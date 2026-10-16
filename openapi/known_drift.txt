@@ -1,0 +1,36 @@
+# Known drift between notte_core.types and openapi/openapi.json; see scripts/openapi_contract.py.
+FunctionRunUpdateRequest: api-only field payloads
+FunctionRunUpdateRequest: api-only field result_preview
+GetFunctionResponse: api-only field published
+GetFunctionResponse: api-only field required_secrets
+GetFunctionResponse: api-only field source
+GetFunctionResponse: api-only field self_healing
+GetFunctionResponse: api-only field domain
+GetFunctionResponse: api-only field instructions
+GetFunctionResponse: api-only field response_format
+GetFunctionResponse: api-only field schedule_cron
+GetFunctionResponse: api-only field schedule_variables
+GetFunctionResponse: api-only field schedule_state
+GetFunctionRunResponse: api-only field function_version
+GetFunctionRunResponse: api-only field payloads
+GetFunctionRunResponse: api-only field stopped_at
+GetFunctionRunResponse: api-only field payload_urls
+GetFunctionWithLinkResponse: api-only field published
+GetFunctionWithLinkResponse: api-only field required_secrets
+GetFunctionWithLinkResponse: api-only field source
+GetFunctionWithLinkResponse: api-only field self_healing
+GetFunctionWithLinkResponse: api-only field domain
+GetFunctionWithLinkResponse: api-only field instructions
+GetFunctionWithLinkResponse: api-only field response_format
+GetFunctionWithLinkResponse: api-only field schedule_cron
+GetFunctionWithLinkResponse: api-only field schedule_variables
+GetFunctionWithLinkResponse: api-only field schedule_state
+ManagedAuthOperation: api-only field created_at (required)
+ManagedAuthOperation: api-only field updated_at (required)
+ReplayResponse: expires_at required api=True sdk=False
+ReplayResponse: expires_at nullable api=False sdk=True
+RunFunctionRequest: api-only field callback_url
+RunFunctionRequest: variables required api=False sdk=True
+ScrapeRequest: api-only field only_images
+SessionStartRequest: api-only field screenshot_type
+SessionStartRequest: api-only field demonstrate

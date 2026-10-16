@@ -1,0 +1,233 @@
+[
+  {
+    "category": "Interaction action",
+    "description": "<div tabindex=\"0\" role=\"button\"></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div tabindex=\"0\" role=\"button\"></div>",
+      "id": "B1",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(1)[id=\"button\"][role=\"button\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://characterization.test/aria:4527775504046182633:3609651542926669075:-61016933632334638:1733966961685525943",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[1]"
+      },
+      "text_label": "Custom button",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div tabindex=\"0\" role=\"checkbox\"></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div tabindex=\"0\" role=\"checkbox\"></div>",
+      "id": "B2",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(2)[id=\"checkbox\"][role=\"checkbox\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://characterization.test/aria:4527775504046182633:3609651542926669075:-1206399714643329741:5729908613219908859",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[2]"
+      },
+      "text_label": "Custom checkbox",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div tabindex=\"0\" role=\"combobox\" aria_label=\"Custom choice\" aria_expanded=\"true\"></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div tabindex=\"0\" role=\"combobox\" aria_label=\"Custom choice\" aria_expanded=\"true\"></div>",
+      "id": "I1",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(3)[id=\"combo\"][role=\"combobox\"][aria-label=\"Custom choice\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://characterization.test/aria:4527775504046182633:3609651542926669075:984647584439646710:-6707874866623494665",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[3]"
+      },
+      "text_label": "Choose a fruit",
+      "timeout": 15000,
+      "type": "select_dropdown_option",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div role=\"listbox\" aria_label=\"Fruit choices\"></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "clear_before_fill": true,
+      "description": "<div role=\"listbox\" aria_label=\"Fruit choices\"></div>",
+      "id": "I2",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(4)[id=\"choices\"][role=\"listbox\"][aria-label=\"Fruit choices\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://characterization.test/aria:4527775504046182633:3609651542926669075:8315277190352123377:2987560632916121195",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[4]"
+      },
+      "text_label": "",
+      "timeout": 15000,
+      "type": "fill",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div tabindex=\"0\" role=\"option\"></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div tabindex=\"0\" role=\"option\"></div>",
+      "id": "O1",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(4) > div:nth-of-type(1)[id=\"apple\"][role=\"option\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://characterization.test/aria:4527775504046182633:3609651542926669075:8315277190352123377:2987560632916121195:-7696625270479014127:-5377508201397998383",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[4]/div[1]"
+      },
+      "text_label": "Apple",
+      "timeout": 15000,
+      "type": "select_dropdown_option",
+      "value": "O1"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div tabindex=\"0\" role=\"option\"></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div tabindex=\"0\" role=\"option\"></div>",
+      "id": "O2",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(4) > div:nth-of-type(2)[id=\"banana\"][role=\"option\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://characterization.test/aria:4527775504046182633:3609651542926669075:8315277190352123377:2987560632916121195:-10255766169036067:-9011942517697338280",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[4]/div[2]"
+      },
+      "text_label": "Banana",
+      "timeout": 15000,
+      "type": "select_dropdown_option",
+      "value": "O2"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div role=\"menu\"></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div role=\"menu\"></div>",
+      "id": "M1",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(5)[role=\"menu\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://characterization.test/aria:4527775504046182633:3609651542926669075:625988667316178361:7010189922962489332",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[5]"
+      },
+      "text_label": "Settings",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div tabindex=\"0\" role=\"menuitem\"></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div tabindex=\"0\" role=\"menuitem\"></div>",
+      "id": "B3",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(5) > div[id=\"menuitem\"][role=\"menuitem\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://characterization.test/aria:4527775504046182633:3609651542926669075:625988667316178361:7010189922962489332:-3764967406304342588:2687071919065774601",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[5]/div"
+      },
+      "text_label": "Settings",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<div tabindex=\"0\" role=\"tab\"></div>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<div tabindex=\"0\" role=\"tab\"></div>",
+      "id": "B4",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div:nth-of-type(6) > div[id=\"tab\"][role=\"tab\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://characterization.test/aria:4527775504046182633:3609651542926669075:6710614156295778293:-6975430711284858148:3390905970029801642:3133652939185059927",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div[6]/div"
+      },
+      "text_label": "Overview",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  }
+]

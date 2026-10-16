@@ -8,14 +8,13 @@ from notte_sdk import NotteClient
 
 client = NotteClient()
 
-# One page of up to 100 functions; use page=2, 3, ... for more
-functions = client.functions.list(page_size=100)
+functions = client.functions.list()
 
 # Create backup directory
 os.makedirs("function_backups", exist_ok=True)
 
 for func in functions.items:
-    function = client.Function(function_id=func.function_id)
+    function = client.Function(function_id=func.function_id, decryption_key="your-key")
 
     try:
         code = function.download()

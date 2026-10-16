@@ -1,5 +1,6 @@
 ---
 title: "client.sessions"
+description: "Method signatures, arguments, and return types for client.sessions API operations."
 ---
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
@@ -141,20 +142,20 @@ sessionProfilePreview: /sessions/&#123;session_id&#125;/profile-preview. Returns
 client.sessions.profilePreview(sessionId: SessionProfilePreviewData["path"]["session_id"], query?: SessionProfilePreviewData["query"], requestOptions?: ResourceRequestOptions & { headers?: Omit<NonNullable<SessionProfilePreviewData["headers"]>, "x-notte-api-key">; }): Promise<SessionProfilePreviewResponse>;
 ```
 
-## profileSave
-
-sessionProfileSave: /sessions/&#123;session_id&#125;/profile/save. Returns the API response body.
-
-```typescript
-client.sessions.profileSave(sessionId: SessionProfileSaveData["path"]["session_id"], body: SessionProfileSaveData["body"], requestOptions?: ResourceRequestOptions & { headers?: Omit<NonNullable<SessionProfileSaveData["headers"]>, "x-notte-api-key">; }): Promise<ProfileResponse>;
-```
-
 ## replay
 
 sessionReplay: /sessions/&#123;session_id&#125;/replay. Returns the API response body.
 
 ```typescript
 client.sessions.replay(sessionId: SessionReplayData["path"]["session_id"], requestOptions?: ResourceRequestOptions & { headers?: Omit<NonNullable<SessionReplayData["headers"]>, "x-notte-api-key">; }): Promise<ReplayResponse>;
+```
+
+## saveProfile
+
+sessionProfileSave: /sessions/&#123;session_id&#125;/profile/save. Returns the API response body.
+
+```typescript
+client.sessions.saveProfile(sessionId: SessionProfileSaveData["path"]["session_id"], body: SessionProfileSaveData["body"], requestOptions?: ResourceRequestOptions & { headers?: Omit<NonNullable<SessionProfileSaveData["headers"]>, "x-notte-api-key">; }): Promise<ProfileResponse>;
 ```
 
 ## scrape

@@ -1,0 +1,97 @@
+from typing import Annotated, Any, Generic, Self, TypeVar
+
+from pydantic import BaseModel, Field, RootModel, model_serializer, model_validator
+
+from notte_core.errors import ScrapeFailedError
+
+TBaseModel = TypeVar("TBaseModel", bound=BaseModel, covariant=True)
+# Legacy name: used as the raw structured-data wrapper before validating
+# against a user-provided schema, so it must preserve any JSON root shape.
+DictBaseModel = RootModel[Any]
+
+
+class NoStructuredData(BaseModel):
+    """Placeholder model for when no structured data is present."""
+
+    pass
+
+
+class StructuredData(BaseModel, Generic[TBaseModel]):
+    success: Annotated[bool, Field(description="Whether the data was extracted successfully")] = True
+    error: Annotated[str | None, Field(description="Error message if the data was not extracted successfully")] = None
+    data: Annotated[
+        TBaseModel | DictBaseModel | None, Field(description="Structured data extracted from the page in JSON format")
+    ] = None
+
+    @model_validator(mode="before")
+    def wrap_dict_in_root_model(cls, values: dict[str, Any]) -> dict[str, Any]:
+        if isinstance(values, dict) and "data" in values and isinstance(values["data"], (dict, list)):  # type: ignore[arg-type]
+            values["data"] = DictBaseModel(values["data"])
+        # if error and is not empty, set success to False
+        error = values.get("error")
+        if error is not None and len(error.strip()) > 0:
+            values["success"] = False
+        return values
+
+    @model_validator(mode="after")
+    def ensure_data_if_success(self) -> Self:
+        if self.success and self.data is None:
+            raise ValueError("Scraping was successful but data field is None")
+        return self
+
+    @model_validator(mode="after")
+    def ensure_no_error_success(self) -> Self:
+        if self.success and (self.error is not None and self.error != ""):
+            raise ValueError("If error, make sure success is False. If success, make sure error is null.")
+        return self
+
+    @model_serializer
+    def serialize_model(self):
+        result: dict[str, Any] = {
+            "success": self.success,
+            "error": self.error,
+        }
+        if isinstance(self.data, RootModel):
+            result["data"] = self.data.root  # type: ignore[attr-defined]
+        elif isinstance(self.data, BaseModel):
+            result["data"] = self.data.model_dump()
+        else:
+            result["data"] = self.data
+        return result
+
+    def get(self) -> TBaseModel:
+        """Get the extracted data, raising ScrapeFailedError if extraction failed."""
+        if not self.success or self.data is None:
+            raise ScrapeFailedError(self.error or "Unknown extraction error")
+        if isinstance(self.data, RootModel):
+            return self.data.root  # type: ignore[attr-defined]
+        return self.data
+
+
+class DataSpace(BaseModel):
+    markdown: Annotated[str, Field(description="Markdown representation of the extracted data")]
+    structured: Annotated[
+        StructuredData[BaseModel] | None, Field(description="Structured data extracted from the page in JSON format")
+    ] = None
+
+    @staticmethod
+    def from_structured(data: BaseModel) -> "DataSpace":
+        return DataSpace(
+            markdown="No markdown available",
+            structured=StructuredData(
+                success=True,
+                data=data,
+                error=None,
+            ),
+        )
+
+    @property
+    def structured_scrape_failed(self) -> bool:
+        return self.structured is not None and not self.structured.success
+
+    @property
+    def structured_scrape_exception(self) -> Exception | None:
+        if not self.structured_scrape_failed:
+            return None
+        error_msg = (self.structured.error if self.structured is not None else None) or "Unknown extraction error"
+        return ScrapeFailedError(error_msg)

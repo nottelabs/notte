@@ -10,16 +10,12 @@ from typing import Any
 from unittest.mock import patch
 
 import pytest
-from notte_core.common import cache as cache_module
-from notte_core.common.cache import (
+from notte_core import cache as cache_module
+from notte_core.cache import (
     CacheDirectory,
-    check_for_legacy_data,
     ensure_cache_directory,
-    get_cache_info,
     get_cache_root,
-    get_legacy_cache_locations,
 )
-from notte_llm import tracer
 
 
 @pytest.fixture(autouse=True)
@@ -29,11 +25,9 @@ def reset_cache_root():
     next test on the same xdist worker, so reset the memo around every test."""
     with cache_module._cache_lock:  # pyright: ignore[reportPrivateUsage]
         cache_module._cache_root = None  # pyright: ignore[reportPrivateUsage]
-        cache_module._using_temp_fallback = False  # pyright: ignore[reportPrivateUsage]
     yield
     with cache_module._cache_lock:  # pyright: ignore[reportPrivateUsage]
         cache_module._cache_root = None  # pyright: ignore[reportPrivateUsage]
-        cache_module._using_temp_fallback = False  # pyright: ignore[reportPrivateUsage]
 
 
 class TestCacheRoot:
@@ -72,7 +66,7 @@ class TestCacheRoot:
         assert root1 == root2
 
     @patch.dict(os.environ, {"HOME": "/nonexistent/home"})
-    @patch("notte_core.common.cache._is_writable")
+    @patch("notte_core.cache._is_writable")
     def test_cache_fallback_to_temp(self, mock_is_writable: Any) -> None:
         """Test fallback to temp directory when home is not writable."""
 
@@ -163,14 +157,15 @@ class TestEnvironmentVariables:
         """Test XDG_CACHE_HOME override for telemetry."""
         with tempfile.TemporaryDirectory() as tmpdir:
             with patch.dict(os.environ, {"XDG_CACHE_HOME": tmpdir}):
-                # Import telemetry module to trigger directory creation
+                # Import telemetry without creating directories yet
                 # Force reload to pick up new env var
-                from notte_core.common import telemetry
+                from notte_core import telemetry
 
                 _ = importlib.reload(telemetry)
 
                 # Check that telemetry uses XDG_CACHE_HOME
-                assert tmpdir in str(telemetry.TELEMETRY_DIR)
+                telemetry_dir, _, _ = telemetry._telemetry_paths()  # pyright: ignore[reportPrivateUsage]
+                assert telemetry_dir == Path(tmpdir) / "notte" / ".cache" / "telemetry"
 
     def test_notte_cache_dir_override(self):
         """Test NOTTE_CACHE_DIR override for file storage."""
@@ -185,50 +180,6 @@ class TestEnvironmentVariables:
                 # Check that files uses NOTTE_CACHE_DIR
                 assert tmpdir == str(files.NOTTE_CACHE_DIR)
 
-    def test_notte_traces_dir_override(self):
-        """Test NOTTE_TRACES_DIR override for tracing."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            with patch.dict(os.environ, {"NOTTE_TRACES_DIR": tmpdir, "DISABLE_NOTTE_LLM_TRACING": "false"}):
-                # Import tracer module to trigger directory creation
-                # Force reload to pick up new env var
-                _ = importlib.reload(tracer)
-
-                # Check that tracer uses NOTTE_TRACES_DIR
-                assert tmpdir == str(tracer.TRACES_DIR)
-
-
-class TestCacheInfo:
-    """Tests for cache information functions."""
-
-    def test_get_cache_info(self):
-        """Test getting cache information."""
-        info = get_cache_info()
-
-        assert "cache_root" in info
-        assert "using_temp_fallback" in info
-        assert "platform" in info
-        assert isinstance(info["cache_root"], str)
-        assert isinstance(info["using_temp_fallback"], bool)
-        assert isinstance(info["platform"], str)
-
-    def test_get_legacy_cache_locations(self):
-        """Test getting legacy cache locations."""
-        legacy_locations = get_legacy_cache_locations()
-
-        assert "telemetry" in legacy_locations
-        assert "files" in legacy_locations
-        assert isinstance(legacy_locations["telemetry"], Path)
-        assert isinstance(legacy_locations["files"], Path)
-
-    def test_check_for_legacy_data(self):
-        """Test checking for legacy data."""
-        legacy_check = check_for_legacy_data()
-
-        assert "telemetry" in legacy_check
-        assert "files" in legacy_check
-        assert isinstance(legacy_check["telemetry"], bool)
-        assert isinstance(legacy_check["files"], bool)
-
 
 class TestIntegration:
     """Integration tests for the cache system."""
@@ -236,29 +187,18 @@ class TestIntegration:
     def test_telemetry_uses_cache(self):
         """Test that telemetry module uses centralized cache."""
         # Force module reload to pick up current cache state
-        from notte_core.common import telemetry
+        from notte_core import telemetry
 
         _ = importlib.reload(telemetry)
 
         # Check that telemetry files are under cache root or in XDG override
         # The path should contain .notte and .cache somewhere in it
-        telemetry_path = str(telemetry.TELEMETRY_DIR)
+        telemetry_dir, _, _ = telemetry._telemetry_paths()  # pyright: ignore[reportPrivateUsage]
+        telemetry_path = str(telemetry_dir)
         xdg_override = os.getenv("XDG_CACHE_HOME")
 
         assert ".notte" in telemetry_path or (xdg_override is not None and xdg_override in telemetry_path)
         assert ".cache" in telemetry_path or (xdg_override is not None and xdg_override in telemetry_path)
-
-    def test_tracer_uses_cache(self):
-        """Test that tracer module uses centralized cache."""
-        # Force module reload to pick up current cache state
-        _ = importlib.reload(tracer)
-
-        # Only check if tracing is enabled and not overridden
-        if os.getenv("DISABLE_NOTTE_LLM_TRACING", "false").lower() == "false" and not os.getenv("NOTTE_TRACES_DIR"):
-            # Check that traces are under cache root
-            traces_path = str(tracer.TRACES_DIR)
-            assert ".notte" in traces_path
-            assert ".cache" in traces_path
 
     def test_files_uses_cache(self):
         """Test that files module uses centralized cache."""

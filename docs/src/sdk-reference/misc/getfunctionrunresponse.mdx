@@ -29,22 +29,22 @@ description: ""
 </ParamField>
 
 <ParamField path="logs" type="list[str]" required>
-  The logs of the workflow run
+  The logs of the function run
 </ParamField>
 
 <ParamField path="variables" type="UnionType[Dict[str, Any], None]" required>
-  The variables of the workflow run
+  The variables of the function run
 </ParamField>
 
 <ParamField path="result" type="UnionType[str, None]">
-  The result of the workflow run (if any)
+  The result of the function run (if any)
 </ParamField>
 
 <ParamField path="local" type="bool" default="False">
-  Whether the workflow has been run locally or on the cloud
+  Whether the function has been run locally or on the cloud
 </ParamField>
 
 
 ## Module
 
-`notte_sdk.types`
+`notte_core.types`

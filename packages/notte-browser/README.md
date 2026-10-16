@@ -1,23 +1,35 @@
 # Notte Browser
 
-The browser component of the Notte agentic ecosystem, designed to provide a seamless interface between LLM agents and web browsing capabilities. This package serves as the foundational layer that enables AI agents to interact with web content in a structured and efficient manner.
+Local, Playwright-based browser sessions (`notte.Session`) with the same `execute` / `observe` / `scrape` API as Notte cloud sessions.
 
 ## Features
 
-- **Browser Management**: Handles browser sessions and windows using Playwright under the hood
-- **DOM Processing**: Transforms web pages into structured, agent-friendly formats
-- **Error Handling**: Robust error management for various browser-related scenarios
-- **Configurable Options**: Flexible configuration for headless mode, user agents, proxies, and more
-- **Security Controls**: Built-in web security controls and customizable Chrome arguments
+- **Browser management**: local Chromium (patchright) or any browser reachable over CDP (`cdp_url`)
+- **Observations**: turns pages into a list of interaction actions plus clean markdown
+- **Actions**: click, fill, select, upload, scroll, tabs, ... by action id or selector
+- **Scraping**: markdown and images; structured data through a pluggable extractor (`notte_core.extraction.StructuredExtractor`)
+- **Vaults and personas**: fill credentials from a vault without exposing them
 
-## Core Dependencies
+## Installation
 
-- Python >=3.11
-- notte_core
-- patchright (Playwright-based browser automation)
+```bash
+pip install notte-browser
+patchright install --with-deps chromium
+# structured scraping (`scrape(instructions=..., response_format=...)`) needs an extractor, e.g. the LLM one:
+pip install notte-llm
+```
+
+notte-browser never calls an LLM itself: structured scraping hands the page markdown to the session's extractor.
+Pass one with `NotteSession(extractor=...)`; when none is passed and [notte-llm](../notte-llm/README.md) is installed,
+its `LlmExtractor` is used.
 
 ## Usage
 
-This package is typically used as part of the larger Notte ecosystem, providing the browser capabilities needed by Notte agents to navigate and interact with web content. It's designed to work seamlessly with other Notte components to enable sophisticated web automation and interaction scenarios.
+```python
+from notte_browser.session import NotteSession
 
-For more information about the Notte ecosystem, visit [notte.cc](https://notte.cc).
+with NotteSession(headless=True) as session:
+    _ = session.execute(type="goto", url="https://www.notte.cc")
+    obs = session.observe()
+    markdown = session.scrape()
+```

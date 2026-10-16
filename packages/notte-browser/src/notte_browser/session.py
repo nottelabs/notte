@@ -1,24 +1,27 @@
+"""Local session workflow: lifecycle → observe → execute → scrape.
+
+BrowserWindow owns page state and operations; playwright owns launch/connect setup.
+Execution, files, scraping, bounded evaluation and vault substitution live in their
+named modules. This facade keeps snapshots, credentials, result/raise ordering,
+trajectory events, and the public sync/async methods and generated overloads.
+"""
+
 from __future__ import annotations
 
 import asyncio
-import datetime as dt
-import re
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, ClassVar, Literal, Unpack, overload
+from typing import TYPE_CHECKING, Any, Literal, Unpack, overload
 
 import requests
-from litellm import BaseModel
 from notte_core import enable_nest_asyncio
 from notte_core.actions import (
-    ActionList,
     BaseAction,
     EvaluateJsAction,
     FallbackFillAction,
     FillAction,
     FormFillAction,
     InteractionAction,
-    InteractionActionUnion,
     MultiFactorFillAction,
     # ReadFileAction,
     ScrapeAction,
@@ -30,10 +33,7 @@ from notte_core.actions.typedicts import (
     CheckActionDict,
     ClickActionDict,
     CloseTabActionDict,
-    CompletionActionDict,
     DownloadFileActionDict,
-    EmailReadActionDict,
-    EmailVerificationReadActionDict,
     EvaluateJsActionDict,
     FallbackFillActionDict,
     FillActionDict,
@@ -42,46 +42,39 @@ from notte_core.actions.typedicts import (
     GoForwardActionDict,
     GotoActionDict,
     GotoNewTabActionDict,
-    HelpActionDict,
     MultiFactorFillActionDict,
     PressKeyActionDict,
     ReloadActionDict,
-    ScrapeActionDict,
     ScrollDownActionDict,
     ScrollUpActionDict,
     SelectDropdownOptionActionDict,
-    SmsReadActionDict,
     SwitchTabActionDict,
     UploadFileActionDict,
     WaitActionDict,
     parse_action,
 )
-from notte_core.browser.observation import ExecutionResult, Observation, Screenshot, TimedSpan
-from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.common.config import BrowserBackend, CookieDict, PerceptionType, RaiseCondition, ScreenshotType, config
-from notte_core.common.logging import logger, timeit
-from notte_core.common.resource import AsyncResource, SyncResource
-from notte_core.common.telemetry import track_usage
-from notte_core.credentials.base import BaseVault, LocatorAttributes
-from notte_core.data.fetch import FetchData, build_fetch_script, response_from_evaluated
-from notte_core.data.space import DataSpace, ImageData, StructuredData, TBaseModel
-from notte_core.errors.actions import (
+from notte_core.config import CookieDict, RaiseCondition, config, create_or_append_cookies_to_file
+from notte_core.credentials.base import BaseVault
+from notte_core.data import DataSpace, StructuredData, TBaseModel
+from notte_core.errors import (
     ActionExecutionError,
     EvaluateJsNoDataError,
     EvaluateJsResultLimitError,
     InvalidActionError,
+    NotteBaseError,
+    RateLimitError,
 )
-from notte_core.errors.base import NotteBaseError
-from notte_core.errors.provider import RateLimitError
+from notte_core.extraction import StructuredExtractor
+from notte_core.fetch import FetchData, build_fetch_script, response_from_evaluated
+from notte_core.logging import logger, timeit
+from notte_core.observation import ExecutionResult, Observation, Screenshot, TimedSpan
 from notte_core.profiling import profiler
-from notte_core.space import ActionSpace
+from notte_core.resource import AsyncResource, SyncResource
+from notte_core.snapshot import BrowserSnapshot
 from notte_core.storage import BaseStorage
+from notte_core.telemetry import track_usage
 from notte_core.trajectory import Trajectory
-from notte_core.utils.files import create_or_append_cookies_to_file
-from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
-from notte_llm.service import LLMService
-from notte_sdk.endpoints.personas import BasePersona
-from notte_sdk.types import (
+from notte_core.types import (
     LocalSessionStartRequest,
     LocalSessionStartRequestDict,
     PaginationParams,
@@ -90,65 +83,50 @@ from notte_sdk.types import (
     ScrapeParams,
     ScrapeParamsDict,
 )
-from pydantic import RootModel, ValidationError
+from pydantic import BaseModel, RootModel, ValidationError
 from typing_extensions import override
 
-from notte_browser.action_selection.pipe import ActionSelectionPipe
-from notte_browser.captcha import CaptchaHandler
-from notte_browser.controller import BrowserController
+from notte_browser import execution
+from notte_browser.action_space import build_action_space
+from notte_browser.captcha import captcha_solver_available
 from notte_browser.dom.locate import locate_element
+from notte_browser.driver import Locator, Page
 from notte_browser.errors import (
     BrowserNotStartedError,
     CaptchaSolverNotAvailableError,
-    EmptyPageContentError,
+    InboxActionNotSupportedLocallyError,
     NoSnapshotObservedError,
     NoStorageObjectProvidedError,
-    NoToolProvidedError,
-    PlaywrightError,
     ScrapeFailedError,
+    ScrapeIsNotAnActionError,
 )
-from notte_browser.evaluation_result import (
-    PAGE_RESULT_GUARD,
-    InvalidPagePayloadError,
-    decode_page_result,
-    format_evaluation_result,
-    new_guard_token,
-    page_expression,
-    page_limit_reason,
-)
-from notte_browser.playwright import PlaywrightManager
-from notte_browser.playwright_async_api import Locator, Page
-from notte_browser.resolution import NodeResolutionPipe
-from notte_browser.scraping.pipe import DataScrapingPipe
-from notte_browser.tagging.action.pipe import MainActionSpacePipe
-from notte_browser.tools.base import BaseTool, PersonaTool
+from notte_browser.evaluation_result import evaluate_page
+from notte_browser.playwright import connect, launch
+from notte_browser.resolution import resolve
+from notte_browser.scrape import default_extractor, scrape_page
+from notte_browser.vault import VaultSecretsScreenshotMask, resolve_vault_action
 from notte_browser.window import BrowserWindow, BrowserWindowOptions
+
+if TYPE_CHECKING:
+    from notte_sdk.endpoints.personas import BasePersona
 
 enable_nest_asyncio()
 
 
 # TODO: ACT callback
 class NotteSession(AsyncResource, SyncResource):
-    # Screenshots appended to the trajectory are best-effort and must not keep a
-    # completed action request open when Chromium's compositor stops responding.
-    POST_ACTION_SCREENSHOT_TIMEOUT_SECONDS: ClassVar[float] = 5.0
-
-    observe_max_retry_after_snapshot_update: ClassVar[int] = 2
-    nb_seconds_between_snapshots_check: ClassVar[int] = 10
-
     @track_usage("local.session.create")
     def __init__(
         self,
         *,
-        perception_type: PerceptionType = config.perception_type,
         raise_on_failure: bool = config.raise_on_session_execution_failure,
         cookie_file: str | Path | None = None,
         storage: BaseStorage | None = None,
-        tools: list[BaseTool] | None = None,
         vault: BaseVault | None = None,
         persona: BasePersona | None = None,
         window: BrowserWindow | None = None,
         keep_alive: bool = False,
+        extractor: StructuredExtractor | None = None,
         **data: Unpack[LocalSessionStartRequestDict],
     ) -> None:
         if storage is not None and storage.is_remote:
@@ -159,23 +137,20 @@ class NotteSession(AsyncResource, SyncResource):
         # runnable by default while preserving an explicit opt-in error.
         _ = data.setdefault("solve_captchas", False)
         self._request: LocalSessionStartRequest = LocalSessionStartRequest.model_validate(data)
-        if self._request.solve_captchas and not CaptchaHandler.is_available:
+        if self._request.solve_captchas and not captcha_solver_available():
             raise CaptchaSolverNotAvailableError()
-        self.screenshot_type: ScreenshotType = self._request.screenshot_type
         self._window: BrowserWindow | None = window
-        self.controller: BrowserController = BrowserController(verbose=config.verbose, storage=storage)
+        self._verbose: bool = config.verbose
         self.storage: BaseStorage | None = storage
-        llmserve = LLMService.from_config(perception_type=perception_type)
-        self._action_space_pipe: MainActionSpacePipe = MainActionSpacePipe(llmserve=llmserve)
-        self._data_scraping_pipe: DataScrapingPipe = DataScrapingPipe(llmserve=llmserve, type=config.scraping_type)
-        self._action_selection_pipe: ActionSelectionPipe = ActionSelectionPipe(llmserve=llmserve)
-        self.tools: list[BaseTool] = tools or []
-        self.vault: BaseVault | None = vault
+        # Structured scraping hands the page markdown to `extractor` (by default `notte_llm.LlmExtractor`, if installed).
+        self._extractor: StructuredExtractor | None = extractor
+        self._vault: BaseVault | None = None
+        # Assigning through the `vault` property also masks the vault's secrets in screenshots.
+        self.vault = vault
         if persona is not None:
             self.attach_persona(persona)
         else:
             self.persona: BasePersona | None = None
-        self.default_perception_type: PerceptionType = perception_type
         self.default_raise_on_failure: bool = raise_on_failure
         self.trajectory: Trajectory = Trajectory()
         self._snapshot: BrowserSnapshot | None = None
@@ -183,23 +158,37 @@ class NotteSession(AsyncResource, SyncResource):
         self._keep_alive: bool = keep_alive
         self._keep_alive_msg: str = "🌌 Keep alive mode enabled, skipping session stop... Use `session.close()` to manually stop the session. Never `keep_alive=True` is production."
 
-    def _has_persona_tool(self, persona: BasePersona) -> bool:
-        for tool in self.tools:
-            if not isinstance(tool, PersonaTool):
-                continue
-            if tool.persona.info.persona_id == persona.info.persona_id:
-                return True
-        return False
-
     def attach_persona(self, persona: BasePersona) -> None:
+        """Use the persona's vault (if any) for credential placeholders. Read its inbox with `persona.emails()`."""
         self.persona = persona
         if self.vault is None and persona.has_vault:
             self.vault = persona.vault
-        if not self._has_persona_tool(persona):
-            self.tools.append(PersonaTool(persona))
 
     def set_vault(self, vault: BaseVault | None) -> None:
         self.vault = vault
+
+    @property
+    def vault(self) -> BaseVault | None:
+        return self._vault
+
+    @vault.setter
+    def vault(self, vault: BaseVault | None) -> None:
+        self._vault = vault
+        self._sync_screenshot_mask()
+
+    def _sync_screenshot_mask(self) -> None:
+        """Mask the vault's secrets in every screenshot while a vault is attached.
+
+        A custom mask set on the window by the caller is left untouched.
+        """
+        if self._window is None:
+            return
+        current = self._window.screenshot_mask
+        if self._vault is not None:
+            if current is None or isinstance(current, VaultSecretsScreenshotMask):
+                self._window.screenshot_mask = VaultSecretsScreenshotMask(vault=self._vault)
+        elif isinstance(current, VaultSecretsScreenshotMask):
+            self._window.screenshot_mask = None
 
     @track_usage("local.session.cookies.set")
     async def aset_cookies(
@@ -209,7 +198,7 @@ class NotteSession(AsyncResource, SyncResource):
 
     @staticmethod
     def script(storage: BaseStorage | None = None, **data: Unpack[LocalSessionStartRequestDict]) -> NotteSession:
-        return NotteSession(storage=storage, raise_on_failure=True, perception_type="fast", **data)
+        return NotteSession(storage=storage, raise_on_failure=True, **data)
 
     @track_usage("local.session.cookies.get")
     async def aget_cookies(self) -> list[CookieDict]:
@@ -226,9 +215,9 @@ class NotteSession(AsyncResource, SyncResource):
     async def astart(self) -> None:
         if self._window is not None:
             return
-        manager = PlaywrightManager()
         options = BrowserWindowOptions.from_request(self._request)
-        self._window = await manager.new_window(options)
+        self._window = await connect(options.cdp_url, options) if options.cdp_url is not None else await launch(options)
+        self._sync_screenshot_mask()
         if self._cookie_file is not None:
             if Path(self._cookie_file).exists():
                 logger.info(f"🍪 Automatically loading cookies from {self._cookie_file}")
@@ -266,7 +255,6 @@ class NotteSession(AsyncResource, SyncResource):
         return self._window
 
     @property
-    @track_usage("local.session.snapshot")
     def snapshot(self) -> BrowserSnapshot:
         if self._snapshot is None:
             raise NoSnapshotObservedError()
@@ -284,137 +272,36 @@ class NotteSession(AsyncResource, SyncResource):
     async def apage(self) -> Page:
         return self.window.page
 
-    @property
-    def previous_interaction_actions(self) -> Sequence[InteractionAction] | None:
-        # This function is always called after trajectory.append(preobs)
-        # —This means trajectory[-1] is always the "current (pre)observation"
-        # And trajectory[-2] is the "previous observation" we're interested in.
-        last_observation = self.trajectory.last_observation
-        if last_observation is None or self.snapshot.clean_url != last_observation.clean_url:
-            return None  # the page has significantly changed
-        actions = last_observation.space.interaction_actions
-        if len(actions) == 0:
-            return None
-        return actions
-
-    @track_usage("local.session.replay")
-    @profiler.profiled(service_name="observation")
-    def replay(self, screenshot_type: ScreenshotType | None = None) -> WebpReplay:
-        screenshot_type = screenshot_type or self.screenshot_type
-
-        screenshots_traj = list(self.trajectory.all_screenshots())
-        screenshots: list[bytes] = [screen.bytes(screenshot_type) for screen in screenshots_traj]
-        if len(screenshots) == 0:
-            raise ValueError("No screenshots found in agent trajectory")
-        elif len(screenshots) > 1 and screenshots[0] == Observation.empty().screenshot.bytes(screenshot_type):
-            screenshots = screenshots[1:]
-        return ScreenshotReplay.from_bytes(screenshots).get(quality=90)  # pyright: ignore [reportArgumentType]
-
     # ---------------------------- observe, step functions ----------------------------
-
-    async def _interaction_action_listing(
-        self,
-        pagination: PaginationParams,
-        perception_type: PerceptionType,
-        retry: int = observe_max_retry_after_snapshot_update,
-    ) -> ActionSpace:
-        if config.verbose:
-            logger.info(f"🧿 observing page {self.snapshot.metadata.url} and {perception_type} perception")
-        space = await self._action_space_pipe.with_perception(perception_type=perception_type).forward(
-            snapshot=self.snapshot,
-            previous_action_list=self.previous_interaction_actions,
-            pagination=pagination,
-        )
-        # TODO: improve this
-        # Check if the snapshot has changed since the beginning of the trajectory
-        # if it has, it means that the page was not fully loaded and that we should restart the oblisting
-        time_diff = dt.datetime.now(dt.timezone.utc) - self.snapshot.metadata.timestamp
-        if time_diff.total_seconds() > self.nb_seconds_between_snapshots_check:
-            if config.verbose:
-                logger.warning(
-                    (
-                        f"{time_diff.total_seconds()} seconds since the beginning of the action listing."
-                        "Check if page content has changed..."
-                    )
-                )
-            check_snapshot = await self.window.snapshot(screenshot=False)
-            if not self.snapshot.compare_with(check_snapshot) and retry > 0:
-                if config.verbose:
-                    logger.warning(
-                        "Snapshot changed since the beginning of the action listing, retrying to observe again"
-                    )
-                self.snapshot = check_snapshot
-                return await self._interaction_action_listing(
-                    perception_type=perception_type, retry=retry - 1, pagination=pagination
-                )
-
-        return space
 
     @track_usage("local.session.screenshot")
     async def ascreenshot(self) -> Screenshot:
         screenshot_bytes = await self.window.screenshot()
-        screenshot = Screenshot(raw=screenshot_bytes, bboxes=[], last_action_id=None)
+        screenshot = Screenshot(raw=screenshot_bytes)
         await self.trajectory.append(screenshot)
         return screenshot
-
-    async def _capture_post_action_screenshot(self) -> None:
-        try:
-            _ = await asyncio.wait_for(
-                self.ascreenshot(),
-                timeout=self.POST_ACTION_SCREENSHOT_TIMEOUT_SECONDS,
-            )
-        except TimeoutError:
-            logger.warning(
-                "Post-action screenshot timed out after "
-                + f"{self.POST_ACTION_SCREENSHOT_TIMEOUT_SECONDS:.1f}s; returning the action result without it"
-            )
-        except Exception as e:
-            logger.warning(f"Failed to capture post-action screenshot: {e}")
 
     def screenshot(
         self,
     ) -> Screenshot:
         return asyncio.run(self.ascreenshot())
 
-    @overload
-    async def aobserve(
-        self,
-        *,
-        instructions: str,
-        perception_type: PerceptionType | None = None,
-        **pagination: Unpack[PaginationParamsDict],
-    ) -> list[InteractionActionUnion]: ...
-
-    @overload
-    async def aobserve(
-        self,
-        *,
-        instructions: None = None,
-        perception_type: PerceptionType | None = None,
-        **pagination: Unpack[PaginationParamsDict],
-    ) -> Observation: ...
-
     @timeit("observe")
     @track_usage("local.session.observe")
-    async def aobserve(
-        self,
-        instructions: str | None = None,
-        perception_type: PerceptionType | None = None,
-        **pagination: Unpack[PaginationParamsDict],
-    ) -> Observation | list[InteractionActionUnion]:
+    async def aobserve(self, **pagination: Unpack[PaginationParamsDict]) -> Observation:
+        """Snapshot the page and list its interaction actions.
+
+        The pagination parameters are kept for parity with the SDK's `observe`, but a local session
+        always lists every action: they are validated and otherwise ignored.
+        """
         # Profile with URL attribute
         async with profiler.profile("aobserve", service_name="observation") as span:
             if span is not None:
                 span.set_attribute("url", self.window.page.url)
 
-            return await self._aobserve_impl(instructions, perception_type, **pagination)
+            return await self._aobserve_impl(**pagination)
 
-    async def _aobserve_impl(
-        self,
-        instructions: str | None = None,
-        perception_type: PerceptionType | None = None,
-        **pagination: Unpack[PaginationParamsDict],
-    ) -> Observation | list[InteractionActionUnion]:
+    async def _aobserve_impl(self, **pagination: Unpack[PaginationParamsDict]) -> Observation:
         # --------------------------------
         # ------ Step 1: snapshot --------
         # --------------------------------
@@ -434,26 +321,16 @@ class NotteSession(AsyncResource, SyncResource):
             self.snapshot = await self.window.snapshot()
 
             if config.verbose:
-                logger.debug(f"ℹ️ previous actions IDs: {[a.id for a in self.previous_interaction_actions or []]}")
                 logger.debug(f"ℹ️ snapshot inodes IDs: {[node.id for node in self.snapshot.interaction_nodes()]}")
 
             # --------------------------------
             # ---- Step 2: action listing ----
             # --------------------------------
 
-            space = await self._interaction_action_listing(
-                perception_type=perception_type or self.default_perception_type,
-                pagination=PaginationParams.model_validate(pagination),
-                retry=self.observe_max_retry_after_snapshot_update,
-            )
-        if instructions is not None:
-            obs = Observation.from_snapshot(self.snapshot, space=space, span=span.close())
-            selected_actions = await self._action_selection_pipe.forward(obs, instructions=instructions)
-            if not selected_actions.success:
-                logger.warning(f"❌ Action selection failed: {selected_actions.reason}. Space will be empty.")
-                return []
-            space = space.filter(action_ids=[a.action_id for a in selected_actions.actions])
-            return list(space.interaction_actions)
+            _ = PaginationParams.model_validate(pagination)
+            if config.verbose:
+                logger.info(f"🧿 observing page {self.snapshot.metadata.url}")
+            space = build_action_space(self.snapshot.dom_node)
 
         # --------------------------------
         # ------- Step 3: tracing --------
@@ -464,109 +341,11 @@ class NotteSession(AsyncResource, SyncResource):
         await self.trajectory.append(obs)
         return obs
 
-    @overload
-    def observe(
-        self,
-        *,
-        instructions: str,
-        perception_type: PerceptionType | None = None,
-        **pagination: Unpack[PaginationParamsDict],
-    ) -> list[InteractionActionUnion]: ...
-
-    @overload
-    def observe(
-        self,
-        *,
-        instructions: None = None,
-        perception_type: PerceptionType | None = None,
-        **pagination: Unpack[PaginationParamsDict],
-    ) -> Observation: ...
-
-    def observe(
-        self,
-        instructions: str | None = None,
-        perception_type: PerceptionType | None = None,
-        **pagination: Unpack[PaginationParamsDict],
-    ) -> Observation | list[InteractionActionUnion]:
-        return asyncio.run(self.aobserve(instructions=instructions, perception_type=perception_type, **pagination))
-
-    def _has_any_persona_tool(self) -> bool:
-        return any(isinstance(tool, PersonaTool) for tool in self.tools)
-
-    async def aread_emails(
-        self,
-        *,
-        only_unread: bool | None = None,
-        time_window: dt.timedelta | None = None,
-        limit: int | None = None,
-        raise_on_failure: bool = False,
-    ) -> ExecutionResult:
-        if not self._has_any_persona_tool():
-            raise ValueError(
-                "No persona tool attached to session. Pass `persona=...` when creating the session or call `attach_persona(...)`."
-            )
-        payload: dict[str, Any] = {"type": "email_read"}
-        if only_unread is not None:
-            payload["only_unread"] = only_unread
-        if time_window is not None:
-            payload["timedelta"] = time_window
-        if limit is not None:
-            payload["limit"] = limit
-        # reads are queries: a tool reporting "nothing yet" is data, not an error,
-        # so polling `while not session.read_emails().success` keeps working
-        return await self.aexecute(raise_on_failure=raise_on_failure, **payload)
-
-    def read_emails(
-        self,
-        *,
-        only_unread: bool | None = None,
-        time_window: dt.timedelta | None = None,
-        limit: int | None = None,
-        raise_on_failure: bool = False,
-    ) -> ExecutionResult:
-        return asyncio.run(
-            self.aread_emails(
-                only_unread=only_unread, time_window=time_window, limit=limit, raise_on_failure=raise_on_failure
-            )
-        )
-
-    async def aread_sms(
-        self,
-        *,
-        only_unread: bool | None = None,
-        time_window: dt.timedelta | None = None,
-        limit: int | None = None,
-        raise_on_failure: bool = False,
-    ) -> ExecutionResult:
-        if not self._has_any_persona_tool():
-            raise ValueError(
-                "No persona tool attached to session. Pass `persona=...` when creating the session or call `attach_persona(...)`."
-            )
-        payload: dict[str, Any] = {"type": "sms_read"}
-        if only_unread is not None:
-            payload["only_unread"] = only_unread
-        if time_window is not None:
-            payload["timedelta"] = time_window
-        if limit is not None:
-            payload["limit"] = limit
-        return await self.aexecute(raise_on_failure=raise_on_failure, **payload)
-
-    def read_sms(
-        self,
-        *,
-        only_unread: bool | None = None,
-        time_window: dt.timedelta | None = None,
-        limit: int | None = None,
-        raise_on_failure: bool = False,
-    ) -> ExecutionResult:
-        return asyncio.run(
-            self.aread_sms(
-                only_unread=only_unread, time_window=time_window, limit=limit, raise_on_failure=raise_on_failure
-            )
-        )
+    def observe(self, **pagination: Unpack[PaginationParamsDict]) -> Observation:
+        return asyncio.run(self.aobserve(**pagination))
 
     async def locate(self, action: BaseAction) -> Locator | None:
-        action_with_selector = await NodeResolutionPipe.forward(action, self._snapshot)
+        action_with_selector = await resolve(action, self._snapshot)
         if isinstance(action_with_selector, InteractionAction) and action_with_selector.selectors is not None:
             locator: Locator = await locate_element(self.window.page, action_with_selector.selectors)
             assert isinstance(action_with_selector, InteractionAction) and action_with_selector.selector is not None
@@ -574,18 +353,11 @@ class NotteSession(AsyncResource, SyncResource):
         return None
 
     async def _action_with_vault(self, action: BaseAction) -> BaseAction:
-        """Replace credential placeholders with vault values.
-
-        Raises `CredentialReplacementError` or `NoCredentialsFoundError` when a placeholder cannot be replaced, so that
-        the action fails instead of typing the literal placeholder into the page. Card holder and card number
-        placeholders without a matching vault credential are filled as-is.
-        """
         # Only fill-type actions support credential replacement
         _SUPPORTED = (FormFillAction, FillAction, FallbackFillAction, MultiFactorFillAction, SelectDropdownOptionAction)
         if (
             self.vault is None
             or not isinstance(action, _SUPPORTED)
-            # skip actions already replaced upstream (e.g. by the agent)
             or not self.vault.has_unresolved_placeholders(action)
         ):
             return action
@@ -593,20 +365,9 @@ class NotteSession(AsyncResource, SyncResource):
         if self._window is not None:
             self.snapshot = await self.window.snapshot()
         snapshot = self.snapshot
-        if isinstance(action, FormFillAction):
-            attrs = LocatorAttributes(type=None, autocomplete=None, outerHTML=None)
-            return await self.vault.replace_credentials(action, attrs, snapshot)
+        return await resolve_vault_action(action, self.vault, snapshot, self.locate)
 
-        locator = await self.locate(action)
-        attrs = LocatorAttributes(type=None, autocomplete=None, outerHTML=None)
-        if locator is not None:
-            attrs = LocatorAttributes(
-                type=await locator.get_attribute("type"),
-                autocomplete=await locator.get_attribute("autocomplete"),
-                outerHTML=await locator.evaluate("el => el.outerHTML"),
-            )
-        return await self.vault.replace_credentials(action, attrs, snapshot)
-
+    # BEGIN GENERATED OVERLOADS: aexecute (scripts/generate_action_overloads.py)
     @overload
     async def aexecute(self, action: BaseAction, *, raise_on_failure: bool | None = None) -> ExecutionResult: ...
     @overload
@@ -663,30 +424,6 @@ class NotteSession(AsyncResource, SyncResource):
     ) -> ExecutionResult: ...
     @overload
     async def aexecute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[HelpActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    async def aexecute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CompletionActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    async def aexecute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ScrapeActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    async def aexecute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[EmailReadActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    async def aexecute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[EmailVerificationReadActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    async def aexecute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[SmsReadActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    async def aexecute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[EvaluateJsActionDict]
     ) -> ExecutionResult: ...
     @overload
@@ -721,6 +458,8 @@ class NotteSession(AsyncResource, SyncResource):
     async def aexecute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[DownloadFileActionDict]
     ) -> ExecutionResult: ...
+
+    # END GENERATED OVERLOADS: aexecute
 
     @timeit("aexecute")
     @track_usage("local.session.execute")
@@ -764,7 +503,7 @@ class NotteSession(AsyncResource, SyncResource):
                 # --- Step 1: action resolution --
                 # --------------------------------
 
-                resolved_action = await NodeResolutionPipe.forward(step_action, self._snapshot, verbose=config.verbose)
+                resolved_action = await resolve(step_action, self._snapshot, verbose=config.verbose)
                 if config.verbose:
                     logger.info(f"🌌 starting execution of action '{resolved_action.type}' ...")
                 # --------------------------------
@@ -776,119 +515,35 @@ class NotteSession(AsyncResource, SyncResource):
 
                 match resolved_action:
                     case ScrapeAction():
-                        # Note: response_format in ScrapeAction is a JSON schema dict for logging/trajectory.
-                        # Actual structured output with Pydantic classes requires calling scrape() directly.
-                        # Agents use instructions-based scraping for structured data extraction.
-                        scraped_data = await self._ascrape(
-                            instructions=resolved_action.instructions,
-                            only_main_content=resolved_action.only_main_content,
-                            selector=resolved_action.selector,
-                            only_images=resolved_action.only_images,
-                            scrape_links=resolved_action.scrape_links,
-                            scrape_images=resolved_action.scrape_images,
-                            ignored_tags=resolved_action.ignored_tags,
-                        )
-                        success = True
+                        raise ScrapeIsNotAnActionError()
                     case EvaluateJsAction(code=code):
-                        # Evaluate JavaScript code on the page and return the result.
-                        # If the code contains bare `return` statements (invalid outside
-                        # a function), wrap it in an IIFE so Playwright can evaluate it.
-                        # Skip wrapping if the code is already a function/IIFE.
-                        stripped = code.strip()
-                        # Detect code that is already a function expression or IIFE:
-                        #   "("            -> grouped expression / IIFE
-                        #   "function ..." -> function declaration/expression (word boundary avoids "functionName()")
-                        #   "async function" / "async (" -> async variants (avoids "asyncio.run()", "async_helper()")
-                        is_already_function = bool(re.match(r"^(?:\(|function\b|async\s+(?:function\b|\())", stripped))
-                        needs_wrap = bool(re.search(r"\breturn\b", stripped)) and not is_already_function
-                        js_code = f"(() => {{\n{code}\n}})()" if needs_wrap else code
-                        guard_token = new_guard_token()
-                        try:
-                            evaluate_kwargs: dict[str, bool] = {}
-                            if config.browser_backend == BrowserBackend.PATCHRIGHT:
-                                evaluate_kwargs["isolated_context"] = False
-                            # The guard measures the value inside the page and
-                            # throws past the budget, so an oversized result is
-                            # never serialized by the browser, decoded by the
-                            # driver, or rebuilt as Python objects.
-                            result = await asyncio.wait_for(
-                                self.window.page.evaluate(
-                                    PAGE_RESULT_GUARD,
-                                    [
-                                        page_expression(js_code),
-                                        config.evaluate_js_max_result_bytes,
-                                        config.evaluate_js_max_result_values,
-                                        guard_token,
-                                    ],
-                                    **evaluate_kwargs,
-                                ),
-                                timeout=config.timeout_evaluate_js_ms / 1000.0,
-                            )
-                        except asyncio.TimeoutError:
-                            success = False
-                            message = f"JavaScript evaluation timed out after {config.timeout_evaluate_js_ms}ms"
-                        except PlaywrightError as js_err:
-                            limit_reason = page_limit_reason(str(js_err), guard_token)
-                            if limit_reason is not None:
-                                raise EvaluateJsResultLimitError(
-                                    config.evaluate_js_max_result_bytes, limit_reason
-                                ) from None
-                            success = False
-                            message = f"JavaScript evaluation failed: {js_err}"
-                        else:
-                            result_str: str | None = None
-                            try:
-                                # The guard returns the result as one JSON string,
-                                # decoded once here instead of value by value by
-                                # Playwright, which cost several times the memory.
-                                result = decode_page_result(
-                                    result,
-                                    guard_token,
-                                    max_bytes=config.evaluate_js_max_result_bytes,
-                                    max_values=config.evaluate_js_max_result_values,
-                                )
-                                result_str = format_evaluation_result(
-                                    result, max_bytes=config.evaluate_js_max_result_bytes
-                                )
-                            except InvalidPagePayloadError as payload_err:
-                                message = f"JavaScript evaluation failed: {payload_err}"
-                            finally:
-                                # The action's frame can itself be retained when a
-                                # failure is raised later or saved in the trajectory.
-                                result = None
-                            success = result_str is not None
-                            if result_str is not None:
-                                scraped_data = DataSpace(markdown=result_str)
+                        success, evaluation_message, scraped_data = await evaluate_page(self.window.page, code)
+                        if evaluation_message is not None:
+                            message = evaluation_message
                     case ToolAction():
-                        tool_found = False
-                        success = False
-                        for tool in self.tools:
-                            tool_func = tool.get_tool(type(resolved_action))
-                            if tool_func is not None:
-                                tool_found = True
-                                res = await tool_func(resolved_action)
-                                message = res.message
-                                scraped_data = res.data
-                                success = res.success
-                                break
-                        if not tool_found:
-                            raise NoToolProvidedError(resolved_action)
+                        raise InboxActionNotSupportedLocallyError(resolved_action)
                     case _:
                         resolved_action = await self._action_with_vault(resolved_action)
-                        if isinstance(resolved_action, InteractionAction):
-                            success = await asyncio.wait_for(
-                                self.controller.execute(self.window, resolved_action, self._snapshot),
-                                timeout=resolved_action.timeout / 1000.0,
-                            )
-                        else:
-                            success = await self.controller.execute(self.window, resolved_action, self._snapshot)
+                        # interactions bound themselves by `action.timeout` (see execution.py)
+                        success = await execution.execute(
+                            self.window,
+                            resolved_action,
+                            storage=self.storage,
+                            prev_snapshot=self._snapshot,
+                            verbose=self._verbose,
+                        )
                         if not success:
                             # `message` still holds the success-phrased execution_message.
                             message = f"Action '{resolved_action.type}' failed during browser execution"
 
-            except (NoSnapshotObservedError, NoStorageObjectProvidedError, NoToolProvidedError) as e:
+            except (
+                NoSnapshotObservedError,
+                NoStorageObjectProvidedError,
+                InboxActionNotSupportedLocallyError,
+                ScrapeIsNotAnActionError,
+            ):
                 # this should be handled by the caller
-                raise e
+                raise
             except InvalidActionError as e:
                 success = False
                 message = e.dev_message
@@ -899,11 +554,7 @@ class NotteSession(AsyncResource, SyncResource):
                 exception = e
             except asyncio.TimeoutError as e:
                 success = False
-                message = (
-                    f"Action timed out after {resolved_action.timeout}ms"
-                    if isinstance(resolved_action, InteractionAction)
-                    else "Action timed out."
-                )
+                message = "Action timed out."
                 exception = e
             except NotteBaseError as e:
                 if isinstance(e, EvaluateJsResultLimitError):
@@ -939,12 +590,8 @@ class NotteSession(AsyncResource, SyncResource):
             raise exception
 
         if resolved_action is None:
-            # keep the initial action in the trajectory
-            if step_action is None:
-                # this shouldnt happen
-                raise InvalidActionError(reason="Could not resolve action", action_id="")
-            else:
-                resolved_action = step_action
+            # resolution failed: keep the initial action in the trajectory
+            resolved_action = step_action
 
         if not success and exception is None:
             # Actions that signal failure by returning (a tool returning `success=False`,
@@ -968,10 +615,6 @@ class NotteSession(AsyncResource, SyncResource):
         )
         await self.trajectory.append(execution_result)
 
-        # add screenshot to trajectory (after the execution)
-        if self._window is not None:
-            await self._capture_post_action_screenshot()
-
         _raise_on_failure = raise_on_failure if raise_on_failure is not None else self.default_raise_on_failure
         # Gate on "did the action fail", not "did something throw": after the synthesis
         # above, every failure carries an exception, including the return-style ones
@@ -980,23 +623,7 @@ class NotteSession(AsyncResource, SyncResource):
             raise exception
         return execution_result
 
-    def execute_saved_actions(self, actions_file: str) -> None:
-        with open(actions_file, "r") as f:
-            action_list = ActionList.model_validate_json(f.read())
-        for i, action in enumerate(action_list.actions):
-            # browser-level actions (wait, goto, ...) have no `id` attribute
-            action_id = getattr(action, "id", "")
-            logger.info(f"💡 Step {i + 1}/{len(action_list.actions)}: executing action '{action.type}' {action_id}")
-            # replay stops gracefully on the first failed step instead of raising
-            res = self.execute(action, raise_on_failure=False)
-            logger.info(f"{'✅' if res.success else '❌'} - {res.message}")
-            if not res.success:
-                logger.error("🚨 Stopping execution of saved actions since last action failed...")
-                return
-            obs = self.observe(perception_type="fast")
-            logger.info(f"🌌 Observation. Current URL: {obs.clean_url}")
-        logger.info("🎉 All actions executed successfully")
-
+    # BEGIN GENERATED OVERLOADS: execute (scripts/generate_action_overloads.py)
     @overload
     def execute(self, action: BaseAction, *, raise_on_failure: bool | None = None) -> ExecutionResult: ...
     @overload
@@ -1048,28 +675,6 @@ class NotteSession(AsyncResource, SyncResource):
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CaptchaSolveActionDict]
     ) -> ExecutionResult: ...
     @overload
-    def execute(self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[HelpActionDict]) -> ExecutionResult: ...
-    @overload
-    def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CompletionActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ScrapeActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[EmailReadActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[EmailVerificationReadActionDict]
-    ) -> ExecutionResult: ...
-    @overload
-    def execute(
-        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[SmsReadActionDict]
-    ) -> ExecutionResult: ...
-    @overload
     def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[EvaluateJsActionDict]
     ) -> ExecutionResult: ...
@@ -1103,6 +708,8 @@ class NotteSession(AsyncResource, SyncResource):
     def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[DownloadFileActionDict]
     ) -> ExecutionResult: ...
+
+    # END GENERATED OVERLOADS: execute
 
     def execute(
         self,
@@ -1207,9 +814,6 @@ class NotteSession(AsyncResource, SyncResource):
             self.afetch(url, method=method, headers=headers, params=params, json=json, data=data, timeout=timeout)
         )
 
-    @overload
-    async def ascrape(self, /, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...
-
     # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
     @overload
     async def ascrape(
@@ -1252,7 +856,7 @@ class NotteSession(AsyncResource, SyncResource):
     @track_usage("local.session.scrape")
     async def ascrape(
         self, *, raise_on_failure: bool = True, **params: Unpack[ScrapeParamsDict]
-    ) -> StructuredData[BaseModel] | BaseModel | str | list[ImageData]:
+    ) -> StructuredData[BaseModel] | BaseModel | str:
         # Extract and convert response_format for the action (store as JSON schema)
         response_format = params.get("response_format")
         instructions = params.get("instructions")
@@ -1266,7 +870,6 @@ class NotteSession(AsyncResource, SyncResource):
             instructions=instructions,
             only_main_content=params.get("only_main_content", False),
             selector=params.get("selector"),
-            only_images=params.get("only_images", False),
             scrape_links=params.get("scrape_links", True),
             scrape_images=params.get("scrape_images", False),
             ignored_tags=params.get("ignored_tags"),
@@ -1277,7 +880,9 @@ class NotteSession(AsyncResource, SyncResource):
         data: DataSpace | None = None
         with TimedSpan.capture() as span:
             try:
-                data = await self._ascrape(**params)
+                async with profiler.profile("NotteSession._ascrape", service_name="execution"):
+                    scrape_params = ScrapeParams.model_validate(params)
+                    data = await scrape_page(self.window, scrape_params, get_extractor=self._get_extractor)
             except Exception as e:
                 exception = e
                 # Record failure to trajectory
@@ -1319,8 +924,6 @@ class NotteSession(AsyncResource, SyncResource):
         await self.trajectory.append(execution_result)
 
         # Return data
-        if data.images is not None:
-            return data.images
         if is_structured_scrape:
             if data.structured is None:
                 raise ScrapeFailedError("Failed to extract structured data")
@@ -1331,26 +934,11 @@ class NotteSession(AsyncResource, SyncResource):
             return data.structured
         return data.markdown
 
-    @profiler.profiled(service_name="execution")
-    async def _ascrape(self, retries: int = 3, wait_time: int = 2000, **params: Unpack[ScrapeParamsDict]) -> DataSpace:
-        try:
-            scrape_params = ScrapeParams.model_validate(params)
-            return await self._data_scraping_pipe.forward(
-                window=self.window,
-                snapshot=await self.window.snapshot(selector=scrape_params.selector, skip_dom=True),
-                params=scrape_params,
-            )
-        except EmptyPageContentError as e:
-            if retries == 0:
-                raise e
-            logger.warning(f"Scrape failed after empty page content, retrying in {wait_time / 1000} seconds...")
-            await asyncio.sleep(wait_time / 1000)
-            return await self._ascrape(retries=retries - 1, wait_time=wait_time, **params)
-        except Exception as e:
-            raise e
-
-    @overload
-    def scrape(self, /, *, only_images: Literal[True], raise_on_failure: bool = True) -> list[ImageData]: ...  # pyright: ignore[reportOverlappingOverload]
+    def _get_extractor(self) -> StructuredExtractor:
+        # Resolved on first structured scrape so that sessions never load an LLM unless they need one.
+        if self._extractor is None:
+            self._extractor = default_extractor()
+        return self._extractor
 
     # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
     @overload
@@ -1392,7 +980,7 @@ class NotteSession(AsyncResource, SyncResource):
 
     def scrape(
         self, *, raise_on_failure: bool = True, **params: Unpack[ScrapeParamsDict]
-    ) -> StructuredData[BaseModel] | BaseModel | dict[str, Any] | str | list[ImageData]:
+    ) -> StructuredData[BaseModel] | BaseModel | dict[str, Any] | str:
         return asyncio.run(self.ascrape(raise_on_failure=raise_on_failure, **params))
 
     @timeit("reset")
@@ -1409,9 +997,3 @@ class NotteSession(AsyncResource, SyncResource):
     @override
     def reset(self) -> None:
         _ = asyncio.run(self.areset())
-
-    def start_from(self, session: "NotteSession") -> None:
-        if len(self.trajectory) > 0 or self._snapshot is not None:
-            raise ValueError("Session already started")
-        self.trajectory = session.trajectory
-        self.snapshot = session._snapshot

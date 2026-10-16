@@ -1,0 +1,159 @@
+### Content of 'WebArea' component with text 'body content'
+_[:]Loading
+L1[:]<a href="https://www.crateandbarrel.com/">Crate and Barrel</a>
+_[:]Checkout
+_[:]Shipping
+_[:]Checkout Navigation Steps
+M1[:]<span>1</span>
+M2[:]<span>Shipping and
+Gift Options</span>
+_[:]Shipping
+_[:]2
+_[:]Payment and
+_[:]Billing
+_[:]3
+_[:]Review and
+_[:]Place Order
+_[:]You are on the Shipping page
+_[:]Ship To
+_[:]Shipping
+_[:]First Name
+_[:]Required
+I1[:]<input type="text" value="" name="FirstName"></input>
+_[:]Last Name
+_[:]Required
+I2[:]<input type="text" value="" name="LastName"></input>
+_[:]Street Address
+_[:]Required
+I3[:]<input type="text" value="" placeholder="" name="Address1"></input>
+B1[:]<button type="button">Add apt, suite or other
+optional</button>
+_[:]Apartment, Suite, Building, Other
+_[:]optional
+_[:]Zip Code
+_[:]Required
+I4[:]<input type="text" value="" name="zipCode"></input>
+_[:]City
+_[:]Required
+I5[:]<input type="text" value="" name="City"></input>
+_[:]State
+_[:]Required
+I6[:]<select name="State">Please Select
+Alabama
+Alaska
+Arizona
+Arkansas
+California
+Colorado
+Connecticut
+Delaware
+District of Columbia
+Florida
+Georgia
+Hawaii
+Idaho
+Illinois
+Indiana
+Iowa
+Kansas
+Kentucky
+Louisiana
+Maine
+Maryland
+Massachusetts
+Michigan
+Minnesota
+Mississippi
+Missouri
+Montana
+Nebraska
+Nevada
+New Hampshire
+New Jersey
+New Mexico
+New York
+North Carolina
+North Dakota
+Ohio
+Oklahoma
+Oregon
+Pennsylvania
+Rhode Island
+South Carolina
+South Dakota
+Tennessee
+Texas
+Utah
+Vermont
+Virginia
+Washington
+West Virginia
+Wisconsin
+Wyoming
+American Samoa
+Federal States of Micronesia
+Guam
+Marshall Islands
+Northern Mariana Islands
+Palau
+Puerto Rico
+Virgin Islands
+AA (Military)
+AE (Military)
+AP (Military)</select>
+_[:]Phone Number
+_[:]Required
+_[:]We may need to contact you with shipping or order questions.
+_[:]Use as billing address
+_[:]Next
+_[:]Order Summary
+L2[:]<a href="https://www.crateandbarrel.com/checkout/cart">Edit cart</a>
+_[:]Merchandise:
+_[:]$14.95
+_[:]Shipping:
+_[:]$6.00
+_[:]Tax:
+_[:]$1.81
+_[:]Order Total:
+_[:]$22.76
+_[:]To learn more about how we use your information, read our
+_[:]Privacy Policy
+_[:](opens in a new window/tab)
+_[:].
+_[:]Secure Checkout Shopping is always
+_[:]safe and secure
+_[:]Crate and Barrel
+_[:]©2025
+_[:]Home
+_[:]Your Cart
+_[:]Give Us
+_[:]Feedback
+_[:]Privacy Policy
+_[:]Terms of Use
+_[:]Site Index
+_[:](800) 967-6696
+_[:]Stay in Touch
+_[:]Terms of Use
+_[:]Privacy Policy
+_[:]Contact Us
+_[:](800) 967-6696
+_[:]Give Us
+_[:]Feedback
+_[:]©2025 Crate and Barrel. All rights reserved.
+_[:];
+_[:]Close Popup
+_[:]Modal Popup
+_[:]normal
+
+# interaction actions
+L1	click	'Crate and Barrel'	html > body > div:nth-of-type(2) > div:nth-of-type(5) > main > div > div:nth-of-type(2) > div > section > div > div:nth-of-type(1) > div > div:nth-of-type(1) > div > a[href="https://www.crateandbarrel.com/"]	html/body/div[2]/div[5]/main/div/div[2]/div/section/div/div[1]/div/div[1]/div/a	in_iframe=False	in_shadow_root=False
+M1	click	'1'	html > body > div:nth-of-type(2) > div:nth-of-type(5) > main > div > div:nth-of-type(2) > div > section > div > div:nth-of-type(1) > div > div:nth-of-type(2) > nav > ul > li:nth-of-type(1) > a > span:nth-of-type(1)	html/body/div[2]/div[5]/main/div/div[2]/div/section/div/div[1]/div/div[2]/nav/ul/li[1]/a/span[1]	in_iframe=False	in_shadow_root=False
+M2	click	'Shipping and Gift Options'	html > body > div:nth-of-type(2) > div:nth-of-type(5) > main > div > div:nth-of-type(2) > div > section > div > div:nth-of-type(1) > div > div:nth-of-type(2) > nav > ul > li:nth-of-type(1) > a > span:nth-of-type(2)	html/body/div[2]/div[5]/main/div/div[2]/div/section/div/div[1]/div/div[2]/nav/ul/li[1]/a/span[2]	in_iframe=False	in_shadow_root=False
+I1	fill	'FirstName'	html > body > div:nth-of-type(2) > div:nth-of-type(5) > main > div > div:nth-of-type(2) > div > section > div > div:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div:nth-of-type(1) > fieldset > div:nth-of-type(1) > input.input-md.input-validation-valid[aria-describedby="FirstNameError"][autocomplete="shipping given-name"][id="FirstName"][name="FirstName"][type="text"][data-testid="input-shipping-first-name"]	html/body/div[2]/div[5]/main/div/div[2]/div/section/div/div[1]/div/div[3]/div/div/div[1]/fieldset/div[1]/input	in_iframe=False	in_shadow_root=False
+I2	fill	'LastName'	html > body > div:nth-of-type(2) > div:nth-of-type(5) > main > div > div:nth-of-type(2) > div > section > div > div:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div:nth-of-type(1) > fieldset > div:nth-of-type(2) > input.input-md.input-validation-valid[aria-describedby="LastNameError"][autocomplete="shipping family-name"][id="LastName"][name="LastName"][type="text"][data-testid="input-shipping-last-name"]	html/body/div[2]/div[5]/main/div/div[2]/div/section/div/div[1]/div/div[3]/div/div/div[1]/fieldset/div[2]/input	in_iframe=False	in_shadow_root=False
+I3	fill	'Address1'	html > body > div:nth-of-type(2) > div:nth-of-type(5) > main > div > div:nth-of-type(2) > div > section > div > div:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div:nth-of-type(1) > fieldset > div:nth-of-type(3) > input.input-md.input-validation-valid.pac-target-input[aria-describedby="Address1Error"][autocomplete="shipping address-line1"][id="Address1"][name="Address1"][type="text"][placeholder][data-testid="input-shipping-address1"]	html/body/div[2]/div[5]/main/div/div[2]/div/section/div/div[1]/div/div[3]/div/div/div[1]/fieldset/div[3]/input	in_iframe=False	in_shadow_root=False
+B1	click	'Add apt, suite or other optional'	html > body > div:nth-of-type(2) > div:nth-of-type(5) > main > div > div:nth-of-type(2) > div > section > div > div:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div:nth-of-type(1) > fieldset > div:nth-of-type(4) > button.extended-address-toggle-button.button-transparent[type="button"]	html/body/div[2]/div[5]/main/div/div[2]/div/section/div/div[1]/div/div[3]/div/div/div[1]/fieldset/div[4]/button	in_iframe=False	in_shadow_root=False
+I4	fill	'zipCode'	html > body > div:nth-of-type(2) > div:nth-of-type(5) > main > div > div:nth-of-type(2) > div > section > div > div:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div:nth-of-type(1) > fieldset > div:nth-of-type(5) > input.input-md.jsZip.input-validation-valid[aria-describedby="ZipCodeError"][autocomplete="shipping postal-code"][id="ZipCode"][name="zipCode"][type="text"][data-testid="input-shipping-zip-code"]	html/body/div[2]/div[5]/main/div/div[2]/div/section/div/div[1]/div/div[3]/div/div/div[1]/fieldset/div[5]/input	in_iframe=False	in_shadow_root=False
+I5	fill	'City'	html > body > div:nth-of-type(2) > div:nth-of-type(5) > main > div > div:nth-of-type(2) > div > section > div > div:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div:nth-of-type(1) > fieldset > div:nth-of-type(6) > div:nth-of-type(1) > input.input-md.input-validation-valid[aria-describedby="CityError"][autocomplete="shipping address-city"][id="City"][name="City"][type="text"][data-testid="input-shipping-city"]	html/body/div[2]/div[5]/main/div/div[2]/div/section/div/div[1]/div/div[3]/div/div/div[1]/fieldset/div[6]/div[1]/input	in_iframe=False	in_shadow_root=False
+I6	select_dropdown_option	'Please Select Alabama Alaska Arizona Arkansas California Colorado Connecticut Delaware District of Columbia Florida Georgia Hawaii Idaho Illinois Indiana Iowa Kansas Kentucky Louisiana Maine Maryland Massachusetts Michigan Minnesota Mississippi Missouri Montana Nebraska Nevada New Hampshire New Jersey New Mexico New York North Carolina North Dakota Ohio Oklahoma Oregon Pennsylvania Rhode Island South Carolina South Dakota Tennessee Texas Utah Vermont Virginia Washington West Virginia Wisconsin Wyoming American Samoa Federal States of Micronesia Guam Marshall Islands Northern Mariana Islands Palau Puerto Rico Virgin Islands AA (Military) AE (Military) AP (Military)'	html > body > div:nth-of-type(2) > div:nth-of-type(5) > main > div > div:nth-of-type(2) > div > section > div > div:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div:nth-of-type(1) > fieldset > div:nth-of-type(6) > div:nth-of-type(2) > select.select-md.width200.jsState.input-validation-valid[aria-describedby="StateError"][id="State"][name="State"][data-testid="input-shipping-state"]	html/body/div[2]/div[5]/main/div/div[2]/div/section/div/div[1]/div/div[3]/div/div/div[1]/fieldset/div[6]/div[2]/select	in_iframe=False	in_shadow_root=False
+L2	click	'Edit cart'	html > body > div:nth-of-type(2) > div:nth-of-type(5) > main > div > div:nth-of-type(2) > div > section > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > a.button-edit-cart[href="https://www.crateandbarrel.com/checkout/cart"]	html/body/div[2]/div[5]/main/div/div[2]/div/section/div/div[2]/div/div/div[1]/a	in_iframe=False	in_shadow_root=False

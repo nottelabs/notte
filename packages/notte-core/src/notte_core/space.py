@@ -1,4 +1,3 @@
-import random
 import re
 from collections.abc import Sequence
 from enum import StrEnum
@@ -7,7 +6,7 @@ from typing import Annotated
 from pydantic import BaseModel, Field, computed_field
 
 from notte_core.actions import ActionUnion, BrowserAction, BrowserActionUnion, InteractionAction, InteractionActionUnion
-from notte_core.errors.processing import InvalidInternalCheckError
+from notte_core.errors import InvalidInternalCheckError
 
 
 class SpaceCategory(StrEnum):
@@ -22,13 +21,6 @@ class SpaceCategory(StrEnum):
     PAYMENT = "payment"
     CAPTCHA = "captcha"
     OTHER = "other"
-
-    def is_data(self) -> bool:
-        return self.value in [
-            SpaceCategory.DATA_FEED.value,
-            SpaceCategory.SEARCH_RESULTS.value,
-            SpaceCategory.ITEM.value,
-        ]
 
 
 class ActionSpace(BaseModel):
@@ -132,23 +124,6 @@ class ActionSpace(BaseModel):
     @property
     def markdown(self) -> str:
         return ActionSpace.render_actions(self.actions)
-
-    @property
-    def interaction_markdown(self) -> str:
-        return ActionSpace.render_actions(self.interaction_actions)
-
-    def is_empty(self) -> bool:
-        return len(self.interaction_actions) == 0
-
-    def sample(self, type: str | None = None) -> ActionUnion:
-        actions = [action for action in self.actions if type is None or action.type == type]
-        if len(actions) == 0:
-            raise InvalidInternalCheckError(
-                check=f"No actions available for sampling. type={type}",
-                url="unknown url",
-                dev_advice="This should never happen.",
-            )
-        return random.choice(actions)
 
     @staticmethod
     def empty(description: str = "No actions available") -> "ActionSpace":

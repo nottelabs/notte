@@ -1,219 +1,173 @@
+"""Launch owns a browser and driver; connect owns only its driver connection."""
+
 import asyncio
-from abc import ABC, abstractmethod
-from collections.abc import Awaitable, Callable
-from typing import ClassVar
 
-from notte_core.common.logging import logger
-from notte_core.common.resource import AsyncResource
+from notte_core.config import config
+from notte_core.logging import logger
 from notte_core.profiling import profiler
-from notte_sdk.types import LocalSessionStartRequest
-from openai import BaseModel
-from pydantic import PrivateAttr
-from typing_extensions import override
+from notte_core.types import LocalSessionStartRequest
 
-from notte_browser.errors import BrowserNotAvailableError, BrowserNotStartedError, CdpConnectionError
-from notte_browser.playwright_async_api import (
-    Browser,
-    BrowserContext,
-    Playwright,
-    async_playwright,
-)
-from notte_browser.window import BrowserResource, BrowserWindow, BrowserWindowOptions
+from notte_browser.cleanup import cleanup_resources
+from notte_browser.driver import Browser, BrowserContext, Page, Playwright, async_playwright
+from notte_browser.errors import BrowserNotAvailableError, CdpConnectionError
+from notte_browser.window import BrowserWindow, BrowserWindowOptions
+
+BROWSER_CREATION_TIMEOUT_SECONDS = 30
+BROWSER_OPERATION_TIMEOUT_SECONDS = 30
 
 
-class BaseWindowManager(AsyncResource, ABC):
-    @abstractmethod
-    async def new_window(self, options: BrowserWindowOptions) -> BrowserWindow:
-        pass
+async def _connect_browser(driver: Playwright, options: BrowserWindowOptions) -> Browser:
+    if options.cdp_url is None:
+        raise ValueError("CDP URL is required to connect to a browser over CDP")
+    try:
+        async with asyncio.timeout(BROWSER_CREATION_TIMEOUT_SECONDS):
+            match options.browser_type:
+                case "chromium" | "chrome" | "chrome-nightly" | "chrome-turbo":
+                    return await driver.chromium.connect_over_cdp(options.cdp_url)
+                case "firefox":
+                    return await driver.firefox.connect(options.cdp_url)
+    except Exception:
+        raise CdpConnectionError(options.cdp_url) from None
 
 
-class PlaywrightManager(BaseModel, BaseWindowManager):
-    model_config = {  # pyright: ignore[reportUnannotatedClassAttribute]
-        "arbitrary_types_allowed": True
-    }
-    BROWSER_CREATION_TIMEOUT_SECONDS: ClassVar[int] = 30
-    BROWSER_OPERATION_TIMEOUT_SECONDS: ClassVar[int] = 30
-    verbose: bool = False
-    _playwright: Playwright | None = PrivateAttr(default=None)
+@profiler.profiled("PlaywrightManager.create_playwright_browser")
+async def _launch_browser(driver: Playwright, options: BrowserWindowOptions) -> Browser:
+    """Get an existing browser or create a new one if needed"""
+    if options.cdp_url is not None:
+        raise ValueError("CDP browser should not be created like other browsers")
 
-    @override
-    async def astart(self) -> None:
-        """Initialize the playwright instance"""
-        async with profiler.profile("start_playwright"):
-            if self._playwright is None:
-                self._playwright = await async_playwright().start()
-
-    @override
-    async def astop(self) -> None:
-        """Stop the playwright instance"""
-        if self._playwright is not None:
-            await self._playwright.stop()
-            self._playwright = None
-
-    def is_started(self) -> bool:
-        return self._playwright is not None
-
-    @property
-    def playwright(self) -> Playwright:
-        if self._playwright is None:
-            raise BrowserNotStartedError()
-        return self._playwright
-
-    def set_playwright(self, playwright: Playwright) -> None:
-        self._playwright = playwright
-
-    async def connect_cdp_browser(self, options: BrowserWindowOptions) -> Browser:
-        if options.cdp_url is None:
-            raise ValueError("CDP URL is required to connect to a browser over CDP")
-        try:
-            async with asyncio.timeout(self.BROWSER_CREATION_TIMEOUT_SECONDS):
-                match options.browser_type:
-                    case "chromium" | "chrome" | "chrome-nightly" | "chrome-turbo":
-                        return await self.playwright.chromium.connect_over_cdp(options.cdp_url)
-                    case "firefox":
-                        return await self.playwright.firefox.connect(options.cdp_url)
-        except Exception:
-            # Driver errors can contain the complete authenticated endpoint.
-            # Do not expose it in messages or chained tracebacks.
-            raise CdpConnectionError(options.cdp_url) from None
-
-    async def _cleanup_browser(
-        self,
-        browser: Browser | None,
-        context: BrowserContext | None = None,
-        *,
-        stop_playwright: bool,
-    ) -> None:
-        """Release each owned resource even if an earlier cleanup fails."""
-        cancelled: asyncio.CancelledError | None = None
-        cleanups: list[Callable[[], Awaitable[None]]] = []
-        if context is not None:
-            cleanups.append(context.close)
-        if browser is not None:
-            cleanups.append(browser.close)
-        if stop_playwright:
-            cleanups.append(self.astop)
-        for cleanup in cleanups:
-            try:
-                async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):
-                    await cleanup()
-            except asyncio.CancelledError as exc:
-                cancelled = exc
-            except Exception:
-                # Exception messages from remote browsers may contain secrets.
-                logger.warning("Failed to release a browser resource")
-        if cancelled is not None:
-            raise cancelled
-
-    @profiler.profiled()
-    async def create_playwright_browser(self, options: BrowserWindowOptions) -> Browser:
-        """Get an existing browser or create a new one if needed"""
+    if config.verbose:
+        if options.debug_port is not None:
+            logger.info(f"🪟 [Browser Settings] Launching browser in debug mode on port {options.debug_port}")
         if options.cdp_url is not None:
-            raise ValueError("CDP browser should not be created like other browsers")
-
-        if self.verbose:
-            if options.debug_port is not None:
-                logger.info(f"🪟 [Browser Settings] Launching browser in debug mode on port {options.debug_port}")
-            if options.cdp_url is not None:
-                logger.info(f"🪟 [Browser Settings] Connecting to browser over CDP at {options.cdp_url}")
-            if options.proxy is not None:
-                logger.info(f"🪟 [Browser Settings] Using proxy {options.proxy.get('server', 'unknown')}")
-            if options.browser_type == "firefox":
-                logger.info(
-                    f"🪟 [Browser Settings] Using {options.browser_type} browser. Note that CDP may not be supported for this browser."
-                )
-
-        match options.browser_type:
-            case "chromium" | "chrome":
-                if options.headless and options.user_agent is None:
-                    logger.warning(
-                        "🪟 [Browser Settings] Launching browser in headless without providing a user-agent"
-                        + ", for better odds at evading bot detection, set a user-agent or run in headful mode"
-                    )
-                browser = await self.playwright.chromium.launch(
-                    channel="chrome"
-                    if options.browser_type == "chrome"
-                    else "chromium",  # opt in to new headless mode by setting chromium
-                    headless=options.headless,
-                    proxy=options.proxy,
-                    timeout=self.BROWSER_CREATION_TIMEOUT_SECONDS * 1000,
-                    args=options.get_chrome_args(),
-                )
-            case _:
-                # TODO: add firefox support: this is not currently supported by patchright
-                # browser = await self.playwright.firefox.launch(
-                #     headless=options.headless,
-                #     proxy=options.proxy,
-                #     timeout=self.BROWSER_CREATION_TIMEOUT_SECONDS * 1000,
-                # )
-                raise BrowserNotAvailableError(browser_type=options.browser_type)
-        return browser
-
-    @profiler.profiled()
-    async def get_browser_resource(self, options: BrowserWindowOptions, browser: Browser) -> BrowserResource:
-        async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):
-            viewport = None
-            if options.viewport_width is not None or options.viewport_height is not None:
-                viewport = {
-                    "width": options.viewport_width,
-                    "height": options.viewport_height,
-                }
-            else:
-                logger.warning(
-                    f"🪟 No viewport set in {'headless' if options.headless else 'headful'} mode, using default viewport in playwright"
-                )
-
-            context: BrowserContext = await browser.new_context(
-                # no viewport should be False for headless browsers
-                no_viewport=not options.headless,
-                viewport=viewport,  # pyright: ignore[reportArgumentType]
-                permissions=[
-                    # Needed for clipboard copy/paste to respect tabs / new lines for chromium browsers
-                    "clipboard-read",
-                    "clipboard-write",
-                ]
-                if options.browser_type in ["chromium", "chrome"]
-                else [],
-                proxy=options.proxy,
-                user_agent=options.user_agent,
-                extra_http_headers=options.extra_http_headers,
+            logger.info(f"🪟 [Browser Settings] Connecting to browser over CDP at {options.cdp_url}")
+        if options.proxy is not None:
+            logger.info(f"🪟 [Browser Settings] Using proxy {options.proxy.get('server', 'unknown')}")
+        if options.browser_type == "firefox":
+            logger.info(
+                f"🪟 [Browser Settings] Using {options.browser_type} browser. Note that CDP may not be supported for this browser."
             )
 
-            try:
-                if len(context.pages) == 0:
-                    page = await context.new_page()
-                else:
-                    page = context.pages[-1]
-                return BrowserResource(
-                    page=page,
-                    options=options,
+    match options.browser_type:
+        case "chromium" | "chrome":
+            if options.headless and options.user_agent is None:
+                logger.warning(
+                    "🪟 [Browser Settings] Launching browser in headless without providing a user-agent"
+                    + ", for better odds at evading bot detection, set a user-agent or run in headful mode"
                 )
-            except BaseException:
-                await self._cleanup_browser(None, context, stop_playwright=False)
-                raise
+            browser = await driver.chromium.launch(
+                channel="chrome"
+                if options.browser_type == "chrome"
+                else "chromium",  # opt in to new headless mode by setting chromium
+                headless=options.headless,
+                proxy=options.proxy,
+                timeout=BROWSER_CREATION_TIMEOUT_SECONDS * 1000,
+                args=options.get_chrome_args(),
+            )
+        case _:
+            # TODO: add firefox support: this is not currently supported by patchright
+            # browser = await driver.firefox.launch(
+            #     headless=options.headless,
+            #     proxy=options.proxy,
+            #     timeout=BROWSER_CREATION_TIMEOUT_SECONDS * 1000,
+            # )
+            raise BrowserNotAvailableError(browser_type=options.browser_type)
+    return browser
 
-    @override
-    @profiler.profiled()
-    async def new_window(self, options: BrowserWindowOptions | None = None) -> BrowserWindow:
-        options = options or BrowserWindowOptions.from_request(LocalSessionStartRequest())
-        started_here = not self.is_started()
-        browser: Browser | None = None
+
+@profiler.profiled("PlaywrightManager.get_browser_resource")
+async def _new_page(options: BrowserWindowOptions, browser: Browser) -> Page:
+    async with asyncio.timeout(BROWSER_OPERATION_TIMEOUT_SECONDS):
+        viewport = None
+        if options.viewport_width is not None or options.viewport_height is not None:
+            viewport = {
+                "width": options.viewport_width,
+                "height": options.viewport_height,
+            }
+        else:
+            logger.warning(
+                f"🪟 No viewport set in {'headless' if options.headless else 'headful'} mode, using default viewport in playwright"
+            )
+
+        context: BrowserContext = await browser.new_context(
+            # no viewport should be False for headless browsers
+            no_viewport=not options.headless,
+            viewport=viewport,  # pyright: ignore[reportArgumentType]
+            permissions=[
+                # Needed for clipboard copy/paste to respect tabs / new lines for chromium browsers
+                "clipboard-read",
+                "clipboard-write",
+            ]
+            if options.browser_type in ["chromium", "chrome"]
+            else [],
+            proxy=options.proxy,
+            user_agent=options.user_agent,
+            extra_http_headers=options.extra_http_headers,
+        )
+
         try:
-            if started_here:
-                await self.astart()
-            if options.cdp_url is not None:
-                browser = await self.connect_cdp_browser(options)
-            else:
-                browser = await self.create_playwright_browser(options)
-            resource = await self.get_browser_resource(options, browser)
+            return context.pages[-1] if context.pages else await context.new_page()
         except BaseException:
-            await self._cleanup_browser(browser, stop_playwright=started_here)
+            await cleanup_resources(context.close)
             raise
 
-        async def on_close() -> None:
-            await self._cleanup_browser(browser, resource.page.context, stop_playwright=True)
 
-        return BrowserWindow(
-            resource=resource,
-            on_close=on_close,
-        )
+async def _start_driver() -> Playwright:
+    async with profiler.profile("start_playwright"):
+        return await async_playwright().start()
+
+
+@profiler.profiled("PlaywrightManager.new_window")
+async def launch(options: BrowserWindowOptions) -> BrowserWindow:
+    """Launch a local browser; closing the window closes the browser and driver."""
+    if options.cdp_url is not None:
+        return await connect(options.cdp_url, options)
+    driver = await _start_driver()
+    browser: Browser | None = None
+    try:
+        browser = await _launch_browser(driver, options)
+        page = await _new_page(options, browser)
+        window = BrowserWindow(page, options)
+    except BaseException:
+        if browser is not None:
+            await cleanup_resources(browser.close, driver.stop)
+        else:
+            await cleanup_resources(driver.stop)
+        raise
+    window._owned_context = page.context  # pyright: ignore[reportPrivateUsage]
+    window._owned_browser = browser  # pyright: ignore[reportPrivateUsage]
+    window._owned_driver = driver  # pyright: ignore[reportPrivateUsage]
+    window.on_close = window._close_owned  # pyright: ignore[reportPrivateUsage]
+    return window
+
+
+async def connect(cdp_url: str, options: BrowserWindowOptions | None = None) -> BrowserWindow:
+    """Borrow existing pages; close only a context created here and our driver."""
+    options = (
+        BrowserWindowOptions.from_request(LocalSessionStartRequest(cdp_url=cdp_url))
+        if options is None
+        else options.model_copy(update={"cdp_url": cdp_url})
+    )
+    driver = await _start_driver()
+    owned_context: BrowserContext | None = None
+    try:
+        browser = await _connect_browser(driver, options)
+        if browser.contexts:
+            context = browser.contexts[0]
+            if options.extra_http_headers is not None:
+                await context.set_extra_http_headers(options.extra_http_headers)
+            page = context.pages[-1] if context.pages else await context.new_page()
+        else:
+            page = await _new_page(options, browser)
+            owned_context = page.context
+        window = BrowserWindow(page, options)
+    except BaseException:
+        if owned_context is not None:
+            await cleanup_resources(owned_context.close, driver.stop)
+        else:
+            await cleanup_resources(driver.stop)
+        raise
+    window._owned_context = owned_context  # pyright: ignore[reportPrivateUsage]
+    window._owned_driver = driver  # pyright: ignore[reportPrivateUsage]
+    window.on_close = window._close_owned  # pyright: ignore[reportPrivateUsage]
+    return window

@@ -1,0 +1,176 @@
+[
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"https://duckduckgo.com/about\" title=\"Learn about DuckDuckGo\" aria_label=\"Learn about DuckDuckGo\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"https://duckduckgo.com/about\" title=\"Learn about DuckDuckGo\" aria_label=\"Learn about DuckDuckGo\"></a>",
+      "id": "L1",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div > div > main > article > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div > header > div > section:nth-of-type(1) > a.header_logoHorizontal__KABN4.header_logoText__d_X6V.header_logoImg__85jCX[title=\"Learn about DuckDuckGo\"][aria-label=\"Learn about DuckDuckGo\"][href=\"https://duckduckgo.com/about\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/duckduckgo.html:4527775504046182633:3609651542926669075:6390467218696966908:-8969389828632023514:-1554807532380649666:8071568300476870897:-4357946817859596182:9074345733790943723:-6484648718410699911:-2156305427554048362:-111241798694919586:-8504541126552021779:-8121335250204178822:-4849666821381520254:-8037454873243956126:-173419000235267127:4611619566034488112:8386813791357053489:-5416461603920714703:6443753521652755394:726328760090972667:3367123614755621300:-3033109179893488250:-9194024111752662828:-7522150403079000661:-4476213077750808342",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div/div/main/article/div[1]/div[1]/div[2]/div/header/div/section[1]/a"
+      },
+      "text_label": "",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" placeholder=\"Search without being tracked\" name=\"q\" role=\"combobox\" aria_label=\"Search with DuckDuckGo\" aria_expanded=\"true\"></input>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<input type=\"text\" value=\"\" placeholder=\"Search without being tracked\" name=\"q\" role=\"combobox\" aria_label=\"Search with DuckDuckGo\" aria_expanded=\"true\"></input>",
+      "id": "I1",
+      "press_enter": false,
+      "selector": {
+        "css_selector": "html > body > div > div > main > article > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div > header > div > section:nth-of-type(2) > form > div > div > input.searchbox_input__rnFzM[aria-label=\"Search with DuckDuckGo\"][role=\"combobox\"][type=\"text\"][name=\"q\"][autocomplete=\"off\"][id=\"searchbox_input\"][placeholder=\"Search without being tracked\"][required]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/duckduckgo.html:4527775504046182633:3609651542926669075:6390467218696966908:-8969389828632023514:-1554807532380649666:8071568300476870897:-4357946817859596182:9074345733790943723:-6484648718410699911:-2156305427554048362:-111241798694919586:-8504541126552021779:-8121335250204178822:-4849666821381520254:-8037454873243956126:-173419000235267127:4611619566034488112:8386813791357053489:-5416461603920714703:6443753521652755394:726328760090972667:3367123614755621300:1689077513782706365:-6610102413919929073:7856497479031612875:-4051744240430182254:-8449545065215203244:-3679365558179447578:-7341261224560781128:1433610875635174715:8328505829436668734:-8038067083067520637",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div/div/main/article/div[1]/div[1]/div[2]/div/header/div/section[2]/form/div/div/input"
+      },
+      "text_label": "Search with DuckDuckGo",
+      "timeout": 15000,
+      "type": "select_dropdown_option",
+      "value": "<sample_value>"
+    },
+    "param": {
+      "default": null,
+      "name": "value",
+      "type": "string",
+      "values": []
+    }
+  },
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"https://duck.ai/\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"https://duck.ai/\"></a>",
+      "id": "L2",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div > div > main > article > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div > header > div > section:nth-of-type(3) > a.header_aiChatButton__e_9yJ.button_button__GGtY1.button_ghost___IPIW.button_size-xs__kck8r[href=\"https://duck.ai/\"][data-testid=\"aichat-button\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/duckduckgo.html:4527775504046182633:3609651542926669075:6390467218696966908:-8969389828632023514:-1554807532380649666:8071568300476870897:-4357946817859596182:9074345733790943723:-6484648718410699911:-2156305427554048362:-111241798694919586:-8504541126552021779:-8121335250204178822:-4849666821381520254:-8037454873243956126:-173419000235267127:4611619566034488112:8386813791357053489:-5416461603920714703:6443753521652755394:726328760090972667:3367123614755621300:6331630797331051870:2212711322905445417:2504289619085920629:-1986878190687660611",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div/div/main/article/div[1]/div[1]/div[2]/div/header/div/section[3]/a"
+      },
+      "text_label": "Chat",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<button></button>",
+      "id": "B1",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div > div > main > article > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div > header > div > section:nth-of-type(3) > nav > ul > li > button.header_headerButton__InWgw.header_menuButton__yMOSr[data-testid=\"sidemenu-button\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/duckduckgo.html:4527775504046182633:3609651542926669075:6390467218696966908:-8969389828632023514:-1554807532380649666:8071568300476870897:-4357946817859596182:9074345733790943723:-6484648718410699911:-2156305427554048362:-111241798694919586:-8504541126552021779:-8121335250204178822:-4849666821381520254:-8037454873243956126:-173419000235267127:4611619566034488112:8386813791357053489:-5416461603920714703:6443753521652755394:726328760090972667:3367123614755621300:6331630797331051870:2212711322905445417:-2511648796091796223:-7042701331085551218:-8149709093517353683:4677271858071377011:-328108427952391527:3993971703137620906:-2566244392478335773:-4917246084740832464",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div/div/main/article/div[1]/div[1]/div[2]/div/header/div/section[3]/nav/ul/li/button"
+      },
+      "text_label": "Menu",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<a></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a></a>",
+      "id": "L3",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div > div > main > article > div:nth-of-type(1) > div:nth-of-type(2) > section > ul > li:nth-of-type(1) > a.cta-cards_button__1dD9t.button_button__GGtY1.button_secondary__6Dv6R.button_size-sm__fklol[target=\"_blank\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/duckduckgo.html:4527775504046182633:3609651542926669075:6390467218696966908:-8969389828632023514:-1554807532380649666:8071568300476870897:-4357946817859596182:9074345733790943723:-6484648718410699911:-2156305427554048362:-111241798694919586:-8504541126552021779:7408474427586376057:663623119132698267:-7030020301133966146:-4353272470461924903:3110539440685922624:4329196932809872457:-604033730175008304:-7700267892256960322:-4419090296543506426:-2996316824486974652",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div/div/main/article/div[1]/div[2]/section/ul/li[1]/a"
+      },
+      "text_label": "Set As Default Search",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"https://addons.mozilla.org/firefox/downloads/latest/duckduckgo-for-firefox/addon-385621-latest.xpi\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"https://addons.mozilla.org/firefox/downloads/latest/duckduckgo-for-firefox/addon-385621-latest.xpi\"></a>",
+      "id": "L4",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div > div > main > article > div:nth-of-type(1) > div:nth-of-type(2) > section > ul > li:nth-of-type(2) > a.cta-cards_button__1dD9t.button_button__GGtY1.button_primary__bqhFV.button_size-sm__fklol[href=\"https://addons.mozilla.org/firefox/downloads/latest/duckduckgo-for-firefox/addon-385621-latest.xpi\"][target=\"_self\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/duckduckgo.html:4527775504046182633:3609651542926669075:6390467218696966908:-8969389828632023514:-1554807532380649666:8071568300476870897:-4357946817859596182:9074345733790943723:-6484648718410699911:-2156305427554048362:-111241798694919586:-8504541126552021779:7408474427586376057:663623119132698267:-7030020301133966146:-4353272470461924903:3110539440685922624:4329196932809872457:8196953967228442060:4181505460125368255:-769900126446513018:7367545378888866310",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div/div/main/article/div[1]/div[2]/section/ul/li[2]/a"
+      },
+      "text_label": "Add Extension",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  },
+  {
+    "category": "Interaction action",
+    "description": "<a href=\"#features\"></a>",
+    "model_dump": {
+      "category": "Interaction action",
+      "description": "<a href=\"#features\"></a>",
+      "id": "L5",
+      "press_enter": null,
+      "selector": {
+        "css_selector": "html > body > div > div > main > article > div:nth-of-type(1) > div:nth-of-type(3) > a.homepage-cta-section_scrollArow__of6hD.button_button__GGtY1.button_tertiary__HpNs_.button_size-md__1jSxL[href=\"#features\"]",
+        "iframe_parent_css_selectors": [],
+        "in_iframe": false,
+        "in_shadow_root": false,
+        "notte_selector": "http://golden.test/duckduckgo.html:4527775504046182633:3609651542926669075:6390467218696966908:-8969389828632023514:-1554807532380649666:8071568300476870897:-4357946817859596182:9074345733790943723:-6484648718410699911:-2156305427554048362:-111241798694919586:-8504541126552021779:2731841977376613482:5954726629594276605:-7233445671689172233:-5887330457021398460",
+        "playwright_selector": null,
+        "python_selector": null,
+        "xpath_selector": "html/body/div/div/main/article/div[1]/div[3]/a"
+      },
+      "text_label": "",
+      "timeout": 15000,
+      "type": "click"
+    },
+    "param": null
+  }
+]

@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { NotteClient } from '@/client';
 import { ManagedAuthError, type ManagedAuthOperation } from '@/managed-auth';
-import { InvalidRequestError, NotteAPIError, NotteTimeoutError } from '@/errors';
+import { NotteAPIError, NotteTimeoutError } from '@/errors';
 import { DEFAULT_ALLOWED_PATTERNS } from '@/proxy/patterns';
 
 const operation = (status: ManagedAuthOperation['status'] = 'running'): ManagedAuthOperation => ({
@@ -39,6 +39,29 @@ describe('managed auth transport and lifecycle', () => {
     client = new NotteClient({ apiKey: 'test-key' }); // pragma: allowlist secret (test fixture)
   });
   afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.restoreAllMocks(); });
+
+  it.each([
+    { viewport_width: 400 },
+    { proxies: [{ type: 'unknown' }] },
+    { headless: false },
+    { auth_ids: ['duplicate', 'duplicate'] },
+  ])('sends invalid session input unchanged: %j', async options => {
+    handle = () => json({ detail: 'invalid session input' }, 422);
+    await expect(client.Session(options as never).start()).rejects.toBeInstanceOf(NotteAPIError);
+    expect(calls).toHaveLength(1);
+    expect(await calls[0].json()).toMatchObject(options);
+  });
+
+  it('sends invalid cookies unchanged and maps the API 422', async () => {
+    const browser = client.Session();
+    await browser.start();
+    calls = [];
+    handle = () => json({ detail: 'invalid cookie' }, 422);
+    const cookies = [{ name: 'test', domain: 'https://www.example.test/path', sameSite: 'invalid' }];
+    await expect(browser.setCookies(cookies as never)).rejects.toBeInstanceOf(NotteAPIError);
+    expect(calls).toHaveLength(1);
+    expect(await calls[0].json()).toEqual({ cookies });
+  });
 
   it('supports cancellation without AbortSignal.any and removes its listener', async () => {
     const originalAny = Object.getOwnPropertyDescriptor(AbortSignal, 'any');
@@ -135,7 +158,7 @@ describe('managed auth transport and lifecycle', () => {
 
   it('omits auth_retry on ordinary sessions and does not poll an active start', async () => {
     handle = () => json(session());
-    await client.Session({ auth_retry: 2 }).start();
+    await client.Session().start();
     expect(await calls[0].json()).not.toHaveProperty('auth_retry');
     expect(calls).toHaveLength(1);
   });
@@ -200,6 +223,12 @@ describe('managed auth transport and lifecycle', () => {
     expect(calls.filter(r => r.method === 'DELETE')).toHaveLength(1);
   });
 
+  it.each(['refreshConnection', 'reauthenticateConnection'] as const)('%s leaves omitted retry defaults to the API', async method => {
+    handle = () => json(operation('succeeded'));
+    await client.managedAuth[method]('connection-1', { wait: false });
+    expect(await calls[0].json()).toEqual({});
+  });
+
   it.each(['refreshConnection', 'reauthenticateConnection'] as const)('%s posts once, then polls through the bound client', async method => {
     handle = request => request.method === 'POST' ? json(operation(), 202) : json(operation('succeeded'));
     const result = await client.managedAuth[method]('connection-1', { auth_retry: 2, pollIntervalMs: 1 });
@@ -240,10 +269,26 @@ describe('managed auth transport and lifecycle', () => {
     expect(calls.every(r => r.method === 'GET')).toBe(true);
   });
 
-  it.each([-1, 3, 0.5])('rejects invalid auth_retry %s before sending a request', async auth_retry => {
-    await expect(client.Session({ auth_ids: ['connection-1'], auth_retry }).start()).rejects.toBeInstanceOf(InvalidRequestError);
-    await expect(client.managedAuth.refreshConnection('connection-1', { auth_retry })).rejects.toBeInstanceOf(InvalidRequestError);
-    expect(calls).toHaveLength(0);
+  it.each([-1, 3, 0.5, null])('sends invalid session auth_retry %s to the API', async auth_retry => {
+    handle = () => json({ detail: 'invalid auth_retry' }, 422);
+    for (const auth_ids of [[], ['connection-1']]) {
+      const failure = client.Session({ auth_ids, auth_retry: auth_retry as number }).start();
+      await expect(failure).rejects.toBeInstanceOf(NotteAPIError);
+      await expect(failure).rejects.toMatchObject({ statusCode: 422 });
+      expect(await calls.at(-1)!.json()).toMatchObject({ auth_retry });
+    }
+    expect(calls).toHaveLength(2);
+  });
+
+  it.each(['refreshConnection', 'reauthenticateConnection'] as const)('%s sends invalid retries to API validation', async method => {
+    handle = () => json({ detail: 'invalid auth_retry' }, 422);
+    for (const auth_retry of [-1, 3, 0.5, null]) {
+      const failure = client.managedAuth[method]('connection-1', { auth_retry: auth_retry as number, wait: false });
+      await expect(failure).rejects.toBeInstanceOf(NotteAPIError);
+      await expect(failure).rejects.toMatchObject({ statusCode: 422 });
+      expect(await calls.at(-1)!.json()).toEqual({ auth_retry });
+    }
+    expect(calls).toHaveLength(4);
   });
 
   it.each(['sessions/session-1/auth', 'managed-auth/operations/operation-1', 'managed-auth/connections/connection-1/check', 'managed-auth/connections/connection-1/refresh', 'managed-auth/connections/connection-1/reauthenticate'])('allows %s through the SDK proxy', path => {

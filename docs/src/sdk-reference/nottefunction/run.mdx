@@ -1,15 +1,14 @@
 ---
 title: "run"
-description: "Run the function code using the specified version and variables"
+description: "Run the function on the Notte cloud using the specified variables"
 ---
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-If no version is provided, the latest version is used.
 This call waits for completion; streaming controls live log delivery.
-For a Function, optionally call `create_run()` only if you need the run ID
-before execution, then pass it as `function_run_id`. When `function_run_id`
+Optionally call `create_run()` only if you need the run ID before
+execution, then pass it as `function_run_id`. When `function_run_id`
 is omitted, `run()` automatically creates a new run.
 Omit runtime to use the saved function default. Pass runtime="extended"
 for longer cloud execution, or runtime="standard" to override that default.
@@ -21,18 +20,12 @@ function = notte.Function("<your-function-id>")
 function.run(variable1="value1", variable2="value2")
 ```
 
-> Make sure that the correct variables are provided based on the python file previously uploaded. Otherwise, the workflow will fail
+> Make sure that the correct variables are provided based on the python file previously uploaded. Otherwise, the function will fail
 
 
 ## Parameters
 
 <ParamField path="version" type="UnionType[str, None]" default="None">
-</ParamField>
-
-<ParamField path="local" type="bool" default="False">
-</ParamField>
-
-<ParamField path="restricted" type="bool" default="True">
 </ParamField>
 
 <ParamField path="timeout" type="UnionType[int, None]" default="None">
@@ -45,12 +38,6 @@ function.run(variable1="value1", variable2="value2")
 </ParamField>
 
 <ParamField path="function_run_id" type="UnionType[str, None]" default="None">
-</ParamField>
-
-<ParamField path="workflow_run_id" type="UnionType[str, None]" default="None">
-</ParamField>
-
-<ParamField path="log_callback" type="UnionType[Callable[[str], None], None]" default="None">
 </ParamField>
 
 <ParamField path="runtime" type="Literal['standard', 'extended'] | None" default="None">

@@ -1,7 +1,7 @@
 # functions from: https://github.com/browser-use/browser-use/blob/main/browser_use/browser/context.py
 import re
 
-from notte_core.common.logging import logger
+from notte_core.logging import logger
 
 
 def xpath_to_css_path(xpath: str) -> str:

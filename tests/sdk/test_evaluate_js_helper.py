@@ -4,10 +4,9 @@ import datetime as dt
 
 import pytest
 from notte_core.actions import EvaluateJsAction
-from notte_core.browser.observation import ExecutionResult
-from notte_core.data.space import DataSpace
-from notte_core.errors.actions import ActionExecutionError, EvaluateJsNoDataError
-from notte_core.errors.base import ErrorConfig
+from notte_core.data import DataSpace
+from notte_core.errors import ActionExecutionError, ErrorConfig, EvaluateJsNoDataError
+from notte_core.observation import ExecutionResult
 
 from tests.sdk.test_execute_raise_on_failure import over_the_wire, remote_session
 

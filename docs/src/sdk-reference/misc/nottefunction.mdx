@@ -1,19 +1,18 @@
 ---
 title: "NotteFunction"
-description: "Notte function that can be run on the cloud or locally"
+description: "Notte function that runs on the Notte cloud"
 ---
 
 
 
-Functions are saved in the notte console for easy access and versioning for users.
-This is a wrapper around RemoteWorkflow that uses function_id terminology
+Functions are saved in the notte console for easy access and versioning for users
 
 ## Methods
 
 ### create_run
 
 ```python
-create_run(local: bool = False) -> CreateFunctionRunResponse
+create_run() -> CreateFunctionRunResponse
 ```
 
 Create a run record without starting execution
@@ -30,14 +29,14 @@ Create a run record without starting execution
 delete() -> None
 ```
 
-Delete the workflow from the notte console
+Delete the function from the notte console
 
 ---
 
 ### download
 
 ```python
-download(workflow_path: str | None = None, version: str | None = None, decryption_key: str | None = None, path: str | None = None) -> str
+download(path: str | None = None, version: str | None = None, decryption_key: str | None = None) -> str
 ```
 
 Download the function code from the notte console as a python file
@@ -68,7 +67,7 @@ Fork a shared function into your own private function
 get_curl(variables: Any) -> str
 ```
 
-Convert the workflow/run to a curl request
+Convert the function run to a curl request
 
 **Returns:**
 
@@ -108,7 +107,7 @@ get_url(version: str | None = None, decryption_key: str | None = None) -> str
 replay(wait: bool = True, timeout: float = 120.0, poll_interval: float = 2.0) -> ReplayResponse
 ```
 
-Get presigned URLs for the workflow run replay
+Get presigned URLs for the function run replay
 
 **Parameters:**
 
@@ -125,10 +124,10 @@ Get presigned URLs for the workflow run replay
 ### run
 
 ```python
-run(version: str | None = None, local: bool = False, restricted: bool = True, timeout: int | None = None, stream: bool = True, raise_on_failure: bool = True, function_run_id: str | None = None, workflow_run_id: str | None = None, log_callback: Callable[[str], None] | None = None, runtime: FunctionRuntime | None = None, input_variables: dict[str, Any] | None = None, variables: Any) -> FunctionRunResponse
+run(version: str | None = None, timeout: int | None = None, stream: bool = True, raise_on_failure: bool = True, function_run_id: str | None = None, runtime: FunctionRuntime | None = None, input_variables: dict[str, Any] | None = None, variables: Any) -> FunctionRunResponse
 ```
 
-Run the function code using the specified version and variables
+Run the function on the Notte cloud using the specified variables
 
 **Returns:**
 
@@ -153,17 +152,13 @@ Manually stop a function run by its ID
 ### update
 
 ```python
-update(path: str | None = None, version: str | None = None, workflow_path: str | None = None, restricted: bool = True) -> None
+update(path: str, version: str | None = None, restricted: bool = True) -> None
 ```
 
-Update the workflow with a new code version
+Update the function with a new code version
 
 ---
 
-
-## Inheritance
-
-Inherits from: RemoteWorkflow
 
 
 ## Module

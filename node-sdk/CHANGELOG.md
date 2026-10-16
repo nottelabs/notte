@@ -2,15 +2,6 @@
 
 ## Unreleased
 
-- Requests retry transient failures (502, 503, 504, 529, and connection errors)
-  with exponential backoff and full jitter, honoring `Retry-After`. POST and
-  PATCH are only retried when the API cannot have processed them (503, 529,
-  connection refused). Configure with `maxRetries` (default 3, `0` disables).
-- `session.saveProfile({ name })` / `session.saveProfile({ profile_id })` saves the
-  running session's browser state into a new or existing profile without stopping
-  the session. With neither option it saves into the session's start profile.
-- `session.page()` sends the SDK's `x-notte-request-origin` and `x-notte-sdk-version`
-  headers on its CDP connection to Notte, as API calls already do.
 - `session.fetch()` refuses plaintext `http:` targets and redirects by default
   because the request carries the page's cookies; pass `allowInsecure: true`
   to override. Relative URLs resolve against the page.

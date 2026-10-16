@@ -16,8 +16,7 @@ directly and a failed extraction throws `ScrapeFailedError`. Pass
 `raiseOnFailure: false` to receive the `StructuredData` wrapper instead.
 
 ```typescript
-Session.scrape(options: SessionScrapeOptions<unknown> & { only_images: true; }): Promise<ImageData[]>;
-Session.scrape(options?: SessionScrapeOptions<unknown> & { response_format?: undefined; instructions?: undefined | null; only_images?: false; }): Promise<string>;
+Session.scrape(options?: SessionScrapeOptions<unknown> & { response_format?: undefined; instructions?: undefined | null; }): Promise<string>;
 Session.scrape<T>(options: SessionScrapeOptions<T> & { response_format: ZodLikeSchema<T>; raiseOnFailure?: true; }): Promise<T>;
 Session.scrape<T>(options: SessionScrapeOptions<T> & { response_format: ZodLikeSchema<T>; raiseOnFailure: false; }): Promise<StructuredData<T>>;
 Session.scrape(options: SessionScrapeOptions<unknown>): Promise<ScrapeResult<unknown>>;
@@ -25,59 +24,47 @@ Session.scrape(options: SessionScrapeOptions<unknown>): Promise<ScrapeResult<unk
 
 ## Parameters (overload 1)
 
-<ParamField body="options" type={"SessionScrapeOptions<unknown> & { only_images: true }"} required>
+<ParamField body="options" type={"SessionScrapeOptions<unknown> & { response_format?: undefined; instructions?: undefined | null }"}>
 
 </ParamField>
 
 ## Returns (overload 1)
 
 ```typescript
-Promise<ImageData[]>
+Promise<string>
 ```
 
 ## Parameters (overload 2)
 
-<ParamField body="options" type={"SessionScrapeOptions<unknown> & { response_format?: undefined; instructions?: undefined | null; only_images?: false }"}>
+<ParamField body="options" type={"SessionScrapeOptions<T> & { response_format: ZodLikeSchema<T>; raiseOnFailure?: true }"} required>
 
 </ParamField>
 
 ## Returns (overload 2)
 
 ```typescript
-Promise<string>
+Promise<T>
 ```
 
 ## Parameters (overload 3)
 
-<ParamField body="options" type={"SessionScrapeOptions<T> & { response_format: ZodLikeSchema<T>; raiseOnFailure?: true }"} required>
+<ParamField body="options" type={"SessionScrapeOptions<T> & { response_format: ZodLikeSchema<T>; raiseOnFailure: false }"} required>
 
 </ParamField>
 
 ## Returns (overload 3)
 
 ```typescript
-Promise<T>
-```
-
-## Parameters (overload 4)
-
-<ParamField body="options" type={"SessionScrapeOptions<T> & { response_format: ZodLikeSchema<T>; raiseOnFailure: false }"} required>
-
-</ParamField>
-
-## Returns (overload 4)
-
-```typescript
 Promise<StructuredData<T>>
 ```
 
-## Parameters (overload 5)
+## Parameters (overload 4)
 
 <ParamField body="options" type={"SessionScrapeOptions<unknown>"} required>
 
 </ParamField>
 
-## Returns (overload 5)
+## Returns (overload 4)
 
 ```typescript
 Promise<ScrapeResult<unknown>>
@@ -87,7 +74,6 @@ Promise<ScrapeResult<unknown>>
 
 ```typescript
 const markdown = await session.scrape({ only_main_content: true });
-const images = await session.scrape({ only_images: true });
 const product = await session.scrape({ response_format: Product, instructions: 'Extract the product' });
 const result = await session.scrape({ response_format: Product, raiseOnFailure: false });
 if (result.success) console.log(result.data);
@@ -95,7 +81,6 @@ if (result.success) console.log(result.data);
 
 ## Related types
 
-- [ImageData](/typescript-sdk-reference/types/imagedata)
 - [ScrapeResult](/typescript-sdk-reference/types/scraperesult)
 - [SessionScrapeOptions](/typescript-sdk-reference/types/sessionscrapeoptions)
 - [StructuredData](/typescript-sdk-reference/types/structureddata)

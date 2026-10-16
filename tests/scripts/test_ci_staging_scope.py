@@ -23,7 +23,7 @@ def test_shared_queue_only_contains_staging_test_jobs() -> None:
     expected = {
         ("claude-agents-integration.yml", "live"),
         ("node-sdk-ci.yml", "integration-tests"),
-        ("test-cicd.yml", "live"),
+        ("test-cicd.yml", "staging-and-live"),
         ("docs-tests-cicd.yml", "execution"),
         ("paired-sdk-examples.yml", "live"),
         ("readme-check.yml", "live"),
@@ -47,21 +47,24 @@ def test_documentation_checks_start_independently() -> None:
 
 def test_unit_suite_never_waits_for_or_cleans_up_staging() -> None:
     jobs = workflow("test-cicd.yml")["jobs"]
-    assert jobs["unit"]["env"]["REQUIRES_STAGING"] == "false"
-    assert jobs["live"]["env"]["REQUIRES_STAGING"] == "true"
-    assert "concurrency" not in jobs["unit"]
-    assert "--ignore=tests/integration" in jobs["unit"]["env"]["PYTEST_ARGS"]
-    for job in (jobs["unit"], jobs["live"]):
-        steps = {step.get("name"): step for step in job["steps"]}
-        assert steps["Wait for the API to be ready"]["if"] == "env.REQUIRES_STAGING == 'true'"
-        assert steps["Cleanup vaults created by this run"]["if"] == "always() && env.REQUIRES_STAGING == 'true'"
-        assert "env.REQUIRES_STAGING == 'true' &&" in steps["Run tests"]["env"]["NOTTE_API_KEY"]
+    offline = jobs["tests"]
+    live = jobs["staging-and-live"]
+    assert "concurrency" not in offline
+    assert "${{ secrets." not in str(offline)
+    assert "Wait for the API to be ready" not in str(offline)
+    assert "Cleanup vaults created by this run" not in str(offline)
+    assert "make test-cicd" in str(offline)
+    assert '-m "staging or live"' in str(live)
+    steps = {step.get("name"): step for step in live["steps"]}
+    assert steps["Wait for the API to be ready"]["uses"] == "./.github/actions/wait-for-api"
+    assert steps["Cleanup vaults created by this run"]["if"] == "${{ always() }}"
+    assert "secrets.NOTTE_API_KEY" in str(steps["Run staging and live tests"])
 
 
 def test_independent_checks_never_depend_on_staging_jobs() -> None:
     for name, staging_jobs in {
         "node-sdk-ci.yml": {"integration-tests"},
-        "test-cicd.yml": {"live"},
+        "test-cicd.yml": {"staging-and-live"},
         "docs-tests-cicd.yml": {"execution"},
         "paired-sdk-examples.yml": {"live"},
         "readme-check.yml": {"live"},
@@ -143,10 +146,7 @@ def test_reusable_suites_reuse_scope_and_keep_standalone_selection() -> None:
             if isinstance(needs, str):
                 needs = [needs]
             assert "changes" in needs, (name, job_id)
-            if name == "test-cicd.yml" and job_id == "tests":
-                assert job["if"] == "always()"
-            else:
-                assert "fromJSON(needs.changes.outputs.scope)" in job["if"], (name, job_id)
+            assert "fromJSON(needs.changes.outputs.scope)" in job["if"], (name, job_id)
 
 
 def test_periodic_coverage_and_cancellation_boundaries_are_preserved() -> None:
@@ -166,7 +166,7 @@ def test_periodic_coverage_and_cancellation_boundaries_are_preserved() -> None:
 def test_live_selection_does_not_bypass_fork_protection() -> None:
     for name, job_id in (
         ("node-sdk-ci.yml", "integration-tests"),
-        ("test-cicd.yml", "live"),
+        ("test-cicd.yml", "staging-and-live"),
         ("docs-tests-cicd.yml", "execution"),
         ("paired-sdk-examples.yml", "live"),
         ("readme-check.yml", "live"),
@@ -190,7 +190,7 @@ def test_lightweight_docs_assertions_have_no_workspace_or_secrets() -> None:
 
 
 def test_deleted_docs_still_run_the_global_link_check() -> None:
-    steps = workflow("test-cicd.yml")["jobs"]["lint"]["steps"]
+    steps = workflow("test-cicd.yml")["jobs"]["checks"]["steps"]
     step = next(step for step in steps if step.get("name") == "Run pre-commit")
     assert step["env"]["DOCS_LINKS"] == "${{ fromJSON(needs.changes.outputs.scope).docs_links }}"
     assert 'if [ "$DOCS_LINKS" = true ]' in step["run"]
@@ -225,13 +225,24 @@ def test_required_gate_waits_for_all_families_and_fails_closed(changes: str, sel
     assert result.returncode == expected, result.stdout + result.stderr
 
 
+def test_scoped_checks_fetch_history_only_during_authenticated_checkout() -> None:
+    job = workflow("test-cicd.yml")["jobs"]["checks"]
+    checkouts = [step for step in job["steps"] if "checkout@" in step.get("uses", "")]
+    assert len(checkouts) == 2
+    for step in checkouts:
+        assert step["with"]["fetch-depth"] == 0
+        assert step["with"]["persist-credentials"] is False
+    lint = next(step for step in job["steps"] if step.get("name") == "Run pre-commit")
+    assert "git fetch" not in lint["run"]
+
+
 @pytest.mark.parametrize(
     "python_setup,full,docs_links", [(False, False, False), (True, False, True), (True, True, False)]
 )
 def test_file_checks_use_the_selected_environment(
     tmp_path: Path, python_setup: bool, full: bool, docs_links: bool
 ) -> None:
-    job = workflow("test-cicd.yml")["jobs"]["lint"]
+    job = workflow("test-cicd.yml")["jobs"]["checks"]
     assert job["if"] == "fromJSON(needs.changes.outputs.scope).file_checks"
     step = next(step for step in job["steps"] if step.get("name") == "Run pre-commit")
     stub = """#!/usr/bin/env python3
@@ -268,9 +279,6 @@ with open(os.environ['COMMAND_LOG'], 'a') as log:
     if full:
         assert calls == [[*runner, "run", "--all-files"]]
     else:
-        assert calls[:2] == [
-            ["git", "fetch", "--no-tags", "origin", "a" * 40, "b" * 40],
-            [*runner, "run", "--from-ref", "a" * 40, "--to-ref", "b" * 40],
-        ]
+        assert calls[:1] == [[*runner, "run", "--from-ref", "a" * 40, "--to-ref", "b" * 40]]
         if docs_links:
-            assert calls[2] == [*runner, "run", "check-docs-broken-links", "--all-files"]
+            assert calls[1] == [*runner, "run", "check-docs-broken-links", "--all-files"]

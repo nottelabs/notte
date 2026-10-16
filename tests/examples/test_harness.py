@@ -11,7 +11,6 @@ from tests.examples import test_examples, test_readme
 @pytest.mark.parametrize(
     "directory,entrypoint,args",
     [
-        ("landing-examples", "landing_examples.py", []),
         ("session-solve-captcha", "main.py", []),
         ("scrape-nike-products", "agent.py", ["--max-categories", "1"]),
     ],

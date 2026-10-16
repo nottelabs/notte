@@ -9,7 +9,6 @@ import PydanticModel from '/snippets/scraping/pydantic_model.mdx';
 import InstructionsOnly from '/snippets/scraping/instructions_only.mdx';
 import ExtractLists from '/snippets/scraping/extract_lists.mdx';
 import NestedStructures from '/snippets/scraping/nested_structures.mdx';
-import ImageExtraction from '/snippets/scraping/image_extraction.mdx';
 import ContentFiltering from '/snippets/scraping/content_filtering.mdx';
 import LinksAndImages from '/snippets/scraping/links_and_images.mdx';
 import ScopedScraping from '/snippets/scraping/scoped_scraping.mdx';
@@ -85,12 +84,6 @@ Handle complex, nested data:
 
 <NestedStructures />
 
-## Image Extraction
-
-Extract all images from a page:
-
-<ImageExtraction />
-
 ## Configuration Options
 
 ### Content Filtering
@@ -119,7 +112,7 @@ Reduce output size by using placeholders:
 
 ### Extraction Model
 
-When you pass `instructions` or `response_format`, the extraction runs on the platform's default model. Set `model` to use a different one, for example `client.scrape(url, instructions="...", model="anthropic/claude-sonnet-4-5-20250929")`. See [Agent Configuration](/features/agents/configuration#reasoning_model) for the list of supported models.
+When you pass `instructions` or `response_format`, the extraction runs on the platform's default model. Set `model` to use a different one, for example `client.scrape(url, instructions="...", model="anthropic/claude-sonnet-4-5-20250929")`.
 
 ## Return Types
 
@@ -128,11 +121,10 @@ The scrape method returns different types based on parameters:
 | Parameters | Return Type |
 |------------|-------------|
 | None | `str` (markdown) |
-| `instructions` | `dict` with the extracted data |
+| `instructions` | `dict` with extracted data |
 | `response_format` | An instance of your model |
-| `only_images=True` | `list[ImageData]` |
 
-If structured extraction fails, `scrape` raises an error. Pass `raise_on_failure=False` to get a `StructuredData` wrapper instead, with `success`, `error`, and `data` fields you can check yourself.
+Pass `raise_on_failure=False` to get a `StructuredData` wrapper with `success`, `error`, and `data` fields instead.
 
 ### Structured Response
 
@@ -208,10 +200,32 @@ Use selectors to focus on relevant content:
 
 ## Multi-step extraction
 
-Use `client.scrape()` for a single URL, or `session.scrape()` after navigation and authentication. When an agent must decide how to navigate or interact before extraction, use `agent.run()` with a response schema:
+Use `client.scrape()` for a single URL, or `session.scrape()` after navigation and authentication:
 
 <AgentScrape />
 
 Design the schema around the actual page content. Make fields optional when the source may omit them; request only data you need.
 
 <SchemaDesign />
+
+## Local Python extraction configuration
+
+Install `notte[llm]` and set `OPENROUTER_API_KEY` for local structured extraction.
+The default model is `google/gemini-3.5-flash-lite` at `https://openrouter.ai/api/v1`.
+Cloud sessions use the platform's server-side extraction configuration.
+
+For another OpenAI-compatible endpoint, set `NOTTE_LLM_API_KEY` and use the endpoint's own model ID:
+
+- OpenAI: `NOTTE_LLM_BASE_URL=https://api.openai.com/v1`, `NOTTE_LLM_MODEL=gpt-4o`.
+- Gemini: `NOTTE_LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai`, `NOTTE_LLM_MODEL=gemini-3.5-flash-lite`.
+- Ollama/custom: `NOTTE_LLM_BASE_URL=http://localhost:11434/v1`, `NOTTE_LLM_MODEL` set to your local model, and `NOTTE_LLM_API_KEY=ollama` for an unauthenticated local server. Ollama is documented but has not been live-tested.
+
+`NOTTE_LLM_API_KEY` takes precedence over `OPENROUTER_API_KEY`; the latter is only used at the default
+OpenRouter URL. Custom endpoints require an explicit model, supplied through `NOTTE_LLM_MODEL` or
+`LlmExtractor(model=...)`. A model passed to `extract(..., model=...)` applies to that call only.
+
+`NOTTE_LLM_TEMPERATURE` defaults to `0.0`, `NOTTE_LLM_NB_RETRIES_STRUCTURED_OUTPUT` to `2`, and
+`NOTTE_LLM_CONTEXT_TOKENS` to `128000`. Document clipping estimates four characters per token.
+The client uses a 60-second HTTP timeout and retries transient errors after 2 and 5 seconds.
+Typed extraction tries strict schemas, then JSON-object output with the schema in the prompt;
+if the endpoint rejects JSON-object mode as well, the schema stays in the prompt alone.

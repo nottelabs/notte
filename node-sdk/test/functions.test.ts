@@ -304,7 +304,7 @@ describe('NotteFunction', () => {
 			const call = vi.mocked(functionUpdate).mock.calls[0]![0];
 			expect(call.client).toBe(generatedClient);
 			expect(call.path).toEqual({ function_id: FUNCTION_ID });
-			expect(call.query).toEqual({ restricted: true });
+			expect(call.query).toEqual({ restricted: undefined });
 			expect((call.body.file as File).name).toBe('updated.py');
 			expect(await (call.body.file as File).text()).toContain('"updated": True');
 		});
@@ -407,7 +407,7 @@ describe('NotteFunction', () => {
 				client: generatedClient,
 				throwOnError: true,
 				path: { function_id: FUNCTION_ID },
-				query: { restricted: true },
+				query: { restricted: undefined },
 				body: { version: 'v1' },
 			});
 		});
@@ -587,9 +587,11 @@ describe('NotteFunction', () => {
 			}
 		});
 
-		it('rejects an invalid runtime before creating a run', async () => {
-			await expect(fn.run({}, { runtime: 'invalid' as never })).rejects.toThrow(InvalidRequestError);
-			expect(post).not.toHaveBeenCalled();
+		it('sends an invalid runtime and propagates the typed API error', async () => {
+			const error = new NotteAPIError(`/functions/${FUNCTION_ID}/runs/run-1`, 422, { detail: 'invalid runtime' });
+			post.mockRejectedValueOnce(error);
+			await expect(fn.run({}, { functionRunId: 'run-1', runtime: 'invalid' as never })).rejects.toBe(error);
+			expect(post.mock.calls[0]![0].body.runtime).toBe('invalid');
 		});
 
 		it('rejects a non-positive timeout before creating a run', async () => {
@@ -825,16 +827,13 @@ describe('NotteFunction', () => {
 	});
 
 	describe('runs', () => {
-		// This method sends only_active=false explicitly instead of relying on the
-		// endpoint default, so a finished function is never answered with an empty
-		// list - including on API versions that predate the server-side default
-		// flipping to false. Keep these two assertions.
+		// The API applies the approved only_active=false default.
 		it('asks for every run, not just the active ones, by default', async () => {
 			mockRunList();
 
 			await fn.runs();
 
-			expect(queryOf(listFunctionRunsByFunctionId)).toEqual({ only_active: false });
+			expect(queryOf(listFunctionRunsByFunctionId)).toEqual({});
 		});
 
 		it('lets the caller opt back in to active-only runs', async () => {
@@ -862,18 +861,17 @@ describe('NotteFunction', () => {
 			expect(queryOf(listFunctionRunsByFunctionId)).toEqual({
 				page: 3,
 				page_size: 50,
-				only_active: false,
 				only_current_token: true,
 				include_system: false,
 			});
 		});
 
-		it('keeps the false default when only_active is passed as undefined', async () => {
+		it('leaves undefined only_active to the API', async () => {
 			mockRunList();
 
 			await fn.runs({ only_active: undefined });
 
-			expect(queryOf(listFunctionRunsByFunctionId)).toEqual({ only_active: false });
+			expect(queryOf(listFunctionRunsByFunctionId)).toEqual({ only_active: undefined });
 		});
 
 		it('propagates API errors as NotteAPIError', async () => {

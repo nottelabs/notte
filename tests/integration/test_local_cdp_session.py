@@ -8,8 +8,8 @@ from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
-from notte_browser.playwright import PlaywrightManager
-from notte_browser.playwright_async_api import Error, async_playwright
+from notte_browser.driver import Error, async_playwright
+from notte_browser.playwright import connect
 from notte_browser.window import BrowserWindowOptions
 from notte_sdk.types import LocalSessionStartRequest
 from patchright.sync_api import sync_playwright
@@ -83,13 +83,13 @@ async def test_new_window_releases_owned_cdp_resources_and_preserves_external_br
         await external_context.add_cookies(
             [{"name": "external-cookie", "value": "external", "domain": "example.invalid", "path": "/"}]
         )
-        manager = PlaywrightManager()
+        window = None
         driver = None
         options = BrowserWindowOptions.from_request(LocalSessionStartRequest(headless=True, cdp_url=cdp_browser))
 
         try:
-            window = await manager.new_window(options)
-            driver = manager.playwright
+            window = await connect(cdp_browser, options)
+            driver = window._owned_driver
             page = window.page
             if fail_browser_close:
                 owned_browser = page.context.browser
@@ -101,9 +101,8 @@ async def test_new_window_releases_owned_cdp_resources_and_preserves_external_br
                 monkeypatch.setattr(owned_browser, "close", fail_close)
             try:
                 during = set((await cdp.send("Target.getBrowserContexts"))["browserContextIds"])
-                assert before < during
-                assert len(during - before) == 1
-                assert await page.context.cookies() == []
+                assert before == during
+                assert {cookie["name"] for cookie in await page.context.cookies()} == {"external-cookie"}
                 await page.context.add_cookies(
                     [{"name": "owned-cookie", "value": "owned", "domain": "example.invalid", "path": "/"}]
                 )
@@ -112,17 +111,20 @@ async def test_new_window_releases_owned_cdp_resources_and_preserves_external_br
             finally:
                 await window.close()
 
-            assert page.is_closed()
-            assert not manager.is_started()
+            assert window._owned_driver is None
             assert set((await cdp.send("Target.getBrowserContexts"))["browserContextIds"]) == before
-            assert {cookie["name"] for cookie in await external_context.cookies()} == {"external-cookie"}
+            assert {cookie["name"] for cookie in await external_context.cookies()} == {
+                "external-cookie",
+                "owned-cookie",
+            }
             assert not external_page.is_closed()
             assert "Browser" in _browser_version(cdp_browser)
             # The endpoint is still healthy, but the stopped driver can no longer connect to it.
             with pytest.raises(Error):
                 await driver.chromium.connect_over_cdp(cdp_browser, timeout=1_000)
         finally:
-            await manager.astop()
+            if window is not None:
+                await window.close()
             if driver is not None:
                 await driver.stop()
             await browser.close()
