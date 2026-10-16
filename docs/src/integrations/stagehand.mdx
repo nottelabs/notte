@@ -1,52 +1,34 @@
 ---
 title: Stagehand
-description: Connecting Stagehand to Notte cloud browsers
+description: Use Stagehand v4 with a Notte cloud browser in Python or TypeScript
 ---
 import StagehandConnect from '/snippets/integrations/stagehand_connect.mdx';
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-[Stagehand](https://github.com/browserbase/stagehand) is an open source AI browser automation framework that lets you choose what to write in code and what to write in natural language.
+Connect [Stagehand](https://github.com/browserbase/stagehand) to your Notte session
+to act on pages, extract structured data, and observe available actions.
 
-<Warning>
-  Stagehand v4 does not currently work against Notte cloud browsers. On `initialize()` it installs a helper extension over CDP, and Notte sessions reject extension management:
+## Setup
 
-  ```
-  CDP operation 'Extensions.loadUnpacked' is not permitted in Notte Cloud sessions.
-  ```
+Set `NOTTE_API_KEY` and `ANTHROPIC_API_KEY` in your environment.
 
-  This affects both the Python and the TypeScript SDK, and there is no client-side flag that skips the extension. Until Notte can preload the helper extension, use [Browser Use](/integrations/browser-use), [Playwright](/features/sessions/playwright), or [Notte actions](/features/sessions/browser-controls) instead.
-</Warning>
+- **Python 3.11+:** install `notte-sdk` and `stagehand==4.2.1`.
+- **TypeScript, Node.js 22.18+:** install `notte-sdk`, `@browserbasehq/stagehand@4.2.1`, and `zod`.
 
-## How the connection is meant to work
+## Connect and extract
 
-Stagehand takes a CDP URL through `local_browser.connect()`, so a Notte session plugs in with `session.cdp_url()`:
+Pass the session's CDP URL to Stagehand. This example opens a page and extracts
+its heading into a typed schema. Both SDKs close their connections before the
+Notte session stops.
 
 <StagehandConnect />
 
-The equivalent in TypeScript is `localBrowser.connect({ cdpUrl })` from `@browserbasehq/stagehand`.
+You can also call `stagehand.act()` and `stagehand.observe()` on the connected browser.
+Use your own model provider key; a Browserbase account is not required.
 
 <Note>
-  Earlier versions of this page showed `Stagehand(env="LOCAL", local_browser_launch_options={...})`. That API belonged to Stagehand v2 and is not present in any release currently on PyPI - neither `stagehand` v3/v4 nor `stagehand-py`.
+  This integration targets Stagehand 4.2.1. Browserbase-managed services and
+  experimental callback batches are not supported.
 </Note>
-
-## What to use instead
-
-<CardGroup cols={2}>
-  <Card title="Browser Use" icon="robot" href="/integrations/browser-use">
-    An LLM driving a Notte browser over CDP, working today
-  </Card>
-
-  <Card title="Anything API" icon="wand-magic-sparkles" href="/concepts/anything">
-    Describe a task in plain English and let Notte build and run it
-  </Card>
-
-  <Card title="Connect with Playwright" icon="p" href="/features/sessions/playwright">
-    Write the automation yourself against a Notte session
-  </Card>
-
-  <Card title="Fetch" icon="download" href="/concepts/scraping">
-    Pull structured data out of a page without an agent
-  </Card>
-</CardGroup>

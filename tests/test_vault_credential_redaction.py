@@ -37,7 +37,8 @@ EMPTY_ATTRS = LocatorAttributes(type=None, autocomplete=None, outerHTML=None)
 @contextmanager
 def capture_logs() -> Iterator[list[str]]:
     records: list[str] = []
-    handler_id = logger.add(lambda message: records.append(str(message)), level="TRACE")
+    # Exclude timestamps and line numbers without dropping message or exception text.
+    handler_id = logger.add(lambda message: records.append(str(message)), level="TRACE", format="{message}")
     try:
         yield records
     finally:
@@ -48,6 +49,33 @@ def assert_no_secret(texts: list[str], secrets: tuple[str, ...] = SECRETS) -> No
     for text in texts:
         for secret in secrets:
             assert secret not in text
+
+
+def test_redaction_capture_ignores_numeric_log_metadata() -> None:
+    def metadata_with_cvv_digits(record):
+        record["time"] = record["time"].replace(microsecond=917000)
+        record["line"] = 917
+
+    with capture_logs() as logs:
+        logger.patch(metadata_with_cvv_digits).error("Vault lookup failed (RuntimeError)")
+    assert len(logs) == 1
+    assert "Vault lookup failed (RuntimeError)" in logs[0]
+    assert_no_secret(logs, ("917",))
+
+
+@pytest.mark.parametrize("in_exception", [False, True])
+def test_redaction_capture_still_detects_actual_secret_values(in_exception: bool) -> None:
+    canary = "917"
+    with capture_logs() as logs:
+        if in_exception:
+            try:
+                raise RuntimeError(f"backend response contains card_cvv={canary}")
+            except RuntimeError:
+                logger.exception("Vault lookup failed")
+        else:
+            logger.error("backend response contains card_cvv={}", canary)
+    with pytest.raises(AssertionError):
+        assert_no_secret(logs, (canary,))
 
 
 def error_texts(error: BaseException) -> list[str]:

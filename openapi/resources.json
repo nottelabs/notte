@@ -17,6 +17,12 @@
   "_connect_link_submit": {
     "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
   },
+  "account_changes": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "account_runs": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
   "agent_start": {
     "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
   },
@@ -29,8 +35,20 @@
   "anything_start": {
     "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
   },
+  "attempts": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "brand_retrieve": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "changes": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
   "connect_payment_wallet": {
     "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "create": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
   },
   "create_payment": {
     "method": "createPayment",
@@ -39,6 +57,13 @@
     "pythonHeaders": [
       "idempotency-key"
     ]
+  },
+  "credit_usage": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "delete": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper.",
+    "nodeOperation": "delete_"
   },
   "delete_secret": {
     "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
@@ -53,6 +78,9 @@
     "method": "delete",
     "resource": "files",
     "telemetry": "cloud.files.delete"
+  },
+  "deliveries": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
   },
   "disconnect_payment_wallet": {
     "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
@@ -75,6 +103,9 @@
     "telemetry": "cloud.files.download",
     "pythonImplementation": "FileStorageClient.download: file IO and streaming download.",
     "nodeParseAs": "blob"
+  },
+  "extract_product_endpoint": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
   },
   "function_create": {
     "method": "create",
@@ -172,11 +203,17 @@
   "health_check": {
     "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
   },
+  "limits": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
   "list_agents": {
     "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
   },
   "list_audit_events": {
     "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "list_data_apis": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
   },
   "list_function_runs_by_function_id": {
     "method": "listRuns",
@@ -187,6 +224,9 @@
     "method": "list",
     "resource": "functions",
     "telemetry": "cloud.function.list"
+  },
+  "list_monitors": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
   },
   "list_personas": {
     "method": "list",
@@ -241,6 +281,12 @@
   "managed_auth_connect_link_create": {
     "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
   },
+  "maps_search": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "news_search": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
   "page_execute": {
     "method": "execute",
     "resource": "sessions",
@@ -264,6 +310,9 @@
     "resource": "sessions",
     "telemetry": null,
     "pythonRawResponse": true
+  },
+  "people_enrich": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
   },
   "persona_create": {
     "method": "create",
@@ -339,8 +388,35 @@
   "ready_check": {
     "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
   },
+  "retrieve": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "retrieve_change": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "retrieve_delivery": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "retrieve_run": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "retry": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "rotate_secret": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "run_now": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "runs": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
   "scrape_from_html": {
     "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "scrape_specialized_data": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
   },
   "scrape_webpage": {
     "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
@@ -416,6 +492,12 @@
   "store_secret": {
     "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
   },
+  "styleguide_endpoint": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "update": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
   "upload_session_file": {
     "aliases": [
       {
@@ -477,5 +559,8 @@
     "method": "update",
     "resource": "vaults",
     "telemetry": null
+  },
+  "youtube_endpoint": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
   }
 }

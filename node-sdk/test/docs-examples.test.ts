@@ -1,8 +1,14 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   collectExampleResult,
   verifyExampleOutput,
+  type ExampleContract,
 } from './helpers/docs-examples';
+
+const liveContracts = JSON.parse(readFileSync(
+  new URL('../../docs/src/sniptest/live-examples.json', import.meta.url), 'utf8',
+)) as Record<string, ExampleContract>;
 
 describe('paired example output contracts', () => {
   it('checks timeout bounds only when the example explicitly demonstrates them', () => {
@@ -57,6 +63,21 @@ describe('paired example output contracts', () => {
   });
 
   const sessionId = '12345678-1234-1234-1234-123456789012';
+
+  it.each(['scroll_down', 'scroll_up'])('rejects a successful no-op in %s', name => {
+    const scroll = liveContracts[`browser-controls/${name}.ts`];
+    const output = JSON.stringify({ session_id: sessionId, status: 'closed' });
+    expect(() => verifyExampleOutput(output, scroll, 'Moved down: false\nReturned to top: true')).toThrow();
+    expect(verifyExampleOutput(output, scroll, 'Moved down: true\nReturned to top: true')).toBe(sessionId);
+  });
+
+  it('rejects scroll-up that did not return to the top', () => {
+    const output = JSON.stringify({ session_id: sessionId, status: 'closed' });
+    expect(() => verifyExampleOutput(
+      output, liveContracts['browser-controls/scroll_up.ts'], 'Moved down: true\nReturned to top: false',
+    )).toThrow();
+  });
+
   const contract = {
     expected: { title: 'Example Domain' },
     closedSession: true,

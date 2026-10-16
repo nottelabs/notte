@@ -376,3 +376,11 @@ export class Client {
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+
+test('wait-action reference variants have useful frontmatter descriptions', () => {
+  for (const name of ['waitaction', 'waitactionoutput', 'nottecoreactionsactionswaitaction']) {
+    const page = actual.pages.get(`typescript-sdk-reference/types/${name}.mdx`);
+    assert.match(page, /^description: ".+browser|^description: "Browser/m);
+  }
+});

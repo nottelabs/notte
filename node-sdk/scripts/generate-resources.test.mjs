@@ -5,7 +5,7 @@ import ts from 'typescript';
 import { generateResources as generateMappedResources, checkCoverage } from './generate-resources.mjs';
 
 const naming = JSON.parse(fs.readFileSync(new URL('../../openapi/resources.json', import.meta.url), 'utf8'));
-const registry = new Map(Object.entries(naming).map(([id, entry]) => [id.replace(/^_+/, '').replace(/_([a-z])/g, (_, c) => c.toUpperCase()), entry]));
+const registry = new Map(Object.entries(naming).map(([id, entry]) => [entry.nodeOperation ?? id.replace(/^_+/, '').replace(/_([a-z])/g, (_, c) => c.toUpperCase()), entry]));
 registry.set('sessionExample', { resource: 'sessions', method: 'example' });
 registry.set('sessionList', { resource: 'sessions', method: 'list' });
 const generateResources = (sdk, types) => generateMappedResources(sdk, types, registry);
@@ -150,4 +150,11 @@ test('preserves run metadata request options before its new payload query', asyn
   }
   assert.equal(requests[0].query, undefined);
   assert.deepEqual(requests[1].query, { payload_mode: 'references' });
+});
+
+// The Data API's operationId "delete" becomes "delete_" in TypeScript.
+test('honors generated names for reserved operation identifiers', () => {
+  const source = `${sdk('delete_')}\n${sdk('listSessions')}`;
+  assert.doesNotThrow(() => generateMappedResources(source, data(`url: '/sessions';`)));
+  assert.throws(() => generateMappedResources(sdk('unmapped_'), data(`url: '/sessions';`)), /Unmapped operation: unmapped_/);
 });

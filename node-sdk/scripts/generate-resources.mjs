@@ -8,7 +8,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const naming = JSON.parse(fs.readFileSync(path.join(root, '../openapi/resources.json'), 'utf8'));
 const groups = [...new Set(Object.values(naming).filter(entry => !entry.exclude).map(entry => entry.resource))];
 const camel = value => value.replace(/^_+/, "").replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
-const byOperation = new Map(Object.entries(naming).map(([id, entry]) => [camel(id), entry]));
+const byOperation = new Map(Object.entries(naming).map(([id, entry]) => [entry.nodeOperation ?? camel(id), entry]));
 export function checkCoverage(spec) {
   const ids = new Set(Object.values(spec.paths).flatMap(item => Object.entries(item)
     .filter(([method]) => ['get', 'post', 'put', 'patch', 'delete'].includes(method))

@@ -13,6 +13,8 @@ packages = [
 requires-python = ">=3.11"
 dependencies = [
     "requests>=2.32.3,<3",
+    # Generated Data API models validate email addresses.
+    "pydantic[email]>=2.10.6,<3",
     "urllib3>=2.2.3,<3",
     "secretstorage>=3.3; sys_platform == 'linux'",
     "notte-core==2.0.0.dev0",

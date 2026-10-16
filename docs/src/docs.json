@@ -604,7 +604,7 @@
                       "typescript-sdk-reference/types/gobackaction",
                       "typescript-sdk-reference/types/goforwardaction",
                       "typescript-sdk-reference/types/reloadaction",
-                      "typescript-sdk-reference/types/waitaction",
+                      "typescript-sdk-reference/types/waitactionoutput",
                       "typescript-sdk-reference/types/presskeyaction",
                       "typescript-sdk-reference/types/scrollupaction",
                       "typescript-sdk-reference/types/scrolldownaction",

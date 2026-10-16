@@ -109,5 +109,17 @@ that single source of truth rather than being copied into hand-maintained
 `testers/` files. Do not hand-edit these generated fences. The `cli-reference`
 workflow verifies the full generated pages, navigation and CLI entries in
 `llms.txt`; generator tests verify presentation normalization. This exception
-is limited to generated CLI command reference pages. Hand-written SDK and HTTP
+covers generated CLI command reference pages. Hand-written SDK and HTTP
 examples still use `testers/` and generated `snippets/` imports.
+
+## Generated TypeScript declarations
+
+`typescript-sdk-reference/*.mdx` is generated from the local SDK declarations by
+`node-sdk/scripts/generate-reference.mjs`. Its type definitions, method signatures,
+and declaration defaults stay inline as generator output. Do not hand-edit these
+fences or copy declarations into executable `testers/` sources. The generator
+compiles the SDK first; its tests compile the MDX and verify signatures and links.
+`npm run docs:check --prefix node-sdk` verifies the complete pages and navigation.
+This exception covers generated API declarations only. Executable SDK recipes,
+including examples linked from reference pages, still use paired `testers/`
+sources and generated `snippets/` imports.

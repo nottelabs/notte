@@ -4,6 +4,11 @@ export { checkForLatestVersion, startVersionCheck } from '@/version-check';
 export * from '@/lib/client/types.gen';
 export * from '@/lib/client/sdk.gen';
 
+// Preserve public names when generated operation and model names change.
+import type { WaitActionOutput } from '@/lib/client/types.gen';
+export type WaitAction = WaitActionOutput;
+export { retry as retryWebhookDelivery } from '@/lib/client/sdk.gen';
+
 // Re-export client for direct access
 export { client } from '@/lib/client/client.gen';
 

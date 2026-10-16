@@ -103,6 +103,9 @@ export function createReference(root = sdkRoot) {
     SaveProfileOptions: "Choose a new or existing profile for a running session's browser state.",
     ProfileResponse: "Profile identifiers, timestamps, and persisted browser domains.",
     PersonaEmailProvider: "Supported mailbox providers for Notte personas.",
+    WaitAction: "Wait for a specified duration in browser automation.",
+    WaitActionOutput: "Browser wait-action fields returned in execution responses.",
+    NotteCoreActionsActionsWaitAction: "Browser wait-action fields accepted by the execute endpoint.",
     ...Object.fromEntries(["files", "functions", "sessions", "vaults", "personas", "profiles"].map(name =>
       [`client.${name}`, `Method signatures, arguments, and return types for client.${name} API operations.`])),
   };

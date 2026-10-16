@@ -49,11 +49,11 @@ export type ActionSpace = {
     /**
      * Actions
      */
-    readonly actions: Array<FormFillAction | GotoAction | GotoNewTabAction | CloseTabAction | SwitchTabAction | GoBackAction | GoForwardAction | ReloadAction | WaitAction | PressKeyAction | ScrollUpAction | ScrollDownAction | CaptchaSolveAction | HelpAction | CompletionAction | ScrapeAction | EmailReadAction | EmailVerificationReadAction | SmsReadAction | EvaluateJsAction | ClickActionOutput | FillActionOutput | MultiFactorFillActionOutput | FallbackFillActionOutput | CheckActionOutput | SelectDropdownOptionActionOutput | UploadFileActionOutput | DownloadFileActionOutput>;
+    readonly actions: Array<FormFillAction | GotoAction | GotoNewTabAction | CloseTabAction | SwitchTabAction | GoBackAction | GoForwardAction | ReloadAction | WaitActionOutput | PressKeyAction | ScrollUpAction | ScrollDownAction | CaptchaSolveAction | HelpAction | CompletionAction | ScrapeAction | EmailReadAction | EmailVerificationReadAction | SmsReadAction | EvaluateJsAction | ClickActionOutput | FillActionOutput | MultiFactorFillActionOutput | FallbackFillActionOutput | CheckActionOutput | SelectDropdownOptionActionOutput | UploadFileActionOutput | DownloadFileActionOutput>;
     /**
      * Browser Actions
      */
-    readonly browser_actions: Array<FormFillAction | GotoAction | GotoNewTabAction | CloseTabAction | SwitchTabAction | GoBackAction | GoForwardAction | ReloadAction | WaitAction | PressKeyAction | ScrollUpAction | ScrollDownAction | CaptchaSolveAction | HelpAction | CompletionAction | ScrapeAction | EmailReadAction | EmailVerificationReadAction | SmsReadAction | EvaluateJsAction>;
+    readonly browser_actions: Array<FormFillAction | GotoAction | GotoNewTabAction | CloseTabAction | SwitchTabAction | GoBackAction | GoForwardAction | ReloadAction | WaitActionOutput | PressKeyAction | ScrollUpAction | ScrollDownAction | CaptchaSolveAction | HelpAction | CompletionAction | ScrapeAction | EmailReadAction | EmailVerificationReadAction | SmsReadAction | EvaluateJsAction>;
     /**
      * Markdown
      */
@@ -362,7 +362,7 @@ export type ApiExecutionResponse = {
         type: 'reload';
     } & ReloadAction) | ({
         type: 'wait';
-    } & WaitAction) | ({
+    } & WaitActionOutput) | ({
         type: 'press_key';
     } & PressKeyAction) | ({
         type: 'scroll_up';
@@ -772,6 +772,636 @@ export type BoundingBox = {
 };
 
 /**
+ * BrandAddress
+ */
+export type BrandAddress = {
+    /**
+     * Street
+     */
+    street?: string | null;
+    /**
+     * City
+     */
+    city?: string | null;
+    /**
+     * Country
+     */
+    country?: string | null;
+    /**
+     * Country Code
+     */
+    country_code?: string | null;
+    /**
+     * State Province
+     */
+    state_province?: string | null;
+    /**
+     * State Code
+     */
+    state_code?: string | null;
+    /**
+     * Postal Code
+     */
+    postal_code?: string | null;
+};
+
+/**
+ * BrandByDirectUrl
+ */
+export type BrandByDirectUrl = {
+    timeoutOpts?: BrandTimeout | null;
+    /**
+     * Tags
+     */
+    tags?: Array<string>;
+    /**
+     * Type
+     */
+    type: 'by_direct_url';
+    /**
+     * Direct Url
+     */
+    direct_url: string;
+};
+
+/**
+ * BrandByDomain
+ */
+export type BrandByDomain = {
+    timeoutOpts?: BrandTimeout | null;
+    /**
+     * Tags
+     */
+    tags?: Array<string>;
+    /**
+     * Force Language
+     */
+    force_language?: 'afrikaans' | 'albanian' | 'amharic' | 'arabic' | 'armenian' | 'assamese' | 'aymara' | 'azeri' | 'basque' | 'belarusian' | 'bengali' | 'bosnian' | 'bulgarian' | 'burmese' | 'cantonese' | 'catalan' | 'cebuano' | 'chinese' | 'corsican' | 'croatian' | 'czech' | 'danish' | 'dutch' | 'english' | 'esperanto' | 'estonian' | 'farsi' | 'fijian' | 'finnish' | 'french' | 'galician' | 'georgian' | 'german' | 'greek' | 'guarani' | 'gujarati' | 'haitian-creole' | 'hausa' | 'hawaiian' | 'hebrew' | 'hindi' | 'hmong' | 'hungarian' | 'icelandic' | 'igbo' | 'indonesian' | 'irish' | 'italian' | 'japanese' | 'javanese' | 'kannada' | 'kazakh' | 'khmer' | 'kinyarwanda' | 'korean' | 'kurdish' | 'kyrgyz' | 'lao' | 'latin' | 'latvian' | 'lingala' | 'lithuanian' | 'luxembourgish' | 'macedonian' | 'malagasy' | 'malay' | 'malayalam' | 'maltese' | 'maori' | 'marathi' | 'mongolian' | 'nepali' | 'norwegian' | 'odia' | 'oromo' | 'pashto' | 'pidgin' | 'polish' | 'portuguese' | 'punjabi' | 'quechua' | 'romanian' | 'russian' | 'samoan' | 'scottish-gaelic' | 'serbian' | 'sesotho' | 'shona' | 'sindhi' | 'sinhala' | 'slovak' | 'slovene' | 'somali' | 'spanish' | 'sundanese' | 'swahili' | 'swedish' | 'tagalog' | 'tajik' | 'tamil' | 'tatar' | 'telugu' | 'thai' | 'tibetan' | 'tigrinya' | 'tongan' | 'tswana' | 'turkish' | 'turkmen' | 'ukrainian' | 'urdu' | 'uyghur' | 'uzbek' | 'vietnamese' | 'welsh' | 'wolof' | 'xhosa' | 'yiddish' | 'yoruba' | 'zulu' | null;
+    /**
+     * Maxspeed
+     */
+    maxSpeed?: boolean;
+    /**
+     * Maxagems
+     */
+    maxAgeMs?: number;
+    /**
+     * Type
+     */
+    type: 'by_domain';
+    /**
+     * Domain
+     */
+    domain: string;
+};
+
+/**
+ * BrandByEmail
+ */
+export type BrandByEmail = {
+    timeoutOpts?: BrandTimeout | null;
+    /**
+     * Tags
+     */
+    tags?: Array<string>;
+    /**
+     * Force Language
+     */
+    force_language?: 'afrikaans' | 'albanian' | 'amharic' | 'arabic' | 'armenian' | 'assamese' | 'aymara' | 'azeri' | 'basque' | 'belarusian' | 'bengali' | 'bosnian' | 'bulgarian' | 'burmese' | 'cantonese' | 'catalan' | 'cebuano' | 'chinese' | 'corsican' | 'croatian' | 'czech' | 'danish' | 'dutch' | 'english' | 'esperanto' | 'estonian' | 'farsi' | 'fijian' | 'finnish' | 'french' | 'galician' | 'georgian' | 'german' | 'greek' | 'guarani' | 'gujarati' | 'haitian-creole' | 'hausa' | 'hawaiian' | 'hebrew' | 'hindi' | 'hmong' | 'hungarian' | 'icelandic' | 'igbo' | 'indonesian' | 'irish' | 'italian' | 'japanese' | 'javanese' | 'kannada' | 'kazakh' | 'khmer' | 'kinyarwanda' | 'korean' | 'kurdish' | 'kyrgyz' | 'lao' | 'latin' | 'latvian' | 'lingala' | 'lithuanian' | 'luxembourgish' | 'macedonian' | 'malagasy' | 'malay' | 'malayalam' | 'maltese' | 'maori' | 'marathi' | 'mongolian' | 'nepali' | 'norwegian' | 'odia' | 'oromo' | 'pashto' | 'pidgin' | 'polish' | 'portuguese' | 'punjabi' | 'quechua' | 'romanian' | 'russian' | 'samoan' | 'scottish-gaelic' | 'serbian' | 'sesotho' | 'shona' | 'sindhi' | 'sinhala' | 'slovak' | 'slovene' | 'somali' | 'spanish' | 'sundanese' | 'swahili' | 'swedish' | 'tagalog' | 'tajik' | 'tamil' | 'tatar' | 'telugu' | 'thai' | 'tibetan' | 'tigrinya' | 'tongan' | 'tswana' | 'turkish' | 'turkmen' | 'ukrainian' | 'urdu' | 'uyghur' | 'uzbek' | 'vietnamese' | 'welsh' | 'wolof' | 'xhosa' | 'yiddish' | 'yoruba' | 'zulu' | null;
+    /**
+     * Maxspeed
+     */
+    maxSpeed?: boolean;
+    /**
+     * Maxagems
+     */
+    maxAgeMs?: number;
+    /**
+     * Type
+     */
+    type: 'by_email';
+    /**
+     * Email
+     */
+    email: string;
+};
+
+/**
+ * BrandByName
+ */
+export type BrandByName = {
+    timeoutOpts?: BrandTimeout | null;
+    /**
+     * Tags
+     */
+    tags?: Array<string>;
+    /**
+     * Force Language
+     */
+    force_language?: 'afrikaans' | 'albanian' | 'amharic' | 'arabic' | 'armenian' | 'assamese' | 'aymara' | 'azeri' | 'basque' | 'belarusian' | 'bengali' | 'bosnian' | 'bulgarian' | 'burmese' | 'cantonese' | 'catalan' | 'cebuano' | 'chinese' | 'corsican' | 'croatian' | 'czech' | 'danish' | 'dutch' | 'english' | 'esperanto' | 'estonian' | 'farsi' | 'fijian' | 'finnish' | 'french' | 'galician' | 'georgian' | 'german' | 'greek' | 'guarani' | 'gujarati' | 'haitian-creole' | 'hausa' | 'hawaiian' | 'hebrew' | 'hindi' | 'hmong' | 'hungarian' | 'icelandic' | 'igbo' | 'indonesian' | 'irish' | 'italian' | 'japanese' | 'javanese' | 'kannada' | 'kazakh' | 'khmer' | 'kinyarwanda' | 'korean' | 'kurdish' | 'kyrgyz' | 'lao' | 'latin' | 'latvian' | 'lingala' | 'lithuanian' | 'luxembourgish' | 'macedonian' | 'malagasy' | 'malay' | 'malayalam' | 'maltese' | 'maori' | 'marathi' | 'mongolian' | 'nepali' | 'norwegian' | 'odia' | 'oromo' | 'pashto' | 'pidgin' | 'polish' | 'portuguese' | 'punjabi' | 'quechua' | 'romanian' | 'russian' | 'samoan' | 'scottish-gaelic' | 'serbian' | 'sesotho' | 'shona' | 'sindhi' | 'sinhala' | 'slovak' | 'slovene' | 'somali' | 'spanish' | 'sundanese' | 'swahili' | 'swedish' | 'tagalog' | 'tajik' | 'tamil' | 'tatar' | 'telugu' | 'thai' | 'tibetan' | 'tigrinya' | 'tongan' | 'tswana' | 'turkish' | 'turkmen' | 'ukrainian' | 'urdu' | 'uyghur' | 'uzbek' | 'vietnamese' | 'welsh' | 'wolof' | 'xhosa' | 'yiddish' | 'yoruba' | 'zulu' | null;
+    /**
+     * Maxspeed
+     */
+    maxSpeed?: boolean;
+    /**
+     * Maxagems
+     */
+    maxAgeMs?: number;
+    /**
+     * Type
+     */
+    type: 'by_name';
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Country Gl
+     */
+    country_gl?: 'af' | 'al' | 'dz' | 'as' | 'ad' | 'ao' | 'ai' | 'aq' | 'ag' | 'ar' | 'am' | 'aw' | 'au' | 'at' | 'az' | 'bs' | 'bh' | 'bd' | 'bb' | 'by' | 'be' | 'bz' | 'bj' | 'bm' | 'bt' | 'bo' | 'ba' | 'bw' | 'bv' | 'br' | 'io' | 'bn' | 'bg' | 'bf' | 'bi' | 'kh' | 'cm' | 'ca' | 'cv' | 'ky' | 'cf' | 'td' | 'cl' | 'cn' | 'cx' | 'cc' | 'co' | 'km' | 'cg' | 'cd' | 'ck' | 'cr' | 'ci' | 'hr' | 'cu' | 'cy' | 'cz' | 'dk' | 'dj' | 'dm' | 'do' | 'ec' | 'eg' | 'sv' | 'gq' | 'er' | 'ee' | 'et' | 'fk' | 'fo' | 'fj' | 'fi' | 'fr' | 'gf' | 'pf' | 'tf' | 'ga' | 'gm' | 'ge' | 'de' | 'gh' | 'gi' | 'gr' | 'gl' | 'gd' | 'gp' | 'gu' | 'gt' | 'gn' | 'gw' | 'gy' | 'ht' | 'hm' | 'va' | 'hn' | 'hk' | 'hu' | 'is' | 'in' | 'id' | 'ir' | 'iq' | 'ie' | 'il' | 'it' | 'jm' | 'jp' | 'jo' | 'kz' | 'ke' | 'ki' | 'kp' | 'kr' | 'kw' | 'kg' | 'la' | 'lv' | 'lb' | 'ls' | 'lr' | 'ly' | 'li' | 'lt' | 'lu' | 'mo' | 'mk' | 'mg' | 'mw' | 'my' | 'mv' | 'ml' | 'mt' | 'mh' | 'mq' | 'mr' | 'mu' | 'yt' | 'mx' | 'fm' | 'md' | 'mc' | 'mn' | 'ms' | 'ma' | 'mz' | 'mm' | 'na' | 'nr' | 'np' | 'nl' | 'an' | 'nc' | 'nz' | 'ni' | 'ne' | 'ng' | 'nu' | 'nf' | 'mp' | 'no' | 'om' | 'pk' | 'pw' | 'ps' | 'pa' | 'pg' | 'py' | 'pe' | 'ph' | 'pn' | 'pl' | 'pt' | 'pr' | 'qa' | 're' | 'ro' | 'ru' | 'rw' | 'sh' | 'kn' | 'lc' | 'pm' | 'vc' | 'ws' | 'sm' | 'st' | 'sa' | 'sn' | 'rs' | 'sc' | 'sl' | 'sg' | 'sk' | 'si' | 'sb' | 'so' | 'za' | 'gs' | 'es' | 'lk' | 'sd' | 'sr' | 'sj' | 'sz' | 'se' | 'ch' | 'sy' | 'tw' | 'tj' | 'tz' | 'th' | 'tl' | 'tg' | 'tk' | 'to' | 'tt' | 'tn' | 'tr' | 'tm' | 'tc' | 'tv' | 'ug' | 'ua' | 'ae' | 'gb' | 'us' | 'um' | 'uy' | 'uz' | 'vu' | 've' | 'vn' | 'vg' | 'vi' | 'wf' | 'eh' | 'ye' | 'zm' | 'zw' | null;
+};
+
+/**
+ * BrandByTicker
+ */
+export type BrandByTicker = {
+    timeoutOpts?: BrandTimeout | null;
+    /**
+     * Tags
+     */
+    tags?: Array<string>;
+    /**
+     * Force Language
+     */
+    force_language?: 'afrikaans' | 'albanian' | 'amharic' | 'arabic' | 'armenian' | 'assamese' | 'aymara' | 'azeri' | 'basque' | 'belarusian' | 'bengali' | 'bosnian' | 'bulgarian' | 'burmese' | 'cantonese' | 'catalan' | 'cebuano' | 'chinese' | 'corsican' | 'croatian' | 'czech' | 'danish' | 'dutch' | 'english' | 'esperanto' | 'estonian' | 'farsi' | 'fijian' | 'finnish' | 'french' | 'galician' | 'georgian' | 'german' | 'greek' | 'guarani' | 'gujarati' | 'haitian-creole' | 'hausa' | 'hawaiian' | 'hebrew' | 'hindi' | 'hmong' | 'hungarian' | 'icelandic' | 'igbo' | 'indonesian' | 'irish' | 'italian' | 'japanese' | 'javanese' | 'kannada' | 'kazakh' | 'khmer' | 'kinyarwanda' | 'korean' | 'kurdish' | 'kyrgyz' | 'lao' | 'latin' | 'latvian' | 'lingala' | 'lithuanian' | 'luxembourgish' | 'macedonian' | 'malagasy' | 'malay' | 'malayalam' | 'maltese' | 'maori' | 'marathi' | 'mongolian' | 'nepali' | 'norwegian' | 'odia' | 'oromo' | 'pashto' | 'pidgin' | 'polish' | 'portuguese' | 'punjabi' | 'quechua' | 'romanian' | 'russian' | 'samoan' | 'scottish-gaelic' | 'serbian' | 'sesotho' | 'shona' | 'sindhi' | 'sinhala' | 'slovak' | 'slovene' | 'somali' | 'spanish' | 'sundanese' | 'swahili' | 'swedish' | 'tagalog' | 'tajik' | 'tamil' | 'tatar' | 'telugu' | 'thai' | 'tibetan' | 'tigrinya' | 'tongan' | 'tswana' | 'turkish' | 'turkmen' | 'ukrainian' | 'urdu' | 'uyghur' | 'uzbek' | 'vietnamese' | 'welsh' | 'wolof' | 'xhosa' | 'yiddish' | 'yoruba' | 'zulu' | null;
+    /**
+     * Maxspeed
+     */
+    maxSpeed?: boolean;
+    /**
+     * Maxagems
+     */
+    maxAgeMs?: number;
+    /**
+     * Type
+     */
+    type: 'by_ticker';
+    /**
+     * Ticker
+     */
+    ticker: string;
+    /**
+     * Ticker Exchange
+     */
+    ticker_exchange?: 'AMEX' | 'AMS' | 'AQS' | 'ASX' | 'ATH' | 'BER' | 'BME' | 'BRU' | 'BSE' | 'BUD' | 'BUE' | 'BVC' | 'CBOE' | 'CNQ' | 'CPH' | 'DFM' | 'DOH' | 'DUB' | 'DUS' | 'DXE' | 'EGX' | 'FSX' | 'HAM' | 'HEL' | 'HKSE' | 'HOSE' | 'ICE' | 'IOB' | 'IST' | 'JKT' | 'JNB' | 'JPX' | 'KLS' | 'KOE' | 'KSC' | 'KUW' | 'LIS' | 'LSE' | 'MCX' | 'MEX' | 'MIL' | 'MUN' | 'NASDAQ' | 'NEO' | 'NSE' | 'NYSE' | 'NZE' | 'OSL' | 'OTC' | 'PAR' | 'PNK' | 'PRA' | 'RIS' | 'SAO' | 'SAU' | 'SES' | 'SET' | 'SGO' | 'SHH' | 'SHZ' | 'SIX' | 'STO' | 'STU' | 'TAI' | 'TAL' | 'TLV' | 'TSX' | 'TSXV' | 'TWO' | 'VIE' | 'WSE' | 'XETRA';
+};
+
+/**
+ * BrandByTransaction
+ */
+export type BrandByTransaction = {
+    timeoutOpts?: BrandTimeout | null;
+    /**
+     * Tags
+     */
+    tags?: Array<string>;
+    /**
+     * Force Language
+     */
+    force_language?: 'afrikaans' | 'albanian' | 'amharic' | 'arabic' | 'armenian' | 'assamese' | 'aymara' | 'azeri' | 'basque' | 'belarusian' | 'bengali' | 'bosnian' | 'bulgarian' | 'burmese' | 'cantonese' | 'catalan' | 'cebuano' | 'chinese' | 'corsican' | 'croatian' | 'czech' | 'danish' | 'dutch' | 'english' | 'esperanto' | 'estonian' | 'farsi' | 'fijian' | 'finnish' | 'french' | 'galician' | 'georgian' | 'german' | 'greek' | 'guarani' | 'gujarati' | 'haitian-creole' | 'hausa' | 'hawaiian' | 'hebrew' | 'hindi' | 'hmong' | 'hungarian' | 'icelandic' | 'igbo' | 'indonesian' | 'irish' | 'italian' | 'japanese' | 'javanese' | 'kannada' | 'kazakh' | 'khmer' | 'kinyarwanda' | 'korean' | 'kurdish' | 'kyrgyz' | 'lao' | 'latin' | 'latvian' | 'lingala' | 'lithuanian' | 'luxembourgish' | 'macedonian' | 'malagasy' | 'malay' | 'malayalam' | 'maltese' | 'maori' | 'marathi' | 'mongolian' | 'nepali' | 'norwegian' | 'odia' | 'oromo' | 'pashto' | 'pidgin' | 'polish' | 'portuguese' | 'punjabi' | 'quechua' | 'romanian' | 'russian' | 'samoan' | 'scottish-gaelic' | 'serbian' | 'sesotho' | 'shona' | 'sindhi' | 'sinhala' | 'slovak' | 'slovene' | 'somali' | 'spanish' | 'sundanese' | 'swahili' | 'swedish' | 'tagalog' | 'tajik' | 'tamil' | 'tatar' | 'telugu' | 'thai' | 'tibetan' | 'tigrinya' | 'tongan' | 'tswana' | 'turkish' | 'turkmen' | 'ukrainian' | 'urdu' | 'uyghur' | 'uzbek' | 'vietnamese' | 'welsh' | 'wolof' | 'xhosa' | 'yiddish' | 'yoruba' | 'zulu' | null;
+    /**
+     * Maxspeed
+     */
+    maxSpeed?: boolean;
+    /**
+     * Type
+     */
+    type: 'by_transaction';
+    /**
+     * Transaction Info
+     */
+    transaction_info: string;
+    /**
+     * Country Gl
+     */
+    country_gl?: 'af' | 'al' | 'dz' | 'as' | 'ad' | 'ao' | 'ai' | 'aq' | 'ag' | 'ar' | 'am' | 'aw' | 'au' | 'at' | 'az' | 'bs' | 'bh' | 'bd' | 'bb' | 'by' | 'be' | 'bz' | 'bj' | 'bm' | 'bt' | 'bo' | 'ba' | 'bw' | 'bv' | 'br' | 'io' | 'bn' | 'bg' | 'bf' | 'bi' | 'kh' | 'cm' | 'ca' | 'cv' | 'ky' | 'cf' | 'td' | 'cl' | 'cn' | 'cx' | 'cc' | 'co' | 'km' | 'cg' | 'cd' | 'ck' | 'cr' | 'ci' | 'hr' | 'cu' | 'cy' | 'cz' | 'dk' | 'dj' | 'dm' | 'do' | 'ec' | 'eg' | 'sv' | 'gq' | 'er' | 'ee' | 'et' | 'fk' | 'fo' | 'fj' | 'fi' | 'fr' | 'gf' | 'pf' | 'tf' | 'ga' | 'gm' | 'ge' | 'de' | 'gh' | 'gi' | 'gr' | 'gl' | 'gd' | 'gp' | 'gu' | 'gt' | 'gn' | 'gw' | 'gy' | 'ht' | 'hm' | 'va' | 'hn' | 'hk' | 'hu' | 'is' | 'in' | 'id' | 'ir' | 'iq' | 'ie' | 'il' | 'it' | 'jm' | 'jp' | 'jo' | 'kz' | 'ke' | 'ki' | 'kp' | 'kr' | 'kw' | 'kg' | 'la' | 'lv' | 'lb' | 'ls' | 'lr' | 'ly' | 'li' | 'lt' | 'lu' | 'mo' | 'mk' | 'mg' | 'mw' | 'my' | 'mv' | 'ml' | 'mt' | 'mh' | 'mq' | 'mr' | 'mu' | 'yt' | 'mx' | 'fm' | 'md' | 'mc' | 'mn' | 'ms' | 'ma' | 'mz' | 'mm' | 'na' | 'nr' | 'np' | 'nl' | 'an' | 'nc' | 'nz' | 'ni' | 'ne' | 'ng' | 'nu' | 'nf' | 'mp' | 'no' | 'om' | 'pk' | 'pw' | 'ps' | 'pa' | 'pg' | 'py' | 'pe' | 'ph' | 'pn' | 'pl' | 'pt' | 'pr' | 'qa' | 're' | 'ro' | 'ru' | 'rw' | 'sh' | 'kn' | 'lc' | 'pm' | 'vc' | 'ws' | 'sm' | 'st' | 'sa' | 'sn' | 'rs' | 'sc' | 'sl' | 'sg' | 'sk' | 'si' | 'sb' | 'so' | 'za' | 'gs' | 'es' | 'lk' | 'sd' | 'sr' | 'sj' | 'sz' | 'se' | 'ch' | 'sy' | 'tw' | 'tj' | 'tz' | 'th' | 'tl' | 'tg' | 'tk' | 'to' | 'tt' | 'tn' | 'tr' | 'tm' | 'tc' | 'tv' | 'ug' | 'ua' | 'ae' | 'gb' | 'us' | 'um' | 'uy' | 'uz' | 'vu' | 've' | 'vn' | 'vg' | 'vi' | 'wf' | 'eh' | 'ye' | 'zm' | 'zw' | null;
+    /**
+     * City
+     */
+    city?: string | null;
+    /**
+     * Mcc
+     */
+    mcc?: string | number | number | null;
+    /**
+     * Phone
+     */
+    phone?: string | number | number | null;
+    /**
+     * High Confidence Only
+     */
+    high_confidence_only?: boolean;
+};
+
+/**
+ * BrandCacheMetadata
+ */
+export type BrandCacheMetadata = {
+    /**
+     * Status
+     */
+    status: 'hit' | 'miss' | 'zdr';
+    /**
+     * Age Ms
+     */
+    age_ms: number;
+};
+
+/**
+ * BrandColor
+ */
+export type BrandColor = {
+    /**
+     * Hex
+     */
+    hex: string;
+    /**
+     * Name
+     */
+    name?: string | null;
+    /**
+     * Source
+     */
+    source: 'site' | 'logo';
+};
+
+/**
+ * BrandEmployees
+ */
+export type BrandEmployees = {
+    /**
+     * Range
+     */
+    range?: '1 to 10' | '11 to 50' | '51 to 200' | '201 to 500' | '501 to 1000' | '1001 to 5000' | '5001 to 10000' | '10001+' | null;
+    /**
+     * Exact
+     */
+    exact?: number | null;
+};
+
+/**
+ * BrandImage
+ */
+export type BrandImage = {
+    /**
+     * Url
+     */
+    url: string;
+    /**
+     * Colors
+     */
+    colors?: Array<Color>;
+    resolution?: ImageResolution | null;
+};
+
+/**
+ * BrandIndustries
+ */
+export type BrandIndustries = {
+    /**
+     * Eic
+     */
+    eic?: Array<BrandIndustry>;
+};
+
+/**
+ * BrandIndustry
+ */
+export type BrandIndustry = {
+    /**
+     * Industry
+     */
+    industry: 'Aerospace & Defense' | 'Technology' | 'Finance' | 'Healthcare' | 'Retail & E-commerce' | 'Entertainment' | 'Education' | 'Government & Nonprofit' | 'Industrial & Energy' | 'Automotive & Transportation' | 'Lifestyle & Leisure' | 'Luxury & Fashion' | 'News & Media' | 'Sports' | 'Real Estate & PropTech' | 'Legal & Compliance' | 'Telecommunications' | 'Agriculture & Food' | 'Professional Services & Agencies' | 'Chemicals & Materials' | 'Logistics & Supply Chain' | 'Hospitality & Tourism' | 'Construction & Built Environment' | 'Consumer Packaged Goods (CPG)';
+    /**
+     * Subindustry
+     */
+    subindustry: 'Defense Systems & Military Hardware' | 'Aerospace Manufacturing' | 'Avionics & Navigation Technology' | 'Subsea & Naval Defense Systems' | 'Space & Satellite Technology' | 'Defense IT & Systems Integration' | 'Software (B2B)' | 'Software (B2C)' | 'Cloud Infrastructure & DevOps' | 'Cybersecurity' | 'Artificial Intelligence & Machine Learning' | 'Data Infrastructure & Analytics' | 'Hardware & Semiconductors' | 'Fintech Infrastructure' | 'eCommerce & Marketplace Platforms' | 'Developer Tools & APIs' | 'Web3 & Blockchain' | 'XR & Spatial Computing' | 'Banking & Lending' | 'Investment Management & WealthTech' | 'Insurance & InsurTech' | 'Payments & Money Movement' | 'Accounting, Tax & Financial Planning Tools' | 'Capital Markets & Trading Platforms' | 'Financial Infrastructure & APIs' | 'Credit Scoring & Risk Management' | 'Cryptocurrency & Digital Assets' | 'BNPL & Alternative Financing' | 'Healthcare Providers & Services' | 'Pharmaceuticals & Drug Development' | 'Medical Devices & Diagnostics' | 'Biotechnology & Genomics' | 'Digital Health & Telemedicine' | 'Health Insurance & Benefits Tech' | 'Clinical Trials & Research Platforms' | 'Mental Health & Wellness' | 'Healthcare IT & EHR Systems' | 'Consumer Health & Wellness Products' | 'Online Marketplaces' | 'Direct-to-Consumer (DTC) Brands' | 'Retail Tech & Point-of-Sale Systems' | 'Omnichannel & In-Store Retail' | 'E-commerce Enablement & Infrastructure' | 'Subscription & Membership Commerce' | 'Social Commerce & Influencer Platforms' | 'Fashion & Apparel Retail' | 'Food, Beverage & Grocery E-commerce' | 'Streaming Platforms (Video, Music, Audio)' | 'Gaming & Interactive Entertainment' | 'Creator Economy & Influencer Platforms' | 'Film, TV & Production Studios' | 'Events, Venues & Live Entertainment' | 'Virtual Worlds & Metaverse Experiences' | 'K-12 Education Platforms & Tools' | 'Higher Education & University Tech' | 'Online Learning & MOOCs' | 'Test Prep & Certification' | 'Corporate Training & Upskilling' | 'Tutoring & Supplemental Learning' | 'Education Management Systems (LMS/SIS)' | 'Language Learning' | 'Creator-Led & Cohort-Based Courses' | 'Special Education & Accessibility Tools' | 'Government Technology & Digital Services' | 'Civic Engagement & Policy Platforms' | 'International Development & Humanitarian Aid' | 'Philanthropy & Grantmaking' | 'Nonprofit Operations & Fundraising Tools' | 'Public Health & Social Services' | 'Education & Youth Development Programs' | 'Environmental & Climate Action Organizations' | 'Legal Aid & Social Justice Advocacy' | 'Municipal & Infrastructure Services' | 'Manufacturing & Industrial Automation' | 'Energy Production (Oil, Gas, Nuclear)' | 'Renewable Energy & Cleantech' | 'Utilities & Grid Infrastructure' | 'Industrial IoT & Monitoring Systems' | 'Construction & Heavy Equipment' | 'Mining & Natural Resources' | 'Environmental Engineering & Sustainability' | 'Energy Storage & Battery Technology' | 'Automotive OEMs & Vehicle Manufacturing' | 'Electric Vehicles (EVs) & Charging Infrastructure' | 'Mobility-as-a-Service (MaaS)' | 'Fleet Management' | 'Public Transit & Urban Mobility' | 'Autonomous Vehicles & ADAS' | 'Aftermarket Parts & Services' | 'Telematics & Vehicle Connectivity' | 'Aviation & Aerospace Transport' | 'Maritime Shipping' | 'Fitness & Wellness' | 'Beauty & Personal Care' | 'Home & Living' | 'Dating & Relationships' | 'Hobbies, Crafts & DIY' | 'Outdoor & Recreational Gear' | 'Events, Experiences & Ticketing Platforms' | 'Designer & Luxury Apparel' | 'Accessories, Jewelry & Watches' | 'Footwear & Leather Goods' | 'Beauty, Fragrance & Skincare' | 'Fashion Marketplaces & Retail Platforms' | 'Sustainable & Ethical Fashion' | 'Resale, Vintage & Circular Fashion' | 'Fashion Tech & Virtual Try-Ons' | 'Streetwear & Emerging Luxury' | 'Couture & Made-to-Measure' | 'News Publishing & Journalism' | 'Advertising, Adtech & Media Buying' | 'Digital Media & Content Platforms' | 'Broadcasting (TV & Radio)' | 'Podcasting & Audio Media' | 'News Aggregators & Curation Tools' | 'Independent & Creator-Led Media' | 'Newsletters & Substack-Style Platforms' | 'Political & Investigative Media' | 'Trade & Niche Publications' | 'Media Monitoring & Analytics' | 'Professional Teams & Leagues' | 'Sports Media & Broadcasting' | 'Sports Betting & Fantasy Sports' | 'Fitness & Athletic Training Platforms' | 'Sportswear & Equipment' | 'Esports & Competitive Gaming' | 'Sports Venues & Event Management' | 'Athlete Management & Talent Agencies' | 'Sports Tech & Performance Analytics' | 'Youth, Amateur & Collegiate Sports' | 'Real Estate Marketplaces' | 'Property Management Software' | 'Rental Platforms' | 'Mortgage & Lending Tech' | 'Real Estate Investment Platforms' | 'Law Firms & Legal Services' | 'Legal Tech & Automation' | 'Regulatory Compliance' | 'E-Discovery & Litigation Tools' | 'Contract Management' | 'Governance, Risk & Compliance (GRC)' | 'IP & Trademark Management' | 'Legal Research & Intelligence' | 'Compliance Training & Certification' | 'Whistleblower & Ethics Reporting' | 'Mobile & Wireless Networks (3G/4G/5G)' | 'Broadband & Fiber Internet' | 'Satellite & Space-Based Communications' | 'Network Equipment & Infrastructure' | 'Telecom Billing & OSS/BSS Systems' | 'VoIP & Unified Communications' | 'Internet Service Providers (ISPs)' | 'Edge Computing & Network Virtualization' | 'IoT Connectivity Platforms' | 'Precision Agriculture & AgTech' | 'Crop & Livestock Production' | 'Food & Beverage Manufacturing & Processing' | 'Food Distribution' | 'Restaurants & Food Service' | 'Agricultural Inputs & Equipment' | 'Sustainable & Regenerative Agriculture' | 'Seafood & Aquaculture' | 'Management Consulting' | 'Marketing & Advertising Agencies' | 'Design, Branding & Creative Studios' | 'IT Services & Managed Services' | 'Staffing, Recruiting & Talent' | 'Accounting & Tax Firms' | 'Public Relations & Communications' | 'Business Process Outsourcing (BPO)' | 'Professional Training & Coaching' | 'Specialty Chemicals' | 'Commodity & Petrochemicals' | 'Polymers, Plastics & Rubber' | 'Coatings, Adhesives & Sealants' | 'Industrial Gases' | 'Advanced Materials & Composites' | 'Battery Materials & Energy Storage' | 'Electronic Materials & Semiconductor Chemicals' | 'Agrochemicals & Fertilizers' | 'Freight & Transportation Tech' | 'Last-Mile Delivery' | 'Warehouse Automation' | 'Supply Chain Visibility Platforms' | 'Logistics Marketplaces' | 'Shipping & Freight Forwarding' | 'Cold Chain Logistics' | 'Reverse Logistics & Returns' | 'Cross-Border Trade Tech' | 'Transportation Management Systems (TMS)' | 'Hotels & Accommodation' | 'Vacation Rentals & Short-Term Stays' | 'Restaurant Tech & Management' | 'Travel Booking Platforms' | 'Tourism Experiences & Activities' | 'Cruise Lines & Marine Tourism' | 'Hospitality Management Systems' | 'Event & Venue Management' | 'Corporate Travel Management' | 'Travel Insurance & Protection' | 'Construction Management Software' | 'BIM/CAD & Design Tools' | 'Construction Marketplaces' | 'Equipment Rental & Management' | 'Building Materials & Procurement' | 'Construction Workforce Management' | 'Project Estimation & Bidding' | 'Modular & Prefab Construction' | 'Construction Safety & Compliance' | 'Smart Building Technology' | 'Food & Beverage CPG' | 'Home & Personal Care CPG' | 'CPG Analytics & Insights' | 'Direct-to-Consumer CPG Brands' | 'CPG Supply Chain & Distribution' | 'Private Label Manufacturing' | 'CPG Retail Intelligence' | 'Sustainable CPG & Packaging' | 'Beauty & Cosmetics CPG' | 'Health & Wellness CPG';
+};
+
+/**
+ * BrandKeyMetadata
+ */
+export type BrandKeyMetadata = {
+    /**
+     * Credits Consumed
+     */
+    credits_consumed: number;
+    /**
+     * Credits Remaining
+     */
+    credits_remaining: number;
+};
+
+/**
+ * BrandLinks
+ */
+export type BrandLinks = {
+    /**
+     * Careers
+     */
+    careers?: string | null;
+    /**
+     * Privacy
+     */
+    privacy?: string | null;
+    /**
+     * Terms
+     */
+    terms?: string | null;
+    /**
+     * Contact
+     */
+    contact?: string | null;
+    /**
+     * Blog
+     */
+    blog?: string | null;
+    /**
+     * Pricing
+     */
+    pricing?: string | null;
+};
+
+/**
+ * BrandLogo
+ */
+export type BrandLogo = {
+    /**
+     * Url
+     */
+    url: string;
+    /**
+     * Colors
+     */
+    colors?: Array<Color>;
+    resolution?: ImageResolution | null;
+    /**
+     * Mode
+     */
+    mode?: 'light' | 'dark' | 'has_opaque_background' | null;
+    /**
+     * Type
+     */
+    type: 'icon' | 'logo';
+};
+
+/**
+ * BrandProfile
+ */
+export type BrandProfile = {
+    /**
+     * Domain
+     */
+    domain?: string | null;
+    /**
+     * Title
+     */
+    title?: string | null;
+    /**
+     * Description
+     */
+    description?: string | null;
+    /**
+     * Slogan
+     */
+    slogan?: string | null;
+    /**
+     * Colors
+     */
+    colors?: Array<BrandColor>;
+    /**
+     * Logos
+     */
+    logos?: Array<BrandLogo>;
+    /**
+     * Backdrops
+     */
+    backdrops?: Array<BrandImage>;
+    /**
+     * Socials
+     */
+    socials?: Array<BrandSocial>;
+    address?: BrandAddress | null;
+    stock?: BrandStock | null;
+    employees?: BrandEmployees | null;
+    /**
+     * Is Nsfw
+     */
+    is_nsfw?: boolean | null;
+    /**
+     * Email
+     */
+    email?: string | null;
+    /**
+     * Phone
+     */
+    phone?: string | null;
+    industries?: BrandIndustries | null;
+    links?: BrandLinks | null;
+    /**
+     * Primary Language
+     */
+    primary_language?: 'afrikaans' | 'albanian' | 'amharic' | 'arabic' | 'armenian' | 'assamese' | 'aymara' | 'azeri' | 'basque' | 'belarusian' | 'bengali' | 'bosnian' | 'bulgarian' | 'burmese' | 'cantonese' | 'catalan' | 'cebuano' | 'chinese' | 'corsican' | 'croatian' | 'czech' | 'danish' | 'dutch' | 'english' | 'esperanto' | 'estonian' | 'farsi' | 'fijian' | 'finnish' | 'french' | 'galician' | 'georgian' | 'german' | 'greek' | 'guarani' | 'gujarati' | 'haitian-creole' | 'hausa' | 'hawaiian' | 'hebrew' | 'hindi' | 'hmong' | 'hungarian' | 'icelandic' | 'igbo' | 'indonesian' | 'irish' | 'italian' | 'japanese' | 'javanese' | 'kannada' | 'kazakh' | 'khmer' | 'kinyarwanda' | 'korean' | 'kurdish' | 'kyrgyz' | 'lao' | 'latin' | 'latvian' | 'lingala' | 'lithuanian' | 'luxembourgish' | 'macedonian' | 'malagasy' | 'malay' | 'malayalam' | 'maltese' | 'maori' | 'marathi' | 'mongolian' | 'nepali' | 'norwegian' | 'odia' | 'oromo' | 'pashto' | 'pidgin' | 'polish' | 'portuguese' | 'punjabi' | 'quechua' | 'romanian' | 'russian' | 'samoan' | 'scottish-gaelic' | 'serbian' | 'sesotho' | 'shona' | 'sindhi' | 'sinhala' | 'slovak' | 'slovene' | 'somali' | 'spanish' | 'sundanese' | 'swahili' | 'swedish' | 'tagalog' | 'tajik' | 'tamil' | 'tatar' | 'telugu' | 'thai' | 'tibetan' | 'tigrinya' | 'tongan' | 'tswana' | 'turkish' | 'turkmen' | 'ukrainian' | 'urdu' | 'uyghur' | 'uzbek' | 'vietnamese' | 'welsh' | 'wolof' | 'xhosa' | 'yiddish' | 'yoruba' | 'zulu' | null;
+};
+
+/**
+ * BrandResponse
+ */
+export type BrandResponse = {
+    /**
+     * Status
+     */
+    status?: 'ok';
+    /**
+     * Code
+     */
+    code?: 200;
+    brand: BrandProfile | null;
+    cache_metadata?: BrandCacheMetadata;
+    /**
+     * Request Id
+     */
+    request_id?: string;
+    /**
+     * Partial
+     */
+    partial?: boolean;
+    key_metadata?: BrandKeyMetadata | null;
+};
+
+/**
+ * BrandSocial
+ */
+export type BrandSocial = {
+    /**
+     * Type
+     */
+    type: 'x' | 'facebook' | 'instagram' | 'linkedin' | 'youtube' | 'pinterest' | 'tiktok' | 'dribbble' | 'github' | 'behance' | 'snapchat' | 'whatsapp' | 'telegram' | 'line' | 'discord' | 'twitch' | 'vimeo' | 'imdb' | 'tumblr' | 'flickr' | 'giphy' | 'medium' | 'spotify' | 'soundcloud' | 'tripadvisor' | 'yelp' | 'producthunt' | 'reddit' | 'crunchbase' | 'appstore' | 'playstore';
+    /**
+     * Url
+     */
+    url: string;
+};
+
+/**
+ * BrandStock
+ */
+export type BrandStock = {
+    /**
+     * Ticker
+     */
+    ticker?: string | null;
+    /**
+     * Exchange
+     */
+    exchange?: string | null;
+};
+
+/**
+ * BrandTimeout
+ */
+export type BrandTimeout = {
+    /**
+     * Milliseconds
+     */
+    milliseconds: number;
+    /**
+     * Behavior
+     */
+    behavior?: 'fail' | 'return-partial';
+};
+
+/**
+ * ButtonStyle
+ */
+export type ButtonStyle = {
+    /**
+     * Backgroundcolor
+     */
+    backgroundColor: string;
+    /**
+     * Color
+     */
+    color: string;
+    /**
+     * Bordercolor
+     */
+    borderColor: string;
+    /**
+     * Borderradius
+     */
+    borderRadius: string;
+    /**
+     * Borderwidth
+     */
+    borderWidth: string;
+    /**
+     * Borderstyle
+     */
+    borderStyle: string;
+    /**
+     * Padding
+     */
+    padding: string;
+    /**
+     * Minwidth
+     */
+    minWidth: string;
+    /**
+     * Minheight
+     */
+    minHeight: string;
+    /**
+     * Fontsize
+     */
+    fontSize: string;
+    /**
+     * Fontweight
+     */
+    fontWeight: number;
+    /**
+     * Fontfamily
+     */
+    fontFamily?: string | null;
+    /**
+     * Fontfallbacks
+     */
+    fontFallbacks?: Array<string> | null;
+    /**
+     * Textdecoration
+     */
+    textDecoration: string;
+    /**
+     * Textdecorationcolor
+     */
+    textDecorationColor?: string | null;
+    /**
+     * Boxshadow
+     */
+    boxShadow: string;
+    /**
+     * Css
+     */
+    css: string;
+};
+
+/**
+ * ButtonStyles
+ */
+export type ButtonStyles = {
+    primary?: ButtonStyle | null;
+    secondary?: ButtonStyle | null;
+    link?: ButtonStyle | null;
+};
+
+/**
+ * CandidateMatch
+ */
+export type CandidateMatch = {
+    /**
+     * Status
+     */
+    status: 'candidate';
+    /**
+     * Score
+     */
+    score: number;
+    person: Person;
+};
+
+/**
+ * CapabilityEndpoint
+ */
+export type CapabilityEndpoint = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Method
+     */
+    method: string;
+    /**
+     * Path
+     */
+    path: string;
+};
+
+/**
  * CaptchaSolveAction
  */
 export type CaptchaSolveAction = {
@@ -825,6 +1455,48 @@ export type CaptchaStatus = {
      * Cancel Reason
      */
     cancel_reason?: 'navigation' | null;
+};
+
+/**
+ * CardStyle
+ */
+export type CardStyle = {
+    /**
+     * Backgroundcolor
+     */
+    backgroundColor: string;
+    /**
+     * Bordercolor
+     */
+    borderColor: string;
+    /**
+     * Borderradius
+     */
+    borderRadius: string;
+    /**
+     * Borderwidth
+     */
+    borderWidth: string;
+    /**
+     * Borderstyle
+     */
+    borderStyle: string;
+    /**
+     * Padding
+     */
+    padding: string;
+    /**
+     * Boxshadow
+     */
+    boxShadow: string;
+    /**
+     * Textcolor
+     */
+    textColor: string;
+    /**
+     * Css
+     */
+    css: string;
 };
 
 /**
@@ -1016,6 +1688,38 @@ export type CloseTabAction = {
 };
 
 /**
+ * Color
+ */
+export type Color = {
+    /**
+     * Hex
+     */
+    hex: string;
+    /**
+     * Name
+     */
+    name?: string | null;
+};
+
+/**
+ * Colors
+ */
+export type Colors = {
+    /**
+     * Accent
+     */
+    accent: string;
+    /**
+     * Background
+     */
+    background: string;
+    /**
+     * Text
+     */
+    text: string;
+};
+
+/**
  * CompletionAction
  */
 export type CompletionAction = {
@@ -1039,6 +1743,14 @@ export type CompletionAction = {
      * Answer
      */
     answer: string;
+};
+
+/**
+ * Components
+ */
+export type Components = {
+    button: ButtonStyles;
+    card?: CardStyle | null;
 };
 
 /**
@@ -1367,6 +2079,44 @@ export type Cookie = {
 };
 
 /**
+ * CreateMonitor
+ */
+export type CreateMonitor = {
+    /**
+     * Mode
+     */
+    mode?: 'web';
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Target
+     */
+    target: ({
+        type: 'page';
+    } & PageTarget) | ({
+        type: 'sitemap';
+    } & SitemapTarget) | ({
+        type: 'extract';
+    } & ExtractTarget);
+    /**
+     * Change Detection
+     */
+    change_detection?: ({
+        type: 'exact';
+    } & ExactDetection) | ({
+        type: 'semantic';
+    } & SemanticDetection) | null;
+    schedule?: Interval;
+    /**
+     * Tags
+     */
+    tags?: Array<string>;
+    webhook?: Webhook | null;
+};
+
+/**
  * Credential
  */
 export type Credential = {
@@ -1470,6 +2220,34 @@ export type CreditCardDictOutput = {
      * Card Full Expiration
      */
     card_full_expiration: string;
+};
+
+/**
+ * DataScrapeRequest
+ */
+export type DataScrapeRequest = {
+    /**
+     * Url
+     */
+    url: string;
+    formats: ScrapeFormats;
+    productParams?: ProductParams | null;
+    markdownParams?: MarkdownParams | null;
+    parseParams?: MapsParseParams | null;
+    sharedParams?: SharedParams;
+    timeoutOpts?: StyleguideTimeout;
+    /**
+     * Maxagems
+     */
+    maxAgeMs?: number | null;
+    /**
+     * Zdr
+     */
+    zdr?: 'enabled' | 'disabled';
+    /**
+     * Tags
+     */
+    tags?: Array<string>;
 };
 
 /**
@@ -1585,6 +2363,44 @@ export type DeleteVaultResponse = {
 };
 
 /**
+ * DeliveryList
+ */
+export type DeliveryList = {
+    /**
+     * Type
+     */
+    type: 'monitor';
+    /**
+     * Monitor Id
+     */
+    monitor_id?: string | null;
+    /**
+     * Run Id
+     */
+    run_id?: string | null;
+    /**
+     * Status
+     */
+    status?: 'pending' | 'delivering' | 'retrying' | 'delivered' | 'failed' | 'cancelled' | null;
+    /**
+     * Created After
+     */
+    created_after?: string | null;
+    /**
+     * Limit
+     */
+    limit?: number;
+    /**
+     * Cursor
+     */
+    cursor?: string | null;
+    /**
+     * Tags
+     */
+    tags?: Array<string>;
+};
+
+/**
  * DownloadFileAction
  */
 export type DownloadFileActionInput = {
@@ -1663,6 +2479,25 @@ export type DownloadFileActionOutput = {
      * Action timeout in milliseconds
      */
     timeout?: number;
+};
+
+/**
+ * EducationClue
+ */
+export type EducationClue = {
+    institution?: OrganizationClue | null;
+    /**
+     * Degree
+     */
+    degree?: string | null;
+    /**
+     * Field Of Study
+     */
+    field_of_study?: string | null;
+    /**
+     * Graduation Year
+     */
+    graduation_year?: number | null;
 };
 
 /**
@@ -1810,6 +2645,16 @@ export type EvaluateJsAction = {
 };
 
 /**
+ * ExactDetection
+ */
+export type ExactDetection = {
+    /**
+     * Type
+     */
+    type: 'exact';
+};
+
+/**
  * ExecutionResponse
  */
 export type ExecutionResponse = {
@@ -1851,6 +2696,42 @@ export type ExternalProxy = {
      * Bypass
      */
     bypass?: string | null;
+};
+
+/**
+ * ExtractTarget
+ */
+export type ExtractTarget = {
+    /**
+     * Url
+     */
+    url: string;
+    /**
+     * Type
+     */
+    type: 'extract';
+    /**
+     * Instructions
+     */
+    instructions: string;
+    /**
+     * Schema
+     */
+    schema?: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * Max Pages
+     */
+    max_pages?: number;
+    /**
+     * Max Depth
+     */
+    max_depth?: number | null;
+    /**
+     * Follow Subdomains
+     */
+    follow_subdomains?: boolean;
 };
 
 /**
@@ -2050,6 +2931,30 @@ export type FillActionOutput = {
      * Clear Before Fill
      */
     clear_before_fill?: boolean;
+};
+
+/**
+ * FontLink
+ */
+export type FontLink = {
+    /**
+     * Type
+     */
+    type: 'google' | 'custom';
+    /**
+     * Files
+     */
+    files: {
+        [key: string]: string;
+    };
+    /**
+     * Category
+     */
+    category?: string | null;
+    /**
+     * Displayname
+     */
+    displayName?: string | null;
 };
 
 /**
@@ -3124,6 +4029,16 @@ export type HttpValidationError = {
 };
 
 /**
+ * HeadingStyles
+ */
+export type HeadingStyles = {
+    h1?: TypographyStyle | null;
+    h2?: TypographyStyle | null;
+    h3?: TypographyStyle | null;
+    h4?: TypographyStyle | null;
+};
+
+/**
  * HealthResponse
  */
 export type HealthResponse = {
@@ -3188,6 +4103,42 @@ export type ImageData = {
      * Description of the image
      */
     description?: string | null;
+};
+
+/**
+ * ImageResolution
+ */
+export type ImageResolution = {
+    /**
+     * Width
+     */
+    width: number;
+    /**
+     * Height
+     */
+    height: number;
+    /**
+     * Aspect Ratio
+     */
+    aspect_ratio: number;
+};
+
+/**
+ * Interval
+ */
+export type Interval = {
+    /**
+     * Type
+     */
+    type?: 'interval';
+    /**
+     * Frequency
+     */
+    frequency?: number;
+    /**
+     * Unit
+     */
+    unit?: 'minutes' | 'hours' | 'days';
 };
 
 /**
@@ -3276,6 +4227,24 @@ export type ListCredentialsResponse = {
  * LlmModel
  */
 export type LlmModel = 'openai/gpt-4o' | 'gemini/gemini-3.5-flash' | 'vertex_ai/gemini-3.5-flash' | 'openrouter/google/gemma-3-27b-it' | 'cerebras/gpt-oss-120b' | 'groq/gpt-oss-120b' | 'perplexity/sonar-pro' | 'deepseek/deepseek-r1' | 'together_ai/meta-llama/llama-3.3-70b-instruct' | 'anthropic/claude-sonnet-4-5-20250929' | 'moonshot/kimi-k2.5' | 'xai/grok-4.3' | 'minimax/minimax-m2.5';
+
+/**
+ * LocationClue
+ */
+export type LocationClue = {
+    /**
+     * City
+     */
+    city?: string | null;
+    /**
+     * Region
+     */
+    region?: string | null;
+    /**
+     * Country
+     */
+    country?: string | null;
+};
 
 /**
  * MailboxConnectRequest
@@ -3504,6 +4473,216 @@ export type ManagedAuthReadiness = {
 };
 
 /**
+ * MapsBusiness
+ */
+export type MapsBusiness = {
+    /**
+     * Place Id
+     */
+    place_id?: string;
+    /**
+     * Name
+     */
+    name?: string | null;
+    /**
+     * Rating
+     */
+    rating?: number | null;
+    /**
+     * Number Of Reviews
+     */
+    number_of_reviews?: number;
+    /**
+     * Website
+     */
+    website?: string | null;
+    /**
+     * Google Maps Url
+     */
+    google_maps_url: string;
+    /**
+     * About
+     */
+    about?: string | null;
+    /**
+     * Cid
+     */
+    cid?: string | null;
+    /**
+     * Google Category
+     */
+    google_category?: Array<string>;
+    /**
+     * Google Description
+     */
+    google_description?: string | null;
+    /**
+     * Google Hours
+     */
+    google_hours?: Array<MapsHours> | null;
+    /**
+     * Google Image
+     */
+    google_image?: string | null;
+    /**
+     * Google Phone
+     */
+    google_phone?: string | null;
+    /**
+     * Google Price Range Dollar Sign
+     */
+    google_price_range_dollar_sign?: string | null;
+    /**
+     * Google Reviews Url
+     */
+    google_reviews_url?: string;
+    /**
+     * Claimed
+     */
+    claimed?: boolean;
+    /**
+     * Latitude
+     */
+    latitude?: number | null;
+    /**
+     * Longitude
+     */
+    longitude?: number | null;
+    /**
+     * Google Orders Urls
+     */
+    google_orders_urls?: Array<MapsOrderLink>;
+    /**
+     * Order Online Url
+     */
+    order_online_url?: string | null;
+    /**
+     * Borough
+     */
+    borough?: string | null;
+    /**
+     * Street Addr
+     */
+    street_addr?: string | null;
+    /**
+     * Street Addr Supplement
+     */
+    street_addr_supplement?: string | null;
+    /**
+     * City
+     */
+    city?: string | null;
+    /**
+     * Postal Code
+     */
+    postal_code?: string | null;
+    /**
+     * State
+     */
+    state?: string | null;
+    /**
+     * Country
+     */
+    country?: string | null;
+    /**
+     * Address
+     */
+    address?: string | null;
+    /**
+     * Primary Tags
+     */
+    primary_tags?: Array<string>;
+    /**
+     * Open Status
+     */
+    open_status?: 'PERMANENTLY_CLOSED' | 'TEMPORARILY_CLOSED' | null;
+};
+
+/**
+ * MapsHours
+ */
+export type MapsHours = {
+    /**
+     * Day
+     */
+    day?: string | null;
+    /**
+     * Times
+     */
+    times?: Array<string>;
+};
+
+/**
+ * MapsOrderLink
+ */
+export type MapsOrderLink = {
+    /**
+     * Link
+     */
+    link: string;
+    /**
+     * Platform Name
+     */
+    platform_name?: string | null;
+};
+
+/**
+ * MapsParseParams
+ */
+export type MapsParseParams = {
+    /**
+     * Type
+     */
+    type: 'prebuilt';
+    /**
+     * Parser
+     */
+    parser: 'google-maps';
+};
+
+/**
+ * MapsResult
+ */
+export type MapsResult = {
+    /**
+     * Results
+     */
+    results?: Array<MapsBusiness>;
+};
+
+/**
+ * MapsSearchRequest
+ */
+export type MapsSearchRequest = {
+    /**
+     * Url
+     */
+    url?: string | null;
+    /**
+     * Search
+     */
+    search?: string | null;
+};
+
+/**
+ * MarkdownParams
+ */
+export type MarkdownParams = {
+    /**
+     * Includelinks
+     */
+    includeLinks?: boolean;
+    /**
+     * Includeimages
+     */
+    includeImages?: boolean;
+    /**
+     * Inlineimages
+     */
+    inlineImages?: 'placeholder' | 'preserve' | null;
+};
+
+/**
  * MouseReplayPage
  */
 export type MouseReplayPage = {
@@ -3619,6 +4798,20 @@ export type MultiFactorFillActionOutput = {
 };
 
 /**
+ * NameClue
+ */
+export type NameClue = {
+    /**
+     * First
+     */
+    first?: string | null;
+    /**
+     * Last
+     */
+    last?: string | null;
+};
+
+/**
  * NetworkBatchFile
  */
 export type NetworkBatchFile = {
@@ -3663,6 +4856,269 @@ export type NetworkLogsResponse = {
 };
 
 /**
+ * NewsArticle
+ */
+export type NewsArticle = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Story Id
+     */
+    story_id: string;
+    /**
+     * Url
+     */
+    url: string;
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Description
+     */
+    description?: string | null;
+    /**
+     * Language
+     */
+    language?: string | null;
+    /**
+     * Authors
+     */
+    authors?: Array<string>;
+    /**
+     * Image Url
+     */
+    image_url?: string | null;
+    /**
+     * Published At
+     */
+    published_at?: string | null;
+    /**
+     * Type
+     */
+    type?: 'editorial' | 'press_release' | 'regulatory_filing' | 'advisory';
+    source: NewsSource;
+    match: NewsMatch;
+};
+
+/**
+ * NewsDateFilter
+ */
+export type NewsDateFilter = {
+    /**
+     * From
+     */
+    from?: number | null;
+    /**
+     * To
+     */
+    to?: number | null;
+};
+
+/**
+ * NewsEntityDomain
+ */
+export type NewsEntityDomain = {
+    /**
+     * Type
+     */
+    type: 'domain';
+    /**
+     * Domain
+     */
+    domain: string;
+};
+
+/**
+ * NewsEntityIsin
+ */
+export type NewsEntityIsin = {
+    /**
+     * Type
+     */
+    type: 'isin';
+    /**
+     * Isin
+     */
+    isin: string;
+};
+
+/**
+ * NewsEntityName
+ */
+export type NewsEntityName = {
+    /**
+     * Type
+     */
+    type: 'name';
+    /**
+     * Name
+     */
+    name: string;
+};
+
+/**
+ * NewsEntityTicker
+ */
+export type NewsEntityTicker = {
+    /**
+     * Type
+     */
+    type: 'ticker';
+    /**
+     * Ticker
+     */
+    ticker: string;
+    /**
+     * Exchange
+     */
+    exchange?: 'AMEX' | 'AMS' | 'AQS' | 'ASX' | 'ATH' | 'BER' | 'BME' | 'BRU' | 'BSE' | 'BUD' | 'BUE' | 'BVC' | 'CBOE' | 'CNQ' | 'CPH' | 'DFM' | 'DOH' | 'DUB' | 'DUS' | 'DXE' | 'EGX' | 'FSX' | 'HAM' | 'HEL' | 'HKSE' | 'HOSE' | 'ICE' | 'IOB' | 'IST' | 'JKT' | 'JNB' | 'JPX' | 'KLS' | 'KOE' | 'KSC' | 'KUW' | 'LIS' | 'LSE' | 'MCX' | 'MEX' | 'MIL' | 'MUN' | 'NASDAQ' | 'NEO' | 'NSE' | 'NYSE' | 'NZE' | 'OSL' | 'OTC' | 'PAR' | 'PNK' | 'PRA' | 'RIS' | 'SAO' | 'SAU' | 'SES' | 'SET' | 'SGO' | 'SHH' | 'SHZ' | 'SIX' | 'STO' | 'STU' | 'TAI' | 'TAL' | 'TLV' | 'TSX' | 'TSXV' | 'TWO' | 'VIE' | 'WSE' | 'XETRA' | null;
+};
+
+/**
+ * NewsFilter
+ */
+export type NewsFilter = {
+    /**
+     * Sourcedomain
+     */
+    sourceDomain?: Array<string> | null;
+    /**
+     * Sourcecountry
+     */
+    sourceCountry?: Array<'ae' | 'ar' | 'au' | 'ca' | 'cg' | 'ch' | 'cl' | 'cz' | 'de' | 'fi' | 'fr' | 'gb' | 'hk' | 'il' | 'in' | 'jp' | 'kr' | 'mx' | 'ng' | 'nl' | 'pk' | 'qa' | 'sa' | 'se' | 'sg' | 'us' | 'za'> | null;
+    /**
+     * Articlelanguage
+     */
+    articleLanguage?: Array<'ar' | 'de' | 'en' | 'es' | 'fr' | 'hi' | 'it' | 'ja' | 'ko' | 'nl' | 'pt' | 'ru' | 'zh'> | null;
+    /**
+     * Articletype
+     */
+    articleType?: Array<'editorial' | 'press_release' | 'regulatory_filing' | 'advisory'> | null;
+    date?: NewsDateFilter | null;
+};
+
+/**
+ * NewsMatch
+ */
+export type NewsMatch = {
+    /**
+     * Level
+     */
+    level: 'primary' | 'secondary';
+    /**
+     * Confidence
+     */
+    confidence?: number | null;
+};
+
+/**
+ * NewsMeta
+ */
+export type NewsMeta = {
+    /**
+     * Count
+     */
+    count: number;
+};
+
+/**
+ * NewsSearchBy
+ */
+export type NewsSearchBy = {
+    /**
+     * Type
+     */
+    type: 'entity';
+    /**
+     * Entity
+     */
+    entity: ({
+        type: 'name';
+    } & NewsEntityName) | ({
+        type: 'domain';
+    } & NewsEntityDomain) | ({
+        type: 'ticker';
+    } & NewsEntityTicker) | ({
+        type: 'isin';
+    } & NewsEntityIsin);
+};
+
+/**
+ * NewsSearchRequest
+ */
+export type NewsSearchRequest = {
+    searchBy: NewsSearchBy;
+    filterBy?: NewsFilter;
+    sortBy?: NewsSort;
+    /**
+     * Limit
+     */
+    limit?: number;
+    /**
+     * Cursor
+     */
+    cursor?: string | null;
+    /**
+     * Tags
+     */
+    tags?: Array<string>;
+};
+
+/**
+ * NewsSearchResponse
+ */
+export type NewsSearchResponse = {
+    /**
+     * Data
+     */
+    data: Array<NewsArticle>;
+    /**
+     * Has More
+     */
+    has_more: boolean;
+    /**
+     * Next Cursor
+     */
+    next_cursor: string | null;
+    meta: NewsMeta;
+    /**
+     * Request Id
+     */
+    request_id: string;
+};
+
+/**
+ * NewsSort
+ */
+export type NewsSort = {
+    /**
+     * Type
+     */
+    type?: 'newest' | 'relevance';
+};
+
+/**
+ * NewsSource
+ */
+export type NewsSource = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Domain
+     */
+    domain: string;
+    /**
+     * Direct
+     */
+    direct?: boolean;
+};
+
+/**
  * NodeSelectors
  */
 export type NodeSelectors = {
@@ -3698,6 +5154,24 @@ export type NodeSelectors = {
      * Python Selector
      */
     python_selector?: string | null;
+};
+
+/**
+ * NotFoundMatch
+ */
+export type NotFoundMatch = {
+    /**
+     * Status
+     */
+    status: 'not_found';
+    /**
+     * Score
+     */
+    score: null;
+    /**
+     * Person
+     */
+    person: null;
 };
 
 /**
@@ -3773,6 +5247,54 @@ export type ObserveRequest = {
      * Whether to run with fast or deep perception
      */
     perception_type?: 'fast' | 'deep' | null;
+};
+
+/**
+ * OrganizationClue
+ */
+export type OrganizationClue = {
+    /**
+     * Name
+     */
+    name?: string | null;
+    /**
+     * Domain
+     */
+    domain?: string | null;
+};
+
+/**
+ * PageTarget
+ */
+export type PageTarget = {
+    /**
+     * Url
+     */
+    url: string;
+    /**
+     * Type
+     */
+    type: 'page';
+    /**
+     * Instructions
+     */
+    instructions?: string | null;
+    /**
+     * Normalize Whitespace
+     */
+    normalize_whitespace?: boolean;
+    /**
+     * Include Selectors
+     */
+    include_selectors?: Array<string>;
+    /**
+     * Exclude Selectors
+     */
+    exclude_selectors?: Array<string>;
+    /**
+     * Actions
+     */
+    actions?: Array<NotteApiDataApisMonitorsModelsWaitAction | PerformAction | ScrollAction> | null;
 };
 
 /**
@@ -4001,6 +5523,10 @@ export type ParameterInfo = {
     default?: string | null;
 };
 
+export type ParsedOutput = {
+    [key: string]: unknown;
+};
+
 /**
  * PaymentConnectRequest
  */
@@ -4193,6 +5719,261 @@ export type PaymentResponse = {
 };
 
 /**
+ * PeopleEnrichRequest
+ */
+export type PeopleEnrichRequest = {
+    /**
+     * Social Urls
+     */
+    social_urls?: Array<string> | null;
+    name?: NameClue | null;
+    /**
+     * Email
+     */
+    email?: string | null;
+    company?: OrganizationClue | null;
+    /**
+     * Education
+     */
+    education?: Array<EducationClue> | null;
+    location?: LocationClue | null;
+    timeoutOpts?: PeopleTimeout | null;
+    /**
+     * Zdr
+     */
+    zdr?: 'enabled' | 'disabled' | null;
+    /**
+     * Tags
+     */
+    tags?: Array<string> | null;
+};
+
+/**
+ * PeopleEnrichResponse
+ */
+export type PeopleEnrichResponse = {
+    /**
+     * Partial
+     */
+    partial?: boolean | null;
+    /**
+     * Match
+     */
+    match: ({
+        status: 'candidate';
+    } & CandidateMatch) | ({
+        status: 'not_found';
+    } & NotFoundMatch);
+    /**
+     * Request Id
+     */
+    request_id: string;
+};
+
+/**
+ * PeopleTimeout
+ */
+export type PeopleTimeout = {
+    /**
+     * Milliseconds
+     */
+    milliseconds: number;
+    /**
+     * Behavior
+     */
+    behavior?: 'fail' | 'return-partial';
+};
+
+/**
+ * PerformAction
+ */
+export type PerformAction = {
+    /**
+     * Do
+     */
+    do: 'perform';
+    /**
+     * Action
+     */
+    action: string;
+};
+
+/**
+ * Person
+ */
+export type Person = {
+    name?: PersonName | null;
+    /**
+     * Email
+     */
+    email?: string | null;
+    /**
+     * Avatar Url
+     */
+    avatar_url?: string | null;
+    /**
+     * Bio
+     */
+    bio?: string | null;
+    location?: PersonLocation | null;
+    /**
+     * Social Urls
+     */
+    social_urls: Array<string>;
+    /**
+     * Website Urls
+     */
+    website_urls: Array<string>;
+    current_role?: PersonRole | null;
+    /**
+     * Current Role Status
+     */
+    current_role_status: 'present' | 'none' | 'unknown';
+    /**
+     * Experience
+     */
+    experience: Array<PersonRole>;
+    /**
+     * Education
+     */
+    education: Array<PersonEducation>;
+    /**
+     * Skills
+     */
+    skills: Array<string>;
+    /**
+     * Last Updated
+     */
+    last_updated?: string | null;
+    /**
+     * Checked At
+     */
+    checked_at?: string | null;
+};
+
+/**
+ * PersonDate
+ */
+export type PersonDate = {
+    /**
+     * Year
+     */
+    year: number;
+    /**
+     * Month
+     */
+    month?: number | null;
+    /**
+     * Day
+     */
+    day?: number | null;
+};
+
+/**
+ * PersonEducation
+ */
+export type PersonEducation = {
+    institution: PersonOrganization;
+    /**
+     * Degree
+     */
+    degree?: string | null;
+    /**
+     * Field Of Study
+     */
+    field_of_study?: string | null;
+    /**
+     * Description
+     */
+    description?: string | null;
+    start_date?: PersonDate | null;
+    end_date?: PersonDate | null;
+};
+
+/**
+ * PersonLocation
+ */
+export type PersonLocation = {
+    /**
+     * Display
+     */
+    display?: string | null;
+    /**
+     * City
+     */
+    city?: string | null;
+    /**
+     * Region
+     */
+    region?: string | null;
+    /**
+     * Country
+     */
+    country?: string | null;
+    /**
+     * Country Code
+     */
+    country_code?: string | null;
+};
+
+/**
+ * PersonName
+ */
+export type PersonName = {
+    /**
+     * Full
+     */
+    full?: string | null;
+    /**
+     * First
+     */
+    first?: string | null;
+    /**
+     * Last
+     */
+    last?: string | null;
+};
+
+/**
+ * PersonOrganization
+ */
+export type PersonOrganization = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Domain
+     */
+    domain?: string | null;
+};
+
+/**
+ * PersonRole
+ */
+export type PersonRole = {
+    /**
+     * Title
+     */
+    title: string;
+    organization: PersonOrganization;
+    /**
+     * Location
+     */
+    location?: string | null;
+    /**
+     * Description
+     */
+    description?: string | null;
+    start_date?: PersonDate | null;
+    end_date?: PersonDate | null;
+    /**
+     * Is Current
+     */
+    is_current?: boolean | null;
+};
+
+/**
  * PersonaCreateRequest
  */
 export type PersonaCreateRequest = {
@@ -4313,6 +6094,147 @@ export type PressKeyAction = {
      * Key
      */
     key: string;
+};
+
+/**
+ * Product
+ */
+export type Product = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Description
+     */
+    description?: string | null;
+    /**
+     * Brand
+     */
+    brand?: string | null;
+    /**
+     * Sku
+     */
+    sku?: string | null;
+    /**
+     * Price
+     */
+    price?: number | null;
+    /**
+     * Regularprice
+     */
+    regularPrice?: number | null;
+    /**
+     * Currency
+     */
+    currency?: string | null;
+    /**
+     * Availability
+     */
+    availability?: 'in_stock' | 'out_of_stock' | 'limited_availability' | 'preorder' | 'backorder' | 'made_to_order' | 'discontinued' | null;
+    /**
+     * Category
+     */
+    category?: string | null;
+    /**
+     * Imageurl
+     */
+    imageUrl?: string | null;
+    /**
+     * Images
+     */
+    images?: Array<string>;
+    /**
+     * Dimensions
+     */
+    dimensions?: Array<string>;
+    /**
+     * Features
+     */
+    features?: Array<string>;
+    /**
+     * Targetaudience
+     */
+    targetAudience?: Array<string>;
+    /**
+     * Tags
+     */
+    tags?: Array<string>;
+    /**
+     * Variants
+     */
+    variants?: Array<ProductVariant>;
+};
+
+/**
+ * ProductExtractRequest
+ */
+export type ProductExtractRequest = {
+    /**
+     * Url
+     */
+    url: string;
+    productParams?: ProductParams;
+};
+
+/**
+ * ProductOutput
+ */
+export type ProductOutput = {
+    /**
+     * Requested
+     */
+    requested?: boolean;
+    /**
+     * Success
+     */
+    success?: boolean;
+    data: ProductResult;
+};
+
+/**
+ * ProductParams
+ */
+export type ProductParams = {
+    /**
+     * Dedupeimages
+     */
+    dedupeImages?: boolean;
+};
+
+/**
+ * ProductResult
+ */
+export type ProductResult = {
+    /**
+     * Isproductpage
+     */
+    isProductPage?: boolean;
+    product?: Product | null;
+};
+
+/**
+ * ProductVariant
+ */
+export type ProductVariant = {
+    /**
+     * Sku
+     */
+    sku?: string | null;
+    /**
+     * Attributes
+     */
+    attributes?: {
+        [key: string]: string;
+    };
+    /**
+     * Url
+     */
+    url?: string | null;
+    /**
+     * Images
+     */
+    images?: Array<string>;
 };
 
 /**
@@ -4522,6 +6444,30 @@ export type ReplayResponse = {
      * Video Duration Ms
      */
     video_duration_ms?: number | null;
+};
+
+/**
+ * Retry
+ */
+export type Retry = {
+    /**
+     * Delays Seconds
+     */
+    delays_seconds?: Array<number>;
+};
+
+/**
+ * RetryDelivery
+ */
+export type RetryDelivery = {
+    /**
+     * Force
+     */
+    force?: boolean;
+    /**
+     * Tags
+     */
+    tags?: Array<string>;
 };
 
 /**
@@ -4787,6 +6733,28 @@ export type ScrapeAction = {
 };
 
 /**
+ * ScrapeFormats
+ */
+export type ScrapeFormats = {
+    /**
+     * Html
+     */
+    html?: boolean;
+    /**
+     * Markdown
+     */
+    markdown?: boolean;
+    /**
+     * Product
+     */
+    product?: boolean;
+    /**
+     * Parse
+     */
+    parse?: boolean;
+};
+
+/**
  * ScrapeFromHtmlRequest
  */
 export type ScrapeFromHtmlRequest = {
@@ -4858,6 +6826,10 @@ export type ScrapeFromHtmlRequest = {
     frames?: Array<FrameData>;
 };
 
+export type ScrapeOutput = {
+    [key: string]: unknown;
+};
+
 /**
  * ScrapeRequest
  */
@@ -4925,6 +6897,49 @@ export type ScrapeRequest = {
 };
 
 /**
+ * ScrapeResponse
+ */
+export type ScrapeResponse = {
+    /**
+     * Url
+     */
+    url: string;
+    html?: ScrapeOutput;
+    markdown?: ScrapeOutput;
+    screenshot?: ScrapeOutput;
+    images?: ScrapeOutput;
+    bytes?: ScrapeOutput;
+    parsed?: ParsedOutput;
+    highlights?: ScrapeOutput;
+    json?: ScrapeOutput;
+    product?: ScrapeOutput;
+    /**
+     * Profile
+     */
+    profile?: null;
+    /**
+     * Metadata
+     */
+    metadata?: {
+        [key: string]: unknown;
+    };
+    /**
+     * Request Id
+     */
+    request_id: string;
+    /**
+     * Cache Metadata
+     */
+    cache_metadata?: {
+        [key: string]: unknown;
+    };
+    /**
+     * Ispartial
+     */
+    isPartial?: boolean;
+};
+
+/**
  * ScrapeSchemaResponse
  */
 export type ScrapeSchemaResponse = {
@@ -4954,6 +6969,32 @@ export type Screenshot = {
      * Last Action Id
      */
     last_action_id?: string | null;
+};
+
+/**
+ * ScrollAction
+ */
+export type ScrollAction = {
+    /**
+     * Do
+     */
+    do: 'scroll';
+    /**
+     * Direction
+     */
+    direction?: 'up' | 'down' | 'left' | 'right';
+    /**
+     * Amount
+     */
+    amount?: number | 'viewport' | 'max';
+    /**
+     * Container
+     */
+    container?: string | null;
+    /**
+     * Maxscrolls
+     */
+    maxScrolls?: number;
 };
 
 /**
@@ -5191,6 +7232,20 @@ export type SelectDropdownOptionActionOutput = {
      * Value
      */
     value: string;
+};
+
+/**
+ * SemanticDetection
+ */
+export type SemanticDetection = {
+    /**
+     * Type
+     */
+    type: 'semantic';
+    /**
+     * Confidence Threshold
+     */
+    confidence_threshold?: number;
 };
 
 /**
@@ -5514,6 +7569,88 @@ export type SessionResponse = {
 };
 
 /**
+ * Shadows
+ */
+export type Shadows = {
+    /**
+     * Sm
+     */
+    sm: string;
+    /**
+     * Md
+     */
+    md: string;
+    /**
+     * Lg
+     */
+    lg: string;
+    /**
+     * Xl
+     */
+    xl: string;
+    /**
+     * Inner
+     */
+    inner: string;
+};
+
+/**
+ * SharedParams
+ */
+export type SharedParams = {
+    /**
+     * Theme
+     */
+    theme?: 'light' | 'dark';
+    /**
+     * Actions
+     */
+    actions?: Array<NotteApiDataApisMonitorsModelsWaitAction | PerformAction | ScrollAction>;
+    /**
+     * Waitfor
+     */
+    waitFor?: number | string;
+    /**
+     * Maincontentonly
+     */
+    mainContentOnly?: boolean;
+    /**
+     * Includeselectors
+     */
+    includeSelectors?: Array<string>;
+    /**
+     * Excludeselectors
+     */
+    excludeSelectors?: Array<string>;
+};
+
+/**
+ * SitemapTarget
+ */
+export type SitemapTarget = {
+    /**
+     * Url
+     */
+    url: string;
+    /**
+     * Type
+     */
+    type: 'sitemap';
+    /**
+     * Include
+     */
+    include?: Array<string>;
+    /**
+     * Exclude
+     */
+    exclude?: Array<string>;
+    /**
+     * Max Urls
+     */
+    max_urls?: number;
+};
+
+/**
  * SmsReadAction
  */
 export type SmsReadAction = {
@@ -5580,6 +7717,32 @@ export type SnapshotMetadata = {
 export type SpaceCategory = 'homepage' | 'search-results' | 'data-feed' | 'item' | 'auth' | 'form' | 'manage-cookies' | 'overlay' | 'payment' | 'captcha' | 'other';
 
 /**
+ * Spacing
+ */
+export type Spacing = {
+    /**
+     * Xs
+     */
+    xs: string;
+    /**
+     * Sm
+     */
+    sm: string;
+    /**
+     * Md
+     */
+    md: string;
+    /**
+     * Lg
+     */
+    lg: string;
+    /**
+     * Xl
+     */
+    xl: string;
+};
+
+/**
  * StructuredData[BaseModel]
  */
 export type StructuredDataBaseModel = {
@@ -5601,6 +7764,83 @@ export type StructuredDataBaseModel = {
      * Structured data extracted from the page in JSON format
      */
     data?: BaseModel | RootModelAny | null;
+};
+
+/**
+ * Styleguide
+ */
+export type Styleguide = {
+    /**
+     * Mode
+     */
+    mode: 'light' | 'dark';
+    colors: Colors;
+    typography: Typography;
+    elementSpacing: Spacing;
+    shadows: Shadows;
+    /**
+     * Fontlinks
+     */
+    fontLinks: {
+        [key: string]: FontLink;
+    };
+    components: Components;
+};
+
+/**
+ * StyleguideCacheMetadata
+ */
+export type StyleguideCacheMetadata = {
+    /**
+     * Status
+     */
+    status?: 'miss';
+    /**
+     * Age Ms
+     */
+    age_ms?: number;
+};
+
+/**
+ * StyleguideResponse
+ */
+export type StyleguideResponse = {
+    /**
+     * Status
+     */
+    status: 'ok';
+    /**
+     * Domain
+     */
+    domain: string;
+    styleguide: Styleguide;
+    /**
+     * Code
+     */
+    code: number;
+    /**
+     * Finaldomstate
+     */
+    finalDOMState: 'loaded' | 'still-loading';
+    cache_metadata: StyleguideCacheMetadata;
+    /**
+     * Request Id
+     */
+    request_id: string;
+};
+
+/**
+ * StyleguideTimeout
+ */
+export type StyleguideTimeout = {
+    /**
+     * Milliseconds
+     */
+    milliseconds: number;
+    /**
+     * Behavior
+     */
+    behavior?: 'fail' | 'return-partial';
 };
 
 /**
@@ -5686,6 +7926,44 @@ export type TailnetProxy = {
 };
 
 /**
+ * Typography
+ */
+export type Typography = {
+    headings: HeadingStyles;
+    p?: TypographyStyle | null;
+};
+
+/**
+ * TypographyStyle
+ */
+export type TypographyStyle = {
+    /**
+     * Fontfamily
+     */
+    fontFamily: string;
+    /**
+     * Fontfallbacks
+     */
+    fontFallbacks: Array<string>;
+    /**
+     * Fontsize
+     */
+    fontSize: string;
+    /**
+     * Fontweight
+     */
+    fontWeight: number;
+    /**
+     * Lineheight
+     */
+    lineHeight: string;
+    /**
+     * Letterspacing
+     */
+    letterSpacing: string;
+};
+
+/**
  * UpdateFunctionRunResponse
  */
 export type UpdateFunctionRunResponse = {
@@ -5717,6 +7995,44 @@ export type UpdateFunctionRunResponse = {
      * Workflow Run Id
      */
     readonly workflow_run_id: string;
+};
+
+/**
+ * UpdateMonitor
+ */
+export type UpdateMonitor = {
+    /**
+     * Name
+     */
+    name?: string | null;
+    /**
+     * Target
+     */
+    target?: ({
+        type: 'page';
+    } & PageTarget) | ({
+        type: 'sitemap';
+    } & SitemapTarget) | ({
+        type: 'extract';
+    } & ExtractTarget) | null;
+    /**
+     * Change Detection
+     */
+    change_detection?: ({
+        type: 'exact';
+    } & ExactDetection) | ({
+        type: 'semantic';
+    } & SemanticDetection) | null;
+    schedule?: Interval | null;
+    /**
+     * Tags
+     */
+    tags?: Array<string> | null;
+    webhook?: Webhook | null;
+    /**
+     * Status
+     */
+    status?: 'active' | 'paused' | null;
 };
 
 /**
@@ -5997,7 +8313,7 @@ export type ViewportData = {
 /**
  * WaitAction
  */
-export type WaitAction = {
+export type WaitActionOutput = {
     /**
      * Type
      */
@@ -6040,6 +8356,210 @@ export type WebSocketUrls = {
      * WebSocket URL for live logs (obsveration / actions events)
      */
     logs: string;
+};
+
+/**
+ * Webhook
+ */
+export type Webhook = {
+    /**
+     * Url
+     */
+    url: string;
+    /**
+     * Events
+     */
+    events?: Array<'change.detected' | 'run.completed'>;
+    retry?: Retry | null;
+};
+
+/**
+ * YouTubeCaption
+ */
+export type YouTubeCaption = {
+    /**
+     * Start
+     */
+    start: number;
+    /**
+     * Duration
+     */
+    duration?: number | null;
+    /**
+     * Text
+     */
+    text: string;
+};
+
+/**
+ * YouTubeExtractRequest
+ */
+export type YouTubeExtractRequest = {
+    /**
+     * Includeimages
+     */
+    includeImages?: boolean;
+    /**
+     * Url
+     */
+    url: string;
+};
+
+/**
+ * YouTubeMetadata
+ */
+export type YouTubeMetadata = {
+    /**
+     * Kind
+     */
+    kind: 'video' | 'channel';
+    /**
+     * Url
+     */
+    url: string;
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Video Id
+     */
+    video_id?: string | null;
+    /**
+     * Channel
+     */
+    channel?: string | null;
+    /**
+     * Channel Url
+     */
+    channel_url?: string | null;
+    /**
+     * Description
+     */
+    description?: string | null;
+    /**
+     * Duration Seconds
+     */
+    duration_seconds?: number | null;
+    /**
+     * Views
+     */
+    views?: string | null;
+    /**
+     * Subscribers
+     */
+    subscribers?: string | null;
+    /**
+     * Video Count
+     */
+    video_count?: string | null;
+    /**
+     * Image Url
+     */
+    image_url?: string | null;
+    /**
+     * Published
+     */
+    published?: string | null;
+};
+
+/**
+ * YouTubeResult
+ */
+export type YouTubeResult = {
+    /**
+     * Markdown
+     */
+    markdown: string;
+    metadata: YouTubeMetadata;
+    /**
+     * Captions Status
+     */
+    captions_status: 'available' | 'unavailable' | 'disabled' | 'not_applicable';
+    /**
+     * Captions Language
+     */
+    captions_language?: string | null;
+    /**
+     * Captions Automatic
+     */
+    captions_automatic?: boolean | null;
+    /**
+     * Captions
+     */
+    captions?: Array<YouTubeCaption>;
+    /**
+     * Videos
+     */
+    videos?: Array<YouTubeVideo>;
+};
+
+/**
+ * YouTubeVideo
+ */
+export type YouTubeVideo = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Url
+     */
+    url: string;
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Duration
+     */
+    duration?: string | null;
+    /**
+     * Views
+     */
+    views?: string | null;
+    /**
+     * Published
+     */
+    published?: string | null;
+};
+
+/**
+ * WaitAction
+ */
+export type NotteApiDataApisMonitorsModelsWaitAction = {
+    /**
+     * Do
+     */
+    do: 'wait';
+    /**
+     * Timems
+     */
+    timeMs: number;
+};
+
+/**
+ * WaitAction
+ */
+export type NotteCoreActionsActionsWaitAction = {
+    /**
+     * Type
+     */
+    type?: 'wait';
+    /**
+     * Category
+     */
+    category?: string;
+    /**
+     * Description
+     */
+    description?: string;
+    /**
+     * Time Ms
+     *
+     * The amount of time to wait in milliseconds (max 30 seconds)
+     */
+    time_ms: number;
 };
 
 /**
@@ -6097,7 +8617,7 @@ export type ApiExecutionResponseWritable = {
         type: 'reload';
     } & ReloadAction) | ({
         type: 'wait';
-    } & WaitAction) | ({
+    } & WaitActionOutput) | ({
         type: 'press_key';
     } & PressKeyAction) | ({
         type: 'scroll_up';
@@ -8133,7 +10653,7 @@ export type PageExecuteData = {
         type: 'reload';
     } & ReloadAction) | ({
         type: 'wait';
-    } & WaitAction) | ({
+    } & NotteCoreActionsActionsWaitAction) | ({
         type: 'press_key';
     } & PressKeyAction) | ({
         type: 'scroll_up';
@@ -8761,6 +11281,10 @@ export type AgentStopErrors = {
      * Validation Error
      */
     422: HttpValidationError;
+    /**
+     * The agent is stopping but its final state is not saved yet; check its status shortly.
+     */
+    503: unknown;
 };
 
 export type AgentStopError = AgentStopErrors[keyof AgentStopErrors];
@@ -11924,6 +14448,1322 @@ export type SearchWebResponses = {
      */
     200: unknown;
 };
+
+export type BrandRetrieveData = {
+    /**
+     * Request
+     */
+    body: ({
+        type: 'by_domain';
+    } & BrandByDomain) | ({
+        type: 'by_name';
+    } & BrandByName) | ({
+        type: 'by_email';
+    } & BrandByEmail) | ({
+        type: 'by_ticker';
+    } & BrandByTicker) | ({
+        type: 'by_direct_url';
+    } & BrandByDirectUrl) | ({
+        type: 'by_transaction';
+    } & BrandByTransaction);
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/data/brand/retrieve';
+};
+
+export type BrandRetrieveErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type BrandRetrieveError = BrandRetrieveErrors[keyof BrandRetrieveErrors];
+
+export type BrandRetrieveResponses = {
+    /**
+     * Successful Response
+     */
+    200: BrandResponse;
+};
+
+export type BrandRetrieveResponse = BrandRetrieveResponses[keyof BrandRetrieveResponses];
+
+export type ExtractProductEndpointData = {
+    body: ProductExtractRequest;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/data/products/extract';
+};
+
+export type ExtractProductEndpointErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ExtractProductEndpointError = ExtractProductEndpointErrors[keyof ExtractProductEndpointErrors];
+
+export type ExtractProductEndpointResponses = {
+    /**
+     * Successful Response
+     */
+    200: ProductOutput;
+};
+
+export type ExtractProductEndpointResponse = ExtractProductEndpointResponses[keyof ExtractProductEndpointResponses];
+
+export type StyleguideEndpointData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: {
+        /**
+         * Domain
+         */
+        domain?: string | null;
+        /**
+         * Directurl
+         */
+        directUrl?: string | null;
+        /**
+         * Maxagems
+         */
+        maxAgeMs?: number | null;
+        /**
+         * Colorscheme
+         */
+        colorScheme?: string;
+        /**
+         * Timeoutopts[Milliseconds]
+         */
+        'timeoutOpts[milliseconds]'?: number | null;
+        /**
+         * Timeoutopts[Behavior]
+         */
+        'timeoutOpts[behavior]'?: string;
+        /**
+         * Zdr
+         */
+        zdr?: string;
+        /**
+         * Tags
+         */
+        tags?: string | null;
+    };
+    url: '/data/web/styleguide';
+};
+
+export type StyleguideEndpointErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type StyleguideEndpointError = StyleguideEndpointErrors[keyof StyleguideEndpointErrors];
+
+export type StyleguideEndpointResponses = {
+    /**
+     * Successful Response
+     */
+    200: StyleguideResponse;
+};
+
+export type StyleguideEndpointResponse = StyleguideEndpointResponses[keyof StyleguideEndpointResponses];
+
+export type MapsSearchData = {
+    body: MapsSearchRequest;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/data/maps/search';
+};
+
+export type MapsSearchErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type MapsSearchError = MapsSearchErrors[keyof MapsSearchErrors];
+
+export type MapsSearchResponses = {
+    /**
+     * Successful Response
+     */
+    200: MapsResult;
+};
+
+export type MapsSearchResponse = MapsSearchResponses[keyof MapsSearchResponses];
+
+export type ListMonitorsData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: {
+        /**
+         * Limit
+         */
+        limit?: number;
+        /**
+         * Cursor
+         */
+        cursor?: string | null;
+        /**
+         * Q
+         */
+        q?: string | null;
+        /**
+         * Search By
+         */
+        search_by?: string | null;
+        /**
+         * Search Type
+         */
+        search_type?: string;
+        /**
+         * Status
+         */
+        status?: string | null;
+        /**
+         * Target Type
+         */
+        target_type?: string | null;
+        /**
+         * Change Detection Type
+         */
+        change_detection_type?: string | null;
+        /**
+         * Tags
+         */
+        tags?: string | null;
+        /**
+         * Tag
+         */
+        tag?: string | null;
+    };
+    url: '/data/monitors';
+};
+
+export type ListMonitorsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListMonitorsError = ListMonitorsErrors[keyof ListMonitorsErrors];
+
+export type ListMonitorsResponses = {
+    /**
+     * Response List Monitors Data Monitors Get
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type ListMonitorsResponse = ListMonitorsResponses[keyof ListMonitorsResponses];
+
+export type CreateData = {
+    body: CreateMonitor;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/data/monitors';
+};
+
+export type CreateErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateError = CreateErrors[keyof CreateErrors];
+
+export type CreateResponses = {
+    /**
+     * Response Create Data Monitors Post
+     *
+     * Successful Response
+     */
+    201: {
+        [key: string]: unknown;
+    };
+};
+
+export type CreateResponse = CreateResponses[keyof CreateResponses];
+
+export type LimitsData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/data/monitors/limits';
+};
+
+export type LimitsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type LimitsError = LimitsErrors[keyof LimitsErrors];
+
+export type LimitsResponses = {
+    /**
+     * Response Limits Data Monitors Limits Get
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type LimitsResponse = LimitsResponses[keyof LimitsResponses];
+
+export type CreditUsageData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: {
+        /**
+         * Since
+         */
+        since?: string | null;
+        /**
+         * Until
+         */
+        until?: string | null;
+    };
+    url: '/data/monitors/credit-usage';
+};
+
+export type CreditUsageErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreditUsageError = CreditUsageErrors[keyof CreditUsageErrors];
+
+export type CreditUsageResponses = {
+    /**
+     * Response Credit Usage Data Monitors Credit Usage Get
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type CreditUsageResponse = CreditUsageResponses[keyof CreditUsageResponses];
+
+export type AccountRunsData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: {
+        /**
+         * Limit
+         */
+        limit?: number;
+        /**
+         * Cursor
+         */
+        cursor?: string | null;
+        /**
+         * Status
+         */
+        status?: string | null;
+    };
+    url: '/data/monitors/runs';
+};
+
+export type AccountRunsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AccountRunsError = AccountRunsErrors[keyof AccountRunsErrors];
+
+export type AccountRunsResponses = {
+    /**
+     * Response Account Runs Data Monitors Runs Get
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type AccountRunsResponse = AccountRunsResponses[keyof AccountRunsResponses];
+
+export type AccountChangesData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: {
+        /**
+         * Limit
+         */
+        limit?: number;
+        /**
+         * Cursor
+         */
+        cursor?: string | null;
+        /**
+         * Monitor Id
+         */
+        monitor_id?: string | null;
+        /**
+         * Target Type
+         */
+        target_type?: string | null;
+        /**
+         * Change Detection Type
+         */
+        change_detection_type?: string | null;
+        /**
+         * Tag
+         */
+        tag?: string | null;
+        /**
+         * Since
+         */
+        since?: string | null;
+        /**
+         * Until
+         */
+        until?: string | null;
+    };
+    url: '/data/monitors/changes';
+};
+
+export type AccountChangesErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AccountChangesError = AccountChangesErrors[keyof AccountChangesErrors];
+
+export type AccountChangesResponses = {
+    /**
+     * Response Account Changes Data Monitors Changes Get
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type AccountChangesResponse = AccountChangesResponses[keyof AccountChangesResponses];
+
+export type DeleteData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Monitor Id
+         */
+        monitor_id: string;
+    };
+    query?: never;
+    url: '/data/monitors/{monitor_id}';
+};
+
+export type DeleteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteError = DeleteErrors[keyof DeleteErrors];
+
+export type DeleteResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteResponse = DeleteResponses[keyof DeleteResponses];
+
+export type RetrieveData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Monitor Id
+         */
+        monitor_id: string;
+    };
+    query?: never;
+    url: '/data/monitors/{monitor_id}';
+};
+
+export type RetrieveErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RetrieveError = RetrieveErrors[keyof RetrieveErrors];
+
+export type RetrieveResponses = {
+    /**
+     * Response Retrieve Data Monitors  Monitor Id  Get
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type RetrieveResponse = RetrieveResponses[keyof RetrieveResponses];
+
+export type UpdateData = {
+    body: UpdateMonitor;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Monitor Id
+         */
+        monitor_id: string;
+    };
+    query?: never;
+    url: '/data/monitors/{monitor_id}';
+};
+
+export type UpdateErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateError = UpdateErrors[keyof UpdateErrors];
+
+export type UpdateResponses = {
+    /**
+     * Response Update Data Monitors  Monitor Id  Patch
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type UpdateResponse = UpdateResponses[keyof UpdateResponses];
+
+export type RunNowData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Monitor Id
+         */
+        monitor_id: string;
+    };
+    query?: never;
+    url: '/data/monitors/{monitor_id}/run';
+};
+
+export type RunNowErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RunNowError = RunNowErrors[keyof RunNowErrors];
+
+export type RunNowResponses = {
+    /**
+     * Response Run Now Data Monitors  Monitor Id  Run Post
+     *
+     * Successful Response
+     */
+    202: {
+        [key: string]: unknown;
+    };
+};
+
+export type RunNowResponse = RunNowResponses[keyof RunNowResponses];
+
+export type RunsData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Monitor Id
+         */
+        monitor_id: string;
+    };
+    query?: {
+        /**
+         * Limit
+         */
+        limit?: number;
+        /**
+         * Cursor
+         */
+        cursor?: string | null;
+        /**
+         * Status
+         */
+        status?: string | null;
+    };
+    url: '/data/monitors/{monitor_id}/runs';
+};
+
+export type RunsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RunsError = RunsErrors[keyof RunsErrors];
+
+export type RunsResponses = {
+    /**
+     * Response Runs Data Monitors  Monitor Id  Runs Get
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type RunsResponse = RunsResponses[keyof RunsResponses];
+
+export type ChangesData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Monitor Id
+         */
+        monitor_id: string;
+    };
+    query?: {
+        /**
+         * Limit
+         */
+        limit?: number;
+        /**
+         * Cursor
+         */
+        cursor?: string | null;
+        /**
+         * Tag
+         */
+        tag?: string | null;
+        /**
+         * Since
+         */
+        since?: string | null;
+        /**
+         * Until
+         */
+        until?: string | null;
+    };
+    url: '/data/monitors/{monitor_id}/changes';
+};
+
+export type ChangesErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ChangesError = ChangesErrors[keyof ChangesErrors];
+
+export type ChangesResponses = {
+    /**
+     * Response Changes Data Monitors  Monitor Id  Changes Get
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type ChangesResponse = ChangesResponses[keyof ChangesResponses];
+
+export type RetrieveRunData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Monitor Id
+         */
+        monitor_id: string;
+        /**
+         * Run Id
+         */
+        run_id: string;
+    };
+    query?: never;
+    url: '/data/monitors/{monitor_id}/runs/{run_id}';
+};
+
+export type RetrieveRunErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RetrieveRunError = RetrieveRunErrors[keyof RetrieveRunErrors];
+
+export type RetrieveRunResponses = {
+    /**
+     * Response Retrieve Run Data Monitors  Monitor Id  Runs  Run Id  Get
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type RetrieveRunResponse = RetrieveRunResponses[keyof RetrieveRunResponses];
+
+export type RetrieveChangeData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Monitor Id
+         */
+        monitor_id: string;
+        /**
+         * Change Id
+         */
+        change_id: string;
+    };
+    query?: never;
+    url: '/data/monitors/{monitor_id}/changes/{change_id}';
+};
+
+export type RetrieveChangeErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RetrieveChangeError = RetrieveChangeErrors[keyof RetrieveChangeErrors];
+
+export type RetrieveChangeResponses = {
+    /**
+     * Response Retrieve Change Data Monitors  Monitor Id  Changes  Change Id  Get
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type RetrieveChangeResponse = RetrieveChangeResponses[keyof RetrieveChangeResponses];
+
+export type RotateSecretData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Monitor Id
+         */
+        monitor_id: string;
+    };
+    query?: never;
+    url: '/data/monitors/{monitor_id}/webhook/rotate-secret';
+};
+
+export type RotateSecretErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RotateSecretError = RotateSecretErrors[keyof RotateSecretErrors];
+
+export type RotateSecretResponses = {
+    /**
+     * Response Rotate Secret Data Monitors  Monitor Id  Webhook Rotate Secret Post
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type RotateSecretResponse = RotateSecretResponses[keyof RotateSecretResponses];
+
+export type DeliveriesData = {
+    body: DeliveryList;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/data/webhooks/deliveries';
+};
+
+export type DeliveriesErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeliveriesError = DeliveriesErrors[keyof DeliveriesErrors];
+
+export type DeliveriesResponses = {
+    /**
+     * Response Deliveries Data Webhooks Deliveries Post
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type DeliveriesResponse = DeliveriesResponses[keyof DeliveriesResponses];
+
+export type RetrieveDeliveryData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Delivery Id
+         */
+        delivery_id: string;
+    };
+    query?: never;
+    url: '/data/webhooks/deliveries/{delivery_id}';
+};
+
+export type RetrieveDeliveryErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RetrieveDeliveryError = RetrieveDeliveryErrors[keyof RetrieveDeliveryErrors];
+
+export type RetrieveDeliveryResponses = {
+    /**
+     * Response Retrieve Delivery Data Webhooks Deliveries  Delivery Id  Get
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type RetrieveDeliveryResponse = RetrieveDeliveryResponses[keyof RetrieveDeliveryResponses];
+
+export type AttemptsData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Delivery Id
+         */
+        delivery_id: string;
+    };
+    query?: {
+        /**
+         * Limit
+         */
+        limit?: number;
+        /**
+         * Cursor
+         */
+        cursor?: string | null;
+    };
+    url: '/data/webhooks/deliveries/{delivery_id}/attempts';
+};
+
+export type AttemptsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AttemptsError = AttemptsErrors[keyof AttemptsErrors];
+
+export type AttemptsResponses = {
+    /**
+     * Response Attempts Data Webhooks Deliveries  Delivery Id  Attempts Get
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type AttemptsResponse = AttemptsResponses[keyof AttemptsResponses];
+
+export type RetryData = {
+    /**
+     * Body
+     */
+    body?: RetryDelivery | null;
+    headers?: {
+        /**
+         * Idempotency-Key
+         */
+        'Idempotency-Key'?: string | null;
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Delivery Id
+         */
+        delivery_id: string;
+    };
+    query?: never;
+    url: '/data/webhooks/deliveries/{delivery_id}/retry';
+};
+
+export type RetryErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RetryError = RetryErrors[keyof RetryErrors];
+
+export type RetryResponses = {
+    /**
+     * Response Retry Data Webhooks Deliveries  Delivery Id  Retry Post
+     *
+     * Successful Response
+     */
+    202: {
+        [key: string]: unknown;
+    };
+};
+
+export type RetryResponse = RetryResponses[keyof RetryResponses];
+
+export type PeopleEnrichData = {
+    body: PeopleEnrichRequest;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/data/people/enrich';
+};
+
+export type PeopleEnrichErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type PeopleEnrichError = PeopleEnrichErrors[keyof PeopleEnrichErrors];
+
+export type PeopleEnrichResponses = {
+    /**
+     * Successful Response
+     */
+    200: PeopleEnrichResponse;
+};
+
+export type PeopleEnrichResponse2 = PeopleEnrichResponses[keyof PeopleEnrichResponses];
+
+export type NewsSearchData = {
+    body: NewsSearchRequest;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/data/news/search';
+};
+
+export type NewsSearchErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type NewsSearchError = NewsSearchErrors[keyof NewsSearchErrors];
+
+export type NewsSearchResponses = {
+    /**
+     * Successful Response
+     */
+    200: NewsSearchResponse;
+};
+
+export type NewsSearchResponse2 = NewsSearchResponses[keyof NewsSearchResponses];
+
+export type ScrapeSpecializedDataData = {
+    body: DataScrapeRequest;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/data/web/scrape';
+};
+
+export type ScrapeSpecializedDataErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ScrapeSpecializedDataError = ScrapeSpecializedDataErrors[keyof ScrapeSpecializedDataErrors];
+
+export type ScrapeSpecializedDataResponses = {
+    /**
+     * Successful Response
+     */
+    200: ScrapeResponse;
+};
+
+export type ScrapeSpecializedDataResponse = ScrapeSpecializedDataResponses[keyof ScrapeSpecializedDataResponses];
+
+export type YoutubeEndpointData = {
+    body: YouTubeExtractRequest;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/data/youtube/extract';
+};
+
+export type YoutubeEndpointErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type YoutubeEndpointError = YoutubeEndpointErrors[keyof YoutubeEndpointErrors];
+
+export type YoutubeEndpointResponses = {
+    /**
+     * Successful Response
+     */
+    200: YouTubeResult;
+};
+
+export type YoutubeEndpointResponse = YoutubeEndpointResponses[keyof YoutubeEndpointResponses];
+
+export type ListDataApisData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/data';
+};
+
+export type ListDataApisErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListDataApisError = ListDataApisErrors[keyof ListDataApisErrors];
+
+export type ListDataApisResponses = {
+    /**
+     * Response List Data Apis
+     *
+     * Successful Response
+     */
+    200: Array<CapabilityEndpoint>;
+};
+
+export type ListDataApisResponse = ListDataApisResponses[keyof ListDataApisResponses];
 
 export type ScrapeFromHtmlData = {
     body: ScrapeFromHtmlRequest;

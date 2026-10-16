@@ -1,4 +1,6 @@
+import ast
 from collections.abc import AsyncIterator
+from pathlib import Path
 from typing import cast
 from unittest.mock import AsyncMock, MagicMock
 
@@ -35,6 +37,45 @@ async def page() -> AsyncIterator[Page]:
 async def scroll(page: Page, action: ScrollDownAction | ScrollUpAction) -> bool:
     window = BrowserWindow(page, BrowserWindowOptions.from_request(LocalSessionStartRequest()))
     return await execute_browser_action(window, action)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("previous_page", ["restrictive-csp", "fixed-layout"])
+async def test_documented_scroll_fixture_replaces_previous_page_styles(page: Page, previous_page: str) -> None:
+    source = Path(__file__).resolve().parents[2] / "docs/src/testers/browser-controls/scroll_down.py"
+    setup = next(
+        node
+        for node in ast.walk(ast.parse(source.read_text()))
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == "evaluate_js"
+    )
+    code = ast.literal_eval(setup.args[0])
+    fixture_url = "https://scroll-fixture.notte.test/"
+    html = "<!doctype html><p>Previous page</p>"
+    headers = {}
+    if previous_page == "restrictive-csp":
+        headers["Content-Security-Policy"] = "style-src 'none'"
+    else:
+        html = (
+            "<!doctype html><head><style>html,body {height:100%; overflow:hidden}</style></head>"
+            "<body>Previous page</body>"
+        )
+
+    async def serve_fixture(route):
+        if route.request.url == fixture_url:
+            await route.fulfill(status=200, content_type="text/html", headers=headers, body=html)
+        else:
+            await route.abort()
+
+    await page.route("**/*", serve_fixture)
+    await page.goto(fixture_url, wait_until="domcontentloaded")
+    await page.evaluate(code)
+    assert await page.evaluate("document.scrollingElement.scrollHeight > window.innerHeight")
+
+    for selector in (None, "html"):
+        assert await scroll(page, ScrollDownAction(selector=selector))
+        assert await page.evaluate("window.scrollY") > 0
+        assert await scroll(page, ScrollUpAction(selector=selector))
+        assert await page.evaluate("window.scrollY") == 0
 
 
 @pytest.mark.asyncio

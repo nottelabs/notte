@@ -431,13 +431,15 @@
     "expected": {
       "status": "closed"
     },
-    "closedSession": true
+    "closedSession": true,
+    "logContains": "Moved down: true"
   },
   "browser-controls/scroll_up.ts": {
     "expected": {
       "status": "closed"
     },
-    "closedSession": true
+    "closedSession": true,
+    "logContains": "Moved down: true\nReturned to top: true"
   },
   "browser-controls/press_key.ts": {
     "expected": {
