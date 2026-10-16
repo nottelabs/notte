@@ -9,26 +9,30 @@ const execute = promisify(execFile);
 const client = new NotteClient();
 export const result = await client.Session().use(async (session) => {
   const command = ['--session', `notte-${session.getId()!}`, '--json'];
+  const env = { ...process.env, AGENT_BROWSER_CDP: await session.cdpUrl() };
   async function browser(...args: string[]): Promise<Record<string, unknown>> {
-    let stdout: string;
     try {
-      ({ stdout } = await execute('agent-browser', [...command, ...args], { timeout: 120_000 }));
+      const { stdout } = await execute('agent-browser', [...command, ...args], { env, timeout: 120_000 });
+      const response = JSON.parse(stdout);
+      if (!response?.success || typeof response.data !== 'object' || response.data === null) throw new Error('Unsuccessful CLI command');
+      return response.data;
     } catch {
       // CLI errors can include the authenticated CDP URL.
       throw new Error('agent-browser command failed');
     }
-    const response = JSON.parse(stdout);
-    if (!response.success) throw new Error('agent-browser reported an unsuccessful command');
-    return response.data;
   }
+  let failed = false;
   try {
-    await browser('connect', await session.cdpUrl());
     await browser('open', 'https://example.com');
     const { title } = await browser('get', 'title');
     if (typeof title !== 'string') throw new Error('The title was not returned');
     console.log(title);
     return { title, session_id: session.getId()! };
+  } catch (error) {
+    failed = true;
+    throw error;
   } finally {
-    await browser('close');
+    try { await browser('close'); }
+    catch (error) { if (!failed) throw error; }
   }
 });

@@ -41,28 +41,28 @@ describe.skipIf(process.env.NOTTE_AGENT_BROWSER_LIVE !== '1')('agent-browser doc
 
 // Own the fixture DOM so selector checks do not depend on a public site's markup.
 describe.skipIf(process.env.NOTTE_AGENT_BROWSER_LIVE !== '1')('agent-browser lifecycle', () => {
-  it('fills, clicks, reconnects, and stops the browser after an application error', async () => {
+  it.each(['application', 'native'] as const)('fills, clicks, reconnects, and stops after a %s error', async mode => {
     const client = new NotteClient();
     let sessionId = '';
     try {
       await expect(client.Session().use(async (session) => {
         sessionId = session.getId()!;
         const command = ['--session', `notte-${sessionId}`, '--json'];
+        const env = { ...process.env, AGENT_BROWSER_CDP: await session.cdpUrl(), AGENT_BROWSER_DEFAULT_TIMEOUT: '1000' };
         const failedCommands: string[] = [];
         async function browser(...args: string[]) {
-          let stdout: string;
           try {
-            ({ stdout } = await execute('agent-browser', [...command, ...args], { timeout: 120_000 }));
+            const { stdout } = await execute('agent-browser', [...command, ...args], { env, timeout: 120_000 });
+            const response = JSON.parse(stdout);
+            if (!response.success) throw new Error('Unsuccessful CLI command');
+            return response.data;
           } catch {
             failedCommands.push(args[0]);
             throw new Error(`agent-browser ${args[0]} failed (failed commands: ${failedCommands.join(', ')}; CLI output withheld)`);
           }
-          const response = JSON.parse(stdout);
-          expect(response.success, `agent-browser ${args[0]} reported failure`).toBe(true);
-          return response.data;
         }
+        let failed = false;
         try {
-          await browser('connect', await session.cdpUrl());
           await browser('open', 'data:text/html,<label>Name<input id="name"></label><button id="save" onclick="document.getElementById(\'result\').textContent=\'Saved \'+document.getElementById(\'name\').value">Save</button><p id="result"></p>');
           expect((await browser('snapshot', '-i')).snapshot).toContain('Save');
           await browser('fill', '#name', 'Ada');
@@ -70,13 +70,17 @@ describe.skipIf(process.env.NOTTE_AGENT_BROWSER_LIVE !== '1')('agent-browser lif
           expect((await browser('get', 'text', '#result')).text).toBe('Saved Ada');
           await browser('close');
           expect((await session.status()).status).toBe('active');
-          await browser('connect', await session.cdpUrl());
           expect((await browser('get', 'text', '#result')).text).toBe('Saved Ada');
+          if (mode === 'native') await browser('get', 'text', '#missing-owned-fixture');
           throw new Error('Injected application failure');
+        } catch (error) {
+          failed = true;
+          throw error;
         } finally {
-          await browser('close');
+          try { await browser('close'); }
+          catch (error) { if (!failed) throw error; }
         }
-      })).rejects.toThrow('Injected application failure');
+      })).rejects.toThrow(mode === 'native' ? 'agent-browser get failed' : 'Injected application failure');
       expect(sessionId).toBeTruthy();
     } finally {
       if (sessionId) await expectSessionClosed(client, sessionId, 'agent-browser application failure');
