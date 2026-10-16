@@ -21,7 +21,7 @@ You can authenticate in two ways:
 2. Enter API key manually - paste your key from console.notte.cc/apikeys
 ```
 
-The API key will be stored securely in your system keychain.
+The API key is stored in your system credential store: the macOS Keychain, the Windows Credential Manager, or a Secret Service, KWallet or pass on Linux. Without one (headless hosts, containers), it goes to an encrypted file in the config directory whose password is fixed, so it is protected no better than a file only your user can read.
 
 ## `notte auth logout`
 
