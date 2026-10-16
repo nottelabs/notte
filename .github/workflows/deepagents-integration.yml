@@ -6,11 +6,19 @@ on:
     paths:
       - .github/workflows/deepagents-integration.yml
       - examples/deepagents/**
+      - packages/notte-sdk/**
+      - packages/notte-core/**
+      - node-sdk/**
+      - uv.lock
   push:
     branches: [main]
     paths:
       - .github/workflows/deepagents-integration.yml
       - examples/deepagents/**
+      - packages/notte-sdk/**
+      - packages/notte-core/**
+      - node-sdk/**
+      - uv.lock
 
 permissions:
   contents: read
@@ -28,7 +36,7 @@ jobs:
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           python-version: '3.11'
-      - run: uv sync --frozen
+      - run: uv sync --locked
         working-directory: examples/deepagents
       - run: uv run python -m unittest -v test_agent.py
         working-directory: examples/deepagents
@@ -40,6 +48,10 @@ jobs:
         working-directory: examples/deepagents/typescript
   browser:
     needs: static
+    strategy:
+      fail-fast: false
+      matrix:
+        sdk: [published, source]
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -57,9 +69,17 @@ jobs:
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           python-version: '3.11'
-      - run: uv sync --frozen
+      - run: uv sync --locked
         working-directory: examples/deepagents
+      - if: matrix.sdk == 'source'
+        run: uv pip install --python examples/deepagents/.venv/bin/python -e packages/notte-core -e packages/notte-sdk
+      - run: uv pip check --python examples/deepagents/.venv/bin/python
       - run: npm ci
+        working-directory: examples/deepagents/typescript
+      - if: matrix.sdk == 'source'
+        run: npm ci --prefix node-sdk && npm run build --prefix node-sdk
+      - if: matrix.sdk == 'source'
+        run: npm install --no-save --package-lock=false ../../../node-sdk && npm run typecheck
         working-directory: examples/deepagents/typescript
       - name: Wait for the API
         uses: ./.github/actions/wait-for-api
@@ -77,6 +97,6 @@ jobs:
           DISABLE_TELEMETRY: 'true'
         run: |
           cd examples/deepagents
-          uv run python -m unittest -v test_agent.py
+          .venv/bin/python -m unittest -v test_agent.py
           cd typescript
           npm run test:live
