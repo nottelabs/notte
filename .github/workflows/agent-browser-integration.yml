@@ -19,6 +19,7 @@ on:
       - node-sdk/package.json
       - node-sdk/package-lock.json
       - node-sdk/tsup.config.ts
+      - node-sdk/tsconfig.json
       - node-sdk/vitest.config.ts
       - uv.lock
   push:
@@ -39,6 +40,7 @@ on:
       - node-sdk/package.json
       - node-sdk/package-lock.json
       - node-sdk/tsup.config.ts
+      - node-sdk/tsconfig.json
       - node-sdk/vitest.config.ts
       - uv.lock
 
