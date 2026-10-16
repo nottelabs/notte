@@ -1,0 +1,38 @@
+---
+title: Temporal
+description: Run durable browser tasks with Temporal and Notte.
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+Run Notte browser tasks as [Temporal Activities](https://docs.temporal.io/activities). The TypeScript project in `examples/temporal` in the [Notte repository](https://github.com/nottelabs/notte) reads a page title through Playwright and returns the result to a Workflow.
+
+## Set up
+
+Use Node.js 24+, a [Notte API key](https://console.notte.cc), and the [Temporal CLI](https://docs.temporal.io/cli).
+
+Start a local Temporal server:
+
+```bash
+temporal server start-dev
+```
+
+In another terminal, start the worker:
+
+```bash
+git clone https://github.com/nottelabs/notte.git
+cd notte/examples/temporal
+npm ci
+npm run build
+export NOTTE_API_KEY=your-notte-api-key
+npm run worker
+```
+
+In a third terminal, run `npm start` from `examples/temporal`. The result contains `title: "Example Domain"` and the stopped session's `session_id`.
+
+## Retries and browser ownership
+
+Browser calls run inside the Activity, outside deterministic Workflow code. Each attempt creates a new session and closes it on success or failure. A three-minute session limit bounds browser lifetime if the worker process dies before cleanup. No local browser installation is needed.
+
+The Workflow allows up to three Activity attempts. Keep operations with external side effects out of automatic retries unless they are idempotent.
