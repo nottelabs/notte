@@ -1,0 +1,28 @@
+---
+title: Inngest AgentKit
+description: Give AgentKit agents browser tools with Notte.
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+Use [Inngest AgentKit](https://agentkit.inngest.com/) with a Notte browser tool. The TypeScript example in `examples/inngest` in the [Notte repository](https://github.com/nottelabs/notte) lets a Claude agent read a page title through Playwright.
+
+## Set up
+
+Use Node.js 24+, a [Notte API key](https://console.notte.cc), and an [Anthropic API key](https://platform.claude.com/settings/keys).
+
+```bash
+git clone https://github.com/nottelabs/notte.git
+cd notte/examples/inngest
+npm ci
+export NOTTE_API_KEY=your-notte-api-key
+export ANTHROPIC_API_KEY=your-anthropic-api-key
+npm start
+```
+
+The agent calls `page_title` for `https://example.com`. The tool result contains `title: "Example Domain"` and the stopped session's `session_id`.
+
+Each tool call owns a separate session and closes it on success or failure. No local browser installation is needed. Extend the tool handler to add the browser actions your agent needs.
+
+This example runs AgentKit directly. For durable execution and tracing, follow [AgentKit's Inngest setup](https://agentkit.inngest.com/getting-started/quick-start).
