@@ -1,0 +1,36 @@
+---
+title: Vercel agent-browser
+description: Run agent-browser commands on a Notte cloud browser.
+---
+import AgentBrowser from '/snippets/integrations/agent_browser.mdx';
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+[agent-browser](https://agent-browser.dev/) is Vercel's browser automation CLI. Connect it to a Notte session over CDP to navigate, inspect pages, and interact with elements.
+
+## Install
+
+Install the CLI with Node.js 24+:
+
+```bash
+npm install -g agent-browser@0.39.1
+```
+
+For Python, use Python 3.11+ and `pip install notte-sdk`. For TypeScript, run `npm install notte-sdk` in a project with `"type": "module"`.
+
+Set your [Notte API key](https://console.notte.cc/apikeys):
+
+```bash
+export NOTTE_API_KEY=your-notte-api-key
+```
+
+## Connect and read a page
+
+Save the example as `notte_agent_browser.py` or `notte_agent_browser.ts`. Run `python notte_agent_browser.py` or `node --experimental-strip-types notte_agent_browser.ts`.
+
+<AgentBrowser />
+
+Both examples print `Example Domain`. Each uses its own CLI session name, disconnects the CLI in `finally`, and stops the Notte browser through the outer session scope.
+
+Use `snapshot -i` to discover interactive element references, then `click @e1` or `fill @e1 value` to interact. Take a new snapshot after the page changes. See [agent-browser commands](https://agent-browser.dev/commands) and [Notte session lifecycle](/features/sessions/lifecycle).

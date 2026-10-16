@@ -1,0 +1,73 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/integrations/agent_browser.py */}
+
+<CodeGroup>
+
+```python notte_agent_browser.py
+import json
+import subprocess
+from typing import Any
+
+from notte_sdk import NotteClient
+
+with NotteClient().Session() as session:
+    command = ["agent-browser", "--session", f"notte-{session.session_id}", "--json"]
+
+    def browser(*args: str) -> dict[str, Any]:
+        try:
+            completed = subprocess.run(command + list(args), capture_output=True, text=True, timeout=120, check=False)
+        except (OSError, subprocess.SubprocessError):
+            raise RuntimeError("agent-browser command failed") from None
+        if completed.returncode:
+            # CLI errors can include the authenticated CDP URL.
+            raise RuntimeError("agent-browser command failed")
+        response = json.loads(completed.stdout)
+        if not response["success"]:
+            raise RuntimeError("agent-browser reported an unsuccessful command")
+        return response["data"]
+
+    try:
+        _ = browser("connect", session.cdp_url())
+        _ = browser("open", "https://example.com")
+        title = browser("get", "title")["title"]
+        print(title)
+        result = {"title": title, "session_id": session.session_id}
+    finally:
+        _ = browser("close")
+```
+
+```typescript notte_agent_browser.ts
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import { NotteClient } from 'notte-sdk';
+
+const execute = promisify(execFile);
+
+export const result = await new NotteClient().Session().use(async (session) => {
+  const command = ['--session', `notte-${session.getId()!}`, '--json'];
+  async function browser(...args: string[]): Promise<Record<string, unknown>> {
+    let stdout: string;
+    try {
+      ({ stdout } = await execute('agent-browser', [...command, ...args], { timeout: 120_000 }));
+    } catch {
+      // CLI errors can include the authenticated CDP URL.
+      throw new Error('agent-browser command failed');
+    }
+    const response = JSON.parse(stdout);
+    if (!response.success) throw new Error('agent-browser reported an unsuccessful command');
+    return response.data;
+  }
+  try {
+    await browser('connect', await session.cdpUrl());
+    await browser('open', 'https://example.com');
+    const { title } = await browser('get', 'title');
+    if (typeof title !== 'string') throw new Error('The title was not returned');
+    console.log(title);
+    return { title, session_id: session.getId()! };
+  } finally {
+    await browser('close');
+  }
+});
+```
+
+</CodeGroup>
