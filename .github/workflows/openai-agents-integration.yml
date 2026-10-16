@@ -9,6 +9,7 @@ on:
       - docs/package.json
       - docs/package-lock.json
       - node-sdk/test/openai-agents.integration.test.ts
+      - node-sdk/test/helpers/run-openai-recipe.py
       - node-sdk/src/**
       - node-sdk/package.json
       - node-sdk/package-lock.json
@@ -23,6 +24,7 @@ on:
       - docs/package.json
       - docs/package-lock.json
       - node-sdk/test/openai-agents.integration.test.ts
+      - node-sdk/test/helpers/run-openai-recipe.py
       - node-sdk/src/**
       - node-sdk/package.json
       - node-sdk/package-lock.json

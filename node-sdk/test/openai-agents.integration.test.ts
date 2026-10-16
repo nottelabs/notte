@@ -19,9 +19,10 @@ function recipe(language: typeof languages[number], overrides: NodeJS.ProcessEnv
   const extension = language === 'python' ? 'py' : 'ts';
   const example = fileURLToPath(new URL(`../../docs/src/testers/integrations/openai_agents.${extension}`, import.meta.url));
   const runner = fileURLToPath(new URL(`../../docs/src/sniptest/run_${language}.${language === 'python' ? 'py' : 'mjs'}`, import.meta.url));
+  const diagnostics = fileURLToPath(new URL('./helpers/run-openai-recipe.py', import.meta.url));
   const env = { ...process.env, ...overrides };
   return execute(language === 'python' ? python! : process.execPath,
-    language === 'python' ? [runner, example] : ['--experimental-strip-types', runner, example],
+    language === 'python' ? [diagnostics, runner, example] : ['--experimental-strip-types', runner, example],
     { env, timeout: 180_000, maxBuffer: 2 * 1024 * 1024 });
 }
 
@@ -31,7 +32,9 @@ describe.skipIf(process.env.NOTTE_OPENAI_AGENTS_LIVE !== '1')('OpenAI Agents SDK
     let stdout: string;
     try {
       ({ stdout } = await recipe(language));
-    } catch {
+    } catch (error) {
+      const diagnostic = (error as { stderr?: string }).stderr?.match(/^OPENAI_DIAGNOSTIC=(.+)$/m)?.[1];
+      if (diagnostic) throw new Error(`${language} OpenAI agent failed: ${JSON.parse(diagnostic)}`);
       throw new Error(`${language} OpenAI agent failed (SDK output withheld)`);
     }
     const { result } = JSON.parse(stdout.trim().split(/\r?\n/).at(-1)!) as {
