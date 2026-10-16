@@ -27,8 +27,7 @@ function recipe(language: typeof languages[number], overrides: NodeJS.ProcessEnv
 }
 
 describe.skipIf(process.env.NOTTE_OPENAI_AGENTS_LIVE !== '1')('OpenAI Agents SDK documentation', () => {
-  it.each(languages)('uses the browser and closes the %s session', async language => {
-    if (!process.env.OPENAI_API_KEY) throw new Error('Set OPENAI_API_KEY explicitly');
+  it.skipIf(!process.env.OPENAI_API_KEY).each(languages)('uses the browser and closes the %s session', async language => {
     let stdout: string;
     try {
       ({ stdout } = await recipe(language));
