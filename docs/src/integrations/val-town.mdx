@@ -21,3 +21,5 @@ Send a POST request to the trigger URL with `Authorization: Bearer <NOTTE_VALTOW
 The handler uses Deno's built-in `fetch` with Notte's session and page-execution APIs. The browser runs in Notte, so Val Town needs no browser binary or filesystem access. Cleanup runs on success and failure. The sample visits `https://example.com`; edit its task to browse another page.
 
 The example's README includes offline and live verification commands. See Val Town's [environment variables guide](https://docs.val.town/reference/environment-variables) for managing your keys.
+
+Verified locally with Deno 2.9.6 and real Notte browsers. Hosted Val Town execution has not been verified.

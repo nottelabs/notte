@@ -123,7 +123,7 @@ Deno.test("The authenticated HTTP task returns the title after closing its brows
 });
 
 Deno.test("Navigation failure closes the owned browser", async () => {
-  await assert.rejects(owned(() => readPage("http://127.0.0.1:1"), true));
+  await owned(() => assert.rejects(() => readPage("http://127.0.0.1:1")), true);
 });
 
 Deno.test(
