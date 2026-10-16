@@ -9,7 +9,7 @@ import sys
 runner, example = sys.argv[1:]
 sys.argv = [runner, example]
 try:
-    runpy.run_path(runner, run_name="__main__")
+    _ = runpy.run_path(runner, run_name="__main__")
 except Exception as error:
     cause = error.__context__ or error
     detail = f"{type(cause).__name__}: {cause}"
