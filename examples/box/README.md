@@ -14,4 +14,4 @@ A [developer token](https://developer.box.com/guides/authentication/tokens/devel
 
 Run offline upload-contract checks with `python -m unittest test_upload` or `npm test`. Set `NOTTE_BOX_CAPTURE_LIVE=1` and an explicit `NOTTE_API_URL` to test the hosted capture and browser cleanup with `python -m unittest test_capture` or `npm run test:capture`.
 
-Box upload, metadata verification, and errors are contract-tested; this example was shipped without a live Box account. To run the optional real-account tests, set `NOTTE_BOX_LIVE=1`, `BOX_ACCESS_TOKEN`, and `NOTTE_API_URL`, then run `python -m unittest test_box` or `npm run test:live`. They create an isolated folder and remove only their own files and folder.
+Box upload, metadata verification, and errors are contract-tested; this example was shipped without a live Box account. To run the optional real-account tests locally, set `NOTTE_BOX_LIVE=1`, `BOX_ACCESS_TOKEN`, and `NOTTE_API_URL`, then run `python -m unittest test_box` or `npm run test:live`. They create an isolated folder and remove only their own files and folder. CI uses no Box credentials.

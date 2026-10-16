@@ -54,9 +54,6 @@ jobs:
       NOTTE_API_URL: https://us-staging.notte.cc
       NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
       NOTTE_BOX_CAPTURE_LIVE: '1'
-      NOTTE_BOX_LIVE: '1'
-      BOX_ACCESS_TOKEN: ${{ secrets.BOX_ACCESS_TOKEN }}
-      BOX_FOLDER_ID: ${{ vars.BOX_FOLDER_ID || '0' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -76,8 +73,3 @@ jobs:
           timeout: '300'
       - run: python -m unittest -v test_capture
       - run: npm run test:capture
-      - name: Test an optional live Box account
-        if: env.BOX_ACCESS_TOKEN != ''
-        run: |
-          python -m unittest -v test_box
-          npm run test:live
