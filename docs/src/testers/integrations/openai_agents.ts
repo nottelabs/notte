@@ -21,14 +21,14 @@ export const result = await new NotteClient().Session().use(async (session) => {
       model: 'gpt-4.1-mini',
       instructions: `Use only browser_id ${session.getId()!}. Read the page with Notte tools.`,
       mcpServers: [server],
-      outputType: z.object({ heading: z.string() }),
+      outputType: z.object({ title: z.string() }),
     });
-    const answer = await new Runner({ tracingDisabled: true }).run(agent, 'Visit https://example.com and return its main heading.', {
+    const answer = await new Runner({ tracingDisabled: true }).run(agent, 'Visit https://example.com and return its page title.', {
       maxTurns: 8,
     });
-    if (!answer.finalOutput) throw new Error('The agent returned no heading');
-    console.log(answer.finalOutput.heading);
-    return { heading: answer.finalOutput.heading, session_id: session.getId()! };
+    if (!answer.finalOutput) throw new Error('The agent returned no title');
+    console.log(answer.finalOutput.title);
+    return { title: answer.finalOutput.title, session_id: session.getId()! };
   } finally {
     await server.close();
   }

@@ -9,8 +9,8 @@ from notte_sdk import NotteClient
 from pydantic import BaseModel
 
 
-class Heading(BaseModel):
-    heading: str
+class PageTitle(BaseModel):
+    title: str
 
 
 async def main() -> dict[str, str]:
@@ -31,17 +31,17 @@ async def main() -> dict[str, str]:
                 model="gpt-4.1-mini",
                 instructions=f"Use only browser_id {session.session_id}. Read the page with Notte tools.",
                 mcp_servers=[server],
-                output_type=Heading,
+                output_type=PageTitle,
             )
             run = await Runner.run(
                 agent,
-                "Visit https://example.com and return its main heading.",
+                "Visit https://example.com and return its page title.",
                 max_turns=8,
                 run_config=RunConfig(tracing_disabled=True),
             )
-            heading = run.final_output_as(Heading).heading
-            print(heading)
-            return {"heading": heading, "session_id": session.session_id}
+            title = run.final_output_as(PageTitle).title
+            print(title)
+            return {"title": title, "session_id": session.session_id}
 
 
 result = asyncio.run(main())

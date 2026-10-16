@@ -31,10 +31,10 @@ describe.skipIf(process.env.NOTTE_OPENAI_AGENTS_LIVE !== '1')('OpenAI Agents SDK
       throw new Error(`${language} OpenAI Agents SDK example failed (SDK output withheld)`);
     }
     const { result } = JSON.parse(stdout.trim().split(/\r?\n/).at(-1)!) as {
-      result: { heading: string; session_id: string };
+      result: { title: string; session_id: string };
     };
     expect(result.session_id).toBeTruthy();
     await expectSessionClosed(new NotteClient(), result.session_id, `OpenAI Agents SDK ${language}`);
-    expect(result.heading).toBe('Example Domain');
+    expect(result.title).toBe('Example Domain');
   }, 200_000);
 });
