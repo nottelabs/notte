@@ -1,0 +1,8 @@
+{
+  "name": "notte-docs-integrations",
+  "private": true,
+  "dependencies": {
+    "@browserbasehq/stagehand": "4.2.1",
+    "zod": "4.4.3"
+  }
+}

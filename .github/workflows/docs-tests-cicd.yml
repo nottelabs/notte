@@ -110,7 +110,7 @@ jobs:
         # and every snippet "passed" without being checked.
         run: |
           uv sync --locked
-          uv pip install pytest-examples mypy
+          uv pip install pytest-examples mypy stagehand==4.2.1
 
       - name: Run type checks
         # --no-sync: pytest and the mypy it spawns must see exactly the environment

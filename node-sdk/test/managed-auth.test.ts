@@ -63,6 +63,8 @@ describe('managed auth transport and lifecycle', () => {
   });
 
   it.each([500, 529])('does not retry session creation after cancellation on HTTP %s', async status => {
+    // Keep retry jitter above the cancellation delay.
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
     const controller = new AbortController();
     handle = () => {
       if (status === 529) setTimeout(() => controller.abort(new Error('cancelled retry')), 10);
