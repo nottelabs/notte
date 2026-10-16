@@ -6,11 +6,21 @@ on:
     paths:
       - .github/workflows/trigger-integration.yml
       - examples/trigger/**
+      - node-sdk/src/**
+      - node-sdk/package.json
+      - node-sdk/package-lock.json
+      - node-sdk/tsup.config.ts
+      - node-sdk/tsconfig.json
   push:
     branches: [main]
     paths:
       - .github/workflows/trigger-integration.yml
       - examples/trigger/**
+      - node-sdk/src/**
+      - node-sdk/package.json
+      - node-sdk/package-lock.json
+      - node-sdk/tsup.config.ts
+      - node-sdk/tsconfig.json
 
 permissions:
   contents: read
@@ -18,6 +28,7 @@ permissions:
 jobs:
   static:
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -29,11 +40,17 @@ jobs:
         working-directory: examples/trigger
       - run: npm run typecheck
         working-directory: examples/trigger
+      - run: npm test
+        working-directory: examples/trigger
   browser-handler:
     needs: static
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    if: github.actor != 'dependabot[bot]' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        sdk: [published, source]
     concurrency:
       group: notte-live-api-${{ github.ref }}
       queue: max
@@ -47,6 +64,12 @@ jobs:
           node-version: '24'
       - run: npm ci
         working-directory: examples/trigger
+      - if: matrix.sdk == 'source'
+        run: |
+          npm ci --prefix node-sdk
+          npm run build --prefix node-sdk
+          cd examples/trigger
+          npm install --no-save --package-lock=false ../../node-sdk
       - name: Wait for the API
         uses: ./.github/actions/wait-for-api
         with:
@@ -58,4 +81,8 @@ jobs:
           NOTTE_API_URL: https://us-staging.notte.cc
           NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
           NOTTE_TRIGGER_LIVE: '1'
-        run: npm run test:live
+        run: |
+          test -n "$NOTTE_API_KEY"
+          npm run typecheck
+          npm test
+          npm run test:live

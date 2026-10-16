@@ -30,10 +30,11 @@ async function execute(url: string, maxAttempts: number) {
 
 async function closed(sessionId: string) {
   const client = new NotteClient();
-  for (let attempt = 0; attempt < 30; attempt++) {
+  const signal = AbortSignal.timeout(15_000);
+  while (!signal.aborted) {
     const response = await sessionStatus({
       client: client.getClient(), path: { session_id: sessionId }, throwOnError: true,
-      signal: AbortSignal.timeout(15_000),
+      signal,
     });
     if (response.data.status === 'closed') return;
     await new Promise(resolve => setTimeout(resolve, 500));

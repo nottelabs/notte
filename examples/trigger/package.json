@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "trigger dev --skip-update-check",
     "typecheck": "tsc --noEmit",
+    "test": "node --test test/cleanup.test.ts test/cli.test.ts",
     "test:live": "node --experimental-strip-types --test test/read-page.live.test.ts",
     "test:hosted": "node --experimental-strip-types --test test/hosted.live.test.ts"
   },
@@ -20,5 +21,10 @@
     "@types/node": "24.10.0",
     "trigger.dev": "4.7.4",
     "typescript": "6.0.3"
+  },
+  "overrides": {
+    "giget": {
+      "tar": "7.5.22"
+    }
   }
 }

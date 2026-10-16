@@ -6,6 +6,7 @@ export async function readPage(payload: { url: string }) {
   return new NotteClient().Session({ max_duration_minutes: 3 }).use(async (session) => {
     let browser: Browser | undefined;
     let stage = 'browser connection';
+    let failed = false;
     try {
       browser = await chromium.connectOverCDP(await session.cdpUrl());
       const page = await browser.contexts()[0].newPage();
@@ -14,10 +15,21 @@ export async function readPage(payload: { url: string }) {
       stage = 'reading the title';
       return { title: await page.title(), session_id: session.getId()! };
     } catch {
+      failed = true;
       // Connection errors can include the authenticated CDP URL.
       throw new Error(`Notte browser task failed during ${stage} (session ${session.getId()})`);
     } finally {
-      await browser?.close();
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      try {
+        if (browser) await Promise.race([
+          browser.close(),
+          new Promise<never>((_resolve, reject) => { timer = setTimeout(() => reject(new Error('Disconnect deadline')), 5_000); }),
+        ]);
+      }
+      catch {
+        if (!failed) throw new Error(`Notte browser cleanup failed (session ${session.getId()})`);
+      }
+      finally { clearTimeout(timer); }
     }
   });
 }
