@@ -27,11 +27,9 @@ identifies scripts needing fixtures/type validation; `live_tested` identifies
 catalog examples executed by the paired runner. The legacy execution backlog
 cannot grow on subsequent PRs. It is not a Python-only exception or a passing live test.
 
-Translation is incremental: there are 488 Python sources and 106
-TypeScript sources, including 93 same-name pairs. 395 Python sources still lack a
-same-name TypeScript counterpart; some describe Python-only integrations or
-function-runtime code. Review these individually before classifying exceptions.
-All 86 previously manual snippet files now use the catalog.
+Run `python docs/src/sniptest/parity.py` from the repository root for current
+source, pairing, and execution-backlog counts. Review unpaired examples individually
+before classifying exceptions; some describe Python-only integrations or function-runtime code.
 See `docs/src/sniptest/BACKLOG.md` for follow-up batches and SDK gaps that remain separate.
 
 ## Local validation
@@ -59,8 +57,8 @@ legacy execution backlog and executes both files unchanged;
 when adding examples needing other resources, extend the owned fixtures first.
 Do not add examples that depend on somebody's existing resource IDs.
 
-`live-examples.json` declares exact expected results for 59 pairs; the six
-original cases retain dedicated checks in the runner. Each new executable pair
+`live-examples.json` declares exact expected results for executable pairs;
+the original cases retain dedicated checks in the runner. Each new executable pair
 must have a nonempty behavior contract. CI rejects missing counterparts, pending
 Python counterparts, stale contracts, and contract typos. The runner collects
 Python globals using `runpy` and TypeScript module exports, with no test-time source
