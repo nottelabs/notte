@@ -167,10 +167,6 @@
       "destination": "/integrations"
     },
     {
-      "source": "/integrations/openai-computer-use",
-      "destination": "/integrations"
-    },
-    {
       "source": "/integrations/claude-agent-sdk",
       "destination": "/mcp-server"
     },
@@ -361,6 +357,13 @@
               "integrations/openclaw",
               "integrations/hermes",
               "integrations/stagehand"
+            ]
+          },
+          {
+            "group": "Computer Use",
+            "icon": "desktop",
+            "pages": [
+              "integrations/openai-computer-use"
             ]
           },
           {
