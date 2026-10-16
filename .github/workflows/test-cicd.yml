@@ -12,7 +12,7 @@ on:
         type: string
         default: ''
       llm_provider:
-        description: Explicit maintainer dispatch provider for live local extraction
+        description: Provider for the validated reviewed commit
         type: string
         default: gemini
   # Periodic full live coverage; offline tests remain the secret-free PR gate.
@@ -86,7 +86,7 @@ jobs:
         with:
           # Maintainer-only path: runs the dispatched PR's code WITH secrets. Only reach
           # this after reviewing the diff. refs/pull/<n>/head is the PR's head commit.
-          ref: ${{ inputs.reviewed_sha || format('refs/pull/{0}/head', github.event.inputs.pr_number) }}
+          ref: refs/pull/${{ github.event.inputs.pr_number }}/head
           fetch-depth: 0
           persist-credentials: false
 
@@ -94,7 +94,7 @@ jobs:
         if: github.event_name != 'workflow_dispatch'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
 
@@ -157,13 +157,13 @@ jobs:
         with:
           # Maintainer-only path: runs the dispatched PR's code WITH secrets. Only reach
           # this after reviewing the diff. refs/pull/<n>/head is the PR's head commit.
-          ref: ${{ inputs.reviewed_sha || format('refs/pull/{0}/head', github.event.inputs.pr_number) }}
+          ref: refs/pull/${{ github.event.inputs.pr_number }}/head
 
       - name: Checkout code (PR or push)
         if: github.event_name != 'workflow_dispatch'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-            ref: ${{ github.event.pull_request.head.sha }}
+            ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - uses: ./.github/actions/python-setup
         with:
@@ -220,13 +220,13 @@ jobs:
         with:
           # Maintainer-only path: runs the dispatched PR's code WITH secrets. Only reach
           # this after reviewing the diff. refs/pull/<n>/head is the PR's head commit.
-          ref: ${{ inputs.reviewed_sha || format('refs/pull/{0}/head', github.event.inputs.pr_number) }}
+          ref: refs/pull/${{ github.event.inputs.pr_number }}/head
 
       - name: Checkout code (PR or push)
         if: github.event_name != 'workflow_dispatch'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-            ref: ${{ github.event.pull_request.head.sha }}
+            ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
@@ -285,10 +285,10 @@ jobs:
 
       - name: Run staging and live tests
         env:
-          # Paid provider credentials remain exclusive to explicit maintainer dispatch.
+          # Paid credentials require a validated, explicit maintainer test-branch push.
           NOTTE_CI_REVIEWED_SHA: ${{ inputs.reviewed_sha }}
-          NOTTE_CI_LLM_PROVIDER: ${{ github.event_name == 'workflow_dispatch' && inputs.llm_provider || 'gemini' }}
-          OPENAI_API_KEY: ${{ github.event_name == 'workflow_dispatch' && inputs.llm_provider == 'openai' && inputs.reviewed_sha == github.sha && secrets.OPENAI_API_KEY || '' }}
+          NOTTE_CI_LLM_PROVIDER: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/ci-reviewed/openai/') && !github.event.deleted && inputs.llm_provider || 'gemini' }}
+          OPENAI_API_KEY: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/ci-reviewed/openai/') && !github.event.deleted && inputs.llm_provider == 'openai' && inputs.reviewed_sha == github.sha && secrets.OPENAI_API_KEY || '' }}
           NOTTE_LLM_BASE_URL: https://generativelanguage.googleapis.com/v1beta/openai
           NOTTE_LLM_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           NOTTE_LLM_MODEL: gemini-3.5-flash-lite
@@ -334,13 +334,13 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ inputs.reviewed_sha || format('refs/pull/{0}/head', github.event.inputs.pr_number) }}
+          ref: refs/pull/${{ github.event.inputs.pr_number }}/head
           persist-credentials: false
       - name: Checkout code (PR or push)
         if: github.event_name != 'workflow_dispatch'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - name: Note - provider matrix skipped (missing secret)
         if: env.OPENROUTER_API_KEY == ''
@@ -403,14 +403,14 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ inputs.reviewed_sha || format('refs/pull/{0}/head', github.event.inputs.pr_number) }}
+          ref: refs/pull/${{ github.event.inputs.pr_number }}/head
           persist-credentials: false
 
       - name: Checkout code (PR or push)
         if: github.event_name != 'workflow_dispatch'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
 
       - run: git submodule update --init notte-cli
@@ -467,7 +467,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:

@@ -200,6 +200,10 @@ class RoutingTests(unittest.TestCase):
         self.assertTrue(all(scheduled[name] for name in ci.GROUPS["node"]))
         manual = ci.select("workflow_dispatch", "", "")
         self.assertTrue(all(manual[name] for name in ci.ALL))
+        # Reviewed pushes retain every suite even when a valid comparison exists.
+        reviewed = ci.select("reviewed_push", "a" * 40, "b" * 40)
+        self.assertTrue(reviewed["full"])
+        self.assertTrue(all(reviewed[name] for name in ci.ALL))
 
     def test_fences_preserve_language_options_code_and_unclosed_blocks(self) -> None:
         original = 'Prose\n```python title="demo"\nx = 1\n```\nMore prose\n'

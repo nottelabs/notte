@@ -7,8 +7,12 @@ on:
         description: Suite decisions from the shared push or PR selector.
         type: string
         default: ''
+      comparison_base:
+        description: Trusted PR base for the reviewed push parity comparison
+        type: string
+        default: ''
       reviewed_sha:
-        description: Immutable commit validated by the coordinating manual workflow
+        description: Immutable commit validated by the coordinating reviewed workflow
         type: string
         default: ''
   workflow_dispatch:
@@ -70,7 +74,7 @@ jobs:
       - run: python -m unittest discover -s docs/src/scripts -p 'test_*.py'
       - name: Enforce example parity and shrinking backlog
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          BASE_SHA: ${{ inputs.comparison_base || github.event.pull_request.base.sha || github.event.before }}
         run: |
           if [ -n "$BASE_SHA" ] && [ "$BASE_SHA" != '0000000000000000000000000000000000000000' ]; then
             python docs/src/sniptest/parity.py --base-ref "$BASE_SHA"
@@ -85,7 +89,7 @@ jobs:
       fromJSON(needs.changes.outputs.scope).paired_live &&
       ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
       (github.event_name != 'pull_request' && github.ref == 'refs/heads/main') ||
-      (github.event_name == 'workflow_dispatch' && inputs.reviewed_sha == github.sha))
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/ci-reviewed/openai/') && !github.event.deleted && inputs.reviewed_sha == github.sha))
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:

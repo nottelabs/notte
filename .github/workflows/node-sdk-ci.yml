@@ -8,7 +8,7 @@ on:
         type: string
         default: ''
       reviewed_sha:
-        description: Immutable commit validated by the coordinating manual workflow
+        description: Immutable commit validated by the coordinating reviewed workflow
         type: string
         default: ''
   # Keep periodic coverage of the complete v2 Node suite.
@@ -92,7 +92,7 @@ jobs:
       fromJSON(needs.changes.outputs.scope).node_live &&
       ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
       (github.event_name != 'pull_request' && github.ref == 'refs/heads/main') ||
-      (github.event_name == 'workflow_dispatch' && inputs.reviewed_sha == github.sha))
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/ci-reviewed/openai/') && !github.event.deleted && inputs.reviewed_sha == github.sha))
     needs: [changes, tests]
     runs-on: ubuntu-latest
     timeout-minutes: 45
