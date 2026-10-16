@@ -425,7 +425,8 @@
             "group": "Workflow Automation",
             "icon": "diagram-project",
             "pages": [
-              "integrations/n8n"
+              "integrations/n8n",
+              "integrations/trigger"
             ]
           },
           {
