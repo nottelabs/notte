@@ -9,7 +9,7 @@ from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import httpx2
-from demo import PipedreamConfig, run_demo
+from demo import PipedreamConfig, load_action, run_demo
 
 CONFIG = PipedreamConfig("fixture-client", "fixture-secret", "proj_fixture", "user-fixture")
 
@@ -69,11 +69,16 @@ def provider(mode="success"):
                     "tools": [
                         {
                             "name": "fixture_catalog_read",
-                            "description": "Local discovery fixture, not a provider action",
+                            "description": "Synthetic test tool, not a vendor action",
                             "inputSchema": {"type": "object", "properties": {}},
                             "annotations": {"readOnlyHint": True},
                         }
                     ]
+                }
+            elif method == "tools/call":
+                result = {
+                    "content": [{"type": "text", "text": "private fixture-output detail"}],
+                    "isError": mode == "action_error",
                 }
             else:
                 return self.reply({"error": "Unexpected fixture method"}, 400)
@@ -107,14 +112,36 @@ def closed(session_id):
 
 
 class LiveTests(unittest.TestCase):
+    def test_invalid_action_file_is_sanitized(self):
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(mode="w+") as file:
+            file.write('{"name":"fixture-private-argument","arguments":[]}')
+            file.flush()
+            with self.assertRaisesRegex(ValueError, "Action file must contain") as error:
+                load_action(file.name)
+            self.assertNotIn("fixture-private-argument", str(error.exception))
+            file.seek(0)
+            file.truncate()
+            file.write('{"name":"fixture_catalog_read","arguments":{}}')
+            file.flush()
+            self.assertEqual(load_action(file.name), {"name": "fixture_catalog_read", "arguments": {}})
+        self.assertIsNone(load_action(None))
+
     def test_native_transports_and_owned_browser_cleanup(self):
-        for mode in ["success", "oauth401", "mcp401", "navigation", "cancel"]:
+        for mode in ["success", "action", "action_error", "unoffered", "oauth401", "mcp401", "navigation", "cancel"]:
             with self.subTest(mode=mode), provider(mode) as (base, state):
 
                 async def execute():
                     task = asyncio.create_task(
                         run_demo(
                             CONFIG,
+                            approved_action={
+                                "name": "fixture_not_offered" if mode == "unoffered" else "fixture_catalog_read",
+                                "arguments": {"private": "fixture-private-argument"},
+                            }
+                            if mode in {"action", "action_error", "unoffered"}
+                            else None,
                             oauth_url=f"{base}/v1/oauth/token",
                             mcp_url=f"{base}/v3",
                             page_url="https://notte-pipedream-missing.invalid"
@@ -133,11 +160,14 @@ class LiveTests(unittest.TestCase):
                     return await task
 
                 with asyncio.Runner() as runner:
-                    if mode == "success":
+                    if mode in {"success", "action"}:
                         result = runner.run(execute())
                         session_id = result["session_id"]
                         self.assertIn("Example Domain", json.dumps(result["page"]))
                         self.assertEqual(result["tool_names"], ["fixture_catalog_read"])
+                        self.assertEqual(result["tool_call_completed"], mode == "action")
+                        self.assertNotIn("fixture-output", json.dumps(result))
+                        self.assertNotIn("fixture-private-argument", json.dumps(result))
                     else:
                         error_type = asyncio.CancelledError if mode == "cancel" else RuntimeError
                         with self.assertRaises(error_type) as error:
@@ -145,6 +175,8 @@ class LiveTests(unittest.TestCase):
                         message = str(error.exception)
                         self.assertNotIn("fixture-secret", message)
                         self.assertNotIn("fixture-access-token", message)
+                        self.assertNotIn("fixture-private-argument", message)
+                        self.assertNotIn("fixture-output", message)
                         session_id = re.search(r"session ([a-f0-9-]{36})", message).group(1)
                 row = closed(session_id)
                 if mode != "navigation":
@@ -178,7 +210,13 @@ class LiveTests(unittest.TestCase):
                     self.assertEqual(headers["x-pd-external-user-id"], CONFIG.external_user_id)
                     self.assertEqual(headers["x-pd-environment"], "development")
                     self.assertEqual(headers["x-pd-app-slug"], "github")
-                    self.assertNotEqual(body["method"], "tools/call", "Discovery must never invoke vendor actions")
+                calls = [body for _, _, body in requests if body.get("method") == "tools/call"]
+                self.assertEqual(len(calls), 1 if mode in {"action", "action_error"} else 0)
+                if calls:
+                    self.assertEqual(
+                        calls[0]["params"],
+                        {"name": "fixture_catalog_read", "arguments": {"private": "fixture-private-argument"}},
+                    )
                 print(f"{mode}: owned browser {session_id} independently closed")
 
 

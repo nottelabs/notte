@@ -8,6 +8,7 @@ from typing import Any
 import httpx2
 from mcp import ClientSession
 from mcp.client.streamable_http import streamable_http_client
+from mcp.types import CallToolResult
 from notte_sdk import NotteClient
 
 
@@ -18,6 +19,25 @@ class PipedreamConfig:
     project_id: str
     external_user_id: str
     app: str = "github"
+
+
+def load_action(path: str | None) -> dict[str, Any] | None:
+    if not path:
+        return None
+    try:
+        with open(path) as file:
+            value = json.load(file)
+        if (
+            not isinstance(value, dict)
+            or set(value) != {"name", "arguments"}
+            or not isinstance(value["name"], str)
+            or not value["name"].strip()
+            or not isinstance(value["arguments"], dict)
+        ):
+            raise ValueError()
+        return value
+    except Exception:
+        raise ValueError("Action file must contain a tool name and arguments object") from None
 
 
 async def connect(stack: AsyncExitStack, url: str, headers: dict[str, str]) -> ClientSession:
@@ -39,7 +59,12 @@ def tool_data(result: Any) -> Any:
 
 
 async def discover(
-    config: PipedreamConfig, session_id: str, oauth_url: str, mcp_url: str, page_url: str
+    config: PipedreamConfig,
+    session_id: str,
+    oauth_url: str,
+    mcp_url: str,
+    page_url: str,
+    approved_action: dict[str, Any] | None,
 ) -> dict[str, Any]:
     completed = False
     async with asyncio.timeout(90), AsyncExitStack() as stack:
@@ -89,7 +114,20 @@ async def discover(
             },
         )
         tools = (await pipedream.list_tools()).tools
-        result = {"session_id": session_id, "page": page, "tool_names": [tool.name for tool in tools]}
+        names = [tool.name for tool in tools]
+        if approved_action is not None:
+            if approved_action["name"] not in names:
+                raise RuntimeError("Approved tool was not offered")
+            output = await pipedream.call_tool(approved_action["name"], approved_action["arguments"])
+            if not isinstance(output, CallToolResult) or output.is_error:
+                raise RuntimeError("Approved tool did not complete successfully")
+            # Provider output can contain account links or private data; do not return or log it.
+        result = {
+            "session_id": session_id,
+            "page": page,
+            "tool_names": names,
+            "tool_call_completed": approved_action is not None,
+        }
         completed = True
     task = asyncio.current_task()
     if not completed or (task is not None and task.cancelling()):
@@ -103,11 +141,12 @@ async def run_demo(
     oauth_url: str = "https://api.pipedream.com/v1/oauth/token",
     mcp_url: str = "https://remote.mcp.pipedream.net/v3",
     page_url: str = "https://example.com",
+    approved_action: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     with NotteClient().Session(max_duration_minutes=3) as browser:
         session_id = browser.session_id
         try:
-            return await discover(config, session_id, oauth_url, mcp_url, page_url)
+            return await discover(config, session_id, oauth_url, mcp_url, page_url, approved_action)
         except asyncio.CancelledError:
             raise asyncio.CancelledError(f"Pipedream discovery cancelled (session {session_id})") from None
         except Exception as error:
@@ -124,5 +163,13 @@ if __name__ == "__main__":
         app=os.environ.get("PIPEDREAM_APP", "github"),
     )
     with asyncio.Runner() as runner:
-        result = runner.run(run_demo(config))
-    print(json.dumps({"session_id": result["session_id"], "tool_count": len(result["tool_names"])}))
+        result = runner.run(run_demo(config, approved_action=load_action(os.environ.get("PIPEDREAM_ACTION_FILE"))))
+    print(
+        json.dumps(
+            {
+                "session_id": result["session_id"],
+                "tool_count": len(result["tool_names"]),
+                "tool_call_completed": result["tool_call_completed"],
+            }
+        )
+    )
