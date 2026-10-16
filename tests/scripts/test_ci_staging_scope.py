@@ -323,7 +323,7 @@ Path(os.environ["OUTPUT"]).write_text(json.dumps({
             "NOTTE_LLM_BASE_URL": "https://generativelanguage.googleapis.com/v1beta/openai",
             "NOTTE_LLM_MODEL": "gemini-3.5-flash-lite",
             "NOTTE_TEST_DEFAULT_MODEL": "gemini-3.5-flash-lite",
-            "NOTTE_LLM_API_KEY": "dummy-gemini-key",
+            "NOTTE_LLM_API_KEY": "dummy-gemini-key",  # pragma: allowlist secret
         },
         capture_output=True,
         text=True,
