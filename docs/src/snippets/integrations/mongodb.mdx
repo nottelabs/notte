@@ -19,7 +19,8 @@ if not uri:
 with NotteClient().Session(max_duration_minutes=3) as session:
     stage = "MongoDB connection"
     try:
-        with MongoClient[dict[str, Any]](uri, timeoutMS=10_000) as mongo:
+        with MongoClient[dict[str, Any]](uri, timeoutMS=10_000, serverSelectionTimeoutMS=10_000) as mongo:
+            mongo.admin.command("ping")
             collection = mongo[os.environ.get("MONGODB_DATABASE", "notte")][
                 os.environ.get("MONGODB_COLLECTION", "pages")
             ]
@@ -49,8 +50,9 @@ if (!uri) throw new Error('Set MONGODB_URI before running this example');
 export const result = await new NotteClient().Session({ max_duration_minutes: 3 }).use(async (session) => {
   let stage = 'MongoDB connection';
   try {
-    const mongo = new MongoClient(uri, { timeoutMS: 10_000 });
+    const mongo = new MongoClient(uri, { timeoutMS: 10_000, serverSelectionTimeoutMS: 10_000 });
     try {
+      await mongo.connect();
       const collection = mongo.db(process.env.MONGODB_DATABASE || 'notte')
         .collection(process.env.MONGODB_COLLECTION || 'pages');
       stage = 'browser navigation';

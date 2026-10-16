@@ -15,7 +15,8 @@ if not uri:
 with NotteClient().Session(max_duration_minutes=3) as session:
     stage = "MongoDB connection"
     try:
-        with MongoClient[dict[str, Any]](uri, timeoutMS=10_000) as mongo:
+        with MongoClient[dict[str, Any]](uri, timeoutMS=10_000, serverSelectionTimeoutMS=10_000) as mongo:
+            mongo.admin.command("ping")
             collection = mongo[os.environ.get("MONGODB_DATABASE", "notte")][
                 os.environ.get("MONGODB_COLLECTION", "pages")
             ]

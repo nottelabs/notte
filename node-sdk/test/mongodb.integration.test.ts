@@ -1,5 +1,6 @@
 import { execFile } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
+import { createServer, type AddressInfo } from 'node:net';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { MongoClient, ObjectId } from 'mongodb';
@@ -10,7 +11,7 @@ import { expectSessionClosed } from './helpers/session-closure';
 const execute = promisify(execFile);
 const languages = ['python', 'typescript'] as const;
 
-function recipe(language: typeof languages[number], collection: string) {
+function recipe(language: typeof languages[number], collection: string, overrides: NodeJS.ProcessEnv = {}) {
   for (const name of ['NOTTE_API_KEY', 'NOTTE_API_URL', 'MONGODB_URI']) {
     if (!process.env[name]) throw new Error(`Set ${name} explicitly`);
   }
@@ -20,12 +21,35 @@ function recipe(language: typeof languages[number], collection: string) {
   const runner = fileURLToPath(new URL(`../../docs/src/sniptest/run_${language}.${language === 'python' ? 'py' : 'mjs'}`, import.meta.url));
   return execute(language === 'python' ? python! : process.execPath,
     language === 'python' ? [runner, example] : ['--experimental-strip-types', runner, example], {
-      env: { ...process.env, MONGODB_DATABASE: 'notte_integration_tests', MONGODB_COLLECTION: collection },
+      env: { ...process.env, ...overrides, MONGODB_DATABASE: 'notte_integration_tests', MONGODB_COLLECTION: collection },
       timeout: 120_000, maxBuffer: 2 * 1024 * 1024,
     });
 }
 
 describe.skipIf(process.env.NOTTE_MONGODB_LIVE !== '1')('MongoDB documentation', () => {
+  it.each(languages)('closes the %s browser before navigation when MongoDB is unavailable', async language => {
+    const unavailable = createServer(socket => socket.destroy());
+    await new Promise<void>(resolve => unavailable.listen(0, '127.0.0.1', resolve));
+    try {
+      let output = '';
+      try {
+        await recipe(language, `notte_recipe_${randomUUID().replaceAll('-', '')}`, {
+          MONGODB_URI: `mongodb://127.0.0.1:${(unavailable.address() as AddressInfo).port}`,
+        });
+      } catch (error) {
+        const failure = error as { stdout?: string; stderr?: string };
+        output = `${failure.stdout ?? ''}\n${failure.stderr ?? ''}`;
+      }
+      const sessionId = output.match(/MongoDB export failed \(session ([0-9a-f-]{36}), code (?:None|undefined)\)/i)?.[1];
+      if (!sessionId) throw new Error(`${language} did not identify its browser after connection failure (SDK output withheld)`);
+      expect(output).toContain('MongoDB connection:');
+      const status = await expectSessionClosed(new NotteClient(), sessionId, `MongoDB ${language} connection failure`);
+      expect(status.steps ?? []).not.toEqual(expect.arrayContaining([expect.objectContaining({ type: 'execution_result' })]));
+    } finally {
+      await new Promise<void>((resolve, reject) => unavailable.close(error => error ? reject(error) : resolve()));
+    }
+  }, 150_000);
+
   it.each(languages)('persists the %s scrape and closes its browser', async language => {
     const uri = process.env.MONGODB_URI;
     if (!uri || !['localhost', '127.0.0.1', '[::1]'].includes(new URL(uri).hostname)) {

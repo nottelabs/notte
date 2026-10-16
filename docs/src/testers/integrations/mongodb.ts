@@ -10,8 +10,9 @@ if (!uri) throw new Error('Set MONGODB_URI before running this example');
 export const result = await new NotteClient().Session({ max_duration_minutes: 3 }).use(async (session) => {
   let stage = 'MongoDB connection';
   try {
-    const mongo = new MongoClient(uri, { timeoutMS: 10_000 });
+    const mongo = new MongoClient(uri, { timeoutMS: 10_000, serverSelectionTimeoutMS: 10_000 });
     try {
+      await mongo.connect();
       const collection = mongo.db(process.env.MONGODB_DATABASE || 'notte')
         .collection(process.env.MONGODB_COLLECTION || 'pages');
       stage = 'browser navigation';
