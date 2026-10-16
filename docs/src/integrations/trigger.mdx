@@ -12,30 +12,13 @@ Use [Trigger.dev](https://trigger.dev/) to schedule and retry browser tasks. The
 
 Use Node.js 24+, a [Notte API key](https://console.notte.cc/apikeys), and a [Trigger.dev project](https://cloud.trigger.dev).
 
-```bash
-git clone https://github.com/nottelabs/notte.git
-cd notte/examples/trigger
-npm ci
-```
-
-Set the keys and project reference from your Trigger.dev dashboard:
-
-```bash
-export NOTTE_API_KEY=your-notte-api-key
-export TRIGGER_PROJECT_REF=your-project-reference
-export TRIGGER_SECRET_KEY=your-development-api-key
-npm run dev
-```
+Clone the Notte repository, open `examples/trigger`, and run `npm ci`. Set `NOTTE_API_KEY`, `TRIGGER_PROJECT_REF`, and the development `TRIGGER_SECRET_KEY` in your environment, then run `npm run dev`. The example's README includes the commands.
 
 The CLI prompts you to log in. For non-interactive use, set `TRIGGER_ACCESS_TOKEN` from your [personal access tokens](https://cloud.trigger.dev/account/tokens).
 
 ## Run a browser task
 
-In your project's development dashboard, test `notte-read-page` with this payload:
-
-```json
-{"url":"https://example.com"}
-```
+In your project's development dashboard, test `notte-read-page` with the payload `{"url":"https://example.com"}`.
 
 The result contains `title: "Example Domain"` and the stopped session's `session_id`. Each attempt creates its own session and closes it when the handler returns or raises an error. The example allows up to three attempts and performs only page reads. Keep operations with external side effects out of automatic retries unless they are idempotent.
 
