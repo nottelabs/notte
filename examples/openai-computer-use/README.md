@@ -32,4 +32,6 @@ npm run test:live
 
 Browser tests require `NOTTE_API_KEY`. The optional model case also requires `OPENAI_API_KEY`; other cases make no paid requests. Set `NOTTE_API_URL` to select another Notte environment.
 
+Browser actions, screenshot exchange, permission checks, turn limits, and HTTP401 cleanup have been tested with published and source Notte SDKs. Real OpenAI visual-task validation remains pending.
+
 API reference: [OpenAI Computer Use](https://developers.openai.com/api/docs/guides/tools-computer-use).

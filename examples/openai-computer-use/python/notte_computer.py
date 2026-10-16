@@ -2,6 +2,7 @@ import asyncio
 import base64
 from collections.abc import Awaitable, Callable
 
+from openai import AsyncOpenAI
 from openai.types.responses import ComputerAction, ResponseComputerToolCall
 from playwright.async_api import Page
 
@@ -35,6 +36,25 @@ class NotteComputer:
         self.page = page
         self.confirm = confirm
         self.actions: list[str] = []
+
+    async def run(self, provider: AsyncOpenAI, task: str) -> None:
+        response = await provider.responses.create(
+            model="gpt-6.1-sol", tools=[{"type": "computer"}], max_output_tokens=2048, input=task
+        )
+        for turn in range(9):
+            calls = [item for item in response.output if item.type == "computer_call"]
+            if not calls:
+                return
+            if turn >= 8:
+                raise RuntimeError("Computer turn limit exceeded")
+            outputs = [await self.handle(call) for call in calls]
+            response = await provider.responses.create(
+                model="gpt-6.1-sol",
+                tools=[{"type": "computer"}],
+                max_output_tokens=2048,
+                previous_response_id=response.id,
+                input=outputs,
+            )
 
     def point(self, x: float, y: float) -> None:
         viewport = self.page.viewport_size

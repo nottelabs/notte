@@ -1,4 +1,5 @@
 import { setTimeout as sleep } from 'node:timers/promises';
+import type OpenAI from 'openai';
 import type { ResponseComputerToolCall, ResponseInputItem, ComputerAction } from 'openai/resources/responses/responses';
 import type { Page } from 'playwright-core';
 
@@ -28,12 +29,46 @@ export class NotteComputer {
     }
   }
 
+  private async approve(action: ComputerAction) {
+    const signal = this.signal;
+    if (!signal) return this.confirm(action);
+    signal.throwIfAborted();
+    let abort!: () => void;
+    const cancelled = new Promise<never>((_resolve, reject) => {
+      abort = () => reject(signal.reason);
+      signal.addEventListener('abort', abort, { once: true });
+    });
+    try {
+      const approved = await Promise.race([Promise.resolve().then(() => this.confirm(action)), cancelled]);
+      signal.throwIfAborted();
+      return approved;
+    } finally { signal.removeEventListener('abort', abort); }
+  }
+
+  async run(provider: OpenAI, task: string) {
+    let response = await provider.responses.create({
+      model: 'gpt-6.1-sol', tools: [{ type: 'computer' }], max_output_tokens: 2048, input: task,
+    }, { signal: this.signal });
+    for (let turn = 0; ; turn++) {
+      const calls = response.output.filter(item => item.type === 'computer_call');
+      if (!calls.length) return;
+      if (turn >= 8) throw new Error('Computer turn limit exceeded');
+      const outputs = [];
+      for (const call of calls) outputs.push(await this.handle(call));
+      response = await provider.responses.create({
+        model: 'gpt-6.1-sol', tools: [{ type: 'computer' }], max_output_tokens: 2048,
+        previous_response_id: response.id, input: outputs,
+      }, { signal: this.signal });
+    }
+  }
+
   async handle(call: ResponseComputerToolCall): Promise<ResponseInputItem.ComputerCallOutput> {
     if (call.pending_safety_checks.length) throw new Error('Computer use requires human safety review');
     if (!call.actions?.length || this.actions.length + call.actions.length > 64) throw new Error('Missing actions or action limit exceeded');
     for (const action of call.actions) {
       this.signal?.throwIfAborted();
-      if (!await this.confirm(action)) throw new Error('Computer action refused');
+      if (!await this.approve(action)) throw new Error('Computer action refused');
+      this.signal?.throwIfAborted();
       const modifiers = ('keys' in action ? action.keys ?? [] : []).map(key => keys[key.toUpperCase()] ?? key);
       if (action.type === 'keypress') {
         await this.page.keyboard.press(modifiers.join('+'));

@@ -8,6 +8,7 @@ import re
 import threading
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from typing import ClassVar
 from unittest.mock import patch
 
@@ -15,7 +16,7 @@ import requests
 from demo import run_demo
 from notte_computer import NotteComputer
 from notte_sdk import NotteClient
-from openai import AuthenticationError
+from openai import AsyncOpenAI, AuthenticationError
 from openai.types.responses import ResponseComputerToolCall
 
 
@@ -93,6 +94,34 @@ class Unauthorized(BaseHTTPRequestHandler):
         pass
 
 
+class TurnBoundary(BaseHTTPRequestHandler):
+    requests = 0
+    extra_call = False
+
+    def do_POST(self):
+        self.rfile.read(int(self.headers.get("Content-Length", 0)))
+        type(self).requests += 1
+        final = type(self).requests == 9 and not type(self).extra_call
+        body = json.dumps(
+            {
+                "id": f"resp_{type(self).requests}",
+                "object": "response",
+                "created_at": 0,
+                "model": "gpt-6.1-sol",
+                "status": "completed",
+                "output": [] if final else [call({"type": "screenshot"}).model_dump()],
+            }
+        ).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, *args):
+        pass
+
+
 @unittest.skipUnless(os.getenv("NOTTE_API_KEY"), "Set NOTTE_API_KEY for live browser tests")
 class ComputerLiveTests(unittest.IsolatedAsyncioTestCase):
     async def test_batched_actions_screenshot_and_permission(self):
@@ -126,16 +155,6 @@ class ComputerLiveTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(int.from_bytes(image[20:24]), 768)
                 self.assertEqual(await page.locator("input").input_value(), "native-protocol")
                 self.assertEqual(await page.locator("output").inner_text(), "Accepted")
-                await computer.handle(
-                    call(
-                        {"type": "move", "x": 20, "y": 200},
-                        {"type": "double_click", "x": 100, "y": 50, "keys": []},
-                        {"type": "scroll", "x": 20, "y": 200, "scroll_x": 0, "scroll_y": 100},
-                        {"type": "drag", "path": [{"x": 100, "y": 50}, {"x": 120, "y": 50}]},
-                        {"type": "wait"},
-                    )
-                )
-                self.assertEqual(len(set(computer.actions)), 9)
                 with self.assertRaisesRegex(ValueError, "Coordinates outside"):
                     await computer.handle(call({"type": "click", "button": "left", "x": 1024, "y": 0}))
                 with self.assertRaisesRegex(PermissionError, "human safety review"):
@@ -152,6 +171,46 @@ class ComputerLiveTests(unittest.IsolatedAsyncioTestCase):
                 with self.assertRaisesRegex(PermissionError, "refused"):
                     await NotteComputer(page, confirm=deny).handle(call({"type": "type", "text": "denied"}))
                 self.assertEqual(await page.locator("input").input_value(), "native-protocol")
+                await page.set_content((Path(__file__).parents[1] / "fixtures/mouse.html").read_text())
+                await computer.handle(call({"type": "move", "x": 400, "y": 100}))
+                self.assertEqual(await page.locator("#pad").get_attribute("data-position"), "400,100")
+                await computer.handle(call({"type": "double_click", "x": 400, "y": 100, "keys": []}))
+                self.assertEqual(await page.locator("#pad").get_attribute("data-double-click"), "yes")
+                await computer.handle(call({"type": "click", "button": "left", "x": 400, "y": 100, "keys": ["SHIFT"]}))
+                self.assertEqual(await page.locator("#pad").get_attribute("data-shift"), "true")
+                await computer.handle(call({"type": "click", "button": "left", "x": 400, "y": 100}))
+                self.assertEqual(await page.locator("#pad").get_attribute("data-shift"), "false")
+                await computer.handle(call({"type": "drag", "path": [{"x": 100, "y": 350}, {"x": 200, "y": 350}]}))
+                self.assertEqual(await page.locator("#drag").get_attribute("data-position"), "200,350")
+                await computer.handle(
+                    call({"type": "scroll", "x": 800, "y": 600, "scroll_x": 0, "scroll_y": 200}, {"type": "wait"})
+                )
+                self.assertGreater(await page.evaluate("window.scrollY"), 0)
+                self.assertEqual(len(set(computer.actions)), 9)
+                for extra_call in (False, True):
+                    TurnBoundary.requests = 0
+                    TurnBoundary.extra_call = extra_call
+                    server = ThreadingHTTPServer(("127.0.0.1", 0), TurnBoundary)
+                    worker = threading.Thread(target=server.serve_forever, daemon=True)
+                    worker.start()
+                    try:
+                        async with AsyncOpenAI(
+                            api_key="test-invalid-key",  # pragma: allowlist secret
+                            base_url=f"http://127.0.0.1:{server.server_port}",
+                            max_retries=0,
+                        ) as provider:
+                            limited = NotteComputer(page, confirm=approve)
+                            if extra_call:
+                                with self.assertRaisesRegex(RuntimeError, "turn limit exceeded"):
+                                    await limited.run(provider, "Check the screenshot")
+                            else:
+                                await limited.run(provider, "Check the screenshot")
+                            self.assertEqual(len(limited.actions), 8)
+                            self.assertEqual(TurnBoundary.requests, 9)
+                    finally:
+                        await asyncio.to_thread(server.shutdown)
+                        server.server_close()
+                        worker.join(timeout=5)
         finally:
             if session.session_id:
                 await assert_closed(session.session_id)

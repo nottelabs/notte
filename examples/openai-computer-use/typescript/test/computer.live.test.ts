@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
+import { readFile } from 'node:fs/promises';
 import { once } from 'node:events';
 import { test } from 'node:test';
 import { setTimeout as sleep } from 'node:timers/promises';
@@ -55,18 +56,63 @@ test('batched native actions, exact screenshot size, and permission refusal', { 
         assert.equal(image.readUInt32BE(20), 768);
         assert.equal(await page.locator('input').inputValue(), 'native-protocol');
         assert.equal(await page.locator('output').innerText(), 'Accepted');
-        await computer.handle(call(
-          { type: 'move', x: 20, y: 200 }, { type: 'double_click', x: 100, y: 50, keys: [] },
-          { type: 'scroll', x: 20, y: 200, scroll_x: 0, scroll_y: 100 },
-          { type: 'drag', path: [{ x: 100, y: 50 }, { x: 120, y: 50 }] }, { type: 'wait' },
-        ));
-        assert.equal(new Set(computer.actions).size, 9);
         await assert.rejects(() => computer.handle(call({ type: 'click', button: 'left', x: 1024, y: 0 })), /Coordinates outside/);
         const unsafe = call({ type: 'type', text: 'denied' });
         unsafe.pending_safety_checks = [{ id: 'check_1', code: 'unsafe', message: 'Review required' }];
         await assert.rejects(() => computer.handle(unsafe), /human safety review/);
         await assert.rejects(() => new NotteComputer(page, () => false).handle(call({ type: 'type', text: 'denied' })), /refused/);
         assert.equal(await page.locator('input').inputValue(), 'native-protocol');
+        for (const never of [false, true]) {
+          const controller = new AbortController();
+          let approve!: (value: boolean) => void;
+          const waiting = new NotteComputer(page, () => new Promise<boolean>(resolve => { approve = resolve; }), controller.signal);
+          const result = waiting.handle(call({ type: 'type', text: 'late input' }));
+          await sleep(10);
+          controller.abort(new Error('Approval cancelled'));
+          if (!never) approve(true);
+          await assert.rejects(result, /Approval cancelled/);
+          assert.equal(await page.locator('input').inputValue(), 'native-protocol');
+        }
+        await page.setContent(await readFile(new URL('../../fixtures/mouse.html', import.meta.url), 'utf8'));
+        await computer.handle(call({ type: 'move', x: 400, y: 100 }));
+        assert.equal(await page.locator('#pad').getAttribute('data-position'), '400,100');
+        await computer.handle(call({ type: 'double_click', x: 400, y: 100, keys: [] }));
+        assert.equal(await page.locator('#pad').getAttribute('data-double-click'), 'yes');
+        await computer.handle(call({ type: 'click', button: 'left', x: 400, y: 100, keys: ['SHIFT'] }));
+        assert.equal(await page.locator('#pad').getAttribute('data-shift'), 'true');
+        await computer.handle(call({ type: 'click', button: 'left', x: 400, y: 100 }));
+        assert.equal(await page.locator('#pad').getAttribute('data-shift'), 'false');
+        await computer.handle(call({ type: 'drag', path: [{ x: 100, y: 350 }, { x: 200, y: 350 }] }));
+        assert.equal(await page.locator('#drag').getAttribute('data-position'), '200,350');
+        await computer.handle(call({ type: 'scroll', x: 800, y: 600, scroll_x: 0, scroll_y: 200 }, { type: 'wait' }));
+        assert.ok(await page.evaluate(() => window.scrollY) > 0);
+        assert.equal(new Set(computer.actions).size, 9);
+        for (const extraCall of [false, true]) {
+          let requests = 0;
+          const server = createServer((request, response) => {
+            request.resume();
+            requests++;
+            response.writeHead(200, { 'Content-Type': 'application/json' });
+            response.end(JSON.stringify({
+              id: `resp_${requests}`, object: 'response', created_at: 0, model: 'gpt-6.1-sol', status: 'completed',
+              output: requests === 9 && !extraCall ? [] : [call({ type: 'screenshot' })],
+            }));
+          });
+          server.listen(0, '127.0.0.1');
+          await once(server, 'listening');
+          const address = server.address();
+          assert.ok(address && typeof address !== 'string');
+          try {
+            const provider = new OpenAI({ apiKey: 'test-invalid-key', baseURL: `http://127.0.0.1:${address.port}`, maxRetries: 0 }); // pragma: allowlist secret
+            const limited = new NotteComputer(page, () => true);
+            if (extraCall) await assert.rejects(() => limited.run(provider, 'Check the screenshot'), /turn limit exceeded/);
+            else await limited.run(provider, 'Check the screenshot');
+            assert.equal(limited.actions.length, 8);
+            assert.equal(requests, 9);
+          } finally {
+            await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
+          }
+        }
       } finally { await browser.close(); }
     });
   } finally { if (id) await assertClosed(id); }
