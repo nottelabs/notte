@@ -140,18 +140,9 @@ describe('Scraping Integration Tests', () => {
         const data = await session.scrape({
           instructions: 'Extract the main heading of the page',
           response_format: z.object({ title: z.string() }),
-          model: 'vertex_ai/gemini-3.1-flash-lite',
+          model: 'vertex_ai/gemini-3.5-flash',
         });
         expect(data.title.toLowerCase()).toContain('example domain');
-      });
-    });
-
-    it('should scrape images only', async () => {
-      await client.Session({ proxies: false }).use(async session => {
-        await session.execute(actions.goto({ url: 'https://gymbeam.pl' }));
-        const images = await session.scrape({ only_images: true });
-        expect(Array.isArray(images)).toBe(true);
-        expect(images.length).toBeGreaterThan(0);
       });
     });
   });
@@ -233,7 +224,7 @@ describe('Scraping Integration Tests', () => {
         proxies: false,
         instructions: 'Extract the main heading of the page',
         response_format: z.object({ title: z.string() }),
-        model: 'vertex_ai/gemini-3.1-flash-lite',
+        model: 'vertex_ai/gemini-3.5-flash',
       });
       expect(data.title.toLowerCase()).toContain('example domain');
     });

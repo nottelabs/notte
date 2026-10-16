@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en"><head><title>Open shadow roots</title></head><body>
+<button id="light" data-probe="light">Light button</button>
+<div id="host"></div>
+<script>
+const outer = document.getElementById('host').attachShadow({mode: 'open'});
+outer.innerHTML = `<button id="outer-button" data-probe="shadow-button">Shadow button</button>
+<input id="field" data-probe="shadow-input" aria-label="Shadow input"><div id="nested-host"></div>`;
+const inner = outer.getElementById('nested-host').attachShadow({mode: 'open'});
+inner.innerHTML = `<button id="inner-button" data-probe="nested-button">Nested shadow button</button>
+<input id="field" data-probe="nested-input" aria-label="Nested shadow input">
+<label><input id="check" data-probe="nested-check" type="checkbox">Nested shadow checkbox</label>`;
+</script>
+</body></html>

@@ -1,26 +1,6 @@
 import pytest
-from notte_core.browser.dom_tree import ComputedDomAttributes, DomAttributes, DomNode, NodeSelectors
-from notte_core.browser.node_type import NodeCategory, NodeRole, NodeType
-
-
-def test_node_category_roles():
-    # Test INTERACTION roles
-    interaction_roles = NodeCategory.INTERACTION.roles()
-    assert "button" in interaction_roles
-    assert "link" in interaction_roles
-    assert "textbox" in interaction_roles
-
-    # Test with group role
-    interaction_roles_with_group = NodeCategory.INTERACTION.roles(add_group_role=True)
-    assert "group" in interaction_roles_with_group
-    assert "generic" in interaction_roles_with_group
-    assert "none" in interaction_roles_with_group
-
-    # Test TEXT roles
-    text_roles = NodeCategory.TEXT.roles()
-    assert "text" in text_roles
-    assert "heading" in text_roles
-    assert "paragraph" in text_roles
+from notte_core.dom_tree import ComputedDomAttributes, DomAttributes, DomNode, NodeSelectors
+from notte_core.node_type import NodeRole, NodeType
 
 
 def test_node_role_from_value():
@@ -32,26 +12,26 @@ def test_node_role_from_value():
     assert NodeRole.from_value("invalid_role") == "invalid_role"
 
 
-def test_node_role_category():
-    # Test structural roles
-    assert NodeRole.WEBAREA.category() == NodeCategory.STRUCTURAL
-    assert NodeRole.GROUP.category() == NodeCategory.STRUCTURAL
-
-    # Test text roles
-    assert NodeRole.TEXT.category() == NodeCategory.TEXT
-    assert NodeRole.HEADING.category() == NodeCategory.TEXT
-
-    # Test interaction roles
-    assert NodeRole.BUTTON.category() == NodeCategory.INTERACTION
-    assert NodeRole.LINK.category() == NodeCategory.INTERACTION
-
-    # Test table roles
-    assert NodeRole.TABLE.category() == NodeCategory.TABLE
-    assert NodeRole.ROW.category() == NodeCategory.TABLE
-
-    # Test list roles
-    assert NodeRole.LIST.category() == NodeCategory.LIST
-    assert NodeRole.LISTITEM.category() == NodeCategory.LIST
+@pytest.mark.parametrize("role", list(NodeRole))
+def test_node_role_interactivity(role: NodeRole) -> None:
+    interactive = {
+        "button",
+        "link",
+        "combobox",
+        "textbox",
+        "checkbox",
+        "searchbox",
+        "radio",
+        "tab",
+        "listbox",
+        "menuitem",
+        "menuitemcheckbox",
+        "menuitemradio",
+        "slider",
+        "switch",
+        "option",
+    }
+    assert role.is_interactive() is (role.value in interactive)
 
 
 def test_notte_node():
@@ -77,7 +57,8 @@ def test_notte_node():
     )
 
     # Test find method
-    assert parent_node.find("child1") == child_node.to_interaction_node()
+    assert parent_node.find("child1") is child_node
+    assert parent_node.interaction_nodes()[0] is child_node
     assert parent_node.find("nonexistent") is None
 
     # Test is_interaction method
@@ -251,199 +232,35 @@ def test_node_attributes():
     assert post_attrs.selectors == selector
 
 
-def test_consistency_node_role_and_category():
-    for role in NodeRole:
-        assert role.value in role.category().roles(), f"Role {role.value} is not in category {role.category()}"
-
-    for category in NodeCategory:
-        for role_str in category.roles():
-            role = NodeRole.from_value(role_str)
-            assert not isinstance(role, str), f"Role {role_str} is a string"
-            assert role.category() == category, f"Role {role_str} has wrong category: {role.category()}"
-
-
-@pytest.fixture
-def nested_graph() -> DomNode:
-    return DomNode(
-        id=None,
-        role=NodeRole.WEBAREA,
-        type=NodeType.OTHER,
-        text="Root",
-        children=[
-            DomNode(
-                id="B1",
-                role=NodeRole.BUTTON,
-                text="Button 1",
-                type=NodeType.INTERACTION,
-                children=[],
-                attributes=None,
-                computed_attributes=ComputedDomAttributes(),
-            ),
-            DomNode(
-                id="B2",
-                role=NodeRole.BUTTON,
-                text="Button 2",
-                type=NodeType.INTERACTION,
-                children=[],
-                attributes=None,
-                computed_attributes=ComputedDomAttributes(),
-            ),
-            DomNode(
-                id=None,
-                role=NodeRole.TEXT,
-                text="Some text",
-                type=NodeType.TEXT,
-                children=[],
-                attributes=None,
-                computed_attributes=ComputedDomAttributes(),
-            ),
-            DomNode(
-                id=None,
-                role=NodeRole.GROUP,
-                text="Group",
-                type=NodeType.OTHER,
-                children=[
-                    DomNode(
-                        id="B3",
-                        role=NodeRole.BUTTON,
-                        text="Button 3",
-                        type=NodeType.INTERACTION,
-                        children=[],
-                        attributes=None,
-                        computed_attributes=ComputedDomAttributes(),
-                    ),
-                    DomNode(
-                        id=None,
-                        role=NodeRole.TEXT,
-                        text="Some other text",
-                        type=NodeType.TEXT,
-                        children=[],
-                        attributes=None,
-                        computed_attributes=ComputedDomAttributes(),
-                    ),
-                ],
-                attributes=None,
-                computed_attributes=ComputedDomAttributes(),
-            ),
-            DomNode(
-                id="B4",
-                role=NodeRole.BUTTON,
-                text="Button 4",
-                type=NodeType.INTERACTION,
-                children=[],
-                attributes=None,
-                computed_attributes=ComputedDomAttributes(),
-            ),
-            DomNode(
-                id=None,
-                role=NodeRole.TEXT,
-                text="Some text 3",
-                type=NodeType.TEXT,
-                children=[],
-                attributes=None,
-                computed_attributes=ComputedDomAttributes(),
-            ),
-            DomNode(
-                id=None,
-                role=NodeRole.GROUP,
-                text="Group 2",
-                type=NodeType.OTHER,
-                children=[
-                    DomNode(
-                        id="L1",
-                        role=NodeRole.LINK,
-                        text="Link 1",
-                        type=NodeType.INTERACTION,
-                        children=[],
-                        attributes=None,
-                        computed_attributes=ComputedDomAttributes(),
-                    ),
-                    DomNode(
-                        id=None,
-                        role=NodeRole.TEXT,
-                        text="Some text 4",
-                        type=NodeType.TEXT,
-                        children=[],
-                        attributes=None,
-                        computed_attributes=ComputedDomAttributes(),
-                    ),
-                ],
-                attributes=None,
-                computed_attributes=ComputedDomAttributes(),
-            ),
-        ],
-        attributes=None,
-        computed_attributes=ComputedDomAttributes(),
-    )
-
-
-def test_subtree_exclude_all_nodes(nested_graph: DomNode):
-    def exclude_all_nodes(node: DomNode) -> bool:
-        return False
-
-    filtered_graph = nested_graph.subtree_filter(exclude_all_nodes)
-    assert filtered_graph is None
-
-
-def test_subtree_keep_all_nodes(nested_graph: DomNode):
-    def keep_all_nodes(node: DomNode) -> bool:
-        return True
-
-    filtered_graph = nested_graph.subtree_filter(keep_all_nodes)
-    assert filtered_graph == nested_graph
-
-
-def test_subtree_keep_one_node(nested_graph: DomNode):
-    def exclude_some_nodes(node: DomNode) -> bool:
-        return len(node.children) > 0 or node.id == "B2"
-
-    filtered_graph = nested_graph.subtree_filter(exclude_some_nodes)
-    assert filtered_graph is not None
-    assert filtered_graph.id is None
-    assert len(filtered_graph.children) == 3, f"Expected 3 children, got {len(filtered_graph.children)}"
-    assert filtered_graph.children[0].id == "B2"
-    assert filtered_graph.children[1].role == NodeRole.GROUP
-    assert filtered_graph.children[2].role == NodeRole.GROUP
-
-
-def test_subtree_keep_one_node_2(nested_graph: DomNode):
-    def exclude_all_except_B2(node: DomNode) -> bool:
-        return "B2" in node.subtree_ids
-
-    filtered_graph = nested_graph.subtree_filter(exclude_all_except_B2)
-    assert filtered_graph is not None
-    assert filtered_graph.id is None
-    assert len(filtered_graph.children) == 1
-    assert filtered_graph.children[0].id == "B2"
-
-
-def test_subtree_keep_some_nodes(nested_graph: DomNode):
-    def keep_some_nodes(node: DomNode) -> bool:
-        return len(set(["B1", "B2", "B3"]).intersection(node.subtree_ids)) > 0
-
-    filtered_graph = nested_graph.subtree_filter(keep_some_nodes)
-    assert filtered_graph is not None
-    assert len(filtered_graph.children) == 3
-    assert filtered_graph.children[0].id == "B1"
-    assert filtered_graph.children[1].id == "B2"
-    assert filtered_graph.children[2].role == NodeRole.GROUP
-    assert filtered_graph.children[2].children[0].id == "B3"
-    assert filtered_graph.find("L1") is None
-    assert filtered_graph.find("B4") is None
-    assert filtered_graph.find("B5") is None
-
-
 def test_all_interaction_roles_have_short_id():
     for role in NodeRole:
-        if role.category() == NodeCategory.INTERACTION:
+        if role.is_interactive():
             assert role.short_id() is not None, f"Role {role.value} has no short id"
 
 
-def test_non_intersecting_category_roles():
-    def all_except(category: NodeCategory) -> set[str]:
-        return set([role for cat in NodeCategory if cat.value != category.value for role in cat.roles()])
-
-    for category in NodeCategory:
-        _all = all_except(category)
-        cat_roles = category.roles()
-        assert len(cat_roles.intersection(_all)) == 0, f"Category {category.value} has intersecting roles"
+@pytest.mark.parametrize(
+    ("tag", "attributes", "role"),
+    [
+        ("a", {}, NodeRole.LINK),
+        ("BUTTON", {}, NodeRole.BUTTON),
+        ("input", {}, NodeRole.TEXTBOX),
+        ("input", {"type": "Checkbox"}, NodeRole.CHECKBOX),
+        ("input", {"type": "submit"}, NodeRole.BUTTON),
+        ("input", {"type": "search"}, NodeRole.SEARCHBOX),
+        ("h3", {}, NodeRole.HEADING),
+        ("body", {}, NodeRole.WEBAREA),
+        ("iframe", {}, NodeRole.IFRAME),
+        ("my-menu-item", {}, NodeRole.MENUITEM),
+        ("x-menuitem-checkbox", {}, NodeRole.MENUITEMCHECKBOX),
+        ("foo-popup", {}, NodeRole.MENULISTPOPUP),
+        ("custom-element", {}, NodeRole.GENERIC),
+        ("", {}, NodeRole.NONE),
+        # the role attribute wins over the tag
+        ("div", {"role": "button"}, NodeRole.BUTTON),
+        ("a", {"role": "presentation"}, NodeRole.PRESENTATION),
+        ("div", {"role": ""}, NodeRole.GROUP),
+        ("div", {"role": "doc-chapter"}, "doc-chapter"),
+    ],
+)
+def test_node_role_from_element(tag: str, attributes: dict[str, str], role: NodeRole | str) -> None:
+    assert NodeRole.from_element(tag, attributes) == role

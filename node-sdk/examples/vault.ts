@@ -40,31 +40,13 @@ async function vaultExample() {
     console.log('Vault not found or inaccessible');
   }
 
-  // Example 3: Use vault with Session and Agent
-  console.log('\n=== Using vault with Agent ===');
-  await client.Session().use(async (session) => {
-    const agent = client.Agent({
-      session,
-      max_steps: 10,
-      vault_id: newVault.vaultId // Use vault for credential management
-    });
-
-    const result = await agent.run({
-      task: "Login to GitHub and create a new repository called 'my-project'",
-      url: "https://github.com/login"
-    });
-
-    console.log(`Agent completed: ${result.success ? 'Success' : 'Failed'}`);
-    console.log(`Result: ${result.answer}`);
-  });
-
-  // Example 4: Password generation
+  // Example 3: Password generation
   console.log('\n=== Password generation examples ===');
   console.log('Strong password (20 chars):', newVault.generatePassword());
   console.log('Medium password (12 chars):', newVault.generatePassword(12));
   console.log('No special chars (15 chars):', newVault.generatePassword(15, false));
 
-  // Example 5: Cleanup
+  // Example 4: Cleanup
   console.log('\n=== Cleanup ===');
 
   // Delete specific credentials
@@ -92,7 +74,7 @@ async function pythonLikeUsage() {
     mfa_secret: "PYNT7I67RFS2EPR5" // pragma: allowlist secret
   });
 
-  console.log('Vault setup complete - ready for agent use!');
+  console.log('Vault setup complete!');
 }
 
 if (require.main === module) {

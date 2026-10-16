@@ -6,7 +6,8 @@ from typing import Any
 
 from notte_sdk import NotteClient
 
-with NotteClient().Session() as session:
+client = NotteClient()
+with client.Session() as session:
     command = ["agent-browser", "--session", f"notte-{session.session_id}", "--json"]
 
     def browser(*args: str) -> dict[str, Any]:

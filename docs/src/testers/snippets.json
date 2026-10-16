@@ -1,89 +1,4 @@
 {
-  "agents/error_handling.mdx": {
-    "group": true,
-    "blocks": [
-      {
-        "source": "agents/error_handling.py",
-        "language": "python",
-        "title": "Python",
-        "existing_python_test": true
-      },
-      {
-        "source": "agents/error_handling.ts",
-        "language": "typescript",
-        "title": "TypeScript",
-        "execution_pending": "Legacy example from agents/error_handling.mdx; needs owned fixtures and behavior assertions before live execution."
-      }
-    ]
-  },
-  "agents/natural_language_task.mdx": {
-    "group": true,
-    "blocks": [
-      {
-        "source": "agents/natural_language_task.py",
-        "language": "python",
-        "title": "Python",
-        "existing_python_test": true
-      },
-      {
-        "source": "agents/natural_language_task.ts",
-        "language": "typescript",
-        "title": "TypeScript",
-        "execution_pending": "Legacy example from agents/natural_language_task.mdx; needs owned fixtures and behavior assertions before live execution."
-      }
-    ]
-  },
-  "agents/starting_url.mdx": {
-    "group": true,
-    "blocks": [
-      {
-        "source": "agents/starting_url.py",
-        "language": "python",
-        "title": "Python",
-        "existing_python_test": true
-      },
-      {
-        "source": "agents/starting_url.ts",
-        "language": "typescript",
-        "title": "TypeScript",
-        "execution_pending": "Legacy example from agents/starting_url.mdx; needs owned fixtures and behavior assertions before live execution."
-      }
-    ]
-  },
-  "agents/step_limits.mdx": {
-    "group": true,
-    "blocks": [
-      {
-        "source": "agents/step_limits.py",
-        "language": "python",
-        "title": "Python",
-        "existing_python_test": true
-      },
-      {
-        "source": "agents/step_limits.ts",
-        "language": "typescript",
-        "title": "TypeScript",
-        "execution_pending": "Legacy example from agents/step_limits.mdx; needs owned fixtures and behavior assertions before live execution."
-      }
-    ]
-  },
-  "agents/structured_output_example.mdx": {
-    "group": true,
-    "blocks": [
-      {
-        "source": "agents/structured_output_example.py",
-        "language": "python",
-        "title": "Python",
-        "existing_python_test": true
-      },
-      {
-        "source": "agents/structured_output_example.ts",
-        "language": "typescript",
-        "title": "TypeScript",
-        "execution_pending": "Legacy example from agents/structured_output_example.mdx; needs owned fixtures and behavior assertions before live execution."
-      }
-    ]
-  },
   "functions/invocations/curl_basic.mdx": {
     "group": true,
     "blocks": [
@@ -361,23 +276,6 @@
       }
     ]
   },
-  "quickstart/web_agent.mdx": {
-    "group": true,
-    "blocks": [
-      {
-        "source": "quickstart/web_agent.py",
-        "language": "python",
-        "title": "Python",
-        "execution_pending": "Legacy example from quickstart/web_agent.mdx; needs owned fixtures and behavior assertions before live execution."
-      },
-      {
-        "source": "quickstart/web_agent.ts",
-        "language": "typescript",
-        "title": "TypeScript",
-        "execution_pending": "Legacy example from quickstart/web_agent.mdx; needs owned fixtures and behavior assertions before live execution."
-      }
-    ]
-  },
   "scraping/content_filtering.mdx": {
     "group": true,
     "blocks": [
@@ -460,23 +358,6 @@
         "language": "typescript",
         "title": "TypeScript",
         "execution_pending": "Legacy example from scraping/handle_missing_data.mdx; needs owned fixtures and behavior assertions before live execution."
-      }
-    ]
-  },
-  "scraping/image_extraction.mdx": {
-    "group": true,
-    "blocks": [
-      {
-        "source": "scraping/image_extraction.py",
-        "language": "python",
-        "title": "Python",
-        "existing_python_test": true
-      },
-      {
-        "source": "scraping/image_extraction.ts",
-        "language": "typescript",
-        "title": "TypeScript",
-        "execution_pending": "Legacy example from scraping/image_extraction.mdx; needs owned fixtures and behavior assertions before live execution."
       }
     ]
   },
@@ -1178,23 +1059,6 @@
         "language": "typescript",
         "title": "TypeScript",
         "live_tested": true
-      }
-    ]
-  },
-  "workflows/index.mdx": {
-    "group": true,
-    "blocks": [
-      {
-        "source": "workflows/index.py",
-        "language": "python",
-        "title": "my_scraping_function.py",
-        "execution_pending": "Legacy example from workflows/index.mdx; needs owned fixtures and behavior assertions before live execution."
-      },
-      {
-        "source": "workflows/index_2.py",
-        "language": "python",
-        "title": "play_with_function.py",
-        "execution_pending": "Legacy example from workflows/index.mdx; needs owned fixtures and behavior assertions before live execution."
       }
     ]
   }

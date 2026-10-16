@@ -35,7 +35,7 @@ Node's filtered `files.list` covers Python's two list operations; absent Node
 APIs (such as Persona phone-number management) are not invented in navigation.
 Actions follow Python's task order, excluding agent-only/internal variants.
 Tests compare shared Vault and Actions tasks against the Python navigation and
-check the additional Node helpers explicitly. Removed credit-card methods no
+check the additional Node helpers explicitly. Removed credit-card methods and the v2 agent API no
 longer produce pages.
 Methods marked with JSDoc `@deprecated` are hidden from navigation and overview
 links, while their reference URLs and deprecation notices remain available.

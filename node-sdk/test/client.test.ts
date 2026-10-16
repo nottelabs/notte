@@ -164,30 +164,6 @@ describe('NotteClient', () => {
     });
   });
 
-  describe('Agent', () => {
-    beforeEach(() => {
-      notteClient = new NotteClient({ apiKey: 'test-key' }) // pragma: allowlist secret;
-    });
-
-    it('should create a new agent', () => {
-      const session = notteClient.Session();
-      // Mock the session to have an ID for testing
-      Object.defineProperty(session, 'sessionId', {
-        value: 'test-session-id',
-        writable: false
-      });
-      Object.defineProperty(session, 'getId', {
-        value: () => 'test-session-id',
-        writable: false
-      });
-
-      const agent = notteClient.Agent({ session, max_steps: 5 });
-
-      expect(agent).toBeDefined();
-      expect(agent.constructor.name).toBe('Agent');
-    });
-  });
-
   describe('getClient', () => {
     it('should return the configured client', () => {
       notteClient = new NotteClient({ apiKey: 'test-key' }) // pragma: allowlist secret;

@@ -1,4 +1,4 @@
-from notte_core.utils.url import get_root_domain
+from notte_core.url import get_root_domain
 
 
 def test_get_root_domain_with_https():

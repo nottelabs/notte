@@ -3,7 +3,7 @@ import tempfile
 from pathlib import Path
 
 from dotenv import load_dotenv
-from notte_core.common.config import CookieDict
+from notte_core.config import CookieDict
 from notte_sdk import NotteClient
 from pytest import fixture
 
@@ -46,7 +46,7 @@ def test_get_cookies():
 
     # create a new session
     with notte.Session(proxies=False, timeout_minutes=1) as session:
-        _ = session.execute(type="goto", value="https://www.ecosia.org")
+        _ = session.execute(type="goto", url="https://www.ecosia.org")
         _ = session.observe()
         resp = session.get_cookies()
 

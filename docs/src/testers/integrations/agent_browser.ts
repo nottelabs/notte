@@ -6,7 +6,8 @@ import { NotteClient } from 'notte-sdk';
 
 const execute = promisify(execFile);
 
-export const result = await new NotteClient().Session().use(async (session) => {
+const client = new NotteClient();
+export const result = await client.Session().use(async (session) => {
   const command = ['--session', `notte-${session.getId()!}`, '--json'];
   async function browser(...args: string[]): Promise<Record<string, unknown>> {
     let stdout: string;

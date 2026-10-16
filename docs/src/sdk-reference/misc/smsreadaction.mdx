@@ -6,12 +6,14 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
+Not a browser action: read the persona inbox directly instead.
+
 **Example:**
 ```python
 import datetime as dt
 
-session.execute(type="sms_read", limit=10, only_unread=True)
-session.execute(type="sms_read", timedelta=dt.timedelta(minutes=5))
+sms = persona.sms(limit=10, only_unread=True)
+sms = persona.wait_for_sms(timedelta=dt.timedelta(minutes=5), timeout=120)
 ```
 
 ## Fields

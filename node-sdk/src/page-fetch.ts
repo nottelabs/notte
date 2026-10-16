@@ -1,6 +1,6 @@
 /**
  * Issue an HTTP request from the page a session is on, the port of
- * `notte_core.data.fetch`.
+ * `notte_core.fetch`.
  *
  * `session.fetch()` runs the browser's own `fetch()` inside the current page, so
  * the request carries the page's cookies, the session's proxy and the browser's

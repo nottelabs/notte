@@ -7,21 +7,19 @@ any log line, and that a placeholder that cannot be replaced fails instead of be
 import asyncio
 from collections.abc import Iterator
 from contextlib import contextmanager
-from unittest.mock import patch
 
 import pytest
 from loguru import logger
 from notte_browser.session import NotteSession
-from notte_core import LoggingSetup
 from notte_core.actions import FillAction, FormFillAction, GotoAction, MultiFactorFillAction, ScrapeAction
 from notte_core.credentials import CARD_CVV, CARD_HOLDER_NAME, EMAIL, MFA, PASSWORD
 from notte_core.credentials.base import CredentialsDict, CreditCardDict, LocatorAttributes, PasswordField
 from notte_core.credentials.types import ValueWithPlaceholder
-from notte_core.errors.actions import NoCredentialsFoundError
-from notte_core.errors.base import NotteBaseError
-from notte_core.errors.processing import (
+from notte_core.errors import (
     CredentialReplacementError,
     MissingCredentialFieldError,
+    NoCredentialsFoundError,
+    NotteBaseError,
     VaultLookupError,
 )
 
@@ -39,13 +37,10 @@ EMPTY_ATTRS = LocatorAttributes(type=None, autocomplete=None, outerHTML=None)
 @contextmanager
 def capture_logs() -> Iterator[list[str]]:
     records: list[str] = []
-    # Keep message and exception text, but exclude timestamps and line numbers:
-    # a three-digit CVV can appear in those fields without any credential leak.
+    # Exclude timestamps and line numbers without dropping message or exception text.
     handler_id = logger.add(lambda message: records.append(str(message)), level="TRACE", format="{message}")
     try:
-        # agent configs reset the loguru handlers, which would drop the capture handler
-        with patch.object(LoggingSetup, "set_logger_mode", staticmethod(lambda mode: None)):
-            yield records
+        yield records
     finally:
         logger.remove(handler_id)
 
@@ -227,7 +222,7 @@ def test_no_credentials_for_domain_fails() -> None:
 
 def test_vault_backend_error_is_not_logged_verbatim() -> None:
     vault = FailingVault()
-    snapshot = make_snapshot(URL)
+    snapshot = make_snapshot(f"{URL}/login?token={SECRET_PASSWORD}")
 
     with capture_logs() as logs, pytest.raises(NoCredentialsFoundError) as exc_info:
         _ = asyncio.run(vault.replace_credentials(FillAction(id="I1", value=PASSWORD), PASSWORD_ATTRS, snapshot))

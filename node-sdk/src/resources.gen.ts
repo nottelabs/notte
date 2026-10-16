@@ -6,7 +6,7 @@ import * as operations from './lib/client/sdk.gen';
 /** Per-request cancellation; authentication and transport stay bound to NotteClient. */
 export interface ResourceRequestOptions { signal?: AbortSignal }
 
-/** Low-level API resources. Lifecycle helpers remain on Session/Agent/Function. */
+/** Low-level API resources. Lifecycle helpers remain on Session/Function. */
 export function createResources(client: Client, getApiKey: () => string) {
   return {
   sessions: {
@@ -32,7 +32,7 @@ export function createResources(client: Client, getApiKey: () => string) {
     },
     /** downloadSessionFile: /sessions/{session_id}/files/{file_id}. Returns the API response body. */
     downloadSessionFile: async (sessionId: Types.DownloadSessionFileData['path']["session_id"], fileId: Types.DownloadSessionFileData['path']["file_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.DownloadSessionFileData['headers']>, 'x-notte-api-key'> } = {}) => {
-      const response = await operations.downloadSessionFile({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId, "file_id": fileId } });
+      const response = await operations.downloadSessionFile({ client, throwOnError: true, signal: requestOptions.signal, parseAs: "blob", headers: { ...requestOptions.headers }, path: { "session_id": sessionId, "file_id": fileId } });
       return response.data;
     },
     /** pageExecute: /sessions/{session_id}/page/execute. Returns the API response body. */
@@ -90,14 +90,14 @@ export function createResources(client: Client, getApiKey: () => string) {
       const response = await operations.sessionProfilePreview({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, query });
       return response.data;
     },
-    /** sessionProfileSave: /sessions/{session_id}/profile/save. Returns the API response body. */
-    profileSave: async (sessionId: Types.SessionProfileSaveData['path']["session_id"], body: Types.SessionProfileSaveData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.SessionProfileSaveData['headers']>, 'x-notte-api-key'> } = {}) => {
-      const response = await operations.sessionProfileSave({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, body });
-      return response.data;
-    },
     /** sessionReplay: /sessions/{session_id}/replay. Returns the API response body. */
     replay: async (sessionId: Types.SessionReplayData['path']["session_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.SessionReplayData['headers']>, 'x-notte-api-key'> } = {}) => {
       const response = await operations.sessionReplay({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId } });
+      return response.data;
+    },
+    /** sessionProfileSave: /sessions/{session_id}/profile/save. Returns the API response body. */
+    saveProfile: async (sessionId: Types.SessionProfileSaveData['path']["session_id"], body: Types.SessionProfileSaveData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.SessionProfileSaveData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.sessionProfileSave({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, body });
       return response.data;
     },
     /** pageScrape: /sessions/{session_id}/page/scrape. Returns the API response body. */
@@ -131,30 +131,25 @@ export function createResources(client: Client, getApiKey: () => string) {
       return response.data;
     },
   },
-  agents: {
-    /** getScript: /agents/{agent_id}/workflow/code. Returns the API response body. */
-    getScript: async (agentId: Types.GetScriptData['path']["agent_id"], query: Types.GetScriptData['query'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.GetScriptData['headers']>, 'x-notte-api-key'> } = {}) => {
-      const response = await operations.getScript({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "agent_id": agentId }, query });
+  files: {
+    /** deleteSessionFile: /sessions/{session_id}/files/{file_id}. Returns the API response body. */
+    delete: async (sessionId: Types.DeleteSessionFileData['path']["session_id"], fileId: Types.DeleteSessionFileData['path']["file_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.DeleteSessionFileData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.deleteSessionFile({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId, "file_id": fileId } });
       return response.data;
     },
-    /** listAgents: /agents. Returns the API response body. */
-    list: async (query: Types.ListAgentsData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.ListAgentsData['headers']>, 'x-notte-api-key'> } = {}) => {
-      const response = await operations.listAgents({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, query });
+    /** downloadSessionFile: /sessions/{session_id}/files/{file_id}. Returns the API response body. */
+    download: async (sessionId: Types.DownloadSessionFileData['path']["session_id"], fileId: Types.DownloadSessionFileData['path']["file_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.DownloadSessionFileData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.downloadSessionFile({ client, throwOnError: true, signal: requestOptions.signal, parseAs: "blob", headers: { ...requestOptions.headers }, path: { "session_id": sessionId, "file_id": fileId } });
       return response.data;
     },
-    /** agentStart: /agents/start. Returns the API response body. */
-    start: async (body: Types.AgentStartData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.AgentStartData['headers']>, 'x-notte-api-key'> } = {}) => {
-      const response = await operations.agentStart({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, body });
+    /** listSessionFiles: /sessions/{session_id}/files. Returns the API response body. */
+    list: async (sessionId: Types.ListSessionFilesData['path']["session_id"], query: Types.ListSessionFilesData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.ListSessionFilesData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.listSessionFiles({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, query });
       return response.data;
     },
-    /** agentStatus: /agents/{agent_id}. Returns the API response body. */
-    status: async (agentId: Types.AgentStatusData['path']["agent_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.AgentStatusData['headers']>, 'x-notte-api-key'> } = {}) => {
-      const response = await operations.agentStatus({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "agent_id": agentId } });
-      return response.data;
-    },
-    /** agentStop: /agents/{agent_id}/stop. Returns the API response body. */
-    stop: async (agentId: Types.AgentStopData['path']["agent_id"], query: Types.AgentStopData['query'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.AgentStopData['headers']>, 'x-notte-api-key'> } = {}) => {
-      const response = await operations.agentStop({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "agent_id": agentId }, query });
+    /** uploadSessionFile: /sessions/{session_id}/files. Returns the API response body. */
+    upload: async (sessionId: Types.UploadSessionFileData['path']["session_id"], body: Types.UploadSessionFileData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.UploadSessionFileData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.uploadSessionFile({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, body });
       return response.data;
     },
   },
@@ -250,6 +245,43 @@ export function createResources(client: Client, getApiKey: () => string) {
       return response.data;
     },
   },
+  personas: {
+    /** personaCreate: /personas/create. Returns the API response body. */
+    create: async (body: Types.PersonaCreateData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.PersonaCreateData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.personaCreate({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, body });
+      return response.data;
+    },
+    /** personaDelete: /personas/{persona_id}. Returns the API response body. */
+    delete: async (personaId: Types.PersonaDeleteData['path']["persona_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.PersonaDeleteData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.personaDelete({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "persona_id": personaId } });
+      return response.data;
+    },
+    /** personaEmailsList: /personas/{persona_id}/emails. Returns the API response body. */
+    emailsList: async (personaId: Types.PersonaEmailsListData['path']["persona_id"], query: Types.PersonaEmailsListData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.PersonaEmailsListData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.personaEmailsList({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "persona_id": personaId }, query });
+      return response.data;
+    },
+    /** personaGet: /personas/{persona_id}. Returns the API response body. */
+    get: async (personaId: Types.PersonaGetData['path']["persona_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.PersonaGetData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.personaGet({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "persona_id": personaId } });
+      return response.data;
+    },
+    /** listPersonas: /personas. Returns the API response body. */
+    list: async (query: Types.ListPersonasData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.ListPersonasData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.listPersonas({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, query });
+      return response.data;
+    },
+    /** personaSmsList: /personas/{persona_id}/sms. Returns the API response body. */
+    smsList: async (personaId: Types.PersonaSmsListData['path']["persona_id"], query: Types.PersonaSmsListData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.PersonaSmsListData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.personaSmsList({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "persona_id": personaId }, query });
+      return response.data;
+    },
+    /** personaUpdate: /personas/{persona_id}. Returns the API response body. */
+    update: async (personaId: Types.PersonaUpdateData['path']["persona_id"], body: Types.PersonaUpdateData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.PersonaUpdateData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.personaUpdate({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "persona_id": personaId }, body });
+      return response.data;
+    },
+  },
   vaults: {
     /** vaultCreate: /vaults/create. Returns the API response body. */
     create: async (body: Types.VaultCreateData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.VaultCreateData['headers']>, 'x-notte-api-key'> } = {}) => {
@@ -304,43 +336,6 @@ export function createResources(client: Client, getApiKey: () => string) {
     /** vaultUpdate: /vaults/{vault_id}. Returns the API response body. */
     update: async (vaultId: Types.VaultUpdateData['path']["vault_id"], body: Types.VaultUpdateData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.VaultUpdateData['headers']>, 'x-notte-api-key'> } = {}) => {
       const response = await operations.vaultUpdate({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "vault_id": vaultId }, body });
-      return response.data;
-    },
-  },
-  personas: {
-    /** personaCreate: /personas/create. Returns the API response body. */
-    create: async (body: Types.PersonaCreateData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.PersonaCreateData['headers']>, 'x-notte-api-key'> } = {}) => {
-      const response = await operations.personaCreate({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, body });
-      return response.data;
-    },
-    /** personaDelete: /personas/{persona_id}. Returns the API response body. */
-    delete: async (personaId: Types.PersonaDeleteData['path']["persona_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.PersonaDeleteData['headers']>, 'x-notte-api-key'> } = {}) => {
-      const response = await operations.personaDelete({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "persona_id": personaId } });
-      return response.data;
-    },
-    /** personaEmailsList: /personas/{persona_id}/emails. Returns the API response body. */
-    emailsList: async (personaId: Types.PersonaEmailsListData['path']["persona_id"], query: Types.PersonaEmailsListData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.PersonaEmailsListData['headers']>, 'x-notte-api-key'> } = {}) => {
-      const response = await operations.personaEmailsList({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "persona_id": personaId }, query });
-      return response.data;
-    },
-    /** personaGet: /personas/{persona_id}. Returns the API response body. */
-    get: async (personaId: Types.PersonaGetData['path']["persona_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.PersonaGetData['headers']>, 'x-notte-api-key'> } = {}) => {
-      const response = await operations.personaGet({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "persona_id": personaId } });
-      return response.data;
-    },
-    /** listPersonas: /personas. Returns the API response body. */
-    list: async (query: Types.ListPersonasData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.ListPersonasData['headers']>, 'x-notte-api-key'> } = {}) => {
-      const response = await operations.listPersonas({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, query });
-      return response.data;
-    },
-    /** personaSmsList: /personas/{persona_id}/sms. Returns the API response body. */
-    smsList: async (personaId: Types.PersonaSmsListData['path']["persona_id"], query: Types.PersonaSmsListData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.PersonaSmsListData['headers']>, 'x-notte-api-key'> } = {}) => {
-      const response = await operations.personaSmsList({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "persona_id": personaId }, query });
-      return response.data;
-    },
-    /** personaUpdate: /personas/{persona_id}. Returns the API response body. */
-    update: async (personaId: Types.PersonaUpdateData['path']["persona_id"], body: Types.PersonaUpdateData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.PersonaUpdateData['headers']>, 'x-notte-api-key'> } = {}) => {
-      const response = await operations.personaUpdate({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "persona_id": personaId }, body });
       return response.data;
     },
   },

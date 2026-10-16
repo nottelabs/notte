@@ -1,7 +1,7 @@
 [project]
 name = "notte-core"
-version = "1.9.8.dev0"
-description = "The web browser for LLMs agents"
+version = "1.10.0.dev0"
+description = "Shared models, actions and config for the Notte packages"
 readme = "README.md"
 authors = [
     { name = "Notte Team ", email = "hello@notte.cc" }
@@ -14,36 +14,20 @@ requires-python = ">=3.11"
 dependencies = [
     "loguru>=0.7.3",
     "pillow>=11.1.0",
-    "posthog>=3.0.1,<=7.63.0",
+    "posthog<=7.63.0,>=7.63.0",
     "pydantic>=2.10.6",
-    "pydantic-settings>=2.8.1",
     "pyotp>=2.9.0",
-    "python-dotenv>=1.0.1",
     "requests>=2.32.3",
     "tldextract>=5.3.0",
-    "toml>=0.10.2",
     "nest_asyncio>=1.6.0",
-    "opentelemetry-sdk>=1.34.1",
     "scarf-sdk>=0.1.2",
-    "restrictedpython>=8.4",
-    "cryptography>=43.0.3",
     "packaging>=25.0",
-    # 3.11.13 is the aiohttp bundled with Pyodide 0.29; keep it installable there.
-    "aiohttp>=3.11.13,<4",
 ]
 
 [project.optional-dependencies]
-tempo = [
-    "opentelemetry-exporter-otlp>=1.27.0",
-]
-pyroscope = [
-    "pyroscope-io>=0.8.0",
-    "pyroscope-otel>=0.1.0",
-]
-observability = [
-    "opentelemetry-exporter-otlp>=1.27.0",
-    "pyroscope-io>=0.8.0",
-    "pyroscope-otel>=0.1.0",
+# `notte_core.profiling` spans (off by default, `enable_profiling` in the config). Imported only once enabled.
+profiling = [
+    "opentelemetry-sdk>=1.34.1",
 ]
 
 

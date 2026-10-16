@@ -1,0 +1,566 @@
+{
+  "_connect_link_context": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "_connect_link_mailbox_connect": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "_connect_link_mailbox_sync": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "_connect_link_mailboxes": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "_connect_link_status": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "_connect_link_submit": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "account_changes": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "account_runs": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "agent_start": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "agent_status": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "agent_stop": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "anything_start": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "attempts": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "brand_retrieve": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "changes": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "connect_payment_wallet": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "create": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "create_payment": {
+    "method": "createPayment",
+    "resource": "sessions",
+    "telemetry": null,
+    "pythonHeaders": [
+      "idempotency-key"
+    ]
+  },
+  "credit_usage": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "delete": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper.",
+    "nodeOperation": "delete_"
+  },
+  "delete_secret": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "delete_session_file": {
+    "aliases": [
+      {
+        "method": "deleteSessionFile",
+        "resource": "sessions"
+      }
+    ],
+    "method": "delete",
+    "resource": "files",
+    "telemetry": "cloud.files.delete"
+  },
+  "deliveries": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "disconnect_payment_wallet": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "download_run_payload": {
+    "method": "downloadRunPayload",
+    "resource": "functions",
+    "telemetry": null,
+    "pythonRawResponse": true
+  },
+  "download_session_file": {
+    "aliases": [
+      {
+        "method": "downloadSessionFile",
+        "resource": "sessions"
+      }
+    ],
+    "method": "download",
+    "resource": "files",
+    "telemetry": "cloud.files.download",
+    "pythonImplementation": "FileStorageClient.download: file IO and streaming download.",
+    "nodeParseAs": "blob"
+  },
+  "extract_product_endpoint": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "function_create": {
+    "method": "create",
+    "resource": "functions",
+    "telemetry": "cloud.function.create",
+    "pythonImplementation": "FunctionsClient.create: multipart upload from a local file."
+  },
+  "function_delete": {
+    "method": "delete",
+    "resource": "functions",
+    "telemetry": "cloud.function.delete"
+  },
+  "function_download_url": {
+    "method": "downloadUrl",
+    "resource": "functions",
+    "telemetry": "cloud.function.get"
+  },
+  "function_fork": {
+    "method": "fork",
+    "resource": "functions",
+    "telemetry": "cloud.function.fork"
+  },
+  "function_metadata_update": {
+    "method": "metadataUpdate",
+    "resource": "functions",
+    "telemetry": null
+  },
+  "function_rollback": {
+    "method": "rollback",
+    "resource": "functions",
+    "telemetry": null
+  },
+  "function_run_get_metadata": {
+    "method": "runGetMetadata",
+    "resource": "functions",
+    "telemetry": null
+  },
+  "function_run_start": {
+    "method": "runStart",
+    "resource": "functions",
+    "telemetry": null,
+    "pythonImplementation": "FunctionsClient.run_start: SSE log decoding and non-streaming execution."
+  },
+  "function_run_stop": {
+    "method": "runStop",
+    "resource": "functions",
+    "telemetry": null
+  },
+  "function_run_update_metadata": {
+    "method": "runUpdateMetadata",
+    "resource": "functions",
+    "telemetry": null
+  },
+  "function_runtime_health": {
+    "method": "runtimeHealth",
+    "resource": "functions",
+    "telemetry": null
+  },
+  "function_schedule_delete": {
+    "method": "deleteSchedule",
+    "resource": "functions",
+    "telemetry": null
+  },
+  "function_schedule_set": {
+    "method": "setSchedule",
+    "resource": "functions",
+    "telemetry": null
+  },
+  "function_update": {
+    "method": "update",
+    "resource": "functions",
+    "telemetry": "cloud.function.update",
+    "pythonImplementation": "FunctionsClient.update: multipart upload from a local file."
+  },
+  "get_payment": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "get_script": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "get_secret": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "get_session_script": {
+    "method": "getSessionScript",
+    "resource": "sessions",
+    "telemetry": null
+  },
+  "get_usage": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "get_usage_logs": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "health_check": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "limits": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "list_agents": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "list_audit_events": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "list_data_apis": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "list_function_runs_by_function_id": {
+    "method": "listRuns",
+    "resource": "functions",
+    "telemetry": null
+  },
+  "list_functions": {
+    "method": "list",
+    "resource": "functions",
+    "telemetry": "cloud.function.list"
+  },
+  "list_monitors": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "list_personas": {
+    "method": "list",
+    "pythonUnwrapItems": true,
+    "resource": "personas",
+    "telemetry": null
+  },
+  "list_secrets": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "list_session_files": {
+    "aliases": [
+      {
+        "method": "listSessionFiles",
+        "resource": "sessions"
+      }
+    ],
+    "method": "list",
+    "resource": "files",
+    "telemetry": "cloud.files.list"
+  },
+  "list_sessions": {
+    "method": "list",
+    "pythonUnwrapItems": true,
+    "resource": "sessions",
+    "telemetry": "cloud.session.list"
+  },
+  "list_vaults": {
+    "method": "list",
+    "pythonUnwrapItems": true,
+    "resource": "vaults",
+    "telemetry": "cloud.vault.list"
+  },
+  "mailbox_connect_token": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "mailbox_delete": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "mailbox_get": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "mailbox_list": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "mailbox_sync": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "mailbox_update": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "managed_auth_connect_link_create": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "maps_search": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "news_search": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "page_execute": {
+    "method": "execute",
+    "resource": "sessions",
+    "telemetry": "cloud.session.execute",
+    "pythonImplementation": "PageClient.execute: core action dispatch shared with local sessions."
+  },
+  "page_observe": {
+    "method": "observe",
+    "resource": "sessions",
+    "telemetry": "cloud.session.observe",
+    "pythonImplementation": "PageClient.observe: core observation shared with local sessions."
+  },
+  "page_scrape": {
+    "method": "scrape",
+    "resource": "sessions",
+    "telemetry": "cloud.session.scrape",
+    "pythonImplementation": "PageClient.scrape: core structured data shared with local sessions."
+  },
+  "page_screenshot": {
+    "method": "pageScreenshot",
+    "resource": "sessions",
+    "telemetry": null,
+    "pythonRawResponse": true
+  },
+  "people_enrich": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "persona_create": {
+    "method": "create",
+    "resource": "personas",
+    "telemetry": "cloud.personas.create"
+  },
+  "persona_delete": {
+    "method": "delete",
+    "resource": "personas",
+    "telemetry": "cloud.personas.delete"
+  },
+  "persona_emails_list": {
+    "method": "emailsList",
+    "resource": "personas",
+    "telemetry": "cloud.personas.emails.list"
+  },
+  "persona_get": {
+    "method": "get",
+    "resource": "personas",
+    "telemetry": "cloud.personas.get"
+  },
+  "persona_sms_list": {
+    "method": "smsList",
+    "resource": "personas",
+    "telemetry": "cloud.personas.sms.list"
+  },
+  "persona_update": {
+    "method": "update",
+    "resource": "personas",
+    "telemetry": null
+  },
+  "prepare_run_payload_upload": {
+    "method": "prepareRunPayloadUpload",
+    "resource": "functions",
+    "telemetry": null
+  },
+  "profile_cookies_get": {
+    "method": "cookiesGet",
+    "resource": "profiles",
+    "telemetry": null
+  },
+  "profile_cookies_set": {
+    "method": "cookiesSet",
+    "resource": "profiles",
+    "telemetry": null
+  },
+  "profile_create": {
+    "method": "create",
+    "resource": "profiles",
+    "telemetry": "cloud.profile.create"
+  },
+  "profile_delete": {
+    "method": "delete",
+    "resource": "profiles",
+    "telemetry": "cloud.profile.delete"
+  },
+  "profile_duplicate": {
+    "method": "duplicate",
+    "resource": "profiles",
+    "telemetry": null
+  },
+  "profile_get": {
+    "method": "get",
+    "resource": "profiles",
+    "telemetry": "cloud.profile.get"
+  },
+  "profile_list": {
+    "method": "list",
+    "pythonUnwrapItems": true,
+    "resource": "profiles",
+    "telemetry": "cloud.profile.list"
+  },
+  "ready_check": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "retrieve": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "retrieve_change": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "retrieve_delivery": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "retrieve_run": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "retry": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "rotate_secret": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "run_now": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "runs": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "scrape_from_html": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "scrape_specialized_data": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "scrape_webpage": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "search_web": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "session_auth_readiness": {
+    "method": "authReadiness",
+    "resource": "sessions",
+    "telemetry": null
+  },
+  "session_cookies_get": {
+    "method": "getCookies",
+    "resource": "sessions",
+    "telemetry": "cloud.session.cookies.get"
+  },
+  "session_cookies_set": {
+    "method": "setCookies",
+    "resource": "sessions",
+    "telemetry": "cloud.session.cookies.set"
+  },
+  "session_debug_info": {
+    "method": "debugInfo",
+    "resource": "sessions",
+    "telemetry": "cloud.session.debug"
+  },
+  "session_mouse_replay": {
+    "method": "mouseReplay",
+    "resource": "sessions",
+    "telemetry": null
+  },
+  "session_network_logs": {
+    "method": "networkLogs",
+    "resource": "sessions",
+    "telemetry": null
+  },
+  "session_offset": {
+    "method": "offset",
+    "resource": "sessions",
+    "telemetry": "cloud.session.offset"
+  },
+  "session_profile_preview": {
+    "method": "profilePreview",
+    "resource": "sessions",
+    "telemetry": null
+  },
+  "session_profile_save": {
+    "method": "saveProfile",
+    "resource": "sessions",
+    "telemetry": "cloud.session.profile.save"
+  },
+  "session_replay": {
+    "method": "replay",
+    "resource": "sessions",
+    "telemetry": "cloud.session.replay"
+  },
+  "session_start": {
+    "method": "start",
+    "resource": "sessions",
+    "telemetry": "cloud.session.start"
+  },
+  "session_status": {
+    "method": "status",
+    "resource": "sessions",
+    "telemetry": "cloud.session.status"
+  },
+  "session_stop": {
+    "method": "stop",
+    "resource": "sessions",
+    "telemetry": "cloud.session.stop"
+  },
+  "store_secret": {
+    "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "styleguide_endpoint": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "update": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "upload_session_file": {
+    "aliases": [
+      {
+        "method": "uploadSessionFile",
+        "resource": "sessions"
+      }
+    ],
+    "method": "upload",
+    "resource": "files",
+    "telemetry": "cloud.files.upload",
+    "pythonImplementation": "FileStorageClient.upload: presigned multipart/file upload."
+  },
+  "vault_create": {
+    "method": "create",
+    "resource": "vaults",
+    "telemetry": "cloud.vault.create"
+  },
+  "vault_credentials_add": {
+    "method": "credentialsAdd",
+    "resource": "vaults",
+    "telemetry": "cloud.vault.credentials.add"
+  },
+  "vault_credentials_delete": {
+    "method": "credentialsDelete",
+    "resource": "vaults",
+    "telemetry": "cloud.vault.credentials.delete"
+  },
+  "vault_credentials_get": {
+    "method": "credentialsGet",
+    "resource": "vaults",
+    "telemetry": "cloud.vault.credentials.get"
+  },
+  "vault_credentials_list": {
+    "method": "credentialsList",
+    "resource": "vaults",
+    "telemetry": "cloud.vault.credentials.list"
+  },
+  "vault_credit_card_delete": {
+    "method": "creditCardDelete",
+    "resource": "vaults",
+    "telemetry": "cloud.vault.credit_card.delete"
+  },
+  "vault_credit_card_get": {
+    "method": "creditCardGet",
+    "resource": "vaults",
+    "telemetry": "cloud.vault.credit_card.get"
+  },
+  "vault_credit_card_set": {
+    "method": "creditCardSet",
+    "resource": "vaults",
+    "telemetry": "cloud.vault.credit_card.set"
+  },
+  "vault_delete": {
+    "method": "delete",
+    "resource": "vaults",
+    "telemetry": "cloud.vault.delete"
+  },
+  "vault_update": {
+    "method": "update",
+    "resource": "vaults",
+    "telemetry": null
+  },
+  "youtube_endpoint": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  }
+}

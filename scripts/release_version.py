@@ -26,7 +26,7 @@ def workspace(root: Path) -> tuple[str, dict[Path, str]]:
             raise ValueError(f"{path}: version {version!r} does not match root version {current!r}")
     # Validate internal pins too, including optional dependencies and underscore names.
     for path, text in texts.items():
-        for pin in re.findall(r'["\']notte[-_][A-Za-z0-9_-]+==([^"\']+)["\']', text):
+        for pin in re.findall(r'["\']notte[-_][A-Za-z0-9_-]+(?:\[[A-Za-z0-9_,-]+\])?==([^"\']+)["\']', text):
             if pin != current:
                 raise ValueError(f"{path}: internal dependency version {pin!r} does not match {current!r}")
     return current, texts
@@ -40,7 +40,7 @@ def update(texts: dict[Path, str], current: str, target: str) -> None:
             text,
         )
         text = re.sub(
-            r'(["\']notte[-_][A-Za-z0-9_-]+==)' + re.escape(current) + r'(["\'])',
+            r'(["\']notte[-_][A-Za-z0-9_-]+(?:\[[A-Za-z0-9_,-]+\])?==)' + re.escape(current) + r'(["\'])',
             lambda match: match[1] + target + match[2],
             text,
         )

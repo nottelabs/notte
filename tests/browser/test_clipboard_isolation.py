@@ -3,16 +3,6 @@ import asyncio
 import pytest
 from notte_browser.session import NotteSession
 
-from tests.mock.mock_service import MockLLMService
-from tests.mock.mock_service import patch_llm_service as _patch_llm_service
-
-patch_llm_service = _patch_llm_service
-
-
-@pytest.fixture
-def mock_llm_service() -> MockLLMService:
-    return MockLLMService(mock_response="")
-
 
 async def simulate_paste(page: NotteSession, text: str) -> None:
     """Helper function to simulate paste operation in a page."""
@@ -82,9 +72,10 @@ async def try_access_clipboard(page: NotteSession) -> str:
     return await page.window.page.evaluate("() => document.querySelector(\"textarea[name='q']\").value")
 
 
+@pytest.mark.live
 @pytest.mark.skip(reason="Skip on CICD because it's failing to often")
 @pytest.mark.asyncio
-async def test_clipboard_isolation(patch_llm_service):
+async def test_clipboard_isolation():
     """Test that clipboard data doesn't leak between browser contexts."""
     # Create two separate Notte environments
     page1 = NotteSession(
@@ -100,11 +91,11 @@ async def test_clipboard_isolation(patch_llm_service):
 
     async with page1 as p1, page2 as p2:
         # Set up test pages
-        _ = await p1.aexecute(type="goto", value=url)
-        _ = await p2.aexecute(type="goto", value=url)
+        _ = await p1.aexecute(type="goto", url=url)
+        _ = await p2.aexecute(type="goto", url=url)
 
-        _ = await p1.aobserve(perception_type="fast")
-        _ = await p2.aobserve(perception_type="fast")
+        _ = await p1.aobserve()
+        _ = await p2.aobserve()
 
         for page in [p1, p2]:
             print(page.snapshot.dom_node.interaction_nodes())
@@ -125,7 +116,7 @@ async def test_clipboard_isolation(patch_llm_service):
         # Try to access clipboard in second context multiple times
         for attempt in range(5):
             # Navigate to fresh page each time to ensure clean state
-            _ = await p2.aexecute(type="goto", value=url)
+            _ = await p2.aexecute(type="goto", url=url)
             _ = await p2.window.page.wait_for_selector(selector)
             _ = await p2.window.page.click(selector)
 

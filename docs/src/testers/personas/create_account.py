@@ -1,4 +1,5 @@
 # @sniptest filename=create_account.py
+from notte_core.credentials import EMAIL, PASSWORD
 from notte_sdk import NotteClient
 
 client = NotteClient()
@@ -12,9 +13,12 @@ url = "https://console.notte.cc"
 # create credentials for the persona (automatically generates a password and stores it in the vault)
 persona.add_credentials(url=url)
 
-with client.Session() as session:
-    agent = client.Agent(session=session, persona=persona)
-    response = agent.run(
-        task=f"Go to {url} and create an account. Go create an API key and return the API key.", url=url
-    )
-    print(response.answer)
+# The session swaps the EMAIL / PASSWORD placeholders for the persona's real credentials
+with client.Session(vault_id=persona.info.vault_id) as session:
+    session.execute(type="goto", url=url)
+    session.execute(type="form_fill", value={"email": EMAIL, "new_password": PASSWORD})
+    session.execute(type="click", selector="button[type='submit']")
+
+# Read the verification email sent to the persona's inbox
+for email in persona.emails(only_unread=True):
+    print(email.subject)

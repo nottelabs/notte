@@ -21,11 +21,10 @@ try:
         page = session.page
         page.goto("https://example.com")
 
-        # Run an Agent
-        agent = client.Agent(session=session, max_steps=10)
-        result = agent.run(task="Find the contact email")
+        # Extract data with Notte's scraping
+        result = session.scrape(instructions="Find the contact email")
 
-        print(f"Result: {result.answer}")
+        print(f"Result: {result}")
 
 finally:
     # Clean up Kernel browser

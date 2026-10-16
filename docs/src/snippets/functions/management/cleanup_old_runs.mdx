@@ -20,7 +20,7 @@ def archive_old_runs(function_id: str, days_old: int = 30):
 
     for run in runs.items:
         if run.created_at < cutoff_date:
-            run_detail = client.functions.get_run(function_id, run.function_run_id)
+            run_detail = client.functions.run_get_metadata(function_id, run.function_run_id)
             archive.append(
                 {
                     "run_id": run.function_run_id,

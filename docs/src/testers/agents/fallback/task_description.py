@@ -1,8 +1,0 @@
-from notte_sdk import NotteClient
-
-client = NotteClient()
-
-with client.Session() as session:
-    # Clear task description helps agent understand goal
-    with client.AgentFallback(session, task="Add the first product to cart") as fb:
-        session.execute(type="click", selector=".add-to-cart")

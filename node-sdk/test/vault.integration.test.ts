@@ -3,7 +3,6 @@ import { NotteClient } from '@/client';
 import { NotteAPIError } from '@/errors';
 import { config } from 'dotenv';
 import { cleanupVaults } from './helpers/cleanup-vaults';
-import { AGENT_TEST_TIMEOUT_MS, skipHeavyLive } from './helpers/live-scope';
 config();
 
 describe('Vault Integration Tests', () => {
@@ -74,7 +73,7 @@ describe('Vault Integration Tests', () => {
 
 			createdVaultIds.push(newVault.vaultId);
 
-			// Verify credentials were added; the SDK and the API both normalise URLs to the root domain.
+			// Verify credentials were added; the API normalises the unchanged input URL to its root domain.
 			const credentials = await newVault.listCredentials();
 			expect(credentials.length).toBeGreaterThan(0);
 			expect(credentials.some(c => c.url === 'github.com')).toBe(true);
@@ -208,38 +207,6 @@ describe('Vault Integration Tests', () => {
 			expect(password.length).toBe(15);
 
 			createdVaultIds.push(newVault.vaultId);
-		});
-	});
-
-	describe.skipIf(skipHeavyLive)('Vault with Agent', () => {
-		it('should use vault with Session and Agent', { timeout: AGENT_TEST_TIMEOUT_MS }, async () => {
-			const newVault = client.Vault({ name: 'Test Vault' });
-
-			await newVault.addCredentials('https://github.com/', {
-				email: 'user@example.com',
-				password: 'secure-password-123' // pragma: allowlist secret
-			});
-
-			createdVaultIds.push(newVault.vaultId);
-
-			await client.Session({ proxies: false, headless: true }).use(async (session) => {
-				const agent = client.Agent({
-					session,
-					max_steps: 3,
-					vault_id: newVault.vaultId
-				});
-
-				const result = await agent.run({
-					task: "Go to GitHub login page and describe what you see",
-					url: "https://github.com/login"
-				});
-
-				expect(result).toBeDefined();
-				expect(result.agent_id).toBeDefined();
-				expect(result.status).toBe('closed');
-				expect(result.success).toBeDefined();
-				expect(result.answer).toBeDefined();
-			});
 		});
 	});
 

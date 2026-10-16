@@ -4,18 +4,17 @@ from functools import wraps
 from typing import Any, Callable, TypeVar
 
 from notte_core.actions import ToolAction
-from notte_core.common.config import config
-from notte_core.common.logging import logger
-from notte_core.errors.base import NotteBaseError, NotteTimeoutError
-from notte_core.errors.processing import InvalidInternalCheckError
+from notte_core.config import config
+from notte_core.errors import InvalidInternalCheckError, NotteBaseError, NotteTimeoutError
+from notte_core.logging import logger
 
-from notte_browser.playwright_async_api import getPlaywrightOrPatchrightError, getPlaywrightOrPatchrightTimeoutError
+from notte_browser.driver import error_types, timeout_error_types
 
 T = TypeVar("T")
 
 
-PlaywrightTimeoutError = getPlaywrightOrPatchrightTimeoutError()
-PlaywrightError = getPlaywrightOrPatchrightError()
+PlaywrightTimeoutError = timeout_error_types()
+PlaywrightError = error_types()
 
 # #######################################################
 # #################### Browser errors ###################
@@ -107,16 +106,6 @@ class BrowserNotAvailableError(BrowserError):
         )
 
 
-class RemoteDebuggingNotAvailableError(BrowserError):
-    def __init__(self) -> None:
-        super().__init__(
-            dev_message="Remote debugging is not available. You should use a `local_pool` instead of a `remote_pool`.",
-            user_message="Remote debugging is not available. Please use a `local_pool` instead of a `remote_pool`.",
-            agent_message="Remote debugging is not available. Please use a `local_pool` instead of a `remote_pool`.",
-            should_retry_later=False,
-        )
-
-
 class BrowserExpiredError(BrowserError):
     def __init__(self) -> None:
         super().__init__(
@@ -171,18 +160,6 @@ class UnexpectedBrowserError(BrowserError):
         )
 
 
-class BrowserResourceNotFoundError(BrowserError):
-    def __init__(self, message: str) -> None:
-        super().__init__(
-            dev_message=message,
-            user_message="The requested browser resource was not found. Please start a new session.",
-            agent_message=(
-                "The requested browser resource was not found. Hint: terminate the current session and start a new one."
-            ),
-            should_retry_later=False,
-        )
-
-
 # #######################################################
 # ################ Environment errors ###################
 # #######################################################
@@ -195,22 +172,6 @@ class NoSnapshotObservedError(BrowserError):
             user_message="No snapshot is available in the session. You should use `session.observe()` first to get a snapshot",
             agent_message="No snapshot is available in the session. You should use `session.observe()` first to get a snapshot",
             should_retry_later=False,
-        )
-
-
-class MaxStepsReachedError(NotteBaseError):
-    def __init__(self, max_steps: int) -> None:
-        super().__init__(
-            dev_message=(
-                f"Max number steps reached: {max_steps} in the currrent trajectory. Either use "
-                "`session.reset()` to reset the session or increase max steps in `NotteSession(max_steps=..)`."
-            ),
-            user_message=(
-                f"Too many actions executed in the current session (i.e. {max_steps} actions). "
-                "Please start a new session to continue."
-            ),
-            # same as user message
-            agent_message=None,
         )
 
 
@@ -364,9 +325,30 @@ class CaptchaSolverNotAvailableError(NotteBaseError):
         )
 
 
-class NoToolProvidedError(NotteBaseError):
+class StructuredExtractorNotAvailableError(NotteBaseError):
+    message: str = (
+        "Structured scraping (`instructions` / `response_format`) on a local session needs a structured extractor. "
+        + "Install the LLM one with `pip install 'notte[llm]'`, pass your own with `NotteSession(extractor=...)`, "
+        + "or scrape the markdown and parse it yourself."
+    )
+
+    def __init__(self) -> None:
+        super().__init__(
+            dev_message=self.message,
+            user_message=self.message,
+            agent_message=self.message,
+        )
+
+
+class InboxActionNotSupportedLocallyError(NotteBaseError):
     def __init__(self, action: ToolAction) -> None:
-        msg = f"No provided tool is able to execute the action: {action.name()}. You should use `notte.Session(tools=[...])` to add tools to the session."
+        if action.name() in ("email_read", "sms_read"):
+            msg = (
+                f"`{action.name()}` is not a browser action: read the persona inbox with `persona.emails()` / "
+                + "`persona.sms()` (or `persona.wait_for_emails()` / `persona.wait_for_sms()` to poll)."
+            )
+        else:
+            msg = f"`{action.name()}` is only available on cloud sessions (`client.Session()`)."
         super().__init__(
             dev_message=msg,
             user_message=msg,
@@ -374,9 +356,15 @@ class NoToolProvidedError(NotteBaseError):
         )
 
 
+class ScrapeIsNotAnActionError(NotteBaseError):
+    def __init__(self) -> None:
+        msg = '`scrape` is not an action: call `session.scrape(...)` instead of `session.execute(type="scrape")`.'
+        super().__init__(dev_message=msg, user_message=msg, agent_message=msg)
+
+
 # #######################################################
 # ################## Scraping errors ####################
 # #######################################################
 
 # Re-export from notte-core for backwards compatibility
-from notte_core.errors.processing import ScrapeFailedError as ScrapeFailedError  # noqa: E402, F401
+from notte_core.errors import ScrapeFailedError as ScrapeFailedError  # noqa: E402, F401

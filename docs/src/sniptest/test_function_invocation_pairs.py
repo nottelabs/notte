@@ -1,8 +1,12 @@
 """Keep caller-side function lessons paired without exposing live fixtures."""
 
 import json
+import os
+import runpy
+import types
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from parser import parse_file
 
@@ -43,7 +47,7 @@ class FunctionInvocationPairsTest(unittest.TestCase):
             for limit in (60, 600):
                 self.assertIn(f"timeout={limit})" if suffix == ".py" else f"timeoutMs: {limit}_000", timeout)
             _, monitor = parse_file(ROOT / "testers/functions" / f"monitor_runs{suffix}")
-            self.assertIn('"stream": False' if suffix == ".py" else "stream: false", monitor)
+            self.assertIn("stream=False" if suffix == ".py" else "stream: false", monitor)
             for text in ("Status:", "Final result:", "closed", "failed", "Check every 5 seconds"):
                 self.assertIn(text, monitor)
 
@@ -55,3 +59,35 @@ class FunctionInvocationPairsTest(unittest.TestCase):
             _, versions = parse_file(ROOT / "testers/functions/management" / f"version_management{suffix}")
             for text in ("Available versions:", "Latest:", "latest_version", "versions"):
                 self.assertIn(text, versions)
+
+
+class MonitoringFailureTest(unittest.TestCase):
+    def test_rejected_start_propagates_without_polling_forever(self):
+        class Function:
+            def create_run(self):
+                return types.SimpleNamespace(function_run_id="owned-run")
+
+            def run(self, **kwargs):
+                raise RuntimeError("start rejected")
+
+        calls = []
+
+        def metadata(*args):
+            calls.append(args)
+            if len(calls) > 2:
+                raise AssertionError("kept polling after the start failed")
+            return types.SimpleNamespace(status="created")
+
+        client = types.SimpleNamespace(
+            Function=lambda **kwargs: Function(),
+            functions=types.SimpleNamespace(run_get_metadata=metadata),
+        )
+        sdk = types.ModuleType("notte_sdk")
+        sdk.NotteClient = lambda: client
+        with (
+            patch.dict("sys.modules", {"notte_sdk": sdk}),
+            patch.dict(os.environ, {"NOTTE_FUNCTION_ID": "owned"}),
+            patch("builtins.print"),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "start rejected"):
+                runpy.run_path(str(ROOT / "testers/functions/monitor_runs.py"))

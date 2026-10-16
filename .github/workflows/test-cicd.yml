@@ -7,8 +7,7 @@ on:
         description: Suite decisions from the shared push or PR selector.
         type: string
         default: ''
-  # Full live suite, including agent, persona and vault-with-agent tests that
-  # pull requests skip. Scheduled runs only run the live suite.
+  # Periodic full live coverage; offline tests remain the secret-free PR gate.
   schedule:
     - cron: '0 */4 * * 1-5'
   # SECURITY: Automatic runs use pull_request in ci.yml, never pull_request_target.
@@ -37,6 +36,7 @@ env:
   NOTTE_CI_VAULT_PREFIX: ci-${{ github.run_id }}-${{ github.job }}
 
 permissions:
+  contents: read
   pull-requests: write
 
 jobs:
@@ -66,7 +66,7 @@ jobs:
         if: inputs.scope == ''
         id: scope
 
-  lint:
+  checks:
     needs: changes
     if: fromJSON(needs.changes.outputs.scope).file_checks
     runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-4vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
@@ -79,14 +79,16 @@ jobs:
           # Maintainer-only path: runs the dispatched PR's code WITH secrets. Only reach
           # this after reviewing the diff. refs/pull/<n>/head is the PR's head commit.
           ref: refs/pull/${{ github.event.inputs.pr_number }}/head
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Checkout code (PR or push)
         if: github.event_name != 'workflow_dispatch'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-            ref: ${{ github.event.pull_request.head.sha }}
-            persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
 
       - uses: ./.github/actions/python-setup
         if: fromJSON(needs.changes.outputs.scope).python_static || fromJSON(needs.changes.outputs.scope).lint_all
@@ -117,7 +119,6 @@ jobs:
           if [ "$FULL" = true ]; then
             "${runner[@]}" run --all-files
           else
-            git fetch --no-tags origin "$BASE_SHA" "$HEAD_SHA"
             "${runner[@]}" run --from-ref "$BASE_SHA" --to-ref "$HEAD_SHA"
             if [ "$DOCS_LINKS" = true ]; then
               "${runner[@]}" run check-docs-broken-links --all-files
@@ -127,26 +128,21 @@ jobs:
       - name: Note - secret-backed tests skipped (fork PR)
         if: ${{ env.IS_TRUSTED != 'true' }}
         run: |
-          echo "This is a fork PR. Steps that require secrets (Vertex auth + the pytest suite)"
+          echo "This is a fork PR. Steps that require secrets (the live pytest suite)"
           echo "were skipped - fork PRs intentionally have no access to repository secrets."
           echo "Build, install, and pre-commit (lint + type checks) ran above and reflect your change."
           echo "A maintainer can run the full secret-backed suite after reviewing the diff via"
           echo "'Run workflow' (workflow_dispatch) with this PR number."
 
-  # Tests without staging API calls run independently on a larger runner.
-  unit:
+  # The offline suite: every test not marked `staging` or `live` (see the markers in
+  # pyproject.toml). Offline - a local browser and localhost only, no secrets - so it runs on
+  # fork PRs too and cannot be failed by a third-party website or a staging deploy.
+  tests:
     needs: changes
-    if: >-
-      fromJSON(needs.changes.outputs.scope).python_unit &&
-      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
-    runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-8vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
+    if: fromJSON(needs.changes.outputs.scope).python_unit
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 20
-    env:
-      SUITE: unit
-      REQUIRES_STAGING: "false"
-      PYTEST_ARGS: -n logical tests --ignore=tests/integration --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py
-      COVERAGE_FILE: .coverage.unit
-    steps: &test-steps
+    steps:
       - name: Checkout PR code (manual trigger)
         if: github.event_name == 'workflow_dispatch'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -154,115 +150,202 @@ jobs:
           # Maintainer-only path: runs the dispatched PR's code WITH secrets. Only reach
           # this after reviewing the diff. refs/pull/<n>/head is the PR's head commit.
           ref: refs/pull/${{ github.event.inputs.pr_number }}/head
-          persist-credentials: false
 
       - name: Checkout code (PR or push)
         if: github.event_name != 'workflow_dispatch'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
             ref: ${{ github.event.pull_request.head.sha }}
-            persist-credentials: false
-
-      - id: 'auth'
-        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
-        with:
-          credentials_json: ${{ secrets.VERTEX_AI }}
 
       - uses: ./.github/actions/python-setup
         with:
           browsers: "true"
+          pre-commit: "true"
+
+      - name: Run unit tests
+        run: |
+          set -o pipefail
+          make test-cicd | tee pytest-coverage.txt
+
+      - name: Note - staging-and-live skipped (fork PR)
+        if: ${{ env.IS_TRUSTED != 'true' }}
+        run: |
+          echo "This is a fork PR. The staging-and-live job (Notte API + third-party websites)"
+          echo "was skipped - fork PRs intentionally have no access to repository secrets."
+          echo "Pre-commit and the offline unit suite ran above and reflect your change."
+          echo "A maintainer can run staging-and-live after reviewing the diff via"
+          echo "'Run workflow' (workflow_dispatch) with this PR number."
+
+      - name: Pytest coverage comment
+        # Fork PRs get a read-only token, so they cannot post the comment.
+        if: ${{ always() && fromJSON(needs.changes.outputs.scope).python_unit && github.ref != 'refs/heads/main' && env.IS_TRUSTED == 'true' }}
+        uses: MishaKav/pytest-coverage-comment@9ee59af31bd7bcada1cc496f086b407122602dbd # v1.12.3
+        with:
+          pytest-coverage-path: ./pytest-coverage.txt
+          junitxml-path: ./pytest.xml
+
+  # Everything marked `staging` (Notte API, us-staging) or `live` (third-party websites, LLM
+  # providers), including marked tests outside tests/integration. These depend on
+  # services outside this repo, so failures are retried (`make test-live`) and the job is kept
+  # separate from the `tests` gate - do not make it a required check.
+  staging-and-live:
+    needs: changes
+    if: ${{ fromJSON(needs.changes.outputs.scope).python_live && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        shard: [1, 2]
+    env:
+      NOTTE_TEST_SHARD: ${{ matrix.shard }}/2
+      NOTTE_CI_VAULT_PREFIX: ci-${{ github.run_id }}-${{ github.job }}-${{ matrix.shard }}
+    concurrency:
+      group: notte-live-api-${{ github.ref }}
+      queue: max
+      cancel-in-progress: false
+    steps:
+      - name: Checkout PR code (manual trigger)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Maintainer-only path: runs the dispatched PR's code WITH secrets. Only reach
+          # this after reviewing the diff. refs/pull/<n>/head is the PR's head commit.
+          ref: refs/pull/${{ github.event.inputs.pr_number }}/head
+
+      - name: Checkout code (PR or push)
+        if: github.event_name != 'workflow_dispatch'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+            ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+            enable-cache: true
+            cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version-file: ".python-version"
+          cache: ${{ env.CACHE_TYPE }}
+
+      - name: Cache patchright
+        id: cache-patchright
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ github.workspace }}/.playwright-browsers
+          key: ${{ runner.os }}-patchright-${{ hashFiles('**/uv.lock') }}-v2
+          restore-keys: |
+            ${{ runner.os }}-patchright-${{ hashFiles('**/uv.lock') }}-
+            ${{ runner.os }}-patchright-
+
+      - name: Install dependencies
+        run: uv sync --dev --all-extras
+
+      - name: Install patchright
+        if: steps.cache-patchright.outputs.cache-hit != 'true'
+        run: |
+          echo "Cache miss - installing patchright"
+          uv run patchright install --with-deps chromium --no-shell
 
       - name: Verify environment variables
         env:
-          NOTTE_API_KEY: ${{ env.REQUIRES_STAGING == 'true' && (secrets.NOTTE_API_KEY_CI_PY || secrets.NOTTE_API_KEY) || '' }}
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_PY || secrets.NOTTE_API_KEY }}
           SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
           EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
         run: |
-          required=(GOOGLE_APPLICATION_CREDENTIALS)
-          if [ "$REQUIRES_STAGING" = "true" ]; then
-            required+=(NOTTE_API_KEY SMTP_SERVER EMAIL_SENDER EMAIL_PASSWORD)
+          if [ -z "$NOTTE_API_KEY" ]; then
+            echo "NOTTE_API_KEY is not set. For an external/fork PR, a maintainer should review the diff and run this workflow via 'Run workflow' (workflow_dispatch) with the PR number."
+            exit 1
           fi
-          for name in "${required[@]}"; do
+          # The SMTP test (tests/integration/sdk/test_persona_inbox.py) skips itself without these, so only warn.
+          for name in SMTP_SERVER EMAIL_SENDER EMAIL_PASSWORD; do
             if [ -z "${!name}" ]; then
-              echo "$name is not set. For an external/fork PR, a maintainer should review the diff and run this workflow via 'Run workflow' (workflow_dispatch) with the PR number."
-              exit 1
+              echo "::warning::$name is not set, the SMTP test will be skipped"
             fi
           done
           echo "Environment variables are set"
 
       - name: Wait for the API to be ready
-        if: env.REQUIRES_STAGING == 'true'
-        # The staging API scales to zero when idle and wakes on the first request.
         uses: ./.github/actions/wait-for-api
         with:
-          api-url: ${{ env.NOTTE_API_URL }}
+          api-url: https://us-staging.notte.cc
 
-      - name: Run tests
+      - name: Run staging and live tests
         env:
-          NOTTE_API_KEY: ${{ env.REQUIRES_STAGING == 'true' && (secrets.NOTTE_API_KEY_CI_PY || secrets.NOTTE_API_KEY) || '' }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_PY || secrets.NOTTE_API_KEY }}
           NOTTE_VAULT_TEST_EMAIL: ${{ secrets.NOTTE_VAULT_TEST_EMAIL }}
           NOTTE_VAULT_TEST_PASSWORD: ${{ secrets.NOTTE_VAULT_TEST_PASSWORD }}
           SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
           EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-        run: |
-          # PYTEST_ARGS holds several arguments; split it on purpose.
-          # shellcheck disable=SC2086
-          uv run pytest $PYTEST_ARGS ${PYTEST_MARKERS:+-m "$PYTEST_MARKERS"} --durations=10 --junitxml="pytest-$SUITE.xml" --cov=packages --cov-report=
+        run: make test-live PYTEST_LIVE='uv run pytest -n 2 tests -m "staging or live" --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py --ignore=tests/llm/test_provider_matrix.py'
 
       - name: Cleanup vaults created by this run
-        if: always() && env.REQUIRES_STAGING == 'true'
+        if: ${{ always() }}
         env:
-          NOTTE_API_KEY: ${{ env.REQUIRES_STAGING == 'true' && (secrets.NOTTE_API_KEY_CI_PY || secrets.NOTTE_API_KEY) || '' }}
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_PY || secrets.NOTTE_API_KEY }}
         run: uv run python scripts/cleanup_ci_vaults.py
 
-      - name: Upload test results
-        if: always()
+  # Local extraction only: no staging API, cloud sessions, or NOTTE_API_KEY needed.
+  llm-provider-matrix:
+    needs: changes
+    if: fromJSON(needs.changes.outputs.scope).llm_provider_live
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 10
+    env:
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      VERTEX_AVAILABLE: ${{ secrets.VERTEX_AI != '' }}
+    steps:
+      - name: Checkout PR code (manual trigger)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/pull/${{ github.event.inputs.pr_number }}/head
+          persist-credentials: false
+      - name: Checkout code (PR or push)
+        if: github.event_name != 'workflow_dispatch'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Note - provider matrix skipped (missing secret)
+        if: env.OPENROUTER_API_KEY == ''
+        run: |
+          echo "OPENROUTER_API_KEY is not set. Fork/external PRs intentionally receive no secrets."
+          echo "A maintainer can dispatch full CI with the PR number after reviewing the diff."
+          echo "Provider matrix skipped: OPENROUTER_API_KEY is absent." >> "$GITHUB_STEP_SUMMARY"
+      - uses: ./.github/actions/python-setup
+        if: env.OPENROUTER_API_KEY != ''
+      - name: Authenticate optional Vertex route
+        if: env.OPENROUTER_API_KEY != '' && env.VERTEX_AVAILABLE == 'true'
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          credentials_json: ${{ secrets.VERTEX_AI }}
+      - name: Mint optional Vertex token outside notte-llm
+        if: env.OPENROUTER_API_KEY != '' && env.VERTEX_AVAILABLE == 'true'
+        run: uv run --script .github/scripts/configure_llm.py
+      - name: Run local provider extraction matrix
+        if: env.OPENROUTER_API_KEY != ''
+        run: >-
+          uv run --no-sync pytest tests/llm/test_provider_matrix.py -m live -n 6
+          --dist loadgroup -v -rA --junitxml=llm-provider-matrix.xml -o junit_family=legacy
+      - name: Summarize provider results and response-format paths
+        if: always() && env.OPENROUTER_API_KEY != ''
+        run: python scripts/llm_matrix_report.py llm-provider-matrix.xml >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload provider results
+        if: always() && env.OPENROUTER_API_KEY != ''
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: pytest-${{ env.SUITE }}
-          path: |
-            .coverage.*
-            pytest-*.xml
-          include-hidden-files: true
-          if-no-files-found: ignore
-          retention-days: 3
+          name: llm-provider-matrix
+          path: llm-provider-matrix.xml
+          if-no-files-found: error
 
-  # Live tests against the staging API, split into shards. Pull requests run the smoke
-  # scope (no agent, persona or vault-with-agent tests) in two shards; main, scheduled
-  # and manual runs run everything in four.
-  live:
-    needs: changes
-    if: >-
-      fromJSON(needs.changes.outputs.scope).python_live &&
-      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
-    runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-4vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
-    timeout-minutes: 20
-    # All live suites for a ref share one queue so they do not hit the API at once.
-    concurrency:
-      group: notte-live-api-${{ github.ref }}
-      queue: max
-      cancel-in-progress: false
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: ${{ fromJSON(github.event_name == 'pull_request' && '[1, 2]' || '[1, 2, 3, 4]') }}
-    env:
-      SUITE: live-${{ matrix.shard }}
-      REQUIRES_STAGING: "true"
-      NOTTE_TEST_SHARD: ${{ matrix.shard }}/${{ strategy.job-total }}
-      # Two workers per shard: all live suites share the staging API, which slows sharply
-      # (vault and persona calls 5-15x) when too many clients hit it at once.
-      PYTEST_ARGS: -n 2 tests/integration
-      PYTEST_MARKERS: ${{ github.event_name == 'pull_request' && 'not live_heavy' || '' }}
-      COVERAGE_FILE: .coverage.live-${{ matrix.shard }}
-      # Shards share a job name; give each its own vault prefix so cleanups stay separate.
-      NOTTE_CI_VAULT_PREFIX: ci-${{ github.run_id }}-${{ github.job }}-${{ matrix.shard }}
-    steps: *test-steps
-
-  # The SDK reads the API key saved by `notte auth login`. Store keys with the CLI's own code
-  # (from the notte-cli submodule) on each OS and check the SDK reads them back. Needs no secrets.
   cli-contract:
     needs: changes
     if: fromJSON(needs.changes.outputs.scope).cli_contract
@@ -363,80 +446,3 @@ jobs:
           python-version: '3.11'
       - run: python -m pip install --no-cache-dir pytest pyyaml
       - run: python -m pytest -c /dev/null --rootdir=. tests/docs tests/test_generate_llms_offline.py --noconftest -q
-
-  # Wait for selected Python suites and combine their coverage.
-  tests:
-    needs: [changes, lint, unit, live, cli-contract, docs]
-    if: always()
-    runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-2vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
-    timeout-minutes: 10
-    steps:
-      - name: Check suite results
-        env:
-          RESULTS: ${{ toJSON(needs) }}
-        run: |
-          echo "$RESULTS" | python3 -c '
-          import json, sys
-          results = {name: job["result"] for name, job in json.load(sys.stdin).items()}
-          print(results)
-          sys.exit(results["changes"] != "success" or any(result in ("failure", "cancelled") for result in results.values()))
-          '
-
-      - name: Checkout code
-        id: checkout
-        if: >-
-          always() && github.event_name == 'pull_request' && env.IS_TRUSTED == 'true' &&
-          (needs.unit.result != 'skipped' || needs.live.result != 'skipped')
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-
-      - name: Install uv
-        if: always() && steps.checkout.outcome == 'success'
-        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
-
-      - name: Download test results
-        if: always() && steps.checkout.outcome == 'success'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-        with:
-          pattern: pytest-*
-          path: results
-          merge-multiple: true
-
-      - name: Combine coverage and test results
-        if: always() && steps.checkout.outcome == 'success'
-        run: |
-          uvx coverage==7.10.7 combine results/.coverage.*
-          {
-            echo "---------- coverage: platform linux, combined unit and live suites ----------"
-            uvx coverage==7.10.7 report -m --skip-covered
-          } > pytest-coverage.txt
-          python3 - <<'PY'
-          import glob
-          import xml.etree.ElementTree as ET
-
-          merged = ET.Element("testsuite", name="pytest")
-          totals = dict.fromkeys(("tests", "errors", "failures", "skipped"), 0)
-          duration = 0.0
-          for path in sorted(glob.glob("results/pytest-*.xml")):
-              root = ET.parse(path).getroot()
-              for suite in root.iter("testsuite"):
-                  for key in totals:
-                      totals[key] += int(suite.get(key, 0))
-                  duration += float(suite.get("time", 0))
-                  merged.extend(suite.findall("testcase"))
-          for key, value in totals.items():
-              merged.set(key, str(value))
-          merged.set("time", f"{duration:.3f}")
-          tree = ET.ElementTree(ET.Element("testsuites"))
-          tree.getroot().append(merged)
-          tree.write("pytest.xml", encoding="utf-8", xml_declaration=True)
-          PY
-
-      - name: Pytest coverage comment
-        if: always() && steps.checkout.outcome == 'success'
-        uses: MishaKav/pytest-coverage-comment@9ee59af31bd7bcada1cc496f086b407122602dbd # v1.12.3
-        with:
-          pytest-coverage-path: ./pytest-coverage.txt
-          junitxml-path: ./pytest.xml

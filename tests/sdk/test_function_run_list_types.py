@@ -27,8 +27,9 @@ def test_function_run_list_uses_lightweight_items() -> None:
     item = response.items[0]
     assert isinstance(item, FunctionRunListItemResponse)
     assert item.created_at == dt.datetime(2026, 8, 17, 10, tzinfo=dt.UTC)
-    assert item.workflow_id == "function-1"
-    assert item.workflow_run_id == "run-1"
+    assert item.function_id == "function-1"
+    assert item.function_run_id == "run-1"
+    assert "workflow_id" not in item.model_dump()
     assert "logs" not in item.model_dump()
     assert "variables" not in item.model_dump()
     assert "result" not in item.model_dump()

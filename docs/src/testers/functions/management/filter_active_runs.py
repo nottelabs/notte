@@ -22,5 +22,7 @@ for run in active_runs.items:
 
 history = client.functions.list_runs(function_id, only_active=False)
 assert any(run.function_run_id == completed.function_run_id for run in history.items)
-assert not active_runs.items
-results = [run.status for run in active_runs.items]
+# Other runs of the shared CI function may be active; only the finished run must be excluded.
+assert all(run.status == "active" for run in active_runs.items)
+results = [run.function_run_id for run in active_runs.items if run.function_run_id == completed.function_run_id]
+assert results == []

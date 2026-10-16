@@ -1,7 +1,7 @@
 {
   "name": "notte-sdk",
   "version": "0.0.0-dev",
-  "description": "TypeScript SDK for Notte - Cloud-hosted browser sessions with LLM-powered web agents",
+  "description": "TypeScript SDK for Notte - Cloud-hosted browser sessions and automation",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -33,8 +33,6 @@
     "resources:generate": "node scripts/generate-resources.mjs",
     "resources:check": "node scripts/generate-resources.mjs --check",
     "resources:test": "node --test scripts/generate-resources.test.mjs",
-    "generate:staging": "NOTTE_API_URL=https://us-staging.notte.cc npm run generate",
-    "check:staging": "node scripts/check-generated-drift.js",
     "build": "tsup",
     "dev": "tsup --watch",
     "prepublishOnly": "npm run build",
@@ -42,7 +40,8 @@
     "test:unit": "vitest --exclude='**/*integration.test.ts'",
     "test:integration": "VITEST_INTEGRATION=1 vitest --run",
     "typecheck": "tsc --noEmit",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "check:generated": "node scripts/check-generated-drift.js && npm run docs:check"
   },
   "keywords": [
     "notte",
@@ -71,7 +70,6 @@
   },
   "dependencies": {
     "tldts": "^7.4.12",
-    "ws": "^8.18.0",
     "zod": "^4.1.9"
   },
   "peerDependencies": {
@@ -86,7 +84,6 @@
     "@hey-api/openapi-ts": "^0.99.0",
     "@mdx-js/mdx": "^3.1.1",
     "@types/node": "^26.6.3",
-    "@types/ws": "^8.5.10",
     "@vitest/coverage-v8": "^5.0.2",
     "dotenv": "^18.0.4",
     "playwright-core": "1.63.0",

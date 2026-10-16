@@ -161,19 +161,19 @@ describe('createNotteProxy', () => {
       apiUrl: 'https://mock-api.notte.cc',
     });
 
-    const request = new Request('http://localhost:3000/api/notte/agents/agent-123/stop', {
+    const request = new Request('http://localhost:3000/api/notte/sessions/session-123/stop', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: '{}',
     });
     const context = {
-      params: Promise.resolve({ path: ['agents', 'agent-123', 'stop'] }),
+      params: Promise.resolve({ path: ['sessions', 'session-123', 'stop'] }),
     };
 
     const response = await handlers.POST(request, context);
     expect(response.status).toBe(200);
 
     const calledUrl = vi.mocked(globalThis.fetch).mock.calls[0]?.[0] as string;
-    expect(calledUrl).toBe('https://mock-api.notte.cc/agents/agent-123/stop');
+    expect(calledUrl).toBe('https://mock-api.notte.cc/sessions/session-123/stop');
   });
 });

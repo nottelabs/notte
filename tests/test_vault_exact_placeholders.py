@@ -23,11 +23,10 @@ from notte_core.credentials import (
 )
 from notte_core.credentials.base import CredentialField, CredentialsDict, CreditCardDict, LocatorAttributes
 from notte_core.credentials.types import ValueWithPlaceholder
-from notte_core.errors.actions import NoCredentialsFoundError
-from notte_core.errors.processing import (
-    CredentialFieldValidationError,
+from notte_core.errors import (
     CredentialReplacementError,
     MissingCredentialFieldError,
+    NoCredentialsFoundError,
     VaultLookupError,
 )
 
@@ -44,7 +43,8 @@ MFA_SECRET = "JBSWY3DPEHPK3PXP"  # pragma: allowlist secret
 SECRET_CARD: CreditCardDict = {
     "card_holder_name": "Canary Holder 8c2e",
     "card_number": "4000 0566 5566 5556",
-    "card_cvv": "917",
+    # A distinctive mock secret avoids false matches in timestamps, timings and sizes.
+    "card_cvv": "Canary-CVV-917-b4f9",  # pragma: allowlist secret
     "card_full_expiration": "07/31",
 }
 SECRETS = (SECRET_EMAIL, SECRET_USERNAME, SECRET_PASSWORD, *SECRET_CARD.values())
@@ -203,14 +203,15 @@ def test_unresolved_placeholder_fails_closed(vault: NoCardVault, value: str, err
 
 
 @pytest.mark.parametrize("value", [CARD_HOLDER_NAME, CARD_NUMBER])
-def test_resolved_non_secret_placeholder_on_invalid_target_fails(value: str) -> None:
-    """With a saved card, a card placeholder on an input that is not a card field fails so the agent can retarget."""
+def test_card_placeholder_outside_payment_field_remains_plain_text(value: str) -> None:
+    """Preserve v2's explicit plain-text behavior even when a card is stored."""
     vault = full_vault()
     attrs = LocatorAttributes(type="text", autocomplete=None, outerHTML='<input id="search" type="text">')
-
-    with capture_logs() as logs, pytest.raises(CredentialFieldValidationError) as exc_info:
-        _ = asyncio.run(vault.replace_credentials(FillAction(id="I1", value=value), attrs, make_snapshot(URL)))
-    assert_no_secret(error_texts(exc_info.value) + logs, SECRETS)
+    action = FillAction(id="I1", value=value)
+    with capture_logs() as logs:
+        updated = asyncio.run(vault.replace_credentials(action, attrs, make_snapshot(URL)))
+    assert updated.value == value
+    assert_no_secret(logs, SECRETS)
 
 
 def test_secret_fails_even_when_form_also_holds_unresolved_card_holder() -> None:

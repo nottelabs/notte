@@ -29,12 +29,6 @@ export interface ManagedAuthRunOptions extends AuthWaitOptions {
 }
 export class ManagedAuthError extends NotteError {}
 
-export function validateAuthRetry(value: number): void {
-  if (!Number.isInteger(value) || value < 0 || value > 2) {
-    throw new InvalidRequestError('auth_retry must be an integer between 0 and 2');
-  }
-}
-
 /** Poll read-only endpoints; never resubmit session creation or login. */
 export async function pollAuth<T>(read: (signal: AbortSignal) => Promise<T | undefined>, options: AuthWaitOptions): Promise<T> {
   const timeoutMs = options.timeoutMs ?? 615_000;
@@ -83,6 +77,7 @@ export async function pollAuth<T>(read: (signal: AbortSignal) => Promise<T | und
  * await client.managedAuth.waitForAuth(operation);
  * ```
  */
+// Legacy: these four managed-auth routes are absent from the committed OpenAPI snapshot.
 export class NotteManagedAuth {
   constructor(private readonly client: NotteClient) {}
 
@@ -127,12 +122,10 @@ export class NotteManagedAuth {
   }
 
   private async run(connectionId: string, action: 'refresh' | 'reauthenticate', options: ManagedAuthRunOptions): Promise<ManagedAuthOperation> {
-    const authRetry = options.auth_retry ?? 0;
-    validateAuthRetry(authRetry);
     options.signal?.throwIfAborted();
     const response = await this.client.getClient().post<{ 202: ManagedAuthOperation }, unknown, true>({
       url: `/managed-auth/connections/${encodeURIComponent(connectionId)}/${action}`,
-      body: { auth_retry: authRetry }, headers: { 'Content-Type': 'application/json' },
+      body: { auth_retry: options.auth_retry }, headers: { 'Content-Type': 'application/json' },
       signal: options.signal, throwOnError: true,
     });
     return options.wait === false ? response.data : this.waitForAuth(response.data, options);

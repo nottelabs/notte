@@ -151,3 +151,41 @@ it('preserves third-argument run request options and accepts a payload query aft
   controller.abort();
   expect(requests.every(request => request.signal.aborted)).toBe(true);
 });
+
+
+it.each(['create', 'list'] as const)('delegates invalid profile %s values to the API', async method => {
+  const requests: Request[] = [];
+  vi.stubGlobal('fetch', vi.fn(async (request: Request) => {
+    requests.push(request);
+    return Response.json({ detail: 'invalid profile input' }, { status: 422 });
+  }));
+  const api = client();
+  const data = method === 'create' ? { name: 42 } : { page: -1 };
+  const error = await api.profiles[method](data as never).catch((value: unknown) => value);
+  expect(error).toBeInstanceOf(NotteAPIError);
+  expect(error).toMatchObject({ statusCode: 422 });
+  expect(requests).toHaveLength(1);
+  if (method === 'create') expect(await requests[0].json()).toEqual(data);
+  else expect(new URL(requests[0].url).searchParams.get('page')).toBe('-1');
+});
+
+it.each(['text/plain', 'application/json'])('preserves %s download bytes through both file entry points', async contentType => {
+  const bytes = contentType === 'text/plain' ? 'plain file content' : '{ "keep": "spacing" }';
+  vi.stubGlobal('fetch', vi.fn(async () => new Response(bytes, { headers: { 'content-type': contentType } })));
+  const api = client();
+  for (const download of [api.files.download, api.sessions.downloadSessionFile]) {
+    const result = await download('session', 'file');
+    expect(result).toBeInstanceOf(Blob);
+    expect(await (result as Blob).text()).toBe(bytes);
+  }
+});
+
+
+it('returns successful raw payload objects with a detail key and preserves HTTP errors', async () => {
+  const fetch = vi.fn(async () => Response.json({ detail: 'notes' }));
+  vi.stubGlobal('fetch', fetch);
+  const api = client();
+  expect(await api.functions.downloadRunPayload('function', 'run', 'variables')).toEqual({ detail: 'notes' });
+  fetch.mockImplementation(async () => Response.json({ detail: 'missing' }, { status: 404 }));
+  await expect(api.functions.downloadRunPayload('function', 'run', 'variables')).rejects.toBeInstanceOf(NotteAPIError);
+});
