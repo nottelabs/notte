@@ -51,6 +51,7 @@ jobs:
         uses: ./.github/actions/wait-for-api
         with:
           api-url: https://us-staging.notte.cc
+          timeout: '300'
       - name: Check browser handler success and failure cleanup
         working-directory: examples/trigger
         env:
