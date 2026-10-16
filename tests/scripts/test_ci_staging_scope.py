@@ -21,6 +21,7 @@ def workflow(name: str) -> dict[str, Any]:
 
 def test_shared_queue_only_contains_staging_test_jobs() -> None:
     expected = {
+        ("claude-agents-integration.yml", "live"),
         ("node-sdk-ci.yml", "integration-tests"),
         ("test-cicd.yml", "live"),
         ("docs-tests-cicd.yml", "execution"),

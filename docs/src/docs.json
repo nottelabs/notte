@@ -87,10 +87,6 @@
       "destination": "/integrations"
     },
     {
-      "source": "/integrations/claude-agent-sdk",
-      "destination": "/mcp-server"
-    },
-    {
       "source": "/integrations/claude-computer-use",
       "destination": "/integrations"
     },
@@ -418,7 +414,8 @@
               "integrations/mastra",
               "integrations/openclaw",
               "integrations/hermes",
-              "integrations/stagehand"
+              "integrations/stagehand",
+              "integrations/claude-agent-sdk"
             ]
           },
           {
