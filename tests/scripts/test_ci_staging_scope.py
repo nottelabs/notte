@@ -26,6 +26,7 @@ def test_shared_queue_only_contains_staging_test_jobs() -> None:
         ("docs-tests-cicd.yml", "execution"),
         ("paired-sdk-examples.yml", "live"),
         ("readme-check.yml", "live"),
+        ("temporal-integration.yml", "browser-workflow"),
         ("inngest-integration.yml", "live"),
         ("selenium-integration.yml", "live"),
     }
