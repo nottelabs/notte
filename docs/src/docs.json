@@ -414,6 +414,7 @@
               "integrations/crewai",
               "integrations/agno",
               "integrations/google-adk",
+              "integrations/openai-agents",
               "integrations/vercel-ai-sdk",
               "integrations/mastra",
               "integrations/openclaw",

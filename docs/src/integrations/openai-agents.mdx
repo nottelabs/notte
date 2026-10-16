@@ -1,0 +1,40 @@
+---
+title: OpenAI Agents SDK
+description: Give OpenAI agents a Notte browser in Python or TypeScript.
+---
+import OpenAiAgents from '/snippets/integrations/openai_agents.mdx';
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+Connect the [OpenAI Agents SDK](https://developers.openai.com/api/docs/guides/agents/sdk) to [Notte Browser MCP](/mcp-server). The example creates a browser, lets an OpenAI agent read a page, and closes the browser when the run finishes or raises an error.
+
+## Install
+
+Use Python 3.11+ or Node.js 22.18+.
+
+<CodeGroup>
+```bash Python
+pip install notte-sdk openai-agents==0.24.0
+```
+```bash TypeScript
+npm install notte-sdk @openai/agents@0.20.0 zod
+```
+</CodeGroup>
+
+Set your [Notte API key](https://console.notte.cc/apikeys) and OpenAI API key:
+
+```bash
+export NOTTE_API_KEY=your-notte-api-key
+export OPENAI_API_KEY=your-openai-api-key
+```
+
+## Run an agent
+
+Save the Python example as `notte_openai_agents.py` and run `python notte_openai_agents.py`. For TypeScript, save it as `notte_openai_agents.ts` in a project with `"type": "module"` and run `node --experimental-strip-types notte_openai_agents.ts`.
+
+<OpenAiAgents />
+
+Both examples print `Example Domain`. The application owns the session and exposes only navigation, observation, and scraping tools to the agent. Closing the MCP connection alone does not stop a browser; the outer Notte session scope handles cleanup. OpenAI tracing is disabled for this example.
+
+See [Notte Browser MCP](/mcp-server) for the available tools and [session lifecycle](/features/sessions/lifecycle) for longer-lived browsers.

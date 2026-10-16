@@ -1,0 +1,90 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/integrations/openai_agents.py */}
+
+<CodeGroup>
+
+```python notte_openai_agents.py
+import asyncio
+import os
+
+from agents import Agent, RunConfig, Runner
+from agents.mcp import MCPServerStreamableHttp, create_static_tool_filter
+from notte_sdk import NotteClient
+from pydantic import BaseModel
+
+
+class Heading(BaseModel):
+    heading: str
+
+
+async def main() -> dict[str, str]:
+    with NotteClient().Session() as session:
+        async with MCPServerStreamableHttp(
+            name="Notte",
+            params={
+                "url": os.environ.get("NOTTE_API_URL", "https://api.notte.cc").rstrip("/") + "/mcp",
+                "headers": {"Authorization": f"Bearer {os.environ['NOTTE_API_KEY']}"},
+            },
+            client_session_timeout_seconds=120,
+            tool_filter=create_static_tool_filter(
+                allowed_tool_names=["browser_action", "browser_observe", "browser_scrape"]
+            ),
+        ) as server:
+            agent = Agent(
+                name="Browser reader",
+                model="gpt-4.1-mini",
+                instructions=f"Use only browser_id {session.session_id}. Read the page with Notte tools.",
+                mcp_servers=[server],
+                output_type=Heading,
+            )
+            run = await Runner.run(
+                agent,
+                "Visit https://example.com and return its main heading.",
+                max_turns=8,
+                run_config=RunConfig(tracing_disabled=True),
+            )
+            heading = run.final_output_as(Heading).heading
+            print(heading)
+            return {"heading": heading, "session_id": session.session_id}
+
+
+result = asyncio.run(main())
+```
+
+```typescript notte_openai_agents.ts
+import { Agent, MCPServerStreamableHttp, createMCPToolStaticFilter, Runner } from '@openai/agents';
+import { NotteClient } from 'notte-sdk';
+import { z } from 'zod';
+
+export const result = await new NotteClient().Session().use(async (session) => {
+  const server = new MCPServerStreamableHttp({
+    name: 'Notte',
+    url: new URL('/mcp', process.env.NOTTE_API_URL || 'https://api.notte.cc').href,
+    requestInit: { headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY!}` } },
+    clientSessionTimeoutSeconds: 120,
+    toolFilter: createMCPToolStaticFilter({
+      allowed: ['browser_action', 'browser_observe', 'browser_scrape'],
+    }),
+  });
+  try {
+    await server.connect();
+    const agent = new Agent({
+      name: 'Browser reader',
+      model: 'gpt-4.1-mini',
+      instructions: `Use only browser_id ${session.getId()!}. Read the page with Notte tools.`,
+      mcpServers: [server],
+      outputType: z.object({ heading: z.string() }),
+    });
+    const answer = await new Runner({ tracingDisabled: true }).run(agent, 'Visit https://example.com and return its main heading.', {
+      maxTurns: 8,
+    });
+    if (!answer.finalOutput) throw new Error('The agent returned no heading');
+    console.log(answer.finalOutput.heading);
+    return { heading: answer.finalOutput.heading, session_id: session.getId()! };
+  } finally {
+    await server.close();
+  }
+});
+```
+
+</CodeGroup>
