@@ -8,6 +8,6 @@ Implement `purchase(page)` for your sandbox merchant. Deliver `onApprovalUrl` on
 
 Every result closes the page and owned session. No existing session or persistent profile is reused. For pending, unknown, or user-action outcomes, follow up through the merchant before starting another checkout. See [Agentcard's completion guide](https://docs.agentcard.sh/vault/completing-a-purchase).
 
-Run `npm test` for adapter contracts. Set `NOTTE_AGENTCARD_LIVE=1` and an explicit `NOTTE_API_URL`, then run `npm run test:live` for real SDK attachment and browser cleanup without vendor calls or payments. Full sandbox approval and merchant confirmation are pending; this integration is a draft.
+Run `npm test` for adapter contracts. Set `NOTTE_AGENTCARD_LIVE=1` and an explicit `NOTTE_API_URL`, then run `npm run test:live` for real SDK attachment and browser cleanup without vendor calls or payments. SDK attachment and browser cleanup are validated; end-to-end sandbox approval, payment, and merchant confirmation have not been tested. Validate your merchant in sandbox before production.
 
 The published SDK is used as an unmodified dependency under its license. No proprietary SDK implementation or data is included here.

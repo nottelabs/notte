@@ -6,10 +6,6 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-<Warning>
-Sandbox approval and merchant-order confirmation are still being validated. This integration is a draft.
-</Warning>
-
 Use the TypeScript helper in [`examples/agentcard`](https://github.com/nottelabs/notte/tree/main/examples/agentcard) to attach Agentcard's Vault SDK to the dedicated context of a newly created Notte session.
 
 ## Set up
@@ -19,5 +15,7 @@ Use Node.js 24+, a [Notte API key](https://console.notte.cc), and sandbox creden
 Open `examples/agentcard` and run `npm ci`. Create an `Agentcard` client from `@agent-cards/sdk`, then pass it to `runCheckout` with your merchant, amount, currency, and user ID.
 
 Your application supplies three callbacks: `purchase` drives the merchant checkout, `onApprovalUrl` delivers the approval link privately, and `readMerchantOrder` checks the merchant's order result. The SDK attaches before checkout actions run. Approval links and payment details must stay out of ordinary logs.
+
+Validate your merchant checkout in Agentcard sandbox before production. Approval alone does not confirm an order.
 
 The helper returns a status, optional confirmed order ID, and the stopped browser's session ID. It closes its page and session on success or failure. It does not retry; follow up with the merchant when the outcome is unknown or needs user action. See [Agentcard's completion guide](https://docs.agentcard.sh/vault/completing-a-purchase).
