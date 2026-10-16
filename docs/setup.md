@@ -31,3 +31,11 @@ For another OpenAI-compatible endpoint, set all three of `NOTTE_LLM_BASE_URL`,
 `NOTTE_LLM_API_KEY` overrides `OPENROUTER_API_KEY`. The latter is used only at the default
 OpenRouter URL, so it is never sent to a custom endpoint. The per-call `model=` argument
 selects a model at the configured endpoint without translating its ID.
+
+## Live CI
+
+The staging test job uses Gemini for local structured extraction. Its existing
+`GEMINI_API_KEY` repository secret is passed as `NOTTE_LLM_API_KEY`, with the
+Gemini endpoint and model configured through `NOTTE_LLM_BASE_URL` and
+`NOTTE_LLM_MODEL`. Offline checks receive no provider key. The optional
+OpenRouter provider matrix still requires `OPENROUTER_API_KEY`.
