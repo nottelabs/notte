@@ -1,6 +1,7 @@
 import re
 from abc import ABC, abstractmethod
-from typing import Any, ClassVar
+from functools import cache
+from typing import TYPE_CHECKING, Any
 
 from notte_core.actions import InteractionAction
 from notte_core.browser.snapshot import BrowserSnapshot
@@ -12,10 +13,12 @@ from notte_core.errors.llm import (
 )
 from notte_core.errors.provider import ContextWindowExceededError
 from notte_llm.service import LLMService
-from notte_llm.tracer import LlmParsingErrorFileTracer
 from typing_extensions import override
 
 from notte_browser.tagging.type import PossibleAction, PossibleActionSpace
+
+if TYPE_CHECKING:
+    from notte_llm.tracer import LlmParsingErrorFileTracer
 
 _CONTEXT_SIZE_ERROR_MESSAGE = "Please reduce the length of the messages or completions"
 _CONTEXT_SIZE_PATTERN = re.compile(r"Current length is (\d+) while limit is (\d+)")
@@ -65,8 +68,18 @@ class BaseActionListingPipe(ABC):
         raise NotImplementedError("forward_incremental")
 
 
+@cache
+def _parsing_error_tracer() -> "LlmParsingErrorFileTracer":
+    # notte_llm.tracer imports litellm, which is only needed once an LLM call is made.
+    from notte_llm.tracer import LlmParsingErrorFileTracer
+
+    return LlmParsingErrorFileTracer()
+
+
 class RetryPipeWrapper(BaseActionListingPipe):
-    tracer: ClassVar[LlmParsingErrorFileTracer] = LlmParsingErrorFileTracer()
+    @property
+    def tracer(self) -> "LlmParsingErrorFileTracer":
+        return _parsing_error_tracer()
 
     def __init__(self, pipe: BaseActionListingPipe, max_tries: int, verbose: bool = False):
         super().__init__(pipe.llmserve)
