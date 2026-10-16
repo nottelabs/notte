@@ -13,9 +13,10 @@ const uuid = /[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}/;
 
 async function assertClosed(id: string) {
   const deadline = Date.now() + 15_000;
+  const signal = AbortSignal.timeout(15_000);
   while (true) {
     const response = await fetch(`${process.env.NOTTE_API_URL ?? 'https://api.notte.cc'}/sessions/${id}`, {
-      headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` }, signal: AbortSignal.timeout(15_000),
+      headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` }, signal,
     });
     assert.equal(response.status, 200, 'Authoritative session lookup failed');
     const { status } = await response.json() as { status: string };
@@ -33,10 +34,11 @@ async function persistedTrace(sessionId: string) {
   assert.match(projectId, new RegExp(`^${uuid.source}$`));
   const query = `SELECT id, output, metadata, metrics, error, span_attributes FROM project_logs('${projectId}') WHERE metadata.session_id = '${sessionId}' LIMIT 1`;
   const deadline = Date.now() + 30_000;
+  const signal = AbortSignal.timeout(30_000);
   while (true) {
     const response = await fetch(`${process.env.BRAINTRUST_API_URL ?? 'https://api.braintrust.dev'}/btql`, {
       method: 'POST', headers: { Authorization: `Bearer ${process.env.BRAINTRUST_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query }), signal: AbortSignal.timeout(15_000),
+      body: JSON.stringify({ query }), signal,
     });
     assert.equal(response.status, 200, 'Braintrust trace query failed');
     const { data } = await response.json() as { data: Array<{
