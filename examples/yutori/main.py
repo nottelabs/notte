@@ -1,6 +1,6 @@
 import asyncio
 import json
-from contextlib import AsyncExitStack
+from contextlib import AsyncExitStack, asynccontextmanager
 from urllib.parse import urlsplit
 
 from notte_sdk import NotteClient
@@ -85,6 +85,17 @@ async def act(page: Page, name: str, arguments: dict):
             raise BrowserTaskError("Yutori keyboard cleanup failed") from None
 
 
+@asynccontextmanager
+async def owned_connection():
+    session = NotteClient().Session(max_duration_minutes=3, proxies=False, viewport_width=1280, viewport_height=800)
+    await session.__aenter__()
+    try:
+        endpoint = await asyncio.to_thread(session.cdp_url)
+        yield session, endpoint
+    finally:
+        await asyncio.to_thread(session.stop)
+
+
 async def run(
     task: str, start_url: str = "https://example.com", *, max_steps: int = 12, client: AsyncYutoriClient | None = None
 ):
@@ -93,13 +104,11 @@ async def run(
     async with AsyncExitStack() as resources:
         if client is None:
             client = await resources.enter_async_context(AsyncYutoriClient(timeout=30))
-        with NotteClient().Session(
-            max_duration_minutes=3, proxies=False, viewport_width=1280, viewport_height=800
-        ) as session:
+        async with owned_connection() as (session, endpoint):
             step = "browser connection"
             try:
                 async with async_playwright() as playwright:
-                    browser = await playwright.chromium.connect_over_cdp(session.cdp_url())
+                    browser = await playwright.chromium.connect_over_cdp(endpoint)
                     try:
                         page = await browser.contexts[0].new_page()
                         await act(page, "goto_url", {"url": start_url})
