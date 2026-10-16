@@ -32,7 +32,9 @@ def install_driver():
     if not target:
         raise RuntimeError("Use a Chrome for Testing supported platform for the local driver")
     client = NotteClient()
-    with client.Session(max_duration_minutes=1, idle_timeout_minutes=1, proxies=False, browser_type="chrome") as session:
+    with client.Session(
+        max_duration_minutes=1, idle_timeout_minutes=1, proxies=False, browser_type="chrome"
+    ) as session:
         major = asyncio.run(browser_major(session))
     for attempt in range(30):
         status = client.sessions.status(session_id=session.session_id)
