@@ -11,25 +11,11 @@ Connect the [Claude Agent SDK](https://code.claude.com/docs/en/agent-sdk/overvie
 
 ## Install
 
-Use Python 3.11+ or Node.js 24+:
+For Python 3.11+, run `pip install notte-sdk claude-agent-sdk==0.2.168`.
 
-<CodeGroup>
-```bash Python
-pip install notte-sdk claude-agent-sdk==0.2.168
-```
-```bash TypeScript
-npm install notte-sdk @anthropic-ai/claude-agent-sdk@0.3.301
-```
-</CodeGroup>
+For Node.js 24+, run `npm install notte-sdk @anthropic-ai/claude-agent-sdk@0.3.301` and set `"type": "module"` in `package.json`. The SDK includes its Claude runtime; no local browser installation is needed.
 
-For TypeScript, set `"type": "module"` in `package.json`. The SDK includes its Claude runtime; no local browser installation is needed.
-
-Set your [Notte API key](https://console.notte.cc/apikeys) and [Anthropic API key](https://console.anthropic.com/settings/keys):
-
-```bash
-export NOTTE_API_KEY=your-notte-api-key
-export ANTHROPIC_API_KEY=your-anthropic-api-key
-```
+Set `NOTTE_API_KEY` to your [Notte API key](https://console.notte.cc/apikeys) and `ANTHROPIC_API_KEY` to your [Anthropic API key](https://console.anthropic.com/settings/keys).
 
 ## Read a page
 
