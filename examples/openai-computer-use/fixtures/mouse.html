@@ -1,0 +1,18 @@
+<!doctype html>
+<body style="margin:0;height:3000px">
+  <div id="pad" style="position:fixed;left:350px;top:30px;width:200px;height:200px;background:lightblue">Mouse target</div>
+  <div id="drag" style="position:fixed;left:50px;top:300px;width:100px;height:100px;background:coral">Drag target</div>
+  <script>
+    const pad = document.querySelector('#pad');
+    const drag = document.querySelector('#drag');
+    let dragging = false;
+    pad.addEventListener('mousemove', event => { pad.dataset.position = `${event.clientX},${event.clientY}`; });
+    pad.addEventListener('dblclick', () => { pad.dataset.doubleClick = 'yes'; });
+    pad.addEventListener('click', event => { pad.dataset.shift = String(event.shiftKey); });
+    drag.addEventListener('mousedown', () => { dragging = true; });
+    document.addEventListener('mousemove', event => {
+      if (dragging) drag.dataset.position = `${event.clientX},${event.clientY}`;
+    });
+    document.addEventListener('mouseup', () => { dragging = false; });
+  </script>
+</body>
