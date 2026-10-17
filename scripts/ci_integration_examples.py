@@ -25,6 +25,12 @@ CREDENTIALS = {
     "AGENTCARD_CLIENT_SECRET",
     "YUTORI_API_KEY",
     "OAGI_API_KEY",
+    "PIPEDREAM_CLIENT_ID",
+    "PIPEDREAM_CLIENT_SECRET",
+    "PIPEDREAM_PROJECT_ID",
+    "PIPEDREAM_EXTERNAL_USER_ID",
+    "PIPEDREAM_ACTION_FILE",
+    "PIPEDREAM_APP",
 }
 DRIVER_IMPORTS = {
     "braintrust": "from braintrust import init_logger; from notte_sdk import NotteClient",
@@ -45,7 +51,7 @@ def projects(shard: str) -> list[tuple[str, str]]:
             raise ValueError("Unknown integration example")
         if registry[name] == "node-project" and name not in NODE_PROJECTS:
             raise ValueError("Unknown Node integration project")
-        if registry[name] == "python-project" and name not in {"prime-intellect", "yutori", "openagi"}:
+        if registry[name] == "python-project" and name not in {"prime-intellect", "yutori", "openagi", "pipedream"}:
             raise ValueError("Unknown Python integration project")
         if registry[name] not in {
             "node-project",
@@ -85,9 +91,18 @@ def check(project: Path, env: dict[str, str], convention: str = "") -> Path:
         else:
             run(["uv", "sync", "--locked", "--python", "3.11"], project, env)
         run(["uv", "pip", "check", "--python", str(python)], project, env)
-        if project.name == "openagi":
-            run([str(python), "-c", "import demo; from oagi import AsyncDefaultAgent"], project, env)
-            run([str(python), "-m", "compileall", "-q", "demo.py", "notte_computer.py", "test_live.py"], project, env)
+        if project.name in {"openagi", "pipedream"}:
+            imports = "import demo; from oagi import AsyncDefaultAgent" if project.name == "openagi" else "import demo"
+            run([str(python), "-c", imports], project, env)
+            if project.name == "openagi":
+                run(
+                    [str(python), "-m", "compileall", "-q", "demo.py", "notte_computer.py", "test_live.py"],
+                    project,
+                    env,
+                )
+            else:
+                run(["npm", "ci"], project, env)
+                run(["npm", "run", "typecheck"], project, env)
         else:
             run([str(python), "-m", "unittest", "-v", *root_tests(project)], project, env)
         return python
@@ -268,13 +283,24 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
                         str(ROOT / "packages/notte-sdk"),
                         *(["-e", str(project)] if project.name == "prime-intellect" else []),
                         *(["oagi-core==0.15.3", "playwright==1.64.0"] if project.name == "openagi" else []),
+                        *(["mcp==2.3.0", "httpx2==2.13.1"] if project.name == "pipedream" else []),
                     ],
                     project,
                     install_env,
                 )
                 run(["uv", "pip", "check", "--python", str(python)], project, install_env)
+                if project.name == "pipedream":
+                    run(
+                        ["npm", "install", "--no-save", "--package-lock=false", str(ROOT / "node-sdk")],
+                        project,
+                        install_env,
+                    )
+                    run(["npm", "run", "typecheck"], project, install_env)
             print(f"Native integration: {project.name}, {sdk} SDK", flush=True)
-            run([str(python), "-m", "unittest", "-v", *root_tests(project)], project, env)
+            selected = {**env, "NOTTE_EXAMPLE_PYTHON": str(python)} if project.name == "pipedream" else env
+            run([str(python), "-m", "unittest", "-v", *root_tests(project)], project, selected)
+            if project.name == "pipedream":
+                run(["npm", "test"], project, selected)
         return
     if project.name in RECIPES:
         recipe_live(project.name, python, project_env(project.name, env), install_env)

@@ -42,6 +42,7 @@ INTEGRATION_INPUTS = {
 }
 INTEGRATION_EXAMPLES: dict[str, str] = json.loads(Path(__file__).with_name("integration_examples.json").read_text())
 RECIPE_INPUTS = {
+    "docs/src/integrations/pipedream.mdx": {"pipedream"},
     "docs/src/integrations/openagi.mdx": {"openagi"},
     "docs/package.json": {"claude-agents", "openai-agents"},
     "docs/package-lock.json": {"claude-agents", "openai-agents"},

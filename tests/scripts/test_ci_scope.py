@@ -281,6 +281,21 @@ class RoutingTests(unittest.TestCase):
                 self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path, code_changed=False))
         self.assertFalse(ci.integration_examples_for_path("examples/openagi/README.md"))
 
+    def test_pipedream_native_languages_and_guide_inputs_select_existing_pair(self) -> None:
+        for path in (
+            "examples/pipedream/demo.py",
+            "examples/pipedream/demo.ts",
+            "examples/pipedream/test_live.py",
+            "examples/pipedream/test/live.test.ts",
+            "examples/pipedream/uv.lock",
+            "examples/pipedream/package-lock.json",
+            "docs/src/integrations/pipedream.mdx",
+        ):
+            with self.subTest(path=path):
+                self.assertEqual(ci.integration_examples_for_path(path), {"pipedream"})
+                self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path, code_changed=False))
+        self.assertFalse(ci.integration_examples_for_path("examples/pipedream/README.md"))
+
     def test_shared_native_inputs_cover_every_registered_project(self) -> None:
         for path in (
             *ci.INTEGRATION_INPUTS,

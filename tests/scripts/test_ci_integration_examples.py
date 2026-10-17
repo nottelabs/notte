@@ -27,7 +27,7 @@ from pathlib import Path
 args = [Path(sys.argv[0]).name, *sys.argv[1:]]
 with open(os.environ['COMMAND_LOG'], 'a') as log:
     log.write(json.dumps({'args': args, 'cwd': os.getcwd(),
-        'credentials': sorted(k for k in ('NOTTE_API_KEY', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'GEMINI_API_KEY', 'BRAINTRUST_API_KEY', 'LMNR_PROJECT_API_KEY', 'OP_SERVICE_ACCOUNT_TOKEN', 'BOX_ACCESS_TOKEN', 'AGENTCARD_CLIENT_ID', 'AGENTCARD_CLIENT_SECRET', 'YUTORI_API_KEY', 'OAGI_API_KEY') if os.environ.get(k)),
+        'credentials': sorted(k for k in ('NOTTE_API_KEY', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'GEMINI_API_KEY', 'BRAINTRUST_API_KEY', 'LMNR_PROJECT_API_KEY', 'OP_SERVICE_ACCOUNT_TOKEN', 'BOX_ACCESS_TOKEN', 'AGENTCARD_CLIENT_ID', 'AGENTCARD_CLIENT_SECRET', 'YUTORI_API_KEY', 'OAGI_API_KEY', 'PIPEDREAM_CLIENT_ID', 'PIPEDREAM_CLIENT_SECRET', 'PIPEDREAM_PROJECT_ID', 'PIPEDREAM_EXTERNAL_USER_ID', 'PIPEDREAM_ACTION_FILE', 'PIPEDREAM_APP') if os.environ.get(k)),
         'vitest': os.environ.get('VITEST_INTEGRATION'),
         'journal': os.environ.get('NOTTE_AGENT_BROWSER_OWNERSHIP_JOURNAL'),
         'example_python': os.environ.get('NOTTE_EXAMPLE_PYTHON'),
@@ -51,6 +51,10 @@ if os.environ.get('FAIL_BOX_CAPTURE') == 'python' and 'test_capture' in args:
     sys.exit(29)
 if os.environ.get('FAIL_BOX_CAPTURE') == 'typescript' and 'test:capture' in args:
     sys.exit(29)
+if os.environ.get('FAIL_PIPEDREAM_IMPORT') and args[1:] == ['-c', 'import demo']:
+    sys.exit(31)
+if os.environ.get('FAIL_PIPEDREAM_NODE') and args == ['npm', 'test']:
+    sys.exit(23)
 if os.environ.get('FAIL_OPENAGI_IMPORT') and args[1:] == ['-c', 'import demo; from oagi import AsyncDefaultAgent']:
     sys.exit(31)
 if os.environ.get('FAIL_UNITTEST') and 'unittest' in args:
@@ -801,3 +805,64 @@ def test_openagi_preserves_import_only_static_and_native_sdk_modes_without_vendo
     assert not any(command[0] in {"npm", "npx"} for command in commands)
     assert commands.index(source) > commands.index(suites[0]["args"])
     assert commands.count(["uv", "pip", "check", "--python", str(project / ".venv/bin/python")]) == 2
+
+
+@pytest.mark.parametrize("failure", [None, "import", "python", "node"])
+def test_pipedream_keeps_independent_native_languages_and_real_python_without_vendor_context(
+    workspace: Path, monkeypatch: pytest.MonkeyPatch, failure: str | None
+) -> None:
+    project = shipped_project(workspace, monkeypatch, "pipedream", "python-project")
+    (project / "test_live.py").write_text("# Native module fixture\n")
+    for flag in ("NOTTE_PRIME_LIVE", "NOTTE_YUTORI_LIVE", "NOTTE_PIPEDREAM_LIVE"):
+        monkeypatch.delenv(flag, raising=False)
+    monkeypatch.setenv("GITHUB_REF", "refs/heads/main")
+    for key in runner.CREDENTIALS - {"NOTTE_API_KEY"}:
+        monkeypatch.setenv(key, "fixture-unused-provider")
+    if failure:
+        monkeypatch.setenv(
+            {"import": "FAIL_PIPEDREAM_IMPORT", "python": "FAIL_UNITTEST", "node": "FAIL_PIPEDREAM_NODE"}[failure], "1"
+        )
+        with pytest.raises(subprocess.CalledProcessError) as error:
+            runner.main()
+        assert error.value.returncode == {"import": 31, "python": 19, "node": 23}[failure]
+        assert not any("-e" in call["args"] for call in calls(workspace))
+        return
+    runner.main()
+    observed = calls(workspace)
+    commands = [call["args"] for call in observed]
+    python = project / ".venv/bin/python"
+    suites = [call for call in observed if "unittest" in call["args"] or call["args"] == ["npm", "test"]]
+    assert len(suites) == 4
+    assert [call["args"] for call in suites] == [
+        ["python", "-m", "unittest", "-v", "test_live.py"],
+        ["npm", "test"],
+    ] * 2
+    assert all(call["example_python"] == str(python) for call in suites)
+    assert all(call["credentials"] == ["NOTTE_API_KEY"] for call in suites)
+    assert all(not call["credentials"] for call in observed if call not in suites)
+    assert all(
+        not {"NOTTE_PRIME_LIVE", "NOTTE_YUTORI_LIVE", "NOTTE_PIPEDREAM_LIVE"} & call["live_flags"].keys()
+        for call in suites
+    )
+    assert all(call["cwd"] == str(project) for call in observed)
+    assert commands[:5] == [
+        ["uv", "sync", "--locked", "--python", "3.11"],
+        ["uv", "pip", "check", "--python", str(python)],
+        ["python", "-c", "import demo"],
+        ["npm", "ci"],
+        ["npm", "run", "typecheck"],
+    ]
+    source = next(command for command in commands if "-e" in command)
+    assert source[-6:] == [
+        "-e",
+        str(workspace / "packages/notte-core"),
+        "-e",
+        str(workspace / "packages/notte-sdk"),
+        "mcp==2.3.0",
+        "httpx2==2.13.1",
+    ]
+    assert str(project) not in source and "--no-deps" not in source
+    assert commands.index(source) > commands.index(suites[1]["args"])
+    assert ["npm", "install", "--no-save", "--package-lock=false", str(workspace / "node-sdk")] in commands
+    assert not any("compileall" in command or "test:live" in command for command in commands)
+    assert commands.count(["uv", "pip", "check", "--python", str(python)]) == 2
