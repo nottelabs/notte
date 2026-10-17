@@ -12,6 +12,8 @@ on:
       - node-sdk/src/**
       - node-sdk/package.json
       - node-sdk/package-lock.json
+      - node-sdk/tsconfig.json
+      - node-sdk/tsup.config.ts
       - packages/notte-sdk/**
       - packages/notte-core/**
       - uv.lock
@@ -26,6 +28,8 @@ on:
       - node-sdk/src/**
       - node-sdk/package.json
       - node-sdk/package-lock.json
+      - node-sdk/tsconfig.json
+      - node-sdk/tsup.config.ts
       - packages/notte-sdk/**
       - packages/notte-core/**
       - uv.lock
@@ -57,7 +61,7 @@ jobs:
         with:
           enable-cache: false
       - run: uv sync --locked --package notte-sdk --no-dev
-      - run: uv pip install claude-agent-sdk==0.2.168
+      - run: uv pip install claude-agent-sdk==0.2.168 && uv pip check
       - run: npm ci --prefix node-sdk
       - run: npm ci --prefix docs
       - run: npm run build --prefix node-sdk
