@@ -121,6 +121,10 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 - [Agentcard](https://docs.notte.cc/integrations/agentcard.md): Attach Agentcard checkout to a hosted Notte browser.
 
+## File Storage
+
+- [Box](https://docs.notte.cc/integrations/box.md): Store hosted browser captures in Box.
+
 ## Email
 
 - [AgentMail](https://docs.notte.cc/integrations/agentmail.md): Give Notte personas an AgentMail inbox for sign-ups and verification emails

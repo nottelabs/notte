@@ -209,6 +209,22 @@ class RoutingTests(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
                 self.assertEqual(ci.integration_examples_for_path(path), {"onepassword"})
+    def test_box_capture_inputs_route_to_existing_paired_jobs(self) -> None:
+        for filename in (
+            "main.py",
+            "cleanup_case.py",
+            "test_capture.py",
+            "test_upload.py",
+            "requirements.txt",
+            "test/capture.live.test.ts",
+            "package-lock.json",
+        ):
+            with self.subTest(filename=filename):
+                path = f"examples/box/{filename}"
+                self.assertEqual(ci.integration_examples_for_path(path), {"box"})
+                self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
+        self.assertFalse(ci.integration_examples_for_path("examples/box/README.md"))
+
 
     def test_shared_native_inputs_cover_every_registered_project(self) -> None:
         for path in (
