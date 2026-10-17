@@ -51,6 +51,7 @@ class LiveTests(unittest.IsolatedAsyncioTestCase):
                 await driver.disconnect(remote)
                 remote = await driver.connect(url)
                 self.assertEqual(await (await remote.page()).title(), "Owned Vibium task")
+                await driver.disconnect(remote)
 
     async def test_native_actions_png_and_reconnect(self):
         await self.task()

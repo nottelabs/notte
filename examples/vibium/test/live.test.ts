@@ -35,6 +35,7 @@ for (const mode of ['success', 'failure', 'cancel'] as const) {
         await driver.disconnect(remote);
         remote = await driver.connect(bidi, signal);
         assert.equal(await (await remote.page()).title(), 'Owned Vibium task');
+        await driver.disconnect(remote);
       }, { client, signal: controller.signal });
       if (mode === 'success') await operation;
       else await assert.rejects(operation, new RegExp(`Vibium ${mode === 'cancel' ? 'cancelled' : 'failed'} \\(session [a-f0-9-]+\\)`));

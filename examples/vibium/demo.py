@@ -21,6 +21,7 @@ async def run_demo(url="https://example.com", selector="h1", client=None):
             remote = await driver.connect(bidi_url)
             if await (await remote.page()).title() != title:
                 raise RuntimeError("Native reconnect changed the page")
+            await driver.disconnect(remote)
             return {"session_id": session_id, "title": title, "text": text, "png": png}
 
 

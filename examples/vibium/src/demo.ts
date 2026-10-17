@@ -14,6 +14,7 @@ export async function runDemo(options: { url?: string; selector?: string; signal
     await driver.disconnect(remote);
     remote = await driver.connect(bidiUrl, signal);
     if (await (await remote.page()).title() !== title) throw new Error('Native reconnect changed the page');
+    await driver.disconnect(remote);
     return { session_id: sessionId, title, text, png };
   }, { signal: options.signal });
 }
