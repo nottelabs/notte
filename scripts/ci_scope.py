@@ -437,7 +437,9 @@ def select(event: str, base: str, head: str) -> dict[str, bool | str | list[str]
                 if path == "scripts/integration_examples.json" and not native_examples:
                     path_scopes.discard("paired_live")
                 selected |= path_scopes
-                paired_snippets_live |= "paired_live" in path_scopes and not native_example_input(path)
+                paired_snippets_live |= "paired_live" in base_scopes_for_path(
+                    path, code_changed=code_changed
+                ) and not native_example_input(path)
                 integration_examples |= native_examples
                 if path_scopes == ALL:
                     integration_examples |= set(INTEGRATION_EXAMPLES)
