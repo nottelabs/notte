@@ -82,14 +82,11 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [Claude Code & AI Agents](https://docs.notte.cc/integrations/claude-code-ai-agents.md): Use Notte with AI coding assistants like Claude Code, Cursor, and Windsurf
 - [Claude Managed Agents](https://docs.notte.cc/integrations/claude-managed-agents.md): Give Anthropic's hosted agents a Notte browser, with your key held in a vault
 
-## Computer Use
-
-- [Yutori](https://docs.notte.cc/integrations/yutori.md): Run Navigator n1.5 browser actions on Notte.
-
 ## Agent Frameworks
 
 - [Browser Use](https://docs.notte.cc/integrations/browser-use.md): Run Browser Use agents on Notte cloud browsers over CDP
 - [LangChain](https://docs.notte.cc/integrations/langchain.md): Give LangChain and LangGraph agents a browser with the Notte MCP server
+- [Deep Agents](https://docs.notte.cc/integrations/deepagents.md): Give LangChain Deep Agents a Notte cloud browser.
 - [crewAI](https://docs.notte.cc/integrations/crewai.md): Give crewAI agents a browser with the Notte MCP server
 - [Agno](https://docs.notte.cc/integrations/agno.md): Give Agno agents a browser with the Notte MCP server
 - [Google ADK](https://docs.notte.cc/integrations/google-adk.md): Give Google ADK agents a browser with the Notte MCP server
@@ -100,21 +97,50 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [OpenClaw](https://docs.notte.cc/integrations/openclaw.md): Use Notte cloud browsers with OpenClaw
 - [Hermes Agent](https://docs.notte.cc/integrations/hermes.md): Use Notte cloud browsers with Hermes Agent
 - [Stagehand](https://docs.notte.cc/integrations/stagehand.md): Use Stagehand v4 with a Notte cloud browser in Python or TypeScript
+- [Claude Agent SDK](https://docs.notte.cc/integrations/claude-agents.md): Give Claude agents a Notte cloud browser through MCP.
+- [Prime Intellect](https://docs.notte.cc/integrations/prime-intellect.md): Build Verifiers browser tasksets with Notte sessions.
+
+## Computer Use
+
+- [OpenAI Computer Use](https://docs.notte.cc/integrations/openai-computer-use.md): Run OpenAI's native screenshot and input actions on a Notte browser.
+- [Anthropic Computer Use](https://docs.notte.cc/integrations/claude-computer-use.md): Run Claude's screenshot, mouse, and keyboard tools on a Notte browser.
+- [Gemini Computer Use](https://docs.notte.cc/integrations/gemini-computer-use.md): Run Gemini's computer-use tool on a Notte cloud browser.
+- [Yutori](https://docs.notte.cc/integrations/yutori.md): Run Navigator n1.5 browser actions on Notte.
 
 ## Workflow Automation
 
 - [n8n](https://docs.notte.cc/integrations/n8n.md): Use Notte browser agents inside n8n workflows
+- [Trigger.dev](https://docs.notte.cc/integrations/trigger.md): Run durable browser tasks with Trigger.dev and Notte.
 - [Temporal](https://docs.notte.cc/integrations/temporal.md): Run durable browser tasks with Temporal and Notte.
+- [GitHub Actions](https://docs.notte.cc/integrations/github-actions.md): Review DOM-validated selector repairs in a manual GitHub Actions workflow.
+
+## Observability
+
+- [Braintrust](https://docs.notte.cc/integrations/braintrust.md): Trace Notte browser tasks and inspect their results in Braintrust.
+- [Laminar](https://docs.notte.cc/integrations/laminar.md): Trace Notte browser tasks in Laminar.
+
+## Payments
+
+- [Agentcard](https://docs.notte.cc/integrations/agentcard.md): Attach Agentcard checkout to a hosted Notte browser.
+
+## File Storage
+
+- [Box](https://docs.notte.cc/integrations/box.md): Store hosted browser captures in Box.
 
 ## Email
 
 - [AgentMail](https://docs.notte.cc/integrations/agentmail.md): Give Notte personas an AgentMail inbox for sign-ups and verification emails
+
+## Credentials
+
+- [1Password](https://docs.notte.cc/integrations/onepassword.md): Fill Notte browser forms with login fields from 1Password.
 
 ## Browser Drivers
 
 - [Connect with Playwright](https://docs.notte.cc/features/sessions/playwright.md): Use Playwright directly with Notte sessions via Chrome DevTools Protocol
 - [Connect with Puppeteer](https://docs.notte.cc/features/sessions/puppeteer.md): Use Puppeteer with Notte sessions via Chrome DevTools Protocol
 - [Vercel agent-browser](https://docs.notte.cc/integrations/agent-browser.md): Run agent-browser commands on a Notte cloud browser.
+- [Selenium](https://docs.notte.cc/integrations/selenium.md): Run Selenium WebDriver commands on a hosted Notte browser.
 
 ## Browser Infrastructure
 
@@ -137,6 +163,37 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 ## APIs
 
 <!-- openapi:begin https://api.notte.cc/openapi.json -->
+
+## Data Apis
+
+- [GET Account Changes](https://docs.notte.cc/api-reference/data-apis/account-changes.md)
+- [GET Account Runs](https://docs.notte.cc/api-reference/data-apis/account-runs.md)
+- [GET Attempts](https://docs.notte.cc/api-reference/data-apis/attempts.md)
+- [POST Brand Retrieve](https://docs.notte.cc/api-reference/data-apis/brand-retrieve.md)
+- [GET Changes](https://docs.notte.cc/api-reference/data-apis/changes.md)
+- [POST Create](https://docs.notte.cc/api-reference/data-apis/create.md)
+- [GET Credit Usage](https://docs.notte.cc/api-reference/data-apis/credit-usage.md)
+- [DELETE Delete](https://docs.notte.cc/api-reference/data-apis/delete.md)
+- [POST Deliveries](https://docs.notte.cc/api-reference/data-apis/deliveries.md)
+- [POST Extract Product Endpoint](https://docs.notte.cc/api-reference/data-apis/extract-product-endpoint.md)
+- [GET Extract a website styleguide](https://docs.notte.cc/api-reference/data-apis/styleguide-endpoint.md)
+- [GET Limits](https://docs.notte.cc/api-reference/data-apis/limits.md)
+- [GET List Data Apis](https://docs.notte.cc/api-reference/data-apis/list-data-apis.md)
+- [GET List Monitors](https://docs.notte.cc/api-reference/data-apis/list-monitors.md)
+- [POST Maps Search](https://docs.notte.cc/api-reference/data-apis/maps-search.md)
+- [POST News Search](https://docs.notte.cc/api-reference/data-apis/news-search.md)
+- [POST People Enrich](https://docs.notte.cc/api-reference/data-apis/people-enrich.md)
+- [GET Retrieve](https://docs.notte.cc/api-reference/data-apis/retrieve.md)
+- [GET Retrieve Change](https://docs.notte.cc/api-reference/data-apis/retrieve-change.md)
+- [GET Retrieve Delivery](https://docs.notte.cc/api-reference/data-apis/retrieve-delivery.md)
+- [GET Retrieve Run](https://docs.notte.cc/api-reference/data-apis/retrieve-run.md)
+- [POST Retry](https://docs.notte.cc/api-reference/data-apis/retry.md)
+- [POST Rotate Secret](https://docs.notte.cc/api-reference/data-apis/rotate-secret.md)
+- [POST Run Now](https://docs.notte.cc/api-reference/data-apis/run-now.md)
+- [GET Runs](https://docs.notte.cc/api-reference/data-apis/runs.md)
+- [POST Scrape Specialized Data](https://docs.notte.cc/api-reference/data-apis/scrape-specialized-data.md)
+- [PATCH Update](https://docs.notte.cc/api-reference/data-apis/update.md)
+- [POST Youtube Endpoint](https://docs.notte.cc/api-reference/data-apis/youtube-endpoint.md)
 
 ## Agents
 
@@ -226,11 +283,6 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [GET Profile Get](https://docs.notte.cc/api-reference/profiles/profile-get.md)
 - [GET Profile List](https://docs.notte.cc/api-reference/profiles/profile-list.md)
 
-## Prompts
-
-- [POST Improve Prompt](https://docs.notte.cc/api-reference/prompts/improve-prompt.md)
-- [POST Nudge Prompt](https://docs.notte.cc/api-reference/prompts/nudge-prompt.md)
-
 ## Scrape
 
 - [POST Scrape From Html](https://docs.notte.cc/api-reference/scrape/scrape-from-html.md)
@@ -266,6 +318,7 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [GET Session Network Logs](https://docs.notte.cc/api-reference/sessions/session-network-logs.md)
 - [GET Session Offset](https://docs.notte.cc/api-reference/sessions/session-offset.md)
 - [GET Session Profile Preview](https://docs.notte.cc/api-reference/sessions/session-profile-preview.md)
+- [POST Session Profile Save](https://docs.notte.cc/api-reference/sessions/session-profile-save.md)
 - [GET Session Replay](https://docs.notte.cc/api-reference/sessions/session-replay.md)
 - [POST Session Start](https://docs.notte.cc/api-reference/sessions/session-start.md)
 - [GET Session Status](https://docs.notte.cc/api-reference/sessions/session-status.md)
