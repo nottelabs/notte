@@ -167,10 +167,6 @@
       "destination": "/integrations"
     },
     {
-      "source": "/integrations/claude-computer-use",
-      "destination": "/integrations"
-    },
-    {
       "source": "/integrations/computer-use-openagi",
       "destination": "/integrations"
     },
@@ -225,6 +221,10 @@
     {
       "source": "/integrations/claude-agent-sdk",
       "destination": "/integrations/claude-agents"
+    },
+    {
+      "source": "/integrations/anthropic-computer-use",
+      "destination": "/integrations/claude-computer-use"
     }
   ],
   "errors": {
@@ -365,7 +365,8 @@
             "group": "Computer Use",
             "icon": "desktop",
             "pages": [
-              "integrations/openai-computer-use"
+              "integrations/openai-computer-use",
+              "integrations/claude-computer-use"
             ]
           },
           {
