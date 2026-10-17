@@ -4,7 +4,7 @@ import json
 import runpy
 import unittest
 from pathlib import Path
-from types import SimpleNamespace
+from types import ModuleType, SimpleNamespace
 from unittest.mock import patch
 
 
@@ -48,7 +48,9 @@ class RecipeTests(unittest.TestCase):
         session = Session()
         client = SimpleNamespace(Session=lambda: session)
         path = Path(__file__).resolve().parents[2] / "docs/src/testers/integrations/agent_browser.py"
-        with patch("notte_sdk.NotteClient", return_value=client), patch("subprocess.run", side_effect=execute):
+        sdk = ModuleType("notte_sdk")
+        sdk.__dict__["NotteClient"] = lambda: client
+        with patch.dict("sys.modules", {"notte_sdk": sdk}), patch("subprocess.run", side_effect=execute):
             if mode == "success":
                 result = runpy.run_path(str(path))["result"]
                 self.assertEqual(result, {"title": "Example Domain", "session_id": session.session_id})
