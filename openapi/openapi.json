@@ -2574,6 +2574,115 @@
         ]
       }
     },
+    "/agents/{agent_id}/stop": {
+      "delete": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "Agent Stop",
+        "operationId": "agent_stop",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "agent_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Agent Id"
+            }
+          },
+          {
+            "name": "session_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "x-notte-request-origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Request-Origin"
+            }
+          },
+          {
+            "name": "x-notte-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Sdk-Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentStatusResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The agent is stopping but its final state is not saved yet; check its status shortly."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Python",
+            "source": "from notte_sdk import NotteClient\n\nnotte = NotteClient()\n\nwith notte.Session() as session:\n    agent = notte.Agent(session=session)\n    _ = agent.start(\n        task=\"find a cute dog on google images\"\n    )\n\n    # stops without waiting for the agent to finish\n    _ = agent.stop()",
+            "label": "python"
+          },
+          {
+            "lang": "TypeScript",
+            "source": "import { NotteClient } from \"notte-sdk\";\n\nconst notte = new NotteClient();\n\nawait notte.Session().use(async (session) => {\n  const agent = notte.Agent({ session });\n  await agent.start({\n    task: \"find a cute dog on google images\",\n  });\n\n  // stops without waiting for the agent to finish\n  await agent.stop();\n});",
+            "label": "node"
+          },
+          {
+            "lang": "Curl",
+            "source": "curl -X DELETE \"https://api.notte.cc/agents/$agent_id/stop?session_id=${session_id}\" \\\n-H \"Authorization: Bearer $NOTTE_API_KEY\" \\\n-H \"Content-Type: application/json\"",
+            "label": "curl"
+          }
+        ]
+      }
+    },
     "/agents/{agent_id}": {
       "get": {
         "tags": [
@@ -2763,115 +2872,6 @@
           {
             "lang": "Curl",
             "source": "curl -X GET \"https://api.notte.cc/agents/$agent_id/workflow/code?as_workflow=false\" \\\n-H \"Authorization: Bearer $NOTTE_API_KEY\" \\\n-H \"Content-Type: application/json\"",
-            "label": "curl"
-          }
-        ]
-      }
-    },
-    "/agents/{agent_id}/stop": {
-      "delete": {
-        "tags": [
-          "agents"
-        ],
-        "summary": "Agent Stop",
-        "operationId": "agent_stop",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "agent_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Agent Id"
-            }
-          },
-          {
-            "name": "session_id",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "title": "Session Id"
-            }
-          },
-          {
-            "name": "x-notte-request-origin",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Request-Origin"
-            }
-          },
-          {
-            "name": "x-notte-sdk-version",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Sdk-Version"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AgentStatusResponse"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "The agent is stopping but its final state is not saved yet; check its status shortly."
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "x-codeSamples": [
-          {
-            "lang": "Python",
-            "source": "from notte_sdk import NotteClient\n\nnotte = NotteClient()\n\nwith notte.Session() as session:\n    agent = notte.Agent(session=session)\n    _ = agent.start(\n        task=\"find a cute dog on google images\"\n    )\n\n    # stops without waiting for the agent to finish\n    _ = agent.stop()",
-            "label": "python"
-          },
-          {
-            "lang": "TypeScript",
-            "source": "import { NotteClient } from \"notte-sdk\";\n\nconst notte = new NotteClient();\n\nawait notte.Session().use(async (session) => {\n  const agent = notte.Agent({ session });\n  await agent.start({\n    task: \"find a cute dog on google images\",\n  });\n\n  // stops without waiting for the agent to finish\n  await agent.stop();\n});",
-            "label": "node"
-          },
-          {
-            "lang": "Curl",
-            "source": "curl -X DELETE \"https://api.notte.cc/agents/$agent_id/stop?session_id=${session_id}\" \\\n-H \"Authorization: Bearer $NOTTE_API_KEY\" \\\n-H \"Content-Type: application/json\"",
             "label": "curl"
           }
         ]
@@ -9773,6 +9773,310 @@
         "x-codeSamples": []
       }
     },
+    "/data/cache": {
+      "get": {
+        "tags": [
+          "Data APIs",
+          "Data APIs"
+        ],
+        "summary": "Get Policy",
+        "operationId": "get_policy",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
+          },
+          {
+            "name": "x-notte-request-origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Request-Origin"
+            }
+          },
+          {
+            "name": "x-notte-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Sdk-Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Data Cache Policy"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Python",
+            "source": "import os\n\nimport requests\n\nresponse = requests.get(\n    \"https://api.notte.cc/data/cache\",\n    headers={\"Authorization\": f\"Bearer {os.environ['NOTTE_API_KEY']}\"},\n    timeout=30,\n)\nresponse.raise_for_status()\nprint(response.json())",
+            "label": "python"
+          },
+          {
+            "lang": "TypeScript",
+            "source": "const response = await fetch(\"https://api.notte.cc/data/cache\", {\n  method: \"GET\",\n  headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` },\n  signal: AbortSignal.timeout(30_000),\n});\nif (!response.ok) throw new Error(await response.text());\nconsole.log(await response.json());",
+            "label": "node"
+          },
+          {
+            "lang": "Curl",
+            "source": "curl --request GET 'https://api.notte.cc/data/cache' \\\n  --header \"Authorization: Bearer $NOTTE_API_KEY\" --fail-with-body --max-time 30",
+            "label": "curl"
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Data APIs",
+          "Data APIs"
+        ],
+        "summary": "Invalidate",
+        "operationId": "invalidate",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "capability",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Capability"
+            }
+          },
+          {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
+          },
+          {
+            "name": "x-notte-request-origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Request-Origin"
+            }
+          },
+          {
+            "name": "x-notte-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Sdk-Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "boolean"
+                  },
+                  "title": "Response Invalidate Data Cache"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Python",
+            "source": "import os\n\nimport requests\n\nresponse = requests.delete(\n    \"https://api.notte.cc/data/cache?capability=news\",\n    headers={\"Authorization\": f\"Bearer {os.environ['NOTTE_API_KEY']}\"},\n    timeout=30,\n)\nresponse.raise_for_status()\nprint(response.json())",
+            "label": "python"
+          },
+          {
+            "lang": "TypeScript",
+            "source": "const response = await fetch(\"https://api.notte.cc/data/cache?capability=news\", {\n  method: \"DELETE\",\n  headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` },\n  signal: AbortSignal.timeout(30_000),\n});\nif (!response.ok) throw new Error(await response.text());\nconsole.log(await response.json());",
+            "label": "node"
+          },
+          {
+            "lang": "Curl",
+            "source": "curl --request DELETE 'https://api.notte.cc/data/cache?capability=news' \\\n  --header \"Authorization: Bearer $NOTTE_API_KEY\" --fail-with-body --max-time 30",
+            "label": "curl"
+          }
+        ]
+      }
+    },
     "/data/brand/retrieve": {
       "post": {
         "tags": [
@@ -9787,6 +10091,60 @@
           }
         ],
         "parameters": [
+          {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
+          },
           {
             "name": "x-notte-request-origin",
             "in": "header",
@@ -9916,6 +10274,60 @@
           }
         ],
         "parameters": [
+          {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
+          },
           {
             "name": "x-notte-request-origin",
             "in": "header",
@@ -10125,6 +10537,60 @@
             }
           },
           {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
+          },
+          {
             "name": "x-notte-request-origin",
             "in": "header",
             "required": false,
@@ -10212,6 +10678,60 @@
           }
         ],
         "parameters": [
+          {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
+          },
           {
             "name": "x-notte-request-origin",
             "in": "header",
@@ -10310,6 +10830,60 @@
           }
         ],
         "parameters": [
+          {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
+          },
           {
             "name": "x-notte-request-origin",
             "in": "header",
@@ -10560,6 +11134,60 @@
             }
           },
           {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
+          },
+          {
             "name": "x-notte-request-origin",
             "in": "header",
             "required": false,
@@ -10649,6 +11277,60 @@
           }
         ],
         "parameters": [
+          {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
+          },
           {
             "name": "x-notte-request-origin",
             "in": "header",
@@ -10772,6 +11454,60 @@
               ],
               "title": "Until"
             }
+          },
+          {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
           },
           {
             "name": "x-notte-request-origin",
@@ -10906,6 +11642,60 @@
               ],
               "title": "Status"
             }
+          },
+          {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
           },
           {
             "name": "x-notte-request-origin",
@@ -11124,6 +11914,60 @@
             }
           },
           {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
+          },
+          {
             "name": "x-notte-request-origin",
             "in": "header",
             "required": false,
@@ -11223,6 +12067,60 @@
             }
           },
           {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
+          },
+          {
             "name": "x-notte-request-origin",
             "in": "header",
             "required": false,
@@ -11318,6 +12216,60 @@
               "type": "string",
               "title": "Monitor Id"
             }
+          },
+          {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
           },
           {
             "name": "x-notte-request-origin",
@@ -11427,6 +12379,60 @@
             }
           },
           {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
+          },
+          {
             "name": "x-notte-request-origin",
             "in": "header",
             "required": false,
@@ -11515,6 +12521,60 @@
               "type": "string",
               "title": "Monitor Id"
             }
+          },
+          {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
           },
           {
             "name": "x-notte-request-origin",
@@ -11658,6 +12718,60 @@
               ],
               "title": "Status"
             }
+          },
+          {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
           },
           {
             "name": "x-notte-request-origin",
@@ -11837,6 +12951,60 @@
             }
           },
           {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
+          },
+          {
             "name": "x-notte-request-origin",
             "in": "header",
             "required": false,
@@ -11943,6 +13111,60 @@
               "type": "string",
               "title": "Run Id"
             }
+          },
+          {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
           },
           {
             "name": "x-notte-request-origin",
@@ -12053,6 +13275,60 @@
             }
           },
           {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
+          },
+          {
             "name": "x-notte-request-origin",
             "in": "header",
             "required": false,
@@ -12152,6 +13428,60 @@
             }
           },
           {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
+          },
+          {
             "name": "x-notte-request-origin",
             "in": "header",
             "required": false,
@@ -12241,6 +13571,60 @@
           }
         ],
         "parameters": [
+          {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
+          },
           {
             "name": "x-notte-request-origin",
             "in": "header",
@@ -12349,6 +13733,60 @@
               "type": "string",
               "title": "Delivery Id"
             }
+          },
+          {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
           },
           {
             "name": "x-notte-request-origin",
@@ -12478,6 +13916,60 @@
             }
           },
           {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
+          },
+          {
             "name": "x-notte-request-origin",
             "in": "header",
             "required": false,
@@ -12594,6 +14086,60 @@
             }
           },
           {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
+          },
+          {
             "name": "x-notte-request-origin",
             "in": "header",
             "required": false,
@@ -12701,6 +14247,60 @@
         ],
         "parameters": [
           {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
+          },
+          {
             "name": "x-notte-request-origin",
             "in": "header",
             "required": false,
@@ -12799,6 +14399,60 @@
         ],
         "parameters": [
           {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
+          },
+          {
             "name": "x-notte-request-origin",
             "in": "header",
             "required": false,
@@ -12882,20 +14536,74 @@
         ]
       }
     },
-    "/data/web/scrape": {
+    "/data/web/fetch": {
       "post": {
         "tags": [
           "Data APIs",
-          "Data scrape"
+          "Data fetch"
         ],
-        "summary": "Scrape Specialized Data",
-        "operationId": "scrape_specialized_data",
+        "summary": "Fetch Specialized Data",
+        "operationId": "fetch_specialized_data",
         "security": [
           {
             "OAuth2PasswordBearer": []
           }
         ],
         "parameters": [
+          {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
+          },
           {
             "name": "x-notte-request-origin",
             "in": "header",
@@ -12964,17 +14672,17 @@
         "x-codeSamples": [
           {
             "lang": "Python",
-            "source": "import os\n\nimport requests\n\nresponse = requests.post(\n    \"https://api.notte.cc/data/web/scrape\",\n    headers={\"Authorization\": f\"Bearer {os.environ['NOTTE_API_KEY']}\"},\n    json={\"url\": \"https://www.allbirds.com/products/mens-tree-runners\", \"formats\": {\"product\": True, \"markdown\": True}},\n    timeout=330,\n)\nresponse.raise_for_status()\nprint(response.json())",
+            "source": "import os\n\nimport requests\n\nresponse = requests.post(\n    \"https://api.notte.cc/data/web/fetch\",\n    headers={\"Authorization\": f\"Bearer {os.environ['NOTTE_API_KEY']}\"},\n    json={\"url\": \"https://www.allbirds.com/products/mens-tree-runners\", \"formats\": {\"product\": True, \"markdown\": True}},\n    timeout=330,\n)\nresponse.raise_for_status()\nprint(response.json())",
             "label": "python"
           },
           {
             "lang": "TypeScript",
-            "source": "const response = await fetch(\"https://api.notte.cc/data/web/scrape\", {\n  method: \"POST\",\n  headers: {\n    Authorization: `Bearer ${process.env.NOTTE_API_KEY}`,\n    \"Content-Type\": \"application/json\",\n  },\n  body: JSON.stringify({\n    \"url\": \"https://www.allbirds.com/products/mens-tree-runners\",\n    \"formats\": {\n      \"product\": true,\n      \"markdown\": true\n    }\n  }),\n  signal: AbortSignal.timeout(330_000),\n});\nif (!response.ok) throw new Error(await response.text());\nconsole.log(await response.json());",
+            "source": "const response = await fetch(\"https://api.notte.cc/data/web/fetch\", {\n  method: \"POST\",\n  headers: {\n    Authorization: `Bearer ${process.env.NOTTE_API_KEY}`,\n    \"Content-Type\": \"application/json\",\n  },\n  body: JSON.stringify({\n    \"url\": \"https://www.allbirds.com/products/mens-tree-runners\",\n    \"formats\": {\n      \"product\": true,\n      \"markdown\": true\n    }\n  }),\n  signal: AbortSignal.timeout(330_000),\n});\nif (!response.ok) throw new Error(await response.text());\nconsole.log(await response.json());",
             "label": "node"
           },
           {
             "lang": "Curl",
-            "source": "curl --fail-with-body --max-time 330 --request POST https://api.notte.cc/data/web/scrape \\\n  --header \"Authorization: Bearer $NOTTE_API_KEY\" \\\n  --header 'Content-Type: application/json' \\\n  --data '{\n  \"url\": \"https://www.allbirds.com/products/mens-tree-runners\",\n  \"formats\": {\n    \"product\": true,\n    \"markdown\": true\n  }\n}'",
+            "source": "curl --fail-with-body --max-time 330 --request POST https://api.notte.cc/data/web/fetch \\\n  --header \"Authorization: Bearer $NOTTE_API_KEY\" \\\n  --header 'Content-Type: application/json' \\\n  --data '{\n  \"url\": \"https://www.allbirds.com/products/mens-tree-runners\",\n  \"formats\": {\n    \"product\": true,\n    \"markdown\": true\n  }\n}'",
             "label": "curl"
           }
         ]
@@ -12994,6 +14702,60 @@
           }
         ],
         "parameters": [
+          {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
+          },
           {
             "name": "x-notte-request-origin",
             "in": "header",
@@ -13091,6 +14853,60 @@
           }
         ],
         "parameters": [
+          {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
+          },
           {
             "name": "x-notte-request-origin",
             "in": "header",
@@ -19168,7 +20984,7 @@
               }
             ],
             "title": "Maxagems",
-            "default": 0
+            "description": "Maximum cached result age in milliseconds. Omit for server policy; zero forces fresh extraction."
           },
           "zdr": {
             "type": "string",
@@ -29414,7 +31230,10 @@
         "properties": {
           "status": {
             "type": "string",
-            "const": "miss",
+            "enum": [
+              "hit",
+              "miss"
+            ],
             "title": "Status",
             "default": "miss"
           },
