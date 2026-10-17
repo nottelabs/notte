@@ -26,7 +26,6 @@ def test_shared_queue_only_contains_staging_test_jobs() -> None:
         ("docs-tests-cicd.yml", "execution"),
         ("paired-sdk-examples.yml", "live"),
         ("readme-check.yml", "live"),
-        ("prime-intellect-integration.yml", "browser"),
     }
     queued = set()
     for path in WORKFLOWS.glob("*.yml"):
@@ -177,7 +176,6 @@ def test_live_selection_does_not_bypass_fork_protection() -> None:
         ("docs-tests-cicd.yml", "execution"),
         ("paired-sdk-examples.yml", "live"),
         ("readme-check.yml", "live"),
-        ("prime-intellect-integration.yml", "browser"),
     ):
         condition = workflow(name)["jobs"][job_id]["if"]
         assert "github.event.pull_request.head.repo.full_name == github.repository" in condition
@@ -238,6 +236,7 @@ def test_required_gate_waits_for_all_families_and_fails_closed(
 
 
 def test_native_examples_have_one_existing_required_owner() -> None:
+    assert not (WORKFLOWS / "prime-intellect-integration.yml").exists()
     assert not (WORKFLOWS / "agentcard-integration.yml").exists()
     assert not (WORKFLOWS / "box-integration.yml").exists()
     assert not (WORKFLOWS / "braintrust-integration.yml").exists()

@@ -53,6 +53,8 @@ if os.environ.get('FAIL_BOX_CAPTURE') == 'typescript' and 'test:capture' in args
     sys.exit(29)
 if os.environ.get('FAIL_UNITTEST') and 'unittest' in args:
     sys.exit(19)
+if os.environ.get('FAIL_PRIME_NATIVE') and 'unittest' in args and os.environ.get('NOTTE_PRIME_LIVE') == '1':
+    sys.exit(19)
 if os.environ.get('FAIL_TS_DRIVER') and args == ['npm', 'run', 'test:live']:
     sys.exit(19)
 if os.environ.get('FAIL_NATIVE') and ('test:live' in args or any(arg.endswith('.integration.test.ts') for arg in args)):
@@ -661,3 +663,59 @@ def test_existing_dependabot_eligibility_is_preserved(
     monkeypatch.setenv("GITHUB_ACTOR", "dependabot[bot]")
     runner.main()
     assert bool(calls(workspace)) == (name in {"inngest", "temporal"})
+
+
+@pytest.mark.parametrize("fail", [None, "static", "live"])
+def test_prime_preserves_python_modes_without_node_or_paid_credentials(
+    workspace: Path, monkeypatch: pytest.MonkeyPatch, fail: str | None
+) -> None:
+    project = shipped_project(workspace, monkeypatch, "prime-intellect", "python-project")
+    (project / "test_notte_prime.py").write_text("# Test module fixture\n")
+    monkeypatch.setenv("GITHUB_REF", "refs/heads/main")
+    monkeypatch.setenv("NOTTE_PRIME_LIVE", "1")
+    for credential in runner.CREDENTIALS:
+        monkeypatch.setenv(credential, "fixture-private-value")
+    if fail:
+        monkeypatch.setenv("FAIL_UNITTEST" if fail == "static" else "FAIL_PRIME_NATIVE", "1")
+        with pytest.raises(subprocess.CalledProcessError) as failure:
+            runner.main()
+        assert failure.value.returncode == 19
+        assert not any("-e" in call["args"] for call in calls(workspace))
+        if fail == "static":
+            assert all(not call["credentials"] for call in calls(workspace))
+        else:
+            assert calls(workspace)[-1]["credentials"] == ["NOTTE_API_KEY"]
+        return
+    runner.main()
+    observed = calls(workspace)
+    suites = [call for call in observed if "unittest" in call["args"]]
+    assert len(suites) == 3
+    assert suites[0]["credentials"] == []
+    assert suites[0]["live_flags"]["NOTTE_PRIME_LIVE"] == "0"
+    assert all(call["credentials"] == ["NOTTE_API_KEY"] for call in suites[1:])
+    assert all(call["live_flags"]["NOTTE_PRIME_LIVE"] == "1" for call in suites[1:])
+    assert all(call["cwd"] == str(project) for call in observed)
+    commands = [call["args"] for call in observed]
+    assert not any(command[0] in {"npm", "npx"} for command in commands)
+    assert commands[0] == ["uv", "sync", "--locked", "--python", "3.11"]
+    source = next(call for call in observed if "-e" in call["args"])
+    assert source["credentials"] == []
+    assert "--no-deps" not in source["args"]
+    assert source["args"][-6:] == [
+        "-e",
+        str(workspace / "packages/notte-core"),
+        "-e",
+        str(workspace / "packages/notte-sdk"),
+        "-e",
+        str(project),
+    ]
+    assert observed.index(source) > observed.index(suites[1])
+    assert len([command for command in commands if command[:3] == ["uv", "pip", "check"]]) == 2
+
+
+def test_python_profile_rejects_unknown_project_before_setup(workspace: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    runner.REGISTRY.write_text('{"alpha":"python-project"}')
+    monkeypatch.setenv("INTEGRATION_EXAMPLES", '["alpha"]')
+    with pytest.raises(ValueError, match="Unknown Python"):
+        runner.projects("1/1")
+    assert calls(workspace) == []

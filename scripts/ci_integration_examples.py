@@ -43,6 +43,8 @@ def projects(shard: str) -> list[tuple[str, str]]:
             raise ValueError("Unknown integration example")
         if registry[name] == "node-project" and name not in NODE_PROJECTS:
             raise ValueError("Unknown Node integration project")
+        if registry[name] == "python-project" and name != "prime-intellect":
+            raise ValueError("Unknown Python integration project")
         if registry[name] not in {
             "node-project",
             "gemini-root",
@@ -50,6 +52,7 @@ def projects(shard: str) -> list[tuple[str, str]]:
             "box-root",
             "root-unittest",
             "typescript-driver",
+            "python-project",
         } and not re.fullmatch(r"NOTTE_[A-Z0-9_]+_PYTHON", registry[name]):
             raise ValueError("Invalid integration registry convention")
         selected.add(name)
@@ -72,6 +75,11 @@ def root_tests(project: Path) -> list[str]:
 
 def check(project: Path, env: dict[str, str], convention: str = "") -> Path:
     python = project / ".venv/bin/python"
+    if convention == "python-project":
+        run(["uv", "sync", "--locked", "--python", "3.11"], project, env)
+        run(["uv", "pip", "check", "--python", str(python)], project, env)
+        run([str(python), "-m", "unittest", "-v", *root_tests(project)], project, env)
+        return python
     if project.name in RECIPES:
         # Shared checks typecheck the TypeScript SDK and docs recipes; Python setup runs in live.
         return ROOT / ".venv/bin/python"
@@ -229,6 +237,31 @@ def recipe_live(name: str, python: Path, env: dict[str, str], install_env: dict[
 
 
 def live(project: Path, python: Path, python_env: str, env: dict[str, str], install_env: dict[str, str]) -> None:
+    if python_env == "python-project":
+        env = {**project_env(project.name, env), "NOTTE_PRIME_LIVE": "1", "DISABLE_TELEMETRY": "true"}
+        for sdk in ("published", "source"):
+            if sdk == "source":
+                run(
+                    [
+                        "uv",
+                        "pip",
+                        "install",
+                        "--python",
+                        str(python),
+                        "-e",
+                        str(ROOT / "packages/notte-core"),
+                        "-e",
+                        str(ROOT / "packages/notte-sdk"),
+                        "-e",
+                        str(project),
+                    ],
+                    project,
+                    install_env,
+                )
+                run(["uv", "pip", "check", "--python", str(python)], project, install_env)
+            print(f"Native integration: {project.name}, {sdk} SDK", flush=True)
+            run([str(python), "-m", "unittest", "-v", *root_tests(project)], project, env)
+        return
     if project.name in RECIPES:
         recipe_live(project.name, python, project_env(project.name, env), install_env)
         return
