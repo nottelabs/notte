@@ -20,6 +20,40 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class RoutingTests(unittest.TestCase):
+    def test_shipped_native_recipe_and_project_inputs_keep_required_paired_owner(self) -> None:
+        inputs = {
+            "docs/src/testers/integrations/openai_agents.py": {"openai-agents"},
+            "docs/src/testers/integrations/claude_agents.ts": {"claude-agents"},
+            "docs/src/testers/integrations/agent_browser.py": {"agent-browser"},
+            "node-sdk/test/helpers/run-openai-recipe.py": {"openai-agents"},
+            "node-sdk/test/agent-browser.recipe.test.ts": {"agent-browser"},
+            "tests/docs/test_agent_browser_recipe.py": {"agent-browser"},
+            "docs/package-lock.json": {"openai-agents", "claude-agents"},
+            ".github/workflows/selector-repair.yml": {"github-actions"},
+            "docs/src/integrations/github-actions.mdx": {"github-actions"},
+            "examples/trigger/src/read-page.ts": {"trigger"},
+            "examples/inngest/src/index.ts": {"inngest"},
+            "examples/temporal/test/workflow.live.test.ts": {"temporal"},
+        }
+        for path, expected in inputs.items():
+            with self.subTest(path=path):
+                self.assertEqual(ci.integration_examples_for_path(path), expected)
+                self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
+                self.assertTrue(ci.base_scopes_for_path(path) <= ci.scopes_for_path(path))
+        for name in (
+            "agent-browser",
+            "claude-agents",
+            "github-actions",
+            "inngest",
+            "openai-agents",
+            "temporal",
+            "trigger",
+        ):
+            path = f".github/workflows/{name}-integration.yml"
+            with self.subTest(path=path):
+                self.assertEqual(ci.integration_examples_for_path(path), {name})
+                self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
+
     def test_prose_never_selects_live_suites(self) -> None:
         for path in (
             "docs/src/pricing.mdx",

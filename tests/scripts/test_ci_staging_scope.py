@@ -21,18 +21,11 @@ def workflow(name: str) -> dict[str, Any]:
 
 def test_shared_queue_only_contains_staging_test_jobs() -> None:
     expected = {
-        ("claude-agents-integration.yml", "live"),
-        ("openai-agents-integration.yml", "live"),
-        ("github-actions-integration.yml", "live"),
         ("node-sdk-ci.yml", "integration-tests"),
         ("test-cicd.yml", "staging-and-live"),
         ("docs-tests-cicd.yml", "execution"),
         ("paired-sdk-examples.yml", "live"),
         ("readme-check.yml", "live"),
-        ("agent-browser-integration.yml", "live"),
-        ("trigger-integration.yml", "browser-handler"),
-        ("temporal-integration.yml", "browser-workflow"),
-        ("inngest-integration.yml", "live"),
         ("agentcard-integration.yml", "live"),
     }
     queued = set()
@@ -247,6 +240,9 @@ def test_native_examples_have_one_existing_required_owner() -> None:
     assert not (WORKFLOWS / "box-integration.yml").exists()
     assert not (WORKFLOWS / "braintrust-integration.yml").exists()
     assert not (WORKFLOWS / "onepassword-integration.yml").exists()
+    for name in ("agent-browser", "claude-agents", "github-actions", "inngest", "openai-agents", "temporal", "trigger"):
+        assert not (WORKFLOWS / f"{name}-integration.yml").exists()
+    assert (WORKFLOWS / "selector-repair.yml").exists()
     assert not (WORKFLOWS / "openai-computer-use-integration.yml").exists()
     assert not (WORKFLOWS / "deepagents-integration.yml").exists()
     assert not (WORKFLOWS / "gemini-computer-use-integration.yml").exists()
@@ -275,6 +271,13 @@ def test_native_examples_have_one_existing_required_owner() -> None:
             model = step["env"]["NOTTE_DEEPAGENTS_MODEL_LIVE"]
             assert "github.ref == 'refs/heads/main' && github.event_name != 'pull_request'" in model
             assert "secrets.ANTHROPIC_API_KEY != '' && '1' || '0'" in model
+    artifact = next(step for step in jobs["live"]["steps"] if "upload-artifact@" in step.get("uses", ""))
+    assert artifact["if"] == "always()"
+    assert artifact["with"] == {
+        "name": "agent-browser-ownership",
+        "path": "${{ runner.temp }}/agent-browser-owned.jsonl",
+        "if-no-files-found": "ignore",
+    }
 
 
 def test_scoped_checks_fetch_history_only_during_authenticated_checkout() -> None:
