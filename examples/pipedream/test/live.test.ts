@@ -11,7 +11,7 @@ import { test } from 'node:test';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { loadAction, runDemo } from '../demo.ts';
 
-const config = { clientId: 'fixture-client', clientSecret: 'fixture-secret', projectId: 'proj_fixture', externalUserId: 'user-fixture' };
+const config = { clientId: 'fixture-client', clientSecret: 'fixture-secret', projectId: 'proj_fixture', externalUserId: 'user-fixture' }; // pragma: allowlist secret
 
 async function closed(id: string) {
   const api = process.env.NOTTE_API_URL ?? 'https://api.notte.cc';
@@ -174,7 +174,7 @@ test(`CLI SIGINT during ${phase} closes its real browser before exiting`, { time
   const port = (server.address() as AddressInfo).port;
   child = spawn(process.execPath, [fileURLToPath(new URL('../demo.ts', import.meta.url))], {
     env: { ...process.env, NOTTE_API_URL: `http://127.0.0.1:${port}`, PIPEDREAM_CLIENT_ID: 'fixture-client',
-      PIPEDREAM_CLIENT_SECRET: 'fixture-secret', PIPEDREAM_PROJECT_ID: 'proj_fixture',
+      PIPEDREAM_CLIENT_SECRET: 'fixture-secret', PIPEDREAM_PROJECT_ID: 'proj_fixture', // pragma: allowlist secret
       PIPEDREAM_EXTERNAL_USER_ID: 'user-fixture', PIPEDREAM_ACTION_FILE: '' },
     stdio: ['ignore', 'pipe', 'pipe'],
   });

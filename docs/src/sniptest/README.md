@@ -60,6 +60,12 @@ Set `NOTTE_API_KEY`, `ANTHROPIC_API_KEY`, `NOTTE_API_URL` to the target environm
 and `NOTTE_DOCS_PYTHON` to the Python executable. From `node-sdk`, run
 `NOTTE_STAGEHAND_LIVE=1 VITEST_INTEGRATION=1 npx vitest run test/stagehand.integration.test.ts`.
 This creates two billed sessions and makes model calls.
+MongoDB uses `pymongo==4.19.0` and the pinned docs dependencies. Set `MONGODB_URI`
+to a local MongoDB server, `NOTTE_API_KEY`, `NOTTE_API_URL`, and `NOTTE_DOCS_PYTHON`.
+Run `NOTTE_MONGODB_LIVE=1 VITEST_INTEGRATION=1 npx vitest run test/mongodb.integration.test.ts`
+from `node-sdk`. It verifies persisted scrapes and browser cleanup after real
+MongoDB document-validation failures, using and dropping only unique test collections.
+
 
 Claude Agent SDK uses `claude-agent-sdk==0.2.168` in Python and the pinned docs
 dependencies for TypeScript. With the same environment variables, run

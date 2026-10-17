@@ -24,3 +24,11 @@ Note that some of the examples require a 2FA token. For the GitHub websites, you
 ```bash
 python agent.py  # or main.py
 ```
+
+## Tzafon Lightcone
+
+See [tzafon](tzafon/README.md) for Python and TypeScript computer-use examples.
+
+## IBM watsonx.ai
+
+See [watsonx](watsonx/README.md) for Python and TypeScript screenshot analysis examples.

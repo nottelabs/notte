@@ -175,10 +175,6 @@
       "destination": "/integrations"
     },
     {
-      "source": "/integrations/val-town",
-      "destination": "/integrations"
-    },
-    {
       "source": "/guides/scraping",
       "destination": "/concepts/scraping"
     },
@@ -331,7 +327,10 @@
             "icon": "code",
             "pages": [
               "integrations/claude-code-ai-agents",
-              "integrations/claude-managed-agents"
+              "integrations/claude-managed-agents",
+              "integrations/replit",
+              "integrations/docker-sandboxes",
+              "integrations/fx"
             ]
           },
           {
@@ -352,7 +351,9 @@
               "integrations/hermes",
               "integrations/stagehand",
               "integrations/claude-agents",
-              "integrations/prime-intellect"
+              "integrations/prime-intellect",
+              "integrations/watsonx",
+              "integrations/eve"
             ]
           },
           {
@@ -363,7 +364,8 @@
               "integrations/claude-computer-use",
               "integrations/gemini-computer-use",
               "integrations/yutori",
-              "integrations/openagi"
+              "integrations/openagi",
+              "integrations/tzafon"
             ]
           },
           {
@@ -374,6 +376,7 @@
               "integrations/trigger",
               "integrations/temporal",
               "integrations/github-actions",
+              "integrations/val-town",
               "integrations/pipedream"
             ]
           },
@@ -389,7 +392,8 @@
             "group": "Payments",
             "icon": "credit-card",
             "pages": [
-              "integrations/agentcard"
+              "integrations/agentcard",
+              "integrations/stripe-link"
             ]
           },
           {
@@ -407,6 +411,20 @@
             ]
           },
           {
+            "group": "Databases",
+            "icon": "database",
+            "pages": [
+              "integrations/mongodb"
+            ]
+          },
+          {
+            "group": "Testing",
+            "icon": "vial",
+            "pages": [
+              "integrations/e2e"
+            ]
+          },
+          {
             "group": "Credentials",
             "icon": "key",
             "pages": [
@@ -421,6 +439,13 @@
               "features/sessions/puppeteer",
               "integrations/agent-browser",
               "integrations/selenium"
+            ]
+          },
+          {
+            "group": "Infrastructure as Code",
+            "icon": "cubes",
+            "pages": [
+              "integrations/terraform"
             ]
           },
           {
