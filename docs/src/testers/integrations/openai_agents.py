@@ -22,7 +22,7 @@ async def main() -> dict[str, str]:
                 MCPServerStreamableHttp(
                     name="Notte",
                     params={
-                        "url": os.environ.get("NOTTE_API_URL", "https://api.notte.cc").rstrip("/") + "/mcp",
+                        "url": (os.environ.get("NOTTE_API_URL") or "https://api.notte.cc").rstrip("/") + "/mcp",
                         "headers": {"Authorization": f"Bearer {os.environ['NOTTE_API_KEY']}"},
                     },
                     client_session_timeout_seconds=120,
