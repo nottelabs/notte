@@ -13,6 +13,7 @@ export async function readPage(url = 'https://example.com') {
         let stage = 'browser connection';
         try {
           const browser = await chromium.connectOverCDP(await session.cdpUrl());
+          let failed = false;
           try {
             const page = await browser.contexts()[0].newPage();
             stage = 'navigation';
@@ -21,7 +22,20 @@ export async function readPage(url = 'https://example.com') {
             const result = { title: await page.title(), session_id: session.getId()! };
             Laminar.setSpanOutput(result);
             return { ...result, trace_id: span.spanContext().traceId };
-          } finally { await browser.close(); }
+          } catch (error) {
+            failed = true;
+            throw error;
+          } finally {
+            let timer: ReturnType<typeof setTimeout> | undefined;
+            try {
+              await Promise.race([
+                browser.close(),
+                new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error('Close deadline exceeded')), 5000); }),
+              ]);
+            } catch {
+              if (!failed) throw new Error('Browser cleanup failed');
+            } finally { clearTimeout(timer); }
+          }
         } catch {
           span.setStatus({ code: 2 });
           throw new Error(`Notte browser task failed during ${stage} (session ${session.getId()}, trace ${span.spanContext().traceId})`);

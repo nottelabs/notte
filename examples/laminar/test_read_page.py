@@ -175,6 +175,44 @@ class LaminarTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn(b"failed during navigation", payload)
         self.assertIn(ids[0].encode(), payload)
 
+    @unittest.skipUnless(LIVE, "Requires an actual browser disconnect")
+    async def test_stalled_disconnect_cannot_skip_owner_cleanup(self):
+        original = read_page.async_playwright
+        disconnected = []
+
+        @asynccontextmanager
+        async def driver():
+            async with original() as native:
+                connect = native.chromium.connect_over_cdp
+
+                async def attach(*args, **kwargs):
+                    browser = await connect(*args, **kwargs)
+                    close = browser.close
+
+                    async def fail():
+                        await close()
+                        disconnected.append(True)
+                        await asyncio.Future()
+
+                    browser.close = fail
+                    return browser
+
+                with patch.object(native.chromium, "connect_over_cdp", side_effect=attach):
+                    yield native
+
+        offset = len(self.payloads)
+        async with owned() as ids:
+            with patch.object(read_page, "async_playwright", driver):
+                async with asyncio.timeout(20):
+                    with self.assertRaisesRegex(RuntimeError, "failed during reading the title") as failure:
+                        await read_page.read_page()
+        self.assertEqual(disconnected, [True])
+        self.assertNotIn(FAKE_CREDENTIAL, str(failure.exception))
+        span, payload = await self.emitted(offset)
+        self.assertEqual(span.status.code, 2)
+        self.assertIn(ids[0].encode(), payload)
+        self.assertIn(b"failed during reading the title", payload)
+
     @unittest.skipUnless(
         LIVE and os.getenv("NOTTE_LAMINAR_EXPORT_LIVE") == "1", "Opt-in actual Laminar export and readback"
     )

@@ -49,8 +49,9 @@ async function offlineOwned<T>(operation: () => Promise<T>) {
 
 async function closed(id: string) {
   const client = new NotteClient();
-  for (let attempt = 0; attempt < 30; attempt++) {
-    const response = await sessionStatus({ client: client.getClient(), path: { session_id: id }, throwOnError: true, signal: AbortSignal.timeout(15_000) });
+  const signal = AbortSignal.timeout(15_000);
+  while (!signal.aborted) {
+    const response = await sessionStatus({ client: client.getClient(), path: { session_id: id }, throwOnError: true, signal });
     if (response.data.status === 'closed') return;
     await new Promise(resolve => setTimeout(resolve, 500));
   }
@@ -109,6 +110,41 @@ test('Navigation failure is traced and its owned session closes', { timeout: 120
   const { span, payload } = await emitted(offset);
   assert.equal(span.status.code, 2);
   assert.ok(payload.includes('failed during navigation'));
+});
+
+test('A stalled disconnect cannot skip owner cleanup', { skip: !live, timeout: 45_000 }, async t => {
+  const original = chromium.connectOverCDP.bind(chromium);
+  let disconnected = 0, release!: () => void;
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  t.mock.method(chromium, 'connectOverCDP', async (endpoint: string) => {
+    const browser = await original(endpoint);
+    const close = browser.close.bind(browser);
+    t.mock.method(browser, 'close', async () => {
+      await close();
+      disconnected++;
+      await gate;
+    });
+    return browser;
+  });
+  const offset = exporter.getFinishedSpans().length;
+  const operation = owned(() => readPage()).then(() => undefined, error => error as Error);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const failure = await Promise.race([
+      operation,
+      new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error('Owned cleanup exceeded its deadline')), 20_000); }),
+    ]);
+    assert.ok(failure instanceof Error);
+    assert.match(failure.message, /failed during reading the title \(session [0-9a-f-]{36}, trace [0-9a-f]{32}\)/);
+    assert.equal(disconnected, 1);
+    const { span, payload } = await emitted(offset);
+    assert.equal(span.status.code, 2);
+    assert.ok(payload.includes('failed during reading the title'));
+  } finally {
+    clearTimeout(timer);
+    release();
+    await operation;
+  }
 });
 
 test('The exported trace is persisted in Laminar', {

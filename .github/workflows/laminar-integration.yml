@@ -26,6 +26,7 @@ permissions:
 jobs:
   static:
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -46,7 +47,7 @@ jobs:
       fail-fast: false
       matrix:
         sdk: [published, source]
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    if: github.actor != 'dependabot[bot]' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     concurrency:
@@ -88,6 +89,7 @@ jobs:
           NOTTE_LAMINAR_EXPORT_LIVE: ${{ secrets.LMNR_PROJECT_API_KEY != '' && '1' || '0' }}
           DISABLE_TELEMETRY: 'true'
         run: |
+          test -n "$NOTTE_API_KEY"
           examples/laminar/.venv/bin/python -m unittest discover -v -s examples/laminar -p test_read_page.py
           cd examples/laminar/typescript
           npm run test:live

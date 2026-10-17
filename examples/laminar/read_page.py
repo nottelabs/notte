@@ -27,7 +27,12 @@ async def read_page(url: str = "https://example.com") -> dict[str, str]:
                         Laminar.set_span_output(result)
                         return {**result, "trace_id": format(span.get_span_context().trace_id, "032x")}
                     finally:
-                        await browser.close()
+                        failure = sys.exception()
+                        try:
+                            await asyncio.wait_for(browser.close(), timeout=5)
+                        except Exception:
+                            if failure is None:
+                                raise RuntimeError("Browser cleanup failed") from None
             except Exception:
                 trace_id = format(span.get_span_context().trace_id, "032x")
                 raise RuntimeError(
