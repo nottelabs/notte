@@ -27,7 +27,7 @@ from pathlib import Path
 args = [Path(sys.argv[0]).name, *sys.argv[1:]]
 with open(os.environ['COMMAND_LOG'], 'a') as log:
     log.write(json.dumps({'args': args, 'cwd': os.getcwd(),
-        'credentials': sorted(k for k in ('NOTTE_API_KEY', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'GEMINI_API_KEY', 'BRAINTRUST_API_KEY', 'LMNR_PROJECT_API_KEY', 'OP_SERVICE_ACCOUNT_TOKEN', 'BOX_ACCESS_TOKEN', 'AGENTCARD_CLIENT_ID', 'AGENTCARD_CLIENT_SECRET', 'YUTORI_API_KEY') if os.environ.get(k)),
+        'credentials': sorted(k for k in ('NOTTE_API_KEY', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'GEMINI_API_KEY', 'BRAINTRUST_API_KEY', 'LMNR_PROJECT_API_KEY', 'OP_SERVICE_ACCOUNT_TOKEN', 'BOX_ACCESS_TOKEN', 'AGENTCARD_CLIENT_ID', 'AGENTCARD_CLIENT_SECRET', 'YUTORI_API_KEY', 'OAGI_API_KEY') if os.environ.get(k)),
         'vitest': os.environ.get('VITEST_INTEGRATION'),
         'journal': os.environ.get('NOTTE_AGENT_BROWSER_OWNERSHIP_JOURNAL'),
         'example_python': os.environ.get('NOTTE_EXAMPLE_PYTHON'),
@@ -51,6 +51,8 @@ if os.environ.get('FAIL_BOX_CAPTURE') == 'python' and 'test_capture' in args:
     sys.exit(29)
 if os.environ.get('FAIL_BOX_CAPTURE') == 'typescript' and 'test:capture' in args:
     sys.exit(29)
+if os.environ.get('FAIL_OPENAGI_IMPORT') and args[1:] == ['-c', 'import demo; from oagi import AsyncDefaultAgent']:
+    sys.exit(31)
 if os.environ.get('FAIL_UNITTEST') and 'unittest' in args:
     sys.exit(19)
 if os.environ.get('FAIL_PRIME_NATIVE') and 'unittest' in args and os.environ.get('NOTTE_PRIME_LIVE') == '1':
@@ -747,3 +749,55 @@ def test_yutori_keeps_python312_requirements_and_both_sdk_modes_without_vendor_c
     source = next(command for command in commands if "-e" in command)
     assert source[-4:] == ["-e", str(workspace / "packages/notte-core"), "-e", str(workspace / "packages/notte-sdk")]
     assert len([command for command in commands if command[:3] == ["uv", "pip", "check"]]) == 2
+
+
+@pytest.mark.parametrize("failure", [None, "import", "native"])
+def test_openagi_preserves_import_only_static_and_native_sdk_modes_without_vendor_key(
+    workspace: Path, monkeypatch: pytest.MonkeyPatch, failure: str | None
+) -> None:
+    project = shipped_project(workspace, monkeypatch, "openagi", "python-project")
+    (project / "test_live.py").write_text("# Native module fixture\n")
+    for flag in ("NOTTE_PRIME_LIVE", "NOTTE_YUTORI_LIVE", "NOTTE_OPENAGI_LIVE"):
+        monkeypatch.delenv(flag, raising=False)
+    monkeypatch.setenv("GITHUB_REF", "refs/heads/main")
+    for key in runner.CREDENTIALS - {"NOTTE_API_KEY"}:
+        monkeypatch.setenv(key, "fixture-unused-provider")
+    if failure:
+        monkeypatch.setenv("FAIL_OPENAGI_IMPORT" if failure == "import" else "FAIL_UNITTEST", "1")
+        with pytest.raises(subprocess.CalledProcessError) as error:
+            runner.main()
+        assert error.value.returncode == (31 if failure == "import" else 19)
+        assert not any("-e" in call["args"] for call in calls(workspace))
+        return
+    runner.main()
+    observed = calls(workspace)
+    commands = [call["args"] for call in observed]
+    suites = [call for call in observed if "unittest" in call["args"]]
+    assert len(suites) == 2
+    assert all(call["args"] == ["python", "-m", "unittest", "-v", "test_live.py"] for call in suites)
+    assert all(call["credentials"] == ["NOTTE_API_KEY"] for call in suites)
+    assert all(not call["credentials"] for call in observed if call not in suites)
+    assert all(
+        not {"NOTTE_PRIME_LIVE", "NOTTE_YUTORI_LIVE", "NOTTE_OPENAGI_LIVE"} & call["live_flags"].keys()
+        for call in suites
+    )
+    assert all(call["cwd"] == str(project) for call in observed)
+    assert commands[:4] == [
+        ["uv", "sync", "--locked", "--python", "3.11"],
+        ["uv", "pip", "check", "--python", str(project / ".venv/bin/python")],
+        ["python", "-c", "import demo; from oagi import AsyncDefaultAgent"],
+        ["python", "-m", "compileall", "-q", "demo.py", "notte_computer.py", "test_live.py"],
+    ]
+    source = next(command for command in commands if "-e" in command)
+    assert source[-6:] == [
+        "-e",
+        str(workspace / "packages/notte-core"),
+        "-e",
+        str(workspace / "packages/notte-sdk"),
+        "oagi-core==0.15.3",
+        "playwright==1.64.0",
+    ]
+    assert str(project) not in source and "--no-deps" not in source
+    assert not any(command[0] in {"npm", "npx"} for command in commands)
+    assert commands.index(source) > commands.index(suites[0]["args"])
+    assert commands.count(["uv", "pip", "check", "--python", str(project / ".venv/bin/python")]) == 2

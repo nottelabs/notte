@@ -11,6 +11,7 @@
   "inngest": "node-project",
   "laminar": "root-unittest",
   "onepassword": "typescript-driver",
+  "openagi": "python-project",
   "openai-agents": "NOTTE_DOCS_PYTHON",
   "openai-computer-use": "NOTTE_COMPUTER_USE_PYTHON",
   "prime-intellect": "python-project",

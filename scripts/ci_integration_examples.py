@@ -24,6 +24,7 @@ CREDENTIALS = {
     "AGENTCARD_CLIENT_ID",
     "AGENTCARD_CLIENT_SECRET",
     "YUTORI_API_KEY",
+    "OAGI_API_KEY",
 }
 DRIVER_IMPORTS = {
     "braintrust": "from braintrust import init_logger; from notte_sdk import NotteClient",
@@ -44,7 +45,7 @@ def projects(shard: str) -> list[tuple[str, str]]:
             raise ValueError("Unknown integration example")
         if registry[name] == "node-project" and name not in NODE_PROJECTS:
             raise ValueError("Unknown Node integration project")
-        if registry[name] == "python-project" and name not in {"prime-intellect", "yutori"}:
+        if registry[name] == "python-project" and name not in {"prime-intellect", "yutori", "openagi"}:
             raise ValueError("Unknown Python integration project")
         if registry[name] not in {
             "node-project",
@@ -84,7 +85,11 @@ def check(project: Path, env: dict[str, str], convention: str = "") -> Path:
         else:
             run(["uv", "sync", "--locked", "--python", "3.11"], project, env)
         run(["uv", "pip", "check", "--python", str(python)], project, env)
-        run([str(python), "-m", "unittest", "-v", *root_tests(project)], project, env)
+        if project.name == "openagi":
+            run([str(python), "-c", "import demo; from oagi import AsyncDefaultAgent"], project, env)
+            run([str(python), "-m", "compileall", "-q", "demo.py", "notte_computer.py", "test_live.py"], project, env)
+        else:
+            run([str(python), "-m", "unittest", "-v", *root_tests(project)], project, env)
         return python
     if project.name in RECIPES:
         # Shared checks typecheck the TypeScript SDK and docs recipes; Python setup runs in live.
@@ -244,8 +249,10 @@ def recipe_live(name: str, python: Path, env: dict[str, str], install_env: dict[
 
 def live(project: Path, python: Path, python_env: str, env: dict[str, str], install_env: dict[str, str]) -> None:
     if python_env == "python-project":
-        flag = "NOTTE_PRIME_LIVE" if project.name == "prime-intellect" else "NOTTE_YUTORI_LIVE"
-        env = {**project_env(project.name, env), flag: "1", "DISABLE_TELEMETRY": "true"}
+        flags = {"prime-intellect": "NOTTE_PRIME_LIVE", "yutori": "NOTTE_YUTORI_LIVE"}
+        env = {**project_env(project.name, env), "DISABLE_TELEMETRY": "true"}
+        if flag := flags.get(project.name):
+            env[flag] = "1"
         for sdk in ("published", "source"):
             if sdk == "source":
                 run(
@@ -260,6 +267,7 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
                         "-e",
                         str(ROOT / "packages/notte-sdk"),
                         *(["-e", str(project)] if project.name == "prime-intellect" else []),
+                        *(["oagi-core==0.15.3", "playwright==1.64.0"] if project.name == "openagi" else []),
                     ],
                     project,
                     install_env,

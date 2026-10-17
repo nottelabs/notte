@@ -268,6 +268,19 @@ class RoutingTests(unittest.TestCase):
                 self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
         self.assertFalse(ci.integration_examples_for_path("examples/agentcard/README.md"))
 
+    def test_openagi_native_protocol_and_guide_inputs_select_existing_pair(self) -> None:
+        for path in (
+            "examples/openagi/demo.py",
+            "examples/openagi/notte_computer.py",
+            "examples/openagi/test_live.py",
+            "examples/openagi/uv.lock",
+            "docs/src/integrations/openagi.mdx",
+        ):
+            with self.subTest(path=path):
+                self.assertEqual(ci.integration_examples_for_path(path), {"openagi"})
+                self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path, code_changed=False))
+        self.assertFalse(ci.integration_examples_for_path("examples/openagi/README.md"))
+
     def test_shared_native_inputs_cover_every_registered_project(self) -> None:
         for path in (
             *ci.INTEGRATION_INPUTS,
