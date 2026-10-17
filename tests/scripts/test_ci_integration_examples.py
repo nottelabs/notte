@@ -20,14 +20,17 @@ def workspace(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.setenv("COMMAND_LOG", str(tmp_path / "calls.jsonl"))
     monkeypatch.setenv("NOTTE_API_KEY", "fixture-ci-key")
     monkeypatch.setenv("OPENAI_API_KEY", "fixture-provider-key")
+    monkeypatch.delenv("BRAINTRUST_API_KEY", raising=False)
     stub = """#!/usr/bin/env python3
 import json, os, sys
 from pathlib import Path
 args = [Path(sys.argv[0]).name, *sys.argv[1:]]
 with open(os.environ['COMMAND_LOG'], 'a') as log:
     log.write(json.dumps({'args': args, 'cwd': os.getcwd(),
-        'credentials': sorted(k for k in ('NOTTE_API_KEY', 'OPENAI_API_KEY') if os.environ.get(k)),
+        'credentials': sorted(k for k in ('NOTTE_API_KEY', 'OPENAI_API_KEY', 'BRAINTRUST_API_KEY') if os.environ.get(k)),
         'python': os.environ.get('NOTTE_COMPUTER_USE_PYTHON'),
+        'braintrust_python': os.environ.get('NOTTE_BRAINTRUST_PYTHON'),
+        'braintrust_project': os.environ.get('BRAINTRUST_PROJECT'),
         'gemini_live': os.environ.get('NOTTE_GEMINI_LIVE'),
         'gemini_model': os.environ.get('NOTTE_GEMINI_MODEL_LIVE'),
         'selenium_live': os.environ.get('NOTTE_SELENIUM_LIVE'),
@@ -40,6 +43,8 @@ if args[1:] == ['install_driver.py']:
     if os.environ.get('FAIL_DRIVER'):
         sys.exit(17)
 if os.environ.get('FAIL_UNITTEST') and 'unittest' in args:
+    sys.exit(19)
+if os.environ.get('FAIL_TS_DRIVER') and args == ['npm', 'run', 'test:live']:
     sys.exit(19)
 """
     for path in (tmp_path / "bin/uv", tmp_path / "bin/npm"):
@@ -281,3 +286,44 @@ def test_root_unittest_requires_real_modules_before_setup(workspace: Path) -> No
     with pytest.raises(ValueError, match="requires root test_"):
         runner.check(workspace / "examples/alpha", {}, "root-unittest")
     assert calls(workspace) == []
+
+
+@pytest.mark.parametrize("failure", [False, True])
+def test_braintrust_ts_driver_preserves_python_selection_and_credential_isolation(
+    workspace: Path, monkeypatch: pytest.MonkeyPatch, failure: bool
+) -> None:
+    project = workspace / "examples/braintrust"
+    (project / "typescript").mkdir(parents=True)
+    python = project / ".venv/bin/python"
+    python.parent.mkdir(parents=True)
+    python.write_text((workspace / "examples/alpha/.venv/bin/python").read_text())
+    python.chmod(0o755)
+    runner.REGISTRY.write_text(json.dumps({"braintrust": "typescript-driver"}))
+    monkeypatch.setenv("INTEGRATION_EXAMPLES", '["braintrust"]')
+    monkeypatch.setenv("BRAINTRUST_API_KEY", "fixture-trace-key")
+    monkeypatch.setenv("BRAINTRUST_PROJECT", "notte-integration-tests")
+    monkeypatch.setattr("sys.argv", ["runner", "live"])
+    if failure:
+        monkeypatch.setenv("FAIL_TS_DRIVER", "1")
+        with pytest.raises(subprocess.CalledProcessError) as error:
+            runner.main()
+        assert error.value.returncode == 19
+    else:
+        runner.main()
+    observed = calls(workspace)
+    native = [call for call in observed if call["args"] == ["npm", "run", "test:live"]]
+    assert len(native) == (1 if failure else 2)
+    assert all(call["cwd"] == str(project / "typescript") for call in native)
+    assert all(call["braintrust_python"] == str(project / ".venv/bin/python") for call in native)
+    assert all(call["braintrust_project"] == "notte-integration-tests" for call in native)
+    assert all(call["credentials"] == ["BRAINTRUST_API_KEY", "NOTTE_API_KEY", "OPENAI_API_KEY"] for call in native)
+    assert all(not call["credentials"] for call in observed if call not in native)
+    assert not any("unittest" in call["args"] for call in observed)
+    commands = [call["args"] for call in observed]
+    assert ["python", "-c", "from braintrust import init_logger; from notte_sdk import NotteClient"] in commands
+    overlays = [command for command in commands if command[:3] == ["uv", "pip", "install"]]
+    if failure:
+        assert not overlays
+    else:
+        assert len(overlays) == 1 and "--no-deps" not in overlays[0]
+        assert commands.index(overlays[0]) > commands.index(native[0]["args"])

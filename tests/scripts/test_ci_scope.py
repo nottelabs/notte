@@ -166,6 +166,13 @@ class RoutingTests(unittest.TestCase):
                 self.assertEqual(ci.integration_examples_for_path(path), {"gemini-computer-use"})
         self.assertFalse(ci.integration_examples_for_path("examples/gemini-computer-use/README.md"))
 
+    def test_braintrust_ts_driver_inputs_select_native_suite(self) -> None:
+        for name in ("python/cleanup_case.py", "typescript/test/braintrust.live.test.ts", "uv.lock"):
+            path = f"examples/braintrust/{name}"
+            with self.subTest(path=path):
+                self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
+                self.assertEqual(ci.integration_examples_for_path(path), {"braintrust"})
+
     def test_selenium_native_inputs_route_to_existing_paired_jobs(self) -> None:
         for filename in (
             "bridge.py",
@@ -405,10 +412,9 @@ class GitHistoryTests(unittest.TestCase):
         self.assertFalse(scope["node_generated"])
         self.assertFalse(scope["full"])
 
-    def test_standalone_integration_diff_keeps_offline_checks_without_global_live_suites(self) -> None:
+    def test_registered_integration_diff_runs_its_native_suite_without_global_live_suites(self) -> None:
         head = self.commit(
             {
-                ".github/workflows/braintrust-integration.yml": "name: Braintrust integration\n",
                 "examples/braintrust/python/demo.py": "browser_task = True\n",
                 "examples/braintrust/typescript/src/demo.ts": "export const browserTask = true;\n",
                 "examples/braintrust/uv.lock": "version = 1\n",
@@ -424,7 +430,9 @@ class GitHistoryTests(unittest.TestCase):
             self.assertTrue(scope[name], name)
         for name in ci.ALL:
             if name.endswith("_live"):
-                self.assertFalse(scope[name], name)
+                self.assertEqual(scope[name], name == "paired_live", name)
+        self.assertEqual(scope["integration_examples"], ["braintrust"])
+        self.assertFalse(scope["paired_snippets_live"])
 
         runtime = self.commit(
             {
