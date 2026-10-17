@@ -19,6 +19,15 @@ interface Runtime {
   attach: typeof attachToPlaywright;
 }
 
+async function closeTransport(close: () => Promise<void>) {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    await Promise.race([close(), new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error('Browser disconnect timed out')), 5_000);
+    })]);
+  } finally { clearTimeout(timer); }
+}
+
 export async function runCheckout(options: CheckoutOptions, runtime: Partial<Runtime> = {}) {
   const client = runtime.client ?? new NotteClient();
   const connect = runtime.connect ?? chromium.connectOverCDP.bind(chromium);
@@ -50,8 +59,8 @@ export async function runCheckout(options: CheckoutOptions, runtime: Partial<Run
               const result = await checkout.reconcile();
               return { status: result.status, order_id: result.orderId, session_id: session.getId()! };
             } finally { checkout.cancel(); }
-          } finally { await page.close(); }
-        } finally { await browser.close(); }
+          } finally { await closeTransport(() => page.close()); }
+        } finally { await closeTransport(() => browser.close()); }
       } catch {
         throw new Error('Hosted checkout failed; verify the merchant outcome before attempting another payment');
       }

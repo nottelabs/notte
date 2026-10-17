@@ -6,11 +6,21 @@ on:
     paths:
       - .github/workflows/agentcard-integration.yml
       - examples/agentcard/**
+      - node-sdk/src/**
+      - node-sdk/package.json
+      - node-sdk/package-lock.json
+      - node-sdk/tsconfig.json
+      - node-sdk/tsup.config.ts
   push:
     branches: [main]
     paths:
       - .github/workflows/agentcard-integration.yml
       - examples/agentcard/**
+      - node-sdk/src/**
+      - node-sdk/package.json
+      - node-sdk/package-lock.json
+      - node-sdk/tsconfig.json
+      - node-sdk/tsup.config.ts
 
 permissions:
   contents: read
@@ -34,9 +44,13 @@ jobs:
       - run: npm test
   live:
     needs: static
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    if: github.actor != 'dependabot[bot]' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        sdk: [published, source]
     concurrency:
       group: notte-live-api-${{ github.ref }}
       queue: max
@@ -56,6 +70,16 @@ jobs:
         with:
           node-version: '24'
       - run: npm ci
+      - name: Build the source SDK
+        if: matrix.sdk == 'source'
+        run: |
+          npm ci --prefix ../../node-sdk
+          npm run build --prefix ../../node-sdk
+          npm install --no-save --package-lock=false ../../node-sdk
+      - run: npm run typecheck
+      - run: npm test
+      - name: Require the Notte test key
+        run: test -n "$NOTTE_API_KEY"
       - name: Wait for the API
         uses: ./.github/actions/wait-for-api
         with:
