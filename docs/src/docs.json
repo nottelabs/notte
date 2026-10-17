@@ -369,6 +369,13 @@
             ]
           },
           {
+            "group": "Computer Use",
+            "icon": "desktop",
+            "pages": [
+              "integrations/tzafon"
+            ]
+          },
+          {
             "group": "Workflow Automation",
             "icon": "diagram-project",
             "pages": [
