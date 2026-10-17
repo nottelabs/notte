@@ -10,14 +10,32 @@ export function pixel(value: number, dimension: number) {
   return Math.floor(value * dimension / 1000);
 }
 export async function withBrowserDeadline<T>(browser: Pick<Browser, 'close'>, signal: AbortSignal, work: () => Promise<T>): Promise<T> {
-  const abort = () => { void browser.close().catch(() => {}); };
-  signal.addEventListener('abort', abort, { once: true });
+  let closing: Promise<void> | undefined;
+  const close = () => closing ??= (async () => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      await Promise.race([browser.close(), new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error('Browser disconnect timed out')), 5_000);
+      })]);
+    } finally { clearTimeout(timer); }
+  })();
+  let abort!: () => void;
+  const aborted = new Promise<never>((_, reject) => {
+    abort = () => { void close().catch(() => {}); reject(signal.reason); };
+    signal.addEventListener('abort', abort, { once: true });
+  });
+  let failed = false;
   try {
     signal.throwIfAborted();
-    return await work();
+    const pending = (async () => work())();
+    return await Promise.race([pending, aborted]);
+  } catch (error) {
+    failed = true;
+    throw error;
   } finally {
     signal.removeEventListener('abort', abort);
-    await browser.close();
+    try { await close(); }
+    catch { if (!failed) throw new Error('Browser disconnect failed'); }
   }
 }
 

@@ -15,6 +15,24 @@ function page() {
 const provider = (fetch: typeof globalThis.fetch) => new Lightcone({ apiKey: 'fixture-provider-key', baseURL: 'https://lightcone.invalid', fetch, maxRetries: 0 }); // pragma: allowlist secret
 const call = (safety = false) => response({ type: 'click', x: 160, y: 260, button: 'left' }, safety).output[0] as ResponseComputerToolCall;
 
+test('disconnect rejection preserves the primary browser failure', async () => {
+  const primary = new Error('Primary browser failure');
+  await assert.rejects(withBrowserDeadline({ close: async () => { throw new Error('PRIVATE_CLOSE_FIXTURE'); } }, new AbortController().signal, async () => { throw primary; }), error => error === primary);
+});
+
+test('abort bounds a stalled disconnect and pending browser command', { timeout: 8_000 }, async () => {
+  const controller = new AbortController();
+  let closes = 0;
+  const operation = withBrowserDeadline({ close: async () => { closes++; await new Promise<void>(() => {}); } }, controller.signal, () => new Promise<void>(() => {}));
+  controller.abort();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const result = await Promise.race([operation.then(() => false, () => true), new Promise<false>(resolve => { timer = setTimeout(() => resolve(false), 6_000); })]);
+    assert.ok(result, 'Cancellation must finish despite a stalled disconnect');
+    assert.equal(closes, 1, 'Only one native disconnect should be started');
+  } finally { clearTimeout(timer); }
+});
+
 test('native wire replays history without persistence', async () => {
   const { mock, requests } = wire();
   const { fake, clicks, keys } = page();

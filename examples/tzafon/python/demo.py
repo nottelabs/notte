@@ -1,17 +1,18 @@
 import asyncio
 import json
 import secrets
+import sys
 
 from computer import NotteComputer
 from notte_sdk import NotteClient
+from playwright.async_api import Page, async_playwright
 from tzafon import APIStatusError, AsyncLightcone
 
 
-async def _run_form(session, provider: AsyncLightcone | None, code: str | None) -> dict:
+async def _run_form(session, page: Page, provider: AsyncLightcone | None, code: str | None) -> dict:
     stage = "browser setup"
     try:
         async with asyncio.timeout(120):
-            page = await session.apage
             await page.route("**/*", lambda route: route.abort())
             await page.goto("about:blank")
             await page.set_viewport_size({"width": 1024, "height": 768})
@@ -60,12 +61,21 @@ async def run_demo(provider: AsyncLightcone | None = None, code: str | None = No
     stage = "browser setup"
     try:
         client = NotteClient()
-        async with client.Session(max_duration_minutes=3, viewport_width=1024, viewport_height=768) as session:
+        with client.Session(max_duration_minutes=3, viewport_width=1024, viewport_height=768) as session:
             session_id = session.session_id
-            try:
-                result = await _run_form(session, provider, code)
-            finally:
-                stage = "browser cleanup"
+            async with async_playwright() as driver:
+                browser = await driver.chromium.connect_over_cdp(session.cdp_url(), timeout=15_000)
+                try:
+                    result = await _run_form(session, browser.contexts[0].pages[0], provider, code)
+                finally:
+                    failed = sys.exception() is not None
+                    if not failed:
+                        stage = "browser cleanup"
+                    try:
+                        await asyncio.wait_for(browser.close(), timeout=5)
+                    except Exception:
+                        if not failed:
+                            raise RuntimeError("Browser disconnect failed") from None
         return result
     except Exception as error:
         if isinstance(error, RuntimeError) and str(error).startswith("Lightcone form failed:"):

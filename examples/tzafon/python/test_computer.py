@@ -1,5 +1,6 @@
 import asyncio
 import unittest
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 import demo
@@ -110,18 +111,26 @@ class ComputerContract(unittest.IsolatedAsyncioTestCase):
         class Session:
             session_id = "00000000-0000-4000-8000-000000000001"
 
-            async def __aenter__(self):
+            def __enter__(self):
                 return self
 
-            async def __aexit__(self, *args):
+            def __exit__(self, *args):
                 raise RuntimeError("PRIVATE_FIXTURE_BODY")
+
+            def cdp_url(self):
+                return "wss://browser.invalid"
 
         class Client:
             def Session(self, **kwargs):
                 return Session()
 
+        browser = SimpleNamespace(contexts=[SimpleNamespace(pages=[Page()])], close=AsyncMock())
+        driver = SimpleNamespace(chromium=SimpleNamespace(connect_over_cdp=AsyncMock(return_value=browser)))
+        playwright = AsyncMock()
+        playwright.__aenter__.return_value = driver
         with (
             patch.object(demo, "NotteClient", Client),
+            patch.object(demo, "async_playwright", return_value=playwright),
             patch.object(demo, "_run_form", AsyncMock(return_value={"output": "Accepted"})),
         ):
             with self.assertRaisesRegex(

@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { test } from 'node:test';
@@ -29,7 +31,7 @@ async function assertClosed(id: string) {
 }
 
 for (const language of ['python', 'typescript']) {
-  for (const mode of ['protocol', 'reject', 'safety', 'out-of-bounds', ...(language === 'typescript' ? ['cancel'] : [])]) {
+  for (const mode of ['protocol', 'reject', 'safety', 'out-of-bounds', 'reject-close', 'reject-timeout', ...(language === 'typescript' ? ['cancel', 'cancel-timeout'] : [])]) {
     const skip = !process.env.NOTTE_API_KEY;
     test(`${language}: ${mode} closes its browser and withholds credentials`, { skip, timeout: 240_000 }, async () => {
       const python = process.env.NOTTE_TZAFON_PYTHON;
@@ -51,26 +53,46 @@ for (const language of ['python', 'typescript']) {
       let result: { output?: string; actions?: string[]; cancelled?: boolean; session_id?: string } | undefined;
       if (!id) {
         for (const line of output.split(/\r?\n/)) {
-          try { result = JSON.parse(line); } catch { continue; }
-          if (result?.session_id) { id = result.session_id; break; }
+          let row: typeof result;
+          try { row = JSON.parse(line); } catch { continue; }
+          if (row?.session_id) id = row.session_id;
+          if (row?.output !== undefined || row?.cancelled !== undefined) result = row;
         }
       }
       try {
-        assert.equal(failed, mode !== 'protocol' && mode !== 'cancel', 'Recipe exited unexpectedly; SDK output withheld');
+        if (process.env.TZAFON_EVIDENCE_DIR) {
+          mkdirSync(process.env.TZAFON_EVIDENCE_DIR, { recursive: true, mode: 0o700 });
+          writeFileSync(join(process.env.TZAFON_EVIDENCE_DIR, `${language}-${mode}.log`), output, { mode: 0o600 });
+        }
+        assert.equal(failed, mode !== 'protocol' && !mode.startsWith('cancel'), 'Recipe exited unexpectedly; SDK output withheld');
         assert.ok(id && new RegExp(`^${uuid}$`).test(id), 'Recipe did not report its owned browser');
-        for (const secret of [env.NOTTE_API_KEY, 'fixture-provider-key', 'PRIVATE_FIXTURE_BODY']) {
+        for (const secret of [env.NOTTE_API_KEY, 'fixture-provider-key', 'PRIVATE_FIXTURE_BODY', 'PRIVATE_CLOSE_FIXTURE']) {
           if (secret) assert.ok(!output.includes(secret), 'Private data entered recipe output');
         }
         assert.ok(!output.includes('wss://'), 'An authenticated browser URL entered output');
         if (failed) {
-          assert.match(output, mode === 'reject' ? /Lightcone form failed: provider HTTP 401/ : /Lightcone form failed: model request/);
-          if (mode === 'reject') assert.match(output, /HTTP 401/);
-        } else if (mode === 'cancel') assert.equal(result?.cancelled, true);
+          assert.match(output, mode.startsWith('reject') ? /Lightcone form failed: provider HTTP 401/ : /Lightcone form failed: model request/);
+          if (mode.startsWith('reject')) assert.match(output, /HTTP 401/);
+        } else if (mode.startsWith('cancel')) assert.equal(result?.cancelled, true);
         else {
           assert.equal(result?.output, 'Accepted');
           assert.deepEqual(result?.actions, ['point_and_type', 'keypress']);
         }
-      } finally { if (id) await assertClosed(id); }
+      } finally {
+        if (id) {
+          let closed = false;
+          try { await assertClosed(id); closed = true; }
+          finally {
+            if (!closed) {
+              const response = await fetch(`${process.env.NOTTE_API_URL ?? 'https://api.notte.cc'}/sessions/${id}/stop`, {
+                method: 'DELETE', headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` }, signal: AbortSignal.timeout(15_000),
+              });
+              assert.ok(response.ok, 'Owned fallback stop failed');
+              await assertClosed(id);
+            }
+          }
+        }
+      }
     });
   }
 }
