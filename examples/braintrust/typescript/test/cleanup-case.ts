@@ -3,6 +3,7 @@ import { mock } from 'node:test';
 import * as braintrust from 'braintrust';
 import { chromium } from 'playwright-core';
 
+const api = (process.env.NOTTE_API_URL || 'https://api.notte.cc').replace(/\/$/, '');
 const mode = process.argv[2];
 const memory = new braintrust.TestBackgroundLogger();
 const state = new braintrust.BraintrustState({ noExitFlush: true });
@@ -41,7 +42,7 @@ globalThis.fetch = async (input, init) => {
   return response;
 };
 const status = async (id: string) => {
-  const response = await originalFetch(`${process.env.NOTTE_API_URL}/sessions/${id}`, {
+  const response = await originalFetch(`${api}/sessions/${id}`, {
     headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` }, signal: AbortSignal.timeout(15_000),
   });
   assert.equal(response.status, 200);
@@ -74,7 +75,7 @@ try {
   globalThis.fetch = originalFetch;
   for (const id of ids) {
     if (await status(id) !== 'closed') {
-      const response = await originalFetch(`${process.env.NOTTE_API_URL}/sessions/${id}/stop`, {
+      const response = await originalFetch(`${api}/sessions/${id}/stop`, {
         method: 'DELETE', headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` }, signal: AbortSignal.timeout(15_000),
       });
       assert.ok(response.ok); assert.equal(await status(id), 'closed');
