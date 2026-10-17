@@ -167,14 +167,6 @@
       "destination": "/integrations"
     },
     {
-      "source": "/integrations/openai-computer-use",
-      "destination": "/integrations"
-    },
-    {
-      "source": "/integrations/claude-agent-sdk",
-      "destination": "/mcp-server"
-    },
-    {
       "source": "/integrations/claude-computer-use",
       "destination": "/integrations"
     },
@@ -229,6 +221,10 @@
     {
       "source": "/api-reference/using-session-replay",
       "destination": "/api-reference/sessions/session-replay"
+    },
+    {
+      "source": "/integrations/claude-agent-sdk",
+      "destination": "/integrations/claude-agents"
     }
   ],
   "errors": {
@@ -361,7 +357,15 @@
               "integrations/inngest-agentkit",
               "integrations/openclaw",
               "integrations/hermes",
-              "integrations/stagehand"
+              "integrations/stagehand",
+              "integrations/claude-agents"
+            ]
+          },
+          {
+            "group": "Computer Use",
+            "icon": "desktop",
+            "pages": [
+              "integrations/openai-computer-use"
             ]
           },
           {
