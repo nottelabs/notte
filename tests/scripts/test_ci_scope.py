@@ -268,6 +268,20 @@ class RoutingTests(unittest.TestCase):
                 self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
         self.assertFalse(ci.integration_examples_for_path("examples/agentcard/README.md"))
 
+    def test_replit_installation_and_hosted_mcp_inputs_select_existing_pair(self) -> None:
+        for path in (
+            "examples/replit/install-link.mjs",
+            "examples/replit/server.json",
+            "examples/replit/test/install-link.test.mjs",
+            "examples/replit/test/mcp.live.test.mjs",
+            "examples/replit/package-lock.json",
+            "docs/src/integrations/replit.mdx",
+        ):
+            with self.subTest(path=path):
+                self.assertEqual(ci.integration_examples_for_path(path), {"replit"})
+                self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path, code_changed=False))
+        self.assertFalse(ci.integration_examples_for_path("examples/replit/README.md"))
+
     def test_shared_native_inputs_cover_every_registered_project(self) -> None:
         for path in (
             *ci.INTEGRATION_INPUTS,

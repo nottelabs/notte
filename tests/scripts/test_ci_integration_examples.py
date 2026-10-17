@@ -503,7 +503,9 @@ def shipped_project(workspace: Path, monkeypatch: pytest.MonkeyPatch, name: str,
     return workspace / "examples" / name
 
 
-@pytest.mark.parametrize("name,count", [("agentcard", 2), ("trigger", 2), ("inngest", 1), ("temporal", 1)])
+@pytest.mark.parametrize(
+    "name,count", [("agentcard", 2), ("trigger", 2), ("inngest", 1), ("replit", 1), ("temporal", 1)]
+)
 def test_node_projects_keep_existing_sdk_modes_and_no_paid_pr_calls(
     workspace: Path, monkeypatch: pytest.MonkeyPatch, name: str, count: int
 ) -> None:
@@ -517,7 +519,8 @@ def test_node_projects_keep_existing_sdk_modes_and_no_paid_pr_calls(
     native = [call for call in observed if call["args"] == ["npm", "run", "test:live"]]
     assert len(native) == count
     assert all(call["credentials"] == ["NOTTE_API_KEY"] and call["cwd"] == str(project) for call in native)
-    assert all(call["live_flags"][f"NOTTE_{name.upper()}_LIVE"] == "1" for call in native)
+    if name != "replit":
+        assert all(call["live_flags"][f"NOTTE_{name.upper()}_LIVE"] == "1" for call in native)
     assert all(not call["credentials"] for call in observed if call not in native)
     commands = [call["args"] for call in observed]
     source = [command for command in commands if command[:2] == ["npm", "install"]]
@@ -526,6 +529,8 @@ def test_node_projects_keep_existing_sdk_modes_and_no_paid_pr_calls(
         assert source[0] == ["npm", "install", "--no-save", "--package-lock=false", str(workspace / "node-sdk")]
         assert commands.count(["npm", "test"]) == 3
         assert commands.count(["npm", "run", "typecheck"]) == 3
+    if name == "replit":
+        assert commands == [["npm", "ci"], ["npm", "test"], ["npm", "run", "test:live"]]
     if name == "inngest":
         assert native[0]["live_flags"]["NOTTE_INNGEST_MODEL_LIVE"] == "0"
     if name == "temporal":
@@ -606,7 +611,12 @@ def test_github_actions_retains_flat_tests_and_selected_source_python(
 
 @pytest.mark.parametrize(
     "name,convention",
-    [("agentcard", "node-project"), ("trigger", "node-project"), ("openai-agents", "NOTTE_DOCS_PYTHON")],
+    [
+        ("agentcard", "node-project"),
+        ("replit", "node-project"),
+        ("trigger", "node-project"),
+        ("openai-agents", "NOTTE_DOCS_PYTHON"),
+    ],
 )
 def test_consolidated_native_failure_stops_before_other_sdk_or_project(
     workspace: Path, monkeypatch: pytest.MonkeyPatch, name: str, convention: str
@@ -653,7 +663,7 @@ def test_even_a_main_ref_pull_request_cannot_receive_paid_provider_credentials(n
     assert runner.project_env(name, env)["NOTTE_API_KEY"] == env["NOTTE_API_KEY"]
 
 
-@pytest.mark.parametrize("name", ["inngest", "temporal", "trigger", "openai-agents"])
+@pytest.mark.parametrize("name", ["inngest", "temporal", "trigger", "replit", "openai-agents"])
 def test_existing_dependabot_eligibility_is_preserved(
     workspace: Path, monkeypatch: pytest.MonkeyPatch, name: str
 ) -> None:
@@ -661,3 +671,13 @@ def test_existing_dependabot_eligibility_is_preserved(
     monkeypatch.setenv("GITHUB_ACTOR", "dependabot[bot]")
     runner.main()
     assert bool(calls(workspace)) == (name in {"inngest", "temporal"})
+
+
+def test_replit_output_names_hosted_mcp_without_sdk_claims(
+    workspace: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    shipped_project(workspace, monkeypatch, "replit", "node-project")
+    runner.main()
+    output = capsys.readouterr().out
+    assert "Native integration: replit, hosted MCP" in output
+    assert "published" not in output and "source SDK" not in output

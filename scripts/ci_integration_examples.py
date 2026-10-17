@@ -29,7 +29,7 @@ DRIVER_IMPORTS = {
     "onepassword": 'from onepassword import Secrets; from notte_sdk import NotteClient; Secrets.validate_secret_reference("op://Test/Login/username")',
 }
 RECIPES = {"agent-browser", "claude-agents", "openai-agents"}
-NODE_PROJECTS = {"agentcard", "inngest", "temporal", "trigger"}
+NODE_PROJECTS = {"agentcard", "inngest", "replit", "temporal", "trigger"}
 
 
 def projects(shard: str) -> list[tuple[str, str]]:
@@ -77,6 +77,9 @@ def check(project: Path, env: dict[str, str], convention: str = "") -> Path:
         return ROOT / ".venv/bin/python"
     if convention == "node-project":
         run(["npm", "ci"], project, env)
+        if project.name == "replit":
+            run(["npm", "test"], project, env)
+            return python
         run(["npm", "run", "build" if project.name == "temporal" else "typecheck"], project, env)
         if project.name in {"trigger", "agentcard"}:
             run(["npm", "test"], project, env)
@@ -233,6 +236,10 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
         recipe_live(project.name, python, project_env(project.name, env), install_env)
         return
     if python_env == "node-project":
+        if project.name == "replit":
+            print("Native integration: replit, hosted MCP", flush=True)
+            run(["npm", "run", "test:live"], project, project_env(project.name, env))
+            return
         env = {**project_env(project.name, env), f"NOTTE_{project.name.upper()}_LIVE": "1"}
         if project.name == "inngest":
             env["NOTTE_INNGEST_MODEL_LIVE"] = "1" if env.get("ANTHROPIC_API_KEY") else "0"
