@@ -19,6 +19,10 @@ mock.module('braintrust', { namedExports: { initLogger: () => logger } });
 const { runDemo } = await import('../src/demo.ts');
 const originalFetch = globalThis.fetch, connect = chromium.connectOverCDP.bind(chromium), flush = logger.flush.bind(logger);
 const ids: string[] = [];
+const uuid = /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/;
+let phase = 'run demo', failureCategory = 'none';
+let closedBeforeCompensation: boolean | null = null;
+const closures: Array<{ session_id: string; closed: boolean | null }> = [];
 let closes = 0, flushes = 0;
 mock.method(chromium, 'connectOverCDP', async (endpoint: string) => {
   const browser = await connect(endpoint), close = browser.close.bind(browser);
@@ -52,16 +56,25 @@ try {
   let result: Awaited<ReturnType<typeof runDemo>> | undefined, failure: string | undefined;
   try { result = await runDemo(mode === 'navigation' ? 'not-a-valid-url' : 'https://example.com'); }
   catch (error) { failure = error instanceof Error ? error.message : 'Unknown failure'; }
+  const primary = /^Browser task failed: (create browser|connect browser|navigate|disconnect browser|release browser) \[([A-Za-z][A-Za-z0-9]{0,63}(?: HTTP -?\d+)?)\] \(session (?:[a-f0-9-]{36}|not-created)\)$/.exec(failure ?? '');
+  const categories = /^(?:Error|PlaywrightError|TypeError|TimeoutError|HTTPError|NotteAPIError|NotteSDKError|AssertionError)(?: HTTP [1-5]\d{2})?$/;
+  failureCategory = primary && categories.test(primary[2]) ? `${primary[1]}:${primary[2]}` : failure?.startsWith('Braintrust trace flush failed (session ') ? 'trace flush' : failure ? 'other' : 'none';
+  phase = 'owner counters';
   assert.equal(ids.length, 1); assert.equal(closes, 1); assert.equal(flushes, 1);
+  phase = 'independent owner status';
   const closed = await status(ids[0]) === 'closed';
+  closedBeforeCompensation = closed;
   console.log(JSON.stringify({ mode, session_id: ids[0], closed_before_compensation: closed,
     private_body: failure?.includes('PRIVATE_') ?? false, navigation_error_preserved: failure?.startsWith('Browser task failed: navigate') ?? false }));
   assert.equal(closed, true, 'Owner did not release its browser');
+  phase = 'trace privacy';
   const rows = await memory.drain(), serialized = JSON.stringify(rows);
   for (const value of [process.env.NOTTE_API_KEY!, process.env.BRAINTRUST_API_KEY!, 'PRIVATE_', 'wss://']) {
     assert.ok(!serialized.includes(value) && !failure?.includes(value), 'Private data escaped error handling');
   }
+  phase = 'trace metadata';
   assert.ok(rows.some(row => 'metadata' in row && (row.metadata as { session_id?: string })?.session_id === ids[0]));
+  phase = 'primary result';
   if (mode === 'success') {
     assert.equal(failure, undefined); assert.equal(result?.title, 'Example Domain');
     assert.ok(rows.some(row => 'output' in row && (row.output as { title?: string })?.title === 'Example Domain'));
@@ -70,16 +83,28 @@ try {
     assert.ok(failure && failure.startsWith(prefix), 'The primary failure was replaced');
     assert.ok(failure.includes(ids[0]));
   }
+  phase = 'passed';
   console.log(JSON.stringify({ mode, session_id: ids[0], closed: true, native_flush_calls: flushes }));
 } finally {
   globalThis.fetch = originalFetch;
-  for (const id of ids) {
-    if (await status(id) !== 'closed') {
-      const response = await originalFetch(`${api}/sessions/${id}/stop`, {
-        method: 'DELETE', headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` }, signal: AbortSignal.timeout(15_000),
-      });
-      assert.ok(response.ok); assert.equal(await status(id), 'closed');
+  try {
+    for (const id of ids) {
+      assert.match(id, uuid);
+      const closure = { session_id: id, closed: null as boolean | null };
+      closures.push(closure);
+      if (await status(id) !== 'closed') {
+        const response = await originalFetch(`${api}/sessions/${id}/stop`, {
+          method: 'DELETE', headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` }, signal: AbortSignal.timeout(15_000),
+        });
+        assert.ok(response.ok);
+      }
+      closure.closed = await status(id) === 'closed';
+      assert.equal(closure.closed, true);
     }
+  } finally {
+    console.log(JSON.stringify({ native_cleanup_receipt: true, mode, phase,
+      failure_category: failureCategory, closed_before_compensation: closedBeforeCompensation,
+      closures }));
+    mock.restoreAll();
   }
-  mock.restoreAll();
 }
