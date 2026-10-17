@@ -7,38 +7,43 @@ import subprocess
 import tempfile
 import threading
 import unittest
+from collections.abc import Mapping
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
+from typing_extensions import override
+
 
 class NativeTerraformTests(unittest.TestCase):
-    def test_profile_lifecycle_import_replacement_drift_and_failures(self):
+    def test_profile_lifecycle_import_replacement_drift_and_failures(self) -> None:
         terraform = os.environ.get("TERRAFORM_BIN") or shutil.which("terraform")
-        self.assertTrue(terraform, "Install the pinned Terraform CLI")
+        if not terraform:
+            self.fail("Install the pinned Terraform CLI")
         with tempfile.TemporaryDirectory(prefix="notte-terraform-") as directory:
             root = Path(directory)
             plugins = root / "plugins"
             plugins.mkdir()
-            subprocess.run(["go", "build", "-o", str(plugins / "terraform-provider-notte"), "."], check=True)
-            profiles = {}
+            _ = subprocess.run(["go", "build", "-o", str(plugins / "terraform-provider-notte"), "."], check=True)
+            profiles: dict[str, dict[str, str | None]] = {}
             counter = 0
-            closed = set()
+            closed: set[str] = set()
             flags = {"forbidden": False, "delete_rejected": False}
             lock = threading.Lock()
 
             class Handler(BaseHTTPRequestHandler):
-                def log_message(self, *_args):
+                @override
+                def log_message(self, format: str, *args: object) -> None:
                     pass
 
-                def respond(self, status, data):
+                def respond(self, status: int, data: Mapping[str, object]) -> None:
                     self.send_response(status)
                     if status == 400:
                         self.send_header("X-Error-Class", "ProfileAlreadyClosedError")
                     self.send_header("Content-Type", "application/json")
                     self.end_headers()
-                    self.wfile.write(json.dumps(data).encode())
+                    _ = self.wfile.write(json.dumps(data).encode())
 
-                def do_POST(self):
+                def do_POST(self) -> None:
                     nonlocal counter
                     if self.path != "/profiles/create" or self.headers.get("Authorization") != "Bearer test-only":
                         return self.respond(403, {"detail": "private-fixture-detail"})
@@ -53,7 +58,7 @@ class NativeTerraformTests(unittest.TestCase):
                         }
                         self.respond(200, profiles[identifier])
 
-                def do_GET(self):
+                def do_GET(self) -> None:
                     if flags["forbidden"]:
                         return self.respond(403, {"detail": "private-fixture-detail"})
                     identifier = self.path.removeprefix("/profiles/")
@@ -62,12 +67,12 @@ class NativeTerraformTests(unittest.TestCase):
                             400 if identifier in closed else 404, {}
                         )
 
-                def do_DELETE(self):
+                def do_DELETE(self) -> None:
                     identifier = self.path.removeprefix("/profiles/")
                     with lock:
                         if flags["delete_rejected"]:
                             return self.respond(200, {"success": False})
-                        profiles.pop(identifier, None)
+                        _ = profiles.pop(identifier, None)
                         closed.add(identifier)
                         self.respond(200, {"success": True})
 
@@ -75,24 +80,24 @@ class NativeTerraformTests(unittest.TestCase):
             thread = threading.Thread(target=server.serve_forever, daemon=True)
             thread.start()
             config = root / "terraform.rc"
-            config.write_text(
+            _ = config.write_text(
                 "provider_installation {\n dev_overrides { "
-                f'"nottelabs/notte" = "{plugins.as_posix()}"'
-                " }\n direct {}\n}\n"
+                + f'"nottelabs/notte" = "{plugins.as_posix()}"'
+                + " }\n direct {}\n}\n"
             )
             env = {
                 **{key: value for key, value in os.environ.items() if not key.startswith("TF_")},
                 "TF_CLI_CONFIG_FILE": str(config),
                 "TF_IN_AUTOMATION": "1",
                 "CHECKPOINT_DISABLE": "1",
-                "NOTTE_API_KEY": "test-only",
+                "NOTTE_API_KEY": "test-only",  # pragma: allowlist secret - loopback fixture only
                 "NOTTE_API_URL": f"http://127.0.0.1:{server.server_port}",
             }
-            env.pop("TF_LOG", None)
-            env.pop("TF_LOG_PATH", None)
-            env.pop("TF_CLI_ARGS", None)
+            _ = env.pop("TF_LOG", None)
+            _ = env.pop("TF_LOG_PATH", None)
+            _ = env.pop("TF_CLI_ARGS", None)
 
-            def cli(*arguments, expected=0):
+            def cli(*arguments: str, expected: int = 0) -> str:
                 result = subprocess.run(
                     [terraform, *arguments, "-no-color"], cwd=root, env=env, text=True, capture_output=True, timeout=120
                 )
@@ -101,18 +106,20 @@ class NativeTerraformTests(unittest.TestCase):
                 if result.returncode != expected:
                     self.fail(
                         f"Terraform {' '.join(arguments)} returned {result.returncode}:\n"
-                        f"{result.stdout}\n{result.stderr}"
+                        + f"{result.stdout}\n{result.stderr}"
                     )
                 return result.stdout
 
-            def configuration(name):
+            def configuration(name: str | None) -> None:
                 attribute = "" if name is None else f"name = {json.dumps(name)}"
-                (root / "main.tf").write_text(
+                _ = (root / "main.tf").write_text(
                     'terraform {\n required_providers {\n notte = { source = "nottelabs/notte" }\n }\n}\n'
-                    'provider "notte" {}\nresource "notte_profile" "example" {\n' + attribute + "\n}\n"
+                    + 'provider "notte" {}\nresource "notte_profile" "example" {\n'
+                    + attribute
+                    + "\n}\n"
                 )
 
-            def resource_id():
+            def resource_id() -> str:
                 data = json.loads(cli("show", "-json"))
                 values = data["values"]["root_module"]["resources"][0]["values"]
                 self.assertEqual(set(values), {"id", "name"})
@@ -123,45 +130,45 @@ class NativeTerraformTests(unittest.TestCase):
                 schemas = json.loads(cli("providers", "schema", "-json"))
                 provider = schemas["provider_schemas"]["registry.terraform.io/nottelabs/notte"]
                 self.assertTrue(provider["provider"]["block"]["attributes"]["api_key"]["sensitive"])
-                cli("apply", "-auto-approve", "-input=false")
+                _ = cli("apply", "-auto-approve", "-input=false")
                 identifier = resource_id()
                 self.assertEqual(profiles[identifier]["name"], "first")
-                cli("plan", "-detailed-exitcode", "-input=false")
+                _ = cli("plan", "-detailed-exitcode", "-input=false")
                 with lock:
                     profiles[identifier]["name"] = "external-change"
-                cli("plan", "-detailed-exitcode", "-input=false", "-out=drift.plan", expected=2)
+                _ = cli("plan", "-detailed-exitcode", "-input=false", "-out=drift.plan", expected=2)
                 drift = json.loads(cli("show", "-json", "drift.plan"))
                 self.assertEqual(drift["resource_changes"][0]["change"]["actions"], ["delete", "create"])
                 configuration("second")
-                cli("apply", "-auto-approve", "-input=false")
+                _ = cli("apply", "-auto-approve", "-input=false")
                 replacement = resource_id()
                 self.assertNotEqual(identifier, replacement)
                 self.assertNotIn(identifier, profiles)
-                cli("state", "rm", "notte_profile.example")
-                cli("import", "-input=false", "notte_profile.example", replacement)
-                cli("plan", "-detailed-exitcode", "-input=false")
+                _ = cli("state", "rm", "notte_profile.example")
+                _ = cli("import", "-input=false", "notte_profile.example", replacement)
+                _ = cli("plan", "-detailed-exitcode", "-input=false")
                 with lock:
-                    profiles.pop(replacement)
+                    _ = profiles.pop(replacement)
                     closed.add(replacement)
-                cli("plan", "-detailed-exitcode", "-input=false", "-out=missing.plan", expected=2)
+                _ = cli("plan", "-detailed-exitcode", "-input=false", "-out=missing.plan", expected=2)
                 missing = json.loads(cli("show", "-json", "missing.plan"))
                 self.assertEqual(missing["resource_changes"][0]["change"]["actions"], ["create"])
-                cli("apply", "-auto-approve", "-input=false")
+                _ = cli("apply", "-auto-approve", "-input=false")
                 recreated = resource_id()
                 flags["forbidden"] = True
-                cli("plan", "-input=false", expected=1)
+                _ = cli("plan", "-input=false", expected=1)
                 self.assertEqual(resource_id(), recreated)
                 flags["forbidden"] = False
                 flags["delete_rejected"] = True
-                cli("destroy", "-auto-approve", "-input=false", expected=1)
+                _ = cli("destroy", "-auto-approve", "-input=false", expected=1)
                 self.assertEqual(resource_id(), recreated)
                 flags["delete_rejected"] = False
-                cli("destroy", "-auto-approve", "-input=false")
+                _ = cli("destroy", "-auto-approve", "-input=false")
                 self.assertFalse(profiles)
                 configuration(None)
-                cli("apply", "-auto-approve", "-input=false")
-                cli("plan", "-detailed-exitcode", "-input=false")
-                cli("destroy", "-auto-approve", "-input=false")
+                _ = cli("apply", "-auto-approve", "-input=false")
+                _ = cli("plan", "-detailed-exitcode", "-input=false")
+                _ = cli("destroy", "-auto-approve", "-input=false")
                 self.assertFalse(profiles)
             finally:
                 server.shutdown()
@@ -170,4 +177,4 @@ class NativeTerraformTests(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    _ = unittest.main()

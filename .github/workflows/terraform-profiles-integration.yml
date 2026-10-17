@@ -38,10 +38,14 @@ jobs:
           curl -fsSL https://releases.hashicorp.com/terraform/1.16.6/terraform_1.16.6_linux_amd64.zip -o "$RUNNER_TEMP/terraform.zip"
           echo "38034b38d03096399a7a1264a14561a8029b2b496fd1f169452656e53968f1b7  $RUNNER_TEMP/terraform.zip" | sha256sum --check
           unzip -q "$RUNNER_TEMP/terraform.zip" terraform -d "$RUNNER_TEMP/terraform-cli"
+      - name: Install the CLI test dependency
+        run: |
+          python3 -m venv "$RUNNER_TEMP/terraform-cli-tests"
+          "$RUNNER_TEMP/terraform-cli-tests/bin/python" -m pip install typing_extensions==4.16.0
       - name: Check native Terraform lifecycle against a loopback fixture
         env:
           TERRAFORM_BIN: ${{ runner.temp }}/terraform-cli/terraform
-        run: python3 -m unittest test_cli -v
+        run: '"$RUNNER_TEMP/terraform-cli-tests/bin/python" -m unittest test_cli -v'
   live:
     needs: static
     if: github.actor != 'dependabot[bot]' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)

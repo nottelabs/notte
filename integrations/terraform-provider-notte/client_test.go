@@ -116,7 +116,7 @@ func TestClientRejectsCredentialRedirectsAndUnsafeOrigins(t *testing.T) {
 	if _, err := c.get(context.Background(), "valid-id"); err == nil || forwarded {
 		t.Fatal("Credential-bearing requests must not follow redirects")
 	}
-	for _, endpoint := range []string{"http://example.com", "https://user:secret@example.com", "https://example.com?key=private", "https://example.com#private"} {
+	for _, endpoint := range []string{"http://example.com", "https://user:secret@example.com", "https://example.com?key=private", "https://example.com#private"} { // pragma: allowlist secret - deliberate invalid-origin fixture
 		if _, err := newClient(endpoint, "test-only"); err == nil {
 			t.Fatal("Unsafe origin accepted")
 		}
