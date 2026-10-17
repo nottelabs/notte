@@ -9,7 +9,7 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import OpenAI from 'openai';
 import type { ComputerAction, ResponseComputerToolCall } from 'openai/resources/responses/responses';
 import { NotteClient } from 'notte-sdk';
-import { chromium, type Browser } from 'playwright-core';
+import { chromium, type Browser, type Page } from 'playwright-core';
 import { NotteComputer } from '../src/computer.ts';
 import { runDemo } from '../src/demo.ts';
 
@@ -34,6 +34,72 @@ async function assertClosed(id: string) {
     assert.ok(Date.now() < deadline, `Owned session ${id} remained active`);
     await sleep(500);
   }
+}
+
+test('cancellation releases a stalled screenshot to its browser owner', { timeout: 5000 }, async () => {
+  const controller = new AbortController();
+  let entered!: () => void;
+  const started = new Promise<void>(resolve => { entered = resolve; });
+  let release!: (image: Buffer) => void;
+  const screenshot = new Promise<Buffer>(resolve => { release = resolve; });
+  const page = {
+    viewportSize: () => ({ width: 1024, height: 768 }),
+    screenshot: () => { entered(); return screenshot; },
+  } as unknown as Page;
+  const operation = new NotteComputer(page, () => true, controller.signal).handle(call({ type: 'screenshot' }));
+  const settled = operation.then(() => 'completed', error => error);
+  try {
+    await started;
+    const reason = new Error('Computer task cancelled');
+    controller.abort(reason);
+    const outcome = await Promise.race([settled, sleep(100).then(() => 'still waiting')]);
+    assert.equal(outcome, reason, 'The owner must regain control before a stalled screenshot finishes');
+  } finally {
+    release(Buffer.alloc(0));
+    await settled;
+  }
+});
+
+for (const metadata of ['omitted', 'null', 'empty', 'pending'] as const) {
+  test(`native Responses client handles ${metadata} safety metadata`, async () => {
+    const { pending_safety_checks: _checks, ...withoutChecks } = call({ type: 'screenshot' });
+    const computerCall = metadata === 'omitted' ? withoutChecks : {
+      ...withoutChecks, pending_safety_checks: metadata === 'null' ? null : metadata === 'pending'
+        ? [{ id: 'check_1', code: 'unsafe', message: 'Review required' }] : [],
+    };
+    const server = createServer((request, response) => {
+      request.resume();
+      response.writeHead(200, { 'Content-Type': 'application/json' });
+      response.end(JSON.stringify({
+        id: 'resp_metadata', object: 'response', created_at: 0, model: 'gpt-6.1-sol', status: 'completed', output: [computerCall],
+      }));
+    });
+    server.listen(0, '127.0.0.1');
+    await once(server, 'listening');
+    const address = server.address();
+    assert.ok(address && typeof address !== 'string');
+    try {
+      const provider = new OpenAI({ apiKey: 'fixture-local-only', baseURL: `http://127.0.0.1:${address.port}`, maxRetries: 0 }); // pragma: allowlist secret
+      const response = await provider.responses.create({ model: 'gpt-6.1-sol', tools: [{ type: 'computer' }], input: 'Check the fixture' });
+      const nativeCall = response.output.find(item => item.type === 'computer_call');
+      assert.ok(nativeCall);
+      let screenshots = 0;
+      const page = {
+        viewportSize: () => ({ width: 1024, height: 768 }),
+        screenshot: async () => { screenshots++; return Buffer.alloc(0); },
+      } as unknown as Page;
+      const operation = new NotteComputer(page, () => true).handle(nativeCall);
+      if (metadata === 'pending') {
+        await assert.rejects(operation, /human safety review/);
+        assert.equal(screenshots, 0);
+      } else {
+        assert.equal((await operation).call_id, 'call_test');
+        assert.equal(screenshots, 1);
+      }
+    } finally {
+      await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
+    }
+  });
 }
 
 test('batched native actions, exact screenshot size, and permission refusal', { skip: !live, timeout: 90_000 }, async () => {
@@ -123,8 +189,9 @@ test('batched native actions, exact screenshot size, and permission refusal', { 
   } finally { if (id) await assertClosed(id); }
 });
 
-for (const closeMode of ['normal', 'reject', 'timeout'] as const) {
-  test(`unchanged demo preserves private HTTP 401 and closes ownership (${closeMode})`, { skip: !live, timeout: 90_000 }, async () => {
+for (const closeMode of ['normal', 'reject', 'timeout'] as const) for (const cancelScreenshot of [false, true]) {
+  const failureMode = cancelScreenshot ? 'cancels a stalled screenshot' : 'preserves private HTTP 401';
+  test(`unchanged demo ${failureMode} and closes ownership (${closeMode})`, { skip: !live, timeout: 90_000 }, async () => {
     const payloads: { tools: unknown; previous_response_id?: string; input: { call_id: string; output: { detail: string; image_url: string } }[] }[] = [];
     const server = createServer(async (request, response) => {
       const chunks = [];
@@ -147,6 +214,13 @@ for (const closeMode of ['normal', 'reject', 'timeout'] as const) {
     let failure: unknown;
     let nativeBrowser: Browser | undefined;
     let restoreClose: (() => void) | undefined;
+    let restoreScreenshot: (() => void) | undefined;
+    let releaseScreenshot: ((image: Buffer) => void) | undefined;
+    let screenshotStarted = false;
+    const controller = new AbortController();
+    const timeout = AbortSignal.timeout.bind(AbortSignal);
+    const deadline = cancelScreenshot ? mock.method(AbortSignal, 'timeout', (milliseconds: number) =>
+      milliseconds === 120_000 ? controller.signal : timeout(milliseconds)) : undefined;
     const messages: string[] = [];
     const sessionFactory = NotteClient.prototype.Session;
     const owner = mock.method(NotteClient.prototype, 'Session', function (this: NotteClient, ...args: Parameters<NotteClient['Session']>) {
@@ -164,6 +238,18 @@ for (const closeMode of ['normal', 'reject', 'timeout'] as const) {
     const connect = chromium.connectOverCDP.bind(chromium);
     const transport = mock.method(chromium, 'connectOverCDP', async (...args: Parameters<typeof connect>) => {
       nativeBrowser = await connect(...args);
+      if (cancelScreenshot) {
+        const page = nativeBrowser.contexts()[0].pages()[0];
+        const screenshot = page.screenshot.bind(page);
+        const capture = mock.method(page, 'screenshot', async (...options: Parameters<typeof screenshot>) => {
+          await screenshot(...options);
+          screenshotStarted = true;
+          const stalled = new Promise<Buffer>(resolve => { releaseScreenshot = resolve; });
+          controller.abort(new DOMException('Computer task deadline', 'TimeoutError'));
+          return stalled;
+        });
+        restoreScreenshot = () => capture.mock.restore();
+      }
       if (closeMode !== 'normal') {
         const closing = mock.method(nativeBrowser, 'close', async () => {
           if (closeMode === 'timeout') await new Promise<void>(() => {});
@@ -194,6 +280,9 @@ for (const closeMode of ['normal', 'reject', 'timeout'] as const) {
           }
         }
       } finally {
+        releaseScreenshot?.(Buffer.alloc(0));
+        restoreScreenshot?.();
+        deadline?.mock.restore();
         restoreClose?.();
         transport.mock.restore();
         restoreStart?.();
@@ -214,13 +303,19 @@ for (const closeMode of ['normal', 'reject', 'timeout'] as const) {
     }
     assert.ok(id, 'The unchanged recipe must allocate an independently tracked browser');
     assert.ok(failure instanceof Error);
-    assert.match(failure.message, /^Computer use failed: provider HTTP 401 \(session [a-f0-9-]+\)$/);
+    assert.match(failure.message, cancelScreenshot
+      ? /^Computer use failed: timeout \(session [a-f0-9-]+\)$/
+      : /^Computer use failed: provider HTTP 401 \(session [a-f0-9-]+\)$/);
     assert.equal(failure.cause, undefined);
     const rendered = inspect(failure, { depth: 10 }) + failure.stack + messages.join('\n');
     assert.ok(!rendered.includes('private-provider-body-fixture'));
     assert.ok(!rendered.includes('private-close-body-fixture'));
-    assert.equal(payloads.length, 2, 'The unchanged demo must complete a screenshot turn before the real HTTP401');
+    assert.equal(payloads.length, cancelScreenshot ? 1 : 2);
     assert.deepEqual(payloads[0].tools, [{ type: 'computer' }]);
+    if (cancelScreenshot) {
+      assert.ok(screenshotStarted, 'Cancellation must follow an actual native browser screenshot');
+      return;
+    }
     assert.equal(payloads[1].previous_response_id, 'resp_protocol');
     assert.equal(payloads[1].input[0].call_id, 'call_test');
     assert.equal(payloads[1].input[0].output.detail, 'original');

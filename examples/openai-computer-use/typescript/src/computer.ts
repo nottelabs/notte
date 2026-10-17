@@ -63,7 +63,21 @@ export class NotteComputer {
   }
 
   async handle(call: ResponseComputerToolCall): Promise<ResponseInputItem.ComputerCallOutput> {
-    if (call.pending_safety_checks.length) throw new Error('Computer use requires human safety review');
+    const signal = this.signal;
+    if (!signal) return this.execute(call);
+    signal.throwIfAborted();
+    let abort!: () => void;
+    const cancelled = new Promise<never>((_resolve, reject) => {
+      abort = () => reject(signal.reason);
+      signal.addEventListener('abort', abort, { once: true });
+    });
+    try {
+      return await Promise.race([this.execute(call), cancelled]);
+    } finally { signal.removeEventListener('abort', abort); }
+  }
+
+  private async execute(call: ResponseComputerToolCall): Promise<ResponseInputItem.ComputerCallOutput> {
+    if (call.pending_safety_checks?.length) throw new Error('Computer use requires human safety review');
     if (!call.actions?.length || this.actions.length + call.actions.length > 64) throw new Error('Missing actions or action limit exceeded');
     for (const action of call.actions) {
       this.signal?.throwIfAborted();
@@ -108,6 +122,7 @@ export class NotteComputer {
       this.actions.push(action.type);
     }
     const image = await this.page.screenshot({ type: 'png', scale: 'css' });
+    this.signal?.throwIfAborted();
     const output = { type: 'computer_screenshot' as const, image_url: `data:image/png;base64,${image.toString('base64')}`, detail: 'original' };
     return { type: 'computer_call_output', call_id: call.call_id, output };
   }
