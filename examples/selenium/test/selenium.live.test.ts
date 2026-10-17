@@ -21,8 +21,9 @@ async function owned(run: () => Promise<void>) {
     assert.equal(ids.length, 1, 'Expected exactly one owned browser');
     const client = new NotteClient();
     let closed = false;
-    for (let attempt = 0; attempt < 30; attempt++) {
-      const result = await sessionStatus({ client: client.getClient(), path: { session_id: ids[0] }, throwOnError: true, signal: AbortSignal.timeout(15_000) });
+    const signal = AbortSignal.timeout(15_000);
+    while (!signal.aborted) {
+      const result = await sessionStatus({ client: client.getClient(), path: { session_id: ids[0] }, throwOnError: true, signal });
       if (result.data.status === 'closed') { closed = true; break; }
       await new Promise(resolve => setTimeout(resolve, 500));
     }

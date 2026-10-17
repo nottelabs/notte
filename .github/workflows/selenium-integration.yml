@@ -6,11 +6,19 @@ on:
     paths:
       - .github/workflows/selenium-integration.yml
       - examples/selenium/**
+      - packages/notte-sdk/**
+      - packages/notte-core/**
+      - node-sdk/**
+      - uv.lock
   push:
     branches: [main]
     paths:
       - .github/workflows/selenium-integration.yml
       - examples/selenium/**
+      - packages/notte-sdk/**
+      - packages/notte-core/**
+      - node-sdk/**
+      - uv.lock
 
 permissions:
   contents: read
@@ -40,7 +48,11 @@ jobs:
       - run: npm test
   live:
     needs: static
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    strategy:
+      fail-fast: false
+      matrix:
+        sdk: [published, source]
+    if: github.actor != 'dependabot[bot]' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     concurrency:
@@ -66,6 +78,15 @@ jobs:
           python-version: '3.12'
       - run: npm ci
       - run: pip install -r requirements.txt
+      - if: matrix.sdk == 'source'
+        run: python -m pip install -e ../../packages/notte-core -e ../../packages/notte-sdk
+      - run: python -m pip check
+      - if: matrix.sdk == 'source'
+        run: npm ci --prefix ../../node-sdk && npm run build --prefix ../../node-sdk
+      - if: matrix.sdk == 'source'
+        run: npm install --no-save --package-lock=false ../../node-sdk && npm run typecheck
+      - name: Require the Notte test key
+        run: test -n "$NOTTE_API_KEY"
       - name: Wait for the API
         uses: ./.github/actions/wait-for-api
         with:
