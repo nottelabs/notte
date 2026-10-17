@@ -86,6 +86,7 @@
     "@types/node": "^26.6.3",
     "@vitest/coverage-v8": "^5.0.2",
     "dotenv": "^18.0.4",
+    "mongodb": "7.7.0",
     "playwright-core": "1.63.0",
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",

@@ -1,0 +1,24 @@
+---
+title: Tzafon Lightcone
+description: Run a Northstar computer-use loop on a Notte browser.
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+Use [Lightcone](https://docs.lightcone.ai/) to send screenshots to Northstar and perform its actions in a Notte browser. The examples copy a visible random code into a local form, then check that the form accepted it.
+
+Set `NOTTE_API_KEY` from [Notte](https://console.notte.cc) and `TZAFON_API_KEY` from your [Lightcone dashboard](https://lightcone.ai/dashboard).
+
+<Tabs>
+  <Tab title="Python">
+    Use Python 3.11+ and uv. From [`examples/tzafon`](https://github.com/nottelabs/notte/tree/main/examples/tzafon), run `uv sync --locked`, then `uv run --locked python python/demo.py`.
+  </Tab>
+  <Tab title="TypeScript">
+    Use Node.js 24+. From [`examples/tzafon/typescript`](https://github.com/nottelabs/notte/tree/main/examples/tzafon/typescript), run `npm ci`, then `npm start`.
+  </Tab>
+</Tabs>
+
+The result includes `output: "Accepted"`, action names, and the session ID. The browser closes on success or failure. The bounded form example supports clicking, typing, Enter/Tab, waiting, and screenshots. See the [README](https://github.com/nottelabs/notte/tree/main/examples/tzafon) for supported actions and verification commands.
+
+<Note>Native SDK requests, real browser effects, and cleanup are tested with injected model responses. Live Tzafon inference and hosted API acceptance remain unverified.</Note>
