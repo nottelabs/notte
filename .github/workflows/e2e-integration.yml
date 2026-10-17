@@ -10,6 +10,8 @@ on:
       - node-sdk/src/**
       - node-sdk/package.json
       - node-sdk/package-lock.json
+      - node-sdk/tsup.config.ts
+      - node-sdk/tsconfig.json
   push:
     branches: [main]
     paths:
@@ -19,6 +21,8 @@ on:
       - node-sdk/src/**
       - node-sdk/package.json
       - node-sdk/package-lock.json
+      - node-sdk/tsup.config.ts
+      - node-sdk/tsconfig.json
 
 permissions:
   contents: read

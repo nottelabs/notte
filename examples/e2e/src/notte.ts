@@ -34,7 +34,7 @@ export function notte(): BrowserProvider {
         try {
           await session.stop();
         } catch (cleanupError) {
-          throw new Error(`Notte browser cleanup failed: ${category(cleanupError)}${session.getId() ? ` (session ${session.getId()})` : ''}`);
+          throw new Error(`Notte browser acquisition failed: ${category(error)}; cleanup failed: ${category(cleanupError)}${session.getId() ? ` (session ${session.getId()})` : ''}`);
         }
         throw new Error(`Notte browser acquisition failed: ${category(error)}${session.getId() ? ` (session ${session.getId()})` : ''}`);
       }
