@@ -549,7 +549,7 @@ class GitHistoryTests(unittest.TestCase):
         self.assertFalse(scope["node_generated"])
         self.assertFalse(scope["full"])
 
-    def test_standalone_integration_diff_keeps_offline_checks_without_global_live_suites(self) -> None:
+    def test_standalone_integration_diff_keeps_offline_checks_and_registered_paired_owner(self) -> None:
         head = self.commit(
             {
                 ".github/workflows/braintrust-integration.yml": "name: Braintrust integration\n",
@@ -563,12 +563,21 @@ class GitHistoryTests(unittest.TestCase):
                 "tests/scripts/test_ci_staging_scope.py": "# Validate workflow coordination\n",
             }
         )
-        scope = self.scope("pull_request", self.base, head)
-        for name in ("python_static", "python_unit", "python_docs", "docs_static", "paired_static"):
-            self.assertTrue(scope[name], name)
-        for name in ci.ALL:
-            if name.endswith("_live"):
-                self.assertFalse(scope[name], name)
+        registries = (
+            {name: convention for name, convention in ci.INTEGRATION_EXAMPLES.items() if name != "braintrust"},
+            {**ci.INTEGRATION_EXAMPLES, "braintrust": "typescript-driver"},
+        )
+        for registry in registries:
+            registered = "braintrust" in registry
+            with self.subTest(registered=registered), patch.object(ci, "INTEGRATION_EXAMPLES", registry):
+                scope = self.scope("pull_request", self.base, head)
+                for name in ("python_static", "python_unit", "python_docs", "docs_static", "paired_static"):
+                    self.assertTrue(scope[name], name)
+                self.assertEqual(scope["integration_examples"], ["braintrust"] if registered else [])
+                self.assertEqual(scope["paired_live"], registered)
+                for name in ci.ALL:
+                    if name.endswith("_live") and name != "paired_live":
+                        self.assertFalse(scope[name], name)
 
         runtime = self.commit(
             {
