@@ -13,6 +13,8 @@ on:
       - node-sdk/src/**
       - node-sdk/package.json
       - node-sdk/package-lock.json
+      - node-sdk/tsconfig.json
+      - node-sdk/tsup.config.ts
       - uv.lock
   push:
     branches: [main]
@@ -26,6 +28,8 @@ on:
       - node-sdk/src/**
       - node-sdk/package.json
       - node-sdk/package-lock.json
+      - node-sdk/tsconfig.json
+      - node-sdk/tsup.config.ts
       - uv.lock
 
 permissions:
