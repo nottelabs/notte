@@ -104,7 +104,9 @@ The shared skill covers CLI installation, authentication, live browser explorati
 ## Workflow Automation
 
 - [n8n](https://docs.notte.cc/integrations/n8n.md): Use Notte browser agents inside n8n workflows
+- [Trigger.dev](https://docs.notte.cc/integrations/trigger.md): Run durable browser tasks with Trigger.dev and Notte.
 - [Temporal](https://docs.notte.cc/integrations/temporal.md): Run durable browser tasks with Temporal and Notte.
+- [GitHub Actions](https://docs.notte.cc/integrations/github-actions.md): Review DOM-validated selector repairs in a manual GitHub Actions workflow.
 
 ## Email
 
@@ -114,6 +116,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 - [Connect with Playwright](https://docs.notte.cc/features/sessions/playwright.md): Use Playwright directly with Notte sessions via Chrome DevTools Protocol
 - [Connect with Puppeteer](https://docs.notte.cc/features/sessions/puppeteer.md): Use Puppeteer with Notte sessions via Chrome DevTools Protocol
+- [Vercel agent-browser](https://docs.notte.cc/integrations/agent-browser.md): Run agent-browser commands on a Notte cloud browser.
 
 ## Browser Infrastructure
 
@@ -136,6 +139,37 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 ## APIs
 
 <!-- openapi:begin https://api.notte.cc/openapi.json -->
+
+## Data Apis
+
+- [GET Account Changes](https://docs.notte.cc/api-reference/data-apis/account-changes.md)
+- [GET Account Runs](https://docs.notte.cc/api-reference/data-apis/account-runs.md)
+- [GET Attempts](https://docs.notte.cc/api-reference/data-apis/attempts.md)
+- [POST Brand Retrieve](https://docs.notte.cc/api-reference/data-apis/brand-retrieve.md)
+- [GET Changes](https://docs.notte.cc/api-reference/data-apis/changes.md)
+- [POST Create](https://docs.notte.cc/api-reference/data-apis/create.md)
+- [GET Credit Usage](https://docs.notte.cc/api-reference/data-apis/credit-usage.md)
+- [DELETE Delete](https://docs.notte.cc/api-reference/data-apis/delete.md)
+- [POST Deliveries](https://docs.notte.cc/api-reference/data-apis/deliveries.md)
+- [POST Extract Product Endpoint](https://docs.notte.cc/api-reference/data-apis/extract-product-endpoint.md)
+- [GET Extract a website styleguide](https://docs.notte.cc/api-reference/data-apis/styleguide-endpoint.md)
+- [GET Limits](https://docs.notte.cc/api-reference/data-apis/limits.md)
+- [GET List Data Apis](https://docs.notte.cc/api-reference/data-apis/list-data-apis.md)
+- [GET List Monitors](https://docs.notte.cc/api-reference/data-apis/list-monitors.md)
+- [POST Maps Search](https://docs.notte.cc/api-reference/data-apis/maps-search.md)
+- [POST News Search](https://docs.notte.cc/api-reference/data-apis/news-search.md)
+- [POST People Enrich](https://docs.notte.cc/api-reference/data-apis/people-enrich.md)
+- [GET Retrieve](https://docs.notte.cc/api-reference/data-apis/retrieve.md)
+- [GET Retrieve Change](https://docs.notte.cc/api-reference/data-apis/retrieve-change.md)
+- [GET Retrieve Delivery](https://docs.notte.cc/api-reference/data-apis/retrieve-delivery.md)
+- [GET Retrieve Run](https://docs.notte.cc/api-reference/data-apis/retrieve-run.md)
+- [POST Retry](https://docs.notte.cc/api-reference/data-apis/retry.md)
+- [POST Rotate Secret](https://docs.notte.cc/api-reference/data-apis/rotate-secret.md)
+- [POST Run Now](https://docs.notte.cc/api-reference/data-apis/run-now.md)
+- [GET Runs](https://docs.notte.cc/api-reference/data-apis/runs.md)
+- [POST Scrape Specialized Data](https://docs.notte.cc/api-reference/data-apis/scrape-specialized-data.md)
+- [PATCH Update](https://docs.notte.cc/api-reference/data-apis/update.md)
+- [POST Youtube Endpoint](https://docs.notte.cc/api-reference/data-apis/youtube-endpoint.md)
 
 ## Agents
 
@@ -225,11 +259,6 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [GET Profile Get](https://docs.notte.cc/api-reference/profiles/profile-get.md)
 - [GET Profile List](https://docs.notte.cc/api-reference/profiles/profile-list.md)
 
-## Prompts
-
-- [POST Improve Prompt](https://docs.notte.cc/api-reference/prompts/improve-prompt.md)
-- [POST Nudge Prompt](https://docs.notte.cc/api-reference/prompts/nudge-prompt.md)
-
 ## Scrape
 
 - [POST Scrape From Html](https://docs.notte.cc/api-reference/scrape/scrape-from-html.md)
@@ -265,6 +294,7 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [GET Session Network Logs](https://docs.notte.cc/api-reference/sessions/session-network-logs.md)
 - [GET Session Offset](https://docs.notte.cc/api-reference/sessions/session-offset.md)
 - [GET Session Profile Preview](https://docs.notte.cc/api-reference/sessions/session-profile-preview.md)
+- [POST Session Profile Save](https://docs.notte.cc/api-reference/sessions/session-profile-save.md)
 - [GET Session Replay](https://docs.notte.cc/api-reference/sessions/session-replay.md)
 - [POST Session Start](https://docs.notte.cc/api-reference/sessions/session-start.md)
 - [GET Session Status](https://docs.notte.cc/api-reference/sessions/session-status.md)
