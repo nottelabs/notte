@@ -41,6 +41,25 @@ INTEGRATION_INPUTS = {
     "tests/scripts/test_ci_integration_examples.py",
 }
 INTEGRATION_EXAMPLES: dict[str, str] = json.loads(Path(__file__).with_name("integration_examples.json").read_text())
+RECIPE_INPUTS = {
+    "openapi/openapi.json": {"terraform-profiles"},
+    "docs/package.json": {"claude-agents", "openai-agents", "mongodb"},
+    "docs/package-lock.json": {"claude-agents", "openai-agents", "mongodb"},
+    "docs/src/sniptest/run_python.py": {"agent-browser", "mongodb"},
+    "docs/src/sniptest/run_typescript.mjs": {"agent-browser", "mongodb"},
+    "docs/src/sniptest/typescript-loader.mjs": {"agent-browser", "mongodb"},
+    "node-sdk/test/helpers/run-openai-recipe.py": {"openai-agents"},
+    "node-sdk/test/helpers/session-closure.ts": {"agent-browser", "mongodb"},
+    "node-sdk/test/agent-browser.recipe.test.ts": {"agent-browser"},
+    "tests/docs/test_agent_browser_recipe.py": {"agent-browser"},
+    ".github/workflows/selector-repair.yml": {"github-actions"},
+    "docs/src/integrations/github-actions.mdx": {"github-actions"},
+    "docs/src/integrations/replit.mdx": {"replit"},
+}
+for _recipe in ("agent-browser", "claude-agents", "mongodb", "openai-agents"):
+    RECIPE_INPUTS[f"node-sdk/test/{_recipe}.integration.test.ts"] = {_recipe}
+    for _language in ("py", "ts"):
+        RECIPE_INPUTS[f"docs/src/testers/integrations/{_recipe.replace('-', '_')}.{_language}"] = {_recipe}
 NODE_GENERATION = {
     "node-sdk/openapi-ts.config.ts",
     "node-sdk/src/proxy/patterns.ts",
@@ -95,6 +114,8 @@ INTEGRATION_WORKFLOWS = {
 
 def integration_examples_for_path(path: str) -> set[str]:
     """Native projects share SDK/build inputs, but do not run for project prose."""
+    if path.startswith("integrations/terraform-provider-notte/") and "terraform-profiles" in INTEGRATION_EXAMPLES:
+        return set() if path.endswith((".md", ".mdx", ".txt")) else {"terraform-profiles"}
     if path in INTEGRATION_INPUTS | PYTHON_CONFIG | NODE_CONFIG or path in {
         ".github/workflows/paired-sdk-examples.yml",
         "node-sdk/tsconfig.json",
@@ -107,6 +128,8 @@ def integration_examples_for_path(path: str) -> set[str]:
         return set() if path.endswith((".md", ".mdx", ".txt")) else set(INTEGRATION_EXAMPLES)
     if path.startswith(".github/actions/python-setup/"):
         return set(INTEGRATION_EXAMPLES)
+    if path in RECIPE_INPUTS:
+        return RECIPE_INPUTS[path] & INTEGRATION_EXAMPLES.keys()
     for name in INTEGRATION_EXAMPLES:
         if path == f".github/workflows/{name}-integration.yml":
             return {name}
@@ -119,13 +142,17 @@ def integration_examples_for_path(path: str) -> set[str]:
 
 
 def native_example_input(path: str) -> bool:
-    return path in INTEGRATION_INPUTS or any(
-        path.startswith(f"examples/{name}/") or path == f".github/workflows/{name}-integration.yml"
-        for name in INTEGRATION_EXAMPLES
+    return (
+        path in INTEGRATION_INPUTS
+        or (path.startswith("integrations/terraform-provider-notte/") and "terraform-profiles" in INTEGRATION_EXAMPLES)
+        or any(
+            path.startswith(f"examples/{name}/") or path == f".github/workflows/{name}-integration.yml"
+            for name in INTEGRATION_EXAMPLES
+        )
     )
 
 
-def scopes_for_path(path: str, *, code_changed: bool = True) -> set[str]:
+def base_scopes_for_path(path: str, *, code_changed: bool = True) -> set[str]:
     """Unknown inputs select broad coverage. Rules combine across every changed path."""
     if path in POLICY or path.startswith(".github/actions/ci-scope/"):
         return ALL.copy()
@@ -332,6 +359,13 @@ def changed_code(base: str, head: str, path: str) -> bool:
         return True
 
 
+def scopes_for_path(path: str, *, code_changed: bool = True) -> set[str]:
+    selected = base_scopes_for_path(path, code_changed=code_changed)
+    if path in RECIPE_INPUTS and integration_examples_for_path(path):
+        selected |= {"python_static", "python_unit"} | GROUPS["paired"]
+    return selected
+
+
 def changed_registry_examples(base: str, head: str) -> set[str]:
     def registry(sha: str) -> dict[str, str]:
         path = "scripts/integration_examples.json"
@@ -403,7 +437,9 @@ def select(event: str, base: str, head: str) -> dict[str, bool | str | list[str]
                 if path == "scripts/integration_examples.json" and not native_examples:
                     path_scopes.discard("paired_live")
                 selected |= path_scopes
-                paired_snippets_live |= "paired_live" in path_scopes and not native_example_input(path)
+                paired_snippets_live |= "paired_live" in base_scopes_for_path(
+                    path, code_changed=code_changed
+                ) and not native_example_input(path)
                 integration_examples |= native_examples
                 if path_scopes == ALL:
                     integration_examples |= set(INTEGRATION_EXAMPLES)
@@ -418,6 +454,7 @@ def select(event: str, base: str, head: str) -> dict[str, bool | str | list[str]
     if event == "schedule":
         # Preserve Python's live-only periodic run; Node keeps its full periodic check.
         selected -= {"python_unit", "python_docs", "cli_contract"}
+    paired_count = max(2 if paired_snippets_live else 1, (len(integration_examples) + 1) // 2)
     return {
         **{name: name in selected for name in sorted(ALL)},
         "full": full,
@@ -428,6 +465,7 @@ def select(event: str, base: str, head: str) -> dict[str, bool | str | list[str]
         "head": head,
         "integration_examples": sorted(integration_examples),
         "paired_snippets_live": paired_snippets_live,
+        "paired_shards": [f"{index}/{paired_count}" for index in range(1, paired_count + 1)],
     }
 
 
