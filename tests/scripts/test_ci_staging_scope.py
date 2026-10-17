@@ -26,8 +26,6 @@ def test_shared_queue_only_contains_staging_test_jobs() -> None:
         ("docs-tests-cicd.yml", "execution"),
         ("paired-sdk-examples.yml", "live"),
         ("readme-check.yml", "live"),
-        ("temporal-integration.yml", "browser-workflow"),
-        ("inngest-integration.yml", "live"),
     }
     queued = set()
     for path in WORKFLOWS.glob("*.yml"):
@@ -89,8 +87,8 @@ def test_automatic_selection_runs_once_with_complete_history() -> None:
     config = workflow("ci.yml")
     assert set(triggers(config)) == {"push", "pull_request"}
     assert config["permissions"] == {"contents": "read"}
-    for event in ("push", "pull_request"):
-        assert triggers(config)[event] == {"branches": ["main"]}
+    assert triggers(config)["push"] == {"branches": ["main"]}
+    assert triggers(config)["pull_request"] == {"branches": ["main"]}
     changes = config["jobs"]["changes"]
     assert "concurrency" not in changes
     checkout = next(step for step in changes["steps"] if "checkout@" in step.get("uses", ""))
@@ -107,7 +105,13 @@ def test_only_selected_families_receive_the_shared_scope() -> None:
         job = jobs[family]
         assert job["needs"] == "changes"
         assert job["uses"] == f"./.github/workflows/{name}"
-        assert job["with"] == {"scope": "${{ needs.changes.outputs.scope }}"}
+        expected_inputs = {"scope": "${{ needs.changes.outputs.scope }}"}
+        if family == "python":
+            expected_inputs.update(
+                source_sha="${{ needs.changes.outputs.source_sha }}",
+                llm_provider="${{ needs.changes.outputs.llm_provider }}",
+            )
+        assert job["with"] == expected_inputs
         assert job["secrets"] == "inherit"  # pragma: allowlist secret
         keys = set(re.findall(r"fromJSON\(needs.changes.outputs.scope\)\.(\w+)", job["if"]))
         assert keys == ci_scope.GROUPS[family] | ({"file_checks"} if family == "python" else set())
@@ -162,6 +166,7 @@ def test_periodic_coverage_and_cancellation_boundaries_are_preserved() -> None:
             assert "schedule" not in triggers(config)
     inputs = triggers(workflow("test-cicd.yml"))["workflow_dispatch"]["inputs"]
     assert inputs["pr_number"]["required"] is True
+    assert "llm_provider" not in inputs  # Paid dispatch requires the coordinating SHA validation.
 
 
 def test_live_selection_does_not_bypass_fork_protection() -> None:
@@ -175,6 +180,7 @@ def test_live_selection_does_not_bypass_fork_protection() -> None:
         condition = workflow(name)["jobs"][job_id]["if"]
         assert "github.event.pull_request.head.repo.full_name == github.repository" in condition
         assert "fromJSON(needs.changes.outputs.scope)" in condition
+        assert "ci-reviewed/" not in condition
 
 
 def test_lightweight_docs_assertions_have_no_workspace_or_secrets() -> None:
@@ -210,13 +216,16 @@ def test_deleted_docs_still_run_the_global_link_check() -> None:
         ("cancelled", "success", 1),
     ],
 )
-def test_required_gate_waits_for_all_families_and_fails_closed(changes: str, selected: str, expected: int) -> None:
+@pytest.mark.parametrize("family", ["node", "paired"])
+def test_required_gate_waits_for_all_families_and_fails_closed(
+    changes: str, selected: str, expected: int, family: str
+) -> None:
     job = workflow("ci.yml")["jobs"]["tests"]
     assert job["if"] == "always()"
     assert set(job["needs"]) == {"changes", *ci_scope.GROUPS}
     results = {name: {"result": "skipped"} for name in job["needs"]}
     results["changes"]["result"] = changes
-    results["node"]["result"] = selected
+    results[family]["result"] = selected
     result = subprocess.run(
         ["bash", "-e", "-o", "pipefail", "-c", job["steps"][0]["run"]],
         env={**os.environ, "RESULTS": json.dumps(results)},
@@ -224,6 +233,54 @@ def test_required_gate_waits_for_all_families_and_fails_closed(changes: str, sel
         text=True,
     )
     assert result.returncode == expected, result.stdout + result.stderr
+
+
+def test_native_examples_have_one_existing_required_owner() -> None:
+    assert not (WORKFLOWS / "openagi-integration.yml").exists()
+    assert not (WORKFLOWS / "yutori-integration.yml").exists()
+    assert not (WORKFLOWS / "prime-intellect-integration.yml").exists()
+    assert not (WORKFLOWS / "agentcard-integration.yml").exists()
+    assert not (WORKFLOWS / "box-integration.yml").exists()
+    assert not (WORKFLOWS / "braintrust-integration.yml").exists()
+    assert not (WORKFLOWS / "onepassword-integration.yml").exists()
+    for name in ("agent-browser", "claude-agents", "github-actions", "inngest", "openai-agents", "temporal", "trigger"):
+        assert not (WORKFLOWS / f"{name}-integration.yml").exists()
+    assert (WORKFLOWS / "selector-repair.yml").exists()
+    assert not (WORKFLOWS / "openai-computer-use-integration.yml").exists()
+    assert not (WORKFLOWS / "deepagents-integration.yml").exists()
+    assert not (WORKFLOWS / "gemini-computer-use-integration.yml").exists()
+    assert not (WORKFLOWS / "selenium-integration.yml").exists()
+    assert not (WORKFLOWS / "laminar-integration.yml").exists()
+    jobs = workflow("paired-sdk-examples.yml")["jobs"]
+    assert set(jobs) == {"changes", "checks", "live"}
+    assert set(jobs["live"]["needs"]) == {"changes", "checks"}
+    snippet = next(s for s in jobs["live"]["steps"] if "test/docs-snippets.integration.test.ts" in s.get("run", ""))
+    assert snippet["if"] == "fromJSON(needs.changes.outputs.scope).paired_snippets_live"
+    for name, phase in (("checks", "checks"), ("live", "live")):
+        job = jobs[name]
+        assert all(s["with"]["node-version"] == "24" for s in job["steps"] if "setup-node@" in s.get("uses", ""))
+        steps = [s for s in job["steps"] if "scripts/ci_integration_examples.py" in s.get("run", "")]
+        assert len(steps) == 1
+        step = steps[0]
+        assert f"ci_integration_examples.py {phase}" in step["run"]
+        assert "integration_examples" in step["env"]["INTEGRATION_EXAMPLES"]
+        assert not step.get("continue-on-error") and not job.get("continue-on-error")
+        if phase == "checks":
+            assert "secrets." not in str(step)
+        else:
+            assert '--shard "$NOTTE_DOCS_SHARD"' in step["run"]
+            for key in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY", "BRAINTRUST_API_KEY"):
+                assert "github.ref == 'refs/heads/main' && github.event_name != 'pull_request'" in step["env"][key]
+            model = step["env"]["NOTTE_DEEPAGENTS_MODEL_LIVE"]
+            assert "github.ref == 'refs/heads/main' && github.event_name != 'pull_request'" in model
+            assert "secrets.ANTHROPIC_API_KEY != '' && '1' || '0'" in model
+    artifact = next(step for step in jobs["live"]["steps"] if "upload-artifact@" in step.get("uses", ""))
+    assert artifact["if"] == "always()"
+    assert artifact["with"] == {
+        "name": "agent-browser-ownership",
+        "path": "${{ runner.temp }}/agent-browser-owned.jsonl",
+        "if-no-files-found": "ignore",
+    }
 
 
 def test_scoped_checks_fetch_history_only_during_authenticated_checkout() -> None:
@@ -235,6 +292,168 @@ def test_scoped_checks_fetch_history_only_during_authenticated_checkout() -> Non
         assert step["with"]["persist-credentials"] is False
     lint = next(step for step in job["steps"] if step.get("name") == "Run pre-commit")
     assert "git fetch" not in lint["run"]
+
+
+@pytest.mark.parametrize(
+    "event,attempt,label,fork,moved,expected",
+    [
+        ("pull_request", 1, True, False, False, "gemini"),
+        ("pull_request", 2, True, False, False, "openai"),
+        ("pull_request", 2, False, False, False, "gemini"),
+        ("pull_request", 2, True, True, False, "gemini"),
+        ("pull_request", 2, True, False, True, None),
+        ("push", 1, True, False, False, "openai"),
+        ("push", 1, False, False, False, "gemini"),
+    ],
+)
+def test_provider_selection_executes_the_normal_workflow(
+    tmp_path: Path, event: str, attempt: int, label: bool, fork: bool, moved: bool, expected: str | None
+) -> None:
+    step = next(s for s in workflow("ci.yml")["jobs"]["changes"]["steps"] if s.get("id") == "provider")
+    pull = {
+        "state": "open" if event == "pull_request" else "closed",
+        "merged_at": None if event == "pull_request" else "2026-10-16T00:00:00Z",
+        "merge_commit_sha": "a" * 40,
+        "base": {"ref": "main", "repo": {"full_name": "owner/repo"}},
+        "head": {"sha": ("b" if moved else "a") * 40, "repo": {"full_name": "owner/repo"}},
+        "labels": [{"name": "ci:openai"}] if label else [],
+        "user": {"login": "fixture-maintainer"},
+    }
+    response = tmp_path / "response.json"
+    response.write_text(json.dumps(pull if event == "pull_request" else [pull]))
+    stub = tmp_path / "gh"
+    stub.write_text("""#!/usr/bin/env python3
+import os, subprocess, sys
+from pathlib import Path
+args = sys.argv[1:]
+Path(os.environ["CALLED"]).write_text(args[1])
+sys.exit(subprocess.run(["jq", args[args.index("--jq") + 1]], stdin=open(os.environ["RESPONSE"])).returncode)
+""")
+    stub.chmod(0o755)
+    output = tmp_path / "outputs"
+    result = subprocess.run(
+        ["bash", "-e", "-o", "pipefail", "-c", step["run"]],
+        cwd=WORKFLOWS.parents[1],
+        env={
+            **os.environ,
+            "PATH": f"{tmp_path}:{os.environ['PATH']}",
+            "EVENT_NAME": event,
+            "GITHUB_REF": "refs/heads/main" if event == "push" else "refs/pull/1214/merge",
+            "GITHUB_RUN_ATTEMPT": str(attempt),
+            "SOURCE_SHA": "a" * 40,
+            "PR_NUMBER": "1214",
+            "SAME_REPOSITORY": "false" if fork else "true",
+            "DELETED": "false",
+            "RESPONSE": str(response),
+            "CALLED": str(tmp_path / "called"),
+            "RUNNER_TEMP": str(tmp_path),
+            "GITHUB_OUTPUT": str(output),
+            "GITHUB_REPOSITORY": "owner/repo",
+        },
+        capture_output=True,
+        text=True,
+    )
+    assert (result.returncode == 0) == (expected is not None), result.stdout + result.stderr
+    assert (tmp_path / "called").exists() is not fork
+    if expected is not None:
+        assert output.read_text() == f"provider={expected}\nsource_sha={'a' * 40}\n"
+        assert (tmp_path / "ci-provider-pulls.json").stat().st_mode & 0o077 == 0
+
+
+@pytest.mark.parametrize(
+    "provider,key,source_matches,checkout_matches,succeeds",
+    [
+        ("gemini", "", True, True, True),
+        ("openai", "dummy-test-key", True, True, True),
+        ("openai", "", True, True, False),
+        ("unknown", "", True, True, False),
+        ("openai", "dummy-test-key", False, True, False),
+        ("openai", "dummy-test-key", True, False, False),
+    ],
+)
+def test_selected_provider_runs_the_full_live_suite(
+    tmp_path: Path, provider: str, key: str, source_matches: bool, checkout_matches: bool, succeeds: bool
+) -> None:
+    step = next(
+        s
+        for s in workflow("test-cicd.yml")["jobs"]["staging-and-live"]["steps"]
+        if s.get("name") == "Run staging and live tests"
+    )
+    paid_key = step["env"]["OPENAI_API_KEY"]
+    assert "github.event.pull_request.head.repo.full_name == github.repository && github.run_attempt > 1" in paid_key
+    assert "inputs.source_sha == (github.event.pull_request.head.sha || github.sha)" in paid_key
+    assert "github.event_name == 'push' && github.ref == 'refs/heads/main' && !github.event.deleted" in paid_key
+    output = tmp_path / "invocation.json"
+    stub = tmp_path / "make"
+    stub.write_text("""#!/usr/bin/env python3
+import json, os, sys
+from pathlib import Path
+Path(os.environ["OUTPUT"]).write_text(json.dumps({
+    "args": sys.argv[1:], "url": os.environ["NOTTE_LLM_BASE_URL"],
+    "model": os.environ["NOTTE_LLM_MODEL"], "default": os.environ["NOTTE_TEST_DEFAULT_MODEL"],
+    "key_matches": os.environ["NOTTE_LLM_API_KEY"] == os.environ["OPENAI_API_KEY"]}))
+""")
+    stub.chmod(0o755)
+    git = tmp_path / "git"
+    git.write_text('#!/bin/sh\ntest "$*" = "rev-parse HEAD" || exit 1\nprintf "%s\\n" "$CHECKED_OUT_SHA"\n')
+    git.chmod(0o755)
+    result = subprocess.run(
+        ["bash", "-e", "-o", "pipefail", "-c", step["run"]],
+        env={
+            **os.environ,
+            "PATH": f"{tmp_path}:{os.environ['PATH']}",
+            "OUTPUT": str(output),
+            "NOTTE_CI_LLM_PROVIDER": provider,
+            "NOTTE_CI_SOURCE_SHA": "a" * 40 if source_matches else "",
+            "NOTTE_CI_EXPECTED_SHA": "a" * 40,
+            "CHECKED_OUT_SHA": ("a" if checkout_matches else "c") * 40,
+            "GITHUB_SHA": "b" * 40,  # The PR's synthetic merge SHA differs from its actual source.
+            "OPENAI_API_KEY": key,
+            "NOTTE_LLM_BASE_URL": "https://generativelanguage.googleapis.com/v1beta/openai",
+            "NOTTE_LLM_MODEL": "gemini-3.5-flash-lite",
+            "NOTTE_TEST_DEFAULT_MODEL": "gemini-3.5-flash-lite",
+            "NOTTE_LLM_API_KEY": "dummy-gemini-key",  # pragma: allowlist secret
+        },
+        capture_output=True,
+        text=True,
+    )
+    assert (result.returncode == 0) == succeeds, result.stdout + result.stderr
+    assert output.exists() == succeeds
+    if succeeds:
+        invocation = json.loads(output.read_text())
+        assert invocation["args"][0] == "test-live"
+        assert '-m "staging or live"' in invocation["args"][1]
+        if provider == "openai":
+            assert invocation["url"] == "https://api.openai.com/v1"
+            assert invocation["model"] == "gpt-4.1-mini"
+            assert invocation["default"] == "gpt-4.1-nano"
+            assert invocation["key_matches"] is True
+        else:
+            assert invocation["model"] == "gemini-3.5-flash-lite"
+            assert invocation["key_matches"] is False
+
+
+@pytest.mark.parametrize("base", ["a" * 40, "0" * 40, ""])
+def test_parity_uses_the_actual_comparison_base(tmp_path: Path, base: str) -> None:
+    step = next(
+        s
+        for s in workflow("paired-sdk-examples.yml")["jobs"]["checks"]["steps"]
+        if s.get("name") == "Enforce example parity and shrinking backlog"
+    )
+    assert step["env"]["BASE_SHA"] == "${{ github.event.pull_request.base.sha || github.event.before }}"
+    stub = tmp_path / "python"
+    output = tmp_path / "args"
+    stub.write_text('#!/bin/sh\nprintf "%s\\n" "$@" > "$OUTPUT"\n')
+    stub.chmod(0o755)
+    subprocess.run(
+        ["bash", "-e", "-o", "pipefail", "-c", step["run"]],
+        check=True,
+        env={**os.environ, "PATH": f"{tmp_path}:{os.environ['PATH']}", "BASE_SHA": base, "OUTPUT": str(output)},
+    )
+    expected = ["docs/src/sniptest/parity.py"]
+    if base and set(base) != {"0"}:
+        expected += ["--base-ref", base]
+    assert output.read_text().splitlines() == expected
 
 
 @pytest.mark.parametrize(
@@ -283,3 +502,27 @@ with open(os.environ['COMMAND_LOG'], 'a') as log:
         assert calls[:1] == [[*runner, "run", "--from-ref", "a" * 40, "--to-ref", "b" * 40]]
         if docs_links:
             assert calls[1] == [*runner, "run", "check-docs-broken-links", "--all-files"]
+
+
+def test_laminar_export_uses_reviewed_main_credentials_only() -> None:
+    jobs = workflow("paired-sdk-examples.yml")["jobs"]
+    native = next(step for step in jobs["live"]["steps"] if step.get("name") == "Execute native integration examples")
+    env = native["env"]
+    assert (
+        env["LMNR_PROJECT_API_KEY"]
+        == "${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.LMNR_PROJECT_API_KEY || '' }}"
+    )
+    assert (
+        env["NOTTE_LAMINAR_EXPORT_LIVE"]
+        == "${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.LMNR_PROJECT_API_KEY != '' && '1' || '0' }}"
+    )
+    for step in jobs["checks"]["steps"]:
+        assert "LMNR_PROJECT_API_KEY" not in step.get("env", {})
+
+
+def test_onepassword_never_requests_vault_credentials_in_shared_ci() -> None:
+    jobs = workflow("paired-sdk-examples.yml")["jobs"]
+    for job in jobs.values():
+        assert "OP_SERVICE_ACCOUNT_TOKEN" not in str(job)
+        assert "OP_USERNAME_REF" not in str(job)
+        assert "OP_PASSWORD_REF" not in str(job)

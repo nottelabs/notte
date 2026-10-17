@@ -1,0 +1,17 @@
+---
+title: Yutori
+description: Run Navigator n1.5 browser actions on Notte.
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+Use Yutori's Navigator n1.5 model with a Notte browser through the original Python adapter in [`examples/yutori`](https://github.com/nottelabs/notte/tree/main/examples/yutori).
+
+## Set up
+
+Use Python 3.12+, a [Notte API key](https://console.notte.cc/apikeys), and a [Yutori API key](https://platform.yutori.com). Install the example's requirements, set `NOTTE_API_KEY` and `YUTORI_API_KEY`, and run `python main.py` from the example directory.
+
+Call `run(task, start_url)` for another task. The adapter uses the official SDK to prepare screenshots and trim request history, then executes supported core browser actions through Playwright. It bounds the loop and closes its owned Notte session after success or failure. Verify the actual result in your application before relying on the model's final answer.
+
+The example tests the native SDK protocol with local model-response fixtures and real Notte browser actions and cleanup. Live Yutori model inference has not been validated. See the [Yutori SDK documentation](https://github.com/yutori-ai/yutori-sdk-python) for model options.
