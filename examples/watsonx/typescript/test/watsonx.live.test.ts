@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { test } from 'node:test';
@@ -29,7 +31,7 @@ async function assertClosed(id: string) {
 }
 
 for (const language of ['python', 'typescript']) {
-  for (const mode of ['fixture', 'iam-reject', 'chat-reject']) {
+  for (const mode of ['fixture', 'iam-reject', 'chat-reject', 'iam-reject-close', 'iam-reject-timeout']) {
     const skip = !process.env.NOTTE_API_KEY;
     test(`${language}: ${mode} closes its browser and withholds credentials`, { skip, timeout: 240_000 }, async () => {
       const python = process.env.NOTTE_WATSONX_PYTHON;
@@ -54,20 +56,40 @@ for (const language of ['python', 'typescript']) {
       let result: { description?: string; session_id?: string } | undefined;
       if (!id) {
         for (const line of output.split(/\r?\n/)) {
-          try { result = JSON.parse(line); } catch { continue; }
-          if (result?.session_id) { id = result.session_id; break; }
+          let row: { description?: string; session_id?: string } | null;
+          try { row = JSON.parse(line); } catch { continue; }
+          if (row?.session_id) id = row.session_id;
+          if (row?.description !== undefined) result = row;
         }
       }
       try {
+        if (process.env.WATSONX_EVIDENCE_DIR) {
+          mkdirSync(process.env.WATSONX_EVIDENCE_DIR, { recursive: true, mode: 0o700 });
+          writeFileSync(join(process.env.WATSONX_EVIDENCE_DIR, `${language}-${mode}.log`), output, { mode: 0o600 });
+        }
         assert.equal(failed, mode !== 'fixture', 'Recipe exited unexpectedly; SDK output withheld');
         assert.ok(id && new RegExp(`^${uuid}$`).test(id), 'Recipe did not report its owned browser');
-        for (const secret of [env.NOTTE_API_KEY, env.WATSONX_API_KEY, 'PRIVATE_FIXTURE_BODY', 'fixture-bearer']) {
+        for (const secret of [env.NOTTE_API_KEY, env.WATSONX_API_KEY, 'PRIVATE_FIXTURE_BODY', 'PRIVATE_CLOSE_FIXTURE', 'fixture-bearer']) {
           if (secret) assert.ok(!output.includes(secret), 'Private data entered recipe output');
         }
         assert.ok(!output.includes('wss://'), 'An authenticated browser URL entered output');
-        if (failed) assert.match(output, new RegExp(`Screenshot analysis failed: describe screenshot.*HTTP ${mode === 'iam-reject' ? 401 : 403}`));
+        if (failed) assert.match(output, new RegExp(`Screenshot analysis failed: describe screenshot.*HTTP ${mode.startsWith('iam-reject') ? 401 : 403}`));
         else assert.equal(result?.description, 'Visible page description');
-      } finally { if (id) await assertClosed(id); }
+      } finally {
+        if (id) {
+          let closed = false;
+          try { await assertClosed(id); closed = true; }
+          finally {
+            if (!closed) {
+              const response = await fetch(`${process.env.NOTTE_API_URL ?? 'https://api.notte.cc'}/sessions/${id}/stop`, {
+                method: 'DELETE', headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` }, signal: AbortSignal.timeout(15_000),
+              });
+              assert.ok(response.ok, 'Owned fallback stop failed');
+              await assertClosed(id);
+            }
+          }
+        }
+      }
     });
   }
 }

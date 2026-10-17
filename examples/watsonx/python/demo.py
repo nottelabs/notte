@@ -2,9 +2,11 @@ import asyncio
 import base64
 import json
 import os
+import sys
 
 import requests
 from notte_sdk import NotteClient
+from playwright.async_api import async_playwright
 
 
 class WatsonxExampleError(RuntimeError):
@@ -73,17 +75,29 @@ async def run_demo(http: requests.Session | None = None) -> dict:
     session_id = "not-created"
     stage = "create browser"
     try:
-        async with client.Session(max_duration_minutes=3) as session:
+        with client.Session(max_duration_minutes=3) as session:
             session_id = session.session_id
             try:
                 stage = "capture page"
-                page = await session.apage
-                await page.goto("https://example.com", wait_until="domcontentloaded")
-                await page.locator("body").wait_for()
-                image = await page.screenshot(type="png")
-                stage = "describe screenshot"
-                with http or requests.Session() as transport:
-                    description = await asyncio.to_thread(describe, image, transport)
+                async with async_playwright() as driver:
+                    browser = await driver.chromium.connect_over_cdp(session.cdp_url())
+                    try:
+                        page = browser.contexts[0].pages[0]
+                        await page.goto("https://example.com", wait_until="domcontentloaded")
+                        await page.locator("body").wait_for()
+                        image = await page.screenshot(type="png")
+                        stage = "describe screenshot"
+                        with http or requests.Session() as transport:
+                            description = await asyncio.to_thread(describe, image, transport)
+                    finally:
+                        failed = sys.exception() is not None
+                        if not failed:
+                            stage = "disconnect browser"
+                        try:
+                            await asyncio.wait_for(browser.close(), timeout=5)
+                        except Exception:
+                            if not failed:
+                                raise RuntimeError("Browser disconnect failed") from None
             except Exception as error:
                 raise safe_failure(error, stage, session_id) from None
         return {"description": description, "session_id": session_id}

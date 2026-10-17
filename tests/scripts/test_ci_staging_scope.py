@@ -30,6 +30,7 @@ def test_shared_queue_only_contains_staging_test_jobs() -> None:
         ("agent-browser-integration.yml", "live"),
         ("temporal-integration.yml", "browser-workflow"),
         ("inngest-integration.yml", "live"),
+        ("watsonx-integration.yml", "live"),
     }
     queued = set()
     for path in WORKFLOWS.glob("*.yml"):

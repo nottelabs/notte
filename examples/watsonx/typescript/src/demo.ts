@@ -54,6 +54,7 @@ export async function runDemo(fetchImpl: typeof fetch = fetch) {
       try {
         stage = 'capture page';
         const browser = await chromium.connectOverCDP(await session.cdpUrl());
+        let failed = false;
         try {
           const page = browser.contexts()[0].pages()[0];
           await page.goto('https://example.com', { waitUntil: 'domcontentloaded' });
@@ -61,7 +62,21 @@ export async function runDemo(fetchImpl: typeof fetch = fetch) {
           const image = await page.screenshot({ type: 'png' });
           stage = 'describe screenshot';
           description = await describe(image, fetchImpl);
-        } finally { await browser.close(); }
+        } catch (error) {
+          failed = true;
+          throw error;
+        } finally {
+          if (!failed) stage = 'disconnect browser';
+          let timer: ReturnType<typeof setTimeout> | undefined;
+          try {
+            await Promise.race([
+              browser.close(),
+              new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error('Close deadline exceeded')), 5000); }),
+            ]);
+          } catch {
+            if (!failed) throw new Error('Browser disconnect failed');
+          } finally { clearTimeout(timer); }
+        }
       } catch (error) { throw safeFailure(error, stage, sessionId); }
     });
     return { description, session_id: sessionId };
