@@ -12,7 +12,7 @@ npm test
 NOTTE_EVE_LIVE=1 NOTTE_API_URL=https://us-dev.notte.cc npm test
 ```
 
-The offline tests compile the native Eve manifest and check navigation, errors, and cancellation. The live tests run the authored tool against Notte and independently GET each owned session to verify closure. No model key is needed for these tests. A three-minute session limit bounds interrupted processes.
+The offline tests compile the native Eve manifest and check navigation, errors, and cancellation. The live tests run the authored tool against Notte, inject disconnect failures, and independently GET each owned session to verify closure. Disconnect waits are limited to five seconds. No model key is needed for these tests. A three-minute session limit bounds interrupted processes.
 
 To use the tool in an existing Eve app, install `notte-sdk` and `playwright-core`, copy `agent/tools/read_page.ts`, and set `NOTTE_API_KEY` in that app's server environment. For this example, choose your model in `agent/agent.ts`, then run `npm run dev` and connect your model provider through Eve. Ask it to read the title of `https://example.com`.
 
