@@ -21,6 +21,12 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class RoutingTests(unittest.TestCase):
+    # Fixed expectations describe the historical seven-owner migration.
+    @patch.object(
+        ci,
+        "INTEGRATION_EXAMPLES",
+        json.loads((ROOT / "tests/scripts/fixtures/integration_example_commands.json").read_text())["active"],
+    )
     def test_shipped_native_recipe_and_project_inputs_keep_required_paired_owner(self) -> None:
         inputs = {
             "docs/src/testers/integrations/openai_agents.py": {"openai-agents"},
@@ -312,6 +318,26 @@ class RoutingTests(unittest.TestCase):
             with self.subTest(candidate=candidate):
                 self.assertNotEqual(ci.fenced_code(original), ci.fenced_code(candidate))
         self.assertTrue(ci.fenced_code("~~~python\nx = 1\n~~~\n"))
+
+
+class RegistrationRoutingTests(unittest.TestCase):
+    def test_routing_contracts_accept_every_prepared_registration(self) -> None:
+        fixtures = json.loads((ROOT / "tests/scripts/fixtures/integration_example_commands.json").read_text())
+        for name, convention in fixtures["active"].items():
+            self.assertEqual(ci.INTEGRATION_EXAMPLES.get(name), convention)
+        augmented = {**ci.INTEGRATION_EXAMPLES, **fixtures["future"]}
+        for registry in (ci.INTEGRATION_EXAMPLES, augmented):
+            with self.subTest(registrations=len(registry)), patch.object(ci, "INTEGRATION_EXAMPLES", registry):
+                result = unittest.TestResult()
+                unittest.TestLoader().loadTestsFromTestCase(RoutingTests).run(result)
+                self.assertGreater(result.testsRun, 0)
+                self.assertFalse(result.errors, result.errors)
+                self.assertFalse(result.failures, result.failures)
+                owners = {"openai-agents", "claude-agents"}
+                if "mongodb" in registry:
+                    owners.add("mongodb")
+                for path in ("docs/package.json", "docs/package-lock.json"):
+                    self.assertEqual(ci.integration_examples_for_path(path), owners)
 
 
 class GitHistoryTests(unittest.TestCase):
