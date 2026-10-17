@@ -369,7 +369,9 @@
             "icon": "diagram-project",
             "pages": [
               "integrations/n8n",
-              "integrations/temporal"
+              "integrations/trigger",
+              "integrations/temporal",
+              "integrations/github-actions"
             ]
           },
           {
@@ -391,7 +393,8 @@
             "icon": "gamepad",
             "pages": [
               "features/sessions/playwright",
-              "features/sessions/puppeteer"
+              "features/sessions/puppeteer",
+              "integrations/agent-browser"
             ]
           },
           {

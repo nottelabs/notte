@@ -22,11 +22,14 @@ def workflow(name: str) -> dict[str, Any]:
 def test_shared_queue_only_contains_staging_test_jobs() -> None:
     expected = {
         ("openai-agents-integration.yml", "live"),
+        ("github-actions-integration.yml", "live"),
         ("node-sdk-ci.yml", "integration-tests"),
         ("test-cicd.yml", "staging-and-live"),
         ("docs-tests-cicd.yml", "execution"),
         ("paired-sdk-examples.yml", "live"),
         ("readme-check.yml", "live"),
+        ("agent-browser-integration.yml", "live"),
+        ("trigger-integration.yml", "browser-handler"),
         ("braintrust-integration.yml", "live"),
         ("temporal-integration.yml", "browser-workflow"),
         ("inngest-integration.yml", "live"),
