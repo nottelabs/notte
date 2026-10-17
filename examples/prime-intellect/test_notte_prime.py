@@ -21,6 +21,7 @@ import verifiers.v1 as vf
 from mcp import ClientSession
 from mcp.client.streamable_http import streamable_http_client
 from mcp.server.mcpserver import MCPServer
+from playwright.async_api import BrowserType
 
 LIVE = os.getenv("NOTTE_PRIME_LIVE") == "1"
 FAKE_CREDENTIAL = "not-a-real-notte-credential"  # pragma: allowlist secret
@@ -168,20 +169,42 @@ class BrowserTests(unittest.IsolatedAsyncioTestCase):
             await task.score(trace)
             self.assertEqual(trace.rewards["title_matches"].score, 1)
             serialized = trace.model_dump_json()
-            self.assertNotIn("cdp_url", serialized)
-            self.assertNotIn(FAKE_CREDENTIAL, serialized)
+            self.assertFalse("cdp_url" in serialized, "Private browser state output withheld")
+            self.assertFalse(FAKE_CREDENTIAL in serialized, "Private trace output withheld")
             if os.getenv("NOTTE_API_KEY"):
-                self.assertNotIn(os.environ["NOTTE_API_KEY"], serialized)
+                self.assertFalse(os.environ["NOTTE_API_KEY"] in serialized, "Private trace output withheld")
 
     async def test_navigation_error_is_safe_and_owned_browser_closes(self):
         async with self.owned(failure=True) as (task, trace):
             async with native_tools(task, trace) as client:
                 result = await client.call_tool("read_page", {"url": "http://127.0.0.1:1"})
                 self.assertTrue(result.is_error)
-                self.assertIn("The browser task failed", result.content[0].text)
-                self.assertNotIn(FAKE_CREDENTIAL, result.content[0].text)
+                self.assertTrue("The browser task failed" in result.content[0].text, "Private tool output withheld")
+                self.assertFalse(FAKE_CREDENTIAL in result.content[0].text, "Private tool output withheld")
             await task.score(trace)
             self.assertEqual(trace.rewards["title_matches"].score, 0)
+
+    @unittest.skipUnless(LIVE, "Requires a real browser disconnect")
+    async def test_stalled_native_disconnect_fails_safely_and_closes_owner(self):
+        connect = BrowserType.connect_over_cdp
+
+        async def connected(browser_type, *args, **kwargs):
+            browser = await connect(browser_type, *args, **kwargs)
+            close = browser.close
+
+            async def stalled():
+                await close()
+                await asyncio.sleep(10)
+
+            browser.close = stalled
+            return browser
+
+        async with self.owned() as (task, trace):
+            with patch.object(BrowserType, "connect_over_cdp", new=connected):
+                async with native_tools(task, trace) as client:
+                    result = await client.call_tool("read_page", {"url": "https://example.com"})
+                    self.assertTrue(result.is_error, "A stalled disconnect exceeded the browser deadline")
+                    self.assertTrue("The browser task failed" in result.content[0].text, "Private tool output withheld")
 
     async def test_reward_rejects_another_page_with_the_expected_title(self):
         task = next(iter(example.NotteTaskset(vf.TasksetConfig())))
@@ -225,6 +248,66 @@ class BrowserTests(unittest.IsolatedAsyncioTestCase):
                 await asyncio.wait_for(starting, 5)
         self.assertEqual(stopped, ["owned"])
         self.assertIsNone(task.session)
+
+    async def test_repeated_cancelled_creation_finishes_and_closes(self):
+        task = next(iter(example.NotteTaskset(vf.TasksetConfig())))
+        entered, release, finished = threading.Event(), threading.Event(), threading.Event()
+        stopped = []
+
+        class Session:
+            response = None
+            session_id = "owned"
+
+            def start(self):
+                entered.set()
+                if not release.wait(5):
+                    raise TimeoutError("Test did not release creation")
+                self.response = object()
+                finished.set()
+
+            def stop(self):
+                stopped.append(self.session_id)
+
+        with patch.object(example, "NotteClient", return_value=SimpleNamespace(Session=lambda **_: Session())):
+            starting = asyncio.create_task(task.setup(SimpleNamespace(state=example.BrowserState()), None))
+            try:
+                self.assertTrue(await asyncio.to_thread(entered.wait, 5))
+                starting.cancel()
+                await asyncio.sleep(0)
+                starting.cancel()
+                await asyncio.sleep(0)
+                ended_before_creation = starting.done()
+            finally:
+                release.set()
+            with self.assertRaises(asyncio.CancelledError):
+                await asyncio.wait_for(starting, 5)
+            self.assertTrue(await asyncio.to_thread(finished.wait, 5))
+        self.assertFalse(ended_before_creation, "Cancellation orphaned the still-running creation")
+        self.assertEqual(stopped, ["owned"])
+        self.assertIsNone(task.session)
+
+    async def test_owner_cleanup_hides_private_sdk_errors_and_retains_identity(self):
+        task = next(iter(example.NotteTaskset(vf.TasksetConfig())))
+        task.session = SimpleNamespace(response=object(), session_id="owned", stop=lambda: None)
+
+        def failed():
+            raise RuntimeError(FAKE_CREDENTIAL)
+
+        task.session.stop = failed
+        with self.assertRaises(RuntimeError) as caught:
+            await task.close()
+        self.assertIn("owned", str(caught.exception))
+        self.assertFalse(FAKE_CREDENTIAL in str(caught.exception), "Private cleanup diagnostic withheld")
+
+    async def test_environment_preserves_primary_agent_failure_when_cleanup_fails(self):
+        task = SimpleNamespace(close=AsyncMock(side_effect=RuntimeError(FAKE_CREDENTIAL)))
+        agents = SimpleNamespace(agent=SimpleNamespace(run=AsyncMock(side_effect=ValueError("primary agent failure"))))
+        with self.assertRaisesRegex(ValueError, "^primary agent failure$") as caught:
+            await example.NotteEnv(vf.SingleAgentEnvConfig(taskset=vf.TasksetConfig(id="notte_prime"))).run(
+                task, agents
+            )
+        task.close.assert_awaited_once()
+        self.assertEqual(caught.exception.__notes__, ["Rollout browser cleanup failed"])
 
     async def test_failed_creation_preserves_safe_error_and_clears_owner(self):
         task = next(iter(example.NotteTaskset(vf.TasksetConfig())))
@@ -326,7 +409,7 @@ class BrowserTests(unittest.IsolatedAsyncioTestCase):
                 self.assertFalse(trace["ok"])
                 self.assertIn("ProviderError", [error["type"] for error in trace["errors"]])
                 for payload in [output, json.dumps(requests), trace_file.read_text()]:
-                    self.assertNotIn(os.environ["NOTTE_API_KEY"], payload)
+                    self.assertFalse(os.environ["NOTTE_API_KEY"] in payload, "Private framework output withheld")
                 for session_id in ids:
                     async with asyncio.timeout(15):
                         while (await asyncio.to_thread(client.sessions.status, session_id)).status != "closed":

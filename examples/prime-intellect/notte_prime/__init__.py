@@ -1,6 +1,7 @@
 """A browser-backed Verifiers taskset with one owned session per rollout."""
 
 import asyncio
+import sys
 
 import verifiers.v1 as vf
 from notte_sdk import NotteClient
@@ -8,6 +9,10 @@ from playwright.async_api import async_playwright
 from verifiers.v1.harnesses.null.harness import NullHarness
 
 __all__ = ["NotteTaskset", "NotteEnv", "NullHarness"]
+
+
+class _BrowserCleanupError(RuntimeError):
+    pass
 
 
 class BrowserState(vf.State):
@@ -35,7 +40,12 @@ class BrowserTools(vf.Toolset[vf.ToolsetConfig, BrowserState]):
                     self.state.url = page.url
                     return self.state.title
                 finally:
-                    await browser.close()
+                    failed = sys.exception() is not None
+                    try:
+                        await asyncio.wait_for(browser.close(), timeout=5)
+                    except Exception:
+                        if not failed:
+                            raise RuntimeError("Browser disconnect failed") from None
         except Exception:
             raise RuntimeError("The browser task failed") from None
 
@@ -55,15 +65,32 @@ class BrowserTask(vf.Task[BrowserData, BrowserState, vf.TaskConfig]):
             trace.state.session_id = self.session.session_id
             trace.state.cdp_url = self.session.cdp_url()
         except BaseException as error:
-            # Cancelling to_thread does not stop the browser creation request.
+            # Finish owned I/O before propagating even repeated cancellation.
+            async def finish(operation):
+                nonlocal error
+                while True:
+                    try:
+                        return await asyncio.shield(operation)
+                    except asyncio.CancelledError as cancelled:
+                        if operation.cancelled():
+                            raise
+                        error = cancelled
+
             try:
-                await starting
-            except Exception:
+                await finish(starting)
+            except (Exception, asyncio.CancelledError):
                 pass
-            await self.close()
-            if not isinstance(error, Exception):
-                raise
-            raise RuntimeError("Could not prepare the rollout browser") from None
+            cleanup_failure = None
+            try:
+                await finish(asyncio.create_task(self.close()))
+            except _BrowserCleanupError as cleanup:
+                cleanup_failure = cleanup
+            primary = (
+                error if not isinstance(error, Exception) else RuntimeError("Could not prepare the rollout browser")
+            )
+            if cleanup_failure is not None:
+                primary.add_note(str(cleanup_failure))
+            raise primary from None
 
     async def finalize(self, trace, runtime):
         try:
@@ -74,7 +101,12 @@ class BrowserTask(vf.Task[BrowserData, BrowserState, vf.TaskConfig]):
     async def close(self):
         if getattr(self, "session", None):
             if self.session.response is not None:
-                await asyncio.to_thread(self.session.stop)
+                try:
+                    await asyncio.to_thread(self.session.stop)
+                except Exception:
+                    raise _BrowserCleanupError(
+                        f"Could not close the rollout browser (session {self.session.session_id})"
+                    ) from None
             self.session = None
 
     @classmethod
@@ -102,4 +134,12 @@ class NotteEnv(vf.SingleAgentEnv):
             await agents.agent.run(task)
         finally:
             # Verifiers skips task finalization after setup or provider errors.
-            await task.close()
+            primary = sys.exception()
+            try:
+                await task.close()
+            except Exception as cleanup:
+                if primary is None:
+                    raise
+                primary.add_note(
+                    str(cleanup) if isinstance(cleanup, _BrowserCleanupError) else "Rollout browser cleanup failed"
+                )
