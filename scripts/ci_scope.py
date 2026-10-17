@@ -70,7 +70,6 @@ INTEGRATION_WORKFLOWS = {
     "eve-integration.yml",
     "evervault-integration.yml",
     "fx-integration.yml",
-    "gemini-computer-use-integration.yml",
     "github-actions-integration.yml",
     "inngest-integration.yml",
     "laminar-integration.yml",
@@ -110,6 +109,8 @@ def integration_examples_for_path(path: str) -> set[str]:
         return set(INTEGRATION_EXAMPLES)
     for name in INTEGRATION_EXAMPLES:
         if path == f".github/workflows/{name}-integration.yml":
+            return {name}
+        if path == f"examples/{name}/requirements.txt":
             return {name}
         if path.startswith(f"examples/{name}/"):
             prose = path.endswith((".md", ".mdx", ".txt", ".png", ".jpg", ".svg", ".pdf"))

@@ -140,7 +140,7 @@
     },
     {
       "source": "/features/sessions/selenium",
-      "destination": "/features/sessions/playwright"
+      "destination": "/integrations/selenium"
     },
     {
       "source": "/zin",
@@ -168,10 +168,6 @@
     },
     {
       "source": "/integrations/computer-use-openagi",
-      "destination": "/integrations"
-    },
-    {
-      "source": "/integrations/gemini-computer-use",
       "destination": "/integrations"
     },
     {
@@ -367,7 +363,8 @@
             "icon": "desktop",
             "pages": [
               "integrations/openai-computer-use",
-              "integrations/claude-computer-use"
+              "integrations/claude-computer-use",
+              "integrations/gemini-computer-use"
             ]
           },
           {
@@ -393,7 +390,8 @@
             "pages": [
               "features/sessions/playwright",
               "features/sessions/puppeteer",
-              "integrations/agent-browser"
+              "integrations/agent-browser",
+              "integrations/selenium"
             ]
           },
           {
