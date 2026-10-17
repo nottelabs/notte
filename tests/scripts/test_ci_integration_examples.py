@@ -26,11 +26,13 @@ from pathlib import Path
 args = [Path(sys.argv[0]).name, *sys.argv[1:]]
 with open(os.environ['COMMAND_LOG'], 'a') as log:
     log.write(json.dumps({'args': args, 'cwd': os.getcwd(),
-        'credentials': sorted(k for k in ('NOTTE_API_KEY', 'OPENAI_API_KEY') if os.environ.get(k)),
+        'credentials': sorted(k for k in ('NOTTE_API_KEY', 'OPENAI_API_KEY', 'LMNR_PROJECT_API_KEY') if os.environ.get(k)),
         'python': os.environ.get('NOTTE_COMPUTER_USE_PYTHON'),
         'gemini_live': os.environ.get('NOTTE_GEMINI_LIVE'),
         'gemini_model': os.environ.get('NOTTE_GEMINI_MODEL_LIVE'),
         'selenium_live': os.environ.get('NOTTE_SELENIUM_LIVE'),
+        'live_flags': {k: v for k, v in os.environ.items() if k.startswith('NOTTE_') and k.endswith('_LIVE')},
+        'tracing': os.environ.get('LANGSMITH_TRACING'),
         'driver': os.environ.get('CHROMEDRIVER_PATH')}) + '\\n')
 if args[1:] == ['install_driver.py']:
     print(os.environ['DRIVER_OUTPUT'])
@@ -233,3 +235,75 @@ def test_selenium_driver_failure_stops_before_browser_tests(
     assert failure.value.returncode == 17
     assert calls(workspace)[-1]["args"][1:] == ["install_driver.py"]
     assert not any("test_selenium" in call["args"] for call in calls(workspace))
+
+
+@pytest.mark.parametrize("name,module", [("deepagents", "test_agent.py"), ("laminar", "test_read_page.py")])
+def test_root_unittest_preserves_independent_suites_and_offline_boundaries(
+    workspace: Path, monkeypatch: pytest.MonkeyPatch, name: str, module: str
+) -> None:
+    runner.REGISTRY.write_text(json.dumps({name: "root-unittest"}))
+    monkeypatch.setenv("INTEGRATION_EXAMPLES", json.dumps([name]))
+    prefix = f"NOTTE_{name.upper()}"
+    monkeypatch.setenv(f"{prefix}_MODEL_LIVE", "1")
+    monkeypatch.setenv(f"{prefix}_EXPORT_LIVE", "1")
+    monkeypatch.setenv("LANGSMITH_TRACING", "true")
+    project = workspace / "examples" / name
+    (project / "typescript").mkdir(parents=True)
+    python = project / ".venv/bin/python"
+    python.parent.mkdir(parents=True)
+    python.write_text((workspace / "examples/alpha/.venv/bin/python").read_text())
+    python.chmod(0o755)
+    (project / "worker.py").write_text("# Fixture source\n")
+    (project / module).write_text("# Fixture unittest module\n")
+    monkeypatch.setattr("sys.argv", ["runner", "live"])
+    runner.main()
+    observed = calls(workspace)
+    suites = [call for call in observed if "unittest" in call["args"] or "test:live" in call["args"]]
+    assert len(suites) == 6
+    assert all(call["args"] == ["python", "-m", "unittest", "-v", module] for call in suites[::2])
+    assert all(call["cwd"] == str(project) for call in suites[::2])
+    assert all(call["cwd"] == str(project / "typescript") for call in suites[1::2])
+    assert all(call["live_flags"][f"{prefix}_LIVE"] == "0" and not call["credentials"] for call in suites[:2])
+    assert all(call["live_flags"][f"{prefix}_LIVE"] == "1" and call["credentials"] for call in suites[2:])
+    assert all(call["live_flags"][f"{prefix}_MODEL_LIVE"] == "1" for call in suites[2:])
+    assert all(call["live_flags"][f"{prefix}_EXPORT_LIVE"] == "1" for call in suites[2:])
+    assert all(call["tracing"] == "false" for call in observed)
+    assert all(not call["credentials"] for call in observed if call not in suites[2:])
+    assert all(value == "0" for call in observed if call not in suites[2:] for value in call["live_flags"].values())
+    commands = [call["args"] for call in observed]
+    assert ["python", "-m", "compileall", "-q", module, "worker.py"] in commands
+    assert commands.count(["uv", "sync", "--locked"]) == 1
+    assert len([command for command in commands if command[:3] == ["uv", "pip", "check"]]) == 2
+    assert any(command[-1:] == [str(workspace / "node-sdk")] for command in commands)
+
+
+def test_root_unittest_requires_real_modules_before_setup(workspace: Path) -> None:
+    with pytest.raises(ValueError, match="requires root test_"):
+        runner.check(workspace / "examples/alpha", {}, "root-unittest")
+    assert calls(workspace) == []
+
+
+def test_laminar_vendor_credential_is_absent_from_install_and_offline_commands(
+    workspace: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runner.REGISTRY.write_text(json.dumps({"laminar": "root-unittest"}))
+    monkeypatch.setenv("INTEGRATION_EXAMPLES", '["laminar"]')
+    monkeypatch.setenv("LMNR_PROJECT_API_KEY", "fixture-vendor-key")
+    monkeypatch.setenv("NOTTE_LAMINAR_EXPORT_LIVE", "1")
+    project = workspace / "examples/laminar"
+    (project / "typescript").mkdir(parents=True)
+    python = project / ".venv/bin/python"
+    python.parent.mkdir(parents=True)
+    python.write_text((workspace / "examples/alpha/.venv/bin/python").read_text())
+    python.chmod(0o755)
+    (project / "test_read_page.py").write_text("# Fixture unittest module\n")
+    monkeypatch.setattr("sys.argv", ["runner", "live"])
+    runner.main()
+    observed = calls(workspace)
+    suites = [call for call in observed if "unittest" in call["args"] or "test:live" in call["args"]]
+    assert len(suites) == 6
+    assert all(not call["credentials"] for call in observed if call not in suites[2:])
+    assert all(call["live_flags"]["NOTTE_LAMINAR_EXPORT_LIVE"] == "0" for call in suites[:2])
+    assert all("LMNR_PROJECT_API_KEY" in call["credentials"] for call in suites[2:])
+    assert all(call["live_flags"]["NOTTE_LAMINAR_EXPORT_LIVE"] == "1" for call in suites[2:])
+    assert [call["args"] for call in suites[::2]] == [["python", "-m", "unittest", "-v", "test_read_page.py"]] * 3

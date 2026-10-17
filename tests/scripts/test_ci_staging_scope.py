@@ -33,7 +33,6 @@ def test_shared_queue_only_contains_staging_test_jobs() -> None:
         ("trigger-integration.yml", "browser-handler"),
         ("temporal-integration.yml", "browser-workflow"),
         ("inngest-integration.yml", "live"),
-        ("laminar-integration.yml", "browser"),
     }
     queued = set()
     for path in WORKFLOWS.glob("*.yml"):
@@ -245,8 +244,10 @@ def test_required_gate_waits_for_all_families_and_fails_closed(
 
 def test_native_examples_have_one_existing_required_owner() -> None:
     assert not (WORKFLOWS / "openai-computer-use-integration.yml").exists()
+    assert not (WORKFLOWS / "deepagents-integration.yml").exists()
     assert not (WORKFLOWS / "gemini-computer-use-integration.yml").exists()
     assert not (WORKFLOWS / "selenium-integration.yml").exists()
+    assert not (WORKFLOWS / "laminar-integration.yml").exists()
     jobs = workflow("paired-sdk-examples.yml")["jobs"]
     assert set(jobs) == {"changes", "checks", "live"}
     assert set(jobs["live"]["needs"]) == {"changes", "checks"}
@@ -267,6 +268,9 @@ def test_native_examples_have_one_existing_required_owner() -> None:
             assert '--shard "$NOTTE_DOCS_SHARD"' in step["run"]
             for key in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY"):
                 assert "github.ref == 'refs/heads/main' && github.event_name != 'pull_request'" in step["env"][key]
+            model = step["env"]["NOTTE_DEEPAGENTS_MODEL_LIVE"]
+            assert "github.ref == 'refs/heads/main' && github.event_name != 'pull_request'" in model
+            assert "secrets.ANTHROPIC_API_KEY != '' && '1' || '0'" in model
 
 
 def test_scoped_checks_fetch_history_only_during_authenticated_checkout() -> None:
@@ -488,3 +492,19 @@ with open(os.environ['COMMAND_LOG'], 'a') as log:
         assert calls[:1] == [[*runner, "run", "--from-ref", "a" * 40, "--to-ref", "b" * 40]]
         if docs_links:
             assert calls[1] == [*runner, "run", "check-docs-broken-links", "--all-files"]
+
+
+def test_laminar_export_uses_reviewed_main_credentials_only() -> None:
+    jobs = workflow("paired-sdk-examples.yml")["jobs"]
+    native = next(step for step in jobs["live"]["steps"] if step.get("name") == "Execute native integration examples")
+    env = native["env"]
+    assert (
+        env["LMNR_PROJECT_API_KEY"]
+        == "${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.LMNR_PROJECT_API_KEY || '' }}"
+    )
+    assert (
+        env["NOTTE_LAMINAR_EXPORT_LIVE"]
+        == "${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.LMNR_PROJECT_API_KEY != '' && '1' || '0' }}"
+    )
+    for step in jobs["checks"]["steps"]:
+        assert "LMNR_PROJECT_API_KEY" not in step.get("env", {})

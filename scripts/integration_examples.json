@@ -1,5 +1,8 @@
 {
+  "anthropic-computer-use": "NOTTE_COMPUTER_USE_PYTHON",
+  "deepagents": "root-unittest",
   "gemini-computer-use": "gemini-root",
+  "laminar": "root-unittest",
   "openai-computer-use": "NOTTE_COMPUTER_USE_PYTHON",
   "selenium": "selenium-root"
 }

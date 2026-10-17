@@ -167,10 +167,6 @@
       "destination": "/integrations"
     },
     {
-      "source": "/integrations/claude-computer-use",
-      "destination": "/integrations"
-    },
-    {
       "source": "/integrations/computer-use-openagi",
       "destination": "/integrations"
     },
@@ -217,6 +213,10 @@
     {
       "source": "/integrations/claude-agent-sdk",
       "destination": "/integrations/claude-agents"
+    },
+    {
+      "source": "/integrations/anthropic-computer-use",
+      "destination": "/integrations/claude-computer-use"
     }
   ],
   "errors": {
@@ -340,6 +340,7 @@
             "pages": [
               "integrations/browser-use",
               "integrations/langchain",
+              "integrations/deepagents",
               "integrations/crewai",
               "integrations/agno",
               "integrations/google-adk",
@@ -358,6 +359,7 @@
             "icon": "desktop",
             "pages": [
               "integrations/openai-computer-use",
+              "integrations/claude-computer-use",
               "integrations/gemini-computer-use"
             ]
           },
