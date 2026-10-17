@@ -124,7 +124,7 @@ def journal(event, session_id):
 
 
 async def assert_closed(test, session_id):
-    root = os.getenv("NOTTE_API_URL", "https://api.notte.cc").rstrip("/")
+    root = (os.getenv("NOTTE_API_URL") or "https://api.notte.cc").rstrip("/")
     headers = {"Authorization": f"Bearer {os.environ['NOTTE_API_KEY']}"}
     async with httpx.AsyncClient(timeout=15) as client:
 
