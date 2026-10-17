@@ -1,6 +1,8 @@
 import { createClient, Secrets } from '@1password/sdk';
 import { NotteClient } from 'notte-sdk';
-import { chromium, type Page } from 'playwright-core';
+import { chromium, type Page, type Browser } from 'playwright-core';
+
+class VaultFormError extends Error {}
 
 export async function fillLogin(page: Page, usernameRef: string, passwordRef: string) {
   const token = process.env.OP_SERVICE_ACCOUNT_TOKEN;
@@ -26,24 +28,46 @@ export async function runDemo() {
   const client = new NotteClient();
   let sessionId = 'not-created';
   let stage = 'create browser';
+  const safeError = (error: unknown) => {
+    if (error instanceof VaultFormError) return error;
+    const name = error instanceof Error ? error.constructor.name : 'UnknownError';
+    const category = /^[A-Za-z][A-Za-z0-9]{0,63}$/.test(name) ? name : 'Error';
+    return new VaultFormError(`Vault form failed: ${stage} [${category}] (session ${sessionId})`);
+  };
   try {
     await client.Session({ max_duration_minutes: 3 }).use(async session => {
       sessionId = session.getId()!;
       stage = 'open test form';
-      const browser = await chromium.connectOverCDP(await session.cdpUrl());
+      let browser: Browser | undefined;
+      let failed = false;
       try {
+        browser = await chromium.connectOverCDP(await session.cdpUrl());
         const page = browser.contexts()[0].pages()[0];
         await page.goto('about:blank');
         await page.setContent('<form onsubmit="event.preventDefault();document.querySelector(\'output\').textContent=\'Submitted\'"><label>Username<input name="username" autocomplete="off"></label><label>Password<input name="password" type="password" autocomplete="off"></label><button>Sign in</button><output></output></form>');
         stage = 'resolve and fill login';
         await fillLogin(page, process.env.OP_USERNAME_REF!, process.env.OP_PASSWORD_REF!);
         await page.locator('output').filter({ hasText: 'Submitted' }).waitFor();
-      } finally { await browser.close(); }
+      } catch (error) {
+        failed = true;
+        throw safeError(error);
+      } finally {
+        if (browser) {
+          if (!failed) stage = 'disconnect browser';
+          let timer: ReturnType<typeof setTimeout> | undefined;
+          try {
+            await Promise.race([
+              browser.close(),
+              new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error('Close deadline exceeded')), 5000); }),
+            ]);
+          } catch {
+            if (!failed) throw safeError(new Error('Browser disconnect failed'));
+          } finally { clearTimeout(timer); }
+        }
+      }
     });
     return { submitted: true, session_id: sessionId };
   } catch (error) {
-    const name = error instanceof Error ? error.constructor.name : 'UnknownError';
-    const category = /^[A-Za-z][A-Za-z0-9]{0,63}$/.test(name) ? name : 'Error';
-    throw new Error(`Vault form failed: ${stage} [${category}] (session ${sessionId})`);
+    throw safeError(error);
   }
 }

@@ -1,10 +1,15 @@
 import asyncio
 import json
 import os
+import sys
 
 from notte_sdk import NotteClient
 from onepassword import Client, Secrets
-from playwright.async_api import Page
+from playwright.async_api import Page, async_playwright
+
+
+class VaultFormError(RuntimeError):
+    pass
 
 
 async def fill_login(page: Page, username_ref: str, password_ref: str) -> None:
@@ -34,24 +39,45 @@ async def run_demo() -> dict:
     client = NotteClient()
     session_id = "not-created"
     stage = "create browser"
+
+    def safe_error(error):
+        if isinstance(error, VaultFormError):
+            return error
+        return VaultFormError(f"Vault form failed: {stage} [{type(error).__name__}] (session {session_id})")
+
     try:
-        async with client.Session(max_duration_minutes=3) as session:
+        with client.Session(max_duration_minutes=3) as session:
             session_id = session.session_id
             stage = "open test form"
-            page = await session.apage
-            await page.goto("about:blank")
-            await page.set_content(
-                "<form onsubmit=\"event.preventDefault();document.querySelector('output').textContent='Submitted'\">"
-                '<label>Username<input name="username" autocomplete="off"></label>'
-                '<label>Password<input name="password" type="password" autocomplete="off"></label>'
-                "<button>Sign in</button><output></output></form>"
-            )
-            stage = "resolve and fill login"
-            await fill_login(page, os.environ["OP_USERNAME_REF"], os.environ["OP_PASSWORD_REF"])
-            await page.locator("output").filter(has_text="Submitted").wait_for()
+            try:
+                async with async_playwright() as driver:
+                    browser = await driver.chromium.connect_over_cdp(session.cdp_url())
+                    try:
+                        page = browser.contexts[0].pages[0]
+                        await page.goto("about:blank")
+                        await page.set_content(
+                            "<form onsubmit=\"event.preventDefault();document.querySelector('output').textContent='Submitted'\">"
+                            '<label>Username<input name="username" autocomplete="off"></label>'
+                            '<label>Password<input name="password" type="password" autocomplete="off"></label>'
+                            "<button>Sign in</button><output></output></form>"
+                        )
+                        stage = "resolve and fill login"
+                        await fill_login(page, os.environ["OP_USERNAME_REF"], os.environ["OP_PASSWORD_REF"])
+                        await page.locator("output").filter(has_text="Submitted").wait_for()
+                    finally:
+                        failed = sys.exception() is not None
+                        if not failed:
+                            stage = "disconnect browser"
+                        try:
+                            await asyncio.wait_for(browser.close(), timeout=5)
+                        except Exception:
+                            if not failed:
+                                raise RuntimeError("Browser disconnect failed") from None
+            except Exception as error:
+                raise safe_error(error) from None
         return {"submitted": True, "session_id": session_id}
     except Exception as error:
-        raise RuntimeError(f"Vault form failed: {stage} [{type(error).__name__}] (session {session_id})") from None
+        raise safe_error(error) from None
 
 
 if __name__ == "__main__":

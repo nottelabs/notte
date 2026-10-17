@@ -78,3 +78,39 @@ for (const language of ['python', 'typescript']) {
     });
   }
 }
+
+for (const language of ['python', 'typescript']) {
+  for (const mode of ['reject', 'timeout']) {
+    test(`${language}: native authentication failure survives ${mode} disconnect`, { skip: !process.env.NOTTE_API_KEY, timeout: 90_000 }, async () => {
+      const python = process.env.NOTTE_ONEPASSWORD_PYTHON;
+      if (language === 'python') assert.ok(python, 'Set NOTTE_ONEPASSWORD_PYTHON');
+      const command = language === 'python' ? python! : process.execPath;
+      const args = language === 'python' ? ['../python/cleanup_case.py', mode] : ['test/cleanup-case.ts', mode];
+      let output = '', failed = false;
+      try {
+        const result = await execute(command, args, { cwd, timeout: 60_000, env: {
+          ...process.env,
+          OP_SERVICE_ACCOUNT_TOKEN: 'test-invalid-token', // pragma: allowlist secret
+          OP_USERNAME_REF: 'op://NotteIntegrationTests/BrowserLogin/username',
+          OP_PASSWORD_REF: 'op://NotteIntegrationTests/BrowserLogin/password', // pragma: allowlist secret
+        } });
+        output = result.stdout + result.stderr;
+      } catch (error) {
+        failed = true;
+        const child = error as { stdout?: string; stderr?: string };
+        output = (child.stdout ?? '') + (child.stderr ?? '');
+      }
+      const records = output.split(/\r?\n/).flatMap(line => {
+        try { return [JSON.parse(line) as { session_id?: string; closed?: boolean }]; } catch { return []; }
+      });
+      const id = records.find(record => record.session_id)?.session_id;
+      try {
+        assert.equal(failed, false, 'Native cleanup case failed; SDK output withheld');
+        assert.ok(id && records.some(record => record.closed === true));
+        for (const value of [process.env.NOTTE_API_KEY!, 'PRIVATE_', 'test-invalid-token', 'wss://']) {
+          assert.ok(!output.includes(value), 'Private data reached recipe output');
+        }
+      } finally { if (id) await assertClosed(id); }
+    });
+  }
+}
