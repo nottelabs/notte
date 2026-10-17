@@ -245,6 +245,9 @@ def test_native_examples_have_one_existing_required_owner() -> None:
     assert not (WORKFLOWS / "selenium-integration.yml").exists()
     jobs = workflow("paired-sdk-examples.yml")["jobs"]
     assert set(jobs) == {"changes", "checks", "live"}
+    assert jobs["live"]["strategy"]["matrix"] == {"shard": "${{ fromJSON(needs.changes.outputs.scope).paired_shards }}"}
+    assert jobs["live"]["env"]["NOTTE_DOCS_SHARD"] == "${{ matrix.shard }}"
+    assert jobs["live"]["timeout-minutes"] == 20
     assert set(jobs["live"]["needs"]) == {"changes", "checks"}
     snippet = next(s for s in jobs["live"]["steps"] if "test/docs-snippets.integration.test.ts" in s.get("run", ""))
     assert snippet["if"] == "fromJSON(needs.changes.outputs.scope).paired_snippets_live"

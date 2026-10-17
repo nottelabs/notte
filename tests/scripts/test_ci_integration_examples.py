@@ -78,6 +78,17 @@ def test_shards_partition_projects_once(workspace: Path) -> None:
     assert calls(workspace) == []
 
 
+@pytest.mark.parametrize("shard", ["0/1", "2/1", "1/0", "bad", "1/2/3"])
+def test_invalid_shard_cli_fails_before_credentials_or_installs(
+    workspace: Path, monkeypatch: pytest.MonkeyPatch, shard: str
+) -> None:
+    monkeypatch.setattr("sys.argv", ["runner", "live", "--shard", shard])
+    monkeypatch.delenv("NOTTE_API_KEY")
+    with pytest.raises(ValueError):
+        runner.main()
+    assert calls(workspace) == []
+
+
 def test_live_resolves_both_sdks_and_limits_credentials(workspace: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("INTEGRATION_EXAMPLES", '["alpha"]')
     monkeypatch.setattr("sys.argv", ["runner", "live"])

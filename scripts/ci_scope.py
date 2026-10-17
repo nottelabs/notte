@@ -444,6 +444,7 @@ def select(event: str, base: str, head: str) -> dict[str, bool | str | list[str]
     if event == "schedule":
         # Preserve Python's live-only periodic run; Node keeps its full periodic check.
         selected -= {"python_unit", "python_docs", "cli_contract"}
+    paired_count = max(2 if paired_snippets_live else 1, (len(integration_examples) + 1) // 2)
     return {
         **{name: name in selected for name in sorted(ALL)},
         "full": full,
@@ -454,6 +455,7 @@ def select(event: str, base: str, head: str) -> dict[str, bool | str | list[str]
         "head": head,
         "integration_examples": sorted(integration_examples),
         "paired_snippets_live": paired_snippets_live,
+        "paired_shards": [f"{index}/{paired_count}" for index in range(1, paired_count + 1)],
     }
 
 

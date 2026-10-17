@@ -94,11 +94,11 @@ jobs:
       fail-fast: false
       max-parallel: 1
       matrix:
-        shard: [1, 2]
+        shard: ${{ fromJSON(needs.changes.outputs.scope).paired_shards }}
     env:
       NOTTE_API_URL: https://us-staging.notte.cc
       NOTTE_DOCS_LIVE: '1'
-      NOTTE_DOCS_SHARD: ${{ matrix.shard }}/2
+      NOTTE_DOCS_SHARD: ${{ matrix.shard }}
       VITEST_INTEGRATION: '1'
     concurrency:
       group: notte-live-api-${{ github.ref }}

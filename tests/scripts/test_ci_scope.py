@@ -14,6 +14,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from scripts import ci_integration_examples as runner
 from scripts import ci_scope as ci
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -313,6 +314,46 @@ class RoutingTests(unittest.TestCase):
 
 
 class GitHistoryTests(unittest.TestCase):
+    def test_adaptive_cli_matrix_partitions_39_native_profiles_without_empty_owners(self) -> None:
+        registry = {f"profile-{index:02}": "NOTTE_FIXTURE_PYTHON" for index in range(39)}
+        before = self.commit({"scripts/integration_examples.json": "{}\n"})
+        head = self.commit({"scripts/integration_examples.json": json.dumps(registry)})
+        script = self.repo / "scripts/ci_scope.py"
+        script.write_text((ROOT / "scripts/ci_scope.py").read_text())
+        output = subprocess.check_output(
+            [sys.executable, str(script), "--event", "push", "--base", before, "--head", head],
+            cwd=self.repo,
+            text=True,
+        )
+        scope = json.loads(output)
+        self.assertTrue(scope["paired_live"])
+        self.assertFalse(scope["paired_snippets_live"])
+        with patch.object(runner, "REGISTRY", self.repo / "scripts/integration_examples.json"):
+            with patch.dict(os.environ, {"INTEGRATION_EXAMPLES": json.dumps(scope["integration_examples"])}):
+                assignments = [runner.projects(shard) for shard in scope["paired_shards"]]
+        self.assertEqual(len(assignments), 20)
+        self.assertTrue(all(1 <= len(group) <= 2 for group in assignments))
+        self.assertEqual(sorted(name for group in assignments for name, _ in group), sorted(registry))
+
+    def test_native_only_uses_one_owner_but_snippets_keep_two(self) -> None:
+        before = self.commit({"scripts/integration_examples.json": "{}\n"})
+        head = self.commit({"scripts/integration_examples.json": '{"openai-computer-use":"NOTTE_COMPUTER_USE_PYTHON"}'})
+        scope = self.scope("push", before, head)
+        self.assertTrue(scope["paired_live"])
+        self.assertEqual(scope["paired_shards"], ["1/1"])
+        snippet = self.commit({"docs/src/testers/sessions/example.ts": "export const example = true;\n"})
+        scope = self.scope("push", head, snippet)
+        self.assertTrue(scope["paired_snippets_live"])
+        self.assertEqual(scope["paired_shards"], ["1/2", "2/2"])
+
+    def test_zero_native_and_prose_diffs_do_not_start_adaptive_live_jobs(self) -> None:
+        for head in (self.base, self.commit({"docs/src/pricing.mdx": "Updated pricing prose\n"})):
+            with self.subTest(head=head):
+                scope = self.scope("push", self.base, head)
+                self.assertFalse(scope["paired_live"])
+                self.assertEqual(scope["integration_examples"], [])
+                self.assertEqual(scope["paired_shards"], ["1/1"])
+
     def setUp(self) -> None:
         self.directory = tempfile.TemporaryDirectory()
         self.addCleanup(self.directory.cleanup)
