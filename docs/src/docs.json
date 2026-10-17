@@ -403,6 +403,13 @@
             ]
           },
           {
+            "group": "Databases",
+            "icon": "database",
+            "pages": [
+              "integrations/mongodb"
+            ]
+          },
+          {
             "group": "Credentials",
             "icon": "key",
             "pages": [
