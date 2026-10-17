@@ -11,7 +11,7 @@ export AI_GATEWAY_API_KEY=your_gateway_key
 npm start -- 'Read the title of https://example.com'
 ```
 
-Set `FX_MODEL` to choose a supported Gateway model. Calls use a 90-second deadline; a three-minute Notte limit bounds interrupted processes. The engine and browser connection close in `finally`.
+Set `FX_MODEL` to choose a supported Gateway model. Calls use a 90-second deadline; a three-minute Notte limit bounds interrupted processes. Browser disconnect waits are limited to five seconds, and cancelled tool cleanup finishes before the engine and session close.
 
 ## Verify without model charges
 
@@ -21,7 +21,7 @@ npm test
 NOTTE_FX_LIVE=1 NOTTE_API_URL=https://us-dev.notte.cc npm test
 ```
 
-The tests run the actual native fx engine against a scripted model transport. They verify its browser tool call, observed title, safe navigation errors, provider HTTP 401 without retry, and authoritative GET closure of each owned browser. The live command requires only Notte credentials. Paid model turns and hosted deployment remain unverified.
+The tests run the actual native fx engine against a scripted model transport. They verify its browser tool call, observed title, safe navigation errors, cancellation, disconnect failures, provider HTTP 401 without retry, and authoritative GET closure of each owned browser. The live command requires only Notte credentials. Paid model turns and hosted deployment remain unverified.
 
 ## Terminal fx
 

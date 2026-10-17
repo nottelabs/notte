@@ -6,6 +6,7 @@ import { pathToFileURL } from 'node:url';
 export async function run(task: string, options: { provider?: FxCustomProviderDefinition; model?: string; fetch?: FxFetch } = {}) {
   return new NotteClient().Session({ max_duration_minutes: 3 }).use(async session => {
     try {
+      const toolCompletions: Promise<void>[] = [];
       const engine = await createFxEngine({
         ...(options.provider ? { provider: options.provider } : { apiKey: process.env.AI_GATEWAY_API_KEY! }),
         model: options.model ?? process.env.FX_MODEL ?? 'anthropic/claude-haiku-5.5',
@@ -17,16 +18,51 @@ export async function run(task: string, options: { provider?: FxCustomProviderDe
           description: 'Read the title of a page in this request\'s Notte browser.',
           inputSchema: { type: 'object', properties: { url: { type: 'string' } }, required: ['url'], additionalProperties: false },
           async execute({ url }: { url: string }, ctx) {
+            let completed!: () => void;
+            toolCompletions.push(new Promise<void>(resolve => { completed = resolve; }));
             try {
               ctx.signal.throwIfAborted();
               if (!['http:', 'https:'].includes(new URL(url).protocol)) throw new Error('Use an HTTP or HTTPS URL');
-              const browser = await chromium.connectOverCDP(await session.cdpUrl());
+              const cdpUrl = await session.cdpUrl();
+              ctx.signal.throwIfAborted();
+              const browser = await chromium.connectOverCDP(cdpUrl);
+              let closing: Promise<void> | undefined;
+              const close = () => closing ??= (async () => {
+                let timer: ReturnType<typeof setTimeout> | undefined;
+                try {
+                  await Promise.race([browser.close(), new Promise<never>((_, reject) => {
+                    timer = setTimeout(() => reject(new Error('Browser disconnect timed out')), 5_000);
+                  })]);
+                } finally { clearTimeout(timer); }
+              })();
+              let abort!: () => void;
+              const cancelled = new Promise<never>((_, reject) => {
+                abort = () => { void close().catch(() => {}); reject(ctx.signal.reason); };
+                ctx.signal.addEventListener('abort', abort, { once: true });
+              });
+              let failed = false;
               try {
-                const page = await browser.contexts()[0].newPage();
-                await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 });
-                return { title: await page.title() };
-              } finally { await browser.close(); }
+                ctx.signal.throwIfAborted();
+                const work = (async () => {
+                  const page = await browser.contexts()[0].newPage();
+                  ctx.signal.throwIfAborted();
+                  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+                  ctx.signal.throwIfAborted();
+                  const title = await page.title();
+                  ctx.signal.throwIfAborted();
+                  return { title };
+                })();
+                return await Promise.race([work, cancelled]);
+              } catch (error) {
+                failed = true;
+                throw error;
+              } finally {
+                ctx.signal.removeEventListener('abort', abort);
+                try { await close(); }
+                catch { if (!failed) throw new Error('Browser disconnect failed'); }
+              }
             } catch { throw new Error('Notte page navigation failed'); }
+            finally { completed(); }
           },
         }],
       });
@@ -37,7 +73,11 @@ export async function run(task: string, options: { provider?: FxCustomProviderDe
         const result = await turn.result;
         if (result.stopReason !== 'end_turn') throw new Error('The fx turn did not complete');
         return { answer, session_id: session.getId()! };
-      } finally { await engine.close(); }
+      } finally {
+        // A cancelled native turn can finish before its host tool's cleanup.
+        await Promise.all(toolCompletions);
+        await engine.close();
+      }
     } catch {
       throw new Error(`fx browser task failed (session ${session.getId()})`);
     }
