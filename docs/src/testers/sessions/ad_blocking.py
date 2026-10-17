@@ -12,4 +12,6 @@ with client.Session() as default_session:
 with client.Session(block_ads=False) as session:
     session.execute(type="goto", url="https://example.com")
 
-results = [default_session.status().status, session.status().status]
+statuses = [default_session.status(), session.status()]
+results = [status.status for status in statuses]
+session_ids = [status.session_id for status in statuses]

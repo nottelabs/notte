@@ -356,8 +356,10 @@
               "integrations/crewai",
               "integrations/agno",
               "integrations/google-adk",
+              "integrations/openai-agents",
               "integrations/vercel-ai-sdk",
               "integrations/mastra",
+              "integrations/inngest-agentkit",
               "integrations/openclaw",
               "integrations/hermes",
               "integrations/stagehand"
@@ -367,7 +369,8 @@
             "group": "Workflow Automation",
             "icon": "diagram-project",
             "pages": [
-              "integrations/n8n"
+              "integrations/n8n",
+              "integrations/temporal"
             ]
           },
           {
