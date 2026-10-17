@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 import { setTimeout as sleep } from 'node:timers/promises';
+import { NotteClient } from 'notte-sdk';
 import { repair } from '../repair.ts';
 
 const source = JSON.parse(await readFile(new URL('../fixtures/selectors.json', import.meta.url), 'utf8'));
@@ -42,22 +43,42 @@ for (const hostname of ['bücher.invalid', 'xn--bcher-kva.invalid', 'faß.invali
   });
 }
 
-test('IDN normalization still refuses a different origin', { timeout: 110_000 }, async () => {
-  const document = { ...structuredClone(source), url: 'https://faß.invalid/start' };
-  let id: string;
-  let message: string;
-  try {
-    await repair(Buffer.from(JSON.stringify(document)), { fixtureRedirect: 'https://fass.invalid/start' });
-    assert.fail('Expected origin refusal');
-  } catch (error) {
-    assert.ok(error instanceof Error);
-    message = error.message;
-    id = error.message.match(/session ([a-f0-9-]{36})/)![1];
-  }
-  await closed(id);
-  console.log(`IDN foreign origin: owned browser ${id} independently closed`);
-  assert.match(message, /refused: origin/);
-});
+for (const suppressFrameEvent of [false, true]) {
+  test(`IDN normalization refuses a different origin${suppressFrameEvent ? ' before a frame event' : ''}`, { timeout: 110_000 }, async (context) => {
+    if (suppressFrameEvent) {
+      const originalSession = NotteClient.prototype.Session;
+      context.mock.method(NotteClient.prototype, 'Session', function (this: NotteClient, ...args: Parameters<typeof originalSession>) {
+        const session = originalSession.apply(this, args);
+        const originalPage = session.page.bind(session);
+        context.mock.method(session, 'page', async (...pageArgs: Parameters<typeof originalPage>) => {
+          const page = await originalPage(...pageArgs);
+          // A failed redirect need not emit its error-page frame event before refusal.
+          context.mock.method(page, 'on', new Proxy(page.on, {
+            apply(target, receiver, args) {
+              return args[0] === 'framenavigated' ? receiver : Reflect.apply(target, receiver, args);
+            },
+          }));
+          return page;
+        });
+        return session;
+      });
+    }
+    const document = { ...structuredClone(source), url: 'https://faß.invalid/start' };
+    let id: string;
+    let message: string;
+    try {
+      await repair(Buffer.from(JSON.stringify(document)), { fixtureRedirect: 'https://fass.invalid/start' });
+      assert.fail('Expected origin refusal');
+    } catch (error) {
+      assert.ok(error instanceof Error);
+      message = error.message;
+      id = error.message.match(/session ([a-f0-9-]{36})/)![1];
+    }
+    await closed(id);
+    console.log(`IDN foreign origin: owned browser ${id} independently closed`);
+    assert.match(message, /refused: origin/);
+  });
+}
 
 for (const [mode, fixtureHtml] of Object.entries(cases)) {
   test(`real DOM ${mode} and owned browser cleanup`, { timeout: 110_000 }, async () => {

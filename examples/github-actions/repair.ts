@@ -38,6 +38,12 @@ export async function repair(source: Buffer, options: { fixtureHtml?: string; fi
         signal.throwIfAborted();
         const expectedOrigin = new URL(map.url).origin;
         let changedOrigin = false;
+        // Routing only intercepts the first URL of an HTTP redirect.
+        page.on('request', (request) => {
+          if (request.isNavigationRequest() && request.frame() === page!.mainFrame() && new URL(request.url()).origin !== expectedOrigin) {
+            changedOrigin = true; stage = 'origin';
+          }
+        });
         page.on('framenavigated', (frame) => {
           if (frame === page!.mainFrame() && new URL(frame.url()).origin !== expectedOrigin) {
             changedOrigin = true; stage = 'origin';
