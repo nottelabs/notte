@@ -24,7 +24,7 @@ def projects(shard: str) -> list[tuple[str, str]]:
     for name in cast(list[object], selection):
         if not isinstance(name, str) or name not in registry or not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", name):
             raise ValueError("Unknown integration example")
-        if registry[name] not in {"gemini-root", "selenium-root"} and not re.fullmatch(
+        if registry[name] not in {"gemini-root", "selenium-root", "root-unittest"} and not re.fullmatch(
             r"NOTTE_[A-Z0-9_]+_PYTHON", registry[name]
         ):
             raise ValueError("Invalid integration registry convention")
@@ -37,6 +37,13 @@ def projects(shard: str) -> list[tuple[str, str]]:
 
 def run(command: list[str], directory: Path, env: dict[str, str]) -> None:
     _ = subprocess.run(command, cwd=directory, env=env, check=True)
+
+
+def root_tests(project: Path) -> list[str]:
+    tests = sorted(path.name for path in project.glob("test_*.py") if path.is_file())
+    if not tests:
+        raise ValueError("root-unittest requires root test_*.py modules")
+    return tests
 
 
 def check(project: Path, env: dict[str, str], convention: str = "") -> Path:
@@ -75,11 +82,25 @@ def check(project: Path, env: dict[str, str], convention: str = "") -> Path:
             run([str(python), "-m", "unittest", "-v", "test_agent.py"], project, offline)
         run(["npm", "test"], project, offline)
         return python
+    tests = root_tests(project) if convention == "root-unittest" else []
     run(["uv", "sync", "--locked"], project, env)
     run(["uv", "pip", "check", "--python", str(python)], project, env)
-    run([str(python), "-m", "compileall", "-q", "python"], project, env)
+    sources = sorted(path.name for path in project.glob("*.py") if path.is_file()) if tests else ["python"]
+    run([str(python), "-m", "compileall", "-q", *sources], project, env)
     run(["npm", "ci"], project / "typescript", env)
     run(["npm", "run", "typecheck"], project / "typescript", env)
+    if tests:
+        prefix = f"NOTTE_{project.name.replace('-', '_').upper()}"
+        offline = {
+            **env,
+            f"{prefix}_LIVE": "0",
+            f"{prefix}_MODEL_LIVE": "0",
+            f"{prefix}_EXPORT_LIVE": "0",
+            "LANGSMITH_TRACING": "false",
+            "DISABLE_TELEMETRY": "true",
+        }
+        run([str(python), "-m", "unittest", "-v", *tests], project, offline)
+        run(["npm", "run", "test:live"], project / "typescript", offline)
     return python
 
 
@@ -108,6 +129,9 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
     elif python_env == "selenium-root":
         env = {name: value for name, value in env.items() if name not in CREDENTIALS - {"NOTTE_API_KEY"}}
         env = {**env, "NOTTE_SELENIUM_LIVE": "1", "DISABLE_TELEMETRY": "true"}
+    elif python_env == "root-unittest":
+        prefix = f"NOTTE_{project.name.replace('-', '_').upper()}"
+        env = {**env, f"{prefix}_LIVE": "1", "LANGSMITH_TRACING": "false", "DISABLE_TELEMETRY": "true"}
     else:
         env = {**env, python_env: str(python)}
     typescript = project if root_layout else project / "typescript"
@@ -143,6 +167,9 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
         elif root_layout:
             run([str(python), "-m", "unittest", "-v", "test_agent.py"], project, env)
             run(["npm", "test"], project, env)
+        elif python_env == "root-unittest":
+            run([str(python), "-m", "unittest", "-v", *root_tests(project)], project, env)
+            run(["npm", "run", "test:live"], typescript, env)
         else:
             run([str(python), "-m", "unittest", "discover", "-s", "python", "-p", "test_live.py", "-v"], project, env)
             run(["npm", "run", "test:live"], typescript, env)
@@ -156,7 +183,12 @@ def main() -> None:
     selected = projects(args.shard)
     if args.phase == "live" and selected and not os.environ.get("NOTTE_API_KEY"):
         raise ValueError("NOTTE_API_KEY is required for native browser checks")
-    install_env = {name: value for name, value in os.environ.items() if name not in CREDENTIALS}
+    install_env = {
+        name: "0" if name.startswith("NOTTE_") and name.endswith("_LIVE") else value
+        for name, value in os.environ.items()
+        if name not in CREDENTIALS
+    }
+    install_env.update(LANGSMITH_TRACING="false", DISABLE_TELEMETRY="true")
     for name, python_env in selected:
         project = ROOT / "examples" / name
         print(f"Checking native integration: {name}", flush=True)

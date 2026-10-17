@@ -29,7 +29,6 @@ def test_shared_queue_only_contains_staging_test_jobs() -> None:
         ("docs-tests-cicd.yml", "execution"),
         ("paired-sdk-examples.yml", "live"),
         ("readme-check.yml", "live"),
-        ("deepagents-integration.yml", "browser"),
         ("agent-browser-integration.yml", "live"),
         ("trigger-integration.yml", "browser-handler"),
         ("braintrust-integration.yml", "live"),
@@ -246,6 +245,7 @@ def test_required_gate_waits_for_all_families_and_fails_closed(
 
 def test_native_examples_have_one_existing_required_owner() -> None:
     assert not (WORKFLOWS / "openai-computer-use-integration.yml").exists()
+    assert not (WORKFLOWS / "deepagents-integration.yml").exists()
     assert not (WORKFLOWS / "gemini-computer-use-integration.yml").exists()
     assert not (WORKFLOWS / "selenium-integration.yml").exists()
     jobs = workflow("paired-sdk-examples.yml")["jobs"]
@@ -268,6 +268,9 @@ def test_native_examples_have_one_existing_required_owner() -> None:
             assert '--shard "$NOTTE_DOCS_SHARD"' in step["run"]
             for key in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY"):
                 assert "github.ref == 'refs/heads/main' && github.event_name != 'pull_request'" in step["env"][key]
+            model = step["env"]["NOTTE_DEEPAGENTS_MODEL_LIVE"]
+            assert "github.ref == 'refs/heads/main' && github.event_name != 'pull_request'" in model
+            assert "secrets.ANTHROPIC_API_KEY != '' && '1' || '0'" in model
 
 
 def test_scoped_checks_fetch_history_only_during_authenticated_checkout() -> None:
