@@ -86,6 +86,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 - [Browser Use](https://docs.notte.cc/integrations/browser-use.md): Run Browser Use agents on Notte cloud browsers over CDP
 - [LangChain](https://docs.notte.cc/integrations/langchain.md): Give LangChain and LangGraph agents a browser with the Notte MCP server
+- [Deep Agents](https://docs.notte.cc/integrations/deepagents.md): Give LangChain Deep Agents a Notte cloud browser.
 - [crewAI](https://docs.notte.cc/integrations/crewai.md): Give crewAI agents a browser with the Notte MCP server
 - [Agno](https://docs.notte.cc/integrations/agno.md): Give Agno agents a browser with the Notte MCP server
 - [Google ADK](https://docs.notte.cc/integrations/google-adk.md): Give Google ADK agents a browser with the Notte MCP server
