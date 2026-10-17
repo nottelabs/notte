@@ -8,10 +8,11 @@ const fakeToken = "valtown-offline-invocation-token"; // pragma: allowlist secre
 async function closed(id: string) {
   const root = Deno.env.get("NOTTE_API_URL")!;
   const key = Deno.env.get("NOTTE_API_KEY")!;
-  for (let attempt = 0; attempt < 30; attempt++) {
+  const signal = AbortSignal.timeout(15_000);
+  while (!signal.aborted) {
     const response = await fetch(`${root}/sessions/${id}`, {
       headers: { Authorization: `Bearer ${key}` },
-      signal: AbortSignal.timeout(15_000),
+      signal,
     });
     assert.ok(response.ok, `Session status returned HTTP ${response.status}`);
     if ((await response.json()).status === "closed") return;

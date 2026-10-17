@@ -18,6 +18,7 @@ permissions:
 jobs:
   static:
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -33,7 +34,7 @@ jobs:
         working-directory: examples/valtown
   browser:
     needs: static
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    if: github.actor != 'dependabot[bot]' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     concurrency:
@@ -57,4 +58,6 @@ jobs:
           NOTTE_API_URL: https://us-staging.notte.cc
           NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
           NOTTE_VALTOWN_LIVE: '1'
-        run: npx --yes deno@2.9.6 task test:live
+        run: |
+          test -n "$NOTTE_API_KEY"
+          npx --yes deno@2.9.6 task test:live
