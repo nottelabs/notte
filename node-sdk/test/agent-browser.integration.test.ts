@@ -1,4 +1,5 @@
 import { execFile } from 'node:child_process';
+import { appendFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { describe, expect, it } from 'vitest';
@@ -45,16 +46,23 @@ describe.skipIf(process.env.NOTTE_AGENT_BROWSER_LIVE !== '1')('agent-browser lif
     const client = new NotteClient();
     let sessionId = '';
     let completedActions = false;
+    function journal(event: 'claimed' | 'closed') {
+      const entry = JSON.stringify({ integration: 'agent-browser', mode, session_id: sessionId, event });
+      const path = process.env.NOTTE_AGENT_BROWSER_OWNERSHIP_JOURNAL;
+      if (path) appendFileSync(path, `${entry}\n`, { mode: 0o600, flush: true });
+      console.info(entry);
+    }
     try {
       await expect(client.Session().use(async (session) => {
         sessionId = session.getId()!;
-        const command = ['--session', `notte-${sessionId}`, '--json'];
+        journal('claimed');
+        let cliSession = `notte-${sessionId}`;
         const env = { ...process.env, AGENT_BROWSER_CDP: await session.cdpUrl() };
         let phase = 'navigation';
         async function browser(...args: string[]) {
           let diagnostic = '';
           try {
-            const { stdout } = await execute('agent-browser', [...command, ...args], { env, timeout: 120_000 });
+            const { stdout } = await execute('agent-browser', ['--session', cliSession, '--json', ...args], { env, timeout: 120_000 });
             diagnostic = stdout;
             const response = JSON.parse(stdout);
             if (!response.success) throw new Error('Unsuccessful CLI command');
@@ -67,7 +75,11 @@ describe.skipIf(process.env.NOTTE_AGENT_BROWSER_LIVE !== '1')('agent-browser lif
               && detail.includes('#missing-owned-fixture')
               && /timeout|timed out|no (?:such )?element|not found/i.test(detail)
               && !/websocket|econn|connection|target closed|session.*closed|cdp.*(?:error|closed)/i.test(detail);
-            throw new Error(`agent-browser ${args[0]} failed (${phase}; ${missing ? 'owned selector missing' : 'command error'}; raw output withheld)`);
+            const category = /econn|connection (?:reset|refused|closed)|broken pipe|failed to read.*response|daemon.*(?:closed|exit)/i.test(detail)
+              ? 'CLI transport ended'
+              : /tab_gone|target.*(?:closed|not found)|no (?:active )?(?:page|tab)/i.test(detail)
+                ? 'owned tab unavailable' : 'command error';
+            throw new Error(`agent-browser ${args[0]} failed (${phase}; ${missing ? 'owned selector missing' : category}; session ${sessionId}; raw output withheld)`);
           }
         }
         let failed = false;
@@ -81,11 +93,19 @@ describe.skipIf(process.env.NOTTE_AGENT_BROWSER_LIVE !== '1')('agent-browser lif
           await browser('click', '#save');
           phase = 'read-after-click';
           expect((await browser('get', 'text', '#result')).text).toBe('Saved Ada');
+          const tabs = (await browser('tab', 'list')).tabs as Array<{ active: boolean; targetId: string }>;
+          const ownedTarget = tabs.find(tab => tab.active)?.targetId;
+          if (!ownedTarget) throw new Error('The native CLI did not identify the owned target');
           phase = 'disconnect';
           await browser('close');
           expect((await session.status()).status).toBe('active');
+          // A separate CLI client avoids coupling attachment to the old daemon's shutdown.
+          cliSession = `notte-${sessionId}-reconnect`;
+          phase = 'select-owned-target-after-reconnect';
+          await browser('tab', ownedTarget);
           phase = 'read-after-reconnect';
           expect((await browser('get', 'text', '#result')).text).toBe('Saved Ada');
+          expect((await session.status()).status).toBe('active');
           completedActions = true;
           if (mode === 'native') {
             phase = 'missing-selector';
@@ -103,7 +123,10 @@ describe.skipIf(process.env.NOTTE_AGENT_BROWSER_LIVE !== '1')('agent-browser lif
       expect(completedActions, 'The negative assertion must follow real actions and reconnect').toBe(true);
       expect(sessionId).toBeTruthy();
     } finally {
-      if (sessionId) await expectSessionClosed(client, sessionId, 'agent-browser application failure');
+      if (sessionId) {
+        await expectSessionClosed(client, sessionId, `agent-browser ${mode} failure`);
+        journal('closed');
+      }
     }
   }, 200_000);
 });

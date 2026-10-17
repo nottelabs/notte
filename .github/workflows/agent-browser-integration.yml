@@ -86,9 +86,16 @@ jobs:
         working-directory: node-sdk
         env:
           NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
+          NOTTE_AGENT_BROWSER_OWNERSHIP_JOURNAL: ${{ runner.temp }}/agent-browser-owned.jsonl
         run: |
           test -n "$NOTTE_API_KEY" || { echo 'Set the Notte CI API key'; exit 1; }
           export NOTTE_DOCS_PYTHON="$GITHUB_WORKSPACE/.venv/bin/python"
           "$NOTTE_DOCS_PYTHON" -m unittest discover -s ../tests/docs -p test_agent_browser_recipe.py
           VITEST_INTEGRATION='' npx vitest run test/agent-browser.recipe.test.ts
           npx vitest run test/agent-browser.integration.test.ts
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: agent-browser-ownership
+          path: ${{ runner.temp }}/agent-browser-owned.jsonl
+          if-no-files-found: ignore
