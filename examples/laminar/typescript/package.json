@@ -1,0 +1,21 @@
+{
+  "name": "notte-laminar-example",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "start": "node src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test:live": "node --test test/laminar.live.test.ts"
+  },
+  "dependencies": {
+    "@lmnr-ai/lmnr": "0.8.51",
+    "notte-sdk": "1.9.7",
+    "playwright-core": "1.63.0"
+  },
+  "devDependencies": {
+    "@opentelemetry/sdk-trace-base": "2.12.0",
+    "@types/node": "24.10.0",
+    "typescript": "6.0.3"
+  }
+}

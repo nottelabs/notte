@@ -1,0 +1,23 @@
+{
+  "name": "notte-selenium-example",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "start": "node src/main.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test test/bridge.test.ts",
+    "test:live": "node --test test/selenium.live.test.ts"
+  },
+  "dependencies": {
+    "notte-sdk": "1.9.7",
+    "selenium-webdriver": "4.51.0",
+    "ws": "8.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/selenium-webdriver": "^4.35.5",
+    "@types/ws": "^8.18.1",
+    "typescript": "^5.9.3"
+  }
+}
