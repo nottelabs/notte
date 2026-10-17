@@ -1,0 +1,109 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/integrations/agent_browser.py */}
+
+<CodeGroup>
+
+```python notte_agent_browser.py
+import json
+import os
+import subprocess
+from typing import Any
+
+from notte_sdk import NotteClient
+
+client = NotteClient()
+with client.Session() as session:
+    command = ["agent-browser", "--session", f"notte-{session.session_id}", "--json"]
+    names = (
+        "PATH",
+        "HOME",
+        "TMPDIR",
+        "TEMP",
+        "TMP",
+        "SystemRoot",
+        "WINDIR",
+        "PATHEXT",
+        "USERPROFILE",
+        "XDG_RUNTIME_DIR",
+    )
+    environment = {name: os.environ[name] for name in names if name in os.environ}
+    environment["AGENT_BROWSER_CDP"] = session.cdp_url()
+
+    def browser(*args: str) -> dict[str, Any]:
+        try:
+            completed = subprocess.run(
+                command + list(args), env=environment, capture_output=True, text=True, timeout=120, check=False
+            )
+            response = json.loads(completed.stdout)
+            if (
+                completed.returncode
+                or not isinstance(response, dict)
+                or response.get("success") is not True
+                or not isinstance(response.get("data"), dict)
+            ):
+                raise RuntimeError("agent-browser command failed")
+            return response["data"]
+        except (OSError, subprocess.SubprocessError, ValueError, TypeError, KeyError):
+            raise RuntimeError("agent-browser command failed") from None
+
+    failed = False
+    try:
+        _ = browser("open", "https://example.com")
+        title = browser("get", "title")["title"]
+        if not isinstance(title, str):
+            raise RuntimeError("The title was not returned")
+        print(title)
+        result = {"title": title, "session_id": session.session_id}
+    except BaseException:
+        failed = True
+        raise
+    finally:
+        try:
+            _ = browser("close")
+        except Exception:
+            if not failed:
+                raise
+```
+
+```typescript notte_agent_browser.ts
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import { NotteClient } from 'notte-sdk';
+
+const execute = promisify(execFile);
+
+const client = new NotteClient();
+export const result = await client.Session().use(async (session) => {
+  const command = ['--session', `notte-${session.getId()!}`, '--json'];
+  const names = ['PATH', 'HOME', 'TMPDIR', 'TEMP', 'TMP', 'SystemRoot', 'WINDIR', 'PATHEXT', 'USERPROFILE', 'XDG_RUNTIME_DIR'];
+  const env = Object.fromEntries(names.map(name => [name, process.env[name]]));
+  env.AGENT_BROWSER_CDP = await session.cdpUrl();
+  async function browser(...args: string[]): Promise<Record<string, unknown>> {
+    try {
+      const { stdout } = await execute('agent-browser', [...command, ...args], { env, timeout: 120_000 });
+      const response = JSON.parse(stdout);
+      if (!response?.success || typeof response.data !== 'object' || response.data === null) throw new Error('Unsuccessful CLI command');
+      return response.data;
+    } catch {
+      // CLI errors can include the authenticated CDP URL.
+      throw new Error('agent-browser command failed');
+    }
+  }
+  let failed = false;
+  try {
+    await browser('open', 'https://example.com');
+    const { title } = await browser('get', 'title');
+    if (typeof title !== 'string') throw new Error('The title was not returned');
+    console.log(title);
+    return { title, session_id: session.getId()! };
+  } catch (error) {
+    failed = true;
+    throw error;
+  } finally {
+    try { await browser('close'); }
+    catch (error) { if (!failed) throw error; }
+  }
+});
+```
+
+</CodeGroup>

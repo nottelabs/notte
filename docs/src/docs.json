@@ -369,7 +369,9 @@
             "icon": "diagram-project",
             "pages": [
               "integrations/n8n",
-              "integrations/temporal"
+              "integrations/trigger",
+              "integrations/temporal",
+              "integrations/github-actions"
             ]
           },
           {
@@ -385,6 +387,7 @@
             "pages": [
               "features/sessions/playwright",
               "features/sessions/puppeteer",
+              "integrations/agent-browser",
               "integrations/selenium"
             ]
           },
