@@ -377,6 +377,7 @@
             "group": "Observability",
             "icon": "chart-line",
             "pages": [
+              "integrations/braintrust",
               "integrations/laminar"
             ]
           },

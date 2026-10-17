@@ -21,18 +21,11 @@ def workflow(name: str) -> dict[str, Any]:
 
 def test_shared_queue_only_contains_staging_test_jobs() -> None:
     expected = {
-        ("claude-agents-integration.yml", "live"),
-        ("openai-agents-integration.yml", "live"),
-        ("github-actions-integration.yml", "live"),
         ("node-sdk-ci.yml", "integration-tests"),
         ("test-cicd.yml", "staging-and-live"),
         ("docs-tests-cicd.yml", "execution"),
         ("paired-sdk-examples.yml", "live"),
         ("readme-check.yml", "live"),
-        ("agent-browser-integration.yml", "live"),
-        ("trigger-integration.yml", "browser-handler"),
-        ("temporal-integration.yml", "browser-workflow"),
-        ("inngest-integration.yml", "live"),
     }
     queued = set()
     for path in WORKFLOWS.glob("*.yml"):
@@ -243,6 +236,10 @@ def test_required_gate_waits_for_all_families_and_fails_closed(
 
 
 def test_native_examples_have_one_existing_required_owner() -> None:
+    assert not (WORKFLOWS / "braintrust-integration.yml").exists()
+    for name in ("agent-browser", "claude-agents", "github-actions", "inngest", "openai-agents", "temporal", "trigger"):
+        assert not (WORKFLOWS / f"{name}-integration.yml").exists()
+    assert (WORKFLOWS / "selector-repair.yml").exists()
     assert not (WORKFLOWS / "openai-computer-use-integration.yml").exists()
     assert not (WORKFLOWS / "deepagents-integration.yml").exists()
     assert not (WORKFLOWS / "gemini-computer-use-integration.yml").exists()
@@ -250,6 +247,9 @@ def test_native_examples_have_one_existing_required_owner() -> None:
     assert not (WORKFLOWS / "laminar-integration.yml").exists()
     jobs = workflow("paired-sdk-examples.yml")["jobs"]
     assert set(jobs) == {"changes", "checks", "live"}
+    assert jobs["live"]["strategy"]["matrix"] == {"shard": "${{ fromJSON(needs.changes.outputs.scope).paired_shards }}"}
+    assert jobs["live"]["env"]["NOTTE_DOCS_SHARD"] == "${{ matrix.shard }}"
+    assert jobs["live"]["timeout-minutes"] == 20
     assert set(jobs["live"]["needs"]) == {"changes", "checks"}
     snippet = next(s for s in jobs["live"]["steps"] if "test/docs-snippets.integration.test.ts" in s.get("run", ""))
     assert snippet["if"] == "fromJSON(needs.changes.outputs.scope).paired_snippets_live"
@@ -266,11 +266,18 @@ def test_native_examples_have_one_existing_required_owner() -> None:
             assert "secrets." not in str(step)
         else:
             assert '--shard "$NOTTE_DOCS_SHARD"' in step["run"]
-            for key in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY"):
+            for key in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY", "BRAINTRUST_API_KEY"):
                 assert "github.ref == 'refs/heads/main' && github.event_name != 'pull_request'" in step["env"][key]
             model = step["env"]["NOTTE_DEEPAGENTS_MODEL_LIVE"]
             assert "github.ref == 'refs/heads/main' && github.event_name != 'pull_request'" in model
             assert "secrets.ANTHROPIC_API_KEY != '' && '1' || '0'" in model
+    artifact = next(step for step in jobs["live"]["steps"] if "upload-artifact@" in step.get("uses", ""))
+    assert artifact["if"] == "always()"
+    assert artifact["with"] == {
+        "name": "agent-browser-ownership",
+        "path": "${{ runner.temp }}/agent-browser-owned.jsonl",
+        "if-no-files-found": "ignore",
+    }
 
 
 def test_scoped_checks_fetch_history_only_during_authenticated_checkout() -> None:

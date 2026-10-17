@@ -94,11 +94,11 @@ jobs:
       fail-fast: false
       max-parallel: 1
       matrix:
-        shard: [1, 2]
+        shard: ${{ fromJSON(needs.changes.outputs.scope).paired_shards }}
     env:
       NOTTE_API_URL: https://us-staging.notte.cc
       NOTTE_DOCS_LIVE: '1'
-      NOTTE_DOCS_SHARD: ${{ matrix.shard }}/2
+      NOTTE_DOCS_SHARD: ${{ matrix.shard }}
       VITEST_INTEGRATION: '1'
     concurrency:
       group: notte-live-api-${{ github.ref }}
@@ -138,7 +138,10 @@ jobs:
           npx vitest run test/docs-snippets.integration.test.ts --retry 1
 
       - name: Execute native integration examples
-        if: github.actor != 'dependabot[bot]'
+        if: >-
+          github.actor != 'dependabot[bot]' ||
+          contains(fromJSON(needs.changes.outputs.scope).integration_examples, 'inngest') ||
+          contains(fromJSON(needs.changes.outputs.scope).integration_examples, 'temporal')
         env:
           INTEGRATION_EXAMPLES: ${{ toJSON(fromJSON(needs.changes.outputs.scope).integration_examples) }}
           NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
@@ -146,6 +149,14 @@ jobs:
           ANTHROPIC_API_KEY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.ANTHROPIC_API_KEY || '' }}
           NOTTE_DEEPAGENTS_MODEL_LIVE: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.ANTHROPIC_API_KEY != '' && '1' || '0' }}
           GEMINI_API_KEY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.GEMINI_API_KEY || '' }}
+          BRAINTRUST_API_KEY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.BRAINTRUST_API_KEY || '' }}
+          BRAINTRUST_PROJECT: notte-integration-tests
           LMNR_PROJECT_API_KEY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.LMNR_PROJECT_API_KEY || '' }}
           NOTTE_LAMINAR_EXPORT_LIVE: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.LMNR_PROJECT_API_KEY != '' && '1' || '0' }}
         run: python3 scripts/ci_integration_examples.py live --shard "$NOTTE_DOCS_SHARD"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: agent-browser-ownership
+          path: ${{ runner.temp }}/agent-browser-owned.jsonl
+          if-no-files-found: ignore
