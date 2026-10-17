@@ -30,6 +30,7 @@ def test_shared_queue_only_contains_staging_test_jobs() -> None:
         ("agent-browser-integration.yml", "live"),
         ("trigger-integration.yml", "browser-handler"),
         ("temporal-integration.yml", "browser-workflow"),
+        ("eve-integration.yml", "browser"),
         ("inngest-integration.yml", "live"),
     }
     queued = set()
