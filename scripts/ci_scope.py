@@ -8,6 +8,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+from typing import cast
 
 GROUPS = {
     "python": {"python_static", "python_unit", "python_live", "llm_provider_live", "python_docs", "cli_contract"},
@@ -330,6 +331,34 @@ def changed_code(base: str, head: str, path: str) -> bool:
         return True
 
 
+def changed_registry_examples(base: str, head: str) -> set[str]:
+    def registry(sha: str) -> dict[str, str]:
+        path = "scripts/integration_examples.json"
+        entry = git("--literal-pathspecs", "ls-tree", "-z", sha, "--", path)
+        if not entry.startswith((b"100644 blob ", b"100755 blob ")):
+            raise ValueError("integration registry is not a regular file")
+        value: object = json.loads(git("show", f"{sha}:{path}"))
+        if not isinstance(value, dict):
+            raise ValueError("integration registry must be an object")
+        result: dict[str, str] = {}
+        for name, convention in cast(dict[object, object], value).items():
+            if (
+                not isinstance(name, str)
+                or not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", name)
+                or not isinstance(convention, str)
+                or not convention.strip()
+            ):
+                raise ValueError("invalid integration registry entry")
+            result[name] = convention
+        return result
+
+    try:
+        before, after = registry(base), registry(head)
+        return {name for name, value in after.items() if before.get(name) != value}
+    except (ValueError, subprocess.SubprocessError, UnicodeError):
+        return set(INTEGRATION_EXAMPLES)
+
+
 def select(event: str, base: str, head: str) -> dict[str, bool | str | list[str]]:
     selected: set[str] = ALL.copy()
     integration_examples: set[str] = set(INTEGRATION_EXAMPLES)
@@ -365,9 +394,16 @@ def select(event: str, base: str, head: str) -> dict[str, bool | str | list[str]
                 markdown = path == "README.md" or (path.startswith("docs/") and path.endswith((".md", ".mdx")))
                 code_changed = changed_code(base, head, path) if markdown else True
                 path_scopes = scopes_for_path(path, code_changed=code_changed)
+                native_examples = (
+                    changed_registry_examples(base, head)
+                    if path == "scripts/integration_examples.json"
+                    else integration_examples_for_path(path)
+                )
+                if path == "scripts/integration_examples.json" and not native_examples:
+                    path_scopes.discard("paired_live")
                 selected |= path_scopes
                 paired_snippets_live |= "paired_live" in path_scopes and not native_example_input(path)
-                integration_examples |= integration_examples_for_path(path)
+                integration_examples |= native_examples
                 if path_scopes == ALL:
                     integration_examples |= set(INTEGRATION_EXAMPLES)
                 if path.endswith((".py", ".pyi")):
