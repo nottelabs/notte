@@ -21,7 +21,7 @@ function readMap(source: Buffer): Document {
   return value;
 }
 
-export async function repair(source: Buffer, options: { fixtureHtml?: string; fixtureRedirect?: string; fixtureLateRedirect?: string; signal?: AbortSignal } = {}) {
+export async function repair(source: Buffer, options: { fixtureHtml?: string; fixtureNavigationHtml?: string; fixtureRedirect?: string; fixtureLateRedirect?: string; signal?: AbortSignal } = {}) {
   const map = readMap(source);
   const signal = AbortSignal.any([AbortSignal.timeout(90_000), ...(options.signal ? [options.signal] : [])]);
   let sessionId = 'unallocated';
@@ -53,7 +53,8 @@ export async function repair(source: Buffer, options: { fixtureHtml?: string; fi
         const checkOrigin = () => {
           if (changedOrigin || new URL(page!.url()).origin !== expectedOrigin) throw new Error('Navigation changed origin');
         };
-        if (options.fixtureRedirect) await page.route(map.url, (route) => route.fulfill({ status: 302, headers: { location: options.fixtureRedirect! }, body: '' }));
+        if (options.fixtureRedirect) await page.route(new URL(map.url).href, (route) => route.fulfill({ status: 302, headers: { location: options.fixtureRedirect! }, body: '' }));
+        if (options.fixtureNavigationHtml !== undefined) await page.route(new URL(map.url).href, (route) => route.fulfill({ contentType: 'text/html', body: options.fixtureNavigationHtml! }));
         stage = 'navigation';
         await page.goto(map.url, { waitUntil: 'domcontentloaded', timeout: 30_000 });
         stage = 'origin';

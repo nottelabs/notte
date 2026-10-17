@@ -29,6 +29,30 @@ def closed(sid):
 
 
 class LiveTests(unittest.TestCase):
+    def test_idn_origins_use_browser_normalization(self):
+        for hostname in ("bücher.invalid", "xn--bcher-kva.invalid", "faß.invalid", "xn--fa-hia.invalid"):
+            with self.subTest(hostname=hostname):
+                source = json.loads(SOURCE)
+                source["url"] = "https://" + hostname + "/start"
+                with asyncio.Runner() as runner:
+                    result = runner.run(
+                        repair(
+                            json.dumps(source).encode(),
+                            fixture_navigation_html='<a id="learn-more" href="/a">Learn more</a>',
+                        )
+                    )
+                closed(result["session_id"])
+                print(f"IDN {hostname}: owned browser {result['session_id']} independently closed")
+                self.assertEqual(result["changes"][0]["after"], "a#learn-more")
+
+        source["url"] = "https://faß.invalid/start"
+        with asyncio.Runner() as runner, self.assertRaises(RuntimeError) as error:
+            runner.run(repair(json.dumps(source).encode(), fixture_redirect="https://fass.invalid/start"))
+        sid = re.search(r"session ([a-f0-9-]{36})", str(error.exception)).group(1)
+        closed(sid)
+        print(f"IDN foreign origin: owned browser {sid} independently closed")
+        self.assertIn("origin", str(error.exception))
+
     def test_dom_backed_repair_and_refusals(self):
         cases = {
             "repair": None,

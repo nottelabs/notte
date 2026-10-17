@@ -23,6 +23,7 @@ async def repair(
     source: bytes,
     *,
     fixture_html: str | None = None,
+    fixture_navigation_html: str | None = None,
     fixture_redirect: str | None = None,
     fixture_late_redirect: str | None = None,
 ) -> dict:
@@ -33,13 +34,16 @@ async def repair(
         async with browser:
             try:
                 async with asyncio.timeout(90):
-                    page = await browser.apage
+                    page = await (await browser.apage).context.new_page()
+                    if page.url != "about:blank":
+                        raise ValueError("Expected a fresh blank page")
+                    navigation_url = await page.evaluate("url => new URL(url).href", document["url"])
 
                     def origin(url):
                         parsed = urlsplit(url)
                         return parsed.scheme, parsed.hostname, parsed.port or (443 if parsed.scheme == "https" else 80)
 
-                    expected = origin(document["url"])
+                    expected = origin(navigation_url)
                     changed_origin = False
 
                     async def guard_navigation(route):
@@ -66,8 +70,13 @@ async def repair(
                     await page.route("**/*", guard_navigation)
                     if fixture_redirect is not None:
                         await page.route(
-                            document["url"],
+                            navigation_url,
                             lambda route: route.fulfill(status=302, headers={"location": fixture_redirect}, body=""),
+                        )
+                    if fixture_navigation_html is not None:
+                        await page.route(
+                            navigation_url,
+                            lambda route: route.fulfill(content_type="text/html", body=fixture_navigation_html),
                         )
                     stage = "navigation"
                     await page.goto(document["url"], wait_until="domcontentloaded", timeout=30_000)

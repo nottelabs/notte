@@ -32,6 +32,33 @@ async function closed(id: string) {
   }
 }
 
+for (const hostname of ['bücher.invalid', 'xn--bcher-kva.invalid', 'faß.invalid', 'xn--fa-hia.invalid']) {
+  test(`IDN ${hostname} preserves the intended origin`, { timeout: 110_000 }, async () => {
+    const document = { ...structuredClone(source), url: `https://${hostname}/start` };
+    const result = await repair(Buffer.from(JSON.stringify(document)), { fixtureNavigationHtml: '<a id="learn-more" href="/a">Learn more</a>' });
+    await closed(result.session_id);
+    console.log(`IDN ${hostname}: owned browser ${result.session_id} independently closed`);
+    assert.equal(result.changes[0].after, 'a#learn-more');
+  });
+}
+
+test('IDN normalization still refuses a different origin', { timeout: 110_000 }, async () => {
+  const document = { ...structuredClone(source), url: 'https://faß.invalid/start' };
+  let id: string;
+  let message: string;
+  try {
+    await repair(Buffer.from(JSON.stringify(document)), { fixtureRedirect: 'https://fass.invalid/start' });
+    assert.fail('Expected origin refusal');
+  } catch (error) {
+    assert.ok(error instanceof Error);
+    message = error.message;
+    id = error.message.match(/session ([a-f0-9-]{36})/)![1];
+  }
+  await closed(id);
+  console.log(`IDN foreign origin: owned browser ${id} independently closed`);
+  assert.match(message, /refused: origin/);
+});
+
 for (const [mode, fixtureHtml] of Object.entries(cases)) {
   test(`real DOM ${mode} and owned browser cleanup`, { timeout: 110_000 }, async () => {
     const document = structuredClone(source);
