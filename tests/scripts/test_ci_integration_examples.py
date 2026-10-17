@@ -1,8 +1,11 @@
 """Exercise native runner isolation, SDK resolution, sharding, and failure propagation."""
 
+import hashlib
+import io
 import json
 import os
 import subprocess
+import zipfile
 from pathlib import Path
 
 import pytest
@@ -22,7 +25,7 @@ def workspace(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.setenv("OPENAI_API_KEY", "fixture-provider-key")
     monkeypatch.delenv("BRAINTRUST_API_KEY", raising=False)
     stub = """#!/usr/bin/env python3
-import json, os, sys
+import json, os, sys, zipfile
 from pathlib import Path
 args = [Path(sys.argv[0]).name, *sys.argv[1:]]
 with open(os.environ['COMMAND_LOG'], 'a') as log:
@@ -42,6 +45,16 @@ with open(os.environ['COMMAND_LOG'], 'a') as log:
         'live_flags': {k: v for k, v in os.environ.items() if k.startswith('NOTTE_') and k.endswith('_LIVE')},
         'tracing': os.environ.get('LANGSMITH_TRACING'),
         'driver': os.environ.get('CHROMEDRIVER_PATH')}) + '\\n')
+if args[0] == 'curl':
+    with zipfile.ZipFile(args[-1], 'w') as archive:
+        archive.writestr(zipfile.ZipInfo('terraform'), b'fixture Terraform CLI')
+if args[0] == 'uv' and args[1] == 'venv':
+    python = Path(args[2]) / 'bin/python'
+    python.parent.mkdir(parents=True, exist_ok=True)
+    python.write_text(Path(sys.argv[0]).read_text())
+    python.chmod(0o755)
+if os.environ.get('FAIL_TERRAFORM_LIVE') and args[:3] == ['go', 'test', '-count=1']:
+    sys.exit(31)
 if args[1:] == ['install_driver.py']:
     print(os.environ['DRIVER_OUTPUT'])
     print('Driver setup diagnostic', file=sys.stderr)
@@ -60,7 +73,13 @@ if os.environ.get('FAIL_TS_DRIVER') and args == ['npm', 'run', 'test:live']:
 if os.environ.get('FAIL_NATIVE') and ('test:live' in args or any(arg.endswith('.integration.test.ts') for arg in args)):
     sys.exit(23)
 """
-    for path in (tmp_path / "bin/uv", tmp_path / "bin/npm", tmp_path / "bin/npx"):
+    for path in (
+        tmp_path / "bin/uv",
+        tmp_path / "bin/npm",
+        tmp_path / "bin/npx",
+        tmp_path / "bin/curl",
+        tmp_path / "bin/go",
+    ):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(stub)
         path.chmod(0o755)
@@ -747,3 +766,54 @@ def test_yutori_keeps_python312_requirements_and_both_sdk_modes_without_vendor_c
     source = next(command for command in commands if "-e" in command)
     assert source[-4:] == ["-e", str(workspace / "packages/notte-core"), "-e", str(workspace / "packages/notte-sdk")]
     assert len([command for command in commands if command[:3] == ["uv", "pip", "check"]]) == 2
+
+
+@pytest.fixture
+def terraform_project(workspace: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    runner.REGISTRY.write_text('{"terraform-profiles":"terraform-go"}')
+    monkeypatch.setenv("INTEGRATION_EXAMPLES", '["terraform-profiles"]')
+    monkeypatch.setenv("NOTTE_TERRAFORM_LIVE", "1")
+    monkeypatch.setattr("sys.argv", ["runner", "live"])
+    data = io.BytesIO()
+    with zipfile.ZipFile(data, "w") as archive:
+        archive.writestr(zipfile.ZipInfo("terraform"), b"fixture Terraform CLI")
+    monkeypatch.setattr(runner, "TERRAFORM_SHA256", hashlib.sha256(data.getvalue()).hexdigest())
+    project = workspace / "integrations/terraform-provider-notte"
+    project.mkdir(parents=True)
+    return project
+
+
+@pytest.mark.parametrize("fail", [False, True])
+def test_terraform_keeps_static_loopback_and_one_uncached_live_wire_owner(
+    workspace: Path, terraform_project: Path, monkeypatch: pytest.MonkeyPatch, fail: bool
+) -> None:
+    for credential in runner.CREDENTIALS - {"NOTTE_API_KEY"}:
+        monkeypatch.setenv(credential, "fixture-unused-provider")
+    if fail:
+        monkeypatch.setenv("FAIL_TERRAFORM_LIVE", "1")
+        with pytest.raises(subprocess.CalledProcessError) as error:
+            runner.main()
+        assert error.value.returncode == 31
+    else:
+        runner.main()
+    observed = calls(workspace)
+    assert all(call["cwd"] == str(terraform_project) for call in observed)
+    assert observed[0]["args"] == ["go", "test", "-race", "./..."]
+    assert observed[-1]["args"] == ["go", "test", "-count=1", "-run", "^TestLiveProfileWire$", "-v", "."]
+    assert all(not call["credentials"] for call in observed[:-1])
+    assert all(call["live_flags"]["NOTTE_TERRAFORM_LIVE"] == "0" for call in observed[:-1])
+    assert observed[-1]["credentials"] == ["NOTTE_API_KEY"]
+    assert observed[-1]["live_flags"]["NOTTE_TERRAFORM_LIVE"] == "1"
+    assert not any(call["args"][0] in {"npm", "npx"} for call in observed)
+    assert len([call for call in observed if "test_cli" in call["args"]]) == 1
+    assert os.access(workspace / "runner-temp/notte-terraform/terraform", os.X_OK)
+
+
+def test_terraform_bad_checksum_never_extracts_or_runs_cli_or_native(
+    workspace: Path, terraform_project: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(runner, "TERRAFORM_SHA256", "0" * 64)
+    with pytest.raises(ValueError, match="checksum mismatch"):
+        runner.main()
+    assert calls(workspace)[-1]["args"][0] == "curl"
+    assert not (workspace / "runner-temp/notte-terraform/terraform").exists()

@@ -20,6 +20,18 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class RoutingTests(unittest.TestCase):
+    def test_terraform_provider_and_schema_keep_required_paired_owner(self) -> None:
+        for path in (
+            "integrations/terraform-provider-notte/provider.go",
+            "integrations/terraform-provider-notte/go.mod",
+            "integrations/terraform-provider-notte/test_cli.py",
+            "openapi/openapi.json",
+        ):
+            with self.subTest(path=path):
+                self.assertEqual(ci.integration_examples_for_path(path), {"terraform-profiles"})
+                self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
+        self.assertFalse(ci.integration_examples_for_path("integrations/terraform-provider-notte/README.md"))
+
     def test_shipped_native_recipe_and_project_inputs_keep_required_paired_owner(self) -> None:
         inputs = {
             "docs/src/testers/integrations/openai_agents.py": {"openai-agents"},

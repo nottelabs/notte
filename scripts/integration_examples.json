@@ -16,6 +16,7 @@
   "prime-intellect": "python-project",
   "selenium": "selenium-root",
   "temporal": "node-project",
+  "terraform-profiles": "terraform-go",
   "trigger": "node-project",
   "yutori": "python-project"
 }

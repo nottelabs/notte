@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
 import subprocess
+import zipfile
 from pathlib import Path
 from typing import cast
 
@@ -31,6 +33,7 @@ DRIVER_IMPORTS = {
 }
 RECIPES = {"agent-browser", "claude-agents", "openai-agents"}
 NODE_PROJECTS = {"agentcard", "inngest", "temporal", "trigger"}
+TERRAFORM_SHA256 = "38034b38d03096399a7a1264a14561a8029b2b496fd1f169452656e53968f1b7"  # pragma: allowlist secret
 
 
 def projects(shard: str) -> list[tuple[str, str]]:
@@ -46,6 +49,8 @@ def projects(shard: str) -> list[tuple[str, str]]:
             raise ValueError("Unknown Node integration project")
         if registry[name] == "python-project" and name not in {"prime-intellect", "yutori"}:
             raise ValueError("Unknown Python integration project")
+        if registry[name] == "terraform-go" and name != "terraform-profiles":
+            raise ValueError("Unknown Terraform integration project")
         if registry[name] not in {
             "node-project",
             "gemini-root",
@@ -54,6 +59,7 @@ def projects(shard: str) -> list[tuple[str, str]]:
             "root-unittest",
             "typescript-driver",
             "python-project",
+            "terraform-go",
         } and not re.fullmatch(r"NOTTE_[A-Z0-9_]+_PYTHON", registry[name]):
             raise ValueError("Invalid integration registry convention")
         selected.add(name)
@@ -76,6 +82,34 @@ def root_tests(project: Path) -> list[str]:
 
 def check(project: Path, env: dict[str, str], convention: str = "") -> Path:
     python = project / ".venv/bin/python"
+    if convention == "terraform-go":
+        run(["go", "test", "-race", "./..."], project, env)
+        prefix = Path(env["RUNNER_TEMP"]) / "notte-terraform"
+        prefix.mkdir(parents=True, exist_ok=True)
+        archive = prefix / "terraform.zip"
+        run(
+            [
+                "curl",
+                "-fsSL",
+                "https://releases.hashicorp.com/terraform/1.16.6/terraform_1.16.6_linux_amd64.zip",
+                "-o",
+                str(archive),
+            ],
+            project,
+            env,
+        )
+        with archive.open("rb") as source:
+            if hashlib.file_digest(source, "sha256").hexdigest() != TERRAFORM_SHA256:
+                raise ValueError("Terraform CLI archive checksum mismatch")
+        with zipfile.ZipFile(archive) as source:
+            _ = source.extract("terraform", prefix)
+        cli = prefix / "terraform"
+        cli.chmod(0o755)
+        python = prefix / "python/bin/python"
+        run(["uv", "venv", str(prefix / "python"), "--clear", "--python", "3.11"], project, env)
+        run(["uv", "pip", "install", "--python", str(python), "typing_extensions==4.16.0"], project, env)
+        run([str(python), "-m", "unittest", "test_cli", "-v"], project, {**env, "TERRAFORM_BIN": str(cli)})
+        return python
     if convention == "python-project":
         if project.name == "yutori":
             run(["uv", "venv", str(project / ".venv"), "--clear", "--python", "3.12"], project, env)
@@ -243,6 +277,14 @@ def recipe_live(name: str, python: Path, env: dict[str, str], install_env: dict[
 
 
 def live(project: Path, python: Path, python_env: str, env: dict[str, str], install_env: dict[str, str]) -> None:
+    if python_env == "terraform-go":
+        print("Native integration: Terraform profile API", flush=True)
+        run(
+            ["go", "test", "-count=1", "-run", "^TestLiveProfileWire$", "-v", "."],
+            project,
+            {**project_env("terraform-profiles", env), "NOTTE_TERRAFORM_LIVE": "1"},
+        )
+        return
     if python_env == "python-project":
         flag = "NOTTE_PRIME_LIVE" if project.name == "prime-intellect" else "NOTTE_YUTORI_LIVE"
         env = {**project_env(project.name, env), flag: "1", "DISABLE_TELEMETRY": "true"}
@@ -384,7 +426,9 @@ def main() -> None:
     }
     install_env.update(LANGSMITH_TRACING="false", DISABLE_TELEMETRY="true")
     for name, python_env in selected:
-        project = ROOT / "examples" / name
+        project = (
+            ROOT / "integrations/terraform-provider-notte" if name == "terraform-profiles" else ROOT / "examples" / name
+        )
         print(f"Checking native integration: {name}", flush=True)
         python = check(project, install_env, python_env)
         if args.phase == "live":

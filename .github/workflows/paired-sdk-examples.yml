@@ -56,6 +56,11 @@ jobs:
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           enable-cache: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        if: contains(fromJSON(needs.changes.outputs.scope).integration_examples, 'terraform-profiles')
+        with:
+          go-version-file: integrations/terraform-provider-notte/go.mod
+          cache-dependency-path: integrations/terraform-provider-notte/go.sum
       - name: Check native integration examples
         env:
           INTEGRATION_EXAMPLES: ${{ toJSON(fromJSON(needs.changes.outputs.scope).integration_examples) }}
@@ -109,6 +114,11 @@ jobs:
         with:
           persist-credentials: false
       # Do not restore dependency caches into the credentialed job.
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        if: contains(fromJSON(needs.changes.outputs.scope).integration_examples, 'terraform-profiles')
+        with:
+          go-version-file: integrations/terraform-provider-notte/go.mod
+          cache: false
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '24'

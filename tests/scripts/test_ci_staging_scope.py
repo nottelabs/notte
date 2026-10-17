@@ -26,7 +26,6 @@ def test_shared_queue_only_contains_staging_test_jobs() -> None:
         ("docs-tests-cicd.yml", "execution"),
         ("paired-sdk-examples.yml", "live"),
         ("readme-check.yml", "live"),
-        ("terraform-profiles-integration.yml", "live"),
     }
     queued = set()
     for path in WORKFLOWS.glob("*.yml"):
@@ -177,7 +176,6 @@ def test_live_selection_does_not_bypass_fork_protection() -> None:
         ("docs-tests-cicd.yml", "execution"),
         ("paired-sdk-examples.yml", "live"),
         ("readme-check.yml", "live"),
-        ("terraform-profiles-integration.yml", "live"),
     ):
         condition = workflow(name)["jobs"][job_id]["if"]
         assert "github.event.pull_request.head.repo.full_name == github.repository" in condition
@@ -238,6 +236,7 @@ def test_required_gate_waits_for_all_families_and_fails_closed(
 
 
 def test_native_examples_have_one_existing_required_owner() -> None:
+    assert not (WORKFLOWS / "terraform-profiles-integration.yml").exists()
     assert not (WORKFLOWS / "yutori-integration.yml").exists()
     assert not (WORKFLOWS / "prime-intellect-integration.yml").exists()
     assert not (WORKFLOWS / "agentcard-integration.yml").exists()
@@ -253,6 +252,12 @@ def test_native_examples_have_one_existing_required_owner() -> None:
     assert not (WORKFLOWS / "selenium-integration.yml").exists()
     assert not (WORKFLOWS / "laminar-integration.yml").exists()
     jobs = workflow("paired-sdk-examples.yml")["jobs"]
+    for name in ("checks", "live"):
+        go = next(step for step in jobs[name]["steps"] if step.get("uses", "").startswith("actions/setup-go@"))
+        assert go["if"] == "contains(fromJSON(needs.changes.outputs.scope).integration_examples, 'terraform-profiles')"
+        assert go["with"]["go-version-file"] == "integrations/terraform-provider-notte/go.mod"
+        if name == "live":
+            assert go["with"]["cache"] is False
     assert set(jobs) == {"changes", "checks", "live"}
     assert set(jobs["live"]["needs"]) == {"changes", "checks"}
     snippet = next(s for s in jobs["live"]["steps"] if "test/docs-snippets.integration.test.ts" in s.get("run", ""))
