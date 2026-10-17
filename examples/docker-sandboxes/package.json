@@ -1,0 +1,19 @@
+{
+  "name": "notte-docker-sandboxes-example",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --test test/setup.test.ts test/errors.test.ts",
+    "test:live": "node --test test/mcp.live.test.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "notte-sdk": "1.9.7"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.3"
+  }
+}

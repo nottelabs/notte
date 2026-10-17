@@ -1,0 +1,82 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/integrations/mongodb.py */}
+
+<CodeGroup>
+
+```python notte_mongodb.py
+import os
+from typing import Any
+
+from notte_sdk import NotteClient
+from pymongo import MongoClient
+from pymongo.errors import OperationFailure
+
+url = "https://example.com"
+uri = os.environ.get("MONGODB_URI")
+if not uri:
+    raise ValueError("Set MONGODB_URI before running this example")
+
+with NotteClient().Session(max_duration_minutes=3) as session:
+    stage = "MongoDB connection"
+    try:
+        with MongoClient[dict[str, Any]](uri, timeoutMS=10_000, serverSelectionTimeoutMS=10_000) as mongo:
+            mongo.admin.command("ping")
+            collection = mongo[os.environ.get("MONGODB_DATABASE", "notte")][
+                os.environ.get("MONGODB_COLLECTION", "pages")
+            ]
+            stage = "browser navigation"
+            session.execute(type="goto", url=url)
+            stage = "browser scrape"
+            markdown = session.scrape()
+            stage = "MongoDB insert"
+            inserted = collection.insert_one({"url": url, "markdown": markdown, "session_id": session.session_id})
+            result = {"document_id": str(inserted.inserted_id), "session_id": session.session_id}
+            print(result["document_id"])
+    except Exception as error:
+        code = error.code if isinstance(error, OperationFailure) else None
+        raise RuntimeError(
+            f"MongoDB export failed (session {session.session_id}, code {code}): {stage}: {type(error).__name__}"
+        ) from None
+```
+
+```typescript notte_mongodb.ts
+import { MongoClient, MongoServerError } from 'mongodb';
+import { NotteClient } from 'notte-sdk';
+
+const url = 'https://example.com';
+const uri = process.env.MONGODB_URI;
+if (!uri) throw new Error('Set MONGODB_URI before running this example');
+
+export const result = await new NotteClient().Session({ max_duration_minutes: 3 }).use(async (session) => {
+  let stage = 'MongoDB connection';
+  try {
+    const mongo = new MongoClient(uri, { timeoutMS: 10_000, serverSelectionTimeoutMS: 10_000 });
+    try {
+      await mongo.connect();
+      const collection = mongo.db(process.env.MONGODB_DATABASE || 'notte')
+        .collection(process.env.MONGODB_COLLECTION || 'pages');
+      stage = 'browser navigation';
+      await session.execute({ type: 'goto', url });
+      stage = 'browser scrape';
+      const markdown = await session.scrape();
+      stage = 'MongoDB insert';
+      const inserted = await collection.insertOne({ url, markdown, session_id: session.getId()! });
+      console.log(inserted.insertedId.toHexString());
+      return { document_id: inserted.insertedId.toHexString(), session_id: session.getId()! };
+    } finally {
+      try {
+        await mongo.close();
+      } catch (error) {
+        stage = 'MongoDB cleanup';
+        throw error;
+      }
+    }
+  } catch (error) {
+    const code = error instanceof MongoServerError && typeof error.code === 'number' ? error.code : undefined;
+    const type = error instanceof Error ? error.name : 'UnknownError';
+    throw new Error(`MongoDB export failed (session ${session.getId()!}, code ${code}): ${stage}: ${type}`);
+  }
+});
+```
+
+</CodeGroup>
