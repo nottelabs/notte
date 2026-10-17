@@ -36,6 +36,33 @@ class RecipeTests(unittest.TestCase):
         def execute(args, **kwargs):
             self.assertNotIn(cdp, args, "Authenticated connection must not enter process arguments")
             self.assertEqual(kwargs["env"]["AGENT_BROWSER_CDP"], cdp)
+            self.assertEqual(kwargs["env"]["PATH"], "/fixture/bin")
+            self.assertEqual(kwargs["env"]["SystemRoot"], "C:/fixture")
+            self.assertEqual(kwargs["env"]["PATHEXT"], ".EXE;.CMD")
+            self.assertTrue(
+                set(kwargs["env"])
+                <= {
+                    "PATH",
+                    "HOME",
+                    "TMPDIR",
+                    "TEMP",
+                    "TMP",
+                    "SystemRoot",
+                    "WINDIR",
+                    "PATHEXT",
+                    "USERPROFILE",
+                    "XDG_RUNTIME_DIR",
+                    "AGENT_BROWSER_CDP",
+                }
+            )
+            for name in (
+                "NOTTE_API_KEY",
+                "OPENAI_API_KEY",
+                "GITHUB_TOKEN",
+                "ACTIONS_RUNTIME_TOKEN",
+                "AGENT_BROWSER_PROFILE",
+            ):
+                self.assertNotIn(name, kwargs["env"])
             command = args[4]
             calls.append(command)
             if command == "open" and mode == "invalid_json":
@@ -50,7 +77,16 @@ class RecipeTests(unittest.TestCase):
         path = Path(__file__).resolve().parents[2] / "docs/src/testers/integrations/agent_browser.py"
         sdk = ModuleType("notte_sdk")
         sdk.__dict__["NotteClient"] = lambda: client
-        with patch.dict("sys.modules", {"notte_sdk": sdk}), patch("subprocess.run", side_effect=execute):
+        parent_env = dict.fromkeys(
+            ("NOTTE_API_KEY", "OPENAI_API_KEY", "GITHUB_TOKEN", "ACTIONS_RUNTIME_TOKEN", "AGENT_BROWSER_PROFILE"),
+            "fixture-unwanted",
+        )
+        parent_env.update({"PATH": "/fixture/bin", "SystemRoot": "C:/fixture", "PATHEXT": ".EXE;.CMD"})
+        with (
+            patch.dict("sys.modules", {"notte_sdk": sdk}),
+            patch.dict("os.environ", parent_env),
+            patch("subprocess.run", side_effect=execute),
+        ):
             if mode == "success":
                 result = runpy.run_path(str(path))["result"]
                 self.assertEqual(result, {"title": "Example Domain", "session_id": session.session_id})

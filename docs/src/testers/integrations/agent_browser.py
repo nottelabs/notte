@@ -10,7 +10,20 @@ from notte_sdk import NotteClient
 client = NotteClient()
 with client.Session() as session:
     command = ["agent-browser", "--session", f"notte-{session.session_id}", "--json"]
-    environment = {**os.environ, "AGENT_BROWSER_CDP": session.cdp_url()}
+    names = (
+        "PATH",
+        "HOME",
+        "TMPDIR",
+        "TEMP",
+        "TMP",
+        "SystemRoot",
+        "WINDIR",
+        "PATHEXT",
+        "USERPROFILE",
+        "XDG_RUNTIME_DIR",
+    )
+    environment = {name: os.environ[name] for name in names if name in os.environ}
+    environment["AGENT_BROWSER_CDP"] = session.cdp_url()
 
     def browser(*args: str) -> dict[str, Any]:
         try:

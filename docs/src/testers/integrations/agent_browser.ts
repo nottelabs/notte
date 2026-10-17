@@ -9,7 +9,9 @@ const execute = promisify(execFile);
 const client = new NotteClient();
 export const result = await client.Session().use(async (session) => {
   const command = ['--session', `notte-${session.getId()!}`, '--json'];
-  const env = { ...process.env, AGENT_BROWSER_CDP: await session.cdpUrl() };
+  const names = ['PATH', 'HOME', 'TMPDIR', 'TEMP', 'TMP', 'SystemRoot', 'WINDIR', 'PATHEXT', 'USERPROFILE', 'XDG_RUNTIME_DIR'];
+  const env = Object.fromEntries(names.map(name => [name, process.env[name]]));
+  env.AGENT_BROWSER_CDP = await session.cdpUrl();
   async function browser(...args: string[]): Promise<Record<string, unknown>> {
     try {
       const { stdout } = await execute('agent-browser', [...command, ...args], { env, timeout: 120_000 });

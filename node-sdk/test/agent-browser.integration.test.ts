@@ -57,7 +57,9 @@ describe.skipIf(process.env.NOTTE_AGENT_BROWSER_LIVE !== '1')('agent-browser lif
         sessionId = session.getId()!;
         journal('claimed');
         let cliSession = `notte-${sessionId}`;
-        const env = { ...process.env, AGENT_BROWSER_CDP: await session.cdpUrl() };
+        const names = ['PATH', 'HOME', 'TMPDIR', 'TEMP', 'TMP', 'SystemRoot', 'WINDIR', 'PATHEXT', 'USERPROFILE', 'XDG_RUNTIME_DIR'];
+        const env = Object.fromEntries(names.map(name => [name, process.env[name]]));
+        env.AGENT_BROWSER_CDP = await session.cdpUrl();
         let phase = 'navigation';
         async function browser(...args: string[]) {
           let diagnostic = '';
