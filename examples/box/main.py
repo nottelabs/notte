@@ -1,24 +1,35 @@
+import asyncio
 import hashlib
 import io
 import json
 import os
+import sys
 
 import requests
 from notte_sdk import NotteClient
-from playwright.sync_api import sync_playwright
+from playwright.async_api import async_playwright
+
+
+async def _capture(cdp_url):
+    async with async_playwright() as playwright:
+        browser = await playwright.chromium.connect_over_cdp(cdp_url)
+        try:
+            page = await browser.contexts[0].new_page()
+            await page.goto("https://example.com", wait_until="domcontentloaded", timeout=30_000)
+            return await page.screenshot(full_page=True)
+        finally:
+            failed = sys.exception() is not None
+            try:
+                await asyncio.wait_for(browser.close(), timeout=5)
+            except Exception:
+                if not failed:
+                    raise RuntimeError("Browser disconnect failed") from None
 
 
 def capture_page():
     with NotteClient().Session(max_duration_minutes=3, proxies=False) as session:
         try:
-            with sync_playwright() as playwright:
-                browser = playwright.chromium.connect_over_cdp(session.cdp_url())
-                try:
-                    page = browser.contexts[0].new_page()
-                    page.goto("https://example.com", wait_until="domcontentloaded", timeout=30_000)
-                    image = page.screenshot(full_page=True)
-                finally:
-                    browser.close()
+            image = asyncio.run(_capture(session.cdp_url()))
         except Exception:
             raise RuntimeError("Could not capture the hosted page") from None
         return image, session.session_id

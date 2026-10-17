@@ -7,11 +7,25 @@ export async function capturePage() {
   return new NotteClient().Session({ max_duration_minutes: 3, proxies: false }).use(async session => {
     try {
       const browser = await chromium.connectOverCDP(await session.cdpUrl());
+      let failed = false;
       try {
         const page = await browser.contexts()[0].newPage();
         await page.goto('https://example.com', { waitUntil: 'domcontentloaded', timeout: 30_000 });
         return { image: await page.screenshot({ fullPage: true }), sessionId: session.getId()! };
-      } finally { await browser.close(); }
+      } catch (error) {
+        failed = true;
+        throw error;
+      } finally {
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        try {
+          await Promise.race([
+            browser.close(),
+            new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error('Close deadline exceeded')), 5000); }),
+          ]);
+        } catch {
+          if (!failed) throw new Error('Browser disconnect failed');
+        } finally { clearTimeout(timer); }
+      }
     } catch {
       throw new Error('Could not capture the hosted page');
     }

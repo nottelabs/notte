@@ -12,6 +12,6 @@ The result contains the new `box_file_id` and stopped browser's `session_id`. Th
 
 A [developer token](https://developer.box.com/guides/authentication/tokens/developer-tokens/) lasts 60 minutes and is intended for testing. Use [Box OAuth or server authentication](https://developer.box.com/guides/authentication/) for a deployed workflow.
 
-Run offline upload-contract checks with `python -m unittest test_upload` or `npm test`. Set `NOTTE_BOX_CAPTURE_LIVE=1` and an explicit `NOTTE_API_URL` to test the hosted capture and browser cleanup with `python -m unittest test_capture` or `npm run test:capture`.
+Run offline upload-contract checks with `python -m unittest test_upload` or `npm test`. Set `NOTTE_BOX_CAPTURE_LIVE=1` and an explicit `NOTTE_API_URL` to test real PNG capture, private navigation/disconnect failures, and bounded cleanup with `python -m unittest test_capture` or `npm run test:capture`.
 
-Box upload, metadata verification, and errors are contract-tested; this example was shipped without a live Box account. To run the optional real-account tests locally, set `NOTTE_BOX_LIVE=1`, `BOX_ACCESS_TOKEN`, and `NOTTE_API_URL`, then run `python -m unittest test_box` or `npm run test:live`. They create an isolated folder and remove only their own files and folder. CI uses no Box credentials.
+Box upload, metadata verification, and errors are contract-tested; live Box upload has not been tested. To run the optional real-account tests locally, set `NOTTE_BOX_LIVE=1`, `BOX_ACCESS_TOKEN`, and `NOTTE_API_URL`, then run `python -m unittest test_box` or `npm run test:live`. They create an isolated folder and remove only their own files and folder. CI runs capture checks with published and source Notte SDKs and uses no Box credentials.
