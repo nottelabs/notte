@@ -24,10 +24,19 @@ CREDENTIALS = {
     "BOX_ACCESS_TOKEN",
     "AGENTCARD_CLIENT_ID",
     "AGENTCARD_CLIENT_SECRET",
+    "LINK_ACCESS_TOKEN",
+    "LINK_SPEND_REQUEST_ID",
+    "NOTTE_VALTOWN_TOKEN",
+    "WATSONX_API_KEY",
+    "WATSONX_PROJECT_ID",
+    "WATSONX_MODEL_ID",
+    "WATSONX_URL",
 }
 DRIVER_IMPORTS = {
     "braintrust": "from braintrust import init_logger; from notte_sdk import NotteClient",
     "onepassword": 'from onepassword import Secrets; from notte_sdk import NotteClient; Secrets.validate_secret_reference("op://Test/Login/username")',
+    "stripe-link": "from link import AsyncClient; from notte_sdk import NotteClient",
+    "watsonx": "import requests; from notte_sdk import NotteClient",
 }
 RECIPES = {"agent-browser", "claude-agents", "openai-agents"}
 NODE_PROJECTS = {"agentcard", "docker-sandboxes", "inngest", "replit", "temporal", "trigger"}
@@ -52,6 +61,7 @@ def projects(shard: str) -> list[tuple[str, str]]:
             "box-root",
             "root-unittest",
             "typescript-driver",
+            "valtown-deno",
         } and not re.fullmatch(r"NOTTE_[A-Z0-9_]+_PYTHON", registry[name]):
             raise ValueError("Invalid integration registry convention")
         selected.add(name)
@@ -94,8 +104,21 @@ def docker_cli_contract(project: Path, env: dict[str, str]) -> None:
     run(["node", "check-cli.mjs", str(prefix / "docker-sbx/sbx")], project, env)
 
 
+def valtown_deno(env: dict[str, str]) -> Path:
+    return (Path(env["RUNNER_TEMP"]) / "notte-valtown-deno/node_modules/.bin/deno").resolve(strict=True)
+
+
 def check(project: Path, env: dict[str, str], convention: str = "") -> Path:
     python = project / ".venv/bin/python"
+    if convention == "valtown-deno":
+        prefix = Path(env["RUNNER_TEMP"]) / "notte-valtown-deno"
+        run(["npm", "install", "--prefix", str(prefix), "--no-audit", "--no-fund", "deno@2.9.6"], project, env)
+        cli = str(valtown_deno(env))
+        run([cli, "fmt", "--check", "main.ts", "main_test.ts", "deno.json"], project, env)
+        run([cli, "lint", "main.ts", "main_test.ts"], project, env)
+        run([cli, "task", "check"], project, env)
+        run([cli, "task", "test"], project, env)
+        return python
     if project.name in RECIPES:
         # Shared checks typecheck the TypeScript SDK and docs recipes; Python setup runs in live.
         return ROOT / ".venv/bin/python"
@@ -168,8 +191,12 @@ def check(project: Path, env: dict[str, str], convention: str = "") -> Path:
     run([str(python), "-m", "compileall", "-q", *sources], project, env)
     if convention == "typescript-driver":
         run([str(python), "-c", DRIVER_IMPORTS[project.name]], project, env)
+        if project.name in {"stripe-link", "watsonx"}:
+            run([str(python), "-m", "unittest", "discover", "-s", "python"], project, env)
     run(["npm", "ci"], project / "typescript", env)
     run(["npm", "run", "typecheck"], project / "typescript", env)
+    if convention == "typescript-driver" and project.name in {"stripe-link", "watsonx"}:
+        run(["npm", "test"], project / "typescript", env)
     if tests:
         prefix = f"NOTTE_{project.name.replace('-', '_').upper()}"
         offline = {
@@ -259,6 +286,14 @@ def recipe_live(name: str, python: Path, env: dict[str, str], install_env: dict[
 
 
 def live(project: Path, python: Path, python_env: str, env: dict[str, str], install_env: dict[str, str]) -> None:
+    if python_env == "valtown-deno":
+        env = {name: value for name, value in env.items() if name not in CREDENTIALS - {"NOTTE_API_KEY"}}
+        run(
+            [str(valtown_deno(install_env)), "task", "test:live"],
+            project,
+            {**env, "NOTTE_VALTOWN_LIVE": "1"},
+        )
+        return
     if project.name in RECIPES:
         recipe_live(project.name, python, project_env(project.name, env), install_env)
         return
@@ -316,7 +351,17 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
         prefix = f"NOTTE_{project.name.replace('-', '_').upper()}"
         env = {**env, f"{prefix}_LIVE": "1", "LANGSMITH_TRACING": "false", "DISABLE_TELEMETRY": "true"}
     elif python_env == "typescript-driver":
-        env = {**env, f"NOTTE_{project.name.replace('-', '_').upper()}_PYTHON": str(python)}
+        if project.name in {"stripe-link", "watsonx"}:
+            env = {name: value for name, value in env.items() if name not in CREDENTIALS - {"NOTTE_API_KEY"}}
+            prefix = "LINK" if project.name == "stripe-link" else "WATSONX"
+            env = {
+                **env,
+                f"NOTTE_{prefix}_PYTHON": str(python),
+                f"NOTTE_{prefix}_REQUIRE_LIVE": "1",
+                "DISABLE_TELEMETRY": "true",
+            }
+        else:
+            env = {**env, f"NOTTE_{project.name.replace('-', '_').upper()}_PYTHON": str(python)}
     else:
         env = {**env, python_env: str(python)}
     typescript = project if root_layout else project / "typescript"

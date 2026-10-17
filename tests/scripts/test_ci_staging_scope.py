@@ -27,7 +27,6 @@ def test_shared_queue_only_contains_staging_test_jobs() -> None:
         ("paired-sdk-examples.yml", "live"),
         ("readme-check.yml", "live"),
     }
-    expected.add(("watsonx-integration.yml", "live"))
     queued = set()
     for path in WORKFLOWS.glob("*.yml"):
         config = workflow(path.name)
@@ -237,6 +236,9 @@ def test_required_gate_waits_for_all_families_and_fails_closed(
 
 
 def test_native_examples_have_one_existing_required_owner() -> None:
+    assert not (WORKFLOWS / "watsonx-integration.yml").exists()
+    assert not (WORKFLOWS / "valtown-integration.yml").exists()
+    assert not (WORKFLOWS / "stripe-link-integration.yml").exists()
     assert not (WORKFLOWS / "docker-sandboxes-integration.yml").exists()
     assert not (WORKFLOWS / "replit-integration.yml").exists()
     assert not (WORKFLOWS / "agentcard-integration.yml").exists()

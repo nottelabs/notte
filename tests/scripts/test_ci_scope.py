@@ -289,6 +289,27 @@ class RoutingTests(unittest.TestCase):
                 self.assertEqual(ci.integration_examples_for_path(path), {"docker-sandboxes"})
                 self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
 
+    def test_stripe_link_native_inputs_retain_paired_owner(self) -> None:
+        for filename in ("python/probe.py", "python/test_demo.py", "typescript/test/link.live.test.ts", "uv.lock"):
+            with self.subTest(filename=filename):
+                path = f"examples/stripe-link/{filename}"
+                self.assertEqual(ci.integration_examples_for_path(path), {"stripe-link"})
+                self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
+
+    def test_valtown_deno_inputs_retain_existing_paired_owner(self) -> None:
+        for filename in ("main.ts", "main_test.ts", "deno.json"):
+            with self.subTest(filename=filename):
+                path = f"examples/valtown/{filename}"
+                self.assertEqual(ci.integration_examples_for_path(path), {"valtown"})
+                self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
+
+    def test_watsonx_driver_inputs_retain_existing_paired_owner(self) -> None:
+        for filename in ("python/probe.py", "python/test_demo.py", "typescript/test/watsonx.live.test.ts", "uv.lock"):
+            with self.subTest(filename=filename):
+                path = f"examples/watsonx/{filename}"
+                self.assertEqual(ci.integration_examples_for_path(path), {"watsonx"})
+                self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
+
     def test_shared_native_inputs_cover_every_registered_project(self) -> None:
         for path in (
             *ci.INTEGRATION_INPUTS,

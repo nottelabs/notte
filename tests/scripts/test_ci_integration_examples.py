@@ -28,7 +28,7 @@ from pathlib import Path
 args = [Path(sys.argv[0]).name, *sys.argv[1:]]
 with open(os.environ['COMMAND_LOG'], 'a') as log:
     log.write(json.dumps({'args': args, 'cwd': os.getcwd(),
-        'credentials': sorted(k for k in ('NOTTE_API_KEY', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'GEMINI_API_KEY', 'BRAINTRUST_API_KEY', 'LMNR_PROJECT_API_KEY', 'OP_SERVICE_ACCOUNT_TOKEN', 'BOX_ACCESS_TOKEN', 'AGENTCARD_CLIENT_ID', 'AGENTCARD_CLIENT_SECRET') if os.environ.get(k)),
+        'credentials': sorted(k for k in ('AGENTCARD_CLIENT_ID', 'AGENTCARD_CLIENT_SECRET', 'ANTHROPIC_API_KEY', 'BOX_ACCESS_TOKEN', 'BRAINTRUST_API_KEY', 'GEMINI_API_KEY', 'LINK_ACCESS_TOKEN', 'LINK_SPEND_REQUEST_ID', 'LMNR_PROJECT_API_KEY', 'NOTTE_API_KEY', 'NOTTE_VALTOWN_TOKEN', 'OPENAI_API_KEY', 'OP_SERVICE_ACCOUNT_TOKEN', 'WATSONX_API_KEY', 'WATSONX_PROJECT_ID', 'WATSONX_MODEL_ID', 'WATSONX_URL') if os.environ.get(k)),
         'vitest': os.environ.get('VITEST_INTEGRATION'),
         'journal': os.environ.get('NOTTE_AGENT_BROWSER_OWNERSHIP_JOURNAL'),
         'example_python': os.environ.get('NOTTE_EXAMPLE_PYTHON'),
@@ -36,6 +36,10 @@ with open(os.environ['COMMAND_LOG'], 'a') as log:
         'python': os.environ.get('NOTTE_COMPUTER_USE_PYTHON'),
         'braintrust_python': os.environ.get('NOTTE_BRAINTRUST_PYTHON'),
         'braintrust_project': os.environ.get('BRAINTRUST_PROJECT'),
+        'link_python': os.environ.get('NOTTE_LINK_PYTHON'),
+        'link_required': os.environ.get('NOTTE_LINK_REQUIRE_LIVE'),
+        'watsonx_python': os.environ.get('NOTTE_WATSONX_PYTHON'),
+        'watsonx_required': os.environ.get('NOTTE_WATSONX_REQUIRE_LIVE'),
         'onepassword_python': os.environ.get('NOTTE_ONEPASSWORD_PYTHON'),
         'gemini_live': os.environ.get('NOTTE_GEMINI_LIVE'),
         'gemini_model': os.environ.get('NOTTE_GEMINI_MODEL_LIVE'),
@@ -47,6 +51,10 @@ if args[0] == 'curl':
     Path(args[-1]).write_bytes(b'owned-sbx-archive')
 if os.environ.get('FAIL_CLI_CONTRACT') and 'check-cli.mjs' in args:
     sys.exit(41)
+if os.environ.get('FAIL_DENO') == 'static' and 'fmt' in args:
+    sys.exit(37)
+if os.environ.get('FAIL_DENO') == 'live' and 'test:live' in args:
+    sys.exit(37)
 if args[1:] == ['install_driver.py']:
     print(os.environ['DRIVER_OUTPUT'])
     print('Driver setup diagnostic', file=sys.stderr)
@@ -759,3 +767,185 @@ def test_docker_cli_or_mcp_failure_fails_existing_paired_owner(
         runner.main()
     assert error.value.returncode == (41 if failure == "cli" else 23)
     assert len([call for call in calls(workspace) if "test:live" in call["args"]]) == (failure == "native")
+
+
+@pytest.fixture
+def stripe_link_project(workspace: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    runner.REGISTRY.write_text('{"stripe-link":"typescript-driver"}')
+    monkeypatch.setenv("INTEGRATION_EXAMPLES", '["stripe-link"]')
+    project = workspace / "examples/stripe-link"
+    (project / "typescript").mkdir(parents=True)
+    python = project / ".venv/bin/python"
+    python.parent.mkdir(parents=True)
+    python.write_text((workspace / "examples/alpha/.venv/bin/python").read_text())
+    python.chmod(0o755)
+    return project
+
+
+def test_stripe_link_retains_native_driver_alias_offline_tests_and_wallet_boundary(
+    workspace: Path, stripe_link_project: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    for key in runner.CREDENTIALS - {"NOTTE_API_KEY"}:
+        monkeypatch.setenv(key, "fixture-private-provider")
+    monkeypatch.setenv("NOTTE_LINK_REQUIRE_LIVE", "1")
+    monkeypatch.setattr("sys.argv", ["runner", "live"])
+    runner.main()
+    observed = calls(workspace)
+    native = [call for call in observed if "test:live" in call["args"]]
+    static = [call for call in observed if "unittest" in call["args"] or call["args"] == ["npm", "test"]]
+    assert len(native) == 2 and len(static) == 2
+    assert all(call["credentials"] == ["NOTTE_API_KEY"] for call in native)
+    assert all(
+        call["link_required"] == "1" and call["link_python"] == str(stripe_link_project / ".venv/bin/python")
+        for call in native
+    )
+    assert all(not call["credentials"] and call["link_required"] == "0" for call in static)
+    assert all(not call["credentials"] for call in observed if call not in native)
+    assert all(call["cwd"] == str(stripe_link_project / "typescript") for call in native)
+    commands = [call["args"] for call in observed]
+    assert ["python", "-c", "from link import AsyncClient; from notte_sdk import NotteClient"] in commands
+    assert ["python", "-m", "unittest", "discover", "-s", "python"] in commands
+    assert ["npm", "test"] in commands
+    source = next(command for command in commands if "-e" in command)
+    assert source[-4:] == ["-e", str(workspace / "packages/notte-core"), "-e", str(workspace / "packages/notte-sdk")]
+    assert "--no-deps" not in source
+    assert commands.index(source) > commands.index(native[0]["args"])
+    assert commands.count(["npm", "run", "typecheck"]) == 2
+    assert ["npm", "install", "--no-save", "--package-lock=false", str(workspace / "node-sdk")] in commands
+
+
+def test_stripe_link_native_driver_failure_reaches_paired_gate_before_source(
+    workspace: Path, stripe_link_project: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("FAIL_TS_DRIVER", "1")
+    monkeypatch.setattr("sys.argv", ["runner", "live"])
+    with pytest.raises(subprocess.CalledProcessError) as failure:
+        runner.main()
+    assert failure.value.returncode == 19
+    assert not any("-e" in call["args"] for call in calls(workspace))
+
+
+@pytest.fixture
+def valtown_project(workspace: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    runner.REGISTRY.write_text('{"valtown":"valtown-deno"}')
+    monkeypatch.setenv("INTEGRATION_EXAMPLES", '["valtown"]')
+    monkeypatch.setenv("RUNNER_TEMP", str(workspace / "runner-temp"))
+    cli = workspace / "runner-temp/notte-valtown-deno/node_modules/.bin/deno"
+    cli.parent.mkdir(parents=True)
+    cli.write_text((workspace / "examples/alpha/.venv/bin/python").read_text())
+    cli.chmod(0o755)
+    project = workspace / "examples/valtown"
+    project.mkdir(parents=True)
+    return project
+
+
+def test_valtown_installs_without_credentials_and_runs_one_native_fetch_suite(
+    workspace: Path, valtown_project: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    for key in runner.CREDENTIALS - {"NOTTE_API_KEY"}:
+        monkeypatch.setenv(key, "fixture-private-provider")
+    monkeypatch.setenv("NOTTE_VALTOWN_LIVE", "1")
+    monkeypatch.setattr("sys.argv", ["runner", "live"])
+    runner.main()
+    observed = calls(workspace)
+    commands = [call["args"] for call in observed]
+    native = [call for call in observed if "test:live" in call["args"]]
+    assert len(native) == 1
+    assert commands[0] == [
+        "npm",
+        "install",
+        "--prefix",
+        str(workspace / "runner-temp/notte-valtown-deno"),
+        "--no-audit",
+        "--no-fund",
+        "deno@2.9.6",
+    ]
+    assert [command[1:] for command in commands[1:]] == [
+        ["fmt", "--check", "main.ts", "main_test.ts", "deno.json"],
+        ["lint", "main.ts", "main_test.ts"],
+        ["task", "check"],
+        ["task", "test"],
+        ["task", "test:live"],
+    ]
+    assert all(call["credentials"] == [] and call["live_flags"]["NOTTE_VALTOWN_LIVE"] == "0" for call in observed[:-1])
+    assert native[0]["credentials"] == ["NOTTE_API_KEY"]
+    assert native[0]["live_flags"]["NOTTE_VALTOWN_LIVE"] == "1"
+    assert all(call["cwd"] == str(valtown_project) for call in observed)
+    assert not any("uv" in command or "npx" in command for command in commands)
+    assert not any("--allow-net" in command for command in commands)
+    assert not any("-e" in command for command in commands)
+
+
+def test_valtown_unselected_shard_does_no_setup(
+    workspace: Path, valtown_project: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("sys.argv", ["runner", "live", "--shard", "2/2"])
+    runner.main()
+    assert calls(workspace) == []
+
+
+@pytest.mark.parametrize("phase", ["static", "live"])
+def test_valtown_cli_failure_stops_existing_paired_owner(
+    workspace: Path, valtown_project: Path, monkeypatch: pytest.MonkeyPatch, phase: str
+) -> None:
+    monkeypatch.setenv("FAIL_DENO", phase)
+    monkeypatch.setattr("sys.argv", ["runner", "live"])
+    with pytest.raises(subprocess.CalledProcessError) as failure:
+        runner.main()
+    assert failure.value.returncode == 37
+    assert len([call for call in calls(workspace) if "test:live" in call["args"]]) == (phase == "live")
+
+
+def test_valtown_default_tests_cannot_use_network_permission() -> None:
+    config = json.loads((Path(__file__).parents[2] / "examples/valtown/deno.json").read_text())
+    assert config["tasks"] == {
+        "check": "deno check main.ts main_test.ts",
+        "test": "deno test --allow-env main_test.ts",
+        "test:live": "deno test --allow-env --allow-net main_test.ts",
+    }
+
+
+@pytest.fixture
+def watsonx_project(workspace: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    project = shipped_project(workspace, monkeypatch, "watsonx", "typescript-driver")
+    (project / "typescript").mkdir()
+    return project
+
+
+def test_watsonx_preserves_offline_native_driver_and_ibm_isolation(
+    workspace: Path, watsonx_project: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    for key in runner.CREDENTIALS - {"NOTTE_API_KEY"}:
+        monkeypatch.setenv(key, "fixture-private-provider")
+    monkeypatch.setenv("NOTTE_WATSONX_REQUIRE_LIVE", "1")
+    runner.main()
+    observed = calls(workspace)
+    native = [call for call in observed if "test:live" in call["args"]]
+    static = [call for call in observed if "unittest" in call["args"] or call["args"] == ["npm", "test"]]
+    assert len(native) == 2 and len(static) == 2
+    assert all(call["credentials"] == ["NOTTE_API_KEY"] for call in native)
+    assert all(
+        call["watsonx_required"] == "1" and call["watsonx_python"] == str(watsonx_project / ".venv/bin/python")
+        for call in native
+    )
+    assert all(not call["credentials"] for call in observed if call not in native)
+    assert all(call["watsonx_required"] == "0" for call in static)
+    commands = [call["args"] for call in observed]
+    assert ["python", "-c", "import requests; from notte_sdk import NotteClient"] in commands
+    assert ["python", "-m", "unittest", "discover", "-s", "python"] in commands
+    assert ["npm", "test"] in commands
+    source = next(command for command in commands if "-e" in command)
+    assert source[-4:] == ["-e", str(workspace / "packages/notte-core"), "-e", str(workspace / "packages/notte-sdk")]
+    assert "--no-deps" not in source
+    assert commands.index(source) > commands.index(native[0]["args"])
+    assert commands.count(["npm", "run", "typecheck"]) == 2
+
+
+def test_watsonx_native_failure_reaches_existing_paired_owner_before_source(
+    workspace: Path, watsonx_project: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("FAIL_TS_DRIVER", "1")
+    with pytest.raises(subprocess.CalledProcessError) as error:
+        runner.main()
+    assert error.value.returncode == 19
+    assert not any("-e" in call["args"] for call in calls(workspace))

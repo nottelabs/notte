@@ -373,7 +373,8 @@
               "integrations/n8n",
               "integrations/trigger",
               "integrations/temporal",
-              "integrations/github-actions"
+              "integrations/github-actions",
+              "integrations/val-town"
             ]
           },
           {
@@ -396,6 +397,13 @@
             "icon": "folder",
             "pages": [
               "integrations/box"
+            ]
+          },
+          {
+            "group": "Payments",
+            "icon": "credit-card",
+            "pages": [
+              "integrations/stripe-link"
             ]
           },
           {
