@@ -20,19 +20,23 @@ def workspace(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.setenv("COMMAND_LOG", str(tmp_path / "calls.jsonl"))
     monkeypatch.setenv("NOTTE_API_KEY", "fixture-ci-key")
     monkeypatch.setenv("OPENAI_API_KEY", "fixture-provider-key")
+    monkeypatch.delenv("BRAINTRUST_API_KEY", raising=False)
     stub = """#!/usr/bin/env python3
 import json, os, sys
 from pathlib import Path
 args = [Path(sys.argv[0]).name, *sys.argv[1:]]
 with open(os.environ['COMMAND_LOG'], 'a') as log:
     log.write(json.dumps({'args': args, 'cwd': os.getcwd(),
-        'credentials': sorted(k for k in ('NOTTE_API_KEY', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'GEMINI_API_KEY') if os.environ.get(k)),
+        'credentials': sorted(k for k in ('NOTTE_API_KEY', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'GEMINI_API_KEY', 'BRAINTRUST_API_KEY', 'LMNR_PROJECT_API_KEY', 'OP_SERVICE_ACCOUNT_TOKEN') if os.environ.get(k)),
         'vitest': os.environ.get('VITEST_INTEGRATION'),
         'journal': os.environ.get('NOTTE_AGENT_BROWSER_OWNERSHIP_JOURNAL'),
         'example_python': os.environ.get('NOTTE_EXAMPLE_PYTHON'),
         'docs_python': os.environ.get('NOTTE_DOCS_PYTHON'),
         'mongodb_uri': os.environ.get('MONGODB_URI'),
         'python': os.environ.get('NOTTE_COMPUTER_USE_PYTHON'),
+        'braintrust_python': os.environ.get('NOTTE_BRAINTRUST_PYTHON'),
+        'braintrust_project': os.environ.get('BRAINTRUST_PROJECT'),
+        'onepassword_python': os.environ.get('NOTTE_ONEPASSWORD_PYTHON'),
         'gemini_live': os.environ.get('NOTTE_GEMINI_LIVE'),
         'gemini_model': os.environ.get('NOTTE_GEMINI_MODEL_LIVE'),
         'selenium_live': os.environ.get('NOTTE_SELENIUM_LIVE'),
@@ -50,6 +54,8 @@ if args[1:] == ['install_driver.py']:
     if os.environ.get('FAIL_DRIVER'):
         sys.exit(17)
 if os.environ.get('FAIL_UNITTEST') and 'unittest' in args:
+    sys.exit(19)
+if os.environ.get('FAIL_TS_DRIVER') and args == ['npm', 'run', 'test:live']:
     sys.exit(19)
 if os.environ.get('FAIL_NATIVE') and ('test:live' in args or any(arg.endswith('.integration.test.ts') for arg in args)):
     sys.exit(23)
@@ -81,6 +87,17 @@ def test_shards_partition_projects_once(workspace: Path) -> None:
     assert [name for name, _ in first] == ["alpha", "gamma"]
     assert [name for name, _ in second] == ["beta"]
     assert len(first + second) == 3
+    assert calls(workspace) == []
+
+
+@pytest.mark.parametrize("shard", ["0/1", "2/1", "1/0", "bad", "1/2/3"])
+def test_invalid_shard_cli_fails_before_credentials_or_installs(
+    workspace: Path, monkeypatch: pytest.MonkeyPatch, shard: str
+) -> None:
+    monkeypatch.setattr("sys.argv", ["runner", "live", "--shard", shard])
+    monkeypatch.delenv("NOTTE_API_KEY")
+    with pytest.raises(ValueError):
+        runner.main()
     assert calls(workspace) == []
 
 
@@ -294,6 +311,73 @@ def test_root_unittest_requires_real_modules_before_setup(workspace: Path) -> No
     with pytest.raises(ValueError, match="requires root test_"):
         runner.check(workspace / "examples/alpha", {}, "root-unittest")
     assert calls(workspace) == []
+
+
+def test_laminar_vendor_credential_is_absent_from_install_and_offline_commands(
+    workspace: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runner.REGISTRY.write_text(json.dumps({"laminar": "root-unittest"}))
+    monkeypatch.setenv("INTEGRATION_EXAMPLES", '["laminar"]')
+    monkeypatch.setenv("LMNR_PROJECT_API_KEY", "fixture-vendor-key")
+    monkeypatch.setenv("NOTTE_LAMINAR_EXPORT_LIVE", "1")
+    project = workspace / "examples/laminar"
+    (project / "typescript").mkdir(parents=True)
+    python = project / ".venv/bin/python"
+    python.parent.mkdir(parents=True)
+    python.write_text((workspace / "examples/alpha/.venv/bin/python").read_text())
+    python.chmod(0o755)
+    (project / "test_read_page.py").write_text("# Fixture unittest module\n")
+    monkeypatch.setattr("sys.argv", ["runner", "live"])
+    runner.main()
+    observed = calls(workspace)
+    suites = [call for call in observed if "unittest" in call["args"] or "test:live" in call["args"]]
+    assert len(suites) == 6
+    assert all(not call["credentials"] for call in observed if call not in suites[2:])
+    assert all(call["live_flags"]["NOTTE_LAMINAR_EXPORT_LIVE"] == "0" for call in suites[:2])
+    assert all("LMNR_PROJECT_API_KEY" in call["credentials"] for call in suites[2:])
+    assert all(call["live_flags"]["NOTTE_LAMINAR_EXPORT_LIVE"] == "1" for call in suites[2:])
+    assert [call["args"] for call in suites[::2]] == [["python", "-m", "unittest", "-v", "test_read_page.py"]] * 3
+
+
+@pytest.mark.parametrize("failure", [False, True])
+def test_braintrust_ts_driver_preserves_python_selection_and_credential_isolation(
+    workspace: Path, monkeypatch: pytest.MonkeyPatch, failure: bool
+) -> None:
+    project = workspace / "examples/braintrust"
+    (project / "typescript").mkdir(parents=True)
+    python = project / ".venv/bin/python"
+    python.parent.mkdir(parents=True)
+    python.write_text((workspace / "examples/alpha/.venv/bin/python").read_text())
+    python.chmod(0o755)
+    runner.REGISTRY.write_text(json.dumps({"braintrust": "typescript-driver"}))
+    monkeypatch.setenv("INTEGRATION_EXAMPLES", '["braintrust"]')
+    monkeypatch.setenv("BRAINTRUST_API_KEY", "fixture-trace-key")
+    monkeypatch.setenv("BRAINTRUST_PROJECT", "notte-integration-tests")
+    monkeypatch.setattr("sys.argv", ["runner", "live"])
+    if failure:
+        monkeypatch.setenv("FAIL_TS_DRIVER", "1")
+        with pytest.raises(subprocess.CalledProcessError) as error:
+            runner.main()
+        assert error.value.returncode == 19
+    else:
+        runner.main()
+    observed = calls(workspace)
+    native = [call for call in observed if call["args"] == ["npm", "run", "test:live"]]
+    assert len(native) == (1 if failure else 2)
+    assert all(call["cwd"] == str(project / "typescript") for call in native)
+    assert all(call["braintrust_python"] == str(project / ".venv/bin/python") for call in native)
+    assert all(call["braintrust_project"] == "notte-integration-tests" for call in native)
+    assert all(call["credentials"] == ["BRAINTRUST_API_KEY", "NOTTE_API_KEY", "OPENAI_API_KEY"] for call in native)
+    assert all(not call["credentials"] for call in observed if call not in native)
+    assert not any("unittest" in call["args"] for call in observed)
+    commands = [call["args"] for call in observed]
+    assert ["python", "-c", "from braintrust import init_logger; from notte_sdk import NotteClient"] in commands
+    overlays = [command for command in commands if command[:3] == ["uv", "pip", "install"]]
+    if failure:
+        assert not overlays
+    else:
+        assert len(overlays) == 1 and "--no-deps" not in overlays[0]
+        assert commands.index(overlays[0]) > commands.index(native[0]["args"])
 
 
 def shipped_project(workspace: Path, monkeypatch: pytest.MonkeyPatch, name: str, convention: str) -> Path:
@@ -547,3 +631,45 @@ def test_mongodb_cleanup_failure_keeps_original_native_failure(
         runner.main()
     assert failure.value.returncode == 23
     assert "Failed to remove owned MongoDB fixture" in failure.value.__notes__
+
+
+@pytest.mark.parametrize("failure", [False, True])
+def test_onepassword_ts_driver_preserves_validation_modes_and_no_vault_dependency(
+    workspace: Path, monkeypatch: pytest.MonkeyPatch, failure: bool
+) -> None:
+    runner.REGISTRY.write_text(json.dumps({"onepassword": "typescript-driver"}))  # pragma: allowlist secret
+    monkeypatch.setenv("INTEGRATION_EXAMPLES", '["onepassword"]')
+    monkeypatch.setenv("OP_SERVICE_ACCOUNT_TOKEN", "fixture-unused-token")
+    project = workspace / "examples/onepassword"
+    (project / "typescript").mkdir(parents=True)
+    python = project / ".venv/bin/python"
+    python.parent.mkdir(parents=True)
+    python.write_text((workspace / "examples/alpha/.venv/bin/python").read_text())
+    python.chmod(0o755)
+    monkeypatch.setattr("sys.argv", ["runner", "live"])
+    if failure:
+        monkeypatch.setenv("FAIL_TS_DRIVER", "1")
+        with pytest.raises(subprocess.CalledProcessError) as error:
+            runner.main()
+        assert error.value.returncode == 19
+    else:
+        runner.main()
+    observed = calls(workspace)
+    native = [call for call in observed if call["args"] == ["npm", "run", "test:live"]]
+    assert len(native) == (1 if failure else 2)
+    assert all(call["onepassword_python"] == str(python) for call in native)
+    assert all(call["cwd"] == str(project / "typescript") for call in native)
+    assert all(not call["credentials"] for call in observed if call not in native)
+    assert not any("unittest" in call["args"] for call in observed)
+    commands = [call["args"] for call in observed]
+    assert [
+        "python",
+        "-c",
+        'from onepassword import Secrets; from notte_sdk import NotteClient; Secrets.validate_secret_reference("op://Test/Login/username")',
+    ] in commands
+    overlays = [command for command in commands if command[:3] == ["uv", "pip", "install"]]
+    if failure:
+        assert not overlays
+    else:
+        assert len(overlays) == 1 and "--no-deps" not in overlays[0]
+        assert commands.index(overlays[0]) > commands.index(native[0]["args"])

@@ -171,10 +171,6 @@
       "destination": "/integrations"
     },
     {
-      "source": "/integrations/laminar",
-      "destination": "/integrations"
-    },
-    {
       "source": "/integrations/magnitude",
       "destination": "/integrations"
     },
@@ -378,6 +374,14 @@
             ]
           },
           {
+            "group": "Observability",
+            "icon": "chart-line",
+            "pages": [
+              "integrations/braintrust",
+              "integrations/laminar"
+            ]
+          },
+          {
             "group": "Email",
             "icon": "envelope",
             "pages": [
@@ -389,6 +393,13 @@
             "icon": "database",
             "pages": [
               "integrations/mongodb"
+            ]
+          },
+          {
+            "group": "Credentials",
+            "icon": "key",
+            "pages": [
+              "integrations/onepassword"
             ]
           },
           {

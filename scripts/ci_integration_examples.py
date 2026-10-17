@@ -17,7 +17,19 @@ from uuid import uuid4
 
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "scripts/integration_examples.json"
-CREDENTIALS = {"NOTTE_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY"}
+CREDENTIALS = {
+    "NOTTE_API_KEY",
+    "OPENAI_API_KEY",
+    "ANTHROPIC_API_KEY",
+    "GEMINI_API_KEY",
+    "BRAINTRUST_API_KEY",
+    "LMNR_PROJECT_API_KEY",
+    "OP_SERVICE_ACCOUNT_TOKEN",
+}
+DRIVER_IMPORTS = {
+    "braintrust": "from braintrust import init_logger; from notte_sdk import NotteClient",
+    "onepassword": 'from onepassword import Secrets; from notte_sdk import NotteClient; Secrets.validate_secret_reference("op://Test/Login/username")',
+}
 RECIPES = {"agent-browser", "claude-agents", "mongodb", "openai-agents"}
 NODE_PROJECTS = {"inngest", "temporal", "trigger"}
 
@@ -33,9 +45,13 @@ def projects(shard: str) -> list[tuple[str, str]]:
             raise ValueError("Unknown integration example")
         if registry[name] == "node-project" and name not in NODE_PROJECTS:
             raise ValueError("Unknown Node integration project")
-        if registry[name] not in {"gemini-root", "selenium-root", "root-unittest", "node-project"} and not re.fullmatch(
-            r"NOTTE_[A-Z0-9_]+_PYTHON", registry[name]
-        ):
+        if registry[name] not in {
+            "gemini-root",
+            "selenium-root",
+            "root-unittest",
+            "node-project",
+            "typescript-driver",
+        } and not re.fullmatch(r"NOTTE_[A-Z0-9_]+_PYTHON", registry[name]):
             raise ValueError("Invalid integration registry convention")
         selected.add(name)
     index, count = map(int, shard.split("/"))
@@ -112,6 +128,8 @@ def check(project: Path, env: dict[str, str], convention: str = "") -> Path:
     run(["uv", "pip", "check", "--python", str(python)], project, env)
     sources = sorted(path.name for path in project.glob("*.py") if path.is_file()) if tests else ["python"]
     run([str(python), "-m", "compileall", "-q", *sources], project, env)
+    if convention == "typescript-driver":
+        run([str(python), "-c", DRIVER_IMPORTS[project.name]], project, env)
     run(["npm", "ci"], project / "typescript", env)
     run(["npm", "run", "typecheck"], project / "typescript", env)
     if tests:
@@ -315,6 +333,8 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
     elif python_env == "root-unittest":
         prefix = f"NOTTE_{project.name.replace('-', '_').upper()}"
         env = {**env, f"{prefix}_LIVE": "1", "LANGSMITH_TRACING": "false", "DISABLE_TELEMETRY": "true"}
+    elif python_env == "typescript-driver":
+        env = {**env, f"NOTTE_{project.name.replace('-', '_').upper()}_PYTHON": str(python)}
     else:
         env = {**env, python_env: str(python)}
     typescript = project if root_layout else project / "typescript"
@@ -352,6 +372,8 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
             run(["npm", "test"], project, env)
         elif python_env == "root-unittest":
             run([str(python), "-m", "unittest", "-v", *root_tests(project)], project, env)
+            run(["npm", "run", "test:live"], typescript, env)
+        elif python_env == "typescript-driver":
             run(["npm", "run", "test:live"], typescript, env)
         else:
             run([str(python), "-m", "unittest", "discover", "-s", "python", "-p", "test_live.py", "-v"], project, env)
