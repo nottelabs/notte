@@ -18,7 +18,7 @@ export function browserTools(tools: DynamicStructuredTool[], sessionId: string) 
 export async function run(task: string) {
   return new NotteClient().Session({ max_duration_minutes: 3 }).use(async session => {
     const adapter = new MCPAdapter({ servers: { notte: {
-      url: `${(process.env.NOTTE_API_URL ?? 'https://api.notte.cc').replace(/\/+$/, '')}/mcp/`,
+      url: `${(process.env.NOTTE_API_URL || 'https://api.notte.cc').replace(/\/+$/, '')}/mcp/`,
       headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` },
     } } });
     let stage = 'MCP connection and tool discovery';

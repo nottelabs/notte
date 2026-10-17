@@ -48,7 +48,7 @@ async def mcp_connection(transport):
 
 async def run(task: str) -> dict[str, str]:
     transport = StreamableHttpTransport(
-        os.getenv("NOTTE_API_URL", "https://api.notte.cc").rstrip("/") + "/mcp/",
+        (os.getenv("NOTTE_API_URL") or "https://api.notte.cc").rstrip("/") + "/mcp/",
         headers={"Authorization": f"Bearer {os.environ['NOTTE_API_KEY']}"},
     )
     with NotteClient().Session(max_duration_minutes=3) as session:
