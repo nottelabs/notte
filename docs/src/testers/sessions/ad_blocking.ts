@@ -16,5 +16,7 @@ await session.use(async (s) => {
   await s.execute({ type: 'goto', url: 'https://example.com' });
 });
 
-const results = [(await defaultSession.status()).status, (await session.status()).status];
-export { results, session };
+const statuses = await Promise.all([defaultSession.status(), session.status()]);
+const results = statuses.map(status => status.status);
+const session_ids = statuses.map(status => status.session_id);
+export { results, session, session_ids };

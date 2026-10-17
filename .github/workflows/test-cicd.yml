@@ -7,6 +7,14 @@ on:
         description: Suite decisions from the shared push or PR selector.
         type: string
         default: ''
+      source_sha:
+        description: Immutable source commit validated by the coordinating workflow
+        type: string
+        default: ''
+      llm_provider:
+        description: Extraction provider selected from live PR metadata
+        type: string
+        default: gemini
   # Periodic full live coverage; offline tests remain the secret-free PR gate.
   schedule:
     - cron: '0 */4 * * 1-5'
@@ -86,7 +94,7 @@ jobs:
         if: github.event_name != 'workflow_dispatch'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
 
@@ -155,7 +163,7 @@ jobs:
         if: github.event_name != 'workflow_dispatch'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-            ref: ${{ github.event.pull_request.head.sha }}
+            ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - uses: ./.github/actions/python-setup
         with:
@@ -218,7 +226,7 @@ jobs:
         if: github.event_name != 'workflow_dispatch'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-            ref: ${{ github.event.pull_request.head.sha }}
+            ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
@@ -277,14 +285,35 @@ jobs:
 
       - name: Run staging and live tests
         env:
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          # PR selection requires a full write-authorized rerun. Forks receive no key.
+          NOTTE_CI_SOURCE_SHA: ${{ inputs.source_sha }}
+          NOTTE_CI_EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          NOTTE_CI_LLM_PROVIDER: ${{ inputs.llm_provider || 'gemini' }}
+          OPENAI_API_KEY: ${{ inputs.llm_provider == 'openai' && inputs.source_sha == (github.event.pull_request.head.sha || github.sha) && ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.run_attempt > 1) || (github.event_name == 'push' && github.ref == 'refs/heads/main' && !github.event.deleted)) && secrets.OPENAI_API_KEY || '' }}
+          NOTTE_LLM_BASE_URL: https://generativelanguage.googleapis.com/v1beta/openai
+          NOTTE_LLM_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          NOTTE_LLM_MODEL: gemini-3.5-flash-lite
+          NOTTE_TEST_DEFAULT_MODEL: gemini-3.8-flash
           NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_PY || secrets.NOTTE_API_KEY }}
           NOTTE_VAULT_TEST_EMAIL: ${{ secrets.NOTTE_VAULT_TEST_EMAIL }}
           NOTTE_VAULT_TEST_PASSWORD: ${{ secrets.NOTTE_VAULT_TEST_PASSWORD }}
           SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
           EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-        run: make test-live PYTEST_LIVE='uv run pytest -n 2 tests -m "staging or live" --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py --ignore=tests/llm/test_provider_matrix.py'
+        run: |
+          case "$NOTTE_CI_LLM_PROVIDER" in
+            gemini) ;;
+            openai)
+              test "$NOTTE_CI_SOURCE_SHA" = "$NOTTE_CI_EXPECTED_SHA" && test "$(git rev-parse HEAD)" = "$NOTTE_CI_SOURCE_SHA" || { echo 'Provider selection does not match the checked-out source'; exit 1; }
+              test -n "$OPENAI_API_KEY" || { echo 'The selected provider requires the existing OpenAI repository secret'; exit 1; }
+              export NOTTE_LLM_BASE_URL=https://api.openai.com/v1
+              export NOTTE_LLM_API_KEY="$OPENAI_API_KEY"
+              export NOTTE_LLM_MODEL=gpt-4.1-mini
+              export NOTTE_TEST_DEFAULT_MODEL=gpt-4.1-nano
+              ;;
+            *) echo 'Unsupported extraction provider'; exit 1 ;;
+          esac
+          make test-live PYTEST_LIVE='uv run pytest -n 2 tests -m "staging or live" --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py --ignore=tests/llm/test_provider_matrix.py'
 
       - name: Cleanup vaults created by this run
         if: ${{ always() }}
@@ -312,7 +341,7 @@ jobs:
         if: github.event_name != 'workflow_dispatch'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - name: Note - provider matrix skipped (missing secret)
         if: env.OPENROUTER_API_KEY == ''
@@ -382,7 +411,7 @@ jobs:
         if: github.event_name != 'workflow_dispatch'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
 
       - run: git submodule update --init notte-cli
@@ -439,7 +468,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
