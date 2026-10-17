@@ -1,13 +1,15 @@
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
+import { appendFileSync } from 'node:fs';
 import { once } from 'node:events';
-import { test } from 'node:test';
+import { test, mock } from 'node:test';
+import { inspect } from 'node:util';
 import { setTimeout as sleep } from 'node:timers/promises';
 import OpenAI from 'openai';
 import type { ComputerAction, ResponseComputerToolCall } from 'openai/resources/responses/responses';
 import { NotteClient } from 'notte-sdk';
-import { chromium } from 'playwright-core';
+import { chromium, type Browser } from 'playwright-core';
 import { NotteComputer } from '../src/computer.ts';
 import { runDemo } from '../src/demo.ts';
 
@@ -24,7 +26,10 @@ async function assertClosed(id: string) {
     });
     assert.equal(response.status, 200, 'Authoritative session lookup failed');
     const { status } = await response.json() as { status: string };
-    if (status === 'closed') return;
+    if (status === 'closed') {
+      if (process.env.CUA_OWNERSHIP_JOURNAL) appendFileSync(process.env.CUA_OWNERSHIP_JOURNAL, JSON.stringify({ event: 'independent_get_closed', session_id: id }) + '\n', { mode: 0o600 });
+      return;
+    }
     assert.equal(status, 'active', 'Unexpected terminal session state');
     assert.ok(Date.now() < deadline, `Owned session ${id} remained active`);
     await sleep(500);
@@ -118,45 +123,110 @@ test('batched native actions, exact screenshot size, and permission refusal', { 
   } finally { if (id) await assertClosed(id); }
 });
 
-test('unchanged demo closes its browser after actual provider HTTP 401', { skip: !live, timeout: 90_000 }, async () => {
-  const payloads: { tools: unknown; previous_response_id?: string; input: { call_id: string; output: { detail: string; image_url: string } }[] }[] = [];
-  const server = createServer(async (request, response) => {
-    const chunks = [];
-    for await (const chunk of request) chunks.push(chunk);
-    payloads.push(JSON.parse(Buffer.concat(chunks).toString()));
-    response.writeHead(payloads.length === 1 ? 200 : 401, { 'Content-Type': 'application/json' });
-    response.end(JSON.stringify(payloads.length === 1
-      ? { id: 'resp_protocol', object: 'response', created_at: 0, model: 'gpt-6.1-sol', status: 'completed', output: [call({ type: 'screenshot' })] }
-      : { error: { type: 'invalid_request_error', message: 'Test credential rejected', code: 'invalid_api_key' } }));
-  });
-  server.listen(0, '127.0.0.1');
-  await once(server, 'listening');
-  const previous = { key: process.env.OPENAI_API_KEY, url: process.env.OPENAI_BASE_URL };
-  const address = server.address();
-  assert.ok(address && typeof address !== 'string');
-  process.env.OPENAI_API_KEY = 'test-invalid-key'; // pragma: allowlist secret
-  process.env.OPENAI_BASE_URL = `http://127.0.0.1:${address.port}`;
-  try {
-    let id: string | undefined;
-    await assert.rejects(runDemo, (error: Error) => {
-      id = /^Computer use failed: provider HTTP 401 \(session ([a-f0-9-]+)\)$/.exec(error.message)?.[1];
-      assert.ok(error.cause instanceof OpenAI.AuthenticationError);
-      return Boolean(id);
+for (const closeMode of ['normal', 'reject', 'timeout'] as const) {
+  test(`unchanged demo preserves private HTTP 401 and closes ownership (${closeMode})`, { skip: !live, timeout: 90_000 }, async () => {
+    const payloads: { tools: unknown; previous_response_id?: string; input: { call_id: string; output: { detail: string; image_url: string } }[] }[] = [];
+    const server = createServer(async (request, response) => {
+      const chunks = [];
+      for await (const chunk of request) chunks.push(chunk);
+      payloads.push(JSON.parse(Buffer.concat(chunks).toString()));
+      response.writeHead(payloads.length === 1 ? 200 : 401, { 'Content-Type': 'application/json' });
+      response.end(JSON.stringify(payloads.length === 1
+        ? { id: 'resp_protocol', object: 'response', created_at: 0, model: 'gpt-6.1-sol', status: 'completed', output: [call({ type: 'screenshot' })] }
+        : { error: { type: 'invalid_request_error', message: 'private-provider-body-fixture', code: 'invalid_api_key' } }));
     });
+    server.listen(0, '127.0.0.1');
+    await once(server, 'listening');
+    const previous = { key: process.env.OPENAI_API_KEY, url: process.env.OPENAI_BASE_URL };
+    const address = server.address();
+    assert.ok(address && typeof address !== 'string');
+    process.env.OPENAI_API_KEY = 'test-invalid-key'; // pragma: allowlist secret
+    process.env.OPENAI_BASE_URL = `http://127.0.0.1:${address.port}`;
+    let id: string | undefined;
+    let restoreStart: (() => void) | undefined;
+    let failure: unknown;
+    let nativeBrowser: Browser | undefined;
+    let restoreClose: (() => void) | undefined;
+    const messages: string[] = [];
+    const sessionFactory = NotteClient.prototype.Session;
+    const owner = mock.method(NotteClient.prototype, 'Session', function (this: NotteClient, ...args: Parameters<NotteClient['Session']>) {
+      const session = sessionFactory.apply(this, args);
+      const start = session.start.bind(session);
+      const starting = mock.method(session, 'start', async (...options: Parameters<typeof start>) => {
+        const result = await start(...options);
+        id = session.getId() ?? undefined;
+        if (process.env.CUA_OWNERSHIP_JOURNAL) appendFileSync(process.env.CUA_OWNERSHIP_JOURNAL, JSON.stringify({ event: 'allocated', session_id: id }) + '\n', { mode: 0o600 });
+        return result;
+      });
+      restoreStart = () => starting.mock.restore();
+      return session;
+    });
+    const connect = chromium.connectOverCDP.bind(chromium);
+    const transport = mock.method(chromium, 'connectOverCDP', async (...args: Parameters<typeof connect>) => {
+      nativeBrowser = await connect(...args);
+      if (closeMode !== 'normal') {
+        const closing = mock.method(nativeBrowser, 'close', async () => {
+          if (closeMode === 'timeout') await new Promise<void>(() => {});
+          throw new Error('private-close-body-fixture');
+        });
+        restoreClose = () => closing.mock.restore();
+      }
+      return nativeBrowser;
+    });
+    const warning = mock.method(console, 'warn', (...args: unknown[]) => { messages.push(inspect(args)); });
+    try {
+      try { await runDemo(); }
+      catch (error) { failure = error; }
+    } finally {
+      try {
+        if (id) {
+          let closed = false;
+          try { await assertClosed(id); closed = true; }
+          finally {
+            if (!closed) {
+              const response = await fetch(`${process.env.NOTTE_API_URL ?? 'https://api.notte.cc'}/sessions/${id}/stop`, {
+                method: 'DELETE', headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` },
+                signal: AbortSignal.timeout(15_000), redirect: 'error',
+              });
+              assert.ok(response.ok, 'Fallback stop failed for the owned browser');
+              await assertClosed(id);
+            }
+          }
+        }
+      } finally {
+        restoreClose?.();
+        transport.mock.restore();
+        restoreStart?.();
+        owner.mock.restore();
+        warning.mock.restore();
+        try {
+          if (nativeBrowser) await Promise.race([
+            nativeBrowser.close(),
+            sleep(5000, undefined, { ref: false }).then(() => { throw new Error('Test transport cleanup timed out'); }),
+          ]);
+        } finally {
+          for (const [name, value] of [['OPENAI_API_KEY', previous.key], ['OPENAI_BASE_URL', previous.url]]) {
+            if (value === undefined) delete process.env[name!]; else process.env[name!] = value;
+          }
+          await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
+        }
+      }
+    }
+    assert.ok(id, 'The unchanged recipe must allocate an independently tracked browser');
+    assert.ok(failure instanceof Error);
+    assert.match(failure.message, /^Computer use failed: provider HTTP 401 \(session [a-f0-9-]+\)$/);
+    assert.equal(failure.cause, undefined);
+    const rendered = inspect(failure, { depth: 10 }) + failure.stack + messages.join('\n');
+    assert.ok(!rendered.includes('private-provider-body-fixture'));
+    assert.ok(!rendered.includes('private-close-body-fixture'));
     assert.equal(payloads.length, 2, 'The unchanged demo must complete a screenshot turn before the real HTTP401');
     assert.deepEqual(payloads[0].tools, [{ type: 'computer' }]);
     assert.equal(payloads[1].previous_response_id, 'resp_protocol');
     assert.equal(payloads[1].input[0].call_id, 'call_test');
     assert.equal(payloads[1].input[0].output.detail, 'original');
     assert.ok(payloads[1].input[0].output.image_url.startsWith('data:image/png;base64,'));
-    await assertClosed(id!);
-  } finally {
-    for (const [name, value] of [['OPENAI_API_KEY', previous.key], ['OPENAI_BASE_URL', previous.url]]) {
-      if (value === undefined) delete process.env[name!]; else process.env[name!] = value;
-    }
-    await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
-  }
-});
+  });
+}
 
 test('unchanged demo completes a real model visual form task', { skip: !live || !process.env.OPENAI_API_KEY, timeout: 180_000 }, async () => {
   let id: string | undefined;

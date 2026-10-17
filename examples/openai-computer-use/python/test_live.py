@@ -6,18 +6,24 @@ import json
 import os
 import re
 import threading
+import traceback
 import unittest
+from contextlib import nullcontext
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from types import SimpleNamespace
 from typing import ClassVar
 from unittest.mock import patch
 
+import demo
 import requests
 from demo import run_demo
 from notte_computer import NotteComputer
+from notte_core.common.logging import logger
 from notte_sdk import NotteClient
-from openai import AsyncOpenAI, AuthenticationError
+from openai import AsyncOpenAI
 from openai.types.responses import ResponseComputerToolCall
+from playwright.async_api import Browser
 
 
 async def assert_closed(session_id: str) -> None:
@@ -79,7 +85,7 @@ class Unauthorized(BaseHTTPRequestHandler):
             {
                 "error": {
                     "type": "invalid_request_error",
-                    "message": "Test credential rejected",
+                    "message": "private-provider-body-fixture",
                     "code": "invalid_api_key",
                 }
             }
@@ -216,11 +222,29 @@ class ComputerLiveTests(unittest.IsolatedAsyncioTestCase):
                 await assert_closed(session.session_id)
 
     async def test_original_demo_provider_failure_closes_browser(self):
+        for close_mode in ("normal", "reject", "timeout"):
+            with self.subTest(close_mode=close_mode):
+                await self.provider_failure(close_mode)
+
+    async def provider_failure(self, close_mode):
         server = ThreadingHTTPServer(("127.0.0.1", 0), Unauthorized)
         worker = threading.Thread(target=server.serve_forever, daemon=True)
         worker.start()
         before = Unauthorized.requests
         Unauthorized.payloads = []
+        client, owned, messages = NotteClient(), [], []
+        failure = None
+
+        def create_session(**kwargs):
+            session = client.Session(**kwargs)
+            owned.append(session)
+            return session
+
+        async def fail_close(_browser, **_kwargs):
+            if close_mode == "timeout":
+                await asyncio.Event().wait()
+            raise RuntimeError("private-close-body-fixture")
+
         try:
             with (
                 patch.dict(
@@ -230,25 +254,44 @@ class ComputerLiveTests(unittest.IsolatedAsyncioTestCase):
                         "OPENAI_BASE_URL": f"http://127.0.0.1:{server.server_port}",
                     },
                 ),
-                self.assertRaisesRegex(
-                    RuntimeError, r"Computer use failed: provider HTTP 401 \(session [a-f0-9-]+\)"
-                ) as failure,
+                patch.object(demo, "NotteClient", return_value=SimpleNamespace(Session=create_session)),
+                patch.object(logger, "warning", side_effect=lambda message: messages.append(str(message))),
+                patch.object(Browser, "close", fail_close) if close_mode != "normal" else nullcontext(),
             ):
-                await run_demo()
-            self.assertEqual(Unauthorized.requests - before, 2)
-            first, second = Unauthorized.payloads
-            self.assertEqual(first["tools"], [{"type": "computer"}])
-            self.assertEqual(second["previous_response_id"], "resp_protocol")
-            self.assertEqual(second["input"][0]["call_id"], "call_test")
-            self.assertEqual(second["input"][0]["output"]["detail"], "original")
-            self.assertTrue(second["input"][0]["output"]["image_url"].startswith("data:image/png;base64,"))
-            self.assertIsInstance(failure.exception.__cause__, AuthenticationError)
-            session_id = re.search(r"session ([a-f0-9-]+)", str(failure.exception))[1]
-            await assert_closed(session_id)
+                try:
+                    await asyncio.wait_for(run_demo(), timeout=30)
+                except Exception as error:
+                    failure = error
         finally:
-            await asyncio.to_thread(server.shutdown)
-            server.server_close()
-            worker.join(timeout=5)
+            try:
+                if owned and owned[0].response is not None:
+                    session = owned[0]
+                    closed = False
+                    try:
+                        await assert_closed(session.session_id)
+                        closed = True
+                    finally:
+                        if not closed:
+                            await asyncio.to_thread(session.stop)
+                            await assert_closed(session.session_id)
+            finally:
+                await asyncio.to_thread(server.shutdown)
+                server.server_close()
+                worker.join(timeout=5)
+
+        self.assertIsInstance(failure, RuntimeError)
+        self.assertRegex(str(failure), r"^Computer use failed: provider HTTP 401 \(session [a-f0-9-]+\)$")
+        self.assertIsNone(failure.__cause__)
+        rendered = "".join(traceback.format_exception(failure)) + repr(failure) + "\n".join(messages)
+        self.assertNotIn("private-provider-body-fixture", rendered)
+        self.assertNotIn("private-close-body-fixture", rendered)
+        self.assertEqual(Unauthorized.requests - before, 2)
+        first, second = Unauthorized.payloads
+        self.assertEqual(first["tools"], [{"type": "computer"}])
+        self.assertEqual(second["previous_response_id"], "resp_protocol")
+        self.assertEqual(second["input"][0]["call_id"], "call_test")
+        self.assertEqual(second["input"][0]["output"]["detail"], "original")
+        self.assertTrue(second["input"][0]["output"]["image_url"].startswith("data:image/png;base64,"))
 
     @unittest.skipUnless(os.getenv("OPENAI_API_KEY"), "Set OPENAI_API_KEY for the real model test")
     async def test_original_demo_real_model(self):
