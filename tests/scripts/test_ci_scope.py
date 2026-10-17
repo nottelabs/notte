@@ -466,6 +466,12 @@ class GitHistoryTests(unittest.TestCase):
         scope = self.scope("push", head, shared)
         self.assertEqual(scope["integration_examples"], sorted(ci.INTEGRATION_EXAMPLES))
         self.assertTrue(scope["paired_snippets_live"])
+        recipe = self.commit({".github/workflows/selector-repair.yml": "recipe = True\n"})
+        scope = self.scope("push", shared, recipe)
+        self.assertEqual(scope["integration_examples"], ["github-actions"])
+        self.assertTrue(scope["paired_static"] and scope["paired_live"])
+        self.assertFalse(scope["paired_snippets_live"])
+        self.assertEqual(scope["paired_shards"], ["1/1"])
 
     def test_snippet_changes_do_not_repeat_unrelated_native_projects(self) -> None:
         head = self.commit({"docs/src/testers/sessions/index.py": "snippet = True\n"})
