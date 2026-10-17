@@ -1,6 +1,30 @@
 ---
-title: Claude Computer Use
-description: Integration with Claude Computer Use
+title: Anthropic Computer Use
+description: Run Claude's screenshot, mouse, and keyboard tools on a Notte browser.
 ---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
-Todo
+<AgentMdNotice />
+
+[Anthropic Computer Use](https://platform.claude.com/docs/en/agents-and-tools/tool-use/computer-use-tool) lets Claude act from screenshots. The Python and TypeScript examples connect its native computer toolset to a Notte browser through Playwright over CDP.
+
+## Set up
+
+Clone the [Notte repository](https://github.com/nottelabs/notte) and open [examples/anthropic-computer-use](https://github.com/nottelabs/notte/tree/main/examples/anthropic-computer-use). Its README includes installation commands and the complete runnable projects.
+
+Set `NOTTE_API_KEY` from [Notte](https://console.notte.cc/apikeys) and `ANTHROPIC_API_KEY` from [Claude Console](https://platform.claude.com/settings/keys).
+
+<Tabs>
+  <Tab title="Python">
+    Use Python 3.11+ and uv. Run `uv sync --locked`, then `uv run python python/demo.py`.
+  </Tab>
+  <Tab title="TypeScript">
+    Use Node.js 24+. Open the `typescript` directory, run `npm ci`, then `npm start`.
+  </Tab>
+</Tabs>
+
+## Run a visual browser task
+
+Claude Haiku 5.5 reads a random code from a screenshot and submits it through a form. The example verifies the page result and returns `output`, `session_id`, and the tool calls. Each attempt owns its Notte session and closes it on success or error.
+
+The reusable adapter supports screenshots, clicks, typing, key presses, and waits inside a browser viewport. It does not expose a desktop. The SDK disables unsupported tools and handles the conversation loop. Provide your own confirmation callback when adapting the toolset to other pages; the demo permits typing only on its own test page.

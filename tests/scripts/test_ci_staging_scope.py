@@ -21,14 +21,11 @@ def workflow(name: str) -> dict[str, Any]:
 
 def test_shared_queue_only_contains_staging_test_jobs() -> None:
     expected = {
-        ("openai-agents-integration.yml", "live"),
         ("node-sdk-ci.yml", "integration-tests"),
         ("test-cicd.yml", "staging-and-live"),
         ("docs-tests-cicd.yml", "execution"),
         ("paired-sdk-examples.yml", "live"),
         ("readme-check.yml", "live"),
-        ("temporal-integration.yml", "browser-workflow"),
-        ("inngest-integration.yml", "live"),
         ("replit-integration.yml", "live"),
     }
     queued = set()
@@ -220,13 +217,16 @@ def test_deleted_docs_still_run_the_global_link_check() -> None:
         ("cancelled", "success", 1),
     ],
 )
-def test_required_gate_waits_for_all_families_and_fails_closed(changes: str, selected: str, expected: int) -> None:
+@pytest.mark.parametrize("family", ["node", "paired"])
+def test_required_gate_waits_for_all_families_and_fails_closed(
+    changes: str, selected: str, expected: int, family: str
+) -> None:
     job = workflow("ci.yml")["jobs"]["tests"]
     assert job["if"] == "always()"
     assert set(job["needs"]) == {"changes", *ci_scope.GROUPS}
     results = {name: {"result": "skipped"} for name in job["needs"]}
     results["changes"]["result"] = changes
-    results["node"]["result"] = selected
+    results[family]["result"] = selected
     result = subprocess.run(
         ["bash", "-e", "-o", "pipefail", "-c", job["steps"][0]["run"]],
         env={**os.environ, "RESULTS": json.dumps(results)},
@@ -234,6 +234,51 @@ def test_required_gate_waits_for_all_families_and_fails_closed(changes: str, sel
         text=True,
     )
     assert result.returncode == expected, result.stdout + result.stderr
+
+
+def test_native_examples_have_one_existing_required_owner() -> None:
+    assert not (WORKFLOWS / "agentcard-integration.yml").exists()
+    assert not (WORKFLOWS / "box-integration.yml").exists()
+    assert not (WORKFLOWS / "braintrust-integration.yml").exists()
+    assert not (WORKFLOWS / "onepassword-integration.yml").exists()
+    for name in ("agent-browser", "claude-agents", "github-actions", "inngest", "openai-agents", "temporal", "trigger"):
+        assert not (WORKFLOWS / f"{name}-integration.yml").exists()
+    assert (WORKFLOWS / "selector-repair.yml").exists()
+    assert not (WORKFLOWS / "openai-computer-use-integration.yml").exists()
+    assert not (WORKFLOWS / "deepagents-integration.yml").exists()
+    assert not (WORKFLOWS / "gemini-computer-use-integration.yml").exists()
+    assert not (WORKFLOWS / "selenium-integration.yml").exists()
+    assert not (WORKFLOWS / "laminar-integration.yml").exists()
+    jobs = workflow("paired-sdk-examples.yml")["jobs"]
+    assert set(jobs) == {"changes", "checks", "live"}
+    assert set(jobs["live"]["needs"]) == {"changes", "checks"}
+    snippet = next(s for s in jobs["live"]["steps"] if "test/docs-snippets.integration.test.ts" in s.get("run", ""))
+    assert snippet["if"] == "fromJSON(needs.changes.outputs.scope).paired_snippets_live"
+    for name, phase in (("checks", "checks"), ("live", "live")):
+        job = jobs[name]
+        assert all(s["with"]["node-version"] == "24" for s in job["steps"] if "setup-node@" in s.get("uses", ""))
+        steps = [s for s in job["steps"] if "scripts/ci_integration_examples.py" in s.get("run", "")]
+        assert len(steps) == 1
+        step = steps[0]
+        assert f"ci_integration_examples.py {phase}" in step["run"]
+        assert "integration_examples" in step["env"]["INTEGRATION_EXAMPLES"]
+        assert not step.get("continue-on-error") and not job.get("continue-on-error")
+        if phase == "checks":
+            assert "secrets." not in str(step)
+        else:
+            assert '--shard "$NOTTE_DOCS_SHARD"' in step["run"]
+            for key in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY", "BRAINTRUST_API_KEY"):
+                assert "github.ref == 'refs/heads/main' && github.event_name != 'pull_request'" in step["env"][key]
+            model = step["env"]["NOTTE_DEEPAGENTS_MODEL_LIVE"]
+            assert "github.ref == 'refs/heads/main' && github.event_name != 'pull_request'" in model
+            assert "secrets.ANTHROPIC_API_KEY != '' && '1' || '0'" in model
+    artifact = next(step for step in jobs["live"]["steps"] if "upload-artifact@" in step.get("uses", ""))
+    assert artifact["if"] == "always()"
+    assert artifact["with"] == {
+        "name": "agent-browser-ownership",
+        "path": "${{ runner.temp }}/agent-browser-owned.jsonl",
+        "if-no-files-found": "ignore",
+    }
 
 
 def test_scoped_checks_fetch_history_only_during_authenticated_checkout() -> None:
@@ -455,3 +500,27 @@ with open(os.environ['COMMAND_LOG'], 'a') as log:
         assert calls[:1] == [[*runner, "run", "--from-ref", "a" * 40, "--to-ref", "b" * 40]]
         if docs_links:
             assert calls[1] == [*runner, "run", "check-docs-broken-links", "--all-files"]
+
+
+def test_laminar_export_uses_reviewed_main_credentials_only() -> None:
+    jobs = workflow("paired-sdk-examples.yml")["jobs"]
+    native = next(step for step in jobs["live"]["steps"] if step.get("name") == "Execute native integration examples")
+    env = native["env"]
+    assert (
+        env["LMNR_PROJECT_API_KEY"]
+        == "${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.LMNR_PROJECT_API_KEY || '' }}"
+    )
+    assert (
+        env["NOTTE_LAMINAR_EXPORT_LIVE"]
+        == "${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.LMNR_PROJECT_API_KEY != '' && '1' || '0' }}"
+    )
+    for step in jobs["checks"]["steps"]:
+        assert "LMNR_PROJECT_API_KEY" not in step.get("env", {})
+
+
+def test_onepassword_never_requests_vault_credentials_in_shared_ci() -> None:
+    jobs = workflow("paired-sdk-examples.yml")["jobs"]
+    for job in jobs.values():
+        assert "OP_SERVICE_ACCOUNT_TOKEN" not in str(job)
+        assert "OP_USERNAME_REF" not in str(job)
+        assert "OP_PASSWORD_REF" not in str(job)
