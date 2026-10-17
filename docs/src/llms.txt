@@ -98,6 +98,10 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [Stagehand](https://docs.notte.cc/integrations/stagehand.md): Use Stagehand v4 with a Notte cloud browser in Python or TypeScript
 - [Claude Agent SDK](https://docs.notte.cc/integrations/claude-agents.md): Give Claude agents a Notte cloud browser through MCP.
 
+## Computer Use
+
+- [OpenAI Computer Use](https://docs.notte.cc/integrations/openai-computer-use.md): Run OpenAI's native screenshot and input actions on a Notte browser.
+
 ## Workflow Automation
 
 - [n8n](https://docs.notte.cc/integrations/n8n.md): Use Notte browser agents inside n8n workflows

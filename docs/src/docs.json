@@ -167,10 +167,6 @@
       "destination": "/integrations"
     },
     {
-      "source": "/integrations/openai-computer-use",
-      "destination": "/integrations"
-    },
-    {
       "source": "/integrations/claude-computer-use",
       "destination": "/integrations"
     },
@@ -363,6 +359,13 @@
               "integrations/hermes",
               "integrations/stagehand",
               "integrations/claude-agents"
+            ]
+          },
+          {
+            "group": "Computer Use",
+            "icon": "desktop",
+            "pages": [
+              "integrations/openai-computer-use"
             ]
           },
           {
