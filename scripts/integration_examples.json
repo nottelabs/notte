@@ -1,0 +1,10 @@
+{
+  "anthropic-computer-use": "NOTTE_COMPUTER_USE_PYTHON",
+  "box": "box-root",
+  "braintrust": "typescript-driver",
+  "deepagents": "root-unittest",
+  "gemini-computer-use": "gemini-root",
+  "openai-computer-use": "NOTTE_COMPUTER_USE_PYTHON",
+  "selenium": "selenium-root",
+  "stripe-link": "typescript-driver"
+}
