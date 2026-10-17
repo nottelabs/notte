@@ -27,6 +27,23 @@ async def _finish_owned(task):
             cancelled = True
 
 
+@asynccontextmanager
+async def _owned_session(session):
+    entered = False
+    try:
+        _, cancelled = await _finish_owned(asyncio.create_task(session.__aenter__()))
+        entered = True
+        if cancelled:
+            raise asyncio.CancelledError
+        yield
+    finally:
+        error = sys.exc_info()
+        if entered:
+            _, cancelled = await _finish_owned(asyncio.create_task(session.__aexit__(*error)))
+            if cancelled and error[0] is None:
+                raise asyncio.CancelledError
+
+
 class NativeDriver:
     def __init__(self):
         self.process = None
@@ -155,7 +172,7 @@ async def notte_vibium(client=None):
     session = client.Session(max_duration_minutes=3, proxies=False, browser_type="chrome")
     try:
         async with NativeDriver() as driver:
-            async with session:
+            async with _owned_session(session):
                 try:
                     async with cdp_bridge(await asyncio.to_thread(session.cdp_url)) as address:
                         url = await driver.attach(address)

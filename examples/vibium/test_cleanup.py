@@ -1,5 +1,6 @@
 import asyncio
 import os
+import threading
 import unittest
 from contextlib import asynccontextmanager
 from types import SimpleNamespace
@@ -9,6 +10,51 @@ import connection
 
 
 class CleanupTests(unittest.IsolatedAsyncioTestCase):
+    async def test_repeated_cancel_during_sdk_claim_stops_the_late_session(self):
+        started, release = threading.Event(), threading.Event()
+        events = []
+        session = connection.NotteClient(api_key="owned-fixture-key").Session(wait_for_authentication=False)
+
+        def start(**_kwargs):
+            started.set()
+            if not release.wait(5):
+                raise TimeoutError("Owned fixture claim was not released")
+            session.response = SimpleNamespace(session_id="owned-fixture")
+            events.append("late-claim")
+
+        async def driver_close(*_args):
+            events.append("driver-close")
+
+        async def execute():
+            async with connection.notte_vibium(SimpleNamespace(Session=lambda **_kwargs: session)):
+                self.fail("A cancelled claim must not reach browser actions")
+
+        with (
+            patch.object(session, "start", start),
+            patch.object(session, "stop", side_effect=lambda **_kwargs: events.append("notte-stop")) as stop,
+            patch.object(connection.NativeDriver, "__aenter__", AsyncMock()),
+            patch.object(connection.NativeDriver, "__aexit__", driver_close),
+            patch.object(connection, "cdp_bridge", side_effect=AssertionError("Cancelled claim reached CDP")),
+        ):
+            task = asyncio.create_task(execute())
+            try:
+                async with asyncio.timeout(2):
+                    while not started.is_set():
+                        await asyncio.sleep(0.001)
+                task.cancel()
+                await asyncio.sleep(0.01)
+                task.cancel()
+                await asyncio.sleep(0.01)
+                self.assertFalse(task.done(), "Cancellation must retain the unfinished SDK claim")
+                release.set()
+                with self.assertRaises(asyncio.CancelledError):
+                    await asyncio.wait_for(task, 2)
+                stop.assert_called_once()
+                self.assertEqual(events, ["late-claim", "notte-stop", "driver-close"])
+            finally:
+                release.set()
+                await asyncio.gather(task, return_exceptions=True)
+
     async def test_repeated_cancel_during_late_start_cleanup_retains_ownership(self):
         started, stopped, release = asyncio.Event(), asyncio.Event(), asyncio.Event()
         events = []

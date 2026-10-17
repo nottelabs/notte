@@ -95,6 +95,10 @@ class LiveTests(unittest.IsolatedAsyncioTestCase):
                         await asyncio.sleep(0.05)
                 self.assertTrue(claimed.is_set(), "A real owned session must be allocated")
                 task.cancel()
+                await asyncio.sleep(0.05)
+                task.cancel()
+                await asyncio.sleep(0.05)
+                self.assertFalse(task.done(), "Repeated cancellation must retain the late claim")
                 release.set()
                 with self.assertRaises(asyncio.CancelledError):
                     await asyncio.wait_for(task, 30)
