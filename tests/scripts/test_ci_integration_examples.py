@@ -26,7 +26,11 @@ from pathlib import Path
 args = [Path(sys.argv[0]).name, *sys.argv[1:]]
 with open(os.environ['COMMAND_LOG'], 'a') as log:
     log.write(json.dumps({'args': args, 'cwd': os.getcwd(),
-        'credentials': sorted(k for k in ('NOTTE_API_KEY', 'OPENAI_API_KEY') if os.environ.get(k)),
+        'credentials': sorted(k for k in ('NOTTE_API_KEY', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'GEMINI_API_KEY') if os.environ.get(k)),
+        'vitest': os.environ.get('VITEST_INTEGRATION'),
+        'journal': os.environ.get('NOTTE_AGENT_BROWSER_OWNERSHIP_JOURNAL'),
+        'example_python': os.environ.get('NOTTE_EXAMPLE_PYTHON'),
+        'docs_python': os.environ.get('NOTTE_DOCS_PYTHON'),
         'python': os.environ.get('NOTTE_COMPUTER_USE_PYTHON'),
         'gemini_live': os.environ.get('NOTTE_GEMINI_LIVE'),
         'gemini_model': os.environ.get('NOTTE_GEMINI_MODEL_LIVE'),
@@ -41,8 +45,10 @@ if args[1:] == ['install_driver.py']:
         sys.exit(17)
 if os.environ.get('FAIL_UNITTEST') and 'unittest' in args:
     sys.exit(19)
+if os.environ.get('FAIL_NATIVE') and ('test:live' in args or any(arg.endswith('.integration.test.ts') for arg in args)):
+    sys.exit(23)
 """
-    for path in (tmp_path / "bin/uv", tmp_path / "bin/npm"):
+    for path in (tmp_path / "bin/uv", tmp_path / "bin/npm", tmp_path / "bin/npx"):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(stub)
         path.chmod(0o755)
@@ -54,6 +60,7 @@ if os.environ.get('FAIL_UNITTEST') and 'unittest' in args:
         python.write_text(stub)
         python.chmod(0o755)
     monkeypatch.setenv("PATH", f"{tmp_path / 'bin'}:{os.environ['PATH']}")
+    monkeypatch.setenv("RUNNER_TEMP", str(tmp_path / "runner-temp"))
     return tmp_path
 
 
@@ -281,3 +288,171 @@ def test_root_unittest_requires_real_modules_before_setup(workspace: Path) -> No
     with pytest.raises(ValueError, match="requires root test_"):
         runner.check(workspace / "examples/alpha", {}, "root-unittest")
     assert calls(workspace) == []
+
+
+def shipped_project(workspace: Path, monkeypatch: pytest.MonkeyPatch, name: str, convention: str) -> Path:
+    runner.REGISTRY.write_text(json.dumps({name: convention}))
+    monkeypatch.setenv("INTEGRATION_EXAMPLES", json.dumps([name]))
+    monkeypatch.setattr("sys.argv", ["runner", "live"])
+    for directory in (workspace / "examples" / name, workspace / "node-sdk", workspace / "docs"):
+        directory.mkdir(parents=True, exist_ok=True)
+    for python in (workspace / "examples" / name / ".venv/bin/python", workspace / ".venv/bin/python"):
+        python.parent.mkdir(parents=True, exist_ok=True)
+        python.write_text((workspace / "examples/alpha/.venv/bin/python").read_text())
+        python.chmod(0o755)
+    return workspace / "examples" / name
+
+
+@pytest.mark.parametrize("name,count", [("trigger", 2), ("inngest", 1), ("temporal", 1)])
+def test_node_projects_keep_existing_sdk_modes_and_no_paid_pr_calls(
+    workspace: Path, monkeypatch: pytest.MonkeyPatch, name: str, count: int
+) -> None:
+    project = shipped_project(workspace, monkeypatch, name, "node-project")
+    monkeypatch.setenv("GITHUB_REF", "refs/pull/1/merge")
+    monkeypatch.setenv("GITHUB_EVENT_NAME", "pull_request")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "fixture-other-provider")
+    runner.main()
+    observed = calls(workspace)
+    native = [call for call in observed if call["args"] == ["npm", "run", "test:live"]]
+    assert len(native) == count
+    assert all(call["credentials"] == ["NOTTE_API_KEY"] and call["cwd"] == str(project) for call in native)
+    assert all(not call["credentials"] for call in observed if call not in native)
+    commands = [call["args"] for call in observed]
+    source = [command for command in commands if command[:2] == ["npm", "install"]]
+    assert len(source) == count - 1
+    if source:
+        assert source[0] == ["npm", "install", "--no-save", "--package-lock=false", str(workspace / "node-sdk")]
+        assert commands.count(["npm", "test"]) == 3
+        assert commands.count(["npm", "run", "typecheck"]) == 3
+    if name == "inngest":
+        assert native[0]["live_flags"]["NOTTE_INNGEST_MODEL_LIVE"] == "0"
+    if name == "temporal":
+        assert ["npm", "run", "build"] in commands
+    assert not any("test:hosted" in command for command in commands)
+
+
+@pytest.mark.parametrize(
+    "name,provider",
+    [
+        ("openai-agents", "OPENAI_API_KEY"),
+        ("claude-agents", "ANTHROPIC_API_KEY"),
+        ("agent-browser", None),
+        ("inngest", "ANTHROPIC_API_KEY"),
+    ],
+)
+def test_framework_commands_restrict_credentials_and_preserve_special_checks(
+    workspace: Path, monkeypatch: pytest.MonkeyPatch, name: str, provider: str | None
+) -> None:
+    shipped_project(workspace, monkeypatch, name, "node-project" if name == "inngest" else "NOTTE_DOCS_PYTHON")
+    monkeypatch.setenv("GITHUB_REF", "refs/heads/main")
+    monkeypatch.setenv("GITHUB_EVENT_NAME", "push")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "fixture-other-provider")
+    monkeypatch.setenv("GEMINI_API_KEY", "fixture-unused-provider")
+    runner.main()
+    observed = calls(workspace)
+    native = [call for call in observed if call["credentials"]]
+    expected = sorted(["NOTTE_API_KEY", provider]) if provider else ["NOTTE_API_KEY"]
+    assert native and all(call["credentials"] == expected for call in native)
+    assert all("vitest" in call["args"] or "unittest" in call["args"] or "test:live" in call["args"] for call in native)
+    commands = [call["args"] for call in observed]
+    assert not any(command[-1:] == [str(workspace / "node-sdk")] for command in commands)
+    if name in runner.RECIPES:
+        assert commands[0] == ["uv", "sync", "--locked", "--package", "notte-sdk", "--no-dev"]
+        assert all(call["docs_python"] == str(workspace / ".venv/bin/python") for call in native)
+    if name == "openai-agents":
+        assert ["uv", "pip", "install", "openai-agents==0.24.0", "pytest", "pytest-timeout"] in commands
+        assert ["uv", "run", "--no-sync", "pytest", "tests/sdk/test_websocket_compatibility.py", "-q"] in commands
+    elif name == "claude-agents":
+        assert ["uv", "pip", "install", "claude-agent-sdk==0.2.168"] in commands
+        assert ["uv", "pip", "check"] in commands
+    elif name == "agent-browser":
+        assert len(native) == 3
+        assert [
+            "npm",
+            "install",
+            "--prefix",
+            str(workspace / "runner-temp/notte-agent-browser"),
+            "--no-audit",
+            "--no-fund",
+            "agent-browser@0.39.1",
+        ] in commands
+        assert native[1]["vitest"] == "" and native[2]["vitest"] == "1"
+        assert all(call["journal"] == str(workspace / "runner-temp/agent-browser-owned.jsonl") for call in native)
+    else:
+        assert native[0]["live_flags"]["NOTTE_INNGEST_MODEL_LIVE"] == "1"
+
+
+def test_github_actions_retains_flat_tests_and_selected_source_python(
+    workspace: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    shipped_project(workspace, monkeypatch, "github-actions", "NOTTE_EXAMPLE_PYTHON")
+    runner.main()
+    observed = calls(workspace)
+    native = [call for call in observed if call["credentials"]]
+    assert len(native) == 4
+    assert all(call["credentials"] == ["NOTTE_API_KEY"] for call in native)
+    assert all(
+        call["args"] == ["python", "-m", "unittest", "test_cli_signals", "test_live", "-v"] for call in native[::2]
+    )
+    assert native[0]["example_python"] == str(workspace / "examples/github-actions/.venv/bin/python")
+    assert native[2]["example_python"] == str(workspace / ".venv/bin/python")
+    commands = [call["args"] for call in observed]
+    assert ["python", "-m", "unittest", "test_publish", "test_cli_signals", "-v"] in commands
+    assert ["uv", "pip", "install", "--python", str(workspace / ".venv/bin/python"), "playwright==1.64.0"] in commands
+    assert ["npm", "install", "--no-save", "--package-lock=false", str(workspace / "node-sdk")] in commands
+
+
+@pytest.mark.parametrize("name,convention", [("trigger", "node-project"), ("openai-agents", "NOTTE_DOCS_PYTHON")])
+def test_consolidated_native_failure_stops_before_other_sdk_or_project(
+    workspace: Path, monkeypatch: pytest.MonkeyPatch, name: str, convention: str
+) -> None:
+    shipped_project(workspace, monkeypatch, name, convention)
+    monkeypatch.setenv("FAIL_NATIVE", "1")
+    with pytest.raises(subprocess.CalledProcessError) as failure:
+        runner.main()
+    assert failure.value.returncode == 23
+    observed = calls(workspace)
+    assert (
+        len(
+            [
+                call
+                for call in observed
+                if "test:live" in call["args"] or any(arg.endswith(".integration.test.ts") for arg in call["args"])
+            ]
+        )
+        == 1
+    )
+    assert not any(call["args"][-1:] == [str(workspace / "node-sdk")] for call in observed)
+
+
+def test_node_tag_is_limited_to_known_node_projects(workspace: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    runner.REGISTRY.write_text('{"alpha":"node-project"}')
+    monkeypatch.setenv("INTEGRATION_EXAMPLES", '["alpha"]')
+    with pytest.raises(ValueError, match="Unknown Node"):
+        runner.projects("1/1")
+    assert calls(workspace) == []
+
+
+@pytest.mark.parametrize(
+    "name,key",
+    [("openai-agents", "OPENAI_API_KEY"), ("claude-agents", "ANTHROPIC_API_KEY"), ("inngest", "ANTHROPIC_API_KEY")],
+)
+def test_even_a_main_ref_pull_request_cannot_receive_paid_provider_credentials(name: str, key: str) -> None:
+    env = {
+        "GITHUB_REF": "refs/heads/main",
+        "GITHUB_EVENT_NAME": "pull_request",
+        "NOTTE_API_KEY": "fixture-ci-key",  # pragma: allowlist secret
+        key: "fixture-provider-key",
+    }
+    assert key not in runner.project_env(name, env)
+    assert runner.project_env(name, env)["NOTTE_API_KEY"] == env["NOTTE_API_KEY"]
+
+
+@pytest.mark.parametrize("name", ["inngest", "temporal", "trigger", "openai-agents"])
+def test_existing_dependabot_eligibility_is_preserved(
+    workspace: Path, monkeypatch: pytest.MonkeyPatch, name: str
+) -> None:
+    shipped_project(workspace, monkeypatch, name, "NOTTE_DOCS_PYTHON" if name == "openai-agents" else "node-project")
+    monkeypatch.setenv("GITHUB_ACTOR", "dependabot[bot]")
+    runner.main()
+    assert bool(calls(workspace)) == (name in {"inngest", "temporal"})
