@@ -355,6 +355,7 @@
               "integrations/crewai",
               "integrations/agno",
               "integrations/google-adk",
+              "integrations/openai-agents",
               "integrations/vercel-ai-sdk",
               "integrations/mastra",
               "integrations/inngest-agentkit",
@@ -390,7 +391,8 @@
             "icon": "gamepad",
             "pages": [
               "features/sessions/playwright",
-              "features/sessions/puppeteer"
+              "features/sessions/puppeteer",
+              "integrations/agent-browser"
             ]
           },
           {
