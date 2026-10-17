@@ -100,6 +100,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [Hermes Agent](https://docs.notte.cc/integrations/hermes.md): Use Notte cloud browsers with Hermes Agent
 - [Stagehand](https://docs.notte.cc/integrations/stagehand.md): Use Stagehand v4 with a Notte cloud browser in Python or TypeScript
 - [Claude Agent SDK](https://docs.notte.cc/integrations/claude-agents.md): Give Claude agents a Notte cloud browser through MCP.
+- [Prime Intellect](https://docs.notte.cc/integrations/prime-intellect.md): Build Verifiers browser tasksets with Notte sessions.
 - [IBM watsonx.ai](https://docs.notte.cc/integrations/watsonx.md): Describe Notte browser screenshots with a watsonx.ai vision model.
 
 ## Computer Use
@@ -107,6 +108,8 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [OpenAI Computer Use](https://docs.notte.cc/integrations/openai-computer-use.md): Run OpenAI's native screenshot and input actions on a Notte browser.
 - [Anthropic Computer Use](https://docs.notte.cc/integrations/claude-computer-use.md): Run Claude's screenshot, mouse, and keyboard tools on a Notte browser.
 - [Gemini Computer Use](https://docs.notte.cc/integrations/gemini-computer-use.md): Run Gemini's computer-use tool on a Notte cloud browser.
+- [Yutori](https://docs.notte.cc/integrations/yutori.md): Run Navigator n1.5 browser actions on Notte.
+- [OpenAGI Lux](https://docs.notte.cc/integrations/openagi.md): Connect OpenAGI's native Lux agent to a Notte cloud browser.
 - [Tzafon Lightcone](https://docs.notte.cc/integrations/tzafon.md): Run a Northstar computer-use loop on a Notte browser.
 
 ## Workflow Automation
@@ -125,18 +128,23 @@ The shared skill covers CLI installation, authentication, live browser explorati
 ## Payments
 
 - [Agentcard](https://docs.notte.cc/integrations/agentcard.md): Attach Agentcard checkout to a hosted Notte browser.
+- [Stripe Link](https://docs.notte.cc/integrations/stripe-link.md): Fill approved Link test credentials into a Notte browser with the native SDK.
 
 ## File Storage
 
 - [Box](https://docs.notte.cc/integrations/box.md): Store hosted browser captures in Box.
 
-## Payments
-
-- [Stripe Link](https://docs.notte.cc/integrations/stripe-link.md): Fill approved Link test credentials into a Notte browser with the native SDK.
-
 ## Email
 
 - [AgentMail](https://docs.notte.cc/integrations/agentmail.md): Give Notte personas an AgentMail inbox for sign-ups and verification emails
+
+## Databases
+
+- [MongoDB](https://docs.notte.cc/integrations/mongodb.md): Save Notte browser scrapes to MongoDB in Python or TypeScript.
+
+## Testing
+
+- [e2e](https://docs.notte.cc/integrations/e2e.md): Run e2e web tests on Notte cloud browsers with a native browser provider.
 
 ## Credentials
 

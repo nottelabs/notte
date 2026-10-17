@@ -168,7 +168,7 @@
     },
     {
       "source": "/integrations/computer-use-openagi",
-      "destination": "/integrations"
+      "destination": "/integrations/openagi"
     },
     {
       "source": "/integrations/magnitude",
@@ -350,6 +350,7 @@
               "integrations/hermes",
               "integrations/stagehand",
               "integrations/claude-agents",
+              "integrations/prime-intellect",
               "integrations/watsonx"
             ]
           },
@@ -360,6 +361,8 @@
               "integrations/openai-computer-use",
               "integrations/claude-computer-use",
               "integrations/gemini-computer-use",
+              "integrations/yutori",
+              "integrations/openagi",
               "integrations/tzafon"
             ]
           },
@@ -386,7 +389,8 @@
             "group": "Payments",
             "icon": "credit-card",
             "pages": [
-              "integrations/agentcard"
+              "integrations/agentcard",
+              "integrations/stripe-link"
             ]
           },
           {
@@ -397,17 +401,24 @@
             ]
           },
           {
-            "group": "Payments",
-            "icon": "credit-card",
-            "pages": [
-              "integrations/stripe-link"
-            ]
-          },
-          {
             "group": "Email",
             "icon": "envelope",
             "pages": [
               "integrations/agentmail"
+            ]
+          },
+          {
+            "group": "Databases",
+            "icon": "database",
+            "pages": [
+              "integrations/mongodb"
+            ]
+          },
+          {
+            "group": "Testing",
+            "icon": "vial",
+            "pages": [
+              "integrations/e2e"
             ]
           },
           {
