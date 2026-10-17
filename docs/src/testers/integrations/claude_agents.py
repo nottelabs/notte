@@ -19,7 +19,7 @@ async def main() -> dict[str, str]:
             mcp_servers={
                 "notte": {
                     "type": "http",
-                    "url": os.environ.get("NOTTE_API_URL", "https://api.notte.cc").rstrip("/") + "/mcp",
+                    "url": (os.environ.get("NOTTE_API_URL") or "https://api.notte.cc").rstrip("/") + "/mcp",
                     "headers": {"Authorization": "Bearer ${NOTTE_API_KEY}"},
                 }
             },
