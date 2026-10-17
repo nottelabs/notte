@@ -1,0 +1,15 @@
+{
+  "agent-browser": "NOTTE_DOCS_PYTHON",
+  "anthropic-computer-use": "NOTTE_COMPUTER_USE_PYTHON",
+  "claude-agents": "NOTTE_DOCS_PYTHON",
+  "deepagents": "root-unittest",
+  "gemini-computer-use": "gemini-root",
+  "github-actions": "NOTTE_EXAMPLE_PYTHON",
+  "inngest": "node-project",
+  "mongodb": "NOTTE_DOCS_PYTHON",
+  "openai-agents": "NOTTE_DOCS_PYTHON",
+  "openai-computer-use": "NOTTE_COMPUTER_USE_PYTHON",
+  "selenium": "selenium-root",
+  "temporal": "node-project",
+  "trigger": "node-project"
+}
