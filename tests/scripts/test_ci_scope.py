@@ -335,6 +335,67 @@ class GitHistoryTests(unittest.TestCase):
         self.assertTrue(scope["paired_live"] and scope["paired_snippets_live"])
         self.assertEqual(scope["integration_examples"], [])
 
+    def test_registry_append_runs_only_the_added_native_project(self) -> None:
+        path = "scripts/integration_examples.json"
+        old = {"openai-computer-use": "NOTTE_COMPUTER_USE_PYTHON"}
+        base = self.commit({path: json.dumps(old)})
+        head = self.commit({path: json.dumps({**old, "anthropic-computer-use": "NOTTE_COMPUTER_USE_PYTHON"})})
+        for event in ("push", "pull_request"):
+            scope = self.scope(event, base, head)
+            self.assertEqual(scope["integration_examples"], ["anthropic-computer-use"])
+            self.assertTrue(scope["paired_static"] and scope["paired_live"])
+            self.assertFalse(scope["paired_snippets_live"])
+
+    def test_registry_entry_change_skips_unchanged_native_projects(self) -> None:
+        path = "scripts/integration_examples.json"
+        base = self.commit({path: json.dumps(ci.INTEGRATION_EXAMPLES)})
+        changed = {**ci.INTEGRATION_EXAMPLES, "openai-computer-use": "NOTTE_NEW_COMPUTER_USE_PYTHON"}
+        head = self.commit({path: json.dumps(changed)})
+        scope = self.scope("push", base, head)
+        self.assertEqual(scope["integration_examples"], ["openai-computer-use"])
+        self.assertFalse(scope["paired_snippets_live"])
+        runner = self.commit({"scripts/ci_integration_examples.py": "updated_runner = True\n"})
+        self.assertEqual(self.scope("push", head, runner)["integration_examples"], sorted(ci.INTEGRATION_EXAMPLES))
+
+    def test_registry_append_preserves_opaque_native_conventions(self) -> None:
+        path = "scripts/integration_examples.json"
+        old = {"gemini-computer-use": "gemini-root", "selenium": "selenium-root"}
+        base = self.commit({path: json.dumps(old)})
+        head = self.commit({path: json.dumps({**old, "anthropic-computer-use": "NOTTE_COMPUTER_USE_PYTHON"})})
+        scope = self.scope("push", base, head)
+        self.assertEqual(scope["integration_examples"], ["anthropic-computer-use"])
+        self.assertTrue(scope["paired_static"] and scope["paired_live"])
+        self.assertFalse(scope["paired_snippets_live"])
+
+    def test_registry_removal_and_formatting_keep_static_without_live(self) -> None:
+        path = "scripts/integration_examples.json"
+        base = self.commit({path: json.dumps(ci.INTEGRATION_EXAMPLES)})
+        removed = self.commit({path: "{}"})
+        formatted = self.commit({path: "{\n}\n"})
+        for before, after in ((base, removed), (removed, formatted)):
+            scope = self.scope("push", before, after)
+            self.assertEqual(scope["integration_examples"], [])
+            self.assertTrue(scope["paired_static"])
+            self.assertFalse(scope["paired_live"] or scope["paired_snippets_live"])
+
+    def test_unavailable_or_malformed_registry_history_falls_back_to_all(self) -> None:
+        path = "scripts/integration_examples.json"
+        previous = self.base  # The registry is missing from the initial commit.
+        valid = '{"openai-computer-use": "NOTTE_COMPUTER_USE_PYTHON"}'
+        for content in (
+            valid,
+            "[]",
+            '{"openai-computer-use": 1}',
+            '{"../escape": "NOTTE_COMPUTER_USE_PYTHON"}',
+            "{",
+            valid,
+        ):
+            head = self.commit({path: content})
+            scope = self.scope("push", previous, head)
+            self.assertEqual(scope["integration_examples"], sorted(ci.INTEGRATION_EXAMPLES))
+            self.assertTrue(scope["paired_static"] and scope["paired_live"])
+            previous = head
+
     def test_push_includes_every_commit_and_unions_scopes(self) -> None:
         self.commit({"packages/notte-sdk/src/client.py": "runtime = True\n"})
         head = self.commit({"docs/src/pricing.mdx": "New pricing prose\n"})
