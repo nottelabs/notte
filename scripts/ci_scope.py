@@ -83,6 +83,7 @@ INTEGRATION_WORKFLOWS = {
     "trigger-integration.yml",
     "tzafon-integration.yml",
     "valtown-integration.yml",
+    "vibium-integration.yml",
     "watsonx-integration.yml",
     "yutori-integration.yml",
 }

@@ -1,0 +1,25 @@
+{
+  "name": "notte-vibium-example",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.8"
+  },
+  "scripts": {
+    "start": "node src/demo.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test test/bridge.test.ts test/cleanup.test.ts",
+    "test:live": "node --test test/live.test.ts"
+  },
+  "dependencies": {
+    "notte-sdk": "1.9.7",
+    "vibium": "26.8.21",
+    "ws": "8.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.0",
+    "@types/ws": "8.18.1",
+    "typescript": "6.0.3",
+    "playwright-core": "1.58.1"
+  }
+}
