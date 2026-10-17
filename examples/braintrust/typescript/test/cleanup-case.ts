@@ -20,7 +20,7 @@ const { runDemo } = await import('../src/demo.ts');
 const originalFetch = globalThis.fetch, connect = chromium.connectOverCDP.bind(chromium), flush = logger.flush.bind(logger);
 const ids: string[] = [];
 const uuid = /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/;
-let phase = 'run demo', failureCategory = 'none';
+let phase = 'run demo', failureCategory = 'none', bodyFailed = false;
 let closedBeforeCompensation: boolean | null = null;
 const closures: Array<{ session_id: string; closed: boolean | null }> = [];
 let closes = 0, flushes = 0;
@@ -85,6 +85,9 @@ try {
   }
   phase = 'passed';
   console.log(JSON.stringify({ mode, session_id: ids[0], closed: true, native_flush_calls: flushes }));
+} catch (error) {
+  bodyFailed = true;
+  throw error;
 } finally {
   globalThis.fetch = originalFetch;
   try {
@@ -92,7 +95,9 @@ try {
       assert.match(id, uuid);
       const closure = { session_id: id, closed: null as boolean | null };
       closures.push(closure);
-      if (await status(id) !== 'closed') {
+      let closed = false;
+      try { closed = await status(id) === 'closed'; } catch { /* Closure is unconfirmed; still attempt the owned stop. */ }
+      if (!closed) {
         const response = await originalFetch(`${api}/sessions/${id}/stop`, {
           method: 'DELETE', headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` }, signal: AbortSignal.timeout(15_000),
         });
@@ -101,6 +106,8 @@ try {
       closure.closed = await status(id) === 'closed';
       assert.equal(closure.closed, true);
     }
+  } catch (error) {
+    if (!bodyFailed) throw error;
   } finally {
     console.log(JSON.stringify({ native_cleanup_receipt: true, mode, phase,
       failure_category: failureCategory, closed_before_compensation: closedBeforeCompensation,
