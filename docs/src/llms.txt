@@ -96,6 +96,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [OpenClaw](https://docs.notte.cc/integrations/openclaw.md): Use Notte cloud browsers with OpenClaw
 - [Hermes Agent](https://docs.notte.cc/integrations/hermes.md): Use Notte cloud browsers with Hermes Agent
 - [Stagehand](https://docs.notte.cc/integrations/stagehand.md): Use Stagehand v4 with a Notte cloud browser in Python or TypeScript
+- [IBM watsonx.ai](https://docs.notte.cc/integrations/watsonx.md): Describe Notte browser screenshots with a watsonx.ai vision model.
 
 ## Workflow Automation
 

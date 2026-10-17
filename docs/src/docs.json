@@ -361,7 +361,8 @@
               "integrations/inngest-agentkit",
               "integrations/openclaw",
               "integrations/hermes",
-              "integrations/stagehand"
+              "integrations/stagehand",
+              "integrations/watsonx"
             ]
           },
           {
