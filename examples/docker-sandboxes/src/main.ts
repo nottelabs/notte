@@ -30,7 +30,7 @@ export async function withBrowser<T>(run: (call: (name: string, args: Record<str
   let step = 'connection';
   const failures: Error[] = [];
   try {
-    await client.connect(new StreamableHTTPClientTransport(new URL('/mcp', process.env.NOTTE_API_URL ?? 'https://api.notte.cc'), {
+    await client.connect(new StreamableHTTPClientTransport(new URL(`${(process.env.NOTTE_API_URL ?? 'https://api.notte.cc').replace(/\/+$/, '')}/mcp`), {
       requestInit: { headers: { Authorization: `Bearer ${token}` } },
     }));
     step = 'tool discovery';
