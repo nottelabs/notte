@@ -14,12 +14,47 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from scripts import ci_integration_examples as runner
 from scripts import ci_scope as ci
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
 class RoutingTests(unittest.TestCase):
+    def test_shipped_native_recipe_and_project_inputs_keep_required_paired_owner(self) -> None:
+        inputs = {
+            "docs/src/testers/integrations/openai_agents.py": {"openai-agents"},
+            "docs/src/testers/integrations/claude_agents.ts": {"claude-agents"},
+            "docs/src/testers/integrations/agent_browser.py": {"agent-browser"},
+            "node-sdk/test/helpers/run-openai-recipe.py": {"openai-agents"},
+            "node-sdk/test/agent-browser.recipe.test.ts": {"agent-browser"},
+            "tests/docs/test_agent_browser_recipe.py": {"agent-browser"},
+            "docs/package-lock.json": {"openai-agents", "claude-agents"},
+            ".github/workflows/selector-repair.yml": {"github-actions"},
+            "docs/src/integrations/github-actions.mdx": {"github-actions"},
+            "examples/trigger/src/read-page.ts": {"trigger"},
+            "examples/inngest/src/index.ts": {"inngest"},
+            "examples/temporal/test/workflow.live.test.ts": {"temporal"},
+        }
+        for path, expected in inputs.items():
+            with self.subTest(path=path):
+                self.assertEqual(ci.integration_examples_for_path(path), expected)
+                self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
+                self.assertTrue(ci.base_scopes_for_path(path) <= ci.scopes_for_path(path))
+        for name in (
+            "agent-browser",
+            "claude-agents",
+            "github-actions",
+            "inngest",
+            "openai-agents",
+            "temporal",
+            "trigger",
+        ):
+            path = f".github/workflows/{name}-integration.yml"
+            with self.subTest(path=path):
+                self.assertEqual(ci.integration_examples_for_path(path), {name})
+                self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
+
     def test_prose_never_selects_live_suites(self) -> None:
         for path in (
             "docs/src/pricing.mdx",
@@ -166,6 +201,23 @@ class RoutingTests(unittest.TestCase):
                 self.assertEqual(ci.integration_examples_for_path(path), {"gemini-computer-use"})
         self.assertFalse(ci.integration_examples_for_path("examples/gemini-computer-use/README.md"))
 
+    def test_selenium_native_inputs_route_to_existing_paired_jobs(self) -> None:
+        with patch.dict(ci.INTEGRATION_EXAMPLES, {"selenium": "selenium-root"}):
+            for filename in (
+                "bridge.py",
+                "install_driver.py",
+                "test_bridge.py",
+                "test_selenium.py",
+                "requirements.txt",
+                "package-lock.json",
+                "test/selenium.live.test.ts",
+            ):
+                path = f"examples/selenium/{filename}"
+                with self.subTest(path=path):
+                    self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
+                    self.assertEqual(ci.integration_examples_for_path(path), {"selenium"})
+            self.assertFalse(ci.integration_examples_for_path("examples/selenium/README.md"))
+
     def test_shared_native_inputs_cover_every_registered_project(self) -> None:
         for path in (
             *ci.INTEGRATION_INPUTS,
@@ -263,6 +315,82 @@ class RoutingTests(unittest.TestCase):
 
 
 class GitHistoryTests(unittest.TestCase):
+    def test_future_registrations_need_no_global_policy_or_runner_edits(self) -> None:
+        fixtures = json.loads((ROOT / "tests/scripts/fixtures/integration_example_commands.json").read_text())
+        current = fixtures["active"]
+        registry_path = "scripts/integration_examples.json"
+        for name, convention in fixtures["future"].items():
+            with self.subTest(name=name):
+                before = self.commit({registry_path: json.dumps(current)})
+                registered = {**current, name: convention}
+                head = self.commit({registry_path: json.dumps(registered)})
+                with patch.object(ci, "INTEGRATION_EXAMPLES", registered):
+                    registration = self.scope("push", before, head)
+                    self.assertEqual(registration["integration_examples"], [name])
+                    self.assertTrue(registration["paired_live"])
+                    self.assertFalse(registration["paired_snippets_live"])
+                    self.assertEqual(registration["paired_shards"], ["1/1"])
+                    self.assertFalse(registration["python_live"])
+                    self.assertFalse(registration["node_live"])
+                    if name == "terraform-profiles":
+                        path = "integrations/terraform-provider-notte/provider.go"
+                    elif name == "mongodb":
+                        path = "node-sdk/test/mongodb.integration.test.ts"
+                    elif convention == "node-project":
+                        path = f"examples/{name}/package.json"
+                    elif convention == "valtown-deno":
+                        path = f"examples/{name}/main.ts"
+                    elif name in {"box", "yutori"}:
+                        path = f"examples/{name}/requirements.txt"
+                    else:
+                        path = f"examples/{name}/pyproject.toml"
+                    changed = self.commit({path: "synthetic native input\n"})
+                    native = self.scope("push", head, changed)
+                    self.assertEqual(native["integration_examples"], [name])
+                    self.assertTrue(native["paired_live"])
+                    self.assertFalse(native["full"])
+                    self.assertFalse(all(native[family] for family in ci.ALL))
+
+    def test_adaptive_cli_matrix_partitions_39_native_profiles_without_empty_owners(self) -> None:
+        registry = {f"profile-{index:02}": "NOTTE_FIXTURE_PYTHON" for index in range(39)}
+        before = self.commit({"scripts/integration_examples.json": "{}\n"})
+        head = self.commit({"scripts/integration_examples.json": json.dumps(registry)})
+        script = self.repo / "scripts/ci_scope.py"
+        script.write_text((ROOT / "scripts/ci_scope.py").read_text())
+        output = subprocess.check_output(
+            [sys.executable, str(script), "--event", "push", "--base", before, "--head", head],
+            cwd=self.repo,
+            text=True,
+        )
+        scope = json.loads(output)
+        self.assertTrue(scope["paired_live"])
+        self.assertFalse(scope["paired_snippets_live"])
+        with patch.object(runner, "REGISTRY", self.repo / "scripts/integration_examples.json"):
+            with patch.dict(os.environ, {"INTEGRATION_EXAMPLES": json.dumps(scope["integration_examples"])}):
+                assignments = [runner.projects(shard) for shard in scope["paired_shards"]]
+        self.assertEqual(len(assignments), 20)
+        self.assertTrue(all(1 <= len(group) <= 2 for group in assignments))
+        self.assertEqual(sorted(name for group in assignments for name, _ in group), sorted(registry))
+
+    def test_native_only_uses_one_owner_but_snippets_keep_two(self) -> None:
+        before = self.commit({"scripts/integration_examples.json": "{}\n"})
+        head = self.commit({"scripts/integration_examples.json": '{"openai-computer-use":"NOTTE_COMPUTER_USE_PYTHON"}'})
+        scope = self.scope("push", before, head)
+        self.assertTrue(scope["paired_live"])
+        self.assertEqual(scope["paired_shards"], ["1/1"])
+        snippet = self.commit({"docs/src/testers/sessions/example.ts": "export const example = true;\n"})
+        scope = self.scope("push", head, snippet)
+        self.assertTrue(scope["paired_snippets_live"])
+        self.assertEqual(scope["paired_shards"], ["1/2", "2/2"])
+
+    def test_zero_native_and_prose_diffs_do_not_start_adaptive_live_jobs(self) -> None:
+        for head in (self.base, self.commit({"docs/src/pricing.mdx": "Updated pricing prose\n"})):
+            with self.subTest(head=head):
+                scope = self.scope("push", self.base, head)
+                self.assertFalse(scope["paired_live"])
+                self.assertEqual(scope["integration_examples"], [])
+                self.assertEqual(scope["paired_shards"], ["1/1"])
+
     def setUp(self) -> None:
         self.directory = tempfile.TemporaryDirectory()
         self.addCleanup(self.directory.cleanup)
