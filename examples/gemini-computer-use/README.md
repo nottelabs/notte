@@ -37,4 +37,4 @@ The browser loop supports Gemini's browser actions, uses screenshots rather than
 
 `npm test` and `python -m unittest -v test_agent.py` check that safety decisions prevent browser access. Set `NOTTE_GEMINI_LIVE=1`, `NOTTE_API_KEY`, and an explicit `NOTTE_API_URL` to also check form actions, confirmation handling, injected provider failures, and browser cleanup. These checks do not call Gemini.
 
-Set `NOTTE_GEMINI_MODEL_LIVE=1` and a funded `GEMINI_API_KEY` to run the actual Gemini model against the cloud browser in each language. CI always verifies browser actions and failure cleanup; paid model checks require a manual run on `main` with `run_model` enabled (off by default). A skipped model test does not establish model compatibility.
+Set `NOTTE_GEMINI_MODEL_LIVE=1` and a funded `GEMINI_API_KEY` to run the actual Gemini model against the cloud browser in each language. Shared CI verifies browser actions and failure cleanup against the published and source SDKs. It does not enable paid model checks. A skipped model test does not establish model compatibility.
