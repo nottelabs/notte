@@ -175,10 +175,6 @@
       "destination": "/integrations"
     },
     {
-      "source": "/integrations/val-town",
-      "destination": "/integrations"
-    },
-    {
       "source": "/guides/scraping",
       "destination": "/concepts/scraping"
     },
