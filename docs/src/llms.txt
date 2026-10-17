@@ -86,6 +86,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 - [Browser Use](https://docs.notte.cc/integrations/browser-use.md): Run Browser Use agents on Notte cloud browsers over CDP
 - [LangChain](https://docs.notte.cc/integrations/langchain.md): Give LangChain and LangGraph agents a browser with the Notte MCP server
+- [Deep Agents](https://docs.notte.cc/integrations/deepagents.md): Give LangChain Deep Agents a Notte cloud browser.
 - [crewAI](https://docs.notte.cc/integrations/crewai.md): Give crewAI agents a browser with the Notte MCP server
 - [Agno](https://docs.notte.cc/integrations/agno.md): Give Agno agents a browser with the Notte MCP server
 - [Google ADK](https://docs.notte.cc/integrations/google-adk.md): Give Google ADK agents a browser with the Notte MCP server
@@ -96,6 +97,13 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [OpenClaw](https://docs.notte.cc/integrations/openclaw.md): Use Notte cloud browsers with OpenClaw
 - [Hermes Agent](https://docs.notte.cc/integrations/hermes.md): Use Notte cloud browsers with Hermes Agent
 - [Stagehand](https://docs.notte.cc/integrations/stagehand.md): Use Stagehand v4 with a Notte cloud browser in Python or TypeScript
+- [Claude Agent SDK](https://docs.notte.cc/integrations/claude-agents.md): Give Claude agents a Notte cloud browser through MCP.
+
+## Computer Use
+
+- [OpenAI Computer Use](https://docs.notte.cc/integrations/openai-computer-use.md): Run OpenAI's native screenshot and input actions on a Notte browser.
+- [Anthropic Computer Use](https://docs.notte.cc/integrations/claude-computer-use.md): Run Claude's screenshot, mouse, and keyboard tools on a Notte browser.
+- [Gemini Computer Use](https://docs.notte.cc/integrations/gemini-computer-use.md): Run Gemini's computer-use tool on a Notte cloud browser.
 
 ## Workflow Automation
 
@@ -117,6 +125,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [Connect with Playwright](https://docs.notte.cc/features/sessions/playwright.md): Use Playwright directly with Notte sessions via Chrome DevTools Protocol
 - [Connect with Puppeteer](https://docs.notte.cc/features/sessions/puppeteer.md): Use Puppeteer with Notte sessions via Chrome DevTools Protocol
 - [Vercel agent-browser](https://docs.notte.cc/integrations/agent-browser.md): Run agent-browser commands on a Notte cloud browser.
+- [Selenium](https://docs.notte.cc/integrations/selenium.md): Run Selenium WebDriver commands on a hosted Notte browser.
 
 ## Browser Infrastructure
 

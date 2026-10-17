@@ -1,0 +1,104 @@
+name: Deep Agents integration
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/deepagents-integration.yml
+      - examples/deepagents/**
+      - packages/notte-sdk/**
+      - packages/notte-core/**
+      - node-sdk/**
+      - uv.lock
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/deepagents-integration.yml
+      - examples/deepagents/**
+      - packages/notte-sdk/**
+      - packages/notte-core/**
+      - node-sdk/**
+      - uv.lock
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          python-version: '3.11'
+      - run: uv sync --locked
+        working-directory: examples/deepagents
+      - run: uv run python -m unittest -v test_agent.py
+        working-directory: examples/deepagents
+      - run: npm ci
+        working-directory: examples/deepagents/typescript
+      - run: npm run typecheck
+        working-directory: examples/deepagents/typescript
+      - run: npm run test:live
+        working-directory: examples/deepagents/typescript
+  browser:
+    needs: static
+    strategy:
+      fail-fast: false
+      matrix:
+        sdk: [published, source]
+    if: github.actor != 'dependabot[bot]' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    concurrency:
+      group: notte-live-api-${{ github.ref }}
+      queue: max
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          python-version: '3.11'
+      - run: uv sync --locked
+        working-directory: examples/deepagents
+      - if: matrix.sdk == 'source'
+        run: uv pip install --python examples/deepagents/.venv/bin/python -e packages/notte-core -e packages/notte-sdk
+      - run: uv pip check --python examples/deepagents/.venv/bin/python
+      - run: npm ci
+        working-directory: examples/deepagents/typescript
+      - if: matrix.sdk == 'source'
+        run: npm ci --prefix node-sdk && npm run build --prefix node-sdk
+      - if: matrix.sdk == 'source'
+        run: npm install --no-save --package-lock=false ../../../node-sdk && npm run typecheck
+        working-directory: examples/deepagents/typescript
+      - name: Wait for the API
+        uses: ./.github/actions/wait-for-api
+        with:
+          api-url: https://us-staging.notte.cc
+          timeout: '300'
+      - name: Verify framework errors and browser cleanup in both languages
+        env:
+          NOTTE_API_URL: https://us-staging.notte.cc
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.ANTHROPIC_API_KEY || '' }}
+          NOTTE_DEEPAGENTS_LIVE: '1'
+          NOTTE_DEEPAGENTS_MODEL_LIVE: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.ANTHROPIC_API_KEY != '' && '1' || '0' }}
+          LANGSMITH_TRACING: 'false'
+          DISABLE_TELEMETRY: 'true'
+        run: |
+          : "${NOTTE_API_KEY:?The Deep Agents browser checks require the CI test key}"
+          cd examples/deepagents
+          .venv/bin/python -m unittest -v test_agent.py
+          cd typescript
+          npm run test:live

@@ -21,6 +21,7 @@ def workflow(name: str) -> dict[str, Any]:
 
 def test_shared_queue_only_contains_staging_test_jobs() -> None:
     expected = {
+        ("claude-agents-integration.yml", "live"),
         ("openai-agents-integration.yml", "live"),
         ("github-actions-integration.yml", "live"),
         ("node-sdk-ci.yml", "integration-tests"),
@@ -28,6 +29,7 @@ def test_shared_queue_only_contains_staging_test_jobs() -> None:
         ("docs-tests-cicd.yml", "execution"),
         ("paired-sdk-examples.yml", "live"),
         ("readme-check.yml", "live"),
+        ("deepagents-integration.yml", "browser"),
         ("agent-browser-integration.yml", "live"),
         ("trigger-integration.yml", "browser-handler"),
         ("braintrust-integration.yml", "live"),
@@ -223,13 +225,16 @@ def test_deleted_docs_still_run_the_global_link_check() -> None:
         ("cancelled", "success", 1),
     ],
 )
-def test_required_gate_waits_for_all_families_and_fails_closed(changes: str, selected: str, expected: int) -> None:
+@pytest.mark.parametrize("family", ["node", "paired"])
+def test_required_gate_waits_for_all_families_and_fails_closed(
+    changes: str, selected: str, expected: int, family: str
+) -> None:
     job = workflow("ci.yml")["jobs"]["tests"]
     assert job["if"] == "always()"
     assert set(job["needs"]) == {"changes", *ci_scope.GROUPS}
     results = {name: {"result": "skipped"} for name in job["needs"]}
     results["changes"]["result"] = changes
-    results["node"]["result"] = selected
+    results[family]["result"] = selected
     result = subprocess.run(
         ["bash", "-e", "-o", "pipefail", "-c", job["steps"][0]["run"]],
         env={**os.environ, "RESULTS": json.dumps(results)},
@@ -237,6 +242,32 @@ def test_required_gate_waits_for_all_families_and_fails_closed(changes: str, sel
         text=True,
     )
     assert result.returncode == expected, result.stdout + result.stderr
+
+
+def test_native_examples_have_one_existing_required_owner() -> None:
+    assert not (WORKFLOWS / "openai-computer-use-integration.yml").exists()
+    assert not (WORKFLOWS / "gemini-computer-use-integration.yml").exists()
+    assert not (WORKFLOWS / "selenium-integration.yml").exists()
+    jobs = workflow("paired-sdk-examples.yml")["jobs"]
+    assert set(jobs) == {"changes", "checks", "live"}
+    assert set(jobs["live"]["needs"]) == {"changes", "checks"}
+    snippet = next(s for s in jobs["live"]["steps"] if "test/docs-snippets.integration.test.ts" in s.get("run", ""))
+    assert snippet["if"] == "fromJSON(needs.changes.outputs.scope).paired_snippets_live"
+    for name, phase in (("checks", "checks"), ("live", "live")):
+        job = jobs[name]
+        assert all(s["with"]["node-version"] == "24" for s in job["steps"] if "setup-node@" in s.get("uses", ""))
+        steps = [s for s in job["steps"] if "scripts/ci_integration_examples.py" in s.get("run", "")]
+        assert len(steps) == 1
+        step = steps[0]
+        assert f"ci_integration_examples.py {phase}" in step["run"]
+        assert "integration_examples" in step["env"]["INTEGRATION_EXAMPLES"]
+        assert not step.get("continue-on-error") and not job.get("continue-on-error")
+        if phase == "checks":
+            assert "secrets." not in str(step)
+        else:
+            assert '--shard "$NOTTE_DOCS_SHARD"' in step["run"]
+            for key in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY"):
+                assert "github.ref == 'refs/heads/main' && github.event_name != 'pull_request'" in step["env"][key]
 
 
 def test_scoped_checks_fetch_history_only_during_authenticated_checkout() -> None:
