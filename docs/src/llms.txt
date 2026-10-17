@@ -102,6 +102,10 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 - [OpenAI Computer Use](https://docs.notte.cc/integrations/openai-computer-use.md): Run OpenAI's native screenshot and input actions on a Notte browser.
 
+## Computer Use
+
+- [OpenAGI Lux](https://docs.notte.cc/integrations/openagi.md): Connect OpenAGI's native Lux agent to a Notte cloud browser.
+
 ## Workflow Automation
 
 - [n8n](https://docs.notte.cc/integrations/n8n.md): Use Notte browser agents inside n8n workflows

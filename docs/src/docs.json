@@ -369,6 +369,13 @@
             ]
           },
           {
+            "group": "Computer Use",
+            "icon": "computer-mouse",
+            "pages": [
+              "integrations/openagi"
+            ]
+          },
+          {
             "group": "Workflow Automation",
             "icon": "diagram-project",
             "pages": [
