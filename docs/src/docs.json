@@ -179,10 +179,6 @@
       "destination": "/integrations"
     },
     {
-      "source": "/integrations/laminar",
-      "destination": "/integrations"
-    },
-    {
       "source": "/integrations/magnitude",
       "destination": "/integrations"
     },
@@ -376,6 +372,13 @@
               "integrations/trigger",
               "integrations/temporal",
               "integrations/github-actions"
+            ]
+          },
+          {
+            "group": "Observability",
+            "icon": "chart-line",
+            "pages": [
+              "integrations/laminar"
             ]
           },
           {

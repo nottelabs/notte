@@ -109,6 +109,10 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [Temporal](https://docs.notte.cc/integrations/temporal.md): Run durable browser tasks with Temporal and Notte.
 - [GitHub Actions](https://docs.notte.cc/integrations/github-actions.md): Review DOM-validated selector repairs in a manual GitHub Actions workflow.
 
+## Observability
+
+- [Laminar](https://docs.notte.cc/integrations/laminar.md): Trace Notte browser tasks in Laminar.
+
 ## Email
 
 - [AgentMail](https://docs.notte.cc/integrations/agentmail.md): Give Notte personas an AgentMail inbox for sign-ups and verification emails
