@@ -14,7 +14,7 @@ import { loadAction, runDemo } from '../demo.ts';
 const config = { clientId: 'fixture-client', clientSecret: 'fixture-secret', projectId: 'proj_fixture', externalUserId: 'user-fixture' }; // pragma: allowlist secret
 
 async function closed(id: string) {
-  const api = process.env.NOTTE_API_URL ?? 'https://api.notte.cc';
+  const api = (process.env.NOTTE_API_URL || 'https://api.notte.cc').replace(/\/$/, '');
   const deadline = Date.now() + 15_000;
   while (true) {
     const response = await fetch(`${api}/sessions/${id}`, { headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY!}` }, signal: AbortSignal.timeout(15_000) });
@@ -133,7 +133,7 @@ test('private action file validation keeps its contents out of errors', async ()
 
 for (const phase of ['claim', 'mcp']) {
 test(`CLI SIGINT during ${phase} closes its real browser before exiting`, { timeout: 100_000 }, async (t) => {
-  const upstream = process.env.NOTTE_API_URL ?? 'https://api.notte.cc';
+  const upstream = (process.env.NOTTE_API_URL || 'https://api.notte.cc').replace(/\/$/, '');
   let id = '';
   let child: ReturnType<typeof spawn>;
   let interrupted = false;

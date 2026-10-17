@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import re
+import socket
 import threading
 import time
 import unittest
@@ -10,7 +11,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from unittest.mock import patch
 
 import httpx2
-from demo import PipedreamConfig, load_action, run_demo
+from demo import PipedreamConfig, discover, load_action, run_demo
 from notte_sdk import NotteClient
 
 CONFIG = PipedreamConfig("fixture-client", "fixture-secret", "proj_fixture", "user-fixture")
@@ -104,7 +105,7 @@ def provider(mode="success"):
 
 
 def closed(session_id):
-    api = os.environ.get("NOTTE_API_URL", "https://api.notte.cc").rstrip("/")
+    api = (os.environ.get("NOTTE_API_URL") or "https://api.notte.cc").rstrip("/")
     with httpx2.Client(headers={"Authorization": f"Bearer {os.environ['NOTTE_API_KEY']}"}, timeout=15) as client:
         deadline = time.monotonic() + 15
         while True:
@@ -118,6 +119,65 @@ def closed(session_id):
 
 
 class LiveTests(unittest.TestCase):
+    def test_notte_mcp_uses_api_root_without_network(self):
+        original_client = httpx2.AsyncClient
+        for value, expected in (
+            (None, "https://api.notte.cc/mcp"),
+            ("", "https://api.notte.cc/mcp"),
+            ("https://example.invalid", "https://example.invalid/mcp"),
+            ("https://example.invalid/", "https://example.invalid/mcp"),
+            ("https://example.invalid/notte/", "https://example.invalid/notte/mcp"),
+        ):
+            with self.subTest(api_url=value):
+                requests = []
+
+                def reply(request):
+                    requests.append(request)
+                    return httpx2.Response(401)
+
+                with (
+                    patch.dict(
+                        os.environ,
+                        {"NOTTE_API_KEY": "fixture-config-only"},  # pragma: allowlist secret
+                        clear=True,
+                    ),
+                    patch.object(
+                        httpx2,
+                        "AsyncClient",
+                        side_effect=lambda **kwargs: original_client(transport=httpx2.MockTransport(reply), **kwargs),
+                    ),
+                    patch.object(socket.socket, "connect", side_effect=AssertionError("Unexpected network")) as network,
+                    patch.object(
+                        socket.socket, "connect_ex", side_effect=AssertionError("Unexpected network")
+                    ) as network_ex,
+                ):
+                    if value is not None:
+                        os.environ["NOTTE_API_URL"] = value
+                    with self.assertRaises(Exception):
+                        asyncio.run(
+                            discover(
+                                CONFIG,
+                                "fixture-session",
+                                "https://oauth.invalid",
+                                "https://mcp.invalid",
+                                "https://example.com",
+                                None,
+                            )
+                        )
+                    self.assertTrue(requests, "The native MCP client must send its initialization")
+                    self.assertEqual({str(request.url) for request in requests}, {expected})
+                    self.assertTrue(
+                        any(
+                            request.method == "POST" and json.loads(request.content)["method"] == "initialize"
+                            for request in requests
+                        )
+                    )
+                    self.assertTrue(
+                        all(request.headers["Authorization"] == "Bearer fixture-config-only" for request in requests)
+                    )
+                    network.assert_not_called()
+                    network_ex.assert_not_called()
+
     def test_invalid_action_file_is_sanitized(self):
         import tempfile
 

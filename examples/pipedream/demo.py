@@ -68,7 +68,7 @@ async def discover(
 ) -> dict[str, Any]:
     completed = False
     async with asyncio.timeout(90), AsyncExitStack() as stack:
-        api = os.environ.get("NOTTE_API_URL", "https://api.notte.cc").rstrip("/")
+        api = (os.environ.get("NOTTE_API_URL") or "https://api.notte.cc").rstrip("/")
         notte = await connect(
             stack,
             f"{api}/mcp",

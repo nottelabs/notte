@@ -42,8 +42,8 @@ export async function runDemo(config: PipedreamConfig, options: Options = {}) {
       const pipedream = new Client({ name: 'notte-pipedream-discovery', version: '1.0.0' });
       let failed = false;
       try {
-        const api = process.env.NOTTE_API_URL ?? 'https://api.notte.cc';
-        await notte.connect(new StreamableHTTPClientTransport(new URL('/mcp', api), {
+        const api = (process.env.NOTTE_API_URL || 'https://api.notte.cc').replace(/\/$/, '');
+        await notte.connect(new StreamableHTTPClientTransport(new URL(`${api}/mcp`), {
           fetch: boundedFetch(fetch),
           requestInit: { headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY!}` }, signal, redirect: 'error' },
         }));
