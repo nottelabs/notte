@@ -13,7 +13,7 @@ for (const rejected of [false, true]) {
       const fake = `#!/usr/bin/env node\nconst fs=require('node:fs');fs.appendFileSync(process.env.TEST_CALLS,JSON.stringify(process.argv.slice(2))+'\\n');if(process.env.TEST_REJECT==='1'&&process.argv[2]==='mcp')process.exit(9);\n`;
       await writeFile(join(directory, 'sbx'), fake, { mode: 0o700 });
       const result = spawnSync('sh', ['setup.sh', 'claude', 'isolated-test'], {
-        env: { ...process.env, PATH: `${directory}:${process.env.PATH}`, TEST_CALLS: record, TEST_REJECT: rejected ? '1' : '0', NOTTE_API_KEY: 'test-only-never-in-argv' }, encoding: 'utf8',
+        env: { ...process.env, PATH: `${directory}:${process.env.PATH}`, TEST_CALLS: record, TEST_REJECT: rejected ? '1' : '0', NOTTE_API_KEY: 'test-only-never-in-argv' }, encoding: 'utf8', // pragma: allowlist secret
       });
       const logged = await readFile(record, 'utf8');
       const calls = logged.trim().split('\n').map(line => JSON.parse(line));

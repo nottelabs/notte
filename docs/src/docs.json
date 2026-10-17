@@ -350,6 +350,7 @@
               "integrations/hermes",
               "integrations/stagehand",
               "integrations/claude-agents",
+              "integrations/prime-intellect",
               "integrations/watsonx"
             ]
           },
@@ -385,7 +386,8 @@
             "group": "Payments",
             "icon": "credit-card",
             "pages": [
-              "integrations/agentcard"
+              "integrations/agentcard",
+              "integrations/stripe-link"
             ]
           },
           {
@@ -396,17 +398,24 @@
             ]
           },
           {
-            "group": "Payments",
-            "icon": "credit-card",
-            "pages": [
-              "integrations/stripe-link"
-            ]
-          },
-          {
             "group": "Email",
             "icon": "envelope",
             "pages": [
               "integrations/agentmail"
+            ]
+          },
+          {
+            "group": "Databases",
+            "icon": "database",
+            "pages": [
+              "integrations/mongodb"
+            ]
+          },
+          {
+            "group": "Testing",
+            "icon": "vial",
+            "pages": [
+              "integrations/e2e"
             ]
           },
           {

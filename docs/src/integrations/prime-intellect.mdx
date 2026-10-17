@@ -1,0 +1,19 @@
+---
+title: Prime Intellect
+description: Build Verifiers browser tasksets with Notte sessions.
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+[Prime Intellect Verifiers](https://docs.primeintellect.ai/verifiers/v1/overview) provides tasksets, tools, and rewards for agent evaluation and training. The [runnable Python example](https://github.com/nottelabs/notte/tree/main/examples/prime-intellect) gives each rollout an owned Notte browser and exposes a page-title tool through Verifiers' native MCP interface.
+
+## Set up
+
+Open `examples/prime-intellect` in the Notte repository and follow its README. Use Python 3.11+, a [Notte API key](https://console.notte.cc/apikeys), and your configured [inference endpoint](https://docs.primeintellect.ai/inference/overview).
+
+## How it connects
+
+The task opens a three-minute session during setup; the environment closes it in `finally`, including on provider failure. The tool uses Playwright over Notte's CDP connection. Verifiers passes the connection through its authenticated private state channel; the model receives a navigation tool rather than a session endpoint. The reward checks the title and URL observed by the browser.
+
+The example uses the current Verifiers 0.4 taskset API. Its native MCP, reward, real browser, and failure-cleanup tests pass. Paid model rollouts and hosted Prime training remain unverified.
