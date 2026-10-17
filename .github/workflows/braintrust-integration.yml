@@ -90,7 +90,7 @@ jobs:
         with:
           api-url: https://us-staging.notte.cc
           timeout: '300'
-      - name: Verify persisted success and error traces when Braintrust is configured
+      - name: Verify browser cleanup and configured trace persistence
         working-directory: examples/braintrust/typescript
         env:
           NOTTE_API_URL: https://us-staging.notte.cc

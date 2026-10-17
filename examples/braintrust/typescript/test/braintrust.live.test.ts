@@ -8,6 +8,7 @@ import { initLogger } from 'braintrust';
 
 const execute = promisify(execFile);
 const live = Boolean(process.env.NOTTE_API_KEY && process.env.BRAINTRUST_API_KEY);
+const native = Boolean(process.env.NOTTE_API_KEY);
 const cwd = fileURLToPath(new URL('..', import.meta.url));
 const uuid = /[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}/;
 
@@ -59,6 +60,36 @@ async function persistedTrace(sessionId: string) {
     }
     assert.ok(Date.now() < deadline, 'Braintrust did not persist the trace');
     await sleep(500);
+  }
+}
+
+for (const language of ['python', 'typescript']) {
+  for (const mode of ['success', 'navigation', 'close-timeout', 'flush-error']) {
+    test(`${language}: native ${mode} preserves private failures and closes the browser`, { skip: !native, timeout: 120_000 }, async () => {
+      const python = process.env.NOTTE_BRAINTRUST_PYTHON;
+      if (language === 'python') assert.ok(python, 'Set NOTTE_BRAINTRUST_PYTHON');
+      const command = language === 'python' ? python! : process.execPath;
+      const args = language === 'python'
+        ? ['../python/cleanup_case.py', mode]
+        : ['--experimental-test-module-mocks', 'test/cleanup-case.ts', mode];
+      let stdout = '', stderr = '', failed = false;
+      try {
+        ({ stdout, stderr } = await execute(command, args, {
+          cwd, timeout: 90_000,
+          env: { ...process.env, BRAINTRUST_API_KEY: 'offline-not-a-real-key' }, // pragma: allowlist secret
+        }));
+      } catch (error) {
+        failed = true;
+        const child = error as { stdout?: string; stderr?: string };
+        stdout = child.stdout ?? ''; stderr = child.stderr ?? '';
+      }
+      assert.equal(failed, false, 'Native cleanup regression failed; SDK output withheld');
+      assert.ok(!(stdout + stderr).includes('PRIVATE_'), 'A private cleanup diagnostic reached process output');
+      assert.ok(!(stdout + stderr).includes(process.env.NOTTE_API_KEY!), 'A browser credential reached process output');
+      const result = JSON.parse(stdout.trim().split(/\r?\n/).at(-1)!);
+      assert.equal(result.mode, mode); assert.equal(result.native_flush_calls, 1); assert.equal(result.closed, true);
+      await assertClosed(result.session_id);
+    });
   }
 }
 

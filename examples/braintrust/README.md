@@ -19,10 +19,10 @@ npm start
 
 Pass a URL as an argument to trace another task. Both examples return `title`, `session_id`, `span_id`, and `trace_url`. Open the link to inspect the trace; its metadata includes the owned Notte session ID. Keep your existing LLM instrumentation inside the browser span to correlate model calls with browser work.
 
-Run the four live cases from `typescript` after installing both projects:
+Run the live checks from `typescript` after installing both projects:
 
 ```sh
 NOTTE_BRAINTRUST_PYTHON=../.venv/bin/python npm run test:live
 ```
 
-The tests execute both original recipes, read successful and failed traces back through Braintrust's API, and independently verify that every owned browser closes. They require both API keys and skip when either is absent. Set `NOTTE_API_URL` to choose another Notte environment; set `BRAINTRUST_API_URL` for your organization's data-plane region if needed.
+With a Notte key, eight cases use the real Braintrust SDK with isolated in-memory logging to verify success, browser-close deadlines, and private error handling. Four additional cases use a Braintrust key to read successful and failed traces back through its API. Every case independently checks browser closure. Set `NOTTE_API_URL` to choose another Notte environment; set `BRAINTRUST_API_URL` for your organization's data-plane region if needed.
