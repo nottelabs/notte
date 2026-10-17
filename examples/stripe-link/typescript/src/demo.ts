@@ -43,13 +43,28 @@ export async function runDemo(wallet?: Link) {
       stage = 'open test form';
       try {
         const browser = await chromium.connectOverCDP(await session.cdpUrl());
+        let failed = false;
         try {
           const page = browser.contexts()[0].pages()[0];
           await page.goto('about:blank');
           await page.setContent('<label>Card number<input type="password" autocomplete="off"></label><label>Expiry<input autocomplete="off"></label><label>CVC<input type="password" autocomplete="off"></label>');
           stage = 'retrieve and fill approved test card';
           await fillApprovedTestCard(page, wallet ?? new Link({ accessToken: process.env.LINK_ACCESS_TOKEN! }), process.env.LINK_SPEND_REQUEST_ID!);
-        } finally { await browser.close(); }
+        } catch (error) {
+          failed = true;
+          throw error;
+        } finally {
+          if (!failed) stage = 'disconnect browser';
+          let timer: ReturnType<typeof setTimeout> | undefined;
+          try {
+            await Promise.race([
+              browser.close(),
+              new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error('Close deadline exceeded')), 5000); }),
+            ]);
+          } catch {
+            if (!failed) throw new Error('Browser disconnect failed');
+          } finally { clearTimeout(timer); }
+        }
       } catch (error) { throw safeFailure(error, stage, sessionId); }
     });
     return { filled: true, session_id: sessionId };

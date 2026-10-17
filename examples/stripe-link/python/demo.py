@@ -1,10 +1,11 @@
 import asyncio
 import json
 import os
+import sys
 
 from link import AsyncClient
 from notte_sdk import NotteClient
-from playwright.async_api import Page
+from playwright.async_api import Page, async_playwright
 
 
 class LinkFormError(RuntimeError):
@@ -43,20 +44,32 @@ async def run_demo(wallet: AsyncClient | None = None) -> dict:
     session_id = "not-created"
     stage = "create browser"
     try:
-        async with client.Session(max_duration_minutes=3) as session:
+        with client.Session(max_duration_minutes=3) as session:
             session_id = session.session_id
             try:
                 stage = "open test form"
-                page = await session.apage
-                await page.goto("about:blank")
-                await page.set_content(
-                    '<label>Card number<input type="password" autocomplete="off"></label>'
-                    '<label>Expiry<input autocomplete="off"></label>'
-                    '<label>CVC<input type="password" autocomplete="off"></label>'
-                )
-                stage = "retrieve and fill approved test card"
-                async with wallet or AsyncClient(access_token=os.environ["LINK_ACCESS_TOKEN"]) as wallet:
-                    await fill_approved_test_card(page, wallet, os.environ["LINK_SPEND_REQUEST_ID"])
+                async with async_playwright() as driver:
+                    browser = await driver.chromium.connect_over_cdp(session.cdp_url())
+                    try:
+                        page = browser.contexts[0].pages[0]
+                        await page.goto("about:blank")
+                        await page.set_content(
+                            '<label>Card number<input type="password" autocomplete="off"></label>'
+                            '<label>Expiry<input autocomplete="off"></label>'
+                            '<label>CVC<input type="password" autocomplete="off"></label>'
+                        )
+                        stage = "retrieve and fill approved test card"
+                        async with wallet or AsyncClient(access_token=os.environ["LINK_ACCESS_TOKEN"]) as wallet:
+                            await fill_approved_test_card(page, wallet, os.environ["LINK_SPEND_REQUEST_ID"])
+                    finally:
+                        failed = sys.exception() is not None
+                        if not failed:
+                            stage = "disconnect browser"
+                        try:
+                            await asyncio.wait_for(browser.close(), timeout=5)
+                        except Exception:
+                            if not failed:
+                                raise RuntimeError("Browser disconnect failed") from None
             except Exception as error:
                 raise safe_failure(error, stage, session_id) from None
         return {"filled": True, "session_id": session_id}

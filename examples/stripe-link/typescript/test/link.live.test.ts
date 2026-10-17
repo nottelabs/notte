@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { test } from 'node:test';
@@ -30,7 +32,7 @@ async function assertClosed(id: string) {
 }
 
 for (const language of ['python', 'typescript']) {
-  for (const mode of ['fixture', 'reject', 'unauthorized', 'approved']) {
+  for (const mode of ['fixture', 'reject', 'reject-close', 'reject-timeout', 'unauthorized', 'approved']) {
     const skip = !process.env.NOTTE_API_KEY || (mode === 'approved' && !configured);
     test(`${language}: ${mode} closes its browser and withholds credentials`, { skip, timeout: 240_000 }, async () => {
       const python = process.env.NOTTE_LINK_PYTHON;
@@ -40,11 +42,11 @@ for (const language of ['python', 'typescript']) {
         env.LINK_ACCESS_TOKEN = 'test-link-token'; // pragma: allowlist secret
         env.LINK_SPEND_REQUEST_ID = 'lsrq_notte_fixture';
       }
-      const fixture = mode === 'fixture' || mode === 'reject';
+      const fixture = mode === 'fixture' || mode.startsWith('reject');
       const command = language === 'python' ? python! : process.execPath;
       const args = language === 'python'
-        ? [fixture ? '../python/probe.py' : '../python/demo.py', ...(mode === 'reject' ? ['reject'] : [])]
-        : [fixture ? 'test/probe.ts' : 'src/index.ts', ...(mode === 'reject' ? ['reject'] : [])];
+        ? [fixture ? '../python/probe.py' : '../python/demo.py', ...(fixture ? [mode] : [])]
+        : [fixture ? 'test/probe.ts' : 'src/index.ts', ...(fixture ? [mode] : [])];
       let output = '';
       let failed = false;
       try {
@@ -59,20 +61,40 @@ for (const language of ['python', 'typescript']) {
       let result: { filled?: boolean; session_id?: string } | undefined;
       if (!id) {
         for (const line of output.split(/\r?\n/)) {
-          try { result = JSON.parse(line); } catch { continue; }
-          if (result?.session_id) { id = result.session_id; break; }
+          let row: { filled?: boolean; session_id?: string } | null;
+          try { row = JSON.parse(line); } catch { continue; }
+          if (row?.session_id) id = row.session_id;
+          if (row?.filled !== undefined) result = row;
         }
       }
       try {
-        assert.equal(failed, mode === 'reject' || mode === 'unauthorized', 'Recipe exited unexpectedly; SDK output withheld');
+        if (process.env.LINK_EVIDENCE_DIR) {
+          mkdirSync(process.env.LINK_EVIDENCE_DIR, { recursive: true, mode: 0o700 });
+          writeFileSync(join(process.env.LINK_EVIDENCE_DIR, `${language}-${mode}.log`), output, { mode: 0o600 });
+        }
+        assert.equal(failed, mode.startsWith('reject') || mode === 'unauthorized', 'Recipe exited unexpectedly; SDK output withheld');
         assert.ok(id && new RegExp(`^${uuid}$`).test(id), 'Recipe did not report its owned browser');
-        for (const secret of [env.NOTTE_API_KEY, env.LINK_ACCESS_TOKEN, 'PRIVATE_FIXTURE_BODY', '4000009990001984']) {
+        for (const secret of [env.NOTTE_API_KEY, env.LINK_ACCESS_TOKEN, 'PRIVATE_FIXTURE_BODY', 'PRIVATE_CLOSE_FIXTURE', '4000009990001984']) {
           if (secret) assert.ok(!output.includes(secret), 'Private data entered recipe output');
         }
         assert.ok(!output.includes('wss://'), 'An authenticated browser URL entered output');
         if (failed) assert.match(output, /Link form failed: retrieve and fill approved test card.*HTTP 401/);
         else assert.equal(result?.filled, true);
-      } finally { if (id) await assertClosed(id); }
+      } finally {
+        if (id) {
+          let closed = false;
+          try { await assertClosed(id); closed = true; }
+          finally {
+            if (!closed) {
+              const response = await fetch(`${process.env.NOTTE_API_URL ?? 'https://api.notte.cc'}/sessions/${id}/stop`, {
+                method: 'DELETE', headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` }, signal: AbortSignal.timeout(15_000),
+              });
+              assert.ok(response.ok, 'Owned fallback stop failed');
+              await assertClosed(id);
+            }
+          }
+        }
+      }
     });
   }
 }
