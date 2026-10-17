@@ -393,6 +393,7 @@
             "group": "Browser Infrastructure",
             "icon": "server",
             "pages": [
+              "integrations/evervault",
               "integrations/kernel",
               "integrations/steel",
               "integrations/massive",
