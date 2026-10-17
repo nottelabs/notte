@@ -12,7 +12,14 @@ from typing import cast
 
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "scripts/integration_examples.json"
-CREDENTIALS = {"NOTTE_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY", "BRAINTRUST_API_KEY"}
+CREDENTIALS = {
+    "NOTTE_API_KEY",
+    "OPENAI_API_KEY",
+    "ANTHROPIC_API_KEY",
+    "GEMINI_API_KEY",
+    "BRAINTRUST_API_KEY",
+    "BOX_ACCESS_TOKEN",
+}
 DRIVER_IMPORTS = {"braintrust": "from braintrust import init_logger; from notte_sdk import NotteClient"}
 
 
@@ -28,6 +35,7 @@ def projects(shard: str) -> list[tuple[str, str]]:
         if registry[name] not in {
             "gemini-root",
             "selenium-root",
+            "box-root",
             "root-unittest",
             "typescript-driver",
         } and not re.fullmatch(r"NOTTE_[A-Z0-9_]+_PYTHON", registry[name]):
@@ -52,8 +60,8 @@ def root_tests(project: Path) -> list[str]:
 
 def check(project: Path, env: dict[str, str], convention: str = "") -> Path:
     python = project / ".venv/bin/python"
-    if convention in {"gemini-root", "selenium-root"}:
-        version = "3.12" if convention == "selenium-root" else "3.11"
+    if convention in {"gemini-root", "selenium-root", "box-root"}:
+        version = "3.11" if convention == "gemini-root" else "3.12"
         run(["uv", "venv", str(project / ".venv"), "--clear", "--python", version], project, env)
         run(["uv", "pip", "install", "--python", str(python), "-r", "requirements.txt"], project, env)
         run(["uv", "pip", "check", "--python", str(python)], project, env)
@@ -64,6 +72,8 @@ def check(project: Path, env: dict[str, str], convention: str = "") -> Path:
             "NOTTE_GEMINI_LIVE": "0",
             "NOTTE_GEMINI_MODEL_LIVE": "0",
             "NOTTE_SELENIUM_LIVE": "0",
+            "NOTTE_BOX_CAPTURE_LIVE": "0",
+            "NOTTE_BOX_LIVE": "0",
             "DISABLE_TELEMETRY": "true",
         }
         if convention == "selenium-root":
@@ -82,6 +92,13 @@ def check(project: Path, env: dict[str, str], convention: str = "") -> Path:
                 offline,
             )
             run([str(python), "-m", "unittest", "-v", "test_bridge"], project, offline)
+        elif convention == "box-root":
+            run([str(python), "-m", "unittest", "-v", "test_upload"], project, offline)
+            run(
+                [str(python), "-m", "compileall", "-q", "main.py", "cleanup_case.py", "test_box.py", "test_capture.py"],
+                project,
+                offline,
+            )
         else:
             run([str(python), "-m", "unittest", "-v", "test_agent.py"], project, offline)
         run(["npm", "test"], project, offline)
@@ -129,12 +146,15 @@ def selenium_driver(project: Path, python: Path, env: dict[str, str]) -> str:
 
 
 def live(project: Path, python: Path, python_env: str, env: dict[str, str], install_env: dict[str, str]) -> None:
-    root_layout = python_env in {"gemini-root", "selenium-root"}
+    root_layout = python_env in {"gemini-root", "selenium-root", "box-root"}
     if python_env == "gemini-root":
         env = {**env, "NOTTE_GEMINI_LIVE": "1", "NOTTE_GEMINI_MODEL_LIVE": "0", "DISABLE_TELEMETRY": "true"}
     elif python_env == "selenium-root":
         env = {name: value for name, value in env.items() if name not in CREDENTIALS - {"NOTTE_API_KEY"}}
         env = {**env, "NOTTE_SELENIUM_LIVE": "1", "DISABLE_TELEMETRY": "true"}
+    elif python_env == "box-root":
+        env = {name: value for name, value in env.items() if name not in CREDENTIALS - {"NOTTE_API_KEY"}}
+        env = {**env, "NOTTE_BOX_CAPTURE_LIVE": "1", "NOTTE_BOX_LIVE": "0", "DISABLE_TELEMETRY": "true"}
     elif python_env == "root-unittest":
         prefix = f"NOTTE_{project.name.replace('-', '_').upper()}"
         env = {**env, f"{prefix}_LIVE": "1", "LANGSMITH_TRACING": "false", "DISABLE_TELEMETRY": "true"}
@@ -172,6 +192,9 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
             driver_env = {**env, "CHROMEDRIVER_PATH": selenium_driver(project, python, env)}
             run([str(python), "-m", "unittest", "-v", "test_selenium"], project, driver_env)
             run(["npm", "run", "test:live"], project, driver_env)
+        elif python_env == "box-root":
+            run([str(python), "-m", "unittest", "-v", "test_capture"], project, env)
+            run(["npm", "run", "test:capture"], project, env)
         elif root_layout:
             run([str(python), "-m", "unittest", "-v", "test_agent.py"], project, env)
             run(["npm", "test"], project, env)

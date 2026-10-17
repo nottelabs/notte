@@ -27,7 +27,7 @@ from pathlib import Path
 args = [Path(sys.argv[0]).name, *sys.argv[1:]]
 with open(os.environ['COMMAND_LOG'], 'a') as log:
     log.write(json.dumps({'args': args, 'cwd': os.getcwd(),
-        'credentials': sorted(k for k in ('NOTTE_API_KEY', 'OPENAI_API_KEY', 'BRAINTRUST_API_KEY') if os.environ.get(k)),
+        'credentials': sorted(k for k in ('NOTTE_API_KEY', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'GEMINI_API_KEY', 'BRAINTRUST_API_KEY', 'BOX_ACCESS_TOKEN') if os.environ.get(k)),
         'python': os.environ.get('NOTTE_COMPUTER_USE_PYTHON'),
         'braintrust_python': os.environ.get('NOTTE_BRAINTRUST_PYTHON'),
         'braintrust_project': os.environ.get('BRAINTRUST_PROJECT'),
@@ -42,6 +42,10 @@ if args[1:] == ['install_driver.py']:
     print('Driver setup diagnostic', file=sys.stderr)
     if os.environ.get('FAIL_DRIVER'):
         sys.exit(17)
+if os.environ.get('FAIL_BOX_CAPTURE') == 'python' and 'test_capture' in args:
+    sys.exit(29)
+if os.environ.get('FAIL_BOX_CAPTURE') == 'typescript' and 'test:capture' in args:
+    sys.exit(29)
 if os.environ.get('FAIL_UNITTEST') and 'unittest' in args:
     sys.exit(19)
 if os.environ.get('FAIL_TS_DRIVER') and args == ['npm', 'run', 'test:live']:
@@ -327,3 +331,84 @@ def test_braintrust_ts_driver_preserves_python_selection_and_credential_isolatio
     else:
         assert len(overlays) == 1 and "--no-deps" not in overlays[0]
         assert commands.index(overlays[0]) > commands.index(native[0]["args"])
+
+
+@pytest.fixture
+def box_project(workspace: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    runner.REGISTRY.write_text('{"box":"box-root"}')
+    monkeypatch.setenv("INTEGRATION_EXAMPLES", '["box"]')
+    project = workspace / "examples/box"
+    python = project / ".venv/bin/python"
+    python.parent.mkdir(parents=True)
+    python.write_text((workspace / "examples/alpha/.venv/bin/python").read_text())
+    python.chmod(0o755)
+    return project
+
+
+def test_box_preserves_root_static_capture_suites_and_credential_boundaries(
+    workspace: Path, box_project: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    for key in runner.CREDENTIALS - {"NOTTE_API_KEY"}:
+        monkeypatch.setenv(key, "fixture-private-provider")
+    monkeypatch.setenv("NOTTE_BOX_CAPTURE_LIVE", "1")
+    monkeypatch.setenv("NOTTE_BOX_LIVE", "1")
+    monkeypatch.setattr("sys.argv", ["runner", "live"])
+    runner.main()
+    observed = calls(workspace)
+    static = [call for call in observed if "test_upload" in call["args"] or call["args"] == ["npm", "test"]]
+    native = [call for call in observed if "test_capture" in call["args"] or "test:capture" in call["args"]]
+    assert len(static) == 2 and len(native) == 4
+    assert all(call["cwd"] == str(box_project) for call in static + native)
+    assert all(not call["credentials"] and call["live_flags"]["NOTTE_BOX_CAPTURE_LIVE"] == "0" for call in static)
+    assert all(
+        call["credentials"] == ["NOTTE_API_KEY"] and call["live_flags"]["NOTTE_BOX_CAPTURE_LIVE"] == "1"
+        for call in native
+    )
+    assert all(call["live_flags"]["NOTTE_BOX_LIVE"] == "0" for call in static + native)
+    assert all(not call["credentials"] for call in observed if call not in native)
+    commands = [call["args"] for call in observed]
+    assert commands[0] == ["uv", "venv", str(box_project / ".venv"), "--clear", "--python", "3.12"]
+    assert [
+        "python",
+        "-m",
+        "compileall",
+        "-q",
+        "main.py",
+        "cleanup_case.py",
+        "test_box.py",
+        "test_capture.py",
+    ] in commands
+    assert [
+        "uv",
+        "pip",
+        "install",
+        "--python",
+        str(box_project / ".venv/bin/python"),
+        "-r",
+        "requirements.txt",
+    ] in commands
+    assert commands.count(["uv", "pip", "check", "--python", str(box_project / ".venv/bin/python")]) == 2
+    assert commands.count(["npm", "run", "typecheck"]) == 2
+    source = next(command for command in commands if "-e" in command)
+    assert source[-4:] == ["-e", str(workspace / "packages/notte-core"), "-e", str(workspace / "packages/notte-sdk")]
+    assert "--no-deps" not in source
+    assert commands.index(source) > commands.index(native[1]["args"])
+    assert ["npm", "install", "--no-save", "--package-lock=false", str(workspace / "node-sdk")] in commands
+    assert not any("test_box" in command or "test:live" in command for command in commands)
+
+
+@pytest.mark.parametrize("language", ["python", "typescript"])
+def test_box_capture_failure_reaches_paired_gate_before_source_or_other_project(
+    workspace: Path, box_project: Path, monkeypatch: pytest.MonkeyPatch, language: str
+) -> None:
+    monkeypatch.setenv("FAIL_BOX_CAPTURE", language)
+    monkeypatch.setattr("sys.argv", ["runner", "live"])
+    with pytest.raises(subprocess.CalledProcessError) as failure:
+        runner.main()
+    assert failure.value.returncode == 29
+    assert not any("-e" in call["args"] for call in calls(workspace))
+    assert all(
+        not call["credentials"]
+        for call in calls(workspace)
+        if "test_capture" not in call["args"] and "test:capture" not in call["args"]
+    )
