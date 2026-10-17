@@ -1,0 +1,19 @@
+{
+  "name": "notte-deepagents-example",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "start": "node src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test:live": "node --test test/deepagents.live.test.ts"
+  },
+  "dependencies": {
+    "deepagents": "1.15.0",
+    "@langchain/mcp-adapters": "2.0.1",
+    "@langchain/anthropic": "1.5.12",
+    "@langchain/core": "1.2.18",
+    "notte-sdk": "1.9.7"
+  },
+  "devDependencies": { "@types/node": "24.10.0", "typescript": "6.0.3" }
+}

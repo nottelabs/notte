@@ -1,0 +1,23 @@
+---
+title: Selenium
+description: Run Selenium WebDriver commands on a hosted Notte browser.
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+Use Selenium's standard navigation, element, wait and action APIs with a Notte browser. The Python and TypeScript examples in [`examples/selenium`](https://github.com/nottelabs/notte/tree/main/examples/selenium) connect local ChromeDriver through a small loopback bridge. Chrome runs on Notte.
+
+## Set up
+
+Use Python 3.12+, a [Notte API key](https://console.notte.cc), and Node.js 24+ for TypeScript. Clone the [Notte repository](https://github.com/nottelabs/notte) and open `examples/selenium`.
+
+Create a Python virtual environment and install `requirements.txt`. Set `NOTTE_API_KEY`, run `python install_driver.py`, and set `CHROMEDRIVER_PATH` to its output. The script discovers the hosted browser's version, closes its temporary session, and downloads a matching driver from [Chrome for Testing](https://googlechromelabs.github.io/chrome-for-testing/). You can also supply an existing matching ChromeDriver.
+
+Run `python main.py`. For TypeScript, run `npm ci` then `npm start` with the same environment. Both examples print `Example Domain` and close the driver, bridge and owned Notte session.
+
+## Use existing Selenium code
+
+Use the example's `connect_driver` or `connectDriver` with its bridge address, then call normal WebDriver methods. Keep the bridge inside the Notte session's lifetime and always quit the driver before closing the bridge.
+
+The bridge binds only to `127.0.0.1`. No local Chrome installation is needed. ChromeDriver's [remote debugging restrictions](https://developer.chrome.com/docs/chromedriver/help/operation-not-supported-when-using-remote-debugging) apply, including unsupported window resizing.

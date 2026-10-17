@@ -1,0 +1,4 @@
+node_modules/
+.venv/
+__pycache__/
+proposal.json
