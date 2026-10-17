@@ -24,8 +24,8 @@ def projects(shard: str) -> list[tuple[str, str]]:
     for name in cast(list[object], selection):
         if not isinstance(name, str) or name not in registry or not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", name):
             raise ValueError("Unknown integration example")
-        if not re.fullmatch(r"NOTTE_[A-Z0-9_]+_PYTHON", registry[name]):
-            raise ValueError("Invalid Python environment variable in integration registry")
+        if registry[name] != "gemini-root" and not re.fullmatch(r"NOTTE_[A-Z0-9_]+_PYTHON", registry[name]):
+            raise ValueError("Invalid integration registry convention")
         selected.add(name)
     index, count = map(int, shard.split("/"))
     if not 1 <= index <= count:
@@ -37,8 +37,18 @@ def run(command: list[str], directory: Path, env: dict[str, str]) -> None:
     _ = subprocess.run(command, cwd=directory, env=env, check=True)
 
 
-def check(project: Path, env: dict[str, str]) -> Path:
+def check(project: Path, env: dict[str, str], convention: str = "") -> Path:
     python = project / ".venv/bin/python"
+    if convention == "gemini-root":
+        run(["uv", "venv", str(project / ".venv"), "--clear", "--python", "3.11"], project, env)
+        run(["uv", "pip", "install", "--python", str(python), "-r", "requirements.txt"], project, env)
+        run(["uv", "pip", "check", "--python", str(python)], project, env)
+        run(["npm", "ci"], project, env)
+        run(["npm", "run", "typecheck"], project, env)
+        offline = {**env, "NOTTE_GEMINI_LIVE": "0", "NOTTE_GEMINI_MODEL_LIVE": "0", "DISABLE_TELEMETRY": "true"}
+        run([str(python), "-m", "unittest", "-v", "test_agent.py"], project, offline)
+        run(["npm", "test"], project, offline)
+        return python
     run(["uv", "sync", "--locked"], project, env)
     run(["uv", "pip", "check", "--python", str(python)], project, env)
     run([str(python), "-m", "compileall", "-q", "python"], project, env)
@@ -48,7 +58,12 @@ def check(project: Path, env: dict[str, str]) -> Path:
 
 
 def live(project: Path, python: Path, python_env: str, env: dict[str, str], install_env: dict[str, str]) -> None:
-    env = {**env, python_env: str(python)}
+    root_layout = python_env == "gemini-root"
+    if root_layout:
+        env = {**env, "NOTTE_GEMINI_LIVE": "1", "NOTTE_GEMINI_MODEL_LIVE": "0", "DISABLE_TELEMETRY": "true"}
+    else:
+        env = {**env, python_env: str(python)}
+    typescript = project if root_layout else project / "typescript"
     for sdk in ("published", "source"):
         if sdk == "source":
             run(
@@ -69,13 +84,17 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
             run(["uv", "pip", "check", "--python", str(python)], project, install_env)
             run(
                 ["npm", "install", "--no-save", "--package-lock=false", str(ROOT / "node-sdk")],
-                project / "typescript",
+                typescript,
                 install_env,
             )
-            run(["npm", "run", "typecheck"], project / "typescript", install_env)
+            run(["npm", "run", "typecheck"], typescript, install_env)
         print(f"Native integration: {project.name}, {sdk} SDK", flush=True)
-        run([str(python), "-m", "unittest", "discover", "-s", "python", "-p", "test_live.py", "-v"], project, env)
-        run(["npm", "run", "test:live"], project / "typescript", env)
+        if root_layout:
+            run([str(python), "-m", "unittest", "-v", "test_agent.py"], project, env)
+            run(["npm", "test"], project, env)
+        else:
+            run([str(python), "-m", "unittest", "discover", "-s", "python", "-p", "test_live.py", "-v"], project, env)
+            run(["npm", "run", "test:live"], typescript, env)
 
 
 def main() -> None:
@@ -90,7 +109,7 @@ def main() -> None:
     for name, python_env in selected:
         project = ROOT / "examples" / name
         print(f"Checking native integration: {name}", flush=True)
-        python = check(project, install_env)
+        python = check(project, install_env, python_env)
         if args.phase == "live":
             live(project, python, python_env, dict(os.environ), install_env)
 
