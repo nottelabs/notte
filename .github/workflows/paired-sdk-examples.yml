@@ -56,6 +56,11 @@ jobs:
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           enable-cache: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        if: contains(fromJSON(needs.changes.outputs.scope).integration_examples, 'terraform-profiles')
+        with:
+          go-version-file: integrations/terraform-provider-notte/go.mod
+          cache-dependency-path: integrations/terraform-provider-notte/go.sum
       - name: Check native integration examples
         env:
           INTEGRATION_EXAMPLES: ${{ toJSON(fromJSON(needs.changes.outputs.scope).integration_examples) }}
@@ -109,6 +114,11 @@ jobs:
         with:
           persist-credentials: false
       # Do not restore dependency caches into the credentialed job.
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        if: contains(fromJSON(needs.changes.outputs.scope).integration_examples, 'terraform-profiles')
+        with:
+          go-version-file: integrations/terraform-provider-notte/go.mod
+          cache: false
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '24'
@@ -149,8 +159,10 @@ jobs:
           ANTHROPIC_API_KEY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.ANTHROPIC_API_KEY || '' }}
           NOTTE_DEEPAGENTS_MODEL_LIVE: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.ANTHROPIC_API_KEY != '' && '1' || '0' }}
           GEMINI_API_KEY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.GEMINI_API_KEY || '' }}
-          BRAINTRUST_API_KEY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.BRAINTRUST_API_KEY || '' }}
+          BRAINTRUST_API_KEY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && contains(fromJSON(needs.changes.outputs.scope).integration_examples, 'braintrust') && secrets.BRAINTRUST_API_KEY || '' }}
           BRAINTRUST_PROJECT: notte-integration-tests
+          LMNR_PROJECT_API_KEY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && contains(fromJSON(needs.changes.outputs.scope).integration_examples, 'laminar') && secrets.LMNR_PROJECT_API_KEY || '' }}
+          NOTTE_LAMINAR_EXPORT_LIVE: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && contains(fromJSON(needs.changes.outputs.scope).integration_examples, 'laminar') && secrets.LMNR_PROJECT_API_KEY != '' && '1' || '0' }}
         run: python3 scripts/ci_integration_examples.py live --shard "$NOTTE_DOCS_SHARD"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()

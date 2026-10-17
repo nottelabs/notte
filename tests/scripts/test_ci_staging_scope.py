@@ -236,7 +236,6 @@ def test_required_gate_waits_for_all_families_and_fails_closed(
 
 
 def test_native_examples_have_one_existing_required_owner() -> None:
-    assert not (WORKFLOWS / "braintrust-integration.yml").exists()
     for name in ("agent-browser", "claude-agents", "github-actions", "inngest", "openai-agents", "temporal", "trigger"):
         assert not (WORKFLOWS / f"{name}-integration.yml").exists()
     assert (WORKFLOWS / "selector-repair.yml").exists()
@@ -265,7 +264,7 @@ def test_native_examples_have_one_existing_required_owner() -> None:
             assert "secrets." not in str(step)
         else:
             assert '--shard "$NOTTE_DOCS_SHARD"' in step["run"]
-            for key in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY", "BRAINTRUST_API_KEY"):
+            for key in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY"):
                 assert "github.ref == 'refs/heads/main' && github.event_name != 'pull_request'" in step["env"][key]
             model = step["env"]["NOTTE_DEEPAGENTS_MODEL_LIVE"]
             assert "github.ref == 'refs/heads/main' && github.event_name != 'pull_request'" in model
@@ -498,3 +497,39 @@ with open(os.environ['COMMAND_LOG'], 'a') as log:
         assert calls[:1] == [[*runner, "run", "--from-ref", "a" * 40, "--to-ref", "b" * 40]]
         if docs_links:
             assert calls[1] == [*runner, "run", "check-docs-broken-links", "--all-files"]
+
+
+def test_future_trace_secrets_require_reviewed_main_and_selected_project() -> None:
+    jobs = workflow("paired-sdk-examples.yml")["jobs"]
+    static = next(step for step in jobs["checks"]["steps"] if "ci_integration_examples.py" in step.get("run", ""))
+    native = next(step for step in jobs["live"]["steps"] if "ci_integration_examples.py" in step.get("run", ""))
+    assert "secrets." not in str(static)
+    for project, key in (("braintrust", "BRAINTRUST_API_KEY"), ("laminar", "LMNR_PROJECT_API_KEY")):
+        guard = (
+            "github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && "
+            f"contains(fromJSON(needs.changes.outputs.scope).integration_examples, '{project}')"
+        )
+        assert native["env"][key] == "${{ " + guard + f" && secrets.{key} || ''" + " }}"
+    assert native["env"]["NOTTE_LAMINAR_EXPORT_LIVE"] == (
+        "${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && "
+        "contains(fromJSON(needs.changes.outputs.scope).integration_examples, 'laminar') && "
+        "secrets.LMNR_PROJECT_API_KEY != '' && '1' || '0' }}"
+    )
+    assert not any(key.startswith(("OP_", "BOX_", "LINK_", "AGENTCARD_", "PIPEDREAM_")) for key in native["env"])
+
+
+def test_future_go_setup_is_selected_only_and_preserves_existing_job_limits() -> None:
+    jobs = workflow("paired-sdk-examples.yml")["jobs"]
+    assert jobs["checks"]["timeout-minutes"] == 15
+    assert jobs["live"]["timeout-minutes"] == 20
+    for name in ("checks", "live"):
+        steps = [step for step in jobs[name]["steps"] if "setup-go@" in step.get("uses", "")]
+        assert len(steps) == 1
+        step = steps[0]
+        assert (
+            step["if"] == "contains(fromJSON(needs.changes.outputs.scope).integration_examples, 'terraform-profiles')"
+        )
+        assert step["with"]["go-version-file"] == "integrations/terraform-provider-notte/go.mod"
+        assert "secrets." not in str(step)
+        if name == "live":
+            assert step["with"]["cache"] is False
