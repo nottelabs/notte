@@ -8,30 +8,59 @@ import json
 import os
 import re
 import subprocess
+import sys
+import time
+import zipfile
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import cast
+from uuid import uuid4
 
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "scripts/integration_examples.json"
 CREDENTIALS = {
-    "NOTTE_API_KEY",
-    "OPENAI_API_KEY",
-    "ANTHROPIC_API_KEY",
-    "GEMINI_API_KEY",
-    "BRAINTRUST_API_KEY",
-    "LMNR_PROJECT_API_KEY",
-    "OP_SERVICE_ACCOUNT_TOKEN",
-    "BOX_ACCESS_TOKEN",
     "AGENTCARD_CLIENT_ID",
     "AGENTCARD_CLIENT_SECRET",
+    "AI_GATEWAY_API_KEY",
+    "ANTHROPIC_API_KEY",
+    "BOX_ACCESS_TOKEN",
+    "BRAINTRUST_API_KEY",
+    "GEMINI_API_KEY",
+    "LINK_ACCESS_TOKEN",
+    "LINK_SPEND_REQUEST_ID",
+    "LMNR_PROJECT_API_KEY",
+    "MONGODB_URI",
+    "NOTTE_API_KEY",
+    "NOTTE_VALTOWN_TOKEN",
+    "OAGI_API_KEY",
+    "OPENAI_API_KEY",
+    "OP_SERVICE_ACCOUNT_TOKEN",
+    "PIPEDREAM_ACTION_FILE",
+    "PIPEDREAM_APP",
+    "PIPEDREAM_CLIENT_ID",
+    "PIPEDREAM_CLIENT_SECRET",
+    "PIPEDREAM_EXTERNAL_USER_ID",
+    "PIPEDREAM_PROJECT_ID",
+    "TZAFON_API_KEY",
+    "WATSONX_API_KEY",
+    "WATSONX_MODEL_ID",
+    "WATSONX_PROJECT_ID",
+    "WATSONX_URL",
+    "YUTORI_API_KEY",
 }
 DRIVER_IMPORTS = {
     "braintrust": "from braintrust import init_logger; from notte_sdk import NotteClient",
     "onepassword": 'from onepassword import Secrets; from notte_sdk import NotteClient; Secrets.validate_secret_reference("op://Test/Login/username")',
+    "stripe-link": "from link import AsyncClient; from notte_sdk import NotteClient",
+    "tzafon": "from tzafon import AsyncLightcone; from notte_sdk import NotteClient",
+    "watsonx": "import requests; from notte_sdk import NotteClient",
 }
-RECIPES = {"agent-browser", "claude-agents", "openai-agents"}
-NODE_PROJECTS = {"agentcard", "docker-sandboxes", "inngest", "replit", "temporal", "trigger"}
+RECIPES = {"agent-browser", "claude-agents", "mongodb", "openai-agents"}
+NODE_PROJECTS = {"agentcard", "docker-sandboxes", "e2e", "eve", "fx", "inngest", "replit", "temporal", "trigger"}
 DOCKER_CLI_SHA256 = "609a2e4b881ba9a7fd21543077e53d3b863a6b99eebee1f208e51a097ab56a05"  # pragma: allowlist secret
+
+TERRAFORM_SHA256 = "38034b38d03096399a7a1264a14561a8029b2b496fd1f169452656e53968f1b7"  # pragma: allowlist secret
 
 
 def projects(shard: str) -> list[tuple[str, str]]:
@@ -45,6 +74,16 @@ def projects(shard: str) -> list[tuple[str, str]]:
             raise ValueError("Unknown integration example")
         if registry[name] == "node-project" and name not in NODE_PROJECTS:
             raise ValueError("Unknown Node integration project")
+        if registry[name] == "python-project" and name not in {"prime-intellect", "yutori", "openagi", "pipedream"}:
+            raise ValueError("Unknown Python integration project")
+        if registry[name] == "terraform-go" and name != "terraform-profiles":
+            raise ValueError("Unknown Terraform integration project")
+        if registry[name] == "typescript-driver" and name not in DRIVER_IMPORTS:
+            raise ValueError("Unknown TypeScript-driven integration project")
+        if registry[name] == "valtown-deno" and name != "valtown":
+            raise ValueError("Unknown Deno integration project")
+        if registry[name] == "box-root" and name != "box":
+            raise ValueError("Unknown Box integration project")
         if registry[name] not in {
             "node-project",
             "gemini-root",
@@ -52,6 +91,9 @@ def projects(shard: str) -> list[tuple[str, str]]:
             "box-root",
             "root-unittest",
             "typescript-driver",
+            "valtown-deno",
+            "python-project",
+            "terraform-go",
         } and not re.fullmatch(r"NOTTE_[A-Z0-9_]+_PYTHON", registry[name]):
             raise ValueError("Invalid integration registry convention")
         selected.add(name)
@@ -94,19 +136,87 @@ def docker_cli_contract(project: Path, env: dict[str, str]) -> None:
     run(["node", "check-cli.mjs", str(prefix / "docker-sbx/sbx")], project, env)
 
 
+def valtown_deno(env: dict[str, str]) -> Path:
+    return (Path(env["RUNNER_TEMP"]) / "notte-valtown-deno/node_modules/.bin/deno").resolve(strict=True)
+
+
 def check(project: Path, env: dict[str, str], convention: str = "") -> Path:
     python = project / ".venv/bin/python"
+    if convention == "terraform-go":
+        run(["go", "test", "-race", "./..."], project, env)
+        prefix = Path(env["RUNNER_TEMP"]) / "notte-terraform"
+        prefix.mkdir(parents=True, exist_ok=True)
+        archive = prefix / "terraform.zip"
+        run(
+            [
+                "curl",
+                "-fsSL",
+                "https://releases.hashicorp.com/terraform/1.16.6/terraform_1.16.6_linux_amd64.zip",
+                "-o",
+                str(archive),
+            ],
+            project,
+            env,
+        )
+        with archive.open("rb") as source:
+            if hashlib.file_digest(source, "sha256").hexdigest() != TERRAFORM_SHA256:
+                raise ValueError("Terraform CLI archive checksum mismatch")
+        with zipfile.ZipFile(archive) as source:
+            _ = source.extract("terraform", prefix)
+        cli = prefix / "terraform"
+        cli.chmod(0o755)
+        python = prefix / "python/bin/python"
+        run(["uv", "venv", str(prefix / "python"), "--clear", "--python", "3.11"], project, env)
+        run(["uv", "pip", "install", "--python", str(python), "typing_extensions==4.16.0"], project, env)
+        run([str(python), "-m", "unittest", "test_cli", "-v"], project, {**env, "TERRAFORM_BIN": str(cli)})
+        return python
+    if convention == "python-project":
+        if project.name == "yutori":
+            run(["uv", "venv", str(project / ".venv"), "--clear", "--python", "3.12"], project, env)
+            run(["uv", "pip", "install", "--python", str(python), "-r", "requirements.txt"], project, env)
+            run([str(python), "-m", "compileall", "-q", *sorted(p.name for p in project.glob("*.py"))], project, env)
+        else:
+            run(["uv", "sync", "--locked", "--python", "3.11"], project, env)
+        run(["uv", "pip", "check", "--python", str(python)], project, env)
+        if project.name in {"openagi", "pipedream"}:
+            imports = "import demo; from oagi import AsyncDefaultAgent" if project.name == "openagi" else "import demo"
+            run([str(python), "-c", imports], project, env)
+            if project.name == "openagi":
+                run(
+                    [str(python), "-m", "compileall", "-q", "demo.py", "notte_computer.py", "test_live.py"],
+                    project,
+                    env,
+                )
+            else:
+                run(["npm", "ci"], project, env)
+                run(["npm", "run", "typecheck"], project, env)
+        else:
+            run([str(python), "-m", "unittest", "-v", *root_tests(project)], project, env)
+        return python
+    if convention == "valtown-deno":
+        prefix = Path(env["RUNNER_TEMP"]) / "notte-valtown-deno"
+        run(["npm", "install", "--prefix", str(prefix), "--no-audit", "--no-fund", "deno@2.9.6"], project, env)
+        cli = str(valtown_deno(env))
+        run([cli, "fmt", "--check", "main.ts", "main_test.ts", "deno.json"], project, env)
+        run([cli, "lint", "main.ts", "main_test.ts"], project, env)
+        run([cli, "task", "check"], project, env)
+        run([cli, "task", "test"], project, env)
+        return python
     if project.name in RECIPES:
         # Shared checks typecheck the TypeScript SDK and docs recipes; Python setup runs in live.
         return ROOT / ".venv/bin/python"
     if convention == "node-project":
+        if project.name == "e2e":
+            env = {**env, "E2E_TELEMETRY_DISABLED": "1"}
         run(["npm", "ci"], project, env)
         if project.name == "replit":
             run(["npm", "test"], project, env)
             return python
         run(["npm", "run", "build" if project.name == "temporal" else "typecheck"], project, env)
-        if project.name in {"trigger", "agentcard", "docker-sandboxes"}:
+        if project.name in {"trigger", "agentcard", "docker-sandboxes", "eve", "fx"}:
             run(["npm", "test"], project, env)
+        elif project.name == "e2e":
+            run(["npm", "run", "test:unit"], project, env)
         if project.name == "docker-sandboxes":
             run(["sh", "-n", "setup.sh"], project, env)
             docker_cli_contract(project, env)
@@ -130,8 +240,6 @@ def check(project: Path, env: dict[str, str], convention: str = "") -> Path:
             "NOTTE_GEMINI_LIVE": "0",
             "NOTTE_GEMINI_MODEL_LIVE": "0",
             "NOTTE_SELENIUM_LIVE": "0",
-            "NOTTE_BOX_CAPTURE_LIVE": "0",
-            "NOTTE_BOX_LIVE": "0",
             "DISABLE_TELEMETRY": "true",
         }
         if convention == "selenium-root":
@@ -151,6 +259,7 @@ def check(project: Path, env: dict[str, str], convention: str = "") -> Path:
             )
             run([str(python), "-m", "unittest", "-v", "test_bridge"], project, offline)
         elif convention == "box-root":
+            offline.update(NOTTE_BOX_CAPTURE_LIVE="0", NOTTE_BOX_LIVE="0")
             run([str(python), "-m", "unittest", "-v", "test_upload"], project, offline)
             run(
                 [str(python), "-m", "compileall", "-q", "main.py", "cleanup_case.py", "test_box.py", "test_capture.py"],
@@ -168,8 +277,12 @@ def check(project: Path, env: dict[str, str], convention: str = "") -> Path:
     run([str(python), "-m", "compileall", "-q", *sources], project, env)
     if convention == "typescript-driver":
         run([str(python), "-c", DRIVER_IMPORTS[project.name]], project, env)
+        if project.name in {"stripe-link", "watsonx", "tzafon"}:
+            run([str(python), "-m", "unittest", "discover", "-s", "python"], project, env)
     run(["npm", "ci"], project / "typescript", env)
     run(["npm", "run", "typecheck"], project / "typescript", env)
+    if convention == "typescript-driver" and project.name in {"stripe-link", "watsonx", "tzafon"}:
+        run(["npm", "test"], project / "typescript", env)
     if tests:
         prefix = f"NOTTE_{project.name.replace('-', '_').upper()}"
         offline = {
@@ -206,12 +319,76 @@ def selenium_driver(project: Path, python: Path, env: dict[str, str]) -> str:
 def project_env(name: str, env: dict[str, str]) -> dict[str, str]:
     provider = {
         "openai-agents": "OPENAI_API_KEY",
+        "openai-computer-use": "OPENAI_API_KEY",
         "claude-agents": "ANTHROPIC_API_KEY",
+        "anthropic-computer-use": "ANTHROPIC_API_KEY",
+        "deepagents": "ANTHROPIC_API_KEY",
+        "gemini-computer-use": "GEMINI_API_KEY",
         "inngest": "ANTHROPIC_API_KEY",
+        "braintrust": "BRAINTRUST_API_KEY",
+        "laminar": "LMNR_PROJECT_API_KEY",
     }.get(name)
     main = env.get("GITHUB_REF") == "refs/heads/main" and env.get("GITHUB_EVENT_NAME") != "pull_request"
     allowed = {"NOTTE_API_KEY", provider} if main else {"NOTTE_API_KEY"}
     return {key: value for key, value in env.items() if key not in CREDENTIALS or key in allowed}
+
+
+@contextmanager
+def mongodb_fixture(env: dict[str, str]) -> Iterator[str]:
+    name = f"notte-mongodb-{uuid4().hex}"
+    run(
+        [
+            "docker",
+            "create",
+            "--name",
+            name,
+            "--publish",
+            "127.0.0.1:27017:27017",
+            "--memory",
+            "768m",
+            "--cpus",
+            "1",
+            "--health-cmd",
+            "mongosh --quiet --eval 'db.adminCommand({ ping: 1 }).ok'",
+            "--health-interval",
+            "5s",
+            "--health-timeout",
+            "5s",
+            "--health-retries",
+            "20",
+            "mongo:8.0@sha256:6657bf2413fefc5be649390318f5b4cd7328e982722f8ce2ac6dfa6f0a42cb03",
+        ],
+        ROOT,
+        env,
+    )
+    try:
+        run(["docker", "start", name], ROOT, env)
+        deadline = time.monotonic() + 120
+        while time.monotonic() < deadline:
+            status = subprocess.run(
+                ["docker", "inspect", "--format", "{{.State.Health.Status}}", name],
+                cwd=ROOT,
+                env=env,
+                check=True,
+                text=True,
+                stdout=subprocess.PIPE,
+            ).stdout.strip()
+            if status == "healthy":
+                yield "mongodb://127.0.0.1:27017"
+                return
+            if status != "starting":
+                raise RuntimeError(f"Owned MongoDB fixture is {status}")
+            time.sleep(2)
+        raise TimeoutError("Owned MongoDB fixture did not become healthy")
+    finally:
+        primary = sys.exception()
+        try:
+            run(["docker", "rm", "--force", "--volumes", name], ROOT, env)
+        except (OSError, subprocess.SubprocessError) as cleanup:
+            message = "Failed to remove owned MongoDB fixture"
+            if primary is None:
+                raise RuntimeError(message) from cleanup
+            primary.add_note(message)
 
 
 def recipe_live(name: str, python: Path, env: dict[str, str], install_env: dict[str, str]) -> None:
@@ -221,6 +398,9 @@ def recipe_live(name: str, python: Path, env: dict[str, str], install_env: dict[
         run(["uv", "run", "--no-sync", "pytest", "tests/sdk/test_websocket_compatibility.py", "-q"], ROOT, install_env)
     elif name == "claude-agents":
         run(["uv", "pip", "install", "claude-agent-sdk==0.2.168"], ROOT, install_env)
+        run(["uv", "pip", "check"], ROOT, install_env)
+    elif name == "mongodb":
+        run(["uv", "pip", "install", "pymongo==4.19.0"], ROOT, install_env)
         run(["uv", "pip", "check"], ROOT, install_env)
     if name != "agent-browser":
         run(["npm", "ci", "--prefix", "docs"], ROOT, install_env)
@@ -255,10 +435,75 @@ def recipe_live(name: str, python: Path, env: dict[str, str], install_env: dict[
             ROOT / "node-sdk",
             {**env, "VITEST_INTEGRATION": ""},
         )
-    run(["npx", "vitest", "run", f"test/{name}.integration.test.ts"], ROOT / "node-sdk", env)
+    command = ["npx", "vitest", "run", f"test/{name}.integration.test.ts"]
+    if name == "mongodb":
+        with mongodb_fixture(install_env) as uri:
+            run(command, ROOT / "node-sdk", {**env, "MONGODB_URI": uri})
+    else:
+        run(command, ROOT / "node-sdk", env)
 
 
 def live(project: Path, python: Path, python_env: str, env: dict[str, str], install_env: dict[str, str]) -> None:
+    env = project_env(project.name, env)
+    if project.name != "laminar" or not env.get("LMNR_PROJECT_API_KEY"):
+        env["NOTTE_LAMINAR_EXPORT_LIVE"] = "0"
+    if project.name != "deepagents" or not env.get("ANTHROPIC_API_KEY"):
+        env["NOTTE_DEEPAGENTS_MODEL_LIVE"] = "0"
+    if python_env == "valtown-deno":
+        env = {name: value for name, value in env.items() if name not in CREDENTIALS - {"NOTTE_API_KEY"}}
+        run(
+            [str(valtown_deno(install_env)), "task", "test:live"],
+            project,
+            {**env, "NOTTE_VALTOWN_LIVE": "1"},
+        )
+        return
+    if python_env == "terraform-go":
+        print("Native integration: Terraform profile API", flush=True)
+        run(
+            ["go", "test", "-count=1", "-run", "^TestLiveProfileWire$", "-v", "."],
+            project,
+            {**project_env("terraform-profiles", env), "NOTTE_TERRAFORM_LIVE": "1"},
+        )
+        return
+    if python_env == "python-project":
+        flags = {"prime-intellect": "NOTTE_PRIME_LIVE", "yutori": "NOTTE_YUTORI_LIVE"}
+        env = {**project_env(project.name, env), "DISABLE_TELEMETRY": "true"}
+        if flag := flags.get(project.name):
+            env[flag] = "1"
+        for sdk in ("published", "source"):
+            if sdk == "source":
+                run(
+                    [
+                        "uv",
+                        "pip",
+                        "install",
+                        "--python",
+                        str(python),
+                        "-e",
+                        str(ROOT / "packages/notte-core"),
+                        "-e",
+                        str(ROOT / "packages/notte-sdk"),
+                        *(["-e", str(project)] if project.name == "prime-intellect" else []),
+                        *(["oagi-core==0.15.3", "playwright==1.64.0"] if project.name == "openagi" else []),
+                        *(["mcp==2.3.0", "httpx2==2.13.1"] if project.name == "pipedream" else []),
+                    ],
+                    project,
+                    install_env,
+                )
+                run(["uv", "pip", "check", "--python", str(python)], project, install_env)
+                if project.name == "pipedream":
+                    run(
+                        ["npm", "install", "--no-save", "--package-lock=false", str(ROOT / "node-sdk")],
+                        project,
+                        install_env,
+                    )
+                    run(["npm", "run", "typecheck"], project, install_env)
+            print(f"Native integration: {project.name}, {sdk} SDK", flush=True)
+            selected = {**env, "NOTTE_EXAMPLE_PYTHON": str(python)} if project.name == "pipedream" else env
+            run([str(python), "-m", "unittest", "-v", *root_tests(project)], project, selected)
+            if project.name == "pipedream":
+                run(["npm", "test"], project, selected)
+        return
     if project.name in RECIPES:
         recipe_live(project.name, python, project_env(project.name, env), install_env)
         return
@@ -270,10 +515,16 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
                 selected_env["NOTTE_SANDBOXES_LIVE"] = "1"
             run(["npm", "run", "test:live"], project, selected_env)
             return
-        env = {**project_env(project.name, env), f"NOTTE_{project.name.upper()}_LIVE": "1"}
+        if project.name == "e2e":
+            env = {**project_env(project.name, env), "E2E_TELEMETRY_DISABLED": "1"}
+            install_env = {**install_env, "E2E_TELEMETRY_DISABLED": "1"}
+        else:
+            env = {**project_env(project.name, env), f"NOTTE_{project.name.upper()}_LIVE": "1"}
         if project.name == "inngest":
             env["NOTTE_INNGEST_MODEL_LIVE"] = "1" if env.get("ANTHROPIC_API_KEY") else "0"
-        for sdk in ("published", "source") if project.name in {"trigger", "agentcard"} else ("published",):
+        for sdk in (
+            ("published", "source") if project.name in {"trigger", "agentcard", "e2e", "eve", "fx"} else ("published",)
+        ):
             if sdk == "source":
                 run(
                     ["npm", "install", "--no-save", "--package-lock=false", str(ROOT / "node-sdk")],
@@ -281,10 +532,12 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
                     install_env,
                 )
             print(f"Native integration: {project.name}, {sdk} SDK", flush=True)
-            if project.name in {"trigger", "agentcard"}:
+            if project.name in {"trigger", "agentcard", "e2e", "eve", "fx"}:
                 run(["npm", "run", "typecheck"], project, install_env)
-                run(["npm", "test"], project, install_env)
-            run(["npm", "run", "test:live"], project, env)
+                run(["npm", "run", "test:unit"] if project.name == "e2e" else ["npm", "test"], project, install_env)
+            run(["npm", "test"] if project.name in {"eve", "fx"} else ["npm", "run", "test:live"], project, env)
+            if project.name == "e2e":
+                run(["npm", "test"], project, env)
         return
     if project.name == "github-actions":
         env = project_env(project.name, env)
@@ -316,7 +569,17 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
         prefix = f"NOTTE_{project.name.replace('-', '_').upper()}"
         env = {**env, f"{prefix}_LIVE": "1", "LANGSMITH_TRACING": "false", "DISABLE_TELEMETRY": "true"}
     elif python_env == "typescript-driver":
-        env = {**env, f"NOTTE_{project.name.replace('-', '_').upper()}_PYTHON": str(python)}
+        if project.name in {"stripe-link", "watsonx", "tzafon"}:
+            env = {name: value for name, value in env.items() if name not in CREDENTIALS - {"NOTTE_API_KEY"}}
+            prefix = "LINK" if project.name == "stripe-link" else project.name.upper()
+            env = {
+                **env,
+                f"NOTTE_{prefix}_PYTHON": str(python),
+                f"NOTTE_{prefix}_REQUIRE_LIVE": "1",
+                "DISABLE_TELEMETRY": "true",
+            }
+        else:
+            env = {**env, f"NOTTE_{project.name.replace('-', '_').upper()}_PYTHON": str(python)}
     else:
         env = {**env, python_env: str(python)}
     typescript = project if root_layout else project / "typescript"
@@ -382,7 +645,9 @@ def main() -> None:
     }
     install_env.update(LANGSMITH_TRACING="false", DISABLE_TELEMETRY="true")
     for name, python_env in selected:
-        project = ROOT / "examples" / name
+        project = (
+            ROOT / "integrations/terraform-provider-notte" if name == "terraform-profiles" else ROOT / "examples" / name
+        )
         print(f"Checking native integration: {name}", flush=True)
         python = check(project, install_env, python_env)
         if args.phase == "live":

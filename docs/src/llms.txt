@@ -113,6 +113,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [Trigger.dev](https://docs.notte.cc/integrations/trigger.md): Run durable browser tasks with Trigger.dev and Notte.
 - [Temporal](https://docs.notte.cc/integrations/temporal.md): Run durable browser tasks with Temporal and Notte.
 - [GitHub Actions](https://docs.notte.cc/integrations/github-actions.md): Review DOM-validated selector repairs in a manual GitHub Actions workflow.
+- [Val Town](https://docs.notte.cc/integrations/val-town.md): Run Notte browser tasks from Val Town HTTP triggers.
 
 ## Observability
 
@@ -122,6 +123,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 ## Payments
 
 - [Agentcard](https://docs.notte.cc/integrations/agentcard.md): Attach Agentcard checkout to a hosted Notte browser.
+- [Stripe Link](https://docs.notte.cc/integrations/stripe-link.md): Fill approved Link test credentials into a Notte browser with the native SDK.
 
 ## File Storage
 
@@ -130,6 +132,10 @@ The shared skill covers CLI installation, authentication, live browser explorati
 ## Email
 
 - [AgentMail](https://docs.notte.cc/integrations/agentmail.md): Give Notte personas an AgentMail inbox for sign-ups and verification emails
+
+## Databases
+
+- [MongoDB](https://docs.notte.cc/integrations/mongodb.md): Save Notte browser scrapes to MongoDB in Python or TypeScript.
 
 ## Credentials
 

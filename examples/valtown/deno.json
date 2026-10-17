@@ -1,0 +1,7 @@
+{
+  "tasks": {
+    "check": "deno check main.ts main_test.ts",
+    "test": "deno test --allow-env main_test.ts",
+    "test:live": "deno test --allow-env --allow-net main_test.ts"
+  }
+}

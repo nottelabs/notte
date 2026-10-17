@@ -14,12 +14,19 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from scripts import ci_integration_examples as runner
 from scripts import ci_scope as ci
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
 class RoutingTests(unittest.TestCase):
+    # Fixed expectations describe the historical seven-owner migration.
+    @patch.object(
+        ci,
+        "INTEGRATION_EXAMPLES",
+        json.loads((ROOT / "tests/scripts/fixtures/integration_example_commands.json").read_text())["active"],
+    )
     def test_shipped_native_recipe_and_project_inputs_keep_required_paired_owner(self) -> None:
         inputs = {
             "docs/src/testers/integrations/openai_agents.py": {"openai-agents"},
@@ -200,94 +207,22 @@ class RoutingTests(unittest.TestCase):
                 self.assertEqual(ci.integration_examples_for_path(path), {"gemini-computer-use"})
         self.assertFalse(ci.integration_examples_for_path("examples/gemini-computer-use/README.md"))
 
-    def test_braintrust_ts_driver_inputs_select_native_suite(self) -> None:
-        for name in ("python/cleanup_case.py", "typescript/test/braintrust.live.test.ts", "uv.lock"):
-            path = f"examples/braintrust/{name}"
-            with self.subTest(path=path):
-                self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
-                self.assertEqual(ci.integration_examples_for_path(path), {"braintrust"})
-
     def test_selenium_native_inputs_route_to_existing_paired_jobs(self) -> None:
-        for filename in (
-            "bridge.py",
-            "install_driver.py",
-            "test_bridge.py",
-            "test_selenium.py",
-            "requirements.txt",
-            "package-lock.json",
-            "test/selenium.live.test.ts",
-        ):
-            path = f"examples/selenium/{filename}"
-            with self.subTest(path=path):
-                self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
-                self.assertEqual(ci.integration_examples_for_path(path), {"selenium"})
-        self.assertFalse(ci.integration_examples_for_path("examples/selenium/README.md"))
-
-    def test_laminar_inputs_select_native_tracing_checks(self) -> None:
-        for filename in (
-            "read_page.py",
-            "test_read_page.py",
-            "uv.lock",
-            "typescript/package-lock.json",
-            "typescript/test/laminar.live.test.ts",
-        ):
-            path = f"examples/laminar/{filename}"
-            with self.subTest(path=path):
-                self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
-                self.assertEqual(ci.integration_examples_for_path(path), {"laminar"})
-        self.assertFalse(ci.integration_examples_for_path("examples/laminar/README.md"))
-
-    def test_onepassword_ts_driver_inputs_select_native_suite(self) -> None:
-        for name in ("python/demo.py", "python/cleanup_case.py", "typescript/test/onepassword.live.test.ts", "uv.lock"):
-            path = f"examples/onepassword/{name}"
-            with self.subTest(path=path):
-                self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
-                self.assertEqual(ci.integration_examples_for_path(path), {"onepassword"})
-
-    def test_box_capture_inputs_route_to_existing_paired_jobs(self) -> None:
-        for filename in (
-            "main.py",
-            "cleanup_case.py",
-            "test_capture.py",
-            "test_upload.py",
-            "requirements.txt",
-            "test/capture.live.test.ts",
-            "package-lock.json",
-        ):
-            with self.subTest(filename=filename):
-                path = f"examples/box/{filename}"
-                self.assertEqual(ci.integration_examples_for_path(path), {"box"})
-                self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
-        self.assertFalse(ci.integration_examples_for_path("examples/box/README.md"))
-
-    def test_agentcard_inputs_select_existing_native_sdk_modes(self) -> None:
-        for filename in ("src/main.ts", "test/browser.live.test.ts", "test/checkout.test.ts", "package-lock.json"):
-            path = f"examples/agentcard/{filename}"
-            with self.subTest(path=path):
-                self.assertEqual(ci.integration_examples_for_path(path), {"agentcard"})
-                self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
-        self.assertFalse(ci.integration_examples_for_path("examples/agentcard/README.md"))
-
-    def test_replit_installation_and_hosted_mcp_inputs_select_existing_pair(self) -> None:
-        for path in (
-            "examples/replit/install-link.mjs",
-            "examples/replit/server.json",
-            "examples/replit/test/install-link.test.mjs",
-            "examples/replit/test/mcp.live.test.mjs",
-            "examples/replit/package-lock.json",
-            "docs/src/integrations/replit.mdx",
-        ):
-            with self.subTest(path=path):
-                self.assertEqual(ci.integration_examples_for_path(path), {"replit"})
-                self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path, code_changed=False))
-        self.assertFalse(ci.integration_examples_for_path("examples/replit/README.md"))
-
-    def test_docker_cli_and_native_inputs_retain_existing_paired_owner(self) -> None:
-        for filename in ("check-cli.mjs", "setup.sh", "test/mcp.live.test.ts", "package-lock.json"):
-            with self.subTest(filename=filename):
-                path = f"examples/docker-sandboxes/{filename}"
-                self.assertEqual(ci.integration_examples_for_path(path), {"docker-sandboxes"})
-                self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
+        with patch.dict(ci.INTEGRATION_EXAMPLES, {"selenium": "selenium-root"}):
+            for filename in (
+                "bridge.py",
+                "install_driver.py",
+                "test_bridge.py",
+                "test_selenium.py",
+                "requirements.txt",
+                "package-lock.json",
+                "test/selenium.live.test.ts",
+            ):
+                path = f"examples/selenium/{filename}"
+                with self.subTest(path=path):
+                    self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
+                    self.assertEqual(ci.integration_examples_for_path(path), {"selenium"})
+            self.assertFalse(ci.integration_examples_for_path("examples/selenium/README.md"))
 
     def test_shared_native_inputs_cover_every_registered_project(self) -> None:
         for path in (
@@ -385,7 +320,103 @@ class RoutingTests(unittest.TestCase):
         self.assertTrue(ci.fenced_code("~~~python\nx = 1\n~~~\n"))
 
 
+class RegistrationRoutingTests(unittest.TestCase):
+    def test_routing_contracts_accept_every_prepared_registration(self) -> None:
+        fixtures = json.loads((ROOT / "tests/scripts/fixtures/integration_example_commands.json").read_text())
+        for name, convention in fixtures["active"].items():
+            self.assertEqual(ci.INTEGRATION_EXAMPLES.get(name), convention)
+        augmented = {**ci.INTEGRATION_EXAMPLES, **fixtures["future"]}
+        for registry in (ci.INTEGRATION_EXAMPLES, augmented):
+            with self.subTest(registrations=len(registry)), patch.object(ci, "INTEGRATION_EXAMPLES", registry):
+                result = unittest.TestResult()
+                unittest.TestLoader().loadTestsFromTestCase(RoutingTests).run(result)
+                self.assertGreater(result.testsRun, 0)
+                self.assertFalse(result.errors, result.errors)
+                self.assertFalse(result.failures, result.failures)
+                owners = {"openai-agents", "claude-agents"}
+                if "mongodb" in registry:
+                    owners.add("mongodb")
+                for path in ("docs/package.json", "docs/package-lock.json"):
+                    self.assertEqual(ci.integration_examples_for_path(path), owners)
+
+
 class GitHistoryTests(unittest.TestCase):
+    def test_future_registrations_need_no_global_policy_or_runner_edits(self) -> None:
+        fixtures = json.loads((ROOT / "tests/scripts/fixtures/integration_example_commands.json").read_text())
+        current = fixtures["active"]
+        registry_path = "scripts/integration_examples.json"
+        for name, convention in fixtures["future"].items():
+            with self.subTest(name=name):
+                before = self.commit({registry_path: json.dumps(current)})
+                registered = {**current, name: convention}
+                head = self.commit({registry_path: json.dumps(registered)})
+                with patch.object(ci, "INTEGRATION_EXAMPLES", registered):
+                    registration = self.scope("push", before, head)
+                    self.assertEqual(registration["integration_examples"], [name])
+                    self.assertTrue(registration["paired_live"])
+                    self.assertFalse(registration["paired_snippets_live"])
+                    self.assertEqual(registration["paired_shards"], ["1/1"])
+                    self.assertFalse(registration["python_live"])
+                    self.assertFalse(registration["node_live"])
+                    if name == "terraform-profiles":
+                        path = "integrations/terraform-provider-notte/provider.go"
+                    elif name == "mongodb":
+                        path = "node-sdk/test/mongodb.integration.test.ts"
+                    elif convention == "node-project":
+                        path = f"examples/{name}/package.json"
+                    elif convention == "valtown-deno":
+                        path = f"examples/{name}/main.ts"
+                    elif name in {"box", "yutori"}:
+                        path = f"examples/{name}/requirements.txt"
+                    else:
+                        path = f"examples/{name}/pyproject.toml"
+                    changed = self.commit({path: "synthetic native input\n"})
+                    native = self.scope("push", head, changed)
+                    self.assertEqual(native["integration_examples"], [name])
+                    self.assertTrue(native["paired_live"])
+                    self.assertFalse(native["full"])
+                    self.assertFalse(all(native[family] for family in ci.ALL))
+
+    def test_adaptive_cli_matrix_partitions_39_native_profiles_without_empty_owners(self) -> None:
+        registry = {f"profile-{index:02}": "NOTTE_FIXTURE_PYTHON" for index in range(39)}
+        before = self.commit({"scripts/integration_examples.json": "{}\n"})
+        head = self.commit({"scripts/integration_examples.json": json.dumps(registry)})
+        script = self.repo / "scripts/ci_scope.py"
+        script.write_text((ROOT / "scripts/ci_scope.py").read_text())
+        output = subprocess.check_output(
+            [sys.executable, str(script), "--event", "push", "--base", before, "--head", head],
+            cwd=self.repo,
+            text=True,
+        )
+        scope = json.loads(output)
+        self.assertTrue(scope["paired_live"])
+        self.assertFalse(scope["paired_snippets_live"])
+        with patch.object(runner, "REGISTRY", self.repo / "scripts/integration_examples.json"):
+            with patch.dict(os.environ, {"INTEGRATION_EXAMPLES": json.dumps(scope["integration_examples"])}):
+                assignments = [runner.projects(shard) for shard in scope["paired_shards"]]
+        self.assertEqual(len(assignments), 20)
+        self.assertTrue(all(1 <= len(group) <= 2 for group in assignments))
+        self.assertEqual(sorted(name for group in assignments for name, _ in group), sorted(registry))
+
+    def test_native_only_uses_one_owner_but_snippets_keep_two(self) -> None:
+        before = self.commit({"scripts/integration_examples.json": "{}\n"})
+        head = self.commit({"scripts/integration_examples.json": '{"openai-computer-use":"NOTTE_COMPUTER_USE_PYTHON"}'})
+        scope = self.scope("push", before, head)
+        self.assertTrue(scope["paired_live"])
+        self.assertEqual(scope["paired_shards"], ["1/1"])
+        snippet = self.commit({"docs/src/testers/sessions/example.ts": "export const example = true;\n"})
+        scope = self.scope("push", head, snippet)
+        self.assertTrue(scope["paired_snippets_live"])
+        self.assertEqual(scope["paired_shards"], ["1/2", "2/2"])
+
+    def test_zero_native_and_prose_diffs_do_not_start_adaptive_live_jobs(self) -> None:
+        for head in (self.base, self.commit({"docs/src/pricing.mdx": "Updated pricing prose\n"})):
+            with self.subTest(head=head):
+                scope = self.scope("push", self.base, head)
+                self.assertFalse(scope["paired_live"])
+                self.assertEqual(scope["integration_examples"], [])
+                self.assertEqual(scope["paired_shards"], ["1/1"])
+
     def setUp(self) -> None:
         self.directory = tempfile.TemporaryDirectory()
         self.addCleanup(self.directory.cleanup)
@@ -512,9 +543,10 @@ class GitHistoryTests(unittest.TestCase):
         self.assertFalse(scope["node_generated"])
         self.assertFalse(scope["full"])
 
-    def test_registered_integration_diff_runs_its_native_suite_without_global_live_suites(self) -> None:
+    def test_standalone_integration_diff_keeps_offline_checks_without_global_live_suites(self) -> None:
         head = self.commit(
             {
+                ".github/workflows/braintrust-integration.yml": "name: Braintrust integration\n",
                 "examples/braintrust/python/demo.py": "browser_task = True\n",
                 "examples/braintrust/typescript/src/demo.ts": "export const browserTask = true;\n",
                 "examples/braintrust/uv.lock": "version = 1\n",
@@ -530,9 +562,7 @@ class GitHistoryTests(unittest.TestCase):
             self.assertTrue(scope[name], name)
         for name in ci.ALL:
             if name.endswith("_live"):
-                self.assertEqual(scope[name], name == "paired_live", name)
-        self.assertEqual(scope["integration_examples"], ["braintrust"])
-        self.assertFalse(scope["paired_snippets_live"])
+                self.assertFalse(scope[name], name)
 
         runtime = self.commit(
             {
