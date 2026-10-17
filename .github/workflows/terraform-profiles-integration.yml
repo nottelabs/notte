@@ -1,0 +1,77 @@
+name: Terraform profiles integration
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/terraform-profiles-integration.yml
+      - integrations/terraform-provider-notte/**
+      - openapi/openapi.json
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/terraform-profiles-integration.yml
+      - integrations/terraform-provider-notte/**
+      - openapi/openapi.json
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: integrations/terraform-provider-notte
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        with:
+          go-version-file: integrations/terraform-provider-notte/go.mod
+          cache-dependency-path: integrations/terraform-provider-notte/go.sum
+      - run: go test -race ./...
+      - name: Install the pinned Terraform CLI
+        run: |
+          curl -fsSL https://releases.hashicorp.com/terraform/1.16.6/terraform_1.16.6_linux_amd64.zip -o "$RUNNER_TEMP/terraform.zip"
+          echo "38034b38d03096399a7a1264a14561a8029b2b496fd1f169452656e53968f1b7  $RUNNER_TEMP/terraform.zip" | sha256sum --check
+          unzip -q "$RUNNER_TEMP/terraform.zip" terraform -d "$RUNNER_TEMP/terraform-cli"
+      - name: Check native Terraform lifecycle against a loopback fixture
+        env:
+          TERRAFORM_BIN: ${{ runner.temp }}/terraform-cli/terraform
+        run: python3 -m unittest test_cli -v
+  live:
+    needs: static
+    if: github.actor != 'dependabot[bot]' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    concurrency:
+      group: notte-live-api-${{ github.ref }}
+      queue: max
+      cancel-in-progress: false
+    defaults:
+      run:
+        working-directory: integrations/terraform-provider-notte
+    env:
+      NOTTE_API_URL: https://us-staging.notte.cc
+      NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
+      NOTTE_TERRAFORM_LIVE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        with:
+          go-version-file: integrations/terraform-provider-notte/go.mod
+          cache-dependency-path: integrations/terraform-provider-notte/go.sum
+      - name: Require the Notte test key
+        run: test -n "$NOTTE_API_KEY"
+      - name: Wait for the API
+        uses: ./.github/actions/wait-for-api
+        with:
+          api-url: https://us-staging.notte.cc
+          timeout: '300'
+      - name: Check an owned application profile without a live Terraform apply
+        run: go test -run '^TestLiveProfileWire$' -v .
