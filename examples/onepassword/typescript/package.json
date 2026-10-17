@@ -1,0 +1,22 @@
+{
+  "name": "notte-onepassword-example",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test:live": "node --test test/onepassword.live.test.ts"
+  },
+  "dependencies": {
+    "@1password/sdk": "0.5.0",
+    "notte-sdk": "1.9.7",
+    "playwright-core": "1.64.1"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.0",
+    "typescript": "6.0.3"
+  }
+}

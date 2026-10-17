@@ -1,6 +1,30 @@
 ---
 title: Laminar
-description: Integration with Laminar
+description: Trace Notte browser tasks in Laminar.
 ---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
-Todo
+<AgentMdNotice />
+
+[Laminar](https://laminar.sh/docs/overview) records traces for AI agents. The runnable [Python and TypeScript examples](https://github.com/nottelabs/notte/tree/main/examples/laminar) trace a browser task running on Notte.
+
+## Set up
+
+Set `NOTTE_API_KEY` from [Notte](https://console.notte.cc/apikeys) and `LMNR_PROJECT_API_KEY` from your [Laminar project settings](https://laminar.sh/projects).
+
+<Tabs>
+  <Tab title="Python">
+    Use Python 3.11+ and uv. Clone the Notte repository, open `examples/laminar`, run `uv sync --locked`, then `uv run python read_page.py`.
+  </Tab>
+  <Tab title="TypeScript">
+    Use Node.js 24+. Clone the Notte repository, open `examples/laminar/typescript`, run `npm ci`, then `npm start`.
+  </Tab>
+</Tabs>
+
+The example visits `https://example.com` and prints its title, browser session ID, and trace ID. Pass another URL as the command's argument. Open your Laminar project and find the `notte.read_page` span.
+
+## How it connects
+
+Each run creates one Notte session, connects Playwright over CDP, and closes the browser on success or failure. A manual Laminar span records the hostname, title, and Notte session ID. Automatic instrumentation is disabled so authenticated CDP URLs stay out of traces. The command flushes tracing before exiting.
+
+See the example's README for live verification commands and Laminar's [manual span guide](https://laminar.sh/docs/sdk/manual-spans) to trace your own tasks.

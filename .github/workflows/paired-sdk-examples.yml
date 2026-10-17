@@ -47,12 +47,19 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '22'
+          node-version: '24'
           cache: npm
           cache-dependency-path: node-sdk/package-lock.json
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.11'
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: false
+      - name: Check native integration examples
+        env:
+          INTEGRATION_EXAMPLES: ${{ toJSON(fromJSON(needs.changes.outputs.scope).integration_examples) }}
+        run: python3 scripts/ci_integration_examples.py checks
       - run: npm ci --prefix node-sdk
       - run: npm ci --prefix docs
       - run: npm run build --prefix node-sdk
@@ -104,7 +111,7 @@ jobs:
       # Do not restore dependency caches into the credentialed job.
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '22'
+          node-version: '24'
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           enable-cache: false
@@ -120,6 +127,7 @@ jobs:
           api-url: https://us-staging.notte.cc
 
       - name: Execute both languages against the local SDK packages
+        if: fromJSON(needs.changes.outputs.scope).paired_snippets_live
         working-directory: node-sdk
         env:
           NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
@@ -128,3 +136,27 @@ jobs:
           # Retry a failed live example once, without rerunning the whole suite.
           # A second failure still fails this job; other jobs keep their retry policy.
           npx vitest run test/docs-snippets.integration.test.ts --retry 1
+
+      - name: Execute native integration examples
+        if: >-
+          github.actor != 'dependabot[bot]' ||
+          contains(fromJSON(needs.changes.outputs.scope).integration_examples, 'inngest') ||
+          contains(fromJSON(needs.changes.outputs.scope).integration_examples, 'temporal')
+        env:
+          INTEGRATION_EXAMPLES: ${{ toJSON(fromJSON(needs.changes.outputs.scope).integration_examples) }}
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
+          OPENAI_API_KEY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.OPENAI_API_KEY || '' }}
+          ANTHROPIC_API_KEY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.ANTHROPIC_API_KEY || '' }}
+          NOTTE_DEEPAGENTS_MODEL_LIVE: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.ANTHROPIC_API_KEY != '' && '1' || '0' }}
+          GEMINI_API_KEY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.GEMINI_API_KEY || '' }}
+          LMNR_PROJECT_API_KEY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.LMNR_PROJECT_API_KEY || '' }}
+          NOTTE_LAMINAR_EXPORT_LIVE: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.LMNR_PROJECT_API_KEY != '' && '1' || '0' }}
+          BRAINTRUST_API_KEY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.BRAINTRUST_API_KEY || '' }}
+          BRAINTRUST_PROJECT: notte-integration-tests
+        run: python3 scripts/ci_integration_examples.py live --shard "$NOTTE_DOCS_SHARD"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: agent-browser-ownership
+          path: ${{ runner.temp }}/agent-browser-owned.jsonl
+          if-no-files-found: ignore
