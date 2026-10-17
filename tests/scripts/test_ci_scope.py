@@ -21,6 +21,12 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class RoutingTests(unittest.TestCase):
+    # Fixed expectations describe the historical seven-owner migration.
+    @patch.object(
+        ci,
+        "INTEGRATION_EXAMPLES",
+        json.loads((ROOT / "tests/scripts/fixtures/integration_example_commands.json").read_text())["active"],
+    )
     def test_shipped_native_recipe_and_project_inputs_keep_required_paired_owner(self) -> None:
         inputs = {
             "docs/src/testers/integrations/openai_agents.py": {"openai-agents"},
@@ -29,11 +35,7 @@ class RoutingTests(unittest.TestCase):
             "node-sdk/test/helpers/run-openai-recipe.py": {"openai-agents"},
             "node-sdk/test/agent-browser.recipe.test.ts": {"agent-browser"},
             "tests/docs/test_agent_browser_recipe.py": {"agent-browser"},
-            "docs/package-lock.json": {"openai-agents", "claude-agents", "mongodb"},
-            "docs/src/testers/integrations/mongodb.py": {"mongodb"},
-            "docs/src/testers/integrations/mongodb.ts": {"mongodb"},
-            "node-sdk/test/mongodb.integration.test.ts": {"mongodb"},
-            "node-sdk/test/helpers/session-closure.ts": {"agent-browser", "mongodb"},
+            "docs/package-lock.json": {"openai-agents", "claude-agents"},
             ".github/workflows/selector-repair.yml": {"github-actions"},
             "docs/src/integrations/github-actions.mdx": {"github-actions"},
             "examples/trigger/src/read-page.ts": {"trigger"},
@@ -50,7 +52,6 @@ class RoutingTests(unittest.TestCase):
             "claude-agents",
             "github-actions",
             "inngest",
-            "mongodb",
             "openai-agents",
             "temporal",
             "trigger",
@@ -206,49 +207,22 @@ class RoutingTests(unittest.TestCase):
                 self.assertEqual(ci.integration_examples_for_path(path), {"gemini-computer-use"})
         self.assertFalse(ci.integration_examples_for_path("examples/gemini-computer-use/README.md"))
 
-    def test_braintrust_ts_driver_inputs_select_native_suite(self) -> None:
-        for name in ("python/cleanup_case.py", "typescript/test/braintrust.live.test.ts", "uv.lock"):
-            path = f"examples/braintrust/{name}"
-            with self.subTest(path=path):
-                self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
-                self.assertEqual(ci.integration_examples_for_path(path), {"braintrust"})
-
     def test_selenium_native_inputs_route_to_existing_paired_jobs(self) -> None:
-        for filename in (
-            "bridge.py",
-            "install_driver.py",
-            "test_bridge.py",
-            "test_selenium.py",
-            "requirements.txt",
-            "package-lock.json",
-            "test/selenium.live.test.ts",
-        ):
-            path = f"examples/selenium/{filename}"
-            with self.subTest(path=path):
-                self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
-                self.assertEqual(ci.integration_examples_for_path(path), {"selenium"})
-        self.assertFalse(ci.integration_examples_for_path("examples/selenium/README.md"))
-
-    def test_laminar_inputs_select_native_tracing_checks(self) -> None:
-        for filename in (
-            "read_page.py",
-            "test_read_page.py",
-            "uv.lock",
-            "typescript/package-lock.json",
-            "typescript/test/laminar.live.test.ts",
-        ):
-            path = f"examples/laminar/{filename}"
-            with self.subTest(path=path):
-                self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
-                self.assertEqual(ci.integration_examples_for_path(path), {"laminar"})
-        self.assertFalse(ci.integration_examples_for_path("examples/laminar/README.md"))
-
-    def test_onepassword_ts_driver_inputs_select_native_suite(self) -> None:
-        for name in ("python/demo.py", "python/cleanup_case.py", "typescript/test/onepassword.live.test.ts", "uv.lock"):
-            path = f"examples/onepassword/{name}"
-            with self.subTest(path=path):
-                self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
-                self.assertEqual(ci.integration_examples_for_path(path), {"onepassword"})
+        with patch.dict(ci.INTEGRATION_EXAMPLES, {"selenium": "selenium-root"}):
+            for filename in (
+                "bridge.py",
+                "install_driver.py",
+                "test_bridge.py",
+                "test_selenium.py",
+                "requirements.txt",
+                "package-lock.json",
+                "test/selenium.live.test.ts",
+            ):
+                path = f"examples/selenium/{filename}"
+                with self.subTest(path=path):
+                    self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
+                    self.assertEqual(ci.integration_examples_for_path(path), {"selenium"})
+            self.assertFalse(ci.integration_examples_for_path("examples/selenium/README.md"))
 
     def test_shared_native_inputs_cover_every_registered_project(self) -> None:
         for path in (
@@ -346,7 +320,63 @@ class RoutingTests(unittest.TestCase):
         self.assertTrue(ci.fenced_code("~~~python\nx = 1\n~~~\n"))
 
 
+class RegistrationRoutingTests(unittest.TestCase):
+    def test_routing_contracts_accept_every_prepared_registration(self) -> None:
+        fixtures = json.loads((ROOT / "tests/scripts/fixtures/integration_example_commands.json").read_text())
+        for name, convention in fixtures["active"].items():
+            self.assertEqual(ci.INTEGRATION_EXAMPLES.get(name), convention)
+        augmented = {**ci.INTEGRATION_EXAMPLES, **fixtures["future"]}
+        for registry in (ci.INTEGRATION_EXAMPLES, augmented):
+            with self.subTest(registrations=len(registry)), patch.object(ci, "INTEGRATION_EXAMPLES", registry):
+                result = unittest.TestResult()
+                unittest.TestLoader().loadTestsFromTestCase(RoutingTests).run(result)
+                self.assertGreater(result.testsRun, 0)
+                self.assertFalse(result.errors, result.errors)
+                self.assertFalse(result.failures, result.failures)
+                owners = {"openai-agents", "claude-agents"}
+                if "mongodb" in registry:
+                    owners.add("mongodb")
+                for path in ("docs/package.json", "docs/package-lock.json"):
+                    self.assertEqual(ci.integration_examples_for_path(path), owners)
+
+
 class GitHistoryTests(unittest.TestCase):
+    def test_future_registrations_need_no_global_policy_or_runner_edits(self) -> None:
+        fixtures = json.loads((ROOT / "tests/scripts/fixtures/integration_example_commands.json").read_text())
+        current = fixtures["active"]
+        registry_path = "scripts/integration_examples.json"
+        for name, convention in fixtures["future"].items():
+            with self.subTest(name=name):
+                before = self.commit({registry_path: json.dumps(current)})
+                registered = {**current, name: convention}
+                head = self.commit({registry_path: json.dumps(registered)})
+                with patch.object(ci, "INTEGRATION_EXAMPLES", registered):
+                    registration = self.scope("push", before, head)
+                    self.assertEqual(registration["integration_examples"], [name])
+                    self.assertTrue(registration["paired_live"])
+                    self.assertFalse(registration["paired_snippets_live"])
+                    self.assertEqual(registration["paired_shards"], ["1/1"])
+                    self.assertFalse(registration["python_live"])
+                    self.assertFalse(registration["node_live"])
+                    if name == "terraform-profiles":
+                        path = "integrations/terraform-provider-notte/provider.go"
+                    elif name == "mongodb":
+                        path = "node-sdk/test/mongodb.integration.test.ts"
+                    elif convention == "node-project":
+                        path = f"examples/{name}/package.json"
+                    elif convention == "valtown-deno":
+                        path = f"examples/{name}/main.ts"
+                    elif name in {"box", "yutori"}:
+                        path = f"examples/{name}/requirements.txt"
+                    else:
+                        path = f"examples/{name}/pyproject.toml"
+                    changed = self.commit({path: "synthetic native input\n"})
+                    native = self.scope("push", head, changed)
+                    self.assertEqual(native["integration_examples"], [name])
+                    self.assertTrue(native["paired_live"])
+                    self.assertFalse(native["full"])
+                    self.assertFalse(all(native[family] for family in ci.ALL))
+
     def test_adaptive_cli_matrix_partitions_39_native_profiles_without_empty_owners(self) -> None:
         registry = {f"profile-{index:02}": "NOTTE_FIXTURE_PYTHON" for index in range(39)}
         before = self.commit({"scripts/integration_examples.json": "{}\n"})
@@ -425,12 +455,6 @@ class GitHistoryTests(unittest.TestCase):
         self.assertTrue(scope["paired_static"] and scope["paired_live"])
         self.assertFalse(scope["paired_snippets_live"])
         self.assertEqual(ci.select("push", "", "")["integration_examples"], sorted(ci.INTEGRATION_EXAMPLES))
-
-    def test_mongodb_recipe_diff_keeps_its_native_required_owner(self) -> None:
-        head = self.commit({"docs/src/testers/integrations/mongodb.py": "recipe = True\n"})
-        scope = self.scope("pull_request", self.base, head)
-        self.assertEqual(scope["integration_examples"], ["mongodb"])
-        self.assertTrue(scope["paired_static"] and scope["paired_live"])
 
     def test_native_runner_diff_skips_snippets_but_sdk_changes_keep_both(self) -> None:
         head = self.commit({"scripts/ci_integration_examples.py": "runner = True\n"})
@@ -519,9 +543,10 @@ class GitHistoryTests(unittest.TestCase):
         self.assertFalse(scope["node_generated"])
         self.assertFalse(scope["full"])
 
-    def test_registered_integration_diff_runs_its_native_suite_without_global_live_suites(self) -> None:
+    def test_standalone_integration_diff_keeps_offline_checks_without_global_live_suites(self) -> None:
         head = self.commit(
             {
+                ".github/workflows/braintrust-integration.yml": "name: Braintrust integration\n",
                 "examples/braintrust/python/demo.py": "browser_task = True\n",
                 "examples/braintrust/typescript/src/demo.ts": "export const browserTask = true;\n",
                 "examples/braintrust/uv.lock": "version = 1\n",
@@ -537,9 +562,7 @@ class GitHistoryTests(unittest.TestCase):
             self.assertTrue(scope[name], name)
         for name in ci.ALL:
             if name.endswith("_live"):
-                self.assertEqual(scope[name], name == "paired_live", name)
-        self.assertEqual(scope["integration_examples"], ["braintrust"])
-        self.assertFalse(scope["paired_snippets_live"])
+                self.assertFalse(scope[name], name)
 
         runtime = self.commit(
             {

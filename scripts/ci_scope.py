@@ -42,8 +42,9 @@ INTEGRATION_INPUTS = {
 }
 INTEGRATION_EXAMPLES: dict[str, str] = json.loads(Path(__file__).with_name("integration_examples.json").read_text())
 RECIPE_INPUTS = {
-    "docs/package.json": {"claude-agents", "mongodb", "openai-agents"},
-    "docs/package-lock.json": {"claude-agents", "mongodb", "openai-agents"},
+    "openapi/openapi.json": {"terraform-profiles"},
+    "docs/package.json": {"claude-agents", "openai-agents", "mongodb"},
+    "docs/package-lock.json": {"claude-agents", "openai-agents", "mongodb"},
     "docs/src/sniptest/run_python.py": {"agent-browser", "mongodb"},
     "docs/src/sniptest/run_typescript.mjs": {"agent-browser", "mongodb"},
     "docs/src/sniptest/typescript-loader.mjs": {"agent-browser", "mongodb"},
@@ -53,6 +54,7 @@ RECIPE_INPUTS = {
     "tests/docs/test_agent_browser_recipe.py": {"agent-browser"},
     ".github/workflows/selector-repair.yml": {"github-actions"},
     "docs/src/integrations/github-actions.mdx": {"github-actions"},
+    "docs/src/integrations/replit.mdx": {"replit"},
 }
 for _recipe in ("agent-browser", "claude-agents", "mongodb", "openai-agents"):
     RECIPE_INPUTS[f"node-sdk/test/{_recipe}.integration.test.ts"] = {_recipe}
@@ -112,6 +114,8 @@ INTEGRATION_WORKFLOWS = {
 
 def integration_examples_for_path(path: str) -> set[str]:
     """Native projects share SDK/build inputs, but do not run for project prose."""
+    if path.startswith("integrations/terraform-provider-notte/") and "terraform-profiles" in INTEGRATION_EXAMPLES:
+        return set() if path.endswith((".md", ".mdx", ".txt")) else {"terraform-profiles"}
     if path in INTEGRATION_INPUTS | PYTHON_CONFIG | NODE_CONFIG or path in {
         ".github/workflows/paired-sdk-examples.yml",
         "node-sdk/tsconfig.json",
@@ -138,9 +142,13 @@ def integration_examples_for_path(path: str) -> set[str]:
 
 
 def native_example_input(path: str) -> bool:
-    return path in INTEGRATION_INPUTS or any(
-        path.startswith(f"examples/{name}/") or path == f".github/workflows/{name}-integration.yml"
-        for name in INTEGRATION_EXAMPLES
+    return (
+        path in INTEGRATION_INPUTS
+        or (path.startswith("integrations/terraform-provider-notte/") and "terraform-profiles" in INTEGRATION_EXAMPLES)
+        or any(
+            path.startswith(f"examples/{name}/") or path == f".github/workflows/{name}-integration.yml"
+            for name in INTEGRATION_EXAMPLES
+        )
     )
 
 
