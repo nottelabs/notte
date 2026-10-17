@@ -1,0 +1,28 @@
+---
+title: Claude Agent SDK
+description: Give Claude agents a Notte cloud browser through MCP.
+---
+import ClaudeAgents from '/snippets/integrations/claude_agents.mdx';
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+Connect the [Claude Agent SDK](https://code.claude.com/docs/en/agent-sdk/overview) to Notte over MCP. Your application owns the browser session; Claude navigates and reads the page through Notte tools.
+
+## Install
+
+For Python 3.11+, run `pip install notte-sdk claude-agent-sdk==0.2.168`.
+
+For Node.js 24+, run `npm install notte-sdk @anthropic-ai/claude-agent-sdk@0.3.301` and set `"type": "module"` in `package.json`. The SDK includes its Claude runtime; no local browser installation is needed.
+
+Set `NOTTE_API_KEY` to your [Notte API key](https://console.notte.cc/apikeys) and `ANTHROPIC_API_KEY` to your [Anthropic API key](https://console.anthropic.com/settings/keys).
+
+## Read a page
+
+Save the example as `notte_claude_agent.py` or `notte_claude_agent.ts`. Run `python notte_claude_agent.py` or `node --experimental-strip-types notte_claude_agent.ts`.
+
+<ClaudeAgents />
+
+Both examples print `Example Domain` and close the browser on success or failure. They use a fixed set of Notte tools, disable built-in tools and filesystem settings, and wait for the complete query stream before closing the session.
+
+See [Claude MCP configuration](https://code.claude.com/docs/en/agent-sdk/mcp) and [Notte session lifecycle](/features/sessions/lifecycle).

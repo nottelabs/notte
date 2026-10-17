@@ -1,0 +1,30 @@
+---
+title: Braintrust
+description: Trace Notte browser tasks and inspect their results in Braintrust.
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+Record browser tasks in [Braintrust](https://www.braintrust.dev/docs/instrument/trace-application-logic) with the Python and TypeScript examples. Each trace includes the page title, Notte session ID, timing, and errors.
+
+## Set up
+
+Clone the [Notte repository](https://github.com/nottelabs/notte) and open [examples/braintrust](https://github.com/nottelabs/notte/tree/main/examples/braintrust). Its README includes installation commands and runnable projects.
+
+Set `NOTTE_API_KEY` from [Notte](https://console.notte.cc/apikeys), `BRAINTRUST_API_KEY` from [Braintrust API keys](https://www.braintrust.dev/app/~/configuration/org/api-keys), and optionally `BRAINTRUST_PROJECT`. The default project is `notte-integration-tests`; Braintrust creates it if needed.
+
+<Tabs>
+  <Tab title="Python">
+    Use Python 3.11+ and uv. Run `uv sync --locked`, then `uv run python python/demo.py`.
+  </Tab>
+  <Tab title="TypeScript">
+    Use Node.js 24+. Open `typescript`, run `npm ci`, then `npm start`.
+  </Tab>
+</Tabs>
+
+## Inspect a browser task
+
+The example opens a page, reads its title, and returns a `trace_url`. Open that link to inspect the result or filter your project's logs by `metadata.session_id`.
+
+Each attempt owns its browser and closes it on success or error. The example flushes its trace before exiting. You can keep your model-provider instrumentation inside the browser span to view model calls alongside browser work.

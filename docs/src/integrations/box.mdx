@@ -1,0 +1,21 @@
+---
+title: Box
+description: Store hosted browser captures in Box.
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+Save a browser capture to Box with the Python and TypeScript examples in [`examples/box`](https://github.com/nottelabs/notte/tree/main/examples/box). Notte hosts the browser; the Box API stores the PNG and verifies its size and SHA1 metadata.
+
+## Set up
+
+Use Python 3.12+ or Node.js 24+, a [Notte API key](https://console.notte.cc), and a Box access token from your app in the [Box Developer Console](https://app.box.com/developers/console).
+
+Clone the [Notte repository](https://github.com/nottelabs/notte) and open `examples/box`. Set `NOTTE_API_KEY` and `BOX_ACCESS_TOKEN`. Optionally set `BOX_FOLDER_ID`; the default `0` uses the authenticated account's root folder.
+
+For Python, create a virtual environment, install `requirements.txt`, then run `python main.py`. For TypeScript, run `npm ci` then `npm start`. No local browser installation is needed.
+
+The example closes its Notte session before uploading. Its result contains `box_file_id` and the stopped browser's `session_id`. The verified file remains in your Box folder.
+
+[Developer tokens](https://developer.box.com/guides/authentication/tokens/developer-tokens/) expire after 60 minutes and are for testing. For a deployed workflow, use [Box OAuth or server authentication](https://developer.box.com/guides/authentication/).
