@@ -10,6 +10,7 @@ import { setTimeout as sleep } from 'node:timers/promises';
 const execute = promisify(execFile);
 const cwd = fileURLToPath(new URL('..', import.meta.url));
 const uuid = '[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}';
+const api = (process.env.NOTTE_API_URL || 'https://api.notte.cc').replace(/\/$/, '');
 if (process.env.NOTTE_WATSONX_REQUIRE_LIVE === '1') {
   assert.ok(process.env.NOTTE_API_KEY, 'CI requires NOTTE_API_KEY for the browser and rejection checks');
 }
@@ -18,7 +19,7 @@ async function assertClosed(id: string) {
   const deadline = Date.now() + 15_000;
   const signal = AbortSignal.timeout(15_000);
   while (true) {
-    const response = await fetch(`${process.env.NOTTE_API_URL ?? 'https://api.notte.cc'}/sessions/${id}`, {
+    const response = await fetch(`${api}/sessions/${id}`, {
       headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` }, signal,
     });
     assert.equal(response.status, 200, 'Authoritative session lookup failed');
@@ -81,7 +82,7 @@ for (const language of ['python', 'typescript']) {
           try { await assertClosed(id); closed = true; }
           finally {
             if (!closed) {
-              const response = await fetch(`${process.env.NOTTE_API_URL ?? 'https://api.notte.cc'}/sessions/${id}/stop`, {
+              const response = await fetch(`${api}/sessions/${id}/stop`, {
                 method: 'DELETE', headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` }, signal: AbortSignal.timeout(15_000),
               });
               assert.ok(response.ok, 'Owned fallback stop failed');
