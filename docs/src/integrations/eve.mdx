@@ -1,0 +1,19 @@
+---
+title: Vercel Eve
+description: Give an Eve agent an owned Notte browser tool.
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+[Vercel Eve](https://eve.dev/docs/tools) discovers authored tools from your app's `agent/tools` directory. The [runnable TypeScript example](https://github.com/nottelabs/notte/tree/main/examples/eve) registers `read_page`, which reads a title through Playwright on Notte.
+
+## Set up
+
+Use Node.js 24+, a [Notte API key](https://console.notte.cc/apikeys), and your configured Eve model provider. Follow `examples/eve/README.md` to run the example or copy its tool into your app.
+
+## How it connects
+
+Each call creates a three-minute Notte session. The tool connects over CDP, reads the page, and stops its owned session in `finally`, including after navigation errors. CDP credentials stay in the app runtime; the model receives the title and session ID.
+
+Native Eve compilation, real browser navigation, cancellation, and cleanup are tested. Paid model turns and hosted deployment remain unverified.

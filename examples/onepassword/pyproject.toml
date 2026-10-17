@@ -1,0 +1,10 @@
+[project]
+name = "notte-onepassword-example"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = ["notte-sdk==1.9.7", "onepassword-sdk==0.4.1", "playwright==1.64.0"]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]

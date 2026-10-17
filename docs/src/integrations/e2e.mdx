@@ -1,0 +1,23 @@
+---
+title: e2e
+description: Run e2e web tests on Notte cloud browsers with a native browser provider.
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+Run [e2e](https://e2e.tester.army/docs) tests on Notte browsers through its native `BrowserProvider` interface. You need Node.js 24.8+ and a [Notte API key](https://console.notte.cc/apikeys).
+
+## Run a test
+
+Get the [example project](https://github.com/nottelabs/notte/tree/main/examples/e2e). In `examples/e2e`, run `npm ci`, set `NOTTE_API_KEY` in your environment, then run `npm test`.
+
+The project includes the provider, `e2e.config.ts`, and a test that opens a public page and checks a link. You do not need to install a local browser or configure a model for this test.
+
+## Test your application
+
+Change `app.url` in `e2e.config.ts` to an application reachable from the cloud browser. Write tests with e2e's `app`, `screen`, and `expect` fixtures. Keep `notte()` as the browser provider.
+
+The runner releases each attempt's browser on success or failure. The example also sets a three-minute session limit. Its minimal provider does not implement downloads, provider recordings, or lease sweeping; e2e's [per-attempt scope limits](https://e2e.tester.army/docs/browser#pick-a-lease-scope) apply.
+
+The included live checks cover deterministic tests and failure cleanup. Model-driven agent steps have not been tested. Follow e2e's [model configuration guide](https://e2e.tester.army/docs/models) to add those steps.
