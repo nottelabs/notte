@@ -89,6 +89,7 @@ export async function run(task: string, initialUrl = 'https://example.com') {
   const tools = [{ type: 'computer_use' as const, environment: 'browser' as const, enable_prompt_injection_detection: true }];
   return new NotteClient().Session({ max_duration_minutes: 3 }).use(async session => {
     let browser: Browser | undefined;
+    let failed = false;
     try {
       browser = await chromium.connectOverCDP(await session.cdpUrl());
       let page = await browser.contexts()[0].newPage();
@@ -151,20 +152,26 @@ export async function run(task: string, initialUrl = 'https://example.com') {
       }
       throw new Error('Computer task exceeded twelve turns');
     } catch (error) {
+      failed = true;
       if (error instanceof ApprovalRequired) throw error;
-      const failure = error as { status?: number; statusCode?: number; message?: string };
+      const failure = error as { status?: number; statusCode?: number };
       const code = failure?.status ?? failure?.statusCode;
       if (typeof code === 'number') {
-        let detail = String(failure.message ?? '');
-        for (const value of [process.env.GEMINI_API_KEY, process.env.NOTTE_API_KEY]) {
-          if (value) detail = detail.replaceAll(value, '[REDACTED]');
-        }
-        detail = detail.replace(/(?:https?|wss?):\/\/\S+/g, '[URL]');
-        throw new Error(`Gemini API error ${code} (${error instanceof Error ? error.name : 'APIError'}): ${detail.slice(0, 240)}`);
+        throw new Error(`Gemini API error ${code}`);
       }
       throw new Error('Gemini computer task failed');
     } finally {
-      await browser?.close();
+      if (browser) {
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        try {
+          await Promise.race([
+            browser.close(),
+            new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error('Close deadline exceeded')), 5000); }),
+          ]);
+        } catch {
+          if (!failed) throw new Error('Gemini browser cleanup failed');
+        } finally { clearTimeout(timer); }
+      }
     }
   });
 }

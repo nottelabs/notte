@@ -10,8 +10,9 @@ const model = process.env.NOTTE_GEMINI_MODEL_LIVE === '1';
 
 async function closed(id: string) {
   const client = new NotteClient();
-  for (let attempt = 0; attempt < 30; attempt++) {
-    const response = await sessionStatus({ client: client.getClient(), path: { session_id: id }, throwOnError: true, signal: AbortSignal.timeout(15_000) });
+  const signal = AbortSignal.timeout(15_000);
+  while (!signal.aborted) {
+    const response = await sessionStatus({ client: client.getClient(), path: { session_id: id }, throwOnError: true, signal });
     if (response.data.status === 'closed') return;
     await new Promise(resolve => setTimeout(resolve, 500));
   }
@@ -102,9 +103,19 @@ test('Delayed popup replans a stale action using the new tab screenshot', { skip
   }
 });
 
-test('Provider failure closes the browser and sanitizes the error', { skip: !live, timeout: 120_000 }, async () => {
+test('Provider failure survives a browser close error and sanitizes the error', { skip: !live, timeout: 120_000 }, async t => {
   assert.ok(process.env.NOTTE_API_URL);
   const original = globalThis.fetch, key = process.env.GEMINI_API_KEY;
+  const originalConnect = chromium.connectOverCDP.bind(chromium);
+  t.mock.method(chromium, 'connectOverCDP', async (endpoint: string) => {
+    const browser = await originalConnect(endpoint);
+    const close = browser.close.bind(browser);
+    browser.close = async () => {
+      await close();
+      throw new Error('Cleanup transport error https://private.invalid/credential');
+    };
+    return browser;
+  });
   const ids: string[] = [];
   let providerCalls = 0;
   process.env.GEMINI_API_KEY = 'integration-test-not-a-real-key'; // pragma: allowlist secret
@@ -126,11 +137,13 @@ test('Provider failure closes the browser and sanitizes the error', { skip: !liv
     });
     assert.equal(providerCalls, 1);
     assert.equal(ids.length, 1);
-    await closed(ids[0]);
   } finally {
-    globalThis.fetch = original;
-    if (key === undefined) delete process.env.GEMINI_API_KEY;
-    else process.env.GEMINI_API_KEY = key;
+    try { for (const id of ids) await closed(id); }
+    finally {
+      globalThis.fetch = original;
+      if (key === undefined) delete process.env.GEMINI_API_KEY;
+      else process.env.GEMINI_API_KEY = key;
+    }
   }
 });
 

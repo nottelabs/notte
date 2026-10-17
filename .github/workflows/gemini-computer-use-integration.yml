@@ -2,6 +2,11 @@ name: Gemini Computer Use integration
 
 on:
   workflow_dispatch:
+    inputs:
+      run_model:
+        description: Run paid Gemini model checks on main
+        type: boolean
+        default: false
   pull_request:
     paths:
       - .github/workflows/gemini-computer-use-integration.yml
@@ -18,6 +23,7 @@ permissions:
 jobs:
   static:
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -38,7 +44,7 @@ jobs:
           DISABLE_TELEMETRY: 'true'
   browser-handler:
     needs: static
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    if: github.actor != 'dependabot[bot]' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     concurrency:
@@ -69,7 +75,9 @@ jobs:
           NOTTE_API_URL: https://us-staging.notte.cc
           NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
           NOTTE_GEMINI_LIVE: '1'
-          NOTTE_GEMINI_MODEL_LIVE: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && '1' || '0' }}
-          GEMINI_API_KEY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.GEMINI_API_KEY || '' }}
+          NOTTE_GEMINI_MODEL_LIVE: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.run_model && '1' || '0' }}
+          GEMINI_API_KEY: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.run_model && secrets.GEMINI_API_KEY || '' }}
           DISABLE_TELEMETRY: 'true'
-        run: npm test && python -m unittest -v test_agent.py
+        run: |
+          : "${NOTTE_API_KEY:?The Gemini browser checks require the CI test key}"
+          npm test && python -m unittest -v test_agent.py

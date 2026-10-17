@@ -2,7 +2,6 @@ import asyncio
 import base64
 import json
 import os
-import re
 import sys
 from typing import Any
 
@@ -242,16 +241,16 @@ async def run(task: str, initial_url: str = "https://example.com") -> dict[str, 
             except Exception as error:
                 code = getattr(error, "status_code", None)
                 if isinstance(code, int):
-                    detail = str(error)
-                    for value in (api_key, os.getenv("NOTTE_API_KEY")):
-                        if value:
-                            detail = detail.replace(value, "[REDACTED]")
-                    detail = re.sub(r"(?:https?|wss?)://\S+", "[URL]", detail)
-                    raise RuntimeError(f"Gemini API error {code} ({type(error).__name__}): {detail[:240]}") from None
+                    raise RuntimeError(f"Gemini API error {code}") from None
                 raise RuntimeError("Gemini computer task failed") from None
             finally:
                 if browser:
-                    await browser.close()
+                    failed = sys.exception() is not None
+                    try:
+                        await asyncio.wait_for(browser.close(), timeout=5)
+                    except Exception:
+                        if not failed:
+                            raise RuntimeError("Gemini browser cleanup failed") from None
 
 
 if __name__ == "__main__":

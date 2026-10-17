@@ -1,5 +1,6 @@
 import asyncio
 import base64
+import json
 import os
 import secrets
 import unittest
@@ -7,8 +8,9 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import agent
+import httpx
 from notte_sdk import NotteClient
-from playwright.async_api import async_playwright
+from playwright.async_api import BrowserType, async_playwright
 
 
 async def closed(client, session_id):
@@ -153,9 +155,66 @@ class ComputerUseTests(unittest.IsolatedAsyncioTestCase):
             ids.append(result.session_id)
             return result
 
-        class ProviderFailure:
-            calls = 0
+        requests = []
 
+        def respond(request):
+            requests.append(json.loads(request.content))
+            return httpx.Response(401, json={"error": {"code": 401, "message": "Private provider diagnostic"}})
+
+        transport = httpx.AsyncClient(transport=httpx.MockTransport(respond))
+        original_provider = agent.genai.Client
+
+        def provider(**kwargs):
+            kwargs["http_options"]["httpx_async_client"] = transport
+            return original_provider(**kwargs)
+
+        original_connect = BrowserType.connect_over_cdp
+
+        async def connect(browser_type, *args, **kwargs):
+            browser = await original_connect(browser_type, *args, **kwargs)
+            original_close = browser.close
+
+            async def close():
+                await original_close()
+                raise RuntimeError("Cleanup transport error https://private.invalid/credential")
+
+            browser.close = close
+            return browser
+
+        try:
+            with (
+                patch.object(client.sessions, "start", side_effect=start),
+                patch.object(agent, "NotteClient", return_value=client),
+                patch.object(agent.genai, "Client", side_effect=provider),
+                patch.object(BrowserType, "connect_over_cdp", new=connect),
+                patch.dict(
+                    os.environ,
+                    {"GEMINI_API_KEY": "integration-test-not-a-real-key"},  # pragma: allowlist secret
+                ),  # pragma: allowlist secret
+            ):
+                with self.assertRaisesRegex(RuntimeError, "^Gemini API error 401$"):
+                    await agent.run("Read the page title")
+            self.assertEqual(len(requests), 1)
+            self.assertEqual(requests[0]["tools"][0]["type"], "computer_use")
+            self.assertEqual(requests[0]["tools"][0]["environment"], "browser")
+            self.assertEqual(len(ids), 1)
+        finally:
+            await transport.aclose()
+            for session_id in ids:
+                await closed(client, session_id)
+
+    @unittest.skipUnless(os.getenv("NOTTE_GEMINI_LIVE") == "1", "Opt-in cloud browser test")
+    async def test_provider_cancellation_closes_browser(self):
+        client, ids = NotteClient(), []
+        original = client.sessions.start
+        entered = asyncio.Event()
+
+        def start(**kwargs):
+            result = original(**kwargs)
+            ids.append(result.session_id)
+            return result
+
+        class Provider:
             async def __aenter__(self):
                 return self
 
@@ -167,21 +226,32 @@ class ComputerUseTests(unittest.IsolatedAsyncioTestCase):
                 return self
 
             async def create(self, **_):
-                self.calls += 1
-                raise RuntimeError("Injected provider failure")
+                entered.set()
+                await asyncio.Future()
 
-        provider = ProviderFailure()
-        with (
-            patch.object(client.sessions, "start", side_effect=start),
-            patch.object(agent, "NotteClient", return_value=client),
-            patch.object(agent.genai, "Client", return_value=SimpleNamespace(aio=provider)),
-            patch.dict(os.environ, {"GEMINI_API_KEY": "integration-test-not-a-real-key"}),  # pragma: allowlist secret
-        ):
-            with self.assertRaisesRegex(RuntimeError, "^Gemini computer task failed$"):
-                await agent.run("Read the page title")
-        self.assertEqual(provider.calls, 1)
-        self.assertEqual(len(ids), 1)
-        await closed(client, ids[0])
+        task = None
+        try:
+            with (
+                patch.object(client.sessions, "start", side_effect=start),
+                patch.object(agent, "NotteClient", return_value=client),
+                patch.object(agent.genai, "Client", return_value=SimpleNamespace(aio=Provider())),
+                patch.dict(
+                    os.environ,
+                    {"GEMINI_API_KEY": "integration-test-not-a-real-key"},  # pragma: allowlist secret
+                ),  # pragma: allowlist secret
+            ):
+                task = asyncio.create_task(agent.run("Read the page title"))
+                await asyncio.wait_for(entered.wait(), timeout=45)
+                task.cancel()
+                with self.assertRaises(asyncio.CancelledError):
+                    await task
+            self.assertEqual(len(ids), 1)
+        finally:
+            if task:
+                task.cancel()
+                await asyncio.gather(task, return_exceptions=True)
+            for session_id in ids:
+                await closed(client, session_id)
 
     @unittest.skipUnless(os.getenv("NOTTE_GEMINI_MODEL_LIVE") == "1", "Opt-in actual Gemini model test")
     async def test_model_drives_browser(self):
