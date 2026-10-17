@@ -33,6 +33,7 @@ def test_shared_queue_only_contains_staging_test_jobs() -> None:
         ("trigger-integration.yml", "browser-handler"),
         ("temporal-integration.yml", "browser-workflow"),
         ("inngest-integration.yml", "live"),
+        ("stripe-link-integration.yml", "live"),
     }
     queued = set()
     for path in WORKFLOWS.glob("*.yml"):
