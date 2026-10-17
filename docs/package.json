@@ -3,7 +3,9 @@
   "private": true,
   "dependencies": {
     "@browserbasehq/stagehand": "4.2.1",
+    "@openai/agents": "0.20.0",
     "mongodb": "7.7.0",
+    "openai": "7.34.0",
     "zod": "4.4.3"
   }
 }
