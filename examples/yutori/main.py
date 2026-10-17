@@ -116,7 +116,11 @@ async def owned_connection():
         primary = sys.exception()
         if entered or session.response is not None:
             try:
-                _, cancelled = await _finish_owned(asyncio.create_task(asyncio.to_thread(session.stop)))
+                _, cancelled = await _finish_owned(
+                    asyncio.create_task(
+                        asyncio.to_thread(session.stop, close_reason="error" if primary is not None else "manual")
+                    )
+                )
             except Exception:
                 if primary is None:
                     raise BrowserTaskError("Yutori browser cleanup failed") from None
