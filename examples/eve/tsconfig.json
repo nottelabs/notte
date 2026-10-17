@@ -1,0 +1,4 @@
+{
+  "compilerOptions": {"target": "ES2023", "module": "NodeNext", "moduleResolution": "NodeNext", "strict": true, "skipLibCheck": true, "noEmit": true, "allowImportingTsExtensions": true},
+  "include": ["agent/**/*.ts", "test/**/*.ts"]
+}

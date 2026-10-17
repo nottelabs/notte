@@ -43,19 +43,20 @@ INTEGRATION_INPUTS = {
 INTEGRATION_EXAMPLES: dict[str, str] = json.loads(Path(__file__).with_name("integration_examples.json").read_text())
 RECIPE_INPUTS = {
     "openapi/openapi.json": {"terraform-profiles"},
-    "docs/package.json": {"claude-agents", "openai-agents"},
-    "docs/package-lock.json": {"claude-agents", "openai-agents"},
-    "docs/src/sniptest/run_python.py": {"agent-browser"},
-    "docs/src/sniptest/run_typescript.mjs": {"agent-browser"},
-    "docs/src/sniptest/typescript-loader.mjs": {"agent-browser"},
+    "docs/package.json": {"claude-agents", "openai-agents", "mongodb"},
+    "docs/package-lock.json": {"claude-agents", "openai-agents", "mongodb"},
+    "docs/src/sniptest/run_python.py": {"agent-browser", "mongodb"},
+    "docs/src/sniptest/run_typescript.mjs": {"agent-browser", "mongodb"},
+    "docs/src/sniptest/typescript-loader.mjs": {"agent-browser", "mongodb"},
     "node-sdk/test/helpers/run-openai-recipe.py": {"openai-agents"},
-    "node-sdk/test/helpers/session-closure.ts": {"agent-browser"},
+    "node-sdk/test/helpers/session-closure.ts": {"agent-browser", "mongodb"},
     "node-sdk/test/agent-browser.recipe.test.ts": {"agent-browser"},
     "tests/docs/test_agent_browser_recipe.py": {"agent-browser"},
     ".github/workflows/selector-repair.yml": {"github-actions"},
     "docs/src/integrations/github-actions.mdx": {"github-actions"},
+    "docs/src/integrations/replit.mdx": {"replit"},
 }
-for _recipe in ("agent-browser", "claude-agents", "openai-agents"):
+for _recipe in ("agent-browser", "claude-agents", "mongodb", "openai-agents"):
     RECIPE_INPUTS[f"node-sdk/test/{_recipe}.integration.test.ts"] = {_recipe}
     for _language in ("py", "ts"):
         RECIPE_INPUTS[f"docs/src/testers/integrations/{_recipe.replace('-', '_')}.{_language}"] = {_recipe}
@@ -142,8 +143,8 @@ def integration_examples_for_path(path: str) -> set[str]:
 
 def native_example_input(path: str) -> bool:
     return (
-        path.startswith("integrations/terraform-provider-notte/")
-        or path in INTEGRATION_INPUTS
+        path in INTEGRATION_INPUTS
+        or (path.startswith("integrations/terraform-provider-notte/") and "terraform-profiles" in INTEGRATION_EXAMPLES)
         or any(
             path.startswith(f"examples/{name}/") or path == f".github/workflows/{name}-integration.yml"
             for name in INTEGRATION_EXAMPLES
@@ -451,6 +452,7 @@ def select(event: str, base: str, head: str) -> dict[str, bool | str | list[str]
     if event == "schedule":
         # Preserve Python's live-only periodic run; Node keeps its full periodic check.
         selected -= {"python_unit", "python_docs", "cli_contract"}
+    paired_count = max(2 if paired_snippets_live else 1, (len(integration_examples) + 1) // 2)
     return {
         **{name: name in selected for name in sorted(ALL)},
         "full": full,
@@ -461,6 +463,7 @@ def select(event: str, base: str, head: str) -> dict[str, bool | str | list[str]
         "head": head,
         "integration_examples": sorted(integration_examples),
         "paired_snippets_live": paired_snippets_live,
+        "paired_shards": [f"{index}/{paired_count}" for index in range(1, paired_count + 1)],
     }
 
 

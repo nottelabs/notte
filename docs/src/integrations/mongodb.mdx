@@ -1,0 +1,26 @@
+---
+title: MongoDB
+description: Save Notte browser scrapes to MongoDB in Python or TypeScript.
+---
+import MongoDb from '/snippets/integrations/mongodb.mdx';
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+Save browser content to MongoDB with its official drivers. These examples scrape a page through Notte, insert a document, and close both connections.
+
+## Set up
+
+For Python 3.11+, run `pip install notte-sdk pymongo==4.19.0`. For Node.js 24+, run `npm install notte-sdk mongodb@7.7.0` and set `"type": "module"` in `package.json`.
+
+Set `NOTTE_API_KEY` to your [Notte API key](https://console.notte.cc/apikeys) and `MONGODB_URI` to your [MongoDB connection string](https://www.mongodb.com/docs/atlas/driver-connection/). Use a local MongoDB server or an existing Atlas deployment.
+
+## Save a page
+
+Save the example as `notte_mongodb.py` or `notte_mongodb.ts`. Run `python notte_mongodb.py` or `node --experimental-strip-types notte_mongodb.ts`.
+
+<MongoDb />
+
+The example prints the inserted document ID. Each document contains the source URL, scraped Markdown, and Notte session ID. Set `MONGODB_DATABASE` and `MONGODB_COLLECTION` to choose the destination; they default to `notte` and `pages`.
+
+See [scraping](/concepts/scraping) and [session lifecycle](/features/sessions/lifecycle).

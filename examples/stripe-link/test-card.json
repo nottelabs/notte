@@ -1,0 +1,15 @@
+{
+  "id": "lsrq_notte_fixture",
+  "status": "approved",
+  "credential_type": "card",
+  "created_at": "2026-10-16T12:00:00Z",
+  "updated_at": "2026-10-16T12:00:00Z",
+  "card": {
+    "id": "card_notte_fixture",
+    "brand": "visa",
+    "number": "4000009990001984",
+    "cvc": "123",
+    "exp_month": 12,
+    "exp_year": 2030
+  }
+}

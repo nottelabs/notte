@@ -99,11 +99,11 @@ jobs:
       fail-fast: false
       max-parallel: 1
       matrix:
-        shard: [1, 2]
+        shard: ${{ fromJSON(needs.changes.outputs.scope).paired_shards }}
     env:
       NOTTE_API_URL: https://us-staging.notte.cc
       NOTTE_DOCS_LIVE: '1'
-      NOTTE_DOCS_SHARD: ${{ matrix.shard }}/2
+      NOTTE_DOCS_SHARD: ${{ matrix.shard }}
       VITEST_INTEGRATION: '1'
     concurrency:
       group: notte-live-api-${{ github.ref }}
@@ -159,10 +159,10 @@ jobs:
           ANTHROPIC_API_KEY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.ANTHROPIC_API_KEY || '' }}
           NOTTE_DEEPAGENTS_MODEL_LIVE: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.ANTHROPIC_API_KEY != '' && '1' || '0' }}
           GEMINI_API_KEY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.GEMINI_API_KEY || '' }}
-          LMNR_PROJECT_API_KEY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.LMNR_PROJECT_API_KEY || '' }}
-          NOTTE_LAMINAR_EXPORT_LIVE: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.LMNR_PROJECT_API_KEY != '' && '1' || '0' }}
-          BRAINTRUST_API_KEY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.BRAINTRUST_API_KEY || '' }}
+          BRAINTRUST_API_KEY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && contains(fromJSON(needs.changes.outputs.scope).integration_examples, 'braintrust') && secrets.BRAINTRUST_API_KEY || '' }}
           BRAINTRUST_PROJECT: notte-integration-tests
+          LMNR_PROJECT_API_KEY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && contains(fromJSON(needs.changes.outputs.scope).integration_examples, 'laminar') && secrets.LMNR_PROJECT_API_KEY || '' }}
+          NOTTE_LAMINAR_EXPORT_LIVE: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && contains(fromJSON(needs.changes.outputs.scope).integration_examples, 'laminar') && secrets.LMNR_PROJECT_API_KEY != '' && '1' || '0' }}
         run: python3 scripts/ci_integration_examples.py live --shard "$NOTTE_DOCS_SHARD"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()

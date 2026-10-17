@@ -1,0 +1,34 @@
+---
+title: Replit Agent
+description: Give Replit Agent cloud browsers through Notte's hosted MCP server.
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+Connect Replit Agent to [Notte Browser MCP](/mcp-server) to navigate websites and extract page content. You need a Replit account and a [Notte API key](https://console.notte.cc/apikeys).
+
+## Connect Notte
+
+[Add Notte to Replit](https://replit.com/integrations?mcp=eyJkaXNwbGF5TmFtZSI6Ik5vdHRlIiwiYmFzZVVybCI6Imh0dHBzOi8vYXBpLm5vdHRlLmNjL21jcCJ9)
+
+The setup link fills in the public server details. Add your authentication in Replit before saving; the link contains no credentials.
+
+You can also open [Replit Integrations](https://replit.com/integrations) and select **+ Add MCP server**. Use these settings:
+
+| Field | Value |
+| --- | --- |
+| Display name | `Notte` |
+| MCP server URL | `https://api.notte.cc/mcp` |
+| Advanced header name | `Authorization` |
+| Advanced header value | `Bearer <your-notte-api-key>` |
+
+Enter your key in the header field and select **Test & save**. Keep the key out of project files, chat prompts, and shared URLs. Replit loads the server's tools after connecting.
+
+## Use a browser
+
+Ask Replit Agent: "Use Notte to start a browser, open https://example.com, report its title, and stop that browser when finished, including on error."
+
+Reuse the browser ID returned by Notte for subsequent actions. Browser sessions consume Notte credits while active. Review tool requests and keep consequential actions under your control.
+
+The [installation manifest and connection tests](https://github.com/nottelabs/notte/tree/main/examples/replit) verify the hosted MCP contract. Hosted Replit Agent execution has not been tested. See Replit's [MCP setup guide](https://docs.replit.com/build/connect-via-mcp) for its connector settings.
