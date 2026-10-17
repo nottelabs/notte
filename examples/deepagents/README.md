@@ -35,3 +35,5 @@ npm run test:live
 ```
 
 Without `NOTTE_DEEPAGENTS_MODEL_LIVE=1`, the live suite verifies provider HTTP 401 failures and cleanup with real Notte sessions and MCP connections. Python also verifies cancellation. Navigation tests independently inspect the persisted browser history before accepting the model's answer.
+
+TypeScript transitively includes `braces@3.0.3`, which has an [unpatched denial-of-service advisory](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm). This example uses in-memory `StateBackend` with a read-only file tool. Review security separately before enabling filesystem backends or glob tools.

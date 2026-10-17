@@ -1,0 +1,19 @@
+---
+title: Docker Sandboxes
+description: Give local sandboxed coding agents Notte browser tools.
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+Connect local Docker Sandboxes agents to Notte Browser MCP with [`examples/docker-sandboxes`](https://github.com/nottelabs/notte/tree/main/examples/docker-sandboxes). The example uses the native `sbx` MCP gateway.
+
+## Set up
+
+Install [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/install/) 0.48+, sign in with `sbx login`, and configure your coding agent. Create a [Notte API key](https://console.notte.cc/apikeys).
+
+From your intended workspace, run the example's `setup.sh` with an agent and a new sandbox name. For example, `sh /path/to/notte/examples/docker-sandboxes/setup.sh claude notte-browser`. It registers `https://api.notte.cc/mcp`, prompts for the Notte key through Docker's host credential store, then starts the agent with Notte preloaded. Supported alternatives include Codex and Gemini.
+
+Ask the agent to start a Notte browser, navigate to a page, observe it, and stop the browser when done or after an error. Then stop the local sandbox with `sbx stop notte-browser`. Stopping the sandbox does not stop its remote browser.
+
+The example's real MCP tests verify browser actions and cleanup. A full coding-agent run inside a native sandbox has not been validated. This setup targets local Sandboxes; Docker's [MCP gateway documentation](https://docs.docker.com/ai/sandboxes/mcp-gateway/) describes other gateway modes.
