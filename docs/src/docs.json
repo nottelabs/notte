@@ -391,7 +391,8 @@
             "icon": "gamepad",
             "pages": [
               "features/sessions/playwright",
-              "features/sessions/puppeteer"
+              "features/sessions/puppeteer",
+              "integrations/agent-browser"
             ]
           },
           {
