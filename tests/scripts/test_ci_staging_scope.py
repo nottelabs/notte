@@ -33,7 +33,6 @@ def test_shared_queue_only_contains_staging_test_jobs() -> None:
         ("trigger-integration.yml", "browser-handler"),
         ("temporal-integration.yml", "browser-workflow"),
         ("inngest-integration.yml", "live"),
-        ("selenium-integration.yml", "live"),
     }
     queued = set()
     for path in WORKFLOWS.glob("*.yml"):
@@ -246,6 +245,7 @@ def test_required_gate_waits_for_all_families_and_fails_closed(
 def test_native_examples_have_one_existing_required_owner() -> None:
     assert not (WORKFLOWS / "openai-computer-use-integration.yml").exists()
     assert not (WORKFLOWS / "gemini-computer-use-integration.yml").exists()
+    assert not (WORKFLOWS / "selenium-integration.yml").exists()
     jobs = workflow("paired-sdk-examples.yml")["jobs"]
     assert set(jobs) == {"changes", "checks", "live"}
     assert set(jobs["live"]["needs"]) == {"changes", "checks"}

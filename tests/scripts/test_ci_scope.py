@@ -166,6 +166,22 @@ class RoutingTests(unittest.TestCase):
                 self.assertEqual(ci.integration_examples_for_path(path), {"gemini-computer-use"})
         self.assertFalse(ci.integration_examples_for_path("examples/gemini-computer-use/README.md"))
 
+    def test_selenium_native_inputs_route_to_existing_paired_jobs(self) -> None:
+        for filename in (
+            "bridge.py",
+            "install_driver.py",
+            "test_bridge.py",
+            "test_selenium.py",
+            "requirements.txt",
+            "package-lock.json",
+            "test/selenium.live.test.ts",
+        ):
+            path = f"examples/selenium/{filename}"
+            with self.subTest(path=path):
+                self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
+                self.assertEqual(ci.integration_examples_for_path(path), {"selenium"})
+        self.assertFalse(ci.integration_examples_for_path("examples/selenium/README.md"))
+
     def test_shared_native_inputs_cover_every_registered_project(self) -> None:
         for path in (
             *ci.INTEGRATION_INPUTS,

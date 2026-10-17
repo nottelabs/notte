@@ -29,7 +29,14 @@ with open(os.environ['COMMAND_LOG'], 'a') as log:
         'credentials': sorted(k for k in ('NOTTE_API_KEY', 'OPENAI_API_KEY') if os.environ.get(k)),
         'python': os.environ.get('NOTTE_COMPUTER_USE_PYTHON'),
         'gemini_live': os.environ.get('NOTTE_GEMINI_LIVE'),
-        'gemini_model': os.environ.get('NOTTE_GEMINI_MODEL_LIVE')}) + '\\n')
+        'gemini_model': os.environ.get('NOTTE_GEMINI_MODEL_LIVE'),
+        'selenium_live': os.environ.get('NOTTE_SELENIUM_LIVE'),
+        'driver': os.environ.get('CHROMEDRIVER_PATH')}) + '\\n')
+if args[1:] == ['install_driver.py']:
+    print(os.environ['DRIVER_OUTPUT'])
+    print('Driver setup diagnostic', file=sys.stderr)
+    if os.environ.get('FAIL_DRIVER'):
+        sys.exit(17)
 if os.environ.get('FAIL_UNITTEST') and 'unittest' in args:
     sys.exit(19)
 """
@@ -145,3 +152,84 @@ def test_gemini_root_commands_preserve_offline_and_paid_boundaries(
     assert "--no-deps" not in source
     assert ["npm", "install", "--no-save", "--package-lock=false", str(workspace / "node-sdk")] in commands
     assert len([command for command in commands if command[:3] == ["uv", "pip", "check"]]) == 2
+
+
+@pytest.fixture
+def selenium_project(workspace: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    runner.REGISTRY.write_text(json.dumps({"selenium": "selenium-root"}))
+    monkeypatch.setenv("INTEGRATION_EXAMPLES", '["selenium"]')
+    project = workspace / "examples/selenium"
+    python = project / ".venv/bin/python"
+    python.parent.mkdir(parents=True)
+    python.write_text((workspace / "examples/alpha/.venv/bin/python").read_text())
+    python.chmod(0o755)
+    driver = project / ".drivers/150/chromedriver"
+    driver.parent.mkdir(parents=True)
+    driver.write_text("fixture driver")
+    driver.chmod(0o755)
+    monkeypatch.setenv("DRIVER_OUTPUT", str(driver))
+    return project
+
+
+def test_selenium_runs_driver_only_in_live_modes(
+    workspace: Path, selenium_project: Path, monkeypatch: pytest.MonkeyPatch, capfd: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr("sys.argv", ["runner", "live"])
+    runner.main()
+    observed = calls(workspace)
+    drivers = [call for call in observed if call["args"][1:] == ["install_driver.py"]]
+    live_tests = [
+        call for call in observed if "test_selenium" in call["args"] or call["args"] == ["npm", "run", "test:live"]
+    ]
+    assert len(drivers) == 2
+    assert len(live_tests) == 4
+    assert all(call["credentials"] == ["NOTTE_API_KEY"] for call in drivers + live_tests)
+    assert all(call["selenium_live"] == "1" for call in drivers + live_tests)
+    assert all(call["driver"] == str(selenium_project / ".drivers/150/chromedriver") for call in live_tests)
+    assert all(call["cwd"] == str(selenium_project) for call in drivers + live_tests)
+    assert all(not call["credentials"] for call in observed if call not in drivers + live_tests)
+    assert "Driver setup diagnostic" in capfd.readouterr().err
+    commands = [call["args"] for call in observed]
+    assert commands[0][-2:] == ["--python", "3.12"]
+    assert ["python", "-m", "unittest", "-v", "test_bridge"] in commands
+    assert ["npm", "test"] in commands
+    assert len([command for command in commands if command[:3] == ["uv", "pip", "check"]]) == 2
+    source = next(command for command in commands if "-e" in command)
+    assert "--no-deps" not in source
+    assert source[-4:] == ["-e", str(workspace / "packages/notte-core"), "-e", str(workspace / "packages/notte-sdk")]
+    assert commands.index(source) > commands.index(live_tests[1]["args"])
+
+
+@pytest.mark.parametrize("invalid", ["empty", "relative", "outside", "multiple", "missing", "nonexecutable"])
+def test_selenium_rejects_invalid_driver_output_before_live_tests(
+    workspace: Path, selenium_project: Path, monkeypatch: pytest.MonkeyPatch, invalid: str
+) -> None:
+    driver = selenium_project / ".drivers/150/chromedriver"
+    outputs = {
+        "empty": "",
+        "relative": ".drivers/150/chromedriver",
+        "outside": str(workspace / "other"),
+        "multiple": str(driver) + "\nextra",
+        "missing": str(driver.parent / "missing"),
+        "nonexecutable": str(driver),
+    }
+    if invalid == "nonexecutable":
+        driver.chmod(0o644)
+    monkeypatch.setenv("DRIVER_OUTPUT", outputs[invalid])
+    monkeypatch.setattr("sys.argv", ["runner", "live"])
+    with pytest.raises(ValueError, match="owned executable driver"):
+        runner.main()
+    assert not any("test_selenium" in call["args"] for call in calls(workspace))
+    assert not any("-e" in call["args"] for call in calls(workspace))
+
+
+def test_selenium_driver_failure_stops_before_browser_tests(
+    workspace: Path, selenium_project: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("FAIL_DRIVER", "1")
+    monkeypatch.setattr("sys.argv", ["runner", "live"])
+    with pytest.raises(subprocess.CalledProcessError) as failure:
+        runner.main()
+    assert failure.value.returncode == 17
+    assert calls(workspace)[-1]["args"][1:] == ["install_driver.py"]
+    assert not any("test_selenium" in call["args"] for call in calls(workspace))

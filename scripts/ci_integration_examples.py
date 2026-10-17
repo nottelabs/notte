@@ -24,7 +24,9 @@ def projects(shard: str) -> list[tuple[str, str]]:
     for name in cast(list[object], selection):
         if not isinstance(name, str) or name not in registry or not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", name):
             raise ValueError("Unknown integration example")
-        if registry[name] != "gemini-root" and not re.fullmatch(r"NOTTE_[A-Z0-9_]+_PYTHON", registry[name]):
+        if registry[name] not in {"gemini-root", "selenium-root"} and not re.fullmatch(
+            r"NOTTE_[A-Z0-9_]+_PYTHON", registry[name]
+        ):
             raise ValueError("Invalid integration registry convention")
         selected.add(name)
     index, count = map(int, shard.split("/"))
@@ -39,14 +41,38 @@ def run(command: list[str], directory: Path, env: dict[str, str]) -> None:
 
 def check(project: Path, env: dict[str, str], convention: str = "") -> Path:
     python = project / ".venv/bin/python"
-    if convention == "gemini-root":
-        run(["uv", "venv", str(project / ".venv"), "--clear", "--python", "3.11"], project, env)
+    if convention in {"gemini-root", "selenium-root"}:
+        version = "3.12" if convention == "selenium-root" else "3.11"
+        run(["uv", "venv", str(project / ".venv"), "--clear", "--python", version], project, env)
         run(["uv", "pip", "install", "--python", str(python), "-r", "requirements.txt"], project, env)
         run(["uv", "pip", "check", "--python", str(python)], project, env)
         run(["npm", "ci"], project, env)
         run(["npm", "run", "typecheck"], project, env)
-        offline = {**env, "NOTTE_GEMINI_LIVE": "0", "NOTTE_GEMINI_MODEL_LIVE": "0", "DISABLE_TELEMETRY": "true"}
-        run([str(python), "-m", "unittest", "-v", "test_agent.py"], project, offline)
+        offline = {
+            **env,
+            "NOTTE_GEMINI_LIVE": "0",
+            "NOTTE_GEMINI_MODEL_LIVE": "0",
+            "NOTTE_SELENIUM_LIVE": "0",
+            "DISABLE_TELEMETRY": "true",
+        }
+        if convention == "selenium-root":
+            run(
+                [
+                    str(python),
+                    "-m",
+                    "compileall",
+                    "-q",
+                    "bridge.py",
+                    "main.py",
+                    "install_driver.py",
+                    "test_selenium.py",
+                ],
+                project,
+                offline,
+            )
+            run([str(python), "-m", "unittest", "-v", "test_bridge"], project, offline)
+        else:
+            run([str(python), "-m", "unittest", "-v", "test_agent.py"], project, offline)
         run(["npm", "test"], project, offline)
         return python
     run(["uv", "sync", "--locked"], project, env)
@@ -57,10 +83,31 @@ def check(project: Path, env: dict[str, str], convention: str = "") -> Path:
     return python
 
 
+def selenium_driver(project: Path, python: Path, env: dict[str, str]) -> str:
+    result = subprocess.run(
+        [str(python), "install_driver.py"], cwd=project, env=env, check=True, text=True, stdout=subprocess.PIPE
+    )
+    output = result.stdout.strip()
+    driver = Path(output)
+    if (
+        not output
+        or len(output.splitlines()) != 1
+        or not driver.is_absolute()
+        or not driver.resolve().is_relative_to((project / ".drivers").resolve())
+        or not driver.is_file()
+        or not os.access(driver, os.X_OK)
+    ):
+        raise ValueError("Selenium setup did not return an owned executable driver path")
+    return str(driver.resolve())
+
+
 def live(project: Path, python: Path, python_env: str, env: dict[str, str], install_env: dict[str, str]) -> None:
-    root_layout = python_env == "gemini-root"
-    if root_layout:
+    root_layout = python_env in {"gemini-root", "selenium-root"}
+    if python_env == "gemini-root":
         env = {**env, "NOTTE_GEMINI_LIVE": "1", "NOTTE_GEMINI_MODEL_LIVE": "0", "DISABLE_TELEMETRY": "true"}
+    elif python_env == "selenium-root":
+        env = {name: value for name, value in env.items() if name not in CREDENTIALS - {"NOTTE_API_KEY"}}
+        env = {**env, "NOTTE_SELENIUM_LIVE": "1", "DISABLE_TELEMETRY": "true"}
     else:
         env = {**env, python_env: str(python)}
     typescript = project if root_layout else project / "typescript"
@@ -89,7 +136,11 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
             )
             run(["npm", "run", "typecheck"], typescript, install_env)
         print(f"Native integration: {project.name}, {sdk} SDK", flush=True)
-        if root_layout:
+        if python_env == "selenium-root":
+            driver_env = {**env, "CHROMEDRIVER_PATH": selenium_driver(project, python, env)}
+            run([str(python), "-m", "unittest", "-v", "test_selenium"], project, driver_env)
+            run(["npm", "run", "test:live"], project, driver_env)
+        elif root_layout:
             run([str(python), "-m", "unittest", "-v", "test_agent.py"], project, env)
             run(["npm", "test"], project, env)
         else:
