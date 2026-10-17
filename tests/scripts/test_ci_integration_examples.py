@@ -27,7 +27,9 @@ args = [Path(sys.argv[0]).name, *sys.argv[1:]]
 with open(os.environ['COMMAND_LOG'], 'a') as log:
     log.write(json.dumps({'args': args, 'cwd': os.getcwd(),
         'credentials': sorted(k for k in ('NOTTE_API_KEY', 'OPENAI_API_KEY') if os.environ.get(k)),
-        'python': os.environ.get('NOTTE_COMPUTER_USE_PYTHON')}) + '\\n')
+        'python': os.environ.get('NOTTE_COMPUTER_USE_PYTHON'),
+        'gemini_live': os.environ.get('NOTTE_GEMINI_LIVE'),
+        'gemini_model': os.environ.get('NOTTE_GEMINI_MODEL_LIVE')}) + '\\n')
 if os.environ.get('FAIL_UNITTEST') and 'unittest' in args:
     sys.exit(19)
 """
@@ -108,3 +110,38 @@ def test_invalid_selection_fails_before_installs(
     with pytest.raises(ValueError):
         runner.projects("1/2")
     assert calls(workspace) == []
+
+
+def test_gemini_root_commands_preserve_offline_and_paid_boundaries(
+    workspace: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runner.REGISTRY.write_text(json.dumps({"gemini-computer-use": "gemini-root"}))
+    monkeypatch.setenv("INTEGRATION_EXAMPLES", '["gemini-computer-use"]')
+    monkeypatch.setenv("NOTTE_GEMINI_MODEL_LIVE", "1")
+    project = workspace / "examples/gemini-computer-use"
+    python = project / ".venv/bin/python"
+    python.parent.mkdir(parents=True)
+    python.write_text((workspace / "examples/alpha/.venv/bin/python").read_text())
+    python.chmod(0o755)
+    monkeypatch.setattr("sys.argv", ["runner", "live"])
+    runner.main()
+    observed = calls(workspace)
+    native_tests = [call for call in observed if "unittest" in call["args"] or call["args"] == ["npm", "test"]]
+    assert len(native_tests) == 6
+    assert all(call["cwd"] == str(project) for call in native_tests)
+    assert all(call["gemini_model"] == "0" for call in native_tests)
+    assert all(call["gemini_live"] == "0" and not call["credentials"] for call in native_tests[:2])
+    assert all(call["gemini_live"] == "1" and call["credentials"] for call in native_tests[2:])
+    assert all(call["python"] is None for call in observed)
+    assert all(not call["credentials"] for call in observed if call not in native_tests)
+    commands = [call["args"] for call in observed]
+    assert commands[0] == ["uv", "venv", str(project / ".venv"), "--clear", "--python", "3.11"]
+    assert ["uv", "pip", "install", "--python", str(python), "-r", "requirements.txt"] in commands
+    assert commands.count([python.name, "-m", "unittest", "-v", "test_agent.py"]) == 3
+    assert commands.count(["npm", "test"]) == 3
+    assert commands.count(["npm", "run", "typecheck"]) == 2
+    source = next(command for command in commands if "-e" in command)
+    assert source[-4:] == ["-e", str(workspace / "packages/notte-core"), "-e", str(workspace / "packages/notte-sdk")]
+    assert "--no-deps" not in source
+    assert ["npm", "install", "--no-save", "--package-lock=false", str(workspace / "node-sdk")] in commands
+    assert len([command for command in commands if command[:3] == ["uv", "pip", "check"]]) == 2

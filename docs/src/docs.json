@@ -171,10 +171,6 @@
       "destination": "/integrations"
     },
     {
-      "source": "/integrations/gemini-computer-use",
-      "destination": "/integrations"
-    },
-    {
       "source": "/integrations/laminar",
       "destination": "/integrations"
     },
@@ -366,7 +362,8 @@
             "icon": "desktop",
             "pages": [
               "integrations/openai-computer-use",
-              "integrations/claude-computer-use"
+              "integrations/claude-computer-use",
+              "integrations/gemini-computer-use"
             ]
           },
           {
