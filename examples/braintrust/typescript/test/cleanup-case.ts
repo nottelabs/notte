@@ -74,7 +74,7 @@ try {
   globalThis.fetch = originalFetch;
   for (const id of ids) {
     if (await status(id) !== 'closed') {
-      const response = await originalFetch(`${process.env.NOTTE_API_URL}/sessions/${id}`, {
+      const response = await originalFetch(`${process.env.NOTTE_API_URL}/sessions/${id}/stop`, {
         method: 'DELETE', headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` }, signal: AbortSignal.timeout(15_000),
       });
       assert.ok(response.ok); assert.equal(await status(id), 'closed');
