@@ -1,0 +1,10 @@
+{
+  "url": "https://example.com",
+  "selectors": {
+    "learn_more": {
+      "selector": ".outdated-learn-more",
+      "role": "link",
+      "name": "Learn more"
+    }
+  }
+}

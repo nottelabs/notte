@@ -135,6 +135,70 @@ class RoutingTests(unittest.TestCase):
         self.assertIn("readme_live", ci.scopes_for_path("README.md", code_changed=True))
         self.assertIn("docs_live", ci.scopes_for_path("docs/src/guides/example.mdx", code_changed=True))
 
+    def test_native_projects_route_into_existing_paired_jobs(self) -> None:
+        for path in (
+            "examples/openai-computer-use/python/demo.py",
+            "examples/openai-computer-use/typescript/test/computer.live.test.ts",
+            "examples/openai-computer-use/pyproject.toml",
+            "examples/openai-computer-use/uv.lock",
+            "examples/openai-computer-use/typescript/package-lock.json",
+            "examples/openai-computer-use/fixtures/mouse.html",
+        ):
+            with self.subTest(path=path):
+                self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
+                self.assertEqual(ci.integration_examples_for_path(path), {"openai-computer-use"})
+        for path in ("examples/openai-computer-use/README.md", "examples/openai-computer-use/.gitignore"):
+            self.assertFalse(ci.integration_examples_for_path(path))
+            self.assertNotIn("paired_live", ci.scopes_for_path(path))
+
+    def test_gemini_native_inputs_preserve_root_commands(self) -> None:
+        for filename in (
+            "agent.py",
+            "test_agent.py",
+            "agent.ts",
+            "agent.test.ts",
+            "requirements.txt",
+            "package-lock.json",
+        ):
+            path = f"examples/gemini-computer-use/{filename}"
+            with self.subTest(path=path):
+                self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
+                self.assertEqual(ci.integration_examples_for_path(path), {"gemini-computer-use"})
+        self.assertFalse(ci.integration_examples_for_path("examples/gemini-computer-use/README.md"))
+
+    def test_selenium_native_inputs_route_to_existing_paired_jobs(self) -> None:
+        for filename in (
+            "bridge.py",
+            "install_driver.py",
+            "test_bridge.py",
+            "test_selenium.py",
+            "requirements.txt",
+            "package-lock.json",
+            "test/selenium.live.test.ts",
+        ):
+            path = f"examples/selenium/{filename}"
+            with self.subTest(path=path):
+                self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
+                self.assertEqual(ci.integration_examples_for_path(path), {"selenium"})
+        self.assertFalse(ci.integration_examples_for_path("examples/selenium/README.md"))
+
+    def test_shared_native_inputs_cover_every_registered_project(self) -> None:
+        for path in (
+            *ci.INTEGRATION_INPUTS,
+            "uv.lock",
+            "packages/notte-sdk/src/notte_sdk/client.py",
+            "packages/notte-core/pyproject.toml",
+            "node-sdk/src/session.ts",
+            "node-sdk/package-lock.json",
+            "node-sdk/tsconfig.json",
+            "node-sdk/tsup.config.ts",
+            "node-sdk/new-build.config.json",
+            ".github/workflows/paired-sdk-examples.yml",
+        ):
+            with self.subTest(path=path):
+                self.assertEqual(ci.integration_examples_for_path(path), set(ci.INTEGRATION_EXAMPLES))
+                self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
+
     def test_offline_generator_and_its_tests_use_the_lightweight_suite(self) -> None:
         for path in ("docs/src/scripts/generate_llms.py", "tests/test_generate_llms_offline.py"):
             with self.subTest(path=path):
@@ -238,10 +302,38 @@ class GitHistoryTests(unittest.TestCase):
         self.git("commit", "-qm", "Test change")
         return self.git("rev-parse", "HEAD")
 
-    def scope(self, event: str, base: str, head: str) -> dict[str, bool | str]:
+    def scope(self, event: str, base: str, head: str) -> dict[str, bool | str | list[str]]:
         original_git = ci.git
         with patch.object(ci, "git", side_effect=lambda *args: original_git("-C", str(self.repo), *args)):
             return ci.select(event, base, head)
+
+    def test_complete_diff_unions_native_projects_and_skips_prose(self) -> None:
+        prose = self.commit({"examples/openai-computer-use/README.md": "New instructions\n"})
+        self.assertEqual(self.scope("push", self.base, prose)["integration_examples"], [])
+        self.commit({"examples/openai-computer-use/python/demo.py": "runtime = True\n"})
+        head = self.commit({"docs/src/pricing.mdx": "More prose\n"})
+        scope = self.scope("push", self.base, head)
+        self.assertEqual(scope["integration_examples"], ["openai-computer-use"])
+        self.assertTrue(scope["paired_static"] and scope["paired_live"])
+        self.assertFalse(scope["paired_snippets_live"])
+        self.assertEqual(ci.select("push", "", "")["integration_examples"], sorted(ci.INTEGRATION_EXAMPLES))
+
+    def test_native_runner_diff_skips_snippets_but_sdk_changes_keep_both(self) -> None:
+        head = self.commit({"scripts/ci_integration_examples.py": "runner = True\n"})
+        scope = self.scope("push", self.base, head)
+        self.assertEqual(scope["integration_examples"], sorted(ci.INTEGRATION_EXAMPLES))
+        self.assertTrue(scope["paired_static"] and scope["paired_live"])
+        self.assertFalse(scope["paired_snippets_live"])
+        shared = self.commit({"packages/notte-sdk/src/notte_sdk/client.py": "client = True\n"})
+        scope = self.scope("push", head, shared)
+        self.assertEqual(scope["integration_examples"], sorted(ci.INTEGRATION_EXAMPLES))
+        self.assertTrue(scope["paired_snippets_live"])
+
+    def test_snippet_changes_do_not_repeat_unrelated_native_projects(self) -> None:
+        head = self.commit({"docs/src/testers/sessions/index.py": "snippet = True\n"})
+        scope = self.scope("push", self.base, head)
+        self.assertTrue(scope["paired_live"] and scope["paired_snippets_live"])
+        self.assertEqual(scope["integration_examples"], [])
 
     def test_push_includes_every_commit_and_unions_scopes(self) -> None:
         self.commit({"packages/notte-sdk/src/client.py": "runtime = True\n"})

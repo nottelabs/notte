@@ -34,6 +34,12 @@ SDK_EXAMPLES = {"docs_static"} | GROUPS["paired"] | GROUPS["readme"]
 POLICY = {"scripts/ci_scope.py", "tests/scripts/test_ci_scope.py"}
 PYTHON_CONFIG = {"pyproject.toml", "uv.lock", ".python-version"}
 NODE_CONFIG = {"node-sdk/package.json", "node-sdk/package-lock.json"}
+INTEGRATION_INPUTS = {
+    "scripts/integration_examples.json",
+    "scripts/ci_integration_examples.py",
+    "tests/scripts/test_ci_integration_examples.py",
+}
+INTEGRATION_EXAMPLES: dict[str, str] = json.loads(Path(__file__).with_name("integration_examples.json").read_text())
 NODE_GENERATION = {
     "node-sdk/openapi-ts.config.ts",
     "node-sdk/src/proxy/patterns.ts",
@@ -63,7 +69,6 @@ INTEGRATION_WORKFLOWS = {
     "eve-integration.yml",
     "evervault-integration.yml",
     "fx-integration.yml",
-    "gemini-computer-use-integration.yml",
     "github-actions-integration.yml",
     "inngest-integration.yml",
     "laminar-integration.yml",
@@ -71,7 +76,6 @@ INTEGRATION_WORKFLOWS = {
     "onepassword-integration.yml",
     "openagi-integration.yml",
     "openai-agents-integration.yml",
-    "openai-computer-use-integration.yml",
     "pipedream-integration.yml",
     "prime-intellect-integration.yml",
     "replit-integration.yml",
@@ -88,10 +92,44 @@ INTEGRATION_WORKFLOWS = {
 }
 
 
+def integration_examples_for_path(path: str) -> set[str]:
+    """Native projects share SDK/build inputs, but do not run for project prose."""
+    if path in INTEGRATION_INPUTS | PYTHON_CONFIG | NODE_CONFIG or path in {
+        ".github/workflows/paired-sdk-examples.yml",
+        "node-sdk/tsconfig.json",
+        "node-sdk/tsup.config.ts",
+    }:
+        return set(INTEGRATION_EXAMPLES)
+    if path.startswith(("packages/notte-sdk/", "packages/notte-core/", "src/")):
+        return set() if path.endswith(("/README.md", "/CHANGELOG.md")) else set(INTEGRATION_EXAMPLES)
+    if path.startswith("node-sdk/") and not path.startswith("node-sdk/test/"):
+        return set() if path.endswith((".md", ".mdx", ".txt")) else set(INTEGRATION_EXAMPLES)
+    if path.startswith(".github/actions/python-setup/"):
+        return set(INTEGRATION_EXAMPLES)
+    for name in INTEGRATION_EXAMPLES:
+        if path == f".github/workflows/{name}-integration.yml":
+            return {name}
+        if path == f"examples/{name}/requirements.txt":
+            return {name}
+        if path.startswith(f"examples/{name}/"):
+            prose = path.endswith((".md", ".mdx", ".txt", ".png", ".jpg", ".svg", ".pdf"))
+            return set() if prose or path.endswith("/.gitignore") else {name}
+    return set()
+
+
+def native_example_input(path: str) -> bool:
+    return path in INTEGRATION_INPUTS or any(
+        path.startswith(f"examples/{name}/") or path == f".github/workflows/{name}-integration.yml"
+        for name in INTEGRATION_EXAMPLES
+    )
+
+
 def scopes_for_path(path: str, *, code_changed: bool = True) -> set[str]:
     """Unknown inputs select broad coverage. Rules combine across every changed path."""
     if path in POLICY or path.startswith(".github/actions/ci-scope/"):
         return ALL.copy()
+    if native_example_input(path) and integration_examples_for_path(path):
+        return {"python_static", "python_unit"} | GROUPS["paired"]
     if path.startswith(".github/actions/wait-for-api/"):
         return ALL.copy()
     if path.startswith(".github/actions/python-setup/"):
@@ -293,8 +331,10 @@ def changed_code(base: str, head: str, path: str) -> bool:
         return True
 
 
-def select(event: str, base: str, head: str) -> dict[str, bool | str]:
+def select(event: str, base: str, head: str) -> dict[str, bool | str | list[str]]:
     selected: set[str] = ALL.copy()
+    integration_examples: set[str] = set(INTEGRATION_EXAMPLES)
+    paired_snippets_live = True
     full = True
     lint_all = False
     docs_links = False
@@ -319,17 +359,26 @@ def select(event: str, base: str, head: str) -> dict[str, bool | str]:
                 # normally triggers the global link hook; deletion-only diffs cannot.
                 docs_links = docs_paths <= deleted
             selected = set()
+            integration_examples = set()
+            paired_snippets_live = False
             for path in filter(None, paths):
                 lint_all |= path in {".pre-commit-config.yaml", "pyproject.toml"} or path.endswith("/pyproject.toml")
                 markdown = path == "README.md" or (path.startswith("docs/") and path.endswith((".md", ".mdx")))
                 code_changed = changed_code(base, head, path) if markdown else True
-                selected |= scopes_for_path(path, code_changed=code_changed)
+                path_scopes = scopes_for_path(path, code_changed=code_changed)
+                selected |= path_scopes
+                paired_snippets_live |= "paired_live" in path_scopes and not native_example_input(path)
+                integration_examples |= integration_examples_for_path(path)
+                if path_scopes == ALL:
+                    integration_examples |= set(INTEGRATION_EXAMPLES)
                 if path.endswith((".py", ".pyi")):
                     selected.add("python_static")
             full = False
     except (ValueError, subprocess.SubprocessError, UnicodeError) as error:
         print(f"Using full CI coverage: {type(error).__name__}", file=sys.stderr)
         selected = ALL.copy()
+        integration_examples = set(INTEGRATION_EXAMPLES)
+        paired_snippets_live = True
     if event == "schedule":
         # Preserve Python's live-only periodic run; Node keeps its full periodic check.
         selected -= {"python_unit", "python_docs", "cli_contract"}
@@ -341,6 +390,8 @@ def select(event: str, base: str, head: str) -> dict[str, bool | str]:
         "docs_links": docs_links,
         "base": base,
         "head": head,
+        "integration_examples": sorted(integration_examples),
+        "paired_snippets_live": paired_snippets_live,
     }
 
 
