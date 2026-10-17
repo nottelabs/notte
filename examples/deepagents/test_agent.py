@@ -81,6 +81,14 @@ class DeepAgentsTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_provider_401_closes_browser(self):
         requests = []
+        closes = []
+        original_close = agent.MCPAdapter.__aexit__
+
+        async def close(adapter, *args):
+            await original_close(adapter, *args)
+            if args[0] is not None:
+                closes.append(True)
+                raise RuntimeError("Cleanup transport error https://private.invalid/credential")
 
         class Unauthorized(BaseHTTPRequestHandler):
             def do_POST(self):
@@ -105,12 +113,15 @@ class DeepAgentsTests(unittest.IsolatedAsyncioTestCase):
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
         try:
-            with patch.dict(
-                os.environ,
-                {
-                    "ANTHROPIC_BASE_URL": f"http://127.0.0.1:{server.server_port}",
-                    "ANTHROPIC_API_KEY": "not-a-real-key",  # pragma: allowlist secret
-                },
+            with (
+                patch.object(agent.MCPAdapter, "__aexit__", new=close),
+                patch.dict(
+                    os.environ,
+                    {
+                        "ANTHROPIC_BASE_URL": f"http://127.0.0.1:{server.server_port}",
+                        "ANTHROPIC_API_KEY": "not-a-real-key",  # pragma: allowlist secret
+                    },
+                ),
             ):
                 async with owned():
                     with self.assertRaisesRegex(
@@ -119,12 +130,36 @@ class DeepAgentsTests(unittest.IsolatedAsyncioTestCase):
                     ):
                         await agent.run("Visit https://example.com and read its title.")
             self.assertEqual(len(requests), 1, "The actual framework must reach the injected provider")
+            self.assertEqual(len(closes), 1, "The outer adapter close must inject a genuine cleanup failure")
             self.assertFalse(requests[0] & {"glob", "grep", "execute"})
             self.assertIn("read_file", requests[0])
         finally:
             await asyncio.to_thread(server.shutdown)
             server.server_close()
             thread.join(timeout=2)
+
+    async def test_cancellation_closes_owned_browser(self):
+        ready = asyncio.Event()
+        original_list = agent.MCPAdapter.list_tools
+
+        async def discover(adapter, *args, **kwargs):
+            await original_list(adapter, *args, **kwargs)
+            ready.set()
+            await asyncio.Future()
+
+        task = None
+        async with owned():
+            try:
+                with patch.object(agent.MCPAdapter, "list_tools", new=discover):
+                    task = asyncio.create_task(agent.run("Read the page title"))
+                    await asyncio.wait_for(ready.wait(), timeout=45)
+                    task.cancel()
+                    with self.assertRaises(asyncio.CancelledError):
+                        await task
+            finally:
+                if task:
+                    task.cancel()
+                    await asyncio.gather(task, return_exceptions=True)
 
 
 if __name__ == "__main__":

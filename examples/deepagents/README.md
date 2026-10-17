@@ -34,4 +34,4 @@ npm run typecheck
 npm run test:live
 ```
 
-Without `NOTTE_DEEPAGENTS_MODEL_LIVE=1`, the live suite runs only the local HTTP 401 provider test. It still uses a real Notte session and MCP connection. Navigation tests independently inspect the persisted browser history before accepting the model's answer.
+Without `NOTTE_DEEPAGENTS_MODEL_LIVE=1`, the live suite verifies provider HTTP 401 failures and cleanup with real Notte sessions and MCP connections. Python also verifies cancellation. Navigation tests independently inspect the persisted browser history before accepting the model's answer.

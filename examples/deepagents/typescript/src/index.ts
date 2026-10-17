@@ -18,10 +18,11 @@ export function browserTools(tools: DynamicStructuredTool[], sessionId: string) 
 export async function run(task: string) {
   return new NotteClient().Session({ max_duration_minutes: 3 }).use(async session => {
     const adapter = new MCPAdapter({ servers: { notte: {
-      url: `${(process.env.NOTTE_API_URL ?? 'https://api.notte.cc').replace(/\/$/, '')}/mcp/`,
+      url: `${(process.env.NOTTE_API_URL ?? 'https://api.notte.cc').replace(/\/+$/, '')}/mcp/`,
       headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` },
     } } });
     let stage = 'MCP connection and tool discovery';
+    let failed = false;
     try {
       const tools = browserTools(await adapter.listTools(), session.getId()!);
       stage = 'agent initialization';
@@ -39,12 +40,23 @@ export async function run(task: string) {
       const result = await agent.invoke({ messages: [{ role: 'user', content: task }] }, { recursionLimit: 20 });
       return { answer: result.messages.at(-1)?.text ?? '', session_id: session.getId()! };
     } catch (error) {
+      failed = true;
       for (let depth = 0; depth < 32 && error instanceof Error && error.cause instanceof Error; depth++) error = error.cause;
       const code = (error as { status?: unknown } | null)?.status;
       const status = typeof code === 'number' ? ` HTTP ${code}` : '';
       const category = error instanceof Error ? error.constructor.name : 'UnknownError';
       throw new Error(`Deep Agents failed during ${stage}: ${category}${status} (session ${session.getId()})`);
-    } finally { await adapter.close(); }
+    } finally {
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      try {
+        await Promise.race([
+          adapter.close(),
+          new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error('Close deadline exceeded')), 5000); }),
+        ]);
+      } catch {
+        if (!failed) throw new Error('Deep Agents MCP cleanup failed');
+      } finally { clearTimeout(timer); }
+    }
   });
 }
 

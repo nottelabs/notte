@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { test } from 'node:test';
 import { DynamicStructuredTool } from '@langchain/core/tools';
+import { MCPAdapter } from '@langchain/mcp-adapters';
 import { NotteClient, sessionStatus } from 'notte-sdk';
 import { browserTools, run } from '../src/index.ts';
 
@@ -21,8 +22,9 @@ test('Model arguments cannot change the owned browser or expose session tools', 
 
 async function closed(id: string) {
   const client = new NotteClient();
-  for (let attempt = 0; attempt < 30; attempt++) {
-    const response = await sessionStatus({ client: client.getClient(), path: { session_id: id }, throwOnError: true, signal: AbortSignal.timeout(15_000) });
+  const signal = AbortSignal.timeout(15_000);
+  while (!signal.aborted) {
+    const response = await sessionStatus({ client: client.getClient(), path: { session_id: id }, throwOnError: true, signal });
     if (response.data.status === 'closed') return response.data;
     await new Promise(resolve => setTimeout(resolve, 500));
   }
@@ -62,7 +64,14 @@ test('Deep Agents navigates the owned browser and closes it', {
   }), 'The persisted browser history must prove successful navigation');
 });
 
-test('A real framework provider 401 closes the owned browser', { skip: !live, timeout: 120_000 }, async () => {
+test('A real framework provider 401 survives MCP close failure and closes the browser', { skip: !live, timeout: 120_000 }, async t => {
+  let closes = 0;
+  const originalClose = MCPAdapter.prototype.close;
+  t.mock.method(MCPAdapter.prototype, 'close', async function(this: MCPAdapter) {
+    await originalClose.call(this);
+    closes++;
+    throw new Error('Cleanup transport error https://private.invalid/credential');
+  });
   let requests = 0;
   let tools: string[] = [];
   const server = createServer((request, response) => {
@@ -85,6 +94,7 @@ test('A real framework provider 401 closes the owned browser', { skip: !live, ti
     await assert.rejects(owned(() => run('Read the page title')),
       /^Error: Deep Agents failed during agent execution: AuthenticationError HTTP 401 \(session [0-9a-f-]{36}\)$/);
     assert.equal(requests, 1, 'The actual framework must reach the injected provider');
+    assert.equal(closes, 1, 'The adapter close must inject a genuine cleanup failure');
     assert.equal(tools.some(name => ['glob', 'grep', 'execute'].includes(name)), false);
     assert.ok(tools.includes('read_file'));
   } finally {

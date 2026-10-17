@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import sys
+from contextlib import asynccontextmanager
 
 from deepagents import create_deep_agent
 from deepagents.middleware.filesystem import FilesystemMiddleware
@@ -29,6 +30,22 @@ def browser_tools(tools, session_id):
     return [bind(tool) for tool in selected]
 
 
+@asynccontextmanager
+async def mcp_connection(transport):
+    adapter = MCPAdapter(transport)
+    await adapter.__aenter__()
+    try:
+        yield adapter
+    finally:
+        failure = sys.exc_info()
+        try:
+            async with asyncio.timeout(5):
+                await adapter.__aexit__(*failure)
+        except Exception:
+            if failure[0] is None:
+                raise RuntimeError("MCP cleanup failed") from None
+
+
 async def run(task: str) -> dict[str, str]:
     transport = StreamableHttpTransport(
         os.getenv("NOTTE_API_URL", "https://api.notte.cc").rstrip("/") + "/mcp/",
@@ -37,7 +54,7 @@ async def run(task: str) -> dict[str, str]:
     with NotteClient().Session(max_duration_minutes=3) as session:
         stage = "MCP connection"
         try:
-            async with MCPAdapter(transport) as adapter:
+            async with mcp_connection(transport) as adapter:
                 stage = "tool discovery"
                 tools = browser_tools(await adapter.list_tools(), session.session_id)
                 stage = "agent initialization"
