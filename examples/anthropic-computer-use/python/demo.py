@@ -58,7 +58,7 @@ async def run_demo() -> dict:
                 category = f"provider HTTP {error.status_code}"
             elif isinstance(error, (TimeoutError, APITimeoutError)):
                 category = "timeout"
-            raise RuntimeError(f"Computer use failed: {category} (session {session.session_id})") from error
+            raise RuntimeError(f"Computer use failed: {category} (session {session.session_id})") from None
 
 
 if __name__ == "__main__":

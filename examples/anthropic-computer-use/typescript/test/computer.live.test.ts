@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { once } from 'node:events';
-import { test } from 'node:test';
+import { mock, test } from 'node:test';
 import { setTimeout as sleep } from 'node:timers/promises';
-import Anthropic from '@anthropic-ai/sdk';
+import { inspect } from 'node:util';
 import type { BetaToolUseBlock } from '@anthropic-ai/sdk/resources/beta';
 import { NotteClient } from 'notte-sdk';
 import { chromium } from 'playwright-core';
@@ -67,37 +67,56 @@ test('native tool protocol, real form actions, and permission refusal', { skip: 
   } finally { if (id) await assertClosed(id); }
 });
 
-test('unchanged demo closes its session after a real provider HTTP 401', { skip: !live, timeout: 90_000 }, async () => {
-  let requests = 0;
-  const server = createServer((request, response) => {
-    requests++;
-    request.resume();
-    response.writeHead(401, { 'Content-Type': 'application/json' });
-    response.end(JSON.stringify({ type: 'error', error: { type: 'authentication_error', message: 'Test credential rejected' } }));
-  });
-  server.listen(0, '127.0.0.1');
-  await once(server, 'listening');
-  const previous = { key: process.env.ANTHROPIC_API_KEY, url: process.env.ANTHROPIC_BASE_URL };
-  const address = server.address();
-  assert.ok(address && typeof address !== 'string');
-  process.env.ANTHROPIC_API_KEY = 'test-invalid-key'; // pragma: allowlist secret
-  process.env.ANTHROPIC_BASE_URL = `http://127.0.0.1:${address.port}`;
-  try {
-    let id: string | undefined;
-    await assert.rejects(runDemo, (error: Error) => {
-      id = /^Computer use failed: provider HTTP 401 \(session ([a-f0-9-]+)\)$/.exec(error.message)?.[1];
-      assert.ok(error.cause instanceof Anthropic.AuthenticationError);
-      return Boolean(id);
+for (const closeMode of ['normal', 'failure', 'stalled']) {
+  test(`demo preserves provider HTTP 401 with ${closeMode} disconnect`, { skip: !live, timeout: 90_000 }, async () => {
+    const connect = chromium.connectOverCDP.bind(chromium);
+    let restoreClose = () => {};
+    const connection = closeMode === 'normal' ? undefined : mock.method(chromium, 'connectOverCDP', async (...args: Parameters<typeof connect>) => {
+      const browser = await connect(...args);
+      const close = browser.close.bind(browser);
+      const closeMock = mock.method(browser, 'close', async () => {
+        await close();
+        if (closeMode === 'failure') throw new Error('private-disconnect-fixture');
+        await new Promise(() => {});
+      });
+      restoreClose = () => closeMock.mock.restore();
+      return browser;
     });
-    assert.ok(requests > 0, 'The actual provider request must reach the test server');
-    await assertClosed(id!);
-  } finally {
-    for (const [name, value] of [['ANTHROPIC_API_KEY', previous.key], ['ANTHROPIC_BASE_URL', previous.url]]) {
-      if (value === undefined) delete process.env[name!]; else process.env[name!] = value;
+    let requests = 0;
+    const server = createServer((request, response) => {
+      requests++;
+      request.resume();
+      response.writeHead(401, { 'Content-Type': 'application/json' });
+      response.end(JSON.stringify({ type: 'error', error: { type: 'authentication_error', message: 'Test credential rejected: private-provider-fixture' } }));
+    });
+    server.listen(0, '127.0.0.1');
+    await once(server, 'listening');
+    const previous = { key: process.env.ANTHROPIC_API_KEY, url: process.env.ANTHROPIC_BASE_URL };
+    const address = server.address();
+    assert.ok(address && typeof address !== 'string');
+    process.env.ANTHROPIC_API_KEY = 'test-invalid-key'; // pragma: allowlist secret
+    process.env.ANTHROPIC_BASE_URL = `http://127.0.0.1:${address.port}`;
+    try {
+      let id: string | undefined;
+      let failure: Error | undefined;
+      await assert.rejects(runDemo, (error: Error) => {
+        id = /^Computer use failed: provider HTTP 401 \(session ([a-f0-9-]+)\)$/.exec(error.message)?.[1];
+        failure = error;
+        return Boolean(id);
+      });
+      assert.ok(requests > 0, 'The actual provider request must reach the test server');
+      await assertClosed(id!);
+      assert.doesNotMatch(inspect(failure), /private-provider-fixture|private-disconnect-fixture/);
+    } finally {
+      restoreClose();
+      connection?.mock.restore();
+      for (const [name, value] of [['ANTHROPIC_API_KEY', previous.key], ['ANTHROPIC_BASE_URL', previous.url]]) {
+        if (value === undefined) delete process.env[name!]; else process.env[name!] = value;
+      }
+      await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
     }
-    await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
-  }
-});
+  });
+}
 
 test('unchanged demo completes a real model visual form task', { skip: !live || !process.env.ANTHROPIC_API_KEY, timeout: 180_000 }, async () => {
   let id: string | undefined;

@@ -5,12 +5,12 @@ import json
 import os
 import re
 import threading
+import traceback
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from unittest.mock import patch
 
 import requests
-from anthropic import AuthenticationError
 from anthropic.types.beta import BetaToolUseBlock
 from demo import run_demo
 from notte_computer import NotteComputer
@@ -50,7 +50,7 @@ class Unauthorized(BaseHTTPRequestHandler):
                 "type": "error",
                 "error": {
                     "type": "authentication_error",
-                    "message": "Test credential rejected",
+                    "message": "Test credential rejected: private-provider-fixture",
                 },
             }
         ).encode()
@@ -120,9 +120,9 @@ class ComputerLiveTests(unittest.IsolatedAsyncioTestCase):
                 ) as failure:
                     await run_demo()
             self.assertGreater(Unauthorized.requests, before)
-            self.assertIsInstance(failure.exception.__cause__, AuthenticationError)
             session_id = re.search(r"session ([a-f0-9-]+)", str(failure.exception))[1]
             await assert_closed(session_id)
+            self.assertNotIn("private-provider-fixture", "".join(traceback.format_exception(failure.exception)))
         finally:
             await asyncio.to_thread(server.shutdown)
             server.server_close()
