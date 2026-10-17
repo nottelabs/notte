@@ -5,8 +5,10 @@ import re
 import time
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import requests
+from playwright.async_api import Page
 from repair import repair
 
 SOURCE = Path(__file__).with_name("fixtures").joinpath("selectors.json").read_bytes()
@@ -52,6 +54,25 @@ class LiveTests(unittest.TestCase):
         closed(sid)
         print(f"IDN foreign origin: owned browser {sid} independently closed")
         self.assertIn("origin", str(error.exception))
+
+    def test_idn_redirect_refuses_before_frame_event(self):
+        source = json.loads(SOURCE)
+        source["url"] = "https://faß.invalid/start"
+        original_on = Page.on
+
+        def without_frame_event(page, event, listener):
+            if event == "framenavigated":
+                return page
+            return original_on(page, event, listener)
+
+        # A failed redirect can finish navigation before a later error-page frame event.
+        with patch.object(Page, "on", without_frame_event), asyncio.Runner() as runner:
+            with self.assertRaises(RuntimeError) as error:
+                runner.run(repair(json.dumps(source).encode(), fixture_redirect="https://fass.invalid/start"))
+        sid = re.search(r"session ([a-f0-9-]{36})", str(error.exception)).group(1)
+        closed(sid)
+        print(f"IDN before frame event: owned browser {sid} independently closed")
+        self.assertIn("refused: origin", str(error.exception))
 
     def test_dom_backed_repair_and_refusals(self):
         cases = {

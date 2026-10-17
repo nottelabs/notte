@@ -46,6 +46,17 @@ async def repair(
                     expected = origin(navigation_url)
                     changed_origin = False
 
+                    def requested(request):
+                        nonlocal changed_origin, stage
+                        # Routing only intercepts the first URL of an HTTP redirect.
+                        if (
+                            request.is_navigation_request()
+                            and request.frame == page.main_frame
+                            and origin(request.url) != expected
+                        ):
+                            changed_origin = True
+                            stage = "origin"
+
                     async def guard_navigation(route):
                         nonlocal changed_origin, stage
                         request = route.request
@@ -66,6 +77,7 @@ async def repair(
                             changed_origin = True
                             stage = "origin"
 
+                    page.on("request", requested)
                     page.on("framenavigated", navigated)
                     await page.route("**/*", guard_navigation)
                     if fixture_redirect is not None:
