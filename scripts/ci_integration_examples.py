@@ -23,6 +23,7 @@ CREDENTIALS = {
     "BOX_ACCESS_TOKEN",
     "AGENTCARD_CLIENT_ID",
     "AGENTCARD_CLIENT_SECRET",
+    "YUTORI_API_KEY",
 }
 DRIVER_IMPORTS = {
     "braintrust": "from braintrust import init_logger; from notte_sdk import NotteClient",
@@ -43,7 +44,7 @@ def projects(shard: str) -> list[tuple[str, str]]:
             raise ValueError("Unknown integration example")
         if registry[name] == "node-project" and name not in NODE_PROJECTS:
             raise ValueError("Unknown Node integration project")
-        if registry[name] == "python-project" and name != "prime-intellect":
+        if registry[name] == "python-project" and name not in {"prime-intellect", "yutori"}:
             raise ValueError("Unknown Python integration project")
         if registry[name] not in {
             "node-project",
@@ -76,7 +77,12 @@ def root_tests(project: Path) -> list[str]:
 def check(project: Path, env: dict[str, str], convention: str = "") -> Path:
     python = project / ".venv/bin/python"
     if convention == "python-project":
-        run(["uv", "sync", "--locked", "--python", "3.11"], project, env)
+        if project.name == "yutori":
+            run(["uv", "venv", str(project / ".venv"), "--clear", "--python", "3.12"], project, env)
+            run(["uv", "pip", "install", "--python", str(python), "-r", "requirements.txt"], project, env)
+            run([str(python), "-m", "compileall", "-q", *sorted(p.name for p in project.glob("*.py"))], project, env)
+        else:
+            run(["uv", "sync", "--locked", "--python", "3.11"], project, env)
         run(["uv", "pip", "check", "--python", str(python)], project, env)
         run([str(python), "-m", "unittest", "-v", *root_tests(project)], project, env)
         return python
@@ -238,7 +244,8 @@ def recipe_live(name: str, python: Path, env: dict[str, str], install_env: dict[
 
 def live(project: Path, python: Path, python_env: str, env: dict[str, str], install_env: dict[str, str]) -> None:
     if python_env == "python-project":
-        env = {**project_env(project.name, env), "NOTTE_PRIME_LIVE": "1", "DISABLE_TELEMETRY": "true"}
+        flag = "NOTTE_PRIME_LIVE" if project.name == "prime-intellect" else "NOTTE_YUTORI_LIVE"
+        env = {**project_env(project.name, env), flag: "1", "DISABLE_TELEMETRY": "true"}
         for sdk in ("published", "source"):
             if sdk == "source":
                 run(
@@ -252,8 +259,7 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
                         str(ROOT / "packages/notte-core"),
                         "-e",
                         str(ROOT / "packages/notte-sdk"),
-                        "-e",
-                        str(project),
+                        *(["-e", str(project)] if project.name == "prime-intellect" else []),
                     ],
                     project,
                     install_env,

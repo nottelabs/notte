@@ -16,5 +16,6 @@
   "prime-intellect": "python-project",
   "selenium": "selenium-root",
   "temporal": "node-project",
-  "trigger": "node-project"
+  "trigger": "node-project",
+  "yutori": "python-project"
 }

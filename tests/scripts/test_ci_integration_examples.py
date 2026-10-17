@@ -27,7 +27,7 @@ from pathlib import Path
 args = [Path(sys.argv[0]).name, *sys.argv[1:]]
 with open(os.environ['COMMAND_LOG'], 'a') as log:
     log.write(json.dumps({'args': args, 'cwd': os.getcwd(),
-        'credentials': sorted(k for k in ('NOTTE_API_KEY', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'GEMINI_API_KEY', 'BRAINTRUST_API_KEY', 'LMNR_PROJECT_API_KEY', 'OP_SERVICE_ACCOUNT_TOKEN', 'BOX_ACCESS_TOKEN', 'AGENTCARD_CLIENT_ID', 'AGENTCARD_CLIENT_SECRET') if os.environ.get(k)),
+        'credentials': sorted(k for k in ('NOTTE_API_KEY', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'GEMINI_API_KEY', 'BRAINTRUST_API_KEY', 'LMNR_PROJECT_API_KEY', 'OP_SERVICE_ACCOUNT_TOKEN', 'BOX_ACCESS_TOKEN', 'AGENTCARD_CLIENT_ID', 'AGENTCARD_CLIENT_SECRET', 'YUTORI_API_KEY') if os.environ.get(k)),
         'vitest': os.environ.get('VITEST_INTEGRATION'),
         'journal': os.environ.get('NOTTE_AGENT_BROWSER_OWNERSHIP_JOURNAL'),
         'example_python': os.environ.get('NOTTE_EXAMPLE_PYTHON'),
@@ -719,3 +719,31 @@ def test_python_profile_rejects_unknown_project_before_setup(workspace: Path, mo
     with pytest.raises(ValueError, match="Unknown Python"):
         runner.projects("1/1")
     assert calls(workspace) == []
+
+
+def test_yutori_keeps_python312_requirements_and_both_sdk_modes_without_vendor_credentials(
+    workspace: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    project = shipped_project(workspace, monkeypatch, "yutori", "python-project")
+    for module in ("main.py", "test_protocol.py", "test_browser.py"):
+        (project / module).write_text("# Source fixture\n")
+    monkeypatch.setenv("NOTTE_YUTORI_LIVE", "1")
+    monkeypatch.setenv("GITHUB_REF", "refs/heads/main")
+    for key in runner.CREDENTIALS - {"NOTTE_API_KEY"}:
+        monkeypatch.setenv(key, "fixture-unused-provider")
+    runner.main()
+    observed = calls(workspace)
+    commands = [call["args"] for call in observed]
+    assert commands[0][-3:] == ["--clear", "--python", "3.12"]
+    assert commands[1][-2:] == ["-r", "requirements.txt"]
+    assert not any(command[0] in {"npm", "npx"} or "sync" in command for command in commands)
+    suites = [call for call in observed if "unittest" in call["args"]]
+    assert len(suites) == 3
+    assert all(call["args"][-2:] == ["test_browser.py", "test_protocol.py"] for call in suites)
+    assert suites[0]["credentials"] == [] and suites[0]["live_flags"]["NOTTE_YUTORI_LIVE"] == "0"
+    assert all(call["credentials"] == ["NOTTE_API_KEY"] for call in suites[1:])
+    assert all(call["live_flags"]["NOTTE_YUTORI_LIVE"] == "1" for call in suites[1:])
+    assert all(not call["credentials"] for call in observed if call not in suites)
+    source = next(command for command in commands if "-e" in command)
+    assert source[-4:] == ["-e", str(workspace / "packages/notte-core"), "-e", str(workspace / "packages/notte-sdk")]
+    assert len([command for command in commands if command[:3] == ["uv", "pip", "check"]]) == 2
