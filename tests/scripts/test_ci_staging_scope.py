@@ -28,6 +28,7 @@ def test_shared_queue_only_contains_staging_test_jobs() -> None:
         ("paired-sdk-examples.yml", "live"),
         ("readme-check.yml", "live"),
         ("agent-browser-integration.yml", "live"),
+        ("trigger-integration.yml", "browser-handler"),
         ("temporal-integration.yml", "browser-workflow"),
         ("inngest-integration.yml", "live"),
     }
