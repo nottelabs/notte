@@ -27,6 +27,20 @@ function recipe(language: typeof languages[number], overrides: NodeJS.ProcessEnv
 }
 
 describe.skipIf(process.env.NOTTE_OPENAI_AGENTS_LIVE !== '1')('OpenAI Agents SDK documentation', () => {
+  it.each([
+    ['recipe', '../../docs/src/testers/integrations/openai_agents.py'],
+    ['generated snippet', '../../docs/src/snippets/integrations/openai_agents.mdx'],
+  ])('constructs matching API URLs from the %s', async (_artifact, path) => {
+    const python = process.env.NOTTE_DOCS_PYTHON;
+    if (!python) throw new Error('Set NOTTE_DOCS_PYTHON with openai-agents==0.24.0');
+    const helper = fileURLToPath(new URL('./helpers/run-openai-recipe.py', import.meta.url));
+    const { stdout } = await execute(python, [helper, '--check-api-urls', fileURLToPath(new URL(path, import.meta.url))], {
+      env: { PATH: process.env.PATH, DISABLE_TELEMETRY: 'true' },
+      timeout: 20_000,
+    });
+    expect(JSON.parse(stdout)).toEqual({ cases: 5, network_attempts: 0 });
+  }, 30_000);
+
   it.skipIf(!process.env.OPENAI_API_KEY).each(languages)('uses the browser and closes the %s session', async language => {
     let stdout: string;
     try {
