@@ -140,7 +140,7 @@
     },
     {
       "source": "/features/sessions/selenium",
-      "destination": "/features/sessions/playwright"
+      "destination": "/integrations/selenium"
     },
     {
       "source": "/zin",
@@ -167,27 +167,7 @@
       "destination": "/integrations"
     },
     {
-      "source": "/integrations/openai-computer-use",
-      "destination": "/integrations"
-    },
-    {
-      "source": "/integrations/claude-agent-sdk",
-      "destination": "/mcp-server"
-    },
-    {
-      "source": "/integrations/claude-computer-use",
-      "destination": "/integrations"
-    },
-    {
       "source": "/integrations/computer-use-openagi",
-      "destination": "/integrations"
-    },
-    {
-      "source": "/integrations/gemini-computer-use",
-      "destination": "/integrations"
-    },
-    {
-      "source": "/integrations/laminar",
       "destination": "/integrations"
     },
     {
@@ -229,6 +209,14 @@
     {
       "source": "/api-reference/using-session-replay",
       "destination": "/api-reference/sessions/session-replay"
+    },
+    {
+      "source": "/integrations/claude-agent-sdk",
+      "destination": "/integrations/claude-agents"
+    },
+    {
+      "source": "/integrations/anthropic-computer-use",
+      "destination": "/integrations/claude-computer-use"
     }
   ],
   "errors": {
@@ -343,7 +331,9 @@
             "icon": "code",
             "pages": [
               "integrations/claude-code-ai-agents",
-              "integrations/claude-managed-agents"
+              "integrations/claude-managed-agents",
+              "integrations/replit",
+              "integrations/docker-sandboxes"
             ]
           },
           {
@@ -352,6 +342,7 @@
             "pages": [
               "integrations/browser-use",
               "integrations/langchain",
+              "integrations/deepagents",
               "integrations/crewai",
               "integrations/agno",
               "integrations/google-adk",
@@ -362,7 +353,17 @@
               "integrations/openclaw",
               "integrations/hermes",
               "integrations/stagehand",
+              "integrations/claude-agents",
               "integrations/watsonx"
+            ]
+          },
+          {
+            "group": "Computer Use",
+            "icon": "desktop",
+            "pages": [
+              "integrations/openai-computer-use",
+              "integrations/claude-computer-use",
+              "integrations/gemini-computer-use"
             ]
           },
           {
@@ -370,7 +371,31 @@
             "icon": "diagram-project",
             "pages": [
               "integrations/n8n",
-              "integrations/temporal"
+              "integrations/trigger",
+              "integrations/temporal",
+              "integrations/github-actions"
+            ]
+          },
+          {
+            "group": "Observability",
+            "icon": "chart-line",
+            "pages": [
+              "integrations/braintrust",
+              "integrations/laminar"
+            ]
+          },
+          {
+            "group": "Payments",
+            "icon": "credit-card",
+            "pages": [
+              "integrations/agentcard"
+            ]
+          },
+          {
+            "group": "File Storage",
+            "icon": "folder",
+            "pages": [
+              "integrations/box"
             ]
           },
           {
@@ -381,12 +406,20 @@
             ]
           },
           {
+            "group": "Credentials",
+            "icon": "key",
+            "pages": [
+              "integrations/onepassword"
+            ]
+          },
+          {
             "group": "Browser Drivers",
             "icon": "gamepad",
             "pages": [
               "features/sessions/playwright",
               "features/sessions/puppeteer",
-              "integrations/agent-browser"
+              "integrations/agent-browser",
+              "integrations/selenium"
             ]
           },
           {

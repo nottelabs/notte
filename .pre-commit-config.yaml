@@ -25,6 +25,8 @@ repos:
     rev: v1.5.0
     hooks:
       - id: detect-secrets
+        # The fixed 1Password integration convention is not a credential.
+        args: ["--exclude-lines", '^\s*"onepassword"\s*:\s*"typescript-driver"\s*,?\s*$']
         # Schema-name mappings such as SecretValueResponse are not credentials.
         exclude: ^(.*/README\.md|.*/pyproject\.toml|docs/archives/20250306_README\.md|README\.md|packages/notte-sdk/src/notte_sdk/_generated/schema_index\.json||tests/data/.*|tests/golden/snapshots/.*|docs/src/.*)$
 
