@@ -29,7 +29,7 @@ DRIVER_IMPORTS = {
     "onepassword": 'from onepassword import Secrets; from notte_sdk import NotteClient; Secrets.validate_secret_reference("op://Test/Login/username")',
 }
 RECIPES = {"agent-browser", "claude-agents", "openai-agents"}
-NODE_PROJECTS = {"agentcard", "inngest", "replit", "temporal", "trigger"}
+NODE_PROJECTS = {"agentcard", "e2e", "inngest", "replit", "temporal", "trigger"}
 
 
 def projects(shard: str) -> list[tuple[str, str]]:
@@ -76,6 +76,8 @@ def check(project: Path, env: dict[str, str], convention: str = "") -> Path:
         # Shared checks typecheck the TypeScript SDK and docs recipes; Python setup runs in live.
         return ROOT / ".venv/bin/python"
     if convention == "node-project":
+        if project.name == "e2e":
+            env = {**env, "E2E_TELEMETRY_DISABLED": "1"}
         run(["npm", "ci"], project, env)
         if project.name == "replit":
             run(["npm", "test"], project, env)
@@ -83,6 +85,8 @@ def check(project: Path, env: dict[str, str], convention: str = "") -> Path:
         run(["npm", "run", "build" if project.name == "temporal" else "typecheck"], project, env)
         if project.name in {"trigger", "agentcard"}:
             run(["npm", "test"], project, env)
+        elif project.name == "e2e":
+            run(["npm", "run", "test:unit"], project, env)
         return python
     if project.name == "github-actions":
         run(["uv", "sync", "--locked"], project, env)
@@ -240,10 +244,14 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
             print("Native integration: replit, hosted MCP", flush=True)
             run(["npm", "run", "test:live"], project, project_env(project.name, env))
             return
-        env = {**project_env(project.name, env), f"NOTTE_{project.name.upper()}_LIVE": "1"}
+        if project.name == "e2e":
+            env = {**project_env(project.name, env), "E2E_TELEMETRY_DISABLED": "1"}
+            install_env = {**install_env, "E2E_TELEMETRY_DISABLED": "1"}
+        else:
+            env = {**project_env(project.name, env), f"NOTTE_{project.name.upper()}_LIVE": "1"}
         if project.name == "inngest":
             env["NOTTE_INNGEST_MODEL_LIVE"] = "1" if env.get("ANTHROPIC_API_KEY") else "0"
-        for sdk in ("published", "source") if project.name in {"trigger", "agentcard"} else ("published",):
+        for sdk in ("published", "source") if project.name in {"trigger", "agentcard", "e2e"} else ("published",):
             if sdk == "source":
                 run(
                     ["npm", "install", "--no-save", "--package-lock=false", str(ROOT / "node-sdk")],
@@ -251,10 +259,12 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
                     install_env,
                 )
             print(f"Native integration: {project.name}, {sdk} SDK", flush=True)
-            if project.name in {"trigger", "agentcard"}:
+            if project.name in {"trigger", "agentcard", "e2e"}:
                 run(["npm", "run", "typecheck"], project, install_env)
-                run(["npm", "test"], project, install_env)
+                run(["npm", "run", "test:unit"] if project.name == "e2e" else ["npm", "test"], project, install_env)
             run(["npm", "run", "test:live"], project, env)
+            if project.name == "e2e":
+                run(["npm", "test"], project, env)
         return
     if project.name == "github-actions":
         env = project_env(project.name, env)

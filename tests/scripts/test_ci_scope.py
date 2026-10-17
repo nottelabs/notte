@@ -282,6 +282,20 @@ class RoutingTests(unittest.TestCase):
                 self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path, code_changed=False))
         self.assertFalse(ci.integration_examples_for_path("examples/replit/README.md"))
 
+    def test_e2e_unit_native_cli_and_guide_inputs_select_existing_pair(self) -> None:
+        for path in (
+            "examples/e2e/src/notte.ts",
+            "examples/e2e/test/provider.error.test.ts",
+            "examples/e2e/test/provider.live.test.ts",
+            "examples/e2e/tests/example.e2e.ts",
+            "examples/e2e/package-lock.json",
+            "docs/src/integrations/e2e.mdx",
+        ):
+            with self.subTest(path=path):
+                self.assertEqual(ci.integration_examples_for_path(path), {"e2e"})
+                self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path, code_changed=False))
+        self.assertFalse(ci.integration_examples_for_path("examples/e2e/README.md"))
+
     def test_shared_native_inputs_cover_every_registered_project(self) -> None:
         for path in (
             *ci.INTEGRATION_INPUTS,

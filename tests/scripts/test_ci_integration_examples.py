@@ -28,6 +28,7 @@ args = [Path(sys.argv[0]).name, *sys.argv[1:]]
 with open(os.environ['COMMAND_LOG'], 'a') as log:
     log.write(json.dumps({'args': args, 'cwd': os.getcwd(),
         'credentials': sorted(k for k in ('NOTTE_API_KEY', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'GEMINI_API_KEY', 'BRAINTRUST_API_KEY', 'LMNR_PROJECT_API_KEY', 'OP_SERVICE_ACCOUNT_TOKEN', 'BOX_ACCESS_TOKEN', 'AGENTCARD_CLIENT_ID', 'AGENTCARD_CLIENT_SECRET') if os.environ.get(k)),
+        'e2e_telemetry': os.environ.get('E2E_TELEMETRY_DISABLED'),
         'vitest': os.environ.get('VITEST_INTEGRATION'),
         'journal': os.environ.get('NOTTE_AGENT_BROWSER_OWNERSHIP_JOURNAL'),
         'example_python': os.environ.get('NOTTE_EXAMPLE_PYTHON'),
@@ -681,3 +682,44 @@ def test_replit_output_names_hosted_mcp_without_sdk_claims(
     output = capsys.readouterr().out
     assert "Native integration: replit, hosted MCP" in output
     assert "published" not in output and "source SDK" not in output
+
+
+@pytest.mark.parametrize("fail", [False, True])
+def test_e2e_preserves_unit_native_cli_modes_and_disables_telemetry(
+    workspace: Path, monkeypatch: pytest.MonkeyPatch, fail: bool
+) -> None:
+    project = shipped_project(workspace, monkeypatch, "e2e", "node-project")
+    for credential in runner.CREDENTIALS - {"NOTTE_API_KEY"}:
+        monkeypatch.setenv(credential, "fixture-unused-provider")
+    if fail:
+        monkeypatch.setenv("FAIL_NATIVE", "1")
+        with pytest.raises(subprocess.CalledProcessError) as error:
+            runner.main()
+        assert error.value.returncode == 23
+        commands = [call["args"] for call in calls(workspace)]
+        assert ["npm", "test"] not in commands
+        assert not any(command[:2] == ["npm", "install"] for command in commands)
+        return
+    runner.main()
+    observed = calls(workspace)
+    commands = [call["args"] for call in observed]
+    native = [call for call in observed if call["args"] in (["npm", "run", "test:live"], ["npm", "test"])]
+    assert len(native) == 4
+    assert all(call["credentials"] == ["NOTTE_API_KEY"] for call in native)
+    assert all(not call["credentials"] for call in observed if call not in native)
+    assert all(call["e2e_telemetry"] == "1" for call in observed)
+    assert all(call["cwd"] == str(project) for call in observed)
+    assert commands == [
+        ["npm", "ci"],
+        ["npm", "run", "typecheck"],
+        ["npm", "run", "test:unit"],
+        ["npm", "run", "typecheck"],
+        ["npm", "run", "test:unit"],
+        ["npm", "run", "test:live"],
+        ["npm", "test"],
+        ["npm", "install", "--no-save", "--package-lock=false", str(workspace / "node-sdk")],
+        ["npm", "run", "typecheck"],
+        ["npm", "run", "test:unit"],
+        ["npm", "run", "test:live"],
+        ["npm", "test"],
+    ]
