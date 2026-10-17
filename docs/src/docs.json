@@ -140,7 +140,7 @@
     },
     {
       "source": "/features/sessions/selenium",
-      "destination": "/features/sessions/playwright"
+      "destination": "/integrations/selenium"
     },
     {
       "source": "/zin",
@@ -389,7 +389,8 @@
             "pages": [
               "features/sessions/playwright",
               "features/sessions/puppeteer",
-              "integrations/agent-browser"
+              "integrations/agent-browser",
+              "integrations/selenium"
             ]
           },
           {
