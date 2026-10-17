@@ -50,7 +50,7 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '24'
-      - run: uv sync --locked && uv run --locked python -m unittest test_publish -v
+      - run: uv sync --locked && uv run --locked python -m unittest test_publish test_cli_signals -v
         working-directory: examples/github-actions
       - run: npm ci && npm run typecheck
         working-directory: examples/github-actions
@@ -102,5 +102,5 @@ jobs:
           NOTTE_EXAMPLE_PYTHON: ${{ github.workspace }}/${{ matrix.sdk == 'source' && '.venv' || 'examples/github-actions/.venv' }}/bin/python
         run: |
           test -n "$NOTTE_API_KEY" || { echo 'Set the Notte CI API key'; exit 1; }
-          "$NOTTE_EXAMPLE_PYTHON" -m unittest test_live -v
+          "$NOTTE_EXAMPLE_PYTHON" -m unittest test_cli_signals test_live -v
           npm test

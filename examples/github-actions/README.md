@@ -38,8 +38,8 @@ your usual required checks before merging; see GitHub's
 
 ## Validation
 
-Run `uv run --locked python -m unittest test_publish -v` without credentials for
-native GitHub HTTP fixtures, including retries, stale/tampered artifacts,
+Run `uv run --locked python -m unittest test_publish test_cli_signals -v` without credentials for
+native GitHub and session-lifecycle HTTP fixtures, including retries, stale/tampered artifacts,
 unrelated branches, HTTP 401 and redirects. No remote repository is modified.
 With `NOTTE_API_KEY`, run `uv run --locked python -m unittest test_live -v` and
 `NOTTE_EXAMPLE_PYTHON=.venv/bin/python npm test` for real DOM and CLI signal tests.

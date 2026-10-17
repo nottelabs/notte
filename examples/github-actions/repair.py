@@ -131,27 +131,32 @@ async def repair(
 
 if __name__ == "__main__":
     directory = Path(__file__).parent
-    interrupted = {"code": 130}
+    interrupted = {"code": 0}
 
     async def main():
         task = asyncio.current_task()
         loop = asyncio.get_running_loop()
 
-        def terminate():
-            interrupted["code"] = 143
-            task.cancel()
+        def interrupt(exit_code):
+            if not interrupted["code"]:
+                interrupted["code"] = exit_code
+                task.cancel()
 
-        loop.add_signal_handler(signal.SIGTERM, terminate)
+        previous = {sig: signal.getsignal(sig) for sig in (signal.SIGINT, signal.SIGTERM)}
         try:
+            loop.add_signal_handler(signal.SIGINT, interrupt, 130)
+            loop.add_signal_handler(signal.SIGTERM, interrupt, 143)
             return await repair((directory / "selectors.json").read_bytes())
         finally:
-            loop.remove_signal_handler(signal.SIGTERM)
+            for sig, handler in previous.items():
+                loop.remove_signal_handler(sig)
+                signal.signal(sig, handler)
 
     try:
         with asyncio.Runner() as runner:
             result = runner.run(main())
     except (asyncio.CancelledError, KeyboardInterrupt) as error:
         print(str(error) or "Selector repair interrupted")
-        raise SystemExit(interrupted["code"]) from None
+        raise SystemExit(interrupted["code"] or 130) from None
     (directory / "proposal.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"session_id": result["session_id"], "changed": len(result["changes"])}))
