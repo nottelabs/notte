@@ -369,6 +369,7 @@
             "icon": "diagram-project",
             "pages": [
               "integrations/n8n",
+              "integrations/trigger",
               "integrations/temporal"
             ]
           },
