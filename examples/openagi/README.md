@@ -6,7 +6,7 @@ Use Python 3.11+, [uv](https://docs.astral.sh/uv/), a [Notte API key](https://co
 
 From this directory, run `uv sync --locked`, set `NOTTE_API_KEY` and `OAGI_API_KEY` in your environment, then run `uv run --locked python demo.py`. No local browser or desktop automation package is needed.
 
-The demo asks the native `AsyncDefaultAgent` to copy a random code into an isolated browser form. It blocks external page requests, approves only the actions that form needs, checks the result, and closes its browser on success or error. Execution is limited to eight model steps and two minutes.
+The demo asks the native `AsyncDefaultAgent` to copy a random code into an isolated browser form. It blocks external page requests, approves only the actions that form needs, checks the result, and closes its browser on success or error. Execution is limited to eight model steps and two minutes. The demo suppresses SDK diagnostics and reports safe provider status and the session ID on failure.
 
 `notte_computer.py` maps Lux's normalized coordinates, clicks, typing, hotkeys, scrolling, and dragging to one browser viewport. Every action requires a confirmation callback. Failure and human-review actions stop execution. To use another application, replace the fixture and confirmation policy with ones appropriate to your task.
 

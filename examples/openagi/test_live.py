@@ -1,11 +1,13 @@
 import asyncio
+import io
 import json
+import logging
 import os
-import re
 import struct
 import threading
+import traceback
 import unittest
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from unittest.mock import patch
 
@@ -14,8 +16,9 @@ from demo import run_demo
 from notte_computer import BrowserActions, Screenshots
 from notte_sdk import NotteClient
 from oagi import AsyncDefaultAgent
+from oagi.logging import get_logger
 from oagi.types.models import Action
-from openai import AuthenticationError
+from playwright.async_api import BrowserType
 
 
 @contextmanager
@@ -64,7 +67,7 @@ def provider(*, failure=False, refusal=False):
                 self.send_json(
                     {
                         "error": {
-                            "message": "Fixture authentication refused",
+                            "message": "PRIVATE_PROVIDER_FIXTURE",
                             "type": "authentication_error",
                             "code": "invalid_api_key",
                         }
@@ -109,18 +112,39 @@ def provider(*, failure=False, refusal=False):
         thread.join(timeout=2)
 
 
+def journal(event, session_id):
+    if path := os.getenv("OAGI_OWNERSHIP_JOURNAL"):
+        try:
+            with open(path, "a") as output:
+                output.write(json.dumps({"event": event, "session_id": session_id}) + "\n")
+                output.flush()
+                os.fsync(output.fileno())
+        except OSError:
+            print("Ownership journal unavailable")
+
+
 async def assert_closed(test, session_id):
+    root = os.getenv("NOTTE_API_URL", "https://api.notte.cc").rstrip("/")
+    headers = {"Authorization": f"Bearer {os.environ['NOTTE_API_KEY']}"}
     async with httpx.AsyncClient(timeout=15) as client:
-        for attempt in range(30):
-            response = await client.get(
-                f"{os.getenv('NOTTE_API_URL', 'https://api.notte.cc')}/sessions/{session_id}",
-                headers={"Authorization": f"Bearer {os.environ['NOTTE_API_KEY']}"},
-            )
-            test.assertEqual(response.status_code, 200)
-            if response.json()["status"] == "closed":
-                return
-            await asyncio.sleep(0.5)
-    test.fail(f"Owned session {session_id} remained active")
+
+        async def wait_closed():
+            async with asyncio.timeout(15):
+                while True:
+                    response = await client.get(f"{root}/sessions/{session_id}", headers=headers)
+                    test.assertEqual(response.status_code, 200)
+                    if response.json()["status"] == "closed":
+                        journal("closed", session_id)
+                        return
+                    await asyncio.sleep(0.5)
+
+        try:
+            await wait_closed()
+        except BaseException:
+            response = await client.delete(f"{root}/sessions/{session_id}/stop", headers=headers)
+            test.assertTrue(response.is_success, "Owned fallback stop failed")
+            await wait_closed()
+            raise
 
 
 async def fixture(page):
@@ -148,8 +172,11 @@ class LiveTests(unittest.IsolatedAsyncioTestCase):
     async def test_mouse_actions_and_repeated_keys_reach_the_browser(self):
         session_id = None
         try:
-            async with NotteClient().Session(max_duration_minutes=3) as session:
+            async with NotteClient().Session(
+                max_duration_minutes=3, viewport_width=1024, viewport_height=768
+            ) as session:
                 session_id = session.session_id
+                journal("allocated", session_id)
                 page = await session.apage
                 await fixture(page)
                 await page.set_content(
@@ -185,8 +212,11 @@ class LiveTests(unittest.IsolatedAsyncioTestCase):
     async def test_native_agent_uploads_screenshots_and_completes_form(self):
         session_id = None
         try:
-            async with NotteClient().Session(max_duration_minutes=3) as session:
+            async with NotteClient().Session(
+                max_duration_minutes=3, viewport_width=1024, viewport_height=768
+            ) as session:
                 session_id = session.session_id
+                journal("allocated", session_id)
                 page = await session.apage
                 await fixture(page)
                 with provider() as (url, state):
@@ -212,26 +242,93 @@ class LiveTests(unittest.IsolatedAsyncioTestCase):
                 await assert_closed(self, session_id)
 
     async def test_real_sdk_http_401_closes_demo_browser(self):
-        with (
-            provider(failure=True) as (url, state),
-            patch.dict(os.environ, {"OAGI_BASE_URL": url, "OAGI_API_KEY": "fixture-token"}),
-        ):
-            with self.assertRaises(RuntimeError) as result:
-                await run_demo()
-        error = result.exception
-        self.assertIsInstance(error.__cause__, AuthenticationError)
-        self.assertIn("provider HTTP 401", str(error))
-        session_id = re.search(r"session ([a-f0-9-]{36})", str(error))
-        self.assertIsNotNone(session_id)
-        await assert_closed(self, session_id.group(1))
-        self.assertEqual(len(state["uploads"]), 1)
-        self.assertEqual(len(state["requests"]), 1)
+        for mode in ("normal", "reject", "timeout"):
+            with self.subTest(close=mode):
+                client = NotteClient()
+                start = client.sessions.start
+                connect = BrowserType.connect_over_cdp
+                ids, closes = [], []
+                failure = None
+                messages = io.StringIO()
+                logger = logging.getLogger("oagi")
+
+                def tracked(*args, **kwargs):
+                    response = start(*args, **kwargs)
+                    ids.append(response.session_id)
+                    journal("allocated", response.session_id)
+                    return response
+
+                async def connected(browser_type, *args, **kwargs):
+                    browser = await connect(browser_type, *args, **kwargs)
+                    close = browser.close
+
+                    async def disconnect():
+                        await close()
+                        closes.append(True)
+                        if mode == "timeout":
+                            await asyncio.Future()
+                        raise RuntimeError("PRIVATE_CLOSE_FIXTURE")
+
+                    browser.close = disconnect
+                    return browser
+
+                with (
+                    provider(failure=True) as (url, state),
+                    patch.dict(
+                        os.environ,
+                        {
+                            "OAGI_BASE_URL": url,
+                            "OAGI_API_KEY": "fixture-token",  # pragma: allowlist secret
+                            "OAGI_LOG": "INFO",
+                        },
+                    ),
+                    patch("demo.NotteClient", return_value=client),
+                    patch.object(client.sessions, "start", side_effect=tracked),
+                    patch.object(BrowserType, "connect_over_cdp", new=connected) if mode != "normal" else nullcontext(),
+                ):
+                    get_logger("privacy-test")
+                    self.assertEqual(
+                        logger.getEffectiveLevel(), logging.INFO, "Initialize SDK diagnostics before the demo"
+                    )
+                    streams = [
+                        (handler, handler.stream)
+                        for handler in logger.handlers
+                        if isinstance(handler, logging.StreamHandler)
+                    ]
+                    for handler, _ in streams:
+                        handler.setStream(messages)
+                    try:
+                        try:
+                            await asyncio.wait_for(run_demo(), timeout=45)
+                        except Exception as error:
+                            failure = error
+                    finally:
+                        try:
+                            for session_id in ids:
+                                await assert_closed(self, session_id)
+                        finally:
+                            for handler, stream in streams:
+                                handler.setStream(stream)
+                self.assertEqual(len(ids), 1, "Expected one owned demo browser")
+                self.assertIsInstance(failure, RuntimeError)
+                self.assertIsNone(failure.__cause__)
+                self.assertTrue(failure.__suppress_context__)
+                self.assertIn("provider HTTP 401", str(failure))
+                diagnostic = "".join(traceback.format_exception(failure)) + messages.getvalue()
+                self.assertFalse("PRIVATE_PROVIDER_FIXTURE" in diagnostic, "Private provider diagnostics leaked")
+                self.assertFalse("PRIVATE_CLOSE_FIXTURE" in diagnostic, "Private close diagnostics leaked")
+                self.assertEqual(closes, [] if mode == "normal" else [True])
+                self.assertEqual(len(state["uploads"]), 1)
+                self.assertEqual(len(state["requests"]), 1)
 
     async def test_native_agent_failure_is_not_reported_as_success(self):
         session_id = None
         try:
-            async with NotteClient().Session(max_duration_minutes=3) as session:
+            async with NotteClient().Session(
+                max_duration_minutes=3, viewport_width=1024, viewport_height=768
+            ) as session:
                 session_id = session.session_id
+                journal("allocated", session_id)
                 page = await session.apage
                 await fixture(page)
                 with provider(refusal=True) as (url, state):
@@ -247,8 +344,11 @@ class LiveTests(unittest.IsolatedAsyncioTestCase):
     async def test_actions_reject_invalid_geometry_counts_and_permissions(self):
         session_id = None
         try:
-            async with NotteClient().Session(max_duration_minutes=3) as session:
+            async with NotteClient().Session(
+                max_duration_minutes=3, viewport_width=1024, viewport_height=768
+            ) as session:
                 session_id = session.session_id
+                journal("allocated", session_id)
                 page = await session.apage
                 await fixture(page)
                 actions = BrowserActions(page, confirm=allow)

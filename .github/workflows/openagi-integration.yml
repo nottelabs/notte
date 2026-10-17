@@ -64,7 +64,7 @@ jobs:
         run: uv sync --locked
         working-directory: examples/openagi
       - if: matrix.sdk == 'source'
-        run: uv sync --locked --package notte-sdk --no-dev && uv pip install oagi-core==0.15.3 playwright==1.64.0
+        run: uv sync --locked --package notte-sdk --no-dev && uv pip install oagi-core==0.15.3 playwright==1.64.0 && uv pip check
       - uses: ./.github/actions/wait-for-api
         with:
           api-url: https://us-staging.notte.cc
@@ -74,5 +74,7 @@ jobs:
           NOTTE_API_URL: https://us-staging.notte.cc
           NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
           NOTTE_EXAMPLE_PYTHON: ${{ github.workspace }}/${{ matrix.sdk == 'source' && '.venv' || 'examples/openagi/.venv' }}/bin/python
-        run: '"$NOTTE_EXAMPLE_PYTHON" -m unittest test_live -v'
+        run: |
+          test -n "$NOTTE_API_KEY"
+          "$NOTTE_EXAMPLE_PYTHON" -m unittest test_live -v
         working-directory: examples/openagi

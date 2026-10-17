@@ -31,6 +31,7 @@ def test_shared_queue_only_contains_staging_test_jobs() -> None:
         ("trigger-integration.yml", "browser-handler"),
         ("temporal-integration.yml", "browser-workflow"),
         ("inngest-integration.yml", "live"),
+        ("openagi-integration.yml", "live"),
     }
     queued = set()
     for path in WORKFLOWS.glob("*.yml"):
