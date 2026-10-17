@@ -1,0 +1,60 @@
+name: Replit integration
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/replit-integration.yml
+      - examples/replit/**
+      - docs/src/integrations/replit.mdx
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/replit-integration.yml
+      - examples/replit/**
+      - docs/src/integrations/replit.mdx
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+      - run: npm ci && npm test
+        working-directory: examples/replit
+  live:
+    needs: static
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    concurrency:
+      group: notte-live-api-${{ github.ref }}
+      queue: max
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+      - run: npm ci
+        working-directory: examples/replit
+      - uses: ./.github/actions/wait-for-api
+        with:
+          api-url: https://us-staging.notte.cc
+          timeout: '300'
+      - name: Verify hosted MCP navigation, scraping, and cleanup
+        env:
+          NOTTE_API_URL: https://us-staging.notte.cc
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
+        run: npm run test:live
+        working-directory: examples/replit
