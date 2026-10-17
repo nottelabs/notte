@@ -59,6 +59,75 @@ def model_endpoint(responses, status=200):
 
 
 class NativeProtocolTests(unittest.IsolatedAsyncioTestCase):
+    async def test_owner_cleanup_failure_is_safe_and_preserves_primary_error(self):
+        for primary in (None, demo.BrowserTaskError("Yutori primary task failed")):
+            with self.subTest(primary=primary is not None):
+                session = NotteClient(api_key="test-only").Session(wait_for_authentication=False)
+                with (
+                    patch.object(demo, "NotteClient", return_value=SimpleNamespace(Session=lambda **_kwargs: session)),
+                    patch.object(session, "start"),
+                    patch.object(session, "cdp_url", return_value="wss://test-only.invalid"),
+                    patch.object(session, "stop", side_effect=RuntimeError("PRIVATE_CLEANUP_FIXTURE")),
+                ):
+                    with self.assertRaises(demo.BrowserTaskError) as caught:
+                        async with demo.owned_connection():
+                            if primary is not None:
+                                raise primary
+                    if primary is not None:
+                        self.assertIs(caught.exception, primary)
+                        self.assertEqual(primary.__notes__, ["Yutori browser cleanup failed"])
+                    else:
+                        self.assertEqual(str(caught.exception), "Yutori browser cleanup failed")
+                        self.assertIsNone(caught.exception.__cause__)
+                        self.assertTrue(caught.exception.__suppress_context__)
+
+    async def test_connection_failure_is_safe_and_stops_owned_session(self):
+        session = NotteClient(api_key="test-only").Session(wait_for_authentication=False)
+        with (
+            patch.object(demo, "NotteClient", return_value=SimpleNamespace(Session=lambda **_kwargs: session)),
+            patch.object(session, "start"),
+            patch.object(session, "cdp_url", side_effect=RuntimeError("PRIVATE_CONNECTION_FIXTURE")),
+            patch.object(session, "stop") as stop,
+        ):
+            with self.assertRaisesRegex(demo.BrowserTaskError, "Yutori browser connection failed") as caught:
+                async with demo.owned_connection():
+                    self.fail("A failed connection must not enter the browser task")
+            self.assertTrue(caught.exception.__suppress_context__)
+            self.assertIsNone(caught.exception.__cause__)
+            stop.assert_called_once()
+
+    async def test_repeated_startup_cancellation_joins_owned_creation_and_stops(self):
+        session = NotteClient(api_key="test-only").Session(wait_for_authentication=False)
+        started, release = threading.Event(), threading.Event()
+        calls = []
+
+        def start(*_args, **_kwargs):
+            started.set()
+            assert release.wait(5), "Release the bounded startup fixture"
+            calls.append("created")
+
+        async def connect():
+            async with demo.owned_connection():
+                self.fail("Cancelled startup must not enter the browser task")
+
+        with (
+            patch.object(demo, "NotteClient", return_value=SimpleNamespace(Session=lambda **_kwargs: session)),
+            patch.object(session, "start", side_effect=start),
+            patch.object(session, "stop", side_effect=lambda: calls.append("stopped")),
+        ):
+            task = asyncio.create_task(connect())
+            try:
+                self.assertTrue(await asyncio.to_thread(started.wait, 2))
+                task.cancel()
+                await asyncio.sleep(0)
+                task.cancel()
+            finally:
+                release.set()
+                with self.assertRaises(asyncio.CancelledError):
+                    await task
+                await asyncio.to_thread(lambda: None)
+        self.assertEqual(calls, ["created", "stopped"])
+
     async def test_sdk_lifecycle_and_connection_lookup_leave_loop_responsive(self):
         session = NotteClient(api_key="test-only").Session(wait_for_authentication=False)
         calls = []
@@ -98,7 +167,7 @@ class NativeProtocolTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_unmodified_sdk_serializes_native_model_contract(self):
         with model_endpoint([completion("goto_url", {"url": "https://example.com"})]) as (url, requests):
-            async with AsyncYutoriClient(api_key="test-only", base_url=url) as client:
+            async with AsyncYutoriClient(api_key="test-only", base_url=url) as client:  # pragma: allowlist secret
                 result = await client.chat.completions.create(
                     model=N1_5_MODEL,
                     messages=[{"role": "user", "content": "Read this page"}],

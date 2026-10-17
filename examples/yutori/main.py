@@ -1,5 +1,6 @@
 import asyncio
 import json
+import sys
 from contextlib import AsyncExitStack, asynccontextmanager
 from urllib.parse import urlsplit
 
@@ -85,15 +86,44 @@ async def act(page: Page, name: str, arguments: dict):
             raise BrowserTaskError("Yutori keyboard cleanup failed") from None
 
 
+async def _finish_owned(task):
+    cancelled = False
+    while True:
+        try:
+            return await asyncio.shield(task), cancelled
+        except asyncio.CancelledError:
+            if task.cancelled():
+                raise
+            cancelled = True
+
+
 @asynccontextmanager
 async def owned_connection():
     session = NotteClient().Session(max_duration_minutes=3, proxies=False, viewport_width=1280, viewport_height=800)
-    await session.__aenter__()
+    entered = False
     try:
+        _, cancelled = await _finish_owned(asyncio.create_task(session.__aenter__()))
+        entered = True
+        if cancelled:
+            raise asyncio.CancelledError
         endpoint = await asyncio.to_thread(session.cdp_url)
         yield session, endpoint
+    except Exception as error:
+        if isinstance(error, BrowserTaskError):
+            raise
+        raise BrowserTaskError("Yutori browser connection failed") from None
     finally:
-        await asyncio.to_thread(session.stop)
+        primary = sys.exception()
+        if entered or session.response is not None:
+            try:
+                _, cancelled = await _finish_owned(asyncio.create_task(asyncio.to_thread(session.stop)))
+            except Exception:
+                if primary is None:
+                    raise BrowserTaskError("Yutori browser cleanup failed") from None
+                primary.add_note("Yutori browser cleanup failed")
+            else:
+                if cancelled and primary is None:
+                    raise asyncio.CancelledError
 
 
 async def run(
@@ -141,7 +171,12 @@ async def run(
                                 )
                         raise BrowserTaskError("Yutori step limit reached")
                     finally:
-                        await browser.close()
+                        failed = sys.exception() is not None
+                        try:
+                            await asyncio.wait_for(browser.close(), timeout=5)
+                        except Exception:
+                            if not failed:
+                                raise BrowserTaskError("Yutori browser disconnect failed") from None
             except APIStatusError as error:
                 raise BrowserTaskError(f"Yutori {step} failed (HTTP {error.status_code})") from None
             except Exception as error:

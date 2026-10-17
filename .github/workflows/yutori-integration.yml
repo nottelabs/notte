@@ -6,11 +6,17 @@ on:
     paths:
       - .github/workflows/yutori-integration.yml
       - examples/yutori/**
+      - packages/notte-sdk/**
+      - packages/notte-core/**
+      - uv.lock
   push:
     branches: [main]
     paths:
       - .github/workflows/yutori-integration.yml
       - examples/yutori/**
+      - packages/notte-sdk/**
+      - packages/notte-core/**
+      - uv.lock
 
 permissions:
   contents: read
@@ -34,7 +40,11 @@ jobs:
       - run: python -m unittest test_protocol -v
   live:
     needs: static
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    strategy:
+      fail-fast: false
+      matrix:
+        sdk: [published, source]
+    if: github.actor != 'dependabot[bot]' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     concurrency:
@@ -55,7 +65,11 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.12'
-      - run: pip install -r requirements.txt
+      - if: matrix.sdk == 'published'
+        run: pip install -r requirements.txt
+      - if: matrix.sdk == 'source'
+        run: pip install ../../packages/notte-core ../../packages/notte-sdk yutori==0.9.36 playwright==1.63.0
+      - run: pip check
       - name: Require the Notte test key
         run: test -n "$NOTTE_API_KEY"
       - name: Wait for the API
@@ -63,4 +77,4 @@ jobs:
         with:
           api-url: https://us-staging.notte.cc
           timeout: '300'
-      - run: python -m unittest test_browser -v
+      - run: python -m unittest test_protocol test_browser -v
