@@ -243,6 +243,7 @@ class RoutingTests(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
                 self.assertEqual(ci.integration_examples_for_path(path), {"onepassword"})
+
     def test_box_capture_inputs_route_to_existing_paired_jobs(self) -> None:
         for filename in (
             "main.py",
@@ -259,6 +260,13 @@ class RoutingTests(unittest.TestCase):
                 self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
         self.assertFalse(ci.integration_examples_for_path("examples/box/README.md"))
 
+    def test_agentcard_inputs_select_existing_native_sdk_modes(self) -> None:
+        for filename in ("src/main.ts", "test/browser.live.test.ts", "test/checkout.test.ts", "package-lock.json"):
+            path = f"examples/agentcard/{filename}"
+            with self.subTest(path=path):
+                self.assertEqual(ci.integration_examples_for_path(path), {"agentcard"})
+                self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
+        self.assertFalse(ci.integration_examples_for_path("examples/agentcard/README.md"))
 
     def test_shared_native_inputs_cover_every_registered_project(self) -> None:
         for path in (

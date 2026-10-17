@@ -27,7 +27,7 @@ from pathlib import Path
 args = [Path(sys.argv[0]).name, *sys.argv[1:]]
 with open(os.environ['COMMAND_LOG'], 'a') as log:
     log.write(json.dumps({'args': args, 'cwd': os.getcwd(),
-        'credentials': sorted(k for k in ('NOTTE_API_KEY', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'GEMINI_API_KEY', 'BRAINTRUST_API_KEY', 'LMNR_PROJECT_API_KEY', 'OP_SERVICE_ACCOUNT_TOKEN', 'BOX_ACCESS_TOKEN') if os.environ.get(k)),
+        'credentials': sorted(k for k in ('NOTTE_API_KEY', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'GEMINI_API_KEY', 'BRAINTRUST_API_KEY', 'LMNR_PROJECT_API_KEY', 'OP_SERVICE_ACCOUNT_TOKEN', 'BOX_ACCESS_TOKEN', 'AGENTCARD_CLIENT_ID', 'AGENTCARD_CLIENT_SECRET') if os.environ.get(k)),
         'vitest': os.environ.get('VITEST_INTEGRATION'),
         'journal': os.environ.get('NOTTE_AGENT_BROWSER_OWNERSHIP_JOURNAL'),
         'example_python': os.environ.get('NOTTE_EXAMPLE_PYTHON'),
@@ -488,6 +488,8 @@ def test_box_capture_failure_reaches_paired_gate_before_source_or_other_project(
         for call in calls(workspace)
         if "test_capture" not in call["args"] and "test:capture" not in call["args"]
     )
+
+
 def shipped_project(workspace: Path, monkeypatch: pytest.MonkeyPatch, name: str, convention: str) -> Path:
     runner.REGISTRY.write_text(json.dumps({name: convention}))
     monkeypatch.setenv("INTEGRATION_EXAMPLES", json.dumps([name]))
@@ -501,19 +503,21 @@ def shipped_project(workspace: Path, monkeypatch: pytest.MonkeyPatch, name: str,
     return workspace / "examples" / name
 
 
-@pytest.mark.parametrize("name,count", [("trigger", 2), ("inngest", 1), ("temporal", 1)])
+@pytest.mark.parametrize("name,count", [("agentcard", 2), ("trigger", 2), ("inngest", 1), ("temporal", 1)])
 def test_node_projects_keep_existing_sdk_modes_and_no_paid_pr_calls(
     workspace: Path, monkeypatch: pytest.MonkeyPatch, name: str, count: int
 ) -> None:
     project = shipped_project(workspace, monkeypatch, name, "node-project")
     monkeypatch.setenv("GITHUB_REF", "refs/pull/1/merge")
     monkeypatch.setenv("GITHUB_EVENT_NAME", "pull_request")
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "fixture-other-provider")
+    for key in runner.CREDENTIALS - {"NOTTE_API_KEY"}:
+        monkeypatch.setenv(key, "fixture-unused-provider")
     runner.main()
     observed = calls(workspace)
     native = [call for call in observed if call["args"] == ["npm", "run", "test:live"]]
     assert len(native) == count
     assert all(call["credentials"] == ["NOTTE_API_KEY"] and call["cwd"] == str(project) for call in native)
+    assert all(call["live_flags"][f"NOTTE_{name.upper()}_LIVE"] == "1" for call in native)
     assert all(not call["credentials"] for call in observed if call not in native)
     commands = [call["args"] for call in observed]
     source = [command for command in commands if command[:2] == ["npm", "install"]]
@@ -600,7 +604,10 @@ def test_github_actions_retains_flat_tests_and_selected_source_python(
     assert ["npm", "install", "--no-save", "--package-lock=false", str(workspace / "node-sdk")] in commands
 
 
-@pytest.mark.parametrize("name,convention", [("trigger", "node-project"), ("openai-agents", "NOTTE_DOCS_PYTHON")])
+@pytest.mark.parametrize(
+    "name,convention",
+    [("agentcard", "node-project"), ("trigger", "node-project"), ("openai-agents", "NOTTE_DOCS_PYTHON")],
+)
 def test_consolidated_native_failure_stops_before_other_sdk_or_project(
     workspace: Path, monkeypatch: pytest.MonkeyPatch, name: str, convention: str
 ) -> None:

@@ -21,13 +21,15 @@ CREDENTIALS = {
     "LMNR_PROJECT_API_KEY",
     "OP_SERVICE_ACCOUNT_TOKEN",
     "BOX_ACCESS_TOKEN",
+    "AGENTCARD_CLIENT_ID",
+    "AGENTCARD_CLIENT_SECRET",
 }
 DRIVER_IMPORTS = {
     "braintrust": "from braintrust import init_logger; from notte_sdk import NotteClient",
     "onepassword": 'from onepassword import Secrets; from notte_sdk import NotteClient; Secrets.validate_secret_reference("op://Test/Login/username")',
 }
 RECIPES = {"agent-browser", "claude-agents", "openai-agents"}
-NODE_PROJECTS = {"inngest", "temporal", "trigger"}
+NODE_PROJECTS = {"agentcard", "inngest", "temporal", "trigger"}
 
 
 def projects(shard: str) -> list[tuple[str, str]]:
@@ -76,7 +78,7 @@ def check(project: Path, env: dict[str, str], convention: str = "") -> Path:
     if convention == "node-project":
         run(["npm", "ci"], project, env)
         run(["npm", "run", "build" if project.name == "temporal" else "typecheck"], project, env)
-        if project.name == "trigger":
+        if project.name in {"trigger", "agentcard"}:
             run(["npm", "test"], project, env)
         return python
     if project.name == "github-actions":
@@ -234,7 +236,7 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
         env = {**project_env(project.name, env), f"NOTTE_{project.name.upper()}_LIVE": "1"}
         if project.name == "inngest":
             env["NOTTE_INNGEST_MODEL_LIVE"] = "1" if env.get("ANTHROPIC_API_KEY") else "0"
-        for sdk in ("published", "source") if project.name == "trigger" else ("published",):
+        for sdk in ("published", "source") if project.name in {"trigger", "agentcard"} else ("published",):
             if sdk == "source":
                 run(
                     ["npm", "install", "--no-save", "--package-lock=false", str(ROOT / "node-sdk")],
@@ -242,7 +244,7 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
                     install_env,
                 )
             print(f"Native integration: {project.name}, {sdk} SDK", flush=True)
-            if project.name == "trigger":
+            if project.name in {"trigger", "agentcard"}:
                 run(["npm", "run", "typecheck"], project, install_env)
                 run(["npm", "test"], project, install_env)
             run(["npm", "run", "test:live"], project, env)
