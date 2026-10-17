@@ -168,14 +168,10 @@
     },
     {
       "source": "/integrations/computer-use-openagi",
-      "destination": "/integrations"
+      "destination": "/integrations/openagi"
     },
     {
       "source": "/integrations/magnitude",
-      "destination": "/integrations"
-    },
-    {
-      "source": "/integrations/val-town",
       "destination": "/integrations"
     },
     {
@@ -333,6 +329,7 @@
               "integrations/claude-code-ai-agents",
               "integrations/claude-managed-agents",
               "integrations/replit",
+              "integrations/docker-sandboxes",
               "integrations/fx"
             ]
           },
@@ -354,6 +351,8 @@
               "integrations/hermes",
               "integrations/stagehand",
               "integrations/claude-agents",
+              "integrations/prime-intellect",
+              "integrations/watsonx",
               "integrations/eve"
             ]
           },
@@ -363,7 +362,10 @@
             "pages": [
               "integrations/openai-computer-use",
               "integrations/claude-computer-use",
-              "integrations/gemini-computer-use"
+              "integrations/gemini-computer-use",
+              "integrations/yutori",
+              "integrations/openagi",
+              "integrations/tzafon"
             ]
           },
           {
@@ -373,7 +375,8 @@
               "integrations/n8n",
               "integrations/trigger",
               "integrations/temporal",
-              "integrations/github-actions"
+              "integrations/github-actions",
+              "integrations/val-town"
             ]
           },
           {
@@ -388,7 +391,8 @@
             "group": "Payments",
             "icon": "credit-card",
             "pages": [
-              "integrations/agentcard"
+              "integrations/agentcard",
+              "integrations/stripe-link"
             ]
           },
           {
@@ -403,6 +407,13 @@
             "icon": "envelope",
             "pages": [
               "integrations/agentmail"
+            ]
+          },
+          {
+            "group": "Databases",
+            "icon": "database",
+            "pages": [
+              "integrations/mongodb"
             ]
           },
           {

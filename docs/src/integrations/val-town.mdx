@@ -1,6 +1,25 @@
 ---
 title: Val Town
-description: Integration with Val Town
+description: Run Notte browser tasks from Val Town HTTP triggers.
 ---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
-Todo
+<AgentMdNotice />
+
+[Val Town](https://docs.val.town/vals/http) runs TypeScript HTTP handlers on Deno. The [runnable example](https://github.com/nottelabs/notte/tree/main/examples/valtown) opens a Notte browser, reads a page title, and closes the session before returning JSON.
+
+## Set up
+
+Create a val in [Val Town](https://www.val.town/new), copy the example's `main.ts` into a file, and add an HTTP trigger.
+
+In the val's Environment Variables sidebar, set `NOTTE_API_KEY` from [Notte](https://console.notte.cc/apikeys). Set `NOTTE_VALTOWN_TOKEN` to a private invocation token you choose.
+
+Send a POST request to the trigger URL with `Authorization: Bearer <NOTTE_VALTOWN_TOKEN>`. The response contains `title` and the closed browser's `session_id`. Unauthenticated requests cannot create browser sessions.
+
+## How it connects
+
+The handler uses Deno's built-in `fetch` with Notte's session and page-execution APIs. The browser runs in Notte, so Val Town needs no browser binary or filesystem access. Cleanup runs on success and failure. The sample visits `https://example.com`; edit its task to browse another page.
+
+The example's README includes offline and live verification commands. See Val Town's [environment variables guide](https://docs.val.town/reference/environment-variables) for managing your keys.
+
+Verified locally with Deno 2.9.6 and real Notte browsers. Hosted Val Town execution has not been verified.
