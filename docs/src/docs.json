@@ -171,10 +171,6 @@
       "destination": "/integrations"
     },
     {
-      "source": "/integrations/laminar",
-      "destination": "/integrations"
-    },
-    {
       "source": "/integrations/magnitude",
       "destination": "/integrations"
     },
@@ -381,7 +377,16 @@
             "group": "Observability",
             "icon": "chart-line",
             "pages": [
-              "integrations/braintrust"
+              "integrations/braintrust",
+              "integrations/laminar"
+            ]
+          },
+          {
+            "group": "Payments",
+            "icon": "credit-card",
+            "pages": [
+              "integrations/agentcard",
+              "integrations/stripe-link"
             ]
           },
           {
@@ -392,17 +397,24 @@
             ]
           },
           {
-            "group": "Payments",
-            "icon": "credit-card",
-            "pages": [
-              "integrations/stripe-link"
-            ]
-          },
-          {
             "group": "Email",
             "icon": "envelope",
             "pages": [
               "integrations/agentmail"
+            ]
+          },
+          {
+            "group": "Databases",
+            "icon": "database",
+            "pages": [
+              "integrations/mongodb"
+            ]
+          },
+          {
+            "group": "Credentials",
+            "icon": "key",
+            "pages": [
+              "integrations/onepassword"
             ]
           },
           {
