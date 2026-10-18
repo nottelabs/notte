@@ -20,7 +20,9 @@ The demo reads `example.com`, lists the selected app's tools, and returns a tool
 
 Keep credentials server-side and derive Pipedream's external user ID from your authenticated application. Pipedream manages provider connections; your Notte key only authenticates browser requests.
 
-Tool discovery does not make every advertised action read-only. To call one tool, select its advertised name and schema, obtain the required approval, and complete its connection flow. Store a JSON object with `name` and `arguments` in a private file outside your checkout, then set `PIPEDREAM_ACTION_FILE` to its path. The example verifies the offered name, rejects MCP errors, and discards provider output. Its completion flag confirms a successful MCP response, not a verified vendor side effect. Pipedream can return a hosted Connect Link when an action needs authorization; discovery alone does not start OAuth.
+Run `uv run --locked python demo.py --discover` or `npm start -- --discover` to include tool names and input schemas from every discovery page in the JSON output. Treat this app metadata as private. Unset `PIPEDREAM_ACTION_FILE` first; discovery mode rejects an action file and never executes a tool call.
+
+Tool discovery does not make every advertised action read-only. To call one tool, select its name and input schema from `--discover`, obtain the required approval, and complete its connection flow. Store a JSON object with `name` and `arguments` in a private file outside your checkout, then set `PIPEDREAM_ACTION_FILE` to its path. The example verifies the offered name, rejects MCP errors, and discards provider output. Its completion flag confirms a successful MCP response, not a verified vendor side effect. Pipedream can return a hosted Connect Link when an action needs authorization; discovery alone does not start OAuth.
 
 The example owns a browser with a three-minute lifetime and closes it on success, failure or cancellation. It does not add a Notte OAuth UI or automatically attach connected-app tools to Notte Agent API runs.
 

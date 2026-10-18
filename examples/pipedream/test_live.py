@@ -3,6 +3,8 @@ import json
 import os
 import re
 import socket
+import subprocess
+import sys
 import threading
 import time
 import unittest
@@ -11,7 +13,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from unittest.mock import patch
 
 import httpx2
-from demo import PipedreamConfig, discover, load_action, run_demo
+from demo import PipedreamConfig, cli_output, discover, load_action, run_demo
 from notte_sdk import NotteClient
 
 CONFIG = PipedreamConfig("fixture-client", "fixture-secret", "proj_fixture", "user-fixture")
@@ -119,6 +121,35 @@ def closed(session_id):
 
 
 class LiveTests(unittest.TestCase):
+    def test_discovery_cli_output_and_action_file_refusal(self):
+        schema = {"type": "object", "properties": {"issue": {"type": "integer"}}, "required": ["issue"]}
+        tools = [{"name": "fixture_catalog_read", "inputSchema": schema}]
+        result = {
+            "session_id": "fixture-session",
+            "page": {"private": "fixture-page-content"},
+            "tool_names": ["fixture_catalog_read"],
+            "tools": tools,
+            "tool_call_completed": False,
+        }
+        self.assertEqual(
+            cli_output(result),
+            {"session_id": "fixture-session", "tool_count": 1, "tool_call_completed": False},
+        )
+        output = cli_output(result, discover_tools=True)
+        self.assertEqual(output, {**cli_output(result), "tools": tools})
+        self.assertNotIn("fixture-page-content", json.dumps(output))
+        process = subprocess.run(
+            [sys.executable, "demo.py", "--discover"],
+            env={"PIPEDREAM_ACTION_FILE": "fixture-private-path", "DISABLE_TELEMETRY": "true"},
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        self.assertEqual(process.returncode, 2)
+        self.assertEqual(process.stdout, "")
+        self.assertIn("Unset PIPEDREAM_ACTION_FILE when using --discover", process.stderr)
+        self.assertNotIn("fixture-private-path", process.stderr)
+
     def test_notte_mcp_uses_api_root_without_network(self):
         original_client = httpx2.AsyncClient
         for value, expected in (
@@ -281,6 +312,14 @@ class LiveTests(unittest.TestCase):
                             else ["fixture_catalog_read"],
                         )
                         self.assertEqual(result["tool_call_completed"], mode in {"action", "pagination"})
+                        self.assertEqual(
+                            cli_output(result, discover_tools=True)["tools"],
+                            [
+                                {"name": name, "inputSchema": {"type": "object", "properties": {}}}
+                                for name in result["tool_names"]
+                            ],
+                        )
+                        self.assertNotIn("tools", cli_output(result))
                         self.assertNotIn("fixture-output", json.dumps(result))
                         self.assertNotIn("fixture-private-argument", json.dumps(result))
                     else:

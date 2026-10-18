@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { once } from 'node:events';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'node:http';
@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import type { AddressInfo } from 'node:net';
 import { test } from 'node:test';
 import { setTimeout as sleep } from 'node:timers/promises';
-import { loadAction, runDemo } from '../demo.ts';
+import { cliOutput, loadAction, runDemo } from '../demo.ts';
 
 const config = { clientId: 'fixture-client', clientSecret: 'fixture-secret', projectId: 'proj_fixture', externalUserId: 'user-fixture' }; // pragma: allowlist secret
 
@@ -77,6 +77,8 @@ for (const mode of ['success', 'action', 'action_error', 'unoffered', 'paginatio
       assert.match(JSON.stringify(result.page), /Example Domain/);
       assert.deepEqual(result.tool_names, mode === 'pagination' ? ['fixture_first_page', 'fixture_catalog_read'] : ['fixture_catalog_read']);
       assert.equal(result.tool_call_completed, ['action', 'pagination'].includes(mode));
+      assert.deepEqual(cliOutput(result, true).tools, result.tool_names.map((name) => ({ name, inputSchema: { type: 'object', properties: {} } })));
+      assert.equal('tools' in cliOutput(result), false);
       assert.doesNotMatch(JSON.stringify(result), /fixture-private-argument|fixture-output/);
     } else {
       try { await run; assert.fail('Expected the real failure'); }
@@ -112,6 +114,24 @@ for (const mode of ['success', 'action', 'action_error', 'unoffered', 'paginatio
     console.log(`${mode}: owned browser ${id} independently closed`);
   });
 }
+
+test('discovery CLI exposes schemas without page content and refuses action files', () => {
+  const tools = [{ name: 'fixture_catalog_read', inputSchema: { type: 'object', properties: { issue: { type: 'integer' } }, required: ['issue'] } }];
+  const result = { session_id: 'fixture-session', page: { private: 'fixture-page-content' }, tool_names: ['fixture_catalog_read'], tools, tool_call_completed: false };
+  const summary = { session_id: 'fixture-session', tool_count: 1, tool_call_completed: false };
+  assert.deepEqual(cliOutput(result), summary);
+  assert.deepEqual(cliOutput(result, true), { ...summary, tools });
+  assert.doesNotMatch(JSON.stringify(cliOutput(result, true)), /fixture-page-content/);
+  const processResult = spawnSync(process.execPath, ['demo.ts', '--discover'], {
+    env: { PIPEDREAM_ACTION_FILE: 'fixture-private-path', DISABLE_TELEMETRY: 'true' },
+    cwd: fileURLToPath(new URL('..', import.meta.url)), encoding: 'utf8', timeout: 15_000,
+  });
+  assert.ifError(processResult.error);
+  assert.equal(processResult.status, 1);
+  assert.equal(processResult.stdout, '');
+  assert.match(processResult.stderr, /Unset PIPEDREAM_ACTION_FILE when using --discover/);
+  assert.doesNotMatch(processResult.stderr, /fixture-private-path/);
+});
 
 
 test('private action file validation keeps its contents out of errors', async () => {

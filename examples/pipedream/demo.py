@@ -1,3 +1,4 @@
+import argparse
 import asyncio
 import json
 import os
@@ -38,6 +39,17 @@ def load_action(path: str | None) -> dict[str, Any] | None:
         return value
     except Exception:
         raise ValueError("Action file must contain a tool name and arguments object") from None
+
+
+def cli_output(result: dict[str, Any], *, discover_tools: bool = False) -> dict[str, Any]:
+    output = {
+        "session_id": result["session_id"],
+        "tool_count": len(result["tool_names"]),
+        "tool_call_completed": result["tool_call_completed"],
+    }
+    if discover_tools:
+        output["tools"] = result["tools"]
+    return output
 
 
 async def connect(stack: AsyncExitStack, url: str, headers: dict[str, str]) -> ClientSession:
@@ -113,12 +125,12 @@ async def discover(
                 "x-pd-app-slug": config.app,
             },
         )
-        names: list[str] = []
+        tools: list[dict[str, Any]] = []
         cursor = None
         seen: set[str] = set()
         for _ in range(20):
             page_tools = await pipedream.list_tools(params=PaginatedRequestParams(cursor=cursor))
-            names.extend(tool.name for tool in page_tools.tools)
+            tools.extend({"name": tool.name, "inputSchema": tool.input_schema} for tool in page_tools.tools)
             cursor = page_tools.next_cursor
             if not cursor:
                 break
@@ -127,6 +139,7 @@ async def discover(
             seen.add(cursor)
         else:
             raise RuntimeError("Tool discovery exceeded 20 pages")
+        names = [tool["name"] for tool in tools]
         if approved_action is not None:
             if approved_action["name"] not in names:
                 raise RuntimeError("Approved tool was not offered")
@@ -138,6 +151,7 @@ async def discover(
             "session_id": session_id,
             "page": page,
             "tool_names": names,
+            "tools": tools,
             "tool_call_completed": approved_action is not None,
         }
         completed = True
@@ -177,6 +191,12 @@ async def run_demo(
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Discover Pipedream tools with a Notte browser")
+    parser.add_argument("--discover", action="store_true", help="Include tool names and input schemas in JSON output")
+    args = parser.parse_args()
+    action_file = os.environ.get("PIPEDREAM_ACTION_FILE")
+    if args.discover and action_file:
+        parser.error("Unset PIPEDREAM_ACTION_FILE when using --discover")
     config = PipedreamConfig(
         client_id=os.environ["PIPEDREAM_CLIENT_ID"],
         client_secret=os.environ["PIPEDREAM_CLIENT_SECRET"],
@@ -185,13 +205,5 @@ if __name__ == "__main__":
         app=os.environ.get("PIPEDREAM_APP", "github"),
     )
     with asyncio.Runner() as runner:
-        result = runner.run(run_demo(config, approved_action=load_action(os.environ.get("PIPEDREAM_ACTION_FILE"))))
-    print(
-        json.dumps(
-            {
-                "session_id": result["session_id"],
-                "tool_count": len(result["tool_names"]),
-                "tool_call_completed": result["tool_call_completed"],
-            }
-        )
-    )
+        result = runner.run(run_demo(config, approved_action=load_action(action_file)))
+    print(json.dumps(cli_output(result, discover_tools=args.discover)))

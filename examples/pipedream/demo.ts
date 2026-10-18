@@ -10,6 +10,11 @@ export type PipedreamConfig = {
 type ApprovedAction = { name: string; arguments: Record<string, unknown> };
 type Options = { approvedAction?: ApprovedAction; providerFetch?: typeof fetch; pageUrl?: string; signal?: AbortSignal };
 
+export function cliOutput(result: Awaited<ReturnType<typeof runDemo>>, discoverTools = false) {
+  return { session_id: result.session_id, tool_count: result.tool_names.length,
+    tool_call_completed: result.tool_call_completed, ...(discoverTools ? { tools: result.tools } : {}) };
+}
+
 export async function loadAction(path: string | undefined): Promise<ApprovedAction | undefined> {
   if (!path) return undefined;
   try {
@@ -67,25 +72,26 @@ export async function runDemo(config: PipedreamConfig, options: Options = {}) {
             'x-pd-app-slug': config.app ?? 'github',
           } },
         }));
-        const names: string[] = [];
+        const tools: { name: string; inputSchema: Record<string, unknown> }[] = [];
         const seen = new Set<string>();
         let cursor: string | undefined;
         for (let page = 0; page < 20; page++) {
           const result = await pipedream.listTools({ cursor }, { signal });
-          names.push(...result.tools.map((tool) => tool.name));
+          tools.push(...result.tools.map((tool) => ({ name: tool.name, inputSchema: tool.inputSchema })));
           cursor = result.nextCursor;
           if (!cursor) break;
           if (seen.has(cursor)) throw new Error('Tool discovery repeated a cursor');
           seen.add(cursor);
         }
         if (cursor) throw new Error('Tool discovery exceeded 20 pages');
+        const names = tools.map((tool) => tool.name);
         if (options.approvedAction) {
           if (!names.includes(options.approvedAction.name)) throw new Error('Approved tool was not offered');
           const output = await pipedream.callTool(options.approvedAction, undefined, { signal });
           if (!Array.isArray(output.content) || output.isError === true) throw new Error('Approved tool did not complete successfully');
           // Provider output can contain account links or private data; do not return or log it.
         }
-        return { session_id: sessionId, page, tool_names: names, tool_call_completed: options.approvedAction !== undefined };
+        return { session_id: sessionId, page, tool_names: names, tools, tool_call_completed: options.approvedAction !== undefined };
       } catch {
         failed = true;
         // The SDK context logs exceptions during cleanup; keep provider errors out of it.
@@ -112,10 +118,15 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   process.on('SIGINT', abort);
   process.on('SIGTERM', abort);
   try {
+    const args = process.argv.slice(2);
+    if (args.some((arg) => arg !== '--discover')) throw new Error('Usage: npm start -- [--discover]');
+    const discoverTools = args.includes('--discover');
+    const actionFile = process.env.PIPEDREAM_ACTION_FILE;
+    if (discoverTools && actionFile) throw new Error('Unset PIPEDREAM_ACTION_FILE when using --discover');
     const result = await runDemo({ clientId: required('PIPEDREAM_CLIENT_ID'), clientSecret: required('PIPEDREAM_CLIENT_SECRET'),
       projectId: required('PIPEDREAM_PROJECT_ID'), externalUserId: required('PIPEDREAM_EXTERNAL_USER_ID'), app: process.env.PIPEDREAM_APP },
-      { approvedAction: await loadAction(process.env.PIPEDREAM_ACTION_FILE), signal: controller.signal });
-    console.log(JSON.stringify({ session_id: result.session_id, tool_count: result.tool_names.length, tool_call_completed: result.tool_call_completed }));
+      { approvedAction: await loadAction(actionFile), signal: controller.signal });
+    console.log(JSON.stringify(cliOutput(result, discoverTools)));
   } catch (error) {
     console.error(error instanceof Error ? error.message : 'Pipedream discovery failed');
     process.exitCode = controller.signal.aborted ? 130 : 1;

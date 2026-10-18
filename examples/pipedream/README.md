@@ -24,8 +24,13 @@ then sends its access token and project/user/app headers to the hosted v3 MCP
 endpoint. Keep this code server-side and derive the external user from your
 authenticated application. Notte and Pipedream credentials are independent.
 
+Run `uv run --locked python demo.py --discover` or `npm start -- --discover`
+to include discovered tool names and input schemas from every page in the JSON
+output. Treat this app metadata as private. Unset `PIPEDREAM_ACTION_FILE` first;
+discovery mode rejects an action file so it cannot execute a tool call.
+
 Discovery does not classify every advertised tool as read-only. To opt in to one
-call, first select its actual advertised name and schema, complete the provider
+call, select its name and input schema from `--discover`, complete the provider
 connection, and obtain the required approval. Create a private JSON file outside
 the checkout with exactly `name` (the offered tool name) and `arguments` (an
 object matching its schema). Set `PIPEDREAM_ACTION_FILE` to its path. Do not put
