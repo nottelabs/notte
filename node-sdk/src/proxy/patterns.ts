@@ -22,6 +22,7 @@ export const DEFAULT_ALLOWED_PATTERNS: RegExp[] = [
   // Data endpoints
   /^data$/, // /data
   /^data\/brand\/retrieve$/, // /data/brand/retrieve
+  /^data\/cache$/, // /data/cache
   /^data\/maps\/search$/, // /data/maps/search
   /^data\/monitors$/, // /data/monitors
   /^data\/monitors\/[^\/]+$/, // /data/monitors/{monitor_id}
@@ -38,7 +39,7 @@ export const DEFAULT_ALLOWED_PATTERNS: RegExp[] = [
   /^data\/news\/search$/, // /data/news/search
   /^data\/people\/enrich$/, // /data/people/enrich
   /^data\/products\/extract$/, // /data/products/extract
-  /^data\/web\/scrape$/, // /data/web/scrape
+  /^data\/web\/fetch$/, // /data/web/fetch
   /^data\/web\/styleguide$/, // /data/web/styleguide
   /^data\/webhooks\/deliveries$/, // /data/webhooks/deliveries
   /^data\/webhooks\/deliveries\/[^\/]+$/, // /data/webhooks/deliveries/{delivery_id}
@@ -95,6 +96,7 @@ export const DEFAULT_ALLOWED_PATTERNS: RegExp[] = [
   /^profiles\/[^\/]+$/, // /profiles/{profile_id}
   /^profiles\/[^\/]+\/cookies$/, // /profiles/{profile_id}/cookies
   /^profiles\/[^\/]+\/duplicate$/, // /profiles/{profile_id}/duplicate
+  /^profiles\/[^\/]+\/state$/, // /profiles/{profile_id}/state
   /^profiles\/create$/, // /profiles/create
 
   // Ready endpoints
