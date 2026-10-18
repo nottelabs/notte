@@ -168,7 +168,7 @@
     },
     {
       "source": "/integrations/computer-use-openagi",
-      "destination": "/integrations"
+      "destination": "/integrations/openagi"
     },
     {
       "source": "/integrations/magnitude",
@@ -361,7 +361,8 @@
               "integrations/openai-computer-use",
               "integrations/claude-computer-use",
               "integrations/gemini-computer-use",
-              "integrations/yutori"
+              "integrations/yutori",
+              "integrations/openagi"
             ]
           },
           {

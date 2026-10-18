@@ -24,5 +24,6 @@
   "trigger": "node-project",
   "valtown": "valtown-deno",
   "watsonx": "typescript-driver",
-  "yutori": "python-project"
+  "yutori": "python-project",
+  "openagi": "python-project"
 }
