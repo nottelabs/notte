@@ -21,7 +21,7 @@ async function assertClosed(client: NotteClient, id: string) {
 
 test('real Agentcard SDK attaches to Notte without payments', { skip: process.env.NOTTE_AGENTCARD_LIVE !== '1', timeout: 360_000 }, async t => {
   assert.ok(process.env.NOTTE_API_URL, 'Choose the test API explicitly');
-  async function owned(mode: 'success' | 'failure' | 'page-reject' | 'page-timeout' | 'browser-reject' | 'browser-timeout') {
+  async function owned(mode: 'success' | 'failure' | 'page-reject' | 'page-timeout' | 'browser-reject' | 'browser-timeout' | 'reconciled-page-reject' | 'reconciled-browser-timeout' | 'reconciled-stop-reject') {
     const client = new NotteClient();
     let id: string | undefined;
     let vendorCalls = 0;
@@ -33,8 +33,19 @@ test('real Agentcard SDK attaches to Notte without payments', { skip: process.en
     const restores: (() => void)[] = [];
     const messages: string[] = [];
     const factory = client.Session.bind(client);
+    const fault = mode.replace(/^reconciled-/, '');
+    const succeeds = mode === 'success' || mode.startsWith('reconciled-');
     const owner = mock.method(client, 'Session', (...args: Parameters<typeof factory>) => {
       const session = factory(...args);
+      if (fault === 'stop-reject') {
+        const stop = session.stop.bind(session);
+        const stopping = mock.method(session, 'stop', async (...args: Parameters<typeof stop>) => {
+          await stop(...args);
+          closeFaultReached = true;
+          throw new Error('private-close-body-fixture');
+        });
+        restores.push(() => stopping.mock.restore());
+      }
       const start = session.start.bind(session);
       const starting = mock.method(session, 'start', async (...options: Parameters<typeof start>) => {
         const response = await start(...options);
@@ -53,22 +64,22 @@ test('real Agentcard SDK attaches to Notte without payments', { skip: process.en
     const warning = mock.method(console, 'warn', (...args: unknown[]) => { messages.push(inspect(args)); });
     const connect = (async (endpointURL: string) => {
       nativeBrowser = await chromium.connectOverCDP(endpointURL);
-      if (mode.startsWith('browser-')) {
+      if (fault.startsWith('browser-')) {
         const closing = mock.method(nativeBrowser, 'close', async () => {
           closeFaultReached = true;
-          if (mode.endsWith('timeout')) await new Promise<void>(() => {});
+          if (fault.endsWith('timeout')) await new Promise<void>(() => {});
           throw new Error('private-close-body-fixture');
         });
         restores.push(() => closing.mock.restore());
       }
-      if (mode.startsWith('page-')) {
+      if (fault.startsWith('page-')) {
         const context = nativeBrowser.contexts()[0];
         const newPage = context.newPage.bind(context);
         const creating = mock.method(context, 'newPage', async () => {
           const page = await newPage();
           const closing = mock.method(page, 'close', async () => {
             closeFaultReached = true;
-            if (mode.endsWith('timeout')) await new Promise<void>(() => {});
+            if (fault.endsWith('timeout')) await new Promise<void>(() => {});
             throw new Error('private-close-body-fixture');
           });
           restores.push(() => closing.mock.restore());
@@ -87,7 +98,7 @@ test('real Agentcard SDK attaches to Notte without payments', { skip: process.en
             merchantActionsStarted = true;
             await page.goto('https://example.com', { waitUntil: 'domcontentloaded', timeout: 30_000 });
             assert.equal(await page.title(), 'Example Domain');
-            if (mode !== 'success') await page.locator('[private-merchant-body-fixture').click();
+            if (!succeeds) await page.locator('[private-merchant-body-fixture').click();
           },
           readMerchantOrder: async () => ({ status: 'unknown' }),
         }, { client, connect });
@@ -123,12 +134,18 @@ test('real Agentcard SDK attaches to Notte without payments', { skip: process.en
     assert.ok(id, 'Expected one owned browser');
     assert.ok(merchantActionsStarted, 'The intended browser command must actually run');
     assert.equal(vendorCalls, 0, 'No vendor calls or payments are authorized');
-    if (mode.startsWith('page-') || mode.startsWith('browser-')) assert.ok(closeFaultReached, 'The native close fault must actually run');
-    if (mode === 'success') {
+    if (fault.startsWith('page-') || fault.startsWith('browser-') || fault === 'stop-reject') assert.ok(closeFaultReached, 'The native close fault must actually run');
+    if (succeeds) {
       assert.ifError(failure);
       assert.ok(result);
       assert.notEqual(result.status, 'completed', 'No payment or merchant order exists');
       assert.equal(result.order_id, undefined);
+      assert.equal(result.session_id, id);
+      if (mode.startsWith('reconciled-')) {
+        const stage = fault.startsWith('page-') ? 'page_close' : fault.startsWith('browser-') ? 'browser_close' : 'session_stop';
+        assert.deepEqual(result.cleanup_errors, [stage]);
+      } else assert.equal(result.cleanup_errors, undefined);
+      assert.doesNotMatch(inspect(result) + messages.join('\n'), /private-(merchant|close)-body-fixture/);
     } else {
       assert.ok(failure instanceof Error);
       assert.equal(failure.message, 'Hosted checkout failed; verify the merchant outcome before attempting another payment');
@@ -136,7 +153,7 @@ test('real Agentcard SDK attaches to Notte without payments', { skip: process.en
       assert.doesNotMatch(inspect(failure) + failure.stack + messages.join('\n'), /private-(merchant|close)-body-fixture/);
     }
   }
-  for (const mode of ['success', 'failure', 'page-reject', 'page-timeout', 'browser-reject', 'browser-timeout'] as const) {
+  for (const mode of ['success', 'failure', 'page-reject', 'page-timeout', 'browser-reject', 'browser-timeout', 'reconciled-page-reject', 'reconciled-browser-timeout', 'reconciled-stop-reject'] as const) {
     await t.test(mode, () => owned(mode));
   }
 });
