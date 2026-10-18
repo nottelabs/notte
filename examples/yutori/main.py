@@ -1,6 +1,5 @@
 import asyncio
 import json
-import sys
 from contextlib import AsyncExitStack, asynccontextmanager
 from urllib.parse import urlsplit
 
@@ -101,6 +100,7 @@ async def _finish_owned(task):
 async def owned_connection():
     session = NotteClient().Session(max_duration_minutes=3, proxies=False, viewport_width=1280, viewport_height=800)
     entered = False
+    primary = None
     try:
         _, cancelled = await _finish_owned(asyncio.create_task(session.__aenter__()))
         entered = True
@@ -108,15 +108,20 @@ async def owned_connection():
             raise asyncio.CancelledError
         endpoint = await asyncio.to_thread(session.cdp_url)
         yield session, endpoint
-    except Exception as error:
-        if isinstance(error, BrowserTaskError):
-            raise
-        raise BrowserTaskError("Yutori browser connection failed") from None
+    except BaseException as error:
+        primary = error
+        if isinstance(error, Exception) and not isinstance(error, BrowserTaskError):
+            primary = BrowserTaskError("Yutori browser connection failed")
+            raise primary from None
+        raise
     finally:
-        primary = sys.exception()
         if entered or session.response is not None:
             try:
-                _, cancelled = await _finish_owned(asyncio.create_task(asyncio.to_thread(session.stop)))
+                _, cancelled = await _finish_owned(
+                    asyncio.create_task(
+                        asyncio.to_thread(session.stop, close_reason="error" if primary is not None else "manual")
+                    )
+                )
             except Exception:
                 if primary is None:
                     raise BrowserTaskError("Yutori browser cleanup failed") from None
@@ -126,7 +131,7 @@ async def owned_connection():
                     raise asyncio.CancelledError
 
 
-async def run(
+async def _run(
     task: str, start_url: str = "https://example.com", *, max_steps: int = 12, client: AsyncYutoriClient | None = None
 ):
     if not 1 <= max_steps <= 30:
@@ -139,6 +144,7 @@ async def run(
             try:
                 async with async_playwright() as playwright:
                     browser = await playwright.chromium.connect_over_cdp(endpoint)
+                    failed = False
                     try:
                         page = await browser.contexts[0].new_page()
                         await act(page, "goto_url", {"url": start_url})
@@ -170,8 +176,10 @@ async def run(
                                     {"role": "tool", "tool_call_id": tool.id, "content": "Action completed"}
                                 )
                         raise BrowserTaskError("Yutori step limit reached")
+                    except BaseException:
+                        failed = True
+                        raise
                     finally:
-                        failed = sys.exception() is not None
                         try:
                             await asyncio.wait_for(browser.close(), timeout=5)
                         except Exception:
@@ -183,6 +191,23 @@ async def run(
                 if isinstance(error, BrowserTaskError):
                     raise
                 raise BrowserTaskError(f"Yutori {step} failed") from None
+
+
+async def run(
+    task: str,
+    start_url: str = "https://example.com",
+    *,
+    max_steps: int = 12,
+    timeout_seconds: float = 120,
+    client: AsyncYutoriClient | None = None,
+):
+    if not 0 < timeout_seconds <= 120:
+        raise ValueError("Choose timeout_seconds above zero and at most 120")
+    try:
+        async with asyncio.timeout(timeout_seconds):
+            return await _run(task, start_url, max_steps=max_steps, client=client)
+    except TimeoutError:
+        raise BrowserTaskError("Yutori time limit reached") from None
 
 
 if __name__ == "__main__":

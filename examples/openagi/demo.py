@@ -2,7 +2,6 @@ import asyncio
 import json
 import os
 import secrets
-import sys
 
 from notte_computer import BrowserActions, Screenshots
 from notte_sdk import NotteClient
@@ -21,6 +20,7 @@ async def run_demo() -> dict:
             async with async_playwright() as driver:
                 async with asyncio.timeout(120):
                     browser = await driver.chromium.connect_over_cdp(session.cdp_url())
+                    failed = False
                     try:
                         page = browser.contexts[0].pages[0]
                         await page.route("**/*", lambda route: route.abort())
@@ -54,8 +54,10 @@ async def run_demo() -> dict:
                         if await page.locator("input").input_value() != code:
                             raise RuntimeError("Lux did not enter the displayed code")
                         return {"output": "Accepted", "session_id": session.session_id}
+                    except BaseException:
+                        failed = True
+                        raise
                     finally:
-                        failed = sys.exception() is not None
                         try:
                             await asyncio.wait_for(browser.close(), timeout=5)
                         except Exception:

@@ -155,6 +155,78 @@ class BrowserTests(unittest.IsolatedAsyncioTestCase):
                 else:
                     self.assertEqual(stopped, started)
 
+    async def test_concurrent_slots_keep_separate_browser_owners(self):
+        task = next(iter(example.NotteTaskset(vf.TasksetConfig(id="notte_prime"))))
+        env = example.NotteEnv(vf.SingleAgentEnvConfig(taskset=vf.TasksetConfig(id="notte_prime")))
+        slots = env.slots(task, 2)
+        self.assertIs(slots[0].task, slots[1].task)
+        traces = [
+            vf.Trace(
+                task=vf.TraceTask(type="BrowserTask", data=task.data),
+                agent=vf.AgentInfo(config=vf.AgentConfig()),
+                state=example.BrowserState(),
+            )
+            for _ in slots
+        ]
+        stopped = []
+        if LIVE:
+            self.assertTrue(os.getenv("NOTTE_API_URL"), "Choose the browser API explicitly")
+            client = example.NotteClient()
+            sessions = [client.Session(max_duration_minutes=3) for _ in slots]
+        else:
+            sessions = [
+                SimpleNamespace(
+                    response=object(),
+                    session_id=f"owned-{index}",
+                    start=lambda: None,
+                    stop=lambda index=index: stopped.append(index),
+                    cdp_url=lambda index=index: f"wss://notte.example.invalid/{index}",
+                )
+                for index in range(2)
+            ]
+        try:
+            with patch.object(
+                example, "NotteClient", return_value=SimpleNamespace(Session=lambda **_: sessions.pop(0))
+            ):
+                # Keep explicit handles even if setup loses shared task ownership.
+                owned = list(sessions)
+                await asyncio.gather(*(slot.task.setup(trace, None) for slot, trace in zip(slots, traces)))
+            self.assertNotEqual(traces[0].state.session_id, traces[1].state.session_id)
+            for trace, session in zip(traces, owned):
+                self.assertEqual(trace.state.session_id, session.session_id)
+                self.assertEqual(trace.state.cdp_url, session.cdp_url())
+
+            async def completed(_task, *, on_trace):
+                on_trace(traces[0])
+
+            await env.run(task, SimpleNamespace(agent=SimpleNamespace(run=completed)))
+            await task.finalize(traces[0], None)
+            if LIVE:
+                self.assertEqual(
+                    (await asyncio.to_thread(client.sessions.status, owned[0].session_id)).status, "closed"
+                )
+                self.assertEqual(
+                    (await asyncio.to_thread(client.sessions.status, owned[1].session_id)).status, "active"
+                )
+            else:
+                self.assertEqual(stopped, [0])
+            await task.finalize(traces[1], None)
+            self.assertEqual([trace.state.cdp_url for trace in traces], ["", ""])
+            self.assertEqual(task._sessions, {})
+            if not LIVE:
+                self.assertEqual(stopped, [0, 1])
+        finally:
+            # Independently release known test owners even if a regression loses one.
+            if LIVE:
+                for session in owned:
+                    if session.response is not None:
+                        status = await asyncio.to_thread(client.sessions.status, session.session_id)
+                        if status.status != "closed":
+                            await asyncio.to_thread(client.sessions.stop, session.session_id)
+                        self.assertEqual(
+                            (await asyncio.to_thread(client.sessions.status, session.session_id)).status, "closed"
+                        )
+
     async def test_native_mcp_browser_and_reward(self):
         async with self.owned() as (task, trace):
             async with native_tools(task, trace) as client:
@@ -236,7 +308,9 @@ class BrowserTests(unittest.IsolatedAsyncioTestCase):
 
         session = Session()
         with patch.object(example, "NotteClient", return_value=SimpleNamespace(Session=lambda **_: session)):
-            starting = asyncio.create_task(task.setup(SimpleNamespace(state=example.BrowserState()), None))
+            starting = asyncio.create_task(
+                task.setup(SimpleNamespace(id="cancelled-setup", state=example.BrowserState()), None)
+            )
             try:
                 self.assertTrue(await asyncio.to_thread(entered.wait, 5))
                 starting.cancel()
@@ -247,7 +321,7 @@ class BrowserTests(unittest.IsolatedAsyncioTestCase):
             with self.assertRaises(asyncio.CancelledError):
                 await asyncio.wait_for(starting, 5)
         self.assertEqual(stopped, ["owned"])
-        self.assertIsNone(task.session)
+        self.assertEqual(task._sessions, {})
 
     async def test_repeated_cancelled_creation_finishes_and_closes(self):
         task = next(iter(example.NotteTaskset(vf.TasksetConfig())))
@@ -269,7 +343,9 @@ class BrowserTests(unittest.IsolatedAsyncioTestCase):
                 stopped.append(self.session_id)
 
         with patch.object(example, "NotteClient", return_value=SimpleNamespace(Session=lambda **_: Session())):
-            starting = asyncio.create_task(task.setup(SimpleNamespace(state=example.BrowserState()), None))
+            starting = asyncio.create_task(
+                task.setup(SimpleNamespace(id="cancelled-setup", state=example.BrowserState()), None)
+            )
             try:
                 self.assertTrue(await asyncio.to_thread(entered.wait, 5))
                 starting.cancel()
@@ -284,30 +360,132 @@ class BrowserTests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(await asyncio.to_thread(finished.wait, 5))
         self.assertFalse(ended_before_creation, "Cancellation orphaned the still-running creation")
         self.assertEqual(stopped, ["owned"])
-        self.assertIsNone(task.session)
+        self.assertEqual(task._sessions, {})
 
     async def test_owner_cleanup_hides_private_sdk_errors_and_retains_identity(self):
         task = next(iter(example.NotteTaskset(vf.TasksetConfig())))
-        task.session = SimpleNamespace(response=object(), session_id="owned", stop=lambda: None)
+        trace = SimpleNamespace(id="cleanup")
+        session = SimpleNamespace(response=object(), session_id="owned", stop=lambda: None)
+        task._sessions[trace.id] = session
 
         def failed():
             raise RuntimeError(FAKE_CREDENTIAL)
 
-        task.session.stop = failed
+        session.stop = failed
         with self.assertRaises(RuntimeError) as caught:
-            await task.close()
+            await task.close(trace)
         self.assertIn("owned", str(caught.exception))
         self.assertFalse(FAKE_CREDENTIAL in str(caught.exception), "Private cleanup diagnostic withheld")
 
     async def test_environment_preserves_primary_agent_failure_when_cleanup_fails(self):
         task = SimpleNamespace(close=AsyncMock(side_effect=RuntimeError(FAKE_CREDENTIAL)))
-        agents = SimpleNamespace(agent=SimpleNamespace(run=AsyncMock(side_effect=ValueError("primary agent failure"))))
+        trace = SimpleNamespace(id="agent-failure")
+
+        async def failed(task, *, on_trace):
+            on_trace(trace)
+            raise ValueError("primary agent failure")
+
+        agents = SimpleNamespace(agent=SimpleNamespace(run=failed))
         with self.assertRaisesRegex(ValueError, "^primary agent failure$") as caught:
             await example.NotteEnv(vf.SingleAgentEnvConfig(taskset=vf.TasksetConfig(id="notte_prime"))).run(
                 task, agents
             )
-        task.close.assert_awaited_once()
+        task.close.assert_awaited_once_with(trace)
         self.assertEqual(caught.exception.__notes__, ["Rollout browser cleanup failed"])
+
+    async def test_environment_finishes_all_owners_despite_repeated_cancel(self):
+        for agent_cancelled in (False, True):
+            with self.subTest(agent_cancelled=agent_cancelled):
+                task = next(iter(example.NotteTaskset(vf.TasksetConfig(id="notte_prime"))))
+                traces = [
+                    vf.Trace(
+                        task=vf.TraceTask(type="BrowserTask", data=task.data),
+                        agent=vf.AgentInfo(config=vf.AgentConfig()),
+                        state=example.BrowserState(),
+                    )
+                    for _ in range(2)
+                ]
+                entered, release = threading.Event(), threading.Event()
+                stopped = []
+                if LIVE:
+                    self.assertTrue(os.getenv("NOTTE_API_URL"), "Choose the browser API explicitly")
+                    client = example.NotteClient()
+                    sessions = [client.Session(max_duration_minutes=3) for _ in traces]
+                else:
+                    sessions = [
+                        SimpleNamespace(
+                            response=object(),
+                            session_id=f"owned-{index}",
+                            start=lambda: None,
+                            stop=lambda: None,
+                            cdp_url=lambda: "wss://notte.example.invalid",
+                        )
+                        for index in range(2)
+                    ]
+                for index, session in enumerate(sessions):
+                    stop = session.stop
+
+                    def blocked_stop(index=index, stop=stop):
+                        if index == 0:
+                            entered.set()
+                            if not release.wait(10):
+                                raise TimeoutError("Test did not release cleanup")
+                        stop()
+                        stopped.append(index)
+
+                    session.stop = blocked_stop
+
+                async def agent_run(_task, *, on_trace):
+                    for trace in traces:
+                        on_trace(trace)
+                    if agent_cancelled:
+                        raise asyncio.CancelledError()
+
+                running = None
+                try:
+                    factory = iter(sessions)
+                    with patch.object(
+                        example, "NotteClient", return_value=SimpleNamespace(Session=lambda **_: next(factory))
+                    ):
+                        await asyncio.gather(*(task.setup(trace, None) for trace in traces))
+                    env = example.NotteEnv(vf.SingleAgentEnvConfig(taskset=vf.TasksetConfig(id="notte_prime")))
+                    running = asyncio.create_task(env.run(task, SimpleNamespace(agent=SimpleNamespace(run=agent_run))))
+                    try:
+                        self.assertTrue(await asyncio.to_thread(entered.wait, 5))
+                        running.cancel()
+                        await asyncio.sleep(0)
+                        running.cancel()
+                        await asyncio.sleep(0)
+                        ended_before_cleanup = running.done()
+                    finally:
+                        release.set()
+                    with self.assertRaises(asyncio.CancelledError):
+                        await asyncio.wait_for(running, 20)
+                    self.assertFalse(ended_before_cleanup, "Cancellation abandoned the remaining trace owners")
+                    self.assertEqual(stopped, [0, 1])
+                    self.assertEqual(task._sessions, {})
+                    if LIVE:
+                        for session in sessions:
+                            self.assertEqual(
+                                (await asyncio.to_thread(client.sessions.status, session.session_id)).status, "closed"
+                            )
+                finally:
+                    release.set()
+                    if running is not None and not running.done():
+                        try:
+                            await asyncio.wait_for(running, 20)
+                        except asyncio.CancelledError:
+                            pass
+                    if LIVE:
+                        for session in sessions:
+                            if session.response is not None:
+                                status = await asyncio.to_thread(client.sessions.status, session.session_id)
+                                if status.status != "closed":
+                                    await asyncio.to_thread(client.sessions.stop, session.session_id)
+                                self.assertEqual(
+                                    (await asyncio.to_thread(client.sessions.status, session.session_id)).status,
+                                    "closed",
+                                )
 
     async def test_failed_creation_preserves_safe_error_and_clears_owner(self):
         task = next(iter(example.NotteTaskset(vf.TasksetConfig())))
@@ -327,8 +505,8 @@ class BrowserTests(unittest.IsolatedAsyncioTestCase):
 
         with patch.object(example, "NotteClient", return_value=SimpleNamespace(Session=lambda **_: Session())):
             with self.assertRaisesRegex(RuntimeError, "^Could not prepare the rollout browser$"):
-                await task.setup(SimpleNamespace(state=example.BrowserState()), None)
-        self.assertIsNone(task.session)
+                await task.setup(SimpleNamespace(id="cancelled-setup", state=example.BrowserState()), None)
+        self.assertEqual(task._sessions, {})
 
     @unittest.skipUnless(LIVE, "Opt-in real browser rollout")
     async def test_full_framework_provider_failure_closes_its_browser(self):
@@ -371,8 +549,10 @@ class BrowserTests(unittest.IsolatedAsyncioTestCase):
                     "--no-rich",
                     "-n",
                     "1",
+                    "-r",
+                    "2",
                     "-c",
-                    "1",
+                    "2",
                     "--model",
                     "local-test",
                     "--client.base_url",
@@ -399,15 +579,17 @@ class BrowserTests(unittest.IsolatedAsyncioTestCase):
                 output = result.stdout + result.stderr
                 ids = re.findall(r"\[Session\]\s+([0-9a-f-]{36}) started", output)
                 self.assertEqual(result.returncode, 0, "The framework CLI failed; child output withheld")
-                self.assertEqual(len(requests), 1, "The real framework must reach the injected provider")
-                self.assertEqual(len(ids), 1)
+                self.assertEqual(len(requests), 2, "Both framework slots must reach the injected provider")
+                self.assertEqual(len(set(ids)), 2)
                 trace_file = next(Path(directory).glob("*/traces.jsonl"))
-                episode = json.loads(trace_file.read_text().splitlines()[0])
-                self.assertFalse(episode["ok"])
-                self.assertEqual(len(episode["traces"]), 1)
-                trace = episode["traces"][0]
-                self.assertFalse(trace["ok"])
-                self.assertIn("ProviderError", [error["type"] for error in trace["errors"]])
+                episodes = [json.loads(line) for line in trace_file.read_text().splitlines()]
+                self.assertEqual(len(episodes), 2)
+                for episode in episodes:
+                    self.assertFalse(episode["ok"])
+                    self.assertEqual(len(episode["traces"]), 1)
+                    trace = episode["traces"][0]
+                    self.assertFalse(trace["ok"])
+                    self.assertIn("ProviderError", [error["type"] for error in trace["errors"]])
                 for payload in [output, json.dumps(requests), trace_file.read_text()]:
                     self.assertFalse(os.environ["NOTTE_API_KEY"] in payload, "Private framework output withheld")
                 for session_id in ids:

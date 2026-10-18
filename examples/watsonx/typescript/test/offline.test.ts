@@ -53,3 +53,19 @@ test('regional endpoint accepts a trailing slash', async () => {
     assert.equal(calls[1].url, 'https://eu-de.ml.cloud.ibm.com/ml/v1/text/chat?version=2024-05-31');
   } finally { process.env.WATSONX_URL = 'https://us-south.ml.cloud.ibm.com'; }
 });
+
+test('optional region defaults when absent or empty', async () => {
+  const original = process.env.WATSONX_URL;
+  try {
+    for (const value of [undefined, '']) {
+      if (value === undefined) delete process.env.WATSONX_URL;
+      else process.env.WATSONX_URL = value;
+      const { mock, calls } = transport();
+      await describe(Buffer.from('fixture'), mock);
+      assert.equal(calls[1].url, 'https://us-south.ml.cloud.ibm.com/ml/v1/text/chat?version=2024-05-31');
+    }
+  } finally {
+    if (original === undefined) delete process.env.WATSONX_URL;
+    else process.env.WATSONX_URL = original;
+  }
+});

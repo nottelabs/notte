@@ -35,6 +35,10 @@ class NotteComputer:
         if not await self.approve(action):
             raise PermissionError("Computer action refused")
         kind = action["type"]
+        if kind in ["type", "point_and_type"]:
+            text = action["text"]
+            if not isinstance(text, str) or len(text) > 1000:
+                raise ValueError("Text exceeds the form limit")
         if kind in ["click", "point_and_type"]:
             viewport = self.page.viewport_size
             if not viewport:
@@ -44,9 +48,6 @@ class NotteComputer:
                 raise ValueError("This form example only permits left clicks")
             await self.page.mouse.click(x, y)
         if kind in ["type", "point_and_type"]:
-            text = action["text"]
-            if not isinstance(text, str) or len(text) > 1000:
-                raise ValueError("Text exceeds the form limit")
             await self.page.keyboard.insert_text(text)
         elif kind == "keypress":
             keys = action["keys"]
