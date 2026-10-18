@@ -17,5 +17,6 @@
   "selenium": "selenium-root",
   "stripe-link": "typescript-driver",
   "temporal": "node-project",
-  "trigger": "node-project"
+  "trigger": "node-project",
+  "valtown": "valtown-deno"
 }
