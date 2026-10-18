@@ -1,3 +1,25 @@
+function diagnostic(error: unknown): string {
+  if (error instanceof Error) {
+    const fixed = [
+      "Set NOTTE_API_KEY",
+      "Use an HTTPS Notte API URL",
+      "Invalid session response",
+      "Browser action failed",
+      "The title was not returned",
+      "The browser task did not finish",
+    ];
+    if (
+      fixed.includes(error.message) ||
+      /^Notte API returned HTTP [1-5][0-9]{2}$/.test(error.message)
+    ) {
+      return error.message;
+    }
+    if (error.name === "TimeoutError") return "Notte request timed out";
+    if (error.name === "AbortError") return "Notte request aborted";
+  }
+  return "Unexpected browser task failure";
+}
+
 export async function readPage(url = "https://example.com") {
   const apiKey = Deno.env.get("NOTTE_API_KEY");
   const root = Deno.env.get("NOTTE_API_URL") ?? "https://api.notte.cc";
@@ -34,6 +56,9 @@ export async function readPage(url = "https://example.com") {
     throw new Error("Invalid session response");
   }
   const path = `/sessions/${session.session_id}`;
+  let output: { title: string; session_id: string } | undefined;
+  let taskFailed = false;
+  let taskError: unknown;
   try {
     for (
       const action of [{ type: "goto", url }, {
@@ -49,13 +74,26 @@ export async function readPage(url = "https://example.com") {
         if (typeof result.data?.markdown !== "string") {
           throw new Error("The title was not returned");
         }
-        return { title: result.data.markdown, session_id: session.session_id };
+        output = {
+          title: result.data.markdown,
+          session_id: session.session_id,
+        };
+        break;
       }
     }
-    throw new Error("The browser task did not finish");
-  } finally {
-    await call(`${path}/stop`, "DELETE");
+    if (!output) throw new Error("The browser task did not finish");
+  } catch (error) {
+    taskFailed = true;
+    taskError = error;
   }
+  try {
+    await call(`${path}/stop`, "DELETE");
+  } catch (error) {
+    console.error("Notte browser cleanup failed:", diagnostic(error));
+    if (!taskFailed) throw error;
+  }
+  if (taskFailed) throw taskError;
+  return output!;
 }
 
 export default async function handler(request: Request): Promise<Response> {
@@ -72,7 +110,8 @@ export default async function handler(request: Request): Promise<Response> {
   }
   try {
     return Response.json(await readPage());
-  } catch {
+  } catch (error) {
+    console.error("Notte browser task failed:", diagnostic(error));
     return Response.json({ error: "Browser task failed" }, { status: 502 });
   }
 }
