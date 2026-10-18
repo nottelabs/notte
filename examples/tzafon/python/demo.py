@@ -1,7 +1,6 @@
 import asyncio
 import json
 import secrets
-import sys
 
 from computer import NotteComputer
 from notte_sdk import NotteClient
@@ -65,10 +64,13 @@ async def run_demo(provider: AsyncLightcone | None = None, code: str | None = No
             session_id = session.session_id
             async with async_playwright() as driver:
                 browser = await driver.chromium.connect_over_cdp(session.cdp_url(), timeout=15_000)
+                failed = False
                 try:
                     result = await _run_form(session, browser.contexts[0].pages[0], provider, code)
+                except BaseException:
+                    failed = True
+                    raise
                 finally:
-                    failed = sys.exception() is not None
                     if not failed:
                         stage = "browser cleanup"
                     try:

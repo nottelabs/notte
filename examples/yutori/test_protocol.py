@@ -59,6 +59,37 @@ def model_endpoint(responses, status=200):
 
 
 class NativeProtocolTests(unittest.IsolatedAsyncioTestCase):
+    async def test_invalid_time_budget_is_rejected_before_connection(self):
+        with patch.object(demo, "NotteClient") as client:
+            for timeout in (0, -1, 121, float("inf"), float("nan")):
+                with self.subTest(timeout=timeout), self.assertRaisesRegex(ValueError, "timeout_seconds"):
+                    await demo.run("Read the title", timeout_seconds=timeout)
+            client.assert_not_called()
+
+    async def test_caller_exception_does_not_change_owned_cleanup(self):
+        for cleanup_fails in (False, True):
+            with self.subTest(cleanup_fails=cleanup_fails):
+                session = NotteClient(api_key="test-only").Session(wait_for_authentication=False)
+                with (
+                    patch.object(demo, "NotteClient", return_value=SimpleNamespace(Session=lambda **_kwargs: session)),
+                    patch.object(session, "start"),
+                    patch.object(session, "cdp_url", return_value="wss://test-only.invalid"),
+                    patch.object(
+                        session, "stop", side_effect=RuntimeError("PRIVATE_CLEANUP_FIXTURE") if cleanup_fails else None
+                    ) as stop,
+                ):
+                    try:
+                        raise ValueError("PRIVATE_CALLER_FIXTURE")
+                    except ValueError:
+                        if cleanup_fails:
+                            with self.assertRaisesRegex(demo.BrowserTaskError, "Yutori browser cleanup failed"):
+                                async with demo.owned_connection():
+                                    pass
+                        else:
+                            async with demo.owned_connection():
+                                pass
+                    stop.assert_called_once_with(close_reason="manual")
+
     async def test_owner_cleanup_failure_is_safe_and_preserves_primary_error(self):
         for primary in (None, demo.BrowserTaskError("Yutori primary task failed")):
             with self.subTest(primary=primary is not None):
@@ -67,7 +98,7 @@ class NativeProtocolTests(unittest.IsolatedAsyncioTestCase):
                     patch.object(demo, "NotteClient", return_value=SimpleNamespace(Session=lambda **_kwargs: session)),
                     patch.object(session, "start"),
                     patch.object(session, "cdp_url", return_value="wss://test-only.invalid"),
-                    patch.object(session, "stop", side_effect=RuntimeError("PRIVATE_CLEANUP_FIXTURE")),
+                    patch.object(session, "stop", side_effect=RuntimeError("PRIVATE_CLEANUP_FIXTURE")) as stop,
                 ):
                     with self.assertRaises(demo.BrowserTaskError) as caught:
                         async with demo.owned_connection():
@@ -80,6 +111,7 @@ class NativeProtocolTests(unittest.IsolatedAsyncioTestCase):
                         self.assertEqual(str(caught.exception), "Yutori browser cleanup failed")
                         self.assertIsNone(caught.exception.__cause__)
                         self.assertTrue(caught.exception.__suppress_context__)
+                    stop.assert_called_once_with(close_reason="error" if primary is not None else "manual")
 
     async def test_connection_failure_is_safe_and_stops_owned_session(self):
         session = NotteClient(api_key="test-only").Session(wait_for_authentication=False)
@@ -94,7 +126,7 @@ class NativeProtocolTests(unittest.IsolatedAsyncioTestCase):
                     self.fail("A failed connection must not enter the browser task")
             self.assertTrue(caught.exception.__suppress_context__)
             self.assertIsNone(caught.exception.__cause__)
-            stop.assert_called_once()
+            stop.assert_called_once_with(close_reason="error")
 
     async def test_repeated_startup_cancellation_joins_owned_creation_and_stops(self):
         session = NotteClient(api_key="test-only").Session(wait_for_authentication=False)
@@ -113,7 +145,7 @@ class NativeProtocolTests(unittest.IsolatedAsyncioTestCase):
         with (
             patch.object(demo, "NotteClient", return_value=SimpleNamespace(Session=lambda **_kwargs: session)),
             patch.object(session, "start", side_effect=start),
-            patch.object(session, "stop", side_effect=lambda: calls.append("stopped")),
+            patch.object(session, "stop", side_effect=lambda **_kwargs: calls.append("stopped")) as stop,
         ):
             task = asyncio.create_task(connect())
             try:
@@ -126,6 +158,7 @@ class NativeProtocolTests(unittest.IsolatedAsyncioTestCase):
                 with self.assertRaises(asyncio.CancelledError):
                     await task
                 await asyncio.to_thread(lambda: None)
+            stop.assert_called_once_with(close_reason="error")
         self.assertEqual(calls, ["created", "stopped"])
 
     async def test_sdk_lifecycle_and_connection_lookup_leave_loop_responsive(self):
@@ -151,7 +184,7 @@ class NativeProtocolTests(unittest.IsolatedAsyncioTestCase):
             patch.object(demo, "NotteClient", return_value=SimpleNamespace(Session=lambda **_kwargs: session)),
             patch.object(session, "start", side_effect=blocking("start")),
             patch.object(session, "cdp_url", side_effect=blocking("connection", "wss://test-only.invalid")),
-            patch.object(session, "stop", side_effect=blocking("stop")),
+            patch.object(session, "stop", side_effect=blocking("stop")) as stop,
         ):
             pulse = asyncio.create_task(heartbeat())
             try:
@@ -161,6 +194,7 @@ class NativeProtocolTests(unittest.IsolatedAsyncioTestCase):
             finally:
                 pulse.cancel()
                 await asyncio.gather(pulse, return_exceptions=True)
+            stop.assert_called_once_with(close_reason="manual")
         self.assertEqual([name for name, _ in calls], ["start", "connection", "stop"])
         self.assertTrue(all(thread != loop_thread for _, thread in calls))
         self.assertGreater(len(ticks), 3)

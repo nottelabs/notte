@@ -39,7 +39,7 @@ export async function runDemo() {
       sessionId = session.getId()!;
       stage = 'open test form';
       let browser: Browser | undefined;
-      let failed = false;
+      let failed = false, cleanupFailed = false;
       try {
         browser = await chromium.connectOverCDP(await session.cdpUrl());
         const page = browser.contexts()[0].pages()[0];
@@ -61,10 +61,11 @@ export async function runDemo() {
               new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error('Close deadline exceeded')), 5000); }),
             ]);
           } catch {
-            if (!failed) throw safeError(new Error('Browser disconnect failed'));
+            cleanupFailed = true;
           } finally { clearTimeout(timer); }
         }
       }
+      if (cleanupFailed) throw safeError(new Error('Browser disconnect failed'));
     });
     return { submitted: true, session_id: sessionId };
   } catch (error) {

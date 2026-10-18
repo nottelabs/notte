@@ -75,6 +75,16 @@ class WatsonxContract(unittest.TestCase):
             describe(PNG, http)
         self.assertEqual(http.calls[1][0], "https://eu-de.ml.cloud.ibm.com/ml/v1/text/chat")
 
+    def test_optional_region_defaults_when_absent_or_empty(self):
+        for value in [None, ""]:
+            with self.subTest(value=value), patch.dict(os.environ), Transport() as http:
+                if value is None:
+                    os.environ.pop("WATSONX_URL", None)
+                else:
+                    os.environ["WATSONX_URL"] = value
+                describe(PNG, http)
+                self.assertEqual(http.calls[1][0], "https://us-south.ml.cloud.ibm.com/ml/v1/text/chat")
+
     def test_failed_or_invalid_iam_never_sends_image(self):
         for mode in ["iam-reject", "invalid-token", "redirect"]:
             with self.subTest(mode=mode), Transport(mode) as http:

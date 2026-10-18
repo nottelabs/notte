@@ -13,18 +13,15 @@ export async function readPage(url = 'https://example.com') {
         let stage = 'browser connection';
         try {
           const browser = await chromium.connectOverCDP(await session.cdpUrl());
-          let failed = false;
+          let cleanupFailed = false;
+          let result: { title: string; session_id: string };
           try {
             const page = await browser.contexts()[0].newPage();
             stage = 'navigation';
             await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 });
             stage = 'reading the title';
-            const result = { title: await page.title(), session_id: session.getId()! };
+            result = { title: await page.title(), session_id: session.getId()! };
             Laminar.setSpanOutput(result);
-            return { ...result, trace_id: span.spanContext().traceId };
-          } catch (error) {
-            failed = true;
-            throw error;
           } finally {
             let timer: ReturnType<typeof setTimeout> | undefined;
             try {
@@ -33,9 +30,11 @@ export async function readPage(url = 'https://example.com') {
                 new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error('Close deadline exceeded')), 5000); }),
               ]);
             } catch {
-              if (!failed) throw new Error('Browser cleanup failed');
+              cleanupFailed = true;
             } finally { clearTimeout(timer); }
           }
+          if (cleanupFailed) throw new Error('Browser cleanup failed');
+          return { ...result, trace_id: span.spanContext().traceId };
         } catch {
           span.setStatus({ code: 2 });
           throw new Error(`Notte browser task failed during ${stage} (session ${session.getId()}, trace ${span.spanContext().traceId})`);
