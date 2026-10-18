@@ -107,6 +107,9 @@
   "extract_product_endpoint": {
     "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
   },
+  "fetch_specialized_data": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
   "function_create": {
     "method": "create",
     "resource": "functions",
@@ -183,6 +186,9 @@
   "get_payment": {
     "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
   },
+  "get_policy": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
   "get_script": {
     "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
   },
@@ -202,6 +208,9 @@
   },
   "health_check": {
     "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "invalidate": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
   },
   "limits": {
     "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
@@ -385,6 +394,11 @@
     "resource": "profiles",
     "telemetry": "cloud.profile.list"
   },
+  "profile_state_set": {
+    "method": "stateSet",
+    "resource": "profiles",
+    "telemetry": null
+  },
   "ready_check": {
     "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
   },
@@ -414,9 +428,6 @@
   },
   "scrape_from_html": {
     "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
-  },
-  "scrape_specialized_data": {
-    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
   },
   "scrape_webpage": {
     "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."

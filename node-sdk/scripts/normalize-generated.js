@@ -55,6 +55,11 @@ function normalizeFile(filePath) {
 
 	// Ensure file ends with exactly one newline
 	content = content.replace(/\n+$/, '') + '\n';
+	// Preserve the old operation exports when refreshing to the renamed API.
+	if (path.basename(filePath) === 'index.ts' && !content.includes('as scrapeSpecializedData')) {
+		content += "\nexport { fetchSpecializedData as scrapeSpecializedData } from './sdk.gen';\n";
+		content += "export type { FetchSpecializedDataData as ScrapeSpecializedDataData, FetchSpecializedDataError as ScrapeSpecializedDataError, FetchSpecializedDataErrors as ScrapeSpecializedDataErrors, FetchSpecializedDataResponse as ScrapeSpecializedDataResponse, FetchSpecializedDataResponses as ScrapeSpecializedDataResponses } from './types.gen';\n";
+	}
 
 	// detect-secrets scans staged generated files and flags this schema type name.
 	if (path.basename(filePath) === 'types.gen.ts' && SECRET_NAMESPACE_TYPE_PATTERN.test(content)) {

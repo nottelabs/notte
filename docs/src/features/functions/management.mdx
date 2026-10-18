@@ -65,7 +65,7 @@ Deploy a new version of your Function:
 
 ### Update Function Metadata
 
-Change the name, description, or default runtime with `PATCH /functions/{function_id}`, or `fn.updateMetadata()` in TypeScript. The Python SDK has no wrapper for this call yet.
+Change metadata with `PATCH /functions/{function_id}`, `client.functions.metadata_update()` in Python, or `fn.updateMetadata()` in TypeScript.
 
 Set `function_id` / `functionId` to your function ID. For Python, also set `api_url` and `api_key`.
 
@@ -211,9 +211,34 @@ Remove a Function permanently:
 
 ## Sharing Functions
 
-### Make Function Public
+### Change sharing for an existing function
 
-Share Functions with others:
+Set `shared` on the metadata operation to enable or disable its public code/fork
+link without creating a function or uploading code again:
+
+- Python: `client.functions.metadata_update(function_id, shared=True)`.
+- TypeScript: `await client.functions.metadataUpdate(functionId, { shared: true })`,
+  or `await fn.updateMetadata({ shared: true })` for an existing function wrapper.
+- HTTP: `PATCH /functions/{function_id}` with the JSON body `{"shared": true}`.
+
+Use `False` in Python or `false` in HTTP/TypeScript to disable the fork link.
+Omitting `shared`, or sending null, preserves the current setting. HTTP requires
+an actual boolean, rather than the strings `"true"` or `"false"`.
+
+```bash
+notte functions configure --function-id ID --shared
+notte functions configure --function-id ID --shared=false
+```
+
+Sharing exposes source code, including literals embedded in it. Runs, results and
+stored runtime secrets stay private. Sharing does not enable public execution of
+the author's function. Disabling the link prevents new forks; copies already
+forked into other workspaces remain usable. Share the URL
+`<console origin>/fork/<function_id>` using the Console for the same environment.
+
+### Create a public function
+
+You can also choose sharing when creating a function:
 
 <MakePublic />
 

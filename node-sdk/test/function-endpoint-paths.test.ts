@@ -172,6 +172,14 @@ describe('function endpoint paths', () => {
 		]);
 	});
 
+	it.each([true, false])('updateMetadata preserves shared=%s', async shared => {
+		responses.push({ ...functionResponse, shared });
+		expect((await fn.updateMetadata({ shared })).shared).toBe(shared);
+		expect(calls).toEqual([
+			expect.objectContaining({ method: 'PATCH', path: `/functions/${FUNCTION_ID}`, body: { shared } }),
+		]);
+	});
+
 	it('updateMetadata patches /functions/{id}', async () => {
 		responses.push(functionResponse);
 

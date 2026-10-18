@@ -58,6 +58,7 @@ class FunctionMetadataUpdateRequestDict(TypedDict):
     instructions: NotRequired[str | None]
     self_healing: NotRequired[bool | None]
     response_format: NotRequired[dict[str, Any] | None]
+    shared: NotRequired[bool | None]
 
 
 class FunctionRollbackRequestDict(TypedDict):
@@ -238,6 +239,15 @@ class ProfileListRequestDict(TypedDict):
     page: NotRequired[int]
     page_size: NotRequired[int]
     name: NotRequired[str]
+
+
+class ProfileStateImportRequestDict(TypedDict):
+    cookies: NotRequired[list[core.Cookie] | None]
+    local_storage: NotRequired[dict[str, dict[str, str]] | None]
+    session_storage: NotRequired[dict[str, dict[str, str]] | None]
+    domains: NotRequired[list[str] | None]
+    mode: NotRequired[Literal["replace", "append"]]
+    storage_scope: NotRequired[Literal["domains", "origins"]]
 
 
 class VaultListRequestDict(TypedDict):

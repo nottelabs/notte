@@ -112,6 +112,12 @@ from notte_sdk._generated.models import (
     ProfileDuplicateRequest as ProfileDuplicateRequest,
 )
 from notte_sdk._generated.models import (
+    ProfileStateImportRequest as ProfileStateImportRequest,
+)
+from notte_sdk._generated.models import (
+    ProfileStateImportResponse as ProfileStateImportResponse,
+)
+from notte_sdk._generated.models import (
     RunPayloadUploadRequest as RunPayloadUploadRequest,
 )
 from notte_sdk._generated.models import ScheduleDeleteResponse as ScheduleDeleteResponse
@@ -238,6 +244,9 @@ from notte_sdk._generated.typing import (
     ProfileDuplicateRequestDict as ProfileDuplicateRequestDict,
 )
 from notte_sdk._generated.typing import ProfileListRequestDict as ProfileListRequestDict
+from notte_sdk._generated.typing import (
+    ProfileStateImportRequestDict as ProfileStateImportRequestDict,
+)
 from notte_sdk._generated.typing import ProxySettingsDict as ProxySettingsDict
 from notte_sdk._generated.typing import (
     RunPayloadUploadRequestDict as RunPayloadUploadRequestDict,
@@ -368,6 +377,9 @@ __all__ = [
     "ProfileListRequest",
     "ProfileListRequestDict",
     "ProfileResponse",
+    "ProfileStateImportRequest",
+    "ProfileStateImportRequestDict",
+    "ProfileStateImportResponse",
     "ProxySettings",
     "ProxySettingsDict",
     "ReplayResponse",

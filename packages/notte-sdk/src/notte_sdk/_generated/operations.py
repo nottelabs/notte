@@ -673,6 +673,19 @@ def profile_list(
     )
 
 
+def profile_state_set(
+    profile_id: str,
+    body: BaseModel,
+) -> NotteEndpoint[models.ProfileStateImportResponse]:
+    """Profile State Set (`POST /profiles/{profile_id}/state`)."""
+    return NotteEndpoint(
+        method="POST",
+        path=f"/profiles/{_segment(profile_id)}/state",
+        response=models.ProfileStateImportResponse,
+        request=body,
+    )
+
+
 def list_vaults(
     *,
     params: BaseModel | None = None,

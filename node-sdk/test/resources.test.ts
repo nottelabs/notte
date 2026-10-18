@@ -189,3 +189,27 @@ it('returns successful raw payload objects with a detail key and preserves HTTP 
   fetch.mockImplementation(async () => Response.json({ detail: 'missing' }, { status: 404 }));
   await expect(api.functions.downloadRunPayload('function', 'run', 'variables')).rejects.toBeInstanceOf(NotteAPIError);
 });
+
+it.each([true, false])('sends explicit sharing=%s through the metadata operation', async shared => {
+  const requests: Request[] = [];
+  vi.stubGlobal('fetch', vi.fn(async (request: Request) => {
+    requests.push(request);
+    return Response.json({ function_id: 'function', shared });
+  }));
+  const result = await client().functions.metadataUpdate('function', { shared });
+  expect(result.shared).toBe(shared);
+  expect(requests).toHaveLength(1);
+  expect(requests[0].method).toBe('PATCH');
+  expect(requests[0].url).toBe('https://api.example.test/functions/function');
+  expect(await requests[0].json()).toEqual({ shared });
+});
+
+it('leaves sharing absent from unrelated metadata updates', async () => {
+  const requests: Request[] = [];
+  vi.stubGlobal('fetch', vi.fn(async (request: Request) => {
+    requests.push(request);
+    return Response.json({ function_id: 'function', shared: true });
+  }));
+  expect((await client().functions.metadataUpdate('function', { name: 'renamed' })).shared).toBe(true);
+  expect(await requests[0].json()).toEqual({ name: 'renamed' });
+});

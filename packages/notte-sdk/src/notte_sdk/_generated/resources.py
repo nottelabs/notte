@@ -41,6 +41,7 @@ from notte_sdk._generated.typing import (
     ProfileCreateRequestDict,
     ProfileDuplicateRequestDict,
     ProfileListRequestDict,
+    ProfileStateImportRequestDict,
     RunPayloadUploadRequestDict,
     SessionListRequestDict,
     SessionMouseReplayParametersQueryDict,
@@ -422,6 +423,13 @@ class ProfilesOperations(BaseClient):
         _ = data.setdefault("page_size", 20)  # SDK default differs from API 10.
         request = wire_request(profiles_compat.ProfileListRequest, data)
         return self.request_list(api.profile_list(params=request))
+
+    def state_set(
+        self, profile_id: str, **data: Unpack[ProfileStateImportRequestDict]
+    ) -> models.ProfileStateImportResponse:
+        "Profile State Set (`POST /profiles/{profile_id}/state`)."
+        request = wire_request(models.ProfileStateImportRequest, data)
+        return self.request(api.profile_state_set(profile_id, request))
 
 
 class VaultsOperations(BaseClient):

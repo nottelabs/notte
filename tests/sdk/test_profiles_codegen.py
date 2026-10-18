@@ -105,6 +105,17 @@ def test_request_compatibility(client: NotteClient, monkeypatch: pytest.MonkeyPa
     assert session.calls[-1].params == {"page": 0, "page_size": 101}
 
 
+def test_profile_state_accepts_plain_domain_lists(client: NotteClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    session = fake(
+        monkeypatch,
+        {"success": True, "cookies_count": 0, "local_storage_origins": 0, "session_storage_origins": 0},
+    )
+    assert client.profiles.state_set("profile-1", domains=["example.com"]).success
+    call = session.calls[0]
+    assert (call.method, call.url) == ("POST", SERVER + "/profiles/profile-1/state")
+    assert json.loads(call.data) == {"domains": ["example.com"]}
+
+
 @pytest.mark.parametrize("payload", [{}, {"success": True}, {"message": "deleted"}])
 def test_incomplete_delete_response_is_not_success(
     client: NotteClient, monkeypatch: pytest.MonkeyPatch, payload: dict[str, Any]
