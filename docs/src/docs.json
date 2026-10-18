@@ -350,7 +350,8 @@
               "integrations/hermes",
               "integrations/stagehand",
               "integrations/claude-agents",
-              "integrations/prime-intellect"
+              "integrations/prime-intellect",
+              "integrations/watsonx"
             ]
           },
           {

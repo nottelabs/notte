@@ -22,5 +22,6 @@
   "stripe-link": "typescript-driver",
   "temporal": "node-project",
   "trigger": "node-project",
-  "valtown": "valtown-deno"
+  "valtown": "valtown-deno",
+  "watsonx": "typescript-driver"
 }
