@@ -3136,12 +3136,6 @@ export type FunctionMetadataUpdateRequest = {
      */
     self_healing?: boolean | null;
     /**
-     * Shared
-     *
-     * Enable or disable public code sharing and forking for this function. Source code, including embedded credentials, becomes public. Runs, results and stored runtime secrets remain private. This does not enable public execution. Omit or send null to leave sharing unchanged.
-     */
-    shared?: boolean | null;
-    /**
      * Response Format
      *
      * JSON Schema of run()'s return value, computed by the caller from its pydantic model
@@ -3149,6 +3143,12 @@ export type FunctionMetadataUpdateRequest = {
     response_format?: {
         [key: string]: unknown;
     } | null;
+    /**
+     * Shared
+     *
+     * Enable or disable public code sharing and forking for this function. Source code, including embedded credentials, becomes public. Runs, results and stored runtime secrets remain private. This does not enable public execution. Omit or send null to leave sharing unchanged.
+     */
+    shared?: boolean | null;
 };
 
 /**

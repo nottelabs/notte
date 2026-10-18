@@ -57,8 +57,8 @@ class FunctionMetadataUpdateRequestDict(TypedDict):
     domain: NotRequired[str | None]
     instructions: NotRequired[str | None]
     self_healing: NotRequired[bool | None]
-    shared: NotRequired[bool | None]
     response_format: NotRequired[dict[str, Any] | None]
+    shared: NotRequired[bool | None]
 
 
 class FunctionRollbackRequestDict(TypedDict):
