@@ -1,0 +1,9 @@
+{
+  "name": "notte-fx-example",
+  "private": true,
+  "type": "module",
+  "engines": {"node": ">=24"},
+  "scripts": {"start": "node src/index.ts", "typecheck": "tsc --noEmit", "test": "node --test test/fx.test.ts"},
+  "dependencies": {"libfx": "0.0.14", "notte-sdk": "1.9.7", "playwright-core": "1.63.0"},
+  "devDependencies": {"@types/node": "24.10.0", "typescript": "6.0.3"}
+}

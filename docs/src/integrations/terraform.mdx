@@ -1,0 +1,19 @@
+---
+title: Terraform
+description: Manage durable Notte profiles with a native Terraform provider.
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+Manage Notte browser profiles with the native provider in [`integrations/terraform-provider-notte`](https://github.com/nottelabs/notte/tree/main/integrations/terraform-provider-notte). It supports creation, import, drift detection and deletion.
+
+## Set up
+
+Use Go 1.27.2+, Terraform 1.16.6, and a [Notte API key](https://console.notte.cc/apikeys). Build the provider and configure a local development override using its README. This provider is source-distributed and has not been published to the Terraform Registry.
+
+Set `NOTTE_API_KEY` and use the included `notte_profile` configuration. Review the Terraform plan through your usual change workflow before applying it. Import an existing profile by ID, then use the managed profile's ID in your browser automation.
+
+Changing a profile's name replaces it and removes its saved browser state. Use `lifecycle.prevent_destroy` when you need to protect an important profile. Cookies and browser storage are managed by your browser automation and are not stored as Terraform resource attributes.
+
+The provider manages profiles only. Project and browser-pool resources and profile metadata updates are unsupported. Tests cover the native CLI against a local API fixture and real apply, refresh, and destroy against Notte's development API, with profile removal independently verified.

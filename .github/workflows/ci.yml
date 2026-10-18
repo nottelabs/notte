@@ -15,16 +15,47 @@ permissions:
 # entire caller would also interrupt example suites and their cleanup steps.
 jobs:
   changes:
+    permissions:
+      contents: read
+      pull-requests: read
     runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-2vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
     timeout-minutes: 5
     outputs:
       scope: ${{ steps.scope.outputs.scope }}
+      llm_provider: ${{ steps.provider.outputs.provider }}
+      source_sha: ${{ steps.provider.outputs.source_sha }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
+      # ci:openai selects a provider, not an approval. A full PR rerun requires
+      # repository write access and rechecks live metadata for the same head.
+      - name: Select live extraction provider
+        id: provider
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          SAME_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+          DELETED: ${{ github.event.deleted }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          umask 077
+          PULLS="$RUNNER_TEMP/ci-provider-pulls.json"
+          printf '[]' > "$PULLS"
+          if [ "$EVENT_NAME" = pull_request ] && [ "$SAME_REPOSITORY" = true ]; then
+            case "$PR_NUMBER" in ''|*[!0-9]*) echo 'Invalid PR number'; exit 1 ;; esac
+            gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq '[.]' > "$PULLS"
+          elif [ "$EVENT_NAME" = push ] && [ "$GITHUB_REF" = refs/heads/main ] && [ "$DELETED" != true ]; then
+            gh api "repos/$GITHUB_REPOSITORY/commits/$SOURCE_SHA/pulls" \
+              --jq '[.[] | . + {merged: (.merged_at != null)}]' > "$PULLS"
+          fi
+          RESULT=$(python3 scripts/ci_provider.py --event "$EVENT_NAME" --ref "$GITHUB_REF" \
+            --repository "$GITHUB_REPOSITORY" --head "$SOURCE_SHA" --attempt "$GITHUB_RUN_ATTEMPT" --pulls "$PULLS")
+          printf '%s\n' "$RESULT" | jq -r '"provider=\(.provider)\nsource_sha=\(.source_sha)"' >> "$GITHUB_OUTPUT"
       - uses: ./.github/actions/ci-scope
         id: scope
 
@@ -44,6 +75,8 @@ jobs:
     uses: ./.github/workflows/test-cicd.yml
     with:
       scope: ${{ needs.changes.outputs.scope }}
+      source_sha: ${{ needs.changes.outputs.source_sha }}
+      llm_provider: ${{ needs.changes.outputs.llm_provider }}
     secrets: inherit # pragma: allowlist secret
 
   node:

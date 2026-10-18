@@ -1,0 +1,30 @@
+{
+  "name": "notte-trigger-example",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "trigger dev --skip-update-check",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test test/cleanup.test.ts test/cli.test.ts",
+    "test:live": "node --experimental-strip-types --test test/read-page.live.test.ts",
+    "test:hosted": "node --experimental-strip-types --test test/hosted.live.test.ts"
+  },
+  "dependencies": {
+    "@trigger.dev/sdk": "4.7.4",
+    "notte-sdk": "1.9.7",
+    "playwright-core": "1.63.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.0",
+    "trigger.dev": "4.7.4",
+    "typescript": "6.0.3"
+  },
+  "overrides": {
+    "giget": {
+      "tar": "7.5.22"
+    }
+  }
+}
