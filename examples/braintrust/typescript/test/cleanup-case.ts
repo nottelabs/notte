@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { mock } from 'node:test';
+import { setTimeout as sleep } from 'node:timers/promises';
 import * as braintrust from 'braintrust';
 import { chromium } from 'playwright-core';
 
@@ -45,12 +46,22 @@ globalThis.fetch = async (input, init) => {
   if (new URL(url).pathname.endsWith('/sessions/start') && response.ok) ids.push((await response.clone().json()).session_id);
   return response;
 };
-const status = async (id: string) => {
+const status = async (id: string, signal = AbortSignal.timeout(15_000)) => {
   const response = await originalFetch(`${api}/sessions/${id}`, {
-    headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` }, signal: AbortSignal.timeout(15_000),
+    headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` }, signal,
   });
   assert.equal(response.status, 200);
-  return (await response.json() as { status: string }).status;
+  const value = (await response.json() as { status: string }).status;
+  assert.ok(value === 'active' || value === 'closed', 'Unknown session status');
+  return value;
+};
+const waitClosed = async (id: string) => {
+  const signal = AbortSignal.timeout(15_000);
+  while (true) {
+    closedBeforeCompensation = await status(id, signal) === 'closed';
+    if (closedBeforeCompensation) return true;
+    await sleep(250, undefined, { signal });
+  }
 };
 try {
   let result: Awaited<ReturnType<typeof runDemo>> | undefined, failure: string | undefined;
@@ -62,8 +73,7 @@ try {
   phase = 'owner counters';
   assert.equal(ids.length, 1); assert.equal(closes, 1); assert.equal(flushes, 1);
   phase = 'independent owner status';
-  const closed = await status(ids[0]) === 'closed';
-  closedBeforeCompensation = closed;
+  const closed = await waitClosed(ids[0]);
   console.log(JSON.stringify({ mode, session_id: ids[0], closed_before_compensation: closed,
     private_body: failure?.includes('PRIVATE_') ?? false, navigation_error_preserved: failure?.startsWith('Browser task failed: navigate') ?? false }));
   assert.equal(closed, true, 'Owner did not release its browser');
