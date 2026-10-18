@@ -292,8 +292,8 @@ export async function fillPassword(
 export async function main(tokenize = createToken) {
   const controller = new AbortController();
   const abort = () => controller.abort();
-  process.once("SIGINT", abort);
-  process.once("SIGTERM", abort);
+  process.on("SIGINT", abort);
+  process.on("SIGTERM", abort);
   try {
     const required = (name: string) => {
       const value = process.env[name];

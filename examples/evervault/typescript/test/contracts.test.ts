@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { spawn } from "node:child_process";
 import { once } from "node:events";
+import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import { chromium, type Browser } from "playwright-core";
 import { CA_SHA256, Notte, createToken, disconnect, fillPassword } from "../src/index.js";
@@ -24,6 +25,7 @@ async function fixture(
   fail = false,
   startStatus = 200,
   onStart?: () => Promise<void>,
+  onStop?: () => Promise<void>,
 ) {
   const requests: { path: string; method: string; auth?: string; body: any }[] =
     [];
@@ -72,7 +74,10 @@ async function fixture(
           cdp_url: "wss://cdp.example.test/fixture",
         }),
       );
-    } else if (req.url === `/sessions/${id}/stop`) res.end("{}");
+    } else if (req.url === `/sessions/${id}/stop`) {
+      await onStop?.();
+      res.end("{}");
+    }
     else if (req.url === `/sessions/${id}`) res.end('{"status":"closed"}');
     else {
       res.statusCode = 404;
@@ -366,73 +371,66 @@ test(
 );
 
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
-  test(
-    `native CLI ${signal} during startup recovers its response and closes ownership`,
-    { timeout: 60_000 },
-    async () => {
-      let entered!: () => void, release!: () => void;
-      const started = new Promise<void>((resolve) => {
-        entered = resolve;
-      });
-      const response = new Promise<void>((resolve) => {
-        release = resolve;
-      });
-      const f = await fixture(markers, false, 200, async () => {
-        entered();
-        await response;
-      });
-      const script = `import { main } from ${JSON.stringify(new URL("../src/index.ts", import.meta.url).href)}; main(async () => ({token:'fixture-token',proxy:${JSON.stringify(proxy)}})).catch(() => { process.exitCode=1; });`;
-      const child = spawn(
-        process.execPath,
-        ["--import", "tsx", "--input-type=module", "-e", script],
-        {
-          env: {
-            PATH: process.env.PATH,
-            NOTTE_API_KEY: "fixture-notte-key", // pragma: allowlist secret (dummy fixture)
-            NOTTE_API_URL: f.root,
-            EVERVAULT_APP_ID: "fixture-app",
-            EVERVAULT_API_KEY: "fixture-vendor-key", // pragma: allowlist secret (dummy fixture)
-            EVERVAULT_ENCRYPTED_PASSWORD: "ev:fixture", // pragma: allowlist secret (dummy fixture)
-            EVERVAULT_FORM_URL: target.href,
-          },
-          stdio: ["ignore", "pipe", "pipe"],
-        },
-      );
-      const exited = once(child, "exit");
-      let timer: ReturnType<typeof setTimeout> | undefined;
-      try {
-        await Promise.race([
-          started,
-          exited.then(([code]) => {
-            throw new Error(`CLI exited before startup (${code})`);
-          }),
-          new Promise<never>((_resolve, reject) => {
-            timer = setTimeout(
-              () => reject(new Error("CLI startup timed out")),
-              45_000,
-            );
-          }),
-        ]);
-        clearTimeout(timer);
-        child.kill(signal);
-        // Let the real signal handler run while the start response is still pending.
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        release();
-        const [code, termination] = await exited;
-        assert.equal(code, 1);
-        assert.equal(termination, null);
-        assert.deepEqual(
-          f.requests.map((r) => r.method),
-          ["POST", "DELETE", "GET"],
+  for (const phase of ["start", "stop"] as const) {
+    test(
+      `native CLI repeated ${signal} during delayed ${phase} closes ownership`,
+      { timeout: 60_000 },
+      async () => {
+        let entered!: () => void, release!: () => void;
+        const started = new Promise<void>((resolve) => { entered = resolve; });
+        const response = new Promise<void>((resolve) => { release = resolve; });
+        const block = async () => { entered(); await response; };
+        const f = await fixture(
+          markers, false, phase === "start" ? 200 : 503,
+          phase === "start" ? block : undefined,
+          phase === "stop" ? block : undefined,
         );
-      } finally {
-        clearTimeout(timer);
-        release();
-        if (child.exitCode === null) child.kill("SIGKILL");
-        await f.close();
-      }
-    },
-  );
+        const child = spawn(
+          process.execPath,
+          ["--import", "tsx", fileURLToPath(new URL("./cli-signal-case.ts", import.meta.url))],
+          {
+            env: {
+              PATH: process.env.PATH,
+              NOTTE_API_KEY: "fixture-notte-key", // pragma: allowlist secret (dummy fixture)
+              NOTTE_API_URL: f.root,
+              EVERVAULT_APP_ID: "fixture-app",
+              EVERVAULT_API_KEY: "fixture-vendor-key", // pragma: allowlist secret (dummy fixture)
+              EVERVAULT_ENCRYPTED_PASSWORD: "ev:fixture", // pragma: allowlist secret (dummy fixture)
+              EVERVAULT_FORM_URL: target.href,
+              EVERVAULT_FIXTURE_PROXY: JSON.stringify(proxy),
+            },
+            stdio: ["ignore", "pipe", "pipe"],
+          },
+        );
+        const exited = once(child, "exit");
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        try {
+          await Promise.race([
+            started,
+            exited.then(([code]) => { throw new Error(`CLI exited before startup (${code})`); }),
+            new Promise<never>((_resolve, reject) => {
+              timer = setTimeout(() => reject(new Error("CLI startup timed out")), 45_000);
+            }),
+          ]);
+          clearTimeout(timer);
+          child.kill(signal);
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          child.kill(signal);
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          release();
+          const [code, termination] = await exited;
+          assert.equal(code, 1);
+          assert.equal(termination, null);
+          assert.deepEqual(f.requests.map((r) => r.method), ["POST", "DELETE", "GET"]);
+        } finally {
+          clearTimeout(timer);
+          release();
+          if (child.exitCode === null) child.kill("SIGKILL");
+          await f.close();
+        }
+      },
+    );
+  }
 }
 
 test("invalid target or plaintext input fails before the vendor request", async () => {
