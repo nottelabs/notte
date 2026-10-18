@@ -180,7 +180,7 @@ jobs:
         # lower bounds must allow existing consumers to keep compatible versions.
         run: >-
           uv run --with websockets==15.0.1 --with beautifulsoup4==4.14.3 --with posthog==7.0.1
-          pytest tests/sdk tests/browser tests/llm tests/data tests/test_telemetry.py -m "not staging and not live" -q
+          pytest tests/sdk tests/browser tests/llm tests/data tests/test_telemetry.py tests/test_telemetry_delivery.py -m "not staging and not live" -q
 
       - name: Note - staging-and-live skipped (fork PR)
         if: ${{ env.IS_TRUSTED != 'true' }}

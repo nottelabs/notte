@@ -52,3 +52,31 @@ def test_track_usage_delivers_metadata_only_to_telemetry_clients(monkeypatch: py
     ]
     assert secret not in repr(posthog_events)
     assert secret not in repr(scarf_events)
+
+
+def test_real_posthog_client_accepts_the_telemetry_contract(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Exercise the installed client's constructor and event builder without delivery."""
+    import posthog
+    from posthog.client import Client
+
+    captured: list[dict[str, Any]] = []
+
+    def enqueue(self: Client, message: dict[str, Any], *args: Any, **kwargs: Any) -> tuple[bool, dict[str, Any]]:
+        _ = self, args, kwargs
+        captured.append(message)
+        return True, message
+
+    # Replacing enqueue prevents consumer threads and network I/O while leaving
+    # the real constructor, capture signature and event normalization intact.
+    monkeypatch.setattr(Client, "_enqueue", enqueue)
+    monkeypatch.setattr(telemetry, "DISABLE_TELEMETRY", False)
+    monkeypatch.setattr(telemetry, "POSTHOG_API_KEY", "test-project-key")
+    client = telemetry.setup_posthog()
+    assert isinstance(client, posthog.Posthog)
+    try:
+        client.capture(distinct_id="test-installation", event="compatibility", properties={"status": "success"})
+        assert captured[0]["event"] == "compatibility"
+        assert captured[0]["distinct_id"] == "test-installation"
+        assert captured[0]["properties"]["status"] == "success"
+    finally:
+        client.shutdown()
