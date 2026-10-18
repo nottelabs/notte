@@ -100,6 +100,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [Hermes Agent](https://docs.notte.cc/integrations/hermes.md): Use Notte cloud browsers with Hermes Agent
 - [Stagehand](https://docs.notte.cc/integrations/stagehand.md): Use Stagehand v4 with a Notte cloud browser in Python or TypeScript
 - [Claude Agent SDK](https://docs.notte.cc/integrations/claude-agents.md): Give Claude agents a Notte cloud browser through MCP.
+- [Prime Intellect](https://docs.notte.cc/integrations/prime-intellect.md): Build Verifiers browser tasksets with Notte sessions.
 
 ## Computer Use
 

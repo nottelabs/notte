@@ -349,7 +349,8 @@
               "integrations/openclaw",
               "integrations/hermes",
               "integrations/stagehand",
-              "integrations/claude-agents"
+              "integrations/claude-agents",
+              "integrations/prime-intellect"
             ]
           },
           {
