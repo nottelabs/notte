@@ -59,6 +59,13 @@ def model_endpoint(responses, status=200):
 
 
 class NativeProtocolTests(unittest.IsolatedAsyncioTestCase):
+    async def test_invalid_time_budget_is_rejected_before_connection(self):
+        with patch.object(demo, "NotteClient") as client:
+            for timeout in (0, -1, 121, float("inf"), float("nan")):
+                with self.subTest(timeout=timeout), self.assertRaisesRegex(ValueError, "timeout_seconds"):
+                    await demo.run("Read the title", timeout_seconds=timeout)
+            client.assert_not_called()
+
     async def test_caller_exception_does_not_change_owned_cleanup(self):
         for cleanup_fails in (False, True):
             with self.subTest(cleanup_fails=cleanup_fails):

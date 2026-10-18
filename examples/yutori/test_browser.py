@@ -20,6 +20,23 @@ from yutori.navigator import aplaywright_screenshot_to_data_url
 
 @unittest.skipUnless(os.environ.get("NOTTE_YUTORI_LIVE") == "1", "Real Notte browser tests are opt-in")
 class BrowserTests(unittest.IsolatedAsyncioTestCase):
+    async def test_time_budget_cancels_model_work_and_stops_owned_session(self):
+        requesting = asyncio.Event()
+
+        async def stalled_model(*_args, **_kwargs):
+            requesting.set()
+            await asyncio.Future()
+
+        with self.owned(), patch.object(demo, "acreate_trimmed", new=stalled_model):
+            async with AsyncYutoriClient(api_key="test-only") as client:  # pragma: allowlist secret
+                with self.assertRaisesRegex(demo.BrowserTaskError, "Yutori time limit reached") as caught:
+                    await asyncio.wait_for(
+                        demo.run("Read the title", max_steps=30, timeout_seconds=10, client=client), timeout=30
+                    )
+            self.assertTrue(requesting.is_set(), "The deadline must interrupt the model request")
+            self.assertIsNone(caught.exception.__cause__)
+            self.assertTrue(caught.exception.__suppress_context__)
+
     async def test_caller_exception_does_not_hide_disconnect_failure(self):
         closes = []
         connect = BrowserType.connect_over_cdp

@@ -131,7 +131,7 @@ async def owned_connection():
                     raise asyncio.CancelledError
 
 
-async def run(
+async def _run(
     task: str, start_url: str = "https://example.com", *, max_steps: int = 12, client: AsyncYutoriClient | None = None
 ):
     if not 1 <= max_steps <= 30:
@@ -191,6 +191,23 @@ async def run(
                 if isinstance(error, BrowserTaskError):
                     raise
                 raise BrowserTaskError(f"Yutori {step} failed") from None
+
+
+async def run(
+    task: str,
+    start_url: str = "https://example.com",
+    *,
+    max_steps: int = 12,
+    timeout_seconds: float = 120,
+    client: AsyncYutoriClient | None = None,
+):
+    if not 0 < timeout_seconds <= 120:
+        raise ValueError("Choose timeout_seconds above zero and at most 120")
+    try:
+        async with asyncio.timeout(timeout_seconds):
+            return await _run(task, start_url, max_steps=max_steps, client=client)
+    except TimeoutError:
+        raise BrowserTaskError("Yutori time limit reached") from None
 
 
 if __name__ == "__main__":
