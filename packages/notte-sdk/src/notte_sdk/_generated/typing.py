@@ -8,8 +8,6 @@ from notte_core import types as core
 from pydantic import Field
 from typing_extensions import TypedDict
 
-from notte_sdk._generated import models
-
 
 class NotteProxyDict(TypedDict):
     type: NotRequired[Literal["notte"]]
@@ -247,7 +245,7 @@ class ProfileStateImportRequestDict(TypedDict):
     cookies: NotRequired[list[core.Cookie] | None]
     local_storage: NotRequired[dict[str, dict[str, str]] | None]
     session_storage: NotRequired[dict[str, dict[str, str]] | None]
-    domains: NotRequired[models.Domains | None]
+    domains: NotRequired[list[str] | None]
     mode: NotRequired[Literal["replace", "append"]]
     storage_scope: NotRequired[Literal["domains", "origins"]]
 

@@ -546,6 +546,7 @@ KEYWORD_ANNOTATIONS = {
         "auth_ids": "list[str]",
     },
     "NotteProxy": {"country": "core.ProxyGeolocationCountry | None"},
+    "ProfileStateImportRequest": {"domains": "list[str] | None"},
     "ListSessionsParametersQuery": {"include_system": "bool | None"},
     "SessionStopParametersQuery": {"close_reason": 'Literal["manual", "error"]'},
     "BodySessionCookiesSetSessionsSessionIdCookiesPost": {"cookies": "list[core.Cookie] | list[config.CookieDict]"},
