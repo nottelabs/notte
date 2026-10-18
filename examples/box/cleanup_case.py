@@ -1,14 +1,16 @@
-"""Inject a native disconnect failure after closing a real owned connection."""
+"""Inject a native disconnect failure and verify the owner's browser release."""
 
 import asyncio
 import json
 import os
 import sys
 import threading
+import time
 from pathlib import Path
 from unittest.mock import patch
 
 import main as demo
+import requests
 from notte_sdk import NotteClient
 from playwright.async_api import BrowserType as AsyncBrowserType
 from playwright.sync_api import BrowserType
@@ -18,6 +20,29 @@ client, ids, closes, navigations = NotteClient(), [], [], []
 start = client.sessions.start
 sync_connect = BrowserType.connect_over_cdp
 async_connect = AsyncBrowserType.connect_over_cdp
+
+
+def status(session_id, timeout=15):
+    api = (os.environ.get("NOTTE_API_URL") or "https://api.notte.cc").rstrip("/")
+    response = requests.get(
+        f"{api}/sessions/{session_id}",
+        headers={"Authorization": f"Bearer {os.environ['NOTTE_API_KEY']}"},
+        timeout=timeout,
+    )
+    assert response.status_code == 200, "Authoritative session lookup failed"
+    value = response.json()["status"]
+    assert value in {"active", "closed"}, "Unknown session status"
+    return value
+
+
+def wait_closed(session_id):
+    deadline = time.monotonic() + 15
+    while True:
+        remaining = deadline - time.monotonic()
+        assert remaining > 0, "Owner did not release its browser"
+        if status(session_id, timeout=min(5, remaining)) == "closed":
+            return True
+        time.sleep(min(0.25, max(0, deadline - time.monotonic())))
 
 
 def started(**kwargs):
@@ -44,10 +69,10 @@ def connected(browser_type, *args, **kwargs):
         return page
 
     def closed():
-        close()
         closes.append(True)
         if mode == "close-timeout":
             threading.Event().wait()
+        close()
         raise RuntimeError("PRIVATE_BROWSER_CLOSE https://private.invalid/credential")
 
     browser.contexts[0].new_page = page_created
@@ -72,10 +97,10 @@ async def async_connected(browser_type, *args, **kwargs):
         return page
 
     async def closed():
-        await close()
         closes.append(True)
         if mode == "close-timeout":
             await asyncio.Future()
+        await close()
         raise RuntimeError("PRIVATE_BROWSER_CLOSE https://private.invalid/credential")
 
     browser.contexts[0].new_page = page_created
@@ -97,10 +122,20 @@ try:
             failure = str(error)
     assert len(ids) == len(closes) == len(navigations) == 1
     assert failure == "Could not capture the hosted page", "Private browser details escaped"
-    assert client.sessions.status(ids[0]).status == "closed", "Owner did not release its browser"
-    print(json.dumps({"session_id": ids[0], "closed": True, "mode": mode}))
+    closed = wait_closed(ids[0])
+    print(json.dumps({"session_id": ids[0], "closed": closed, "closed_before_compensation": closed, "mode": mode}))
 finally:
-    for session_id in ids:
-        if client.sessions.status(session_id).status != "closed":
-            client.sessions.stop(session_id)
-            assert client.sessions.status(session_id).status == "closed"
+    failed = sys.exception() is not None
+    try:
+        for session_id in ids:
+            closed = False
+            try:
+                closed = status(session_id) == "closed"
+            except Exception:
+                pass  # Closure is unconfirmed; still attempt the owned stop.
+            if not closed:
+                client.sessions.stop(session_id)
+            wait_closed(session_id)
+    except Exception:
+        if not failed:
+            raise
