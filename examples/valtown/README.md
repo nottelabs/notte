@@ -5,6 +5,9 @@ built-in `fetch` to open a Notte session, read Example Domain's title, and close
 the browser before responding. It needs no local browser, filesystem access, or
 model key.
 
+Failures log fixed diagnostics or HTTP statuses without credentials, URLs, or
+response bodies. If the task and cleanup both fail, the task error remains primary.
+
 Verified locally with Deno 2.9.6 and real Notte browsers. Execution inside a
 hosted Val Town account has not been verified.
 

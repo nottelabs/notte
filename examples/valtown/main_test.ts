@@ -21,7 +21,11 @@ async function closed(id: string) {
   assert.fail("The owned browser session did not close");
 }
 
-async function owned<T>(operation: () => Promise<T>, failure = false) {
+async function owned<T>(
+  operation: () => Promise<T>,
+  failure = false,
+  stopFailure = false,
+) {
   const original = globalThis.fetch;
   const ids: string[] = [], stopped: string[] = [];
   const originalKey = Deno.env.get("NOTTE_API_KEY");
@@ -39,6 +43,11 @@ async function owned<T>(operation: () => Promise<T>, failure = false) {
       if (path === "/sessions/start" && response.ok) {
         ids.push((await response.clone().json()).session_id);
       }
+      if (path.endsWith("/stop") && stopFailure) {
+        // Inject the failed response after the real owned stop completes.
+        await response.body?.cancel();
+        return Response.json({ detail: "PRIVATE_STOP_BODY" }, { status: 503 });
+      }
       return response;
     }
     assert.equal(request.headers.get("Authorization"), `Bearer ${fakeKey}`);
@@ -50,6 +59,9 @@ async function owned<T>(operation: () => Promise<T>, failure = false) {
     assert.ok(ids.length === 1 && path.startsWith(`/sessions/${ids[0]}/`));
     if (path.endsWith("/stop")) {
       stopped.push(ids[0]);
+      if (stopFailure) {
+        return Response.json({ detail: "PRIVATE_STOP_BODY" }, { status: 503 });
+      }
       return Response.json({ session_id: ids[0], status: "closed" });
     }
     assert.ok(path.endsWith("/page/execute"));
@@ -143,3 +155,104 @@ Deno.test(
     assert.deepEqual(await result.json(), { error: "Browser task failed" });
   },
 );
+
+Deno.test("A cleanup failure preserves the original task failure", async () => {
+  const original = console.error;
+  const messages: string[] = [];
+  console.error = (...values) => messages.push(values.join(" "));
+  try {
+    await owned(
+      () =>
+        assert.rejects(
+          () => readPage("http://127.0.0.1:1"),
+          (error: unknown) => {
+            assert.ok(error instanceof Error);
+            assert.notEqual(error.message, "Notte API returned HTTP 503");
+            if (!live) {
+              assert.equal(error.message, "Notte API returned HTTP 400");
+            }
+            return true;
+          },
+        ),
+      true,
+      true,
+    );
+    assert.deepEqual(messages, [
+      "Notte browser cleanup failed: Notte API returned HTTP 503",
+    ]);
+  } finally {
+    console.error = original;
+  }
+});
+
+Deno.test("A successful task still reports a cleanup failure", async () => {
+  const original = console.error;
+  const messages: string[] = [];
+  console.error = (...values) => messages.push(values.join(" "));
+  try {
+    await owned(
+      () =>
+        assert.rejects(
+          () => readPage(),
+          /Notte API returned HTTP 503/,
+        ),
+      false,
+      true,
+    );
+    assert.deepEqual(messages, [
+      "Notte browser cleanup failed: Notte API returned HTTP 503",
+    ]);
+  } finally {
+    console.error = original;
+  }
+});
+
+Deno.test("Handler diagnostics exclude raw transport and parser details", {
+  ignore: live,
+}, async () => {
+  const fetch = globalThis.fetch, log = console.error;
+  const key = Deno.env.get("NOTTE_API_KEY"),
+    url = Deno.env.get("NOTTE_API_URL");
+  const messages: string[] = [];
+  Deno.env.set("NOTTE_API_KEY", fakeKey);
+  Deno.env.set("NOTTE_API_URL", "https://notte.example.invalid");
+  Deno.env.set("NOTTE_VALTOWN_TOKEN", fakeToken);
+  console.error = (...values) => messages.push(values.join(" "));
+  const request = () =>
+    new Request("https://val.example", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${fakeToken}` },
+    });
+  try {
+    for (
+      const error of [
+        new Error(`PRIVATE_TRANSPORT ${fakeKey} ${fakeToken}`),
+        new SyntaxError("PRIVATE_JSON_BODY"),
+        new DOMException("PRIVATE_TIMEOUT_URL", "TimeoutError"),
+      ]
+    ) {
+      globalThis.fetch = () => Promise.reject(error);
+      const response = await handler(request());
+      assert.equal(response.status, 502);
+      assert.deepEqual(await response.json(), { error: "Browser task failed" });
+    }
+    Deno.env.delete("NOTTE_API_KEY");
+    assert.equal((await handler(request())).status, 502);
+    assert.deepEqual(messages, [
+      "Notte browser task failed: Unexpected browser task failure",
+      "Notte browser task failed: Unexpected browser task failure",
+      "Notte browser task failed: Notte request timed out",
+      "Notte browser task failed: Set NOTTE_API_KEY",
+    ]);
+    assert.ok(!messages.join(" ").includes("PRIVATE_"));
+    assert.ok(!messages.join(" ").includes(fakeKey));
+    assert.ok(!messages.join(" ").includes(fakeToken));
+  } finally {
+    globalThis.fetch = fetch;
+    console.error = log;
+    if (key === undefined) Deno.env.delete("NOTTE_API_KEY");
+    else Deno.env.set("NOTTE_API_KEY", key);
+    if (url === undefined) Deno.env.delete("NOTTE_API_URL");
+    else Deno.env.set("NOTTE_API_URL", url);
+  }
+});
