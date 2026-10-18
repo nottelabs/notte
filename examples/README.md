@@ -28,3 +28,7 @@ python agent.py  # or main.py
 ## IBM watsonx.ai
 
 See [watsonx](watsonx/README.md) for Python and TypeScript screenshot analysis examples.
+
+## Tzafon Lightcone
+
+See [tzafon](tzafon/README.md) for Python and TypeScript computer-use examples.

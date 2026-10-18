@@ -110,6 +110,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [Gemini Computer Use](https://docs.notte.cc/integrations/gemini-computer-use.md): Run Gemini's computer-use tool on a Notte cloud browser.
 - [Yutori](https://docs.notte.cc/integrations/yutori.md): Run Navigator n1.5 browser actions on Notte.
 - [OpenAGI Lux](https://docs.notte.cc/integrations/openagi.md): Connect OpenAGI's native Lux agent to a Notte cloud browser.
+- [Tzafon Lightcone](https://docs.notte.cc/integrations/tzafon.md): Run a Northstar computer-use loop on a Notte browser.
 
 ## Workflow Automation
 
