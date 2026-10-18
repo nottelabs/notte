@@ -15,6 +15,7 @@
   "openai-agents": "NOTTE_DOCS_PYTHON",
   "openai-computer-use": "NOTTE_COMPUTER_USE_PYTHON",
   "selenium": "selenium-root",
+  "stripe-link": "typescript-driver",
   "temporal": "node-project",
   "trigger": "node-project"
 }

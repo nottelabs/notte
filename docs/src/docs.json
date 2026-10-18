@@ -385,7 +385,8 @@
             "group": "Payments",
             "icon": "credit-card",
             "pages": [
-              "integrations/agentcard"
+              "integrations/agentcard",
+              "integrations/stripe-link"
             ]
           },
           {

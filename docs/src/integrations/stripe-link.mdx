@@ -1,0 +1,32 @@
+---
+title: Stripe Link
+description: Fill approved Link test credentials into a Notte browser with the native SDK.
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+Use [Link's native SDKs](https://github.com/stripe/link-cli#sdks) to retrieve an approved payment credential, then fill browser fields through Notte's CDP connection. Keep credentials out of agent prompts and logs.
+
+The [runnable example](https://github.com/nottelabs/notte/tree/main/examples/stripe-link) fills an in-memory test form and checks its values. It accepts only Link's published test card, never submits a payment, and closes the browser on success or error.
+
+## Setup
+
+Set `NOTTE_API_KEY`, your application's `LINK_ACCESS_TOKEN`, and `LINK_SPEND_REQUEST_ID` for an approved test-mode card request. A Stripe secret key is not required. Link CLI supports `spend-request create --test`; follow the [wallet setup and approval instructions](https://github.com/stripe/link-cli#quickstart).
+
+<Tabs>
+  <Tab title="Python">
+    From `examples/stripe-link`, run `uv sync --locked` and `uv run python python/demo.py` with Python 3.11 or newer.
+
+    [Python example](https://github.com/nottelabs/notte/blob/main/examples/stripe-link/python/demo.py)
+  </Tab>
+  <Tab title="TypeScript">
+    From `examples/stripe-link/typescript`, run `npm ci` and `npm start` with Node.js 24 or newer.
+
+    [TypeScript example](https://github.com/nottelabs/notte/blob/main/examples/stripe-link/typescript/src/demo.ts)
+  </Tab>
+</Tabs>
+
+The example has real browser and native SDK protocol tests. Wallet approval and credential issuance have not been live-tested; see the [validation details](https://github.com/nottelabs/notte/tree/main/examples/stripe-link#readme).
+
+For an actual checkout, request approval for the merchant and final total, submit once, and verify the merchant's order confirmation. Approval alone does not confirm a purchase.
