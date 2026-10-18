@@ -1,0 +1,6 @@
+provider_installation {
+  dev_overrides {
+    "nottelabs/notte" = "/absolute/path/to/terraform-provider-notte/bin"
+  }
+  direct {}
+}

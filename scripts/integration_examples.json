@@ -28,5 +28,6 @@
   "openagi": "python-project",
   "tzafon": "typescript-driver",
   "eve": "node-project",
-  "fx": "node-project"
+  "fx": "node-project",
+  "terraform-profiles": "terraform-go"
 }
