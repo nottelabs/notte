@@ -1,10 +1,29 @@
 import { afterEach, describe, expect, expectTypeOf, it, vi } from 'vitest';
 import { createClient, retry, retryWebhookDelivery, type WaitAction, type WaitActionOutput } from '@/index';
 import { DEFAULT_ALLOWED_PATTERNS } from '@/proxy/patterns';
+import {
+  fetchSpecializedData, scrapeSpecializedData,
+  type FetchSpecializedDataData, type ScrapeSpecializedDataData,
+  type FetchSpecializedDataError, type ScrapeSpecializedDataError,
+  type FetchSpecializedDataErrors, type ScrapeSpecializedDataErrors,
+  type FetchSpecializedDataResponse, type ScrapeSpecializedDataResponse,
+  type FetchSpecializedDataResponses, type ScrapeSpecializedDataResponses,
+} from '@/index';
+import { scrapeSpecializedData as generatedScrapeSpecializedData } from '@/lib/client';
 
 afterEach(() => vi.unstubAllGlobals());
 
 describe('generated public export compatibility', () => {
+  it('preserves the renamed specialized data exports', () => {
+    expect(scrapeSpecializedData).toBe(fetchSpecializedData);
+    expect(generatedScrapeSpecializedData).toBe(fetchSpecializedData);
+    expectTypeOf<ScrapeSpecializedDataData>().toEqualTypeOf<FetchSpecializedDataData>();
+    expectTypeOf<ScrapeSpecializedDataError>().toEqualTypeOf<FetchSpecializedDataError>();
+    expectTypeOf<ScrapeSpecializedDataErrors>().toEqualTypeOf<FetchSpecializedDataErrors>();
+    expectTypeOf<ScrapeSpecializedDataResponse>().toEqualTypeOf<FetchSpecializedDataResponse>();
+    expectTypeOf<ScrapeSpecializedDataResponses>().toEqualTypeOf<FetchSpecializedDataResponses>();
+  });
+
   it('preserves the existing WaitAction import', () => {
     expectTypeOf<WaitAction>().toEqualTypeOf<WaitActionOutput>();
     const action: WaitAction = { type: 'wait', time_ms: 10 };

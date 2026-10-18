@@ -8,6 +8,14 @@ export * from '@/lib/client/sdk.gen';
 import type { WaitActionOutput } from '@/lib/client/types.gen';
 export type WaitAction = WaitActionOutput;
 export { retry as retryWebhookDelivery } from '@/lib/client/sdk.gen';
+export { fetchSpecializedData as scrapeSpecializedData } from '@/lib/client/sdk.gen';
+export type {
+  FetchSpecializedDataData as ScrapeSpecializedDataData,
+  FetchSpecializedDataError as ScrapeSpecializedDataError,
+  FetchSpecializedDataErrors as ScrapeSpecializedDataErrors,
+  FetchSpecializedDataResponse as ScrapeSpecializedDataResponse,
+  FetchSpecializedDataResponses as ScrapeSpecializedDataResponses,
+} from '@/lib/client/types.gen';
 
 // Re-export client for direct access
 export { client } from '@/lib/client/client.gen';
