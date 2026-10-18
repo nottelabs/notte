@@ -73,6 +73,7 @@ export class NotteComputer {
     if (call.pending_safety_checks?.length) throw new Error('Safety review is required');
     const action = call.action;
     if (!await this.approval(action)) throw new Error('Computer action refused');
+    if ((action.type === 'type' || action.type === 'point_and_type') && (typeof action.text !== 'string' || action.text.length > 1000)) throw new Error('Text exceeds the form limit');
     if (action.type === 'click' || action.type === 'point_and_type') {
       const viewport = this.page.viewportSize();
       if (!viewport) throw new Error('Missing browser viewport');
@@ -82,7 +83,6 @@ export class NotteComputer {
     this.signal.throwIfAborted();
     switch (action.type) {
       case 'type': case 'point_and_type':
-        if (typeof action.text !== 'string' || action.text.length > 1000) throw new Error('Text exceeds the form limit');
         await this.page.keyboard.insertText(action.text); break;
       case 'keypress':
         if (!action.keys.length || !action.keys.every(key => ['ENTER', 'RETURN', 'TAB'].includes(key.toUpperCase()))) throw new Error('This form example only permits Enter and Tab');

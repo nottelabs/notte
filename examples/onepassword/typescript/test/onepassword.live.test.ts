@@ -9,6 +9,7 @@ import { Secrets } from '@1password/sdk';
 const execute = promisify(execFile);
 const cwd = fileURLToPath(new URL('..', import.meta.url));
 const uuid = '[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}';
+const api = (process.env.NOTTE_API_URL || 'https://api.notte.cc').replace(/\/$/, '');
 const configured = ['OP_SERVICE_ACCOUNT_TOKEN', 'OP_USERNAME_REF', 'OP_PASSWORD_REF'].every(name => process.env[name]);
 
 test('the installed native SDK accepts valid references and rejects malformed ones', () => {
@@ -20,7 +21,7 @@ async function assertClosed(id: string) {
   const deadline = Date.now() + 15_000;
   const signal = AbortSignal.timeout(15_000);
   while (true) {
-    const response = await fetch(`${process.env.NOTTE_API_URL ?? 'https://api.notte.cc'}/sessions/${id}`, {
+    const response = await fetch(`${api}/sessions/${id}`, {
       headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` }, signal,
     });
     assert.equal(response.status, 200, 'Authoritative session lookup failed');

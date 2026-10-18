@@ -18,4 +18,4 @@ Your application supplies three callbacks: `purchase` drives the merchant checko
 
 Validate your merchant checkout in Agentcard sandbox before production. Approval alone does not confirm an order.
 
-The helper returns a status, optional confirmed order ID, and the stopped browser's session ID. It closes its page and session on success or failure. It does not retry; follow up with the merchant when the outcome is unknown or needs user action. See [Agentcard's completion guide](https://docs.agentcard.sh/vault/completing-a-purchase).
+The helper returns a status, optional confirmed order ID, and browser session ID. It attempts to close its page, browser connection, and session. If cleanup fails after reconciliation, it preserves the checkout result and adds a sanitized `cleanup_errors` list. Use the session ID to inspect and stop the owned session if needed; do not repeat the purchase. Follow up with the merchant when the outcome is unknown or needs user action. See [Agentcard's completion guide](https://docs.agentcard.sh/vault/completing-a-purchase).

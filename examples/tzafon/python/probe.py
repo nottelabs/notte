@@ -16,7 +16,7 @@ from tzafon import AsyncLightcone
 
 async def main() -> dict:
     mode = sys.argv[1]
-    closing = mode in ("reject-close", "reject-timeout")
+    closing = mode in ("reject-close", "reject-timeout", "caller-except-close")
     wire = Wire("reject" if mode.startswith("reject") else mode, real_screenshot=True)
     client = NotteClient()
     start = client.sessions.start
@@ -64,9 +64,15 @@ async def main() -> dict:
                 patch.object(client.sessions, "start", side_effect=started),
                 patch.object(BrowserType, "connect_over_cdp", new=connected) if closing else nullcontext(),
             ):
-                result = await run_demo(provider, CODE)
+                if mode == "caller-except-close":
+                    try:
+                        raise ValueError("Unrelated caller exception")
+                    except ValueError:
+                        result = await run_demo(provider, CODE)
+                else:
+                    result = await run_demo(provider, CODE)
         except Exception:
-            assert len(wire.requests) == 1
+            assert len(wire.requests) == (3 if mode == "caller-except-close" else 1)
             raise
         finally:
             if closing:
