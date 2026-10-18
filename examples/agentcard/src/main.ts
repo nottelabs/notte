@@ -19,6 +19,15 @@ interface Runtime {
   attach: typeof attachToPlaywright;
 }
 
+type CleanupError = 'checkout_cancel' | 'page_close' | 'browser_close' | 'session_stop';
+
+interface CheckoutResult {
+  status: CheckoutState['status'];
+  order_id: string | undefined;
+  session_id: string;
+  cleanup_errors?: CleanupError[];
+}
+
 async function closeTransport(close: () => Promise<void>) {
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
@@ -28,43 +37,60 @@ async function closeTransport(close: () => Promise<void>) {
   } finally { clearTimeout(timer); }
 }
 
-export async function runCheckout(options: CheckoutOptions, runtime: Partial<Runtime> = {}) {
+export async function runCheckout(options: CheckoutOptions, runtime: Partial<Runtime> = {}): Promise<CheckoutResult> {
   const client = runtime.client ?? new NotteClient();
   const connect = runtime.connect ?? chromium.connectOverCDP.bind(chromium);
   const attach = runtime.attach ?? attachToPlaywright;
+  let reconciled: CheckoutResult | undefined;
+  const cleanupErrors: CleanupError[] = [];
+  const close = async (stage: 'page_close' | 'browser_close', action: () => Promise<void>) => {
+    try { await closeTransport(action); }
+    catch { cleanupErrors.push(stage); }
+  };
   let step = 'Agentcard registry refresh';
   try {
     await options.vault.syncRegistry();
     step = 'Hosted checkout';
-    return await client.Session({ max_duration_minutes: 20, idle_timeout_minutes: 20, proxies: false }).use(async session => {
-      try {
-        const browser = await connect(await session.cdpUrl());
+    try {
+      await client.Session({ max_duration_minutes: 20, idle_timeout_minutes: 20, proxies: false }).use(async session => {
         try {
-          const context = browser.contexts()[0];
-          if (!context) throw new Error('The owned session has no browser context');
-          const page = await context.newPage();
+          const browser = await connect(await session.cdpUrl());
           try {
-            const checkout = await attach(page, {
-              vault: options.vault,
-              user: options.userId,
-              merchant: options.merchant,
-              amount: options.amount,
-              currency: options.currency,
-              onApprovalUrl: options.onApprovalUrl,
-              requireMerchantResult: true,
-              resolveMerchantResult: state => options.readMerchantOrder(page, state),
-            });
+            const context = browser.contexts()[0];
+            if (!context) throw new Error('The owned session has no browser context');
+            const page = await context.newPage();
             try {
-              await options.purchase(page);
-              const result = await checkout.reconcile();
-              return { status: result.status, order_id: result.orderId, session_id: session.getId()! };
-            } finally { checkout.cancel(); }
-          } finally { await closeTransport(() => page.close()); }
-        } finally { await closeTransport(() => browser.close()); }
-      } catch {
-        throw new Error('Hosted checkout failed; verify the merchant outcome before attempting another payment');
-      }
-    });
+              const checkout = await attach(page, {
+                vault: options.vault,
+                user: options.userId,
+                merchant: options.merchant,
+                amount: options.amount,
+                currency: options.currency,
+                onApprovalUrl: options.onApprovalUrl,
+                requireMerchantResult: true,
+                resolveMerchantResult: state => options.readMerchantOrder(page, state),
+              });
+              try {
+                await options.purchase(page);
+                const result = await checkout.reconcile();
+                reconciled = { status: result.status, order_id: result.orderId, session_id: session.getId()! };
+                return reconciled;
+              } finally {
+                try { checkout.cancel(); }
+                catch { cleanupErrors.push('checkout_cancel'); }
+              }
+            } finally { await close('page_close', () => page.close()); }
+          } finally { await close('browser_close', () => browser.close()); }
+        } catch {
+          throw new Error('Hosted checkout failed; verify the merchant outcome before attempting another payment');
+        }
+      });
+    } catch {
+      if (!reconciled) throw new Error('Hosted checkout failed; verify the merchant outcome before attempting another payment');
+      cleanupErrors.push('session_stop');
+    }
+    if (!reconciled) throw new Error('Checkout did not reconcile');
+    return { ...reconciled, ...(cleanupErrors.length ? { cleanup_errors: cleanupErrors } : {}) };
   } catch {
     throw new Error(`${step} failed; verify the merchant outcome before attempting another payment`);
   }

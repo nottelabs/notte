@@ -20,6 +20,35 @@ from yutori.navigator import aplaywright_screenshot_to_data_url
 
 @unittest.skipUnless(os.environ.get("NOTTE_YUTORI_LIVE") == "1", "Real Notte browser tests are opt-in")
 class BrowserTests(unittest.IsolatedAsyncioTestCase):
+    async def test_caller_exception_does_not_hide_disconnect_failure(self):
+        closes = []
+        connect = BrowserType.connect_over_cdp
+
+        async def connected(browser_type, *args, **kwargs):
+            browser = await connect(browser_type, *args, **kwargs)
+            close = browser.close
+
+            async def disconnect():
+                await close()
+                closes.append(True)
+                raise RuntimeError("PRIVATE_CLOSE_FIXTURE")
+
+            browser.close = disconnect
+            return browser
+
+        with (
+            self.owned(),
+            model_endpoint([completion()]) as (url, _),
+            patch.object(BrowserType, "connect_over_cdp", new=connected),
+        ):
+            async with AsyncYutoriClient(api_key="test-only", base_url=url) as client:  # pragma: allowlist secret
+                try:
+                    raise ValueError("PRIVATE_CALLER_FIXTURE")
+                except ValueError:
+                    with self.assertRaisesRegex(demo.BrowserTaskError, "Yutori browser disconnect failed"):
+                        await demo.run("Read the title", client=client)
+            self.assertEqual(closes, [True], "The native disconnect fault must run")
+
     def journal(self, event, session_id):
         if path := os.environ.get("YUTORI_OWNERSHIP_JOURNAL"):
             try:

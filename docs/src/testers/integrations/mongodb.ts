@@ -11,6 +11,8 @@ export const result = await new NotteClient().Session({ max_duration_minutes: 3 
   let stage = 'MongoDB connection';
   try {
     const mongo = new MongoClient(uri, { timeoutMS: 10_000, serverSelectionTimeoutMS: 10_000 });
+    let documentId: string;
+    let cleanupFailed = false;
     try {
       await mongo.connect();
       const collection = mongo.db(process.env.MONGODB_DATABASE || 'notte')
@@ -22,15 +24,19 @@ export const result = await new NotteClient().Session({ max_duration_minutes: 3 
       stage = 'MongoDB insert';
       const inserted = await collection.insertOne({ url, markdown, session_id: session.getId()! });
       console.log(inserted.insertedId.toHexString());
-      return { document_id: inserted.insertedId.toHexString(), session_id: session.getId()! };
+      documentId = inserted.insertedId.toHexString();
     } finally {
       try {
         await mongo.close();
-      } catch (error) {
-        stage = 'MongoDB cleanup';
-        throw error;
+      } catch {
+        cleanupFailed = true;
       }
     }
+    if (cleanupFailed) {
+      stage = 'MongoDB cleanup';
+      throw new Error('MongoDB disconnect failed');
+    }
+    return { document_id: documentId, session_id: session.getId()! };
   } catch (error) {
     const code = error instanceof MongoServerError && typeof error.code === 'number' ? error.code : undefined;
     const type = error instanceof Error ? error.name : 'UnknownError';

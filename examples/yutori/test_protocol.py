@@ -59,6 +59,30 @@ def model_endpoint(responses, status=200):
 
 
 class NativeProtocolTests(unittest.IsolatedAsyncioTestCase):
+    async def test_caller_exception_does_not_change_owned_cleanup(self):
+        for cleanup_fails in (False, True):
+            with self.subTest(cleanup_fails=cleanup_fails):
+                session = NotteClient(api_key="test-only").Session(wait_for_authentication=False)
+                with (
+                    patch.object(demo, "NotteClient", return_value=SimpleNamespace(Session=lambda **_kwargs: session)),
+                    patch.object(session, "start"),
+                    patch.object(session, "cdp_url", return_value="wss://test-only.invalid"),
+                    patch.object(
+                        session, "stop", side_effect=RuntimeError("PRIVATE_CLEANUP_FIXTURE") if cleanup_fails else None
+                    ) as stop,
+                ):
+                    try:
+                        raise ValueError("PRIVATE_CALLER_FIXTURE")
+                    except ValueError:
+                        if cleanup_fails:
+                            with self.assertRaisesRegex(demo.BrowserTaskError, "Yutori browser cleanup failed"):
+                                async with demo.owned_connection():
+                                    pass
+                        else:
+                            async with demo.owned_connection():
+                                pass
+                    stop.assert_called_once_with(close_reason="manual")
+
     async def test_owner_cleanup_failure_is_safe_and_preserves_primary_error(self):
         for primary in (None, demo.BrowserTaskError("Yutori primary task failed")):
             with self.subTest(primary=primary is not None):

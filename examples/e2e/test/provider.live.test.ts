@@ -15,11 +15,12 @@ import { notte } from '../src/notte.ts';
 
 assert.ok(process.env.NOTTE_API_KEY, 'Set NOTTE_API_KEY before running live provider tests');
 const cwd = fileURLToPath(new URL('../', import.meta.url));
+const api = (process.env.NOTTE_API_URL || 'https://api.notte.cc').replace(/\/$/, '');
 
 async function assertClosed(id: string) {
   const deadline = Date.now() + 15_000;
   while (true) {
-    const response = await fetch(`${process.env.NOTTE_API_URL ?? 'https://api.notte.cc'}/sessions/${id}`, {
+    const response = await fetch(`${api}/sessions/${id}`, {
       headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` }, signal: AbortSignal.timeout(15_000),
     });
     assert.equal(response.status, 200, 'Independent session lookup failed');
