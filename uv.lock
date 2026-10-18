@@ -2514,7 +2514,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "beautifulsoup4", specifier = ">=4.15.0" },
+    { name = "beautifulsoup4", specifier = ">=4.12.0" },
     { name = "html2text", specifier = ">=2025.4.15" },
     { name = "lxml", specifier = ">=5.3.1" },
     { name = "markdownify", specifier = ">=0.14.1" },
@@ -2553,7 +2553,7 @@ requires-dist = [
     { name = "opentelemetry-sdk", marker = "extra == 'profiling'", specifier = ">=1.34.1" },
     { name = "packaging", specifier = ">=25.0" },
     { name = "pillow", specifier = ">=11.1.0" },
-    { name = "posthog", specifier = "<=7.63.0,>=7.63.0" },
+    { name = "posthog", specifier = ">=3.0.1,<=7.63.0" },
     { name = "pydantic", specifier = ">=2.10.6" },
     { name = "pyotp", specifier = ">=2.9.0" },
     { name = "requests", specifier = ">=2.32.3" },
@@ -2609,7 +2609,7 @@ requires-dist = [
     { name = "requests", specifier = ">=2.32.3,<3" },
     { name = "secretstorage", marker = "sys_platform == 'linux'", specifier = ">=3.3" },
     { name = "urllib3", specifier = ">=2.2.3,<3" },
-    { name = "websockets", specifier = ">=16.1.1" },
+    { name = "websockets", specifier = ">=13.1" },
 ]
 provides-extras = ["playwright"]
 

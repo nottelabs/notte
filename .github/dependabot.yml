@@ -14,6 +14,8 @@ version: 2
 updates:
   # Python: the uv workspace (root uv.lock covers every packages/* member).
   - package-ecosystem: "uv"
+    # Refresh the lock without turning the latest release into a library minimum.
+    versioning-strategy: lockfile-only
     directory: "/"
     schedule:
       interval: "weekly"
