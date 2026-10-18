@@ -23,5 +23,6 @@
   "temporal": "node-project",
   "trigger": "node-project",
   "valtown": "valtown-deno",
-  "watsonx": "typescript-driver"
+  "watsonx": "typescript-driver",
+  "yutori": "python-project"
 }
