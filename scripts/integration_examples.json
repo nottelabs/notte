@@ -27,5 +27,6 @@
   "yutori": "python-project",
   "openagi": "python-project",
   "tzafon": "typescript-driver",
-  "eve": "node-project"
+  "eve": "node-project",
+  "fx": "node-project"
 }

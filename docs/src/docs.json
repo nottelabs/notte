@@ -329,7 +329,8 @@
               "integrations/claude-code-ai-agents",
               "integrations/claude-managed-agents",
               "integrations/replit",
-              "integrations/docker-sandboxes"
+              "integrations/docker-sandboxes",
+              "integrations/fx"
             ]
           },
           {
