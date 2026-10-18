@@ -382,6 +382,13 @@
             ]
           },
           {
+            "group": "File Storage",
+            "icon": "folder",
+            "pages": [
+              "integrations/box"
+            ]
+          },
+          {
             "group": "Email",
             "icon": "envelope",
             "pages": [
