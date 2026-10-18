@@ -376,7 +376,8 @@
               "integrations/trigger",
               "integrations/temporal",
               "integrations/github-actions",
-              "integrations/val-town"
+              "integrations/val-town",
+              "integrations/pipedream"
             ]
           },
           {

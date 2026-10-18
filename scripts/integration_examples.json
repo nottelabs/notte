@@ -29,5 +29,6 @@
   "tzafon": "typescript-driver",
   "eve": "node-project",
   "fx": "node-project",
-  "terraform-profiles": "terraform-go"
+  "terraform-profiles": "terraform-go",
+  "pipedream": "python-project"
 }

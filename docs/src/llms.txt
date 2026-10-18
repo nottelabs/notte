@@ -121,6 +121,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [Temporal](https://docs.notte.cc/integrations/temporal.md): Run durable browser tasks with Temporal and Notte.
 - [GitHub Actions](https://docs.notte.cc/integrations/github-actions.md): Review DOM-validated selector repairs in a manual GitHub Actions workflow.
 - [Val Town](https://docs.notte.cc/integrations/val-town.md): Run Notte browser tasks from Val Town HTTP triggers.
+- [Connected apps with Pipedream](https://docs.notte.cc/integrations/pipedream.md): Combine Notte browser tools with Pipedream connected-app tools.
 
 ## Observability
 
