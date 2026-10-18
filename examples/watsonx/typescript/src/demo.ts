@@ -23,7 +23,7 @@ export async function describe(image: Buffer, fetchImpl: typeof fetch = fetch) {
   if (!token.ok) throw new HttpError(token.status);
   const { access_token } = await token.json() as { access_token?: unknown };
   if (typeof access_token !== 'string' || !access_token) throw new Error('IBM IAM did not return an access token');
-  const response = await fetchImpl(`${(process.env.WATSONX_URL ?? 'https://us-south.ml.cloud.ibm.com').replace(/\/$/, '')}/ml/v1/text/chat?version=2024-05-31`, {
+  const response = await fetchImpl(`${(process.env.WATSONX_URL || 'https://us-south.ml.cloud.ibm.com').replace(/\/$/, '')}/ml/v1/text/chat?version=2024-05-31`, {
     method: 'POST', headers: { Authorization: `Bearer ${access_token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       project_id: process.env.WATSONX_PROJECT_ID, model_id: process.env.WATSONX_MODEL_ID,

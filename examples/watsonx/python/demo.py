@@ -2,7 +2,6 @@ import asyncio
 import base64
 import json
 import os
-import sys
 
 import requests
 from notte_sdk import NotteClient
@@ -36,7 +35,7 @@ def describe(image: bytes, http: requests.Session) -> str:
     if not isinstance(access_token, str) or not access_token:
         raise RuntimeError("IBM IAM did not return an access token")
     response = http.post(
-        f"{os.getenv('WATSONX_URL', 'https://us-south.ml.cloud.ibm.com').rstrip('/')}/ml/v1/text/chat",
+        f"{(os.getenv('WATSONX_URL') or 'https://us-south.ml.cloud.ibm.com').rstrip('/')}/ml/v1/text/chat",
         params={"version": "2024-05-31"},
         headers={"Authorization": f"Bearer {access_token}"},
         json={
@@ -81,6 +80,7 @@ async def run_demo(http: requests.Session | None = None) -> dict:
                 stage = "capture page"
                 async with async_playwright() as driver:
                     browser = await driver.chromium.connect_over_cdp(session.cdp_url())
+                    failed = False
                     try:
                         page = browser.contexts[0].pages[0]
                         await page.goto("https://example.com", wait_until="domcontentloaded")
@@ -89,8 +89,10 @@ async def run_demo(http: requests.Session | None = None) -> dict:
                         stage = "describe screenshot"
                         with http or requests.Session() as transport:
                             description = await asyncio.to_thread(describe, image, transport)
+                    except BaseException:
+                        failed = True
+                        raise
                     finally:
-                        failed = sys.exception() is not None
                         if not failed:
                             stage = "disconnect browser"
                         try:

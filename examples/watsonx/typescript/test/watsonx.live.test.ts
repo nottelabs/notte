@@ -32,7 +32,9 @@ async function assertClosed(id: string) {
 }
 
 for (const language of ['python', 'typescript']) {
-  for (const mode of ['fixture', 'iam-reject', 'chat-reject', 'iam-reject-close', 'iam-reject-timeout']) {
+  const modes = ['fixture', 'iam-reject', 'chat-reject', 'iam-reject-close', 'iam-reject-timeout'];
+  if (language === 'python') modes.push('caller-except-close');
+  for (const mode of modes) {
     const skip = !process.env.NOTTE_API_KEY;
     test(`${language}: ${mode} closes its browser and withholds credentials`, { skip, timeout: 240_000 }, async () => {
       const python = process.env.NOTTE_WATSONX_PYTHON;
@@ -70,11 +72,12 @@ for (const language of ['python', 'typescript']) {
         }
         assert.equal(failed, mode !== 'fixture', 'Recipe exited unexpectedly; SDK output withheld');
         assert.ok(id && new RegExp(`^${uuid}$`).test(id), 'Recipe did not report its owned browser');
-        for (const secret of [env.NOTTE_API_KEY, env.WATSONX_API_KEY, 'PRIVATE_FIXTURE_BODY', 'PRIVATE_CLOSE_FIXTURE', 'fixture-bearer']) {
+        for (const secret of [env.NOTTE_API_KEY, env.WATSONX_API_KEY, 'PRIVATE_FIXTURE_BODY', 'PRIVATE_CLOSE_FIXTURE', 'PRIVATE_CALLER_FIXTURE', 'fixture-bearer']) {
           if (secret) assert.ok(!output.includes(secret), 'Private data entered recipe output');
         }
         assert.ok(!output.includes('wss://'), 'An authenticated browser URL entered output');
-        if (failed) assert.match(output, new RegExp(`Screenshot analysis failed: describe screenshot.*HTTP ${mode.startsWith('iam-reject') ? 401 : 403}`));
+        if (mode === 'caller-except-close') assert.match(output, /Screenshot analysis failed: disconnect browser.*\[RuntimeError\]/);
+        else if (failed) assert.match(output, new RegExp(`Screenshot analysis failed: describe screenshot.*HTTP ${mode.startsWith('iam-reject') ? 401 : 403}`));
         else assert.equal(result?.description, 'Visible page description');
       } finally {
         if (id) {
