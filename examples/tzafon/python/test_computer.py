@@ -107,6 +107,19 @@ class ComputerContract(unittest.IsolatedAsyncioTestCase):
                 )
         self.assertEqual(page.events, [])
 
+    async def test_invalid_point_and_type_text_never_clicks_or_types(self):
+        for text in [None, 7, [], "x" * 1001]:
+            with self.subTest(text_type=type(text).__name__):
+                page = Page()
+                computer = NotteComputer(page, approve)
+                with self.assertRaises(ValueError):
+                    await computer.handle(
+                        response({"type": "point_and_type", "x": 160, "y": 260, "text": text})["output"][0]
+                    )
+                self.assertEqual(page.events, [])
+                self.assertEqual(page.keyboard.events, [])
+                self.assertEqual(computer.actions, [])
+
     async def test_cleanup_failure_retains_the_created_session_id(self):
         class Session:
             session_id = "00000000-0000-4000-8000-000000000001"

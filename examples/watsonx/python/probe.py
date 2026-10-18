@@ -24,7 +24,7 @@ class ScreenshotTransport(Transport):
 
 async def main():
     mode = sys.argv[1]
-    closing = mode in ("iam-reject-close", "iam-reject-timeout")
+    closing = mode in ("iam-reject-close", "iam-reject-timeout", "caller-except-close")
     closes = []
     connect = BrowserType.connect_over_cdp
     client = NotteClient()
@@ -70,9 +70,18 @@ async def main():
             assert len(closes) == 1, "The disconnect failure was not exercised"
 
 
+async def probe():
+    if sys.argv[1] == "caller-except-close":
+        try:
+            raise ValueError("PRIVATE_CALLER_FIXTURE")
+        except ValueError:
+            return await main()
+    return await main()
+
+
 try:
     with asyncio.Runner() as runner:
-        print(json.dumps(runner.run(main())))
+        print(json.dumps(runner.run(probe())))
 except Exception as error:
     print(str(error))
     raise SystemExit(1) from None

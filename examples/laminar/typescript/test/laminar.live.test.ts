@@ -114,15 +114,20 @@ test('Navigation failure is traced and its owned session closes', { timeout: 120
 
 test('A stalled disconnect cannot skip owner cleanup', { skip: !live, timeout: 45_000 }, async t => {
   const original = chromium.connectOverCDP.bind(chromium);
-  let disconnected = 0, release!: () => void;
+  let closeStarted = 0, nativeCloseFinished = false, release!: () => void;
+  let closeAttempt: Promise<void> | undefined;
   const gate = new Promise<void>(resolve => { release = resolve; });
   t.mock.method(chromium, 'connectOverCDP', async (endpoint: string) => {
     const browser = await original(endpoint);
     const close = browser.close.bind(browser);
-    t.mock.method(browser, 'close', async () => {
-      await close();
-      disconnected++;
-      await gate;
+    t.mock.method(browser, 'close', () => {
+      closeStarted++;
+      closeAttempt = (async () => {
+        await gate;
+        await close();
+        nativeCloseFinished = true;
+      })();
+      return closeAttempt;
     });
     return browser;
   });
@@ -136,7 +141,8 @@ test('A stalled disconnect cannot skip owner cleanup', { skip: !live, timeout: 4
     ]);
     assert.ok(failure instanceof Error);
     assert.match(failure.message, /failed during reading the title \(session [0-9a-f-]{36}, trace [0-9a-f]{32}\)/);
-    assert.equal(disconnected, 1);
+    assert.equal(closeStarted, 1);
+    assert.equal(nativeCloseFinished, false);
     const { span, payload } = await emitted(offset);
     assert.equal(span.status.code, 2);
     assert.ok(payload.includes('failed during reading the title'));
@@ -144,6 +150,7 @@ test('A stalled disconnect cannot skip owner cleanup', { skip: !live, timeout: 4
     clearTimeout(timer);
     release();
     await operation;
+    await closeAttempt;
   }
 });
 

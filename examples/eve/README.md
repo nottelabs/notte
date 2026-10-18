@@ -9,7 +9,7 @@ npm ci
 export NOTTE_API_KEY=your_notte_key
 npm run typecheck
 npm test
-NOTTE_EVE_LIVE=1 NOTTE_API_URL=https://us-dev.notte.cc npm test
+NOTTE_EVE_LIVE=1 NOTTE_API_URL=https://api.notte.cc npm test
 ```
 
 The offline tests compile the native Eve manifest and check navigation, errors, and cancellation. The live tests run the authored tool against Notte, inject disconnect failures, and independently GET each owned session to verify closure. Disconnect waits are limited to five seconds. No model key is needed for these tests. A three-minute session limit bounds interrupted processes.

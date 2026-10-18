@@ -84,10 +84,35 @@ for (const language of ['python', 'typescript']) {
         const child = error as { stdout?: string; stderr?: string };
         stdout = child.stdout ?? ''; stderr = child.stderr ?? '';
       }
+      const receipt = stdout.split(/\r?\n/).flatMap(line => {
+        try {
+          const row = JSON.parse(line);
+          return row.native_cleanup_receipt === true && row.mode === mode ? [row] : [];
+        } catch { return []; }
+      }).at(-1);
+      if (receipt) {
+        const phases = ['run demo', 'owner counters', 'independent owner status', 'trace privacy', 'trace metadata', 'primary result', 'passed'];
+        const category = /^(?:none|other|trace flush|(?:create browser|connect browser|navigate|disconnect browser|release browser):(?:Error|PlaywrightError|TypeError|TimeoutError|HTTPError|NotteAPIError|NotteSDKError|AssertionError)(?: HTTP [1-5]\d{2})?)$/;
+        const closures = Array.isArray(receipt.closures) ? receipt.closures.slice(0, 1).flatMap((row: { session_id?: unknown; closed?: unknown }) =>
+          typeof row.session_id === 'string' && new RegExp(`^${uuid.source}$`).test(row.session_id)
+            ? [{ session_id: row.session_id, closed: row.closed === true ? true : row.closed === false ? false : null }] : []) : [];
+        console.log(JSON.stringify({ language, mode, phase: phases.includes(receipt.phase) ? receipt.phase : 'unknown',
+          failure_category: typeof receipt.failure_category === 'string' && category.test(receipt.failure_category) ? receipt.failure_category : 'unknown',
+          closed_before_compensation: receipt.closed_before_compensation === true ? true : receipt.closed_before_compensation === false ? false : null,
+          closures }));
+        for (const row of closures) {
+          await assertClosed(row.session_id);
+          console.log(JSON.stringify({ language, mode, session_id: row.session_id, independently_closed: true }));
+        }
+      }
       assert.equal(failed, false, 'Native cleanup regression failed; SDK output withheld');
       assert.ok(!(stdout + stderr).includes('PRIVATE_'), 'A private cleanup diagnostic reached process output');
       assert.ok(!(stdout + stderr).includes(process.env.NOTTE_API_KEY!), 'A browser credential reached process output');
-      const result = JSON.parse(stdout.trim().split(/\r?\n/).at(-1)!);
+      const result = stdout.trim().split(/\r?\n/).flatMap(line => {
+        try { const row = JSON.parse(line); return row.mode === mode && row.native_flush_calls === 1 ? [row] : []; }
+        catch { return []; }
+      }).at(-1);
+      assert.ok(result, 'Native cleanup result missing');
       assert.equal(result.mode, mode); assert.equal(result.native_flush_calls, 1); assert.equal(result.closed, true);
       await assertClosed(result.session_id);
     });

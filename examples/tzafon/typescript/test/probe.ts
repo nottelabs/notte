@@ -9,7 +9,7 @@ import { runDemo } from '../src/demo.ts';
 import { CODE, wire } from './fixture.ts';
 
 const mode = process.argv[2];
-const closing = ['reject-close', 'reject-timeout', 'cancel-timeout'].includes(mode);
+const closing = ['reject-close', 'reject-timeout', 'protocol-close', 'cancel-timeout'].includes(mode);
 const originalFetch = globalThis.fetch;
 const keepAlive = closing ? setInterval(() => {}, 1000) : undefined;
 let closes = 0;
@@ -73,7 +73,7 @@ operation.then(result => {
   if (!mode.startsWith('cancel')) assert.equal(requests.length, 3);
   console.log(JSON.stringify(result));
 }).catch(error => {
-  if (!mode.startsWith('cancel')) assert.equal(requests.length, 1);
+  if (!mode.startsWith('cancel')) assert.equal(requests.length, mode === 'protocol-close' ? 3 : 1);
   console.error(error.message);
   process.exitCode = 1;
 }).finally(async () => {

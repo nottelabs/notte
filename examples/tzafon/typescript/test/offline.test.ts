@@ -66,6 +66,18 @@ test('safety and denied approval have no effects', async () => {
   }
 });
 
+test('invalid point_and_type text never clicks or types', async () => {
+  for (const text of [null, 7, [], 'x'.repeat(1001)]) {
+    const { fake, clicks, keys } = page();
+    const computer = new NotteComputer(fake, () => true, new AbortController().signal);
+    const command = response({ type: 'point_and_type', x: 160, y: 260, text }).output[0] as ResponseComputerToolCall;
+    await assert.rejects(computer.handle(command), /Text exceeds the form limit/);
+    assert.deepEqual(clicks, []);
+    assert.deepEqual(keys, []);
+    assert.deepEqual(computer.actions, []);
+  }
+});
+
 test('cancelled approval never acts', async () => {
   const { fake, clicks } = page();
   const computer = new NotteComputer(fake, () => new Promise(() => {}), AbortSignal.timeout(20));
