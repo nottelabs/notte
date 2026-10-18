@@ -1,0 +1,21 @@
+---
+title: Agentcard
+description: Attach Agentcard checkout to a hosted Notte browser.
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+Use the TypeScript helper in [`examples/agentcard`](https://github.com/nottelabs/notte/tree/main/examples/agentcard) to attach Agentcard's Vault SDK to the dedicated context of a newly created Notte session.
+
+## Set up
+
+Use Node.js 24+, a [Notte API key](https://console.notte.cc), and sandbox credentials from the [Agentcard dashboard](https://app.agentcard.sh). Follow the [Vault quickstart](https://docs.agentcard.sh/vault/quickstart) to link a test card and obtain its user ID.
+
+Open `examples/agentcard` and run `npm ci`. Create an `Agentcard` client from `@agent-cards/sdk`, then pass it to `runCheckout` with your merchant, amount, currency, and user ID.
+
+Your application supplies three callbacks: `purchase` drives the merchant checkout, `onApprovalUrl` delivers the approval link privately, and `readMerchantOrder` checks the merchant's order result. The SDK attaches before checkout actions run. Approval links and payment details must stay out of ordinary logs.
+
+Validate your merchant checkout in Agentcard sandbox before production. Approval alone does not confirm an order.
+
+The helper returns a status, optional confirmed order ID, and browser session ID. It attempts to close its page, browser connection, and session. If cleanup fails after reconciliation, it preserves the checkout result and adds a sanitized `cleanup_errors` list. Use the session ID to inspect and stop the owned session if needed; do not repeat the purchase. Follow up with the merchant when the outcome is unknown or needs user action. See [Agentcard's completion guide](https://docs.agentcard.sh/vault/completing-a-purchase).

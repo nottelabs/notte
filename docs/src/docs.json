@@ -382,6 +382,13 @@
             ]
           },
           {
+            "group": "Payments",
+            "icon": "credit-card",
+            "pages": [
+              "integrations/agentcard"
+            ]
+          },
+          {
             "group": "File Storage",
             "icon": "folder",
             "pages": [
