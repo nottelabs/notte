@@ -570,7 +570,7 @@ class RemoteSession(SyncResource):
         Start the session using the configured request.
 
         This method sends a start request to the API and logs the session ID
-        and request details upon successful start.
+        upon successful start.
 
         **Example:**
 
@@ -634,7 +634,7 @@ class RemoteSession(SyncResource):
 
         self.storage = self.storage.for_session(self.session_id)
 
-        logger.info(f"[Session] {self.session_id} started with request: {self.request.model_dump(exclude_none=True)}")
+        logger.info(f"[Session] {self.session_id} started")
         should_wait = (
             self.request.wait_for_authentication if wait_for_authentication is None else wait_for_authentication
         )

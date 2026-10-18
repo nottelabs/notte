@@ -1,0 +1,29 @@
+---
+title: Connected apps with Pipedream
+description: Combine Notte browser tools with Pipedream connected-app tools.
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+Use native MCP clients to connect [Notte browser tools](/mcp-server) and [Pipedream connected apps](https://pipedream.com/docs/connect/mcp/developers) in one application. The Python and TypeScript [example project](https://github.com/nottelabs/notte/tree/main/examples/pipedream) reads a page and discovers app tools. You can explicitly approve one optional tool call; no model selects actions.
+
+## Set up
+
+Use Python 3.11+ or Node.js 24.8+, a [Notte API key](https://console.notte.cc/apikeys), and your own Pipedream [project](https://pipedream.com/projects) and [OAuth client](https://pipedream.com/settings/api).
+
+Clone the [Notte repository](https://github.com/nottelabs/notte) and open `examples/pipedream`. Run `uv sync --locked` or `npm ci`. Set `NOTTE_API_KEY`, `PIPEDREAM_CLIENT_ID`, `PIPEDREAM_CLIENT_SECRET`, `PIPEDREAM_PROJECT_ID` and `PIPEDREAM_EXTERNAL_USER_ID`, then run `uv run --locked python demo.py` or `npm start`.
+
+The demo reads `example.com`, lists the selected app's tools, and returns a tool count, stopped browser ID, and optional tool-call completion flag. `PIPEDREAM_APP` defaults to `github`; Pipedream requests use its development environment.
+
+## Connections and actions
+
+Keep credentials server-side and derive Pipedream's external user ID from your authenticated application. Pipedream manages provider connections; your Notte key only authenticates browser requests.
+
+Run `uv run --locked python demo.py --discover` or `npm start -- --discover` to include tool names and input schemas from every discovery page in the JSON output. Treat this app metadata as private. Unset `PIPEDREAM_ACTION_FILE` first; discovery mode rejects an action file and never executes a tool call.
+
+Tool discovery does not make every advertised action read-only. To call one tool, select its name and input schema from `--discover`, obtain the required approval, and complete its connection flow. Store a JSON object with `name` and `arguments` in a private file outside your checkout, then set `PIPEDREAM_ACTION_FILE` to its path. The example verifies the offered name, rejects MCP errors, and discards provider output. Its completion flag confirms a successful MCP response, not a verified vendor side effect. Pipedream can return a hosted Connect Link when an action needs authorization; discovery alone does not start OAuth.
+
+The example owns a browser with a three-minute lifetime and closes it on success, failure or cancellation. It does not add a Notte OAuth UI or automatically attach connected-app tools to Notte Agent API runs.
+
+Native protocol tests cover a real Notte browser with local Pipedream OAuth/MCP fixtures, including synthetic tool-call success/error, pagination, unoffered-tool rejection and browser cleanup during cancellation. Hosted Pipedream OAuth and vendor action execution have not been tested.

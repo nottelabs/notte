@@ -1,0 +1,25 @@
+{
+  "name": "notte-eve-example",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test test/*.test.ts",
+    "dev": "eve dev"
+  },
+  "dependencies": {
+    "eve": "0.80.1",
+    "ai": "7.0.137",
+    "notte-sdk": "1.9.7",
+    "playwright-core": "1.63.0",
+    "zod": "4.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.0",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3"
+  }
+}

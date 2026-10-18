@@ -1,0 +1,13 @@
+{
+  "name": "notte-pipedream-example",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24.8" },
+  "scripts": {
+    "start": "node demo.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test test/live.test.ts"
+  },
+  "dependencies": { "@modelcontextprotocol/sdk": "1.32.1", "notte-sdk": "1.9.7" },
+  "devDependencies": { "@types/node": "24.10.0", "typescript": "6.0.3" }
+}

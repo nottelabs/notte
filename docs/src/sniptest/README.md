@@ -60,6 +60,19 @@ Set `NOTTE_API_KEY`, `ANTHROPIC_API_KEY`, `NOTTE_API_URL` to the target environm
 and `NOTTE_DOCS_PYTHON` to the Python executable. From `node-sdk`, run
 `NOTTE_STAGEHAND_LIVE=1 VITEST_INTEGRATION=1 npx vitest run test/stagehand.integration.test.ts`.
 This creates two billed sessions and makes model calls.
+MongoDB uses `pymongo==4.19.0` and the pinned docs dependencies. Set `MONGODB_URI`
+to a local MongoDB server, `NOTTE_API_KEY`, `NOTTE_API_URL`, and `NOTTE_DOCS_PYTHON`.
+Run `NOTTE_MONGODB_LIVE=1 VITEST_INTEGRATION=1 npx vitest run test/mongodb.integration.test.ts`
+from `node-sdk`. It verifies persisted scrapes and browser cleanup after real
+MongoDB document-validation failures, using and dropping only unique test collections.
+
+
+Claude Agent SDK uses `claude-agent-sdk==0.2.168` in Python and the pinned docs
+dependencies for TypeScript. With the same environment variables, run
+`NOTTE_CLAUDE_AGENTS_LIVE=1 VITEST_INTEGRATION=1 npx vitest run test/claude-agents.integration.test.ts`.
+It verifies both original recipes, persisted browser actions, and cleanup after
+real framework authentication errors. Model cases skip when `ANTHROPIC_API_KEY`
+is absent; authentication-failure cleanup still runs for both languages.
 Extracted TypeScript scripts and fragments awaiting fixtures receive syntax checks,
 not a misleading claim of full type or live validation. Every catalog Python source
 is syntax-checked, shell commands pass `bash -n`, and JSON responses are parsed.

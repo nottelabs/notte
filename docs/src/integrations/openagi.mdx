@@ -1,0 +1,23 @@
+---
+title: OpenAGI Lux
+description: Connect OpenAGI's native Lux agent to a Notte cloud browser.
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+Use [OpenAGI Lux](https://github.com/agiopen-org/oagi-python) with Notte through the SDK's native screenshot and action-handler interfaces. You need Python 3.11+, [uv](https://docs.astral.sh/uv/), a [Notte API key](https://console.notte.cc/apikeys), and an [OpenAGI API key](https://developer.agiopen.org/api-keys).
+
+## Run the example
+
+Get the [example project](https://github.com/nottelabs/notte/tree/main/examples/openagi). In `examples/openagi`, run `uv sync --locked`, set `NOTTE_API_KEY` and `OAGI_API_KEY` in your environment, then run `uv run --locked python demo.py`.
+
+The native `AsyncDefaultAgent` receives screenshots from a Notte browser and sends actions to the included Playwright handler. The demo uses an isolated form, limits execution, checks the submitted code, and closes the session on success or error. You do not need a local browser or desktop automation package.
+
+## Use your application
+
+Replace the fixture in `demo.py` with an application reachable from the cloud browser. Adapt the confirmation callback to review the actions your task needs. Page content is untrusted; keep consequential actions under your control.
+
+The handler supports normalized coordinates, clicks, typing, hotkeys, scrolling, and dragging. Lux failure and human-review actions stop execution.
+
+The live checks cover the real SDK protocol and Notte browser behavior using a local response server. Live Lux model inference has not been tested. See the [official SDK](https://github.com/agiopen-org/oagi-python) for model and API configuration.
