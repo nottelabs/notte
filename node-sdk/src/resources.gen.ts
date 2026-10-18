@@ -375,6 +375,11 @@ export function createResources(client: Client, getApiKey: () => string) {
       const response = await operations.profileList({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, query });
       return response.data;
     },
+    /** profileStateSet: /profiles/{profile_id}/state. Returns the API response body. */
+    stateSet: async (profileId: Types.ProfileStateSetData['path']["profile_id"], body: Types.ProfileStateSetData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.ProfileStateSetData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.profileStateSet({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "profile_id": profileId }, body });
+      return response.data;
+    },
   },
   };
 }

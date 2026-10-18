@@ -3143,6 +3143,12 @@ export type FunctionMetadataUpdateRequest = {
     response_format?: {
         [key: string]: unknown;
     } | null;
+    /**
+     * Shared
+     *
+     * Enable or disable public code sharing and forking for this function. Runs, results and secrets remain private. This does not enable public execution. Omit or send null to leave sharing unchanged.
+     */
+    shared?: boolean | null;
 };
 
 /**

@@ -163,3 +163,25 @@ def test_function_response_types_are_generated() -> None:
     assert GetFunctionResponse is core.GetFunctionResponse
     assert issubclass(GetFunctionWithLinkResponse, GetFunctionResponse)
     assert GetFunctionRunResponse is core.GetFunctionRunResponse
+
+
+@pytest.mark.parametrize("shared", [True, False])
+def test_function_sharing_metadata_round_trip(
+    client: NotteClient, monkeypatch: pytest.MonkeyPatch, shared: bool
+) -> None:
+    api = fake(monkeypatch, {**FUNCTION, "shared": shared})
+    response = client.functions.metadata_update("fn", shared=shared)
+    assert response.shared is shared
+    assert len(api.calls) == 1
+    call = api.calls[0]
+    assert (call.method, call.url) == ("PATCH", SERVER + "/functions/fn")
+    assert json.loads(call.data) == {"shared": shared}
+
+
+def test_function_metadata_preserves_omitted_and_null_sharing(
+    client: NotteClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    api = fake(monkeypatch, {**FUNCTION, "shared": True})
+    assert client.functions.metadata_update("fn", name="renamed").shared is True
+    assert client.functions.metadata_update("fn", name="renamed", shared=None).shared is True
+    assert [json.loads(call.data) for call in api.calls] == [{"name": "renamed"}, {"name": "renamed"}]

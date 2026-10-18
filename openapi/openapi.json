@@ -22712,6 +22712,18 @@
             ],
             "title": "Response Format",
             "description": "JSON Schema of run()'s return value, computed by the caller from its pydantic model"
+          },
+          "shared": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shared",
+            "description": "Enable or disable public code sharing and forking for this function. Runs, results and secrets remain private. This does not enable public execution. Omit or send null to leave sharing unchanged."
           }
         },
         "type": "object",

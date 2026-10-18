@@ -69,3 +69,11 @@ profileList: /profiles. Returns the API response body.
 ```typescript
 client.profiles.list(query?: ProfileListData["query"], requestOptions?: ResourceRequestOptions & { headers?: Omit<NonNullable<ProfileListData["headers"]>, "x-notte-api-key">; }): Promise<PaginatedResponseProfileResponse>;
 ```
+
+## stateSet
+
+profileStateSet: /profiles/&#123;profile_id&#125;/state. Returns the API response body.
+
+```typescript
+client.profiles.stateSet(profileId: ProfileStateSetData["path"]["profile_id"], body: ProfileStateSetData["body"], requestOptions?: ResourceRequestOptions & { headers?: Omit<NonNullable<ProfileStateSetData["headers"]>, "x-notte-api-key">; }): Promise<ProfileStateImportResponse>;
+```
