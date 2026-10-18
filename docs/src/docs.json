@@ -171,10 +171,6 @@
       "destination": "/integrations"
     },
     {
-      "source": "/integrations/laminar",
-      "destination": "/integrations"
-    },
-    {
       "source": "/integrations/magnitude",
       "destination": "/integrations"
     },
@@ -381,7 +377,8 @@
             "group": "Observability",
             "icon": "chart-line",
             "pages": [
-              "integrations/braintrust"
+              "integrations/braintrust",
+              "integrations/laminar"
             ]
           },
           {

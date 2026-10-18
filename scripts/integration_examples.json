@@ -7,6 +7,7 @@
   "gemini-computer-use": "gemini-root",
   "github-actions": "NOTTE_EXAMPLE_PYTHON",
   "inngest": "node-project",
+  "laminar": "root-unittest",
   "openai-agents": "NOTTE_DOCS_PYTHON",
   "openai-computer-use": "NOTTE_COMPUTER_USE_PYTHON",
   "selenium": "selenium-root",
