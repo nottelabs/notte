@@ -341,6 +341,65 @@ class LiveTests(unittest.IsolatedAsyncioTestCase):
             if session_id:
                 await assert_closed(self, session_id)
 
+    async def test_demo_reports_disconnect_failure_inside_caller_except(self):
+        client = NotteClient()
+        start = client.sessions.start
+        connect = BrowserType.connect_over_cdp
+        ids, completed, closes = [], [], []
+
+        def tracked(*args, **kwargs):
+            response = start(*args, **kwargs)
+            ids.append(response.session_id)
+            journal("allocated", response.session_id)
+            return response
+
+        async def connected(browser_type, *args, **kwargs):
+            browser = await connect(browser_type, *args, **kwargs)
+            close = browser.close
+
+            async def disconnect():
+                await close()
+                closes.append(True)
+                raise RuntimeError("PRIVATE_CLOSE_FIXTURE")
+
+            browser.close = disconnect
+            return browser
+
+        async def execute(_agent, _instruction, *, action_handler, image_provider):
+            page = action_handler.page
+            self.assertGreater(len((await image_provider()).read()), 0)
+            code = (await page.locator("p").inner_text()).removeprefix("Code: ")
+            await page.locator("input").fill(code)
+            await page.locator("input").press("Enter")
+            self.assertEqual(await page.locator("output").inner_text(), "Accepted")
+            completed.append(True)
+            return True
+
+        try:
+            with (
+                patch.dict(os.environ, {"OAGI_API_KEY": "fixture-token"}),  # pragma: allowlist secret
+                patch("demo.NotteClient", return_value=client),
+                patch.object(client.sessions, "start", side_effect=tracked),
+                patch.object(BrowserType, "connect_over_cdp", new=connected),
+                patch.object(AsyncDefaultAgent, "execute", new=execute),
+            ):
+                try:
+                    raise ValueError("Unrelated caller exception")
+                except ValueError:
+                    with self.assertRaises(RuntimeError) as caught:
+                        async with asyncio.timeout(45):
+                            await run_demo()
+            self.assertIn("OpenAGI failed: RuntimeError", str(caught.exception))
+            self.assertIsNone(caught.exception.__cause__)
+            self.assertTrue(caught.exception.__suppress_context__)
+            self.assertNotIn("PRIVATE_CLOSE_FIXTURE", str(caught.exception))
+            self.assertEqual(completed, [True])
+            self.assertEqual(closes, [True])
+            self.assertEqual(len(ids), 1)
+        finally:
+            for session_id in ids:
+                await assert_closed(self, session_id)
+
     async def test_actions_reject_invalid_geometry_counts_and_permissions(self):
         session_id = None
         try:
