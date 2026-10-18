@@ -2238,6 +2238,8 @@ export type DataScrapeRequest = {
     timeoutOpts?: StyleguideTimeout;
     /**
      * Maxagems
+     *
+     * Maximum cached result age in milliseconds. Omit for server policy; zero forces fresh extraction.
      */
     maxAgeMs?: number | null;
     /**
@@ -3133,6 +3135,12 @@ export type FunctionMetadataUpdateRequest = {
      * Self Healing
      */
     self_healing?: boolean | null;
+    /**
+     * Shared
+     *
+     * Enable or disable public code sharing and forking for this function. Source code, including embedded credentials, becomes public. Runs, results and stored runtime secrets remain private. This does not enable public execution. Omit or send null to leave sharing unchanged.
+     */
+    shared?: boolean | null;
     /**
      * Response Format
      *
@@ -6352,6 +6360,68 @@ export type ProfileResponse = {
 };
 
 /**
+ * ProfileStateImportRequest
+ */
+export type ProfileStateImportRequest = {
+    /**
+     * Cookies
+     */
+    cookies?: Array<Cookie>;
+    /**
+     * Local Storage
+     */
+    local_storage?: {
+        [key: string]: {
+            [key: string]: string;
+        };
+    };
+    /**
+     * Session Storage
+     */
+    session_storage?: {
+        [key: string]: {
+            [key: string]: string;
+        };
+    };
+    /**
+     * Domains
+     */
+    domains?: Array<string> | null;
+    /**
+     * Mode
+     */
+    mode?: 'replace' | 'append';
+    /**
+     * Storage Scope
+     *
+     * Use origins for partial live-tab snapshots: replace only origins present in each storage map.
+     */
+    storage_scope?: 'domains' | 'origins';
+};
+
+/**
+ * ProfileStateImportResponse
+ */
+export type ProfileStateImportResponse = {
+    /**
+     * Success
+     */
+    success: boolean;
+    /**
+     * Cookies Count
+     */
+    cookies_count: number;
+    /**
+     * Local Storage Origins
+     */
+    local_storage_origins: number;
+    /**
+     * Session Storage Origins
+     */
+    session_storage_origins: number;
+};
+
+/**
  * ProxyGeolocationCountry
  */
 export type ProxyGeolocationCountry = 'ad' | 'ae' | 'af' | 'ag' | 'ai' | 'al' | 'am' | 'ao' | 'ar' | 'at' | 'au' | 'aw' | 'az' | 'ba' | 'bb' | 'bd' | 'be' | 'bf' | 'bg' | 'bh' | 'bi' | 'bj' | 'bm' | 'bn' | 'bo' | 'bq' | 'br' | 'bs' | 'bt' | 'bw' | 'by' | 'bz' | 'ca' | 'cd' | 'cg' | 'ch' | 'ci' | 'cl' | 'cm' | 'cn' | 'co' | 'cr' | 'cu' | 'cv' | 'cw' | 'cy' | 'cz' | 'de' | 'dj' | 'dk' | 'dm' | 'do' | 'dz' | 'ec' | 'ee' | 'eg' | 'es' | 'et' | 'fi' | 'fj' | 'fr' | 'ga' | 'gb' | 'gd' | 'ge' | 'gf' | 'gg' | 'gh' | 'gi' | 'gm' | 'gn' | 'gp' | 'gq' | 'gr' | 'gt' | 'gu' | 'gw' | 'gy' | 'hk' | 'hn' | 'hr' | 'ht' | 'hu' | 'id' | 'ie' | 'il' | 'im' | 'in' | 'iq' | 'ir' | 'is' | 'it' | 'je' | 'jm' | 'jo' | 'jp' | 'ke' | 'kg' | 'kh' | 'kn' | 'kr' | 'kw' | 'ky' | 'kz' | 'la' | 'lb' | 'lc' | 'lk' | 'lr' | 'ls' | 'lt' | 'lu' | 'lv' | 'ly' | 'ma' | 'md' | 'me' | 'mf' | 'mg' | 'mk' | 'ml' | 'mm' | 'mn' | 'mo' | 'mq' | 'mr' | 'mt' | 'mu' | 'mv' | 'mw' | 'mx' | 'my' | 'mz' | 'na' | 'nc' | 'ne' | 'ng' | 'ni' | 'nl' | 'no' | 'np' | 'nz' | 'om' | 'pa' | 'pe' | 'pf' | 'pg' | 'ph' | 'pk' | 'pl' | 'pr' | 'ps' | 'pt' | 'py' | 'qa' | 're' | 'ro' | 'rs' | 'ru' | 'rw' | 'sa' | 'sc' | 'sd' | 'se' | 'sg' | 'si' | 'sk' | 'sl' | 'sm' | 'sn' | 'so' | 'sr' | 'ss' | 'st' | 'sv' | 'sx' | 'sy' | 'sz' | 'tc' | 'tg' | 'th' | 'tj' | 'tm' | 'tn' | 'tr' | 'tt' | 'tw' | 'tz' | 'ua' | 'ug' | 'us' | 'uy' | 'uz' | 'vc' | 've' | 'vg' | 'vi' | 'vn' | 'ye' | 'za' | 'zm' | 'zw';
@@ -7794,7 +7864,7 @@ export type StyleguideCacheMetadata = {
     /**
      * Status
      */
-    status?: 'miss';
+    status?: 'hit' | 'miss';
     /**
      * Age Ms
      */
@@ -11156,6 +11226,55 @@ export type AgentStartResponses = {
 
 export type AgentStartResponse = AgentStartResponses[keyof AgentStartResponses];
 
+export type AgentStopData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Agent Id
+         */
+        agent_id: string;
+    };
+    query: {
+        /**
+         * Session Id
+         */
+        session_id: string;
+    };
+    url: '/agents/{agent_id}/stop';
+};
+
+export type AgentStopErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+    /**
+     * The agent is stopping but its final state is not saved yet; check its status shortly.
+     */
+    503: unknown;
+};
+
+export type AgentStopError = AgentStopErrors[keyof AgentStopErrors];
+
+export type AgentStopResponses = {
+    /**
+     * Successful Response
+     */
+    200: AgentStatusResponse;
+};
+
+export type AgentStopResponse = AgentStopResponses[keyof AgentStopResponses];
+
 export type AgentStatusData = {
     body?: never;
     headers?: {
@@ -11248,55 +11367,6 @@ export type GetScriptResponses = {
 };
 
 export type GetScriptResponse = GetScriptResponses[keyof GetScriptResponses];
-
-export type AgentStopData = {
-    body?: never;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path: {
-        /**
-         * Agent Id
-         */
-        agent_id: string;
-    };
-    query: {
-        /**
-         * Session Id
-         */
-        session_id: string;
-    };
-    url: '/agents/{agent_id}/stop';
-};
-
-export type AgentStopErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-    /**
-     * The agent is stopping but its final state is not saved yet; check its status shortly.
-     */
-    503: unknown;
-};
-
-export type AgentStopError = AgentStopErrors[keyof AgentStopErrors];
-
-export type AgentStopResponses = {
-    /**
-     * Successful Response
-     */
-    200: AgentStatusResponse;
-};
-
-export type AgentStopResponse = AgentStopResponses[keyof AgentStopResponses];
 
 export type ListAgentsData = {
     body?: never;
@@ -13093,6 +13163,46 @@ export type ProfileCookiesSetResponses = {
 
 export type ProfileCookiesSetResponse = ProfileCookiesSetResponses[keyof ProfileCookiesSetResponses];
 
+export type ProfileStateSetData = {
+    body: ProfileStateImportRequest;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Profile Id
+         */
+        profile_id: string;
+    };
+    query?: never;
+    url: '/profiles/{profile_id}/state';
+};
+
+export type ProfileStateSetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ProfileStateSetError = ProfileStateSetErrors[keyof ProfileStateSetErrors];
+
+export type ProfileStateSetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ProfileStateImportResponse;
+};
+
+export type ProfileStateSetResponse = ProfileStateSetResponses[keyof ProfileStateSetResponses];
+
 export type ProfileListData = {
     body?: never;
     headers?: {
@@ -14449,6 +14559,125 @@ export type SearchWebResponses = {
     200: unknown;
 };
 
+export type InvalidateData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: {
+        /**
+         * Capability
+         */
+        capability?: string | null;
+    };
+    url: '/data/cache';
+};
+
+export type InvalidateErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type InvalidateError = InvalidateErrors[keyof InvalidateErrors];
+
+export type InvalidateResponses = {
+    /**
+     * Response Invalidate Data Cache
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: boolean;
+    };
+};
+
+export type InvalidateResponse = InvalidateResponses[keyof InvalidateResponses];
+
+export type GetPolicyData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/data/cache';
+};
+
+export type GetPolicyErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetPolicyError = GetPolicyErrors[keyof GetPolicyErrors];
+
+export type GetPolicyResponses = {
+    /**
+     * Response Get Data Cache Policy
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type GetPolicyResponse = GetPolicyResponses[keyof GetPolicyResponses];
+
 export type BrandRetrieveData = {
     /**
      * Request
@@ -14467,6 +14696,24 @@ export type BrandRetrieveData = {
         type: 'by_transaction';
     } & BrandByTransaction);
     headers?: {
+        /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
         /**
          * X-Notte-Request-Origin
          */
@@ -14503,6 +14750,24 @@ export type ExtractProductEndpointData = {
     body: ProductExtractRequest;
     headers?: {
         /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
+        /**
          * X-Notte-Request-Origin
          */
         'x-notte-request-origin'?: string | null;
@@ -14537,6 +14802,24 @@ export type ExtractProductEndpointResponse = ExtractProductEndpointResponses[key
 export type StyleguideEndpointData = {
     body?: never;
     headers?: {
+        /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
         /**
          * X-Notte-Request-Origin
          */
@@ -14606,6 +14889,24 @@ export type MapsSearchData = {
     body: MapsSearchRequest;
     headers?: {
         /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
+        /**
          * X-Notte-Request-Origin
          */
         'x-notte-request-origin'?: string | null;
@@ -14640,6 +14941,24 @@ export type MapsSearchResponse = MapsSearchResponses[keyof MapsSearchResponses];
 export type ListMonitorsData = {
     body?: never;
     headers?: {
+        /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
         /**
          * X-Notte-Request-Origin
          */
@@ -14721,6 +15040,24 @@ export type CreateData = {
     body: CreateMonitor;
     headers?: {
         /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
+        /**
          * X-Notte-Request-Origin
          */
         'x-notte-request-origin'?: string | null;
@@ -14760,6 +15097,24 @@ export type LimitsData = {
     body?: never;
     headers?: {
         /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
+        /**
          * X-Notte-Request-Origin
          */
         'x-notte-request-origin'?: string | null;
@@ -14798,6 +15153,24 @@ export type LimitsResponse = LimitsResponses[keyof LimitsResponses];
 export type CreditUsageData = {
     body?: never;
     headers?: {
+        /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
         /**
          * X-Notte-Request-Origin
          */
@@ -14846,6 +15219,24 @@ export type CreditUsageResponse = CreditUsageResponses[keyof CreditUsageResponse
 export type AccountRunsData = {
     body?: never;
     headers?: {
+        /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
         /**
          * X-Notte-Request-Origin
          */
@@ -14898,6 +15289,24 @@ export type AccountRunsResponse = AccountRunsResponses[keyof AccountRunsResponse
 export type AccountChangesData = {
     body?: never;
     headers?: {
+        /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
         /**
          * X-Notte-Request-Origin
          */
@@ -14971,6 +15380,24 @@ export type DeleteData = {
     body?: never;
     headers?: {
         /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
+        /**
          * X-Notte-Request-Origin
          */
         'x-notte-request-origin'?: string | null;
@@ -15010,6 +15437,24 @@ export type DeleteResponse = DeleteResponses[keyof DeleteResponses];
 export type RetrieveData = {
     body?: never;
     headers?: {
+        /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
         /**
          * X-Notte-Request-Origin
          */
@@ -15055,6 +15500,24 @@ export type UpdateData = {
     body: UpdateMonitor;
     headers?: {
         /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
+        /**
          * X-Notte-Request-Origin
          */
         'x-notte-request-origin'?: string | null;
@@ -15099,6 +15562,24 @@ export type RunNowData = {
     body?: never;
     headers?: {
         /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
+        /**
          * X-Notte-Request-Origin
          */
         'x-notte-request-origin'?: string | null;
@@ -15142,6 +15623,24 @@ export type RunNowResponse = RunNowResponses[keyof RunNowResponses];
 export type RunsData = {
     body?: never;
     headers?: {
+        /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
         /**
          * X-Notte-Request-Origin
          */
@@ -15199,6 +15698,24 @@ export type RunsResponse = RunsResponses[keyof RunsResponses];
 export type ChangesData = {
     body?: never;
     headers?: {
+        /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
         /**
          * X-Notte-Request-Origin
          */
@@ -15265,6 +15782,24 @@ export type RetrieveRunData = {
     body?: never;
     headers?: {
         /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
+        /**
          * X-Notte-Request-Origin
          */
         'x-notte-request-origin'?: string | null;
@@ -15312,6 +15847,24 @@ export type RetrieveRunResponse = RetrieveRunResponses[keyof RetrieveRunResponse
 export type RetrieveChangeData = {
     body?: never;
     headers?: {
+        /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
         /**
          * X-Notte-Request-Origin
          */
@@ -15361,6 +15914,24 @@ export type RotateSecretData = {
     body?: never;
     headers?: {
         /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
+        /**
          * X-Notte-Request-Origin
          */
         'x-notte-request-origin'?: string | null;
@@ -15405,6 +15976,24 @@ export type DeliveriesData = {
     body: DeliveryList;
     headers?: {
         /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
+        /**
          * X-Notte-Request-Origin
          */
         'x-notte-request-origin'?: string | null;
@@ -15443,6 +16032,24 @@ export type DeliveriesResponse = DeliveriesResponses[keyof DeliveriesResponses];
 export type RetrieveDeliveryData = {
     body?: never;
     headers?: {
+        /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
         /**
          * X-Notte-Request-Origin
          */
@@ -15487,6 +16094,24 @@ export type RetrieveDeliveryResponse = RetrieveDeliveryResponses[keyof RetrieveD
 export type AttemptsData = {
     body?: never;
     headers?: {
+        /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
         /**
          * X-Notte-Request-Origin
          */
@@ -15548,6 +16173,24 @@ export type RetryData = {
          */
         'Idempotency-Key'?: string | null;
         /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
+        /**
          * X-Notte-Request-Origin
          */
         'x-notte-request-origin'?: string | null;
@@ -15592,6 +16235,24 @@ export type PeopleEnrichData = {
     body: PeopleEnrichRequest;
     headers?: {
         /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
+        /**
          * X-Notte-Request-Origin
          */
         'x-notte-request-origin'?: string | null;
@@ -15627,6 +16288,24 @@ export type NewsSearchData = {
     body: NewsSearchRequest;
     headers?: {
         /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
+        /**
          * X-Notte-Request-Origin
          */
         'x-notte-request-origin'?: string | null;
@@ -15658,9 +16337,27 @@ export type NewsSearchResponses = {
 
 export type NewsSearchResponse2 = NewsSearchResponses[keyof NewsSearchResponses];
 
-export type ScrapeSpecializedDataData = {
+export type FetchSpecializedDataData = {
     body: DataScrapeRequest;
     headers?: {
+        /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
         /**
          * X-Notte-Request-Origin
          */
@@ -15672,30 +16369,48 @@ export type ScrapeSpecializedDataData = {
     };
     path?: never;
     query?: never;
-    url: '/data/web/scrape';
+    url: '/data/web/fetch';
 };
 
-export type ScrapeSpecializedDataErrors = {
+export type FetchSpecializedDataErrors = {
     /**
      * Validation Error
      */
     422: HttpValidationError;
 };
 
-export type ScrapeSpecializedDataError = ScrapeSpecializedDataErrors[keyof ScrapeSpecializedDataErrors];
+export type FetchSpecializedDataError = FetchSpecializedDataErrors[keyof FetchSpecializedDataErrors];
 
-export type ScrapeSpecializedDataResponses = {
+export type FetchSpecializedDataResponses = {
     /**
      * Successful Response
      */
     200: ScrapeResponse;
 };
 
-export type ScrapeSpecializedDataResponse = ScrapeSpecializedDataResponses[keyof ScrapeSpecializedDataResponses];
+export type FetchSpecializedDataResponse = FetchSpecializedDataResponses[keyof FetchSpecializedDataResponses];
 
 export type YoutubeEndpointData = {
     body: YouTubeExtractRequest;
     headers?: {
+        /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
         /**
          * X-Notte-Request-Origin
          */
@@ -15731,6 +16446,24 @@ export type YoutubeEndpointResponse = YoutubeEndpointResponses[keyof YoutubeEndp
 export type ListDataApisData = {
     body?: never;
     headers?: {
+        /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
         /**
          * X-Notte-Request-Origin
          */
