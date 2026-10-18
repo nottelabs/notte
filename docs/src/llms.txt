@@ -138,6 +138,10 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 - [MongoDB](https://docs.notte.cc/integrations/mongodb.md): Save Notte browser scrapes to MongoDB in Python or TypeScript.
 
+## Testing
+
+- [e2e](https://docs.notte.cc/integrations/e2e.md): Run e2e web tests on Notte cloud browsers with a native browser provider.
+
 ## Credentials
 
 - [1Password](https://docs.notte.cc/integrations/onepassword.md): Fill Notte browser forms with login fields from 1Password.

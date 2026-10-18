@@ -411,6 +411,13 @@
             ]
           },
           {
+            "group": "Testing",
+            "icon": "vial",
+            "pages": [
+              "integrations/e2e"
+            ]
+          },
+          {
             "group": "Credentials",
             "icon": "key",
             "pages": [
