@@ -26,5 +26,6 @@
   "watsonx": "typescript-driver",
   "yutori": "python-project",
   "openagi": "python-project",
-  "tzafon": "typescript-driver"
+  "tzafon": "typescript-driver",
+  "eve": "node-project"
 }

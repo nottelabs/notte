@@ -351,7 +351,8 @@
               "integrations/stagehand",
               "integrations/claude-agents",
               "integrations/prime-intellect",
-              "integrations/watsonx"
+              "integrations/watsonx",
+              "integrations/eve"
             ]
           },
           {

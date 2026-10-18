@@ -102,6 +102,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [Claude Agent SDK](https://docs.notte.cc/integrations/claude-agents.md): Give Claude agents a Notte cloud browser through MCP.
 - [Prime Intellect](https://docs.notte.cc/integrations/prime-intellect.md): Build Verifiers browser tasksets with Notte sessions.
 - [IBM watsonx.ai](https://docs.notte.cc/integrations/watsonx.md): Describe Notte browser screenshots with a watsonx.ai vision model.
+- [Vercel Eve](https://docs.notte.cc/integrations/eve.md): Give an Eve agent an owned Notte browser tool.
 
 ## Computer Use
 
