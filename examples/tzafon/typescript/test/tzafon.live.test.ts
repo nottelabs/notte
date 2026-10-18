@@ -32,7 +32,7 @@ async function assertClosed(id: string) {
 }
 
 for (const language of ['python', 'typescript']) {
-  for (const mode of ['protocol', 'reject', 'safety', 'out-of-bounds', 'reject-close', 'reject-timeout', ...(language === 'typescript' ? ['cancel', 'cancel-timeout'] : [])]) {
+  for (const mode of ['protocol', 'reject', 'safety', 'out-of-bounds', 'reject-close', 'reject-timeout', ...(language === 'typescript' ? ['cancel', 'cancel-timeout'] : ['caller-except-close'])]) {
     const skip = !process.env.NOTTE_API_KEY;
     test(`${language}: ${mode} closes its browser and withholds credentials`, { skip, timeout: 240_000 }, async () => {
       const python = process.env.NOTTE_TZAFON_PYTHON;
@@ -72,7 +72,7 @@ for (const language of ['python', 'typescript']) {
         }
         assert.ok(!output.includes('wss://'), 'An authenticated browser URL entered output');
         if (failed) {
-          assert.match(output, mode.startsWith('reject') ? /Lightcone form failed: provider HTTP 401/ : /Lightcone form failed: model request/);
+          assert.match(output, mode.startsWith('reject') ? /Lightcone form failed: provider HTTP 401/ : mode === 'caller-except-close' ? /Lightcone form failed: browser cleanup/ : /Lightcone form failed: model request/);
           if (mode.startsWith('reject')) assert.match(output, /HTTP 401/);
         } else if (mode.startsWith('cancel')) assert.equal(result?.cancelled, true);
         else {
