@@ -393,6 +393,100 @@ class BrowserTests(unittest.IsolatedAsyncioTestCase):
         task.close.assert_awaited_once_with(trace)
         self.assertEqual(caught.exception.__notes__, ["Rollout browser cleanup failed"])
 
+    async def test_environment_finishes_all_owners_despite_repeated_cancel(self):
+        for agent_cancelled in (False, True):
+            with self.subTest(agent_cancelled=agent_cancelled):
+                task = next(iter(example.NotteTaskset(vf.TasksetConfig(id="notte_prime"))))
+                traces = [
+                    vf.Trace(
+                        task=vf.TraceTask(type="BrowserTask", data=task.data),
+                        agent=vf.AgentInfo(config=vf.AgentConfig()),
+                        state=example.BrowserState(),
+                    )
+                    for _ in range(2)
+                ]
+                entered, release = threading.Event(), threading.Event()
+                stopped = []
+                if LIVE:
+                    self.assertTrue(os.getenv("NOTTE_API_URL"), "Choose the browser API explicitly")
+                    client = example.NotteClient()
+                    sessions = [client.Session(max_duration_minutes=3) for _ in traces]
+                else:
+                    sessions = [
+                        SimpleNamespace(
+                            response=object(),
+                            session_id=f"owned-{index}",
+                            start=lambda: None,
+                            stop=lambda: None,
+                            cdp_url=lambda: "wss://notte.example.invalid",
+                        )
+                        for index in range(2)
+                    ]
+                for index, session in enumerate(sessions):
+                    stop = session.stop
+
+                    def blocked_stop(index=index, stop=stop):
+                        if index == 0:
+                            entered.set()
+                            if not release.wait(10):
+                                raise TimeoutError("Test did not release cleanup")
+                        stop()
+                        stopped.append(index)
+
+                    session.stop = blocked_stop
+
+                async def agent_run(_task, *, on_trace):
+                    for trace in traces:
+                        on_trace(trace)
+                    if agent_cancelled:
+                        raise asyncio.CancelledError()
+
+                running = None
+                try:
+                    factory = iter(sessions)
+                    with patch.object(
+                        example, "NotteClient", return_value=SimpleNamespace(Session=lambda **_: next(factory))
+                    ):
+                        await asyncio.gather(*(task.setup(trace, None) for trace in traces))
+                    env = example.NotteEnv(vf.SingleAgentEnvConfig(taskset=vf.TasksetConfig(id="notte_prime")))
+                    running = asyncio.create_task(env.run(task, SimpleNamespace(agent=SimpleNamespace(run=agent_run))))
+                    try:
+                        self.assertTrue(await asyncio.to_thread(entered.wait, 5))
+                        running.cancel()
+                        await asyncio.sleep(0)
+                        running.cancel()
+                        await asyncio.sleep(0)
+                        ended_before_cleanup = running.done()
+                    finally:
+                        release.set()
+                    with self.assertRaises(asyncio.CancelledError):
+                        await asyncio.wait_for(running, 20)
+                    self.assertFalse(ended_before_cleanup, "Cancellation abandoned the remaining trace owners")
+                    self.assertEqual(stopped, [0, 1])
+                    self.assertEqual(task._sessions, {})
+                    if LIVE:
+                        for session in sessions:
+                            self.assertEqual(
+                                (await asyncio.to_thread(client.sessions.status, session.session_id)).status, "closed"
+                            )
+                finally:
+                    release.set()
+                    if running is not None and not running.done():
+                        try:
+                            await asyncio.wait_for(running, 20)
+                        except asyncio.CancelledError:
+                            pass
+                    if LIVE:
+                        for session in sessions:
+                            if session.response is not None:
+                                status = await asyncio.to_thread(client.sessions.status, session.session_id)
+                                if status.status != "closed":
+                                    await asyncio.to_thread(client.sessions.stop, session.session_id)
+                                self.assertEqual(
+                                    (await asyncio.to_thread(client.sessions.status, session.session_id)).status,
+                                    "closed",
+                                )
+
     async def test_failed_creation_preserves_safe_error_and_clears_owner(self):
         task = next(iter(example.NotteTaskset(vf.TasksetConfig())))
 

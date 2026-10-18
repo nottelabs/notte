@@ -144,16 +144,36 @@ class NotteEnv(vf.SingleAgentEnv):
         finally:
             # Include failed and retried traces whose task finalizers were skipped.
             primary = sys.exception()
-            failures = []
-            for trace in traces:
+
+            async def close_all():
+                failures = []
+                for trace in traces:
+                    try:
+                        await task.close(trace)
+                    except Exception as cleanup:
+                        failures.append(
+                            str(cleanup)
+                            if isinstance(cleanup, _BrowserCleanupError)
+                            else "Rollout browser cleanup failed"
+                        )
+                return failures
+
+            closing = asyncio.create_task(close_all())
+            cancelled = None
+            while True:
                 try:
-                    await task.close(trace)
-                except Exception as cleanup:
-                    failures.append(
-                        str(cleanup) if isinstance(cleanup, _BrowserCleanupError) else "Rollout browser cleanup failed"
-                    )
+                    failures = await asyncio.shield(closing)
+                    break
+                except asyncio.CancelledError as error:
+                    if closing.cancelled():
+                        raise
+                    cancelled = error
+            if cancelled is not None:
+                primary = cancelled
             if failures:
                 if primary is None:
                     raise _BrowserCleanupError("; ".join(failures)) from None
                 for failure in failures:
                     primary.add_note(failure)
+            if cancelled is not None:
+                raise cancelled
