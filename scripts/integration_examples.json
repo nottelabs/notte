@@ -1,6 +1,7 @@
 {
   "agent-browser": "NOTTE_DOCS_PYTHON",
   "anthropic-computer-use": "NOTTE_COMPUTER_USE_PYTHON",
+  "braintrust": "typescript-driver",
   "claude-agents": "NOTTE_DOCS_PYTHON",
   "deepagents": "root-unittest",
   "gemini-computer-use": "gemini-root",
