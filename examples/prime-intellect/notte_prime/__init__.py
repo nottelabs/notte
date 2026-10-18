@@ -56,14 +56,20 @@ class BrowserData(vf.TaskData):
 
 
 class BrowserTask(vf.Task[BrowserData, BrowserState, vf.TaskConfig]):
+    def __init__(self, data, config=None):
+        super().__init__(data, config)
+        # Verifiers reuses a task across slots; live handles never enter wire state.
+        self._sessions = {}
+
     async def setup(self, trace, runtime):
-        await self.close()
-        self.session = NotteClient().Session(max_duration_minutes=3)
-        starting = asyncio.create_task(asyncio.to_thread(self.session.start))
+        await self.close(trace)
+        session = NotteClient().Session(max_duration_minutes=3)
+        self._sessions[trace.id] = session
+        starting = asyncio.create_task(asyncio.to_thread(session.start))
         try:
             await asyncio.shield(starting)
-            trace.state.session_id = self.session.session_id
-            trace.state.cdp_url = self.session.cdp_url()
+            trace.state.session_id = session.session_id
+            trace.state.cdp_url = session.cdp_url()
         except BaseException as error:
             # Finish owned I/O before propagating even repeated cancellation.
             async def finish(operation):
@@ -82,7 +88,7 @@ class BrowserTask(vf.Task[BrowserData, BrowserState, vf.TaskConfig]):
                 pass
             cleanup_failure = None
             try:
-                await finish(asyncio.create_task(self.close()))
+                await finish(asyncio.create_task(self.close(trace)))
             except _BrowserCleanupError as cleanup:
                 cleanup_failure = cleanup
             primary = (
@@ -94,20 +100,22 @@ class BrowserTask(vf.Task[BrowserData, BrowserState, vf.TaskConfig]):
 
     async def finalize(self, trace, runtime):
         try:
-            await self.close()
+            await self.close(trace)
         finally:
             trace.state.cdp_url = ""
 
-    async def close(self):
-        if getattr(self, "session", None):
-            if self.session.response is not None:
+    async def close(self, trace):
+        session = self._sessions.get(trace.id)
+        if session is not None:
+            if session.response is not None:
                 try:
-                    await asyncio.to_thread(self.session.stop)
+                    await asyncio.to_thread(session.stop)
                 except Exception:
                     raise _BrowserCleanupError(
-                        f"Could not close the rollout browser (session {self.session.session_id})"
+                        f"Could not close the rollout browser (session {session.session_id})"
                     ) from None
-            self.session = None
+            if self._sessions.get(trace.id) is session:
+                del self._sessions[trace.id]
 
     @classmethod
     def toolsets(cls, config):
@@ -130,16 +138,42 @@ class NotteTaskset(vf.Taskset[BrowserTask, vf.TasksetConfig]):
 
 class NotteEnv(vf.SingleAgentEnv):
     async def run(self, task, agents):
+        traces = []
         try:
-            await agents.agent.run(task)
+            await agents.agent.run(task, on_trace=traces.append)
         finally:
-            # Verifiers skips task finalization after setup or provider errors.
+            # Include failed and retried traces whose task finalizers were skipped.
             primary = sys.exception()
-            try:
-                await task.close()
-            except Exception as cleanup:
+
+            async def close_all():
+                failures = []
+                for trace in traces:
+                    try:
+                        await task.close(trace)
+                    except Exception as cleanup:
+                        failures.append(
+                            str(cleanup)
+                            if isinstance(cleanup, _BrowserCleanupError)
+                            else "Rollout browser cleanup failed"
+                        )
+                return failures
+
+            closing = asyncio.create_task(close_all())
+            cancelled = None
+            while True:
+                try:
+                    failures = await asyncio.shield(closing)
+                    break
+                except asyncio.CancelledError as error:
+                    if closing.cancelled():
+                        raise
+                    cancelled = error
+            if cancelled is not None:
+                primary = cancelled
+            if failures:
                 if primary is None:
-                    raise
-                primary.add_note(
-                    str(cleanup) if isinstance(cleanup, _BrowserCleanupError) else "Rollout browser cleanup failed"
-                )
+                    raise _BrowserCleanupError("; ".join(failures)) from None
+                for failure in failures:
+                    primary.add_note(failure)
+            if cancelled is not None:
+                raise cancelled
