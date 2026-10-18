@@ -328,7 +328,8 @@
             "pages": [
               "integrations/claude-code-ai-agents",
               "integrations/claude-managed-agents",
-              "integrations/replit"
+              "integrations/replit",
+              "integrations/docker-sandboxes"
             ]
           },
           {

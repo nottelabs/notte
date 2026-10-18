@@ -6,6 +6,7 @@
   "braintrust": "typescript-driver",
   "claude-agents": "NOTTE_DOCS_PYTHON",
   "deepagents": "root-unittest",
+  "docker-sandboxes": "node-project",
   "gemini-computer-use": "gemini-root",
   "github-actions": "NOTTE_EXAMPLE_PYTHON",
   "inngest": "node-project",
