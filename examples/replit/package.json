@@ -1,0 +1,12 @@
+{
+  "name": "notte-replit-integration",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "install-link": "node install-link.mjs",
+    "test": "node --test test/install-link.test.mjs",
+    "test:live": "node --test test/mcp.live.test.mjs"
+  },
+  "devDependencies": { "@modelcontextprotocol/sdk": "1.32.1" }
+}

@@ -327,7 +327,8 @@
             "icon": "code",
             "pages": [
               "integrations/claude-code-ai-agents",
-              "integrations/claude-managed-agents"
+              "integrations/claude-managed-agents",
+              "integrations/replit"
             ]
           },
           {
