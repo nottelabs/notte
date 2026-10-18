@@ -1,6 +1,6 @@
 # Prime Intellect with Notte
 
-A [Verifiers 0.4](https://docs.primeintellect.ai/verifiers/v1/overview) taskset that gives each rollout its own Notte browser. Its MCP `read_page` tool reads a page title; the reward checks the observed title and URL. The environment closes the browser in `finally`, including on provider failures.
+A [Verifiers 0.4](https://docs.primeintellect.ai/verifiers/v1/overview) taskset that gives each rollout its own Notte browser. Its MCP `read_page` tool reads a page title; the reward checks the observed title and URL. The environment closes the browser in `finally`, including on provider failures. Each trace keeps its own browser handle, even when Verifiers reuses the task for concurrent rollouts.
 
 ```sh
 cd examples/prime-intellect
