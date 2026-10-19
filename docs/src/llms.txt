@@ -199,6 +199,9 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [POST Deliveries](https://docs.notte.cc/api-reference/data-apis/deliveries.md)
 - [POST Extract Product Endpoint](https://docs.notte.cc/api-reference/data-apis/extract-product-endpoint.md)
 - [GET Extract a website styleguide](https://docs.notte.cc/api-reference/data-apis/styleguide-endpoint.md)
+- [POST Fetch Specialized Data](https://docs.notte.cc/api-reference/data-apis/fetch-specialized-data.md)
+- [GET Get Policy](https://docs.notte.cc/api-reference/data-apis/get-policy.md)
+- [DELETE Invalidate](https://docs.notte.cc/api-reference/data-apis/invalidate.md)
 - [GET Limits](https://docs.notte.cc/api-reference/data-apis/limits.md)
 - [GET List Data Apis](https://docs.notte.cc/api-reference/data-apis/list-data-apis.md)
 - [GET List Monitors](https://docs.notte.cc/api-reference/data-apis/list-monitors.md)
@@ -213,7 +216,6 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [POST Rotate Secret](https://docs.notte.cc/api-reference/data-apis/rotate-secret.md)
 - [POST Run Now](https://docs.notte.cc/api-reference/data-apis/run-now.md)
 - [GET Runs](https://docs.notte.cc/api-reference/data-apis/runs.md)
-- [POST Scrape Specialized Data](https://docs.notte.cc/api-reference/data-apis/scrape-specialized-data.md)
 - [PATCH Update](https://docs.notte.cc/api-reference/data-apis/update.md)
 - [POST Youtube Endpoint](https://docs.notte.cc/api-reference/data-apis/youtube-endpoint.md)
 
@@ -304,6 +306,7 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [POST Profile Duplicate](https://docs.notte.cc/api-reference/profiles/profile-duplicate.md)
 - [GET Profile Get](https://docs.notte.cc/api-reference/profiles/profile-get.md)
 - [GET Profile List](https://docs.notte.cc/api-reference/profiles/profile-list.md)
+- [POST Profile State Set](https://docs.notte.cc/api-reference/profiles/profile-state-set.md)
 
 ## Scrape
 
