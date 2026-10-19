@@ -14,7 +14,9 @@ List, create, and operate on functions.
 
 Update a function's metadata.
 
-Pass any of `--name`, `--description`, `--domain`, `--run-instructions`, `--default-runtime`, `--response-format`, or `--self-healing`. Only the flags you pass are sent; omitted fields are left unchanged.
+Pass any of `--name`, `--description`, `--domain`, `--run-instructions`, `--default-runtime`, `--response-format`, `--self-healing`, or `--shared`. Only the flags you pass are sent; omitted fields are left unchanged.
+
+`--shared` enables a public code/fork link; `--shared`=false disables it. Code literals become public. Runs, results and runtime secrets stay private. This does not enable public execution.
 
 `--run-instructions` is documentation for whoever calls the function - how long a run takes, what each variable is for, which sites it trips over. It is not input to the self-healing agent.
 
@@ -32,6 +34,7 @@ Pass any of `--name`, `--description`, `--domain`, `--run-instructions`, `--defa
 | `--response-format <string>` | JSON Schema of run()'s return value, computed by the caller from its pydantic model, as inline JSON, @file, or - for stdin |
 | `--run-instructions <string>` | Notes for whoever calls this function: how long a run takes, what the variables mean, what it trips over |
 | `--self-healing` | Let an agent repair the function when a run fails |
+| `--shared` | Enable or disable public code sharing and forking for this function. Source code, including embedded credentials, becomes public. Runs, results and stored runtime secrets remain private. This does not enable public execution. Omit or send null to leave sharing unchanged. |
 
 ## `notte functions create`
 
