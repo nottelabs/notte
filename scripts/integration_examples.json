@@ -30,5 +30,6 @@
   "eve": "node-project",
   "fx": "node-project",
   "terraform-profiles": "terraform-go",
-  "pipedream": "python-project"
+  "pipedream": "python-project",
+  "e2b": "python-project"
 }

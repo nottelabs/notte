@@ -74,7 +74,13 @@ def projects(shard: str) -> list[tuple[str, str]]:
             raise ValueError("Unknown integration example")
         if registry[name] == "node-project" and name not in NODE_PROJECTS:
             raise ValueError("Unknown Node integration project")
-        if registry[name] == "python-project" and name not in {"prime-intellect", "yutori", "openagi", "pipedream"}:
+        if registry[name] == "python-project" and name not in {
+            "prime-intellect",
+            "yutori",
+            "openagi",
+            "pipedream",
+            "e2b",
+        }:
             raise ValueError("Unknown Python integration project")
         if registry[name] == "terraform-go" and name != "terraform-profiles":
             raise ValueError("Unknown Terraform integration project")
