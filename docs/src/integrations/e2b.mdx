@@ -1,0 +1,60 @@
+---
+title: E2B
+description: Test apps running in E2B sandboxes with Notte cloud browsers.
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+[E2B](https://e2b.dev) runs code in isolated cloud sandboxes. Pair it with Notte when an agent builds or runs an app in a sandbox and needs a real browser to check the result. The browser runs on Notte, so the sandbox installs no Chromium. See the [runnable Python example](https://github.com/nottelabs/notte/tree/main/examples/e2b).
+
+## Set up
+
+Use Python 3.11+, an [E2B API key](https://e2b.dev/dashboard?tab=keys), and a [Notte API key](https://console.notte.cc/apikeys). Install `e2b`, `notte-sdk[playwright]`, and `python-dotenv`.
+
+## Open a sandbox app from your code
+
+Serve the app from the sandbox, then open its public URL with a Notte session. `session.page` is a Playwright page connected to the Notte browser over CDP.
+
+```python
+from e2b import Sandbox
+from notte_sdk import NotteClient
+
+notte = NotteClient()
+sandbox = Sandbox.create(timeout=300)
+try:
+    sandbox.files.write("/home/user/app/index.html", "<h1>Hello from E2B</h1>")
+    sandbox.commands.run("python3 -m http.server 8000", cwd="/home/user/app", background=True)
+    # Wait until the server accepts connections.
+    sandbox.commands.run("for i in $(seq 1 50); do curl -sf localhost:8000 > /dev/null && exit 0; sleep 0.2; done; exit 1")
+    url = f"https://{sandbox.get_host(8000)}"
+
+    with notte.Session() as session:
+        page = session.page
+        page.goto(url)
+        print(page.locator("h1").inner_text())
+finally:
+    sandbox.kill()
+```
+
+## Drive the browser from inside the sandbox
+
+Agents running in the sandbox can use the Notte CLI. Install it and the Notte skills, which coding agents such as Claude Code and Codex pick up from `~/.agents/skills`:
+
+```bash
+curl -fsSL https://notte.cc/install-cli.sh | sh
+notte skill add --yes
+```
+
+Pass `NOTTE_API_KEY` to the sandbox commands, then drive the browser:
+
+```bash
+notte sessions start
+notte page goto https://8000-<sandbox-id>.e2b.app
+notte page fill '#title' 'Ship the E2B example'
+notte page click 'button[type=submit]'
+notte page scrape --only-main-content
+notte sessions stop
+```
+
+The example stops the CLI session even when a command fails, and kills the sandbox at the end. Its tests cover the sandbox commands and cleanup offline, and the full flow against real E2B and Notte.
