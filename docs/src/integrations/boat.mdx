@@ -62,7 +62,7 @@ notte page goto 'https://<sandbox>-8000.on.boat.dev?_token=<token>'
 notte page fill '#title' 'Ship the boat example'
 notte page click 'button[type=submit]'
 notte page scrape --only-main-content
-notte sessions stop
+notte sessions stop --yes
 ```
 
 The example stops the CLI session even when a command fails, and deletes the sandbox at the end. Its tests cover the sandbox commands and cleanup offline, and the full flow against real boat and Notte.

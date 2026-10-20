@@ -158,7 +158,7 @@ def check_with_notte_cli(boat: BoatApi, sandbox_id: str, url: str) -> str:
         try:
             run(boat, sandbox_id, "notte sessions stop --yes")
             print("Notte CLI session stopped")
-        except CommandError as error:
+        except Exception as error:
             print(f"Warning: could not stop the Notte CLI session: {error}")
 
 

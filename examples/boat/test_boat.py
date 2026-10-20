@@ -136,6 +136,19 @@ class OfflineTests(unittest.TestCase):
         with patch.object(demo, "wait_until_ready", not_ready), self.assertRaisesRegex(TimeoutError, "not ready"):
             demo.create_sandbox(boat)
 
+    def test_api_error_on_stop_does_not_hide_the_original_error(self):
+        boat = FakeBoat(failing={f"notte page goto '{URL}'"})
+        original = boat.exec
+
+        def exec_or_api_error(command):
+            if command == "notte sessions stop --yes":
+                raise ConnectionError("boat API unavailable")
+            return original(command)
+
+        boat.exec = exec_or_api_error
+        with self.assertRaisesRegex(demo.CommandError, "goto"):
+            demo.check_with_notte_cli(boat, "sb-1", URL)
+
     def test_failed_navigation_keeps_the_token_out_of_the_error(self):
         boat = FakeBoat(failing={f"notte page goto '{URL}'"})
         with self.assertRaises(demo.CommandError) as raised:
