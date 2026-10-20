@@ -114,10 +114,12 @@ def check_with_notte_cli(sandbox: Sandbox, url: str) -> str:
     if api_url := os.environ.get("NOTTE_API_URL"):
         env["NOTTE_API_URL"] = api_url
     headers = shlex.quote(json.dumps(PREVIEW_HEADERS))
-    session = json.loads(run(sandbox, f"notte sessions start --extra-http-headers {headers} -o json", env=env))
-    print(f"Notte CLI started session {session['session_id']}, watch it live: {session['viewer_url']}")
+    started = run(sandbox, f"notte sessions start --extra-http-headers {headers} -o json", env=env)
 
+    # From here on the session exists, so always try to stop it.
     try:
+        session = json.loads(started)
+        print(f"Notte CLI started session {session['session_id']}, watch it live: {session['viewer_url']}")
         commands = [
             f"notte page goto {shlex.quote(url)}",
             "notte page fill '#title' 'Ship the Daytona example'",
