@@ -21,7 +21,7 @@ Fast perception lists the page's actions with their IDs and selectors. It does n
 
 ## Observe instructions
 
-`<<ALTERNATIVE FOR instructions: session.act() — pending>>`
+Call `observe()` without `instructions` and pick the next action yourself from the actions it returns, for example by passing them to your own LLM. In Python, `session.observe(instructions="...")` becomes `session.observe()`, followed by your own choice among `observation.space.actions`; in TypeScript, `session.observe({ instructions: '...' })` becomes `session.observe()` and the same choice among the returned actions.
 
 ## Response headers
 

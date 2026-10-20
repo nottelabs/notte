@@ -6,7 +6,7 @@
   session default) are deprecated and will be removed from the API on December 1,
   2026. `session.observe()` warns once per session for each; requests are
   unchanged. Use `perception_type: 'fast'` (the default) instead of `'deep'`. For
-  `instructions`: `<<ALTERNATIVE FOR instructions: session.act() — pending>>`. Migration guide: https://docs.notte.cc/features/sessions/observe-migration
+  `instructions`: call `observe()` without it and pick from the returned actions yourself, for example with your own LLM. Migration guide: https://docs.notte.cc/features/sessions/observe-migration
 - **Breaking:** image scraping is removed. The generated SDK no longer exports
   `ImageCategory` or `ImageData`, and `DataSpace.images` is removed. Remove uses
   of those types and the response field; omit `scrape_images` and `only_images`

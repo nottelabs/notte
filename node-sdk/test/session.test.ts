@@ -647,7 +647,7 @@ describe('Session Unit Tests', () => {
       const messages = warn.mock.calls.map(([message]) => String(message)).filter((message) => message.includes('December 1, 2026'));
       expect(messages).toHaveLength(2);
       expect(messages[0]).toContain('`observe({ instructions })` is deprecated');
-      expect(messages[0]).toContain('<<ALTERNATIVE FOR instructions: session.act() — pending>>');
+      expect(messages[0]).toContain('pick from the returned actions yourself');
       expect(messages[1]).toContain("use `perception_type: 'fast'` (the default)");
       for (const message of messages) {
         expect(message).toContain('https://docs.notte.cc/features/sessions/observe-migration');

@@ -18,7 +18,7 @@ string argument is accepted as the perception type.
 Deprecated: `perception_type: 'deep'` and `instructions` are removed on
 December 1, 2026, and each warns once per session. Use `perception_type:
 'fast'` (the default) instead of `'deep'`. For `instructions`:
-`<<ALTERNATIVE FOR instructions: session.act() — pending>>`. See https://docs.notte.cc/features/sessions/observe-migration
+call `observe()` without it and pick from the returned actions yourself, for example with your own LLM. See https://docs.notte.cc/features/sessions/observe-migration
 
 ```typescript
 Session.observe(options?: ObserveRequest | PerceptionType): Promise<Observation>;

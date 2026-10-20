@@ -36,7 +36,7 @@ removed from the API on December 1, 2026. Passing either to `observe()` (on a
 `RemoteSession` or `client.sessions.page`), including a session created with
 `perception_type="deep"`, emits a `DeprecationWarning`; requests are unchanged.
 Use `perception_type="fast"` (the default) instead of `"deep"`. For `instructions`:
-`<<ALTERNATIVE FOR instructions: session.act() — pending>>`. Migration guide: https://docs.notte.cc/features/sessions/observe-migration
+call `observe()` without it and pick from the returned actions (`observation.space.actions`) yourself, for example with your own LLM. Migration guide: https://docs.notte.cc/features/sessions/observe-migration
 
 ## Unreleased — deprecated 1.x aliases
 
