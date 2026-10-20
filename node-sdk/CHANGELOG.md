@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **Breaking:** image scraping is removed. The generated SDK no longer exports
+  `ImageCategory` or `ImageData`, and `DataSpace.images` is removed. Remove uses
+  of those types and the response field; omit `scrape_images` and `only_images`
+  or set them to `false` when sending scraping requests.
 - `session.fetch()` refuses plaintext `http:` targets and redirects by default
   because the request carries the page's cookies; pass `allowInsecure: true`
   to override. Relative URLs resolve against the page.

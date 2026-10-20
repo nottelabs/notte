@@ -90,6 +90,9 @@ export function createReference(root = sdkRoot) {
       const normalize = value => value.replace(/(?:Input|Output)$/, '').replace(/[^a-z0-9]/gi, '').toLowerCase();
       if (normalize(paragraphs[0]) === normalize(symbol.name)) text = paragraphs.slice(1).join('\n\n');
     }
+    if (!text && symbol?.name === 'persisted_domains' && node?.parent?.parent?.name?.getText() === 'ProfileResponse') {
+      text = 'List of domains with persisted browser state (cookies, localStorage, sessionStorage).';
+    }
     return prose(text);
   };
   const typeText = type => portableType(checker.typeToString(type, undefined, ts.TypeFormatFlags.NoTruncation));

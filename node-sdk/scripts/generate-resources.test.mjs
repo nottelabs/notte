@@ -125,6 +125,32 @@ test('spec-owned agent operations stay outside client resources while sessions r
   assert.equal(requests[0].client, client);
 });
 
+test('preserves runtime health request options before its new SDK-generation query', async () => {
+  const generated = generateResources(sdk('functionRuntimeHealth'), data(`
+    headers?: { 'x-notte-request-origin'?: string };
+    query?: { sdk_generation?: 'v19' | 'v110' };
+    url: '/functions/health';
+  `));
+  const js = ts.transpile(generated, { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 });
+  const requests = [];
+  const exports = {};
+  new Function('require', 'exports', js)(() => ({ functionRuntimeHealth: async options => {
+    requests.push(options);
+    return { data: 'result' };
+  } }), exports);
+  const { runtimeHealth } = exports.createResources({}, () => 'bound-key').functions;
+  const signal = new AbortController().signal;
+  const headers = { 'x-notte-request-origin': 'custom-origin' };
+  assert.equal(await runtimeHealth({ signal, headers }), 'result');
+  await runtimeHealth({ signal, headers }, { sdk_generation: 'v110' });
+  for (const request of requests) {
+    assert.equal(request.signal, signal);
+    assert.deepEqual(request.headers, headers);
+  }
+  assert.equal(requests[0].query, undefined);
+  assert.deepEqual(requests[1].query, { sdk_generation: 'v110' });
+});
+
 test('preserves run metadata request options before its new payload query', async () => {
   const generated = generateResources(sdk('functionRunGetMetadata'), data(`
     path: { function_id: string; run_id: string };

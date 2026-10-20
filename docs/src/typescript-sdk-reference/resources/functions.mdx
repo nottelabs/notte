@@ -139,7 +139,7 @@ client.functions.runUpdateMetadata(functionId: FunctionRunUpdateMetadataData["pa
 functionRuntimeHealth: /functions/health. Returns the API response body.
 
 ```typescript
-client.functions.runtimeHealth(query?: FunctionRuntimeHealthData["query"], requestOptions?: ResourceRequestOptions & { headers?: Omit<NonNullable<FunctionRuntimeHealthData["headers"]>, "x-notte-api-key">; }): Promise<FunctionRuntimeHealthResponse>;
+client.functions.runtimeHealth(requestOptions?: ResourceRequestOptions & { headers?: Omit<NonNullable<FunctionRuntimeHealthData["headers"]>, "x-notte-api-key">; }, query?: FunctionRuntimeHealthData["query"]): Promise<FunctionRuntimeHealthResponse>;
 ```
 
 ## setSchedule

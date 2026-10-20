@@ -31,6 +31,27 @@ it('preserves function artifact and execution runtime metadata', async () => {
   expect(result.artifact_sdk_generation).toBe('v19');
 });
 
+it('keeps runtime-health cancellation options before the SDK-generation query', async () => {
+  const controller = new AbortController();
+  const requests: Request[] = [];
+  vi.stubGlobal('fetch', vi.fn(async (request: Request) => {
+    requests.push(request);
+    return Response.json({ status: 'healthy' });
+  }));
+  const api = client();
+  const options = { signal: controller.signal, headers: { 'x-notte-request-origin': 'compatibility-test' } };
+  await api.functions.runtimeHealth(options);
+  await api.functions.runtimeHealth(options, { sdk_generation: 'v110' });
+  expect(requests[0].url).toBe('https://api.example.test/functions/health');
+  expect(requests[1].url).toBe('https://api.example.test/functions/health?sdk_generation=v110');
+  for (const request of requests) {
+    expect(request.headers.get('x-notte-request-origin')).toBe('sdk-node');
+    expect(request.signal.aborted).toBe(false);
+  }
+  controller.abort();
+  expect(requests.every(request => request.signal.aborted)).toBe(true);
+});
+
 it('binds a detached stop method to the owning client and unwraps its response', async () => {
   const requests: Request[] = [];
   vi.stubGlobal('fetch', vi.fn(async (request: Request) => {

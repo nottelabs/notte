@@ -240,7 +240,7 @@ export function createResources(client: Client, getApiKey: () => string) {
       return response.data;
     },
     /** functionRuntimeHealth: /functions/health. Returns the API response body. */
-    runtimeHealth: async (query: Types.FunctionRuntimeHealthData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionRuntimeHealthData['headers']>, 'x-notte-api-key'> } = {}) => {
+    runtimeHealth: async (requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionRuntimeHealthData['headers']>, 'x-notte-api-key'> } = {}, query: Types.FunctionRuntimeHealthData['query'] = undefined) => {
       const response = await operations.functionRuntimeHealth({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, query });
       return response.data;
     },
