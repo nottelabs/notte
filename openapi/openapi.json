@@ -3,7 +3,7 @@
   "info": {
     "title": "Notte API",
     "description": "Notte API is a REST API that allows you to interact with Notte. It is used to create cloud browser sessions, scrape webpages, and run web ai agents to act on your behalf on the internet.",
-    "version": "1.9.8",
+    "version": "1.10.0",
     "x-logo": {
       "url": "https://www.notte.cc/images/logo/logo-white.png"
     }
@@ -562,109 +562,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProfileResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "x-codeSamples": []
-      }
-    },
-    "/sessions/{session_id}/workflow/code": {
-      "get": {
-        "tags": [
-          "sessions"
-        ],
-        "summary": "Get Session Script",
-        "operationId": "get_session_script",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "session_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Session Id"
-            }
-          },
-          {
-            "name": "as_workflow",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "boolean",
-              "description": "Whether to return code as standalone workflow or just relevant instructions",
-              "title": "As Workflow"
-            },
-            "description": "Whether to return code as standalone workflow or just relevant instructions"
-          },
-          {
-            "name": "infer_response_format",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "description": "Whether to infer response_format schema for scrape calls that have instructions but no schema",
-              "default": false,
-              "title": "Infer Response Format"
-            },
-            "description": "Whether to infer response_format schema for scrape calls that have instructions but no schema"
-          },
-          {
-            "name": "x-notte-request-origin",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Request-Origin"
-            }
-          },
-          {
-            "name": "x-notte-sdk-version",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Sdk-Version"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AgentFunctionCodeResponse"
                 }
               }
             }
@@ -2093,6 +1990,108 @@
         "x-codeSamples": []
       }
     },
+    "/sessions/{session_id}/page/execute/file": {
+      "post": {
+        "tags": [
+          "sessions",
+          "files",
+          "page"
+        ],
+        "summary": "Execute Session File",
+        "operationId": "execute_session_file",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "update_metadata",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Update Metadata"
+            }
+          },
+          {
+            "name": "x-notte-request-origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Request-Origin"
+            }
+          },
+          {
+            "name": "x-notte-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Sdk-Version"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FileExecutionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiExecutionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": []
+      }
+    },
     "/sessions/{session_id}/files": {
       "post": {
         "tags": [
@@ -2477,540 +2476,6 @@
         "x-codeSamples": []
       }
     },
-    "/agents/start": {
-      "post": {
-        "tags": [
-          "agents"
-        ],
-        "summary": "Agent Start",
-        "operationId": "agent_start",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "x-notte-request-origin",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Request-Origin"
-            }
-          },
-          {
-            "name": "x-notte-sdk-version",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Sdk-Version"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ApiAgentStartRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AgentResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "x-codeSamples": [
-          {
-            "lang": "Python",
-            "source": "from notte_sdk import NotteClient\n\nnotte = NotteClient()\ntask = \"find a cute dog on google images\"\n\nwith notte.Session() as session:\n    agent = notte.Agent(session=session, max_steps=5)\n    # this runs the agent and waits for completion\n    full_response = agent.run(task=task)\n    print(f\"{full_response.success=}, {full_response.answer=}\")",
-            "label": "python"
-          },
-          {
-            "lang": "TypeScript",
-            "source": "import { NotteClient } from \"notte-sdk\";\n\nconst notte = new NotteClient();\nconst task = \"find a cute dog on google images\";\n\nawait notte.Session().use(async (session) => {\n  const agent = notte.Agent({ session, max_steps: 5 });\n  // this runs the agent and waits for completion\n  const response = await agent.run({ task });\n  console.log(`success=${response.success}, answer=${response.answer}`);\n});",
-            "label": "node"
-          },
-          {
-            "lang": "Curl",
-            "source": "curl -X POST \"https://api.notte.cc/agents/start\" \\\n-H \"Authorization: Bearer $NOTTE_API_KEY\" \\\n-H \"Content-Type: application/json\" \\\n-d '{\n\"task\": \"find a cute dog on google images\",\n\"max_steps\": 5,\n\"session_id\": \"<session_id>\"\n}'",
-            "label": "curl"
-          }
-        ]
-      }
-    },
-    "/agents/{agent_id}/stop": {
-      "delete": {
-        "tags": [
-          "agents"
-        ],
-        "summary": "Agent Stop",
-        "operationId": "agent_stop",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "agent_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Agent Id"
-            }
-          },
-          {
-            "name": "session_id",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "title": "Session Id"
-            }
-          },
-          {
-            "name": "x-notte-request-origin",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Request-Origin"
-            }
-          },
-          {
-            "name": "x-notte-sdk-version",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Sdk-Version"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AgentStatusResponse"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "The agent is stopping but its final state is not saved yet; check its status shortly."
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "x-codeSamples": [
-          {
-            "lang": "Python",
-            "source": "from notte_sdk import NotteClient\n\nnotte = NotteClient()\n\nwith notte.Session() as session:\n    agent = notte.Agent(session=session)\n    _ = agent.start(\n        task=\"find a cute dog on google images\"\n    )\n\n    # stops without waiting for the agent to finish\n    _ = agent.stop()",
-            "label": "python"
-          },
-          {
-            "lang": "TypeScript",
-            "source": "import { NotteClient } from \"notte-sdk\";\n\nconst notte = new NotteClient();\n\nawait notte.Session().use(async (session) => {\n  const agent = notte.Agent({ session });\n  await agent.start({\n    task: \"find a cute dog on google images\",\n  });\n\n  // stops without waiting for the agent to finish\n  await agent.stop();\n});",
-            "label": "node"
-          },
-          {
-            "lang": "Curl",
-            "source": "curl -X DELETE \"https://api.notte.cc/agents/$agent_id/stop?session_id=${session_id}\" \\\n-H \"Authorization: Bearer $NOTTE_API_KEY\" \\\n-H \"Content-Type: application/json\"",
-            "label": "curl"
-          }
-        ]
-      }
-    },
-    "/agents/{agent_id}": {
-      "get": {
-        "tags": [
-          "agents"
-        ],
-        "summary": "Agent Status",
-        "operationId": "agent_status",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "agent_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Agent Id"
-            }
-          },
-          {
-            "name": "x-notte-request-origin",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Request-Origin"
-            }
-          },
-          {
-            "name": "x-notte-sdk-version",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Sdk-Version"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LegacyAgentStatusResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "x-hidden": true
-      }
-    },
-    "/agents/{agent_id}/workflow/code": {
-      "get": {
-        "tags": [
-          "agents"
-        ],
-        "summary": "Get Script",
-        "operationId": "get_script",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "agent_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Agent Id"
-            }
-          },
-          {
-            "name": "as_workflow",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "boolean",
-              "description": "Whether to return code as standalone workflow or just relevant instructions",
-              "title": "As Workflow"
-            },
-            "description": "Whether to return code as standalone workflow or just relevant instructions"
-          },
-          {
-            "name": "infer_response_format",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "description": "Whether to infer response_format schema for scrape calls that have instructions but no schema",
-              "default": false,
-              "title": "Infer Response Format"
-            },
-            "description": "Whether to infer response_format schema for scrape calls that have instructions but no schema"
-          },
-          {
-            "name": "x-notte-request-origin",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Request-Origin"
-            }
-          },
-          {
-            "name": "x-notte-sdk-version",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Sdk-Version"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AgentFunctionCodeResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "x-codeSamples": [
-          {
-            "lang": "Python",
-            "source": "from notte_sdk import NotteClient\n\nnotte = NotteClient()\n\nagent = notte.Agent(agent_id=\"<agent_id>\")\nprint(agent.workflow.code().python_script)",
-            "label": "python"
-          },
-          {
-            "lang": "Curl",
-            "source": "curl -X GET \"https://api.notte.cc/agents/$agent_id/workflow/code?as_workflow=false\" \\\n-H \"Authorization: Bearer $NOTTE_API_KEY\" \\\n-H \"Content-Type: application/json\"",
-            "label": "curl"
-          }
-        ]
-      }
-    },
-    "/agents": {
-      "get": {
-        "tags": [
-          "agents"
-        ],
-        "summary": "List Agents",
-        "operationId": "list_agents",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "description": "Page number",
-              "default": 1,
-              "title": "Page"
-            },
-            "description": "Page number"
-          },
-          {
-            "name": "page_size",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "description": "Number of items per page",
-              "default": 10,
-              "title": "Page Size"
-            },
-            "description": "Number of items per page"
-          },
-          {
-            "name": "only_active",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "description": "Whether to only return active sessions",
-              "default": true,
-              "title": "Only Active"
-            },
-            "description": "Whether to only return active sessions"
-          },
-          {
-            "name": "only_saved",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "description": "Whether to only return saved agents",
-              "default": false,
-              "title": "Only Saved"
-            },
-            "description": "Whether to only return saved agents"
-          },
-          {
-            "name": "only_current_token",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "description": "Whether to only return agents for the current token (apikey)",
-              "default": false,
-              "title": "Only Current Token"
-            },
-            "description": "Whether to only return agents for the current token (apikey)"
-          },
-          {
-            "name": "x-notte-request-origin",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Request-Origin"
-            }
-          },
-          {
-            "name": "x-notte-sdk-version",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Sdk-Version"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_AgentResponse_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "x-hidden": true
-      }
-    },
     "/functions/health": {
       "get": {
         "tags": [
@@ -3024,6 +2489,20 @@
           }
         ],
         "parameters": [
+          {
+            "name": "sdk_generation",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "v19",
+                "v110"
+              ],
+              "type": "string",
+              "default": "v19",
+              "title": "Sdk Generation"
+            }
+          },
           {
             "name": "x-notte-request-origin",
             "in": "header",
@@ -3549,6 +3028,22 @@
                 }
               ],
               "title": "Version"
+            }
+          },
+          {
+            "name": "function_run_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Function Run Id"
             }
           },
           {
@@ -15155,6 +14650,647 @@
         },
         "x-hidden": true
       }
+    },
+    "/agents/start": {
+      "post": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "Agent Start",
+        "operationId": "agent_start",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-notte-request-origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Request-Origin"
+            }
+          },
+          {
+            "name": "x-notte-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Sdk-Version"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiAgentStartRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Python",
+            "source": "from notte_sdk import NotteClient\n\nnotte = NotteClient()\ntask = \"find a cute dog on google images\"\n\nwith notte.Session() as session:\n    agent = notte.Agent(session=session, max_steps=5)\n    # this runs the agent and waits for completion\n    full_response = agent.run(task=task)\n    print(f\"{full_response.success=}, {full_response.answer=}\")",
+            "label": "python"
+          },
+          {
+            "lang": "TypeScript",
+            "source": "import { NotteClient } from \"notte-sdk\";\n\nconst notte = new NotteClient();\nconst task = \"find a cute dog on google images\";\n\nawait notte.Session().use(async (session) => {\n  const agent = notte.Agent({ session, max_steps: 5 });\n  // this runs the agent and waits for completion\n  const response = await agent.run({ task });\n  console.log(`success=${response.success}, answer=${response.answer}`);\n});",
+            "label": "node"
+          },
+          {
+            "lang": "Curl",
+            "source": "curl -X POST \"https://api.notte.cc/agents/start\" \\\n-H \"Authorization: Bearer $NOTTE_API_KEY\" \\\n-H \"Content-Type: application/json\" \\\n-d '{\n\"task\": \"find a cute dog on google images\",\n\"max_steps\": 5,\n\"session_id\": \"<session_id>\"\n}'",
+            "label": "curl"
+          }
+        ]
+      }
+    },
+    "/agents/{agent_id}/stop": {
+      "delete": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "Agent Stop",
+        "operationId": "agent_stop",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "agent_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Agent Id"
+            }
+          },
+          {
+            "name": "session_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "x-notte-request-origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Request-Origin"
+            }
+          },
+          {
+            "name": "x-notte-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Sdk-Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentStatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The agent is stopping but its final state is not saved yet; check its status shortly."
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Python",
+            "source": "from notte_sdk import NotteClient\n\nnotte = NotteClient()\n\nwith notte.Session() as session:\n    agent = notte.Agent(session=session)\n    _ = agent.start(\n        task=\"find a cute dog on google images\"\n    )\n\n    # stops without waiting for the agent to finish\n    _ = agent.stop()",
+            "label": "python"
+          },
+          {
+            "lang": "TypeScript",
+            "source": "import { NotteClient } from \"notte-sdk\";\n\nconst notte = new NotteClient();\n\nawait notte.Session().use(async (session) => {\n  const agent = notte.Agent({ session });\n  await agent.start({\n    task: \"find a cute dog on google images\",\n  });\n\n  // stops without waiting for the agent to finish\n  await agent.stop();\n});",
+            "label": "node"
+          },
+          {
+            "lang": "Curl",
+            "source": "curl -X DELETE \"https://api.notte.cc/agents/$agent_id/stop?session_id=${session_id}\" \\\n-H \"Authorization: Bearer $NOTTE_API_KEY\" \\\n-H \"Content-Type: application/json\"",
+            "label": "curl"
+          }
+        ]
+      }
+    },
+    "/agents/{agent_id}": {
+      "get": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "Agent Status",
+        "description": "Retrieves the current status of a specific <agent_id>.\n\nThe most important fields are:\n- success: Whether the agent task was successful (None if still running)\n- answer: The answer to the agent task (None if still running)\n\nAlso you can check the `steps` field to better understand which actions where taken by the agent.",
+        "operationId": "agent_status",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "agent_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Agent Id"
+            }
+          },
+          {
+            "name": "x-notte-request-origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Request-Origin"
+            }
+          },
+          {
+            "name": "x-notte-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Sdk-Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyAgentStatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-hidden": true
+      }
+    },
+    "/agents/{agent_id}/workflow/code": {
+      "get": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "Get Script",
+        "description": "Retrieves the current status of a specific <agent_id>.\n\nThe most important fields are:\n- success: Whether the agent task was successful (None if still running)\n- answer: The answer to the agent task (None if still running)\n\nAlso you can check the `steps` field to better understand which actions where taken by the agent.",
+        "operationId": "get_script",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "agent_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Agent Id"
+            }
+          },
+          {
+            "name": "as_workflow",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "boolean",
+              "description": "Whether to return code as standalone workflow or just relevant instructions",
+              "title": "As Workflow"
+            },
+            "description": "Whether to return code as standalone workflow or just relevant instructions"
+          },
+          {
+            "name": "infer_response_format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Whether to infer response_format schema for scrape calls that have instructions but no schema",
+              "default": false,
+              "title": "Infer Response Format"
+            },
+            "description": "Whether to infer response_format schema for scrape calls that have instructions but no schema"
+          },
+          {
+            "name": "x-notte-request-origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Request-Origin"
+            }
+          },
+          {
+            "name": "x-notte-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Sdk-Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentFunctionCodeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Python",
+            "source": "from notte_sdk import NotteClient\n\nnotte = NotteClient()\n\nagent = notte.Agent(agent_id=\"<agent_id>\")\nprint(agent.workflow.code().python_script)",
+            "label": "python"
+          },
+          {
+            "lang": "Curl",
+            "source": "curl -X GET \"https://api.notte.cc/agents/$agent_id/workflow/code?as_workflow=false\" \\\n-H \"Authorization: Bearer $NOTTE_API_KEY\" \\\n-H \"Content-Type: application/json\"",
+            "label": "curl"
+          }
+        ]
+      }
+    },
+    "/agents": {
+      "get": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "List Agents",
+        "description": "Retrieves a list of all agents associated with the authenticated user.\n\nParameters:\n- request: AgentListRequest containing:\n    - only_active: Whether to only return active agents\n    - limit: Maximum number of agents to return",
+        "operationId": "list_agents",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Page number",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Page number"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Number of items per page",
+              "default": 10,
+              "title": "Page Size"
+            },
+            "description": "Number of items per page"
+          },
+          {
+            "name": "only_active",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Whether to only return active sessions",
+              "default": true,
+              "title": "Only Active"
+            },
+            "description": "Whether to only return active sessions"
+          },
+          {
+            "name": "only_saved",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Whether to only return saved agents",
+              "default": false,
+              "title": "Only Saved"
+            },
+            "description": "Whether to only return saved agents"
+          },
+          {
+            "name": "only_current_token",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Whether to only return agents for the current token (apikey)",
+              "default": false,
+              "title": "Only Current Token"
+            },
+            "description": "Whether to only return agents for the current token (apikey)"
+          },
+          {
+            "name": "x-notte-request-origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Request-Origin"
+            }
+          },
+          {
+            "name": "x-notte-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Sdk-Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponse_AgentResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-hidden": true
+      }
+    },
+    "/sessions/{session_id}/workflow/code": {
+      "get": {
+        "tags": [
+          "sessions"
+        ],
+        "summary": "Get Session Script",
+        "description": "Generate a Python script from a session's trajectory.\n\nThis endpoint generates executable Python code that replicates the session's actions,\nwith proper `client.AgentFallback` blocks for steps that were executed by agents.\n\nReturns both a Python script and JSON actions list.",
+        "operationId": "get_session_script",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "as_workflow",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "boolean",
+              "description": "Whether to return code as standalone workflow or just relevant instructions",
+              "title": "As Workflow"
+            },
+            "description": "Whether to return code as standalone workflow or just relevant instructions"
+          },
+          {
+            "name": "infer_response_format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Whether to infer response_format schema for scrape calls that have instructions but no schema",
+              "default": false,
+              "title": "Infer Response Format"
+            },
+            "description": "Whether to infer response_format schema for scrape calls that have instructions but no schema"
+          },
+          {
+            "name": "x-notte-request-origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Request-Origin"
+            }
+          },
+          {
+            "name": "x-notte-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Sdk-Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentFunctionCodeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": []
+      }
     }
   },
   "components": {
@@ -15556,191 +15692,6 @@
         ],
         "title": "AddCreditCardResponse"
       },
-      "AgentFunctionCodeResponse": {
-        "properties": {
-          "python_script": {
-            "type": "string",
-            "title": "Python Script",
-            "description": "Python script to replicate agent steps"
-          },
-          "json_actions": {
-            "items": {
-              "additionalProperties": true,
-              "type": "object"
-            },
-            "type": "array",
-            "title": "Json Actions",
-            "description": "Json actions to replicate agent steps"
-          }
-        },
-        "type": "object",
-        "required": [
-          "python_script",
-          "json_actions"
-        ],
-        "title": "AgentFunctionCodeResponse"
-      },
-      "AgentResponse": {
-        "properties": {
-          "agent_id": {
-            "type": "string",
-            "title": "Agent Id",
-            "description": "The ID of the agent"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At",
-            "description": "The creation time of the agent"
-          },
-          "session_id": {
-            "type": "string",
-            "title": "Session Id",
-            "description": "The ID of the session"
-          },
-          "status": {
-            "$ref": "#/components/schemas/AgentStatus",
-            "description": "The status of the agent (active or closed)"
-          },
-          "closed_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Closed At",
-            "description": "The closing time of the agent"
-          },
-          "saved": {
-            "type": "boolean",
-            "title": "Saved",
-            "description": "Whether the agent is saved as a workflow",
-            "default": false
-          }
-        },
-        "type": "object",
-        "required": [
-          "agent_id",
-          "created_at",
-          "session_id",
-          "status"
-        ],
-        "title": "AgentResponse"
-      },
-      "AgentStatus": {
-        "type": "string",
-        "enum": [
-          "active",
-          "closed"
-        ],
-        "title": "AgentStatus"
-      },
-      "AgentStatusResponse": {
-        "properties": {
-          "agent_id": {
-            "type": "string",
-            "title": "Agent Id",
-            "description": "The ID of the agent"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At",
-            "description": "The creation time of the agent"
-          },
-          "session_id": {
-            "type": "string",
-            "title": "Session Id",
-            "description": "The ID of the session"
-          },
-          "status": {
-            "$ref": "#/components/schemas/AgentStatus",
-            "description": "The status of the agent (active or closed)"
-          },
-          "closed_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Closed At",
-            "description": "The closing time of the agent"
-          },
-          "saved": {
-            "type": "boolean",
-            "title": "Saved",
-            "description": "Whether the agent is saved as a workflow",
-            "default": false
-          },
-          "task": {
-            "type": "string",
-            "title": "Task",
-            "description": "The task that the agent is currently running"
-          },
-          "url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Url",
-            "description": "The URL that the agent started on"
-          },
-          "success": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Success",
-            "description": "Whether the agent task was successful. None if the agent is still running"
-          },
-          "answer": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Answer",
-            "description": "The answer to the agent task. None if the agent is still running"
-          },
-          "steps": {
-            "items": {
-              "additionalProperties": true,
-              "type": "object"
-            },
-            "type": "array",
-            "title": "Steps",
-            "description": "The steps that the agent has currently taken"
-          }
-        },
-        "type": "object",
-        "required": [
-          "agent_id",
-          "created_at",
-          "session_id",
-          "status",
-          "task"
-        ],
-        "title": "AgentStatusResponse"
-      },
       "AnythingStartRequest": {
         "properties": {
           "task": {
@@ -15753,124 +15704,6 @@
           "task"
         ],
         "title": "AnythingStartRequest"
-      },
-      "ApiAgentStartRequest": {
-        "properties": {
-          "task": {
-            "type": "string",
-            "title": "Task",
-            "description": "The task that the agent should perform"
-          },
-          "url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Url",
-            "description": "The URL that the agent should start on (optional)"
-          },
-          "response_format": {
-            "anyOf": [
-              {},
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Response Format",
-            "description": "The response format to use for the agent answer. You can use a Pydantic model or a JSON Schema dict (cf. https://docs.pydantic.dev/latest/concepts/json_schema/#generating-json-schema.)"
-          },
-          "session_offset": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Session Offset",
-            "description": "[Experimental] The step from which the agent should gather information from in the session. If none, fresh memory"
-          },
-          "reasoning_model": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/LlmModel"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "title": "Reasoning Model",
-            "description": "The reasoning model to use"
-          },
-          "use_vision": {
-            "type": "boolean",
-            "title": "Use Vision",
-            "description": "Whether to use vision for the agent. Not all reasoning models support vision.",
-            "default": true
-          },
-          "max_steps": {
-            "type": "integer",
-            "maximum": 150.0,
-            "minimum": 1.0,
-            "title": "Max Steps",
-            "description": "The maximum number of steps the agent should take",
-            "default": 20
-          },
-          "vault_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Vault Id",
-            "description": "The vault to use for the agent"
-          },
-          "persona_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Persona Id",
-            "description": "The persona to use for the agent"
-          },
-          "notifier_config": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Notifier Config",
-            "description": "Config used for the notifier"
-          },
-          "session_id": {
-            "type": "string",
-            "title": "Session Id",
-            "description": "The ID of the session to run the agent on"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "task",
-          "session_id"
-        ],
-        "title": "ApiAgentStartRequest"
       },
       "ApiExecutionResponse": {
         "properties": {
@@ -16239,17 +16072,6 @@
             "title": "Cdp Url",
             "description": "The CDP URL of another remote session provider."
           },
-          "screenshot_type": {
-            "type": "string",
-            "enum": [
-              "raw",
-              "full",
-              "last_action"
-            ],
-            "title": "Screenshot Type",
-            "description": "The type of screenshot to use for the session.",
-            "default": "last_action"
-          },
           "profile": {
             "anyOf": [
               {
@@ -16327,6 +16149,18 @@
             "title": "Advanced Stealth",
             "description": "Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.",
             "default": false
+          },
+          "screenshot_type": {
+            "type": "string",
+            "enum": [
+              "raw",
+              "full",
+              "last_action"
+            ],
+            "title": "Screenshot Type",
+            "description": "Ignored since notte 1.10: screenshots are returned without highlighting.",
+            "default": "last_action",
+            "deprecated": true
           },
           "demonstrate": {
             "type": "boolean",
@@ -21111,21 +20945,6 @@
             "title": "Markdown",
             "description": "Markdown representation of the extracted data"
           },
-          "images": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/ImageData"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Images",
-            "description": "List of images extracted from the page (ID and download link)"
-          },
           "structured": {
             "anyOf": [
               {
@@ -22118,6 +21937,45 @@
         ],
         "title": "FallbackFillAction"
       },
+      "FileExecutionRequest": {
+        "properties": {
+          "action": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/UploadFileAction-Input"
+              },
+              {
+                "$ref": "#/components/schemas/DownloadFileAction-Input"
+              }
+            ],
+            "title": "Action",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "download_file": "#/components/schemas/DownloadFileAction-Input",
+                "upload_file": "#/components/schemas/UploadFileAction-Input"
+              }
+            }
+          },
+          "target_id": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Target Id"
+          },
+          "record": {
+            "type": "boolean",
+            "title": "Record",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "action",
+          "target_id"
+        ],
+        "title": "FileExecutionRequest"
+      },
       "FileSource": {
         "type": "string",
         "enum": [
@@ -22494,24 +22352,24 @@
               }
             ],
             "title": "Variables",
-            "description": "The variables to run the workflow with"
+            "description": "The variables to run the function with"
           },
           "created_at": {
             "type": "string",
             "format": "date-time",
             "title": "Created At",
-            "description": "The creation time of the workflow"
+            "description": "The creation time of the function"
           },
           "updated_at": {
             "type": "string",
             "format": "date-time",
             "title": "Updated At",
-            "description": "The last update time of the workflow"
+            "description": "The last update time of the function"
           },
           "latest_version": {
             "type": "string",
             "title": "Latest Version",
-            "description": "The version of the workflow"
+            "description": "The version of the function"
           },
           "versions": {
             "items": {
@@ -22519,12 +22377,12 @@
             },
             "type": "array",
             "title": "Versions",
-            "description": "The versions of the workflow"
+            "description": "The versions of the function"
           },
           "status": {
             "type": "string",
             "title": "Status",
-            "description": "The status of the workflow"
+            "description": "The status of the function"
           },
           "name": {
             "anyOf": [
@@ -22536,7 +22394,7 @@
               }
             ],
             "title": "Name",
-            "description": "The name of the workflow"
+            "description": "The name of the function"
           },
           "description": {
             "anyOf": [
@@ -22548,12 +22406,12 @@
               }
             ],
             "title": "Description",
-            "description": "The description of the workflow"
+            "description": "The description of the function"
           },
           "shared": {
             "type": "boolean",
             "title": "Shared",
-            "description": "Whether the workflow is public and can beshared with other users",
+            "description": "Whether the function is public and can beshared with other users",
             "default": false
           },
           "reference_workflow_id": {
@@ -22566,7 +22424,27 @@
               }
             ],
             "title": "Reference Workflow Id",
-            "description": "The ID of the reference workflow (i.e wether the workflow was forked from another workflow or not)"
+            "description": "The ID of the reference function (i.e whether the function was forked from another function or not)"
+          },
+          "sdk_generation": {
+            "type": "string",
+            "enum": [
+              "v19",
+              "v110"
+            ],
+            "title": "Sdk Generation",
+            "default": "v19"
+          },
+          "upload_sdk_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upload Sdk Version"
           },
           "published": {
             "type": "boolean",
@@ -22700,6 +22578,18 @@
             ],
             "title": "Self Healing"
           },
+          "shared": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shared",
+            "description": "Enable or disable public code sharing and forking for this function. Source code, including embedded credentials, becomes public. Runs, results and stored runtime secrets remain private. This does not enable public execution. Omit or send null to leave sharing unchanged."
+          },
           "response_format": {
             "anyOf": [
               {
@@ -22712,18 +22602,6 @@
             ],
             "title": "Response Format",
             "description": "JSON Schema of run()'s return value, computed by the caller from its pydantic model"
-          },
-          "shared": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Shared",
-            "description": "Enable or disable public code sharing and forking for this function. Source code, including embedded credentials, becomes public. Runs, results and stored runtime secrets remain private. This does not enable public execution. Omit or send null to leave sharing unchanged."
           }
         },
         "type": "object",
@@ -22758,24 +22636,24 @@
               }
             ],
             "title": "Variables",
-            "description": "The variables to run the workflow with"
+            "description": "The variables to run the function with"
           },
           "created_at": {
             "type": "string",
             "format": "date-time",
             "title": "Created At",
-            "description": "The creation time of the workflow"
+            "description": "The creation time of the function"
           },
           "updated_at": {
             "type": "string",
             "format": "date-time",
             "title": "Updated At",
-            "description": "The last update time of the workflow"
+            "description": "The last update time of the function"
           },
           "latest_version": {
             "type": "string",
             "title": "Latest Version",
-            "description": "The version of the workflow"
+            "description": "The version of the function"
           },
           "versions": {
             "items": {
@@ -22783,12 +22661,12 @@
             },
             "type": "array",
             "title": "Versions",
-            "description": "The versions of the workflow"
+            "description": "The versions of the function"
           },
           "status": {
             "type": "string",
             "title": "Status",
-            "description": "The status of the workflow"
+            "description": "The status of the function"
           },
           "name": {
             "anyOf": [
@@ -22800,7 +22678,7 @@
               }
             ],
             "title": "Name",
-            "description": "The name of the workflow"
+            "description": "The name of the function"
           },
           "description": {
             "anyOf": [
@@ -22812,12 +22690,12 @@
               }
             ],
             "title": "Description",
-            "description": "The description of the workflow"
+            "description": "The description of the function"
           },
           "shared": {
             "type": "boolean",
             "title": "Shared",
-            "description": "Whether the workflow is public and can beshared with other users",
+            "description": "Whether the function is public and can beshared with other users",
             "default": false
           },
           "reference_workflow_id": {
@@ -22830,7 +22708,27 @@
               }
             ],
             "title": "Reference Workflow Id",
-            "description": "The ID of the reference workflow (i.e wether the workflow was forked from another workflow or not)"
+            "description": "The ID of the reference function (i.e whether the function was forked from another function or not)"
+          },
+          "sdk_generation": {
+            "type": "string",
+            "enum": [
+              "v19",
+              "v110"
+            ],
+            "title": "Sdk Generation",
+            "default": "v19"
+          },
+          "upload_sdk_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upload Sdk Version"
           },
           "published": {
             "type": "boolean",
@@ -23057,10 +22955,17 @@
             "description": "The ID of the session"
           },
           "logs": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Logs",
             "description": "The logs of the workflow run"
           },
@@ -23078,12 +22983,6 @@
             "description": "The variables of the workflow run"
           },
           "result": {
-            "anyOf": [
-              {},
-              {
-                "type": "null"
-              }
-            ],
             "title": "Result",
             "description": "The result of the workflow run"
           },
@@ -23208,6 +23107,49 @@
             "title": "Runtime Digest",
             "description": "Digest of the reproducible contract - Python version, packages with their sources, allowed imports, reserved names - and nothing volatile, so it changes if and only if an environment built against it would now be wrong. Cache against it to detect a runner rebuild. Null unless `status` is 'ok', since a partial report is not a contract. Also returned as the response ETag."
           },
+          "sdk_generation": {
+            "type": "string",
+            "enum": [
+              "v19",
+              "v110"
+            ],
+            "title": "Sdk Generation",
+            "default": "v19"
+          },
+          "source_manifest": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Manifest"
+          },
+          "runner_policy_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runner Policy Version"
+          },
+          "runtime_lock_digest": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runtime Lock Digest"
+          },
           "error": {
             "anyOf": [
               {
@@ -23256,6 +23198,14 @@
         ],
         "title": "FunctionScheduleCreateRequest"
       },
+      "FunctionSdkGeneration": {
+        "type": "string",
+        "enum": [
+          "v19",
+          "v110"
+        ],
+        "title": "FunctionSdkGeneration"
+      },
       "FunctionSource": {
         "type": "string",
         "enum": [
@@ -23302,24 +23252,24 @@
               }
             ],
             "title": "Variables",
-            "description": "The variables to run the workflow with"
+            "description": "The variables to run the function with"
           },
           "created_at": {
             "type": "string",
             "format": "date-time",
             "title": "Created At",
-            "description": "The creation time of the workflow"
+            "description": "The creation time of the function"
           },
           "updated_at": {
             "type": "string",
             "format": "date-time",
             "title": "Updated At",
-            "description": "The last update time of the workflow"
+            "description": "The last update time of the function"
           },
           "latest_version": {
             "type": "string",
             "title": "Latest Version",
-            "description": "The version of the workflow"
+            "description": "The version of the function"
           },
           "versions": {
             "items": {
@@ -23327,12 +23277,12 @@
             },
             "type": "array",
             "title": "Versions",
-            "description": "The versions of the workflow"
+            "description": "The versions of the function"
           },
           "status": {
             "type": "string",
             "title": "Status",
-            "description": "The status of the workflow"
+            "description": "The status of the function"
           },
           "name": {
             "anyOf": [
@@ -23344,7 +23294,7 @@
               }
             ],
             "title": "Name",
-            "description": "The name of the workflow"
+            "description": "The name of the function"
           },
           "description": {
             "anyOf": [
@@ -23356,12 +23306,12 @@
               }
             ],
             "title": "Description",
-            "description": "The description of the workflow"
+            "description": "The description of the function"
           },
           "shared": {
             "type": "boolean",
             "title": "Shared",
-            "description": "Whether the workflow is public and can beshared with other users",
+            "description": "Whether the function is public and can beshared with other users",
             "default": false
           },
           "reference_workflow_id": {
@@ -23374,7 +23324,27 @@
               }
             ],
             "title": "Reference Workflow Id",
-            "description": "The ID of the reference workflow (i.e wether the workflow was forked from another workflow or not)"
+            "description": "The ID of the reference function (i.e whether the function was forked from another function or not)"
+          },
+          "sdk_generation": {
+            "type": "string",
+            "enum": [
+              "v19",
+              "v110"
+            ],
+            "title": "Sdk Generation",
+            "default": "v19"
+          },
+          "upload_sdk_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upload Sdk Version"
           },
           "published": {
             "type": "boolean",
@@ -23594,7 +23564,7 @@
             },
             "type": "array",
             "title": "Logs",
-            "description": "The logs of the workflow run"
+            "description": "The logs of the function run"
           },
           "variables": {
             "anyOf": [
@@ -23607,7 +23577,7 @@
               }
             ],
             "title": "Variables",
-            "description": "The variables of the workflow run"
+            "description": "The variables of the function run"
           },
           "result": {
             "anyOf": [
@@ -23619,12 +23589,12 @@
               }
             ],
             "title": "Result",
-            "description": "The result of the workflow run (if any)"
+            "description": "The result of the function run (if any)"
           },
           "local": {
             "type": "boolean",
             "title": "Local",
-            "description": "Whether the workflow has been run locally or on the cloud",
+            "description": "Whether the function has been run locally or on the cloud",
             "default": false
           },
           "function_version": {
@@ -23637,6 +23607,14 @@
               }
             ],
             "title": "Function Version"
+          },
+          "artifact_sdk_generation": {
+            "$ref": "#/components/schemas/FunctionSdkGeneration",
+            "default": "v19"
+          },
+          "sdk_generation": {
+            "$ref": "#/components/schemas/FunctionSdkGeneration",
+            "default": "v19"
           },
           "payloads": {
             "additionalProperties": {
@@ -23852,17 +23830,6 @@
             "title": "Cdp Url",
             "description": "The CDP URL of another remote session provider."
           },
-          "screenshot_type": {
-            "type": "string",
-            "enum": [
-              "raw",
-              "full",
-              "last_action"
-            ],
-            "title": "Screenshot Type",
-            "description": "The type of screenshot to use for the session.",
-            "default": "last_action"
-          },
           "profile": {
             "anyOf": [
               {
@@ -23941,6 +23908,18 @@
             "description": "Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.",
             "default": false
           },
+          "screenshot_type": {
+            "type": "string",
+            "enum": [
+              "raw",
+              "full",
+              "last_action"
+            ],
+            "title": "Screenshot Type",
+            "description": "Ignored since notte 1.10: screenshots are returned without highlighting.",
+            "default": "last_action",
+            "deprecated": true
+          },
           "selector": {
             "anyOf": [
               {
@@ -23962,8 +23941,9 @@
           "scrape_images": {
             "type": "boolean",
             "title": "Scrape Images",
-            "description": "Whether to scrape images from the page. Images are scraped by default.",
-            "default": false
+            "description": "Image scraping was removed; true returns 422.",
+            "default": false,
+            "deprecated": true
           },
           "ignored_tags": {
             "anyOf": [
@@ -23984,12 +23964,6 @@
             "type": "boolean",
             "title": "Only Main Content",
             "description": "Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded.",
-            "default": false
-          },
-          "only_images": {
-            "type": "boolean",
-            "title": "Only Images",
-            "description": "Whether to only scrape images from the page. If True, the page content is excluded.",
             "default": false
           },
           "response_format": {
@@ -24017,9 +23991,6 @@
           "model": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/LlmModel"
-              },
-              {
                 "type": "string"
               },
               {
@@ -24027,13 +23998,20 @@
               }
             ],
             "title": "Model",
-            "description": "The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'vertex_ai/gemini-3.1-flash-lite'. Defaults to the platform model."
+            "description": "Model used for structured extraction. Canonical OpenRouter ids: google/gemini-3.5-flash, google/gemini-3.5-flash-lite, google/gemini-3.1-flash-lite, google/gemini-3.1-flash-lite-preview, google/gemini-2.5-flash, openai/gpt-4.1-mini, openai/gpt-4o, google/gemma-3-27b-it, openai/gpt-oss-120b, perplexity/sonar-pro, deepseek/deepseek-r1, meta-llama/llama-3.3-70b-instruct, anthropic/claude-sonnet-4-5, anthropic/claude-haiku-4-5, moonshotai/kimi-k2.5, x-ai/grok-4.3, minimax/minimax-m2.5. Reviewed legacy LiteLLM ids remain accepted. Defaults to google/gemini-3.5-flash."
           },
           "use_link_placeholders": {
             "type": "boolean",
             "title": "Use Link Placeholders",
             "description": "Whether to use link/image placeholders to reduce the number of tokens in the prompt and hallucinations. However this is an experimental feature and might not work as expected.",
             "default": false
+          },
+          "only_images": {
+            "type": "boolean",
+            "title": "Only Images",
+            "description": "Image scraping was removed; true returns 422.",
+            "default": false,
+            "deprecated": true
           },
           "url": {
             "type": "string",
@@ -24237,7 +24215,7 @@
           "version": {
             "type": "string",
             "title": "Version",
-            "default": "1.9.8"
+            "default": "1.10.0"
           },
           "description": {
             "type": "string",
@@ -24276,59 +24254,6 @@
           "reason"
         ],
         "title": "HelpAction"
-      },
-      "ImageCategory": {
-        "type": "string",
-        "enum": [
-          "favicon",
-          "icon",
-          "content_image",
-          "decorative",
-          "svg_icon",
-          "svg_content"
-        ],
-        "title": "ImageCategory"
-      },
-      "ImageData": {
-        "properties": {
-          "url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Url",
-            "description": "URL of the image"
-          },
-          "category": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/ImageCategory"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Category of the image (icon, svg, content, etc.)"
-          },
-          "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description",
-            "description": "Description of the image"
-          }
-        },
-        "type": "object",
-        "title": "ImageData"
       },
       "ImageResolution": {
         "properties": {
@@ -24387,107 +24312,6 @@
         "type": "object",
         "title": "Interval"
       },
-      "LegacyAgentStatusResponse": {
-        "properties": {
-          "agent_id": {
-            "type": "string",
-            "title": "Agent Id",
-            "description": "The ID of the agent"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At",
-            "description": "The creation time of the agent"
-          },
-          "session_id": {
-            "type": "string",
-            "title": "Session Id",
-            "description": "The ID of the session"
-          },
-          "status": {
-            "$ref": "#/components/schemas/AgentStatus",
-            "description": "The status of the agent (active or closed)"
-          },
-          "closed_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Closed At",
-            "description": "The closing time of the agent"
-          },
-          "saved": {
-            "type": "boolean",
-            "title": "Saved",
-            "description": "Whether the agent is saved as a workflow",
-            "default": false
-          },
-          "task": {
-            "type": "string",
-            "title": "Task",
-            "description": "The task that the agent is currently running"
-          },
-          "url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Url",
-            "description": "The URL that the agent started on"
-          },
-          "success": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Success",
-            "description": "Whether the agent task was successful. None if the agent is still running"
-          },
-          "answer": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Answer",
-            "description": "The answer to the agent task. None if the agent is still running"
-          },
-          "steps": {
-            "items": {
-              "additionalProperties": true,
-              "type": "object"
-            },
-            "type": "array",
-            "title": "Steps"
-          }
-        },
-        "type": "object",
-        "required": [
-          "agent_id",
-          "created_at",
-          "session_id",
-          "status",
-          "task"
-        ],
-        "title": "LegacyAgentStatusResponse"
-      },
       "ListCredentialsResponse": {
         "properties": {
           "credentials": {
@@ -24504,25 +24328,6 @@
           "credentials"
         ],
         "title": "ListCredentialsResponse"
-      },
-      "LlmModel": {
-        "type": "string",
-        "enum": [
-          "openai/gpt-4o",
-          "gemini/gemini-3.5-flash",
-          "vertex_ai/gemini-3.5-flash",
-          "openrouter/google/gemma-3-27b-it",
-          "cerebras/gpt-oss-120b",
-          "groq/gpt-oss-120b",
-          "perplexity/sonar-pro",
-          "deepseek/deepseek-r1",
-          "together_ai/meta-llama/llama-3.3-70b-instruct",
-          "anthropic/claude-sonnet-4-5-20250929",
-          "moonshot/kimi-k2.5",
-          "xai/grok-4.3",
-          "minimax/minimax-m2.5"
-        ],
-        "title": "LlmModel"
       },
       "LocationClue": {
         "properties": {
@@ -26798,43 +26603,6 @@
         ],
         "title": "PageTarget"
       },
-      "PaginatedResponse_AgentResponse_": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/AgentResponse"
-            },
-            "type": "array",
-            "title": "Items"
-          },
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
-          },
-          "has_next": {
-            "type": "boolean",
-            "title": "Has Next"
-          },
-          "has_previous": {
-            "type": "boolean",
-            "title": "Has Previous",
-            "readOnly": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "items",
-          "page",
-          "page_size",
-          "has_next",
-          "has_previous"
-        ],
-        "title": "PaginatedResponse[AgentResponse]"
-      },
       "PaginatedResponse_FunctionListItemResponse_": {
         "properties": {
           "items": {
@@ -28790,8 +28558,7 @@
               "type": "string"
             },
             "type": "array",
-            "title": "Persisted Domains",
-            "description": "List of domains with persisted browser state (cookies, localStorage, sessionStorage)"
+            "title": "Persisted Domains"
           }
         },
         "type": "object",
@@ -29642,7 +29409,7 @@
             "type": "boolean",
             "title": "Only Main Content",
             "description": "Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded.",
-            "default": true
+            "default": false
           },
           "selector": {
             "anyOf": [
@@ -29655,12 +29422,6 @@
             ],
             "title": "Selector",
             "description": "Playwright selector to scope the scrape to. Only content inside this selector will be scraped."
-          },
-          "only_images": {
-            "type": "boolean",
-            "title": "Only Images",
-            "description": "Whether to only scrape images from the page. If True, the page content is excluded.",
-            "default": false
           },
           "scrape_links": {
             "type": "boolean",
@@ -29756,8 +29517,9 @@
           "scrape_images": {
             "type": "boolean",
             "title": "Scrape Images",
-            "description": "Whether to scrape images from the page. Images are scraped by default.",
-            "default": false
+            "description": "Image scraping was removed; true returns 422.",
+            "default": false,
+            "deprecated": true
           },
           "ignored_tags": {
             "anyOf": [
@@ -29780,12 +29542,6 @@
             "description": "Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded.",
             "default": false
           },
-          "only_images": {
-            "type": "boolean",
-            "title": "Only Images",
-            "description": "Whether to only scrape images from the page. If True, the page content is excluded.",
-            "default": false
-          },
           "response_format": {
             "anyOf": [
               {},
@@ -29805,9 +29561,6 @@
           "model": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/LlmModel"
-              },
-              {
                 "type": "string"
               },
               {
@@ -29815,13 +29568,20 @@
               }
             ],
             "title": "Model",
-            "description": "The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'vertex_ai/gemini-3.1-flash-lite'. Defaults to the platform model."
+            "description": "Model used for structured extraction. Canonical OpenRouter ids: google/gemini-3.5-flash, google/gemini-3.5-flash-lite, google/gemini-3.1-flash-lite, google/gemini-3.1-flash-lite-preview, google/gemini-2.5-flash, openai/gpt-4.1-mini, openai/gpt-4o, google/gemma-3-27b-it, openai/gpt-oss-120b, perplexity/sonar-pro, deepseek/deepseek-r1, meta-llama/llama-3.3-70b-instruct, anthropic/claude-sonnet-4-5, anthropic/claude-haiku-4-5, moonshotai/kimi-k2.5, x-ai/grok-4.3, minimax/minimax-m2.5. Reviewed legacy LiteLLM ids remain accepted. Defaults to google/gemini-3.5-flash."
           },
           "use_link_placeholders": {
             "type": "boolean",
             "title": "Use Link Placeholders",
             "description": "Whether to use link/image placeholders to reduce the number of tokens in the prompt and hallucinations. However this is an experimental feature and might not work as expected.",
             "default": false
+          },
+          "only_images": {
+            "type": "boolean",
+            "title": "Only Images",
+            "description": "Image scraping was removed; true returns 422.",
+            "default": false,
+            "deprecated": true
           },
           "frames": {
             "items": {
@@ -29863,8 +29623,9 @@
           "scrape_images": {
             "type": "boolean",
             "title": "Scrape Images",
-            "description": "Whether to scrape images from the page. Images are scraped by default.",
-            "default": false
+            "description": "Image scraping was removed; true returns 422.",
+            "default": false,
+            "deprecated": true
           },
           "ignored_tags": {
             "anyOf": [
@@ -29885,12 +29646,6 @@
             "type": "boolean",
             "title": "Only Main Content",
             "description": "Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded.",
-            "default": false
-          },
-          "only_images": {
-            "type": "boolean",
-            "title": "Only Images",
-            "description": "Whether to only scrape images from the page. If True, the page content is excluded.",
             "default": false
           },
           "response_format": {
@@ -29918,9 +29673,6 @@
           "model": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/LlmModel"
-              },
-              {
                 "type": "string"
               },
               {
@@ -29928,13 +29680,20 @@
               }
             ],
             "title": "Model",
-            "description": "The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'vertex_ai/gemini-3.1-flash-lite'. Defaults to the platform model."
+            "description": "Model used for structured extraction. Canonical OpenRouter ids: google/gemini-3.5-flash, google/gemini-3.5-flash-lite, google/gemini-3.1-flash-lite, google/gemini-3.1-flash-lite-preview, google/gemini-2.5-flash, openai/gpt-4.1-mini, openai/gpt-4o, google/gemma-3-27b-it, openai/gpt-oss-120b, perplexity/sonar-pro, deepseek/deepseek-r1, meta-llama/llama-3.3-70b-instruct, anthropic/claude-sonnet-4-5, anthropic/claude-haiku-4-5, moonshotai/kimi-k2.5, x-ai/grok-4.3, minimax/minimax-m2.5. Reviewed legacy LiteLLM ids remain accepted. Defaults to google/gemini-3.5-flash."
           },
           "use_link_placeholders": {
             "type": "boolean",
             "title": "Use Link Placeholders",
             "description": "Whether to use link/image placeholders to reduce the number of tokens in the prompt and hallucinations. However this is an experimental feature and might not work as expected.",
             "default": false
+          },
+          "only_images": {
+            "type": "boolean",
+            "title": "Only Images",
+            "description": "Image scraping was removed; true returns 422.",
+            "default": false,
+            "deprecated": true
           }
         },
         "additionalProperties": false,
@@ -30044,17 +29803,6 @@
             },
             "type": "array",
             "title": "Bboxes"
-          },
-          "last_action_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Last Action Id"
           }
         },
         "type": "object",
@@ -32773,6 +32521,467 @@
           "time_ms"
         ],
         "title": "WaitAction"
+      },
+      "AgentFunctionCodeResponse": {
+        "properties": {
+          "python_script": {
+            "type": "string",
+            "title": "Python Script",
+            "description": "Python script to replicate agent steps"
+          },
+          "json_actions": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Json Actions",
+            "description": "Json actions to replicate agent steps"
+          }
+        },
+        "type": "object",
+        "required": [
+          "python_script",
+          "json_actions"
+        ],
+        "title": "AgentFunctionCodeResponse"
+      },
+      "AgentResponse": {
+        "properties": {
+          "agent_id": {
+            "type": "string",
+            "title": "Agent Id",
+            "description": "The ID of the agent"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "The creation time of the agent"
+          },
+          "session_id": {
+            "type": "string",
+            "title": "Session Id",
+            "description": "The ID of the session"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AgentStatus",
+            "description": "The status of the agent (active or closed)"
+          },
+          "closed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed At",
+            "description": "The closing time of the agent"
+          },
+          "saved": {
+            "type": "boolean",
+            "title": "Saved",
+            "description": "Whether the agent is saved as a workflow",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "agent_id",
+          "created_at",
+          "session_id",
+          "status"
+        ],
+        "title": "AgentResponse"
+      },
+      "AgentStatus": {
+        "type": "string",
+        "enum": [
+          "active",
+          "closed"
+        ],
+        "title": "AgentStatus"
+      },
+      "AgentStatusResponse": {
+        "properties": {
+          "agent_id": {
+            "type": "string",
+            "title": "Agent Id",
+            "description": "The ID of the agent"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "The creation time of the agent"
+          },
+          "session_id": {
+            "type": "string",
+            "title": "Session Id",
+            "description": "The ID of the session"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AgentStatus",
+            "description": "The status of the agent (active or closed)"
+          },
+          "closed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed At",
+            "description": "The closing time of the agent"
+          },
+          "saved": {
+            "type": "boolean",
+            "title": "Saved",
+            "description": "Whether the agent is saved as a workflow",
+            "default": false
+          },
+          "task": {
+            "type": "string",
+            "title": "Task",
+            "description": "The task that the agent is currently running"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url",
+            "description": "The URL that the agent started on"
+          },
+          "success": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Success",
+            "description": "Whether the agent task was successful. None if the agent is still running"
+          },
+          "answer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer",
+            "description": "The answer to the agent task. None if the agent is still running"
+          },
+          "steps": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Steps",
+            "description": "The steps that the agent has currently taken"
+          }
+        },
+        "type": "object",
+        "required": [
+          "agent_id",
+          "created_at",
+          "session_id",
+          "status",
+          "task"
+        ],
+        "title": "AgentStatusResponse"
+      },
+      "ApiAgentStartRequest": {
+        "properties": {
+          "task": {
+            "type": "string",
+            "title": "Task",
+            "description": "The task that the agent should perform"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url",
+            "description": "The URL that the agent should start on (optional)"
+          },
+          "response_format": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Response Format",
+            "description": "The response format to use for the agent answer. You can use a Pydantic model or a JSON Schema dict (cf. https://docs.pydantic.dev/latest/concepts/json_schema/#generating-json-schema.)"
+          },
+          "session_offset": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Offset",
+            "description": "[Experimental] The step from which the agent should gather information from in the session. If none, fresh memory"
+          },
+          "reasoning_model": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LlmModel"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Reasoning Model",
+            "description": "The reasoning model to use"
+          },
+          "use_vision": {
+            "type": "boolean",
+            "title": "Use Vision",
+            "description": "Whether to use vision for the agent. Not all reasoning models support vision.",
+            "default": true
+          },
+          "max_steps": {
+            "type": "integer",
+            "maximum": 150.0,
+            "minimum": 1.0,
+            "title": "Max Steps",
+            "description": "The maximum number of steps the agent should take",
+            "default": 20
+          },
+          "vault_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vault Id",
+            "description": "The vault to use for the agent"
+          },
+          "persona_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Persona Id",
+            "description": "The persona to use for the agent"
+          },
+          "notifier_config": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notifier Config",
+            "description": "Config used for the notifier"
+          },
+          "session_id": {
+            "type": "string",
+            "title": "Session Id",
+            "description": "The ID of the session to run the agent on"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "task",
+          "session_id"
+        ],
+        "title": "ApiAgentStartRequest"
+      },
+      "LegacyAgentStatusResponse": {
+        "properties": {
+          "agent_id": {
+            "type": "string",
+            "title": "Agent Id",
+            "description": "The ID of the agent"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "The creation time of the agent"
+          },
+          "session_id": {
+            "type": "string",
+            "title": "Session Id",
+            "description": "The ID of the session"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AgentStatus",
+            "description": "The status of the agent (active or closed)"
+          },
+          "closed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed At",
+            "description": "The closing time of the agent"
+          },
+          "saved": {
+            "type": "boolean",
+            "title": "Saved",
+            "description": "Whether the agent is saved as a workflow",
+            "default": false
+          },
+          "task": {
+            "type": "string",
+            "title": "Task",
+            "description": "The task that the agent is currently running"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url",
+            "description": "The URL that the agent started on"
+          },
+          "success": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Success",
+            "description": "Whether the agent task was successful. None if the agent is still running"
+          },
+          "answer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer",
+            "description": "The answer to the agent task. None if the agent is still running"
+          },
+          "steps": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Steps"
+          }
+        },
+        "type": "object",
+        "required": [
+          "agent_id",
+          "created_at",
+          "session_id",
+          "status",
+          "task"
+        ],
+        "title": "LegacyAgentStatusResponse",
+        "description": "This class is used to handle the legacy agent status response.\nThe rationale is that we are likely to change the `AgentStepResponse` in the future and we want to be able to handle the legacy response.\nThis is a temporary solution to avoid breaking changes."
+      },
+      "LlmModel": {
+        "type": "string",
+        "enum": [
+          "openai/gpt-4o",
+          "gemini/gemini-3.5-flash",
+          "vertex_ai/gemini-3.5-flash",
+          "openrouter/google/gemma-3-27b-it",
+          "cerebras/gpt-oss-120b",
+          "groq/gpt-oss-120b",
+          "perplexity/sonar-pro",
+          "deepseek/deepseek-r1",
+          "together_ai/meta-llama/llama-3.3-70b-instruct",
+          "anthropic/claude-sonnet-4-5-20250929",
+          "moonshot/kimi-k2.5",
+          "xai/grok-4.3",
+          "minimax/minimax-m2.5"
+        ],
+        "title": "LlmModel"
+      },
+      "PaginatedResponse_AgentResponse_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AgentResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "has_next": {
+            "type": "boolean",
+            "title": "Has Next"
+          },
+          "has_previous": {
+            "type": "boolean",
+            "title": "Has Previous",
+            "readOnly": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page",
+          "page_size",
+          "has_next",
+          "has_previous"
+        ],
+        "title": "PaginatedResponse[AgentResponse]"
       }
     },
     "securitySchemes": {

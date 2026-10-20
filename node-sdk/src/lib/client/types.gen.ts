@@ -109,143 +109,6 @@ export type AddCreditCardResponse = {
 };
 
 /**
- * AgentFunctionCodeResponse
- */
-export type AgentFunctionCodeResponse = {
-    /**
-     * Python Script
-     *
-     * Python script to replicate agent steps
-     */
-    python_script: string;
-    /**
-     * Json Actions
-     *
-     * Json actions to replicate agent steps
-     */
-    json_actions: Array<{
-        [key: string]: unknown;
-    }>;
-};
-
-/**
- * AgentResponse
- */
-export type AgentResponse = {
-    /**
-     * Agent Id
-     *
-     * The ID of the agent
-     */
-    agent_id: string;
-    /**
-     * Created At
-     *
-     * The creation time of the agent
-     */
-    created_at: string;
-    /**
-     * Session Id
-     *
-     * The ID of the session
-     */
-    session_id: string;
-    /**
-     * The status of the agent (active or closed)
-     */
-    status: AgentStatus;
-    /**
-     * Closed At
-     *
-     * The closing time of the agent
-     */
-    closed_at?: string | null;
-    /**
-     * Saved
-     *
-     * Whether the agent is saved as a workflow
-     */
-    saved?: boolean;
-};
-
-/**
- * AgentStatus
- */
-export type AgentStatus = 'active' | 'closed';
-
-/**
- * AgentStatusResponse
- */
-export type AgentStatusResponse = {
-    /**
-     * Agent Id
-     *
-     * The ID of the agent
-     */
-    agent_id: string;
-    /**
-     * Created At
-     *
-     * The creation time of the agent
-     */
-    created_at: string;
-    /**
-     * Session Id
-     *
-     * The ID of the session
-     */
-    session_id: string;
-    /**
-     * The status of the agent (active or closed)
-     */
-    status: AgentStatus;
-    /**
-     * Closed At
-     *
-     * The closing time of the agent
-     */
-    closed_at?: string | null;
-    /**
-     * Saved
-     *
-     * Whether the agent is saved as a workflow
-     */
-    saved?: boolean;
-    /**
-     * Task
-     *
-     * The task that the agent is currently running
-     */
-    task: string;
-    /**
-     * Url
-     *
-     * The URL that the agent started on
-     */
-    url?: string | null;
-    /**
-     * Success
-     *
-     * Whether the agent task was successful. None if the agent is still running
-     */
-    success?: boolean | null;
-    /**
-     * Answer
-     *
-     * The answer to the agent task. None if the agent is still running
-     */
-    answer?: string | null;
-    /**
-     * Steps
-     *
-     * The steps that the agent has currently taken
-     */
-    steps?: Array<{
-        [key: string]: unknown;
-    }>;
-};
-
-/**
  * AnythingStartRequest
  */
 export type AnythingStartRequest = {
@@ -253,80 +116,6 @@ export type AnythingStartRequest = {
      * Task
      */
     task: string;
-};
-
-/**
- * ApiAgentStartRequest
- */
-export type ApiAgentStartRequest = {
-    /**
-     * Task
-     *
-     * The task that the agent should perform
-     */
-    task: string;
-    /**
-     * Url
-     *
-     * The URL that the agent should start on (optional)
-     */
-    url?: string | null;
-    /**
-     * Response Format
-     *
-     * The response format to use for the agent answer. You can use a Pydantic model or a JSON Schema dict (cf. https://docs.pydantic.dev/latest/concepts/json_schema/#generating-json-schema.)
-     */
-    response_format?: unknown | null;
-    /**
-     * Session Offset
-     *
-     * [Experimental] The step from which the agent should gather information from in the session. If none, fresh memory
-     */
-    session_offset?: number | null;
-    /**
-     * Reasoning Model
-     *
-     * The reasoning model to use
-     */
-    reasoning_model?: LlmModel | string;
-    /**
-     * Use Vision
-     *
-     * Whether to use vision for the agent. Not all reasoning models support vision.
-     */
-    use_vision?: boolean;
-    /**
-     * Max Steps
-     *
-     * The maximum number of steps the agent should take
-     */
-    max_steps?: number;
-    /**
-     * Vault Id
-     *
-     * The vault to use for the agent
-     */
-    vault_id?: string | null;
-    /**
-     * Persona Id
-     *
-     * The persona to use for the agent
-     */
-    persona_id?: string | null;
-    /**
-     * Notifier Config
-     *
-     * Config used for the notifier
-     */
-    notifier_config?: {
-        [key: string]: unknown;
-    } | null;
-    /**
-     * Session Id
-     *
-     * The ID of the session to run the agent on
-     */
-    session_id: string;
 };
 
 /**
@@ -497,12 +286,6 @@ export type ApiSessionStartRequest = {
      */
     cdp_url?: string | null;
     /**
-     * Screenshot Type
-     *
-     * The type of screenshot to use for the session.
-     */
-    screenshot_type?: 'raw' | 'full' | 'last_action';
-    /**
      * Browser profile configuration for state persistence
      */
     profile?: SessionProfile | null;
@@ -554,6 +337,14 @@ export type ApiSessionStartRequest = {
      * Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.
      */
     advanced_stealth?: boolean;
+    /**
+     * Screenshot Type
+     *
+     * Ignored since notte 1.10: screenshots are returned without highlighting.
+     *
+     * @deprecated
+     */
+    screenshot_type?: 'raw' | 'full' | 'last_action';
     /**
      * Demonstrate
      *
@@ -2263,12 +2054,6 @@ export type DataSpace = {
      */
     markdown: string;
     /**
-     * Images
-     *
-     * List of images extracted from the page (ID and download link)
-     */
-    images?: Array<ImageData> | null;
-    /**
      * Structured data extracted from the page in JSON format
      */
     structured?: StructuredDataBaseModel | null;
@@ -2834,6 +2619,28 @@ export type FallbackFillActionOutput = {
 };
 
 /**
+ * FileExecutionRequest
+ */
+export type FileExecutionRequest = {
+    /**
+     * Action
+     */
+    action: ({
+        type: 'upload_file';
+    } & UploadFileActionInput) | ({
+        type: 'download_file';
+    } & DownloadFileActionInput);
+    /**
+     * Target Id
+     */
+    target_id: string;
+    /**
+     * Record
+     */
+    record?: boolean;
+};
+
+/**
  * FileSource
  */
 export type FileSource = 'user_upload' | 'session_download';
@@ -3018,63 +2825,71 @@ export type FunctionListItemResponse = {
     /**
      * Variables
      *
-     * The variables to run the workflow with
+     * The variables to run the function with
      */
     variables?: Array<ParameterInfo> | null;
     /**
      * Created At
      *
-     * The creation time of the workflow
+     * The creation time of the function
      */
     created_at: string;
     /**
      * Updated At
      *
-     * The last update time of the workflow
+     * The last update time of the function
      */
     updated_at: string;
     /**
      * Latest Version
      *
-     * The version of the workflow
+     * The version of the function
      */
     latest_version: string;
     /**
      * Versions
      *
-     * The versions of the workflow
+     * The versions of the function
      */
     versions: Array<string>;
     /**
      * Status
      *
-     * The status of the workflow
+     * The status of the function
      */
     status: string;
     /**
      * Name
      *
-     * The name of the workflow
+     * The name of the function
      */
     name?: string | null;
     /**
      * Description
      *
-     * The description of the workflow
+     * The description of the function
      */
     description?: string | null;
     /**
      * Shared
      *
-     * Whether the workflow is public and can beshared with other users
+     * Whether the function is public and can beshared with other users
      */
     shared?: boolean;
     /**
      * Reference Workflow Id
      *
-     * The ID of the reference workflow (i.e wether the workflow was forked from another workflow or not)
+     * The ID of the reference function (i.e whether the function was forked from another function or not)
      */
     reference_workflow_id?: string | null;
+    /**
+     * Sdk Generation
+     */
+    sdk_generation?: 'v19' | 'v110';
+    /**
+     * Upload Sdk Version
+     */
+    upload_sdk_version?: string | null;
     /**
      * Published
      */
@@ -3136,6 +2951,12 @@ export type FunctionMetadataUpdateRequest = {
      */
     self_healing?: boolean | null;
     /**
+     * Shared
+     *
+     * Enable or disable public code sharing and forking for this function. Source code, including embedded credentials, becomes public. Runs, results and stored runtime secrets remain private. This does not enable public execution. Omit or send null to leave sharing unchanged.
+     */
+    shared?: boolean | null;
+    /**
      * Response Format
      *
      * JSON Schema of run()'s return value, computed by the caller from its pydantic model
@@ -3143,12 +2964,6 @@ export type FunctionMetadataUpdateRequest = {
     response_format?: {
         [key: string]: unknown;
     } | null;
-    /**
-     * Shared
-     *
-     * Enable or disable public code sharing and forking for this function. Source code, including embedded credentials, becomes public. Runs, results and stored runtime secrets remain private. This does not enable public execution. Omit or send null to leave sharing unchanged.
-     */
-    shared?: boolean | null;
 };
 
 /**
@@ -3168,63 +2983,71 @@ export type FunctionResponse = {
     /**
      * Variables
      *
-     * The variables to run the workflow with
+     * The variables to run the function with
      */
     variables?: Array<ParameterInfo> | null;
     /**
      * Created At
      *
-     * The creation time of the workflow
+     * The creation time of the function
      */
     created_at: string;
     /**
      * Updated At
      *
-     * The last update time of the workflow
+     * The last update time of the function
      */
     updated_at: string;
     /**
      * Latest Version
      *
-     * The version of the workflow
+     * The version of the function
      */
     latest_version: string;
     /**
      * Versions
      *
-     * The versions of the workflow
+     * The versions of the function
      */
     versions: Array<string>;
     /**
      * Status
      *
-     * The status of the workflow
+     * The status of the function
      */
     status: string;
     /**
      * Name
      *
-     * The name of the workflow
+     * The name of the function
      */
     name?: string | null;
     /**
      * Description
      *
-     * The description of the workflow
+     * The description of the function
      */
     description?: string | null;
     /**
      * Shared
      *
-     * Whether the workflow is public and can beshared with other users
+     * Whether the function is public and can beshared with other users
      */
     shared?: boolean;
     /**
      * Reference Workflow Id
      *
-     * The ID of the reference workflow (i.e wether the workflow was forked from another workflow or not)
+     * The ID of the reference function (i.e whether the function was forked from another function or not)
      */
     reference_workflow_id?: string | null;
+    /**
+     * Sdk Generation
+     */
+    sdk_generation?: 'v19' | 'v110';
+    /**
+     * Upload Sdk Version
+     */
+    upload_sdk_version?: string | null;
     /**
      * Published
      */
@@ -3364,7 +3187,7 @@ export type FunctionRunUpdateRequest = {
      *
      * The logs of the workflow run
      */
-    logs?: Array<string>;
+    logs?: Array<string> | null;
     /**
      * Variables
      *
@@ -3378,7 +3201,7 @@ export type FunctionRunUpdateRequest = {
      *
      * The result of the workflow run
      */
-    result?: unknown | null;
+    result?: unknown;
     /**
      * Status
      *
@@ -3450,6 +3273,24 @@ export type FunctionRuntimeHealthResponse = {
      */
     runtime_digest?: string | null;
     /**
+     * Sdk Generation
+     */
+    sdk_generation?: 'v19' | 'v110';
+    /**
+     * Source Manifest
+     */
+    source_manifest?: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * Runner Policy Version
+     */
+    runner_policy_version?: string | null;
+    /**
+     * Runtime Lock Digest
+     */
+    runtime_lock_digest?: string | null;
+    /**
      * Error
      *
      * Why the probe failed, when it did.
@@ -3476,6 +3317,11 @@ export type FunctionScheduleCreateRequest = {
         [key: string]: unknown;
     } | null;
 };
+
+/**
+ * FunctionSdkGeneration
+ */
+export type FunctionSdkGeneration = 'v19' | 'v110';
 
 /**
  * FunctionSource
@@ -3505,63 +3351,71 @@ export type FunctionWithLinkResponse = {
     /**
      * Variables
      *
-     * The variables to run the workflow with
+     * The variables to run the function with
      */
     variables?: Array<ParameterInfo> | null;
     /**
      * Created At
      *
-     * The creation time of the workflow
+     * The creation time of the function
      */
     created_at: string;
     /**
      * Updated At
      *
-     * The last update time of the workflow
+     * The last update time of the function
      */
     updated_at: string;
     /**
      * Latest Version
      *
-     * The version of the workflow
+     * The version of the function
      */
     latest_version: string;
     /**
      * Versions
      *
-     * The versions of the workflow
+     * The versions of the function
      */
     versions: Array<string>;
     /**
      * Status
      *
-     * The status of the workflow
+     * The status of the function
      */
     status: string;
     /**
      * Name
      *
-     * The name of the workflow
+     * The name of the function
      */
     name?: string | null;
     /**
      * Description
      *
-     * The description of the workflow
+     * The description of the function
      */
     description?: string | null;
     /**
      * Shared
      *
-     * Whether the workflow is public and can beshared with other users
+     * Whether the function is public and can beshared with other users
      */
     shared?: boolean;
     /**
      * Reference Workflow Id
      *
-     * The ID of the reference workflow (i.e wether the workflow was forked from another workflow or not)
+     * The ID of the reference function (i.e whether the function was forked from another function or not)
      */
     reference_workflow_id?: string | null;
+    /**
+     * Sdk Generation
+     */
+    sdk_generation?: 'v19' | 'v110';
+    /**
+     * Upload Sdk Version
+     */
+    upload_sdk_version?: string | null;
     /**
      * Published
      */
@@ -3695,13 +3549,13 @@ export type GetFunctionRunResponse = {
     /**
      * Logs
      *
-     * The logs of the workflow run
+     * The logs of the function run
      */
     logs?: Array<string>;
     /**
      * Variables
      *
-     * The variables of the workflow run
+     * The variables of the function run
      */
     variables?: {
         [key: string]: unknown;
@@ -3709,19 +3563,21 @@ export type GetFunctionRunResponse = {
     /**
      * Result
      *
-     * The result of the workflow run (if any)
+     * The result of the function run (if any)
      */
     result?: string | null;
     /**
      * Local
      *
-     * Whether the workflow has been run locally or on the cloud
+     * Whether the function has been run locally or on the cloud
      */
     local?: boolean;
     /**
      * Function Version
      */
     function_version?: string | null;
+    artifact_sdk_generation?: FunctionSdkGeneration;
+    sdk_generation?: FunctionSdkGeneration;
     /**
      * Payloads
      */
@@ -3819,12 +3675,6 @@ export type GlobalScrapeRequest = {
      */
     cdp_url?: string | null;
     /**
-     * Screenshot Type
-     *
-     * The type of screenshot to use for the session.
-     */
-    screenshot_type?: 'raw' | 'full' | 'last_action';
-    /**
      * Browser profile configuration for state persistence
      */
     profile?: SessionProfile | null;
@@ -3877,6 +3727,14 @@ export type GlobalScrapeRequest = {
      */
     advanced_stealth?: boolean;
     /**
+     * Screenshot Type
+     *
+     * Ignored since notte 1.10: screenshots are returned without highlighting.
+     *
+     * @deprecated
+     */
+    screenshot_type?: 'raw' | 'full' | 'last_action';
+    /**
      * Selector
      *
      * Playwright selector to scope the scrape to. Only content inside this selector will be scraped.
@@ -3891,7 +3749,9 @@ export type GlobalScrapeRequest = {
     /**
      * Scrape Images
      *
-     * Whether to scrape images from the page. Images are scraped by default.
+     * Image scraping was removed; true returns 422.
+     *
+     * @deprecated
      */
     scrape_images?: boolean;
     /**
@@ -3907,12 +3767,6 @@ export type GlobalScrapeRequest = {
      */
     only_main_content?: boolean;
     /**
-     * Only Images
-     *
-     * Whether to only scrape images from the page. If True, the page content is excluded.
-     */
-    only_images?: boolean;
-    /**
      * Response Format
      *
      * The response format to use for the scrape. You can use a Pydantic model or a JSON Schema dict (cf. https://docs.pydantic.dev/latest/concepts/json_schema/#generating-json-schema.)
@@ -3927,15 +3781,23 @@ export type GlobalScrapeRequest = {
     /**
      * Model
      *
-     * The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'vertex_ai/gemini-3.1-flash-lite'. Defaults to the platform model.
+     * Model used for structured extraction. Canonical OpenRouter ids: google/gemini-3.5-flash, google/gemini-3.5-flash-lite, google/gemini-3.1-flash-lite, google/gemini-3.1-flash-lite-preview, google/gemini-2.5-flash, openai/gpt-4.1-mini, openai/gpt-4o, google/gemma-3-27b-it, openai/gpt-oss-120b, perplexity/sonar-pro, deepseek/deepseek-r1, meta-llama/llama-3.3-70b-instruct, anthropic/claude-sonnet-4-5, anthropic/claude-haiku-4-5, moonshotai/kimi-k2.5, x-ai/grok-4.3, minimax/minimax-m2.5. Reviewed legacy LiteLLM ids remain accepted. Defaults to google/gemini-3.5-flash.
      */
-    model?: LlmModel | string | null;
+    model?: string | null;
     /**
      * Use Link Placeholders
      *
      * Whether to use link/image placeholders to reduce the number of tokens in the prompt and hallucinations. However this is an experimental feature and might not work as expected.
      */
     use_link_placeholders?: boolean;
+    /**
+     * Only Images
+     *
+     * Image scraping was removed; true returns 422.
+     *
+     * @deprecated
+     */
+    only_images?: boolean;
     /**
      * Url
      */
@@ -4087,33 +3949,6 @@ export type HelpAction = {
 };
 
 /**
- * ImageCategory
- */
-export type ImageCategory = 'favicon' | 'icon' | 'content_image' | 'decorative' | 'svg_icon' | 'svg_content';
-
-/**
- * ImageData
- */
-export type ImageData = {
-    /**
-     * Url
-     *
-     * URL of the image
-     */
-    url?: string | null;
-    /**
-     * Category of the image (icon, svg, content, etc.)
-     */
-    category?: ImageCategory | null;
-    /**
-     * Description
-     *
-     * Description of the image
-     */
-    description?: string | null;
-};
-
-/**
  * ImageResolution
  */
 export type ImageResolution = {
@@ -4150,76 +3985,6 @@ export type Interval = {
 };
 
 /**
- * LegacyAgentStatusResponse
- */
-export type LegacyAgentStatusResponse = {
-    /**
-     * Agent Id
-     *
-     * The ID of the agent
-     */
-    agent_id: string;
-    /**
-     * Created At
-     *
-     * The creation time of the agent
-     */
-    created_at: string;
-    /**
-     * Session Id
-     *
-     * The ID of the session
-     */
-    session_id: string;
-    /**
-     * The status of the agent (active or closed)
-     */
-    status: AgentStatus;
-    /**
-     * Closed At
-     *
-     * The closing time of the agent
-     */
-    closed_at?: string | null;
-    /**
-     * Saved
-     *
-     * Whether the agent is saved as a workflow
-     */
-    saved?: boolean;
-    /**
-     * Task
-     *
-     * The task that the agent is currently running
-     */
-    task: string;
-    /**
-     * Url
-     *
-     * The URL that the agent started on
-     */
-    url?: string | null;
-    /**
-     * Success
-     *
-     * Whether the agent task was successful. None if the agent is still running
-     */
-    success?: boolean | null;
-    /**
-     * Answer
-     *
-     * The answer to the agent task. None if the agent is still running
-     */
-    answer?: string | null;
-    /**
-     * Steps
-     */
-    steps?: Array<{
-        [key: string]: unknown;
-    }>;
-};
-
-/**
  * ListCredentialsResponse
  */
 export type ListCredentialsResponse = {
@@ -4230,11 +3995,6 @@ export type ListCredentialsResponse = {
      */
     credentials: Array<Credential>;
 };
-
-/**
- * LlmModel
- */
-export type LlmModel = 'openai/gpt-4o' | 'gemini/gemini-3.5-flash' | 'vertex_ai/gemini-3.5-flash' | 'openrouter/google/gemma-3-27b-it' | 'cerebras/gpt-oss-120b' | 'groq/gpt-oss-120b' | 'perplexity/sonar-pro' | 'deepseek/deepseek-r1' | 'together_ai/meta-llama/llama-3.3-70b-instruct' | 'anthropic/claude-sonnet-4-5-20250929' | 'moonshot/kimi-k2.5' | 'xai/grok-4.3' | 'minimax/minimax-m2.5';
 
 /**
  * LocationClue
@@ -5306,32 +5066,6 @@ export type PageTarget = {
 };
 
 /**
- * PaginatedResponse[AgentResponse]
- */
-export type PaginatedResponseAgentResponse = {
-    /**
-     * Items
-     */
-    items: Array<AgentResponse>;
-    /**
-     * Page
-     */
-    page: number;
-    /**
-     * Page Size
-     */
-    page_size: number;
-    /**
-     * Has Next
-     */
-    has_next: boolean;
-    /**
-     * Has Previous
-     */
-    readonly has_previous: boolean;
-};
-
-/**
  * PaginatedResponse[FunctionListItemResponse]
  */
 export type PaginatedResponseFunctionListItemResponse = {
@@ -6353,8 +6087,6 @@ export type ProfileResponse = {
     updated_at: string;
     /**
      * Persisted Domains
-     *
-     * List of domains with persisted browser state (cookies, localStorage, sessionStorage)
      */
     persisted_domains?: Array<string>;
 };
@@ -6769,12 +6501,6 @@ export type ScrapeAction = {
      */
     selector?: string | null;
     /**
-     * Only Images
-     *
-     * Whether to only scrape images from the page. If True, the page content is excluded.
-     */
-    only_images?: boolean;
-    /**
      * Scrape Links
      *
      * Whether to scrape links from the page. Links are scraped by default.
@@ -6843,7 +6569,9 @@ export type ScrapeFromHtmlRequest = {
     /**
      * Scrape Images
      *
-     * Whether to scrape images from the page. Images are scraped by default.
+     * Image scraping was removed; true returns 422.
+     *
+     * @deprecated
      */
     scrape_images?: boolean;
     /**
@@ -6859,12 +6587,6 @@ export type ScrapeFromHtmlRequest = {
      */
     only_main_content?: boolean;
     /**
-     * Only Images
-     *
-     * Whether to only scrape images from the page. If True, the page content is excluded.
-     */
-    only_images?: boolean;
-    /**
      * Response Format
      *
      * The response format to use for the scrape. You can use a Pydantic model or a JSON Schema dict (cf. https://docs.pydantic.dev/latest/concepts/json_schema/#generating-json-schema.)
@@ -6879,15 +6601,23 @@ export type ScrapeFromHtmlRequest = {
     /**
      * Model
      *
-     * The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'vertex_ai/gemini-3.1-flash-lite'. Defaults to the platform model.
+     * Model used for structured extraction. Canonical OpenRouter ids: google/gemini-3.5-flash, google/gemini-3.5-flash-lite, google/gemini-3.1-flash-lite, google/gemini-3.1-flash-lite-preview, google/gemini-2.5-flash, openai/gpt-4.1-mini, openai/gpt-4o, google/gemma-3-27b-it, openai/gpt-oss-120b, perplexity/sonar-pro, deepseek/deepseek-r1, meta-llama/llama-3.3-70b-instruct, anthropic/claude-sonnet-4-5, anthropic/claude-haiku-4-5, moonshotai/kimi-k2.5, x-ai/grok-4.3, minimax/minimax-m2.5. Reviewed legacy LiteLLM ids remain accepted. Defaults to google/gemini-3.5-flash.
      */
-    model?: LlmModel | string | null;
+    model?: string | null;
     /**
      * Use Link Placeholders
      *
      * Whether to use link/image placeholders to reduce the number of tokens in the prompt and hallucinations. However this is an experimental feature and might not work as expected.
      */
     use_link_placeholders?: boolean;
+    /**
+     * Only Images
+     *
+     * Image scraping was removed; true returns 422.
+     *
+     * @deprecated
+     */
+    only_images?: boolean;
     /**
      * Frames
      *
@@ -6919,7 +6649,9 @@ export type ScrapeRequest = {
     /**
      * Scrape Images
      *
-     * Whether to scrape images from the page. Images are scraped by default.
+     * Image scraping was removed; true returns 422.
+     *
+     * @deprecated
      */
     scrape_images?: boolean;
     /**
@@ -6935,12 +6667,6 @@ export type ScrapeRequest = {
      */
     only_main_content?: boolean;
     /**
-     * Only Images
-     *
-     * Whether to only scrape images from the page. If True, the page content is excluded.
-     */
-    only_images?: boolean;
-    /**
      * Response Format
      *
      * The response format to use for the scrape. You can use a Pydantic model or a JSON Schema dict (cf. https://docs.pydantic.dev/latest/concepts/json_schema/#generating-json-schema.)
@@ -6955,15 +6681,23 @@ export type ScrapeRequest = {
     /**
      * Model
      *
-     * The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'vertex_ai/gemini-3.1-flash-lite'. Defaults to the platform model.
+     * Model used for structured extraction. Canonical OpenRouter ids: google/gemini-3.5-flash, google/gemini-3.5-flash-lite, google/gemini-3.1-flash-lite, google/gemini-3.1-flash-lite-preview, google/gemini-2.5-flash, openai/gpt-4.1-mini, openai/gpt-4o, google/gemma-3-27b-it, openai/gpt-oss-120b, perplexity/sonar-pro, deepseek/deepseek-r1, meta-llama/llama-3.3-70b-instruct, anthropic/claude-sonnet-4-5, anthropic/claude-haiku-4-5, moonshotai/kimi-k2.5, x-ai/grok-4.3, minimax/minimax-m2.5. Reviewed legacy LiteLLM ids remain accepted. Defaults to google/gemini-3.5-flash.
      */
-    model?: LlmModel | string | null;
+    model?: string | null;
     /**
      * Use Link Placeholders
      *
      * Whether to use link/image placeholders to reduce the number of tokens in the prompt and hallucinations. However this is an experimental feature and might not work as expected.
      */
     use_link_placeholders?: boolean;
+    /**
+     * Only Images
+     *
+     * Image scraping was removed; true returns 422.
+     *
+     * @deprecated
+     */
+    only_images?: boolean;
 };
 
 /**
@@ -7035,10 +6769,6 @@ export type Screenshot = {
      * Bboxes
      */
     bboxes?: Array<BoundingBox>;
-    /**
-     * Last Action Id
-     */
-    last_action_id?: string | null;
 };
 
 /**
@@ -8633,6 +8363,322 @@ export type NotteCoreActionsActionsWaitAction = {
 };
 
 /**
+ * AgentFunctionCodeResponse
+ */
+export type AgentFunctionCodeResponse = {
+    /**
+     * Python Script
+     *
+     * Python script to replicate agent steps
+     */
+    python_script: string;
+    /**
+     * Json Actions
+     *
+     * Json actions to replicate agent steps
+     */
+    json_actions: Array<{
+        [key: string]: unknown;
+    }>;
+};
+
+/**
+ * AgentResponse
+ */
+export type AgentResponse = {
+    /**
+     * Agent Id
+     *
+     * The ID of the agent
+     */
+    agent_id: string;
+    /**
+     * Created At
+     *
+     * The creation time of the agent
+     */
+    created_at: string;
+    /**
+     * Session Id
+     *
+     * The ID of the session
+     */
+    session_id: string;
+    /**
+     * The status of the agent (active or closed)
+     */
+    status: AgentStatus;
+    /**
+     * Closed At
+     *
+     * The closing time of the agent
+     */
+    closed_at?: string | null;
+    /**
+     * Saved
+     *
+     * Whether the agent is saved as a workflow
+     */
+    saved?: boolean;
+};
+
+/**
+ * AgentStatus
+ */
+export type AgentStatus = 'active' | 'closed';
+
+/**
+ * AgentStatusResponse
+ */
+export type AgentStatusResponse = {
+    /**
+     * Agent Id
+     *
+     * The ID of the agent
+     */
+    agent_id: string;
+    /**
+     * Created At
+     *
+     * The creation time of the agent
+     */
+    created_at: string;
+    /**
+     * Session Id
+     *
+     * The ID of the session
+     */
+    session_id: string;
+    /**
+     * The status of the agent (active or closed)
+     */
+    status: AgentStatus;
+    /**
+     * Closed At
+     *
+     * The closing time of the agent
+     */
+    closed_at?: string | null;
+    /**
+     * Saved
+     *
+     * Whether the agent is saved as a workflow
+     */
+    saved?: boolean;
+    /**
+     * Task
+     *
+     * The task that the agent is currently running
+     */
+    task: string;
+    /**
+     * Url
+     *
+     * The URL that the agent started on
+     */
+    url?: string | null;
+    /**
+     * Success
+     *
+     * Whether the agent task was successful. None if the agent is still running
+     */
+    success?: boolean | null;
+    /**
+     * Answer
+     *
+     * The answer to the agent task. None if the agent is still running
+     */
+    answer?: string | null;
+    /**
+     * Steps
+     *
+     * The steps that the agent has currently taken
+     */
+    steps?: Array<{
+        [key: string]: unknown;
+    }>;
+};
+
+/**
+ * ApiAgentStartRequest
+ */
+export type ApiAgentStartRequest = {
+    /**
+     * Task
+     *
+     * The task that the agent should perform
+     */
+    task: string;
+    /**
+     * Url
+     *
+     * The URL that the agent should start on (optional)
+     */
+    url?: string | null;
+    /**
+     * Response Format
+     *
+     * The response format to use for the agent answer. You can use a Pydantic model or a JSON Schema dict (cf. https://docs.pydantic.dev/latest/concepts/json_schema/#generating-json-schema.)
+     */
+    response_format?: unknown | null;
+    /**
+     * Session Offset
+     *
+     * [Experimental] The step from which the agent should gather information from in the session. If none, fresh memory
+     */
+    session_offset?: number | null;
+    /**
+     * Reasoning Model
+     *
+     * The reasoning model to use
+     */
+    reasoning_model?: LlmModel | string;
+    /**
+     * Use Vision
+     *
+     * Whether to use vision for the agent. Not all reasoning models support vision.
+     */
+    use_vision?: boolean;
+    /**
+     * Max Steps
+     *
+     * The maximum number of steps the agent should take
+     */
+    max_steps?: number;
+    /**
+     * Vault Id
+     *
+     * The vault to use for the agent
+     */
+    vault_id?: string | null;
+    /**
+     * Persona Id
+     *
+     * The persona to use for the agent
+     */
+    persona_id?: string | null;
+    /**
+     * Notifier Config
+     *
+     * Config used for the notifier
+     */
+    notifier_config?: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * Session Id
+     *
+     * The ID of the session to run the agent on
+     */
+    session_id: string;
+};
+
+/**
+ * LegacyAgentStatusResponse
+ *
+ * This class is used to handle the legacy agent status response.
+ * The rationale is that we are likely to change the `AgentStepResponse` in the future and we want to be able to handle the legacy response.
+ * This is a temporary solution to avoid breaking changes.
+ */
+export type LegacyAgentStatusResponse = {
+    /**
+     * Agent Id
+     *
+     * The ID of the agent
+     */
+    agent_id: string;
+    /**
+     * Created At
+     *
+     * The creation time of the agent
+     */
+    created_at: string;
+    /**
+     * Session Id
+     *
+     * The ID of the session
+     */
+    session_id: string;
+    /**
+     * The status of the agent (active or closed)
+     */
+    status: AgentStatus;
+    /**
+     * Closed At
+     *
+     * The closing time of the agent
+     */
+    closed_at?: string | null;
+    /**
+     * Saved
+     *
+     * Whether the agent is saved as a workflow
+     */
+    saved?: boolean;
+    /**
+     * Task
+     *
+     * The task that the agent is currently running
+     */
+    task: string;
+    /**
+     * Url
+     *
+     * The URL that the agent started on
+     */
+    url?: string | null;
+    /**
+     * Success
+     *
+     * Whether the agent task was successful. None if the agent is still running
+     */
+    success?: boolean | null;
+    /**
+     * Answer
+     *
+     * The answer to the agent task. None if the agent is still running
+     */
+    answer?: string | null;
+    /**
+     * Steps
+     */
+    steps?: Array<{
+        [key: string]: unknown;
+    }>;
+};
+
+/**
+ * LlmModel
+ */
+export type LlmModel = 'openai/gpt-4o' | 'gemini/gemini-3.5-flash' | 'vertex_ai/gemini-3.5-flash' | 'openrouter/google/gemma-3-27b-it' | 'cerebras/gpt-oss-120b' | 'groq/gpt-oss-120b' | 'perplexity/sonar-pro' | 'deepseek/deepseek-r1' | 'together_ai/meta-llama/llama-3.3-70b-instruct' | 'anthropic/claude-sonnet-4-5-20250929' | 'moonshot/kimi-k2.5' | 'xai/grok-4.3' | 'minimax/minimax-m2.5';
+
+/**
+ * PaginatedResponse[AgentResponse]
+ */
+export type PaginatedResponseAgentResponse = {
+    /**
+     * Items
+     */
+    items: Array<AgentResponse>;
+    /**
+     * Page
+     */
+    page: number;
+    /**
+     * Page Size
+     */
+    page_size: number;
+    /**
+     * Has Next
+     */
+    has_next: boolean;
+    /**
+     * Has Previous
+     */
+    readonly has_previous: boolean;
+};
+
+/**
  * ActionSpace
  */
 export type ActionSpaceWritable = {
@@ -9006,63 +9052,71 @@ export type FunctionListItemResponseWritable = {
     /**
      * Variables
      *
-     * The variables to run the workflow with
+     * The variables to run the function with
      */
     variables?: Array<ParameterInfo> | null;
     /**
      * Created At
      *
-     * The creation time of the workflow
+     * The creation time of the function
      */
     created_at: string;
     /**
      * Updated At
      *
-     * The last update time of the workflow
+     * The last update time of the function
      */
     updated_at: string;
     /**
      * Latest Version
      *
-     * The version of the workflow
+     * The version of the function
      */
     latest_version: string;
     /**
      * Versions
      *
-     * The versions of the workflow
+     * The versions of the function
      */
     versions: Array<string>;
     /**
      * Status
      *
-     * The status of the workflow
+     * The status of the function
      */
     status: string;
     /**
      * Name
      *
-     * The name of the workflow
+     * The name of the function
      */
     name?: string | null;
     /**
      * Description
      *
-     * The description of the workflow
+     * The description of the function
      */
     description?: string | null;
     /**
      * Shared
      *
-     * Whether the workflow is public and can beshared with other users
+     * Whether the function is public and can beshared with other users
      */
     shared?: boolean;
     /**
      * Reference Workflow Id
      *
-     * The ID of the reference workflow (i.e wether the workflow was forked from another workflow or not)
+     * The ID of the reference function (i.e whether the function was forked from another function or not)
      */
     reference_workflow_id?: string | null;
+    /**
+     * Sdk Generation
+     */
+    sdk_generation?: 'v19' | 'v110';
+    /**
+     * Upload Sdk Version
+     */
+    upload_sdk_version?: string | null;
     /**
      * Published
      */
@@ -9108,63 +9162,71 @@ export type FunctionResponseWritable = {
     /**
      * Variables
      *
-     * The variables to run the workflow with
+     * The variables to run the function with
      */
     variables?: Array<ParameterInfo> | null;
     /**
      * Created At
      *
-     * The creation time of the workflow
+     * The creation time of the function
      */
     created_at: string;
     /**
      * Updated At
      *
-     * The last update time of the workflow
+     * The last update time of the function
      */
     updated_at: string;
     /**
      * Latest Version
      *
-     * The version of the workflow
+     * The version of the function
      */
     latest_version: string;
     /**
      * Versions
      *
-     * The versions of the workflow
+     * The versions of the function
      */
     versions: Array<string>;
     /**
      * Status
      *
-     * The status of the workflow
+     * The status of the function
      */
     status: string;
     /**
      * Name
      *
-     * The name of the workflow
+     * The name of the function
      */
     name?: string | null;
     /**
      * Description
      *
-     * The description of the workflow
+     * The description of the function
      */
     description?: string | null;
     /**
      * Shared
      *
-     * Whether the workflow is public and can beshared with other users
+     * Whether the function is public and can beshared with other users
      */
     shared?: boolean;
     /**
      * Reference Workflow Id
      *
-     * The ID of the reference workflow (i.e wether the workflow was forked from another workflow or not)
+     * The ID of the reference function (i.e whether the function was forked from another function or not)
      */
     reference_workflow_id?: string | null;
+    /**
+     * Sdk Generation
+     */
+    sdk_generation?: 'v19' | 'v110';
+    /**
+     * Upload Sdk Version
+     */
+    upload_sdk_version?: string | null;
     /**
      * Published
      */
@@ -9288,63 +9350,71 @@ export type FunctionWithLinkResponseWritable = {
     /**
      * Variables
      *
-     * The variables to run the workflow with
+     * The variables to run the function with
      */
     variables?: Array<ParameterInfo> | null;
     /**
      * Created At
      *
-     * The creation time of the workflow
+     * The creation time of the function
      */
     created_at: string;
     /**
      * Updated At
      *
-     * The last update time of the workflow
+     * The last update time of the function
      */
     updated_at: string;
     /**
      * Latest Version
      *
-     * The version of the workflow
+     * The version of the function
      */
     latest_version: string;
     /**
      * Versions
      *
-     * The versions of the workflow
+     * The versions of the function
      */
     versions: Array<string>;
     /**
      * Status
      *
-     * The status of the workflow
+     * The status of the function
      */
     status: string;
     /**
      * Name
      *
-     * The name of the workflow
+     * The name of the function
      */
     name?: string | null;
     /**
      * Description
      *
-     * The description of the workflow
+     * The description of the function
      */
     description?: string | null;
     /**
      * Shared
      *
-     * Whether the workflow is public and can beshared with other users
+     * Whether the function is public and can beshared with other users
      */
     shared?: boolean;
     /**
      * Reference Workflow Id
      *
-     * The ID of the reference workflow (i.e wether the workflow was forked from another workflow or not)
+     * The ID of the reference function (i.e whether the function was forked from another function or not)
      */
     reference_workflow_id?: string | null;
+    /**
+     * Sdk Generation
+     */
+    sdk_generation?: 'v19' | 'v110';
+    /**
+     * Upload Sdk Version
+     */
+    upload_sdk_version?: string | null;
     /**
      * Published
      */
@@ -9444,13 +9514,13 @@ export type GetFunctionRunResponseWritable = {
     /**
      * Logs
      *
-     * The logs of the workflow run
+     * The logs of the function run
      */
     logs?: Array<string>;
     /**
      * Variables
      *
-     * The variables of the workflow run
+     * The variables of the function run
      */
     variables?: {
         [key: string]: unknown;
@@ -9458,19 +9528,21 @@ export type GetFunctionRunResponseWritable = {
     /**
      * Result
      *
-     * The result of the workflow run (if any)
+     * The result of the function run (if any)
      */
     result?: string | null;
     /**
      * Local
      *
-     * Whether the workflow has been run locally or on the cloud
+     * Whether the function has been run locally or on the cloud
      */
     local?: boolean;
     /**
      * Function Version
      */
     function_version?: string | null;
+    artifact_sdk_generation?: FunctionSdkGeneration;
+    sdk_generation?: FunctionSdkGeneration;
     /**
      * Payloads
      */
@@ -9632,28 +9704,6 @@ export type ObservationWritable = {
      * Available actions in the current state
      */
     space: ActionSpaceWritable;
-};
-
-/**
- * PaginatedResponse[AgentResponse]
- */
-export type PaginatedResponseAgentResponseWritable = {
-    /**
-     * Items
-     */
-    items: Array<AgentResponse>;
-    /**
-     * Page
-     */
-    page: number;
-    /**
-     * Page Size
-     */
-    page_size: number;
-    /**
-     * Has Next
-     */
-    has_next: boolean;
 };
 
 /**
@@ -10074,6 +10124,28 @@ export type UpdateFunctionRunResponseWritable = {
     status?: 'updated' | 'stopped';
 };
 
+/**
+ * PaginatedResponse[AgentResponse]
+ */
+export type PaginatedResponseAgentResponseWritable = {
+    /**
+     * Items
+     */
+    items: Array<AgentResponse>;
+    /**
+     * Page
+     */
+    page: number;
+    /**
+     * Page Size
+     */
+    page_size: number;
+    /**
+     * Has Next
+     */
+    has_next: boolean;
+};
+
 export type SessionAuthReadinessData = {
     body?: never;
     headers?: {
@@ -10339,59 +10411,6 @@ export type SessionProfileSaveResponses = {
 };
 
 export type SessionProfileSaveResponse = SessionProfileSaveResponses[keyof SessionProfileSaveResponses];
-
-export type GetSessionScriptData = {
-    body?: never;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path: {
-        /**
-         * Session Id
-         */
-        session_id: string;
-    };
-    query: {
-        /**
-         * As Workflow
-         *
-         * Whether to return code as standalone workflow or just relevant instructions
-         */
-        as_workflow: boolean;
-        /**
-         * Infer Response Format
-         *
-         * Whether to infer response_format schema for scrape calls that have instructions but no schema
-         */
-        infer_response_format?: boolean;
-    };
-    url: '/sessions/{session_id}/workflow/code';
-};
-
-export type GetSessionScriptErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type GetSessionScriptError = GetSessionScriptErrors[keyof GetSessionScriptErrors];
-
-export type GetSessionScriptResponses = {
-    /**
-     * Successful Response
-     */
-    200: AgentFunctionCodeResponse;
-};
-
-export type GetSessionScriptResponse = GetSessionScriptResponses[keyof GetSessionScriptResponses];
 
 export type SessionStopData = {
     body?: never;
@@ -11008,6 +11027,51 @@ export type SessionReplayResponses = {
 
 export type SessionReplayResponse = SessionReplayResponses[keyof SessionReplayResponses];
 
+export type ExecuteSessionFileData = {
+    body: FileExecutionRequest;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Session Id
+         */
+        session_id: string;
+    };
+    query?: {
+        /**
+         * Update Metadata
+         */
+        update_metadata?: boolean;
+    };
+    url: '/sessions/{session_id}/page/execute/file';
+};
+
+export type ExecuteSessionFileErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ExecuteSessionFileError = ExecuteSessionFileErrors[keyof ExecuteSessionFileErrors];
+
+export type ExecuteSessionFileResponses = {
+    /**
+     * Successful Response
+     */
+    200: ApiExecutionResponse;
+};
+
+export type ExecuteSessionFileResponse = ExecuteSessionFileResponses[keyof ExecuteSessionFileResponses];
+
 export type ListSessionFilesData = {
     body?: never;
     headers?: {
@@ -11191,184 +11255,7 @@ export type DownloadSessionFileResponses = {
     200: unknown;
 };
 
-export type AgentStartData = {
-    body: ApiAgentStartRequest;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path?: never;
-    query?: never;
-    url: '/agents/start';
-};
-
-export type AgentStartErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type AgentStartError = AgentStartErrors[keyof AgentStartErrors];
-
-export type AgentStartResponses = {
-    /**
-     * Successful Response
-     */
-    200: AgentResponse;
-};
-
-export type AgentStartResponse = AgentStartResponses[keyof AgentStartResponses];
-
-export type AgentStopData = {
-    body?: never;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path: {
-        /**
-         * Agent Id
-         */
-        agent_id: string;
-    };
-    query: {
-        /**
-         * Session Id
-         */
-        session_id: string;
-    };
-    url: '/agents/{agent_id}/stop';
-};
-
-export type AgentStopErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-    /**
-     * The agent is stopping but its final state is not saved yet; check its status shortly.
-     */
-    503: unknown;
-};
-
-export type AgentStopError = AgentStopErrors[keyof AgentStopErrors];
-
-export type AgentStopResponses = {
-    /**
-     * Successful Response
-     */
-    200: AgentStatusResponse;
-};
-
-export type AgentStopResponse = AgentStopResponses[keyof AgentStopResponses];
-
-export type AgentStatusData = {
-    body?: never;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path: {
-        /**
-         * Agent Id
-         */
-        agent_id: string;
-    };
-    query?: never;
-    url: '/agents/{agent_id}';
-};
-
-export type AgentStatusErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type AgentStatusError = AgentStatusErrors[keyof AgentStatusErrors];
-
-export type AgentStatusResponses = {
-    /**
-     * Successful Response
-     */
-    200: LegacyAgentStatusResponse;
-};
-
-export type AgentStatusResponse2 = AgentStatusResponses[keyof AgentStatusResponses];
-
-export type GetScriptData = {
-    body?: never;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path: {
-        /**
-         * Agent Id
-         */
-        agent_id: string;
-    };
-    query: {
-        /**
-         * As Workflow
-         *
-         * Whether to return code as standalone workflow or just relevant instructions
-         */
-        as_workflow: boolean;
-        /**
-         * Infer Response Format
-         *
-         * Whether to infer response_format schema for scrape calls that have instructions but no schema
-         */
-        infer_response_format?: boolean;
-    };
-    url: '/agents/{agent_id}/workflow/code';
-};
-
-export type GetScriptErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type GetScriptError = GetScriptErrors[keyof GetScriptErrors];
-
-export type GetScriptResponses = {
-    /**
-     * Successful Response
-     */
-    200: AgentFunctionCodeResponse;
-};
-
-export type GetScriptResponse = GetScriptResponses[keyof GetScriptResponses];
-
-export type ListAgentsData = {
+export type FunctionRuntimeHealthData = {
     body?: never;
     headers?: {
         /**
@@ -11383,71 +11270,10 @@ export type ListAgentsData = {
     path?: never;
     query?: {
         /**
-         * Page
-         *
-         * Page number
+         * Sdk Generation
          */
-        page?: number;
-        /**
-         * Page Size
-         *
-         * Number of items per page
-         */
-        page_size?: number;
-        /**
-         * Only Active
-         *
-         * Whether to only return active sessions
-         */
-        only_active?: boolean;
-        /**
-         * Only Saved
-         *
-         * Whether to only return saved agents
-         */
-        only_saved?: boolean;
-        /**
-         * Only Current Token
-         *
-         * Whether to only return agents for the current token (apikey)
-         */
-        only_current_token?: boolean;
+        sdk_generation?: 'v19' | 'v110';
     };
-    url: '/agents';
-};
-
-export type ListAgentsErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type ListAgentsError = ListAgentsErrors[keyof ListAgentsErrors];
-
-export type ListAgentsResponses = {
-    /**
-     * Successful Response
-     */
-    200: PaginatedResponseAgentResponse;
-};
-
-export type ListAgentsResponse = ListAgentsResponses[keyof ListAgentsResponses];
-
-export type FunctionRuntimeHealthData = {
-    body?: never;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path?: never;
-    query?: never;
     url: '/functions/health';
 };
 
@@ -11640,6 +11466,10 @@ export type FunctionDownloadUrlData = {
          * Version
          */
         version?: string | null;
+        /**
+         * Function Run Id
+         */
+        function_run_id?: string | null;
         /**
          * Decryption Key
          *
@@ -16532,3 +16362,299 @@ export type ScrapeFromHtmlResponses = {
 };
 
 export type ScrapeFromHtmlResponse = ScrapeFromHtmlResponses[keyof ScrapeFromHtmlResponses];
+
+export type AgentStartData = {
+    body: ApiAgentStartRequest;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/agents/start';
+};
+
+export type AgentStartErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AgentStartError = AgentStartErrors[keyof AgentStartErrors];
+
+export type AgentStartResponses = {
+    /**
+     * Successful Response
+     */
+    200: AgentResponse;
+};
+
+export type AgentStartResponse = AgentStartResponses[keyof AgentStartResponses];
+
+export type AgentStopData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Agent Id
+         */
+        agent_id: string;
+    };
+    query: {
+        /**
+         * Session Id
+         */
+        session_id: string;
+    };
+    url: '/agents/{agent_id}/stop';
+};
+
+export type AgentStopErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+    /**
+     * The agent is stopping but its final state is not saved yet; check its status shortly.
+     */
+    503: unknown;
+};
+
+export type AgentStopError = AgentStopErrors[keyof AgentStopErrors];
+
+export type AgentStopResponses = {
+    /**
+     * Successful Response
+     */
+    200: AgentStatusResponse;
+};
+
+export type AgentStopResponse = AgentStopResponses[keyof AgentStopResponses];
+
+export type AgentStatusData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Agent Id
+         */
+        agent_id: string;
+    };
+    query?: never;
+    url: '/agents/{agent_id}';
+};
+
+export type AgentStatusErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AgentStatusError = AgentStatusErrors[keyof AgentStatusErrors];
+
+export type AgentStatusResponses = {
+    /**
+     * Successful Response
+     */
+    200: LegacyAgentStatusResponse;
+};
+
+export type AgentStatusResponse2 = AgentStatusResponses[keyof AgentStatusResponses];
+
+export type GetScriptData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Agent Id
+         */
+        agent_id: string;
+    };
+    query: {
+        /**
+         * As Workflow
+         *
+         * Whether to return code as standalone workflow or just relevant instructions
+         */
+        as_workflow: boolean;
+        /**
+         * Infer Response Format
+         *
+         * Whether to infer response_format schema for scrape calls that have instructions but no schema
+         */
+        infer_response_format?: boolean;
+    };
+    url: '/agents/{agent_id}/workflow/code';
+};
+
+export type GetScriptErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetScriptError = GetScriptErrors[keyof GetScriptErrors];
+
+export type GetScriptResponses = {
+    /**
+     * Successful Response
+     */
+    200: AgentFunctionCodeResponse;
+};
+
+export type GetScriptResponse = GetScriptResponses[keyof GetScriptResponses];
+
+export type ListAgentsData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: {
+        /**
+         * Page
+         *
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page Size
+         *
+         * Number of items per page
+         */
+        page_size?: number;
+        /**
+         * Only Active
+         *
+         * Whether to only return active sessions
+         */
+        only_active?: boolean;
+        /**
+         * Only Saved
+         *
+         * Whether to only return saved agents
+         */
+        only_saved?: boolean;
+        /**
+         * Only Current Token
+         *
+         * Whether to only return agents for the current token (apikey)
+         */
+        only_current_token?: boolean;
+    };
+    url: '/agents';
+};
+
+export type ListAgentsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListAgentsError = ListAgentsErrors[keyof ListAgentsErrors];
+
+export type ListAgentsResponses = {
+    /**
+     * Successful Response
+     */
+    200: PaginatedResponseAgentResponse;
+};
+
+export type ListAgentsResponse = ListAgentsResponses[keyof ListAgentsResponses];
+
+export type GetSessionScriptData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Session Id
+         */
+        session_id: string;
+    };
+    query: {
+        /**
+         * As Workflow
+         *
+         * Whether to return code as standalone workflow or just relevant instructions
+         */
+        as_workflow: boolean;
+        /**
+         * Infer Response Format
+         *
+         * Whether to infer response_format schema for scrape calls that have instructions but no schema
+         */
+        infer_response_format?: boolean;
+    };
+    url: '/sessions/{session_id}/workflow/code';
+};
+
+export type GetSessionScriptErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetSessionScriptError = GetSessionScriptErrors[keyof GetSessionScriptErrors];
+
+export type GetSessionScriptResponses = {
+    /**
+     * Successful Response
+     */
+    200: AgentFunctionCodeResponse;
+};
+
+export type GetSessionScriptResponse = GetSessionScriptResponses[keyof GetSessionScriptResponses];
