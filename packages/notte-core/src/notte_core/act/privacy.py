@@ -1,4 +1,4 @@
-"""Keep caller-provided variable literals out of later model requests in the same session."""
+"""Keep caller-provided variable literals and vault secrets out of later model requests in the same session."""
 
 import html
 import re
@@ -17,16 +17,23 @@ class ActPrivacy:
 
     def remember(self, variables: Mapping[str, str]) -> None:
         for name, value in variables.items():
-            if not value:
-                continue
-            placeholder = "{{" + name + "}}"
-            for literal in (value, html.escape(value), quote(value, safe=""), quote_plus(value)):
-                self.replacements[literal] = placeholder
-                # observe() caps field values at 200 UTF-16 code units. A protected
-                # long value must not disclose its prefix through the capped state.
-                prefix = literal.encode("utf-16-le")[:400].decode("utf-16-le", errors="surrogatepass")
-                if len(prefix) < len(literal):
-                    self.replacements[prefix] = placeholder
+            self._protect(value, "{{" + name + "}}")
+
+    def remember_secrets(self, replacements: Mapping[str, str]) -> None:
+        """Credential values the vault already typed (read back by the live state), by vault placeholder."""
+        for value, placeholder in replacements.items():
+            self._protect(value, placeholder)
+
+    def _protect(self, value: str, placeholder: str) -> None:
+        if not value:
+            return
+        for literal in (value, html.escape(value), quote(value, safe=""), quote_plus(value)):
+            self.replacements[literal] = placeholder
+            # observe() caps field values at 200 UTF-16 code units. A protected
+            # long value must not disclose its prefix through the capped state.
+            prefix = literal.encode("utf-16-le")[:400].decode("utf-16-le", errors="surrogatepass")
+            if len(prefix) < len(literal):
+                self.replacements[prefix] = placeholder
 
     def text(self, value: str) -> str:
         if not self.replacements:

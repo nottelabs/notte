@@ -211,6 +211,10 @@ class JevDecider:
             dev_message="TypeSafe unavailable", user_message="TypeSafe unavailable", agent_message=None
         )
 
+    def close(self) -> None:
+        """Close the pooled HTTP connections (sessions close the decider they resolved when they stop)."""
+        self._http.close()
+
     async def choose(self, state: DecisionState, questions: Mapping[str, Question]) -> Answers:
         body = {
             "model": self.model,

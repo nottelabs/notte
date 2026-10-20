@@ -59,7 +59,7 @@ export OPENROUTER_API_KEY=...     # LLM decisions and the text writer
 <ActOptions />
 
 - `variables`: the writer answers `{{name}}` and Notte substitutes the value after the model call, so values never reach a model.
-- With a vault attached, credential fields get the vault placeholders, swapped for the real secrets at execution.
+- With a vault attached, credential fields get the vault placeholders, swapped for the real secrets at execution. Values the vault typed are masked again in later model requests.
 - `min_confidence`: below it, nothing runs (`status="blocked"`).
 - `observation`: decide on an observation you already have instead of observing again.
 - `decider`: pass a decider explicitly (see [Deciders](#deciders)).
@@ -68,7 +68,7 @@ export OPENROUTER_API_KEY=...     # LLM decisions and the text writer
 
 <ActCloud />
 
-Local sessions read the **live state** of form controls (the current value of inputs, checked state, the options of a `<select>`), so the decider sees what a field already holds. The cloud observe response does not carry this state yet: cloud decisions rely on the element descriptions only, and a `<select>` is set by typing its option label.
+Local sessions read the **live state** of form controls (the current value of inputs, checked state, the options of a `<select>`), so the decider sees what a field already holds. Long option lists are cut to their first 50 options; the others are selected by typing their label. A `<select multiple>` takes one option per `act()`, and each selection replaces the previous one. The cloud observe response does not carry this state yet: cloud decisions rely on the element descriptions only, and a `<select>` is set by typing its option label.
 
 ## Choose and check
 

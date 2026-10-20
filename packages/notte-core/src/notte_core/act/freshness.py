@@ -2,16 +2,18 @@
 
 Right after observing, the session records the signature of every interaction element (tag, text,
 value, checked / disabled / aria state, found at the element's XPath). Right before acting, it reads
-the target's signature again: if it differs, or the URL changed, the decision is stale. This costs a
+the target's signature again: if it differs, or the URL changed, the decision is stale. The recorded
+signature is read after the observation, so it is first checked against what the observation showed
+(`Signatures.consistent`): a page that changed in between falls back to a new observation. This costs a
 few milliseconds locally (one `page.evaluate`) and one `evaluate_js` call for cloud sessions, instead
 of a full observation. Elements in iframes or shadow roots have no usable XPath: sessions fall back
 to comparing a new observation (`same_target`).
 """
 
 import json
-from typing import Any
+from typing import Any, cast
 
-from notte_core.act.space import ObservedPage
+from notte_core.act.space import ObservedPage, description_lines
 
 ELEMENT_SIGNATURES_JS = """(xpaths) => {
     const elements = {};
@@ -82,3 +84,47 @@ class Signatures:
         if current.url is None or current.url != self.url:
             return False
         return element_id is None or current.elements.get(element_id) == self.elements.get(element_id)
+
+    def consistent(self, page: ObservedPage, element_id: str) -> bool:
+        """The recorded signature of `element_id` describes the element of `page` (same tag, label text and,
+        with live state, value, checked state and options). `False` when unsure: the caller then compares
+        a new observation instead, which is slower but exact."""
+        raw: Any = self.elements.get(element_id)
+        action = next((a for a in page.actions if a.id == element_id), None)
+        if action is None or not isinstance(raw, list):
+            return False
+        fields = cast(list[Any], raw)
+        if len(fields) != _SIGNATURE_FIELDS:
+            return False
+        tag = str(fields[0]).lower()
+        line = description_lines(page.description).get(element_id, "")
+        if line.startswith("<") and not line.startswith(f"<{tag}"):
+            return False
+        label = _normalized(action.text_label or "").removesuffix("...")
+        text = _normalized(str(fields[1] or ""))
+        if label and text and label not in text and text not in label:
+            return False
+        state = page.states.get(element_id)
+        if state is None:
+            return True
+        value, checked, options = fields[2], fields[3], fields[14]
+        if state.filled is not None:
+            return value == state.filled
+        if state.value is not None and not state.value_truncated and isinstance(value, str) and value != state.value:
+            return False
+        if state.checked is not None and isinstance(checked, bool) and checked != state.checked:
+            return False
+        if state.options is not None and not state.options_truncated:
+            listed = [(o.value, o.selected, o.disabled) for o in state.options]
+            read = [tuple(o[:1] + o[2:]) for o in options] if isinstance(options, list) else None  # pyright: ignore[reportUnknownVariableType, reportUnknownArgumentType]
+            return read == listed
+        return True
+
+
+# entries of an `ELEMENT_SIGNATURES_JS` signature: tag, text, value, checked, ..., options (the last)
+_SIGNATURE_FIELDS = 15
+
+
+def _normalized(text: str) -> str:
+    # innerText follows CSS text-transform and line breaks; labels come from the DOM text
+    return " ".join(text.split()).lower()

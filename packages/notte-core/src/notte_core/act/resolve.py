@@ -21,3 +21,10 @@ def default_decider() -> Decider:
         raise DeciderNotAvailableError(missing_package=True) from e
     decider: Decider = module.default_decider()
     return decider
+
+
+def close_decider(decider: Decider) -> None:
+    """Release the connections of a decider that has a `close()` method (e.g. `JevDecider`)."""
+    close = getattr(decider, "close", None)
+    if callable(close):
+        _ = close()

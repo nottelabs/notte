@@ -86,6 +86,12 @@ async def test_jev_decider_http_error_executes_nothing(monkeypatch: pytest.Monke
         _ = await decider.choose(STATE, QUESTIONS)
 
 
+def test_jev_decider_closes_its_http_client() -> None:
+    decider = JevDecider(api_key="k")
+    decider.close()
+    assert decider._http.is_closed  # pyright: ignore[reportPrivateUsage]
+
+
 @pytest.mark.asyncio
 async def test_jev_decider_without_writer_explains_how_to_type(monkeypatch: pytest.MonkeyPatch) -> None:
     decider = JevDecider(api_key="k")

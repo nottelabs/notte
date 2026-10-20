@@ -260,3 +260,119 @@ def test_act_errors_rehydrate_from_their_serialized_form() -> None:
     assert isinstance(error, NoActionFoundError) and error.result is None and "go" in error.dev_message
     retry = SerializedError.from_exception(InvalidDecisionError("bad")).to_exception()
     assert isinstance(retry, InvalidDecisionError) and retry.should_retry_later
+
+
+def test_signature_includes_the_frame_path() -> None:
+    from notte_core.dom_tree import NodeSelectors
+
+    def page(frames: list[str]) -> ObservedPage:
+        selectors = NodeSelectors(
+            css_selector="button",
+            xpath_selector="html/body/button",
+            in_iframe=True,
+            in_shadow_root=False,
+            iframe_parent_css_selectors=frames,
+        )
+        actions = [ClickAction(id="B1", text_label="Submit", selector=selectors)]
+        return _page(states={}, actions=actions)
+
+    # the same button in another frame is another target
+    assert page(["iframe#a"]).signature("B1") != page(["iframe#b"]).signature("B1")
+
+
+def test_truncated_select_options_can_be_typed() -> None:
+    options = (SelectOption(value="v0", label="Option 0", selected=True), SelectOption(value="v1", label="Option 1"))
+    states = {"I3": ElementState(value="v0", options=options, options_truncated=True)}
+    space = build_act_space(_page(states=states))
+    element = next(e for e in space.elements if e["index"] == "I3")
+    assert element["more_options"] is True
+    assert set(space.targets["SELECT"]) == {"I3:1"}
+    # the options left out of the live state are reachable by typing their label
+    assert space.targets["TYPE_TEXT"]["I3"].kind == "select_text"
+
+
+def test_multiple_select_is_flagged() -> None:
+    options = (SelectOption(value="a", label="A"), SelectOption(value="b", label="B"))
+    space = build_act_space(_page(states={"I3": ElementState(options=options, multiple=True)}))
+    assert next(e for e in space.elements if e["index"] == "I3")["multiple"] is True
+
+
+def test_act_until_done_does_not_count_scrolls_as_unchanged() -> None:
+    session = _ScriptedSession([_result(fingerprint="a", operation="SCROLL_DOWN") for _ in range(10)])
+    assert len(act_until_done(session, "go", max_steps=7)) == 7
+
+
+def _signature(tag: str, text: str, value: Any = None, checked: Any = None, options: Any = None) -> list[Any]:
+    return [tag, text, value, checked, None, None, None, None, None, None, None, None, None, None, options]
+
+
+def test_signature_baseline_must_match_the_observation() -> None:
+    from notte_core.act.freshness import Signatures
+
+    page = _page()
+    current = Signatures(
+        {
+            "url": page.url,
+            "elements": {
+                "B1": _signature("BUTTON", "SIGN IN"),
+                "I1": _signature("INPUT", "", value="jane@"),
+                "I2": _signature("INPUT", "", checked=False),
+                "I3": _signature(
+                    "SELECT",
+                    "",
+                    value="us",
+                    options=[[o.value, o.label, o.selected, o.disabled] for o in STATES["I3"].options or ()],
+                ),
+            },
+        }
+    )
+    assert all(current.consistent(page, element_id) for element_id in ("B1", "I1", "I2", "I3"))
+
+    changed = Signatures(
+        {
+            "url": page.url,
+            "elements": {
+                # changed between the observation and the baseline read
+                "B1": _signature("BUTTON", "Delete account"),
+                "L1": _signature("BUTTON", "Help"),
+                "I1": _signature("INPUT", "", value="other"),
+                "I2": _signature("INPUT", "", checked=True),
+                "I3": _signature("SELECT", "", value="fr", options=[["fr", "France", True, False]]),
+            },
+        }
+    )
+    assert not any(changed.consistent(page, element_id) for element_id in ("B1", "L1", "I1", "I2", "I3"))
+    assert not changed.consistent(page, "missing")
+
+
+@pytest.mark.asyncio
+async def test_vault_secrets_typed_earlier_are_masked() -> None:
+    from notte_core.act import run_act
+    from notte_core.observation import ExecutionResult
+
+    from tests.act.fakes import FakeDecider
+
+    vault_email = "jane.private@example.test"
+    page = _page(
+        states={"I1": ElementState(value=vault_email)}, description=DESCRIPTION + f"\n_[:]Signed in as {vault_email}"
+    )
+
+    class Driver:
+        has_vault: bool = True
+
+        def secret_replacements(self) -> dict[str, str]:
+            return {vault_email: "user@example.org"}
+
+        async def observe(self, observation: Any) -> ObservedPage:  # pyright: ignore[reportUnusedParameter]
+            return page
+
+        async def is_fresh(self, page: ObservedPage, element_id: str | None) -> bool:  # pyright: ignore[reportUnusedParameter]
+            return True
+
+        async def execute(self, action: Any, raise_on_failure: bool) -> ExecutionResult:  # pyright: ignore[reportUnusedParameter]
+            raise AssertionError("not executed")
+
+    decider = FakeDecider(choices=[{"operation": "DONE"}])
+    _ = await run_act(Driver(), decider, ActHistory(), "check the account", raise_on_failure=False)
+    assert vault_email not in decider.states[0].model_dump_json()
+    assert "user@example.org" in decider.states[0].model_dump_json()

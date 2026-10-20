@@ -78,7 +78,8 @@ class ObservedPage:
         )
 
     def signature(self, element_id: str) -> str | None:
-        """What a decision about `element_id` depends on: its type, label, selector and live state."""
+        """What a decision about `element_id` depends on: its type, label, selectors (including the iframe
+        and shadow-root path used to execute it) and live state."""
         for action in self.actions:
             if action.id == element_id:
                 selectors = action.selectors
@@ -87,7 +88,7 @@ class ObservedPage:
                     [
                         action.type,
                         action.text_label or "",
-                        "" if selectors is None else selectors.xpath_selector,
+                        "" if selectors is None else selectors.model_dump_json(),
                         "" if state is None else state.digest(),
                     ]
                 )
@@ -257,6 +258,9 @@ def build_act_space(page: ObservedPage, *, display_text: Callable[[str], str] = 
                 else:
                     listed: list[dict[str, str]] = []
                     element["options"] = listed
+                    if state is not None and state.multiple:
+                        # selecting an option replaces the current selection of a <select multiple>
+                        element["multiple"] = True
                     for option in options:
                         if option.selected or option.disabled:
                             continue
@@ -265,6 +269,10 @@ def build_act_space(page: ObservedPage, *, display_text: Callable[[str], str] = 
                             {"index": key, "label": display_text(option.label), "value": display_text(option.value)}
                         )
                         add("SELECT", target("select_option", key, option), element)
+                    if state is not None and state.options_truncated:
+                        # long lists are cut (`ElementState.options`): the other options are typed by label
+                        element["more_options"] = True
+                        add("TYPE_TEXT", target("select_text"), element)
             case _:
                 add("CLICK", target("click"), element)
         space.elements.append(element)

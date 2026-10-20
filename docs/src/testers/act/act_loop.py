@@ -12,13 +12,13 @@ def act_until_done(session: notte.Session, instruction: str, max_steps: int = 20
         results.append(result)
         if result.status != "executed":  # done, blocked or stale
             break
-        # 3 actions in a row (WAIT aside) that left the page unchanged: stop
+        # 3 actions in a row (WAIT and scrolls aside: the fingerprint has no scroll position) that left the page unchanged: stop
         recent = results[-4:]
         if (
             len(recent) == 4
             and all(r.fingerprint is not None for r in recent)
             and len({r.fingerprint for r in recent}) == 1
-            and all(r.operation != "WAIT" for r in recent[:-1])
+            and all(r.operation not in ("WAIT", "SCROLL_DOWN", "SCROLL_UP") for r in recent[:-1])
         ):
             break
     return results

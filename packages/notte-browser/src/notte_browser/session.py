@@ -21,6 +21,7 @@ from notte_core.act import (
     Choice,
     Decider,
     ObservedPage,
+    close_decider,
     default_decider,
     run_act,
     run_check,
@@ -145,6 +146,10 @@ class LocalActDriver:
     def has_vault(self) -> bool:
         return self.session.vault is not None
 
+    def secret_replacements(self) -> Mapping[str, str]:
+        vault = self.session.vault
+        return {} if vault is None else vault.get_replacement_map()
+
     async def _read_signatures(self, xpaths: dict[str, str]) -> Signatures:
         try:
             result: dict[str, Any] = await self.session.window.page.evaluate(ELEMENT_SIGNATURES_JS, xpaths)
@@ -172,7 +177,7 @@ class LocalActDriver:
         if before.url is not None and before.url != page.url:
             return False
         # without a baseline (the signature script failed after observing), compare a new snapshot
-        if before.url is not None and (element_id is None or before.has(element_id)):
+        if before.url is not None and (element_id is None or before.consistent(page, element_id)):
             xpaths = {} if element_id is None else signature_xpaths(page, element_id)
             return before.matches(await self._read_signatures(xpaths), element_id)
         snapshot = await self.session.window.snapshot(screenshot=False)
@@ -318,6 +323,7 @@ class NotteSession(AsyncResource, SyncResource):
         if self._keep_alive:
             logger.info(self._keep_alive_msg)
             return
+        self._release_decider()
         await self.window.close()
         self._window = None
 
@@ -1088,6 +1094,12 @@ class NotteSession(AsyncResource, SyncResource):
         if self._decider is None:
             self._decider = default_decider()
         return self._decider
+
+    def _release_decider(self) -> None:
+        # only the decider this session resolved: deciders passed with `decider=` belong to the caller
+        decider, self._decider = self._decider, None
+        if decider is not None:
+            close_decider(decider)
 
     @track_usage("local.session.act")
     async def aact(

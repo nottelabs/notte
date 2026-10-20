@@ -19,6 +19,7 @@ from notte_core.act import (
     Choice,
     Decider,
     ObservedPage,
+    close_decider,
     default_decider,
     run_act,
     run_check,
@@ -428,6 +429,10 @@ class RemoteActDriver:
     def has_vault(self) -> bool:
         return self.session.request.vault_id is not None
 
+    def secret_replacements(self) -> Mapping[str, str]:
+        # the cloud vault substitutes secrets server-side, and the observe response carries no field values
+        return {}
+
     def _observe(self) -> Observation:
         # always the fast perception, whatever the session's default
         return self.session.observe(perception_type="fast")
@@ -462,7 +467,7 @@ class RemoteActDriver:
         before = self._signatures
         if before.url is not None and before.url != page.url:
             return False
-        if before.url is not None and (element_id is None or before.has(element_id)):
+        if before.url is not None and (element_id is None or before.consistent(page, element_id)):
             xpaths = {} if element_id is None else signature_xpaths(page, element_id)
             return before.matches(await asyncio.to_thread(self._read_signatures, xpaths), element_id)
         current = ObservedPage.from_observation(await asyncio.to_thread(self._observe))
@@ -838,6 +843,7 @@ class RemoteSession(SyncResource):
                 create_or_append_cookies_to_file(self._cookie_file, cookies)
             except Exception as e:
                 logger.error(f"🍪 Error saving cookies to {self._cookie_file}: {e}")
+        self._release_decider()
         try:
             self.response = self.client.stop(session_id=self.session_id, close_reason=close_reason)
         except Exception as e:
@@ -1423,6 +1429,12 @@ class RemoteSession(SyncResource):
         if self._decider is None:
             self._decider = default_decider()
         return self._decider
+
+    def _release_decider(self) -> None:
+        # only the decider this session resolved: deciders passed with `decider=` belong to the caller
+        decider, self._decider = self._decider, None
+        if decider is not None:
+            close_decider(decider)
 
     @track_usage("cloud.session.act")
     async def aact(

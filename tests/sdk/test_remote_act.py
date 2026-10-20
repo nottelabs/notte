@@ -145,7 +145,8 @@ def test_remote_choose_and_check(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def _signatures(url: str = "https://search.test/", **elements: Any) -> dict[str, Any]:
-    return {"url": url, "elements": elements}
+    # `ELEMENT_SIGNATURES_JS` returns 15 entries per element: pad the ones a test does not set
+    return {"url": url, "elements": {k: v + [None] * (15 - len(v)) for k, v in elements.items()}}
 
 
 def test_remote_freshness_uses_two_evaluate_js_calls(monkeypatch: pytest.MonkeyPatch) -> None:

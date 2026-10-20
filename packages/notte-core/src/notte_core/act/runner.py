@@ -74,6 +74,11 @@ class ActDriver(Protocol):
         """A vault is attached: credential fields get vault placeholders, swapped for secrets at execution."""
         ...
 
+    def secret_replacements(self) -> Mapping[str, str]:
+        """Credential values the vault already typed in this session, mapped to their placeholders: they are
+        masked in every model request (the live state reads field values back)."""
+        ...
+
     async def observe(self, observation: Observation | None) -> ObservedPage:
         """Observe the page (or wrap `observation`, already taken on the current page), and record
         what `is_fresh` will compare against."""
@@ -181,6 +186,7 @@ async def run_act(
         page = await driver.observe(observation if attempt == 0 else None)
         run.timings.observe_ms += _ms(step)
         history.observed(page.fingerprint)
+        history.privacy.remember_secrets(driver.secret_replacements())
 
         space = build_act_space(page, display_text=history.privacy.text)
         model_page = history.privacy.page(page)
@@ -325,6 +331,7 @@ async def run_choose(
         raise ValueError("choose() needs at least two options")
     page = await driver.observe(observation)
     history.observed(page.fingerprint)
+    history.privacy.remember_secrets(driver.secret_replacements())
     model_page = history.privacy.page(page)
     state = DecisionState(
         page=page_state(model_page),

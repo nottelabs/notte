@@ -342,3 +342,49 @@ async def test_controls_run_when_element_signatures_are_unavailable(
     decider = FakeDecider(choices=[{"operation": "PRESS_ENTER"}] * 2)
     result = await session.aact("submit", decider=decider)
     assert result.status == "executed" and len(decider.states) == 1
+
+
+@pytest.mark.asyncio
+async def test_a_page_changed_before_the_signature_baseline_is_decided_again(
+    session: NotteSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from notte_browser.session import LocalActDriver
+
+    read = LocalActDriver._read_signatures  # pyright: ignore[reportPrivateUsage]
+    calls = {"n": 0}
+
+    async def change_then_read(self: LocalActDriver, xpaths: dict[str, str]):  # pyright: ignore[reportUnknownParameterType]
+        calls["n"] += 1
+        if calls["n"] == 1:
+            # the page changes after the snapshot, before the baseline is read
+            await session.window.page.eval_on_selector("button", "el => el.textContent = 'Delete account'")
+        return await read(self, xpaths)  # pyright: ignore[reportUnknownVariableType]
+
+    monkeypatch.setattr(LocalActDriver, "_read_signatures", change_then_read)
+    observation = await session.aobserve()
+    button = next(a.id for a in observation.space.interaction_actions if (a.text_label or "") == "Subscribe")
+    decider = FakeDecider(choices=[{"operation": "CLICK", "click_target": button}] * 2)
+    result = await session.aact("subscribe", decider=decider, raise_on_failure=False)
+    # the decision taken on "Subscribe" is not executed on "Delete account": it is taken again
+    assert len(decider.states) == 2
+    assert "Delete account" in decider.states[1].page.text
+    assert result.status == "executed"
+
+
+def test_session_closes_the_decider_it_resolved(monkeypatch: pytest.MonkeyPatch) -> None:
+    from notte_browser import session as session_module
+
+    class Closable(FakeDecider):
+        closed: int = 0
+
+        def close(self) -> None:
+            self.closed += 1
+
+    owned = Closable(choices=[{"operation": "DONE"}])
+    passed = Closable(choices=[{"operation": "DONE"}])
+    monkeypatch.setattr(session_module, "default_decider", lambda: owned)
+    with NotteSession(headless=True) as session:
+        _ = asyncio.run(session.window.page.goto(f"data:text/html,{quote(PAGE)}"))
+        _ = session.act("nothing to do")
+        _ = session.act("nothing to do", decider=passed)
+    assert owned.closed == 1 and passed.closed == 0
