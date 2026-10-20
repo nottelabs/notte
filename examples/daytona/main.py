@@ -154,8 +154,12 @@ def main() -> None:
         install_notte(sandbox)
         check_with_notte_cli(sandbox, url)
     finally:
-        daytona.delete(sandbox)
-        print("Sandbox deleted")
+        # Warn instead of raising, so a failed delete never hides the original error.
+        try:
+            daytona.delete(sandbox)
+            print("Sandbox deleted")
+        except Exception as error:
+            print(f"Warning: could not delete sandbox {sandbox.id}: {error}")
 
 
 if __name__ == "__main__":

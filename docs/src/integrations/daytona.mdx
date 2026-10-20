@@ -50,7 +50,7 @@ curl -fsSL https://notte.cc/install-cli.sh | sh
 notte skill add --yes
 ```
 
-Pass `NOTTE_API_KEY` to the sandbox commands, then drive the browser:
+Pass `NOTTE_API_KEY` to the sandbox commands, then drive the browser. Replace the example URL with the one `create_signed_preview_url` returns:
 
 ```bash
 notte sessions start --extra-http-headers '{"X-Daytona-Skip-Preview-Warning": "true"}'
