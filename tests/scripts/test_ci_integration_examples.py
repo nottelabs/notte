@@ -1414,7 +1414,7 @@ def test_mongodb_live_owns_one_limited_fixture_and_original_source_suite(
     assert create[create.index("--health-cmd") + 1] == "mongosh --quiet --eval 'db.adminCommand({ ping: 1 }).ok'"
     for option, value in (("--health-interval", "5s"), ("--health-timeout", "5s"), ("--health-retries", "20")):
         assert create[create.index(option) + 1] == value
-    assert create[-1] == "mongo:8.0@sha256:6657bf2413fefc5be649390318f5b4cd7328e982722f8ce2ac6dfa6f0a42cb03"
+    assert create[-1] == "mongo:8.0.34@sha256:4a4ab5d4834207389e0d7270fac988e21ffedccecba77991a552f755df229907"
     assert all(call["args"][-1] == name for call in docker[1:])
     assert docker[-1]["args"] == ["docker", "rm", "--force", "--volumes", name]
     assert all(not call["credentials"] for call in docker)

@@ -527,6 +527,7 @@ class RemoteSession(SyncResource):
 
         Args:
             storage: File Storage to attach to the session
+            perception_type: Default perception type for `observe()`. Defaults to `'fast'`. `'deep'` is deprecated and removed on December 1, 2026; use `'fast'`.
             open_viewer: Whether to open the live viewer when the session starts (default: False).
                 This controls only the viewer popup and is independent of the browser environment.
             advanced_stealth: Enable Notte's highest-fidelity browser environment. Available to approved workspaces.
@@ -1393,23 +1394,9 @@ class RemoteSession(SyncResource):
         session.execute(action)
         ```
 
-        Note that by default, a very simple page perception is used to generate the action space (i.e `perception_type='fast'`) to make the query fast.
-        If you want a more powerful and LLM-ready action space, you can use:
-
-        ```python
-        obs = session.observe(perception_type='deep')
-        print(obs.space.description)
-        ```
-
-        At the cost of a slower query since this uses an LLM call to format the interactive elements.
-
-        Additionally, you can use the `instructions` parameter to narrow down the action space to a specific intent on a website. This is useful if you want to quickly build an automation using natural language:
-
-        ```python
-        _ = session.execute(type="goto", url="https://console.notte.cc")
-        actions = session.observe(instructions="Fill the email input")
-        print(actions[0].model_dump())
-        ```
+        Deprecated: `perception_type='deep'` and `instructions` are removed on December 1, 2026, and passing
+        either emits a `DeprecationWarning`. Use `perception_type='fast'` (the default) instead of `'deep'`.
+        For `instructions`: `<<ALTERNATIVE FOR instructions: session.act() — pending>>`. See the migration guide: https://docs.notte.cc/features/sessions/observe-migration
 
 
         Args:

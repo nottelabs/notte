@@ -1966,12 +1966,25 @@ class PaginationParams(SdkRequest):
 
 
 class ObserveRequest(PaginationParams):
+    # Deprecated in the schema only: `Field(deprecated=...)` would warn on every attribute read, even when unset.
     instructions: Annotated[
         str | None,
-        Field(description="Additional instructions to use for the observation."),
+        Field(
+            description=(
+                "Deprecated: removed on December 1, 2026. Additional instructions to use for the observation. "
+                + "<<ALTERNATIVE FOR instructions: session.act() — pending>>. See https://docs.notte.cc/features/sessions/observe-migration"
+            ),
+            json_schema_extra={"deprecated": True},
+        ),
     ] = None
     perception_type: Annotated[
-        PerceptionType | None, Field(description="Whether to run with fast or deep perception")
+        PerceptionType | None,
+        Field(
+            description=(
+                "Whether to run with fast or deep perception. `deep` is deprecated and removed on "
+                + "December 1, 2026; use `fast` (the default). See https://docs.notte.cc/features/sessions/observe-migration"
+            )
+        ),
     ] = None
 
 
@@ -1980,7 +1993,8 @@ class ObserveRequestDict(PaginationParamsDict, total=False):
 
     Args:
         url: The URL to observe. If not provided, uses the current page URL.
-        instructions: Additional instructions to use for the observation.
+        instructions: Deprecated, removed on December 1, 2026. Additional instructions to use for the observation.
+        perception_type: `"fast"` (the default) or `"deep"`. `"deep"` is deprecated, removed on December 1, 2026.
     """
 
     instructions: str | None

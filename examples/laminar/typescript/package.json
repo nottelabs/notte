@@ -17,5 +17,15 @@
     "@opentelemetry/sdk-trace-base": "2.12.0",
     "@types/node": "24.10.0",
     "typescript": "6.0.3"
+  },
+  "overrides": {
+    "@lmnr-ai/lmnr": {
+      "@opentelemetry/exporter-trace-otlp-grpc": "0.223.0",
+      "@opentelemetry/exporter-trace-otlp-proto": "0.223.0",
+      "@opentelemetry/instrumentation": "0.223.0",
+      "@opentelemetry/otlp-exporter-base": "0.223.0",
+      "@opentelemetry/otlp-grpc-exporter-base": "0.223.0",
+      "@opentelemetry/sdk-node": "0.223.0"
+    }
   }
 }
