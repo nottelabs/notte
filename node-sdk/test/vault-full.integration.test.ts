@@ -334,15 +334,13 @@ describe('Vault Integration Tests', () => {
       createdVaults.push(vaultId);
     });
 
-    it('should surface the API validation error for an invalid URL', async () => {
+    it('should surface API 404 when a query URL has no stored credentials', async () => {
       const vault = client.Vault();
       await initializeOwnedVault(vault, createdVaults);
       const failure = vault.getCredentials('https://');
       await expect(failure).rejects.toBeInstanceOf(NotteAPIError);
-      // Staging's query dependency constructs GetCredentialsRequest directly:
-      // its validation error currently becomes HTTP 500, not FastAPI's body 422.
-      // Preserve the server status until that backend dependency is fixed.
-      await expect(failure).rejects.toMatchObject({ statusCode: 500 });
+      await expect(failure).rejects.toMatchObject({ statusCode: 404 });
+      await expect(failure).rejects.toThrow('Credentials not found');
     });
 
     it('should surface API 422 for an invalid credential-body URL', async () => {
