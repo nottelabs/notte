@@ -137,7 +137,8 @@ class LlmWriter:
             raise InvalidDecisionError("the field writer must answer exactly {'text': ...}; nothing typed")
         if value is None:
             return None
-        if not isinstance(value, str) or not value.strip() or len(value) > MAX_TEXT_LENGTH:
+        # "" clears the field
+        if not isinstance(value, str) or (value and not value.strip()) or len(value) > MAX_TEXT_LENGTH:
             raise InvalidDecisionError("the field writer returned no valid field value; nothing typed")
         return value
 

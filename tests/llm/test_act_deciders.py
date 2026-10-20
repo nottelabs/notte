@@ -162,7 +162,13 @@ async def test_llm_decider_falls_back_to_json_object(monkeypatch: pytest.MonkeyP
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("output", "expected"),
-    [('{"text": "Jane"}', "Jane"), ('{"text": null}', None), ('```json\n{"text": "{{email}}"}\n```', "{{email}}")],
+    [
+        ('{"text": "Jane"}', "Jane"),
+        ('{"text": null}', None),
+        # clearing the field
+        ('{"text": ""}', ""),
+        ('```json\n{"text": "{{email}}"}\n```', "{{email}}"),
+    ],
 )
 async def test_writer_returns_exactly_the_text(
     monkeypatch: pytest.MonkeyPatch, output: str, expected: str | None
@@ -177,7 +183,7 @@ async def test_writer_returns_exactly_the_text(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("output", ['{"text": ""}', '{"text": "a", "extra": 1}', '{"text": 3}', "not json"])
+@pytest.mark.parametrize("output", ['{"text": "  "}', '{"text": "a", "extra": 1}', '{"text": 3}', "not json"])
 async def test_writer_rejects_invalid_values(monkeypatch: pytest.MonkeyPatch, output: str) -> None:
     monkeypatch.setattr(llm_act, "_complete", _fake_complete([output], []))
     with pytest.raises(InvalidDecisionError):

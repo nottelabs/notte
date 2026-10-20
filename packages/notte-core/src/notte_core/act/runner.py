@@ -230,7 +230,8 @@ async def run_act(
                 context = _write_context(instruction, target, model_page, history, variables, driver)
                 text = await decider.write(context)
                 run.timings.write_ms += _ms(step)
-                if text is None:
+                # "" clears a field, but names no option of a dropdown
+                if text is None or (text == "" and target.kind == "select_text"):
                     return _blocked(
                         run, f"no value to type in {target.label!r} from the instruction", raise_on_failure, common
                     )

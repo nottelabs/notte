@@ -388,3 +388,12 @@ def test_session_closes_the_decider_it_resolved(monkeypatch: pytest.MonkeyPatch)
         _ = session.act("nothing to do")
         _ = session.act("nothing to do", decider=passed)
     assert owned.closed == 1 and passed.closed == 0
+
+
+@pytest.mark.asyncio
+async def test_act_clears_a_field(session: NotteSession) -> None:
+    await session.window.page.fill("#name", "Jane")
+    ids = await _ids(session)
+    decider = FakeDecider(choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["name"]}], texts=[""])
+    result = await session.aact("clear the name", decider=decider)
+    assert result.status == "executed" and await session.window.page.input_value("#name") == ""
