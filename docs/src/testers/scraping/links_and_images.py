@@ -1,5 +1,5 @@
 # @sniptest filename=links_and_images.py
-# @sniptest show=6-16
+# @sniptest show=6-10
 from notte_sdk import NotteClient
 
 client = NotteClient()
@@ -10,12 +10,6 @@ markdown = client.scrape(url, scrape_links=True)
 
 # Exclude links
 markdown = client.scrape(url, scrape_links=False)
-
-# Include images in markdown
-markdown = client.scrape(url, scrape_images=True)
-
-# Exclude images (default)
-markdown = client.scrape(url, scrape_images=False)
 
 # Preserve the displayed overwrite pattern; retain separate responses for option checks.
 with_links = client.scrape(url, scrape_links=True)

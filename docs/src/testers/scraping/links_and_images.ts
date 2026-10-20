@@ -1,5 +1,5 @@
 // @sniptest filename=links_and_images.ts
-// @sniptest show=6-16
+// @sniptest show=6-10
 import { NotteClient } from 'notte-sdk';
 
 const client = new NotteClient();
@@ -10,12 +10,6 @@ let markdown = await client.scrape(url, { scrape_links: true });
 
 // Exclude links
 markdown = await client.scrape(url, { scrape_links: false });
-
-// Include images in markdown
-markdown = await client.scrape(url, { scrape_images: true });
-
-// Exclude images (default)
-markdown = await client.scrape(url, { scrape_images: false });
 
 // Preserve the displayed overwrite pattern; retain separate responses for option checks.
 const withLinks = await client.scrape(url, { scrape_links: true });
