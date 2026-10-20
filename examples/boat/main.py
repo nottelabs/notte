@@ -80,7 +80,11 @@ def create_sandbox(boat: BoatApi) -> str:
         wait_until_ready(boat, sandbox_id)
     except Exception:
         # The caller only deletes sandboxes it gets back, so delete this one here.
-        boat.delete_sandbox(x_ascii_confirm_delete=sandbox_id, sandbox_id=sandbox_id)
+        # Warn instead of raising, so a failed delete never hides the startup error.
+        try:
+            boat.delete_sandbox(x_ascii_confirm_delete=sandbox_id, sandbox_id=sandbox_id)
+        except Exception as error:
+            print(f"Warning: could not delete sandbox {sandbox_id}: {error}")
         raise
     return sandbox_id
 

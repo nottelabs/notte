@@ -123,6 +123,19 @@ class OfflineTests(unittest.TestCase):
             demo.create_sandbox(boat)
         self.assertEqual(boat.deleted, [("sb-1", "sb-1")])
 
+    def test_failed_delete_does_not_hide_the_startup_error(self):
+        boat = FakeBoat()
+
+        def not_ready(boat, sandbox_id):
+            raise TimeoutError("not ready")
+
+        def delete_fails(x_ascii_confirm_delete, sandbox_id):
+            raise RuntimeError("delete failed")
+
+        boat.delete_sandbox = delete_fails
+        with patch.object(demo, "wait_until_ready", not_ready), self.assertRaisesRegex(TimeoutError, "not ready"):
+            demo.create_sandbox(boat)
+
     def test_failed_navigation_keeps_the_token_out_of_the_error(self):
         boat = FakeBoat(failing={f"notte page goto '{URL}'"})
         with self.assertRaises(demo.CommandError) as raised:
