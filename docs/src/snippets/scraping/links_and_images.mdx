@@ -9,12 +9,6 @@ markdown = client.scrape(url, scrape_links=True)
 
 # Exclude links
 markdown = client.scrape(url, scrape_links=False)
-
-# Include images in markdown
-markdown = client.scrape(url, scrape_images=True)
-
-# Exclude images (default)
-markdown = client.scrape(url, scrape_images=False)
 ```
 
 ```typescript TypeScript
@@ -23,12 +17,6 @@ let markdown = await client.scrape(url, { scrape_links: true });
 
 // Exclude links
 markdown = await client.scrape(url, { scrape_links: false });
-
-// Include images in markdown
-markdown = await client.scrape(url, { scrape_images: true });
-
-// Exclude images (default)
-markdown = await client.scrape(url, { scrape_images: false });
 ```
 
 </CodeGroup>
