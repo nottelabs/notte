@@ -29,23 +29,9 @@ Once you have selected an action (either manually or using an LLM), you can exec
 session.execute(action)
 ```
 
-Note that by default, a very simple page perception is used to generate the action space (i.e `perception_type='fast'`) to make the query fast.
-If you want a more powerful and LLM-ready action space, you can use:
-
-```python
-obs = session.observe(perception_type='deep')
-print(obs.space.description)
-```
-
-At the cost of a slower query since this uses an LLM call to format the interactive elements.
-
-Additionally, you can use the `instructions` parameter to narrow down the action space to a specific intent on a website. This is useful if you want to quickly build an automation using natural language:
-
-```python
-_ = session.execute(type="goto", url="https://console.notte.cc")
-actions = session.observe(instructions="Fill the email input")
-print(actions[0].model_dump())
-```
+Deprecated: `perception_type='deep'` and `instructions` are removed on December 1, 2026, and passing
+either emits a `DeprecationWarning`. Use `perception_type='fast'` (the default) instead of `'deep'`.
+For `instructions`: `<<ALTERNATIVE FOR instructions: session.act() — pending>>`. See the migration guide: https://docs.notte.cc/features/sessions/observe-migration
 
 
 
@@ -61,10 +47,11 @@ print(actions[0].model_dump())
 </ParamField>
 
 <ParamField path="instructions" type="str | None">
-  Additional instructions to use for the observation.
+  Deprecated, removed on December 1, 2026. Additional instructions to use for the observation.
 </ParamField>
 
 <ParamField path="perception_type" type="typing.Optional[typing.Literal['fast', 'deep']]">
+  `"fast"` (the default) or `"deep"`. `"deep"` is deprecated, removed on December 1, 2026.
 </ParamField>
 
 ## Returns

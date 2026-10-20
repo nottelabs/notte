@@ -22,6 +22,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [Session Lifecycle](https://docs.notte.cc/features/sessions/lifecycle.md): Manage the lifecycle of your Notte browser sessions
 - [Session Configurations](https://docs.notte.cc/features/sessions/configuration.md): Learn how to create and configure Notte browser sessions
 - [Browser Controls](https://docs.notte.cc/features/sessions/browser-controls.md): Complete reference of all browser actions available in sessions
+- [Observe Migration](https://docs.notte.cc/features/sessions/observe-migration.md): Deep perception and observe instructions are removed on December 1, 2026
 - [Playwright vs Notte Controls](https://docs.notte.cc/features/sessions/playwright-vs-notte.md): Understanding the difference between direct Playwright control and Notte's AI-enabled SDK
 - [File Storage](https://docs.notte.cc/concepts/file-storage.md): Upload and download files for your automations
 

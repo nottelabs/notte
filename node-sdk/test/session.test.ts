@@ -635,6 +635,40 @@ describe('Session Unit Tests', () => {
       );
     });
 
+    it('warns once per session about deprecated observe options, and still sends them', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+      const session = new Session(mockClient);
+      await session.start();
+      await session.observe({ instructions: 'click jobs', perception_type: 'deep' });
+      await session.observe({ instructions: 'click jobs', perception_type: 'deep' });
+      expect(pageObserve).toHaveBeenLastCalledWith(
+        expect.objectContaining({ body: { instructions: 'click jobs', perception_type: 'deep' } }),
+      );
+      const messages = warn.mock.calls.map(([message]) => String(message)).filter((message) => message.includes('December 1, 2026'));
+      expect(messages).toHaveLength(2);
+      expect(messages[0]).toContain('`observe({ instructions })` is deprecated');
+      expect(messages[0]).toContain('<<ALTERNATIVE FOR instructions: session.act() — pending>>');
+      expect(messages[1]).toContain("use `perception_type: 'fast'` (the default)");
+      for (const message of messages) {
+        expect(message).toContain('https://docs.notte.cc/features/sessions/observe-migration');
+      }
+      warn.mockRestore();
+    });
+
+    it('warns about a deep session default and not about fast observes', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+      const fast = new Session(mockClient);
+      await fast.start();
+      await fast.observe();
+      await fast.observe({ perception_type: 'fast', instructions: null });
+      expect(warn.mock.calls.filter(([message]) => String(message).includes('December 1, 2026'))).toEqual([]);
+      const deep = new Session(mockClient, { perception_type: 'deep' });
+      await deep.start();
+      await deep.observe();
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("`perception_type: 'deep'` is deprecated"));
+      warn.mockRestore();
+    });
+
     it('rejects when not started', async () => {
       await expect(new Session(mockClient).observe()).rejects.toThrow('Session not started');
     });
