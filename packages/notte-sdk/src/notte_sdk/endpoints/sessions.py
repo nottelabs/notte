@@ -1462,7 +1462,7 @@ class RemoteSession(SyncResource):
         """Carry out one step of a natural-language instruction: observe, pick one action, execute it.
 
         Runs in the client on top of `observe()` and `execute()`: the decider is called from your
-        machine with your keys (`TYPESAFE_API_KEY`, or an LLM such as `OPENROUTER_API_KEY`), and needs
+        machine with your keys (`OPENROUTER_API_KEY` for Jev through OpenRouter, or `TYPESAFE_API_KEY`), and needs
         `pip install 'notte[llm]'` unless you pass `decider=`. Cloud observations do not carry the live
         field values that local sessions read, so decisions rely on the action descriptions.
 

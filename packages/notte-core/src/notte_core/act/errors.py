@@ -27,10 +27,11 @@ class DeciderNotAvailableError(ActError):
             detail = reason or "No decider is configured."
         message = (
             f"session.act() / choose() / check() need a decider. {detail} "
-            "Configure one of: (1) TYPESAFE_API_KEY to use the Jev classification model from TypeSafe "
-            "(field values are then written by a small LLM, see NOTTE_ACT_TEXT_MODEL); or "
-            "(2) an LLM: OPENROUTER_API_KEY (default model, override with NOTTE_ACT_MODEL), or any "
-            "OpenAI-compatible endpoint with NOTTE_LLM_BASE_URL, NOTTE_LLM_API_KEY and NOTTE_ACT_MODEL / NOTTE_LLM_MODEL."
+            "Configure one of: (1) OPENROUTER_API_KEY to use TypeSafe's Jev classification model through "
+            "OpenRouter, with field values written by a small LLM on OpenRouter (see NOTTE_ACT_TEXT_MODEL); "
+            "(2) TYPESAFE_API_KEY to call Jev on TypeSafe directly (an OpenRouter key is still needed to type "
+            "text); or (3) an LLM decider on any OpenAI-compatible endpoint: NOTTE_LLM_BASE_URL, NOTTE_LLM_API_KEY "
+            "and NOTTE_ACT_MODEL / NOTTE_LLM_MODEL (NOTTE_ACT_DECIDER=llm selects it on OpenRouter)."
         )
         super().__init__(dev_message=message, user_message=message, agent_message=message)
 

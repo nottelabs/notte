@@ -1,8 +1,9 @@
 """Live smoke tests of `session.act()` with the real deciders (network, model keys).
 
-Skipped without keys: `TYPESAFE_API_KEY` (Jev), `OPENROUTER_API_KEY` (LLM decider and the default
-field writer, on the OpenRouter endpoint: `NOTTE_LLM_BASE_URL` unset), `NOTTE_API_KEY` (cloud session).
-Each test prints the per-step timings.
+Skipped without keys. `OPENROUTER_API_KEY` (with `NOTTE_LLM_BASE_URL` unset) runs everything: Jev through
+OpenRouter's decisions endpoint, the LLM decider and the default field writer. With `TYPESAFE_API_KEY` too, the
+`jev` cases call TypeSafe directly instead. `NOTTE_API_KEY` adds the cloud session. Each test prints the per-step
+timings and the decision model.
 """
 
 import os
@@ -17,7 +18,6 @@ import notte
 # the default decision and writer models are OpenRouter model ids
 _ON_OPENROUTER = urlsplit(os.getenv("NOTTE_LLM_BASE_URL") or "https://openrouter.ai").hostname == "openrouter.ai"
 HAS_OPENROUTER = _ON_OPENROUTER and bool(os.getenv("NOTTE_LLM_API_KEY") or os.getenv("OPENROUTER_API_KEY"))
-HAS_TYPESAFE = bool(os.getenv("TYPESAFE_API_KEY")) and HAS_OPENROUTER
 HAS_NOTTE = bool(os.getenv("NOTTE_API_KEY"))
 
 FORM = """<html><head><title>Signup</title></head><body><h1>Newsletter signup</h1>
@@ -38,6 +38,7 @@ def _decider(kind: str) -> Decider:
     from notte_llm.act import DEFAULT_ACT_MODEL, DEFAULT_TEXT_MODEL, JevDecider, LlmDecider, LlmWriter  # noqa: PLC0415
 
     writer = LlmWriter(DEFAULT_TEXT_MODEL, fallback_model=DEFAULT_ACT_MODEL)
+    # Jev: TypeSafe directly with TYPESAFE_API_KEY, else through OpenRouter
     return JevDecider(writer=writer) if kind == "jev" else LlmDecider(DEFAULT_ACT_MODEL, writer=writer)
 
 
@@ -54,14 +55,12 @@ def _report(name: str, results: list[ActResult]) -> None:
 
 DECIDERS = [
     pytest.param(
-        "jev", marks=pytest.mark.skipif(not HAS_TYPESAFE, reason="needs TYPESAFE_API_KEY and an OpenRouter key")
-    ),
-    pytest.param(
-        "llm",
+        kind,
         marks=pytest.mark.skipif(
             not HAS_OPENROUTER, reason="needs an OpenRouter key (OPENROUTER_API_KEY, NOTTE_LLM_BASE_URL unset)"
         ),
-    ),
+    )
+    for kind in ("jev", "llm")
 ]
 
 

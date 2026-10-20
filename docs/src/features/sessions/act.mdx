@@ -26,16 +26,23 @@ Install the deciders with `pip install "notte[llm]"` (or `pip install notte-llm`
 
 | Option | Environment | What decides |
 |---|---|---|
-| Jev (TypeSafe) | `TYPESAFE_API_KEY` (optional `TYPESAFE_MODEL`, default `jev-latest`) | TypeSafe's hosted classification model: a calibrated probability per option, typically 250-500 ms per decision |
-| LLM | `OPENROUTER_API_KEY` (model: `NOTTE_ACT_MODEL`, default `google/gemini-3.1-flash-lite`) | Any model of the LLM endpoint, one call per decision with the options as JSON-schema enums |
+| Jev through OpenRouter | `OPENROUTER_API_KEY` (model `~typesafe/jev-latest`) | TypeSafe's Jev classification model: a calibrated probability per option |
+| Jev on TypeSafe | `TYPESAFE_API_KEY` (optional `TYPESAFE_MODEL`, default `jev-latest`) | The same model, called on TypeSafe's API directly |
+| LLM | `NOTTE_ACT_DECIDER=llm` with `OPENROUTER_API_KEY`, or any OpenAI-compatible endpoint (`NOTTE_LLM_BASE_URL`, `NOTTE_LLM_API_KEY`, `NOTTE_LLM_MODEL`); model `NOTTE_ACT_MODEL`, default `google/gemini-3.1-flash-lite` | Any model of the LLM endpoint, one call per decision with the options as JSON-schema enums |
 
-When `TYPESAFE_API_KEY` is set, Jev decides. Otherwise an LLM decides, picked from `NOTTE_ACT_MODEL`, then `NOTTE_LLM_MODEL`, then the OpenRouter default. The LLM endpoint is the one `notte-llm` uses for extraction: OpenRouter by default, or any OpenAI-compatible endpoint with `NOTTE_LLM_BASE_URL`, `NOTTE_LLM_API_KEY` and a model. With neither option configured, `act()` raises `DeciderNotAvailableError` explaining both.
+`act()` picks the first available: `TYPESAFE_API_KEY` (Jev on TypeSafe), then an OpenRouter key (Jev through OpenRouter), then an LLM on another `NOTTE_LLM_*` endpoint. `NOTTE_ACT_DECIDER=jev` or `llm` forces one. With nothing configured, `act()` raises `DeciderNotAvailableError` listing the options.
 
-Text typed into fields is written by a small, fast LLM on the same endpoint: `NOTTE_ACT_TEXT_MODEL`, default `inception/mercury-2.5` on OpenRouter, else the decision model. Jev users who type text also need an LLM key for this writer. If the writer's provider refuses a value on content-policy grounds, the decision model writes it instead. If that also refuses, the step is `blocked` with the reason.
+<Note>
+Jev through OpenRouter uses OpenRouter's decisions endpoint (`/api/alpha/decisions`), which is in alpha. If it is unavailable, set `NOTTE_ACT_DECIDER=llm` to use an LLM decider with the same key.
+</Note>
+
+Jev cannot write text. Text typed into fields is written by a small, fast LLM on the `NOTTE_LLM_*` endpoint (OpenRouter with `OPENROUTER_API_KEY`): `NOTTE_ACT_TEXT_MODEL`, default `inception/mercury-2.5` on OpenRouter, else the decision model. With `TYPESAFE_API_KEY` alone, `act()` can click and select but not type text. If the writer's provider refuses a value on content-policy grounds, `NOTTE_ACT_MODEL` (default `google/gemini-3.1-flash-lite`) writes it instead. If that also refuses, the step is `blocked` with the reason.
 
 ```bash
-export TYPESAFE_API_KEY=...       # Jev decisions
-export OPENROUTER_API_KEY=...     # LLM decisions and the text writer
+export OPENROUTER_API_KEY=...     # Jev through OpenRouter, and the text writer
+# optional
+export TYPESAFE_API_KEY=...       # Jev on TypeSafe directly
+export NOTTE_ACT_DECIDER=llm      # an LLM decides instead of Jev
 ```
 
 ## Act

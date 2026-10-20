@@ -6,8 +6,9 @@ Local (`notte.Session`) and cloud (`client.Session()`) sessions gain `act(instru
 observe → decide → execute step, where a decider picks one operation and its target from typed
 multiple-choice questions about the page. `choose(question, options)` and `check(question)` ask
 the same decider about the current page. Async versions are `aact`, `achoose` and `acheck`.
-Deciders live in `notte-llm` (`JevDecider` with `TYPESAFE_API_KEY`, or `LlmDecider` on the
-`NOTTE_LLM_*` endpoint) and load only when one of these methods runs. Cloud sessions run `act()`
+Deciders live in `notte-llm` and load only when one of these methods runs: `JevDecider`
+(TypeSafe's Jev, through OpenRouter with `OPENROUTER_API_KEY` or on TypeSafe with `TYPESAFE_API_KEY`)
+by default, or `LlmDecider` on the `NOTTE_LLM_*` endpoint (`NOTTE_ACT_DECIDER=llm`). Cloud sessions run `act()`
 in the client over the existing observe and execute endpoints.
 
 Local observations also read the live state of form controls (current values, checked state,

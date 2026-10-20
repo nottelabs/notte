@@ -1121,8 +1121,9 @@ class NotteSession(AsyncResource, SyncResource):
         ```
 
         A decider answers which operation (click, type, select, scroll, ...) and which element advance
-        the instruction (see `notte_core.act`). `TYPESAFE_API_KEY` selects TypeSafe's Jev model, else
-        an LLM (`OPENROUTER_API_KEY`, `NOTTE_ACT_MODEL`); `decider=` overrides both. Field values are
+        the instruction (see `notte_core.act`). By default TypeSafe's Jev model decides, through OpenRouter
+        (`OPENROUTER_API_KEY`) or on TypeSafe (`TYPESAFE_API_KEY`); `NOTTE_ACT_DECIDER=llm` selects an LLM, and
+        `decider=` overrides both. Field values are
         written by a small LLM; `{{name}}` in them is replaced by `variables[name]` after the model
         call, so variable values never reach a model. With a vault, credential fields get the vault
         placeholders, replaced by the secrets at execution.

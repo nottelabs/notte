@@ -4,8 +4,10 @@
 # (see `notte_core/act/LICENSE-jev-ultrafast`).
 """Deciders for `session.act()` / `choose()` / `check()` (the `notte_core.act.Decider` protocol).
 
-- `JevDecider`: TypeSafe's hosted classification model (`POST {TYPESAFE_BASE_URL}/v1/systemone`).
-  It returns a calibrated probability per option. Bring your own `TYPESAFE_API_KEY`.
+- `JevDecider`: TypeSafe's Jev classification model. It returns a calibrated probability per option.
+  Two routes with the same request and answer: TypeSafe directly (`POST {TYPESAFE_BASE_URL}/v1/systemone`,
+  `TYPESAFE_API_KEY`), or OpenRouter's decisions endpoint (`POST https://openrouter.ai/api/alpha/decisions`,
+  model `~typesafe/jev-latest`, `OPENROUTER_API_KEY`; the endpoint is in alpha).
 - `LlmDecider`: any model of the `NOTTE_LLM_*` endpoint (OpenRouter by default, see `LlmSettings`),
   one call per decision with a JSON schema whose `choice` fields are enums of the option keys. LLMs
   give no calibrated probabilities: the chosen option gets probability 1.0 (the others 0.0) and
@@ -13,15 +15,19 @@
   So `check()` returns 0.0 or 1.0 with this decider.
 - `LlmWriter`: the field writer of both deciders, a small fast LLM returning exactly `{"text": ...}`.
 
-`default_decider()` picks one from the environment:
+`default_decider()` picks one from the environment, in this order:
 
 | variable | effect |
 |---|---|
-| `TYPESAFE_API_KEY` | use `JevDecider` (`TYPESAFE_MODEL`, default `jev-latest`; `TYPESAFE_BASE_URL`) |
-| `OPENROUTER_API_KEY` / `NOTTE_LLM_API_KEY` | otherwise use `LlmDecider` on the `NOTTE_LLM_*` endpoint; also enables the field writer |
-| `NOTTE_ACT_MODEL` / `NOTTE_LLM_MODEL` | model of `LlmDecider`, in this order (default `DEFAULT_ACT_MODEL`) |
+| `TYPESAFE_API_KEY` | `JevDecider` on TypeSafe directly (`TYPESAFE_MODEL`, default `jev-latest`; `TYPESAFE_BASE_URL`) |
+| `OPENROUTER_API_KEY` | otherwise `JevDecider` through OpenRouter (`TYPESAFE_MODEL`, default `~typesafe/jev-latest`) |
+| `NOTTE_LLM_BASE_URL` / `NOTTE_LLM_API_KEY` | otherwise `LlmDecider` on that endpoint |
+| `NOTTE_ACT_DECIDER` | `auto` (default, the order above), `jev` (fail without a Jev key) or `llm` (`LlmDecider` on the `NOTTE_LLM_*` endpoint) |
+| `NOTTE_ACT_MODEL` / `NOTTE_LLM_MODEL` | model of `LlmDecider`, in this order (default `DEFAULT_ACT_MODEL`); also the writer's fallback model |
 | `NOTTE_ACT_TEXT_MODEL` | model of the field writer (default `DEFAULT_TEXT_MODEL` on OpenRouter, else the decision model) |
 | `NOTTE_ACT_REASONING` | reasoning of OpenRouter models: `none` (default; `low` for models that require reasoning), `low`, `medium` or `high` |
+
+The field writer runs on the `NOTTE_LLM_*` endpoint (OpenRouter with `OPENROUTER_API_KEY`); Jev cannot write text.
 """
 
 import asyncio
@@ -30,7 +36,8 @@ import math
 import os
 import time
 from collections.abc import Mapping
-from typing import Any, cast
+from typing import Any, Literal, cast
+from urllib.parse import urlsplit
 
 import httpx
 from json_repair import repair_json
@@ -57,11 +64,16 @@ DEFAULT_ACT_MODEL = "google/gemini-3.1-flash-lite"
 DEFAULT_TEXT_MODEL = "inception/mercury-2.5"
 DEFAULT_TYPESAFE_MODEL = "jev-latest"
 DEFAULT_TYPESAFE_BASE_URL = "https://api.typesafe.ai"
+# Jev through OpenRouter's decisions endpoint (alpha): same request and answers as TypeSafe's `/v1/systemone`
+DEFAULT_OPENROUTER_JEV_MODEL = "~typesafe/jev-latest"
+DEFAULT_OPENROUTER_DECISIONS_BASE_URL = "https://openrouter.ai/api"
+JevRoute = Literal["typesafe", "openrouter"]
+_JEV_PATHS: dict[JevRoute, str] = {"typesafe": "/v1/systemone", "openrouter": "/alpha/decisions"}
 MAX_TEXT_LENGTH = 2_000
 # room for the reasoning tokens of models that cannot disable reasoning
 DECISION_MAX_TOKENS = 4_096
 LLM_TIMEOUT_S = 30.0
-_RETRY_STATUSES = {429, 503, 529}
+_RETRY_STATUSES = {429, 502, 503, 529}
 
 LLM_DECIDER_SYSTEM = """You are the decision model of a browser automation library.
 You receive the state of a web page and multiple-choice questions, as JSON. For every question,
@@ -166,12 +178,39 @@ class _NoWriter:
     async def write(self, context: WriteContext) -> str | None:  # noqa: ARG002
         _ = context
         raise DeciderNotAvailableError(
-            "Typing a field value needs a text model: set OPENROUTER_API_KEY, or NOTTE_LLM_API_KEY for a NOTTE_LLM_BASE_URL endpoint."
+            "Typing a field value needs a text model (Jev cannot write text): set OPENROUTER_API_KEY, "
+            + "or NOTTE_LLM_API_KEY for a NOTTE_LLM_BASE_URL endpoint."
         )
 
 
+def _openrouter_key() -> str | None:
+    """An OpenRouter API key: `OPENROUTER_API_KEY`, or `NOTTE_LLM_API_KEY` when the `NOTTE_LLM_*` endpoint is OpenRouter."""
+    base_url = os.getenv("NOTTE_LLM_BASE_URL")
+    if (base_url is None or urlsplit(base_url).hostname == "openrouter.ai") and os.getenv("NOTTE_LLM_API_KEY"):
+        return os.getenv("NOTTE_LLM_API_KEY")
+    return os.getenv("OPENROUTER_API_KEY") or None
+
+
+def _response_detail(response: httpx.Response, key: str) -> str:
+    """The provider's error message (cut, key redacted), for error messages."""
+    try:
+        body: Any = response.json()
+    except ValueError:
+        body = None
+    error: Any = cast(dict[str, Any], body).get("error") if isinstance(body, dict) else None
+    detail: Any = cast(dict[str, Any], error).get("message") if isinstance(error, dict) else None
+    text = (str(detail) if detail else response.text).replace(key, "[REDACTED]")
+    return text if len(text) <= 300 else text[:300] + "..."
+
+
 class JevDecider:
-    """Decisions from TypeSafe's Jev classification model; field values from `writer`."""
+    """Decisions from TypeSafe's Jev classification model; field values from `writer`.
+
+    `route="typesafe"` posts to TypeSafe (`{base_url}/v1/systemone`, `TYPESAFE_API_KEY`); `route="openrouter"`
+    to OpenRouter's decisions endpoint (`{base_url}/alpha/decisions`, `OPENROUTER_API_KEY`, alpha). Without
+    `route`: TypeSafe when `api_key=` or `TYPESAFE_API_KEY` is given, else OpenRouter with an OpenRouter key.
+    `model` (or `TYPESAFE_MODEL`) overrides the route's default model.
+    """
 
     def __init__(
         self,
@@ -179,57 +218,72 @@ class JevDecider:
         api_key: str | None = None,
         model: str | None = None,
         base_url: str | None = None,
+        route: JevRoute | None = None,
         writer: LlmWriter | None = None,
         timeout: float = 25,
     ) -> None:
-        key = api_key or os.getenv("TYPESAFE_API_KEY")
+        if route is None:
+            if api_key or os.getenv("TYPESAFE_API_KEY"):
+                route = "typesafe"
+            elif _openrouter_key():
+                route = "openrouter"
+            else:
+                raise DeciderNotAvailableError(
+                    "JevDecider needs TYPESAFE_API_KEY (TypeSafe directly) or OPENROUTER_API_KEY (through OpenRouter)."
+                )
+        if route == "typesafe":
+            key = api_key or os.getenv("TYPESAFE_API_KEY")
+            default_model, base = DEFAULT_TYPESAFE_MODEL, os.getenv("TYPESAFE_BASE_URL") or DEFAULT_TYPESAFE_BASE_URL
+            self.provider: str = "TypeSafe"
+        else:
+            key = api_key or _openrouter_key()
+            default_model, base = DEFAULT_OPENROUTER_JEV_MODEL, DEFAULT_OPENROUTER_DECISIONS_BASE_URL
+            self.provider = "OpenRouter decisions endpoint"
         if not key:
-            raise DeciderNotAvailableError("JevDecider needs TYPESAFE_API_KEY (or api_key=...).")
+            variable = "TYPESAFE_API_KEY" if route == "typesafe" else "OPENROUTER_API_KEY"
+            raise DeciderNotAvailableError(f"JevDecider with route={route!r} needs {variable} (or api_key=...).")
+        self.route: JevRoute = route
         self._api_key: str = key
-        self.model: str = model or os.getenv("TYPESAFE_MODEL") or DEFAULT_TYPESAFE_MODEL
-        self.base_url: str = (base_url or os.getenv("TYPESAFE_BASE_URL") or DEFAULT_TYPESAFE_BASE_URL).rstrip("/")
+        self.model: str = model or os.getenv("TYPESAFE_MODEL") or default_model
+        self.base_url: str = (base_url or base).rstrip("/")
+        self.url: str = self.base_url + _JEV_PATHS[route]
         self.writer: LlmWriter | _NoWriter = writer or _NoWriter()
         self.timeout: float = timeout
         # a pooled (keep-alive) sync client, used from a worker thread: not bound to an event loop
         self._http: httpx.Client = httpx.Client(timeout=httpx.Timeout(self.timeout, connect=5))
 
+    def _error(self, problem: str, *, retry_later: bool) -> LLMProviderError:
+        return LLMProviderError(
+            dev_message=f"Jev via the {self.provider} ({self.url}) {problem}; no action executed.",
+            user_message=f"The decision model ({self.provider}) failed; no action executed.",
+            agent_message=None,
+            should_retry_later=retry_later,
+        )
+
     def _post(self, body: dict[str, Any]) -> dict[str, Any]:
-        url = f"{self.base_url}/v1/systemone"
         for attempt in range(3):
             try:
-                response = self._http.post(url, json=body, headers={"Authorization": f"Bearer {self._api_key}"})
+                response = self._http.post(self.url, json=body, headers={"Authorization": f"Bearer {self._api_key}"})
             except httpx.HTTPError as e:
-                raise LLMProviderError(
-                    dev_message=f"TypeSafe request failed: {type(e).__name__}; no action executed.",
-                    user_message="The decision model could not be reached; no action executed.",
-                    agent_message=None,
-                    should_retry_later=True,
-                ) from None
-            if response.status_code in _RETRY_STATUSES and attempt < 2:
+                raise self._error(f"request failed: {type(e).__name__}", retry_later=True) from None
+            status = response.status_code
+            if status in _RETRY_STATUSES and attempt < 2:
                 time.sleep(0.5 * 2**attempt)
                 continue
             if not response.is_success:
-                raise LLMProviderError(
-                    dev_message=f"TypeSafe returned HTTP {response.status_code}; no action executed.",
-                    user_message="The decision model returned an error; no action executed.",
-                    agent_message=None,
-                    should_retry_later=response.status_code >= 500 or response.status_code == 429,
-                )
+                detail = _response_detail(response, self._api_key)
+                raise self._error(f"returned HTTP {status}: {detail}", retry_later=status >= 500 or status == 429)
             try:
                 data: Any = response.json()
             except ValueError:
                 data = None
             if not isinstance(data, dict):
-                raise LLMProviderError(
-                    dev_message="TypeSafe returned a response that is not a JSON object; no action executed.",
-                    user_message="The decision model returned an invalid response; no action executed.",
-                    agent_message=None,
-                    should_retry_later=True,
-                )
+                raise self._error("returned a response that is not a JSON object", retry_later=True)
+            # OpenRouter can embed an upstream error in a 200 body
+            if "error" in data and "answers" not in data:
+                raise self._error(f"returned an error: {_response_detail(response, self._api_key)}", retry_later=True)
             return cast(dict[str, Any], data)
-        raise LLMProviderError(  # pragma: no cover - the loop returns or raises
-            dev_message="TypeSafe unavailable", user_message="TypeSafe unavailable", agent_message=None
-        )
+        raise self._error("kept answering a retryable status", retry_later=True)  # pragma: no cover
 
     def close(self) -> None:
         """Close the pooled HTTP connections (sessions close the decider they resolved when they stop)."""
@@ -248,7 +302,7 @@ class JevDecider:
                 answers[name] = Answer.model_validate(raw)
             except ValueError:
                 # left out: `act()` validates strictly the answers it uses and fails on a missing one
-                logger.debug(f"TypeSafe answer {name!r} has an unexpected shape")
+                logger.debug(f"Jev answer {name!r} ({self.provider}) has an unexpected shape")
         return Answers(answers=answers, model=str(data.get("model") or self.model), usage=data.get("usage") or {})
 
     async def write(self, context: WriteContext) -> str | None:
@@ -372,23 +426,36 @@ def _text_model(endpoint: LlmSettings, decision_model: str) -> str:
     return DEFAULT_TEXT_MODEL if endpoint.is_openrouter else decision_model
 
 
+def _writer(endpoint: LlmSettings | None) -> LlmWriter | None:
+    """The field writer of `JevDecider` (Jev cannot write text): on the `NOTTE_LLM_*` endpoint, falling back to
+    the LLM decision model when the writer model refuses on content-policy grounds."""
+    if endpoint is None:
+        return None
+    fallback = _decision_model()
+    return LlmWriter(_text_model(endpoint, fallback), fallback_model=fallback)
+
+
 def default_decider() -> Decider:
-    """`JevDecider` if `TYPESAFE_API_KEY` is set, else `LlmDecider` if an LLM endpoint has a key, else raise.
+    """`JevDecider` on TypeSafe (`TYPESAFE_API_KEY`), else `JevDecider` through OpenRouter (an OpenRouter key),
+    else `LlmDecider` on the `NOTTE_LLM_*` endpoint, else raise. `NOTTE_ACT_DECIDER=jev` / `llm` forces one.
 
     See the module docstring for the environment variables.
     """
+    choice = os.getenv("NOTTE_ACT_DECIDER", "auto").strip().lower()
+    if choice not in ("auto", "jev", "llm"):
+        raise DeciderNotAvailableError(f"NOTTE_ACT_DECIDER must be 'auto', 'jev' or 'llm', not {choice!r}.")
     endpoint = _endpoint()
-    if os.getenv("TYPESAFE_API_KEY"):
-        decision_model = _decision_model()
-        writer = (
-            None
-            if endpoint is None
-            else LlmWriter(_text_model(endpoint, decision_model), fallback_model=decision_model)
+    if choice != "llm":
+        route: JevRoute | None = (
+            "typesafe" if os.getenv("TYPESAFE_API_KEY") else "openrouter" if _openrouter_key() else None
         )
-        return JevDecider(writer=writer)
+        if route is not None:
+            return JevDecider(route=route, writer=_writer(endpoint))
+        if choice == "jev":
+            raise DeciderNotAvailableError("NOTTE_ACT_DECIDER=jev needs TYPESAFE_API_KEY or OPENROUTER_API_KEY.")
     if endpoint is None:
         raise DeciderNotAvailableError(
-            "Neither TYPESAFE_API_KEY nor an LLM API key (OPENROUTER_API_KEY, or NOTTE_LLM_API_KEY) is set."
+            "Neither TYPESAFE_API_KEY, OPENROUTER_API_KEY nor an LLM endpoint key (NOTTE_LLM_API_KEY) is set."
         )
     model = _decision_model()
     return LlmDecider(model, writer=LlmWriter(_text_model(endpoint, model), fallback_model=model))

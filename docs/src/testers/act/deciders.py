@@ -7,7 +7,7 @@ import notte
 # explicit deciders instead of the environment-based default
 # the writer asks `fallback_model` once when its own provider refuses on content-policy grounds
 writer = LlmWriter("inception/mercury-2.5", fallback_model="google/gemini-3.1-flash-lite")
-jev = JevDecider(writer=writer)  # TYPESAFE_API_KEY
+jev = JevDecider(route="openrouter", writer=writer)  # OPENROUTER_API_KEY (route="typesafe": TYPESAFE_API_KEY)
 llm = LlmDecider("google/gemini-3.1-flash-lite")  # OPENROUTER_API_KEY
 
 with notte.Session() as session:

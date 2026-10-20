@@ -21,6 +21,8 @@ ENV = [
     "TYPESAFE_API_KEY",
     "TYPESAFE_MODEL",
     "OPENROUTER_API_KEY",
+    "TYPESAFE_BASE_URL",
+    "NOTTE_ACT_DECIDER",
     "NOTTE_LLM_API_KEY",
     "NOTTE_LLM_BASE_URL",
     "NOTTE_ACT_MODEL",
@@ -40,6 +42,7 @@ def _response(status: int, body: dict[str, Any] | None = None) -> MagicMock:
     response.status_code = status
     response.is_success = 200 <= status < 300
     response.json.return_value = body or {}
+    response.text = json.dumps(body or {})
     return response
 
 
@@ -200,6 +203,8 @@ def test_default_decider_prefers_typesafe(monkeypatch: pytest.MonkeyPatch) -> No
 
 def test_default_decider_llm_from_openrouter_or_configured_model(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("OPENROUTER_API_KEY", "k")
+    # with an OpenRouter key, the LLM decider is opt-in (Jev is the default)
+    monkeypatch.setenv("NOTTE_ACT_DECIDER", "llm")
     decider = default_decider()
     assert isinstance(decider, LlmDecider) and decider.model == DEFAULT_ACT_MODEL
     assert decider.writer.model == DEFAULT_TEXT_MODEL
@@ -222,11 +227,15 @@ def test_default_decider_on_another_endpoint(monkeypatch: pytest.MonkeyPatch) ->
     d = default_decider()
     # off OpenRouter, the writer uses the decision model
     assert isinstance(d, LlmDecider) and d.model == "local-model" and d.writer.model == "local-model"
-    # the OpenRouter key does not apply to another endpoint
-    monkeypatch.delenv("NOTTE_LLM_API_KEY")
+    # an OpenRouter key selects Jev through OpenRouter; the writer stays on the configured endpoint
     monkeypatch.setenv("OPENROUTER_API_KEY", "k")
-    with pytest.raises(DeciderNotAvailableError):
-        _ = default_decider()
+    jev = default_decider()
+    assert isinstance(jev, JevDecider) and jev.route == "openrouter"
+    assert isinstance(jev.writer, LlmWriter) and jev.writer.model == "local-model" and jev.writer.fallback_model is None
+    # without an endpoint key, Jev has no writer: the OpenRouter key is never sent to another endpoint
+    monkeypatch.delenv("NOTTE_LLM_API_KEY")
+    jev = default_decider()
+    assert isinstance(jev, JevDecider) and not isinstance(jev.writer, LlmWriter)
 
 
 def test_jev_decider_without_llm_key_has_no_writer(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -335,9 +344,147 @@ async def test_other_writer_errors_do_not_fall_back(monkeypatch: pytest.MonkeyPa
 
 def test_default_writers_fall_back_to_the_decision_model(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("OPENROUTER_API_KEY", "k")
+    monkeypatch.setenv("NOTTE_ACT_DECIDER", "llm")
     llm = default_decider()
     assert isinstance(llm, LlmDecider) and llm.writer.fallback_model == DEFAULT_ACT_MODEL
-    monkeypatch.setenv("TYPESAFE_API_KEY", "k")
-    jev = default_decider()
-    assert isinstance(jev, JevDecider) and isinstance(jev.writer, LlmWriter)
-    assert jev.writer.model == DEFAULT_TEXT_MODEL and jev.writer.fallback_model == DEFAULT_ACT_MODEL
+    monkeypatch.delenv("NOTTE_ACT_DECIDER")
+    for typesafe in (False, True):
+        if typesafe:
+            monkeypatch.setenv("TYPESAFE_API_KEY", "k")
+        jev = default_decider()
+        assert isinstance(jev, JevDecider) and isinstance(jev.writer, LlmWriter)
+        # Jev cannot write: the fallback is a text model
+        assert jev.writer.model == DEFAULT_TEXT_MODEL and jev.writer.fallback_model == DEFAULT_ACT_MODEL
+
+
+OPENROUTER_DECISION = {
+    "model": "typesafe/jev-1.14-20261014",
+    "answers": {
+        "operation": {
+            "type": "choice",
+            "choice": "CLICK",
+            "probabilities": {"CLICK": 0.9, "DONE": 0.1},
+            "confidence": 0.9,
+        },
+        "click_target": {
+            "type": "choice",
+            "choice": "B1",
+            "probabilities": {"B1": 0.99, "L1": 0.01},
+            "confidence": 0.99,
+        },
+    },
+    "usage": {"input_tokens": 432, "output_tokens": 49, "cost": 1.8e-05},
+    "id": "gen-dec-1",
+    "provider": "TypeSafe",
+}
+
+
+@pytest.mark.asyncio
+async def test_jev_through_openrouter_posts_to_the_decisions_endpoint(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-key")
+    decider = JevDecider()
+    assert decider.route == "openrouter"
+    post = MagicMock(return_value=_response(200, OPENROUTER_DECISION))
+    monkeypatch.setattr(decider._http, "post", post)  # pyright: ignore[reportPrivateUsage]
+
+    answers = await decider.choose(STATE, QUESTIONS)
+
+    assert post.call_args.args[0] == "https://openrouter.ai/api/alpha/decisions"
+    assert post.call_args.kwargs["headers"] == {"Authorization": "Bearer or-key"}
+    sent = post.call_args.kwargs["json"]
+    assert sent["model"] == "~typesafe/jev-latest" and set(sent) == {"model", "state", "questions"}
+    assert answers.answers["click_target"].choice == "B1" and answers.answers["click_target"].confidence == 0.99
+    assert answers.model == "typesafe/jev-1.14-20261014" and answers.usage["cost"] == 1.8e-05
+
+
+def test_jev_route_resolution(monkeypatch: pytest.MonkeyPatch) -> None:
+    with pytest.raises(DeciderNotAvailableError, match="OPENROUTER_API_KEY"):
+        _ = JevDecider()
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-key")
+    assert JevDecider().url == "https://openrouter.ai/api/alpha/decisions"
+    # an OpenRouter key given as NOTTE_LLM_API_KEY at the default endpoint
+    monkeypatch.delenv("OPENROUTER_API_KEY")
+    monkeypatch.setenv("NOTTE_LLM_API_KEY", "llm-key")
+    assert JevDecider().route == "openrouter"
+    monkeypatch.setenv("TYPESAFE_API_KEY", "ts-key")
+    direct = JevDecider()
+    assert (
+        direct.route == "typesafe"
+        and direct.url == "https://api.typesafe.ai/v1/systemone"
+        and direct.model == "jev-latest"
+    )
+    # overrides: model, base URL, explicit route and key
+    monkeypatch.setenv("TYPESAFE_MODEL", "jev-1.14")
+    monkeypatch.setenv("TYPESAFE_BASE_URL", "https://typesafe.test/")
+    assert JevDecider().url == "https://typesafe.test/v1/systemone" and JevDecider().model == "jev-1.14"
+    routed = JevDecider(route="openrouter", api_key="explicit", base_url="https://proxy.test/api/")
+    assert routed.url == "https://proxy.test/api/alpha/decisions" and routed._api_key == "explicit"  # pyright: ignore[reportPrivateUsage]
+    assert routed.model == "jev-1.14"
+    monkeypatch.delenv("NOTTE_LLM_API_KEY")
+    with pytest.raises(DeciderNotAvailableError, match="OPENROUTER_API_KEY"):
+        _ = JevDecider(route="openrouter")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("status", "body", "match", "retry_later"),
+    [
+        (400, {"error": {"message": "state: Required"}}, "HTTP 400: state: Required", False),
+        (401, {"error": {"message": "No auth credentials found"}}, "HTTP 401", False),
+        (
+            200,
+            {"error": {"message": "Upstream error from TypeSafe", "code": 502}},
+            "Upstream error from TypeSafe",
+            True,
+        ),
+    ],
+)
+async def test_jev_errors_name_the_endpoint(
+    monkeypatch: pytest.MonkeyPatch, status: int, body: dict[str, Any], match: str, retry_later: bool
+) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-key")
+    decider = JevDecider()
+    monkeypatch.setattr(decider._http, "post", MagicMock(return_value=_response(status, body)))  # pyright: ignore[reportPrivateUsage]
+    with pytest.raises(LLMProviderError, match=match) as exc:
+        _ = await decider.choose(STATE, QUESTIONS)
+    assert "https://openrouter.ai/api/alpha/decisions" in exc.value.dev_message
+    assert "OpenRouter" in exc.value.user_message and "or-key" not in exc.value.dev_message
+    assert exc.value.should_retry_later is retry_later
+
+
+@pytest.mark.asyncio
+async def test_jev_retries_openrouter_upstream_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(llm_act.time, "sleep", lambda _: None)
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-key")
+    decider = JevDecider()
+    post = MagicMock(side_effect=[_response(502), _response(200, OPENROUTER_DECISION)])
+    monkeypatch.setattr(decider._http, "post", post)  # pyright: ignore[reportPrivateUsage]
+    assert set((await decider.choose(STATE, QUESTIONS)).answers) == {"operation", "click_target"}
+    assert post.call_count == 2
+
+
+def test_resolution_order(monkeypatch: pytest.MonkeyPatch) -> None:
+    # 1. TypeSafe directly
+    monkeypatch.setenv("TYPESAFE_API_KEY", "ts")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or")
+    assert isinstance(d := default_decider(), JevDecider) and d.route == "typesafe"
+    # 2. Jev through OpenRouter
+    monkeypatch.delenv("TYPESAFE_API_KEY")
+    assert isinstance(d := default_decider(), JevDecider) and d.route == "openrouter"
+    # NOTTE_ACT_DECIDER=llm keeps the LLM decider available
+    monkeypatch.setenv("NOTTE_ACT_DECIDER", "llm")
+    assert isinstance(default_decider(), LlmDecider)
+    monkeypatch.setenv("NOTTE_ACT_DECIDER", "nope")
+    with pytest.raises(DeciderNotAvailableError, match="NOTTE_ACT_DECIDER"):
+        _ = default_decider()
+    # 3. another endpoint without an OpenRouter key: the LLM decider
+    monkeypatch.delenv("NOTTE_ACT_DECIDER")
+    monkeypatch.delenv("OPENROUTER_API_KEY")
+    monkeypatch.setenv("NOTTE_LLM_BASE_URL", "https://llm.test/v1")
+    monkeypatch.setenv("NOTTE_LLM_API_KEY", "k")
+    monkeypatch.setenv("NOTTE_LLM_MODEL", "local-model")
+    assert isinstance(d := default_decider(), LlmDecider) and d.model == "local-model"
+    # NOTTE_ACT_DECIDER=jev refuses to fall back to an LLM
+    monkeypatch.setenv("NOTTE_ACT_DECIDER", "jev")
+    with pytest.raises(DeciderNotAvailableError, match="NOTTE_ACT_DECIDER=jev"):
+        _ = default_decider()

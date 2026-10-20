@@ -2,7 +2,7 @@
 # @sniptest typecheck_only=true
 import notte
 
-# needs TYPESAFE_API_KEY (Jev) or OPENROUTER_API_KEY (LLM decider), and `pip install "notte[llm]"`
+# needs OPENROUTER_API_KEY (Jev through OpenRouter, and the text writer), and `pip install "notte[llm]"`
 with notte.Session() as session:
     _ = session.execute(type="goto", url="https://en.wikipedia.org/wiki/Main_Page")
 
