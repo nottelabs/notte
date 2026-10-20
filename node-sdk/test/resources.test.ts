@@ -4,6 +4,54 @@ import { NotteClient, NotteAPIError, sessionStop, type GetFunctionRunResponseWri
 afterEach(() => vi.unstubAllGlobals());
 const client = () => new NotteClient({ baseUrl: 'https://api.example.test', apiKey: 'test-key' }); // pragma: allowlist secret
 
+it.each(['files', 'sessions'] as const)('executes a file action through %s with a pinned target', async resource => {
+  const requests: Request[] = [];
+  const action = { type: 'upload_file' as const, file_path: 'input.txt', selector: 'input[type=file]' };
+  const payload = { success: true, action, message: 'Uploaded', started_at: '2026-10-20T00:00:00Z', ended_at: '2026-10-20T00:00:01Z' };
+  vi.stubGlobal('fetch', vi.fn(async (request: Request) => {
+    requests.push(request);
+    return Response.json(payload);
+  }));
+  const api = client();
+  const execute = resource === 'files' ? api.files.execute : api.sessions.executeSessionFile;
+  const result = await execute('session/id', { action, target_id: 'browser-target', record: false }, { update_metadata: false });
+  expect(result).toEqual(payload);
+  expect(requests).toHaveLength(1);
+  expect(requests[0].method).toBe('POST');
+  expect(requests[0].url).toBe('https://api.example.test/sessions/session%2Fid/page/execute/file?update_metadata=false');
+  expect(requests[0].headers.get('authorization')).toBe('Bearer test-key');
+  expect(await requests[0].json()).toEqual({ action, target_id: 'browser-target', record: false });
+});
+
+it('preserves function artifact and execution runtime metadata', async () => {
+  const payload = { sdk_generation: 'v110', artifact_sdk_generation: 'v19', status: 'active' };
+  vi.stubGlobal('fetch', vi.fn(async () => Response.json(payload)));
+  const result = await client().functions.runGetMetadata('function', 'run');
+  expect(result.sdk_generation).toBe('v110');
+  expect(result.artifact_sdk_generation).toBe('v19');
+});
+
+it('keeps runtime-health cancellation options before the SDK-generation query', async () => {
+  const controller = new AbortController();
+  const requests: Request[] = [];
+  vi.stubGlobal('fetch', vi.fn(async (request: Request) => {
+    requests.push(request);
+    return Response.json({ status: 'healthy' });
+  }));
+  const api = client();
+  const options = { signal: controller.signal, headers: { 'x-notte-request-origin': 'compatibility-test' } };
+  await api.functions.runtimeHealth(options);
+  await api.functions.runtimeHealth(options, { sdk_generation: 'v110' });
+  expect(requests[0].url).toBe('https://api.example.test/functions/health');
+  expect(requests[1].url).toBe('https://api.example.test/functions/health?sdk_generation=v110');
+  for (const request of requests) {
+    expect(request.headers.get('x-notte-request-origin')).toBe('sdk-node');
+    expect(request.signal.aborted).toBe(false);
+  }
+  controller.abort();
+  expect(requests.every(request => request.signal.aborted)).toBe(true);
+});
+
 it('binds a detached stop method to the owning client and unwraps its response', async () => {
   const requests: Request[] = [];
   vi.stubGlobal('fetch', vi.fn(async (request: Request) => {

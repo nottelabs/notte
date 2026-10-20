@@ -552,7 +552,7 @@ KEYWORD_ANNOTATIONS = {
     "BodySessionCookiesSetSessionsSessionIdCookiesPost": {"cookies": "list[core.Cookie] | list[config.CookieDict]"},
     "FunctionRunGetMetadataParametersQuery": {"payload_mode": "str"},
     "FunctionRunUpdateRequest": {
-        "logs": "list[str]",
+        "logs": "list[str] | None",
         "result": "Any | None",
         "status": 'Literal["closed", "active", "failed"]',
     },

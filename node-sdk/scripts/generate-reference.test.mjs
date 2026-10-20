@@ -40,6 +40,11 @@ class NotExported { visible(): void {} }
 });
 after(() => rmSync(fixture, { recursive: true, force: true }));
 
+test('profile persisted domains describe the retained browser state', () => {
+  const page = actual.pages.get('typescript-sdk-reference/types/profileresponse.mdx');
+  assert.match(page, /<ParamField body="persisted_domains"[^>]*>\nList of domains with persisted browser state \(cookies, localStorage, sessionStorage\)\./);
+});
+
 test('source links remain stable when declarations move to different lines', () => {
   const path = resolve(fixture, 'src/index.ts');
   const source = readFileSync(path, 'utf8');

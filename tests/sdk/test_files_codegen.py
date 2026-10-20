@@ -1,5 +1,6 @@
 """JSON file-operation captures, first run against the old HTTP facade."""
 
+import json
 from typing import Any
 
 import pytest
@@ -119,3 +120,43 @@ def test_file_enum_is_generated_with_public_member_names() -> None:
     assert FileSource.USER_UPLOAD.value == "user_upload"
     assert FileSource.USER_UPLOAD == "user_upload"
     assert isinstance(FileSource.USER_UPLOAD, str)
+
+
+def test_file_execution_targets_one_browser_tab(client: NotteClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    from notte_sdk._generated.models import UploadFileActionInput
+
+    action = {"type": "upload_file", "file_path": "input.txt", "selector": "input[type=file]"}
+    session = fake(
+        monkeypatch,
+        {
+            "started_at": "2026-10-20T00:00:00Z",
+            "ended_at": "2026-10-20T00:00:01Z",
+            "action": action,
+            "success": True,
+            "message": "Uploaded",
+        },
+    )
+    result = client.files.execute(
+        "session/id",
+        action=UploadFileActionInput.model_validate(action),
+        target_id="browser-target",
+        record=False,
+        query={"update_metadata": False},
+    )
+    assert result.success is True
+    assert result.action.type == "upload_file"
+    call = session.calls[0]
+    assert (call.method, call.url) == ("POST", SERVER + "/sessions/session%2Fid/page/execute/file")
+    assert call.params == {"update_metadata": False}
+    body = json.loads(call.data)
+    assert body["target_id"] == "browser-target"
+    assert body["record"] is False
+    assert {key: body["action"][key] for key in action} == action
+
+
+def test_file_execution_returns_api_errors(client: NotteClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    session = fake(monkeypatch, {"detail": "The file action browser target is no longer available"}, 409)
+    with pytest.raises(NotteAPIError) as error:
+        _ = client.files.execute("session", action={}, target_id="closed-target")
+    assert error.value.status_code == 409
+    assert len(session.calls) == 1

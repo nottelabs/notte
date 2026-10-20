@@ -21,7 +21,7 @@ export type FunctionRunUpdateRequest = Omit<ApiFunctionRunUpdateRequest, 'payloa
 The ID of the session
 </ParamField>
 
-<ParamField body="status" type={"\"active\" | \"closed\" | \"failed\""} required>
+<ParamField body="status" type={"\"failed\" | \"closed\" | \"active\""} required>
 The status of the workflow run
 </ParamField>
 
@@ -29,7 +29,7 @@ The status of the workflow run
 The result of the workflow run
 </ParamField>
 
-<ParamField body="logs" type={"string[] | undefined"}>
+<ParamField body="logs" type={"string[] | null | undefined"}>
 The logs of the workflow run
 </ParamField>
 

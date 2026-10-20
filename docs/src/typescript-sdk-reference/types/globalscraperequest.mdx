@@ -78,12 +78,6 @@ export type GlobalScrapeRequest = {
      */
     cdp_url?: string | null;
     /**
-     * Screenshot Type
-     *
-     * The type of screenshot to use for the session.
-     */
-    screenshot_type?: 'raw' | 'full' | 'last_action';
-    /**
      * Browser profile configuration for state persistence
      */
     profile?: SessionProfile | null;
@@ -136,6 +130,14 @@ export type GlobalScrapeRequest = {
      */
     advanced_stealth?: boolean;
     /**
+     * Screenshot Type
+     *
+     * Ignored since notte 1.10: screenshots are returned without highlighting.
+     *
+     * @deprecated
+     */
+    screenshot_type?: 'raw' | 'full' | 'last_action';
+    /**
      * Selector
      *
      * Playwright selector to scope the scrape to. Only content inside this selector will be scraped.
@@ -150,7 +152,9 @@ export type GlobalScrapeRequest = {
     /**
      * Scrape Images
      *
-     * Whether to scrape images from the page. Images are scraped by default.
+     * Image scraping was removed; true returns 422.
+     *
+     * @deprecated
      */
     scrape_images?: boolean;
     /**
@@ -166,12 +170,6 @@ export type GlobalScrapeRequest = {
      */
     only_main_content?: boolean;
     /**
-     * Only Images
-     *
-     * Whether to only scrape images from the page. If True, the page content is excluded.
-     */
-    only_images?: boolean;
-    /**
      * Response Format
      *
      * The response format to use for the scrape. Use a JSON Schema object; high-level Node scrape methods also accept a Zod schema
@@ -186,15 +184,23 @@ export type GlobalScrapeRequest = {
     /**
      * Model
      *
-     * The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'vertex_ai/gemini-3.1-flash-lite'. Defaults to the platform model.
+     * Model used for structured extraction. Canonical OpenRouter ids: google/gemini-3.5-flash, google/gemini-3.5-flash-lite, google/gemini-3.1-flash-lite, google/gemini-3.1-flash-lite-preview, google/gemini-2.5-flash, openai/gpt-4.1-mini, openai/gpt-4o, google/gemma-3-27b-it, openai/gpt-oss-120b, perplexity/sonar-pro, deepseek/deepseek-r1, meta-llama/llama-3.3-70b-instruct, anthropic/claude-sonnet-4-5, anthropic/claude-haiku-4-5, moonshotai/kimi-k2.5, x-ai/grok-4.3, minimax/minimax-m2.5. Reviewed legacy LiteLLM ids remain accepted. Defaults to google/gemini-3.5-flash.
      */
-    model?: LlmModel | string | null;
+    model?: string | null;
     /**
      * Use Link Placeholders
      *
      * Whether to use link/image placeholders to reduce the number of tokens in the prompt and hallucinations. However this is an experimental feature and might not work as expected.
      */
     use_link_placeholders?: boolean;
+    /**
+     * Only Images
+     *
+     * Image scraping was removed; true returns 422.
+     *
+     * @deprecated
+     */
+    only_images?: boolean;
     /**
      * Url
      */
@@ -248,10 +254,6 @@ Viewport shape preset. When set, the backend fits the largest rectangle of this 
 The CDP URL of another remote session provider.
 </ParamField>
 
-<ParamField body="screenshot_type" type={"\"raw\" | \"full\" | \"last_action\" | undefined"}>
-The type of screenshot to use for the session.
-</ParamField>
-
 <ParamField body="profile" type={"SessionProfile | null | undefined"}>
 Browser profile configuration for state persistence
 </ParamField>
@@ -288,6 +290,14 @@ Block ads and trackers in managed browsers using Basic filtering. Set false to d
 Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.
 </ParamField>
 
+<ParamField body="screenshot_type" type={"\"raw\" | \"full\" | \"last_action\" | undefined"}>
+Ignored since notte 1.10: screenshots are returned without highlighting.
+
+**deprecated:**
+
+
+</ParamField>
+
 <ParamField body="selector" type={"string | null | undefined"}>
 Playwright selector to scope the scrape to. Only content inside this selector will be scraped.
 </ParamField>
@@ -297,7 +307,11 @@ Whether to scrape links from the page. Links are scraped by default.
 </ParamField>
 
 <ParamField body="scrape_images" type={"boolean | undefined"}>
-Whether to scrape images from the page. Images are scraped by default.
+Image scraping was removed; true returns 422.
+
+**deprecated:**
+
+
 </ParamField>
 
 <ParamField body="ignored_tags" type={"string[] | null | undefined"}>
@@ -306,10 +320,6 @@ HTML tags to ignore from the page
 
 <ParamField body="only_main_content" type={"boolean | undefined"}>
 Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded.
-</ParamField>
-
-<ParamField body="only_images" type={"boolean | undefined"}>
-Whether to only scrape images from the page. If True, the page content is excluded.
 </ParamField>
 
 <ParamField body="response_format" type={"unknown"}>
@@ -321,11 +331,19 @@ Additional instructions to use for the scrape. E.g. 'Extract only the title, dat
 </ParamField>
 
 <ParamField body="model" type={"string | null | undefined"}>
-The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'vertex_ai/gemini-3.1-flash-lite'. Defaults to the platform model.
+Model used for structured extraction. Canonical OpenRouter ids: google/gemini-3.5-flash, google/gemini-3.5-flash-lite, google/gemini-3.1-flash-lite, google/gemini-3.1-flash-lite-preview, google/gemini-2.5-flash, openai/gpt-4.1-mini, openai/gpt-4o, google/gemma-3-27b-it, openai/gpt-oss-120b, perplexity/sonar-pro, deepseek/deepseek-r1, meta-llama/llama-3.3-70b-instruct, anthropic/claude-sonnet-4-5, anthropic/claude-haiku-4-5, moonshotai/kimi-k2.5, x-ai/grok-4.3, minimax/minimax-m2.5. Reviewed legacy LiteLLM ids remain accepted. Defaults to google/gemini-3.5-flash.
 </ParamField>
 
 <ParamField body="use_link_placeholders" type={"boolean | undefined"}>
 Whether to use link/image placeholders to reduce the number of tokens in the prompt and hallucinations. However this is an experimental feature and might not work as expected.
+</ParamField>
+
+<ParamField body="only_images" type={"boolean | undefined"}>
+Image scraping was removed; true returns 422.
+
+**deprecated:**
+
+
 </ParamField>
 
 <ParamField body="url" type={"string"} required>
@@ -335,7 +353,6 @@ Whether to use link/image placeholders to reduce the number of tokens in the pro
 ## Related types
 
 - [ExternalProxy](/typescript-sdk-reference/types/externalproxy)
-- [LlmModel](/typescript-sdk-reference/types/llmmodel)
 - [NotteProxy](/typescript-sdk-reference/types/notteproxy)
 - [SessionProfile](/typescript-sdk-reference/types/sessionprofile)
 - [TailnetProxy](/typescript-sdk-reference/types/tailnetproxy)

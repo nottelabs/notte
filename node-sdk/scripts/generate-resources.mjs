@@ -73,9 +73,9 @@ export function generateResources(sdkSource, typesSource, registry = byOperation
         for (const key of keys) args.push(`${camel(key)}: Types.${data}['path'][${JSON.stringify(key)}]`);
         request.push(`path: { ${keys.map(key => `${JSON.stringify(key)}: ${camel(key)}`).join(', ')} }`);
       }
-      // This operation originally had no query. Keep request options in the
-      // third position for existing callers and append its new payload query.
-      const queryAfterOptions = operation === 'functionRunGetMetadata';
+      // These operations originally had no query. Keep existing request-options
+      // positions and append their new query parameters.
+      const queryAfterOptions = ['functionRunGetMetadata', 'functionRuntimeHealth'].includes(operation);
       let trailingQuery;
       for (const field of ['body', 'query']) {
         const member = members.get(field);

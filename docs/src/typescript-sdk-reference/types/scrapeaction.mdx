@@ -40,12 +40,6 @@ export type ScrapeAction = {
      */
     selector?: string | null;
     /**
-     * Only Images
-     *
-     * Whether to only scrape images from the page. If True, the page content is excluded.
-     */
-    only_images?: boolean;
-    /**
      * Scrape Links
      *
      * Whether to scrape links from the page. Links are scraped by default.
@@ -98,10 +92,6 @@ Whether to only scrape the main content of the page. If True, navbars, footers, 
 
 <ParamField body="selector" type={"string | null | undefined"}>
 Playwright selector to scope the scrape to. Only content inside this selector will be scraped.
-</ParamField>
-
-<ParamField body="only_images" type={"boolean | undefined"}>
-Whether to only scrape images from the page. If True, the page content is excluded.
 </ParamField>
 
 <ParamField body="scrape_links" type={"boolean | undefined"}>

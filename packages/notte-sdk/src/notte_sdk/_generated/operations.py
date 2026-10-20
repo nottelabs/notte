@@ -165,12 +165,16 @@ def function_run_update_metadata(
     )
 
 
-def function_runtime_health() -> NotteEndpoint[models.FunctionRuntimeHealthResponse]:
+def function_runtime_health(
+    *,
+    params: BaseModel | None = None,
+) -> NotteEndpoint[models.FunctionRuntimeHealthResponse]:
     """Function Runtime Health (`GET /functions/health`)."""
     return NotteEndpoint(
         method="GET",
         path="/functions/health",
         response=models.FunctionRuntimeHealthResponse,
+        params=params,
     )
 
 
@@ -485,6 +489,22 @@ def list_session_files(
         method="GET",
         path=f"/sessions/{_segment(session_id)}/files",
         response=models.SessionFilesPage,
+        params=params,
+    )
+
+
+def execute_session_file(
+    session_id: str,
+    body: BaseModel,
+    *,
+    params: BaseModel | None = None,
+) -> NotteEndpoint[models.ApiExecutionResponse]:
+    """Execute Session File (`POST /sessions/{session_id}/page/execute/file`)."""
+    return NotteEndpoint(
+        method="POST",
+        path=f"/sessions/{_segment(session_id)}/page/execute/file",
+        response=models.ApiExecutionResponse,
+        request=body,
         params=params,
     )
 

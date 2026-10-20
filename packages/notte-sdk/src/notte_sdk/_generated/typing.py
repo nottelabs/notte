@@ -8,6 +8,8 @@ from notte_core import types as core
 from pydantic import Field
 from typing_extensions import TypedDict
 
+from notte_sdk._generated import models
+
 
 class NotteProxyDict(TypedDict):
     type: NotRequired[Literal["notte"]]
@@ -48,6 +50,7 @@ class GetFunctionRequestDict(TypedDict):
     "Request dictionary for getting a function.\n\nArgs:\n    function_id: The ID of the function to get.\n    version: The version of the function to get."
 
     version: NotRequired[str | None]
+    function_run_id: NotRequired[str | None]
 
 
 class FunctionMetadataUpdateRequestDict(TypedDict):
@@ -57,8 +60,8 @@ class FunctionMetadataUpdateRequestDict(TypedDict):
     domain: NotRequired[str | None]
     instructions: NotRequired[str | None]
     self_healing: NotRequired[bool | None]
-    response_format: NotRequired[dict[str, Any] | None]
     shared: NotRequired[bool | None]
+    response_format: NotRequired[dict[str, Any] | None]
 
 
 class FunctionRollbackRequestDict(TypedDict):
@@ -75,10 +78,14 @@ class FunctionRunGetMetadataParametersQueryDict(TypedDict):
 
 class FunctionRunUpdateRequestDict(TypedDict):
     session_id: NotRequired[str | None]
-    logs: NotRequired[list[str]]
+    logs: NotRequired[list[str] | None]
     variables: NotRequired[dict[str, Any] | None]
     result: NotRequired[Any | None]
     status: NotRequired[Literal["closed", "active", "failed"]]
+
+
+class FunctionRuntimeHealthParametersQueryDict(TypedDict):
+    sdk_generation: NotRequired[Literal["v19", "v110"]]
 
 
 class FunctionScheduleCreateRequestDict(TypedDict):
@@ -190,6 +197,16 @@ class ListSessionFilesParametersQueryDict(TypedDict):
     source: NotRequired[str | None]
     limit: NotRequired[int]
     offset: NotRequired[int]
+
+
+class FileExecutionRequestDict(TypedDict):
+    action: Required[models.UploadFileActionInput | models.DownloadFileActionInput]
+    target_id: Required[str]
+    record: NotRequired[bool]
+
+
+class ExecuteSessionFileParametersQueryDict(TypedDict):
+    update_metadata: NotRequired[bool]
 
 
 class PersonaListRequestDict(TypedDict):
