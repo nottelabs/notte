@@ -330,6 +330,7 @@
               "integrations/claude-managed-agents",
               "integrations/replit",
               "integrations/docker-sandboxes",
+              "integrations/daytona",
               "integrations/e2b",
               "integrations/fx"
             ]

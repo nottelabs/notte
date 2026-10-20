@@ -31,5 +31,6 @@
   "fx": "node-project",
   "terraform-profiles": "terraform-go",
   "pipedream": "python-project",
-  "e2b": "python-project"
+  "e2b": "python-project",
+  "daytona": "python-project"
 }

@@ -1,0 +1,10 @@
+[project]
+name = "notte-daytona-example"
+version = "0.1.0"
+description = "Test a web app running in a Daytona sandbox with a Notte cloud browser"
+requires-python = ">=3.11,<3.15"
+dependencies = ["daytona>=0.220,<1", "notte-sdk[playwright]>=1.9.7,<2", "python-dotenv>=1.1,<2"]
+
+[tool.uv]
+package = false
+[tool.uv.workspace]
