@@ -104,3 +104,35 @@ def test_instructions_are_deprecated_in_the_request_schema() -> None:
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         assert ObserveRequest().instructions is None
+
+
+def test_the_replacement_for_instructions_observes_without_warning(client: NotteClient, sent: MagicMock) -> None:
+    # The guidance: observe without `instructions`, then choose among the returned actions.
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        observation = client.sessions.page.observe(session_id=SESSION_ID)
+    # The actions to choose from (here only the browser actions an empty page offers).
+    assert len(observation.space.actions) > 0
+    request = sent.call_args.args[0].request
+    assert request.instructions is None
+    assert request.perception_type in (None, "fast")
+
+
+def test_the_deprecation_guidance_is_complete(client: NotteClient, sent: MagicMock) -> None:
+    _ = sent
+    caught = _observe_warnings(
+        client.sessions.page.observe, session_id=SESSION_ID, instructions="click login", perception_type="deep"
+    )
+    properties = ObserveRequest.model_json_schema(mode="validation")["properties"]
+    texts = [str(warning.message) for warning in caught] + [
+        properties["instructions"]["description"],
+        properties["perception_type"]["description"],
+        PageClient.observe.__doc__ or "",
+        RemoteSession.observe.__doc__ or "",
+    ]
+    for text in texts:
+        assert "<<" not in text and ">>" not in text and "pending" not in text.lower(), text
+    instructions_texts = [text for text in texts if "instructions" in text]
+    assert instructions_texts
+    for text in instructions_texts:
+        assert "returned actions" in text, text
