@@ -185,7 +185,8 @@ class _NoWriter:
 
 def _openrouter_key() -> str | None:
     """An OpenRouter API key: `OPENROUTER_API_KEY`, or `NOTTE_LLM_API_KEY` when the `NOTTE_LLM_*` endpoint is OpenRouter."""
-    base_url = os.getenv("NOTTE_LLM_BASE_URL")
+    # empty means the default (OpenRouter), as in `LlmSettings.from_env`
+    base_url = os.getenv("NOTTE_LLM_BASE_URL") or None
     if (base_url is None or urlsplit(base_url).hostname == "openrouter.ai") and os.getenv("NOTTE_LLM_API_KEY"):
         return os.getenv("NOTTE_LLM_API_KEY")
     return os.getenv("OPENROUTER_API_KEY") or None

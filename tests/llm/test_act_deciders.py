@@ -488,3 +488,18 @@ def test_resolution_order(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("NOTTE_ACT_DECIDER", "jev")
     with pytest.raises(DeciderNotAvailableError, match="NOTTE_ACT_DECIDER=jev"):
         _ = default_decider()
+
+
+@pytest.mark.parametrize("base_url", ["", "https://openrouter.ai/api/v1/"])
+def test_an_empty_or_openrouter_base_url_is_openrouter(monkeypatch: pytest.MonkeyPatch, base_url: str) -> None:
+    from notte_llm.config import LlmSettings
+
+    monkeypatch.setenv("NOTTE_LLM_BASE_URL", base_url)
+    monkeypatch.setenv("NOTTE_LLM_API_KEY", "llm-key")
+    # the writer's endpoint and Jev's route agree that this is OpenRouter
+    assert LlmSettings.from_env().is_openrouter
+    assert JevDecider().route == "openrouter"
+    monkeypatch.setenv("NOTTE_ACT_DECIDER", "jev")
+    decider = default_decider()
+    assert isinstance(decider, JevDecider) and decider._api_key == "llm-key"  # pyright: ignore[reportPrivateUsage]
+    assert isinstance(decider.writer, LlmWriter) and decider.writer.model == DEFAULT_TEXT_MODEL
