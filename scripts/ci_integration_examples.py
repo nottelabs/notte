@@ -26,6 +26,7 @@ CREDENTIALS = {
     "ANTHROPIC_API_KEY",
     "BOX_ACCESS_TOKEN",
     "BRAINTRUST_API_KEY",
+    "DAYTONA_API_KEY",
     "GEMINI_API_KEY",
     "LINK_ACCESS_TOKEN",
     "LINK_SPEND_REQUEST_ID",
@@ -334,6 +335,7 @@ def project_env(name: str, env: dict[str, str]) -> dict[str, str]:
         "inngest": "ANTHROPIC_API_KEY",
         "braintrust": "BRAINTRUST_API_KEY",
         "laminar": "LMNR_PROJECT_API_KEY",
+        "daytona": "DAYTONA_API_KEY",
     }.get(name)
     main = env.get("GITHUB_REF") == "refs/heads/main" and env.get("GITHUB_EVENT_NAME") != "pull_request"
     allowed = {"NOTTE_API_KEY", provider} if main else {"NOTTE_API_KEY"}
