@@ -38,6 +38,7 @@ from notte_core.act import Answer, Answers, Decider, DecisionState, Question, Wr
 from notte_core.act.errors import DeciderNotAvailableError, InvalidDecisionError
 from notte_core.act.prompts import TEXT_VALUE
 from notte_core.errors import (
+    ContentFilterError,
     InvalidJsonResponseForStructuredOutput,
     LLMProviderError,
     ModelNotFoundError,
@@ -120,17 +121,35 @@ def _json_object(content: str) -> dict[str, Any]:
 
 
 class LlmWriter:
-    """Writes the text of one field with a small LLM that answers exactly `{"text": <string or null>}`."""
+    """Writes the text of one field with a small LLM that answers exactly `{"text": <string or null>}`.
 
-    def __init__(self, model: str) -> None:
+    When the provider of `model` refuses the request on content-policy grounds (`ContentFilterError`),
+    the text is asked once more from `fallback_model` (the decision model with `default_decider()`).
+    """
+
+    def __init__(self, model: str, *, fallback_model: str | None = None) -> None:
         self.model: str = model
+        self.fallback_model: str | None = None if fallback_model == model else fallback_model
 
     async def write(self, context: WriteContext) -> str | None:
         messages: list[Message] = [
             {"role": "system", "content": TEXT_VALUE},
             {"role": "user", "content": context.model_dump_json()},
         ]
-        content, _ = await _complete(self.model, messages, {"type": "json_object"}, max_tokens=1024)
+        try:
+            content, _ = await _complete(self.model, messages, {"type": "json_object"}, max_tokens=1024)
+        except ContentFilterError:
+            if self.fallback_model is None:
+                raise
+            logger.warning(f"{self.model} refused to write a field value; asking {self.fallback_model}")
+            try:
+                content, _ = await _complete(self.fallback_model, messages, {"type": "json_object"}, max_tokens=1024)
+            except ContentFilterError as e:
+                field = context.field.get("label") or "the field"
+                raise ContentFilterError(
+                    f"{self.model} and {self.fallback_model}",
+                    f"both text models refused to write the value of {field!r}; nothing typed",
+                ) from e
         output = _json_object(content)
         value = output.get("text")
         if set(output) != {"text"}:
@@ -360,11 +379,16 @@ def default_decider() -> Decider:
     """
     endpoint = _endpoint()
     if os.getenv("TYPESAFE_API_KEY"):
-        writer = None if endpoint is None else LlmWriter(_text_model(endpoint, _decision_model()))
+        decision_model = _decision_model()
+        writer = (
+            None
+            if endpoint is None
+            else LlmWriter(_text_model(endpoint, decision_model), fallback_model=decision_model)
+        )
         return JevDecider(writer=writer)
     if endpoint is None:
         raise DeciderNotAvailableError(
             "Neither TYPESAFE_API_KEY nor an LLM API key (OPENROUTER_API_KEY, or NOTTE_LLM_API_KEY) is set."
         )
     model = _decision_model()
-    return LlmDecider(model, writer=LlmWriter(_text_model(endpoint, model)))
+    return LlmDecider(model, writer=LlmWriter(_text_model(endpoint, model), fallback_model=model))

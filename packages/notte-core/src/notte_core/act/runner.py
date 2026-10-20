@@ -59,6 +59,7 @@ from notte_core.credentials.base import (
     PasswordField,
     UserNameField,
 )
+from notte_core.errors import ContentFilterError
 from notte_core.observation import ExecutionResult, Observation
 
 HISTORY_SIZE = 10
@@ -228,7 +229,11 @@ async def run_act(
             if text is None:
                 step = time.perf_counter()
                 context = _write_context(instruction, target, model_page, history, variables, driver)
-                text = await decider.write(context)
+                try:
+                    text = await decider.write(context)
+                except ContentFilterError as e:
+                    run.timings.write_ms += _ms(step)
+                    return _blocked(run, f"the field writer refused: {e.dev_message}", raise_on_failure, common, e)
                 run.timings.write_ms += _ms(step)
                 # "" clears a field, but names no option of a dropdown
                 if text is None or (text == "" and target.kind == "select_text"):
@@ -277,10 +282,12 @@ async def run_act(
     raise AssertionError("unreachable")  # pragma: no cover
 
 
-def _blocked(run: _Run, reason: str, raise_on_failure: bool, common: dict[str, Any]) -> ActResult:
+def _blocked(
+    run: _Run, reason: str, raise_on_failure: bool, common: dict[str, Any], cause: Exception | None = None
+) -> ActResult:
     result = run.result(status="blocked", message=reason, **common)
     if raise_on_failure:
-        raise NoActionFoundError(run.instruction, reason, result)
+        raise NoActionFoundError(run.instruction, reason, result) from cause
     return result
 
 

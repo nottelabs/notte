@@ -8,7 +8,7 @@ import pytest
 from notte_core.act import DeciderNotAvailableError, DecisionState, PageState, Question, WriteContext
 from notte_core.act import resolve as act_resolve
 from notte_core.act.errors import InvalidDecisionError
-from notte_core.errors import LLMProviderError, UnsupportedResponseSchemaError
+from notte_core.errors import ContentFilterError, InvalidAPIKeyError, LLMProviderError, UnsupportedResponseSchemaError
 from notte_llm import act as llm_act
 from notte_llm.act import DEFAULT_ACT_MODEL, DEFAULT_TEXT_MODEL, JevDecider, LlmDecider, LlmWriter, default_decider
 
@@ -275,3 +275,69 @@ def test_default_decider_without_notte_llm(monkeypatch: pytest.MonkeyPatch) -> N
     monkeypatch.setattr(act_resolve.importlib, "import_module", missing)
     with pytest.raises(DeciderNotAvailableError, match="notte\\[llm\\]"):
         _ = act_resolve.default_decider()
+
+
+def _refusing(models: set[str], calls: list[str]):  # pyright: ignore[reportUnknownParameterType]
+    async def fake(model: str, messages: list[dict[str, Any]], response_format: dict[str, Any], max_tokens: int):  # pyright: ignore[reportUnusedParameter]
+        calls.append(model)
+        if model in models:
+            raise ContentFilterError(model, "refused")
+        return '{"text": "Ada Lovelace"}', {}
+
+    return fake
+
+
+CONTEXT = WriteContext(goal="search for Ada Lovelace", field={"label": "Search Wikipedia"}, page={})
+
+
+@pytest.mark.asyncio
+async def test_writer_asks_the_fallback_model_after_a_content_refusal(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[str] = []
+    monkeypatch.setattr(llm_act, "_complete", _refusing({"writer"}, calls))
+    assert await LlmWriter("writer", fallback_model="decider").write(CONTEXT) == "Ada Lovelace"
+    assert calls == ["writer", "decider"]
+
+
+@pytest.mark.asyncio
+async def test_writer_fails_clearly_when_both_models_refuse(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[str] = []
+    monkeypatch.setattr(llm_act, "_complete", _refusing({"writer", "decider"}, calls))
+    with pytest.raises(ContentFilterError, match="Search Wikipedia") as exc:
+        _ = await LlmWriter("writer", fallback_model="decider").write(CONTEXT)
+    assert not isinstance(exc.value, InvalidAPIKeyError)
+    assert "writer" in exc.value.model and "decider" in exc.value.model
+    assert calls == ["writer", "decider"]
+
+
+@pytest.mark.asyncio
+async def test_writer_without_fallback_reraises_the_refusal(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[str] = []
+    monkeypatch.setattr(llm_act, "_complete", _refusing({"m"}, calls))
+    # a fallback equal to the model is no fallback
+    with pytest.raises(ContentFilterError):
+        _ = await LlmWriter("m", fallback_model="m").write(CONTEXT)
+    assert calls == ["m"]
+
+
+@pytest.mark.asyncio
+async def test_other_writer_errors_do_not_fall_back(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[str] = []
+
+    async def fake(model: str, messages: list[dict[str, Any]], response_format: dict[str, Any], max_tokens: int):  # pyright: ignore[reportUnusedParameter]
+        calls.append(model)
+        raise InvalidAPIKeyError(provider=model)
+
+    monkeypatch.setattr(llm_act, "_complete", fake)
+    with pytest.raises(InvalidAPIKeyError):
+        _ = await LlmWriter("writer", fallback_model="decider").write(CONTEXT)
+    assert calls == ["writer"]
+
+
+def test_default_writers_fall_back_to_the_decision_model(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "k")
+    llm = default_decider()
+    assert isinstance(llm, LlmDecider) and llm.writer.fallback_model == DEFAULT_ACT_MODEL
+    monkeypatch.setenv("TYPESAFE_API_KEY", "k")
+    jev = default_decider()
+    assert isinstance(jev, JevDecider) and isinstance(jev.writer, LlmWriter)
+    assert jev.writer.model == DEFAULT_TEXT_MODEL and jev.writer.fallback_model == DEFAULT_ACT_MODEL

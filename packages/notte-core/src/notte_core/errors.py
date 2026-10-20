@@ -380,6 +380,20 @@ class InvalidAPIKeyError(LLMProviderError):
         )
 
 
+class ContentFilterError(LLMProviderError):
+    """The provider refused the request on content-policy grounds (not an authentication failure)."""
+
+    def __init__(self, model: str, detail: str | None = None) -> None:
+        reason = f": {detail}" if detail else ""
+        super().__init__(
+            dev_message=f"The provider of {model} refused the request on content-policy grounds{reason}",
+            user_message=f"The LLM provider of {model} refused the request on content-policy grounds.",
+            agent_message=None,
+            should_retry_later=False,
+        )
+        self.model: str = model
+
+
 class ContextWindowExceededError(LLMProviderError):
     def __init__(self, provider: str, current_size: int | None = None, max_size: int | None = None) -> None:
         size_info = ""

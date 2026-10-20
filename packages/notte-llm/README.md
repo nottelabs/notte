@@ -57,6 +57,9 @@ Instructions-only extraction starts with `json_object` because it has no fixed d
 OpenRouter receives model fallbacks (`google/gemini-3.8-flash`, `openai/gpt-4.1-mini`).
 `LLMEngine(provider_order=[...], reasoning={...})` can also pass OpenRouter routing and reasoning
 options. These extras are sent only when the configured hostname is `openrouter.ai`.
+A provider's content-policy refusal (an OpenRouter, OpenAI or Azure content-filter error, or a
+`content_filter` finish reason with no content) raises `ContentFilterError` naming the model,
+not `InvalidAPIKeyError`.
 For Vertex or other token-based endpoints, mint the access token outside the library and pass
 it as `NOTTE_LLM_API_KEY`; refresh it before it expires.
 
@@ -95,7 +98,8 @@ endpoint's limit when it is lower. Overrides do not persist to subsequent calls.
 
 `default_decider()` uses Jev when `TYPESAFE_API_KEY` is set, else `LlmDecider` when the endpoint has a key
 (`NOTTE_ACT_MODEL`, then `NOTTE_LLM_MODEL`, then `google/gemini-3.1-flash-lite`). The writer model is
-`NOTTE_ACT_TEXT_MODEL`, else `inception/mercury-2.5` on OpenRouter, else the decision model. Decisions are sent
+`NOTTE_ACT_TEXT_MODEL`, else `inception/mercury-2.5` on OpenRouter, else the decision model. When the writer's
+provider refuses a value on content-policy grounds, the decision model writes it instead. Decisions are sent
 without OpenRouter model fallbacks and with reasoning disabled (`NOTTE_ACT_REASONING=none`; models that require
 reasoning are retried with `low`).
 

@@ -31,7 +31,7 @@ Install the deciders with `pip install "notte[llm]"` (or `pip install notte-llm`
 
 When `TYPESAFE_API_KEY` is set, Jev decides. Otherwise an LLM decides, picked from `NOTTE_ACT_MODEL`, then `NOTTE_LLM_MODEL`, then the OpenRouter default. The LLM endpoint is the one `notte-llm` uses for extraction: OpenRouter by default, or any OpenAI-compatible endpoint with `NOTTE_LLM_BASE_URL`, `NOTTE_LLM_API_KEY` and a model. With neither option configured, `act()` raises `DeciderNotAvailableError` explaining both.
 
-Text typed into fields is written by a small, fast LLM on the same endpoint: `NOTTE_ACT_TEXT_MODEL`, default `inception/mercury-2.5` on OpenRouter, else the decision model. Jev users who type text also need an LLM key for this writer.
+Text typed into fields is written by a small, fast LLM on the same endpoint: `NOTTE_ACT_TEXT_MODEL`, default `inception/mercury-2.5` on OpenRouter, else the decision model. Jev users who type text also need an LLM key for this writer. If the writer's provider refuses a value on content-policy grounds, the decision model writes it instead. If that also refuses, the step is `blocked` with the reason.
 
 ```bash
 export TYPESAFE_API_KEY=...       # Jev decisions

@@ -37,7 +37,7 @@ FORM_EXPECTED = "Thanks Jane Doe <jane@example.com> (fr, terms=true)"
 def _decider(kind: str) -> Decider:
     from notte_llm.act import DEFAULT_ACT_MODEL, DEFAULT_TEXT_MODEL, JevDecider, LlmDecider, LlmWriter  # noqa: PLC0415
 
-    writer = LlmWriter(DEFAULT_TEXT_MODEL)
+    writer = LlmWriter(DEFAULT_TEXT_MODEL, fallback_model=DEFAULT_ACT_MODEL)
     return JevDecider(writer=writer) if kind == "jev" else LlmDecider(DEFAULT_ACT_MODEL, writer=writer)
 
 

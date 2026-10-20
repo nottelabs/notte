@@ -12,7 +12,9 @@ in the client over the existing observe and execute endpoints.
 
 Local observations also read the live state of form controls (current values, checked state,
 `<select>` options) into `DomNode.state`, with `BrowserSnapshot.element_states()` and
-`fingerprint()`. Action ids and descriptions are unchanged. `LLMEngine` takes a `timeout`.
+`fingerprint()`. Action ids and descriptions are unchanged. `LLMEngine` takes a `timeout`, and
+raises `ContentFilterError` (an `LLMProviderError`) for provider content-policy refusals, which
+were reported as `InvalidAPIKeyError`.
 
 ## Unreleased — deprecated observe options
 

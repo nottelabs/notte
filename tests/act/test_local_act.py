@@ -397,3 +397,21 @@ async def test_act_clears_a_field(session: NotteSession) -> None:
     decider = FakeDecider(choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["name"]}], texts=[""])
     result = await session.aact("clear the name", decider=decider)
     assert result.status == "executed" and await session.window.page.input_value("#name") == ""
+
+
+@pytest.mark.asyncio
+async def test_a_writer_refusal_blocks_the_step(session: NotteSession) -> None:
+    from notte_core.errors import ContentFilterError
+
+    class Refusing(FakeDecider):
+        async def write(self, context):  # pyright: ignore[reportMissingParameterType, reportUnknownParameterType]
+            raise ContentFilterError("writer and decider", "both text models refused")
+
+    ids = await _ids(session)
+    choices = [{"operation": "TYPE_TEXT", "type_text_target": ids["name"]}]
+    with pytest.raises(NoActionFoundError, match="refused") as error:
+        _ = await session.aact("type Ada Lovelace", decider=Refusing(choices=list(choices)))
+    assert isinstance(error.value.__cause__, ContentFilterError)
+    blocked = await session.aact("type Ada Lovelace", raise_on_failure=False, decider=Refusing(choices=list(choices)))
+    assert blocked.status == "blocked" and "content-policy" in (blocked.message or "")
+    assert await session.window.page.input_value("#name") == ""
