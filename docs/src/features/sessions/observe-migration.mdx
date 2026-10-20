@@ -1,0 +1,54 @@
+---
+title: Observe Migration
+description: Deep perception and observe instructions are removed on December 1, 2026
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+Two `observe()` options are deprecated and will be **removed on December 1, 2026**:
+
+- `perception_type="deep"`
+- `instructions`
+
+Until then both keep working exactly as before. Requests that use them already receive `Deprecation`, `Sunset` and `Link` response headers, and the Python and TypeScript SDKs emit a deprecation warning. After December 1, 2026 the API rejects requests that use either option.
+
+## Deep perception → fast perception
+
+Remove `perception_type="deep"` (from `observe()` and from the session options), or set it to `"fast"`, the default:
+
+<CodeGroup>
+```python Python
+# Before
+obs = session.observe(perception_type="deep")
+
+# After
+obs = session.observe()
+```
+
+```typescript TypeScript
+// Before
+const obs = await session.observe({ perception_type: 'deep' });
+
+// After
+const obs = await session.observe();
+```
+</CodeGroup>
+
+Fast perception lists the page's actions with their IDs and selectors. It does not add the LLM-written page description, action descriptions and categories that deep perception added.
+
+## Observe instructions
+
+`<<ALTERNATIVE FOR instructions: session.act() — pending>>`
+
+## Response headers
+
+Responses to observe requests that use either option carry:
+
+| Header | Value |
+| --- | --- |
+| `Deprecation` | `@1792454400` (October 20, 2026) |
+| `Sunset` | `Tue, 01 Dec 2026 00:00:00 GMT` |
+| `Link` | `<https://docs.notte.cc/features/sessions/observe-migration>; rel="deprecation"` |
+
+If you call the API directly, you can log these headers to find the remaining calls in your code.

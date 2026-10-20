@@ -65,6 +65,14 @@ export const CLUSTER_OVERLOAD_RETRY_DELAY_MS = 30_000;
 export const CAPTCHA_SOLVE_TIMEOUT_MS = 100_000;
 
 export type PerceptionType = NonNullable<ObserveRequest['perception_type']>;
+
+/** Migration guide for the observe options removed on December 1, 2026. */
+const OBSERVE_MIGRATION_URL = 'https://docs.notte.cc/features/sessions/observe-migration';
+const OBSERVE_DEPRECATIONS = {
+  instructions: `\`observe({ instructions })\` is deprecated and will be removed on December 1, 2026; <<ALTERNATIVE FOR instructions: session.act() — pending>>. See ${OBSERVE_MIGRATION_URL}`,
+  deep: `\`perception_type: 'deep'\` is deprecated and will be removed on December 1, 2026; use \`perception_type: 'fast'\` (the default). See ${OBSERVE_MIGRATION_URL}`,
+} as const;
+
 export type SessionCloseReason = 'manual' | 'error';
 
 export interface ExecuteOptions {
@@ -122,7 +130,10 @@ export interface SessionOptions extends ApiSessionStartRequest {
    * The counterpart of `raise_on_failure` on `RemoteSession`. Defaults to true.
    */
   raiseOnFailure?: boolean;
-  /** Default perception type for `observe()`. Defaults to `fast`. */
+  /**
+   * Default perception type for `observe()`. Defaults to `fast`. `'deep'` is
+   * deprecated and removed on December 1, 2026; use `'fast'`.
+   */
   perception_type?: PerceptionType;
   /**
    * JSON cookie file: loaded into the session on `start()` when it exists and
@@ -162,6 +173,7 @@ export class Session {
   private legacyHeadless: boolean | undefined;
   private defaultRaiseOnFailure: boolean;
   private defaultPerceptionType: PerceptionType;
+  private readonly warnedObserveDeprecations = new Set<keyof typeof OBSERVE_DEPRECATIONS>();
   private cookieFile: string | undefined;
   private cookiesLoaded = false;
   private cookieLoadPromise: Promise<void> | undefined;
@@ -921,18 +933,29 @@ export class Session {
    * The `perception_type` defaults to the session option (`fast`). A bare
    * string argument is accepted as the perception type.
    *
+   * Deprecated: `perception_type: 'deep'` and `instructions` are removed on
+   * December 1, 2026, and each warns once per session. Use `perception_type:
+   * 'fast'` (the default) instead of `'deep'`. For `instructions`:
+   * `<<ALTERNATIVE FOR instructions: session.act() — pending>>`. See https://docs.notte.cc/features/sessions/observe-migration
+   *
    * @param options - Observation settings, including an optional URL, or a perception-mode string.
    * @returns Structured page analysis, available actions, and page metadata.
    * @throws NotteAPIError if observation fails.
    * @example
    * const obs = await session.observe();
    * console.log(obs.space.description);
-   * const deep = await session.observe({ perception_type: 'deep', max_nb_actions: 50 });
+   * const firstActions = await session.observe({ max_nb_actions: 50 });
    */
   async observe(options: ObserveRequest | PerceptionType = {}): Promise<Observation> {
     const body: ObserveRequest = typeof options === 'string' ? { perception_type: options } : { ...options };
     if (body.perception_type == null) {
       body.perception_type = this.defaultPerceptionType;
+    }
+    if (body.instructions != null) {
+      this.warnObserveDeprecation('instructions');
+    }
+    if (body.perception_type !== 'fast') {
+      this.warnObserveDeprecation('deep');
     }
     const response = await pageObserve({
       client: this.client.getClient(),
@@ -941,6 +964,13 @@ export class Session {
       throwOnError: true,
     });
     return response.data;
+  }
+
+  private warnObserveDeprecation(option: keyof typeof OBSERVE_DEPRECATIONS): void {
+    if (!this.warnedObserveDeprecations.has(option)) {
+      this.warnedObserveDeprecations.add(option);
+      console.warn(OBSERVE_DEPRECATIONS[option]);
+    }
   }
 
   /**

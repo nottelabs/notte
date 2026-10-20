@@ -1,6 +1,11 @@
+import os
+import sys
 import time
+import warnings
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Unpack, cast, overload
 
+import notte_core
 from notte_core.actions import ActionUnion, CaptchaSolveAction, InteractionActionUnion, WaitAction
 from notte_core.config import PerceptionType
 from notte_core.data import StructuredData, TBaseModel
@@ -30,6 +35,32 @@ from notte_sdk.errors import NotteAPIError
 
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
+
+OBSERVE_MIGRATION_URL = "https://docs.notte.cc/features/sessions/observe-migration"
+# Frames in these packages are skipped so the warning points at the caller's code.
+_SDK_PACKAGES = tuple(f"{path}{os.sep}" for path in (Path(notte_core.__file__).parent, Path(__file__).parents[1]))
+
+
+def _warn_deprecated_observe(instructions: str | None, perception_type: PerceptionType | None) -> None:
+    """`instructions` and `perception_type='deep'` are removed from the API on December 1, 2026."""
+    messages: list[str] = []
+    if instructions is not None:
+        messages.append(
+            "`observe(instructions=...)` is deprecated and will be removed on December 1, 2026; "
+            + "<<ALTERNATIVE FOR instructions: session.act() — pending>>."
+        )
+    if perception_type is not None and perception_type != "fast":
+        messages.append(
+            f"`perception_type={perception_type!r}` is deprecated and will be removed on December 1, 2026; "
+            + "use `perception_type='fast'` (the default)."
+        )
+    if not messages:
+        return
+    frame, stacklevel = sys._getframe(1), 2  # pyright: ignore[reportPrivateUsage]
+    while frame.f_back is not None and frame.f_code.co_filename.startswith(_SDK_PACKAGES):
+        frame, stacklevel = frame.f_back, stacklevel + 1
+    for message in messages:
+        warnings.warn(f"{message} See {OBSERVE_MIGRATION_URL}", DeprecationWarning, stacklevel=stacklevel)
 
 
 @final
@@ -251,6 +282,10 @@ class PageClient(BaseClient):
         Either a 'url' or a 'session_id' must be supplied; otherwise, an InvalidRequestError is raised.
         The request is sent to the observe endpoint, and the response is formatted into an Observation object.
 
+        Deprecated: `perception_type='deep'` and `instructions` are removed on December 1, 2026, and passing
+        either emits a `DeprecationWarning`. Use `perception_type='fast'` (the default) instead of `'deep'`.
+        For `instructions`: `<<ALTERNATIVE FOR instructions: session.act() — pending>>`. See the migration guide: https://docs.notte.cc/features/sessions/observe-migration
+
         Parameters:
             session_id: The session ID to observe.
             **data: Arbitrary keyword arguments corresponding to observation request fields.
@@ -260,6 +295,7 @@ class PageClient(BaseClient):
             list[InteractionActionUnion]: The filtered list of actions when instructions is provided.
         """
         instructions = data.get("instructions")
+        _warn_deprecated_observe(instructions, data.get("perception_type"))
         request = ObserveRequest.model_validate(data)
         endpoint = PageClient._page_observe_endpoint(session_id=session_id)
         obs_response = self.request(endpoint.with_request(request))

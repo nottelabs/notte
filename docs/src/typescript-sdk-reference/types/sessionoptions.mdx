@@ -31,7 +31,10 @@ export interface SessionOptions extends ApiSessionStartRequest {
    * The counterpart of `raise_on_failure` on `RemoteSession`. Defaults to true.
    */
   raiseOnFailure?: boolean;
-  /** Default perception type for `observe()`. Defaults to `fast`. */
+  /**
+   * Default perception type for `observe()`. Defaults to `fast`. `'deep'` is
+   * deprecated and removed on December 1, 2026; use `'fast'`.
+   */
   perception_type?: PerceptionType;
   /**
    * JSON cookie file: loaded into the session on `start()` when it exists and
@@ -74,7 +77,8 @@ The counterpart of `raise_on_failure` on `RemoteSession`. Defaults to true.
 </ParamField>
 
 <ParamField body="perception_type" type={"PerceptionType | undefined"}>
-Default perception type for `observe()`. Defaults to `fast`.
+Default perception type for `observe()`. Defaults to `fast`. `'deep'` is
+deprecated and removed on December 1, 2026; use `'fast'`.
 </ParamField>
 
 <ParamField body="cookie_file" type={"string | undefined"}>
