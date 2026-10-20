@@ -58,11 +58,15 @@ class CommandError(RuntimeError):
     """A command in the sandbox exited with a non-zero code."""
 
 
-def run(boat: BoatApi, sandbox_id: str, command: str, timeout: int = 120) -> str:
-    """Run a command in the sandbox and return its output, raising if it fails."""
+def run(boat: BoatApi, sandbox_id: str, command: str, timeout: int = 120, secret: str | None = None) -> str:
+    """Run a command in the sandbox and return its output, raising if it fails.
+
+    `secret` is replaced in the error message, so a failing command never prints it.
+    """
     result = exec_command(boat, sandbox_id, command, timeout_seconds=timeout).actual_instance
     if result.exit_code != 0:
-        raise CommandError(f"`{command}` exited with {result.exit_code}: {(result.stderr or result.stdout).strip()}")
+        message = f"`{command}` exited with {result.exit_code}: {(result.stderr or result.stdout).strip()}"
+        raise CommandError(message.replace(secret, "<hosted URL>") if secret else message)
     return result.stdout
 
 
@@ -72,7 +76,12 @@ def create_sandbox(boat: BoatApi) -> str:
     if api_url := os.environ.get("NOTTE_API_URL"):
         env["NOTTE_API_URL"] = api_url
     sandbox_id = boat.create(create_sandbox_request=CreateSandboxRequest(ttl_seconds=1800, env=env)).sandbox.id
-    wait_until_ready(boat, sandbox_id)
+    try:
+        wait_until_ready(boat, sandbox_id)
+    except Exception:
+        # The caller only deletes sandboxes it gets back, so delete this one here.
+        boat.delete_sandbox(x_ascii_confirm_delete=sandbox_id, sandbox_id=sandbox_id)
+        raise
     return sandbox_id
 
 
@@ -136,7 +145,7 @@ def check_with_notte_cli(boat: BoatApi, sandbox_id: str, url: str) -> str:
         for command in commands:
             # Keep the access token in the hosted URL out of the printed output.
             print(f"$ {command.replace(url, '<hosted URL>')}")
-            output = run(boat, sandbox_id, command).strip()
+            output = run(boat, sandbox_id, command, secret=url).strip()
             print(output.replace(url, "<hosted URL>"))
         return output
     finally:
