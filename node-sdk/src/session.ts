@@ -69,7 +69,7 @@ export type PerceptionType = NonNullable<ObserveRequest['perception_type']>;
 /** Migration guide for the observe options removed on December 1, 2026. */
 const OBSERVE_MIGRATION_URL = 'https://docs.notte.cc/features/sessions/observe-migration';
 const OBSERVE_DEPRECATIONS = {
-  instructions: `\`observe({ instructions })\` is deprecated and will be removed on December 1, 2026; <<ALTERNATIVE FOR instructions: session.act() — pending>>. See ${OBSERVE_MIGRATION_URL}`,
+  instructions: `\`observe({ instructions })\` is deprecated and will be removed on December 1, 2026; call observe() without it and pick from the returned actions yourself, for example with your own LLM. See ${OBSERVE_MIGRATION_URL}`,
   deep: `\`perception_type: 'deep'\` is deprecated and will be removed on December 1, 2026; use \`perception_type: 'fast'\` (the default). See ${OBSERVE_MIGRATION_URL}`,
 } as const;
 
@@ -936,7 +936,7 @@ export class Session {
    * Deprecated: `perception_type: 'deep'` and `instructions` are removed on
    * December 1, 2026, and each warns once per session. Use `perception_type:
    * 'fast'` (the default) instead of `'deep'`. For `instructions`:
-   * `<<ALTERNATIVE FOR instructions: session.act() — pending>>`. See https://docs.notte.cc/features/sessions/observe-migration
+   * call `observe()` without it and pick from the returned actions yourself, for example with your own LLM. See https://docs.notte.cc/features/sessions/observe-migration
    *
    * @param options - Observation settings, including an optional URL, or a perception-mode string.
    * @returns Structured page analysis, available actions, and page metadata.

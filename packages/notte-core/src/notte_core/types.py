@@ -1992,7 +1992,7 @@ class ObserveRequest(PaginationParams):
         Field(
             description=(
                 "Deprecated: removed on December 1, 2026. Additional instructions to use for the observation. "
-                + "<<ALTERNATIVE FOR instructions: session.act() — pending>>. See https://docs.notte.cc/features/sessions/observe-migration"
+                + "Instead, call observe() without instructions and pick from the returned actions yourself, for example with your own LLM. See https://docs.notte.cc/features/sessions/observe-migration"
             ),
             json_schema_extra={"deprecated": True},
         ),

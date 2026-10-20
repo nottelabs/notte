@@ -1567,7 +1567,7 @@ class RemoteSession(SyncResource):
 
         Deprecated: `perception_type='deep'` and `instructions` are removed on December 1, 2026, and passing
         either emits a `DeprecationWarning`. Use `perception_type='fast'` (the default) instead of `'deep'`.
-        For `instructions`: `<<ALTERNATIVE FOR instructions: session.act() — pending>>`. See the migration guide: https://docs.notte.cc/features/sessions/observe-migration
+        For `instructions`: call `observe()` without it and pick from the returned actions (`observation.space.actions`) yourself, for example with your own LLM. See the migration guide: https://docs.notte.cc/features/sessions/observe-migration
 
 
         Args:

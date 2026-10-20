@@ -47,7 +47,7 @@ def _warn_deprecated_observe(instructions: str | None, perception_type: Percepti
     if instructions is not None:
         messages.append(
             "`observe(instructions=...)` is deprecated and will be removed on December 1, 2026; "
-            + "<<ALTERNATIVE FOR instructions: session.act() — pending>>."
+            + "call `observe()` without it and pick from the returned actions yourself, for example with your own LLM."
         )
     if perception_type is not None and perception_type != "fast":
         messages.append(
@@ -390,7 +390,7 @@ class PageClient(BaseClient):
 
         Deprecated: `perception_type='deep'` and `instructions` are removed on December 1, 2026, and passing
         either emits a `DeprecationWarning`. Use `perception_type='fast'` (the default) instead of `'deep'`.
-        For `instructions`: `<<ALTERNATIVE FOR instructions: session.act() — pending>>`. See the migration guide: https://docs.notte.cc/features/sessions/observe-migration
+        For `instructions`: call `observe()` without it and pick from the returned actions (`observation.space.actions`) yourself, for example with your own LLM. See the migration guide: https://docs.notte.cc/features/sessions/observe-migration
 
         Parameters:
             session_id: The session ID to observe.
