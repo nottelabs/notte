@@ -15,25 +15,7 @@ Until then both keep working exactly as before. Requests that use them already r
 
 ## Deep perception → fast perception
 
-Remove `perception_type="deep"` (from `observe()` and from the session options), or set it to `"fast"`, the default:
-
-<CodeGroup>
-```python Python
-# Before
-obs = session.observe(perception_type="deep")
-
-# After
-obs = session.observe()
-```
-
-```typescript TypeScript
-// Before
-const obs = await session.observe({ perception_type: 'deep' });
-
-// After
-const obs = await session.observe();
-```
-</CodeGroup>
+Remove `perception_type="deep"` from `observe()` calls and from the session options, or set it to `"fast"`, the default. In Python, `session.observe(perception_type="deep")` becomes `session.observe()`; in TypeScript, `session.observe({ perception_type: 'deep' })` becomes `session.observe()`.
 
 Fast perception lists the page's actions with their IDs and selectors. It does not add the LLM-written page description, action descriptions and categories that deep perception added.
 
