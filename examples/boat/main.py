@@ -63,7 +63,11 @@ def run(boat: BoatApi, sandbox_id: str, command: str, timeout: int = 120, secret
 
     `secret` is replaced in the error message, so a failing command never prints it.
     """
-    result = exec_command(boat, sandbox_id, command, timeout_seconds=timeout).actual_instance
+    try:
+        result = exec_command(boat, sandbox_id, command, timeout_seconds=timeout).actual_instance
+    except Exception as error:
+        message = f"`{command}` failed: {error}"
+        raise CommandError(message.replace(secret, "<hosted URL>") if secret else message) from None
     if result.exit_code != 0:
         message = f"`{command}` exited with {result.exit_code}: {(result.stderr or result.stdout).strip()}"
         raise CommandError(message.replace(secret, "<hosted URL>") if secret else message)
@@ -132,10 +136,9 @@ def install_notte(boat: BoatApi, sandbox_id: str) -> None:
 def check_with_notte_cli(boat: BoatApi, sandbox_id: str, url: str) -> str:
     """Drive a Notte browser from inside the sandbox with CLI commands and return the scraped page."""
     # NOTTE_API_KEY comes from the sandbox's environment, set when it was created.
-    started = run(boat, sandbox_id, "notte sessions start -o json")
-
-    # From here on the session exists, so always try to stop it.
+    # The start command can create the session and still fail, so always try to stop it.
     try:
+        started = run(boat, sandbox_id, "notte sessions start -o json")
         session = json.loads(started)
         # viewer_url is optional in the session response.
         print(f"Notte CLI started session {session['session_id']}, watch it live: {session.get('viewer_url')}")

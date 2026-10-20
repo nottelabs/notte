@@ -149,6 +149,23 @@ class OfflineTests(unittest.TestCase):
         with self.assertRaisesRegex(demo.CommandError, "goto"):
             demo.check_with_notte_cli(boat, "sb-1", URL)
 
+    def test_api_error_keeps_the_token_out_of_the_error(self):
+        boat = FakeBoat()
+
+        def api_error(command):
+            raise ConnectionError(f"request failed for {command}")
+
+        boat.exec = api_error
+        with self.assertRaises(demo.CommandError) as raised:
+            demo.run(boat, "sb-1", f"notte page goto '{URL}'", secret=URL)
+        self.assertNotIn("_token=secret", str(raised.exception))
+
+    def test_failed_start_still_tries_to_stop_the_session(self):
+        boat = FakeBoat(failing={"notte sessions start -o json"})
+        with self.assertRaisesRegex(demo.CommandError, "sessions start"):
+            demo.check_with_notte_cli(boat, "sb-1", URL)
+        self.assertEqual(boat.runs[-1], "notte sessions stop --yes")
+
     def test_failed_navigation_keeps_the_token_out_of_the_error(self):
         boat = FakeBoat(failing={f"notte page goto '{URL}'"})
         with self.assertRaises(demo.CommandError) as raised:
@@ -187,7 +204,11 @@ class LiveTests(unittest.TestCase):
                 self.assertIn("Ship the boat example", page)
                 self.assertIn("3 to-dos", page)
             finally:
-                boat.delete_sandbox(x_ascii_confirm_delete=sandbox_id, sandbox_id=sandbox_id)
+                # Warn instead of raising, so a failed delete never hides the test failure.
+                try:
+                    boat.delete_sandbox(x_ascii_confirm_delete=sandbox_id, sandbox_id=sandbox_id)
+                except Exception as error:
+                    print(f"Warning: could not delete sandbox {sandbox_id}: {error}")
 
 
 if __name__ == "__main__":
