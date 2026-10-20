@@ -170,7 +170,7 @@ class LiveTests(unittest.TestCase):
                 self.assertEqual(demo.check_with_playwright(notte, url), ["Write the app", "Start the server"])
                 demo.install_notte(boat, sandbox_id)
                 # The CLI wraps long lines, so compare without line breaks.
-                page = demo.check_with_notte_cli(boat, sandbox_id, url).replace("\n", " ")
+                page = demo.check_with_notte_cli(boat, sandbox_id, url).replace("\n", "")
                 self.assertIn("Ship the boat example", page)
                 self.assertIn("3 to-dos", page)
             finally:
