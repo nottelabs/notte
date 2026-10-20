@@ -156,12 +156,14 @@ source "$1"
         self.assertEqual(sleeps, [])
 
     def test_healthy_response_after_deadline_cannot_pass(self) -> None:
+        # Bash's SECONDS ticks on whole wall-clock seconds, so it can advance by one
+        # before the first poll. A 2 s deadline always leaves time for that poll.
         result, polls, sleeps = self.run_action(
-            [{"body": HEALTHY, "delay": 1.2}], timeout=1, consecutive=1, real_clock=True
+            [{"body": HEALTHY, "delay": 2.5}], timeout=2, consecutive=1, real_clock=True
         )
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertEqual(len(polls), 1)
-        self.assertEqual(polls[0]["max_time"], 1)
+        self.assertIn(polls[0]["max_time"], (1, 2))
         self.assertEqual(sleeps, [])
         self.assertNotIn("API is ready", result.stdout)
 
