@@ -119,7 +119,8 @@ def check_with_notte_cli(sandbox: Sandbox, url: str) -> str:
     # From here on the session exists, so always try to stop it.
     try:
         session = json.loads(started)
-        print(f"Notte CLI started session {session['session_id']}, watch it live: {session['viewer_url']}")
+        # viewer_url is optional in the session response.
+        print(f"Notte CLI started session {session['session_id']}, watch it live: {session.get('viewer_url')}")
         commands = [
             f"notte page goto {shlex.quote(url)}",
             "notte page fill '#title' 'Ship the Daytona example'",
