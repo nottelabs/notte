@@ -46,7 +46,8 @@ selects a model at the configured endpoint without translating its ID.
 | `NOTTE_LLM_NB_RETRIES_STRUCTURED_OUTPUT` | `2` |
 | `NOTTE_LLM_CONTEXT_TOKENS` | `128000` (document clipping estimates four characters per token) |
 
-The async client posts Chat Completions through `httpx` with a 60-second timeout, retrying
+The async client posts Chat Completions through `httpx` with a 60-second timeout per attempt
+(`LLMEngine(timeout=...)`), retrying
 transient errors after 2 and 5 seconds. Typed extraction tries strict `json_schema` output;
 when a provider rejects it, the client retries with `json_object` and the schema in the prompt.
 If the endpoint also rejects `json_object`, it uses the schema in the prompt alone. Every
@@ -82,3 +83,21 @@ Explicit extras are forwarded to any configured endpoint, so use only fields tha
 endpoint supports. The library does not discover provider limits or automatically
 lower its default 8192 completion tokens. Set `max_completion_tokens` to your
 endpoint's limit when it is lower. Overrides do not persist to subsequent calls.
+
+## Deciders for `session.act()`, `choose()` and `check()`
+
+`notte_llm.act` provides the deciders of `session.act()` / `choose()` / `check()` (see the
+[act docs](https://docs.notte.cc/features/sessions/act)):
+
+- `JevDecider`: TypeSafe's Jev classification model (`TYPESAFE_API_KEY`, `TYPESAFE_MODEL`, `TYPESAFE_BASE_URL`).
+- `LlmDecider`: a model of the endpoint above, one call per decision with the options as JSON-schema enums.
+- `LlmWriter`: the field writer of both, answering exactly `{"text": ...}`.
+
+`default_decider()` uses Jev when `TYPESAFE_API_KEY` is set, else `LlmDecider` when the endpoint has a key
+(`NOTTE_ACT_MODEL`, then `NOTTE_LLM_MODEL`, then `google/gemini-3.1-flash-lite`). The writer model is
+`NOTTE_ACT_TEXT_MODEL`, else `inception/mercury-2.5` on OpenRouter, else the decision model. Decisions are sent
+without OpenRouter model fallbacks and with reasoning disabled (`NOTTE_ACT_REASONING=none`; models that require
+reasoning are retried with `low`).
+
+The question set, prompts and guards are adapted from [jev-ultrafast](https://github.com/browser-use/jev-ultrafast)
+(MIT License, Copyright (c) 2026 Browser Use); the license text ships as `notte_core/act/LICENSE-jev-ultrafast`.

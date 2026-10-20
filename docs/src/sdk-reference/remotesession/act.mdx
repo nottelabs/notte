@@ -1,0 +1,52 @@
+---
+title: "act"
+description: "Carry out one step of a natural-language instruction: observe, pick one action, execute it"
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+Runs in the client on top of `observe()` and `execute()`: the decider is called from your
+machine with your keys (`TYPESAFE_API_KEY`, or an LLM such as `OPENROUTER_API_KEY`), and needs
+`pip install 'notte[llm]'` unless you pass `decider=`. Cloud observations do not carry the live
+field values that local sessions read, so decisions rely on the action descriptions.
+
+import ActCloud from '/snippets/act/act_cloud.mdx';
+
+<ActCloud />
+
+
+
+## Parameters
+
+<ParamField path="instruction" type="str" required>
+  what to do, e.g. "search for running shoes".
+</ParamField>
+
+<ParamField path="variables" type="UnionType[Mapping[str, str], None]" default="None">
+  values for `{{name}}` placeholders in typed text, substituted after the model call.
+</ParamField>
+
+<ParamField path="dry_run" type="bool" default="False">
+  choose the action but do not run it (`status="proposed"`).
+</ParamField>
+
+<ParamField path="min_confidence" type="float" default="0.0">
+  below this decider confidence, nothing runs (`status="blocked"`).
+</ParamField>
+
+<ParamField path="observation" type="UnionType[Observation, None]" default="None">
+  optional observation for read-only decisions; executable decisions refresh it first.
+</ParamField>
+
+<ParamField path="raise_on_failure" type="UnionType[bool, None]" default="None">
+  raise `NoActionFoundError` when blocked, and the execution error when the         action fails. Defaults to the session's `raise_on_failure`.
+</ParamField>
+
+<ParamField path="decider" type="UnionType[Decider, None]" default="None">
+  decider to use for this call.
+</ParamField>
+
+## Returns
+
+<Visibility for="humans">[`ActResult`](/sdk-reference/misc/actresult)</Visibility><Visibility for="agents">[`ActResult`](/sdk-reference/misc/actresult.md)</Visibility>: `status` (`executed`, `proposed`, `done`, `blocked`, `stale`), the `action`, its     `execution`, the decider's `confidence` / `probabilities` and per-step `timings`.

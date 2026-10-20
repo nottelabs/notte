@@ -22,6 +22,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [Session Lifecycle](https://docs.notte.cc/features/sessions/lifecycle.md): Manage the lifecycle of your Notte browser sessions
 - [Session Configurations](https://docs.notte.cc/features/sessions/configuration.md): Learn how to create and configure Notte browser sessions
 - [Browser Controls](https://docs.notte.cc/features/sessions/browser-controls.md): Complete reference of all browser actions available in sessions
+- [Act, choose and check](https://docs.notte.cc/features/sessions/act.md): Run one step of a natural-language instruction, or ask typed questions about the page
 - [Playwright vs Notte Controls](https://docs.notte.cc/features/sessions/playwright-vs-notte.md): Understanding the difference between direct Playwright control and Notte's AI-enabled SDK
 - [File Storage](https://docs.notte.cc/concepts/file-storage.md): Upload and download files for your automations
 
@@ -396,6 +397,9 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [stop](https://docs.notte.cc/sdk-reference/remotesession/stop.md): Stop the session and clean up resources
 - [observe](https://docs.notte.cc/sdk-reference/remotesession/observe.md): Observes the current session page
 - [execute](https://docs.notte.cc/sdk-reference/remotesession/execute.md): Executes an action on the current session page
+- [act](https://docs.notte.cc/sdk-reference/remotesession/act.md): Carry out one step of a natural-language instruction: observe, pick one action, execute it
+- [choose](https://docs.notte.cc/sdk-reference/remotesession/choose.md): Pick one of `options` about the current page, with a probability per option
+- [check](https://docs.notte.cc/sdk-reference/remotesession/check.md): The probability (0 to 1) that a yes/no question holds on the current page
 - [scrape](https://docs.notte.cc/sdk-reference/remotesession/scrape.md): Scrape the current page data
 - [fetch](https://docs.notte.cc/sdk-reference/remotesession/fetch.md): Issue an HTTP request from the page the session is on and return the response
 - [replay](https://docs.notte.cc/sdk-reference/remotesession/replay.md): Get presigned URLs for the session replay

@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased — `act()`, `choose()` and `check()`
+
+Local (`notte.Session`) and cloud (`client.Session()`) sessions gain `act(instruction)`: one
+observe → decide → execute step, where a decider picks one operation and its target from typed
+multiple-choice questions about the page. `choose(question, options)` and `check(question)` ask
+the same decider about the current page. Async versions are `aact`, `achoose` and `acheck`.
+Deciders live in `notte-llm` (`JevDecider` with `TYPESAFE_API_KEY`, or `LlmDecider` on the
+`NOTTE_LLM_*` endpoint) and load only when one of these methods runs. Cloud sessions run `act()`
+in the client over the existing observe and execute endpoints.
+
+Local observations also read the live state of form controls (current values, checked state,
+`<select>` options) into `DomNode.state`, with `BrowserSnapshot.element_states()` and
+`fingerprint()`. Action ids and descriptions are unchanged. `LLMEngine` takes a `timeout`.
+
 ## Unreleased — deprecated 1.x aliases
 
 Restored surviving core import paths and matching resource method names as lazy,

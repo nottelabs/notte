@@ -244,6 +244,7 @@ class LLMEngine:
         provider_order: list[str] | None = None,
         reasoning: dict[str, Any] | None = None,
         extra_body: dict[str, Any] | None = None,
+        timeout: float = 60.0,
     ):
         self.settings: LlmSettings = LlmSettings.from_env(model=model)
         self.model: str = self.settings.model
@@ -251,6 +252,8 @@ class LLMEngine:
         self.provider_order: list[str] | None = provider_order
         self.reasoning: dict[str, Any] | None = reasoning
         self.extra_body: dict[str, Any] = dict(extra_body or {})
+        # seconds per HTTP attempt (transient failures are retried)
+        self.timeout: float = timeout
         self.sc: StructuredContent = StructuredContent(inner_tag="json", fail_if_inner_tag=False)
 
         if nb_retries_structured_output is None:
@@ -490,7 +493,7 @@ class LLMEngine:
                         f"{self.settings.base_url}/chat/completions",
                         headers={"Authorization": f"Bearer {key}"},
                         json=body,
-                        timeout=60.0,
+                        timeout=self.timeout,
                     )
                     status = response.status_code
                     try:

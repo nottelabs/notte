@@ -352,6 +352,7 @@ class SerializedError(BaseModel):
 
         for module in (
             "notte_core.errors",
+            "notte_core.act.errors",
             "notte_browser.errors",
             "notte_sdk.errors",
         ):

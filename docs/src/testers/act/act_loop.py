@@ -1,0 +1,32 @@
+# @sniptest filename=act_loop.py
+# @sniptest typecheck_only=true
+from notte_core.act import ActResult
+
+import notte
+
+
+def act_until_done(session: notte.Session, instruction: str, max_steps: int = 20) -> list[ActResult]:
+    results: list[ActResult] = []
+    for _ in range(max_steps):
+        result = session.act(instruction, raise_on_failure=False)
+        results.append(result)
+        if result.status != "executed":  # done, blocked or stale
+            break
+        # 3 actions in a row (WAIT aside) that left the page unchanged: stop
+        recent = results[-4:]
+        if (
+            len(recent) == 4
+            and all(r.fingerprint is not None for r in recent)
+            and len({r.fingerprint for r in recent}) == 1
+            and all(r.operation != "WAIT" for r in recent[:-1])
+        ):
+            break
+    return results
+
+
+with notte.Session() as session:
+    _ = session.execute(type="goto", url="https://en.wikipedia.org/wiki/Main_Page")
+    steps = act_until_done(session, "Search Wikipedia for Ada Lovelace and open her article")
+    print([(r.status, r.operation) for r in steps])
+
+    # the same helper ships with notte: `from notte_core.act import act_until_done`

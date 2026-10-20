@@ -243,6 +243,7 @@
               "features/sessions/lifecycle",
               "features/sessions/configuration",
               "features/sessions/browser-controls",
+              "features/sessions/act",
               "features/sessions/playwright-vs-notte",
               "concepts/file-storage",
               {
@@ -502,6 +503,9 @@
                       "sdk-reference/remotesession/stop",
                       "sdk-reference/remotesession/observe",
                       "sdk-reference/remotesession/execute",
+                      "sdk-reference/remotesession/act",
+                      "sdk-reference/remotesession/choose",
+                      "sdk-reference/remotesession/check",
                       "sdk-reference/remotesession/scrape",
                       "sdk-reference/remotesession/fetch",
                       "sdk-reference/remotesession/replay",
