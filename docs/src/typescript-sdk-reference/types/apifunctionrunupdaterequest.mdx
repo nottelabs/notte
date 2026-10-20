@@ -24,7 +24,7 @@ type ApiFunctionRunUpdateRequest = {
      *
      * The logs of the workflow run
      */
-    logs?: Array<string>;
+    logs?: Array<string> | null;
     /**
      * Variables
      *
@@ -38,7 +38,7 @@ type ApiFunctionRunUpdateRequest = {
      *
      * The result of the workflow run
      */
-    result?: unknown | null;
+    result?: unknown;
     /**
      * Status
      *
@@ -64,7 +64,7 @@ type ApiFunctionRunUpdateRequest = {
 The ID of the session
 </ParamField>
 
-<ParamField body="logs" type={"string[] | undefined"}>
+<ParamField body="logs" type={"string[] | null | undefined"}>
 The logs of the workflow run
 </ParamField>
 
@@ -76,7 +76,7 @@ The variables of the workflow run
 The result of the workflow run
 </ParamField>
 
-<ParamField body="status" type={"\"active\" | \"closed\" | \"failed\""} required>
+<ParamField body="status" type={"\"failed\" | \"closed\" | \"active\""} required>
 The status of the workflow run
 </ParamField>
 

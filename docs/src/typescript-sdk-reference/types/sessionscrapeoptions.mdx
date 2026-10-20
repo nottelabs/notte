@@ -34,7 +34,11 @@ Whether to scrape links from the page. Links are scraped by default.
 </ParamField>
 
 <ParamField body="scrape_images" type={"boolean | undefined"}>
-Whether to scrape images from the page. Images are scraped by default.
+Image scraping was removed; true returns 422.
+
+**deprecated:**
+
+
 </ParamField>
 
 <ParamField body="ignored_tags" type={"string[] | null | undefined"}>
@@ -42,7 +46,7 @@ HTML tags to ignore from the page
 </ParamField>
 
 <ParamField body="model" type={"string | null | undefined"}>
-The LLM used to extract structured data when `instructions` or `response_format` is set, e.g. 'vertex_ai/gemini-3.1-flash-lite'. Defaults to the platform model.
+Model used for structured extraction. Canonical OpenRouter ids: google/gemini-3.5-flash, google/gemini-3.5-flash-lite, google/gemini-3.1-flash-lite, google/gemini-3.1-flash-lite-preview, google/gemini-2.5-flash, openai/gpt-4.1-mini, openai/gpt-4o, google/gemma-3-27b-it, openai/gpt-oss-120b, perplexity/sonar-pro, deepseek/deepseek-r1, meta-llama/llama-3.3-70b-instruct, anthropic/claude-sonnet-4-5, anthropic/claude-haiku-4-5, moonshotai/kimi-k2.5, x-ai/grok-4.3, minimax/minimax-m2.5. Reviewed legacy LiteLLM ids remain accepted. Defaults to google/gemini-3.5-flash.
 </ParamField>
 
 <ParamField body="use_link_placeholders" type={"boolean | undefined"}>

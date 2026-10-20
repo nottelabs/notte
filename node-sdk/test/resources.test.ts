@@ -4,6 +4,33 @@ import { NotteClient, NotteAPIError, sessionStop, type GetFunctionRunResponseWri
 afterEach(() => vi.unstubAllGlobals());
 const client = () => new NotteClient({ baseUrl: 'https://api.example.test', apiKey: 'test-key' }); // pragma: allowlist secret
 
+it.each(['files', 'sessions'] as const)('executes a file action through %s with a pinned target', async resource => {
+  const requests: Request[] = [];
+  const action = { type: 'upload_file' as const, file_path: 'input.txt', selector: 'input[type=file]' };
+  const payload = { success: true, action, message: 'Uploaded', started_at: '2026-10-20T00:00:00Z', ended_at: '2026-10-20T00:00:01Z' };
+  vi.stubGlobal('fetch', vi.fn(async (request: Request) => {
+    requests.push(request);
+    return Response.json(payload);
+  }));
+  const api = client();
+  const execute = resource === 'files' ? api.files.execute : api.sessions.executeSessionFile;
+  const result = await execute('session/id', { action, target_id: 'browser-target', record: false }, { update_metadata: false });
+  expect(result).toEqual(payload);
+  expect(requests).toHaveLength(1);
+  expect(requests[0].method).toBe('POST');
+  expect(requests[0].url).toBe('https://api.example.test/sessions/session%2Fid/page/execute/file?update_metadata=false');
+  expect(requests[0].headers.get('authorization')).toBe('Bearer test-key');
+  expect(await requests[0].json()).toEqual({ action, target_id: 'browser-target', record: false });
+});
+
+it('preserves function artifact and execution runtime metadata', async () => {
+  const payload = { sdk_generation: 'v110', artifact_sdk_generation: 'v19', status: 'active' };
+  vi.stubGlobal('fetch', vi.fn(async () => Response.json(payload)));
+  const result = await client().functions.runGetMetadata('function', 'run');
+  expect(result.sdk_generation).toBe('v110');
+  expect(result.artifact_sdk_generation).toBe('v19');
+});
+
 it('binds a detached stop method to the owning client and unwraps its response', async () => {
   const requests: Request[] = [];
   vi.stubGlobal('fetch', vi.fn(async (request: Request) => {

@@ -18,12 +18,6 @@ export type DataSpace = {
      */
     markdown: string;
     /**
-     * Images
-     *
-     * List of images extracted from the page (ID and download link)
-     */
-    images?: Array<ImageData> | null;
-    /**
      * Structured data extracted from the page in JSON format
      */
     structured?: StructuredDataBaseModel | null;
@@ -36,15 +30,10 @@ export type DataSpace = {
 Markdown representation of the extracted data
 </ParamField>
 
-<ParamField body="images" type={"ImageData[] | null | undefined"}>
-List of images extracted from the page (ID and download link)
-</ParamField>
-
 <ParamField body="structured" type={"StructuredDataBaseModel | null | undefined"}>
 Structured data extracted from the page in JSON format
 </ParamField>
 
 ## Related types
 
-- [ImageData](/typescript-sdk-reference/types/imagedata)
 - [StructuredDataBaseModel](/typescript-sdk-reference/types/structureddatabasemodel)

@@ -70,6 +70,14 @@ pageExecute: /sessions/&#123;session_id&#125;/page/execute. Returns the API resp
 client.sessions.execute(sessionId: PageExecuteData["path"]["session_id"], body: PageExecuteData["body"], query?: PageExecuteData["query"], requestOptions?: ResourceRequestOptions & { headers?: Omit<NonNullable<PageExecuteData["headers"]>, "x-notte-api-key">; }): Promise<ApiExecutionResponse>;
 ```
 
+## executeSessionFile
+
+executeSessionFile: /sessions/&#123;session_id&#125;/page/execute/file. Returns the API response body.
+
+```typescript
+client.sessions.executeSessionFile(sessionId: ExecuteSessionFileData["path"]["session_id"], body: ExecuteSessionFileData["body"], query?: ExecuteSessionFileData["query"], requestOptions?: ResourceRequestOptions & { headers?: Omit<NonNullable<ExecuteSessionFileData["headers"]>, "x-notte-api-key">; }): Promise<ApiExecutionResponse>;
+```
+
 ## getCookies
 
 sessionCookiesGet: /sessions/&#123;session_id&#125;/cookies. Returns the API response body.

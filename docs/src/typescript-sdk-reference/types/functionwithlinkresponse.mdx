@@ -30,63 +30,71 @@ export type FunctionWithLinkResponse = {
     /**
      * Variables
      *
-     * The variables to run the workflow with
+     * The variables to run the function with
      */
     variables?: Array<ParameterInfo> | null;
     /**
      * Created At
      *
-     * The creation time of the workflow
+     * The creation time of the function
      */
     created_at: string;
     /**
      * Updated At
      *
-     * The last update time of the workflow
+     * The last update time of the function
      */
     updated_at: string;
     /**
      * Latest Version
      *
-     * The version of the workflow
+     * The version of the function
      */
     latest_version: string;
     /**
      * Versions
      *
-     * The versions of the workflow
+     * The versions of the function
      */
     versions: Array<string>;
     /**
      * Status
      *
-     * The status of the workflow
+     * The status of the function
      */
     status: string;
     /**
      * Name
      *
-     * The name of the workflow
+     * The name of the function
      */
     name?: string | null;
     /**
      * Description
      *
-     * The description of the workflow
+     * The description of the function
      */
     description?: string | null;
     /**
      * Shared
      *
-     * Whether the workflow is public and can beshared with other users
+     * Whether the function is public and can beshared with other users
      */
     shared?: boolean;
     /**
      * Reference Workflow Id
      *
-     * The ID of the reference workflow (i.e wether the workflow was forked from another workflow or not)
+     * The ID of the reference function (i.e whether the function was forked from another function or not)
      */
     reference_workflow_id?: string | null;
+    /**
+     * Sdk Generation
+     */
+    sdk_generation?: 'v19' | 'v110';
+    /**
+     * Upload Sdk Version
+     */
+    upload_sdk_version?: string | null;
     /**
      * Published
      */
@@ -169,43 +177,51 @@ The ID of the function
 </ParamField>
 
 <ParamField body="variables" type={"ParameterInfo[] | null | undefined"}>
-The variables to run the workflow with
+The variables to run the function with
 </ParamField>
 
 <ParamField body="created_at" type={"string"} required>
-The creation time of the workflow
+The creation time of the function
 </ParamField>
 
 <ParamField body="updated_at" type={"string"} required>
-The last update time of the workflow
+The last update time of the function
 </ParamField>
 
 <ParamField body="latest_version" type={"string"} required>
-The version of the workflow
+The version of the function
 </ParamField>
 
 <ParamField body="versions" type={"string[]"} required>
-The versions of the workflow
+The versions of the function
 </ParamField>
 
 <ParamField body="status" type={"string"} required>
-The status of the workflow
+The status of the function
 </ParamField>
 
 <ParamField body="name" type={"string | null | undefined"}>
-The name of the workflow
+The name of the function
 </ParamField>
 
 <ParamField body="description" type={"string | null | undefined"}>
-The description of the workflow
+The description of the function
 </ParamField>
 
 <ParamField body="shared" type={"boolean | undefined"}>
-Whether the workflow is public and can beshared with other users
+Whether the function is public and can beshared with other users
 </ParamField>
 
 <ParamField body="reference_workflow_id" type={"string | null | undefined"}>
-The ID of the reference workflow (i.e wether the workflow was forked from another workflow or not)
+The ID of the reference function (i.e whether the function was forked from another function or not)
+</ParamField>
+
+<ParamField body="sdk_generation" type={"\"v19\" | \"v110\" | undefined"}>
+
+</ParamField>
+
+<ParamField body="upload_sdk_version" type={"string | null | undefined"}>
+
 </ParamField>
 
 <ParamField body="published" type={"boolean | undefined"}>

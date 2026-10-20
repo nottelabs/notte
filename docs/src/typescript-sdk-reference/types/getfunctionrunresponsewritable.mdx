@@ -25,20 +25,24 @@ The ID of the session
 
 </ParamField>
 
-<ParamField body="status" type={"\"active\" | \"closed\" | \"failed\""} required>
+<ParamField body="status" type={"\"failed\" | \"closed\" | \"active\""} required>
 
 </ParamField>
 
 <ParamField body="result" type={"string | null | undefined"}>
-The result of the workflow run (if any)
+The result of the function run (if any)
 </ParamField>
 
 <ParamField body="logs" type={"string[] | undefined"}>
-The logs of the workflow run
+The logs of the function run
 </ParamField>
 
 <ParamField body="variables" type={"{ [key: string]: unknown; } | null | undefined"}>
-The variables of the workflow run
+The variables of the function run
+</ParamField>
+
+<ParamField body="sdk_generation" type={"FunctionSdkGeneration | undefined"}>
+
 </ParamField>
 
 <ParamField body="function_id" type={"string"} required>
@@ -54,10 +58,14 @@ The ID of the function run
 </ParamField>
 
 <ParamField body="local" type={"boolean | undefined"}>
-Whether the workflow has been run locally or on the cloud
+Whether the function has been run locally or on the cloud
 </ParamField>
 
 <ParamField body="function_version" type={"string | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="artifact_sdk_generation" type={"FunctionSdkGeneration | undefined"}>
 
 </ParamField>
 

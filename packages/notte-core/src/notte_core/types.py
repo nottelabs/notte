@@ -2282,6 +2282,7 @@ class GetFunctionRequestDict(TypedDict, total=False):
     """
 
     version: str | None
+    function_run_id: str | None
 
 
 class ListFunctionsRequestDict(ListRequestDict, total=False):
@@ -2347,6 +2348,8 @@ class ForkFunctionRequest(SdkRequest):
 
 class GetFunctionResponse(SdkResponse):
     default_runtime: FunctionRuntime = "standard"
+    sdk_generation: Literal["v19", "v110"] = "v19"
+    upload_sdk_version: str | None = None
     function_id: Annotated[
         str, Field(description="The ID of the function", validation_alias=AliasChoices("workflow_id", "function_id"))
     ]
@@ -2383,6 +2386,7 @@ class UpdateFunctionRequest(SdkRequest):
 
 class GetFunctionRequest(SdkRequest):
     version: Annotated[str | None, Field(description="The version of the function to get")] = None
+    function_run_id: Annotated[str | None, Field(description="The run whose pinned function code to download")] = None
 
 
 class DeleteFunctionResponse(SdkResponse):
@@ -2470,6 +2474,8 @@ class FunctionRunResponse(SdkResponse):
 
 
 class GetFunctionRunResponse(SdkResponse):
+    artifact_sdk_generation: Literal["v19", "v110"] = "v19"
+    sdk_generation: Literal["v19", "v110"] = "v19"
     function_id: Annotated[
         str, Field(description="The ID of the function", validation_alias=AliasChoices("workflow_id", "function_id"))
     ]
@@ -2514,7 +2520,7 @@ class FunctionRunListItemResponse(SdkResponse):
 
 class FunctionRunUpdateRequestDict(TypedDict, total=False):
     session_id: str | None
-    logs: list[str]
+    logs: list[str] | None
     variables: dict[str, Any] | None
     result: Any | None
     status: FunctionRunStatus
@@ -2522,9 +2528,9 @@ class FunctionRunUpdateRequestDict(TypedDict, total=False):
 
 class FunctionRunUpdateRequest(SdkRequest):
     session_id: Annotated[str | None, Field(description="The ID of the session")] = None
-    logs: Annotated[list[str], Field(description="The logs of the function run")] = Field(default_factory=list)
+    logs: Annotated[list[str] | None, Field(description="The logs of the function run")] = None
     variables: Annotated[dict[str, Any] | None, Field(description="The variables of the function run")] = None
-    result: Annotated[Any | None, Field(description="The result of the function run")] = None
+    result: Annotated[Any, Field(description="The result of the function run")] = None
     status: Annotated[FunctionRunStatus, Field(description="The status of the function run")]
 
 

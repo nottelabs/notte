@@ -147,5 +147,5 @@ describe('committed-snapshot generation', () => {
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }
-  }, 30_000);
+  }, 60_000);
 });

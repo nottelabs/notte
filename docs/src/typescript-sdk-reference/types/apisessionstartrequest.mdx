@@ -78,12 +78,6 @@ export type ApiSessionStartRequest = {
      */
     cdp_url?: string | null;
     /**
-     * Screenshot Type
-     *
-     * The type of screenshot to use for the session.
-     */
-    screenshot_type?: 'raw' | 'full' | 'last_action';
-    /**
      * Browser profile configuration for state persistence
      */
     profile?: SessionProfile | null;
@@ -135,6 +129,14 @@ export type ApiSessionStartRequest = {
      * Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.
      */
     advanced_stealth?: boolean;
+    /**
+     * Screenshot Type
+     *
+     * Ignored since notte 1.10: screenshots are returned without highlighting.
+     *
+     * @deprecated
+     */
+    screenshot_type?: 'raw' | 'full' | 'last_action';
     /**
      * Demonstrate
      *
@@ -190,10 +192,6 @@ Viewport shape preset. When set, the backend fits the largest rectangle of this 
 The CDP URL of another remote session provider.
 </ParamField>
 
-<ParamField body="screenshot_type" type={"\"raw\" | \"full\" | \"last_action\" | undefined"}>
-The type of screenshot to use for the session.
-</ParamField>
-
 <ParamField body="profile" type={"SessionProfile | null | undefined"}>
 Browser profile configuration for state persistence
 </ParamField>
@@ -228,6 +226,14 @@ Block ads and trackers in managed browsers using Basic filtering. Set false to d
 
 <ParamField body="advanced_stealth" type={"boolean | undefined"}>
 Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.
+</ParamField>
+
+<ParamField body="screenshot_type" type={"\"raw\" | \"full\" | \"last_action\" | undefined"}>
+Ignored since notte 1.10: screenshots are returned without highlighting.
+
+**deprecated:**
+
+
 </ParamField>
 
 <ParamField body="demonstrate" type={"boolean | undefined"}>

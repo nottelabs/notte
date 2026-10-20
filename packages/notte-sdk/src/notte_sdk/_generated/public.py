@@ -48,6 +48,7 @@ from notte_sdk._generated.models import AddCreditCardResponse as AddCreditCardRe
 from notte_sdk._generated.models import (
     AgentFunctionCodeResponse as AgentFunctionCodeResponse,
 )
+from notte_sdk._generated.models import ApiExecutionResponse as ApiExecutionResponse
 from notte_sdk._generated.models import (
     CreatePaymentParametersQuery as CreatePaymentParametersQuery,
 )
@@ -60,6 +61,10 @@ from notte_sdk._generated.models import (
 from notte_sdk._generated.models import DeleteFunctionResponse as DeleteFunctionResponse
 from notte_sdk._generated.models import DeletePersonaResponse as DeletePersonaResponse
 from notte_sdk._generated.models import DeleteVaultResponse as DeleteVaultResponse
+from notte_sdk._generated.models import (
+    ExecuteSessionFileParametersQuery as ExecuteSessionFileParametersQuery,
+)
+from notte_sdk._generated.models import FileExecutionRequest as FileExecutionRequest
 from notte_sdk._generated.models import FileSource as FileSource
 from notte_sdk._generated.models import (
     FunctionMetadataUpdateRequest as FunctionMetadataUpdateRequest,
@@ -72,6 +77,9 @@ from notte_sdk._generated.models import (
 )
 from notte_sdk._generated.models import (
     FunctionRunGetMetadataParametersQuery as FunctionRunGetMetadataParametersQuery,
+)
+from notte_sdk._generated.models import (
+    FunctionRuntimeHealthParametersQuery as FunctionRuntimeHealthParametersQuery,
 )
 from notte_sdk._generated.models import (
     FunctionRuntimeHealthResponse as FunctionRuntimeHealthResponse,
@@ -180,7 +188,13 @@ from notte_sdk._generated.typing import (
     DeleteCreditCardRequestDict as DeleteCreditCardRequestDict,
 )
 from notte_sdk._generated.typing import DeleteVaultRequestDict as DeleteVaultRequestDict
+from notte_sdk._generated.typing import (
+    ExecuteSessionFileParametersQueryDict as ExecuteSessionFileParametersQueryDict,
+)
 from notte_sdk._generated.typing import ExternalProxyDict as ExternalProxyDict
+from notte_sdk._generated.typing import (
+    FileExecutionRequestDict as FileExecutionRequestDict,
+)
 from notte_sdk._generated.typing import (
     FunctionMetadataUpdateRequestDict as FunctionMetadataUpdateRequestDict,
 )
@@ -192,6 +206,9 @@ from notte_sdk._generated.typing import (
 )
 from notte_sdk._generated.typing import (
     FunctionRunGetMetadataParametersQueryDict as FunctionRunGetMetadataParametersQueryDict,
+)
+from notte_sdk._generated.typing import (
+    FunctionRuntimeHealthParametersQueryDict as FunctionRuntimeHealthParametersQueryDict,
 )
 from notte_sdk._generated.typing import (
     FunctionRunUpdateRequestDict as FunctionRunUpdateRequestDict,
@@ -286,6 +303,7 @@ __all__ = [
     "AddCreditCardRequestDict",
     "AddCreditCardResponse",
     "AgentFunctionCodeResponse",
+    "ApiExecutionResponse",
     "Cookie",
     "CreateFunctionRequest",
     "CreateFunctionRequestDict",
@@ -306,8 +324,12 @@ __all__ = [
     "DeleteVaultRequestDict",
     "DeleteVaultResponse",
     "EmailResponse",
+    "ExecuteSessionFileParametersQuery",
+    "ExecuteSessionFileParametersQueryDict",
     "ExternalProxy",
     "ExternalProxyDict",
+    "FileExecutionRequest",
+    "FileExecutionRequestDict",
     "FileSource",
     "FunctionMetadataUpdateRequest",
     "FunctionMetadataUpdateRequestDict",
@@ -320,6 +342,8 @@ __all__ = [
     "FunctionRunListItemResponse",
     "FunctionRunUpdateRequest",
     "FunctionRunUpdateRequestDict",
+    "FunctionRuntimeHealthParametersQuery",
+    "FunctionRuntimeHealthParametersQueryDict",
     "FunctionRuntimeHealthResponse",
     "FunctionScheduleCreateRequest",
     "FunctionScheduleCreateRequestDict",

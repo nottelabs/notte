@@ -17,10 +17,13 @@ from notte_sdk._generated.typing import (
     DeleteCredentialsRequestDict,
     DeleteCreditCardRequestDict,
     DeleteVaultRequestDict,
+    ExecuteSessionFileParametersQueryDict,
+    FileExecutionRequestDict,
     FunctionMetadataUpdateRequestDict,
     FunctionRollbackParametersQueryDict,
     FunctionRollbackRequestDict,
     FunctionRunGetMetadataParametersQueryDict,
+    FunctionRuntimeHealthParametersQueryDict,
     FunctionRunUpdateRequestDict,
     FunctionScheduleCreateRequestDict,
     GetCredentialsRequestDict,
@@ -145,9 +148,12 @@ class FunctionsOperations(RunPayloadsOperations):
         request = wire_request(models.FunctionRunUpdateRequest, data)
         return self.request(api.function_run_update_metadata(function_id, run_id, request))
 
-    def runtime_health(self) -> models.FunctionRuntimeHealthResponse:
+    def runtime_health(
+        self, **data: Unpack[FunctionRuntimeHealthParametersQueryDict]
+    ) -> models.FunctionRuntimeHealthResponse:
         "Function Runtime Health (`GET /functions/health`)."
-        return self.request(api.function_runtime_health())
+        request = wire_request(models.FunctionRuntimeHealthParametersQuery, data)
+        return self.request(api.function_runtime_health(params=request))
 
     def delete_schedule(self, function_id: str) -> models.ScheduleDeleteResponse:
         "Function Schedule Delete (`DELETE /functions/{function_id}/schedule`)."
@@ -192,7 +198,7 @@ class SessionsOperations(BaseClient):
     def get_session_script(
         self, session_id: str, **data: Unpack[GetSessionScriptParametersQueryDict]
     ) -> models.AgentFunctionCodeResponse:
-        "Get Session Script (`GET /sessions/{session_id}/workflow/code`)."
+        "Get Session Script (`GET /sessions/{session_id}/workflow/code`).\n\nGenerate a Python script from a session's trajectory.\n\nThis endpoint generates executable Python code that replicates the session's actions,\nwith proper `client.AgentFallback` blocks for steps that were executed by agents.\n\nReturns both a Python script and JSON actions list."
         request = wire_request(models.GetSessionScriptParametersQuery, data)
         return self.request(api.get_session_script(session_id, params=request))
 
@@ -310,6 +316,18 @@ class FilesOperations(BaseClient):
         "List Session Files (`GET /sessions/{session_id}/files`)."
         request = wire_request(models.ListSessionFilesParametersQuery, data)
         return self.request(api.list_session_files(session_id, params=request))
+
+    @track_usage("cloud.files.execute")
+    def execute(
+        self,
+        session_id: str,
+        *,
+        query: ExecuteSessionFileParametersQueryDict | None = None,
+        **data: Unpack[FileExecutionRequestDict],
+    ) -> models.ApiExecutionResponse:
+        "Execute Session File (`POST /sessions/{session_id}/page/execute/file`)."
+        request = wire_request(models.FileExecutionRequest, data)
+        return self.request(api.execute_session_file(session_id, request, params=wire_request(None, query or {})))
 
 
 class PersonasOperations(BaseClient):

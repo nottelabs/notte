@@ -509,6 +509,17 @@
   "update": {
     "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
   },
+  "execute_session_file": {
+    "aliases": [
+      {
+        "method": "executeSessionFile",
+        "resource": "sessions"
+      }
+    ],
+    "method": "execute",
+    "resource": "files",
+    "telemetry": "cloud.files.execute"
+  },
   "upload_session_file": {
     "aliases": [
       {

@@ -165,6 +165,34 @@ def test_function_response_types_are_generated() -> None:
     assert GetFunctionRunResponse is core.GetFunctionRunResponse
 
 
+def test_function_runtime_metadata_survives_response_parsing(
+    client: NotteClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    api = fake(
+        monkeypatch,
+        {**FUNCTION, "url": "https://storage.example/code", "sdk_generation": "v110", "upload_sdk_version": "1.10.0"},
+    )
+    function = client.functions.download_url("fn", function_run_id="run")
+    assert function.sdk_generation == "v110"
+    assert function.upload_sdk_version == "1.10.0"
+    assert api.calls[0].params == {"function_run_id": "run"}
+    api.payload = {**RUN, "artifact_sdk_generation": "v19", "sdk_generation": "v110"}
+    run = client.functions.run_get_metadata("fn", "run")
+    assert run.artifact_sdk_generation == "v19"
+    assert run.sdk_generation == "v110"
+    assert GetFunctionResponse.model_validate(FUNCTION).sdk_generation == "v19"
+    assert GetFunctionRunResponse.model_validate(RUN).sdk_generation == "v19"
+
+
+def test_function_update_accepts_nullable_logs_and_arbitrary_result() -> None:
+    from notte_core.types import FunctionRunUpdateRequest
+
+    update = FunctionRunUpdateRequest(status="active", logs=None, result={"ok": True})
+    assert update.logs is None
+    assert update.result == {"ok": True}
+    assert FunctionRunUpdateRequest(status="closed", result=None).result is None
+
+
 @pytest.mark.parametrize("shared", [True, False])
 def test_function_sharing_metadata_round_trip(
     client: NotteClient, monkeypatch: pytest.MonkeyPatch, shared: bool

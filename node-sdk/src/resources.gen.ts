@@ -40,6 +40,11 @@ export function createResources(client: Client, getApiKey: () => string) {
       const response = await operations.pageExecute({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, body, query });
       return response.data;
     },
+    /** executeSessionFile: /sessions/{session_id}/page/execute/file. Returns the API response body. */
+    executeSessionFile: async (sessionId: Types.ExecuteSessionFileData['path']["session_id"], body: Types.ExecuteSessionFileData['body'], query: Types.ExecuteSessionFileData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.ExecuteSessionFileData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.executeSessionFile({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, body, query });
+      return response.data;
+    },
     /** sessionCookiesGet: /sessions/{session_id}/cookies. Returns the API response body. */
     getCookies: async (sessionId: Types.SessionCookiesGetData['path']["session_id"], query: Types.SessionCookiesGetData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.SessionCookiesGetData['headers']>, 'x-notte-api-key'> } = {}) => {
       const response = await operations.sessionCookiesGet({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, query });
@@ -142,6 +147,11 @@ export function createResources(client: Client, getApiKey: () => string) {
       const response = await operations.downloadSessionFile({ client, throwOnError: true, signal: requestOptions.signal, parseAs: "blob", headers: { ...requestOptions.headers }, path: { "session_id": sessionId, "file_id": fileId } });
       return response.data;
     },
+    /** executeSessionFile: /sessions/{session_id}/page/execute/file. Returns the API response body. */
+    execute: async (sessionId: Types.ExecuteSessionFileData['path']["session_id"], body: Types.ExecuteSessionFileData['body'], query: Types.ExecuteSessionFileData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.ExecuteSessionFileData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.executeSessionFile({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, body, query });
+      return response.data;
+    },
     /** listSessionFiles: /sessions/{session_id}/files. Returns the API response body. */
     list: async (sessionId: Types.ListSessionFilesData['path']["session_id"], query: Types.ListSessionFilesData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.ListSessionFilesData['headers']>, 'x-notte-api-key'> } = {}) => {
       const response = await operations.listSessionFiles({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId }, query });
@@ -230,8 +240,8 @@ export function createResources(client: Client, getApiKey: () => string) {
       return response.data;
     },
     /** functionRuntimeHealth: /functions/health. Returns the API response body. */
-    runtimeHealth: async (requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionRuntimeHealthData['headers']>, 'x-notte-api-key'> } = {}) => {
-      const response = await operations.functionRuntimeHealth({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers } });
+    runtimeHealth: async (query: Types.FunctionRuntimeHealthData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionRuntimeHealthData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.functionRuntimeHealth({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, query });
       return response.data;
     },
     /** functionScheduleSet: /functions/{function_id}/schedule. Returns the API response body. */
