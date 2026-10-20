@@ -329,6 +329,7 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 
 - [DELETE Delete Session File](https://docs.notte.cc/api-reference/sessions/delete-session-file.md)
 - [GET Download Session File](https://docs.notte.cc/api-reference/sessions/download-session-file.md)
+- [POST Execute Session File](https://docs.notte.cc/api-reference/sessions/execute-session-file.md)
 - [GET Get Session Script](https://docs.notte.cc/api-reference/sessions/get-session-script.md)
 - [GET List Session Files](https://docs.notte.cc/api-reference/sessions/list-session-files.md)
 - [GET List Sessions](https://docs.notte.cc/api-reference/sessions/list-sessions.md)
