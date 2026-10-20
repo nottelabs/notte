@@ -376,7 +376,7 @@ def mongodb_fixture(env: dict[str, str]) -> Iterator[str]:
             "5s",
             "--health-retries",
             "20",
-            "mongo:8.0@sha256:6657bf2413fefc5be649390318f5b4cd7328e982722f8ce2ac6dfa6f0a42cb03",
+            "mongo:8.0.34@sha256:4a4ab5d4834207389e0d7270fac988e21ffedccecba77991a552f755df229907",
         ],
         ROOT,
         env,
