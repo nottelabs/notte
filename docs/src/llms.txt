@@ -83,6 +83,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [Claude Managed Agents](https://docs.notte.cc/integrations/claude-managed-agents.md): Give Anthropic's hosted agents a Notte browser, with your key held in a vault
 - [Replit Agent](https://docs.notte.cc/integrations/replit.md): Give Replit Agent cloud browsers through Notte's hosted MCP server.
 - [Docker Sandboxes](https://docs.notte.cc/integrations/docker-sandboxes.md): Give local sandboxed coding agents Notte browser tools.
+- [Daytona](https://docs.notte.cc/integrations/daytona.md): Test apps running in Daytona sandboxes with Notte cloud browsers.
 - [E2B](https://docs.notte.cc/integrations/e2b.md): Test apps running in E2B sandboxes with Notte cloud browsers.
 - [fx](https://docs.notte.cc/integrations/fx.md): Run the native fx agent engine with an owned Notte browser.
 

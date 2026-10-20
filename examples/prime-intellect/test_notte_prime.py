@@ -91,6 +91,13 @@ async def native_tools(task, trace):
             thread.join(timeout=2)
 
 
+async def wait_until_closed(client, session_id: str) -> None:
+    """Wait for the API to report a stopped session as closed; stopping is asynchronous."""
+    async with asyncio.timeout(15):
+        while (await asyncio.to_thread(client.sessions.status, session_id)).status != "closed":
+            await asyncio.sleep(0.5)
+
+
 class BrowserTests(unittest.IsolatedAsyncioTestCase):
     @asynccontextmanager
     async def owned(self, failure=False):
@@ -202,9 +209,7 @@ class BrowserTests(unittest.IsolatedAsyncioTestCase):
             await env.run(task, SimpleNamespace(agent=SimpleNamespace(run=completed)))
             await task.finalize(traces[0], None)
             if LIVE:
-                self.assertEqual(
-                    (await asyncio.to_thread(client.sessions.status, owned[0].session_id)).status, "closed"
-                )
+                await wait_until_closed(client, owned[0].session_id)
                 self.assertEqual(
                     (await asyncio.to_thread(client.sessions.status, owned[1].session_id)).status, "active"
                 )
@@ -223,9 +228,7 @@ class BrowserTests(unittest.IsolatedAsyncioTestCase):
                         status = await asyncio.to_thread(client.sessions.status, session.session_id)
                         if status.status != "closed":
                             await asyncio.to_thread(client.sessions.stop, session.session_id)
-                        self.assertEqual(
-                            (await asyncio.to_thread(client.sessions.status, session.session_id)).status, "closed"
-                        )
+                        await wait_until_closed(client, session.session_id)
 
     async def test_native_mcp_browser_and_reward(self):
         async with self.owned() as (task, trace):
@@ -466,9 +469,7 @@ class BrowserTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(task._sessions, {})
                     if LIVE:
                         for session in sessions:
-                            self.assertEqual(
-                                (await asyncio.to_thread(client.sessions.status, session.session_id)).status, "closed"
-                            )
+                            await wait_until_closed(client, session.session_id)
                 finally:
                     release.set()
                     if running is not None and not running.done():
@@ -482,10 +483,7 @@ class BrowserTests(unittest.IsolatedAsyncioTestCase):
                                 status = await asyncio.to_thread(client.sessions.status, session.session_id)
                                 if status.status != "closed":
                                     await asyncio.to_thread(client.sessions.stop, session.session_id)
-                                self.assertEqual(
-                                    (await asyncio.to_thread(client.sessions.status, session.session_id)).status,
-                                    "closed",
-                                )
+                                await wait_until_closed(client, session.session_id)
 
     async def test_failed_creation_preserves_safe_error_and_clears_owner(self):
         task = next(iter(example.NotteTaskset(vf.TasksetConfig())))

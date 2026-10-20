@@ -1,0 +1,64 @@
+---
+title: Daytona
+description: Test apps running in Daytona sandboxes with Notte cloud browsers.
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+[Daytona](https://www.daytona.io) runs agent code in sandboxes that start and resume in about a second. Pair it with Notte when an agent builds or runs an app in a sandbox and needs a real browser to check the result. The browser runs on Notte, so the sandbox's memory stays free for the agent's code. See the [runnable Python example](https://github.com/nottelabs/notte/tree/main/examples/daytona).
+
+## Set up
+
+Use Python 3.11+, a [Daytona API key](https://app.daytona.io/dashboard/keys), and a [Notte API key](https://console.notte.cc/apikeys). Install `daytona`, `notte-sdk[playwright]`, and `python-dotenv`.
+
+## Open a sandbox app from your code
+
+Serve the app from the sandbox and create a signed preview URL for its port. The URL carries its own token, so the browser needs no auth header. Daytona shows browsers a warning page on a preview URL's first load; the `X-Daytona-Skip-Preview-Warning` header skips it. `session.page` is a Playwright page connected to the Notte browser over CDP.
+
+```python
+from daytona import Daytona, SessionExecuteRequest
+from notte_sdk import NotteClient
+
+notte = NotteClient()
+daytona = Daytona()
+sandbox = daytona.create()
+try:
+    sandbox.fs.upload_file(b"<h1>Hello from Daytona</h1>", "/home/daytona/app/index.html")
+    sandbox.process.create_session("app")
+    sandbox.process.execute_session_command(
+        "app", SessionExecuteRequest(command="cd /home/daytona/app && python3 -m http.server 3000", run_async=True)
+    )
+    # Wait until the server accepts connections.
+    sandbox.process.exec("bash -c 'for i in $(seq 1 50); do curl -sf localhost:3000 > /dev/null && exit 0; sleep 0.2; done; exit 1'")
+    url = sandbox.create_signed_preview_url(3000, expires_in_seconds=3600).url
+
+    with notte.Session(extra_http_headers={"X-Daytona-Skip-Preview-Warning": "true"}) as session:
+        page = session.page
+        page.goto(url)
+        print(page.locator("h1").inner_text())
+finally:
+    daytona.delete(sandbox)
+```
+
+## Drive the browser from inside the sandbox
+
+Agents running in the sandbox can use the Notte CLI. Install it and the Notte skills, which coding agents such as Claude Code and Codex pick up from `~/.agents/skills`:
+
+```bash
+curl -fsSL https://notte.cc/install-cli.sh | sh
+notte skill add --yes
+```
+
+Pass `NOTTE_API_KEY` to the sandbox commands, then drive the browser. Replace the example URL with the one `create_signed_preview_url` returns:
+
+```bash
+notte sessions start --extra-http-headers '{"X-Daytona-Skip-Preview-Warning": "true"}'
+notte page goto https://3000-<token>.daytonaproxy01.net
+notte page fill '#title' 'Ship the Daytona example'
+notte page click 'button[type=submit]'
+notte page scrape --only-main-content
+notte sessions stop
+```
+
+The example stops the CLI session even when a command fails, and deletes the sandbox at the end. Its tests cover the sandbox commands and cleanup offline, and the full flow against real Daytona and Notte.

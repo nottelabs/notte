@@ -80,6 +80,7 @@ def projects(shard: str) -> list[tuple[str, str]]:
             "openagi",
             "pipedream",
             "e2b",
+            "daytona",
         }:
             raise ValueError("Unknown Python integration project")
         if registry[name] == "terraform-go" and name != "terraform-profiles":
@@ -339,6 +340,19 @@ def project_env(name: str, env: dict[str, str]) -> dict[str, str]:
     return {key: value for key, value in env.items() if key not in CREDENTIALS or key in allowed}
 
 
+def container_diagnostics(name: str, env: dict[str, str]) -> str:
+    """Return a failed container's state, last health checks, and log tail for the error message."""
+    commands = (
+        ["docker", "inspect", "--format", "{{json .State}}", name],
+        ["docker", "logs", "--tail", "50", name],
+    )
+    output: list[str] = []
+    for command in commands:
+        result = subprocess.run(command, cwd=ROOT, env=env, check=False, text=True, capture_output=True)
+        output.append(f"$ {' '.join(command)}\n{result.stdout}{result.stderr}")
+    return "\n".join(output)
+
+
 @contextmanager
 def mongodb_fixture(env: dict[str, str]) -> Iterator[str]:
     name = f"notte-mongodb-{uuid4().hex}"
@@ -383,9 +397,9 @@ def mongodb_fixture(env: dict[str, str]) -> Iterator[str]:
                 yield "mongodb://127.0.0.1:27017"
                 return
             if status != "starting":
-                raise RuntimeError(f"Owned MongoDB fixture is {status}")
+                raise RuntimeError(f"Owned MongoDB fixture is {status}\n{container_diagnostics(name, env)}")
             time.sleep(2)
-        raise TimeoutError("Owned MongoDB fixture did not become healthy")
+        raise TimeoutError(f"Owned MongoDB fixture did not become healthy\n{container_diagnostics(name, env)}")
     finally:
         primary = sys.exception()
         try:
