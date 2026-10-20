@@ -5,6 +5,7 @@ from collections.abc import Sequence
 from pydantic import BaseModel, Field
 
 from notte_core.dom_tree import DomNode
+from notte_core.element_state import ElementState, page_fingerprint
 from notte_core.url import clean_url
 
 
@@ -52,3 +53,21 @@ class BrowserSnapshot(BaseModel):
 
     def interaction_nodes(self) -> Sequence[DomNode]:
         return self.dom_node.interaction_nodes()
+
+    def element_states(self) -> dict[str, ElementState]:
+        """The live state of the interaction nodes that have one, by action id (e.g. `I1`)."""
+        nodes = self.dom_node.interaction_nodes_by_id
+        return {node_id: node.state for node_id, node in nodes.items() if node.state is not None}
+
+    def fingerprint(self) -> str:
+        """A cheap marker of the page state: URL, and the id, label and live state of every
+        interaction node. It changes when the page offers other actions or a field value changes,
+        so a decision taken on this snapshot can be checked against a newer one before acting."""
+        return page_fingerprint(
+            self.metadata.url,
+            # `inner_text()` is the action label (what interaction nodes used to carry as `text`).
+            (
+                (node_id, node.inner_text(), node.state)
+                for node_id, node in self.dom_node.interaction_nodes_by_id.items()
+            ),
+        )
