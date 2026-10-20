@@ -1,0 +1,68 @@
+---
+title: boat
+description: Test apps running in boat sandboxes with Notte cloud browsers.
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+[boat](https://boat.dev) runs agents in full Linux VMs that keep their disk between runs. Pair it with Notte when an agent builds or runs an app in a sandbox and needs a browser to check the result, or when it browses sites that block or challenge a datacenter IP. A Notte browser comes with stealth, residential proxies and captcha solving. See the [runnable Python example](https://github.com/nottelabs/notte/tree/main/examples/boat).
+
+## Set up
+
+Use Python 3.11+, a [boat API key](https://docs.boat.dev/api-keys), and a [Notte API key](https://console.notte.cc/apikeys). Install `boat-sdk`, `notte-sdk[playwright]`, and `python-dotenv`.
+
+## Open a sandbox app from your code
+
+Serve the app from the sandbox, then host its port. The hosted URL carries an access token, so the browser needs no auth header; treat it like a password. `session.page` is a Playwright page connected to the Notte browser over CDP.
+
+```python
+import os
+
+from boat_sdk import ApiClient, Configuration, exec_command, wait_until_ready, write_text
+from boat_sdk.api.boat_api import BoatApi
+from boat_sdk.models import CommandRequest, CreateSandboxRequest, HostPortRequest
+from notte_sdk import NotteClient
+
+notte = NotteClient()
+config = Configuration(host="https://boat.dev/api/v1", access_token=os.environ["BOAT_API_KEY"])
+with ApiClient(config) as client:
+    boat = BoatApi(client)
+    sandbox_id = boat.create(create_sandbox_request=CreateSandboxRequest(ttl_seconds=1800)).sandbox.id
+    try:
+        wait_until_ready(boat, sandbox_id)
+        write_text(boat, sandbox_id, "app/index.html", "<h1>Hello from boat</h1>")
+        boat.command(sandbox_id, CommandRequest(command="python3 -m http.server 8000", cwd="app", detached=True))
+        # Wait until the server accepts connections.
+        exec_command(boat, sandbox_id, "for i in $(seq 1 50); do curl -sf localhost:8000 > /dev/null && exit 0; sleep 0.2; done; exit 1")
+        url = boat.host_port(sandbox_id, HostPortRequest(port=8000)).url
+
+        with notte.Session() as session:
+            page = session.page
+            page.goto(url)
+            print(page.locator("h1").inner_text())
+    finally:
+        boat.delete_sandbox(x_ascii_confirm_delete=sandbox_id, sandbox_id=sandbox_id)
+```
+
+## Drive the browser from inside the sandbox
+
+Agents running in the sandbox can use the Notte CLI. Pass `NOTTE_API_KEY` in the sandbox's `env` when you create it, then install the CLI and the Notte skills, which coding agents such as Claude Code and Codex pick up from `~/.agents/skills`:
+
+```bash
+curl -fsSL https://notte.cc/install-cli.sh | sh
+notte skill add --yes
+```
+
+Then drive the browser. Replace the example URL with the one `host_port` returns:
+
+```bash
+notte sessions start
+notte page goto 'https://<sandbox>-8000.on.boat.dev?_token=<token>'
+notte page fill '#title' 'Ship the boat example'
+notte page click 'button[type=submit]'
+notte page scrape --only-main-content
+notte sessions stop
+```
+
+The example stops the CLI session even when a command fails, and deletes the sandbox at the end. Its tests cover the sandbox commands and cleanup offline, and the full flow against real boat and Notte.

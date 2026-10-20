@@ -90,6 +90,7 @@ def test_no_snippets_outside_folder():
         "kernel.mdx",  # Integration-specific examples
         "e2b.mdx",  # Integration-specific examples
         "daytona.mdx",  # Integration-specific examples
+        "boat.mdx",  # Integration-specific examples
         "schedules.mdx",  # Comment-only cron examples
         "management.mdx",  # Comment-only metadata example
         "quickstart.mdx",  # CodeGroup with Python/JS tabs
