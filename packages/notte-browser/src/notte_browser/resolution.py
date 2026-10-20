@@ -60,10 +60,20 @@ async def generate_playwright_selector(node: DomNode, selectors: NodeSelectors) 
     handle = node.computed_attributes.handle
     if generator is None or handle is None:
         return None
+    deadline = asyncio.timeout(SELECTOR_GENERATOR_TIMEOUT_S)
     try:
-        selector = await asyncio.wait_for(generator(handle, selectors), timeout=SELECTOR_GENERATOR_TIMEOUT_S)
+        async with deadline:
+            selector = await generator(handle, selectors)
     except Exception as e:
-        logger.debug(f"Selector generator failed for node {node.id}, using CSS / XPath selectors: {e}")
+        if deadline.expired():
+            logger.warning(
+                f"Selector generator timed out after {SELECTOR_GENERATOR_TIMEOUT_S}s for node {node.id}, using CSS / XPath selectors"
+            )
+        else:
+            # only the exception type: its message can carry selectors or page content
+            logger.warning(
+                f"Selector generator failed for node {node.id} ({type(e).__name__}), using CSS / XPath selectors"
+            )
         return None
     if not selector:
         return None
