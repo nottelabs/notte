@@ -161,7 +161,6 @@ jobs:
           GEMINI_API_KEY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.GEMINI_API_KEY || '' }}
           BRAINTRUST_API_KEY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && contains(fromJSON(needs.changes.outputs.scope).integration_examples, 'braintrust') && secrets.BRAINTRUST_API_KEY || '' }}
           BRAINTRUST_PROJECT: notte-integration-tests
-          DAYTONA_API_KEY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && contains(fromJSON(needs.changes.outputs.scope).integration_examples, 'daytona') && secrets.DAYTONA_API_KEY || '' }}
           LMNR_PROJECT_API_KEY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && contains(fromJSON(needs.changes.outputs.scope).integration_examples, 'laminar') && secrets.LMNR_PROJECT_API_KEY || '' }}
           NOTTE_LAMINAR_EXPORT_LIVE: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && contains(fromJSON(needs.changes.outputs.scope).integration_examples, 'laminar') && secrets.LMNR_PROJECT_API_KEY != '' && '1' || '0' }}
         run: python3 scripts/ci_integration_examples.py live --shard "$NOTTE_DOCS_SHARD"
