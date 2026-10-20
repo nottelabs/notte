@@ -669,6 +669,26 @@ describe('Session Unit Tests', () => {
       warn.mockRestore();
     });
 
+    it('gives a complete replacement for each deprecated observe option', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+      const session = new Session(mockClient);
+      await session.start();
+      await session.observe({ instructions: 'click jobs', perception_type: 'deep' });
+      const messages = warn.mock.calls.map(([message]) => String(message)).filter((message) => message.includes('December 1, 2026'));
+      expect(messages).toHaveLength(2);
+      for (const message of messages) {
+        expect(message).not.toMatch(/<<|>>|pending/i);
+      }
+      // The replacement for instructions: observe without them, which never warns.
+      warn.mockClear();
+      await session.observe();
+      const lastBody = (vi.mocked(pageObserve).mock.lastCall?.[0] as unknown as { body?: Record<string, unknown> } | undefined)?.body ?? {};
+      expect(lastBody.instructions).toBeUndefined();
+      expect(lastBody.perception_type ?? 'fast').toBe('fast');
+      expect(warn.mock.calls.filter(([message]) => String(message).includes('December 1, 2026'))).toEqual([]);
+      warn.mockRestore();
+    });
+
     it('rejects when not started', async () => {
       await expect(new Session(mockClient).observe()).rejects.toThrow('Session not started');
     });
