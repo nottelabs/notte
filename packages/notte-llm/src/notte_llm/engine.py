@@ -9,6 +9,7 @@ from typing import Any, cast
 import httpx
 from json_repair import repair_json
 from notte_core.errors import (
+    ContentFilterError,
     ContextWindowExceededError,
     InsufficentCreditsError,
     InvalidAPIKeyError,
@@ -68,6 +69,29 @@ def is_schema_rejection(message: str) -> bool:
         re.search(r"json.?schema|response.?format|output_format\.schema|union types", message, re.IGNORECASE)
         is not None
     )
+
+
+# Content refusals: OpenRouter (`error_type: content_policy_violation`, `provider_code: content_filter`,
+# moderation "input was flagged"), OpenAI (`code: content_policy_violation`), Azure (`content_filter`,
+# `ResponsibleAIPolicyViolation`). They come as 400 or 403 and are not authentication failures.
+_CONTENT_REFUSAL = re.compile(r"content[_ -]?(policy|filter)|responsible_?ai_?policy|input was flagged", re.IGNORECASE)
+
+
+def is_content_refusal(message: str) -> bool:
+    """Recognize a provider's content-policy refusal in an error body."""
+    return _CONTENT_REFUSAL.search(message) is not None
+
+
+def _error_detail(message: str) -> str:
+    """The provider's own error message (cut), without the rest of the body."""
+    try:
+        body: Any = json.loads(message)
+    except ValueError:
+        body = None
+    error: Any = cast(dict[str, Any], body).get("error") if isinstance(body, dict) else None
+    detail: Any = cast(dict[str, Any], error).get("message") if isinstance(error, dict) else None
+    text = str(detail) if detail else message
+    return text if len(text) <= 200 else text[:200] + "..."
 
 
 def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
@@ -244,6 +268,7 @@ class LLMEngine:
         provider_order: list[str] | None = None,
         reasoning: dict[str, Any] | None = None,
         extra_body: dict[str, Any] | None = None,
+        timeout: float = 60.0,
     ):
         self.settings: LlmSettings = LlmSettings.from_env(model=model)
         self.model: str = self.settings.model
@@ -251,6 +276,8 @@ class LLMEngine:
         self.provider_order: list[str] | None = provider_order
         self.reasoning: dict[str, Any] | None = reasoning
         self.extra_body: dict[str, Any] = dict(extra_body or {})
+        # seconds per HTTP attempt (transient failures are retried)
+        self.timeout: float = timeout
         self.sc: StructuredContent = StructuredContent(inner_tag="json", fail_if_inner_tag=False)
 
         if nb_retries_structured_output is None:
@@ -427,6 +454,8 @@ class LLMEngine:
         return body
 
     def _raise_provider_error(self, status: int, message: str, model: str) -> None:
+        if status in (400, 403, 422) and is_content_refusal(message):
+            raise ContentFilterError(model, _error_detail(message))
         if status in (401, 403):
             raise InvalidAPIKeyError(provider=model)
         if status == 404:
@@ -490,7 +519,7 @@ class LLMEngine:
                         f"{self.settings.base_url}/chat/completions",
                         headers={"Authorization": f"Bearer {key}"},
                         json=body,
-                        timeout=60.0,
+                        timeout=self.timeout,
                     )
                     status = response.status_code
                     try:
@@ -503,6 +532,9 @@ class LLMEngine:
                         status = cast(dict[str, Any], error).get("code", 502) if isinstance(error, dict) else 502
                         if not isinstance(status, int) or not 400 <= status <= 599:
                             status = 502
+                    # a content refusal is final, whatever status (or embedded code) it comes with: never retried
+                    if status >= 400 and is_content_refusal(response.text):
+                        raise ContentFilterError(model, _error_detail(response.text.replace(key, "[REDACTED]")))
                     if status == 408 or status == 429 or status >= 500:
                         if retry_delay is not None:
                             logger.warning(f"Transient HTTP {status} from {model} (attempt {attempt}); retrying")
@@ -533,6 +565,12 @@ class LLMEngine:
                             agent_message=None,
                             should_retry_later=True,
                         )
+                    # a refusal can also come as a successful response with no content
+                    if choices and all(
+                        choice.get("finish_reason") == "content_filter" and not choice["message"].get("content")
+                        for choice in cast(list[dict[str, Any]], choices)
+                    ):
+                        raise ContentFilterError(model, "finish_reason=content_filter")
                     return cast(dict[str, Any], payload)
                 except (httpx.TimeoutException, httpx.TransportError) as e:
                     if retry_delay is not None:
