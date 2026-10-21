@@ -104,6 +104,21 @@ read and written off the event loop.
 and typed overloads: it starts a session, goes to `url`, scrapes the page and stops the session,
 also when the scrape fails.
 
+## Unreleased — `act()`, `choose()` and `check()`
+
+Local (`notte.Session`) and cloud (`client.Session()`) sessions gain `act(instruction)`: one
+observe → decide → execute step, where a decider picks one operation and its target from typed
+multiple-choice questions about the page. `choose(question, options)` and `check(question)` ask
+the same decider about the current page. Async versions are `aact`, `achoose` and `acheck`.
+Deciders live in `notte-llm` and load only when one of these methods runs: `JevDecider`
+(TypeSafe's Jev, through OpenRouter with `OPENROUTER_API_KEY` or on TypeSafe with `TYPESAFE_API_KEY`)
+by default, or `LlmDecider` on the `NOTTE_LLM_*` endpoint (`NOTTE_ACT_DECIDER=llm`). Cloud sessions run `act()`
+in the client over the existing observe and execute endpoints, and use the observation's live element
+state when the server returns it. Deciders see elements by their accessible names and the page as
+visible text (`NOTTE_ACT_LABELS=html` sends the rendered HTML instead). The default field writer is
+`inception/mercury-3` on OpenRouter (`NOTTE_ACT_TEXT_MODEL` overrides it), falling back to the
+decision model when the writer's provider refuses on content-policy grounds.
+
 ## Unreleased: httpx transport
 
 The Python SDK sends HTTP with httpx instead of requests: one pooled connection set per

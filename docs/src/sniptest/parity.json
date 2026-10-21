@@ -173,6 +173,12 @@
     "vaults/manual.py"
   ],
   "python_only": {
+    "act/act_cloud.py": "session.act() / choose() / check() are Python-only for now (the Node SDK has no act() yet), and running the example needs a TypeSafe or OpenRouter key.",
+    "act/act_local.py": "session.act() / choose() / check() are Python-only for now (the Node SDK has no act() yet), and running the example needs a TypeSafe or OpenRouter key.",
+    "act/act_loop.py": "session.act() / choose() / check() are Python-only for now (the Node SDK has no act() yet), and running the example needs a TypeSafe or OpenRouter key.",
+    "act/act_options.py": "session.act() / choose() / check() are Python-only for now (the Node SDK has no act() yet), and running the example needs a TypeSafe or OpenRouter key.",
+    "act/choose_check.py": "session.act() / choose() / check() are Python-only for now (the Node SDK has no act() yet), and running the example needs a TypeSafe or OpenRouter key.",
+    "act/deciders.py": "session.act() / choose() / check() are Python-only for now (the Node SDK has no act() yet), and running the example needs a TypeSafe or OpenRouter key.",
     "anything-api/consume_stream.py": "Raw HTTP example for anything.notte.cc; a TypeScript pair would become an executable pair requiring a live behavior contract, and running it bills a real 2-10 minute Anything API agent build.",
     "anything-api/start_detached.py": "Raw HTTP example for anything.notte.cc; a TypeScript pair would become an executable pair requiring a live behavior contract, and running it bills a real 2-10 minute Anything API agent build.",
     "integrations/agentmail_read_emails.py": "AgentMail persona example; a TypeScript pair would become an executable pair requiring a live behavior contract, and running it needs a persona whose AgentMail inbox has already received a verification email.",

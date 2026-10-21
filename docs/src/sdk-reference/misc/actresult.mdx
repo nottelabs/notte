@@ -1,0 +1,62 @@
+---
+title: "ActResult"
+description: "The outcome of `session"
+---
+
+act(instruction)`.
+
+- `executed`: `action` ran; `execution` holds its result (check `execution.success`).
+- `proposed`: `dry_run=True`; `action` was chosen but not run (`session.execute(result.action)` runs it).
+- `done`: the decider found the instruction already satisfied on the page; nothing ran.
+- `blocked`: no operation can progress (decider answered BLOCKED, confidence below
+  `min_confidence`, or no field value); raises `NoActionFoundError` unless `raise_on_failure=False`.
+- `stale`: the page changed between the decision and the execution, twice; nothing ran
+
+## Fields
+
+<ParamField path="instruction" type="str" required>
+</ParamField>
+
+<ParamField path="status" type="Literal['executed', 'proposed', 'done', 'blocked', 'stale']" required>
+</ParamField>
+
+<ParamField path="action" type="UnionType[BaseAction, None]">
+</ParamField>
+
+<ParamField path="execution" type="UnionType[ExecutionResult, None]">
+</ParamField>
+
+<ParamField path="operation" type="UnionType[str, None]">
+</ParamField>
+
+<ParamField path="target" type="UnionType[str, None]">
+</ParamField>
+
+<ParamField path="value" type="UnionType[str, None]">
+</ParamField>
+
+<ParamField path="confidence" type="UnionType[float, None]">
+</ParamField>
+
+<ParamField path="probabilities" type="Dict[str, float]" required>
+</ParamField>
+
+<ParamField path="operation_probabilities" type="Dict[str, float]" required>
+</ParamField>
+
+<ParamField path="model" type="UnionType[str, None]">
+</ParamField>
+
+<ParamField path="message" type="UnionType[str, None]">
+</ParamField>
+
+<ParamField path="fingerprint" type="UnionType[str, None]">
+</ParamField>
+
+<ParamField path="timings" type="ActTimings" required>
+</ParamField>
+
+
+## Module
+
+`notte_core.act.types`
