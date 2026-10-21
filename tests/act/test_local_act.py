@@ -540,17 +540,36 @@ async def test_cloud_freshness_scripts_return_no_field_values(session: NotteSess
     await page.eval_on_selector("#out", "(el, text) => { el.contentEditable = 'true'; el.innerText = text; }", private)
     xpaths = {"name": "html/body/form/label[1]/input", "out": "html/body/p"}
 
-    stored = json.loads(await page.evaluate(remote_signatures_expression(xpaths, "store")))
+    stored = json.loads(await page.evaluate(remote_signatures_expression(xpaths, "store", "a")))
     assert private not in json.dumps(stored)
     assert stored["elements"]["name"][0] == "INPUT" and stored["elements"]["name"][2] is None
-    same = json.loads(await page.evaluate(remote_signatures_expression({"name": xpaths["name"]}, "compare")))
+    same = json.loads(await page.evaluate(remote_signatures_expression({"name": xpaths["name"]}, "compare", "a")))
     assert same == {"url": page.url, "unchanged": {"name": True}}
 
     # an edit is detected in the page, without the value coming back
     await page.fill("#name", private + "!")
-    changed = json.loads(await page.evaluate(remote_signatures_expression({"name": xpaths["name"]}, "compare")))
+    changed = json.loads(await page.evaluate(remote_signatures_expression({"name": xpaths["name"]}, "compare", "a")))
     assert changed["unchanged"] == {"name": False} and private not in json.dumps(changed)
     # a new page has no baseline: nothing is unchanged
     _ = await page.goto(f"data:text/html,{quote(PAGE)}")
-    gone = json.loads(await page.evaluate(remote_signatures_expression({"name": xpaths["name"]}, "compare")))
+    gone = json.loads(await page.evaluate(remote_signatures_expression({"name": xpaths["name"]}, "compare", "a")))
     assert gone["unchanged"] == {"name": False}
+
+
+@pytest.mark.asyncio
+async def test_overlapping_cloud_act_calls_keep_their_own_baseline(session: NotteSession) -> None:
+    from notte_core.act.freshness import remote_signatures_expression
+
+    page = session.window.page
+    button = {"send": "html/body/form/button"}
+
+    async def run(mode: str, token: str) -> dict[str, object]:
+        return json.loads(await page.evaluate(remote_signatures_expression(button, mode, token)))  # pyright: ignore[reportArgumentType]
+
+    _ = await run("store", "first")
+    # the page changes while the first call's model decides; a second call then records the changed page
+    await page.eval_on_selector("button", "el => el.textContent = 'Delete account'")
+    _ = await run("store", "second")
+    # the first decision was taken on the old button: stale, whatever the second call stored
+    assert (await run("compare", "first"))["unchanged"] == {"send": False}
+    assert (await run("compare", "second"))["unchanged"] == {"send": True}
