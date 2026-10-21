@@ -14,9 +14,11 @@ Three text algorithms read the tree, with different outputs, and are kept as the
 from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass, field
+from typing import Any
 
 from notte_core.config import config
 from notte_core.dom_tree import ComputedDomAttributes, DomAttributes, DomNode, NodeSelectors
+from notte_core.element_state import ElementState
 from notte_core.highlighter import BoundingBox
 from notte_core.logging import logger
 from notte_core.node_type import NodeRole, NodeType
@@ -46,6 +48,8 @@ class RawNode(TypedDict):
     highlightIndex: NotRequired[int]
     shadowRoot: NotRequired[bool]
     bbox: NotRequired[dict[str, float] | None]
+    # live value / checked state / select options of highlighted elements (`ElementState`)
+    state: NotRequired[dict[str, Any]]
     # visible iframe elements of the child frames the caller asked about
     frameIndex: NotRequired[int]
     frameOffset: NotRequired[dict[str, float]]
@@ -197,6 +201,7 @@ class _TreeBuilder:
                 selectors=selectors,
             ),
             bbox=BoundingBox.model_validate(bbox) if bbox else None,
+            state=ElementState.from_payload(raw.get("state")),
         )
         for child in children:
             child.set_parent(node)

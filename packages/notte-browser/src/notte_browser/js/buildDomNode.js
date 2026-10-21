@@ -108,6 +108,96 @@
 
 	const HIGHLIGHT_CONTAINER_ID = "playwright-highlight-container";
 
+	// Live state of the interactive elements (see `getLiveState`): longer values and option lists are cut.
+	const MAX_STATE_VALUE_LENGTH = 200;
+	const MAX_STATE_OPTIONS = 50;
+	const MAX_STATE_OPTION_LABEL_LENGTH = 100;
+
+	function truncateStateValue(value, state) {
+		if (value.length <= MAX_STATE_VALUE_LENGTH) return value;
+		state.valueTruncated = true;
+		// FNV-1a over UTF-16 code units: a change marker, not a security hash. Keep the
+		// full value out of the payload while detecting edits beyond the display cap.
+		// Passwords never pass through this function.
+		let hash = 0xcbf29ce484222325n;
+		for (let i = 0; i < value.length; i++) {
+			hash = BigInt.asUintN(64, (hash ^ BigInt(value.charCodeAt(i))) * 0x100000001b3n);
+		}
+		state.valueDigest = hash.toString(16).padStart(16, "0");
+		return value.slice(0, MAX_STATE_VALUE_LENGTH);
+	}
+
+	function parseAriaBoolean(element, name) {
+		const value = element.getAttribute(name);
+		if (value === "true") return true;
+		if (value === "false") return false;
+		return undefined;
+	}
+
+	/**
+	 * Reads the live state of a highlighted element: what the attributes do not show once the user
+	 * (or a script) changed the element. `getAttribute('value')` is the initial value of an input,
+	 * not what is typed in it; same for `checked` and the selected option of a `<select>`.
+	 *
+	 * Returned as its own payload field (never mixed into `attributes`, which the action descriptions
+	 * render), so the rendered descriptions and the action ids are unchanged. Password values are
+	 * never read: only whether the field is filled. Returns `undefined` when there is no state.
+	 *
+	 * @param {HTMLElement} element - A highlighted (interactive) element.
+	 * @returns {object | undefined} The live state.
+	 */
+	function getLiveState(element) {
+		const state = {};
+		const tagName = element.tagName.toLowerCase();
+		if (tagName === "select") {
+			state.value = element.value;
+			const options = element.options;
+			state.options = [];
+			for (let i = 0; i < options.length; i++) {
+				const option = options[i];
+				// the selected options are always listed, even past the cap
+				if (i >= MAX_STATE_OPTIONS && !option.selected) {
+					state.optionsTruncated = true;
+					continue;
+				}
+				state.options.push({
+					value: option.value,
+					label: (option.label || option.text || "").trim().slice(0, MAX_STATE_OPTION_LABEL_LENGTH),
+					selected: option.selected,
+					disabled: option.disabled || !!option.closest("optgroup[disabled]"),
+				});
+			}
+			state.multiple = element.multiple;
+		} else if (tagName === "input") {
+			const type = (element.type || "text").toLowerCase();
+			if (type === "checkbox" || type === "radio") {
+				state.checked = element.checked;
+			} else if (type === "password") {
+				state.filled = element.value.length > 0;
+			} else if (type !== "submit" && type !== "button" && type !== "reset" && type !== "image" && type !== "hidden") {
+				state.value = truncateStateValue(element.value, state);
+			}
+		} else if (tagName === "textarea") {
+			state.value = truncateStateValue(element.value, state);
+		} else if (element.isContentEditable) {
+			state.value = truncateStateValue(element.innerText || "", state);
+		}
+		if (state.checked === undefined) {
+			// role="checkbox" / "switch" / "radio" / "menuitemcheckbox" widgets
+			const ariaChecked = element.getAttribute("aria-checked");
+			if (ariaChecked === "true" || ariaChecked === "false") state.checked = ariaChecked === "true";
+			else if (ariaChecked === "mixed") state.mixed = true;
+		}
+		const expanded = parseAriaBoolean(element, "aria-expanded");
+		if (expanded !== undefined) state.expanded = expanded;
+		const selected = parseAriaBoolean(element, "aria-selected");
+		if (selected !== undefined) state.selected = selected;
+		const pressed = parseAriaBoolean(element, "aria-pressed");
+		if (pressed !== undefined) state.pressed = pressed;
+		else if (element.getAttribute("aria-pressed") === "mixed") state.pressed = "mixed";
+		return Object.keys(state).length > 0 ? state : undefined;
+	}
+
 	// Add a WeakMap cache for XPath strings
 	const xpathCache = new WeakMap();
 
@@ -1267,6 +1357,10 @@
 					nodeData.pointerElement = isPointerElementWithHover(node);
 					// Call the dedicated highlighting function
 					nodeWasHighlighted = handleHighlighting(nodeData, node, parentIframe, isParentHighlighted);
+					if (nodeData.highlightIndex !== undefined) {
+						const state = getLiveState(node);
+						if (state !== undefined) nodeData.state = state;
+					}
 				}
 			}
 		}
