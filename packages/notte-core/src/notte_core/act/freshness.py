@@ -66,16 +66,20 @@ def signature_xpaths(page: ObservedPage, element_id: str | None = None) -> dict[
     return xpaths
 
 
-# where the cloud baseline is kept in the page (a non-enumerable property of `window`)
+# where the cloud baselines are kept in the page (a non-enumerable property of `window`), by token
 _BASELINE_KEY = "__notteActSignatures"
+# baselines kept per page: overlapping act() calls each have their own
+_MAX_BASELINES = 16
 
 
-def remote_signatures_expression(xpaths: dict[str, str], mode: Literal["store", "compare"]) -> str:
+def remote_signatures_expression(xpaths: dict[str, str], mode: Literal["store", "compare"], token: str) -> str:
     """An `evaluate_js` expression (a JSON string result) for cloud sessions, whose script results are recorded.
 
-    - `store`: reads the signatures of `xpaths`, keeps them in the page, and returns them with no field value
-      (only whether a password is filled) and no text of an editable element.
-    - `compare`: reads them again and returns, by id, whether each is unchanged since `store` (and the URL).
+    - `store`: reads the signatures of `xpaths`, keeps them in the page under `token`, and returns them with no
+      field value (only whether a password is filled) and no text of an editable element.
+    - `compare`: reads them again and returns, by id, whether each is unchanged since the `store` of the same
+      `token` (and the URL). Each act() call uses its own token, so overlapping calls never compare against
+      each other's baseline.
     Field values never leave the page.
     """
     return f"""(() => {{
@@ -83,8 +87,15 @@ def remote_signatures_expression(xpaths: dict[str, str], mode: Literal["store", 
     const xpaths = {json.dumps(xpaths)};
     const current = run(xpaths);
     const key = {json.dumps(_BASELINE_KEY)};
+    const token = {json.dumps(token)};
+    if (!(window[key] instanceof Map)) {{
+        Object.defineProperty(window, key, {{ value: new Map(), configurable: true, writable: true, enumerable: false }});
+    }}
+    const baselines = window[key];
     if ({json.dumps(mode)} === "store") {{
-        Object.defineProperty(window, key, {{ value: current, configurable: true, writable: true, enumerable: false }});
+        baselines.delete(token);
+        baselines.set(token, current);
+        while (baselines.size > {_MAX_BASELINES}) baselines.delete(baselines.keys().next().value);
         const elements = {{}};
         for (const [id, signature] of Object.entries(current.elements)) {{
             if (signature === null) {{ elements[id] = null; continue; }}
@@ -99,7 +110,7 @@ def remote_signatures_expression(xpaths: dict[str, str], mode: Literal["store", 
         }}
         return JSON.stringify({{ url: current.url, elements }});
     }}
-    const stored = window[key];
+    const stored = baselines.get(token);
     const unchanged = {{}};
     for (const id of Object.keys(xpaths)) {{
         unchanged[id] = Boolean(stored) && current.elements[id] !== null
