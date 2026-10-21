@@ -238,7 +238,7 @@ class Probe:
             return dom
 
         parsing._load_payload = load  # pyright: ignore[reportPrivateUsage]
-        window_module.parse_dom = parse  # pyright: ignore[reportPrivateImportUsage]
+        setattr(window_module, "parse_dom", parse)
 
 
 def new_session() -> notte.Session:
