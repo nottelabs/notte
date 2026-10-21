@@ -411,9 +411,11 @@ class RemoteActDriver:
     """How `act()` / `choose()` / `check()` read and drive a cloud session (`notte_core.act.ActDriver`).
 
     `act()` runs client-side on top of the observe / execute endpoints (no server-side act endpoint).
-    The observe response has the action descriptions but not the live element state that local
-    sessions read (field values, checked state, select options), so cloud decisions rely on the
-    descriptions only, and a `<select>` is set by typing its option label.
+    When the observe response carries the live element state (`Observation.element_states`: field values,
+    checked state, select options) and its fingerprint, decisions use it like local sessions do, and a
+    `<select>` option is chosen from its options. A server that does not return them leaves the fields
+    empty: decisions then rely on the action descriptions only, and a `<select>` is set by typing its
+    option label.
 
     Freshness: after observing, one `evaluate_js` call records the element signatures
     (`notte_core.act.freshness`) before the decider thinks; right before acting, a second one reads the
@@ -1463,8 +1465,8 @@ class RemoteSession(SyncResource):
 
         Runs in the client on top of `observe()` and `execute()`: the decider is called from your
         machine with your keys (`OPENROUTER_API_KEY` for Jev through OpenRouter, or `TYPESAFE_API_KEY`), and needs
-        `pip install 'notte[llm]'` unless you pass `decider=`. Cloud observations do not carry the live
-        field values that local sessions read, so decisions rely on the action descriptions.
+        `pip install 'notte[llm]'` unless you pass `decider=`. Decisions use the live field values and
+        `<select>` options when the observe response carries them, else the action descriptions only.
 
         import ActCloud from '/snippets/act/act_cloud.mdx';
 

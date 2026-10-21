@@ -25,6 +25,14 @@ description: ""
   Available actions in the current state
 </ParamField>
 
+<ParamField path="element_states" type="UnionType[Dict[str, ElementState], None]">
+  Live state of the interactive elements that have one (current value, checked state, select options, aria state), by action id. Not rendered into the action descriptions.
+</ParamField>
+
+<ParamField path="fingerprint" type="UnionType[str, None]">
+  Hash of the page URL and of the id, label and live state of every interactive element: it changes when the page offers other actions or a field value changes.
+</ParamField>
+
 
 ## Module
 

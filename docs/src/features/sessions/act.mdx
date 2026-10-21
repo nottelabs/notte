@@ -82,7 +82,7 @@ By default (`NOTTE_ACT_LABELS=accessible`) each element is named the way a scree
 
 <ActCloud />
 
-Local sessions read the **live state** of form controls (the current value of inputs, checked state, the options of a `<select>`), so the decider sees what a field already holds. Long option lists are cut to their first 50 options; the others are selected by typing their label. A `<select multiple>` takes one option per `act()`, and each selection replaces the previous one. The cloud observe response does not carry this state yet: cloud decisions rely on the element descriptions only, and a `<select>` is set by typing its option label.
+Local sessions read the **live state** of form controls (the current value of inputs, checked state, the options of a `<select>`), so the decider sees what a field already holds. Long option lists are cut to their first 50 options; the others are selected by typing their label. A `<select multiple>` takes one option per `act()`, and each selection replaces the previous one. Cloud sessions get the same state when the observe response carries it (`Observation.element_states`). With a server that does not return it, cloud decisions rely on the element descriptions only, and a `<select>` is set by typing its option label.
 
 ## Choose and check
 

@@ -14,6 +14,7 @@ from typing_extensions import override
 
 from notte_core.actions import ActionUnion
 from notte_core.data import DataSpace
+from notte_core.element_state import ElementState
 from notte_core.errors import NotteBaseError
 from notte_core.highlighter import BoundingBox, highlight_screenshot
 from notte_core.logging import logger
@@ -214,6 +215,25 @@ class Observation(FilledTimedSpan):
     ]
     screenshot: Annotated[Screenshot, Field(description="Base64 encoded screenshot of the current page", repr=False)]
     space: Annotated[ActionSpace, Field(description="Available actions in the current state")]
+    # Optional so that payloads without them (older servers) still parse, and older clients ignore them.
+    element_states: Annotated[
+        dict[str, ElementState] | None,
+        Field(
+            description=(
+                "Live state of the interactive elements that have one (current value, checked state, select "
+                "options, aria state), by action id. Not rendered into the action descriptions."
+            )
+        ),
+    ] = None
+    fingerprint: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Hash of the page URL and of the id, label and live state of every interactive element: it "
+                "changes when the page offers other actions or a field value changes."
+            )
+        ),
+    ] = None
 
     @property
     def clean_url(self) -> str:
@@ -232,6 +252,8 @@ class Observation(FilledTimedSpan):
             metadata=snapshot.metadata,
             screenshot=Screenshot(raw=snapshot.screenshot, bboxes=bboxes),
             space=space,
+            element_states=snapshot.element_states(),
+            fingerprint=snapshot.fingerprint(),
             started_at=span.started_at,
             ended_at=span.ended_at,
         )

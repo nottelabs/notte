@@ -12,6 +12,7 @@ import pytest
 from notte_core.act import aact_until_done, act_until_done
 from notte_core.actions import BaseAction, ClickAction, EvaluateJsAction, FillAction, SelectDropdownOptionAction
 from notte_core.data import DataSpace
+from notte_core.element_state import ElementState, SelectOption
 from notte_core.observation import ExecutionResult, Observation
 from notte_core.snapshot import SnapshotMetadata, ViewportData
 from notte_core.space import ActionSpace
@@ -265,3 +266,70 @@ def test_act_reference_examples_use_existing_tested_snippets(method: str) -> Non
     for snippet in snippets:
         content = (docs / snippet.lstrip("/")).read_text()
         assert "@sniptest testers/" in content
+
+
+# --- live element state in the observe response ---------------------------------------------------
+
+STATES = {
+    "I1": ElementState(value="ada"),
+    "I2": ElementState(
+        value="en",
+        options=(SelectOption(value="en", label="English", selected=True), SelectOption(value="fr", label="French")),
+    ),
+}
+
+
+def _observation_with_state() -> Observation:
+    return _observation().model_copy(update={"element_states": STATES, "fingerprint": "server-fingerprint"})
+
+
+@pytest.mark.parametrize("by_alias", [False, True])
+def test_observation_state_round_trips(by_alias: bool) -> None:
+    observation = _observation_with_state()
+    parsed = Observation.model_validate_json(observation.model_dump_json(by_alias=by_alias))
+    assert parsed.element_states == STATES and parsed.fingerprint == "server-fingerprint"
+
+
+def test_observation_state_is_backward_compatible() -> None:
+    from pydantic import BaseModel
+
+    # an older server's payload: no state, no fingerprint
+    payload = json.loads(_observation().model_dump_json())
+    del payload["element_states"], payload["fingerprint"]
+    older = Observation.model_validate(payload)
+    assert older.element_states is None and older.fingerprint is None
+
+    # an older client: the same model without the new fields still parses the new payload
+    class OlderObservation(BaseModel):
+        metadata: SnapshotMetadata
+        space: ActionSpace
+
+    parsed = OlderObservation.model_validate_json(_observation_with_state().model_dump_json())
+    assert [a.id for a in parsed.space.interaction_actions] == ["I1", "I2", "B1"]
+
+
+def test_remote_act_uses_live_state_from_the_observe_response(monkeypatch: pytest.MonkeyPatch) -> None:
+    remote = _Remote([_observation_with_state()])
+    session = _session(remote, monkeypatch)
+    decider = FakeDecider(choices=[{"operation": "SELECT", "select_target": "I2:1"}])
+
+    result = session.act("switch to French", decider=decider)
+
+    # the select is chosen from its options instead of typing a label
+    assert isinstance(result.action, SelectDropdownOptionAction) and result.action.value == "fr"
+    assert result.fingerprint == "server-fingerprint"
+    elements = {e["index"]: e for e in decider.states[0].elements}
+    assert elements["I1"]["value"] == "ada"
+    assert elements["I2"]["value"] == "English" and elements["I2"]["options"][0]["label"] == "French"
+    assert "TYPE_TEXT" not in elements["I2"]["operations"]
+
+
+def test_remote_act_without_state_types_the_select_label(monkeypatch: pytest.MonkeyPatch) -> None:
+    # an older server: no element_states in the observe response
+    remote = _Remote([_observation()])
+    session = _session(remote, monkeypatch)
+    decider = FakeDecider(choices=[{"operation": "TYPE_TEXT", "type_text_target": "I2"}], texts=["French"])
+    result = session.act("switch to French", decider=decider)
+    assert isinstance(result.action, SelectDropdownOptionAction) and result.action.value == "French"
+    elements = {e["index"]: e for e in decider.states[0].elements}
+    assert "value" not in elements["I1"] and "options" not in elements["I2"]

@@ -79,7 +79,7 @@ class ObservedPage:
     description: str
     actions: Sequence[InteractionAction]
     viewport: ViewportData | None
-    # live element state by action id (empty for remote sessions: their observe response has none)
+    # live element state by action id (empty when a cloud observe response does not carry it)
     states: Mapping[str, ElementState]
     fingerprint: str
     # clickable `<label>` id -> id of the field it labels (`for`, or the field inside it), "" for none;
@@ -93,9 +93,14 @@ class ObservedPage:
         fingerprint: str | None = None,
         label_targets: Mapping[str, str] | None = None,
     ) -> "ObservedPage":
-        """Wrap an observation. Without `fingerprint`, it hashes the URL and the actions' ids and labels."""
+        """Wrap an observation. The live state and fingerprint default to the observation's own (absent from
+        an older server's observe response); without a fingerprint, it hashes the URL and the actions' ids
+        and labels."""
         actions = list(observation.space.interaction_actions)
         url = observation.metadata.url
+        if states is None:
+            states = observation.element_states
+        fingerprint = fingerprint or observation.fingerprint
         return ObservedPage(
             url=url,
             title=observation.metadata.title,
@@ -498,7 +503,7 @@ def build_act_space(
             case "select":
                 options = None if state is None else state.options
                 if options is None:
-                    # no live state (remote session): the writer types the option label
+                    # no live state (an observe response without it): the writer types the option label
                     add("TYPE_TEXT", target("select_text"), element)
                 else:
                     listed: list[dict[str, str]] = []

@@ -14,7 +14,9 @@ accessible names and the page as visible text (`NOTTE_ACT_LABELS=html` sends the
 
 Local observations also read the live state of form controls (current values, checked state,
 `<select>` options) into `DomNode.state`, with `BrowserSnapshot.element_states()` and
-`fingerprint()`. Action ids and descriptions are unchanged. `LLMEngine` takes a `timeout`, and
+`fingerprint()`. Action ids and descriptions are unchanged. Observations (and observe responses) carry
+the same state as `Observation.element_states` and `Observation.fingerprint` (optional fields,
+ignored by older clients); cloud `act()` uses them when the server returns them. `LLMEngine` takes a `timeout`, and
 raises `ContentFilterError` (an `LLMProviderError`) for provider content-policy refusals, which
 were reported as `InvalidAPIKeyError`.
 

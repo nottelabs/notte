@@ -197,3 +197,13 @@ async def test_observe_preserves_mixed_pressed_state(session: NotteSession) -> N
     state = _state_by_selector(session)["menu"]
     assert state is not None and state.pressed is None
     assert session.snapshot.fingerprint() != fingerprint
+
+
+@pytest.mark.asyncio
+async def test_observation_carries_the_live_state_and_fingerprint(session: NotteSession) -> None:
+    await session.window.page.fill("#name", "typed")
+    obs = await session.aobserve()
+    # what a cloud observe response serializes, so that remote act() sees the same state as local
+    assert obs.element_states == session.snapshot.element_states()
+    assert obs.fingerprint == session.snapshot.fingerprint()
+    assert any(state.value == "typed" for state in (obs.element_states or {}).values())
