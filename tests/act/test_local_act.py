@@ -70,6 +70,7 @@ async def test_act_selects_an_option_and_checks_a_box(session: NotteSession) -> 
             # "Choose" is selected on load, so the targets are France (1) and United States (2)
             {"operation": "SELECT", "select_target": f"{ids['country']}:1"},
             {"operation": "CLICK", "click_target": ids["terms"]},
+            {"operation": "DONE"},
         ]
     )
     selected = await session.aact("from France", decider=decider)
@@ -85,6 +86,10 @@ async def test_act_selects_an_option_and_checks_a_box(session: NotteSession) -> 
     country = next(e for e in state.elements if e["index"] == ids["country"])
     assert country["value"] == "France"
     assert state.recent_actions[-1]["kind"] == "SELECT" and state.recent_actions[-1]["page_changed"] is True
+
+    # a toggle says which way it went (a "CLICK" on a checkbox can uncheck it)
+    _ = await session.aact("accept the terms", decider=decider)
+    assert decider.states[2].recent_actions[-1]["action"].startswith('Check <input type="checkbox"')
 
 
 @pytest.mark.asyncio

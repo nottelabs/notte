@@ -50,7 +50,7 @@ from notte_core.act.types import (
     Question,
     WriteContext,
 )
-from notte_core.actions import BaseAction
+from notte_core.actions import BaseAction, CheckAction
 from notte_core.credentials.base import (
     CardCVVField,
     CardFullExpirationField,
@@ -250,6 +250,9 @@ async def run_act(
         if target is not None:
             action: BaseAction = target_action(target, None if text is None else substitute_variables(text, variables))
             label = target.label
+            if isinstance(action, CheckAction):
+                # "CLICK <checkbox>" alone reads as checking it: say which way it went
+                label = f"{'Check' if action.value else 'Uncheck'} {label}"
         else:
             assert decision.control is not None
             action = decision.control.action.model_copy()
