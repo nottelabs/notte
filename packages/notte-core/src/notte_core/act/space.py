@@ -428,6 +428,7 @@ def _element(
     has_live_state: bool,
     display_text: Callable[[str], str],
     labels: LabelMode,
+    display_cut: Callable[[str], str],
 ) -> dict[str, Any]:
     element: dict[str, Any] = {"index": action.id, "label": label, "role": role, "operations": []}
     # an accessible name already is the element's text
@@ -435,7 +436,7 @@ def _element(
         element["text"] = _cut(display_text(action.text_label), 120)
     if state is not None:
         if state.value is not None:
-            element["value"] = display_text(state.value)
+            element["value"] = (display_cut if state.value_truncated else display_text)(state.value)
         if state.filled is not None:
             element["filled"] = state.filled
         if state.checked is not None:
@@ -452,8 +453,14 @@ def _element(
 
 
 def build_act_space(
-    page: ObservedPage, *, display_text: Callable[[str], str] = str, labels: LabelMode = "html"
+    page: ObservedPage,
+    *,
+    display_text: Callable[[str], str] = str,
+    labels: LabelMode = "html",
+    display_cut: Callable[[str], str] | None = None,
 ) -> ActSpace:
+    """`display_text` masks the presentation strings; `display_cut` (default `display_text`) the live values the
+    browser cut, where a protected value can start at the cut."""
     # Determine IDs, roles and supported operations from the original page. Only
     # presentation strings pass through display_text, before their display caps.
     lines = description_lines(page.description)
@@ -474,7 +481,9 @@ def build_act_space(
         label = _cut(display_text(shown or action.text_label or action.id), MAX_LABEL_LENGTH)
         role = _role(action, line)
         state = page.states.get(action.id)
-        element = _element(action, label, role, state, has_live_state, display_text, labels)
+        element = _element(
+            action, label, role, state, has_live_state, display_text, labels, display_cut or display_text
+        )
         current = element.get("value")
         base: dict[str, Any] = {k: element[k] for k in ("role", "checked", "selected", "expanded") if k in element}
 
