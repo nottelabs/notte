@@ -207,3 +207,38 @@ async def test_observation_carries_the_live_state_and_fingerprint(session: Notte
     assert obs.element_states == session.snapshot.element_states()
     assert obs.fingerprint == session.snapshot.fingerprint()
     assert any(state.value == "typed" for state in (obs.element_states or {}).values())
+
+
+@pytest.mark.asyncio
+async def test_observation_masks_values_the_vault_typed(session: NotteSession) -> None:
+    from tests.mock.mock_vault import MockVault
+
+    vault_value = "jane.private@example.test"
+    vault = MockVault()
+    # what the vault records after typing a credential (its replacement map: value -> placeholder)
+    vault._retrieved_credentials["https://a.test"] = {"email": vault_value}  # pyright: ignore[reportPrivateUsage]
+    session.vault = vault
+    await session.window.page.fill("#name", vault_value)
+    obs = await session.aobserve()
+
+    # the serialized observation (what an observe response carries) has the placeholder, not the value
+    assert vault_value not in obs.model_dump_json()
+    states = obs.element_states or {}
+    assert any(state.value == "user@example.org" for state in states.values())
+    # the fingerprint is computed from the masked states: it cannot be used to guess the value
+    assert obs.fingerprint == session.snapshot.fingerprint(states)
+    assert obs.fingerprint != session.snapshot.fingerprint()
+
+
+def test_element_state_masking() -> None:
+    state = ElementState(
+        value="code 123456",
+        options=(SelectOption(value="123456", label="Use 123456", selected=True), SelectOption(value="x", label="x")),
+    )
+    masked = state.masked({"123456": "999779", "": "ignored"})
+    assert masked.value == "code 999779"
+    assert masked.options is not None and masked.options[0] == SelectOption(
+        value="999779", label="Use 999779", selected=True
+    )
+    assert masked.options[1] == SelectOption(value="x", label="x")
+    assert state.masked({}) is state

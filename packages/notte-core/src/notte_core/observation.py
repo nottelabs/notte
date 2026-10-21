@@ -3,7 +3,7 @@ import datetime as dt
 import io
 from base64 import b64decode, b64encode
 from builtins import bytes as _builtin_bytes
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable, Iterator, Mapping
 from contextlib import contextmanager
 from io import BytesIO
 from textwrap import dedent
@@ -240,7 +240,14 @@ class Observation(FilledTimedSpan):
         return clean_url(self.metadata.url)
 
     @staticmethod
-    def from_snapshot(snapshot: BrowserSnapshot, space: ActionSpace, span: FilledTimedSpan) -> "Observation":
+    def from_snapshot(
+        snapshot: BrowserSnapshot,
+        space: ActionSpace,
+        span: FilledTimedSpan,
+        secrets: Mapping[str, str] | None = None,
+    ) -> "Observation":
+        """`secrets` (a value -> placeholder map, e.g. the vault's) are masked in the element states, and the
+        fingerprint is computed from the masked states, so neither reveals a value the vault typed."""
         if snapshot.screenshot is None:
             raise ValueError("Cannot build an Observation from a snapshot taken with screenshot=False")
         bboxes = [
@@ -248,12 +255,13 @@ class Observation(FilledTimedSpan):
             for node in snapshot.interaction_nodes()
             if node.bbox is not None and node.id is not None
         ]
+        states = {node_id: state.masked(secrets or {}) for node_id, state in snapshot.element_states().items()}
         return Observation(
             metadata=snapshot.metadata,
             screenshot=Screenshot(raw=snapshot.screenshot, bboxes=bboxes),
             space=space,
-            element_states=snapshot.element_states(),
-            fingerprint=snapshot.fingerprint(),
+            element_states=states,
+            fingerprint=snapshot.fingerprint(states),
             started_at=span.started_at,
             ended_at=span.ended_at,
         )
