@@ -116,7 +116,9 @@ async def _complete(
             raise
         _REASONING_REQUIRED.add(model)
         return await _complete(model, messages, response_format, max_tokens)
-    content = cast(list[dict[str, Any]], response["choices"])[0]["message"].get("content")
+    choices = cast(list[dict[str, Any]], response["choices"])
+    # an empty reply reads as no answer: the deciders ask again or report an invalid decision
+    content = choices[0]["message"].get("content") if choices else None
     usage = response.get("usage")
     return str(content or ""), cast(dict[str, Any], usage) if isinstance(usage, dict) else {}
 
