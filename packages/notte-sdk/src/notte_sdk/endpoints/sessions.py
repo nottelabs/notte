@@ -7,7 +7,7 @@ from collections.abc import Awaitable, Callable, Coroutine, Mapping, Sequence
 from enum import StrEnum
 from pathlib import Path
 from types import TracebackType
-from typing import TYPE_CHECKING, Any, Literal, Unpack, overload
+from typing import TYPE_CHECKING, Any, Literal, Unpack, cast, overload
 from urllib.parse import urlsplit
 from webbrowser import open as open_browser
 
@@ -25,7 +25,7 @@ from notte_core.act import (
     run_choose,
     same_target,
 )
-from notte_core.act.freshness import Signatures, signature_xpaths, signatures_expression
+from notte_core.act.freshness import Signatures, remote_signatures_expression, signature_xpaths
 from notte_core.actions import BaseAction, InteractionActionUnion
 from notte_core.actions.typedicts import (
     CaptchaSolveActionDict,
@@ -810,21 +810,24 @@ class RemoteActDriver:
         # always the fast perception, whatever the session's default
         return self.session.observe(perception_type="fast")
 
-    def _read_signatures(self, xpaths: dict[str, str]) -> Signatures:
+    def _evaluate(self, code: str) -> dict[str, Any] | None:
         try:
-            result = self.session.execute(
-                type="evaluate_js", code=signatures_expression(xpaths), raise_on_failure=False
-            )
+            result = self.session.execute(type="evaluate_js", code=code, raise_on_failure=False)
         except Exception:
             # This optimization must not leave a failed transport task running after act().
             # is_fresh falls back to a full observation when signatures are unavailable.
-            return Signatures(None)
+            return None
         if not result.success or result.data is None:
-            return Signatures(None)
+            return None
         try:
-            return Signatures(json.loads(result.data.markdown))
+            value: Any = json.loads(result.data.markdown)
         except ValueError:
-            return Signatures(None)
+            return None
+        return cast(dict[str, Any], value) if isinstance(value, dict) else None
+
+    def _read_signatures(self, xpaths: dict[str, str]) -> Signatures:
+        # the baseline stays in the page; what comes back (and is recorded) has no field values
+        return Signatures(self._evaluate(remote_signatures_expression(xpaths, "store")))
 
     async def observe(self, observation: Observation | None) -> ObservedPage:
         # A supplied observation has no trusted signature baseline. Refresh it before
@@ -842,7 +845,8 @@ class RemoteActDriver:
             return False
         if before.url is not None and (element_id is None or before.consistent(page, element_id)):
             xpaths = {} if element_id is None else signature_xpaths(page, element_id)
-            return before.matches(await asyncio.to_thread(self._read_signatures, xpaths), element_id)
+            check = await asyncio.to_thread(self._evaluate, remote_signatures_expression(xpaths, "compare"))
+            return before.unchanged(check, element_id)
         current = ObservedPage.from_observation(await asyncio.to_thread(self._observe))
         return same_target(page, current, element_id)
 

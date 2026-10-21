@@ -193,7 +193,9 @@ async def run_act(
         history.observed(page.fingerprint)
         history.privacy.remember_secrets(driver.secret_replacements())
 
-        space = build_act_space(page, display_text=history.privacy.text, labels=labels)
+        space = build_act_space(
+            page, display_text=history.privacy.text, labels=labels, display_cut=history.privacy.cut_text
+        )
         model_page = history.privacy.page(page)
         state = DecisionState(
             page=page_state(model_page, labels, history.privacy.text),
@@ -353,7 +355,9 @@ async def run_choose(
     model_page = history.privacy.page(page)
     state = DecisionState(
         page=page_state(model_page, labels, history.privacy.text),
-        elements=build_act_space(page, display_text=history.privacy.text, labels=labels).elements,
+        elements=build_act_space(
+            page, display_text=history.privacy.text, labels=labels, display_cut=history.privacy.cut_text
+        ).elements,
         recent_actions=history.privacy.payload(history.recent()),
     )
     questions = {
