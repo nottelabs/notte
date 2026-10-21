@@ -7,10 +7,14 @@ import pytest
 from notte_core.act import ActHistory, ActResult, Answer, Answers, ObservedPage, act_until_done
 from notte_core.act.errors import InvalidDecisionError
 from notte_core.act.space import (
+    accessible_names,
+    accessible_text,
     act_questions,
     build_act_space,
     description_lines,
     interpret,
+    label_mode,
+    page_state,
     substitute_variables,
     target_action,
     validate_answer,
@@ -376,3 +380,112 @@ async def test_vault_secrets_typed_earlier_are_masked() -> None:
     _ = await run_act(Driver(), decider, ActHistory(), "check the account", raise_on_failure=False)
     assert vault_email not in decider.states[0].model_dump_json()
     assert "user@example.org" in decider.states[0].model_dump_json()
+
+
+ACCESSIBLE_DESCRIPTION = """### Content of 'WebArea' component with text 'body content'
+_[:]Sign in to Example
+_[:]Username or email address
+I1[:]<input type="text" name="login"></input>
+I2[:]<input type="checkbox" name="remember"></input>
+_[:]Keep me signed in
+I3[:]<select name="country"></select>
+I4[:]<input type="search" aria_label="Search the docs" placeholder="Search"></input>
+B1[:]<input type="submit" value="Sign in" name="commit"></input>
+B2[:]<button type="button">Sign in with
+a passkey</button>
+L1[:]<a href="/help"></a>
+_[:]A sentence that is far too long to be the label of the field right after it, so it is not used as one.
+I5[:]<input type="text" name="code" placeholder="123456"></input>
+### Content of 'dialog' component with text 'Cookies'
+B3[:]<button>Accept</button>"""
+
+
+def _accessible_page(**kwargs: Any) -> ObservedPage:
+    actions: list[InteractionAction] = [
+        FillAction(id="I1", value="<sample_value>", text_label="login"),
+        CheckAction(id="I2", value=True, text_label="remember"),
+        SelectDropdownOptionAction(id="I3", value="<sample_value>", text_label="country"),
+        FillAction(id="I4", value="<sample_value>", text_label="Search the docs"),
+        ClickAction(id="B1", text_label="commit"),
+        ClickAction(id="B2", text_label="Sign in with a passkey"),
+        ClickAction(id="L1", text_label=""),
+        FillAction(id="I5", value="<sample_value>", text_label="code"),
+        ClickAction(id="B3", text_label="Accept"),
+    ]
+    return _page(description=ACCESSIBLE_DESCRIPTION, actions=actions, states={}, **kwargs)
+
+
+def test_accessible_names_approximate_the_browser_names() -> None:
+    assert accessible_names(_accessible_page()) == {
+        # the label text before a field, after a checkbox (notte's text_label is the name attribute)
+        "I1": "Username or email address",
+        "I2": "Keep me signed in",
+        "I3": "country",
+        # aria-label first; a submit input is its value; a multi-line button its whole text
+        "I4": "Search the docs",
+        "B1": "Sign in",
+        "B2": "Sign in with a passkey",
+        # an unnamed link is its destination
+        "L1": "/help",
+        # a long text is not a label: the placeholder is used
+        "I5": "123456",
+        "B3": "Accept",
+    }
+
+
+def test_accessible_mode_labels_elements_and_targets_without_html() -> None:
+    space = build_act_space(_accessible_page(), labels="accessible")
+    elements = {e["index"]: e for e in space.elements}
+    assert elements["I1"]["label"] == "Username or email address" and elements["I1"]["role"] == "textbox"
+    assert elements["I2"]["label"] == "Keep me signed in" and elements["I2"]["role"] == "checkbox"
+    # the name is the element's text: no separate `text`
+    assert all("text" not in e for e in space.elements)
+    assert all("<" not in e["label"] for e in space.elements)
+    criteria = act_questions(space, "sign in")["type_text_target"].criteria["I1"]
+    assert criteria == {"element": "[I1] Username or email address", "current_value": "", "role": "textbox"}
+    # roles and operations come from the HTML, whatever the labels
+    html = build_act_space(_accessible_page())
+    assert {k: set(v) for k, v in space.targets.items()} == {k: set(v) for k, v in html.targets.items()}
+    assert elements["I1"]["operations"] == next(e for e in html.elements if e["index"] == "I1")["operations"]
+
+
+def test_accessible_mode_keeps_live_state_and_select_options() -> None:
+    space = build_act_space(_page(), labels="accessible")
+    elements = {e["index"]: e for e in space.elements}
+    assert elements["I1"]["label"] == "Sign in" and elements["I1"]["value"] == "jane@"
+    assert elements["I3"]["options"][1] == {"index": "I3:2", "label": "France", "value": "fr"}
+    criteria = act_questions(space, "sign in")["select_target"].criteria["I3:2"]
+    assert criteria["element"] == "[I3:2] country → France" and criteria["current_value"] == "United States"
+
+
+def test_accessible_text_is_visible_text_with_element_markers() -> None:
+    text = accessible_text(_accessible_page())
+    assert text.splitlines()[:5] == [
+        "Sign in to Example",
+        "Username or email address",
+        "[I1] Username or email address",
+        "[I2] Keep me signed in",
+        "Keep me signed in",
+    ]
+    assert "[B2] Sign in with a passkey" in text and "[L1] /help" in text
+    # no markup, no page header; a dialog header says a modal is open
+    assert "<" not in text and "[:]" not in text and "WebArea" not in text
+    assert "Content of 'dialog' component with text 'Cookies'" in text
+    assert page_state(_accessible_page(), "accessible").text == text
+    assert page_state(_accessible_page()).text == ACCESSIBLE_DESCRIPTION
+
+
+def test_accessible_text_masks_names() -> None:
+    page = _accessible_page()
+    text = accessible_text(page, display_text=lambda s: s.replace("Sign in", "{{x}}"))
+    assert "[B1] {{x}}" in text
+
+
+def test_label_mode_from_the_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("NOTTE_ACT_LABELS", raising=False)
+    assert label_mode() == "html"
+    monkeypatch.setenv("NOTTE_ACT_LABELS", " Accessible ")
+    assert label_mode() == "accessible"
+    monkeypatch.setenv("NOTTE_ACT_LABELS", "aria")
+    with pytest.raises(ValueError, match="NOTTE_ACT_LABELS"):
+        _ = label_mode()

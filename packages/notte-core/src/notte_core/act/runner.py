@@ -27,13 +27,16 @@ import notte_core.act.prompts as prompts
 from notte_core.act.errors import NoActionFoundError
 from notte_core.act.privacy import ActPrivacy
 from notte_core.act.space import (
+    LabelMode,
     ObservedPage,
     Target,
     act_questions,
     build_act_space,
     interpret,
+    label_mode,
     needs_text,
     page_state,
+    page_text,
     substitute_variables,
     target_action,
     validate_answer,
@@ -179,6 +182,7 @@ async def run_act(
     run = _Run(instruction=instruction)
     variables = dict(variables or {})
     history.privacy.remember(variables)
+    labels = label_mode()
     # text written for a field, reused if a stale page forces a new decision on the same field
     written: dict[tuple[str, str, str], str] = {}
 
@@ -189,10 +193,10 @@ async def run_act(
         history.observed(page.fingerprint)
         history.privacy.remember_secrets(driver.secret_replacements())
 
-        space = build_act_space(page, display_text=history.privacy.text)
+        space = build_act_space(page, display_text=history.privacy.text, labels=labels)
         model_page = history.privacy.page(page)
         state = DecisionState(
-            page=page_state(model_page),
+            page=page_state(model_page, labels, history.privacy.text),
             elements=space.elements,
             recent_actions=history.privacy.payload(history.recent()),
         )
@@ -228,7 +232,7 @@ async def run_act(
             text = written.get(key)
             if text is None:
                 step = time.perf_counter()
-                context = _write_context(instruction, target, model_page, history, variables, driver)
+                context = _write_context(instruction, target, model_page, history, variables, driver, labels)
                 try:
                     text = await decider.write(context)
                 except ContentFilterError as e:
@@ -309,12 +313,14 @@ def _write_context(
     history: ActHistory,
     variables: Mapping[str, str],
     driver: ActDriver,
+    labels: LabelMode,
 ) -> WriteContext:
     field: dict[str, Any] = {"label": target.label, "role": target.role, "value": target.value or ""}
+    text = page_text(page, labels, history.privacy.text)
     return WriteContext(
         goal=history.privacy.text(instruction),
         field=field,
-        page={"title": page.title, "text": page.description[:WRITER_PAGE_TEXT_LENGTH]},
+        page={"title": page.title, "text": text[:WRITER_PAGE_TEXT_LENGTH]},
         recent_actions=history.privacy.payload(
             [{"action": e["action"], "text": e["text"]} for e in history.recent(WRITER_HISTORY_SIZE)]
         ),
@@ -337,13 +343,14 @@ async def run_choose(
     criteria: dict[str, Any] = dict(options) if isinstance(options, Mapping) else {o: o for o in options}
     if len(criteria) < 2:
         raise ValueError("choose() needs at least two options")
+    labels = label_mode()
     page = await driver.observe(observation)
     history.observed(page.fingerprint)
     history.privacy.remember_secrets(driver.secret_replacements())
     model_page = history.privacy.page(page)
     state = DecisionState(
-        page=page_state(model_page),
-        elements=build_act_space(page, display_text=history.privacy.text).elements,
+        page=page_state(model_page, labels, history.privacy.text),
+        elements=build_act_space(page, display_text=history.privacy.text, labels=labels).elements,
         recent_actions=history.privacy.payload(history.recent()),
     )
     questions = {

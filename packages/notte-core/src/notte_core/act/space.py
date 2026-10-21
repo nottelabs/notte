@@ -8,9 +8,15 @@ One `operation` question picks what to do (CLICK, TYPE_TEXT, SELECT, a control, 
 and one target question per operation picks the element: only the target question of the chosen
 operation is used, the others are ignored. Native `<select>` options (from the live element state)
 are SELECT targets `<id>:<n>`.
+
+Two ways to show the page to the models (`NOTTE_ACT_LABELS`, see `label_mode`): `html` labels each
+element with its rendered HTML (`<input placeholder="Search">`) and sends the rendered page
+(`I1[:]<input ...>` lines); `accessible` labels it with its accessible name ("Search") and sends the
+visible text with `[I1] Search` markers, closer to jev-ultrafast's page reading.
 """
 
 import math
+import os
 import re
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -43,8 +49,23 @@ WAIT_MS = 1_000
 
 Operation = Literal["CLICK", "TYPE_TEXT", "SELECT"]
 TargetKind = Literal["click", "check", "fill", "select_option", "select_text"]
+LabelMode = Literal["html", "accessible"]
 
 _DESCRIPTION_LINE = re.compile(r"^([A-Z]\d+)\[:\](.*)$")
+# one rendered element (`I1[:]<input ...>`) or text (`_[:]Sign in`); its next lines continue it
+_DESCRIPTION_BLOCK = re.compile(r"^([A-Z]\d+|_)\[:\](.*)$")
+_RENDERED_ELEMENT = re.compile(r"^<(\w+)([^>]*)>(.*)</\1>$", re.DOTALL)
+_RENDERED_ATTRIBUTE = re.compile(r'(\w+)="([^"]*)"')
+# a text next to a field is taken as its label (the rendered page has no `<label for>` links) when short
+MAX_NEARBY_LABEL_LENGTH = 80
+
+
+def label_mode() -> LabelMode:
+    """`NOTTE_ACT_LABELS`: `html` (default) or `accessible`, how elements and page text are shown to the models."""
+    mode = os.getenv("NOTTE_ACT_LABELS", "html").strip().lower() or "html"
+    if mode not in ("html", "accessible"):
+        raise ValueError(f"NOTTE_ACT_LABELS must be 'html' or 'accessible', not {mode!r}")
+    return "accessible" if mode == "accessible" else "html"
 
 
 @dataclass(frozen=True)
@@ -139,6 +160,103 @@ def description_lines(description: str) -> dict[str, str]:
     return lines
 
 
+def _description_blocks(description: str) -> list[tuple[str | None, str]]:
+    """The rendered page as (`<id>` / `_` for text / None for a component header, content) blocks."""
+    blocks: list[tuple[str | None, str]] = []
+    for line in description.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        match = _DESCRIPTION_BLOCK.match(line)
+        if match is not None:
+            blocks.append((match.group(1), match.group(2).strip()))
+        elif line.startswith("### Content of "):
+            blocks.append((None, line))
+        elif len(blocks) > 0 and blocks[-1][0] is not None:
+            # an element or text rendered over several lines
+            blocks[-1] = (blocks[-1][0], blocks[-1][1] + "\n" + line)
+        else:
+            blocks.append(("_", line))
+    return blocks
+
+
+def _accessible_name(action: InteractionAction, rendered: str, before: str | None, after: str | None) -> str:
+    """An accessible name from the rendered element, approximating the browser's: `aria-label`, the
+    label-like text next to a form field (before a text field, after a checkbox or radio), the button
+    value or visible text, then `alt` / `placeholder` / `title`, notte's `text_label`, a link's `href`."""
+    match = _RENDERED_ELEMENT.match(rendered)
+    tag, attributes, content = "", dict[str, str](), ""
+    if match is not None:
+        tag = match.group(1).lower()
+        attributes = dict(_RENDERED_ATTRIBUTE.findall(match.group(2)))
+        content = " ".join(match.group(3).split())
+
+    def nearby(text: str | None) -> str | None:
+        return text if text is not None and len(text) <= MAX_NEARBY_LABEL_LENGTH else None
+
+    role = _role(action, rendered)
+    candidates = [attributes.get("aria_label")]
+    if tag == "input" and attributes.get("type") in ("submit", "button", "reset"):
+        candidates.append(attributes.get("value"))
+    if role in ("checkbox", "radio"):
+        candidates += [nearby(after), nearby(before)]
+    elif role in ("textbox", "combobox", "select"):
+        candidates.append(nearby(before))
+    candidates += [content, attributes.get("alt"), attributes.get("placeholder"), attributes.get("title")]
+    # an unnamed link (an icon) is at least its destination
+    candidates += [action.text_label, attributes.get("href")]
+    return next((c.strip() for c in candidates if c is not None and c.strip()), role)
+
+
+def accessible_names(page: ObservedPage) -> dict[str, str]:
+    """The accessible name of every action rendered in the page description, by action id."""
+    blocks = _description_blocks(page.description)
+    actions = {action.id: action for action in page.actions}
+    names: dict[str, str] = {}
+
+    def toggle(index: int) -> bool:
+        action = actions.get(blocks[index][0] or "") if index >= 0 else None
+        return action is not None and _role(action, blocks[index][1]) in ("checkbox", "radio")
+
+    def text(index: int) -> str | None:
+        # the text right after a checkbox or radio is its label, not the next field's
+        if 0 <= index < len(blocks) and blocks[index][0] == "_" and not toggle(index - 1):
+            return " ".join(blocks[index][1].split())
+        return None
+
+    for i, (key, content) in enumerate(blocks):
+        action = actions.get(key or "")
+        if key is not None and action is not None and key not in names:
+            after = " ".join(blocks[i + 1][1].split()) if i + 1 < len(blocks) and blocks[i + 1][0] == "_" else None
+            names[key] = _accessible_name(action, content, text(i - 1), after)
+    return names
+
+
+def accessible_text(page: ObservedPage, display_text: Callable[[str], str] = str) -> str:
+    """The page as visible text, each element replaced by `[<id>] <accessible name>` in reading order.
+
+    The markers keep what the HTML rendering is needed for (where an element sits relative to the
+    text: the price next to a button, the result a link opens) without its markup. The page's own
+    component header is dropped; dialog headers are kept (they say a modal is open).
+    """
+    names = accessible_names(page)
+    lines: list[str] = []
+    for key, content in _description_blocks(page.description):
+        if key is None:
+            if "'WebArea'" not in content:
+                lines.append(content.removeprefix("### "))
+        elif key == "_":
+            lines.append(content)
+        else:
+            lines.append(f"[{key}] {_cut(display_text(names.get(key, key)), MAX_LABEL_LENGTH)}")
+    return "\n".join(lines)
+
+
+def page_text(page: ObservedPage, labels: LabelMode = "html", display_text: Callable[[str], str] = str) -> str:
+    """The page text sent to the models: the rendered description, or `accessible_text`."""
+    return page.description if labels == "html" else accessible_text(page, display_text)
+
+
 def _cut(text: str, length: int) -> str:
     return text if len(text) <= length else text[:length] + "..."
 
@@ -173,9 +291,11 @@ def _element(
     state: ElementState | None,
     has_live_state: bool,
     display_text: Callable[[str], str],
+    labels: LabelMode,
 ) -> dict[str, Any]:
     element: dict[str, Any] = {"index": action.id, "label": label, "role": role, "operations": []}
-    if action.text_label and action.text_label not in label:
+    # an accessible name already is the element's text
+    if labels == "html" and action.text_label and action.text_label not in label:
         element["text"] = _cut(display_text(action.text_label), 120)
     if state is not None:
         if state.value is not None:
@@ -195,10 +315,13 @@ def _element(
     return element
 
 
-def build_act_space(page: ObservedPage, *, display_text: Callable[[str], str] = str) -> ActSpace:
+def build_act_space(
+    page: ObservedPage, *, display_text: Callable[[str], str] = str, labels: LabelMode = "html"
+) -> ActSpace:
     # Determine IDs, roles and supported operations from the original page. Only
     # presentation strings pass through display_text, before their display caps.
     lines = description_lines(page.description)
+    names = accessible_names(page) if labels == "accessible" else {}
     space = ActSpace()
     has_live_state = len(page.states) > 0
 
@@ -211,10 +334,11 @@ def build_act_space(page: ObservedPage, *, display_text: Callable[[str], str] = 
         if not action.id:
             continue
         line = lines.get(action.id, "")
-        label = _cut(display_text(line or action.text_label or action.id), MAX_LABEL_LENGTH)
+        shown = names.get(action.id) if labels == "accessible" else line
+        label = _cut(display_text(shown or action.text_label or action.id), MAX_LABEL_LENGTH)
         role = _role(action, line)
         state = page.states.get(action.id)
-        element = _element(action, label, role, state, has_live_state, display_text)
+        element = _element(action, label, role, state, has_live_state, display_text, labels)
         current = element.get("value")
         base: dict[str, Any] = {k: element[k] for k in ("role", "checked", "selected", "expanded") if k in element}
 
@@ -292,8 +416,10 @@ def build_act_space(page: ObservedPage, *, display_text: Callable[[str], str] = 
     return space
 
 
-def page_state(page: ObservedPage) -> PageState:
-    return PageState(url=page.url, title=page.title, text=_cut(page.description, MAX_PAGE_TEXT_LENGTH))
+def page_state(page: ObservedPage, labels: LabelMode = "html", display_text: Callable[[str], str] = str) -> PageState:
+    return PageState(
+        url=page.url, title=page.title, text=_cut(page_text(page, labels, display_text), MAX_PAGE_TEXT_LENGTH)
+    )
 
 
 def act_questions(space: ActSpace, goal: str) -> dict[str, Question]:

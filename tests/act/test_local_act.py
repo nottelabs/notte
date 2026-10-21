@@ -415,3 +415,25 @@ async def test_a_writer_refusal_blocks_the_step(session: NotteSession) -> None:
     blocked = await session.aact("type Ada Lovelace", raise_on_failure=False, decider=Refusing(choices=list(choices)))
     assert blocked.status == "blocked" and "content-policy" in (blocked.message or "")
     assert await session.window.page.input_value("#name") == ""
+
+
+@pytest.mark.asyncio
+async def test_accessible_labels_reach_the_decider_and_the_writer(
+    session: NotteSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("NOTTE_ACT_LABELS", "accessible")
+    ids = await _ids(session)
+    decider = FakeDecider(choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["name"]}], texts=["{{who}}"])
+    result = await session.aact("Sign up as {{who}}", variables={"who": "Subscribe"}, decider=decider)
+
+    assert result.success and await session.window.page.input_value("#name") == "Subscribe"
+    state = decider.states[0]
+    labels = {e["index"]: e["label"] for e in state.elements}
+    assert labels[ids["name"]] == "Name" and labels[ids["terms"]] == "Accept the terms"
+    assert labels[ids["country"]] == "Country"
+    assert f"[{ids['name']}] Name" in state.page.text and "[:]" not in state.page.text
+    context = decider.contexts[0]
+    assert context.field["label"] == "Name"
+    assert "<" not in context.page["text"] and f"[{ids['name']}] Name" in context.page["text"]
+    # variable values are masked in the names too
+    assert "] {{who}}" in state.page.text and "Subscribe" not in state.model_dump_json()
