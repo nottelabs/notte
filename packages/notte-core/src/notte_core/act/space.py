@@ -182,7 +182,7 @@ def _description_blocks(description: str) -> list[tuple[str | None, str]]:
 
 def _accessible_name(action: InteractionAction, rendered: str, before: str | None, after: str | None) -> str:
     """An accessible name from the rendered element, approximating the browser's: `aria-label`, the
-    label-like text next to a form field (before a text field, after a checkbox or radio), the button
+    label-like text or `<label>` next to a form field (before a text field, after a checkbox or radio), the button
     value or visible text, then `alt` / `placeholder` / `title`, notte's `text_label`, a link's `href`."""
     match = _RENDERED_ELEMENT.match(rendered)
     tag, attributes, content = "", dict[str, str](), ""
@@ -218,17 +218,24 @@ def accessible_names(page: ObservedPage) -> dict[str, str]:
         action = actions.get(blocks[index][0] or "") if index >= 0 else None
         return action is not None and _role(action, blocks[index][1]) in ("checkbox", "radio")
 
-    def text(index: int) -> str | None:
-        # the text right after a checkbox or radio is its label, not the next field's
-        if 0 <= index < len(blocks) and blocks[index][0] == "_" and not toggle(index - 1):
-            return " ".join(blocks[index][1].split())
-        return None
+    def label(index: int) -> str | None:
+        """A text, or a `<label>` element (clickable labels get an id), that can name a field next to it."""
+        if not 0 <= index < len(blocks) or blocks[index][0] is None:
+            return None
+        key, content = blocks[index]
+        if key != "_":
+            match = _RENDERED_ELEMENT.match(content)
+            if match is None or match.group(1).lower() != "label":
+                return None
+            content = match.group(3)
+        return " ".join(content.split()) or None
 
     for i, (key, content) in enumerate(blocks):
         action = actions.get(key or "")
         if key is not None and action is not None and key not in names:
-            after = " ".join(blocks[i + 1][1].split()) if i + 1 < len(blocks) and blocks[i + 1][0] == "_" else None
-            names[key] = _accessible_name(action, content, text(i - 1), after)
+            # the label right after a checkbox or radio is its own, not the next field's
+            before = None if i >= 2 and toggle(i - 2) else label(i - 1)
+            names[key] = _accessible_name(action, content, before, label(i + 1))
     return names
 
 

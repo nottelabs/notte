@@ -433,6 +433,24 @@ def test_accessible_names_approximate_the_browser_names() -> None:
     }
 
 
+def test_a_clickable_label_names_the_field_next_to_it() -> None:
+    # notte gives clickable `<label>` elements an id: they still name their field
+    description = """M1[:]<label>Username</label>
+I1[:]<input type="text" name="username"></input>
+I2[:]<input type="checkbox" name="remember"></input>
+M2[:]<label>Remember me</label>
+I3[:]<input type="text" name="code"></input>"""
+    actions: list[InteractionAction] = [
+        ClickAction(id="M1", text_label="Username"),
+        FillAction(id="I1", value="<sample_value>", text_label="username"),
+        CheckAction(id="I2", value=True, text_label="remember"),
+        ClickAction(id="M2", text_label="Remember me"),
+        FillAction(id="I3", value="<sample_value>", text_label="code"),
+    ]
+    names = accessible_names(_page(description=description, actions=actions, states={}))
+    assert names == {"M1": "Username", "I1": "Username", "I2": "Remember me", "M2": "Remember me", "I3": "code"}
+
+
 def test_accessible_mode_labels_elements_and_targets_without_html() -> None:
     space = build_act_space(_accessible_page(), labels="accessible")
     elements = {e["index"]: e for e in space.elements}
