@@ -35,6 +35,17 @@ class ActPrivacy:
             if len(prefix) < len(literal):
                 self.replacements[prefix] = placeholder
 
+    def cut_text(self, value: str) -> str:
+        """`text` for a live field value the browser cut (`ElementState.value_truncated`): a protected value
+        can also start at the cut, with only its first characters visible. Those are masked too (from 3
+        characters: shorter starts match ordinary text too often)."""
+        value = self.text(value)
+        for literal in sorted(self.replacements, key=len, reverse=True):
+            for length in range(min(len(literal), len(value)), min(3, len(literal)) - 1, -1):
+                if value.endswith(literal[:length]):
+                    return value[: len(value) - length] + self.replacements[literal]
+        return value
+
     def text(self, value: str) -> str:
         if not self.replacements:
             return value
