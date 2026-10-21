@@ -532,6 +532,9 @@ class LLMEngine:
                         status = cast(dict[str, Any], error).get("code", 502) if isinstance(error, dict) else 502
                         if not isinstance(status, int) or not 400 <= status <= 599:
                             status = 502
+                    # a content refusal is final, whatever status (or embedded code) it comes with: never retried
+                    if status >= 400 and is_content_refusal(response.text):
+                        raise ContentFilterError(model, _error_detail(response.text.replace(key, "[REDACTED]")))
                     if status == 408 or status == 429 or status >= 500:
                         if retry_delay is not None:
                             logger.warning(f"Transient HTTP {status} from {model} (attempt {attempt}); retrying")

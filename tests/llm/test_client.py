@@ -241,3 +241,29 @@ async def test_timeout_applies_to_each_request() -> None:
 
     _ = await LLMEngine(transport=httpx.MockTransport(handler), timeout=7.5).completion([])
     assert timeouts == [{"connect": 7.5, "read": 7.5, "write": 7.5, "pool": 7.5}]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "error",
+    [
+        # a string code (or none): the embedded error would otherwise read as a retryable 502
+        {"code": "content_policy_violation", "message": "Your request was rejected"},
+        {"message": "Upstream error: content_filter"},
+    ],
+)
+async def test_embedded_refusals_are_not_retried(error: dict[str, object], monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[int] = []
+    delays: list[float] = []
+
+    async def sleep(seconds: float) -> None:
+        delays.append(seconds)
+
+    def handler(_: httpx.Request) -> httpx.Response:
+        calls.append(1)
+        return httpx.Response(200, json={"error": error})
+
+    monkeypatch.setattr("notte_llm.engine.asyncio.sleep", sleep)
+    with pytest.raises(ContentFilterError):
+        await LLMEngine(model="vendor/model", transport=httpx.MockTransport(handler)).completion([])
+    assert calls == [1] and delays == []
