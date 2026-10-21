@@ -1,0 +1,49 @@
+---
+title: "Decider"
+description: "Answers the questions of `act()` / `choose()` / `check()` and writes field values"
+---
+
+
+
+Implementations: `notte_llm.JevDecider` (TypeSafe's Jev classification model) and
+`notte_llm.LlmDecider` (an LLM of the `NOTTE_LLM_*` endpoint). Any object with these two methods works
+
+## Methods
+
+### choose
+
+```python
+choose(state: <class 'notte_core.act.types.DecisionState'>, questions: collections.abc.Mapping[str, notte_core.act.types.Question]) -> <class 'notte_core.act.types.Answers'>
+```
+
+Answer every question (option keys must come from each question's `criteria`)
+
+**Returns:**
+
+<Visibility for="humans">[`Answers`](/sdk-reference/misc/answers)</Visibility><Visibility for="agents">[`Answers`](/sdk-reference/misc/answers.md)</Visibility>
+
+---
+
+### write
+
+```python
+write(context: <class 'notte_core.act.types.WriteContext'>) -> str | None
+```
+
+The exact text to type in a field, or `None` when the goal does not give a value
+
+**Returns:**
+
+`UnionType`[`str`, `None`]
+
+---
+
+
+## Inheritance
+
+Inherits from: Protocol
+
+
+## Module
+
+`notte_core.act.types`
