@@ -527,3 +527,30 @@ customElements.define("my-label", class extends HTMLElement {
     decider = FakeDecider(choices=[{"operation": "DONE"}])
     _ = await session.aact("look", decider=decider)
     assert [e["label"] for e in decider.states[0].elements if e["role"] == "textbox"] == ["Work email"]
+
+
+@pytest.mark.asyncio
+async def test_cloud_freshness_scripts_return_no_field_values(session: NotteSession) -> None:
+    """The cloud freshness check's results are recorded with the session's actions: they must hold no values."""
+    from notte_core.act.freshness import remote_signatures_expression
+
+    page = session.window.page
+    private = "jane.private@example.test"
+    await page.fill("#name", private)
+    await page.eval_on_selector("#out", "(el, text) => { el.contentEditable = 'true'; el.innerText = text; }", private)
+    xpaths = {"name": "html/body/form/label[1]/input", "out": "html/body/p"}
+
+    stored = json.loads(await page.evaluate(remote_signatures_expression(xpaths, "store")))
+    assert private not in json.dumps(stored)
+    assert stored["elements"]["name"][0] == "INPUT" and stored["elements"]["name"][2] is None
+    same = json.loads(await page.evaluate(remote_signatures_expression({"name": xpaths["name"]}, "compare")))
+    assert same == {"url": page.url, "unchanged": {"name": True}}
+
+    # an edit is detected in the page, without the value coming back
+    await page.fill("#name", private + "!")
+    changed = json.loads(await page.evaluate(remote_signatures_expression({"name": xpaths["name"]}, "compare")))
+    assert changed["unchanged"] == {"name": False} and private not in json.dumps(changed)
+    # a new page has no baseline: nothing is unchanged
+    _ = await page.goto(f"data:text/html,{quote(PAGE)}")
+    gone = json.loads(await page.evaluate(remote_signatures_expression({"name": xpaths["name"]}, "compare")))
+    assert gone["unchanged"] == {"name": False}
