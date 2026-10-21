@@ -55,8 +55,10 @@ def _observation(url: str = "https://search.test/", label: str = "Search") -> Ob
 
 
 class _Remote:
-    """observe / execute of a cloud session. `signatures` are the `evaluate_js` answers of the
-    freshness check, in order (`None`: the call fails, like on an API without evaluate_js data)."""
+    """observe / execute of a cloud session. `signatures` are the page's element signatures at each
+    `evaluate_js` call of the freshness check, in order (`None`: the call fails, like on an API without
+    evaluate_js data). Like the page script, a `store` call keeps them and a `compare` call answers only
+    whether each element is unchanged since."""
 
     def __init__(self, observations: list[Observation], signatures: list[dict[str, Any] | None] | None = None) -> None:
         self.observations: list[Observation] = observations
@@ -65,6 +67,8 @@ class _Remote:
         self.observe_calls: int = 0
         self.observe_kwargs: list[dict[str, Any]] = []
         self.js_calls: list[str] = []
+        self.stored: dict[str, Any] | None = None
+        self.answers: list[dict[str, Any]] = []
 
     def observe(self, **kwargs: Any) -> Observation:
         self.observe_calls += 1
@@ -77,8 +81,20 @@ class _Remote:
         now = dt.datetime.now(dt.timezone.utc)
         if kwargs.get("type") == "evaluate_js":
             self.js_calls.append(kwargs["code"])
-            answer = self.signatures.pop(0) if self.signatures else None
+            state = self.signatures.pop(0) if self.signatures else None
             js = EvaluateJsAction(code=kwargs["code"])
+            answer: dict[str, Any] | None = None
+            if state is not None and '"store" === "store"' in kwargs["code"]:
+                self.stored = state
+                answer = state
+            elif state is not None and self.stored is not None:
+                ids = json.loads(kwargs["code"].split("const xpaths = ", 1)[1].split(";\n", 1)[0])
+                answer = {
+                    "url": state["url"],
+                    "unchanged": {i: state["elements"].get(i) == self.stored["elements"].get(i) for i in ids},
+                }
+            if answer is not None:
+                self.answers.append(answer)
             if answer is None:
                 return ExecutionResult(action=js, success=False, message="no data", started_at=now, ended_at=now)
             data = DataSpace(markdown=json.dumps(answer))

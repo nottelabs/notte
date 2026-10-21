@@ -8,10 +8,15 @@ signature is read after the observation, so it is first checked against what the
 few milliseconds locally (one `page.evaluate`) and one `evaluate_js` call for cloud sessions, instead
 of a full observation. Elements in iframes or shadow roots have no usable XPath: sessions fall back
 to comparing a new observation (`same_target`).
+
+On cloud sessions a script's result is recorded with the session's actions, so field values must not be
+returned: `remote_signatures_expression` keeps the full baseline in the page and returns it without field
+values or editable text (`store`), then compares in the page and returns only whether each element is
+unchanged (`compare`).
 """
 
 import json
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 from notte_core.act.space import ObservedPage, description_lines
 
@@ -61,13 +66,47 @@ def signature_xpaths(page: ObservedPage, element_id: str | None = None) -> dict[
     return xpaths
 
 
-def signatures_expression(xpaths: dict[str, str]) -> str:
-    """`ELEMENT_SIGNATURES_JS` applied to `xpaths`, as one expression returning a JSON string (for `evaluate_js`).
+# where the cloud baseline is kept in the page (a non-enumerable property of `window`)
+_BASELINE_KEY = "__notteActSignatures"
 
-    An immediately invoked function: the cloud API returns `null` for some other shapes of expression
-    (e.g. `JSON.stringify((fn)(args))` when `fn` has a block body).
+
+def remote_signatures_expression(xpaths: dict[str, str], mode: Literal["store", "compare"]) -> str:
+    """An `evaluate_js` expression (a JSON string result) for cloud sessions, whose script results are recorded.
+
+    - `store`: reads the signatures of `xpaths`, keeps them in the page, and returns them with no field value
+      (only whether a password is filled) and no text of an editable element.
+    - `compare`: reads them again and returns, by id, whether each is unchanged since `store` (and the URL).
+    Field values never leave the page.
     """
-    return f"(() => {{ const run = {ELEMENT_SIGNATURES_JS}; return JSON.stringify(run({json.dumps(xpaths)})); }})()"
+    return f"""(() => {{
+    const run = {ELEMENT_SIGNATURES_JS};
+    const xpaths = {json.dumps(xpaths)};
+    const current = run(xpaths);
+    const key = {json.dumps(_BASELINE_KEY)};
+    if ({json.dumps(mode)} === "store") {{
+        Object.defineProperty(window, key, {{ value: current, configurable: true, writable: true, enumerable: false }});
+        const elements = {{}};
+        for (const [id, signature] of Object.entries(current.elements)) {{
+            if (signature === null) {{ elements[id] = null; continue; }}
+            const copy = signature.slice();
+            copy[2] = typeof copy[2] === "boolean" ? copy[2] : null;
+            let el = null;
+            try {{
+                el = document.evaluate(xpaths[id], document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            }} catch (e) {{}}
+            if (el && (el.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName))) copy[1] = null;
+            elements[id] = copy;
+        }}
+        return JSON.stringify({{ url: current.url, elements }});
+    }}
+    const stored = window[key];
+    const unchanged = {{}};
+    for (const id of Object.keys(xpaths)) {{
+        unchanged[id] = Boolean(stored) && current.elements[id] !== null
+            && JSON.stringify(stored.elements[id] ?? null) === JSON.stringify(current.elements[id]);
+    }}
+    return JSON.stringify({{ url: current.url, unchanged }});
+}})()"""
 
 
 class Signatures:
@@ -79,6 +118,13 @@ class Signatures:
 
     def has(self, element_id: str) -> bool:
         return self.elements.get(element_id) is not None
+
+    def unchanged(self, check: dict[str, Any] | None, element_id: str | None) -> bool:
+        """A cloud `compare` result (`remote_signatures_expression`): same URL and, for `element_id`, unchanged."""
+        if check is None or check.get("url") is None or check.get("url") != self.url:
+            return False
+        flags: Any = check.get("unchanged") or {}
+        return element_id is None or (isinstance(flags, dict) and cast(dict[str, Any], flags).get(element_id) is True)
 
     def matches(self, current: "Signatures", element_id: str | None) -> bool:
         if current.url is None or current.url != self.url:
