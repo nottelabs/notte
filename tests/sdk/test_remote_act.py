@@ -38,7 +38,8 @@ def _observation(url: str = "https://search.test/", label: str = "Search") -> Ob
         ),
         screenshot=b"",
         space=ActionSpace(
-            description=DESCRIPTION,
+            # the button renders its label, as a real observation would
+            description=DESCRIPTION.replace(">Search</button>", f">{label}</button>"),
             interaction_actions=[
                 FillAction(id="I1", value="<sample_value>", text_label="q", selector="xpath=html/body/form/input"),
                 SelectDropdownOptionAction(
@@ -86,6 +87,11 @@ class _Remote:
         return ExecutionResult(action=action, success=True, message="ok", started_at=now, ended_at=now)
 
 
+@pytest.fixture(autouse=True)
+def default_label_mode(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("NOTTE_ACT_LABELS", raising=False)
+
+
 def _session(remote: _Remote, monkeypatch: pytest.MonkeyPatch) -> RemoteSession:
     session = RemoteSession(_client=MagicMock())
     monkeypatch.setattr(session, "observe", remote.observe)
@@ -117,7 +123,8 @@ def test_remote_act_types_and_selects_by_label(monkeypatch: pytest.MonkeyPatch) 
     # a fill without live state: page_changed is unknown, not False
     assert decider.states[1].recent_actions == [
         {
-            "action": '<input type="text" name="q"></input>',
+            # the accessible name (the text before the field)
+            "action": "Search",
             "kind": "TYPE_TEXT",
             "text": "{{query}}",
             "page_changed": None,
@@ -207,7 +214,7 @@ def test_remote_supplied_observation_is_refreshed_before_act(monkeypatch: pytest
     decider = FakeDecider(choices=[{"operation": "DONE"}])
     _ = session.act("Review the page", observation=old, decider=decider)
     assert decider.states[0].page.url == new.metadata.url
-    assert any(e.get("text") == "Delete account" for e in decider.states[0].elements)
+    assert any(e.get("label") == "Delete account" for e in decider.states[0].elements)
     assert remote.executed == []
 
 

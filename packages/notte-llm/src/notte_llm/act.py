@@ -26,6 +26,7 @@
 | `NOTTE_ACT_MODEL` / `NOTTE_LLM_MODEL` | model of `LlmDecider`, in this order (default `DEFAULT_ACT_MODEL`); also the writer's fallback model |
 | `NOTTE_ACT_TEXT_MODEL` | model of the field writer (default `DEFAULT_TEXT_MODEL` on OpenRouter, else the decision model) |
 | `NOTTE_ACT_REASONING` | reasoning of OpenRouter models: `none` (default; `low` for models that require reasoning), `low`, `medium` or `high` |
+| `NOTTE_ACT_LABELS` | how the page is shown to every decider and the writer: `accessible` (default: accessible names and the visible text with `[I1] Name` markers) or `html` (rendered HTML), see `notte_core.act.space` |
 
 The field writer runs on the `NOTTE_LLM_*` endpoint (OpenRouter with `OPENROUTER_API_KEY`); Jev cannot write text.
 """

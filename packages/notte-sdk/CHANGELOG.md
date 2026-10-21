@@ -9,7 +9,8 @@ the same decider about the current page. Async versions are `aact`, `achoose` an
 Deciders live in `notte-llm` and load only when one of these methods runs: `JevDecider`
 (TypeSafe's Jev, through OpenRouter with `OPENROUTER_API_KEY` or on TypeSafe with `TYPESAFE_API_KEY`)
 by default, or `LlmDecider` on the `NOTTE_LLM_*` endpoint (`NOTTE_ACT_DECIDER=llm`). Cloud sessions run `act()`
-in the client over the existing observe and execute endpoints.
+in the client over the existing observe and execute endpoints. Deciders see elements by their
+accessible names and the page as visible text (`NOTTE_ACT_LABELS=html` sends the rendered HTML instead).
 
 Local observations also read the live state of form controls (current values, checked state,
 `<select>` options) into `DomNode.state`, with `BrowserSnapshot.element_states()` and

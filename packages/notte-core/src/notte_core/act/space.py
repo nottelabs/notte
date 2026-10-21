@@ -9,10 +9,11 @@ and one target question per operation picks the element: only the target questio
 operation is used, the others are ignored. Native `<select>` options (from the live element state)
 are SELECT targets `<id>:<n>`.
 
-Two ways to show the page to the models (`NOTTE_ACT_LABELS`, see `label_mode`): `html` labels each
-element with its rendered HTML (`<input placeholder="Search">`) and sends the rendered page
-(`I1[:]<input ...>` lines); `accessible` labels it with its accessible name ("Search") and sends the
-visible text with `[I1] Search` markers, closer to jev-ultrafast's page reading.
+Two ways to show the page to the models (`NOTTE_ACT_LABELS`, see `label_mode`): `accessible` (default)
+labels each element with its accessible name ("Search") and sends the visible text with `[I1] Search`
+markers, closer to jev-ultrafast's page reading; a text or clickable `<label>` that names the field
+next to it is not repeated as its own line or element. `html` labels each element with its rendered
+HTML (`<input placeholder="Search">`) and sends the rendered page (`I1[:]<input ...>` lines).
 """
 
 import math
@@ -61,8 +62,8 @@ MAX_NEARBY_LABEL_LENGTH = 80
 
 
 def label_mode() -> LabelMode:
-    """`NOTTE_ACT_LABELS`: `html` (default) or `accessible`, how elements and page text are shown to the models."""
-    mode = os.getenv("NOTTE_ACT_LABELS", "html").strip().lower() or "html"
+    """`NOTTE_ACT_LABELS`: `accessible` (default) or `html`, how elements and page text are shown to the models."""
+    mode = os.getenv("NOTTE_ACT_LABELS", "accessible").strip().lower() or "accessible"
     if mode not in ("html", "accessible"):
         raise ValueError(f"NOTTE_ACT_LABELS must be 'html' or 'accessible', not {mode!r}")
     return "accessible" if mode == "accessible" else "html"
@@ -151,12 +152,12 @@ class ActSpace:
 
 
 def description_lines(description: str) -> dict[str, str]:
-    """The rendered element of every action id in an action space description (`I1[:]<input ...>`)."""
+    """The rendered element of every action id in an action space description (`I1[:]<input ...>`), on one
+    line: an element rendered over several lines (a `<select>` and its options) is joined with spaces."""
     lines: dict[str, str] = {}
-    for line in description.splitlines():
-        match = _DESCRIPTION_LINE.match(line.strip())
-        if match is not None:
-            _ = lines.setdefault(match.group(1), match.group(2).strip())
+    for key, content in _description_blocks(description):
+        if key is not None and key != "_":
+            _ = lines.setdefault(key, " ".join(content.splitlines()))
     return lines
 
 
@@ -180,7 +181,12 @@ def _description_blocks(description: str) -> list[tuple[str | None, str]]:
     return blocks
 
 
-def _accessible_name(action: InteractionAction, rendered: str, before: str | None, after: str | None) -> str:
+NameSource = Literal["before", "after"]
+
+
+def _accessible_name(
+    action: InteractionAction, rendered: str, before: str | None, after: str | None
+) -> tuple[str, NameSource | None]:
     """An accessible name from the rendered element, approximating the browser's: `aria-label`, the
     label-like text or `<label>` next to a form field (before a text field, after a checkbox or radio), the button
     value or visible text, then `alt` / `placeholder` / `title`, notte's `text_label`, a link's `href`."""
@@ -195,24 +201,40 @@ def _accessible_name(action: InteractionAction, rendered: str, before: str | Non
         return text if text is not None and len(text) <= MAX_NEARBY_LABEL_LENGTH else None
 
     role = _role(action, rendered)
-    candidates = [attributes.get("aria_label")]
+    candidates: list[tuple[str | None, NameSource | None]] = [(attributes.get("aria_label"), None)]
     if tag == "input" and attributes.get("type") in ("submit", "button", "reset"):
-        candidates.append(attributes.get("value"))
+        candidates.append((attributes.get("value"), None))
     if role in ("checkbox", "radio"):
-        candidates += [nearby(after), nearby(before)]
+        candidates.append((nearby(after), "after"))
+        candidates.append((nearby(before), "before"))
     elif role in ("textbox", "combobox", "select"):
-        candidates.append(nearby(before))
-    candidates += [content, attributes.get("alt"), attributes.get("placeholder"), attributes.get("title")]
+        candidates.append((nearby(before), "before"))
+    candidates += [
+        (c, None) for c in (content, attributes.get("alt"), attributes.get("placeholder"), attributes.get("title"))
+    ]
     # an unnamed link (an icon) is at least its destination
-    candidates += [action.text_label, attributes.get("href")]
-    return next((c.strip() for c in candidates if c is not None and c.strip()), role)
+    candidates += [(action.text_label, None), (attributes.get("href"), None)]
+    for candidate, source in candidates:
+        if candidate is not None and candidate.strip():
+            return candidate.strip(), source
+    return role, None
 
 
-def accessible_names(page: ObservedPage) -> dict[str, str]:
-    """The accessible name of every action rendered in the page description, by action id."""
+@dataclass(frozen=True)
+class _Names:
+    # accessible name by action id
+    names: dict[str, str]
+    # description blocks used as the name of the element next to them (a text or a clickable `<label>`)
+    used: frozenset[int]
+    # clickable `<label>` elements that name the field next to them: the field is offered instead
+    labels: frozenset[str]
+
+
+def _names(page: ObservedPage) -> _Names:
     blocks = _description_blocks(page.description)
     actions = {action.id: action for action in page.actions}
     names: dict[str, str] = {}
+    used: set[int] = set()
 
     def toggle(index: int) -> bool:
         action = actions.get(blocks[index][0] or "") if index >= 0 else None
@@ -235,8 +257,23 @@ def accessible_names(page: ObservedPage) -> dict[str, str]:
         if key is not None and action is not None and key not in names:
             # the label right after a checkbox or radio is its own, not the next field's
             before = None if i >= 2 and toggle(i - 2) else label(i - 1)
-            names[key] = _accessible_name(action, content, before, label(i + 1))
-    return names
+            names[key], source = _accessible_name(action, content, before, label(i + 1))
+            if source is not None:
+                used.add(i - 1 if source == "before" else i + 1)
+    # a label that named its field is not an element of its own (clicking it would only focus or toggle the field)
+    labels = frozenset(key for i in used if (key := blocks[i][0]) is not None and key != "_")
+    return _Names(names={k: v for k, v in names.items() if k not in labels}, used=frozenset(used), labels=labels)
+
+
+def accessible_names(page: ObservedPage) -> dict[str, str]:
+    """The accessible name of every action rendered in the page description, by action id (clickable `<label>`
+    elements that name the field next to them are left out: see `label_elements`)."""
+    return _names(page).names
+
+
+def label_elements(page: ObservedPage) -> frozenset[str]:
+    """Ids of the clickable `<label>` elements whose text names the field next to them."""
+    return _names(page).labels
 
 
 def accessible_text(page: ObservedPage, display_text: Callable[[str], str] = str) -> str:
@@ -246,16 +283,19 @@ def accessible_text(page: ObservedPage, display_text: Callable[[str], str] = str
     text: the price next to a button, the result a link opens) without its markup. The page's own
     component header is dropped; dialog headers are kept (they say a modal is open).
     """
-    names = accessible_names(page)
+    names = _names(page)
     lines: list[str] = []
-    for key, content in _description_blocks(page.description):
+    for i, (key, content) in enumerate(_description_blocks(page.description)):
+        if i in names.used:
+            # already the name of the element next to it
+            continue
         if key is None:
             if "'WebArea'" not in content:
                 lines.append(content.removeprefix("### "))
         elif key == "_":
             lines.append(content)
         else:
-            lines.append(f"[{key}] {_cut(display_text(names.get(key, key)), MAX_LABEL_LENGTH)}")
+            lines.append(f"[{key}] {_cut(display_text(names.names.get(key, key)), MAX_LABEL_LENGTH)}")
     return "\n".join(lines)
 
 
@@ -328,7 +368,7 @@ def build_act_space(
     # Determine IDs, roles and supported operations from the original page. Only
     # presentation strings pass through display_text, before their display caps.
     lines = description_lines(page.description)
-    names = accessible_names(page) if labels == "accessible" else {}
+    names = _names(page) if labels == "accessible" else None
     space = ActSpace()
     has_live_state = len(page.states) > 0
 
@@ -338,10 +378,10 @@ def build_act_space(
             element["operations"].append(operation)
 
     for action in page.actions[:MAX_ELEMENTS]:
-        if not action.id:
+        if not action.id or (names is not None and action.id in names.labels):
             continue
         line = lines.get(action.id, "")
-        shown = names.get(action.id) if labels == "accessible" else line
+        shown = line if names is None else names.names.get(action.id)
         label = _cut(display_text(shown or action.text_label or action.id), MAX_LABEL_LENGTH)
         role = _role(action, line)
         state = page.states.get(action.id)

@@ -103,7 +103,8 @@ OpenRouter key, else `LlmDecider` on another `NOTTE_LLM_*` endpoint (`NOTTE_ACT_
 then `google/gemini-3.1-flash-lite`). `NOTTE_ACT_DECIDER=jev|llm` forces one (`llm` keeps an LLM deciding with an
 OpenRouter key). Jev cannot write text: the writer model is `NOTTE_ACT_TEXT_MODEL`, else `inception/mercury-2.5` on
 OpenRouter, else the decision model. When the writer's provider refuses a value on content-policy grounds,
-`NOTTE_ACT_MODEL` (default `google/gemini-3.1-flash-lite`) writes it instead. Decisions are sent
+`NOTTE_ACT_MODEL` (default `google/gemini-3.1-flash-lite`) writes it instead. Deciders and the writer see elements
+by their accessible names and the page as visible text by default (`NOTTE_ACT_LABELS=html` for the rendered HTML). Decisions are sent
 without OpenRouter model fallbacks and with reasoning disabled (`NOTTE_ACT_REASONING=none`; models that require
 reasoning are retried with `low`).
 

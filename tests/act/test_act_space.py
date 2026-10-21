@@ -13,6 +13,7 @@ from notte_core.act.space import (
     build_act_space,
     description_lines,
     interpret,
+    label_elements,
     label_mode,
     page_state,
     substitute_variables,
@@ -447,8 +448,29 @@ I3[:]<input type="text" name="code"></input>"""
         ClickAction(id="M2", text_label="Remember me"),
         FillAction(id="I3", value="<sample_value>", text_label="code"),
     ]
-    names = accessible_names(_page(description=description, actions=actions, states={}))
-    assert names == {"M1": "Username", "I1": "Username", "I2": "Remember me", "M2": "Remember me", "I3": "code"}
+    page = _page(description=description, actions=actions, states={})
+    assert accessible_names(page) == {"I1": "Username", "I2": "Remember me", "I3": "code"}
+    # the labels name their fields, so they are not offered as elements of their own (or repeated as text)
+    assert label_elements(page) == {"M1", "M2"}
+    space = build_act_space(page, labels="accessible")
+    assert [e["index"] for e in space.elements] == ["I1", "I2", "I3"]
+    assert not any(key in ("M1", "M2") for targets in space.targets.values() for key in targets)
+    assert accessible_text(page).splitlines() == ["[I1] Username", "[I2] Remember me", "[I3] code"]
+    # html mode keeps every element: the `<label>` markup says what it is
+    assert {"M1", "M2"} <= {e["index"] for e in build_act_space(page, labels="html").elements}
+
+
+def test_a_label_that_names_nothing_stays_clickable() -> None:
+    # a custom checkbox: the visible label is the only way to toggle the hidden input
+    description = """M1[:]<label>Remember me</label>
+B1[:]<button>Login</button>"""
+    actions: list[InteractionAction] = [
+        ClickAction(id="M1", text_label="Remember me"),
+        ClickAction(id="B1", text_label="Login"),
+    ]
+    page = _page(description=description, actions=actions, states={})
+    assert label_elements(page) == frozenset()
+    assert [e["index"] for e in build_act_space(page, labels="accessible").elements] == ["M1", "B1"]
 
 
 def test_accessible_mode_labels_elements_and_targets_without_html() -> None:
@@ -478,19 +500,21 @@ def test_accessible_mode_keeps_live_state_and_select_options() -> None:
 
 def test_accessible_text_is_visible_text_with_element_markers() -> None:
     text = accessible_text(_accessible_page())
-    assert text.splitlines()[:5] == [
+    assert text.splitlines()[:4] == [
         "Sign in to Example",
-        "Username or email address",
+        # a text that names the element next to it is not repeated as its own line
         "[I1] Username or email address",
         "[I2] Keep me signed in",
-        "Keep me signed in",
+        "[I3] country",
     ]
+    # a long text names nothing: it stays
+    assert "A sentence that is far too long" in text
     assert "[B2] Sign in with a passkey" in text and "[L1] /help" in text
     # no markup, no page header; a dialog header says a modal is open
     assert "<" not in text and "[:]" not in text and "WebArea" not in text
     assert "Content of 'dialog' component with text 'Cookies'" in text
     assert page_state(_accessible_page(), "accessible").text == text
-    assert page_state(_accessible_page()).text == ACCESSIBLE_DESCRIPTION
+    assert page_state(_accessible_page(), "html").text == ACCESSIBLE_DESCRIPTION
 
 
 def test_accessible_text_masks_names() -> None:
@@ -501,9 +525,11 @@ def test_accessible_text_masks_names() -> None:
 
 def test_label_mode_from_the_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("NOTTE_ACT_LABELS", raising=False)
-    assert label_mode() == "html"
-    monkeypatch.setenv("NOTTE_ACT_LABELS", " Accessible ")
     assert label_mode() == "accessible"
+    monkeypatch.setenv("NOTTE_ACT_LABELS", "")
+    assert label_mode() == "accessible"
+    monkeypatch.setenv("NOTTE_ACT_LABELS", " HTML ")
+    assert label_mode() == "html"
     monkeypatch.setenv("NOTTE_ACT_LABELS", "aria")
     with pytest.raises(ValueError, match="NOTTE_ACT_LABELS"):
         _ = label_mode()

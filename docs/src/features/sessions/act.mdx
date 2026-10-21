@@ -43,7 +43,14 @@ export OPENROUTER_API_KEY=...     # Jev through OpenRouter, and the text writer
 # optional
 export TYPESAFE_API_KEY=...       # Jev on TypeSafe directly
 export NOTTE_ACT_DECIDER=llm      # an LLM decides instead of Jev
+export NOTTE_ACT_LABELS=html      # show elements as rendered HTML instead of accessible names
 ```
+
+### What the decider sees
+
+By default (`NOTTE_ACT_LABELS=accessible`) each element is named the way a screen reader would name it: its `aria-label`, the label text next to a form field, a button's text, then `alt`, `placeholder` or `title`. The page is sent as its visible text, with each element shown in place as `[I1] Full name`. A label that names the field next to it is not repeated as its own line or offered as a separate element. Roles, operations, live state and `<select>` options are the same in both modes.
+
+`NOTTE_ACT_LABELS=html` sends each element's rendered HTML (`<input name="name">`) and the rendered page instead. On pages where several elements differ only by their label text (two checkboxes with the same `name`, a list of todo toggles), the accessible names are what tells them apart.
 
 ## Act
 

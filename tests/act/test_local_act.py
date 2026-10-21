@@ -89,7 +89,7 @@ async def test_act_selects_an_option_and_checks_a_box(session: NotteSession) -> 
 
     # a toggle says which way it went (a "CLICK" on a checkbox can uncheck it)
     _ = await session.aact("accept the terms", decider=decider)
-    assert decider.states[2].recent_actions[-1]["action"].startswith('Check <input type="checkbox"')
+    assert decider.states[2].recent_actions[-1]["action"] == "Check Accept the terms"
 
 
 @pytest.mark.asyncio
@@ -224,7 +224,7 @@ async def test_private_values_do_not_change_action_choices(session: NotteSession
         assert elements[ids["terms"]]["role"] == "checkbox"
         assert "SELECT" in questions["operation"].criteria
         assert ids["country"] not in questions["type_text_target"].criteria
-        assert f"{ids['country']}[:]" in state.page.text
+        assert f"[{ids['country']}]" in state.page.text
 
 
 @pytest.mark.asyncio
@@ -442,3 +442,36 @@ async def test_accessible_labels_reach_the_decider_and_the_writer(
     assert "<" not in context.page["text"] and f"[{ids['name']}] Name" in context.page["text"]
     # variable values are masked in the names too
     assert "] {{who}}" in state.page.text and "Subscribe" not in state.model_dump_json()
+
+
+@pytest.mark.asyncio
+async def test_accessible_page_text_names_each_field_once(session: NotteSession) -> None:
+    form = """<html><body><form>
+<label for="name">Full name</label> <input id="name" name="name"><br>
+<label for="plan">Plan</label>
+<select id="plan" name="plan"><option value="free">Free</option><option value="pro">Pro</option></select><br>
+<input type="checkbox" id="terms" name="terms"><label for="terms">I accept the terms</label><br>
+<input type="checkbox" id="news" name="news"><label for="news">Send me the newsletter</label><br>
+<button type="submit">Sign up</button></form></body></html>"""
+    _ = await session.window.page.goto(f"data:text/html,{quote(form)}")
+    ids = await _ids(session)
+    decider = FakeDecider(choices=[{"operation": "DONE"}])
+    _ = await session.aact("sign up", decider=decider)
+    assert decider.states[0].page.text.splitlines() == [
+        f"[{ids['name']}] Full name",
+        f"[{ids['plan']}] Plan",
+        f"[{ids['terms']}] I accept the terms",
+        f"[{ids['news']}] Send me the newsletter",
+        "[B3] Sign up",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_html_labels_show_the_whole_select(session: NotteSession, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("NOTTE_ACT_LABELS", "html")
+    ids = await _ids(session)
+    decider = FakeDecider(choices=[{"operation": "DONE"}])
+    _ = await session.aact("look", decider=decider)
+    country = next(e for e in decider.states[0].elements if e["index"] == ids["country"])
+    # a <select> renders over several lines: its label keeps all of them
+    assert country["label"].startswith('<select name="country">') and country["label"].endswith("</select>")
