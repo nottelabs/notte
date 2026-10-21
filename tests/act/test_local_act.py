@@ -573,3 +573,29 @@ async def test_overlapping_cloud_act_calls_keep_their_own_baseline(session: Nott
     # the first decision was taken on the old button: stale, whatever the second call stored
     assert (await run("compare", "first"))["unchanged"] == {"send": False}
     assert (await run("compare", "second"))["unchanged"] == {"send": True}
+
+
+@pytest.mark.asyncio
+async def test_another_observation_during_the_decision_does_not_switch_the_target(session: NotteSession) -> None:
+    page = session.window.page
+    await page.set_content(
+        "<div id='top'></div><form><button type='button' id='target' "
+        "onclick=\"document.getElementById('out').textContent = 'target'\">Continue</button></form><p id='out'></p>"
+    )
+    obs = await session.aobserve()
+    target = next(a.id for a in obs.space.interaction_actions if (a.text_label or "") == "Continue")
+
+    async def renumber_while_deciding() -> None:
+        # another call adds a button before the target (in another parent: the target's XPath is unchanged)
+        # and observes the session, so the target's id now names the new button
+        await page.eval_on_selector(
+            "#top",
+            "el => el.innerHTML = `<button type='button' onclick=\"document.getElementById('out').textContent = 'other'\">Delete</button>`",
+        )
+        renumbered = await session.aobserve()
+        assert next(a for a in renumbered.space.interaction_actions if a.id == target).text_label == "Delete"
+
+    decider = FakeDecider(choices=[{"operation": "CLICK", "click_target": target}], on_choose=renumber_while_deciding)
+    result = await session.aact("continue", decider=decider)
+    assert result.status == "executed"
+    assert await page.inner_text("#out") == "target"
