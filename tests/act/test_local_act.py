@@ -512,3 +512,18 @@ for (const [host, name] of [["a", "Work email"], ["b", "Personal email"]]) {
     _ = await session.aact("look", decider=decider)
     labels = [e["label"] for e in decider.states[0].elements if e["role"] == "textbox"]
     assert labels == ["Work email", "Personal email"]
+
+
+@pytest.mark.asyncio
+async def test_a_slotted_label_names_the_field_next_to_its_host(session: NotteSession) -> None:
+    # the label is slotted into a custom element (light DOM of the host), the field is in the main document
+    page = """<html><body><my-label><label for="email" style="cursor:pointer" onclick="">Work email</label></my-label>
+<input id="email" name="email"><script>
+customElements.define("my-label", class extends HTMLElement {
+  constructor() { super(); this.attachShadow({mode: "open"}).innerHTML = "<slot></slot>"; }
+});
+</script></body></html>"""
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    decider = FakeDecider(choices=[{"operation": "DONE"}])
+    _ = await session.aact("look", decider=decider)
+    assert [e["label"] for e in decider.states[0].elements if e["role"] == "textbox"] == ["Work email"]
