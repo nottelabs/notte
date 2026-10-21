@@ -85,13 +85,34 @@ class ElementState(BaseModel):
             return text
 
         value = mask(self.value)
-        # a digest of a long value could reveal a secret it contains: drop it
-        digest = None if value != self.value else self.value_digest
+        digest = self.value_digest
+        if self.value_truncated:
+            # The browser cut the value (and hashed the whole of it) before this runs: a secret can sit past the
+            # cut, or across it. Mask a secret's start at the end of the cut value (this also covers a secret
+            # longer than the cut), and drop the digest, which could confirm a guess of the hidden part.
+            value = _mask_cut_secret(value, literals, secrets)
+            digest = None
+        elif value != self.value:
+            digest = None
         return self.model_copy(update={"value": value, "value_digest": digest})
 
     def digest(self) -> str:
         """A stable string of the state, for fingerprints."""
         return self.model_dump_json(exclude_defaults=True)
+
+
+# the shortest start of a secret masked at the end of a cut value (shorter ones match ordinary text too often)
+MIN_CUT_SECRET_PREFIX = 3
+
+
+def _mask_cut_secret(value: str | None, literals: list[str], secrets: Mapping[str, str]) -> str | None:
+    if value is None:
+        return None
+    for literal in literals:
+        for length in range(min(len(literal), len(value)), min(MIN_CUT_SECRET_PREFIX, len(literal)) - 1, -1):
+            if value.endswith(literal[:length]):
+                return value[: len(value) - length] + secrets[literal]
+    return value
 
 
 def page_fingerprint(url: str, elements: Iterable[tuple[str, str, ElementState | None]]) -> str:

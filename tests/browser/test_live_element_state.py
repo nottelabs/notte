@@ -306,3 +306,18 @@ def test_element_state_masking() -> None:
     # option values identify the option to select: they stay exact
     assert masked.options == state.options
     assert state.masked({}) is state
+
+
+def test_masking_a_cut_value() -> None:
+    secrets = {"737": "[CardCVVPlaceholder]", "a" * 250: "user@example.org"}
+    # a secret past the cut: not visible, but the digest of the whole value is dropped
+    past = ElementState(value="x" * 200, value_truncated=True, value_digest="0123456789abcdef")
+    assert past.masked(secrets) == ElementState(value="x" * 200, value_truncated=True)
+    # a secret across the cut: its visible start is masked (from 3 characters: shorter starts match ordinary text)
+    across = ElementState(value="x" * 197 + "737", value_truncated=True, value_digest="d")
+    assert across.masked({"7375": "[CardCVVPlaceholder]"}).value == "x" * 197 + "[CardCVVPlaceholder]"
+    # a secret longer than the cut
+    long = ElementState(value="a" * 200, value_truncated=True, value_digest="d")
+    assert long.masked(secrets).value == "user@example.org" and long.masked(secrets).value_digest is None
+    # no secrets: unchanged, digest kept
+    assert past.masked({}) is past
