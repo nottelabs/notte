@@ -86,3 +86,27 @@ Explicit extras are forwarded to any configured endpoint, so use only fields tha
 endpoint supports. The library does not discover provider limits or automatically
 lower its default 8192 completion tokens. Set `max_completion_tokens` to your
 endpoint's limit when it is lower. Overrides do not persist to subsequent calls.
+
+## Deciders for `session.act()`, `choose()` and `check()`
+
+`notte_llm.act` provides the deciders of `session.act()` / `choose()` / `check()` (see the
+[act docs](https://docs.notte.cc/features/sessions/act)):
+
+- `JevDecider`: TypeSafe's Jev classification model, through OpenRouter's decisions endpoint (alpha:
+  `https://openrouter.ai/api/alpha/decisions`, model `~typesafe/jev-latest`, `OPENROUTER_API_KEY`) or on TypeSafe
+  directly (`/v1/systemone`, `TYPESAFE_API_KEY`, `TYPESAFE_BASE_URL`). `TYPESAFE_MODEL` overrides the model of either.
+- `LlmDecider`: a model of the endpoint above, one call per decision with the options as JSON-schema enums.
+- `LlmWriter`: the field writer of both, answering exactly `{"text": ...}`.
+
+`default_decider()` uses Jev on TypeSafe when `TYPESAFE_API_KEY` is set, else Jev through OpenRouter with an
+OpenRouter key, else `LlmDecider` on another `NOTTE_LLM_*` endpoint (`NOTTE_ACT_MODEL`, then `NOTTE_LLM_MODEL`,
+then `google/gemini-3.1-flash-lite`). `NOTTE_ACT_DECIDER=jev|llm` forces one (`llm` keeps an LLM deciding with an
+OpenRouter key). Jev cannot write text: the writer model is `NOTTE_ACT_TEXT_MODEL`, else `inception/mercury-3` on
+OpenRouter, else the decision model. When the writer's provider refuses a value on content-policy grounds,
+`NOTTE_ACT_MODEL` (default `google/gemini-3.1-flash-lite`) writes it instead. Deciders and the writer see elements
+by their accessible names and the page as visible text by default (`NOTTE_ACT_LABELS=html` for the rendered HTML). Decisions are sent
+without OpenRouter model fallbacks and with reasoning disabled (`NOTTE_ACT_REASONING=none`; models that require
+reasoning are retried with `low`).
+
+The question set, prompts and guards are adapted from [jev-ultrafast](https://github.com/browser-use/jev-ultrafast)
+(MIT License, Copyright (c) 2026 Browser Use); the license text ships as `notte_core/act/LICENSE-jev-ultrafast`.
