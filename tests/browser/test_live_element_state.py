@@ -197,3 +197,112 @@ async def test_observe_preserves_mixed_pressed_state(session: NotteSession) -> N
     state = _state_by_selector(session)["menu"]
     assert state is not None and state.pressed is None
     assert session.snapshot.fingerprint() != fingerprint
+
+
+@pytest.mark.asyncio
+async def test_observation_carries_the_live_state_and_fingerprint(session: NotteSession) -> None:
+    await session.window.page.fill("#name", "typed")
+    obs = await session.aobserve()
+    # what a cloud observe response serializes, so that remote act() sees the same state as local
+    assert obs.element_states == session.snapshot.element_states()
+    assert obs.fingerprint == session.snapshot.fingerprint()
+    assert any(state.value == "typed" for state in (obs.element_states or {}).values())
+
+
+VAULT_URL = "http://vault.test/"
+VAULT_PAGE = """<html><body><form>
+<input id="email" type="email" name="email">
+<input id="user" name="username">
+<input id="card" name="cardnumber" autocomplete="cc-number">
+<input id="pw" type="password" name="password">
+</form></body></html>"""
+SECRETS = {
+    "email": "real-user@example.com",
+    "username": "real-user-42",
+    "password": "s3cr3t-pw",  # pragma: allowlist secret
+}
+CARD = {
+    "card_holder_name": "Ada Lovelace",
+    "card_number": "5555 4444 3333 1111",
+    "card_cvv": "737",
+    "card_full_expiration": "03/30",
+}
+
+
+async def _vault_session(session: NotteSession, secrets: dict[str, str], card_number: str) -> None:
+    """The vault types an email, a username, a card number and a password into the page."""
+    from notte_core.actions import FillAction
+    from notte_core.credentials import CARD_NUMBER, EMAIL, PASSWORD, USERNAME
+
+    from tests.mock.mock_vault import MockVault
+
+    page = session.window.page
+    _ = await page.route(VAULT_URL, lambda route: route.fulfill(body=VAULT_PAGE, content_type="text/html"))
+    _ = await page.goto(VAULT_URL)
+    vault = MockVault({VAULT_URL: secrets})  # pyright: ignore[reportArgumentType]
+    await vault.set_credit_card_async(**{**CARD, "card_number": card_number})  # pyright: ignore[reportArgumentType]
+    session.vault = vault
+    _ = await session.aobserve()
+    for selector, placeholder in (("#email", EMAIL), ("#user", USERNAME), ("#card", CARD_NUMBER), ("#pw", PASSWORD)):
+        result = await session.aexecute(FillAction(selector=selector, value=placeholder), raise_on_failure=True)
+        assert result.success
+
+
+@pytest.mark.asyncio
+async def test_observation_carries_only_placeholders_for_values_the_vault_typed(session: NotteSession) -> None:
+    from notte_core.credentials import CARD_NUMBER, EMAIL, USERNAME
+
+    await _vault_session(session, SECRETS, CARD["card_number"])
+    page = session.window.page
+    # the page holds the real values...
+    assert await page.input_value("#email") == SECRETS["email"]
+    assert await page.input_value("#card") == CARD["card_number"]
+
+    obs = await session.aobserve()
+    payload = obs.model_dump_json()
+    # ...the observation (and what it serializes) only their placeholders
+    for value in (*SECRETS.values(), CARD["card_number"]):
+        assert value not in payload
+    values = {state.value for state in (obs.element_states or {}).values()}
+    assert {EMAIL, USERNAME, CARD_NUMBER} <= values
+    # a password field never carries its value: only whether it is filled
+    password = [s for s in (obs.element_states or {}).values() if s.filled is not None]
+    assert len(password) == 1 and password[0].filled is True and password[0].value is None
+    assert obs.fingerprint == session.snapshot.fingerprint(obs.element_states)
+    assert obs.fingerprint != session.snapshot.fingerprint()
+
+
+@pytest.mark.asyncio
+async def test_fingerprint_does_not_depend_on_the_secret(session: NotteSession) -> None:
+    await _vault_session(session, SECRETS, CARD["card_number"])
+    first = (await session.aobserve()).fingerprint
+    # other secrets typed into the same fields: same placeholders, same fingerprint
+    other = {
+        "email": "someone-else@example.com",
+        "username": "someone-else",
+        "password": "another-pw",  # pragma: allowlist secret
+    }
+    await _vault_session(session, other, "4000 0566 5566 5556")
+    assert (await session.aobserve()).fingerprint == first
+
+
+def test_observation_requires_the_secrets_to_mask() -> None:
+    import inspect
+
+    from notte_core.observation import Observation
+
+    parameter = inspect.signature(Observation.from_snapshot).parameters["secrets"]
+    # no default: a caller cannot build an observation from a snapshot without saying what to mask
+    assert parameter.default is inspect.Parameter.empty and parameter.kind is inspect.Parameter.KEYWORD_ONLY
+
+
+def test_element_state_masking() -> None:
+    state = ElementState(
+        value="code 123456",
+        options=(SelectOption(value="123456", label="Use 123456", selected=True), SelectOption(value="x", label="x")),
+    )
+    masked = state.masked({"123456": "999779", "": "ignored"})
+    assert masked.value == "code 999779"
+    # option values identify the option to select: they stay exact
+    assert masked.options == state.options
+    assert state.masked({}) is state

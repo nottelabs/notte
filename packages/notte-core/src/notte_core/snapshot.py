@@ -1,6 +1,6 @@
 import datetime as dt
 from base64 import b64encode
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 
 from pydantic import BaseModel, Field
 
@@ -59,15 +59,17 @@ class BrowserSnapshot(BaseModel):
         nodes = self.dom_node.interaction_nodes_by_id
         return {node_id: node.state for node_id, node in nodes.items() if node.state is not None}
 
-    def fingerprint(self) -> str:
+    def fingerprint(self, states: Mapping[str, ElementState] | None = None) -> str:
         """A cheap marker of the page state: URL, and the id, label and live state of every
         interaction node. It changes when the page offers other actions or a field value changes,
-        so a decision taken on this snapshot can be checked against a newer one before acting."""
+        so a decision taken on this snapshot can be checked against a newer one before acting.
+        `states` replaces the nodes' own state (e.g. with secrets masked)."""
+        nodes = self.dom_node.interaction_nodes_by_id
         return page_fingerprint(
             self.metadata.url,
             # `inner_text()` is the action label (what interaction nodes used to carry as `text`).
             (
-                (node_id, node.inner_text(), node.state)
-                for node_id, node in self.dom_node.interaction_nodes_by_id.items()
+                (node_id, node.inner_text(), node.state if states is None else states.get(node_id))
+                for node_id, node in nodes.items()
             ),
         )

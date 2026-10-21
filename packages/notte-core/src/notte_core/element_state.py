@@ -9,7 +9,7 @@ descriptions, so observing a page gives the same descriptions and action ids as 
 
 import hashlib
 import json
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from typing import Any, ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -66,6 +66,28 @@ class ElementState(BaseModel):
     @property
     def selected_options(self) -> list[SelectOption]:
         return [option for option in self.options or () if option.selected]
+
+    def masked(self, secrets: Mapping[str, str]) -> "ElementState":
+        """A copy with every occurrence of a secret (`secrets` maps a value to its placeholder, e.g. a vault's
+        replacement map) replaced in the field value: what the vault typed into the element.
+
+        Select options are left as they are: they are the page's own content (already in the rendered
+        description), and their values identify the option to select, so they must stay exact."""
+        literals = sorted((s for s in secrets if s), key=len, reverse=True)
+        if not literals:
+            return self
+
+        def mask(text: str | None) -> str | None:
+            if text is None:
+                return None
+            for literal in literals:
+                text = text.replace(literal, secrets[literal])
+            return text
+
+        value = mask(self.value)
+        # a digest of a long value could reveal a secret it contains: drop it
+        digest = None if value != self.value else self.value_digest
+        return self.model_copy(update={"value": value, "value_digest": digest})
 
     def digest(self) -> str:
         """A stable string of the state, for fingerprints."""
