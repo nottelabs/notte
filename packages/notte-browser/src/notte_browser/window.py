@@ -566,6 +566,16 @@ class BrowserWindow:
         except PlaywrightError:
             return await self.snapshot(screenshot=screenshot, retries=retries - 1, selector=selector, skip_dom=skip_dom)
 
+    async def _document_loaded(self, timeout_ms: float) -> bool:
+        """Whether the current document has already fired its load event."""
+        try:
+            ready_state = await asyncio.wait_for(self.page.evaluate("document.readyState"), timeout=timeout_ms / 1000)
+        except PlaywrightError:
+            return False
+        except TimeoutError:
+            return False
+        return ready_state == "complete"
+
     async def goto_and_wait(
         self,
         url: str | None = None,
@@ -629,14 +639,26 @@ class BrowserWindow:
             # navigation budget. A committed document can be used best-effort if
             # its later load events stall; a missing commit is an error above.
             if wait_until != "commit":
-                remaining_ms = max(1, config.timeout_goto_ms - (time.monotonic() - navigation_start) * 1000)
-                try:
-                    await self.page.wait_for_load_state(wait_until or "load", timeout=remaining_ms)
-                except PlaywrightTimeoutError:
-                    logger.warning(
-                        f"Goto for {url=} committed but timed out waiting for {wait_until or 'load'}; "
-                        + "continuing with the loaded document"
-                    )
+
+                def remaining_ms() -> float:
+                    return max(1, config.timeout_goto_ms - (time.monotonic() - navigation_start) * 1000)
+
+                # A back-forward cache restore brings back an already loaded document
+                # without new load events, so waiting for them would only hit the timeout.
+                # Network idle is still reported after a restore and keeps its wait.
+                already_loaded = (
+                    operation is not None
+                    and wait_until != "networkidle"
+                    and await self._document_loaded(timeout_ms=remaining_ms())
+                )
+                if not already_loaded:
+                    try:
+                        await self.page.wait_for_load_state(wait_until or "load", timeout=remaining_ms())
+                    except PlaywrightTimeoutError:
+                        logger.warning(
+                            f"Goto for {url=} committed but timed out waiting for {wait_until or 'load'}; "
+                            + "continuing with the loaded document"
+                        )
 
             # Early load events deliberately skip the animation settle wait.
             if wait_until not in ("commit", "domcontentloaded"):
