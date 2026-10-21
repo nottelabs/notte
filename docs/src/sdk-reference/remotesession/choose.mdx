@@ -1,0 +1,33 @@
+---
+title: "choose"
+description: "Pick one of `options` about the current page, with a probability per option"
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+`options` is a list of options, or a mapping from option key to a description of the option.
+Runs client-side like `act()`, with the same decider.
+
+import ChooseCheck from '/snippets/act/choose_check.mdx';
+
+<ChooseCheck />
+
+
+## Parameters
+
+<ParamField path="question" type="str" required>
+</ParamField>
+
+<ParamField path="options" type="UnionType[Sequence[str], Mapping[str, str]]" required>
+</ParamField>
+
+<ParamField path="observation" type="UnionType[Observation, None]" default="None">
+</ParamField>
+
+<ParamField path="decider" type="UnionType[Decider, None]" default="None">
+</ParamField>
+
+## Returns
+
+<Visibility for="humans">[`Choice`](/sdk-reference/misc/choice)</Visibility><Visibility for="agents">[`Choice`](/sdk-reference/misc/choice.md)</Visibility>
