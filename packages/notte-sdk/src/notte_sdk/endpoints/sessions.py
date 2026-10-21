@@ -3,6 +3,7 @@ import json
 import os
 import random
 import time
+import uuid
 from collections.abc import Awaitable, Callable, Coroutine, Mapping, Sequence
 from enum import StrEnum
 from pathlib import Path
@@ -797,6 +798,8 @@ class RemoteActDriver:
         self.session: "RemoteSession" = session
         self._signatures: Signatures = Signatures(None)
         self._capture_signatures: bool = capture_signatures
+        # this act() call's baseline in the page (overlapping calls on the same session each have their own)
+        self._token: str = uuid.uuid4().hex
 
     @property
     def has_vault(self) -> bool:
@@ -827,7 +830,7 @@ class RemoteActDriver:
 
     def _read_signatures(self, xpaths: dict[str, str]) -> Signatures:
         # the baseline stays in the page; what comes back (and is recorded) has no field values
-        return Signatures(self._evaluate(remote_signatures_expression(xpaths, "store")))
+        return Signatures(self._evaluate(remote_signatures_expression(xpaths, "store", self._token)))
 
     async def observe(self, observation: Observation | None) -> ObservedPage:
         # A supplied observation has no trusted signature baseline. Refresh it before
@@ -845,7 +848,9 @@ class RemoteActDriver:
             return False
         if before.url is not None and (element_id is None or before.consistent(page, element_id)):
             xpaths = {} if element_id is None else signature_xpaths(page, element_id)
-            check = await asyncio.to_thread(self._evaluate, remote_signatures_expression(xpaths, "compare"))
+            check = await asyncio.to_thread(
+                self._evaluate, remote_signatures_expression(xpaths, "compare", self._token)
+            )
             return before.unchanged(check, element_id)
         current = ObservedPage.from_observation(await asyncio.to_thread(self._observe))
         return same_target(page, current, element_id)
