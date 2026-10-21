@@ -503,3 +503,10 @@ def test_an_empty_or_openrouter_base_url_is_openrouter(monkeypatch: pytest.Monke
     decider = default_decider()
     assert isinstance(decider, JevDecider) and decider._api_key == "llm-key"  # pyright: ignore[reportPrivateUsage]
     assert isinstance(decider.writer, LlmWriter) and decider.writer.model == DEFAULT_TEXT_MODEL
+
+
+def test_default_writer_is_mercury_3_on_openrouter(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "k")
+    decider = default_decider()
+    assert isinstance(decider, JevDecider) and isinstance(decider.writer, LlmWriter)
+    assert decider.writer.model == "inception/mercury-3"

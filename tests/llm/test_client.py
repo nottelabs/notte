@@ -204,11 +204,11 @@ OPENROUTER_REFUSAL = {
     ],
 )
 async def test_content_refusals_are_not_api_key_errors(response: httpx.Response) -> None:
-    engine = LLMEngine(model="inception/mercury-2.5", transport=httpx.MockTransport(lambda _: response))
+    engine = LLMEngine(model="inception/mercury-3", transport=httpx.MockTransport(lambda _: response))
     with pytest.raises(ContentFilterError) as exc:
         await engine.completion([])
     assert not isinstance(exc.value, InvalidAPIKeyError)
-    assert exc.value.model == "inception/mercury-2.5" and "inception/mercury-2.5" in str(exc.value)
+    assert exc.value.model == "inception/mercury-3" and "inception/mercury-3" in str(exc.value)
 
 
 @pytest.mark.asyncio

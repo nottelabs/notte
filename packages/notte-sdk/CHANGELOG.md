@@ -16,7 +16,8 @@ Local observations also read the live state of form controls (current values, ch
 `<select>` options) into `DomNode.state`, with `BrowserSnapshot.element_states()` and
 `fingerprint()`. Action ids and descriptions are unchanged. `LLMEngine` takes a `timeout`, and
 raises `ContentFilterError` (an `LLMProviderError`) for provider content-policy refusals, which
-were reported as `InvalidAPIKeyError`.
+were reported as `InvalidAPIKeyError`. The default field writer is `inception/mercury-3` on OpenRouter
+(`NOTTE_ACT_TEXT_MODEL` overrides it).
 
 ## Unreleased — deprecated observe options
 

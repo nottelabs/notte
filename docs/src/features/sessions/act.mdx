@@ -36,7 +36,7 @@ Install the deciders with `pip install "notte[llm]"` (or `pip install notte-llm`
 Jev through OpenRouter uses OpenRouter's decisions endpoint (`/api/alpha/decisions`), which is in alpha. If it is unavailable, set `NOTTE_ACT_DECIDER=llm` to use an LLM decider with the same key.
 </Note>
 
-Jev cannot write text. Text typed into fields is written by a small, fast LLM on the `NOTTE_LLM_*` endpoint (OpenRouter with `OPENROUTER_API_KEY`): `NOTTE_ACT_TEXT_MODEL`, default `inception/mercury-2.5` on OpenRouter, else the decision model. With `TYPESAFE_API_KEY` alone, `act()` can click and select but not type text. If the writer's provider refuses a value on content-policy grounds, `NOTTE_ACT_MODEL` (default `google/gemini-3.1-flash-lite`) writes it instead. If that also refuses, the step is `blocked` with the reason.
+Jev cannot write text. Text typed into fields is written by a small, fast LLM on the `NOTTE_LLM_*` endpoint (OpenRouter with `OPENROUTER_API_KEY`): `NOTTE_ACT_TEXT_MODEL`, default `inception/mercury-3` on OpenRouter, else the decision model. With `TYPESAFE_API_KEY` alone, `act()` can click and select but not type text. If the writer's provider refuses a value on content-policy grounds, `NOTTE_ACT_MODEL` (default `google/gemini-3.1-flash-lite`) writes it instead. If that also refuses, the step is `blocked` with the reason.
 
 ```bash
 export OPENROUTER_API_KEY=...     # Jev through OpenRouter, and the text writer
