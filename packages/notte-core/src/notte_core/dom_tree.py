@@ -316,6 +316,9 @@ class DomNode:
     parent: "DomNode | None" = None
     # live value / checked state / select options of an interactive element (see `element_state.py`)
     state: ElementState | None = None
+    # accessible name of an interactive element, as the browser computes it for screen readers
+    # (`aria-labelledby`, `<label>`, `aria-label`, `alt`, text content, ...); None when it has none
+    accessible_name: str | None = None
 
     @override
     def __repr__(self) -> str:

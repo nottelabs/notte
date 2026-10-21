@@ -3,6 +3,7 @@
     "category": "Interaction action",
     "description": "<div tabindex=\"0\" role=\"button\"></div>",
     "model_dump": {
+      "accessible_name": "Custom button",
       "category": "Interaction action",
       "description": "<div tabindex=\"0\" role=\"button\"></div>",
       "id": "B1",
@@ -27,6 +28,7 @@
     "category": "Interaction action",
     "description": "<div tabindex=\"0\" role=\"checkbox\"></div>",
     "model_dump": {
+      "accessible_name": "Custom checkbox",
       "category": "Interaction action",
       "description": "<div tabindex=\"0\" role=\"checkbox\"></div>",
       "id": "B2",
@@ -51,6 +53,7 @@
     "category": "Interaction action",
     "description": "<div tabindex=\"0\" role=\"combobox\" aria_label=\"Custom choice\" aria_expanded=\"true\"></div>",
     "model_dump": {
+      "accessible_name": "Custom choice",
       "category": "Interaction action",
       "description": "<div tabindex=\"0\" role=\"combobox\" aria_label=\"Custom choice\" aria_expanded=\"true\"></div>",
       "id": "I1",
@@ -81,6 +84,7 @@
     "category": "Interaction action",
     "description": "<div role=\"listbox\" aria_label=\"Fruit choices\"></div>",
     "model_dump": {
+      "accessible_name": "Fruit choices",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<div role=\"listbox\" aria_label=\"Fruit choices\"></div>",
@@ -112,6 +116,7 @@
     "category": "Interaction action",
     "description": "<div tabindex=\"0\" role=\"option\"></div>",
     "model_dump": {
+      "accessible_name": "Apple",
       "category": "Interaction action",
       "description": "<div tabindex=\"0\" role=\"option\"></div>",
       "id": "O1",
@@ -137,6 +142,7 @@
     "category": "Interaction action",
     "description": "<div tabindex=\"0\" role=\"option\"></div>",
     "model_dump": {
+      "accessible_name": "Banana",
       "category": "Interaction action",
       "description": "<div tabindex=\"0\" role=\"option\"></div>",
       "id": "O2",
@@ -162,6 +168,7 @@
     "category": "Interaction action",
     "description": "<div role=\"menu\"></div>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<div role=\"menu\"></div>",
       "id": "M1",
@@ -186,6 +193,7 @@
     "category": "Interaction action",
     "description": "<div tabindex=\"0\" role=\"menuitem\"></div>",
     "model_dump": {
+      "accessible_name": "Settings",
       "category": "Interaction action",
       "description": "<div tabindex=\"0\" role=\"menuitem\"></div>",
       "id": "B3",
@@ -210,6 +218,7 @@
     "category": "Interaction action",
     "description": "<div tabindex=\"0\" role=\"tab\"></div>",
     "model_dump": {
+      "accessible_name": "Overview",
       "category": "Interaction action",
       "description": "<div tabindex=\"0\" role=\"tab\"></div>",
       "id": "B4",

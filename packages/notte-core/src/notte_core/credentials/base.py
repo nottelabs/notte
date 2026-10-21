@@ -768,6 +768,7 @@ class BaseVault(ABC):
                         clear_before_fill=action.clear_before_fill,
                         press_enter=action.press_enter,
                         text_label=action.text_label,
+                        accessible_name=action.accessible_name,
                         timeout=action.timeout,
                     )
             else:

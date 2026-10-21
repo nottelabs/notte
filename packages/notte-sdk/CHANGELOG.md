@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased — accessible names in observations
+
+Observations give each interactive element its accessible name, the name a screen reader announces:
+`aria-labelledby`, `<label for>` or a wrapping `<label>`, `aria-label`, `alt`, `<legend>`, a button's
+`value` or text, then `title` and `placeholder`, in shadow roots and iframes too. It matches Chromium's
+accessibility tree, except that the value of a text field or select is never part of a name, so a name
+cannot contain what was typed. It is available as `DomNode.accessible_name` and as the new optional
+`accessible_name` of interaction actions (`None` when the element has no name). Names are cut to 200
+characters. `text_label`, action ids and descriptions are unchanged.
+
 ## Unreleased — LLM content refusals
 
 `LLMEngine` raises the new `ContentFilterError` (an `LLMProviderError` that names the model) when a

@@ -57,6 +57,7 @@ def _interaction_action(node: DomNode) -> InteractionAction:
         param = None
         action = ClickAction(id=node.id, text_label=label)
     action.selector = node.computed_attributes.selectors
+    action.accessible_name = node.accessible_name
     action.description = render_node(node, include_children=False)
     action.category = "Interaction action"
     action.param = param

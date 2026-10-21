@@ -3,6 +3,7 @@
     "category": "Interaction action",
     "description": "<a href=\"https://www.urbanoutfitters.com/?ref=logo\"></a>",
     "model_dump": {
+      "accessible_name": "Urban Outfitters",
       "category": "Interaction action",
       "description": "<a href=\"https://www.urbanoutfitters.com/?ref=logo\"></a>",
       "id": "L1",
@@ -27,6 +28,7 @@
     "category": "Interaction action",
     "description": "<picture></picture>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<picture></picture>",
       "id": "M1",
@@ -51,6 +53,7 @@
     "category": "Interaction action",
     "description": "<a href=\"https://www.urbanoutfitters.com/account/hearted-products\"></a>",
     "model_dump": {
+      "accessible_name": "Favorites",
       "category": "Interaction action",
       "description": "<a href=\"https://www.urbanoutfitters.com/account/hearted-products\"></a>",
       "id": "L2",
@@ -75,6 +78,7 @@
     "category": "Interaction action",
     "description": "<a href=\"https://www.urbanoutfitters.com/cart\"></a>",
     "model_dump": {
+      "accessible_name": "My Shopping Bag Product Count 1",
       "category": "Interaction action",
       "description": "<a href=\"https://www.urbanoutfitters.com/cart\"></a>",
       "id": "L3",
@@ -99,6 +103,7 @@
     "category": "Interaction action",
     "description": "<button type=\"button\"></button>",
     "model_dump": {
+      "accessible_name": "Sign In",
       "category": "Interaction action",
       "description": "<button type=\"button\"></button>",
       "id": "B1",
@@ -123,6 +128,7 @@
     "category": "Interaction action",
     "description": "<input type=\"email\" value=\"\" name=\"emailAddress\"></input>",
     "model_dump": {
+      "accessible_name": "Email Address",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"email\" value=\"\" name=\"emailAddress\"></input>",
@@ -154,6 +160,7 @@
     "category": "Interaction action",
     "description": "<input type=\"checkbox\" value=\"true\" name=\"emailOptIn\"></input>",
     "model_dump": {
+      "accessible_name": "Sign up to receive exclusive offers + promotions. View our Privacy Policy here for more information.",
       "category": "Interaction action",
       "description": "<input type=\"checkbox\" value=\"true\" name=\"emailOptIn\"></input>",
       "id": "B2",
@@ -178,6 +185,7 @@
     "category": "Interaction action",
     "description": "<a href=\"https://www.urbanoutfitters.com/help/privacy\"></a>",
     "model_dump": {
+      "accessible_name": "Privacy Policy here",
       "category": "Interaction action",
       "description": "<a href=\"https://www.urbanoutfitters.com/help/privacy\"></a>",
       "id": "L4",
@@ -202,6 +210,7 @@
     "category": "Interaction action",
     "description": "<button tabindex=\"0\" role=\"tab\"></button>",
     "model_dump": {
+      "accessible_name": "Ship",
       "category": "Interaction action",
       "description": "<button tabindex=\"0\" role=\"tab\"></button>",
       "id": "B3",
@@ -226,6 +235,7 @@
     "category": "Interaction action",
     "description": "<button tabindex=\"-1\" role=\"tab\"></button>",
     "model_dump": {
+      "accessible_name": "Pick Up",
       "category": "Interaction action",
       "description": "<button tabindex=\"-1\" role=\"tab\"></button>",
       "id": "B4",
@@ -250,6 +260,7 @@
     "category": "Interaction action",
     "description": "<select name=\"country\"></select>",
     "model_dump": {
+      "accessible_name": "Country/Region",
       "category": "Interaction action",
       "description": "<select name=\"country\"></select>",
       "id": "I2",
@@ -280,6 +291,7 @@
     "category": "Interaction action",
     "description": "<a href=\"tel:8002822200\"></a>",
     "model_dump": {
+      "accessible_name": "800.282.2200",
       "category": "Interaction action",
       "description": "<a href=\"tel:8002822200\"></a>",
       "id": "L5",
@@ -304,6 +316,7 @@
     "category": "Interaction action",
     "description": "<button type=\"button\" aria_expanded=\"false\"></button>",
     "model_dump": {
+      "accessible_name": "Promo Code",
       "category": "Interaction action",
       "description": "<button type=\"button\" aria_expanded=\"false\"></button>",
       "id": "B5",
@@ -328,6 +341,7 @@
     "category": "Interaction action",
     "description": "<div></div>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<div></div>",
       "id": "M2",
@@ -352,6 +366,7 @@
     "category": "Interaction action",
     "description": "<button type=\"button\"></button>",
     "model_dump": {
+      "accessible_name": "Continue",
       "category": "Interaction action",
       "description": "<button type=\"button\"></button>",
       "id": "B6",

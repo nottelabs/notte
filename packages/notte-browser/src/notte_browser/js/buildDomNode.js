@@ -198,6 +198,183 @@
 		return Object.keys(state).length > 0 ? state : undefined;
 	}
 
+	// Accessible names of the highlighted elements (see `getAccessibleName`): longer names are cut.
+	const MAX_NAME_LENGTH = 200;
+	// Roles whose name comes from their content (https://www.w3.org/TR/wai-aria-1.2/#namefromcontent).
+	const NAME_FROM_CONTENT_ROLES = new Set([
+		"button", "cell", "checkbox", "columnheader", "gridcell", "heading", "link", "menuitem",
+		"menuitemcheckbox", "menuitemradio", "option", "radio", "row", "rowheader", "switch", "tab",
+		"tooltip", "treeitem",
+	]);
+	// Controls whose value the user edits: they add nothing to the name of the element they label.
+	const EDITABLE_CONTROL_ROLES = new Set(["textbox", "searchbox", "combobox", "listbox", "spinbutton", "slider"]);
+	const INPUT_ROLES = {
+		button: "button", submit: "button", reset: "button", image: "button", checkbox: "checkbox",
+		radio: "radio", range: "slider", number: "spinbutton", search: "searchbox", text: "textbox",
+		email: "textbox", tel: "textbox", url: "textbox",
+		password: "textbox", // pragma: allowlist secret
+	};
+	// elements without a role of their own, which browsers do not name
+	const GENERIC_TAGS = new Set(["div", "span", "a"]);
+	const IMPLICIT_ROLES = {
+		button: "button", summary: "button", option: "option", textarea: "textbox", td: "cell",
+		th: "columnheader", tr: "row", h1: "heading", h2: "heading", h3: "heading", h4: "heading",
+		h5: "heading", h6: "heading", img: "img",
+	};
+
+	function getRole(element) {
+		const explicit = (element.getAttribute("role") || "").trim().split(/\s+/)[0].toLowerCase();
+		if (explicit) return explicit;
+		const tagName = element.localName;
+		if (tagName === "a" || tagName === "area") return element.hasAttribute("href") ? "link" : "";
+		if (tagName === "select") return element.multiple || element.size > 1 ? "listbox" : "combobox";
+		if (tagName === "input") {
+			const type = (element.getAttribute("type") || "text").toLowerCase();
+			const role = INPUT_ROLES[type] ?? "";
+			return element.hasAttribute("list") && (role === "textbox" || role === "searchbox") ? "combobox" : role;
+		}
+		if (element.isContentEditable && !element.parentElement?.isContentEditable) return "textbox";
+		return IMPLICIT_ROLES[tagName] ?? "";
+	}
+
+	function isHiddenForName(element) {
+		if (element.getAttribute("aria-hidden") === "true") return true;
+		const style = getCachedComputedStyle(element);
+		return style?.display === "none" || style?.visibility === "hidden" || style?.visibility === "collapse";
+	}
+
+	function isInline(element) {
+		const display = getCachedComputedStyle(element)?.display;
+		return display === undefined || display === "inline" || display === "contents";
+	}
+
+	/**
+	 * The accessible name of an element (https://www.w3.org/TR/accname-1.2/), as a screen reader
+	 * announces it: `aria-labelledby`, `aria-label`, `<label>` (for / wrapping), `alt`, `<legend>`,
+	 * button `value`, the text content of buttons, links and other roles named from content, then
+	 * `title` and `placeholder`. Shadow roots and slotted content are traversed.
+	 *
+	 * Unlike browsers, the value of an editable control (a text field, a select) inside a label or an
+	 * `aria-labelledby` target is never part of a name, so a name cannot contain what was typed.
+	 * CSS generated content (`::before` / `::after`) is not read. Returns `undefined` for no name.
+	 *
+	 * @param {HTMLElement} element - A highlighted (interactive) element.
+	 * @returns {string | undefined} The accessible name, cut to `MAX_NAME_LENGTH` characters.
+	 */
+	function getAccessibleName(element) {
+		const context = { visited: new Set(), budget: 4 * MAX_NAME_LENGTH };
+		const name = textAlternative(element, context, { root: true, labelledBy: false, content: false, hidden: false });
+		const cleaned = name.replace(/\s+/g, " ").trim();
+		return cleaned.length > 0 ? cleaned.slice(0, MAX_NAME_LENGTH) : undefined;
+	}
+
+	function textAlternative(element, context, step) {
+		if (context.visited.has(element) || context.budget <= 0) return "";
+		context.visited.add(element);
+		if (!step.root && !step.hidden && isHiddenForName(element)) return "";
+		const tagName = element.localName;
+		const role = getRole(element);
+
+		// aria-labelledby, not followed from a labelledby target
+		if (!step.labelledBy && element.hasAttribute("aria-labelledby")) {
+			const scope = element.getRootNode();
+			const parts = [];
+			for (const id of element.getAttribute("aria-labelledby").trim().split(/\s+/)) {
+				const target = id && scope.getElementById?.(id);
+				if (!target) continue;
+				context.visited.delete(target);
+				parts.push(textAlternative(target, context, {
+					root: false, labelledBy: true, content: true, hidden: step.hidden || isHiddenForName(target),
+				}));
+			}
+			const text = parts.join(" ");
+			if (text.trim()) return text;
+		}
+		// an editable control inside the label of another element: its value is left out
+		if (!step.root && EDITABLE_CONTROL_ROLES.has(role)) return "";
+
+		const ariaLabel = element.getAttribute("aria-label");
+		if (ariaLabel && ariaLabel.trim()) return ariaLabel;
+
+		// host language labels
+		if (tagName === "input") {
+			const type = (element.getAttribute("type") || "text").toLowerCase();
+			if (type === "button" || type === "submit" || type === "reset") {
+				const value = element.getAttribute("value");
+				if (value && value.trim()) return value;
+				if (type !== "button") return type === "submit" ? "Submit" : "Reset";
+			}
+			if (type === "image") {
+				const text = element.getAttribute("alt") || element.getAttribute("value") || element.getAttribute("title");
+				return text && text.trim() ? text : "Submit";
+			}
+		}
+		if (element.labels && element.labels.length > 0) {
+			const text = Array.from(element.labels, (label) => {
+				context.visited.delete(label);
+				return textAlternative(label, context, { root: false, labelledBy: step.labelledBy, content: true, hidden: step.hidden });
+			}).join(" ");
+			if (text.trim()) return text;
+		}
+		if (tagName === "img" || tagName === "area") {
+			const alt = element.getAttribute("alt");
+			if (alt && alt.trim()) return alt;
+		} else if (tagName === "fieldset") {
+			const legend = Array.from(element.children).find((child) => child.localName === "legend");
+			const text = legend ? textAlternative(legend, context, { ...step, root: false, content: true }) : "";
+			if (text.trim()) return text;
+		} else if (tagName === "svg") {
+			const title = Array.from(element.children).find((child) => child.localName === "title");
+			if (title && title.textContent.trim()) return title.textContent;
+		}
+
+		// name from content: roles named by their text, and every descendant of a label
+		if (step.content || NAME_FROM_CONTENT_ROLES.has(role)) {
+			const text = contentText(element, context, step);
+			if (text.trim()) return text;
+		}
+
+		// tooltips name the element itself only (not its ancestors), and never a generic element
+		if (!step.root || (role === "" && GENERIC_TAGS.has(tagName))) return "";
+		const title = element.getAttribute("title");
+		if (title && title.trim()) return title;
+		const placeholder = element.getAttribute("placeholder") || element.getAttribute("aria-placeholder");
+		if (placeholder && placeholder.trim() && (tagName === "input" || tagName === "textarea" || role === "textbox")) {
+			return placeholder;
+		}
+		return "";
+	}
+
+	// browsers name elements after their rendered text: `text-transform` applies
+	function transformText(text, parent) {
+		const transform = parent ? getCachedComputedStyle(parent)?.textTransform : undefined;
+		if (transform === "uppercase") return text.toUpperCase();
+		if (transform === "lowercase") return text.toLowerCase();
+		if (transform === "capitalize") return text.replace(/(^|\s)(\S)/g, (_, space, letter) => space + letter.toUpperCase());
+		return text;
+	}
+
+	function contentText(element, context, step) {
+		const childStep = { root: false, labelledBy: step.labelledBy, content: true, hidden: step.hidden };
+		let children = element.shadowRoot ? element.shadowRoot.childNodes : element.childNodes;
+		if (element.localName === "slot") {
+			const assigned = element.assignedNodes({ flatten: true });
+			if (assigned.length > 0) children = assigned;
+		}
+		let text = "";
+		for (const child of children) {
+			if (context.budget <= 0) break;
+			if (child.nodeType === Node.TEXT_NODE) {
+				text += transformText(child.data, child.parentElement);
+				context.budget -= child.data.length;
+			} else if (child.nodeType === Node.ELEMENT_NODE) {
+				const childText = textAlternative(child, context, childStep);
+				text += isInline(child) ? childText : ` ${childText} `;
+			}
+		}
+		return text;
+	}
+
 	// Add a WeakMap cache for XPath strings
 	const xpathCache = new WeakMap();
 
@@ -1360,6 +1537,8 @@
 					if (nodeData.highlightIndex !== undefined) {
 						const state = getLiveState(node);
 						if (state !== undefined) nodeData.state = state;
+						const accessibleName = getAccessibleName(node);
+						if (accessibleName !== undefined) nodeData.accessibleName = accessibleName;
 					}
 				}
 			}

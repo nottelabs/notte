@@ -92,7 +92,7 @@ def test_action_type_literal_includes_all_actions() -> None:
 def test_typeddict_fields_match_action_fields() -> None:
     """Test that TypedDict fields match the corresponding action class fields."""
     # Fields that are excluded from TypedDicts (internal/metadata fields)
-    excluded_fields = {"category", "description", "param", "press_enter", "text_label"}
+    excluded_fields = {"accessible_name", "category", "description", "param", "press_enter", "text_label"}
 
     errors: list[str] = []
     mapping = _get_action_to_typeddict_mapping()

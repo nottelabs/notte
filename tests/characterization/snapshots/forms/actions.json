@@ -3,6 +3,7 @@
     "category": "Interaction action",
     "description": "<input type=\"text\"></input>",
     "model_dump": {
+      "accessible_name": "Full name",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"text\"></input>",
@@ -34,6 +35,7 @@
     "category": "Interaction action",
     "description": "<input type=\"email\" placeholder=\"email@example.test\" aria_label=\"Email address\"></input>",
     "model_dump": {
+      "accessible_name": "Email address",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"email\" placeholder=\"email@example.test\" aria_label=\"Email address\"></input>",
@@ -65,6 +67,7 @@
     "category": "Interaction action",
     "description": "<input type=\"password\" aria_label=\"Account password\"></input>",
     "model_dump": {
+      "accessible_name": "Account password",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"password\" aria_label=\"Account password\"></input>",
@@ -96,6 +99,7 @@
     "category": "Interaction action",
     "description": "<textarea placeholder=\"Notes for delivery\"></textarea>",
     "model_dump": {
+      "accessible_name": "Notes for delivery",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<textarea placeholder=\"Notes for delivery\"></textarea>",
@@ -127,6 +131,7 @@
     "category": "Interaction action",
     "description": "<select></select>",
     "model_dump": {
+      "accessible_name": "Country",
       "category": "Interaction action",
       "description": "<select></select>",
       "id": "I5",
@@ -157,6 +162,7 @@
     "category": "Interaction action",
     "description": "<input type=\"checkbox\"></input>",
     "model_dump": {
+      "accessible_name": "Accept terms",
       "category": "Interaction action",
       "description": "<input type=\"checkbox\"></input>",
       "id": "B1",
@@ -181,6 +187,7 @@
     "category": "Interaction action",
     "description": "<input type=\"radio\" value=\"basic\" name=\"plan\"></input>",
     "model_dump": {
+      "accessible_name": "Basic plan",
       "category": "Interaction action",
       "description": "<input type=\"radio\" value=\"basic\" name=\"plan\"></input>",
       "id": "B2",
@@ -205,6 +212,7 @@
     "category": "Interaction action",
     "description": "<input type=\"radio\" value=\"pro\" name=\"plan\"></input>",
     "model_dump": {
+      "accessible_name": "Pro plan",
       "category": "Interaction action",
       "description": "<input type=\"radio\" value=\"pro\" name=\"plan\"></input>",
       "id": "B3",
@@ -229,6 +237,7 @@
     "category": "Interaction action",
     "description": "<div role=\"textbox\" aria_label=\"Rich notes\"></div>",
     "model_dump": {
+      "accessible_name": "Rich notes",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<div role=\"textbox\" aria_label=\"Rich notes\"></div>",
@@ -260,6 +269,7 @@
     "category": "Interaction action",
     "description": "<button type=\"button\" title=\"Save the complete account form including delivery preferences and all notification settings for this account\"></button>",
     "model_dump": {
+      "accessible_name": "Save account",
       "category": "Interaction action",
       "description": "<button type=\"button\" title=\"Save the complete account form including delivery preferences and all notification settings for this account\"></button>",
       "id": "B4",
@@ -284,6 +294,7 @@
     "category": "Interaction action",
     "description": "<button type=\"button\" aria_label=\"Help\"></button>",
     "model_dump": {
+      "accessible_name": "Help",
       "category": "Interaction action",
       "description": "<button type=\"button\" aria_label=\"Help\"></button>",
       "id": "B5",
@@ -308,6 +319,7 @@
     "category": "Interaction action",
     "description": "<a href=\"#details\"></a>",
     "model_dump": {
+      "accessible_name": "Read details",
       "category": "Interaction action",
       "description": "<a href=\"#details\"></a>",
       "id": "L1",

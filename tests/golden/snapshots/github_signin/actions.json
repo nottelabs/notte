@@ -3,6 +3,7 @@
     "category": "Interaction action",
     "description": "<a href=\"https://github.com/login#start-of-content\"></a>",
     "model_dump": {
+      "accessible_name": "Skip to content",
       "category": "Interaction action",
       "description": "<a href=\"https://github.com/login#start-of-content\"></a>",
       "id": "L1",
@@ -27,6 +28,7 @@
     "category": "Interaction action",
     "description": "<input type=\"text\" name=\"login\"></input>",
     "model_dump": {
+      "accessible_name": "Username or email address",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"text\" name=\"login\"></input>",
@@ -58,6 +60,7 @@
     "category": "Interaction action",
     "description": "<input type=\"password\" name=\"password\"></input>",
     "model_dump": {
+      "accessible_name": "Password",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"password\" name=\"password\"></input>",
@@ -89,6 +92,7 @@
     "category": "Interaction action",
     "description": "<a href=\"https://github.com/password_reset\"></a>",
     "model_dump": {
+      "accessible_name": "Forgot password?",
       "category": "Interaction action",
       "description": "<a href=\"https://github.com/password_reset\"></a>",
       "id": "L2",
@@ -113,6 +117,7 @@
     "category": "Interaction action",
     "description": "<input type=\"submit\" value=\"Sign in\" name=\"commit\"></input>",
     "model_dump": {
+      "accessible_name": "Sign in",
       "category": "Interaction action",
       "description": "<input type=\"submit\" value=\"Sign in\" name=\"commit\"></input>",
       "id": "B1",
@@ -137,6 +142,7 @@
     "category": "Interaction action",
     "description": "<button type=\"button\"></button>",
     "model_dump": {
+      "accessible_name": "Sign in with a passkey",
       "category": "Interaction action",
       "description": "<button type=\"button\"></button>",
       "id": "B2",
@@ -161,6 +167,7 @@
     "category": "Interaction action",
     "description": "<a href=\"https://github.com/signup?source=login\"></a>",
     "model_dump": {
+      "accessible_name": "Create an account",
       "category": "Interaction action",
       "description": "<a href=\"https://github.com/signup?source=login\"></a>",
       "id": "L3",
@@ -185,6 +192,7 @@
     "category": "Interaction action",
     "description": "<a href=\"https://docs.github.com/site-policy/github-terms/github-terms-of-service\"></a>",
     "model_dump": {
+      "accessible_name": "Terms",
       "category": "Interaction action",
       "description": "<a href=\"https://docs.github.com/site-policy/github-terms/github-terms-of-service\"></a>",
       "id": "L4",
@@ -209,6 +217,7 @@
     "category": "Interaction action",
     "description": "<a href=\"https://docs.github.com/site-policy/privacy-policies/github-privacy-statement\"></a>",
     "model_dump": {
+      "accessible_name": "Privacy",
       "category": "Interaction action",
       "description": "<a href=\"https://docs.github.com/site-policy/privacy-policies/github-privacy-statement\"></a>",
       "id": "L5",
@@ -233,6 +242,7 @@
     "category": "Interaction action",
     "description": "<a href=\"https://docs.github.com/\"></a>",
     "model_dump": {
+      "accessible_name": "Docs",
       "category": "Interaction action",
       "description": "<a href=\"https://docs.github.com/\"></a>",
       "id": "L6",
@@ -257,6 +267,7 @@
     "category": "Interaction action",
     "description": "<a href=\"https://support.github.com/\"></a>",
     "model_dump": {
+      "accessible_name": "Contact GitHub Support",
       "category": "Interaction action",
       "description": "<a href=\"https://support.github.com/\"></a>",
       "id": "L7",
@@ -281,6 +292,7 @@
     "category": "Interaction action",
     "description": "<button type=\"button\"></button>",
     "model_dump": {
+      "accessible_name": "Manage cookies",
       "category": "Interaction action",
       "description": "<button type=\"button\"></button>",
       "id": "B3",
@@ -305,6 +317,7 @@
     "category": "Interaction action",
     "description": "<button type=\"button\"></button>",
     "model_dump": {
+      "accessible_name": "Do not share my personal information",
       "category": "Interaction action",
       "description": "<button type=\"button\"></button>",
       "id": "B4",

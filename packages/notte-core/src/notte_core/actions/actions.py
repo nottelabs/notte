@@ -1017,6 +1017,8 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
     category: str = Field(default="Interaction Actions", min_length=1)
     press_enter: bool | None = Field(default=None)
     text_label: str | None = Field(default=None)
+    # the element's accessible name (`DomNode.accessible_name`), e.g. the text of an input's `<label>`
+    accessible_name: str | None = Field(default=None)
     param: ActionParameter | None = Field(default=None, exclude=True)
     timeout: int = Field(default=config.timeout_action_ms, ge=0, description="Action timeout in milliseconds")
 
