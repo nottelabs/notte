@@ -179,6 +179,9 @@
     "anything-api/start_detached.py": "Raw HTTP example for anything.notte.cc; a TypeScript pair would become an executable pair requiring a live behavior contract, and running it bills a real 2-10 minute Anything API agent build.",
     "integrations/agentmail_read_emails.py": "AgentMail persona example; a TypeScript pair would become an executable pair requiring a live behavior contract, and running it needs a persona whose AgentMail inbox has already received a verification email.",
     "personas/agentmail_inbox.py": "AgentMail persona example, executed live by the Python docs suite like the other persona examples; a TypeScript pair would become an executable pair requiring a live behavior contract, and the existing persona examples have no TypeScript fixtures yet.",
-    "sessions/tailnet_proxy_console.py": "Tailscale session example; a TypeScript pair would become an executable pair requiring a live behavior contract, and running it needs a real Tailscale OAuth client connected to the workspace and a reachable tailnet host."
+    "sessions/tailnet_proxy_console.py": "Tailscale session example; a TypeScript pair would become an executable pair requiring a live behavior contract, and running it needs a real Tailscale OAuth client connected to the workspace and a reachable tailnet host.",
+    "guides/mysql/scrape_function.py": "Hosted Notte Function handler; the Function runtime executes Python code. Also provides the same scrape helper to the Python direct-write example.",
+    "guides/mysql/scrape_to_mysql.py": "Python companion to the scheduled Function guide, shared by the direct scheduler script and its FastAPI MySQL receiver. This page documents a Python deployment, not a cross-language SDK integration.",
+    "guides/mysql/mysql_receiver.py": "FastAPI receiver used by the Python-only hosted Function guide. It imports the direct-write companion to keep both documented database write paths identical."
   }
 }
