@@ -475,3 +475,24 @@ async def test_html_labels_show_the_whole_select(session: NotteSession, monkeypa
     country = next(e for e in decider.states[0].elements if e["index"] == ids["country"])
     # a <select> renders over several lines: its label keeps all of them
     assert country["label"].startswith('<select name="country">') and country["label"].endswith("</select>")
+
+
+@pytest.mark.asyncio
+async def test_a_hidden_checkbox_label_before_a_field_stays_clickable(session: NotteSession) -> None:
+    page = """<html><body><form>
+<label style="cursor:pointer" onclick="document.getElementById('remember').click()">Remember me</label>
+<input type="checkbox" id="remember" hidden>
+<input type="email" name="email" placeholder="Email">
+<label for="password" style="cursor:pointer" onclick="">Password</label>
+<input type="password" id="password" name="password">
+</form></body></html>"""
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    decider = FakeDecider(choices=[{"operation": "DONE"}])
+    _ = await session.aact("look", decider=decider)
+    elements = {e["label"]: e for e in decider.states[0].elements}
+    # the checkbox's only visible part is still offered, and does not name the email field
+    assert elements["Remember me"]["role"] == "clickable"
+    assert "Email" in elements and elements["Email"]["role"] == "textbox"
+    # the password label belongs to its field: named once, not offered separately
+    assert [e["label"] for e in decider.states[0].elements].count("Password") == 1
+    assert elements["Password"]["role"] == "textbox"

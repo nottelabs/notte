@@ -448,7 +448,8 @@ I3[:]<input type="text" name="code"></input>"""
         ClickAction(id="M2", text_label="Remember me"),
         FillAction(id="I3", value="<sample_value>", text_label="code"),
     ]
-    page = _page(description=description, actions=actions, states={})
+    # local sessions know which field each label belongs to (`for`, or the field inside it)
+    page = _page(description=description, actions=actions, states={}, label_targets={"M1": "I1", "M2": "I2"})
     assert accessible_names(page) == {"I1": "Username", "I2": "Remember me", "I3": "code"}
     # the labels name their fields, so they are not offered as elements of their own (or repeated as text)
     assert label_elements(page) == {"M1", "M2"}
@@ -468,7 +469,7 @@ B1[:]<button>Login</button>"""
         ClickAction(id="M1", text_label="Remember me"),
         ClickAction(id="B1", text_label="Login"),
     ]
-    page = _page(description=description, actions=actions, states={})
+    page = _page(description=description, actions=actions, states={}, label_targets={"M1": ""})
     assert label_elements(page) == frozenset()
     assert [e["index"] for e in build_act_space(page, labels="accessible").elements] == ["M1", "B1"]
 
@@ -533,3 +534,48 @@ def test_label_mode_from_the_environment(monkeypatch: pytest.MonkeyPatch) -> Non
     monkeypatch.setenv("NOTTE_ACT_LABELS", "aria")
     with pytest.raises(ValueError, match="NOTTE_ACT_LABELS"):
         _ = label_mode()
+
+
+LABEL_THEN_FIELD = """M1[:]<label>Remember me</label>
+I1[:]<input type="email" name="email"></input>"""
+
+
+def _label_then_field(targets: dict[str, str] | None) -> ObservedPage:
+    actions: list[InteractionAction] = [
+        ClickAction(id="M1", text_label="Remember me"),
+        FillAction(id="I1", value="<sample_value>", text_label="email"),
+    ]
+    return _page(description=LABEL_THEN_FIELD, actions=actions, states={}, label_targets=targets)
+
+
+def test_a_label_for_another_control_does_not_name_the_next_field() -> None:
+    # the visible label of a hidden checkbox, right before an unrelated email field
+    page = _label_then_field({"M1": ""})
+    assert accessible_names(page) == {"M1": "Remember me", "I1": "email"}
+    assert [e["index"] for e in build_act_space(page, labels="accessible").elements] == ["M1", "I1"]
+
+
+def test_labels_stay_elements_when_their_field_is_unknown() -> None:
+    # no DOM links (a cloud observation): the label may name the field, but it stays offered
+    page = _label_then_field(None)
+    assert label_elements(page) == frozenset()
+    assert [e["index"] for e in build_act_space(page, labels="accessible").elements] == ["M1", "I1"]
+    assert accessible_text(page).splitlines() == ["[M1] Remember me", "[I1] Remember me"]
+
+
+def test_a_select_without_live_state_keeps_its_options_in_the_text() -> None:
+    description = """_[:]Country
+I1[:]<select name="country">Alpha
+Beta</select>"""
+    actions: list[InteractionAction] = [
+        SelectDropdownOptionAction(id="I1", value="<sample_value>", text_label="country")
+    ]
+    cloud = _page(description=description, actions=actions, states={})
+    assert accessible_text(cloud) == "[I1] Country (options: Alpha, Beta)"
+    # with live state the options are SELECT targets: not repeated in the text
+    state = ElementState(
+        value="a",
+        options=(SelectOption(value="a", label="Alpha", selected=True), SelectOption(value="b", label="Beta")),
+    )
+    local = _page(description=description, actions=actions, states={"I1": state})
+    assert accessible_text(local) == "[I1] Country"

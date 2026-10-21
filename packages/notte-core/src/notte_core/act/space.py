@@ -39,6 +39,7 @@ from notte_core.actions import (
     SelectDropdownOptionAction,
     WaitAction,
 )
+from notte_core.dom_tree import DomNode
 from notte_core.element_state import ElementState, SelectOption, page_fingerprint
 from notte_core.observation import Observation
 from notte_core.snapshot import ViewportData
@@ -81,10 +82,16 @@ class ObservedPage:
     # live element state by action id (empty for remote sessions: their observe response has none)
     states: Mapping[str, ElementState]
     fingerprint: str
+    # clickable `<label>` id -> id of the field it labels (`for`, or the field inside it), "" for none;
+    # None when unknown (no DOM, e.g. a cloud observation): labels are then kept as elements of their own
+    label_targets: Mapping[str, str] | None = None
 
     @staticmethod
     def from_observation(
-        observation: Observation, states: Mapping[str, ElementState] | None = None, fingerprint: str | None = None
+        observation: Observation,
+        states: Mapping[str, ElementState] | None = None,
+        fingerprint: str | None = None,
+        label_targets: Mapping[str, str] | None = None,
     ) -> "ObservedPage":
         """Wrap an observation. Without `fingerprint`, it hashes the URL and the actions' ids and labels."""
         actions = list(observation.space.interaction_actions)
@@ -97,6 +104,7 @@ class ObservedPage:
             viewport=observation.metadata.viewport,
             states=states or {},
             fingerprint=fingerprint or page_fingerprint(url, ((a.id, a.text_label or "", None) for a in actions)),
+            label_targets=label_targets,
         )
 
     def signature(self, element_id: str) -> str | None:
@@ -149,6 +157,27 @@ class ActSpace:
         operations.update({key: control.label for key, control in self.controls.items()})
         operations.update(DONE=prompts.DONE, BLOCKED=prompts.BLOCKED)
         return operations
+
+
+def label_targets(nodes: Mapping[str, DomNode]) -> dict[str, str]:
+    """For every interactive `<label>` among `nodes` (by action id), the action id of the field it labels: the
+    one its `for` attribute names, else the field inside it; "" when it labels no offered field (e.g. a hidden
+    custom checkbox, whose label is then the only way to toggle it)."""
+    by_dom_id = {
+        node.attributes.id_name: node_id
+        for node_id, node in nodes.items()
+        if node.attributes is not None and node.attributes.id_name
+    }
+    targets: dict[str, str] = {}
+    for node_id, node in nodes.items():
+        attributes = node.attributes
+        if attributes is None or attributes.tag_name.lower() != "label":
+            continue
+        target = by_dom_id.get(attributes.label_for or "")
+        if target is None:
+            target = next((n.id for n in node.interaction_nodes() if n.id and n.id != node_id), None)
+        targets[node_id] = target or ""
+    return targets
 
 
 def description_lines(description: str) -> dict[str, str]:
@@ -240,8 +269,10 @@ def _names(page: ObservedPage) -> _Names:
         action = actions.get(blocks[index][0] or "") if index >= 0 else None
         return action is not None and _role(action, blocks[index][1]) in ("checkbox", "radio")
 
-    def label(index: int) -> str | None:
-        """A text, or a `<label>` element (clickable labels get an id), that can name a field next to it."""
+    targets = page.label_targets
+
+    def label(index: int, field: str) -> str | None:
+        """A text, or a `<label>` element (clickable labels get an id), that can name `field` next to it."""
         if not 0 <= index < len(blocks) or blocks[index][0] is None:
             return None
         key, content = blocks[index]
@@ -249,20 +280,33 @@ def _names(page: ObservedPage) -> _Names:
             match = _RENDERED_ELEMENT.match(content)
             if match is None or match.group(1).lower() != "label":
                 return None
+            # a label known to belong to another field (or to none) does not name this one
+            if targets is not None and targets.get(key or "") != field:
+                return None
             content = match.group(3)
         return " ".join(content.split()) or None
 
+    labels: set[str] = set()
     for i, (key, content) in enumerate(blocks):
         action = actions.get(key or "")
         if key is not None and action is not None and key not in names:
             # the label right after a checkbox or radio is its own, not the next field's
-            before = None if i >= 2 and toggle(i - 2) else label(i - 1)
-            names[key], source = _accessible_name(action, content, before, label(i + 1))
-            if source is not None:
-                used.add(i - 1 if source == "before" else i + 1)
-    # a label that named its field is not an element of its own (clicking it would only focus or toggle the field)
-    labels = frozenset(key for i in used if (key := blocks[i][0]) is not None and key != "_")
-    return _Names(names={k: v for k, v in names.items() if k not in labels}, used=frozenset(used), labels=labels)
+            before = None if i >= 2 and toggle(i - 2) else label(i - 1, key)
+            names[key], source = _accessible_name(action, content, before, label(i + 1, key))
+            if source is None:
+                continue
+            index = i - 1 if source == "before" else i + 1
+            label_key = blocks[index][0]
+            if label_key == "_":
+                used.add(index)
+            elif label_key is not None and targets is not None:
+                # a label that names its own field is not an element of its own (clicking it only focuses or
+                # toggles the field). Without the DOM links the label is kept: it may be another control.
+                used.add(index)
+                labels.add(label_key)
+    return _Names(
+        names={k: v for k, v in names.items() if k not in labels}, used=frozenset(used), labels=frozenset(labels)
+    )
 
 
 def accessible_names(page: ObservedPage) -> dict[str, str]:
@@ -295,8 +339,24 @@ def accessible_text(page: ObservedPage, display_text: Callable[[str], str] = str
         elif key == "_":
             lines.append(content)
         else:
-            lines.append(f"[{key}] {_cut(display_text(names.names.get(key, key)), MAX_LABEL_LENGTH)}")
+            marker = f"[{key}] {_cut(display_text(names.names.get(key, key)), MAX_LABEL_LENGTH)}"
+            options = _rendered_options(page, key, content)
+            if options:
+                marker += f" (options: {_cut(display_text(', '.join(options)), MAX_LABEL_LENGTH)})"
+            lines.append(marker)
     return "\n".join(lines)
+
+
+def _rendered_options(page: ObservedPage, key: str, rendered: str) -> list[str]:
+    """The option labels of a `<select>` rendered over several lines, when the live state does not list them
+    (a cloud observation without it): the decider and the writer still see what can be chosen."""
+    state = page.states.get(key)
+    if state is not None and state.options is not None:
+        return []
+    match = _RENDERED_ELEMENT.match(rendered)
+    if match is None or match.group(1).lower() != "select":
+        return []
+    return [line.strip() for line in match.group(3).splitlines() if line.strip()]
 
 
 def page_text(page: ObservedPage, labels: LabelMode = "html", display_text: Callable[[str], str] = str) -> str:

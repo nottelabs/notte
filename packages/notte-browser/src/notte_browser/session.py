@@ -29,6 +29,7 @@ from notte_core.act import (
     same_target,
 )
 from notte_core.act.freshness import ELEMENT_SIGNATURES_JS, Signatures, signature_xpaths
+from notte_core.act.space import label_targets
 from notte_core.actions import (
     BaseAction,
     EvaluateJsAction,
@@ -165,7 +166,12 @@ class LocalActDriver:
         snapshot = self.session._snapshot  # pyright: ignore[reportPrivateUsage]
         # the live state only applies if the observation was built from the session's last snapshot
         if snapshot is not None and snapshot.metadata == observation.metadata:
-            page = ObservedPage.from_observation(observation, snapshot.element_states(), snapshot.fingerprint())
+            page = ObservedPage.from_observation(
+                observation,
+                snapshot.element_states(),
+                snapshot.fingerprint(),
+                label_targets(snapshot.dom_node.interaction_nodes_by_id),
+            )
         else:
             page = ObservedPage.from_observation(observation)
         if self._capture_signatures:
@@ -192,6 +198,7 @@ class LocalActDriver:
             viewport=snapshot.metadata.viewport,
             states=snapshot.element_states(),
             fingerprint=snapshot.fingerprint(),
+            label_targets=label_targets(snapshot.dom_node.interaction_nodes_by_id),
         )
         return same_target(page, current, element_id)
 
