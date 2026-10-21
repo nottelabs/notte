@@ -237,8 +237,6 @@ def test_element_state_masking() -> None:
     )
     masked = state.masked({"123456": "999779", "": "ignored"})
     assert masked.value == "code 999779"
-    assert masked.options is not None and masked.options[0] == SelectOption(
-        value="999779", label="Use 999779", selected=True
-    )
-    assert masked.options[1] == SelectOption(value="x", label="x")
+    # option values identify the option to select: they stay exact
+    assert masked.options == state.options
     assert state.masked({}) is state

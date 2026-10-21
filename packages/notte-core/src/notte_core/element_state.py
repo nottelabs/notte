@@ -69,7 +69,10 @@ class ElementState(BaseModel):
 
     def masked(self, secrets: Mapping[str, str]) -> "ElementState":
         """A copy with every occurrence of a secret (`secrets` maps a value to its placeholder, e.g. a vault's
-        replacement map) replaced in the value and the option values and labels."""
+        replacement map) replaced in the field value: what the vault typed into the element.
+
+        Select options are left as they are: they are the page's own content (already in the rendered
+        description), and their values identify the option to select, so they must stay exact."""
         literals = sorted((s for s in secrets if s), key=len, reverse=True)
         if not literals:
             return self
@@ -81,15 +84,10 @@ class ElementState(BaseModel):
                 text = text.replace(literal, secrets[literal])
             return text
 
-        options = None
-        if self.options is not None:
-            options = tuple(
-                option.model_copy(update={"value": mask(option.value), "label": mask(option.label)})
-                for option in self.options
-            )
+        value = mask(self.value)
         # a digest of a long value could reveal a secret it contains: drop it
-        digest = None if self.value_digest is not None and mask(self.value) != self.value else self.value_digest
-        return self.model_copy(update={"value": mask(self.value), "options": options, "value_digest": digest})
+        digest = None if value != self.value else self.value_digest
+        return self.model_copy(update={"value": value, "value_digest": digest})
 
     def digest(self) -> str:
         """A stable string of the state, for fingerprints."""
