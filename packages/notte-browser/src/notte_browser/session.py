@@ -336,7 +336,9 @@ class NotteSession(AsyncResource, SyncResource):
         # ------- Step 3: tracing --------
         # --------------------------------
 
-        obs = Observation.from_snapshot(self.snapshot, space=space, span=span.close())
+        # values the vault typed are masked in the element states the observation carries (and serializes)
+        secrets = {} if self.vault is None else self.vault.get_replacement_map()
+        obs = Observation.from_snapshot(self.snapshot, space=space, span=span.close(), secrets=secrets)
 
         await self.trajectory.append(obs)
         return obs

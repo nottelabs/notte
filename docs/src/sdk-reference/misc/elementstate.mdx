@@ -1,0 +1,60 @@
+---
+title: "ElementState"
+description: "What an interactive element currently holds"
+---
+
+Fields that do not apply to the element are `None`.
+
+- `value`: the current value of an input, textarea, contenteditable element (cut to 200 characters,
+  `value_truncated` is then set) or the value of the selected option of a `<select>`. Password
+  fields never expose their value or a digest: `filled` tells whether they hold one.
+- `value_digest`: a change marker of the full non-password value when `value` is truncated.
+- `checked`: checkbox / radio state (`.checked`, or `aria-checked` for ARIA widgets);
+  `mixed` for `aria-checked="mixed"`.
+- `options`: the options of a `<select>` (the first 50, plus the selected ones; `options_truncated`
+  is set when some are left out). They are data on the select's node, not actions of their own.
+- `expanded` / `selected` / `pressed`: `aria-expanded` / `aria-selected` / `aria-pressed`;
+  `pressed` can also be `"mixed"` for toggle buttons with mixed formatting
+
+## Fields
+
+<ParamField path="value" type="UnionType[str, None]">
+</ParamField>
+
+<ParamField path="value_truncated" type="bool" default="False">
+</ParamField>
+
+<ParamField path="value_digest" type="UnionType[str, None]">
+</ParamField>
+
+<ParamField path="filled" type="UnionType[bool, None]">
+</ParamField>
+
+<ParamField path="checked" type="UnionType[bool, None]">
+</ParamField>
+
+<ParamField path="mixed" type="UnionType[bool, None]">
+</ParamField>
+
+<ParamField path="options" type="UnionType[tuple[SelectOption, Ellipsis], None]">
+</ParamField>
+
+<ParamField path="options_truncated" type="bool" default="False">
+</ParamField>
+
+<ParamField path="multiple" type="UnionType[bool, None]">
+</ParamField>
+
+<ParamField path="expanded" type="UnionType[bool, None]">
+</ParamField>
+
+<ParamField path="selected" type="UnionType[bool, None]">
+</ParamField>
+
+<ParamField path="pressed" type="bool | Literal['mixed'] | None">
+</ParamField>
+
+
+## Module
+
+`notte_core.element_state`

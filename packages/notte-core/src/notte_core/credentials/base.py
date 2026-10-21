@@ -7,7 +7,7 @@ import os
 import re
 from abc import ABC, abstractmethod
 from collections.abc import Coroutine
-from typing import Any, Callable, ClassVar, NotRequired, Unpack
+from typing import Any, Callable, ClassVar, NotRequired, Unpack, cast
 
 from pydantic import BaseModel, Field, model_serializer
 from pyotp.totp import TOTP
@@ -209,6 +209,8 @@ CARD_FIELDS: tuple[type[CredentialField], ...] = (
     CardCVVField,
     CardFullExpirationField,
 )
+# key of the card the vault typed in `BaseVault.past_credentials()` (login credentials are keyed by URL)
+_CREDIT_CARD_KEY = "credit_card"
 # Placeholders that are also ordinary values (e.g. 'John Doe', or the '4242 4242 4242 4242' test card): when the vault
 # cannot resolve them, they are filled as written instead of failing the action
 FILLED_AS_IS_WHEN_UNRESOLVED: tuple[type[CredentialField], ...] = (CardHolderField, CardNumberField)
@@ -643,11 +645,14 @@ class BaseVault(ABC):
 
     async def _get_credit_card_for_replacement(self, cred_key: str) -> CreditCardDict:
         try:
-            return await self.get_credit_card_async()
+            card = await self.get_credit_card_async()
         except Exception as e:
             # Never log the exception message: vault backends can echo stored values in their errors
             logger.error(f"Error getting credit card from vault ({type(e).__name__})")
             raise VaultLookupError(cred_key, type(e).__name__) from None
+        # tracked like login credentials, so `get_replacement_map()` masks the card values the vault typed
+        self._retrieved_credentials[_CREDIT_CARD_KEY] = cast(CredentialsDict, cast(object, dict(card)))
+        return card
 
     async def _get_credentials_for_replacement(self, url: str) -> CredentialsDict:
         try:

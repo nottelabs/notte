@@ -3,7 +3,7 @@ import datetime as dt
 import io
 from base64 import b64decode, b64encode
 from builtins import bytes as _builtin_bytes
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable, Iterator, Mapping
 from contextlib import contextmanager
 from io import BytesIO
 from textwrap import dedent
@@ -14,6 +14,7 @@ from typing_extensions import override
 
 from notte_core.actions import ActionUnion
 from notte_core.data import DataSpace
+from notte_core.element_state import ElementState
 from notte_core.errors import NotteBaseError
 from notte_core.highlighter import BoundingBox, highlight_screenshot
 from notte_core.logging import logger
@@ -214,13 +215,45 @@ class Observation(FilledTimedSpan):
     ]
     screenshot: Annotated[Screenshot, Field(description="Base64 encoded screenshot of the current page", repr=False)]
     space: Annotated[ActionSpace, Field(description="Available actions in the current state")]
+    # Optional so that payloads without them (older servers) still parse, and older clients ignore them.
+    element_states: Annotated[
+        dict[str, ElementState] | None,
+        Field(
+            description=(
+                "Live state of the interactive elements that have one (current value, checked state, select "
+                "options, aria state), by action id. Not rendered into the action descriptions."
+            )
+        ),
+    ] = None
+    fingerprint: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Hash of the page URL and of the id, label and live state of every interactive element: it "
+                "changes when the page offers other actions or a field value changes."
+            )
+        ),
+    ] = None
 
     @property
     def clean_url(self) -> str:
         return clean_url(self.metadata.url)
 
     @staticmethod
-    def from_snapshot(snapshot: BrowserSnapshot, space: ActionSpace, span: FilledTimedSpan) -> "Observation":
+    def from_snapshot(
+        snapshot: BrowserSnapshot,
+        space: ActionSpace,
+        span: FilledTimedSpan,
+        *,
+        secrets: Mapping[str, str],
+    ) -> "Observation":
+        """The observation of `snapshot`, with the live state of its interactive elements.
+
+        This is where field values first leave the browser (an observation is serialized, e.g. in an observe
+        response), so `secrets` is required: a value -> placeholder map of what must not leave it, the vault's
+        `get_replacement_map()` (pass `{}` without a vault). Every occurrence of a secret is replaced by its
+        placeholder in the element states, and the fingerprint is computed from the masked states, so neither
+        reveals a value the vault typed. Password fields never carry their value (only `filled`)."""
         if snapshot.screenshot is None:
             raise ValueError("Cannot build an Observation from a snapshot taken with screenshot=False")
         bboxes = [
@@ -228,10 +261,13 @@ class Observation(FilledTimedSpan):
             for node in snapshot.interaction_nodes()
             if node.bbox is not None and node.id is not None
         ]
+        states = {node_id: state.masked(secrets) for node_id, state in snapshot.element_states().items()}
         return Observation(
             metadata=snapshot.metadata,
             screenshot=Screenshot(raw=snapshot.screenshot, bboxes=bboxes),
             space=space,
+            element_states=states,
+            fingerprint=snapshot.fingerprint(states),
             started_at=span.started_at,
             ended_at=span.ended_at,
         )

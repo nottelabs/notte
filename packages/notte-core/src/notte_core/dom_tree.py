@@ -7,6 +7,7 @@ from typing import Annotated, Any, Callable, ClassVar, TypeAlias
 from pydantic import BaseModel, Field
 from typing_extensions import override
 
+from notte_core.element_state import ElementState
 from notte_core.highlighter import BoundingBox
 from notte_core.logging import logger
 from notte_core.node_type import NodeRole, NodeType
@@ -313,6 +314,8 @@ class DomNode:
     # parents cannot be set in the constructor because it is a recursive structure
     # we need to set it after the constructor
     parent: "DomNode | None" = None
+    # live value / checked state / select options of an interactive element (see `element_state.py`)
+    state: ElementState | None = None
 
     @override
     def __repr__(self) -> str:

@@ -8,6 +8,17 @@ errors (as 400/403/422, or embedded in a 200 body) and a `content_filter` finish
 content. These were reported as `InvalidAPIKeyError`; 401, and 403 without a content-policy
 marker, still are. `LLMEngine(timeout=...)` sets the per-attempt HTTP timeout (default 60 s).
 
+## Unreleased — live element state in observations
+
+Observations read the live state of form controls: the current value of inputs, textareas and
+contenteditable elements, checked state, `<select>` options, and `aria-expanded` / `aria-selected` /
+`aria-pressed`. It is available as `DomNode.state`, `BrowserSnapshot.element_states()` /
+`fingerprint()`, and in the new optional `Observation.element_states` (by action id) and
+`Observation.fingerprint`. Action ids and descriptions are unchanged. Password fields only report
+whether they are filled. Values a session's vault typed are replaced by their placeholders in the
+observation's state and fingerprint (`Observation.from_snapshot` now requires the `secrets` to mask),
+and card values the vault typed are now part of `BaseVault.get_replacement_map()`.
+
 ## Unreleased — deprecated observe options
 
 `observe(instructions=...)` and `perception_type="deep"` are deprecated and will be

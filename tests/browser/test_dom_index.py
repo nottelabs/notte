@@ -82,7 +82,7 @@ async def test_observe_and_execute_share_one_tree_walk(monkeypatch: pytest.Monke
 
     monkeypatch.setattr(DomNode, "is_interaction", counted)
     space = build_action_space(snapshot.dom_node)
-    obs = Observation.from_snapshot(snapshot, space, TimedSpan.empty())
+    obs = Observation.from_snapshot(snapshot, space, TimedSpan.empty(), secrets={})
     assert len(obs.screenshot.bboxes) == 3  # Includes the action outside the dialog.
     assert len(snapshot.interaction_nodes()) == 3
     # A fresh ID-only action uses the index; its label is descendant text, not the title attribute.
