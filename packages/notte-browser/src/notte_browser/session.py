@@ -118,7 +118,7 @@ from notte_browser.errors import (
 )
 from notte_browser.evaluation_result import evaluate_page
 from notte_browser.playwright import connect, launch
-from notte_browser.resolution import resolve
+from notte_browser.resolution import resolve, resolve_selectors
 from notte_browser.scrape import default_extractor, scrape_page
 from notte_browser.vault import VaultSecretsScreenshotMask, resolve_vault_action
 from notte_browser.window import BrowserWindow, BrowserWindowOptions
@@ -136,12 +136,17 @@ class LocalActDriver:
     reads element signatures by XPath (`notte_core.act.freshness`): all of them right after the
     snapshot, the target's right before acting. Targets without a signature (iframes, shadow roots)
     fall back to a new snapshot without screenshot.
+
+    The action runs on the element of the snapshot the decision was checked against, even if another call
+    observes the session meanwhile (which renumbers the ids of the session's own snapshot).
     """
 
     def __init__(self, session: NotteSession, *, capture_signatures: bool = True) -> None:
         self.session: NotteSession = session
         self._signatures: Signatures = Signatures(None)
         self._capture_signatures: bool = capture_signatures
+        # the snapshot the decision is taken (then checked) on: action ids are resolved against it
+        self._snapshot: BrowserSnapshot | None = None
 
     @property
     def has_vault(self) -> bool:
@@ -165,6 +170,7 @@ class LocalActDriver:
             observation = await self.session.aobserve()
         snapshot = self.session._snapshot  # pyright: ignore[reportPrivateUsage]
         # the live state only applies if the observation was built from the session's last snapshot
+        self._snapshot = snapshot if snapshot is not None and snapshot.metadata == observation.metadata else None
         if snapshot is not None and snapshot.metadata == observation.metadata:
             page = ObservedPage.from_observation(
                 observation,
@@ -187,8 +193,9 @@ class LocalActDriver:
             xpaths = {} if element_id is None else signature_xpaths(page, element_id)
             return before.matches(await self._read_signatures(xpaths), element_id)
         snapshot = await self.session.window.snapshot(screenshot=False)
-        # actions resolve their ids against the session snapshot: use the one just checked
+        # actions resolve their ids against the snapshot just checked
         self.session.snapshot = snapshot
+        self._snapshot = snapshot
         space = build_action_space(snapshot.dom_node)
         current = ObservedPage(
             url=snapshot.metadata.url,
@@ -203,6 +210,12 @@ class LocalActDriver:
         return same_target(page, current, element_id)
 
     async def execute(self, action: BaseAction, raise_on_failure: bool) -> ExecutionResult:
+        if isinstance(action, InteractionAction) and action.selector is None and self._snapshot is not None:
+            # pin the element with the selectors of the checked snapshot, not by an id that another
+            # observation of the session may have given to another element
+            node = self._snapshot.dom_node.interaction_nodes_by_id.get(action.id)
+            if node is not None:
+                action = action.model_copy(update={"selector": await resolve_selectors(node)})
         return await self.session.aexecute(action, raise_on_failure=raise_on_failure)
 
 
