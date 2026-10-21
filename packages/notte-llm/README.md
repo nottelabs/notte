@@ -46,7 +46,8 @@ selects a model at the configured endpoint without translating its ID.
 | `NOTTE_LLM_NB_RETRIES_STRUCTURED_OUTPUT` | `2` |
 | `NOTTE_LLM_CONTEXT_TOKENS` | `128000` (document clipping estimates four characters per token) |
 
-The async client posts Chat Completions through `httpx` with a 60-second timeout, retrying
+The async client posts Chat Completions through `httpx` with a 60-second timeout per attempt
+(`LLMEngine(timeout=...)`), retrying
 transient errors after 2 and 5 seconds. Typed extraction tries strict `json_schema` output;
 when a provider rejects it, the client retries with `json_object` and the schema in the prompt.
 If the endpoint also rejects `json_object`, it uses the schema in the prompt alone. Every
@@ -56,6 +57,9 @@ Instructions-only extraction starts with `json_object` because it has no fixed d
 OpenRouter receives model fallbacks (`google/gemini-3.8-flash`, `openai/gpt-4.1-mini`).
 `LLMEngine(provider_order=[...], reasoning={...})` can also pass OpenRouter routing and reasoning
 options. These extras are sent only when the configured hostname is `openrouter.ai`.
+A provider's content-policy refusal (an OpenRouter, OpenAI or Azure content-filter error, or a
+`content_filter` finish reason with no content) raises `ContentFilterError` naming the model,
+not `InvalidAPIKeyError`.
 For Vertex or other token-based endpoints, mint the access token outside the library and pass
 it as `NOTTE_LLM_API_KEY`; refresh it before it expires.
 

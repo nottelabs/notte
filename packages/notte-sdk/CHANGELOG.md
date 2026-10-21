@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased — LLM content refusals
+
+`LLMEngine` raises the new `ContentFilterError` (an `LLMProviderError` that names the model) when a
+provider refuses a request on content-policy grounds: OpenRouter, OpenAI and Azure content-filter
+errors (as 400/403/422, or embedded in a 200 body) and a `content_filter` finish reason with no
+content. These were reported as `InvalidAPIKeyError`; 401, and 403 without a content-policy
+marker, still are. `LLMEngine(timeout=...)` sets the per-attempt HTTP timeout (default 60 s).
+
 ## Unreleased — deprecated observe options
 
 `observe(instructions=...)` and `perception_type="deep"` are deprecated and will be

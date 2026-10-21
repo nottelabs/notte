@@ -3,6 +3,7 @@ import json
 import httpx
 import pytest
 from notte_core.errors import (
+    ContentFilterError,
     ContextWindowExceededError,
     InsufficentCreditsError,
     InvalidAPIKeyError,
@@ -53,6 +54,10 @@ async def test_completion_posts_compatible_payload_and_returns_response():
     [
         (401, "Unauthorized", InvalidAPIKeyError),
         (403, "Forbidden", InvalidAPIKeyError),
+        # content refusals are not authentication failures
+        (403, "Upstream error: content_policy_violation", ContentFilterError),
+        (400, "Your request was rejected by our content_filter", ContentFilterError),
+        (403, "Your chosen model requires moderation and your input was flagged", ContentFilterError),
         (404, "Model missing", ModelNotFoundError),
         (429, "Rate limit", RateLimitError),
         (400, "context_length_exceeded", ContextWindowExceededError),
@@ -161,3 +166,78 @@ async def test_malformed_response_is_a_provider_error(body):
     engine = LLMEngine(transport=httpx.MockTransport(lambda _: httpx.Response(200, json=body)))
     with pytest.raises(LLMProviderError):
         await engine.completion([])
+
+
+OPENROUTER_REFUSAL = {
+    "error": {
+        "message": "Upstream error from Inception: I'm sorry, I can't help with that.",
+        "code": 403,
+        "metadata": {"error_type": "content_policy_violation", "provider_code": "content_filter"},
+    }
+}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "response",
+    [
+        # OpenRouter: the HTTP status, or the same error embedded in a 200 body
+        httpx.Response(403, json=OPENROUTER_REFUSAL),
+        httpx.Response(200, json=OPENROUTER_REFUSAL),
+        # OpenAI
+        httpx.Response(
+            400,
+            json={
+                "error": {
+                    "message": "Your request was rejected",
+                    "type": "invalid_request_error",
+                    "code": "content_policy_violation",
+                }
+            },
+        ),
+        # Azure
+        httpx.Response(
+            400, json={"error": {"code": "content_filter", "innererror": {"code": "ResponsibleAIPolicyViolation"}}}
+        ),
+        # a successful response the provider filtered
+        httpx.Response(200, json={"choices": [{"message": {"content": None}, "finish_reason": "content_filter"}]}),
+    ],
+)
+async def test_content_refusals_are_not_api_key_errors(response: httpx.Response) -> None:
+    engine = LLMEngine(model="inception/mercury-3", transport=httpx.MockTransport(lambda _: response))
+    with pytest.raises(ContentFilterError) as exc:
+        await engine.completion([])
+    assert not isinstance(exc.value, InvalidAPIKeyError)
+    assert exc.value.model == "inception/mercury-3" and "inception/mercury-3" in str(exc.value)
+
+
+@pytest.mark.asyncio
+async def test_content_refusal_reaches_structured_callers() -> None:
+    """Extraction (`structured_completion`) surfaces the refusal instead of retrying or parsing."""
+    from pydantic import BaseModel
+
+    class Title(BaseModel):
+        title: str
+
+    calls: list[int] = []
+
+    def handler(_: httpx.Request) -> httpx.Response:
+        calls.append(1)
+        return httpx.Response(403, json=OPENROUTER_REFUSAL)
+
+    engine = LLMEngine(transport=httpx.MockTransport(handler))
+    with pytest.raises(ContentFilterError):
+        _ = await engine.structured_completion([{"role": "user", "content": "x"}], Title)
+    assert len(calls) == 1
+
+
+@pytest.mark.asyncio
+async def test_timeout_applies_to_each_request() -> None:
+    timeouts: list[object] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        timeouts.append(request.extensions["timeout"])
+        return httpx.Response(200, json={"choices": [{"message": {"content": "ok"}}]})
+
+    _ = await LLMEngine(transport=httpx.MockTransport(handler), timeout=7.5).completion([])
+    assert timeouts == [{"connect": 7.5, "read": 7.5, "write": 7.5, "pool": 7.5}]
