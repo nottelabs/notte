@@ -1,0 +1,14 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/act/act_cloud.py */}
+
+```python act_cloud.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+# act() runs in your process, on top of observe() and execute(): bring your own decider key
+with client.Session() as session:
+    _ = session.execute(type="goto", url="https://en.wikipedia.org/wiki/Main_Page")
+    result = session.act("search for Ada Lovelace")
+    print(result.status, result.operation, result.target, result.value)
+```
