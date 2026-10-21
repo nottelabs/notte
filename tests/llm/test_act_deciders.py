@@ -510,3 +510,23 @@ def test_default_writer_is_mercury_3_on_openrouter(monkeypatch: pytest.MonkeyPat
     decider = default_decider()
     assert isinstance(decider, JevDecider) and isinstance(decider.writer, LlmWriter)
     assert decider.writer.model == "inception/mercury-3"
+
+
+@pytest.mark.asyncio
+async def test_an_empty_model_reply_is_no_answer(monkeypatch: pytest.MonkeyPatch) -> None:
+    import httpx
+
+    def handler(_: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={"choices": []})
+
+    real_engine = llm_act.LLMEngine
+    monkeypatch.setattr(
+        llm_act, "LLMEngine", lambda **kwargs: real_engine(transport=httpx.MockTransport(handler), **kwargs)
+    )
+    monkeypatch.setenv("OPENROUTER_API_KEY", "k")
+    content, _ = await llm_act._complete("vendor/model", [], {"type": "json_object"}, max_tokens=10)  # pyright: ignore[reportPrivateUsage]
+    assert content == ""
+    # the decider gets no answers (act() then reports an invalid decision); the writer an invalid value
+    assert (await LlmDecider("vendor/model").choose(STATE, QUESTIONS)).answers == {}
+    with pytest.raises(InvalidDecisionError):
+        _ = await LlmWriter("vendor/model").write(WriteContext(goal="g", field={}, page={}))
