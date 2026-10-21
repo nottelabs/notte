@@ -579,3 +579,19 @@ Beta</select>"""
     )
     local = _page(description=description, actions=actions, states={"I1": state})
     assert accessible_text(local) == "[I1] Country"
+
+
+def test_a_variable_cut_by_the_browser_is_masked() -> None:
+    history = ActHistory()
+    token = "tok-" + "z" * 40
+    history.privacy.remember({"token": token})
+    # the browser cut the field value 10 characters into the token
+    cut = "x" * 190 + token[:10]
+    page = _page(states={"I1": ElementState(value=cut, value_truncated=True)})
+    space = build_act_space(
+        page, display_text=history.privacy.text, labels="accessible", display_cut=history.privacy.cut_text
+    )
+    value = next(e for e in space.elements if e["index"] == "I1")["value"]
+    assert value == "x" * 190 + "{{token}}" and token[:10] not in value
+    # an uncut value is masked as before, and ordinary text is left alone
+    assert history.privacy.cut_text("plain") == "plain"
