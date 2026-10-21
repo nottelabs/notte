@@ -159,12 +159,26 @@ class ActSpace:
         return operations
 
 
+def _document_scope(node: DomNode) -> int:
+    """The document or shadow root `node` belongs to (ids, and so `<label for>`, are unique only within one):
+    its nearest `<iframe>` or shadow host ancestor, 0 for the main document."""
+    ancestor = node.parent
+    while ancestor is not None:
+        attributes = ancestor.attributes
+        if ancestor.computed_attributes.shadow_root or (
+            attributes is not None and attributes.tag_name.lower() in ("iframe", "frame")
+        ):
+            return id(ancestor)
+        ancestor = ancestor.parent
+    return 0
+
+
 def label_targets(nodes: Mapping[str, DomNode]) -> dict[str, str]:
     """For every interactive `<label>` among `nodes` (by action id), the action id of the field it labels: the
-    one its `for` attribute names, else the field inside it; "" when it labels no offered field (e.g. a hidden
-    custom checkbox, whose label is then the only way to toggle it)."""
+    one its `for` attribute names in the same document or shadow root, else the field inside it; "" when it
+    labels no offered field (e.g. a hidden custom checkbox, whose label is then the only way to toggle it)."""
     by_dom_id = {
-        node.attributes.id_name: node_id
+        (_document_scope(node), node.attributes.id_name): node_id
         for node_id, node in nodes.items()
         if node.attributes is not None and node.attributes.id_name
     }
@@ -173,7 +187,7 @@ def label_targets(nodes: Mapping[str, DomNode]) -> dict[str, str]:
         attributes = node.attributes
         if attributes is None or attributes.tag_name.lower() != "label":
             continue
-        target = by_dom_id.get(attributes.label_for or "")
+        target = by_dom_id.get((_document_scope(node), attributes.label_for or ""))
         if target is None:
             target = next((n.id for n in node.interaction_nodes() if n.id and n.id != node_id), None)
         targets[node_id] = target or ""

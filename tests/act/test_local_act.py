@@ -496,3 +496,19 @@ async def test_a_hidden_checkbox_label_before_a_field_stays_clickable(session: N
     # the password label belongs to its field: named once, not offered separately
     assert [e["label"] for e in decider.states[0].elements].count("Password") == 1
     assert elements["Password"]["role"] == "textbox"
+
+
+@pytest.mark.asyncio
+async def test_labels_link_fields_within_their_own_shadow_root(session: NotteSession) -> None:
+    # two components reuse the id "email": each label names the field of its own shadow root
+    page = """<html><body><div id="a"></div><div id="b"></div><script>
+for (const [host, name] of [["a", "Work email"], ["b", "Personal email"]]) {
+  const root = document.getElementById(host).attachShadow({mode: "open"});
+  root.innerHTML = `<label for="email" style="cursor:pointer" onclick="">${name}</label><input id="email" name="${host}">`;
+}
+</script></body></html>"""
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    decider = FakeDecider(choices=[{"operation": "DONE"}])
+    _ = await session.aact("look", decider=decider)
+    labels = [e["label"] for e in decider.states[0].elements if e["role"] == "textbox"]
+    assert labels == ["Work email", "Personal email"]
