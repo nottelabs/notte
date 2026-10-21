@@ -9,12 +9,27 @@ trajectory events, and the public sync/async methods and generated overloads.
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Unpack, overload
 
 import requests
 from notte_core import enable_nest_asyncio
+from notte_core.act import (
+    ActHistory,
+    ActResult,
+    Choice,
+    Decider,
+    ObservedPage,
+    close_decider,
+    default_decider,
+    run_act,
+    run_check,
+    run_choose,
+    same_target,
+)
+from notte_core.act.freshness import ELEMENT_SIGNATURES_JS, Signatures, signature_xpaths
+from notte_core.act.space import label_targets
 from notte_core.actions import (
     BaseAction,
     EvaluateJsAction,
@@ -97,6 +112,7 @@ from notte_browser.errors import (
     InboxActionNotSupportedLocallyError,
     NoSnapshotObservedError,
     NoStorageObjectProvidedError,
+    PlaywrightError,
     ScrapeFailedError,
     ScrapeIsNotAnActionError,
 )
@@ -111,6 +127,83 @@ if TYPE_CHECKING:
     from notte_sdk.endpoints.personas import BasePersona
 
 enable_nest_asyncio()
+
+
+class LocalActDriver:
+    """How `act()` / `choose()` / `check()` read and drive a local session (`notte_core.act.ActDriver`).
+
+    The session's last snapshot gives the live element state and its fingerprint. The freshness check
+    reads element signatures by XPath (`notte_core.act.freshness`): all of them right after the
+    snapshot, the target's right before acting. Targets without a signature (iframes, shadow roots)
+    fall back to a new snapshot without screenshot.
+    """
+
+    def __init__(self, session: NotteSession, *, capture_signatures: bool = True) -> None:
+        self.session: NotteSession = session
+        self._signatures: Signatures = Signatures(None)
+        self._capture_signatures: bool = capture_signatures
+
+    @property
+    def has_vault(self) -> bool:
+        return self.session.vault is not None
+
+    def secret_replacements(self) -> Mapping[str, str]:
+        vault = self.session.vault
+        return {} if vault is None else vault.get_replacement_map()
+
+    async def _read_signatures(self, xpaths: dict[str, str]) -> Signatures:
+        try:
+            result: dict[str, Any] = await self.session.window.page.evaluate(ELEMENT_SIGNATURES_JS, xpaths)
+        except PlaywrightError:
+            return Signatures(None)
+        return Signatures(result)
+
+    async def observe(self, observation: Observation | None) -> ObservedPage:
+        # Caller-supplied observations have no signatures tied to their capture. Refresh
+        # before executable decisions rather than endorsing old data with new signatures.
+        if observation is None or self._capture_signatures:
+            observation = await self.session.aobserve()
+        snapshot = self.session._snapshot  # pyright: ignore[reportPrivateUsage]
+        # the live state only applies if the observation was built from the session's last snapshot
+        if snapshot is not None and snapshot.metadata == observation.metadata:
+            page = ObservedPage.from_observation(
+                observation,
+                snapshot.element_states(),
+                snapshot.fingerprint(),
+                label_targets(snapshot.dom_node.interaction_nodes_by_id),
+            )
+        else:
+            page = ObservedPage.from_observation(observation)
+        if self._capture_signatures:
+            self._signatures = await self._read_signatures(signature_xpaths(page))
+        return page
+
+    async def is_fresh(self, page: ObservedPage, element_id: str | None) -> bool:
+        before = self._signatures
+        if before.url is not None and before.url != page.url:
+            return False
+        # without a baseline (the signature script failed after observing), compare a new snapshot
+        if before.url is not None and (element_id is None or before.consistent(page, element_id)):
+            xpaths = {} if element_id is None else signature_xpaths(page, element_id)
+            return before.matches(await self._read_signatures(xpaths), element_id)
+        snapshot = await self.session.window.snapshot(screenshot=False)
+        # actions resolve their ids against the session snapshot: use the one just checked
+        self.session.snapshot = snapshot
+        space = build_action_space(snapshot.dom_node)
+        current = ObservedPage(
+            url=snapshot.metadata.url,
+            title=snapshot.metadata.title,
+            description=space.description,
+            actions=list(space.interaction_actions),
+            viewport=snapshot.metadata.viewport,
+            states=snapshot.element_states(),
+            fingerprint=snapshot.fingerprint(),
+            label_targets=label_targets(snapshot.dom_node.interaction_nodes_by_id),
+        )
+        return same_target(page, current, element_id)
+
+    async def execute(self, action: BaseAction, raise_on_failure: bool) -> ExecutionResult:
+        return await self.session.aexecute(action, raise_on_failure=raise_on_failure)
 
 
 # TODO: ACT callback
@@ -156,6 +249,9 @@ class NotteSession(AsyncResource, SyncResource):
         self._snapshot: BrowserSnapshot | None = None
         self._cookie_file: Path | None = Path(cookie_file) if cookie_file is not None else None
         self._keep_alive: bool = keep_alive
+        # `act()`: decider resolved on first use (never loads an LLM before), last actions sent as history
+        self._decider: Decider | None = None
+        self._act_history: ActHistory = ActHistory()
         self._keep_alive_msg: str = "🌌 Keep alive mode enabled, skipping session stop... Use `session.close()` to manually stop the session. Never `keep_alive=True` is production."
 
     def attach_persona(self, persona: BasePersona) -> None:
@@ -234,6 +330,7 @@ class NotteSession(AsyncResource, SyncResource):
         if self._keep_alive:
             logger.info(self._keep_alive_msg)
             return
+        self._release_decider()
         await self.window.close()
         self._window = None
 
@@ -999,3 +1096,154 @@ class NotteSession(AsyncResource, SyncResource):
     @override
     def reset(self) -> None:
         _ = asyncio.run(self.areset())
+
+    def _resolve_decider(self, decider: Decider | None) -> Decider:
+        if decider is not None:
+            return decider
+        if self._decider is None:
+            self._decider = default_decider()
+        return self._decider
+
+    def _release_decider(self) -> None:
+        # only the decider this session resolved: deciders passed with `decider=` belong to the caller
+        decider, self._decider = self._decider, None
+        if decider is not None:
+            close_decider(decider)
+
+    @track_usage("local.session.act")
+    async def aact(
+        self,
+        instruction: str,
+        *,
+        variables: Mapping[str, str] | None = None,
+        dry_run: bool = False,
+        min_confidence: float = 0.0,
+        observation: Observation | None = None,
+        raise_on_failure: bool | None = None,
+        decider: Decider | None = None,
+    ) -> ActResult:
+        """Carry out one step of a natural-language instruction: observe, pick one action, execute it.
+
+        ```python
+        result = await session.aact("accept the cookies")
+        result = await session.aact("type {{email}} in the email field", variables={"email": "jane@example.com"})
+        ```
+
+        A decider answers which operation (click, type, select, scroll, ...) and which element advance
+        the instruction (see `notte_core.act`). By default TypeSafe's Jev model decides, through OpenRouter
+        (`OPENROUTER_API_KEY`) or on TypeSafe (`TYPESAFE_API_KEY`); `NOTTE_ACT_DECIDER=llm` selects an LLM, and
+        `decider=` overrides both. Field values are
+        written by a small LLM; `{{name}}` in them is replaced by `variables[name]` after the model
+        call, so variable values never reach a model. With a vault, credential fields get the vault
+        placeholders, replaced by the secrets at execution.
+
+        Args:
+            instruction: what to do, e.g. "search for running shoes".
+            variables: values for `{{name}}` placeholders in typed text.
+            dry_run: choose the action but do not run it (`status="proposed"`).
+            min_confidence: below this decider confidence, nothing runs (`status="blocked"`).
+            observation: optional observation for read-only decisions; executable decisions refresh it first.
+            raise_on_failure: raise `NoActionFoundError` when blocked, and the execution error when the
+                action fails. Defaults to the session's `raise_on_failure`.
+            decider: decider to use for this call.
+
+        Returns:
+            ActResult: `status` (`executed`, `proposed`, `done`, `blocked`, `stale`), the `action`, its
+            `execution`, the decider's `confidence` / `probabilities` and per-step `timings`.
+        """
+        return await run_act(
+            LocalActDriver(self, capture_signatures=not dry_run),
+            self._resolve_decider(decider),
+            self._act_history,
+            instruction,
+            variables=variables,
+            dry_run=dry_run,
+            min_confidence=min_confidence,
+            observation=observation,
+            raise_on_failure=self.default_raise_on_failure if raise_on_failure is None else raise_on_failure,
+        )
+
+    def act(
+        self,
+        instruction: str,
+        *,
+        variables: Mapping[str, str] | None = None,
+        dry_run: bool = False,
+        min_confidence: float = 0.0,
+        observation: Observation | None = None,
+        raise_on_failure: bool | None = None,
+        decider: Decider | None = None,
+    ) -> ActResult:
+        """Synchronous version of `aact`: carry out one step of a natural-language instruction."""
+        return asyncio.run(
+            self.aact(
+                instruction,
+                variables=variables,
+                dry_run=dry_run,
+                min_confidence=min_confidence,
+                observation=observation,
+                raise_on_failure=raise_on_failure,
+                decider=decider,
+            )
+        )
+
+    @track_usage("local.session.choose")
+    async def achoose(
+        self,
+        question: str,
+        options: Sequence[str] | Mapping[str, str],
+        *,
+        observation: Observation | None = None,
+        decider: Decider | None = None,
+    ) -> Choice:
+        """Pick one of `options` about the current page, with a probability per option.
+
+        ```python
+        choice = await session.achoose("Which plan is selected?", ["free", "pro", "enterprise"])
+        choice.choice, choice.probabilities["pro"], choice.confidence
+        ```
+
+        `options` is a list of options, or a mapping from option key to a description of the option.
+        """
+        return await run_choose(
+            LocalActDriver(self, capture_signatures=False),
+            self._resolve_decider(decider),
+            self._act_history,
+            question,
+            options,
+            observation=observation,
+        )
+
+    def choose(
+        self,
+        question: str,
+        options: Sequence[str] | Mapping[str, str],
+        *,
+        observation: Observation | None = None,
+        decider: Decider | None = None,
+    ) -> Choice:
+        """Synchronous version of `achoose`: pick one of `options` about the current page."""
+        return asyncio.run(self.achoose(question, options, observation=observation, decider=decider))
+
+    @track_usage("local.session.check")
+    async def acheck(
+        self, question: str, *, observation: Observation | None = None, decider: Decider | None = None
+    ) -> float:
+        """The probability (0 to 1) that a yes/no question holds on the current page.
+
+        ```python
+        if await session.acheck("Is the user logged in?") > 0.8:
+            ...
+        ```
+        """
+        return await run_check(
+            LocalActDriver(self, capture_signatures=False),
+            self._resolve_decider(decider),
+            self._act_history,
+            question,
+            observation=observation,
+        )
+
+    def check(self, question: str, *, observation: Observation | None = None, decider: Decider | None = None) -> float:
+        """Synchronous version of `acheck`: the probability that a yes/no question holds on the current page."""
+        return asyncio.run(self.acheck(question, observation=observation, decider=decider))

@@ -1,8 +1,9 @@
 import asyncio
+import json
 import os
 import random
 import time
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from enum import StrEnum
 from pathlib import Path
 from types import TracebackType
@@ -11,6 +12,20 @@ from urllib.parse import urlsplit
 from webbrowser import open as open_browser
 
 from notte_core import __version__ as notte_core_version
+from notte_core.act import (
+    ActHistory,
+    ActResult,
+    Choice,
+    Decider,
+    ObservedPage,
+    close_decider,
+    default_decider,
+    run_act,
+    run_check,
+    run_choose,
+    same_target,
+)
+from notte_core.act.freshness import Signatures, signature_xpaths, signatures_expression
 from notte_core.actions import BaseAction, InteractionActionUnion
 from notte_core.actions.typedicts import (
     CaptchaSolveActionDict,
@@ -43,7 +58,7 @@ from notte_core.data import StructuredData, TBaseModel
 from notte_core.errors import EvaluateJsNoDataError, NotteBaseError
 from notte_core.fetch import FetchData, FetchResponse, build_fetch_script, response_from_evaluated
 from notte_core.logging import logger
-from notte_core.observation import ExecutionResult
+from notte_core.observation import ExecutionResult, Observation
 from notte_core.resource import SyncResource
 from notte_core.telemetry import track_usage
 from notte_core.types import (
@@ -392,6 +407,78 @@ class SessionsClient(SessionsOperations):
                 self.viewer_cdp(session_id=session_id)
 
 
+class RemoteActDriver:
+    """How `act()` / `choose()` / `check()` read and drive a cloud session (`notte_core.act.ActDriver`).
+
+    `act()` runs client-side on top of the observe / execute endpoints (no server-side act endpoint).
+    When the observe response carries the live element state (`Observation.element_states`: field values,
+    checked state, select options) and its fingerprint, decisions use it like local sessions do, and a
+    `<select>` option is chosen from its options. A server that does not return them leaves the fields
+    empty: decisions then rely on the action descriptions only, and a `<select>` is set by typing its
+    option label.
+
+    Freshness: after observing, one `evaluate_js` call records the element signatures
+    (`notte_core.act.freshness`) before the decider thinks; right before acting, a second one reads the
+    target's. When that fails (or for iframe / shadow-root targets), a new observation is compared.
+    """
+
+    def __init__(self, session: "RemoteSession", *, capture_signatures: bool = True) -> None:
+        self.session: "RemoteSession" = session
+        self._signatures: Signatures = Signatures(None)
+        self._capture_signatures: bool = capture_signatures
+
+    @property
+    def has_vault(self) -> bool:
+        return self.session.request.vault_id is not None
+
+    def secret_replacements(self) -> Mapping[str, str]:
+        # the cloud vault substitutes secrets server-side, and the observe response carries no field values
+        return {}
+
+    def _observe(self) -> Observation:
+        # always the fast perception, whatever the session's default
+        return self.session.observe(perception_type="fast")
+
+    def _read_signatures(self, xpaths: dict[str, str]) -> Signatures:
+        try:
+            result = self.session.execute(
+                type="evaluate_js", code=signatures_expression(xpaths), raise_on_failure=False
+            )
+        except Exception:
+            # This optimization must not leave a failed transport task running after act().
+            # is_fresh falls back to a full observation when signatures are unavailable.
+            return Signatures(None)
+        if not result.success or result.data is None:
+            return Signatures(None)
+        try:
+            return Signatures(json.loads(result.data.markdown))
+        except ValueError:
+            return Signatures(None)
+
+    async def observe(self, observation: Observation | None) -> ObservedPage:
+        # A supplied observation has no trusted signature baseline. Refresh it before
+        # executable decisions, including after navigation to another page at the same XPath.
+        if observation is None or self._capture_signatures:
+            observation = await asyncio.to_thread(self._observe)
+        page = ObservedPage.from_observation(observation)
+        if self._capture_signatures:
+            self._signatures = await asyncio.to_thread(self._read_signatures, signature_xpaths(page))
+        return page
+
+    async def is_fresh(self, page: ObservedPage, element_id: str | None) -> bool:
+        before = self._signatures
+        if before.url is not None and before.url != page.url:
+            return False
+        if before.url is not None and (element_id is None or before.consistent(page, element_id)):
+            xpaths = {} if element_id is None else signature_xpaths(page, element_id)
+            return before.matches(await asyncio.to_thread(self._read_signatures, xpaths), element_id)
+        current = ObservedPage.from_observation(await asyncio.to_thread(self._observe))
+        return same_target(page, current, element_id)
+
+    async def execute(self, action: BaseAction, raise_on_failure: bool) -> ExecutionResult:
+        return await asyncio.to_thread(self.session.execute, action, raise_on_failure=raise_on_failure)
+
+
 class RemoteSession(SyncResource):
     """
     A remote session that can be managed through the Notte API.
@@ -483,6 +570,9 @@ class RemoteSession(SyncResource):
         self._async_playwright_context: "PlaywrightAsync | None" = None
         self._async_playwright_browser: "BrowserAsync | None" = None
         self._async_playwright_page: "PageAsync | None" = None
+        # `act()`: decider resolved on first use, last actions sent to the decider as history
+        self._decider: Decider | None = None
+        self._act_history: ActHistory = ActHistory()
 
     @override
     def __exit__(  # pyright: ignore [reportMissingSuperCall]
@@ -756,6 +846,7 @@ class RemoteSession(SyncResource):
                 create_or_append_cookies_to_file(self._cookie_file, cookies)
             except Exception as e:
                 logger.error(f"🍪 Error saving cookies to {self._cookie_file}: {e}")
+        self._release_decider()
         try:
             self.response = self.client.stop(session_id=self.session_id, close_reason=close_reason)
         except Exception as e:
@@ -1320,6 +1411,154 @@ class RemoteSession(SyncResource):
         if data.get("perception_type") is None:
             data["perception_type"] = self.default_perception_type
         return self.client.page.observe(session_id=self.session_id, **data)  # pyright: ignore[reportUnknownVariableType, reportArgumentType, reportCallIssue]
+
+    def _resolve_decider(self, decider: Decider | None) -> Decider:
+        if decider is not None:
+            return decider
+        if self._decider is None:
+            self._decider = default_decider()
+        return self._decider
+
+    def _release_decider(self) -> None:
+        # only the decider this session resolved: deciders passed with `decider=` belong to the caller
+        decider, self._decider = self._decider, None
+        if decider is not None:
+            close_decider(decider)
+
+    @track_usage("cloud.session.act")
+    async def aact(
+        self,
+        instruction: str,
+        *,
+        variables: Mapping[str, str] | None = None,
+        dry_run: bool = False,
+        min_confidence: float = 0.0,
+        observation: Observation | None = None,
+        raise_on_failure: bool | None = None,
+        decider: Decider | None = None,
+    ) -> ActResult:
+        """Async version of `act`: carry out one step of a natural-language instruction."""
+        return await run_act(
+            RemoteActDriver(self, capture_signatures=not dry_run),
+            self._resolve_decider(decider),
+            self._act_history,
+            instruction,
+            variables=variables,
+            dry_run=dry_run,
+            min_confidence=min_confidence,
+            observation=observation,
+            raise_on_failure=self.default_raise_on_failure if raise_on_failure is None else raise_on_failure,
+        )
+
+    def act(
+        self,
+        instruction: str,
+        *,
+        variables: Mapping[str, str] | None = None,
+        dry_run: bool = False,
+        min_confidence: float = 0.0,
+        observation: Observation | None = None,
+        raise_on_failure: bool | None = None,
+        decider: Decider | None = None,
+    ) -> ActResult:
+        """Carry out one step of a natural-language instruction: observe, pick one action, execute it.
+
+        Runs in the client on top of `observe()` and `execute()`: the decider is called from your
+        machine with your keys (`OPENROUTER_API_KEY` for Jev through OpenRouter, or `TYPESAFE_API_KEY`), and needs
+        `pip install 'notte[llm]'` unless you pass `decider=`. Decisions use the live field values and
+        `<select>` options when the observe response carries them, else the action descriptions only.
+
+        import ActCloud from '/snippets/act/act_cloud.mdx';
+
+        <ActCloud />
+
+        Args:
+            instruction: what to do, e.g. "search for running shoes".
+            variables: values for `{{name}}` placeholders in typed text, substituted after the model call.
+            dry_run: choose the action but do not run it (`status="proposed"`).
+            min_confidence: below this decider confidence, nothing runs (`status="blocked"`).
+            observation: optional observation for read-only decisions; executable decisions refresh it first.
+            raise_on_failure: raise `NoActionFoundError` when blocked, and the execution error when the
+                action fails. Defaults to the session's `raise_on_failure`.
+            decider: decider to use for this call.
+
+        Returns:
+            ActResult: `status` (`executed`, `proposed`, `done`, `blocked`, `stale`), the `action`, its
+            `execution`, the decider's `confidence` / `probabilities` and per-step `timings`.
+        """
+        return asyncio.run(
+            self.aact(
+                instruction,
+                variables=variables,
+                dry_run=dry_run,
+                min_confidence=min_confidence,
+                observation=observation,
+                raise_on_failure=raise_on_failure,
+                decider=decider,
+            )
+        )
+
+    @track_usage("cloud.session.choose")
+    async def achoose(
+        self,
+        question: str,
+        options: Sequence[str] | Mapping[str, str],
+        *,
+        observation: Observation | None = None,
+        decider: Decider | None = None,
+    ) -> Choice:
+        """Async version of `choose`: pick one of `options` about the current page."""
+        return await run_choose(
+            RemoteActDriver(self, capture_signatures=False),
+            self._resolve_decider(decider),
+            self._act_history,
+            question,
+            options,
+            observation=observation,
+        )
+
+    def choose(
+        self,
+        question: str,
+        options: Sequence[str] | Mapping[str, str],
+        *,
+        observation: Observation | None = None,
+        decider: Decider | None = None,
+    ) -> Choice:
+        """Pick one of `options` about the current page, with a probability per option.
+
+        `options` is a list of options, or a mapping from option key to a description of the option.
+        Runs client-side like `act()`, with the same decider.
+
+        import ChooseCheck from '/snippets/act/choose_check.mdx';
+
+        <ChooseCheck />
+        """
+        return asyncio.run(self.achoose(question, options, observation=observation, decider=decider))
+
+    @track_usage("cloud.session.check")
+    async def acheck(
+        self, question: str, *, observation: Observation | None = None, decider: Decider | None = None
+    ) -> float:
+        """Async version of `check`: the probability that a yes/no question holds on the current page."""
+        return await run_check(
+            RemoteActDriver(self, capture_signatures=False),
+            self._resolve_decider(decider),
+            self._act_history,
+            question,
+            observation=observation,
+        )
+
+    def check(self, question: str, *, observation: Observation | None = None, decider: Decider | None = None) -> float:
+        """The probability (0 to 1) that a yes/no question holds on the current page.
+
+        With an LLM decider (no calibrated probabilities) the answer is 0.0 or 1.0.
+
+        import ChooseCheck from '/snippets/act/choose_check.mdx';
+
+        <ChooseCheck />
+        """
+        return asyncio.run(self.acheck(question, observation=observation, decider=decider))
 
     # BEGIN GENERATED OVERLOADS: execute (scripts/generate_action_overloads.py)
     @overload

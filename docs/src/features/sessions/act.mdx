@@ -1,0 +1,115 @@
+---
+title: Act, choose and check
+description: Run one step of a natural-language instruction, or ask typed questions about the page
+---
+import ActLocal from "/snippets/act/act_local.mdx";
+import ActCloud from "/snippets/act/act_cloud.mdx";
+import ActOptions from "/snippets/act/act_options.mdx";
+import ChooseCheck from "/snippets/act/choose_check.mdx";
+import ActLoop from "/snippets/act/act_loop.mdx";
+import Deciders from "/snippets/act/deciders.mdx";
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+`session.act(instruction)` observes the page, lets a **decider** pick one operation (click, type, select an option, scroll, press Enter, go back, wait) and its target element, then executes it. `session.choose(question, options)` and `session.check(question)` ask the same decider a typed question about the current page.
+
+The decider never writes selectors or actions: Notte turns the observed page into multiple-choice questions, validates the answers strictly (an answer that is not one of the offered options executes nothing), and maps the chosen option back to a Notte action.
+
+<Note>
+`act()`, `choose()` and `check()` are available in the Python SDK, on local sessions (`notte.Session`) and cloud sessions (`client.Session`). Cloud sessions run them in your process, on top of `observe()` and `execute()`.
+</Note>
+
+## Setup
+
+Install the deciders with `pip install "notte[llm]"` (or `pip install notte-llm` next to `notte-sdk`), then configure one of:
+
+| Option | Environment | What decides |
+|---|---|---|
+| Jev through OpenRouter | `OPENROUTER_API_KEY` (model `~typesafe/jev-latest`) | TypeSafe's Jev classification model: a calibrated probability per option |
+| Jev on TypeSafe | `TYPESAFE_API_KEY` (optional `TYPESAFE_MODEL`, default `jev-latest`) | The same model, called on TypeSafe's API directly |
+| LLM | `NOTTE_ACT_DECIDER=llm` with `OPENROUTER_API_KEY`, or any OpenAI-compatible endpoint (`NOTTE_LLM_BASE_URL`, `NOTTE_LLM_API_KEY`, `NOTTE_LLM_MODEL`); model `NOTTE_ACT_MODEL`, default `google/gemini-3.1-flash-lite` | Any model of the LLM endpoint, one call per decision with the options as JSON-schema enums |
+
+`act()` picks the first available: `TYPESAFE_API_KEY` (Jev on TypeSafe), then an OpenRouter key (Jev through OpenRouter), then an LLM on another `NOTTE_LLM_*` endpoint. `NOTTE_ACT_DECIDER=jev` or `llm` forces one. With nothing configured, `act()` raises `DeciderNotAvailableError` listing the options.
+
+<Note>
+Jev through OpenRouter uses OpenRouter's decisions endpoint (`/api/alpha/decisions`), which is in alpha. If it is unavailable, set `NOTTE_ACT_DECIDER=llm` to use an LLM decider with the same key.
+</Note>
+
+Jev cannot write text. Text typed into fields is written by a small, fast LLM on the `NOTTE_LLM_*` endpoint (OpenRouter with `OPENROUTER_API_KEY`): `NOTTE_ACT_TEXT_MODEL`, default `inception/mercury-3` on OpenRouter, else the decision model. With `TYPESAFE_API_KEY` alone, `act()` can click and select but not type text. If the writer's provider refuses a value on content-policy grounds, `NOTTE_ACT_MODEL` (default `google/gemini-3.1-flash-lite`) writes it instead. If that also refuses, the step is `blocked` with the reason.
+
+```bash
+export OPENROUTER_API_KEY=...     # Jev through OpenRouter, and the text writer
+# optional
+export TYPESAFE_API_KEY=...       # Jev on TypeSafe directly
+export NOTTE_ACT_DECIDER=llm      # an LLM decides instead of Jev
+export NOTTE_ACT_LABELS=html      # show elements as rendered HTML instead of accessible names
+```
+
+### What the decider sees
+
+By default (`NOTTE_ACT_LABELS=accessible`) each element is named the way a screen reader would name it: its `aria-label`, the label text next to a form field, a button's text, then `alt`, `placeholder` or `title`. The page is sent as its visible text, with each element shown in place as `[I1] Full name`. A label that names the field next to it is not repeated as its own line or offered as a separate element. Roles, operations, live state and `<select>` options are the same in both modes.
+
+`NOTTE_ACT_LABELS=html` sends each element's rendered HTML (`<input name="name">`) and the rendered page instead. On pages where several elements differ only by their label text (two checkboxes with the same `name`, a list of todo toggles), the accessible names are what tells them apart.
+
+## Act
+
+<ActLocal />
+
+`act()` returns an `ActResult`:
+
+| Field | Meaning |
+|---|---|
+| `status` | `executed` (the action ran, see `execution`), `proposed` (`dry_run=True`), `done` (the instruction is already satisfied), `blocked` (no operation can progress), `stale` (the page kept changing between decision and execution; nothing ran) |
+| `action`, `execution` | the Notte action and its `ExecutionResult` |
+| `operation`, `target` | the chosen operation (`CLICK`, `TYPE_TEXT`, `SELECT`, `SCROLL_DOWN`, ...) and element id (`B1`, or `I3:2` for the 2nd option of a select) |
+| `value` | the text typed, as written by the model (`{{variables}}` not substituted) |
+| `confidence`, `probabilities` | the decider's confidence and the probability of each candidate target |
+| `timings` | milliseconds spent observing, deciding, writing text, re-checking the page and executing |
+| `fingerprint` | a hash of the page the decision was taken on |
+
+`blocked` raises `NoActionFoundError` unless `raise_on_failure=False` (the default follows the session's `raise_on_failure`). An action that fails to execute raises like `session.execute()` does.
+
+<ActOptions />
+
+- `variables`: the writer answers `{{name}}` and Notte substitutes the value after the model call, so values never reach a model.
+- With a vault attached, credential fields get the vault placeholders, swapped for the real secrets at execution. Values the vault typed are masked again in later model requests.
+- `min_confidence`: below it, nothing runs (`status="blocked"`).
+- `observation`: decide on an observation you already have instead of observing again.
+- `decider`: pass a decider explicitly (see [Deciders](#deciders)).
+
+### Cloud sessions
+
+<ActCloud />
+
+Local sessions read the **live state** of form controls (the current value of inputs, checked state, the options of a `<select>`), so the decider sees what a field already holds. Long option lists are cut to their first 50 options; the others are selected by typing their label. A `<select multiple>` takes one option per `act()`, and each selection replaces the previous one. Cloud sessions get the same state when the observe response carries it (`Observation.element_states`). With a server that does not return it, cloud decisions rely on the element descriptions only, and a `<select>` is set by typing its option label.
+
+## Choose and check
+
+<ChooseCheck />
+
+`choose()` returns a `Choice` (`choice`, `probabilities`, `confidence`). `check()` returns the probability that the answer is yes. With an LLM decider, probabilities are not calibrated: the chosen option gets 1.0, so `check()` returns 0.0 or 1.0.
+
+## Loops
+
+`act()` runs one step. To carry out a multi-step instruction, call it until the decider answers `DONE`, with a step budget and a guard against actions that change nothing:
+
+<ActLoop />
+
+`act()` sends the last 10 `act()` actions of the session (with whether each changed the page) to the decider, so repeating the same instruction makes progress.
+
+## Guards
+
+- **Strict answers.** The chosen option must be one of the offered keys, probabilities must cover exactly the offered options, sum to 1 and favor the choice; otherwise `InvalidDecisionError` and nothing runs.
+- **Fresh page.** Right before acting, Notte checks the page still matches the decision: same URL and same target element (text, value, checked state). Locally this costs a few milliseconds (element signatures read by XPath); on cloud sessions one `evaluate_js` call. If the page changed, Notte decides again once (reusing the text already written for the same field), then returns `stale`.
+- **One decision, one action.** A decision is never reused after the page changed; `dry_run` proposals are only executed if you call `session.execute(result.action)`.
+
+## Deciders
+
+<Deciders />
+
+A decider is any object with two async methods (`notte_core.act.Decider`): `choose(state, questions) -> Answers` and `write(context) -> str | None`.
+
+<Info>
+The question set (one operation question plus one target question per operation), the decision and text-writer prompts and the guards are adapted from [jev-ultrafast](https://github.com/browser-use/jev-ultrafast) (MIT License, Copyright (c) 2026 Browser Use).
+</Info>
