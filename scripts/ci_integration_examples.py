@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import os
+import platform
 import re
 import subprocess
 import sys
@@ -58,6 +59,9 @@ DRIVER_IMPORTS = {
 }
 RECIPES = {"agent-browser", "claude-agents", "mongodb", "openai-agents"}
 NODE_PROJECTS = {"agentcard", "docker-sandboxes", "e2e", "eve", "fx", "inngest", "replit", "temporal", "trigger"}
+# MongoDB 8.0+ refuses to start on Linux 6.19+ unless it recognizes the kernel fix (SERVER-121912),
+# and reads Ubuntu's 7.0.14-based kernels as 7.0.0. 7.0 uses the legacy TCMalloc, which does not use rseq.
+MONGODB_IMAGE = "mongo:7.0.45@sha256:c53852c00c23ca9f23fc39690350ffa9a80e3642fe8f96879726d8da0abe80a7"
 DOCKER_CLI_SHA256 = "609a2e4b881ba9a7fd21543077e53d3b863a6b99eebee1f208e51a097ab56a05"  # pragma: allowlist secret
 
 TERRAFORM_SHA256 = "38034b38d03096399a7a1264a14561a8029b2b496fd1f169452656e53968f1b7"  # pragma: allowlist secret
@@ -354,9 +358,18 @@ def container_diagnostics(name: str, env: dict[str, str]) -> str:
     return "\n".join(output)
 
 
+def kernel_release() -> str:
+    """Return `uname -r`, plus the upstream version Ubuntu kernels report separately."""
+    try:
+        return f"{platform.release()} ({Path('/proc/version_signature').read_text().strip()})"
+    except OSError:
+        return platform.release()
+
+
 @contextmanager
 def mongodb_fixture(env: dict[str, str]) -> Iterator[str]:
     name = f"notte-mongodb-{uuid4().hex}"
+    print(f"MongoDB fixture: {MONGODB_IMAGE} on Linux {kernel_release()}", flush=True)
     run(
         [
             "docker",
@@ -377,7 +390,7 @@ def mongodb_fixture(env: dict[str, str]) -> Iterator[str]:
             "5s",
             "--health-retries",
             "20",
-            "mongo:8.0.34@sha256:4a4ab5d4834207389e0d7270fac988e21ffedccecba77991a552f755df229907",
+            MONGODB_IMAGE,
         ],
         ROOT,
         env,
