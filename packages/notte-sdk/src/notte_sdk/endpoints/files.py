@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import os
 import tempfile
 from pathlib import Path, PureWindowsPath
@@ -125,14 +126,13 @@ class RemoteFileStorage(BaseStorage):
     @override
     async def get_file(self, name: str) -> str | None:
         assert self.upload_dir is not None
-        match = next(
-            (file for file in self.list(FileSource.USER_UPLOAD, limit=1000).files if file.filename == name), None
-        )
-        return None if match is None else self.download(match.id, self.upload_dir, force=True)
+        page = await asyncio.to_thread(self.list, FileSource.USER_UPLOAD, limit=1000)
+        match = next((file for file in page.files if file.filename == name), None)
+        return None if match is None else await asyncio.to_thread(self.download, match.id, self.upload_dir, force=True)
 
     @override
     async def set_file(self, path: str) -> bool:
-        _ = self.upload(path)
+        _ = await asyncio.to_thread(self.upload, path)
         return True
 
     @staticmethod
@@ -143,8 +143,10 @@ class RemoteFileStorage(BaseStorage):
 
     @override
     async def alist_uploaded_files(self) -> list[FileInfo]:
-        return [self._file_info(file) for file in self.list(FileSource.USER_UPLOAD, limit=1000).files]
+        page = await asyncio.to_thread(self.list, FileSource.USER_UPLOAD, limit=1000)
+        return [self._file_info(file) for file in page.files]
 
     @override
     async def alist_downloaded_files(self) -> list[FileInfo]:
-        return [self._file_info(file) for file in self.list(FileSource.SESSION_DOWNLOAD, limit=1000).files]
+        page = await asyncio.to_thread(self.list, FileSource.SESSION_DOWNLOAD, limit=1000)
+        return [self._file_info(file) for file in page.files]

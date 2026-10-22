@@ -552,7 +552,7 @@ class RemoteSession(SyncResource):
         self._async_playwright_page = None
 
         try:
-            self.stop(close_reason="error" if exc_val is not None else "manual")
+            await asyncio.to_thread(self.stop, close_reason="error" if exc_val is not None else "manual")
         except Exception as stop_error:
             if exc_val is None:
                 raise
@@ -1158,7 +1158,7 @@ class RemoteSession(SyncResource):
 
             # Connect to browser via CDP
             if self._async_playwright_browser is None:
-                cdp_url = self.cdp_url()
+                cdp_url = await asyncio.to_thread(self.cdp_url)
                 self._async_playwright_browser = await self._async_playwright_context.chromium.connect_over_cdp(
                     cdp_url, headers=self._cdp_headers(cdp_url)
                 )
