@@ -1,16 +1,93 @@
 import time
 from functools import wraps
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, Protocol, TypeVar
 
+import requests
 from notte_core.errors import NotteBaseError
 from notte_core.logging import logger
-from requests import Response
 
 T = TypeVar("T")
 
 
+class APIResponse(Protocol):
+    """The parts of an HTTP response the API errors read.
+
+    The SDK passes an `httpx.Response`. A `requests.Response` built by calling
+    code still works.
+    """
+
+    @property
+    def status_code(self) -> int: ...
+
+    @property
+    def text(self) -> str: ...
+
+    def json(self) -> Any: ...
+
+
+class NotteRequestError(requests.RequestException):
+    """An HTTP request made by the SDK failed before the API returned a response.
+
+    The SDK's transport errors subclass the matching `requests` exceptions, so
+    existing `except requests.RequestException` handlers keep working. Catching
+    the `requests` classes is deprecated: catch these classes instead.
+    """
+
+
+class NotteConnectionError(NotteRequestError, requests.ConnectionError):
+    """The connection could not be opened, or it broke before a response arrived."""
+
+
+class NotteProxyError(NotteConnectionError, requests.exceptions.ProxyError):
+    """The configured proxy refused or failed the connection."""
+
+
+class NotteSSLError(NotteConnectionError, requests.exceptions.SSLError):
+    """TLS failed, for example because the certificate was rejected."""
+
+
+class NotteRequestTimeoutError(NotteRequestError, requests.Timeout):
+    """The request timed out, or the SDK retry deadline was exceeded."""
+
+
+class NotteConnectTimeoutError(NotteConnectionError, NotteRequestTimeoutError, requests.ConnectTimeout):
+    """Opening the connection timed out. Nothing was sent."""
+
+
+class NotteReadTimeoutError(NotteRequestTimeoutError, requests.ReadTimeout):
+    """The server did not send data in time, after the request was sent."""
+
+
+class NotteStreamError(NotteRequestError, requests.exceptions.ChunkedEncodingError):
+    """The connection broke while the response body was being read."""
+
+
+class NotteHTTPStatusError(NotteRequestError, requests.HTTPError):
+    """A non-API URL (object storage, a download link) answered with a 4xx or 5xx status.
+
+    `response` is the `httpx.Response`: `status_code`, `headers`, `text` and
+    `json()` work as they did on `requests.Response`.
+    """
+
+
+class NotteTooManyRedirectsError(NotteRequestError, requests.TooManyRedirects):
+    """The server redirected more than 30 times."""
+
+
+class NotteInvalidURLError(NotteRequestError, requests.exceptions.InvalidURL):
+    """The URL is malformed or uses an unsupported scheme."""
+
+
+# requests.JSONDecodeError.__init__ initializes both json.JSONDecodeError and RequestException.
+class NotteJSONDecodeError(NotteRequestError, requests.JSONDecodeError):  # pyright: ignore[reportUnsafeMultipleInheritance]
+    """A successful response did not contain valid JSON. Also a `json.JSONDecodeError`."""
+
+    def __init__(self, msg: str, doc: str, pos: int) -> None:
+        requests.JSONDecodeError.__init__(self, msg, doc, pos)
+
+
 class NotteAPIError(NotteBaseError):
-    def __init__(self, path: str, response: Response) -> None:
+    def __init__(self, path: str, response: APIResponse) -> None:
         self.error: dict[Any, Any] = {}
         self.status_code: int = response.status_code
         try:
@@ -36,7 +113,7 @@ class NotteAPIError(NotteBaseError):
 
 
 class NotteAPIExecutionError(NotteBaseError):
-    def __init__(self, path: str, response: Response) -> None:
+    def __init__(self, path: str, response: APIResponse) -> None:
         try:
             error = response.json()
         except Exception:
