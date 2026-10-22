@@ -34,7 +34,7 @@ class FileStorageClient(FilesOperations):
         if not path.is_file():
             raise FileNotFoundError(f"Cannot upload file {file_path}: it is not a file")
         endpoint = api.upload_session_file(session_id, wire_request(None, {}))
-        return self.request_upload(endpoint, {"file": (upload_file_name or path.name, path)})
+        return self._request_upload(endpoint, {"file": (upload_file_name or path.name, path)})
 
     def metadata(self, session_id: str, file_id: str) -> SessionFile:
         offset = 0
@@ -60,7 +60,7 @@ class FileStorageClient(FilesOperations):
             raise FileExistsError(f"{destination} already exists; pass force=True to overwrite it")
         temporary: Path | None = None
         try:
-            with self.stream_bytes(api.download_session_file(session_id, file_id)) as chunks:
+            with self._stream_bytes(api.download_session_file(session_id, file_id)) as chunks:
                 with tempfile.NamedTemporaryFile(
                     mode="wb",
                     dir=directory,

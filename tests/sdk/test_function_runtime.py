@@ -34,7 +34,7 @@ def test_transport_preserves_selection(monkeypatch, runtime, stream):
         FUNCTION_RUN_TIMEOUT=900,
     )
     # The real transport helpers, bound to the fake client.
-    for name in ("request_once", "stream_lines", "_open_once"):
+    for name in ("_request_once", "_stream_lines", "_open_once"):
         setattr(client, name, partial(getattr(FunctionsClient, name), client))
     post = MagicMock(
         return_value=SimpleNamespace(

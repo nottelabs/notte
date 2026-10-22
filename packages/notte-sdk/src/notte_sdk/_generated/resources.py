@@ -111,7 +111,7 @@ class FunctionsOperations(RunPayloadsOperations):
         request = wire_request(
             models.BodyFunctionCreateFunctionsPost, {key: value for key, value in data.items() if key not in ["path"]}
         )
-        return self.request_upload(api.function_create(request, params=wire_request(None, query or {})), files)
+        return self._request_upload(api.function_create(request, params=wire_request(None, query or {})), files)
 
     @track_usage("cloud.function.delete")
     def delete(self, function_id: str) -> models.DeleteFunctionResponse:
@@ -222,7 +222,7 @@ class SessionsOperations(BaseClient):
     @track_usage("cloud.files.download")
     def download_session_file(self, session_id: str, file_id: str) -> bytes:
         "Download Session File (`GET /sessions/{session_id}/files/{file_id}`)."
-        return self.request_bytes(api.download_session_file(session_id, file_id))
+        return self._request_bytes(api.download_session_file(session_id, file_id))
 
     def get_session_script(
         self, session_id: str, **data: Unpack[GetSessionScriptParametersQueryDict]
@@ -378,7 +378,7 @@ class SessionsOperations(BaseClient):
             models.BodyUploadSessionFileSessionsSessionIdFilesPost,
             {key: value for key, value in data.items() if key not in ["file"]},
         )
-        return self.request_upload(api.upload_session_file(session_id, request), files)
+        return self._request_upload(api.upload_session_file(session_id, request), files)
 
 
 class FilesOperations(BaseClient):

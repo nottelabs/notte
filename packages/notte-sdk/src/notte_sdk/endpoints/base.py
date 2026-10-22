@@ -615,7 +615,7 @@ class BaseClient(ABC):
                 # Re-raise original error if no upgrade suggestion needed
                 raise
 
-    def request_upload(self, endpoint: NotteEndpoint[TResponse], files: Mapping[str, UploadFile]) -> TResponse:
+    def _request_upload(self, endpoint: NotteEndpoint[TResponse], files: Mapping[str, UploadFile]) -> TResponse:
         """
         Sends the endpoint as multipart form data with local files attached, and returns the validated response.
 
@@ -639,7 +639,7 @@ class BaseClient(ABC):
                 uploads[name] = handle if filename is None else (filename, handle)
             return self.request(endpoint.model_copy(update={"files": uploads}))
 
-    def request_bytes(self, endpoint: NotteEndpoint[TResponse]) -> bytes:
+    def _request_bytes(self, endpoint: NotteEndpoint[TResponse]) -> bytes:
         """
         Sends the endpoint and returns its raw response body, for operations that respond with a file.
 
@@ -649,7 +649,7 @@ class BaseClient(ABC):
         return self._send_checked(endpoint, headers=None, timeout=None).content
 
     @contextmanager
-    def stream_bytes(self, endpoint: NotteEndpoint[TResponse]) -> Generator[Iterator[bytes], None, None]:
+    def _stream_bytes(self, endpoint: NotteEndpoint[TResponse]) -> Generator[Iterator[bytes], None, None]:
         """
         Sends the GET endpoint once and yields its response body in chunks, without holding it in memory.
 
@@ -666,7 +666,7 @@ class BaseClient(ABC):
         finally:
             response.close()
 
-    def request_once(self, endpoint: NotteEndpoint[TResponse], *, headers: dict[str, str], timeout: float) -> Any:
+    def _request_once(self, endpoint: NotteEndpoint[TResponse], *, headers: dict[str, str], timeout: float) -> Any:
         """
         Sends the endpoint's JSON request once, without retries, and returns the decoded JSON response.
 
@@ -679,7 +679,7 @@ class BaseClient(ABC):
         return response.json()
 
     @contextmanager
-    def stream_lines(
+    def _stream_lines(
         self, endpoint: NotteEndpoint[TResponse], *, headers: dict[str, str], timeout: float
     ) -> Generator[Iterator[str], None, None]:
         """

@@ -127,7 +127,7 @@ class FunctionsClient(FunctionsOperations):
         if (version := data.get("version")) is not None:
             query["version"] = version
         endpoint = api.function_update(function_id, wire_request(None, {}), params=wire_request(None, query))
-        return self.request_upload(endpoint, {"file": data["path"]})
+        return self._request_upload(endpoint, {"file": data["path"]})
 
     def create_run(self, function_id: str) -> CreateFunctionRunResponse:
         request = CreateFunctionRunRequest()
@@ -242,13 +242,13 @@ class FunctionsClient(FunctionsOperations):
         timeout = timeout or self.FUNCTION_RUN_TIMEOUT
 
         if not stream:
-            return FunctionRunResponse.model_validate(self.request_once(endpoint, headers=headers, timeout=timeout))
+            return FunctionRunResponse.model_validate(self._request_once(endpoint, headers=headers, timeout=timeout))
 
         INITIAL = object()
         result: Any = INITIAL
 
         session_id = None
-        with self.stream_lines(endpoint, headers=headers, timeout=timeout) as lines:
+        with self._stream_lines(endpoint, headers=headers, timeout=timeout) as lines:
             for utf in lines:
                 try:
                     # Lambda streaming often uses Server-Sent Events format

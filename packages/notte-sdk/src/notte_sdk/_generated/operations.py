@@ -54,7 +54,7 @@ def function_create(
 ) -> NotteEndpoint[core.GetFunctionResponse]:
     """Function Create (`POST /functions/`).
 
-    Body: multipart/form-data, attach files with `BaseClient.request_upload`.
+    Body: multipart/form-data, attach files with `BaseClient._request_upload`.
     Parses response schema `FunctionResponse` with `GetFunctionResponse`.
     """
     return NotteEndpoint(
@@ -245,7 +245,7 @@ def function_update(
 ) -> NotteEndpoint[core.GetFunctionResponse]:
     """Function Update (`POST /functions/{function_id}`).
 
-    Body: multipart/form-data, attach files with `BaseClient.request_upload`.
+    Body: multipart/form-data, attach files with `BaseClient._request_upload`.
     Parses response schema `FunctionResponse` with `GetFunctionResponse`.
     """
     return NotteEndpoint(
@@ -540,7 +540,7 @@ def download_session_file(
 ) -> NotteEndpoint[runtime.RawResponse]:
     """Download Session File (`GET /sessions/{session_id}/files/{file_id}`).
 
-    Responds with a file: read it with `BaseClient.request_bytes` or `stream_bytes`.
+    Responds with a file: read it with `BaseClient._request_bytes` or `_stream_bytes`.
     """
     return NotteEndpoint(
         method="GET",
@@ -585,7 +585,7 @@ def upload_session_file(
 ) -> NotteEndpoint[models.SessionFile]:
     """Upload Session File (`POST /sessions/{session_id}/files`).
 
-    Body: multipart/form-data, attach files with `BaseClient.request_upload`.
+    Body: multipart/form-data, attach files with `BaseClient._request_upload`.
     """
     return NotteEndpoint(
         method="POST",

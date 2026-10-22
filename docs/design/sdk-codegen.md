@@ -15,8 +15,8 @@ signature or behavior: `files.upload` / `files.download` (local paths), `functio
 `runs/{run_id}` route). Their factories and aliases are still generated.
 
 Python generates multipart bodies (file fields are local paths, sent with
-`BaseClient.request_upload`), binary responses with `pythonBinaryResponse`
-(`BaseClient.request_bytes`), and the page operations `sessions.scrape`, `observe` and
+`BaseClient._request_upload`), binary responses with `pythonBinaryResponse`
+(`BaseClient._request_bytes`), and the page operations `sessions.scrape`, `observe` and
 `execute`, which keep their core request and response types and reuse the core-bound
 factories of `endpoints.py`.
 
@@ -87,8 +87,8 @@ blob parsing, so text/JSON files retain their bytes.
 
 Only `_transport.py`, `_retry.py`, `errors.py` and `endpoints/base.py` import the HTTP
 library (`tests/sdk/test_generated_resource_methods.py` enforces it). Generated code and
-the stateful layer use `BaseClient` methods (`request`, `request_list`, `request_upload`,
-`request_bytes`, `stream_bytes`, `request_once`, `stream_lines`) and the `_transport`
+the stateful layer use `BaseClient` methods (`request`, `request_list`, `_request_upload`,
+`_request_bytes`, `_stream_bytes`, `_request_once`, `_stream_lines`) and the `_transport`
 helpers for object storage and public downloads, so the transport can change by editing
 those modules only.
 

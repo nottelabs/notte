@@ -259,7 +259,7 @@ def _docstring(bound: Bound) -> list[str]:
         what = f"`{op.body_schema}`" if op.body_schema else "an inline schema"
         notes.append(f"Body: {what} ({op.body_content_type}) has no model in notte_core.")
     elif op.body_content_type == "multipart/form-data":
-        notes.append("Body: multipart/form-data, attach files with `BaseClient.request_upload`.")
+        notes.append("Body: multipart/form-data, attach files with `BaseClient._request_upload`.")
     if op.query_params and bound.query is None:
         names = ", ".join(f"{name}{' (required)' if req else ''}" for name, req in op.query_params.items())
         notes.append(f"Query: {names}.")
@@ -277,7 +277,7 @@ def _docstring(bound: Bound) -> list[str]:
         case "none":
             notes.append("Responds with no content.")
         case "binary":
-            notes.append("Responds with a file: read it with `BaseClient.request_bytes` or `stream_bytes`.")
+            notes.append("Responds with a file: read it with `BaseClient._request_bytes` or `_stream_bytes`.")
         case "untyped":
             notes.append("Responds with an untyped body (no schema): parsed as `RawResponse`.")
         case _:
@@ -894,10 +894,10 @@ def _method(bound: Bound, name: str) -> str:
     if op.response_shape == "raw":
         runtime, returns = "_request", "Any"
     if op.response_shape == "binary":
-        runtime, returns = "request_bytes", "bytes"
+        runtime, returns = "_request_bytes", "bytes"
     if bound.files:
         endpoint += ", files"
-        runtime = "request_upload"
+        runtime = "_request_upload"
     headers = ""
     if op.header_params:
         headers = (
