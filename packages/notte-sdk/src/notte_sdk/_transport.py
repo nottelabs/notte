@@ -14,9 +14,11 @@ import random
 import ssl
 import threading
 import time
+import weakref
 from collections.abc import Callable, Generator, Iterable, Iterator, Mapping
 from contextlib import contextmanager
-from http.cookiejar import CookieJar, DefaultCookiePolicy
+from contextvars import ContextVar
+from http.cookiejar import CookieJar
 from typing import IO, Any, Protocol, cast
 from urllib.parse import urlencode
 
@@ -46,6 +48,9 @@ MAX_REDIRECTS = 30
 # requests opened a connection per call, so concurrency was never capped; keep
 # at most 20 idle connections, closed after 5 s idle so the server never does it first.
 _LIMITS = httpx.Limits(max_connections=None, max_keepalive_connections=20, keepalive_expiry=5.0)
+# requests opened a new session per call: cookies set during a call's redirects were sent on
+# its later hops, and none outlived the call. `stream()` gives every call its own jar.
+_CALL_COOKIES: ContextVar[httpx.Cookies | None] = ContextVar("notte_sdk_call_cookies", default=None)
 
 
 class _RetryRequest(Protocol):
@@ -170,8 +175,6 @@ class _Client(httpx.Client):
         # No default timeout: like requests, every call passes its own.
         super().__init__(
             verify=verify,
-            # requests opened a new session per call, so no cookie outlived a call. Keep none.
-            cookies=CookieJar(policy=DefaultCookiePolicy(allowed_domains=[])),
             trust_env=True,
             limits=_LIMITS,
             timeout=None,
@@ -182,6 +185,27 @@ class _Client(httpx.Client):
         # separately and keep httpx's own transports.
         self._transport.close()
         self._transport = _HandshakeTransport(verify=verify, limits=_LIMITS)
+
+    @property
+    @override
+    def cookies(self) -> httpx.Cookies:
+        # The current call's jar; outside a call, an empty one that nothing keeps.
+        jar = _CALL_COOKIES.get()
+        return httpx.Cookies() if jar is None else jar
+
+    @cookies.setter
+    @override
+    def cookies(
+        self,
+        cookies: httpx.Cookies | CookieJar | dict[str, str] | list[tuple[str, str]],  # pyright: ignore[reportPropertyTypeMismatch]
+    ) -> None:
+        raise TypeError("The SDK HTTP client keeps no cookies between calls")
+
+    @override
+    def build_request(self, method: str, url: httpx.URL | str, **options: Any) -> httpx.Request:
+        # A malformed URL fails here, before send(); raise it as an SDK exception too.
+        with translate_errors():
+            return super().build_request(method, url, **options)
 
 
 def _ssl_context() -> ssl.SSLContext:
@@ -213,6 +237,11 @@ class SharedHttpClient:
         self._lock: threading.Lock = threading.Lock()
         self._client: httpx.Client | None = None
         self._pid: int | None = None
+        _SHARED_CLIENTS.add(self)
+
+    def _after_fork_in_child(self) -> None:
+        # A thread that held the lock during fork does not exist in the child.
+        self._lock = threading.Lock()
 
     def get(self) -> httpx.Client:
         with self._lock:
@@ -229,6 +258,18 @@ class SharedHttpClient:
             owned = self._pid == os.getpid()
         if client is not None and owned:
             client.close()
+
+
+_SHARED_CLIENTS: "weakref.WeakSet[SharedHttpClient]" = weakref.WeakSet()
+
+
+def _reset_shared_clients_after_fork() -> None:
+    for shared in list(_SHARED_CLIENTS):
+        shared._after_fork_in_child()  # pyright: ignore[reportPrivateUsage]
+
+
+if hasattr(os, "register_at_fork"):
+    os.register_at_fork(after_in_child=_reset_shared_clients_after_fork)
 
 
 def translate_error(error: Exception, *, body: bool = False) -> NotteRequestError:
@@ -270,10 +311,13 @@ def translate_errors(*, body: bool = False) -> Generator[None]:
 @contextmanager
 def stream(client: httpx.Client, request: httpx.Request, *, follow_redirects: bool = True) -> Generator[httpx.Response]:
     """Send a request and yield the response before its body is read; always closes it."""
+    token = _CALL_COOKIES.set(httpx.Cookies())
     try:
         response = client.send(request, stream=True, follow_redirects=follow_redirects)
     except (httpx.HTTPError, httpx.InvalidURL) as error:
         raise translate_error(error) from error
+    finally:
+        _CALL_COOKIES.reset(token)
     try:
         with translate_errors(body=True):
             yield response
@@ -296,6 +340,12 @@ def raise_for_status(response: httpx.Response) -> None:
         kind = "Server Error"
     else:
         return
+    # A streamed response closes when its block exits. Read the error body first so callers
+    # can still use `error.response.text` and `json()`, as requests left them readable.
+    try:
+        _ = response.read()
+    except httpx.HTTPError:
+        pass  # the status error is more useful than the failure to read its body
     raise NotteHTTPStatusError(
         f"{response.status_code} {kind}: {response.reason_phrase} for url: {response.url}",
         response=response,

@@ -6,9 +6,12 @@ Where both libraries are involved, `requests` is the reference implementation.
 import datetime as dt
 import gc
 import json
+import os
+import signal
 import socket
 import ssl
 import threading
+import warnings
 from collections.abc import Iterator
 from email.message import Message
 from email.parser import BytesParser
@@ -306,6 +309,19 @@ def test_raise_for_status_error_keeps_the_response(tmp_path: Any, monkeypatch: p
     assert (response.status_code, response.text, response.headers["content-length"]) == (404, "gone", "4")
 
 
+def test_streamed_error_body_stays_readable(tmp_path: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    class Unread(httpx.SyncByteStream):
+        def __iter__(self) -> Iterator[bytes]:
+            yield b'{"detail": "expired"}'
+
+    _ = serve(monkeypatch, lambda request: httpx.Response(403, stream=Unread()))
+    with pytest.raises(NotteHTTPStatusError) as error:
+        _ = api().request_download("https://files.test/a", str(tmp_path / "a"))
+    response = error.value.response
+    assert response is not None
+    assert response.json() == {"detail": "expired"}
+
+
 class Body(BaseModel):
     value: str
 
@@ -512,6 +528,27 @@ def test_cookies_are_not_kept_between_calls(monkeypatch: pytest.MonkeyPatch) -> 
     assert len(client.http.cookies) == 0
 
 
+def test_cookies_set_during_redirects_reach_later_hops(monkeypatch: pytest.MonkeyPatch) -> None:
+    # requests' per-call session sent a cookie set by one hop on the next; nothing outlived the call.
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/resource":
+            return httpx.Response(302, headers={"location": f"{SERVER}/next", "set-cookie": "hop=1; Path=/"})
+        return httpx.Response(200, json={"cookie": request.headers.get("cookie")})
+
+    seen = serve(monkeypatch, handler)
+    client = api()
+    assert client._request(endpoint()) == {"cookie": "hop=1"}
+    assert client._request(endpoint()) == {"cookie": "hop=1"}
+    assert [request.headers.get("cookie") for request in seen] == [None, "hop=1", None, "hop=1"]
+
+
+def test_malformed_server_url_is_an_sdk_exception() -> None:
+    client = BaseClient(SimpleNamespace(max_retries=0), None, server_url="http://localhost:bad", api_key="test-key")
+    with pytest.raises(requests.RequestException) as error:
+        _ = client._request(endpoint())
+    assert isinstance(error.value, NotteInvalidURLError)
+
+
 # ---------------------------------------------------------------------------
 # Connection pooling and lifecycle
 
@@ -585,6 +622,40 @@ def test_forked_process_gets_its_own_connections(monkeypatch: pytest.MonkeyPatch
     # The child never closes the parent's connections.
     assert not parent.is_closed
     parent.close()
+
+
+@pytest.mark.skipif(not hasattr(os, "fork"), reason="os.fork is POSIX only")
+def test_fork_while_another_thread_holds_the_client_lock() -> None:
+    client = NotteClient(api_key="test-key", server_url=SERVER)
+    shared = client._http  # pyright: ignore[reportPrivateUsage]
+    holding, release = threading.Event(), threading.Event()
+
+    def hold() -> None:
+        with shared._lock:  # pyright: ignore[reportPrivateUsage]
+            holding.set()
+            _ = release.wait(5)
+
+    holder = threading.Thread(target=hold)
+    holder.start()
+    _ = holding.wait(5)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)  # fork() in a multi-threaded process
+        pid = os.fork()
+    if pid == 0:  # child: the holding thread does not exist here
+        code = 1
+        try:
+            _ = signal.alarm(5)  # a hang on the inherited lock ends the child with SIGALRM
+            # Skip opening real connections: only the lock is under test.
+            with patch("notte_sdk._transport.http_client", return_value=Mock(spec=httpx.Client)):
+                _ = shared.get()
+            code = 0
+        finally:
+            os._exit(code)
+    release.set()
+    holder.join()
+    _, status = os.waitpid(pid, 0)
+    assert os.waitstatus_to_exitcode(status) == 0, "the forked child hung on the inherited lock"
+    client.close()
 
 
 def test_streamed_responses_are_closed(monkeypatch: pytest.MonkeyPatch) -> None:
