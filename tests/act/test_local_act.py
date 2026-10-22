@@ -544,7 +544,7 @@ async def test_cloud_freshness_scripts_return_no_field_values(session: NotteSess
     assert private not in json.dumps(stored)
     assert stored["elements"]["name"][0] == "INPUT" and stored["elements"]["name"][2] is None
     same = json.loads(await page.evaluate(remote_signatures_expression({"name": xpaths["name"]}, "compare", "a")))
-    assert same == {"url": page.url, "unchanged": {"name": True}}
+    assert same == {"url": page.url, "unchanged": {"name": True}, "focusUnchanged": True}
 
     # an edit is detected in the page, without the value coming back
     await page.fill("#name", private + "!")
@@ -613,3 +613,42 @@ async def test_fields_get_their_real_names(session: NotteSession) -> None:
     _ = await session.aact("look", decider=decider)
     labels = [e["label"] for e in decider.states[0].elements if e["role"] == "textbox"]
     assert labels == ["Phone number", "Delivery date"]
+
+
+@pytest.mark.asyncio
+async def test_a_renamed_field_is_stale(session: NotteSession) -> None:
+    # the field's own text, value and selectors stay; only the `<label for>` naming it changes
+    page = session.window.page
+    await page.set_content('<label for="q">Search</label><p>hint</p><input id="q" name="q">')
+    ids = await _ids(session)
+    target = ids["q"]
+
+    names = iter(["Delete account", "Close account"])
+
+    async def rename() -> None:
+        await page.eval_on_selector("label", "(el, name) => el.textContent = name", next(names))
+
+    decider = FakeDecider(choices=[{"operation": "CLICK", "click_target": target}] * 2, on_choose=rename)
+    result = await session.aact("click the search box", decider=decider, raise_on_failure=False)
+    # renamed while each decision was taken: decided again once, then stale, never executed on an old name
+    assert len(decider.states) == 2 and result.status == "stale" and result.execution is None
+
+
+@pytest.mark.asyncio
+async def test_enter_is_stale_when_the_focus_moved(session: NotteSession) -> None:
+    page = session.window.page
+    await page.set_content("<input id='search'><form><input id='other'></form>")
+    await page.focus("#search")
+
+    fields = iter(["#other", "#search"])
+
+    async def move_focus() -> None:
+        await page.focus(next(fields))
+
+    decider = FakeDecider(choices=[{"operation": "PRESS_ENTER"}] * 2, on_choose=move_focus)
+    result = await session.aact("submit the search", decider=decider, raise_on_failure=False)
+    # Enter would go to another field than the decision saw: decided again, then stale
+    assert result.status == "stale" and len(decider.states) == 2
+    # a focus that stays put lets Enter through
+    still = await session.aact("submit", decider=FakeDecider(choices=[{"operation": "PRESS_ENTER"}]))
+    assert still.status == "executed"
