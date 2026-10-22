@@ -13,6 +13,12 @@ from typing_extensions import override
 
 
 class ValueWithPlaceholder(SecretStr):
+    """A secret value that shows its placeholder instead of the value.
+
+    `str()`, `repr()` and serialization show the placeholder (or `''` when the value is empty), so a credential
+    filled into an action never appears in logs or traces. Use `get_secret_value()` to read the real value.
+    """
+
     def __init__(self, secret_value: str, placeholder_value: str):
         super().__init__(secret_value)
         self.placeholder_value: str = placeholder_value
