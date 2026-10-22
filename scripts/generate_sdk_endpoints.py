@@ -807,7 +807,8 @@ def _method(bound: Bound) -> str:
     if op.name == "session_auth_readiness":
         call = f"self.{runtime}({endpoint}, timeout=10)"
     if field := RESULT_FIELDS.get(op.name):
-        if bound.response.model.model_fields[field].annotation is not bool:
+        annotation = bound.response.model.model_fields[field].annotation
+        if not (isinstance(annotation, type) and issubclass(annotation, bool)):
             raise GenerationError(f"{op.name}: result field must remain bool")
         call, returns = f"{call}.{field}", "bool"
     lines.append(f"        _ = {call}" if op.response_shape == "none" else f"        return {call}")

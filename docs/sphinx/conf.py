@@ -116,4 +116,8 @@ def curate_reference(app: Sphinx, exception: Exception | None) -> None:
                 target = new if new.startswith("https://") else new + suffix
                 text = text.replace(f"]({old}{suffix})", f"]({target})")
         text = re.sub(r'/sdk-reference/agentsclient/[\w_]+(?:\.md)?(?=["\)])', "/sdk-reference/manual/agent", text)
+        # Inherited pydantic docstrings link relative to their own docs site.
+        text = re.sub(r"\]\(\.\./([\w/-]+)\.md(#[\w-]+)?\)", r"](https://docs.pydantic.dev/latest/\1/\2)", text)
+        # Their mkdocs cross-references ([`name`][target]) have no definitions here and render as brackets.
+        text = re.sub(r"\[(`[^`]+`)\]\[[\w.]+\]", r"\1", text)
         _ = page.write_text(text)
