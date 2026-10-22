@@ -383,6 +383,38 @@ async def test_vault_secrets_typed_earlier_are_masked() -> None:
     assert "user@example.org" in decider.states[0].model_dump_json()
 
 
+@pytest.mark.asyncio
+async def test_choose_masks_protected_options() -> None:
+    from notte_core.act import run_choose
+
+    from tests.act.fakes import FakeDecider
+
+    email = "jane.private@example.test"
+    page = _page()
+
+    class Driver:
+        has_vault: bool = False
+
+        def secret_replacements(self) -> dict[str, str]:
+            return {}
+
+        async def observe(self, observation: Any) -> ObservedPage:  # pyright: ignore[reportUnusedParameter]
+            return page
+
+    history = ActHistory()
+    history.privacy.remember({"email": email})
+    decider = FakeDecider(choices=[{"answer": "{{email}}"}, {"answer": "option 2"}])
+    choice = await run_choose(Driver(), decider, history, "Which account is shown?", [email, "another account"])  # pyright: ignore[reportArgumentType]
+    assert email not in decider.questions[0]["answer"].model_dump_json()
+    assert choice.choice == email and set(choice.probabilities) == {email, "another account"}
+
+    # masked, both would be "{{email}}": numbered instead
+    choice = await run_choose(Driver(), decider, history, "Which one?", ["{{email}}", email])  # pyright: ignore[reportArgumentType]
+    assert list(decider.questions[1]["answer"].criteria) == ["option 1", "option 2"]
+    assert email not in decider.questions[1]["answer"].model_dump_json()
+    assert choice.choice == email
+
+
 ACCESSIBLE_DESCRIPTION = """### Content of 'WebArea' component with text 'body content'
 _[:]Sign in to Example
 _[:]Username or email address
