@@ -3,6 +3,7 @@
     "category": "Interaction action",
     "description": "<a href=\"https://www.crateandbarrel.com/\"></a>",
     "model_dump": {
+      "accessible_name": "Crate and Barrel",
       "category": "Interaction action",
       "description": "<a href=\"https://www.crateandbarrel.com/\"></a>",
       "id": "L1",
@@ -27,6 +28,7 @@
     "category": "Interaction action",
     "description": "<span>1</span>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<span>1</span>",
       "id": "M1",
@@ -51,6 +53,7 @@
     "category": "Interaction action",
     "description": "<span>Shipping and Gift Options</span>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<span>Shipping and Gift Options</span>",
       "id": "M2",
@@ -75,6 +78,7 @@
     "category": "Interaction action",
     "description": "<input type=\"text\" value=\"\" name=\"FirstName\"></input>",
     "model_dump": {
+      "accessible_name": "First Name required",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"text\" value=\"\" name=\"FirstName\"></input>",
@@ -106,6 +110,7 @@
     "category": "Interaction action",
     "description": "<input type=\"text\" value=\"\" name=\"LastName\"></input>",
     "model_dump": {
+      "accessible_name": "Last Name required",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"text\" value=\"\" name=\"LastName\"></input>",
@@ -137,6 +142,7 @@
     "category": "Interaction action",
     "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"Address1\"></input>",
     "model_dump": {
+      "accessible_name": "Street Address required",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"Address1\"></input>",
@@ -168,6 +174,7 @@
     "category": "Interaction action",
     "description": "<button type=\"button\"></button>",
     "model_dump": {
+      "accessible_name": "Add apt, suite or other optional",
       "category": "Interaction action",
       "description": "<button type=\"button\"></button>",
       "id": "B1",
@@ -192,6 +199,7 @@
     "category": "Interaction action",
     "description": "<input type=\"text\" value=\"\" name=\"zipCode\"></input>",
     "model_dump": {
+      "accessible_name": "Zip Code required",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"text\" value=\"\" name=\"zipCode\"></input>",
@@ -223,6 +231,7 @@
     "category": "Interaction action",
     "description": "<input type=\"text\" value=\"\" name=\"City\"></input>",
     "model_dump": {
+      "accessible_name": "City required",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"text\" value=\"\" name=\"City\"></input>",
@@ -254,6 +263,7 @@
     "category": "Interaction action",
     "description": "<select name=\"State\"></select>",
     "model_dump": {
+      "accessible_name": "State required",
       "category": "Interaction action",
       "description": "<select name=\"State\"></select>",
       "id": "I6",
@@ -284,6 +294,7 @@
     "category": "Interaction action",
     "description": "<a href=\"https://www.crateandbarrel.com/checkout/cart\"></a>",
     "model_dump": {
+      "accessible_name": "Edit cart",
       "category": "Interaction action",
       "description": "<a href=\"https://www.crateandbarrel.com/checkout/cart\"></a>",
       "id": "L2",

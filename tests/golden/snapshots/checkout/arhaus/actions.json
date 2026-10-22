@@ -3,6 +3,7 @@
     "category": "Interaction action",
     "description": "<a href=\"https://www.arhaus.com/\"></a>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<a href=\"https://www.arhaus.com/\"></a>",
       "id": "L1",
@@ -27,6 +28,7 @@
     "category": "Interaction action",
     "description": "<a href=\"https://www.arhaus.com/cart\" aria_label=\"Cart\"></a>",
     "model_dump": {
+      "accessible_name": "Cart",
       "category": "Interaction action",
       "description": "<a href=\"https://www.arhaus.com/cart\" aria_label=\"Cart\"></a>",
       "id": "L2",
@@ -51,6 +53,7 @@
     "category": "Interaction action",
     "description": "<a href=\"https://www.arhaus.com/account/login?checkout_url=%2Fcheckouts%2Fcn%2FZ2NwLXVzLXdlc3QxOjAxSzA4MllSNkM3NUdNRTBBMDQ2M1lHODZF%3Fcompany_location_id%26locale%3Den-US\"></a>",
     "model_dump": {
+      "accessible_name": "Log in",
       "category": "Interaction action",
       "description": "<a href=\"https://www.arhaus.com/account/login?checkout_url=%2Fcheckouts%2Fcn%2FZ2NwLXVzLXdlc3QxOjAxSzA4MllSNkM3NUdNRTBBMDQ2M1lHODZF%3Fcompany_location_id%26locale%3Den-US\"></a>",
       "id": "L3",
@@ -75,6 +78,7 @@
     "category": "Interaction action",
     "description": "<div></div>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<div></div>",
       "id": "M1",
@@ -99,6 +103,7 @@
     "category": "Interaction action",
     "description": "<input type=\"email\" value=\"\" placeholder=\"Email\" name=\"email\"></input>",
     "model_dump": {
+      "accessible_name": "Email",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"email\" value=\"\" placeholder=\"Email\" name=\"email\"></input>",
@@ -130,6 +135,7 @@
     "category": "Interaction action",
     "description": "<input type=\"checkbox\" name=\"marketing_opt_in\"></input>",
     "model_dump": {
+      "accessible_name": "Email me with news and offers",
       "category": "Interaction action",
       "description": "<input type=\"checkbox\" name=\"marketing_opt_in\"></input>",
       "id": "B1",
@@ -154,6 +160,7 @@
     "category": "Interaction action",
     "description": "<label></label>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<label></label>",
       "id": "M2",
@@ -178,6 +185,7 @@
     "category": "Interaction action",
     "description": "<select name=\"countryCode\"></select>",
     "model_dump": {
+      "accessible_name": "Country/Region",
       "category": "Interaction action",
       "description": "<select name=\"countryCode\"></select>",
       "id": "I2",
@@ -208,6 +216,7 @@
     "category": "Interaction action",
     "description": "<div></div>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<div></div>",
       "id": "M3",
@@ -232,6 +241,7 @@
     "category": "Interaction action",
     "description": "<input type=\"text\" value=\"\" placeholder=\"First name\" name=\"firstName\"></input>",
     "model_dump": {
+      "accessible_name": "First name",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"text\" value=\"\" placeholder=\"First name\" name=\"firstName\"></input>",
@@ -263,6 +273,7 @@
     "category": "Interaction action",
     "description": "<div></div>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<div></div>",
       "id": "M4",
@@ -287,6 +298,7 @@
     "category": "Interaction action",
     "description": "<input type=\"text\" value=\"\" placeholder=\"Last name\" name=\"lastName\"></input>",
     "model_dump": {
+      "accessible_name": "Last name",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"text\" value=\"\" placeholder=\"Last name\" name=\"lastName\"></input>",
@@ -318,6 +330,7 @@
     "category": "Interaction action",
     "description": "<div></div>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<div></div>",
       "id": "M5",
@@ -342,6 +355,7 @@
     "category": "Interaction action",
     "description": "<input type=\"text\" value=\"\" placeholder=\"Address\" name=\"address1\" role=\"combobox\" aria_expanded=\"false\"></input>",
     "model_dump": {
+      "accessible_name": "Address",
       "category": "Interaction action",
       "description": "<input type=\"text\" value=\"\" placeholder=\"Address\" name=\"address1\" role=\"combobox\" aria_expanded=\"false\"></input>",
       "id": "I5",
@@ -372,6 +386,7 @@
     "category": "Interaction action",
     "description": "<div></div>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<div></div>",
       "id": "M6",
@@ -396,6 +411,7 @@
     "category": "Interaction action",
     "description": "<input type=\"text\" value=\"\" placeholder=\"Apartment, suite, etc. (optional)\" name=\"address2\"></input>",
     "model_dump": {
+      "accessible_name": "Apartment, suite, etc. (optional)",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"text\" value=\"\" placeholder=\"Apartment, suite, etc. (optional)\" name=\"address2\"></input>",
@@ -427,6 +443,7 @@
     "category": "Interaction action",
     "description": "<div></div>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<div></div>",
       "id": "M7",
@@ -451,6 +468,7 @@
     "category": "Interaction action",
     "description": "<input type=\"text\" value=\"\" placeholder=\"Discount Code or Trade ID\" name=\"reductions\"></input>",
     "model_dump": {
+      "accessible_name": "Discount Code or Trade ID",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"text\" value=\"\" placeholder=\"Discount Code or Trade ID\" name=\"reductions\"></input>",
@@ -482,6 +500,7 @@
     "category": "Interaction action",
     "description": "<button type=\"button\" aria_expanded=\"false\"></button>",
     "model_dump": {
+      "accessible_name": "Click here",
       "category": "Interaction action",
       "description": "<button type=\"button\" aria_expanded=\"false\"></button>",
       "id": "B2",
@@ -506,6 +525,7 @@
     "category": "Interaction action",
     "description": "<button type=\"button\" aria_expanded=\"false\"></button>",
     "model_dump": {
+      "accessible_name": "Click here",
       "category": "Interaction action",
       "description": "<button type=\"button\" aria_expanded=\"false\"></button>",
       "id": "B3",
@@ -530,6 +550,7 @@
     "category": "Interaction action",
     "description": "<button type=\"button\" aria_label=\"Shipping policy\"></button>",
     "model_dump": {
+      "accessible_name": "Shipping policy",
       "category": "Interaction action",
       "description": "<button type=\"button\" aria_label=\"Shipping policy\"></button>",
       "id": "B4",

@@ -3,6 +3,7 @@
     "category": "Interaction action",
     "description": "<button></button>",
     "model_dump": {
+      "accessible_name": "Light button",
       "category": "Interaction action",
       "description": "<button></button>",
       "id": "B1",
@@ -27,6 +28,7 @@
     "category": "Interaction action",
     "description": "<button></button>",
     "model_dump": {
+      "accessible_name": "Shadow button",
       "category": "Interaction action",
       "description": "<button></button>",
       "id": "B2",
@@ -51,6 +53,7 @@
     "category": "Interaction action",
     "description": "<input aria_label=\"Shadow input\"></input>",
     "model_dump": {
+      "accessible_name": "Shadow input",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input aria_label=\"Shadow input\"></input>",
@@ -82,6 +85,7 @@
     "category": "Interaction action",
     "description": "<button></button>",
     "model_dump": {
+      "accessible_name": "Nested shadow button",
       "category": "Interaction action",
       "description": "<button></button>",
       "id": "B3",
@@ -106,6 +110,7 @@
     "category": "Interaction action",
     "description": "<input aria_label=\"Nested shadow input\"></input>",
     "model_dump": {
+      "accessible_name": "Nested shadow input",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input aria_label=\"Nested shadow input\"></input>",
@@ -137,6 +142,7 @@
     "category": "Interaction action",
     "description": "<input type=\"checkbox\"></input>",
     "model_dump": {
+      "accessible_name": "Nested shadow checkbox",
       "category": "Interaction action",
       "description": "<input type=\"checkbox\"></input>",
       "id": "B4",

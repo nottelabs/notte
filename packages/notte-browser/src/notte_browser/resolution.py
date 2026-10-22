@@ -107,6 +107,7 @@ async def resolve(
         raise InvalidActionError(action_id=action.id, reason=f"action '{action.id}' not found in page context.")
     action.selector = await resolve_selectors(node, verbose)
     action.text_label = node.inner_text()
+    action.accessible_name = node.accessible_name
     return action
 
 

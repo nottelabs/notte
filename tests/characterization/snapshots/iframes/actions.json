@@ -3,6 +3,7 @@
     "category": "Interaction action",
     "description": "<button></button>",
     "model_dump": {
+      "accessible_name": "Main button",
       "category": "Interaction action",
       "description": "<button></button>",
       "id": "B1",
@@ -27,6 +28,7 @@
     "category": "Interaction action",
     "description": "<button></button>",
     "model_dump": {
+      "accessible_name": "Frame button",
       "category": "Interaction action",
       "description": "<button></button>",
       "id": "B2",
@@ -53,6 +55,7 @@
     "category": "Interaction action",
     "description": "<input aria_label=\"Frame input\"></input>",
     "model_dump": {
+      "accessible_name": "Frame input",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input aria_label=\"Frame input\"></input>",
@@ -86,6 +89,7 @@
     "category": "Interaction action",
     "description": "<button></button>",
     "model_dump": {
+      "accessible_name": "Nested frame button",
       "category": "Interaction action",
       "description": "<button></button>",
       "id": "B3",
@@ -113,6 +117,7 @@
     "category": "Interaction action",
     "description": "<input aria_label=\"Nested frame input\"></input>",
     "model_dump": {
+      "accessible_name": "Nested frame input",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input aria_label=\"Nested frame input\"></input>",

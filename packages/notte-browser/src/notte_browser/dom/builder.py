@@ -50,6 +50,8 @@ class RawNode(TypedDict):
     bbox: NotRequired[dict[str, float] | None]
     # live value / checked state / select options of highlighted elements (`ElementState`)
     state: NotRequired[dict[str, Any]]
+    # accessible name of highlighted elements, when they have one
+    accessibleName: NotRequired[str]
     # visible iframe elements of the child frames the caller asked about
     frameIndex: NotRequired[int]
     frameOffset: NotRequired[dict[str, float]]
@@ -202,6 +204,7 @@ class _TreeBuilder:
             ),
             bbox=BoundingBox.model_validate(bbox) if bbox else None,
             state=ElementState.from_payload(raw.get("state")),
+            accessible_name=raw.get("accessibleName"),
         )
         for child in children:
             child.set_parent(node)

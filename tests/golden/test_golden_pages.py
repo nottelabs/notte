@@ -9,7 +9,7 @@ listed in a different order between runs (and serialised differently across plat
 The expected output lives next to this file in `snapshots/<page>/`:
 
 - `observe.txt`: the action space description, then one line per interaction action
-  (id, type, text label, CSS and XPath selectors, iframe / shadow-root flags)
+  (id, type, text label, accessible name, CSS and XPath selectors, iframe / shadow-root flags)
 - `scrape.md`: `session.scrape()` markdown (full page)
 - `scrape_main.md`: `session.scrape(only_main_content=True)` markdown
 
@@ -67,6 +67,7 @@ def _render_observation(obs: Observation) -> str:
                     action.id,
                     action.type,
                     repr(action.text_label),
+                    repr(action.accessible_name),
                     "" if selector is None else selector.css_selector,
                     "" if selector is None else selector.xpath_selector,
                     f"in_iframe={selector is not None and selector.in_iframe}",

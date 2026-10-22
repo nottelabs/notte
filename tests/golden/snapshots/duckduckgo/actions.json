@@ -3,6 +3,7 @@
     "category": "Interaction action",
     "description": "<a href=\"https://duckduckgo.com/about\" title=\"Learn about DuckDuckGo\" aria_label=\"Learn about DuckDuckGo\"></a>",
     "model_dump": {
+      "accessible_name": "Learn about DuckDuckGo",
       "category": "Interaction action",
       "description": "<a href=\"https://duckduckgo.com/about\" title=\"Learn about DuckDuckGo\" aria_label=\"Learn about DuckDuckGo\"></a>",
       "id": "L1",
@@ -27,6 +28,7 @@
     "category": "Interaction action",
     "description": "<input type=\"text\" value=\"\" placeholder=\"Search without being tracked\" name=\"q\" role=\"combobox\" aria_label=\"Search with DuckDuckGo\" aria_expanded=\"true\"></input>",
     "model_dump": {
+      "accessible_name": "Search with DuckDuckGo",
       "category": "Interaction action",
       "description": "<input type=\"text\" value=\"\" placeholder=\"Search without being tracked\" name=\"q\" role=\"combobox\" aria_label=\"Search with DuckDuckGo\" aria_expanded=\"true\"></input>",
       "id": "I1",
@@ -57,6 +59,7 @@
     "category": "Interaction action",
     "description": "<a href=\"https://duck.ai/\"></a>",
     "model_dump": {
+      "accessible_name": "Chat",
       "category": "Interaction action",
       "description": "<a href=\"https://duck.ai/\"></a>",
       "id": "L2",
@@ -81,6 +84,7 @@
     "category": "Interaction action",
     "description": "<button></button>",
     "model_dump": {
+      "accessible_name": "Menu",
       "category": "Interaction action",
       "description": "<button></button>",
       "id": "B1",
@@ -105,6 +109,7 @@
     "category": "Interaction action",
     "description": "<a></a>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<a></a>",
       "id": "L3",
@@ -129,6 +134,7 @@
     "category": "Interaction action",
     "description": "<a href=\"https://addons.mozilla.org/firefox/downloads/latest/duckduckgo-for-firefox/addon-385621-latest.xpi\"></a>",
     "model_dump": {
+      "accessible_name": "Add Extension",
       "category": "Interaction action",
       "description": "<a href=\"https://addons.mozilla.org/firefox/downloads/latest/duckduckgo-for-firefox/addon-385621-latest.xpi\"></a>",
       "id": "L4",
@@ -153,6 +159,7 @@
     "category": "Interaction action",
     "description": "<a href=\"#features\"></a>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<a href=\"#features\"></a>",
       "id": "L5",

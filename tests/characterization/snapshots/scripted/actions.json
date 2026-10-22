@@ -3,6 +3,7 @@
     "category": "Interaction action",
     "description": "<button></button>",
     "model_dump": {
+      "accessible_name": "Static button",
       "category": "Interaction action",
       "description": "<button></button>",
       "id": "B1",
@@ -27,6 +28,7 @@
     "category": "Interaction action",
     "description": "<button></button>",
     "model_dump": {
+      "accessible_name": "Generated button",
       "category": "Interaction action",
       "description": "<button></button>",
       "id": "B2",
@@ -51,6 +53,7 @@
     "category": "Interaction action",
     "description": "<input placeholder=\"Generated input\"></input>",
     "model_dump": {
+      "accessible_name": "Generated input",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input placeholder=\"Generated input\"></input>",
@@ -82,6 +85,7 @@
     "category": "Interaction action",
     "description": "<select aria_label=\"Generated choice\"></select>",
     "model_dump": {
+      "accessible_name": "Generated choice",
       "category": "Interaction action",
       "description": "<select aria_label=\"Generated choice\"></select>",
       "id": "I2",

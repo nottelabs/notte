@@ -3,6 +3,7 @@
     "category": "Interaction action",
     "description": "<button></button>",
     "model_dump": {
+      "accessible_name": "Outside button",
       "category": "Interaction action",
       "description": "<button></button>",
       "id": "B1",
@@ -27,6 +28,7 @@
     "category": "Interaction action",
     "description": "<input aria_label=\"Outside input\"></input>",
     "model_dump": {
+      "accessible_name": "Outside input",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input aria_label=\"Outside input\"></input>",
@@ -58,6 +60,7 @@
     "category": "Interaction action",
     "description": "<button></button>",
     "model_dump": {
+      "accessible_name": "Inside button",
       "category": "Interaction action",
       "description": "<button></button>",
       "id": "B2",
@@ -82,6 +85,7 @@
     "category": "Interaction action",
     "description": "<input aria_label=\"Inside input\"></input>",
     "model_dump": {
+      "accessible_name": "Inside input",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input aria_label=\"Inside input\"></input>",

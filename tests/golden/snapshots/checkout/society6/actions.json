@@ -3,6 +3,7 @@
     "category": "Interaction action",
     "description": "<a href=\"https://society6.com/\"></a>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<a href=\"https://society6.com/\"></a>",
       "id": "L1",
@@ -27,6 +28,7 @@
     "category": "Interaction action",
     "description": "<a href=\"https://society6.com/checkouts/cn/Z2NwLXVzLWVhc3QxOjAxSzA4MzAwM1BNVjlIUVpIMUNDMUcxUUg4?payment=shop_pay&checkout_queue_token=A_pZ0R4kxe1xnbCjQRDs2G7pM6js2kVxYgbhFhrPA6sy-vk7tevyU5d6QBhV2VeWV1tJezxbyj8tYyMEuTZeJ4lXqtoYetnRtS28MOo2gV37WPs70pE6EA%3D%3D&redirect_source=direct_checkout_checkout\" aria_label=\"Shop Pay\"></a>",
     "model_dump": {
+      "accessible_name": "Shop Pay",
       "category": "Interaction action",
       "description": "<a href=\"https://society6.com/checkouts/cn/Z2NwLXVzLWVhc3QxOjAxSzA4MzAwM1BNVjlIUVpIMUNDMUcxUUg4?payment=shop_pay&checkout_queue_token=A_pZ0R4kxe1xnbCjQRDs2G7pM6js2kVxYgbhFhrPA6sy-vk7tevyU5d6QBhV2VeWV1tJezxbyj8tYyMEuTZeJ4lXqtoYetnRtS28MOo2gV37WPs70pE6EA%3D%3D&redirect_source=direct_checkout_checkout\" aria_label=\"Shop Pay\"></a>",
       "id": "L2",
@@ -51,6 +53,7 @@
     "category": "Interaction action",
     "description": "<button type=\"button\"></button>",
     "model_dump": {
+      "accessible_name": "Show more options",
       "category": "Interaction action",
       "description": "<button type=\"button\"></button>",
       "id": "B1",
@@ -75,6 +78,7 @@
     "category": "Interaction action",
     "description": "<a href=\"https://account.society6.com/authentication/oauth/authorize?client_id=83aa640d-9b1a-4f5d-b332-2be0ee054e6b&consent_id=d76ebd5b-733b-42f0-b4ba-dcbc1d4f9a04&locale=en-US&nonce=1bc58375-a9dc-45e3-8683-5e2059650945&redirect_uri=https%3A%2F%2Fsociety6.com%2Fcustomer_authentication%2Fcallback%3Fsource%3Dcore&response_type=code&scope=openid+email+customer-account-api%3Afull&state=01K08302Q2HF9MPRZ1W2R740VX\"></a>",
     "model_dump": {
+      "accessible_name": "Log in",
       "category": "Interaction action",
       "description": "<a href=\"https://account.society6.com/authentication/oauth/authorize?client_id=83aa640d-9b1a-4f5d-b332-2be0ee054e6b&consent_id=d76ebd5b-733b-42f0-b4ba-dcbc1d4f9a04&locale=en-US&nonce=1bc58375-a9dc-45e3-8683-5e2059650945&redirect_uri=https%3A%2F%2Fsociety6.com%2Fcustomer_authentication%2Fcallback%3Fsource%3Dcore&response_type=code&scope=openid+email+customer-account-api%3Afull&state=01K08302Q2HF9MPRZ1W2R740VX\"></a>",
       "id": "L3",
@@ -99,6 +103,7 @@
     "category": "Interaction action",
     "description": "<div></div>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<div></div>",
       "id": "M1",
@@ -123,6 +128,7 @@
     "category": "Interaction action",
     "description": "<input type=\"email\" value=\"\" placeholder=\"Email\" name=\"email\"></input>",
     "model_dump": {
+      "accessible_name": "Email",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"email\" value=\"\" placeholder=\"Email\" name=\"email\"></input>",
@@ -154,6 +160,7 @@
     "category": "Interaction action",
     "description": "<input type=\"checkbox\" name=\"marketing_opt_in\"></input>",
     "model_dump": {
+      "accessible_name": "Email me with news and offers",
       "category": "Interaction action",
       "description": "<input type=\"checkbox\" name=\"marketing_opt_in\"></input>",
       "id": "B2",
@@ -178,6 +185,7 @@
     "category": "Interaction action",
     "description": "<label></label>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<label></label>",
       "id": "M2",
@@ -202,6 +210,7 @@
     "category": "Interaction action",
     "description": "<select name=\"countryCode\"></select>",
     "model_dump": {
+      "accessible_name": "Country/Region",
       "category": "Interaction action",
       "description": "<select name=\"countryCode\"></select>",
       "id": "I2",
@@ -232,6 +241,7 @@
     "category": "Interaction action",
     "description": "<div></div>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<div></div>",
       "id": "M3",
@@ -256,6 +266,7 @@
     "category": "Interaction action",
     "description": "<input type=\"text\" value=\"\" placeholder=\"First name\" name=\"firstName\"></input>",
     "model_dump": {
+      "accessible_name": "First name",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"text\" value=\"\" placeholder=\"First name\" name=\"firstName\"></input>",
@@ -287,6 +298,7 @@
     "category": "Interaction action",
     "description": "<div></div>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<div></div>",
       "id": "M4",
@@ -311,6 +323,7 @@
     "category": "Interaction action",
     "description": "<input type=\"text\" value=\"\" placeholder=\"Last name\" name=\"lastName\"></input>",
     "model_dump": {
+      "accessible_name": "Last name",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"text\" value=\"\" placeholder=\"Last name\" name=\"lastName\"></input>",
@@ -342,6 +355,7 @@
     "category": "Interaction action",
     "description": "<div></div>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<div></div>",
       "id": "M5",
@@ -366,6 +380,7 @@
     "category": "Interaction action",
     "description": "<input type=\"text\" value=\"\" placeholder=\"Company (optional)\" name=\"company\"></input>",
     "model_dump": {
+      "accessible_name": "Company (optional)",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"text\" value=\"\" placeholder=\"Company (optional)\" name=\"company\"></input>",
@@ -397,6 +412,7 @@
     "category": "Interaction action",
     "description": "<div></div>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<div></div>",
       "id": "M6",
@@ -421,6 +437,7 @@
     "category": "Interaction action",
     "description": "<input type=\"text\" value=\"\" placeholder=\"Discount code or gift card\" name=\"reductions\"></input>",
     "model_dump": {
+      "accessible_name": "Discount code or gift card",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"text\" value=\"\" placeholder=\"Discount code or gift card\" name=\"reductions\"></input>",
@@ -452,6 +469,7 @@
     "category": "Interaction action",
     "description": "<button type=\"button\" aria_label=\"Shipping policy\"></button>",
     "model_dump": {
+      "accessible_name": "Shipping policy",
       "category": "Interaction action",
       "description": "<button type=\"button\" aria_label=\"Shipping policy\"></button>",
       "id": "B3",

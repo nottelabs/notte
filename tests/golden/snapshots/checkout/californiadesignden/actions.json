@@ -3,6 +3,7 @@
     "category": "Interaction action",
     "description": "<a href=\"https://www.californiadesignden.com/\"></a>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<a href=\"https://www.californiadesignden.com/\"></a>",
       "id": "L1",
@@ -27,6 +28,7 @@
     "category": "Interaction action",
     "description": "<a href=\"https://www.californiadesignden.com/cart\"></a>",
     "model_dump": {
+      "accessible_name": "Cart",
       "category": "Interaction action",
       "description": "<a href=\"https://www.californiadesignden.com/cart\"></a>",
       "id": "L2",
@@ -51,6 +53,7 @@
     "category": "Interaction action",
     "description": "<a href=\"https://www.californiadesignden.com/checkouts/cn/Z2NwLXVzLXdlc3QxOjAxSzA4MzdUWTdNU0VBR0VXOTlQUjk0VzlO?payment=shop_pay&checkout_queue_token=A5NXzPCPoA8rg55g5wLi359_27lRJKcStCHpSRbBVkDJf2CGlVpLpogYmrPbDczmqJHfIuVA3IVkUpSVH3UgFk7412dQiK73R4Q-EEoG1lO6cuHvzP4z&redirect_source=direct_checkout_checkout\" aria_label=\"Shop Pay\"></a>",
     "model_dump": {
+      "accessible_name": "Shop Pay",
       "category": "Interaction action",
       "description": "<a href=\"https://www.californiadesignden.com/checkouts/cn/Z2NwLXVzLXdlc3QxOjAxSzA4MzdUWTdNU0VBR0VXOTlQUjk0VzlO?payment=shop_pay&checkout_queue_token=A5NXzPCPoA8rg55g5wLi359_27lRJKcStCHpSRbBVkDJf2CGlVpLpogYmrPbDczmqJHfIuVA3IVkUpSVH3UgFk7412dQiK73R4Q-EEoG1lO6cuHvzP4z&redirect_source=direct_checkout_checkout\" aria_label=\"Shop Pay\"></a>",
       "id": "L3",
@@ -75,6 +78,7 @@
     "category": "Interaction action",
     "description": "<a href=\"https://shopify.com/authentication/2463760495/oauth/authorize?client_id=e40b40dc-0a00-4513-96a4-e943ca743d9d&consent_id=&locale=en-US&nonce=878bf8d3-77bd-4f54-805e-63871ad69ae2&redirect_uri=https%3A%2F%2Fwww.californiadesignden.com%2Fcustomer_authentication%2Fcallback%3Fsource%3Dcore&response_type=code&scope=openid+email+customer-account-api%3Afull&state=01K0837XWH79MS7CVSN722C9DE\"></a>",
     "model_dump": {
+      "accessible_name": "Log in",
       "category": "Interaction action",
       "description": "<a href=\"https://shopify.com/authentication/2463760495/oauth/authorize?client_id=e40b40dc-0a00-4513-96a4-e943ca743d9d&consent_id=&locale=en-US&nonce=878bf8d3-77bd-4f54-805e-63871ad69ae2&redirect_uri=https%3A%2F%2Fwww.californiadesignden.com%2Fcustomer_authentication%2Fcallback%3Fsource%3Dcore&response_type=code&scope=openid+email+customer-account-api%3Afull&state=01K0837XWH79MS7CVSN722C9DE\"></a>",
       "id": "L4",
@@ -99,6 +103,7 @@
     "category": "Interaction action",
     "description": "<div></div>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<div></div>",
       "id": "M1",
@@ -123,6 +128,7 @@
     "category": "Interaction action",
     "description": "<input type=\"email\" value=\"\" placeholder=\"Email\" name=\"email\"></input>",
     "model_dump": {
+      "accessible_name": "Email",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"email\" value=\"\" placeholder=\"Email\" name=\"email\"></input>",
@@ -154,6 +160,7 @@
     "category": "Interaction action",
     "description": "<input type=\"checkbox\" name=\"marketing_opt_in\"></input>",
     "model_dump": {
+      "accessible_name": "Email me with news and offers",
       "category": "Interaction action",
       "description": "<input type=\"checkbox\" name=\"marketing_opt_in\"></input>",
       "id": "B1",
@@ -178,6 +185,7 @@
     "category": "Interaction action",
     "description": "<label></label>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<label></label>",
       "id": "M2",
@@ -202,6 +210,7 @@
     "category": "Interaction action",
     "description": "<select name=\"countryCode\"></select>",
     "model_dump": {
+      "accessible_name": "Country/Region",
       "category": "Interaction action",
       "description": "<select name=\"countryCode\"></select>",
       "id": "I2",
@@ -232,6 +241,7 @@
     "category": "Interaction action",
     "description": "<div></div>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<div></div>",
       "id": "M3",
@@ -256,6 +266,7 @@
     "category": "Interaction action",
     "description": "<input type=\"text\" value=\"\" placeholder=\"First name\" name=\"firstName\"></input>",
     "model_dump": {
+      "accessible_name": "First name",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"text\" value=\"\" placeholder=\"First name\" name=\"firstName\"></input>",
@@ -287,6 +298,7 @@
     "category": "Interaction action",
     "description": "<div></div>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<div></div>",
       "id": "M4",
@@ -311,6 +323,7 @@
     "category": "Interaction action",
     "description": "<input type=\"text\" value=\"\" placeholder=\"Last name\" name=\"lastName\"></input>",
     "model_dump": {
+      "accessible_name": "Last name",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"text\" value=\"\" placeholder=\"Last name\" name=\"lastName\"></input>",
@@ -342,6 +355,7 @@
     "category": "Interaction action",
     "description": "<div></div>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<div></div>",
       "id": "M5",
@@ -366,6 +380,7 @@
     "category": "Interaction action",
     "description": "<input type=\"text\" value=\"\" placeholder=\"Company (optional)\" name=\"company\"></input>",
     "model_dump": {
+      "accessible_name": "Company (optional)",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"text\" value=\"\" placeholder=\"Company (optional)\" name=\"company\"></input>",
@@ -397,6 +412,7 @@
     "category": "Interaction action",
     "description": "<div></div>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<div></div>",
       "id": "M6",
@@ -421,6 +437,7 @@
     "category": "Interaction action",
     "description": "<input type=\"text\" value=\"\" placeholder=\"Discount code or gift card\" name=\"reductions\"></input>",
     "model_dump": {
+      "accessible_name": "Discount code or gift card",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"text\" value=\"\" placeholder=\"Discount code or gift card\" name=\"reductions\"></input>",

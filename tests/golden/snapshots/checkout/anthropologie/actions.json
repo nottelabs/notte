@@ -3,6 +3,7 @@
     "category": "Interaction action",
     "description": "<a href=\"https://www.anthropologie.com/help/privacy-policy\"></a>",
     "model_dump": {
+      "accessible_name": "Learn more",
       "category": "Interaction action",
       "description": "<a href=\"https://www.anthropologie.com/help/privacy-policy\"></a>",
       "id": "L1",
@@ -27,6 +28,7 @@
     "category": "Interaction action",
     "description": "<a href=\"https://www.anthropologie.com/?ref=logo\"></a>",
     "model_dump": {
+      "accessible_name": "Anthropologie",
       "category": "Interaction action",
       "description": "<a href=\"https://www.anthropologie.com/?ref=logo\"></a>",
       "id": "L2",
@@ -51,6 +53,7 @@
     "category": "Interaction action",
     "description": "<picture></picture>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<picture></picture>",
       "id": "M1",
@@ -75,6 +78,7 @@
     "category": "Interaction action",
     "description": "<a href=\"https://www.anthropologie.com/anthrohome?brand-switch=1&ref=tab\"></a>",
     "model_dump": {
+      "accessible_name": "AnthroHome",
       "category": "Interaction action",
       "description": "<a href=\"https://www.anthropologie.com/anthrohome?brand-switch=1&ref=tab\"></a>",
       "id": "L3",
@@ -99,6 +103,7 @@
     "category": "Interaction action",
     "description": "<picture></picture>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<picture></picture>",
       "id": "M2",
@@ -123,6 +128,7 @@
     "category": "Interaction action",
     "description": "<a href=\"https://www.anthropologie.com/account/hearted-products\"></a>",
     "model_dump": {
+      "accessible_name": "Favorites",
       "category": "Interaction action",
       "description": "<a href=\"https://www.anthropologie.com/account/hearted-products\"></a>",
       "id": "L4",
@@ -147,6 +153,7 @@
     "category": "Interaction action",
     "description": "<a href=\"https://www.anthropologie.com/cart\"></a>",
     "model_dump": {
+      "accessible_name": "My Shopping Cart Product Count 1",
       "category": "Interaction action",
       "description": "<a href=\"https://www.anthropologie.com/cart\"></a>",
       "id": "L5",
@@ -171,6 +178,7 @@
     "category": "Interaction action",
     "description": "<button type=\"button\"></button>",
     "model_dump": {
+      "accessible_name": "SIGN IN",
       "category": "Interaction action",
       "description": "<button type=\"button\"></button>",
       "id": "B1",
@@ -195,6 +203,7 @@
     "category": "Interaction action",
     "description": "<input type=\"email\" value=\"\" name=\"emailAddress\"></input>",
     "model_dump": {
+      "accessible_name": "Email Address",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"email\" value=\"\" name=\"emailAddress\"></input>",
@@ -226,6 +235,7 @@
     "category": "Interaction action",
     "description": "<input type=\"checkbox\" value=\"true\" name=\"emailOptIn\"></input>",
     "model_dump": {
+      "accessible_name": "Please send me Anthropologie offers, promotions, and other commercial messages. (You may unsubscribe at any time.)",
       "category": "Interaction action",
       "description": "<input type=\"checkbox\" value=\"true\" name=\"emailOptIn\"></input>",
       "id": "B2",
@@ -250,6 +260,7 @@
     "category": "Interaction action",
     "description": "<button tabindex=\"0\" role=\"tab\"></button>",
     "model_dump": {
+      "accessible_name": "SHIP",
       "category": "Interaction action",
       "description": "<button tabindex=\"0\" role=\"tab\"></button>",
       "id": "B3",
@@ -274,6 +285,7 @@
     "category": "Interaction action",
     "description": "<button tabindex=\"-1\" role=\"tab\"></button>",
     "model_dump": {
+      "accessible_name": "PICK UP",
       "category": "Interaction action",
       "description": "<button tabindex=\"-1\" role=\"tab\"></button>",
       "id": "B4",
@@ -298,6 +310,7 @@
     "category": "Interaction action",
     "description": "<a href=\"tel:8003092500\"></a>",
     "model_dump": {
+      "accessible_name": "800.309.2500",
       "category": "Interaction action",
       "description": "<a href=\"tel:8003092500\"></a>",
       "id": "L6",
@@ -322,6 +335,7 @@
     "category": "Interaction action",
     "description": "<button type=\"button\" aria_expanded=\"false\"></button>",
     "model_dump": {
+      "accessible_name": "Promo Code",
       "category": "Interaction action",
       "description": "<button type=\"button\" aria_expanded=\"false\"></button>",
       "id": "B5",
@@ -346,6 +360,7 @@
     "category": "Interaction action",
     "description": "<div></div>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<div></div>",
       "id": "M3",
@@ -370,6 +385,7 @@
     "category": "Interaction action",
     "description": "<button type=\"button\"></button>",
     "model_dump": {
+      "accessible_name": "SHIP TO THIS ADDRESS",
       "category": "Interaction action",
       "description": "<button type=\"button\"></button>",
       "id": "B6",

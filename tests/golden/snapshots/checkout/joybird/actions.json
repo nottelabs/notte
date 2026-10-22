@@ -3,6 +3,7 @@
     "category": "Interaction action",
     "description": "<a href=\"https://joybird.com/\" aria_label=\"Joybird\"></a>",
     "model_dump": {
+      "accessible_name": "Joybird",
       "category": "Interaction action",
       "description": "<a href=\"https://joybird.com/\" aria_label=\"Joybird\"></a>",
       "id": "L1",
@@ -27,6 +28,7 @@
     "category": "Interaction action",
     "description": "<a href=\"#email\"></a>",
     "model_dump": {
+      "accessible_name": "1. Email",
       "category": "Interaction action",
       "description": "<a href=\"#email\"></a>",
       "id": "L2",
@@ -51,6 +53,7 @@
     "category": "Interaction action",
     "description": "<a href=\"#shipping\"></a>",
     "model_dump": {
+      "accessible_name": "2. Shipping",
       "category": "Interaction action",
       "description": "<a href=\"#shipping\"></a>",
       "id": "L3",
@@ -75,6 +78,7 @@
     "category": "Interaction action",
     "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"first_name\"></input>",
     "model_dump": {
+      "accessible_name": "First name *",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"first_name\"></input>",
@@ -106,6 +110,7 @@
     "category": "Interaction action",
     "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"last_name\"></input>",
     "model_dump": {
+      "accessible_name": "Last name *",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"last_name\"></input>",
@@ -137,6 +142,7 @@
     "category": "Interaction action",
     "description": "<div role=\"combobox\" aria_expanded=\"false\"></div>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<div role=\"combobox\" aria_expanded=\"false\"></div>",
       "id": "I3",
@@ -167,6 +173,7 @@
     "category": "Interaction action",
     "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"address\"></input>",
     "model_dump": {
+      "accessible_name": "Street address *",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"address\"></input>",
@@ -198,6 +205,7 @@
     "category": "Interaction action",
     "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"city\"></input>",
     "model_dump": {
+      "accessible_name": "City *",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"city\"></input>",
@@ -229,6 +237,7 @@
     "category": "Interaction action",
     "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"apartment\"></input>",
     "model_dump": {
+      "accessible_name": "Apartment / suite # (optional)",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"apartment\"></input>",
@@ -260,6 +269,7 @@
     "category": "Interaction action",
     "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"company\"></input>",
     "model_dump": {
+      "accessible_name": "Company (optional)",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"company\"></input>",
@@ -291,6 +301,7 @@
     "category": "Interaction action",
     "description": "<select></select>",
     "model_dump": {
+      "accessible_name": "State *",
       "category": "Interaction action",
       "description": "<select></select>",
       "id": "I8",
@@ -321,6 +332,7 @@
     "category": "Interaction action",
     "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"zipcode\"></input>",
     "model_dump": {
+      "accessible_name": "Zip code *",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"zipcode\"></input>",
@@ -352,6 +364,7 @@
     "category": "Interaction action",
     "description": "<input type=\"tel\" value=\"\" placeholder=\"\" name=\"phone_number\"></input>",
     "model_dump": {
+      "accessible_name": "Phone (delivery contact) *",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"tel\" value=\"\" placeholder=\"\" name=\"phone_number\"></input>",
@@ -383,6 +396,7 @@
     "category": "Interaction action",
     "description": "<button type=\"button\" aria_label=\"Show/hide order summary\" aria_expanded=\"true\"></button>",
     "model_dump": {
+      "accessible_name": "Show/hide order summary",
       "category": "Interaction action",
       "description": "<button type=\"button\" aria_label=\"Show/hide order summary\" aria_expanded=\"true\"></button>",
       "id": "B1",
@@ -407,6 +421,7 @@
     "category": "Interaction action",
     "description": "<div></div>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<div></div>",
       "id": "M1",
@@ -431,6 +446,7 @@
     "category": "Interaction action",
     "description": "<div></div>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<div></div>",
       "id": "M2",
@@ -455,6 +471,7 @@
     "category": "Interaction action",
     "description": "<div></div>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<div></div>",
       "id": "M3",
@@ -479,6 +496,7 @@
     "category": "Interaction action",
     "description": "<div></div>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<div></div>",
       "id": "M4",
@@ -503,6 +521,7 @@
     "category": "Interaction action",
     "description": "<div></div>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<div></div>",
       "id": "M5",
@@ -527,6 +546,7 @@
     "category": "Interaction action",
     "description": "<div></div>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<div></div>",
       "id": "M6",
@@ -551,6 +571,7 @@
     "category": "Interaction action",
     "description": "<div></div>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<div></div>",
       "id": "M7",
@@ -575,6 +596,7 @@
     "category": "Interaction action",
     "description": "<div></div>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<div></div>",
       "id": "M8",
@@ -599,6 +621,7 @@
     "category": "Interaction action",
     "description": "<div></div>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<div></div>",
       "id": "M9",
@@ -623,6 +646,7 @@
     "category": "Interaction action",
     "description": "<div></div>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<div></div>",
       "id": "M10",
@@ -647,6 +671,7 @@
     "category": "Interaction action",
     "description": "<div></div>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<div></div>",
       "id": "M11",
@@ -671,6 +696,7 @@
     "category": "Interaction action",
     "description": "<div></div>",
     "model_dump": {
+      "accessible_name": null,
       "category": "Interaction action",
       "description": "<div></div>",
       "id": "M12",
@@ -695,6 +721,7 @@
     "category": "Interaction action",
     "description": "<button type=\"button\" aria_expanded=\"false\"></button>",
     "model_dump": {
+      "accessible_name": "Apply Gift Card/Promo Code +",
       "category": "Interaction action",
       "description": "<button type=\"button\" aria_expanded=\"false\"></button>",
       "id": "B2",
