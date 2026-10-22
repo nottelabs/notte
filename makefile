@@ -208,12 +208,14 @@ sdk-endpoints-check:
 	uv run --no-sync python scripts/generate_sdk_endpoints.py --check
 
 # SDK-owned models, side by side with the existing public API during migration.
-.PHONY: sdk-models sdk-codegen sdk-codegen-check
-sdk-models:
-	uv run --no-sync python scripts/generate_sdk_models.py
-
-# Separate targets, so `make -k` still runs the endpoint generator if models fail.
-sdk-codegen: sdk-models sdk-endpoints
+.PHONY: sdk-codegen sdk-codegen-check
+# Endpoints read the generated models, so they run after them, and run even if
+# model generation fails so one run reports both; the target fails if either did.
+sdk-codegen:
+	status=0; \
+	uv run --no-sync python scripts/generate_sdk_models.py || status=1; \
+	uv run --no-sync python scripts/generate_sdk_endpoints.py || status=1; \
+	exit $$status
 
 sdk-codegen-check:
 	uv run --no-sync python scripts/generate_sdk_models.py --check
