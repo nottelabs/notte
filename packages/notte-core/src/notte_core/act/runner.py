@@ -19,7 +19,7 @@ A session plugs in through an `ActDriver` (observe, re-check, execute); the deci
 
 import time
 from collections import deque
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
@@ -364,17 +364,32 @@ async def run_choose(
         ).elements,
         recent_actions=history.privacy.payload(history.recent()),
     )
+    # Option keys reach the model too: send them masked and map the answer back.
+    keys = _model_keys(list(criteria), history.privacy.text)
+    sent = {keys[option]: description for option, description in criteria.items()}
     questions = {
         "answer": Question(
-            criteria=history.privacy.payload(criteria),
+            criteria=history.privacy.payload(sent),
             instructions=history.privacy.payload({"goal": question, "rules": rules}),
         )
     }
     answers = await decider.choose(state, questions)
-    answer = validate_answer(answers, "answer", criteria)
+    answer = validate_answer(answers, "answer", sent)
+    option = {key: option for option, key in keys.items()}
     return Choice(
-        choice=answer.choice, probabilities=answer.probabilities, confidence=answer.confidence, model=answers.model
+        choice=option[answer.choice],
+        probabilities={option[key]: p for key, p in answer.probabilities.items()},
+        confidence=answer.confidence,
+        model=answers.model,
     )
+
+
+def _model_keys(options: list[str], mask: Callable[[str], str]) -> dict[str, str]:
+    """Each option's key in the model request: masked, or numbered when masking makes two keys equal."""
+    masked = [mask(option) for option in options]
+    if len(set(masked)) == len(masked):
+        return dict(zip(options, masked))
+    return {option: f"option {i}" for i, option in enumerate(options, 1)}
 
 
 CHECK_OPTIONS = {
