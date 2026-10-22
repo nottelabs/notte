@@ -92,6 +92,7 @@ class _Remote:
                 answer = {
                     "url": state["url"],
                     "unchanged": {i: state["elements"].get(i) == self.stored["elements"].get(i) for i in ids},
+                    "focusUnchanged": state.get("focus") == self.stored.get("focus"),
                 }
             if answer is not None:
                 self.answers.append(answer)
@@ -170,7 +171,7 @@ def test_remote_choose_and_check(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def _signatures(url: str = "https://search.test/", **elements: Any) -> dict[str, Any]:
     # `ELEMENT_SIGNATURES_JS` returns 15 entries per element: pad the ones a test does not set
-    return {"url": url, "elements": {k: v + [None] * (15 - len(v)) for k, v in elements.items()}}
+    return {"url": url, "elements": {k: v + [None] * (16 - len(v)) for k, v in elements.items()}}
 
 
 def test_remote_freshness_uses_two_evaluate_js_calls(monkeypatch: pytest.MonkeyPatch) -> None:

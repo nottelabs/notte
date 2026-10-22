@@ -178,14 +178,14 @@ class LocalActDriver:
             self._signatures = await self._read_signatures(signature_xpaths(page))
         return page
 
-    async def is_fresh(self, page: ObservedPage, element_id: str | None) -> bool:
+    async def is_fresh(self, page: ObservedPage, element_id: str | None, *, focus: bool = False) -> bool:
         before = self._signatures
         if before.url is not None and before.url != page.url:
             return False
         # without a baseline (the signature script failed after observing), compare a new snapshot
         if before.url is not None and (element_id is None or before.consistent(page, element_id)):
             xpaths = {} if element_id is None else signature_xpaths(page, element_id)
-            return before.matches(await self._read_signatures(xpaths), element_id)
+            return before.matches(await self._read_signatures(xpaths), element_id, focus=focus)
         snapshot = await self.session.window.snapshot(screenshot=False)
         # actions resolve their ids against the snapshot just checked
         self.session.snapshot = snapshot
