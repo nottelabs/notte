@@ -67,7 +67,7 @@ jobs:
           source .venv/bin/activate
 
       - name: Install dependencies
-        run: uv pip install notte-sdk pytest-examples
+        run: uv pip install notte-sdk pytest-examples fastapi httpx
 
       - name: Run syntax checks
         run: cd docs/src && uv run pytest -v --tb=no
@@ -110,7 +110,7 @@ jobs:
         # and every snippet "passed" without being checked.
         run: |
           uv sync --locked
-          uv pip install pytest-examples mypy stagehand==4.2.1 openai-agents==0.24.0 claude-agent-sdk==0.2.168 pymongo==4.19.0
+          uv pip install pytest-examples mypy stagehand==4.2.1 openai-agents==0.24.0 claude-agent-sdk==0.2.168 pymongo==4.19.0 fastapi httpx
 
       - name: Run type checks
         # --no-sync: pytest and the mypy it spawns must see exactly the environment
@@ -149,7 +149,7 @@ jobs:
           source .venv/bin/activate
 
       - name: Install dependencies
-        run: uv pip install notte-sdk pytest-examples patchright
+        run: uv pip install notte-sdk pytest-examples patchright fastapi httpx
 
       - name: Install patchright
         run: uv run patchright install --no-shell
