@@ -39,7 +39,7 @@ def test_combined_body_query_and_required_header(client: NotteClient, monkeypatc
     call = transport.calls[0]
     assert call.url == SERVER + "/sessions/s%2Fid/payments"
     assert call.headers["idempotency-key"] == "unique"
-    assert call.params == {"update_metadata": False}
+    assert call.params == {"update_metadata": "False"}
     assert json.loads(call.data) == data
 
 

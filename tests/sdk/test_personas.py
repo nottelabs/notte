@@ -1,11 +1,12 @@
 import json
 from typing import Any, Literal
-from unittest.mock import MagicMock, patch
 
 import pytest
 from notte_sdk.client import NotteClient
 from notte_sdk.types import PersonaCreateRequest, PersonaResponse
 from pydantic import ValidationError
+
+from tests.sdk.test_generated_endpoints import fake
 
 
 def _persona_response_dict(**overrides: Any) -> dict[str, Any]:
@@ -51,31 +52,29 @@ def test_persona_response_parses_email_provider(provider: Literal["agentmail", "
     assert response.email_provider == provider
 
 
-@patch("notte_sdk._transport._RequestSession.post")
 @pytest.mark.parametrize("provider", ["agentmail", "resend"])
-def test_personas_create_sends_email_provider(mock_post: MagicMock, provider: Literal["agentmail", "resend"]) -> None:
-    mock_post.return_value.status_code = 200
-    mock_post.return_value.json.return_value = _persona_response_dict(email_provider=provider)
+def test_personas_create_sends_email_provider(
+    provider: Literal["agentmail", "resend"], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    api = fake(monkeypatch, _persona_response_dict(email_provider=provider))
     client = NotteClient(api_key="test-api-key")
 
     response = client.personas.create(email_provider=provider)
 
     assert response.email_provider == provider
-    body = json.loads(mock_post.call_args.kwargs["data"])
+    body = json.loads([c for c in api.calls if c.method == "POST"][-1].data)
     assert body["email_provider"] == provider
 
 
-@patch("notte_sdk._transport._RequestSession.post")
 @pytest.mark.parametrize("provider", ["agentmail", "resend"])
 def test_persona_constructor_forwards_email_provider(
-    mock_post: MagicMock, provider: Literal["agentmail", "resend"]
+    provider: Literal["agentmail", "resend"], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    mock_post.return_value.status_code = 200
-    mock_post.return_value.json.return_value = _persona_response_dict(email_provider=provider)
+    api = fake(monkeypatch, _persona_response_dict(email_provider=provider))
     client = NotteClient(api_key="test-api-key")
 
     persona = client.Persona(email_provider=provider)
 
     assert persona.info.email_provider == provider
-    body = json.loads(mock_post.call_args.kwargs["data"])
+    body = json.loads([c for c in api.calls if c.method == "POST"][-1].data)
     assert body["email_provider"] == provider

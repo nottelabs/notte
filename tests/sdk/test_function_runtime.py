@@ -3,12 +3,13 @@
 import json
 from functools import partial
 from types import SimpleNamespace
-from unittest.mock import MagicMock, Mock
+from unittest.mock import Mock
 
 import pytest
-from notte_sdk import _transport as transport
 from notte_sdk.endpoints.functions import FunctionsClient, NotteFunction
 from notte_sdk.types import RunFunctionRequest, StartFunctionRunRequest
+
+from tests.sdk.test_generated_endpoints import FakeSession, fake
 
 
 @pytest.mark.parametrize("runtime", [None, "standard", "extended"])
@@ -26,37 +27,32 @@ def test_high_level_run_forwards_runtime(runtime):
 @pytest.mark.parametrize("stream", [False, True])
 def test_transport_preserves_selection(monkeypatch, runtime, stream):
     endpoint = SimpleNamespace(with_request=lambda request: SimpleNamespace(request=request))
+    run = {
+        "function_id": "function",
+        "function_run_id": "run",
+        "status": "closed",
+        "session_id": None,
+        "result": {"ok": True},
+    }
+    api = FakeSession(
+        ("data: " + json.dumps({"type": "result", "message": json.dumps(run)})).encode() if stream else run
+    )
     client = SimpleNamespace(
         token="test",
         headers=lambda headers: headers,
         request_path=lambda endpoint: "https://example.com",
         _start_function_run_endpoint=lambda **kwargs: endpoint,
         FUNCTION_RUN_TIMEOUT=900,
+        http=api.client,
     )
     # The real transport helpers, bound to the fake client.
-    for name in ("_request_once", "_stream_lines", "_open_once"):
+    for name in ("_request_once", "_stream_lines", "_once_request"):
         setattr(client, name, partial(getattr(FunctionsClient, name), client))
-    post = MagicMock(
-        return_value=SimpleNamespace(
-            json=lambda: {
-                "function_id": "function",
-                "function_run_id": "run",
-                "status": "closed",
-                "session_id": None,
-                "result": {"ok": True},
-            }
-        )
-    )
-    post.return_value = MagicMock(json=post.return_value.json)
-    post.return_value.__enter__.return_value = post.return_value
-    post.return_value.iter_lines.return_value = [
-        ("data: " + json.dumps({"type": "result", "message": json.dumps(post.return_value.json())})).encode()
-    ]
-    monkeypatch.setattr(transport.requests, "post", post)
     FunctionsClient.run_start(
         client, "run", function_id="function", variables={"wait_seconds": 960}, stream=stream, runtime=runtime
     )
-    body = json.loads(post.call_args.kwargs["data"])
+    assert [(call.method, call.url) for call in api.calls] == [("POST", "https://example.com")]
+    body = json.loads(api.calls[0].data)
     assert body.get("runtime") == runtime
     assert body["variables"] == {"wait_seconds": 960}
     if runtime is None:
@@ -67,21 +63,18 @@ def test_transport_preserves_selection(monkeypatch, runtime, stream):
 
 @pytest.mark.parametrize("stream", [True, False])
 def test_invalid_runtime_is_sent_and_api_422_is_typed(monkeypatch, stream):
-    import requests
     from notte_sdk import NotteClient
     from notte_sdk.errors import NotteAPIError
 
     client = NotteClient(api_key="test-api-key", server_url="https://api.example.test")
-    response = requests.Response()
-    response.status_code = 422
-    response._content = b'{"detail": "invalid runtime"}'
-    post = MagicMock(return_value=response)
-    monkeypatch.setattr(transport.requests, "post", post)
+    api = fake(monkeypatch, {"detail": "invalid runtime"}, 422)
     function = SimpleNamespace(client=client.functions, response=SimpleNamespace(function_id="function"))
     with pytest.raises(NotteAPIError) as error:
         NotteFunction.run(function, function_run_id="run", runtime="invalid", stream=stream)
     assert error.value.status_code == 422
-    assert json.loads(post.call_args.kwargs["data"])["runtime"] == "invalid"
+    assert error.value.error == {"detail": "invalid runtime"}
+    assert json.loads(api.calls[0].data)["runtime"] == "invalid"
+    assert api.bodies[0].closed
 
 
 def test_models_leave_runtime_unset():

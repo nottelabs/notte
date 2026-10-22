@@ -64,19 +64,19 @@ def test_vault_wire_contract(client: NotteClient, monkeypatch: pytest.MonkeyPatc
     assert client.vaults.credit_card_delete(ID).message == "Credit card deleted successfully"
     assert client.vaults.delete(ID).message == "Vault deleted successfully"
     assert [(c.method, c.url.removeprefix(SERVER), c.params) for c in session.calls] == [
-        ("POST", "/vaults/create", None),
-        ("POST", "/vaults/create", None),
+        ("POST", "/vaults/create", {}),
+        ("POST", "/vaults/create", {}),
         ("GET", "/vaults", {}),
-        ("GET", "/vaults", {"only_active": False, "page_size": 101, "page": 0}),
-        ("POST", PATH + "/credentials", None),
-        ("POST", PATH + "/card", None),
+        ("GET", "/vaults", {"only_active": "False", "page_size": "101", "page": "0"}),
+        ("POST", PATH + "/credentials", {}),
+        ("POST", PATH + "/card", {}),
         ("GET", PATH + "/credentials", {"url": "https://www.example.com/login"}),
-        ("GET", PATH + "/card", None),
-        ("GET", PATH, None),
-        ("GET", PATH, None),
+        ("GET", PATH + "/card", {}),
+        ("GET", PATH, {}),
+        ("GET", PATH, {}),
         ("DELETE", PATH + "/credentials", {"url": "https://www.example.com/login"}),
-        ("DELETE", PATH + "/card", None),
-        ("DELETE", PATH, None),
+        ("DELETE", PATH + "/card", {}),
+        ("DELETE", PATH, {}),
     ]
     assert [json.loads(c.data) for c in session.calls if c.method == "POST"] == [
         {},
@@ -142,7 +142,7 @@ def test_empty_request_keywords_are_sent(client: NotteClient, monkeypatch: pytes
     with pytest.raises(NotteAPIError) as error:
         _ = getattr(client.vaults, method)(ID, typo=True)
     assert error.value.status_code == 422
-    assert session.calls[-1].params == {"typo": True}
+    assert session.calls[-1].params == {"typo": "True"}
 
 
 @pytest.mark.parametrize(
@@ -180,7 +180,7 @@ def test_server_validates_url(client: NotteClient, monkeypatch: pytest.MonkeyPat
     with pytest.raises(NotteAPIError) as error:
         _ = client.vaults.credentials_get(ID, **data)
     assert error.value.status_code == 422
-    assert session.calls[-1].params == data
+    assert session.calls[-1].params == {key: str(value) for key, value in data.items()}
 
 
 @pytest.mark.parametrize("credentials", [{"password": CREDS["password"]}, {**CREDS, "username": "both"}])

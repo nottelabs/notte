@@ -3,9 +3,9 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-import requests
 from notte_core import __version__ as notte_core_version
 from notte_sdk.endpoints.sessions import RemoteSession
+from notte_sdk.errors import NotteConnectionError
 from notte_sdk.types import SessionStartRequest
 
 
@@ -92,9 +92,9 @@ def test_start_retries_final_metadata_refresh(monkeypatch, failures):
     monkeypatch.setattr("notte_sdk.endpoints.sessions.time.sleep", lambda _: None)
     session = bare_session()
     ready = session.client.status.return_value
-    session.client.status.side_effect = [requests.ConnectionError("temporary") for _ in range(failures)] + [ready]
+    session.client.status.side_effect = [NotteConnectionError("temporary") for _ in range(failures)] + [ready]
     if failures == 3:
-        with pytest.raises(requests.ConnectionError):
+        with pytest.raises(NotteConnectionError):
             session.start()
         session.stop.assert_called_once_with(close_reason="error")
         assert session.client.status.call_count == 3
@@ -112,9 +112,9 @@ async def test_async_entry_retries_final_metadata_refresh(monkeypatch, failures)
     monkeypatch.setattr("notte_sdk.endpoints.sessions.asyncio.sleep", AsyncMock())
     session = bare_session()
     ready = session.client.status.return_value
-    session.client.status.side_effect = [requests.ConnectionError("temporary") for _ in range(failures)] + [ready]
+    session.client.status.side_effect = [NotteConnectionError("temporary") for _ in range(failures)] + [ready]
     if failures == 3:
-        with pytest.raises(requests.ConnectionError):
+        with pytest.raises(NotteConnectionError):
             await session.__aenter__()
         session.stop.assert_called_once_with(close_reason="error")
         assert session.client.status.call_count == 3

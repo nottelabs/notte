@@ -181,10 +181,6 @@ def test_method_alias_transport(
     resource, args, kwargs, payload = CASES[old]
     obj = getattr(client, resource)
     transport = fake(monkeypatch, payload)
-    if old == "run":
-        response = Mock()
-        response.json.return_value = payload
-        monkeypatch.setattr("notte_sdk._transport.requests.post", Mock(return_value=response))
     expected = getattr(obj, new)(*args, **kwargs)
     canonical = Mock(wraps=getattr(obj, new))
     monkeypatch.setattr(obj, new, canonical)

@@ -49,18 +49,18 @@ def test_persona_wire_contract(client: NotteClient, monkeypatch: pytest.MonkeyPa
     assert client.personas.delete_number(ID).message == "Phone number deleted successfully"
     assert client.personas.delete(ID).status == "failure"
     assert [(c.method, c.url.removeprefix(SERVER), c.params) for c in session.calls] == [
-        ("POST", "/personas/create", None),
-        ("POST", "/personas/create", None),
-        ("GET", PATH, None),
+        ("POST", "/personas/create", {}),
+        ("POST", "/personas/create", {}),
+        ("GET", PATH, {}),
         ("GET", "/personas", {}),
-        ("GET", "/personas", {"only_active": False, "page_size": 101, "page": 0}),
+        ("GET", "/personas", {"only_active": "False", "page_size": "101", "page": "0"}),
         ("GET", PATH + "/emails", {}),
-        ("GET", PATH + "/emails", {"limit": 3, "timedelta": dt.timedelta(minutes=5), "only_unread": True}),
+        ("GET", PATH + "/emails", {"limit": "3", "timedelta": "0:05:00", "only_unread": "True"}),
         ("GET", PATH + "/sms", {}),
-        ("GET", PATH + "/sms", {"limit": 2, "timedelta": dt.timedelta(seconds=30)}),
-        ("POST", PATH + "/sms/number", None),
-        ("DELETE", PATH + "/sms/number", None),
-        ("DELETE", PATH, None),
+        ("GET", PATH + "/sms", {"limit": "2", "timedelta": "0:00:30"}),
+        ("POST", PATH + "/sms/number", {}),
+        ("DELETE", PATH + "/sms/number", {}),
+        ("DELETE", PATH, {}),
     ]
     assert [json.loads(c.data) for c in session.calls if c.method == "POST"] == [
         {},

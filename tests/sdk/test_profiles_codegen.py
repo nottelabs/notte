@@ -41,14 +41,14 @@ def test_profile_wire_contract(client: NotteClient, monkeypatch: pytest.MonkeyPa
     assert client.profiles.delete("a/b") is True
 
     assert [(c.method, c.url.removeprefix(SERVER), c.params) for c in session.calls] == [
-        ("POST", "/profiles/create", None),
-        ("POST", "/profiles/create", None),
-        ("GET", "/profiles/a%2Fb%20%3F%23%25%C3%A9", None),
-        ("GET", "/profiles", {"page_size": 20}),
-        ("GET", "/profiles", {"page": 2, "page_size": 3, "name": "p"}),
-        ("GET", "/profiles", {"page_size": 20}),
-        ("DELETE", "/profiles/a%2Fb", None),
-        ("DELETE", "/profiles/a%2Fb", None),
+        ("POST", "/profiles/create", {}),
+        ("POST", "/profiles/create", {}),
+        ("GET", "/profiles/a%2Fb%20%3F%23%25%C3%A9", {}),
+        ("GET", "/profiles", {"page_size": "20"}),
+        ("GET", "/profiles", {"page": "2", "page_size": "3", "name": "p"}),
+        ("GET", "/profiles", {"page_size": "20"}),
+        ("DELETE", "/profiles/a%2Fb", {}),
+        ("DELETE", "/profiles/a%2Fb", {}),
     ]
     assert json.loads(session.calls[0].data) == {}
     assert json.loads(session.calls[1].data) == {"name": "p"}
@@ -102,7 +102,7 @@ def test_request_compatibility(client: NotteClient, monkeypatch: pytest.MonkeyPa
     # The facade historically leaves pagination bounds to the server.
     session.payload = {"items": []}
     _ = client.profiles.list(page=0, page_size=101)
-    assert session.calls[-1].params == {"page": 0, "page_size": 101}
+    assert session.calls[-1].params == {"page": "0", "page_size": "101"}
 
 
 def test_profile_state_accepts_plain_domain_lists(client: NotteClient, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -145,5 +145,9 @@ def test_profile_invalid_inputs_reach_api(
         getattr(client.profiles, method)(**data)
     assert error.value.status_code == 422
     assert len(capture.calls) == 1
-    sent = json.loads(capture.calls[0].data) if method == "create" else capture.calls[0].params
-    assert all(sent[key] == value for key, value in data.items())
+    if method == "create":
+        sent, expected = json.loads(capture.calls[0].data), data
+    else:
+        # query parameters reach the wire as text
+        sent, expected = capture.calls[0].params, {key: str(value) for key, value in data.items()}
+    assert all(sent[key] == value for key, value in expected.items())

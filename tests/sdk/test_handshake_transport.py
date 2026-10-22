@@ -9,17 +9,18 @@ import threading
 from contextlib import contextmanager
 from unittest.mock import Mock, patch
 
+import httpcore
+import httpx
 import pytest
 import requests
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
-from notte_sdk._transport import _HandshakeConnection, _HandshakePool, request_session
+from notte_sdk._transport import _HandshakeBackend, _HandshakeStream, http_client, send
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
+from notte_sdk.errors import NotteConnectionError, NotteRequestError, NotteSSLError
 from pydantic import BaseModel
-from urllib3.connection import HTTPSConnection
-from urllib3.exceptions import ReadTimeoutError
 
 
 @pytest.fixture
@@ -128,18 +129,34 @@ def tls_server(certificate, *, failures=0, reset=False, response="ok"):
         assert not state["errors"]
 
 
+PROXY_VARIABLES = ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy")
+
+
 @pytest.fixture(autouse=True)
 def fast_backoff(monkeypatch):
     monkeypatch.setattr("notte_sdk._transport.time.sleep", Mock())
     monkeypatch.setattr("notte_sdk._transport.random.uniform", lambda *_: 0.05)
+    # Connect directly to the local test server.
+    for name in PROXY_VARIABLES:
+        monkeypatch.delenv(name, raising=False)
+
+
+@pytest.fixture
+def trusted(monkeypatch):
+    """Create SDK clients that trust a CA bundle, configured as requests users configure it."""
+
+    def client(ca: str) -> httpx.Client:
+        monkeypatch.setenv("REQUESTS_CA_BUNDLE", ca)
+        return http_client()
+
+    return client
 
 
 @pytest.mark.parametrize("method", ["GET", "POST", "PATCH", "DELETE"])
 @pytest.mark.parametrize("reset", [False, True])
-def test_handshake_recovery_sends_one_request(certificate, method, reset):
-    with tls_server(certificate, failures=2, reset=reset) as (url, ca, state), request_session() as session:
-        session.trust_env = False
-        result = session.request(method, url, data=b"payload", verify=ca, timeout=2)
+def test_handshake_recovery_sends_one_request(certificate, trusted, method, reset):
+    with tls_server(certificate, failures=2, reset=reset) as (url, ca, state), trusted(ca) as client:
+        result = send(client, client.build_request(method, url, content=b"payload", timeout=2))
         assert result.status_code == 200
         assert state["connections"] == 3
         assert len(state["requests"]) == 1
@@ -147,77 +164,119 @@ def test_handshake_recovery_sends_one_request(certificate, method, reset):
 
 
 @pytest.mark.parametrize("reset", [False, True])
-def test_persistent_failure_is_bounded(certificate, reset):
-    with tls_server(certificate, failures=10, reset=reset) as (url, ca, state), request_session() as session:
-        session.trust_env = False
-        with pytest.raises(requests.exceptions.ConnectionError):
-            session.post(url, data=b"payload", verify=ca, timeout=2)
+def test_persistent_failure_is_bounded(certificate, trusted, reset):
+    with tls_server(certificate, failures=10, reset=reset) as (url, ca, state), trusted(ca) as client:
+        with pytest.raises(requests.exceptions.ConnectionError) as error:
+            send(client, client.build_request("POST", url, content=b"payload", timeout=2))
+        assert isinstance(error.value, NotteSSLError if not reset else NotteConnectionError)
         assert state["connections"] == 3
         assert state["requests"] == []
 
 
 @pytest.mark.parametrize("response", ["drop", "timeout", "503"])
-def test_post_is_never_replayed_after_transmission(certificate, response):
-    with tls_server(certificate, response=response) as (url, ca, state), request_session() as session:
-        session.trust_env = False
+def test_post_is_never_replayed_after_transmission(certificate, trusted, response):
+    with tls_server(certificate, response=response) as (url, ca, state), trusted(ca) as client:
+        request = client.build_request("POST", url, content=b"action", timeout=0.2)
         if response == "503":
-            assert session.post(url, data=b"action", verify=ca, timeout=0.2).status_code == 503
+            assert send(client, request).status_code == 503
         else:
-            with pytest.raises(requests.exceptions.RequestException):
-                session.post(url, data=b"action", verify=ca, timeout=0.2)
+            with pytest.raises(requests.exceptions.RequestException) as error:
+                send(client, request)
+            assert isinstance(error.value, NotteRequestError)
         assert state["connections"] == 1
         assert len(state["requests"]) == 1
 
 
-def test_certificate_rejection_is_not_retried(certificate):
-    with tls_server(certificate) as (url, _, state), request_session() as session:
-        session.trust_env = False
-        with pytest.raises(requests.exceptions.SSLError):
-            session.get(url, timeout=2)
+def test_certificate_rejection_is_not_retried(certificate, monkeypatch):
+    monkeypatch.delenv("REQUESTS_CA_BUNDLE", raising=False)
+    monkeypatch.delenv("CURL_CA_BUNDLE", raising=False)
+    with tls_server(certificate) as (url, _, state), http_client() as client:
+        with pytest.raises(requests.exceptions.SSLError) as error:
+            send(client, client.build_request("GET", url, timeout=2))
+        assert isinstance(error.value, NotteSSLError)
         assert state["connections"] == 1
         assert state["requests"] == []
 
 
-def test_adapter_is_local_and_proxy_pool_is_unmodified():
-    with request_session() as session, requests.Session() as normal:
-        adapter = session.get_adapter("https://example.test")
-        assert adapter.poolmanager.pool_classes_by_scheme["https"] is _HandshakePool
-        assert (
-            normal.get_adapter("https://example.test").poolmanager.pool_classes_by_scheme["https"] is not _HandshakePool
-        )
-        assert adapter.proxy_manager_for("http://proxy.test").pool_classes_by_scheme["https"] is not _HandshakePool
-        assert type(session.get_adapter("http://example.test")) is requests.adapters.HTTPAdapter
+def test_handshake_backend_is_local_and_proxy_pool_is_unmodified(monkeypatch):
+    monkeypatch.setenv("HTTPS_PROXY", "http://proxy.test:3128")
+    with http_client() as client, httpx.Client() as normal:
+        assert isinstance(client._transport._pool._network_backend, _HandshakeBackend)
+        assert not isinstance(normal._transport._pool._network_backend, _HandshakeBackend)
+        proxy = client._transport_for_url(httpx.URL("https://example.test"))
+        assert proxy is not client._transport
+        assert isinstance(proxy._pool, httpcore.HTTPProxy)
+        assert not isinstance(proxy._pool._network_backend, _HandshakeBackend)
+
+
+class FakeStream(httpcore.NetworkStream):
+    def __init__(self, error: Exception | None = None) -> None:
+        self.error = error
+        self.closed = False
+        self.handshakes: list[float | None] = []
+
+    def read(self, max_bytes, timeout=None):
+        return b""
+
+    def write(self, buffer, timeout=None):
+        pass
+
+    def close(self):
+        self.closed = True
+
+    def start_tls(self, ssl_context, server_hostname=None, timeout=None):
+        self.handshakes.append(timeout)
+        if self.error is not None:
+            raise self.error
+        return self
+
+
+def handshake_failure(cause: BaseException) -> httpcore.ConnectError:
+    # httpcore raises ConnectError from the socket error, as SyncStream.start_tls does.
+    error = httpcore.ConnectError(str(cause))
+    error.__cause__ = cause
+    return error
 
 
 @pytest.mark.parametrize(
-    "error",
+    "cause",
     [
         ssl.SSLError("unsupported protocol"),
         ssl.SSLCertVerificationError("bad cert"),
-        ReadTimeoutError(None, "/", "timeout"),
+        ConnectionRefusedError("refused"),
     ],
 )
-def test_other_connection_errors_are_not_retried(error):
-    conn = _HandshakeConnection("example.test")
-    with patch.object(HTTPSConnection, "connect", side_effect=error) as connect:
-        with pytest.raises(type(error)) as caught:
-            conn.connect()
-        assert caught.value is error
-        assert connect.call_count == 1
+def test_other_connection_errors_are_not_retried(cause):
+    error = handshake_failure(cause)
+    connect = Mock(return_value=FakeStream(error))
+    stream = _HandshakeStream(connect, "example.test")
+    with pytest.raises(httpcore.ConnectError) as caught:
+        stream.start_tls(ssl.create_default_context(), "example.test", 1.0)
+    assert caught.value is error
+    assert connect.call_count == 1
+
+
+def test_handshake_timeouts_are_not_retried():
+    error = httpcore.ConnectTimeout("handshake timed out")
+    connect = Mock(return_value=FakeStream(error))
+    stream = _HandshakeStream(connect, "example.test")
+    with pytest.raises(httpcore.ConnectTimeout) as caught:
+        stream.start_tls(ssl.create_default_context(), "example.test", 1.0)
+    assert caught.value is error
+    assert connect.call_count == 1
 
 
 def test_exhaustion_preserves_error_closes_sockets_and_logs_no_path():
-    conn = _HandshakeConnection("example.test")
-    error = ssl.SSLEOFError("sensitive exception text")
-    with (
-        patch.object(HTTPSConnection, "connect", side_effect=error) as connect,
-        patch.object(conn, "close") as close,
-        patch("notte_sdk._transport.logger.warning") as log,
-    ):
-        with pytest.raises(ssl.SSLEOFError) as caught:
-            conn.connect()
+    error = handshake_failure(ssl.SSLEOFError("sensitive exception text"))
+    streams = [FakeStream(error) for _ in range(3)]
+    connect = Mock(side_effect=streams)
+    with patch("notte_sdk._transport.logger.warning") as log:
+        stream = _HandshakeStream(connect, "example.test")
+        with pytest.raises(httpcore.ConnectError) as caught:
+            stream.start_tls(ssl.create_default_context(), "example.test", 1.0)
         assert caught.value is error
-        assert connect.call_count == close.call_count == 3
+        assert connect.call_count == 3
+        assert all(item.closed for item in streams)
         assert log.call_count == 3
         assert "sensitive" not in str(log.call_args_list)
 
@@ -261,10 +320,9 @@ def test_sdk_preserves_headers_query_and_body_during_recovery(certificate, monke
             assert body == b'{"value":"test"}'
 
 
-def test_explicit_redirect_retains_requests_behavior(certificate):
-    with tls_server(certificate, failures=1, response="redirect") as (url, ca, state), request_session() as session:
-        session.trust_env = False
-        result = session.post(url, data=b"body", verify=ca, timeout=2)
+def test_explicit_redirect_retains_requests_behavior(certificate, trusted):
+    with tls_server(certificate, failures=1, response="redirect") as (url, ca, state), trusted(ca) as client:
+        result = send(client, client.build_request("POST", url, content=b"body", timeout=2))
         assert result.status_code == 200
         assert len(result.history) == 1
         assert state["connections"] == 3
@@ -274,15 +332,21 @@ def test_explicit_redirect_retains_requests_behavior(certificate):
 
 
 def test_backoff_and_per_attempt_timeout_are_preserved():
-    conn = _HandshakeConnection("example.test", timeout=1.5)
+    error = handshake_failure(ConnectionResetError("reset"))
+    streams = [FakeStream(error) for _ in range(3)]
     timeouts = []
 
-    def fail():
-        timeouts.append(conn.timeout)
-        raise ConnectionResetError("reset")
+    def connect(host, port, timeout=None, local_address=None, socket_options=None):
+        timeouts.append(timeout)
+        return streams[len(timeouts) - 1]
 
-    with patch.object(HTTPSConnection, "connect", side_effect=fail), patch("notte_sdk._transport.time.sleep") as sleep:
-        with pytest.raises(ConnectionResetError):
-            conn.connect()
+    with (
+        patch.object(httpcore.SyncBackend, "connect_tcp", side_effect=connect),
+        patch("notte_sdk._transport.time.sleep") as sleep,
+    ):
+        stream = _HandshakeBackend().connect_tcp("example.test", 443, timeout=1.5)
+        with pytest.raises(httpcore.ConnectError):
+            stream.start_tls(ssl.create_default_context(), "example.test", 1.5)
         assert timeouts == [1.5, 1.5, 1.5]
+        assert [item.handshakes for item in streams] == [[1.5], [1.5], [1.5]]
         assert [args.args[0] for args in sleep.call_args_list] == [0.3, 0.8]

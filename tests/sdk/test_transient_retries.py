@@ -1,28 +1,48 @@
-import json
+import socket
+import ssl
 from io import BytesIO
 from types import SimpleNamespace
 from unittest.mock import Mock
 
+import httpcore
+import httpx
 import pytest
-import requests
 from notte_sdk._retry import backoff_delay, is_retryable_exception, parse_retry_after, retry_delay
-from notte_sdk._transport import send_with_retries
+from notte_sdk._transport import send_with_retries, translate_error
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.endpoints.sessions import RemoteSession
-from notte_sdk.errors import NotteAPIError
+from notte_sdk.errors import (
+    NotteAPIError,
+    NotteConnectionError,
+    NotteConnectTimeoutError,
+    NotteReadTimeoutError,
+    NotteRequestError,
+    NotteSSLError,
+)
 from notte_sdk.types import SessionStartRequest
 from pydantic import BaseModel
-from urllib3.exceptions import MaxRetryError, NewConnectionError
 
 
-def response(status: int, retry_after: str | None = None) -> requests.Response:
-    result = requests.Response()
-    result.status_code = status
-    result._content_consumed = True
-    result._content = json.dumps({"message": "unavailable", "status": status}).encode()
-    if retry_after is not None:
-        result.headers["Retry-After"] = retry_after
-    return result
+def response(status: int, retry_after: str | None = None) -> httpx.Response:
+    headers = {} if retry_after is None else {"Retry-After": retry_after}
+    return httpx.Response(status, json={"message": "unavailable", "status": status}, headers=headers)
+
+
+def failure(error: httpx.HTTPError, cause: BaseException | None = None, *, body: bool = False) -> NotteRequestError:
+    """The SDK exception for an httpx failure, chained as the transport raises it.
+
+    httpx raises from the httpcore error, which httpcore re-raised `from None`:
+    its socket or TLS error is only its `__context__`.
+    """
+    if cause is not None:
+        inner = httpcore.ConnectError(str(cause))
+        inner.__context__ = cause
+        inner.__suppress_context__ = True
+        error.__cause__ = inner
+    try:
+        raise translate_error(error, body=body) from error
+    except NotteRequestError as translated:
+        return translated
 
 
 @pytest.fixture
@@ -86,16 +106,57 @@ def test_retry_budget_and_disabled_retries(transport, status):
 
 def test_connection_exception_shapes(transport):
     client, sleep = transport
-    refused = requests.ConnectionError(MaxRetryError(None, "/", NewConnectionError(None, "refused")))
+    refused = failure(httpx.ConnectError("refused"), ConnectionRefusedError(61, "refused"))
     client._send.side_effect = [refused, response(200)]
     assert send(client, "POST").status_code == 200
     sleep.assert_called_once()
-    assert is_retryable_exception(requests.ConnectTimeout(), "POST")
-    assert is_retryable_exception(requests.ReadTimeout(), "GET")
-    assert not is_retryable_exception(requests.ReadTimeout(), "POST")
-    assert is_retryable_exception(requests.ConnectionError("reset"), "GET")
-    assert not is_retryable_exception(requests.ConnectionError("reset"), "POST")
-    assert not is_retryable_exception(requests.exceptions.SSLError(), "GET")
+    assert is_retryable_exception(NotteConnectTimeoutError(), "POST")
+    assert is_retryable_exception(NotteReadTimeoutError(), "GET")
+    assert not is_retryable_exception(NotteReadTimeoutError(), "POST")
+    assert is_retryable_exception(NotteConnectionError("reset"), "GET")
+    assert not is_retryable_exception(NotteConnectionError("reset"), "POST")
+    assert not is_retryable_exception(NotteSSLError(), "GET")
+
+
+IDEMPOTENT_ONLY = {"GET": True, "POST": False}
+EVERY_METHOD = {"GET": True, "POST": True}
+NEVER = {"GET": False, "POST": False}
+
+
+@pytest.mark.parametrize(
+    "error,cause,body,retried",
+    [
+        # The connection never opened: nothing was sent.
+        (httpx.ConnectError("refused"), ConnectionRefusedError(61, "refused"), False, EVERY_METHOD),
+        (httpx.ConnectError("unreachable"), OSError(51, "unreachable"), False, EVERY_METHOD),
+        (httpx.ConnectTimeout("connect"), None, False, EVERY_METHOD),
+        (httpx.PoolTimeout("pool"), None, False, EVERY_METHOD),
+        # requests treated an unknown host and an exhausted handshake reset as possibly sent.
+        (httpx.ConnectError("dns"), socket.gaierror(8, "nodename"), False, IDEMPOTENT_ONLY),
+        (httpx.ConnectError("reset"), ConnectionResetError(54, "reset"), False, IDEMPOTENT_ONLY),
+        (httpx.ReadTimeout("read"), None, False, IDEMPOTENT_ONLY),
+        (httpx.WriteTimeout("write"), None, False, IDEMPOTENT_ONLY),
+        (httpx.ReadError("reset"), ConnectionResetError(54, "reset"), False, IDEMPOTENT_ONLY),
+        (httpx.WriteError("pipe"), BrokenPipeError(32, "pipe"), False, IDEMPOTENT_ONLY),
+        (httpx.RemoteProtocolError("Server disconnected"), None, False, IDEMPOTENT_ONLY),
+        (httpx.ProxyError("proxy"), None, False, IDEMPOTENT_ONLY),
+        # A body read that times out, like requests' ConnectionError from iter_content.
+        (httpx.ReadTimeout("read"), None, True, IDEMPOTENT_ONLY),
+        # A body broken mid-read, like requests' ChunkedEncodingError.
+        (httpx.RemoteProtocolError("incomplete"), None, True, NEVER),
+        (httpx.ReadError("reset"), ConnectionResetError(54, "reset"), True, NEVER),
+        # TLS failures, in the handshake or later.
+        (httpx.ConnectError("cert"), ssl.SSLCertVerificationError("bad cert"), False, NEVER),
+        (httpx.ConnectError("eof"), ssl.SSLEOFError("eof"), False, NEVER),
+        (httpx.ReadError("tls"), ssl.SSLError("bad record mac"), True, NEVER),
+        (httpx.TooManyRedirects("redirects"), None, False, NEVER),
+        (httpx.UnsupportedProtocol("ftp"), None, False, NEVER),
+        (httpx.DecodingError("gzip"), None, True, NEVER),
+    ],
+)
+def test_retry_classification_matches_requests(error, cause, body, retried):
+    translated = failure(error, cause, body=body)
+    assert {method: is_retryable_exception(translated, method) for method in ("GET", "POST")} == retried
 
 
 @pytest.mark.parametrize("header,delay", [("4", 4), ("20", 20), ("21", None)])

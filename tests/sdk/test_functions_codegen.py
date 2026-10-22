@@ -51,14 +51,14 @@ def test_function_wire_contract(client: NotteClient, monkeypatch: pytest.MonkeyP
     assert [(c.method, c.url.removeprefix(SERVER), c.params) for c in api.calls] == [
         ("GET", "/functions/fn", {}),
         ("GET", "/functions/fn", {"version": "v1"}),
-        ("POST", "/functions/fn/fork", None),
+        ("POST", "/functions/fn/fork", {}),
         ("GET", "/functions/", {}),
-        ("DELETE", "/functions/fn", None),
-        ("POST", "/functions/fn/runs/create", None),
+        ("DELETE", "/functions/fn", {}),
+        ("POST", "/functions/fn/runs/create", {}),
         ("GET", "/functions/fn/runs/run", {"payload_mode": "references"}),
-        ("PATCH", "/functions/fn/runs/run", None),
-        ("DELETE", "/functions/fn/runs/run", None),
-        ("GET", "/functions/fn/runs/", {"only_active": True}),
+        ("PATCH", "/functions/fn/runs/run", {}),
+        ("DELETE", "/functions/fn/runs/run", {}),
+        ("GET", "/functions/fn/runs/", {"only_active": "True"}),
     ]
     assert api.calls[2].data is None
     assert [json.loads(c.data) for c in api.calls if c.method in {"POST", "PATCH"} and c.data is not None] == [
@@ -130,9 +130,12 @@ def test_invalid_function_requests_reach_api(
         getattr(client.functions, name)(*args, **data)
     assert error.value.status_code == 422
     assert len(api.calls) == 1
-    supplied = json.loads(api.calls[0].data) if name == "run_update_metadata" else api.calls[0].params
-    assert supplied is not None
-    assert all(supplied[key] == value for key, value in data.items())
+    if name == "run_update_metadata":
+        supplied, expected = json.loads(api.calls[0].data), data
+    else:
+        # query parameters reach the wire as text
+        supplied, expected = api.calls[0].params, {key: str(value) for key, value in data.items()}
+    assert all(supplied[key] == value for key, value in expected.items())
 
 
 def test_function_multipart_contract(client: NotteClient, monkeypatch: pytest.MonkeyPatch, tmp_path: Any) -> None:
@@ -143,11 +146,14 @@ def test_function_multipart_contract(client: NotteClient, monkeypatch: pytest.Mo
     _ = client.functions.update("fn", path=str(path), version="v1", restricted=False)
     assert [(c.method, c.url.removeprefix(SERVER), c.params) for c in api.calls] == [
         ("POST", "/functions/", {}),
-        ("POST", "/functions/fn", {"restricted": False, "version": "v1"}),
+        ("POST", "/functions/fn", {"restricted": "False", "version": "v1"}),
     ]
     # The local path is the uploaded file, not a form field.
     assert api.calls[0].data == {"name": "fixture"}
     assert api.calls[1].data == {}
+    for call in api.calls:
+        filename, content, _ = call.files["file"]
+        assert (filename, content) == ("function.py", b"def run(): return 1\n")
     assert all("Content-Type" not in c.headers for c in api.calls)
 
 

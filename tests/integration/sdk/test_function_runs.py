@@ -4,9 +4,11 @@ import tempfile
 from collections.abc import Generator
 from unittest.mock import patch
 
+import httpx
 import pytest
 from dotenv import load_dotenv
 from notte_sdk import NotteClient
+from notte_sdk._transport import http_client
 from notte_sdk.endpoints.functions import NotteFunction
 from notte_sdk.errors import NotteAPIError
 from notte_sdk.types import (
@@ -17,6 +19,8 @@ from notte_sdk.types import (
     ListFunctionRunsResponse,
     UpdateFunctionRunResponse,
 )
+
+from tests.sdk.test_generated_endpoints import FakeSession
 
 _ = load_dotenv()
 
@@ -211,58 +215,35 @@ class TestFunctionRunsClient:
 class TestFunctionRunExecution:
     """Test cases for actual workflow run execution."""
 
-    @patch("requests.post")
-    def test_run_workflow_cloud_execution(self, mock_post, client: NotteClient, test_workflow: GetFunctionResponse):
+    def test_run_workflow_cloud_execution(self, client: NotteClient, test_workflow: GetFunctionResponse):
         """Test running a workflow in cloud mode."""
-        # Mock the create_run response
-        create_run_mock_response = type(
-            "MockResponse",
-            (),
+        # The create_run response, then the run workflow response
+        api = FakeSession(
             {
-                "json": lambda self: {
-                    "workflow_id": test_workflow.function_id,
-                    "workflow_run_id": "test-run-id",
-                    "created_at": "2023-01-01T00:00:00Z",
-                    "status": "created",
-                },
-                "raise_for_status": lambda self: None,
-                "status_code": 200,
-                "ok": True,
-            },
-        )()
-
-        # Mock the run workflow response
-        run_workflow_mock_response = type(
-            "MockResponse",
-            (),
-            {
-                "json": lambda self: {
-                    "workflow_id": test_workflow.function_id,
-                    "workflow_run_id": "test-run-id",
-                    "session_id": "test-session-id",
-                    "result": str({"test_var": "test_value", "result": "mock_scraped_data"}),
-                    "status": "closed",
-                },
-                "raise_for_status": lambda self: None,
-                "status_code": 200,
-                "ok": True,
-            },
-        )()
-
-        # Configure mock to return different responses for different calls
-        mock_post.side_effect = [create_run_mock_response, run_workflow_mock_response]
-
-        # Create a run first
-        with patch("notte_sdk._transport._RequestSession.post", side_effect=mock_post):
+                "workflow_id": test_workflow.function_id,
+                "workflow_run_id": "test-run-id",
+                "created_at": "2023-01-01T00:00:00Z",
+                "status": "created",
+            }
+        )
+        with patch("notte_sdk._transport.SharedHttpClient.get", return_value=api.client):
+            # Create a run first
             create_response = client.functions.create_run(function_id=test_workflow.function_id)
 
-        # Run the workflow
-        response = client.functions.run_start(
-            function_run_id=create_response.function_run_id,
-            function_id=test_workflow.function_id,
-            variables={"test_var": "test_value"},
-            stream=False,
-        )
+            api.payload = {
+                "workflow_id": test_workflow.function_id,
+                "workflow_run_id": "test-run-id",
+                "session_id": "test-session-id",
+                "result": str({"test_var": "test_value", "result": "mock_scraped_data"}),
+                "status": "closed",
+            }
+            # Run the workflow
+            response = client.functions.run_start(
+                function_run_id=create_response.function_run_id,
+                function_id=test_workflow.function_id,
+                variables={"test_var": "test_value"},
+                stream=False,
+            )
 
         assert isinstance(response, FunctionRunResponse)
         assert response.function_id == test_workflow.function_id
@@ -272,15 +253,13 @@ class TestFunctionRunExecution:
         assert response.status == "closed"
 
         # Verify both requests were made correctly
-        assert mock_post.call_count == 2
+        assert [call.method for call in api.calls] == ["POST", "POST"]
 
         # Check the first call (create_run)
-        first_call_args = mock_post.call_args_list[0]
-        assert "data" in first_call_args.kwargs
+        assert api.calls[0].data is not None
 
         # Check the second call (run workflow)
-        second_call_args = mock_post.call_args_list[1]
-        assert "data" in second_call_args.kwargs
+        assert api.calls[1].data is not None
 
     def test_run_workflow_invalid_run_id(self, client: NotteClient, test_workflow: GetFunctionResponse):
         """Test running a workflow with invalid run ID."""
@@ -304,30 +283,24 @@ class TestFunctionRunExecution:
 class TestRemoteFunctionRuns:
     """Test cases for NotteFunction run functionality."""
 
-    @patch("requests.post")
-    def test_remote_function_run_cloud(self, mock_post, test_remote_function: NotteFunction):
+    def test_remote_function_run_cloud(self, test_remote_function: NotteFunction):
         """Test running a NotteFunction in the cloud."""
         # Mock the cloud response
-        mock_response = type(
-            "MockResponse",
-            (),
+        api = FakeSession(
             {
-                "json": lambda self: {
-                    "workflow_id": test_remote_function.function_id,
-                    "workflow_run_id": "test-run-id",
-                    "session_id": "test-session-id",
-                    "result": str({"test_var": "cloud_test", "result": "cloud_execution_result"}),
-                    "status": "closed",
-                },
-                "raise_for_status": lambda self: None,
-                "status_code": 200,
-                "ok": True,
-            },
-        )()
-        mock_post.return_value = mock_response
+                "workflow_id": test_remote_function.function_id,
+                "workflow_run_id": "test-run-id",
+                "session_id": "test-session-id",
+                "result": str({"test_var": "cloud_test", "result": "cloud_execution_result"}),
+                "status": "closed",
+            }
+        )
 
         # Mock create_run
-        with patch.object(test_remote_function.client, "create_run") as mock_create_run:
+        with (
+            patch.object(test_remote_function.client, "create_run") as mock_create_run,
+            patch("notte_sdk._transport.SharedHttpClient.get", return_value=api.client),
+        ):
             import datetime
 
             mock_create_run.return_value = CreateFunctionRunResponse(
@@ -499,27 +472,31 @@ class TestFunctionRunsIntegration:
                 status="created",
             )
 
-            # Mock the workflow run call
-            with patch("requests.post") as mock_post:
-                # Mock cloud execution response
-                mock_response = type(
-                    "MockResponse",
-                    (),
-                    {
-                        "json": lambda self: {
-                            "workflow_id": test_workflow.function_id,
-                            "workflow_run_id": "remote-test-run-id",
-                            "session_id": "remote-test-session",
-                            "result": str({"complete_flow": True, "success": True}),
-                            "status": "closed",
-                        },
-                        "raise_for_status": lambda self: None,
-                        "status_code": 200,
-                        "ok": True,
-                    },
-                )()
-                mock_post.return_value = mock_response
+            # Mock the workflow run call, with a cloud execution response
+            api = FakeSession(
+                {
+                    "workflow_id": test_workflow.function_id,
+                    "workflow_run_id": "remote-test-run-id",
+                    "session_id": "remote-test-session",
+                    "result": str({"complete_flow": True, "success": True}),
+                    "status": "closed",
+                }
+            )
+            # Only the run request is mocked; every other request reaches the API.
+            real = http_client()
 
+            def route(request: httpx.Request) -> httpx.Response:
+                if request.method == "POST" and request.url.path.endswith("/runs/remote-test-run-id"):
+                    return api._handle(request)
+                response = real.send(request)
+                _ = response.read()
+                return response
+
+            with (
+                real,
+                httpx.Client(transport=httpx.MockTransport(route)) as routed,
+                patch("notte_sdk._transport.SharedHttpClient.get", return_value=routed),
+            ):
                 # Execute the workflow
                 result = function.run(complete_flow_test=True, integration_test="enabled", stream=False)
 
@@ -529,10 +506,9 @@ class TestFunctionRunsIntegration:
         assert result.result is not None
 
         # Verify the request was made with correct parameters
-        mock_post.assert_called_once()
-        call_kwargs = mock_post.call_args.kwargs
-        assert "data" in call_kwargs
-        data = json.loads(call_kwargs["data"])
+        assert len(api.calls) == 1
+        assert api.calls[0].data is not None
+        data = json.loads(api.calls[0].data)
         assert data["workflow_id"] == test_workflow.function_id
         assert "variables" in data
         assert data["variables"]["complete_flow_test"] is True
