@@ -307,7 +307,8 @@
             "icon": "book-open",
             "pages": [
               "guides/stealth",
-              "guides/account_creation"
+              "guides/account_creation",
+              "guides/scrape-to-mysql"
             ]
           }
         ]

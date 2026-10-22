@@ -1,0 +1,119 @@
+---
+title: Scrape a website hourly into MySQL
+description: Save structured scrape results to MySQL using a scheduled Notte Function or your own scheduler.
+---
+import ScrapeFunction from '/snippets/guides/mysql/scrape_function.mdx';
+import DirectMysql from '/snippets/guides/mysql/scrape_to_mysql.mdx';
+import MysqlReceiver from '/snippets/guides/mysql/mysql_receiver.mdx';
+import DeployFunction from '/snippets/guides/mysql/deploy_function.mdx';
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+Use [`POST /scrape`](/api-reference/scrape/scrape-webpage) to extract structured data, then save it to MySQL. This example extracts a page title and description and keeps one row per URL. Each successful run updates that row.
+
+Choose where the job runs:
+
+- **Notte hosts the schedule and scrape:** a Function runs hourly and sends the result to a small HTTPS endpoint in your application, which writes to MySQL.
+- **Your server runs the whole job:** a Python script scrapes and writes directly to MySQL, scheduled with cron.
+
+<Note>
+Hosted Functions do not currently include a MySQL driver. The direct MySQL script below runs on your server, not in the hosted Function runtime. The hosted option uses HTTPS for database delivery.
+</Note>
+
+## 1. Prepare MySQL
+
+Use Python 3.11+ and a [Notte API key](https://console.notte.cc/apikeys). On the server that connects to MySQL, install `requests`, `pydantic`, and `PyMySQL`:
+
+```bash
+pip install requests 'pydantic>=2,<3' 'PyMySQL>=1.1,<2'
+```
+
+Create this table in your database:
+
+```sql
+CREATE TABLE scraped_pages (
+    url VARCHAR(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    scraped_at DATETIME NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+```
+
+Configure these environment variables on that server using your secret manager or deployment settings:
+
+| Variable | Value |
+| --- | --- |
+| `MYSQL_HOST` | MySQL hostname, matching its TLS certificate |
+| `MYSQL_PORT` | Port, defaults to `3306` |
+| `MYSQL_USER` | A dedicated user with `INSERT` and `UPDATE` access to `scraped_pages` |
+| `MYSQL_PASSWORD` | That user's password |
+| `MYSQL_DATABASE` | The database containing the table |
+| `MYSQL_SSL_CA` | Optional path to your provider's CA PEM file; otherwise system CAs are used |
+
+Use a MySQL server/account that requires TLS. Allow connections from the machine running the writer. The script verifies the server certificate and hostname.
+
+## 2. Save the scripts
+
+Save this first file as **`scrape_function.py`**. Its `scrape_page()` helper calls the simple scrape endpoint; `run()` is the entry point for the hosted option.
+
+<ScrapeFunction />
+
+`response_format` defines the fields to extract. Change `PageData`, the instructions, and the destination columns together to collect different data. HTTP errors and unsuccessful structured extraction raise an exception before a database write.
+
+Save the writer as **`scrape_to_mysql.py`** in the same directory:
+
+<DirectMysql />
+
+Values are passed as SQL parameters. The binary URL comparison keeps case-sensitive paths distinct. The primary key and upsert prevent repeated runs from adding duplicate rows for the same URL. A failed write closes the connection without committing. `scraped_at` records the last successful write in UTC.
+
+## Option A: Run hourly as a hosted Function
+
+### Add an HTTPS receiver
+
+If you already have a backend, add an authenticated endpoint that calls `save_page()`. Here is a minimal FastAPI receiver. Save it as **`mysql_receiver.py`**, alongside the two files above:
+
+<MysqlReceiver />
+
+Install `fastapi` and `uvicorn`, set a strong random `MYSQL_INGEST_TOKEN` on the receiver, and deploy it behind HTTPS using your normal application hosting. For local development, start it with `uvicorn mysql_receiver:app --host 127.0.0.1 --port 8000`. Hosted Functions must use its publicly reachable HTTPS URL, for example `https://your-app.example/ingest`, not localhost.
+
+The receiver needs the MySQL variables from step 1. It does not need a Notte API key: the Function performs the scrape. Keep the endpoint authenticated; it can write to your database.
+
+### Deploy and test the Function
+
+In the [Console](https://console.notte.cc), open **Settings > Function Secrets** and add:
+
+- `MYSQL_INGEST_URL`: your receiver's HTTPS URL, including `/ingest`.
+- `MYSQL_INGEST_TOKEN`: the same token configured on the receiver.
+
+The Function reads these variables through Pydantic's environment settings. You do not need to add your MySQL credentials to Notte. Notte supplies its own API key to the Function at run time.
+
+Install `notte-sdk` locally and set `NOTTE_API_KEY`, then deploy **only `scrape_function.py`**:
+
+<DeployFunction />
+
+Run this once before scheduling. Confirm the result is `{"url": "https://example.com", "saved": true}` and check the saved row:
+
+```sql
+SELECT url, title, description, scraped_at FROM scraped_pages;
+```
+
+### Enable the hourly schedule
+
+Open the Function in the Console, select its **Schedule** tab, and use `rate(1 hour)`. Set its variables to `{"url": "https://example.com"}`. The Function now scrapes and sends the result to your receiver hourly.
+
+Check the Function's run history for failures. A failed scrape or receiver request fails the run; it does not report a successful database write. See [Function schedules](/features/functions/schedules) to pause or remove the schedule and [Function management](/features/functions/management) to inspect runs.
+
+## Option B: Connect directly from your server
+
+Keep `scrape_function.py` and `scrape_to_mysql.py` together. Set `NOTTE_API_KEY` and the MySQL variables on your server. The ingest URL and token are not needed for this option.
+
+Run `python scrape_to_mysql.py`, then use the SQL query above to verify the saved row. Running it again should update the row rather than create a second one.
+
+To run hourly with Unix cron, use your actual directory and Python environment paths:
+
+```cron
+0 * * * * cd /opt/notte-mysql && /opt/notte-mysql/.venv/bin/python scrape_to_mysql.py >> /opt/notte-mysql/scrape.log 2>&1
+```
+
+Make the required variables available to the cron process through your server's environment configuration or a private wrapper script. Cron does not inherit your interactive shell's environment. Keep credentials out of the crontab and source control, and check the log for failures.

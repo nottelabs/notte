@@ -69,6 +69,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 - [Anti-Detection Playbook](https://docs.notte.cc/guides/stealth.md): Diagnose blocked browser sessions and choose the next step
 - [Create accounts with Personas](https://docs.notte.cc/guides/account_creation.md): How to use notte personas for account creation
+- [Scrape a website hourly into MySQL](https://docs.notte.cc/guides/scrape-to-mysql.md): Save structured scrape results to MySQL using a scheduled Notte Function or your own scheduler.
 
 
 # Integrations
