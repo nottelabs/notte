@@ -416,7 +416,8 @@ def _accessible_page(**kwargs: Any) -> ObservedPage:
     return _page(description=ACCESSIBLE_DESCRIPTION, actions=actions, states={}, **kwargs)
 
 
-def test_accessible_names_approximate_the_browser_names() -> None:
+def test_accessible_names_without_names_in_the_observation_are_approximated() -> None:
+    # an older server's observation: no `accessible_name`, so names come from the rendered page
     assert accessible_names(_accessible_page()) == {
         # the label text before a field, after a checkbox (notte's text_label is the name attribute)
         "I1": "Username or email address",
@@ -434,44 +435,69 @@ def test_accessible_names_approximate_the_browser_names() -> None:
     }
 
 
-def test_a_clickable_label_names_the_field_next_to_it() -> None:
-    # notte gives clickable `<label>` elements an id: they still name their field
-    description = """M1[:]<label>Username</label>
+LABELS = """M1[:]<label>Username</label>
 I1[:]<input type="text" name="username"></input>
 I2[:]<input type="checkbox" name="remember"></input>
 M2[:]<label>Remember me</label>
-I3[:]<input type="text" name="code"></input>"""
+M3[:]<label>Stay hidden</label>
+I3[:]<input type="text" name="code"></input>
+L1[:]<a href="/help"></a>"""
+
+
+def _labels_page(named: bool) -> ObservedPage:
+    def name(value: str) -> str | None:
+        return value if named else None
+
     actions: list[InteractionAction] = [
-        ClickAction(id="M1", text_label="Username"),
-        FillAction(id="I1", value="<sample_value>", text_label="username"),
-        CheckAction(id="I2", value=True, text_label="remember"),
-        ClickAction(id="M2", text_label="Remember me"),
-        FillAction(id="I3", value="<sample_value>", text_label="code"),
+        ClickAction(id="M1", text_label="Username", accessible_name=name("Username")),
+        FillAction(id="I1", value="<sample_value>", text_label="username", accessible_name=name("Username")),
+        CheckAction(id="I2", value=True, text_label="remember", accessible_name=name("Remember me")),
+        ClickAction(id="M2", text_label="Remember me", accessible_name=name("Remember me")),
+        # the visible label of a hidden custom checkbox, right before an unrelated field
+        ClickAction(id="M3", text_label="Stay hidden", accessible_name=name("Stay hidden")),
+        FillAction(id="I3", value="<sample_value>", text_label="code", accessible_name=name("One-time code")),
+        # unnamed in the observation: the approximation fills in
+        ClickAction(id="L1", text_label=""),
     ]
-    # local sessions know which field each label belongs to (`for`, or the field inside it)
-    page = _page(description=description, actions=actions, states={}, label_targets={"M1": "I1", "M2": "I2"})
-    assert accessible_names(page) == {"I1": "Username", "I2": "Remember me", "I3": "code"}
-    # the labels name their fields, so they are not offered as elements of their own (or repeated as text)
+    return _page(description=LABELS, actions=actions, states={})
+
+
+def test_the_observations_accessible_names_label_the_elements() -> None:
+    page = _labels_page(named=True)
+    assert accessible_names(page) == {
+        "I1": "Username",
+        "I2": "Remember me",
+        "M3": "Stay hidden",
+        # the real name, not the label-like text next to it
+        "I3": "One-time code",
+        "L1": "/help",
+    }
+    # a `<label>` whose text is the name of the field next to it labels that field: neither offered nor
+    # repeated. A label that names nothing offered (M3) stays, it may be the only way to toggle a control.
     assert label_elements(page) == {"M1", "M2"}
     space = build_act_space(page, labels="accessible")
-    assert [e["index"] for e in space.elements] == ["I1", "I2", "I3"]
+    assert [e["index"] for e in space.elements] == ["I1", "I2", "M3", "I3", "L1"]
     assert not any(key in ("M1", "M2") for targets in space.targets.values() for key in targets)
-    assert accessible_text(page).splitlines() == ["[I1] Username", "[I2] Remember me", "[I3] code"]
+    assert accessible_text(page).splitlines() == [
+        "[I1] Username",
+        "[I2] Remember me",
+        "[M3] Stay hidden",
+        "[I3] One-time code",
+        "[L1] /help",
+    ]
+    criteria = act_questions(space, "sign in")["type_text_target"].criteria["I3"]
+    assert criteria["element"] == "[I3] One-time code"
     # html mode keeps every element: the `<label>` markup says what it is
     assert {"M1", "M2"} <= {e["index"] for e in build_act_space(page, labels="html").elements}
 
 
-def test_a_label_that_names_nothing_stays_clickable() -> None:
-    # a custom checkbox: the visible label is the only way to toggle the hidden input
-    description = """M1[:]<label>Remember me</label>
-B1[:]<button>Login</button>"""
-    actions: list[InteractionAction] = [
-        ClickAction(id="M1", text_label="Remember me"),
-        ClickAction(id="B1", text_label="Login"),
-    ]
-    page = _page(description=description, actions=actions, states={}, label_targets={"M1": ""})
+def test_without_names_labels_stay_elements() -> None:
+    # an older server: a label's text may be taken as the next field's name, so the label stays offered
+    page = _labels_page(named=False)
     assert label_elements(page) == frozenset()
-    assert [e["index"] for e in build_act_space(page, labels="accessible").elements] == ["M1", "B1"]
+    names = accessible_names(page)
+    assert names["I1"] == "Username" and names["I3"] == "Stay hidden" and names["M1"] == "Username"
+    assert {"M1", "M2", "M3"} <= {e["index"] for e in build_act_space(page, labels="accessible").elements}
 
 
 def test_accessible_mode_labels_elements_and_targets_without_html() -> None:
@@ -534,33 +560,6 @@ def test_label_mode_from_the_environment(monkeypatch: pytest.MonkeyPatch) -> Non
     monkeypatch.setenv("NOTTE_ACT_LABELS", "aria")
     with pytest.raises(ValueError, match="NOTTE_ACT_LABELS"):
         _ = label_mode()
-
-
-LABEL_THEN_FIELD = """M1[:]<label>Remember me</label>
-I1[:]<input type="email" name="email"></input>"""
-
-
-def _label_then_field(targets: dict[str, str] | None) -> ObservedPage:
-    actions: list[InteractionAction] = [
-        ClickAction(id="M1", text_label="Remember me"),
-        FillAction(id="I1", value="<sample_value>", text_label="email"),
-    ]
-    return _page(description=LABEL_THEN_FIELD, actions=actions, states={}, label_targets=targets)
-
-
-def test_a_label_for_another_control_does_not_name_the_next_field() -> None:
-    # the visible label of a hidden checkbox, right before an unrelated email field
-    page = _label_then_field({"M1": ""})
-    assert accessible_names(page) == {"M1": "Remember me", "I1": "email"}
-    assert [e["index"] for e in build_act_space(page, labels="accessible").elements] == ["M1", "I1"]
-
-
-def test_labels_stay_elements_when_their_field_is_unknown() -> None:
-    # no DOM links (a cloud observation): the label may name the field, but it stays offered
-    page = _label_then_field(None)
-    assert label_elements(page) == frozenset()
-    assert [e["index"] for e in build_act_space(page, labels="accessible").elements] == ["M1", "I1"]
-    assert accessible_text(page).splitlines() == ["[M1] Remember me", "[I1] Remember me"]
 
 
 def test_a_select_without_live_state_keeps_its_options_in_the_text() -> None:
