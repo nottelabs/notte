@@ -26,13 +26,15 @@ export type ObserveRequest = {
     /**
      * Instructions
      *
-     * Additional instructions to use for the observation.
+     * Deprecated: removed on December 1, 2026. Additional instructions to use for the observation. <<ALTERNATIVE FOR instructions: session.act() — pending>>. See https://docs.notte.cc/features/sessions/observe-migration
+     *
+     * @deprecated
      */
     instructions?: string | null;
     /**
      * Perception Type
      *
-     * Whether to run with fast or deep perception
+     * Whether to run with fast or deep perception. `deep` is deprecated and removed on December 1, 2026; use `fast` (the default). See https://docs.notte.cc/features/sessions/observe-migration
      */
     perception_type?: 'fast' | 'deep' | null;
 };
@@ -49,9 +51,13 @@ The maximum number of actions to list after which the listing will stop. Used wh
 </ParamField>
 
 <ParamField body="instructions" type={"string | null | undefined"}>
-Additional instructions to use for the observation.
+Deprecated: removed on December 1, 2026. Additional instructions to use for the observation. &lt;&lt;ALTERNATIVE FOR instructions: session.act() — pending&gt;&gt;. See https://docs.notte.cc/features/sessions/observe-migration
+
+**deprecated:**
+
+
 </ParamField>
 
 <ParamField body="perception_type" type={"\"fast\" | \"deep\" | null | undefined"}>
-Whether to run with fast or deep perception
+Whether to run with fast or deep perception. `deep` is deprecated and removed on December 1, 2026; use `fast` (the default). See https://docs.notte.cc/features/sessions/observe-migration
 </ParamField>

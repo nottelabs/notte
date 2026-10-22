@@ -2544,7 +2544,7 @@ class FunctionRunUpdateRequest(SdkRequest):
     session_id: Annotated[str | None, Field(description="The ID of the session")] = None
     logs: Annotated[list[str] | None, Field(description="The logs of the function run")] = None
     variables: Annotated[dict[str, Any] | None, Field(description="The variables of the function run")] = None
-    result: Annotated[Any, Field(description="The result of the function run")] = None
+    result: Annotated[Any | None, Field(description="The result of the function run")] = None
     status: Annotated[FunctionRunStatus, Field(description="The status of the function run")]
 
 
