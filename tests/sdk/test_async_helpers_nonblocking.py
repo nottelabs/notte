@@ -44,7 +44,10 @@ class LoopProbe:
         async def release() -> None:
             # Runs only while the event loop is free. If the helper blocks the loop, the stub has
             # already timed out by the time this gets a turn.
+            deadline = asyncio.get_running_loop().time() + BLOCK_TIMEOUT
             while not self.entered.is_set():
+                if asyncio.get_running_loop().time() > deadline:
+                    return  # the stub never ran; the assertion below reports it
                 await asyncio.sleep(0.001)
             self.released.set()
 
