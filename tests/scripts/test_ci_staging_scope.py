@@ -24,7 +24,6 @@ def test_shared_queue_only_contains_staging_test_jobs() -> None:
         ("node-sdk-ci.yml", "integration-tests"),
         ("test-cicd.yml", "staging-and-live"),
         ("docs-tests-cicd.yml", "execution"),
-        ("paired-sdk-examples.yml", "live"),
         ("readme-check.yml", "live"),
     }
     queued = set()
@@ -35,6 +34,16 @@ def test_shared_queue_only_contains_staging_test_jobs() -> None:
             if "notte-live-api" in str(job.get("concurrency", {})):
                 queued.add((path.name, job_id))
     assert queued == expected
+
+
+def test_paired_shards_run_in_parallel_with_bounded_load() -> None:
+    live = workflow("paired-sdk-examples.yml")["jobs"]["live"]
+    assert live["strategy"]["max-parallel"] == 6
+    assert live["concurrency"] == {
+        "group": "notte-paired-live-${{ github.ref }}-${{ matrix.shard }}",
+        "queue": "max",
+        "cancel-in-progress": False,
+    }
 
 
 def test_documentation_checks_start_independently() -> None:

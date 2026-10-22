@@ -97,7 +97,8 @@ jobs:
     timeout-minutes: 20
     strategy:
       fail-fast: false
-      max-parallel: 1
+      # Shards own disjoint examples and resources; this bounds their combined staging load.
+      max-parallel: 6
       matrix:
         shard: ${{ fromJSON(needs.changes.outputs.scope).paired_shards }}
     env:
@@ -105,8 +106,10 @@ jobs:
       NOTTE_DOCS_LIVE: '1'
       NOTTE_DOCS_SHARD: ${{ matrix.shard }}
       VITEST_INTEGRATION: '1'
+    # One queue per shard: a newer push waits for the same shard of an older run,
+    # but shards no longer wait for each other or for the other live suites.
     concurrency:
-      group: notte-live-api-${{ github.ref }}
+      group: notte-paired-live-${{ github.ref }}-${{ matrix.shard }}
       queue: max
       cancel-in-progress: false
     steps:
