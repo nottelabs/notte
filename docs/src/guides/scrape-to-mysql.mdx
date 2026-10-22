@@ -5,6 +5,7 @@ description: Save structured scrape results to MySQL using a scheduled Notte Fun
 import ScrapeFunction from '/snippets/guides/mysql/scrape_function.mdx';
 import DirectMysql from '/snippets/guides/mysql/scrape_to_mysql.mdx';
 import MysqlReceiver from '/snippets/guides/mysql/mysql_receiver.mdx';
+import DeployFunction from '/snippets/guides/mysql/deploy_function.mdx';
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
@@ -32,7 +33,7 @@ Create this table in your database:
 
 ```sql
 CREATE TABLE scraped_pages (
-    url VARCHAR(512) PRIMARY KEY,
+    url VARCHAR(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin PRIMARY KEY,
     title TEXT NOT NULL,
     description TEXT NOT NULL,
     scraped_at DATETIME NOT NULL
@@ -64,7 +65,7 @@ Save the writer as **`scrape_to_mysql.py`** in the same directory:
 
 <DirectMysql />
 
-Values are passed as SQL parameters. The primary key and upsert prevent repeated runs from adding duplicate rows for the same URL. A failed write closes the connection without committing. `scraped_at` records the last successful write in UTC.
+Values are passed as SQL parameters. The binary URL comparison keeps case-sensitive paths distinct. The primary key and upsert prevent repeated runs from adding duplicate rows for the same URL. A failed write closes the connection without committing. `scraped_at` records the last successful write in UTC.
 
 ## Option A: Run hourly as a hosted Function
 
@@ -89,17 +90,7 @@ The Function reads these variables through Pydantic's environment settings. You 
 
 Install `notte-sdk` locally and set `NOTTE_API_KEY`, then deploy **only `scrape_function.py`**:
 
-```python
-from notte_sdk import NotteClient
-
-client = NotteClient()
-function = client.Function(
-    path="scrape_function.py",
-    name="Hourly scrape to MySQL",
-)
-print(function.function_id)
-print(function.run(url="https://example.com", stream=False).result)
-```
+<DeployFunction />
 
 Run this once before scheduling. Confirm the result is `{"url": "https://example.com", "saved": true}` and check the saved row:
 

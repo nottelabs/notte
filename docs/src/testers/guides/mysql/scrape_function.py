@@ -24,7 +24,7 @@ class PageData(BaseModel):
 
 
 def scrape_page(url: str) -> PageData:
-    settings = ScrapeSettings()
+    settings = ScrapeSettings()  # type: ignore[call-arg]  # BaseSettings reads required fields from the environment.
     response = requests.post(
         settings.notte_api_url.rstrip("/") + "/scrape",
         headers={"Authorization": f"Bearer {settings.notte_api_key}"},
@@ -44,7 +44,7 @@ def scrape_page(url: str) -> PageData:
 
 
 def run(url: str) -> dict:
-    settings = IngestSettings()
+    settings = IngestSettings()  # type: ignore[call-arg]  # BaseSettings reads required fields from the environment.
     receiver = settings.mysql_ingest_url
     if urlsplit(receiver).scheme != "https":
         raise ValueError("MYSQL_INGEST_URL must use HTTPS")

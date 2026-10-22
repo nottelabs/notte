@@ -85,6 +85,30 @@ class MysqlGuideTest(unittest.TestCase):
                 self.handler.run("https://example.com")
             post.assert_not_called()
 
+    def test_receiver_rejects_missing_or_invalid_tokens_without_writing(self):
+        from fastapi.testclient import TestClient
+
+        receiver = load("mysql_receiver")
+        payload = {"url": "https://example.com/Report", "data": {"title": "Report", "description": "Page"}}
+        with TestClient(receiver.app) as client, patch.object(receiver, "save_page") as save:
+            for headers in ({}, {"Authorization": "Bearer wrong"}):
+                with self.subTest(headers=headers):
+                    self.assertEqual(client.post("/ingest", json=payload, headers=headers).status_code, 401)
+            save.assert_not_called()
+
+    def test_receiver_preserves_url_and_writes_once_with_correct_token(self):
+        from fastapi.testclient import TestClient
+
+        receiver = load("mysql_receiver")
+        payload = {"url": "https://example.com/Report", "data": {"title": "Report", "description": "Page"}}
+        with TestClient(receiver.app) as client, patch.object(receiver, "save_page") as save:
+            response = client.post("/ingest", json=payload, headers={"Authorization": "Bearer fixture-ingest-token"})
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json(), {"saved": True})
+            save.assert_called_once()
+            self.assertEqual(save.call_args.args[0], payload["url"])
+            self.assertEqual(save.call_args.args[1].model_dump(), payload["data"])
+
     def test_writer_parameterizes_values_commits_once_and_closes(self):
         connection = self.driver.connect.return_value
         page = self.handler.PageData(title="Quote ' and %s", description="A description")

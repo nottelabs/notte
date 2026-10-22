@@ -72,6 +72,8 @@ jobs:
       - run: node docs/src/sniptest/check_typescript.mjs
       - run: node --test docs/src/sniptest/test_typescript_display.mjs
       - run: python docs/src/sniptest/live.py
+      - name: Install MySQL guide test dependencies
+        run: python -m pip install requests 'pydantic>=2,<3' fastapi httpx
       - run: python -m unittest discover -s docs/src/sniptest -p 'test_*.py'
       - run: python docs/src/sniptest/generate.py --check
       - run: python docs/src/scripts/check_docs_nav.py

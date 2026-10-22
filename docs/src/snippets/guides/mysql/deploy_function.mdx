@@ -1,0 +1,14 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/guides/mysql/deploy_function.py */}
+
+```python deploy_function.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+function = client.Function(
+    path="scrape_function.py",
+    name="Hourly scrape to MySQL",
+)
+print(function.function_id)
+print(function.run(url="https://example.com", stream=False).result)
+```
