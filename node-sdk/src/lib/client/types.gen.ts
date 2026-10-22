@@ -2817,6 +2817,14 @@ export type FunctionListItemResponse = {
      */
     default_runtime?: 'standard' | 'extended';
     /**
+     * Sdk Generation
+     */
+    sdk_generation?: 'v19' | 'v110';
+    /**
+     * Upload Sdk Version
+     */
+    upload_sdk_version?: string | null;
+    /**
      * Function Id
      *
      * The ID of the function
@@ -2882,14 +2890,6 @@ export type FunctionListItemResponse = {
      * The ID of the reference function (i.e whether the function was forked from another function or not)
      */
     reference_workflow_id?: string | null;
-    /**
-     * Sdk Generation
-     */
-    sdk_generation?: 'v19' | 'v110';
-    /**
-     * Upload Sdk Version
-     */
-    upload_sdk_version?: string | null;
     /**
      * Published
      */
@@ -2975,6 +2975,14 @@ export type FunctionResponse = {
      */
     default_runtime?: 'standard' | 'extended';
     /**
+     * Sdk Generation
+     */
+    sdk_generation?: 'v19' | 'v110';
+    /**
+     * Upload Sdk Version
+     */
+    upload_sdk_version?: string | null;
+    /**
      * Function Id
      *
      * The ID of the function
@@ -3040,14 +3048,6 @@ export type FunctionResponse = {
      * The ID of the reference function (i.e whether the function was forked from another function or not)
      */
     reference_workflow_id?: string | null;
-    /**
-     * Sdk Generation
-     */
-    sdk_generation?: 'v19' | 'v110';
-    /**
-     * Upload Sdk Version
-     */
-    upload_sdk_version?: string | null;
     /**
      * Published
      */
@@ -3201,7 +3201,7 @@ export type FunctionRunUpdateRequest = {
      *
      * The result of the workflow run
      */
-    result?: unknown;
+    result?: unknown | null;
     /**
      * Status
      *
@@ -3343,6 +3343,14 @@ export type FunctionWithLinkResponse = {
      */
     default_runtime?: 'standard' | 'extended';
     /**
+     * Sdk Generation
+     */
+    sdk_generation?: 'v19' | 'v110';
+    /**
+     * Upload Sdk Version
+     */
+    upload_sdk_version?: string | null;
+    /**
      * Function Id
      *
      * The ID of the function
@@ -3408,14 +3416,6 @@ export type FunctionWithLinkResponse = {
      * The ID of the reference function (i.e whether the function was forked from another function or not)
      */
     reference_workflow_id?: string | null;
-    /**
-     * Sdk Generation
-     */
-    sdk_generation?: 'v19' | 'v110';
-    /**
-     * Upload Sdk Version
-     */
-    upload_sdk_version?: string | null;
     /**
      * Published
      */
@@ -3516,6 +3516,8 @@ export type GetCreditCardResponse = {
  * GetFunctionRunResponse
  */
 export type GetFunctionRunResponse = {
+    artifact_sdk_generation?: FunctionSdkGeneration;
+    sdk_generation?: FunctionSdkGeneration;
     /**
      * Function Id
      *
@@ -3576,8 +3578,6 @@ export type GetFunctionRunResponse = {
      * Function Version
      */
     function_version?: string | null;
-    artifact_sdk_generation?: FunctionSdkGeneration;
-    sdk_generation?: FunctionSdkGeneration;
     /**
      * Payloads
      */
@@ -5006,13 +5006,15 @@ export type ObserveRequest = {
     /**
      * Instructions
      *
-     * Additional instructions to use for the observation.
+     * Deprecated: removed on December 1, 2026. Additional instructions to use for the observation. <<ALTERNATIVE FOR instructions: session.act() — pending>>. See https://docs.notte.cc/features/sessions/observe-migration
+     *
+     * @deprecated
      */
     instructions?: string | null;
     /**
      * Perception Type
      *
-     * Whether to run with fast or deep perception
+     * Whether to run with fast or deep perception. `deep` is deprecated and removed on December 1, 2026; use `fast` (the default). See https://docs.notte.cc/features/sessions/observe-migration
      */
     perception_type?: 'fast' | 'deep' | null;
 };
@@ -9044,6 +9046,14 @@ export type FunctionListItemResponseWritable = {
      */
     default_runtime?: 'standard' | 'extended';
     /**
+     * Sdk Generation
+     */
+    sdk_generation?: 'v19' | 'v110';
+    /**
+     * Upload Sdk Version
+     */
+    upload_sdk_version?: string | null;
+    /**
      * Function Id
      *
      * The ID of the function
@@ -9109,14 +9119,6 @@ export type FunctionListItemResponseWritable = {
      * The ID of the reference function (i.e whether the function was forked from another function or not)
      */
     reference_workflow_id?: string | null;
-    /**
-     * Sdk Generation
-     */
-    sdk_generation?: 'v19' | 'v110';
-    /**
-     * Upload Sdk Version
-     */
-    upload_sdk_version?: string | null;
     /**
      * Published
      */
@@ -9154,6 +9156,14 @@ export type FunctionResponseWritable = {
      */
     default_runtime?: 'standard' | 'extended';
     /**
+     * Sdk Generation
+     */
+    sdk_generation?: 'v19' | 'v110';
+    /**
+     * Upload Sdk Version
+     */
+    upload_sdk_version?: string | null;
+    /**
      * Function Id
      *
      * The ID of the function
@@ -9219,14 +9229,6 @@ export type FunctionResponseWritable = {
      * The ID of the reference function (i.e whether the function was forked from another function or not)
      */
     reference_workflow_id?: string | null;
-    /**
-     * Sdk Generation
-     */
-    sdk_generation?: 'v19' | 'v110';
-    /**
-     * Upload Sdk Version
-     */
-    upload_sdk_version?: string | null;
     /**
      * Published
      */
@@ -9342,6 +9344,14 @@ export type FunctionWithLinkResponseWritable = {
      */
     default_runtime?: 'standard' | 'extended';
     /**
+     * Sdk Generation
+     */
+    sdk_generation?: 'v19' | 'v110';
+    /**
+     * Upload Sdk Version
+     */
+    upload_sdk_version?: string | null;
+    /**
      * Function Id
      *
      * The ID of the function
@@ -9408,14 +9418,6 @@ export type FunctionWithLinkResponseWritable = {
      */
     reference_workflow_id?: string | null;
     /**
-     * Sdk Generation
-     */
-    sdk_generation?: 'v19' | 'v110';
-    /**
-     * Upload Sdk Version
-     */
-    upload_sdk_version?: string | null;
-    /**
      * Published
      */
     published?: boolean;
@@ -9481,6 +9483,8 @@ export type FunctionWithLinkResponseWritable = {
  * GetFunctionRunResponse
  */
 export type GetFunctionRunResponseWritable = {
+    artifact_sdk_generation?: FunctionSdkGeneration;
+    sdk_generation?: FunctionSdkGeneration;
     /**
      * Function Id
      *
@@ -9541,8 +9545,6 @@ export type GetFunctionRunResponseWritable = {
      * Function Version
      */
     function_version?: string | null;
-    artifact_sdk_generation?: FunctionSdkGeneration;
-    sdk_generation?: FunctionSdkGeneration;
     /**
      * Payloads
      */
@@ -14388,6 +14390,208 @@ export type SearchWebResponses = {
      */
     200: unknown;
 };
+
+export type SummaryData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: {
+        /**
+         * Since
+         */
+        since?: string | null;
+        /**
+         * Until
+         */
+        until?: string | null;
+    };
+    url: '/data/analytics';
+};
+
+export type SummaryErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SummaryError = SummaryErrors[keyof SummaryErrors];
+
+export type SummaryResponses = {
+    /**
+     * Response Summary Data Analytics Get
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type SummaryResponse = SummaryResponses[keyof SummaryResponses];
+
+export type HistoryData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: {
+        /**
+         * Since
+         */
+        since?: string | null;
+        /**
+         * Until
+         */
+        until?: string | null;
+        /**
+         * Limit
+         */
+        limit?: number;
+        /**
+         * Cursor
+         */
+        cursor?: string | null;
+    };
+    url: '/data/analytics/requests';
+};
+
+export type HistoryErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type HistoryError = HistoryErrors[keyof HistoryErrors];
+
+export type HistoryResponses = {
+    /**
+     * Response History Data Analytics Requests Get
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type HistoryResponse = HistoryResponses[keyof HistoryResponses];
+
+export type DetailData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Cache-Mode
+         *
+         * Extraction cache: default, refresh, or bypass.
+         */
+        'X-Notte-Cache-Mode'?: string | null;
+        /**
+         * X-Notte-Cache-Max-Age-Ms
+         *
+         * Maximum cached result age in milliseconds; zero forces refresh.
+         */
+        'X-Notte-Cache-Max-Age-Ms'?: string | null;
+        /**
+         * X-Notte-Cache-Ttl-Seconds
+         *
+         * Shorten the server storage TTL; zero bypasses caching.
+         */
+        'X-Notte-Cache-Ttl-Seconds'?: string | null;
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Request Id
+         */
+        request_id: string;
+    };
+    query?: never;
+    url: '/data/analytics/requests/{request_id}';
+};
+
+export type DetailErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DetailError = DetailErrors[keyof DetailErrors];
+
+export type DetailResponses = {
+    /**
+     * Response Detail Data Analytics Requests  Request Id  Get
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type DetailResponse = DetailResponses[keyof DetailResponses];
 
 export type InvalidateData = {
     body?: never;

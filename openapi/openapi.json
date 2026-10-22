@@ -9358,6 +9358,544 @@
         "x-codeSamples": []
       }
     },
+    "/data/analytics": {
+      "get": {
+        "tags": [
+          "Data APIs",
+          "Data API usage"
+        ],
+        "summary": "Summary",
+        "operationId": "summary",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Since"
+            }
+          },
+          {
+            "name": "until",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Until"
+            }
+          },
+          {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
+          },
+          {
+            "name": "x-notte-request-origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Request-Origin"
+            }
+          },
+          {
+            "name": "x-notte-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Sdk-Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Summary Data Analytics Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Python",
+            "source": "import os\n\nimport requests\n\nresponse = requests.get(\n    \"https://api.notte.cc/data/analytics\",\n    headers={\"Authorization\": f\"Bearer {os.environ['NOTTE_API_KEY']}\"},\n    timeout=15,\n)\nresponse.raise_for_status()\nprint(response.json())",
+            "label": "python"
+          },
+          {
+            "lang": "TypeScript",
+            "source": "const response = await fetch(\"https://api.notte.cc/data/analytics\", {\n  method: \"GET\",\n  headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` },\n  signal: AbortSignal.timeout(15_000),\n});\nif (!response.ok) throw new Error(await response.text());\nconsole.log(await response.json());",
+            "label": "node"
+          },
+          {
+            "lang": "Curl",
+            "source": "curl --fail-with-body --max-time 15 --request GET https://api.notte.cc/data/analytics \\\n  --header \"Authorization: Bearer $NOTTE_API_KEY\"",
+            "label": "curl"
+          }
+        ]
+      }
+    },
+    "/data/analytics/requests": {
+      "get": {
+        "tags": [
+          "Data APIs",
+          "Data API usage"
+        ],
+        "summary": "History",
+        "operationId": "history",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Since"
+            }
+          },
+          {
+            "name": "until",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Until"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 25,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
+          },
+          {
+            "name": "x-notte-request-origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Request-Origin"
+            }
+          },
+          {
+            "name": "x-notte-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Sdk-Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response History Data Analytics Requests Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Python",
+            "source": "import os\n\nimport requests\n\nresponse = requests.get(\n    \"https://api.notte.cc/data/analytics/requests\",\n    headers={\"Authorization\": f\"Bearer {os.environ['NOTTE_API_KEY']}\"},\n    timeout=15,\n)\nresponse.raise_for_status()\nprint(response.json())",
+            "label": "python"
+          },
+          {
+            "lang": "TypeScript",
+            "source": "const response = await fetch(\"https://api.notte.cc/data/analytics/requests\", {\n  method: \"GET\",\n  headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` },\n  signal: AbortSignal.timeout(15_000),\n});\nif (!response.ok) throw new Error(await response.text());\nconsole.log(await response.json());",
+            "label": "node"
+          },
+          {
+            "lang": "Curl",
+            "source": "curl --fail-with-body --max-time 15 --request GET https://api.notte.cc/data/analytics/requests \\\n  --header \"Authorization: Bearer $NOTTE_API_KEY\"",
+            "label": "curl"
+          }
+        ]
+      }
+    },
+    "/data/analytics/requests/{request_id}": {
+      "get": {
+        "tags": [
+          "Data APIs",
+          "Data API usage"
+        ],
+        "summary": "Detail",
+        "operationId": "detail",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "request_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Request Id"
+            }
+          },
+          {
+            "name": "X-Notte-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extraction cache: default, refresh, or bypass.",
+              "title": "X-Notte-Cache-Mode"
+            },
+            "description": "Extraction cache: default, refresh, or bypass."
+          },
+          {
+            "name": "X-Notte-Cache-Max-Age-Ms",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum cached result age in milliseconds; zero forces refresh.",
+              "title": "X-Notte-Cache-Max-Age-Ms"
+            },
+            "description": "Maximum cached result age in milliseconds; zero forces refresh."
+          },
+          {
+            "name": "X-Notte-Cache-Ttl-Seconds",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Shorten the server storage TTL; zero bypasses caching.",
+              "title": "X-Notte-Cache-Ttl-Seconds"
+            },
+            "description": "Shorten the server storage TTL; zero bypasses caching."
+          },
+          {
+            "name": "x-notte-request-origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Request-Origin"
+            }
+          },
+          {
+            "name": "x-notte-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Sdk-Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Detail Data Analytics Requests  Request Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Python",
+            "source": "import os\n\nimport requests\n\nresponse = requests.get(\n    \"https://api.notte.cc/data/analytics/requests/REPLACE_WITH_REQUEST_ID\",\n    headers={\"Authorization\": f\"Bearer {os.environ['NOTTE_API_KEY']}\"},\n    timeout=15,\n)\nresponse.raise_for_status()\nprint(response.json())",
+            "label": "python"
+          },
+          {
+            "lang": "TypeScript",
+            "source": "const response = await fetch(\"https://api.notte.cc/data/analytics/requests/REPLACE_WITH_REQUEST_ID\", {\n  method: \"GET\",\n  headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` },\n  signal: AbortSignal.timeout(15_000),\n});\nif (!response.ok) throw new Error(await response.text());\nconsole.log(await response.json());",
+            "label": "node"
+          },
+          {
+            "lang": "Curl",
+            "source": "curl --fail-with-body --max-time 15 --request GET https://api.notte.cc/data/analytics/requests/REPLACE_WITH_REQUEST_ID \\\n  --header \"Authorization: Bearer $NOTTE_API_KEY\"",
+            "label": "curl"
+          }
+        ]
+      }
+    },
     "/data/cache": {
       "get": {
         "tags": [
@@ -22334,6 +22872,26 @@
             "title": "Default Runtime",
             "default": "standard"
           },
+          "sdk_generation": {
+            "type": "string",
+            "enum": [
+              "v19",
+              "v110"
+            ],
+            "title": "Sdk Generation",
+            "default": "v19"
+          },
+          "upload_sdk_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upload Sdk Version"
+          },
           "function_id": {
             "type": "string",
             "title": "Function Id",
@@ -22425,26 +22983,6 @@
             ],
             "title": "Reference Workflow Id",
             "description": "The ID of the reference function (i.e whether the function was forked from another function or not)"
-          },
-          "sdk_generation": {
-            "type": "string",
-            "enum": [
-              "v19",
-              "v110"
-            ],
-            "title": "Sdk Generation",
-            "default": "v19"
-          },
-          "upload_sdk_version": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Upload Sdk Version"
           },
           "published": {
             "type": "boolean",
@@ -22618,6 +23156,26 @@
             "title": "Default Runtime",
             "default": "standard"
           },
+          "sdk_generation": {
+            "type": "string",
+            "enum": [
+              "v19",
+              "v110"
+            ],
+            "title": "Sdk Generation",
+            "default": "v19"
+          },
+          "upload_sdk_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upload Sdk Version"
+          },
           "function_id": {
             "type": "string",
             "title": "Function Id",
@@ -22709,26 +23267,6 @@
             ],
             "title": "Reference Workflow Id",
             "description": "The ID of the reference function (i.e whether the function was forked from another function or not)"
-          },
-          "sdk_generation": {
-            "type": "string",
-            "enum": [
-              "v19",
-              "v110"
-            ],
-            "title": "Sdk Generation",
-            "default": "v19"
-          },
-          "upload_sdk_version": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Upload Sdk Version"
           },
           "published": {
             "type": "boolean",
@@ -22983,6 +23521,12 @@
             "description": "The variables of the workflow run"
           },
           "result": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
             "title": "Result",
             "description": "The result of the workflow run"
           },
@@ -23234,6 +23778,26 @@
             "title": "Default Runtime",
             "default": "standard"
           },
+          "sdk_generation": {
+            "type": "string",
+            "enum": [
+              "v19",
+              "v110"
+            ],
+            "title": "Sdk Generation",
+            "default": "v19"
+          },
+          "upload_sdk_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upload Sdk Version"
+          },
           "function_id": {
             "type": "string",
             "title": "Function Id",
@@ -23325,26 +23889,6 @@
             ],
             "title": "Reference Workflow Id",
             "description": "The ID of the reference function (i.e whether the function was forked from another function or not)"
-          },
-          "sdk_generation": {
-            "type": "string",
-            "enum": [
-              "v19",
-              "v110"
-            ],
-            "title": "Sdk Generation",
-            "default": "v19"
-          },
-          "upload_sdk_version": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Upload Sdk Version"
           },
           "published": {
             "type": "boolean",
@@ -23517,6 +24061,14 @@
       },
       "GetFunctionRunResponse": {
         "properties": {
+          "artifact_sdk_generation": {
+            "$ref": "#/components/schemas/FunctionSdkGeneration",
+            "default": "v19"
+          },
+          "sdk_generation": {
+            "$ref": "#/components/schemas/FunctionSdkGeneration",
+            "default": "v19"
+          },
           "function_id": {
             "type": "string",
             "title": "Function Id",
@@ -23607,14 +24159,6 @@
               }
             ],
             "title": "Function Version"
-          },
-          "artifact_sdk_generation": {
-            "$ref": "#/components/schemas/FunctionSdkGeneration",
-            "default": "v19"
-          },
-          "sdk_generation": {
-            "$ref": "#/components/schemas/FunctionSdkGeneration",
-            "default": "v19"
           },
           "payloads": {
             "additionalProperties": {
@@ -26456,7 +27000,8 @@
               }
             ],
             "title": "Instructions",
-            "description": "Additional instructions to use for the observation."
+            "description": "Deprecated: removed on December 1, 2026. Additional instructions to use for the observation. <<ALTERNATIVE FOR instructions: session.act() — pending>>. See https://docs.notte.cc/features/sessions/observe-migration",
+            "deprecated": true
           },
           "perception_type": {
             "anyOf": [
@@ -26472,7 +27017,7 @@
               }
             ],
             "title": "Perception Type",
-            "description": "Whether to run with fast or deep perception"
+            "description": "Whether to run with fast or deep perception. `deep` is deprecated and removed on December 1, 2026; use `fast` (the default). See https://docs.notte.cc/features/sessions/observe-migration"
           }
         },
         "additionalProperties": false,
