@@ -119,12 +119,13 @@ def file_storage(client: Mock) -> RemoteFileStorage:
 
 @pytest.mark.asyncio
 async def test_file_storage_get_file_runs_off_the_event_loop() -> None:
-    probe = LoopProbe()
+    # One probe per call: a released probe stays released, so a shared one would not check the download.
+    listing, download = LoopProbe(), LoopProbe()
     client = Mock()
-    client.list.side_effect = probe.blocking(SimpleNamespace(files=[file_metadata()]))
-    client.download.side_effect = probe.blocking("/tmp/input.txt")
-    assert await probe.run(file_storage(client).get_file("input.txt")) == "/tmp/input.txt"
-    assert len(probe.released_while_blocked) == 2
+    client.list.side_effect = listing.blocking(SimpleNamespace(files=[file_metadata()]))
+    client.download.side_effect = download.blocking("/tmp/input.txt")
+    assert await download.run(listing.run(file_storage(client).get_file("input.txt"))) == "/tmp/input.txt"
+    assert len(listing.released_while_blocked) == len(download.released_while_blocked) == 1
 
 
 @pytest.mark.asyncio
