@@ -170,6 +170,30 @@ async def test_async_context_exit_stops_the_session_off_the_event_loop() -> None
 
 
 @pytest.mark.asyncio
+async def test_cancelled_async_context_exit_waits_for_the_session_stop() -> None:
+    entered, release = threading.Event(), threading.Event()
+    stopped: list[bool] = []
+
+    def stop(**_kwargs: str) -> None:
+        entered.set()
+        _ = release.wait(BLOCK_TIMEOUT)
+        stopped.append(True)
+
+    session = bare_session()
+    session.stop = MagicMock(side_effect=stop)
+    exit_task = asyncio.create_task(session.__aexit__(None, None, None))
+    while not entered.is_set():
+        await asyncio.sleep(0.001)
+    _ = exit_task.cancel()
+    await asyncio.sleep(0.01)
+    assert not exit_task.done(), "the exit returned while the session was still stopping"
+    release.set()
+    with pytest.raises(asyncio.CancelledError):
+        await exit_task
+    assert stopped == [True]
+
+
+@pytest.mark.asyncio
 async def test_async_page_resolves_the_cdp_url_off_the_event_loop(monkeypatch: pytest.MonkeyPatch) -> None:
     probe = LoopProbe()
     session = bare_session()

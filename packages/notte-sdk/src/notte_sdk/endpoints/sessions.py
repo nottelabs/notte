@@ -551,8 +551,18 @@ class RemoteSession(SyncResource):
             self._async_playwright_context = None
         self._async_playwright_page = None
 
+        stop_task = asyncio.create_task(
+            asyncio.to_thread(self.stop, close_reason="error" if exc_val is not None else "manual")
+        )
         try:
-            await asyncio.to_thread(self.stop, close_reason="error" if exc_val is not None else "manual")
+            await asyncio.shield(stop_task)
+        except asyncio.CancelledError:
+            # A cancelled to_thread call keeps stopping the session. Wait for it before exiting.
+            try:
+                await stop_task
+            except Exception:
+                logger.exception("Could not stop session after cancelled exit")
+            raise
         except Exception as stop_error:
             if exc_val is None:
                 raise
