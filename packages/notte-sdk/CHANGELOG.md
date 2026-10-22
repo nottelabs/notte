@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased: httpx transport
+
+The Python SDK sends HTTP with httpx instead of requests: one pooled connection set per
+`NotteClient`, closed by the new `NotteClient.close()`, by `with NotteClient() as client:`, or
+when the client is garbage collected. Retries, timeouts, redirects, proxy and CA environment
+variables, and request encoding are unchanged. Transport failures are raised as the new
+`notte_sdk.errors.NotteRequestError` subclasses (`NotteConnectionError`, `NotteReadTimeoutError`,
+`NotteHTTPStatusError` and others), which also subclass the matching `requests` exceptions, so
+existing `except requests.RequestException` handlers keep working; catching the `requests`
+classes is deprecated. `NotteHTTPStatusError.response` is an `httpx.Response`. Differences: the
+default `User-Agent` is `python-httpx/<version>`, multipart file parts carry a content type, and
+a timeout while reading a response body is a `Timeout` rather than a `ConnectionError`.
+
 ## Unreleased: generated page, function and session-file methods
 
 The Python SDK now generates every operation in `openapi/resources.json` under the Node SDK's
