@@ -45,7 +45,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
           cache: npm
@@ -53,7 +53,7 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.11'
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           enable-cache: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
@@ -124,10 +124,10 @@ jobs:
         with:
           go-version-file: integrations/terraform-provider-notte/go.mod
           cache: false
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           enable-cache: false
       - run: uv sync --locked --package notte-sdk --no-dev
@@ -169,7 +169,7 @@ jobs:
           LMNR_PROJECT_API_KEY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && contains(fromJSON(needs.changes.outputs.scope).integration_examples, 'laminar') && secrets.LMNR_PROJECT_API_KEY || '' }}
           NOTTE_LAMINAR_EXPORT_LIVE: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && contains(fromJSON(needs.changes.outputs.scope).integration_examples, 'laminar') && secrets.LMNR_PROJECT_API_KEY != '' && '1' || '0' }}
         run: python3 scripts/ci_integration_examples.py live --shard "$NOTTE_DOCS_SHARD"
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: agent-browser-ownership
