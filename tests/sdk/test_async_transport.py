@@ -979,7 +979,6 @@ async def test_forked_process_gets_its_own_connections() -> None:
     await parent.aclose()
 
 
-@pytest.mark.skipif(not hasattr(os, "fork"), reason="os.fork is POSIX only")
 def test_forked_child_opens_new_connections_and_leaves_the_parents_open(
     keep_alive_server: tuple[str, dict[str, int]],  # noqa: F811
 ) -> None:
