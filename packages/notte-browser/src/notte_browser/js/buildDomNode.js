@@ -296,7 +296,14 @@
 		const ariaLabel = element.getAttribute("aria-label");
 		if (ariaLabel && ariaLabel.trim()) return ariaLabel;
 
-		// host language labels
+		// host language labels: `<label>` first, even for input buttons, which then fall back to their value
+		if (element.labels && element.labels.length > 0) {
+			const text = Array.from(element.labels, (label) => {
+				context.visited.delete(label);
+				return textAlternative(label, context, { root: false, labelledBy: step.labelledBy, content: true, hidden: step.hidden });
+			}).join(" ");
+			if (text.trim()) return text;
+		}
 		if (tagName === "input") {
 			const type = (element.getAttribute("type") || "text").toLowerCase();
 			if (type === "button" || type === "submit" || type === "reset") {
@@ -308,13 +315,6 @@
 				const text = element.getAttribute("alt") || element.getAttribute("value") || element.getAttribute("title");
 				return text && text.trim() ? text : "Submit";
 			}
-		}
-		if (element.labels && element.labels.length > 0) {
-			const text = Array.from(element.labels, (label) => {
-				context.visited.delete(label);
-				return textAlternative(label, context, { root: false, labelledBy: step.labelledBy, content: true, hidden: step.hidden });
-			}).join(" ");
-			if (text.trim()) return text;
 		}
 		if (tagName === "img" || tagName === "area") {
 			const alt = element.getAttribute("alt");
@@ -366,7 +366,10 @@
 			if (context.budget <= 0) break;
 			if (child.nodeType === Node.TEXT_NODE) {
 				text += transformText(child.data, child.parentElement);
-				context.budget -= child.data.length;
+				// formatting whitespace is collapsed away: it does not use up the budget
+				context.budget -= child.data.trim().length;
+			} else if (child.localName === "br") {
+				text += " ";
 			} else if (child.nodeType === Node.ELEMENT_NODE) {
 				const childText = textAlternative(child, context, childStep);
 				text += isInline(child) ? childText : ` ${childText} `;

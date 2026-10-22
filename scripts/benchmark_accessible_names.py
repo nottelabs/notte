@@ -104,15 +104,15 @@ def make_router(fixtures: Path | None) -> Callable[[Route], Awaitable[None]]:
     async def route(route: Route) -> None:
         url = route.request.url
         if url.startswith(GOLDEN_URL):
-            path = GOLDEN_DIR / url.removeprefix(GOLDEN_URL).split("?")[0]
-            if route.request.resource_type == "document" and path.is_file():
+            path = (GOLDEN_DIR / url.removeprefix(GOLDEN_URL).split("?")[0].lstrip("/")).resolve()
+            if route.request.resource_type == "document" and path.is_relative_to(GOLDEN_DIR) and path.is_file():
                 await route.fulfill(body=golden_html(path), content_type="text/html; charset=utf-8")
                 return
             await route.abort()
             return
         if url.startswith(FIXTURES_URL) and fixtures is not None:
-            path = fixtures / url.removeprefix(FIXTURES_URL).split("?")[0].split("#")[0]
-            if path.is_file():
+            path = (fixtures / url.removeprefix(FIXTURES_URL).split("?")[0].split("#")[0].lstrip("/")).resolve()
+            if path.is_relative_to(fixtures.resolve()) and path.is_file():
                 await route.fulfill(path=path)
                 return
             await route.abort()

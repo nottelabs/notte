@@ -27,6 +27,8 @@ PAGE = """
 <input id="placeholder" placeholder="Search products">
 <input id="submit" type="submit" value="Place order">
 <input id="reset" type="reset">
+<label for="labelledsubmit">Confirm purchase</label> <input id="labelledsubmit" type="submit" value="Send">
+<button id="linebreak">Place<br>order</button>
 <button id="icon"><svg aria-hidden="true" width="10" height="10"><title>icon</title></svg><span class="caps">Save</span></button>
 <a id="upvote" href="#up"><div class="box" title="upvote"></div></a>
 <div id="generic" class="box" title="Collapse sidebar" onclick=""></div>
@@ -61,6 +63,8 @@ EXPECTED = {
     "placeholder": "Search products",
     "submit": "Place order",
     "reset": "Reset",
+    "labelledsubmit": "Confirm purchase",
+    "linebreak": "Place order",
     "icon": "SAVE",
     "upvote": None,
     "generic": None,
@@ -156,3 +160,11 @@ async def test_long_names_are_cut(session: NotteSession) -> None:
     assert node.accessible_name is not None
     assert len(node.accessible_name) == 200
     assert node.accessible_name.startswith("word word")
+
+
+@pytest.mark.asyncio
+async def test_formatting_whitespace_does_not_cut_names(session: NotteSession) -> None:
+    _ = await session.window.page.goto(_data_url(f"<button>{' ' * 2000}<span>Save</span></button>"))
+    _ = await session.aobserve()
+    (node,) = session.snapshot.interaction_nodes()
+    assert node.accessible_name == "Save"
