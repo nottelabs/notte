@@ -1,29 +1,39 @@
 """HTTP transport: one pooled `httpx.Client` configured like `requests`, with HTTPS recovery,
-retries, streaming and object storage.
+retries, streaming and object storage, and its `httpx.AsyncClient` twin for `AsyncNotteClient`.
 
 This module and `endpoints/base.py` are the only SDK modules that use the HTTP library.
 Everything else goes through the transport-neutral helpers below or `BaseClient`.
+
+The sync and async I/O are written side by side. Every decision they make (error
+translation, retry policy and delays, handshake recovery, request encoding, line
+splitting, status errors) lives in one shared helper that both call.
 
 Every HTTP failure is raised as an SDK exception from `notte_sdk.errors`, which
 also subclasses the matching `requests` exception.
 """
 
+import asyncio
 import json
 import os
 import random
 import ssl
 import threading
 import time
+import warnings
 import weakref
-from collections.abc import Callable, Generator, Iterable, Iterator, Mapping
-from contextlib import contextmanager
+from collections.abc import AsyncGenerator, AsyncIterator, Awaitable, Callable, Generator, Iterable, Iterator, Mapping
+from contextlib import asynccontextmanager, contextmanager
 from contextvars import ContextVar
 from http.cookiejar import CookieJar
-from typing import IO, Any, Protocol, cast
+from typing import IO, Any, Protocol, TypedDict, cast
 from urllib.parse import urlencode
 
+import anyio
 import httpcore
 import httpx
+
+# Imported where it is defined: `httpcore.AnyIOBackend` is declared conditionally on anyio.
+from httpcore._backends.anyio import AnyIOBackend
 from notte_core.logging import logger
 from typing_extensions import final, override
 
@@ -53,6 +63,21 @@ _LIMITS = httpx.Limits(max_connections=None, max_keepalive_connections=20, keepa
 _CALL_COOKIES: ContextVar[httpx.Cookies | None] = ContextVar("notte_sdk_call_cookies", default=None)
 
 
+class _ClientOptions(TypedDict):
+    trust_env: bool
+    limits: httpx.Limits
+    timeout: None
+    follow_redirects: bool
+    max_redirects: int
+
+
+# trust_env applies HTTP(S)_PROXY, ALL_PROXY and NO_PROXY, as in requests.
+# No default timeout: like requests, every call passes its own.
+_CLIENT_OPTIONS = _ClientOptions(
+    trust_env=True, limits=_LIMITS, timeout=None, follow_redirects=True, max_redirects=MAX_REDIRECTS
+)
+
+
 class _RetryRequest(Protocol):
     @property
     def method(self) -> str: ...
@@ -62,6 +87,32 @@ class _RetryRequest(Protocol):
 
     @property
     def files(self) -> Any: ...
+
+
+# Delays before the second and third handshake attempts (plus up to 0.1 s of jitter).
+_HANDSHAKE_DELAYS = (0.25, 0.75)
+
+
+def _dropped_handshake(error: httpcore.ConnectError) -> bool:
+    """Whether the server closed or reset the connection during the TLS handshake.
+
+    anyio, the async transport's network layer, reports a TLS EOF as `EndOfStream`.
+    """
+    return isinstance(root_cause(error), (ssl.SSLEOFError, ConnectionResetError, anyio.EndOfStream))
+
+
+def _handshake_retry_delay(host: str, attempt: int, started: float, error: httpcore.ConnectError) -> float | None:
+    """Log a dropped handshake and return the delay before reconnecting, or `None` once exhausted."""
+    exhausted = attempt == len(_HANDSHAKE_DELAYS)
+    logger.warning(
+        "HTTPS handshake {} host={} attempt={} elapsed_ms={:.0f} error_type={}",
+        "exhausted" if exhausted else "retry",
+        host,
+        attempt + 1,
+        (time.monotonic() - started) * 1000,
+        type(root_cause(error)).__name__,
+    )
+    return None if exhausted else _HANDSHAKE_DELAYS[attempt] + random.uniform(0, 0.1)
 
 
 class _HandshakeStream(httpcore.NetworkStream):
@@ -93,7 +144,6 @@ class _HandshakeStream(httpcore.NetworkStream):
         self, ssl_context: ssl.SSLContext, server_hostname: str | None = None, timeout: float | None = None
     ) -> httpcore.NetworkStream:
         started = time.monotonic()
-        delays = (0.25, 0.75)
         attempt = 0
         while True:
             try:
@@ -101,22 +151,13 @@ class _HandshakeStream(httpcore.NetworkStream):
                 # Never retry errors around request writes or response reads.
                 return self._stream.start_tls(ssl_context, server_hostname, timeout)
             except httpcore.ConnectError as exc:
-                cause = root_cause(exc)
-                if not isinstance(cause, (ssl.SSLEOFError, ConnectionResetError)):
+                if not _dropped_handshake(exc):
                     raise
                 self._stream.close()
-                exhausted = attempt == len(delays)
-                logger.warning(
-                    "HTTPS handshake {} host={} attempt={} elapsed_ms={:.0f} error_type={}",
-                    "exhausted" if exhausted else "retry",
-                    self._host,
-                    attempt + 1,
-                    (time.monotonic() - started) * 1000,
-                    type(cause).__name__,
-                )
-                if exhausted:
+                delay = _handshake_retry_delay(self._host, attempt, started, exc)
+                if delay is None:
                     raise
-                time.sleep(delays[attempt] + random.uniform(0, 0.1))
+                time.sleep(delay)
                 attempt += 1
                 # The caller's connect timeout applies to each attempt.
                 self._stream = self._connect()
@@ -168,19 +209,19 @@ class _HandshakeTransport(httpx.HTTPTransport):
         )
 
 
+def _call_cookies() -> httpx.Cookies:
+    # The current call's jar; outside a call, an empty one that nothing keeps.
+    jar = _CALL_COOKIES.get()
+    return httpx.Cookies() if jar is None else jar
+
+
+_NO_CLIENT_COOKIES = "The SDK HTTP client keeps no cookies between calls"
+
+
 @final
 class _Client(httpx.Client):
     def __init__(self, *, verify: ssl.SSLContext) -> None:
-        # trust_env applies HTTP(S)_PROXY, ALL_PROXY and NO_PROXY, as in requests.
-        # No default timeout: like requests, every call passes its own.
-        super().__init__(
-            verify=verify,
-            trust_env=True,
-            limits=_LIMITS,
-            timeout=None,
-            follow_redirects=True,
-            max_redirects=MAX_REDIRECTS,
-        )
+        super().__init__(verify=verify, **_CLIENT_OPTIONS)
         # Replace only the default transport. Environment proxies are mounted
         # separately and keep httpx's own transports.
         self._transport.close()
@@ -189,9 +230,7 @@ class _Client(httpx.Client):
     @property
     @override
     def cookies(self) -> httpx.Cookies:
-        # The current call's jar; outside a call, an empty one that nothing keeps.
-        jar = _CALL_COOKIES.get()
-        return httpx.Cookies() if jar is None else jar
+        return _call_cookies()
 
     @cookies.setter
     @override
@@ -199,7 +238,7 @@ class _Client(httpx.Client):
         self,
         cookies: httpx.Cookies | CookieJar | dict[str, str] | list[tuple[str, str]],  # pyright: ignore[reportPropertyTypeMismatch]
     ) -> None:
-        raise TypeError("The SDK HTTP client keeps no cookies between calls")
+        raise TypeError(_NO_CLIENT_COOKIES)
 
     @override
     def build_request(self, method: str, url: httpx.URL | str, **options: Any) -> httpx.Request:
@@ -278,7 +317,9 @@ def translate_error(error: Exception, *, body: bool = False) -> NotteRequestErro
     `body` marks failures while reading a response body, after its headers arrived.
     """
     message = str(error) or type(error).__name__
-    if isinstance(root_cause(error), ssl.SSLError):
+    cause = root_cause(error)
+    # Under the async transport, anyio reports a TLS EOF during the handshake as `EndOfStream`.
+    if isinstance(cause, (ssl.SSLError, anyio.EndOfStream)):
         return NotteSSLError(message)
     if isinstance(error, (httpx.ConnectTimeout, httpx.PoolTimeout)):
         return NotteConnectTimeoutError(message)
@@ -332,13 +373,25 @@ def send(client: httpx.Client, request: httpx.Request, *, follow_redirects: bool
     return response
 
 
-def raise_for_status(response: httpx.Response) -> None:
-    """Raise `NotteHTTPStatusError` for a 4xx or 5xx status, with requests' message."""
+def _status_error(response: httpx.Response) -> NotteHTTPStatusError | None:
+    """`NotteHTTPStatusError` for a 4xx or 5xx status, with requests' message."""
     if 400 <= response.status_code < 500:
         kind = "Client Error"
     elif 500 <= response.status_code < 600:
         kind = "Server Error"
     else:
+        return None
+    return NotteHTTPStatusError(
+        f"{response.status_code} {kind}: {response.reason_phrase} for url: {response.url}",
+        response=response,
+        request=response.request,
+    )
+
+
+def raise_for_status(response: httpx.Response) -> None:
+    """Raise `NotteHTTPStatusError` for a 4xx or 5xx status, with requests' message."""
+    error = _status_error(response)
+    if error is None:
         return
     # A streamed response closes when its block exits. Read the error body first so callers
     # can still use `error.response.text` and `json()`, as requests left them readable.
@@ -346,11 +399,7 @@ def raise_for_status(response: httpx.Response) -> None:
         _ = response.read()
     except httpx.HTTPError:
         pass  # the status error is more useful than the failure to read its body
-    raise NotteHTTPStatusError(
-        f"{response.status_code} {kind}: {response.reason_phrase} for url: {response.url}",
-        response=response,
-        request=response.request,
-    )
+    raise error
 
 
 def decode_json(response: httpx.Response) -> Any:
@@ -361,20 +410,34 @@ def decode_json(response: httpx.Response) -> Any:
         raise NotteJSONDecodeError(e.msg, e.doc, e.pos) from e
 
 
-def iter_lines(response: httpx.Response) -> Iterator[bytes]:
+class _LineSplitter:
     """Split a streamed body into lines exactly as `requests.Response.iter_lines` does."""
-    pending: bytes | None = None
-    for chunk in response.iter_bytes():
-        if pending is not None:
-            chunk = pending + chunk
+
+    def __init__(self) -> None:
+        self._pending: bytes | None = None
+
+    def feed(self, chunk: bytes) -> list[bytes]:
+        """The lines completed by `chunk`; a trailing partial line waits for the next chunk."""
+        if self._pending is not None:
+            chunk = self._pending + chunk
         lines = chunk.splitlines()
         if lines and lines[-1] and chunk and lines[-1][-1] == chunk[-1]:
-            pending = lines.pop()
+            self._pending = lines.pop()
         else:
-            pending = None
-        yield from lines
-    if pending is not None:
-        yield pending
+            self._pending = None
+        return lines
+
+    def end(self) -> list[bytes]:
+        """The last line, when the body did not end with a line break."""
+        return [] if self._pending is None else [self._pending]
+
+
+def iter_lines(response: httpx.Response) -> Iterator[bytes]:
+    """Split a streamed body into lines exactly as `requests.Response.iter_lines` does."""
+    lines = _LineSplitter()
+    for chunk in response.iter_bytes():
+        yield from lines.feed(chunk)
+    yield from lines.end()
 
 
 def _as_values(value: Any) -> list[Any]:
@@ -421,42 +484,79 @@ def multipart_files(files: Any) -> dict[str, Any]:
     return parts
 
 
+class _RetryBudget:
+    """The retry decisions for one request, within one request time budget.
+
+    `send_with_retries` and `asend_with_retries` only send, close and sleep; this decides.
+    """
+
+    def __init__(self, endpoint: _RetryRequest, *, max_retries: int, timeout: float) -> None:
+        self._endpoint: _RetryRequest = endpoint
+        self._max_retries: int = max(0, max_retries)
+        self._timeout: float = timeout
+        self._deadline: float = time.monotonic() + timeout
+        self._positions: list[tuple[Any, int]] | None = _upload_positions(endpoint)
+        self._attempt: int = 0
+
+    def remaining(self) -> float:
+        """The time budget for the next attempt; raises once the request's budget is spent."""
+        remaining = self._timeout if self._attempt == 0 else self._deadline - time.monotonic()
+        if remaining <= 0:
+            raise NotteRequestTimeoutError("SDK request retry deadline exceeded")
+        return remaining
+
+    def after_error(self, error: NotteRequestError) -> float | None:
+        """The delay before retrying a failed attempt, or `None` to raise its error."""
+        # Uploaded files are rewound before a retry; one that cannot be is not resent.
+        if not (
+            self._can_retry()
+            and is_retryable_exception(error, self._endpoint.method)
+            and _rewind_files(self._positions)
+        ):
+            return None
+        delay = backoff_delay(self._attempt)
+        if time.monotonic() + delay >= self._deadline:
+            return None
+        return self._retrying(delay, type(error).__name__)
+
+    def after_response(self, response: httpx.Response) -> float | None:
+        """The delay before retrying a response (the caller closes it), or `None` to return it."""
+        if not (self._can_retry() and is_retryable_status(response.status_code, self._endpoint.method)):
+            return None
+        delay = retry_delay(self._attempt, response.headers.get("Retry-After"))
+        if delay is None or time.monotonic() + delay >= self._deadline or not _rewind_files(self._positions):
+            return None
+        return self._retrying(delay, f"status {response.status_code}")
+
+    def _can_retry(self) -> bool:
+        return self._attempt < self._max_retries
+
+    def _retrying(self, delay: float, reason: str) -> float:
+        self._attempt += 1
+        logger.warning(
+            f"`{self._endpoint.method} {self._endpoint.path}` failed ({reason}), retrying in {delay:.1f}s ({self._attempt}/{self._max_retries})"
+        )
+        return delay
+
+
 def send_with_retries(
     endpoint: _RetryRequest, send: Callable[[float], httpx.Response], *, max_retries: int, timeout: float
 ) -> httpx.Response:
     """Retry transient responses and replayable uploads within one request time budget."""
-    max_retries = max(0, max_retries)
-    deadline = time.monotonic() + timeout
-    positions = _upload_positions(endpoint)
-    attempt = 0
+    budget = _RetryBudget(endpoint, max_retries=max_retries, timeout=timeout)
     while True:
-        # Uploaded files are rewound before a retry; one that cannot be is not resent.
-        can_retry = attempt < max_retries
-        remaining = timeout if attempt == 0 else deadline - time.monotonic()
-        if remaining <= 0:
-            raise NotteRequestTimeoutError("SDK request retry deadline exceeded")
+        remaining = budget.remaining()
         try:
             response = send(remaining)
         except NotteRequestError as e:
-            if not (can_retry and is_retryable_exception(e, endpoint.method) and _rewind_files(positions)):
+            delay = budget.after_error(e)
+            if delay is None:
                 raise
-            delay = backoff_delay(attempt)
-            if time.monotonic() + delay >= deadline:
-                raise
-            reason = type(e).__name__
         else:
-            if not (can_retry and is_retryable_status(response.status_code, endpoint.method)):
+            delay = budget.after_response(response)
+            if delay is None:
                 return response
-            response_delay = retry_delay(attempt, response.headers.get("Retry-After"))
-            if response_delay is None or time.monotonic() + response_delay >= deadline or not _rewind_files(positions):
-                return response
-            delay = response_delay
-            reason = f"status {response.status_code}"
             response.close()
-        attempt += 1
-        logger.warning(
-            f"`{endpoint.method} {endpoint.path}` failed ({reason}), retrying in {delay:.1f}s ({attempt}/{max_retries})"
-        )
         time.sleep(delay)
 
 
@@ -541,3 +641,280 @@ def get_object(
         with stream(storage_session, request, follow_redirects=False) as response:
             raise_for_status(response)
             yield response.status_code, response.iter_bytes(chunk_size=chunk_size)
+
+
+# ---------------------------------------------------------------------------
+# Async transport: the same client configuration, handshake recovery and retries on
+# `httpx.AsyncClient`. Each function below mirrors the sync one of the same name without
+# its `a` prefix and shares its decisions through the helpers above.
+
+
+class _AsyncHandshakeStream(httpcore.AsyncNetworkStream):
+    """A TCP stream that reconnects when the server drops the TLS handshake."""
+
+    def __init__(
+        self,
+        connect: Callable[[], Awaitable[httpcore.AsyncNetworkStream]],
+        host: str,
+        stream: httpcore.AsyncNetworkStream,
+    ) -> None:
+        self._connect: Callable[[], Awaitable[httpcore.AsyncNetworkStream]] = connect
+        self._host: str = host
+        self._stream: httpcore.AsyncNetworkStream = stream
+
+    @override
+    async def read(self, max_bytes: int, timeout: float | None = None) -> bytes:
+        return await self._stream.read(max_bytes, timeout)
+
+    @override
+    async def write(self, buffer: bytes, timeout: float | None = None) -> None:
+        await self._stream.write(buffer, timeout)
+
+    @override
+    async def aclose(self) -> None:
+        await self._stream.aclose()
+
+    @override
+    def get_extra_info(self, info: str) -> Any:
+        return self._stream.get_extra_info(info)
+
+    @override
+    async def start_tls(
+        self, ssl_context: ssl.SSLContext, server_hostname: str | None = None, timeout: float | None = None
+    ) -> httpcore.AsyncNetworkStream:
+        started = time.monotonic()
+        attempt = 0
+        while True:
+            try:
+                # Only the handshake runs here: HTTP bytes are written after it returns.
+                # Never retry errors around request writes or response reads.
+                return await self._stream.start_tls(ssl_context, server_hostname, timeout)
+            except httpcore.ConnectError as exc:
+                if not _dropped_handshake(exc):
+                    raise
+                await self._stream.aclose()
+                delay = _handshake_retry_delay(self._host, attempt, started, exc)
+                if delay is None:
+                    raise
+                await asyncio.sleep(delay)
+                attempt += 1
+                # The caller's connect timeout applies to each attempt.
+                self._stream = await self._connect()
+
+
+class _AsyncHandshakeBackend(httpcore.AsyncNetworkBackend):
+    def __init__(self) -> None:
+        self._backend: AnyIOBackend = AnyIOBackend()
+
+    @override
+    async def connect_tcp(
+        self,
+        host: str,
+        port: int,
+        timeout: float | None = None,
+        local_address: str | None = None,
+        socket_options: Iterable[httpcore.SOCKET_OPTION] | None = None,
+    ) -> httpcore.AsyncNetworkStream:
+        options = None if socket_options is None else list(socket_options)
+
+        def connect() -> Awaitable[httpcore.AsyncNetworkStream]:
+            return self._backend.connect_tcp(host, port, timeout, local_address, options)
+
+        return _AsyncHandshakeStream(connect, host, await connect())
+
+    @override
+    async def connect_unix_socket(
+        self, path: str, timeout: float | None = None, socket_options: Iterable[httpcore.SOCKET_OPTION] | None = None
+    ) -> httpcore.AsyncNetworkStream:
+        return await self._backend.connect_unix_socket(path, timeout, socket_options)
+
+    @override
+    async def sleep(self, seconds: float) -> None:
+        await self._backend.sleep(seconds)
+
+
+@final
+class _AsyncHandshakeTransport(httpx.AsyncHTTPTransport):
+    """Direct connections only: proxied connections keep httpx's normal behavior."""
+
+    def __init__(self, *, verify: ssl.SSLContext, limits: httpx.Limits) -> None:
+        super().__init__(verify=verify, limits=limits)
+        # The pool httpx builds for direct connections, with the handshake-retrying backend.
+        self._pool = httpcore.AsyncConnectionPool(
+            ssl_context=verify,
+            max_connections=limits.max_connections,
+            max_keepalive_connections=limits.max_keepalive_connections,
+            keepalive_expiry=limits.keepalive_expiry,
+            network_backend=_AsyncHandshakeBackend(),
+        )
+
+
+@final
+class _AsyncClient(httpx.AsyncClient):
+    def __init__(self, *, verify: ssl.SSLContext) -> None:
+        super().__init__(verify=verify, **_CLIENT_OPTIONS)
+        # The default transport has opened nothing yet, so it needs no closing.
+        self._transport = _AsyncHandshakeTransport(verify=verify, limits=_LIMITS)
+
+    @property
+    @override
+    def cookies(self) -> httpx.Cookies:
+        return _call_cookies()
+
+    @cookies.setter
+    @override
+    def cookies(
+        self,
+        cookies: httpx.Cookies | CookieJar | dict[str, str] | list[tuple[str, str]],  # pyright: ignore[reportPropertyTypeMismatch]
+    ) -> None:
+        raise TypeError(_NO_CLIENT_COOKIES)
+
+    @override
+    def build_request(self, method: str, url: httpx.URL | str, **options: Any) -> httpx.Request:
+        # A malformed URL fails here, before send(); raise it as an SDK exception too.
+        with translate_errors():
+            return super().build_request(method, url, **options)
+
+
+def async_http_client() -> httpx.AsyncClient:
+    """The async twin of `http_client()`, with the same configuration and handshake recovery."""
+    return _AsyncClient(verify=_ssl_context())
+
+
+_OTHER_LOOP = (
+    "This AsyncNotteClient's connections belong to another event loop that is still open. "
+    "Use the client from that loop, create one client per event loop, "
+    "or `await client.aclose()` in that loop first."
+)
+
+
+class AsyncSharedHttpClient:
+    """One pooled async client per `AsyncNotteClient`, opened on first use.
+
+    httpx async connections belong to the event loop that opened them. Using them from another
+    open loop raises `RuntimeError` instead of hanging; once their loop is closed, they can
+    never be used again, so the next request opens new ones in the current loop.
+    """
+
+    def __init__(self) -> None:
+        self._client: httpx.AsyncClient | None = None
+        self._pid: int | None = None
+        self._loop: weakref.ref[asyncio.AbstractEventLoop] | None = None
+
+    def _owner_loop(self) -> asyncio.AbstractEventLoop | None:
+        """The open event loop the current connections belong to, if any."""
+        loop = None if self._loop is None else self._loop()
+        return None if loop is None or loop.is_closed() else loop
+
+    def get(self) -> httpx.AsyncClient:
+        loop = asyncio.get_running_loop()
+        # A forked child must not share the parent's TLS connections.
+        if self._client is not None and self._pid == os.getpid():
+            owner = self._owner_loop()
+            if owner is loop:
+                return self._client
+            if owner is not None:
+                raise RuntimeError(_OTHER_LOOP)
+        self._client = async_http_client()
+        self._pid = os.getpid()
+        self._loop = weakref.ref(loop)
+        return self._client
+
+    async def aclose(self) -> None:
+        """Close pooled connections. A later request opens a new client."""
+        if self._client is None:
+            return
+        owned = self._pid == os.getpid()
+        owner = self._owner_loop()
+        if owned and owner is not None and owner is not asyncio.get_running_loop():
+            raise RuntimeError(_OTHER_LOOP)
+        client, self._client = self._client, None
+        # A child never closes its parent's connections; nothing can close those of a closed loop.
+        if owned and owner is not None:
+            await client.aclose()
+
+    def warn_unclosed(self) -> None:
+        """Finalizer: async connections cannot be closed during garbage collection."""
+        if self._client is not None and self._pid == os.getpid():
+            warnings.warn(
+                (
+                    "An AsyncNotteClient was garbage collected with open connections. "
+                    "Use `async with AsyncNotteClient() as client:` or `await client.aclose()`."
+                ),
+                ResourceWarning,
+                stacklevel=1,
+            )
+
+
+@asynccontextmanager
+async def astream(
+    client: httpx.AsyncClient, request: httpx.Request, *, follow_redirects: bool = True
+) -> AsyncGenerator[httpx.Response]:
+    """Send a request and yield the response before its body is read; always closes it."""
+    token = _CALL_COOKIES.set(httpx.Cookies())
+    try:
+        response = await client.send(request, stream=True, follow_redirects=follow_redirects)
+    except (httpx.HTTPError, httpx.InvalidURL) as error:
+        raise translate_error(error) from error
+    finally:
+        _CALL_COOKIES.reset(token)
+    try:
+        with translate_errors(body=True):
+            yield response
+    finally:
+        await response.aclose()
+
+
+async def asend(client: httpx.AsyncClient, request: httpx.Request, *, follow_redirects: bool = True) -> httpx.Response:
+    """Send a request and read its whole body, as `requests` does without `stream=True`."""
+    async with astream(client, request, follow_redirects=follow_redirects) as response:
+        _ = await response.aread()
+    return response
+
+
+async def araise_for_status(response: httpx.Response) -> None:
+    """Raise `NotteHTTPStatusError` for a 4xx or 5xx status, with requests' message."""
+    error = _status_error(response)
+    if error is None:
+        return
+    # Read the error body before the streamed response closes, as `raise_for_status` does.
+    try:
+        _ = await response.aread()
+    except httpx.HTTPError:
+        pass  # the status error is more useful than the failure to read its body
+    raise error
+
+
+async def aiter_lines(response: httpx.Response) -> AsyncIterator[bytes]:
+    """Split a streamed body into lines exactly as `requests.Response.iter_lines` does."""
+    lines = _LineSplitter()
+    async for chunk in response.aiter_bytes():
+        for line in lines.feed(chunk):
+            yield line
+    for line in lines.end():
+        yield line
+
+
+async def asend_with_retries(
+    endpoint: _RetryRequest,
+    send: Callable[[float], Awaitable[httpx.Response]],
+    *,
+    max_retries: int,
+    timeout: float,
+) -> httpx.Response:
+    """Retry transient responses and replayable uploads within one request time budget."""
+    budget = _RetryBudget(endpoint, max_retries=max_retries, timeout=timeout)
+    while True:
+        remaining = budget.remaining()
+        try:
+            response = await send(remaining)
+        except NotteRequestError as e:
+            delay = budget.after_error(e)
+            if delay is None:
+                raise
+        else:
+            delay = budget.after_response(response)
+            if delay is None:
+                return response
+            await response.aclose()
+        await asyncio.sleep(delay)

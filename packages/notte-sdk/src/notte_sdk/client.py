@@ -14,8 +14,16 @@ from notte_core.types import ScrapeMarkdownParamsDict, ScrapeRequestDict
 from pydantic import BaseModel
 from typing_extensions import final
 
+from notte_sdk._generated.resources import (
+    AsyncFilesOperations,
+    AsyncFunctionsOperations,
+    AsyncPersonasOperations,
+    AsyncProfilesOperations,
+    AsyncSessionsOperations,
+    AsyncVaultsOperations,
+)
 from notte_sdk._retry import DEFAULT_MAX_RETRIES
-from notte_sdk._transport import SharedHttpClient
+from notte_sdk._transport import AsyncSharedHttpClient, SharedHttpClient
 from notte_sdk.auth import MISSING_API_KEY_MESSAGE, resolve_api_key
 from notte_sdk.endpoints.base import BaseClient
 from notte_sdk.endpoints.files import FileStorageClient, RemoteFileStorage
@@ -28,6 +36,21 @@ from notte_sdk.endpoints.vaults import NotteVault, VaultsClient
 from notte_sdk.errors import AuthenticationError
 
 enable_nest_asyncio()
+
+
+def _validated_settings(
+    api_key: str | None, server_url: str | None, captcha_timeout_seconds: float, max_retries: int
+) -> str:
+    """Check the client settings shared by `NotteClient` and `AsyncNotteClient`; returns the API key."""
+    if not math.isfinite(captcha_timeout_seconds) or captcha_timeout_seconds <= 0:
+        raise ValueError("captcha_timeout_seconds must be finite and greater than zero")
+    if type(max_retries) is not int or max_retries < 0:
+        raise ValueError("max_retries must be a non-negative integer")
+    # Resolve once so the keyring is read at most once per client.
+    api_key = resolve_api_key(api_key, server_url or os.getenv("NOTTE_API_URL") or BaseClient.DEFAULT_NOTTE_API_URL)
+    if api_key is None:
+        raise AuthenticationError(MISSING_API_KEY_MESSAGE)
+    return api_key
 
 
 @final
@@ -62,19 +85,12 @@ class NotteClient:
                 connection refused), so they are never applied twice. Set to 0 to disable retries.
         """
 
-        if not math.isfinite(captcha_timeout_seconds) or captcha_timeout_seconds <= 0:
-            raise ValueError("captcha_timeout_seconds must be finite and greater than zero")
+        api_key = _validated_settings(api_key, server_url, captcha_timeout_seconds, max_retries)
         self.captcha_timeout_seconds: float = captcha_timeout_seconds
-        if type(max_retries) is not int or max_retries < 0:
-            raise ValueError("max_retries must be a non-negative integer")
         self.max_retries: int = max_retries
         # One connection pool for every resource client below.
         self._http: SharedHttpClient = SharedHttpClient()
         _ = weakref.finalize(self, self._http.close)
-        # Resolve once so the keyring is read at most once per client.
-        api_key = resolve_api_key(api_key, server_url or os.getenv("NOTTE_API_URL") or BaseClient.DEFAULT_NOTTE_API_URL)
-        if api_key is None:
-            raise AuthenticationError(MISSING_API_KEY_MESSAGE)
         self.sessions: SessionsClient = SessionsClient(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose, viewer_type=viewer_type
         )
@@ -252,3 +268,94 @@ class NotteClient:
             if not result.success and result.exception is not None:
                 raise result.exception
             return session.scrape(raise_on_failure=raise_on_failure, **data)
+
+
+@final
+class AsyncNotteClient:
+    """
+    Async client for the Notte API. Preview: the API resources only, for now.
+
+    `sessions`, `functions`, `files`, `personas`, `profiles` and `vaults` have the same methods as
+    on `NotteClient`, as coroutines, with the same arguments, results and exceptions. Not yet
+    available: the methods the sync resources extend beyond the API call (for example
+    `sessions.stop`, `sessions.replay`, the viewers and `sessions.page`, `functions.run_start`,
+    `functions.update`, `files.upload` and `files.download`, `vaults.get`), `managed_auth`, and the
+    `Session`, `Function`, `Persona`, `Vault` and `FileStorage` objects. They will be added later.
+
+    **Example:**
+    ```python
+    from notte_sdk import AsyncNotteClient
+
+    async with AsyncNotteClient() as client:
+        sessions = await client.sessions.list()
+    ```
+
+    Connections open on the first request and belong to the event loop that made it. Close them
+    with `async with` or `await client.aclose()`: they cannot be closed when the client is
+    garbage collected, which emits a `ResourceWarning` instead. Using the client from another
+    event loop while the first one is still open raises `RuntimeError`.
+    """
+
+    def __init__(
+        self,
+        api_key: str | None = None,
+        server_url: str | None = None,
+        verbose: bool = False,
+        viewer_type: SessionViewerType = SessionViewerType.BROWSER,
+        captcha_timeout_seconds: float = 180,
+        max_retries: int = DEFAULT_MAX_RETRIES,
+    ):
+        """Initialize an AsyncNotteClient instance; takes the same arguments as `NotteClient`.
+
+        Args:
+            api_key: Optional API key for authentication.
+            viewer_type: Kept for the session viewers, which are not available on this client yet.
+            captcha_timeout_seconds: Total CAPTCHA wait budget, separate from action and HTTP timeouts.
+            max_retries: Retries for transient failures (502, 503, 504, 529, and connection errors),
+                with exponential backoff and full jitter. ``Retry-After`` is honored. POST and PATCH
+                requests are only retried when the API cannot have processed them (503, 529,
+                connection refused), so they are never applied twice. Set to 0 to disable retries.
+        """
+        api_key = _validated_settings(api_key, server_url, captcha_timeout_seconds, max_retries)
+        self.captcha_timeout_seconds: float = captcha_timeout_seconds
+        self.max_retries: int = max_retries
+        self._viewer_type: SessionViewerType = viewer_type
+        # One connection pool for every resource client below.
+        self._http: AsyncSharedHttpClient = AsyncSharedHttpClient()
+        _ = weakref.finalize(self, self._http.warn_unclosed)
+        self.sessions: AsyncSessionsOperations = AsyncSessionsOperations(
+            root_client=self, base_endpoint_path="sessions", api_key=api_key, server_url=server_url, verbose=verbose
+        )
+        self.personas: AsyncPersonasOperations = AsyncPersonasOperations(
+            root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
+        )
+        self.vaults: AsyncVaultsOperations = AsyncVaultsOperations(
+            root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
+        )
+        self.profiles: AsyncProfilesOperations = AsyncProfilesOperations(
+            root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
+        )
+        self.files: AsyncFilesOperations = AsyncFilesOperations(
+            root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
+        )
+        self.functions: AsyncFunctionsOperations = AsyncFunctionsOperations(
+            root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
+        )
+
+        if self.sessions.server_url != self.sessions.DEFAULT_NOTTE_API_URL:
+            logger.warning(f"NOTTE_API_URL is set to: {self.sessions.server_url}")
+
+    async def aclose(self) -> None:
+        """Close pooled HTTP connections. The client stays usable: a later request opens new ones."""
+        await self._http.aclose()
+
+    async def __aenter__(self) -> Self:
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        await self.aclose()

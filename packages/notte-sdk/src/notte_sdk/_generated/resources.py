@@ -67,10 +67,10 @@ from notte_sdk._generated.typing import (
     VaultUpdateRequestDict,
 )
 from notte_sdk._requests import wire_request
-from notte_sdk.endpoints.base import BaseClient
+from notte_sdk.endpoints.base import AsyncBaseClient, BaseClient
 
 if TYPE_CHECKING:
-    from notte_sdk.client import NotteClient
+    from notte_sdk.client import AsyncNotteClient, NotteClient
 
 
 class RunPayloadsOperations(BaseClient):
@@ -80,6 +80,17 @@ class RunPayloadsOperations(BaseClient):
         "Prepare Run Payload Upload (`POST /functions/{function_id}/runs/{run_id}/payloads/{field}/upload`)."
         request = wire_request(models.RunPayloadUploadRequest, data)
         return self.request(api.prepare_run_payload_upload(function_id, run_id, field, request))
+
+
+class AsyncRunPayloadsOperations(AsyncBaseClient):
+    "Async twin of `RunPayloadsOperations`, for `AsyncNotteClient`."
+
+    async def prepare_run_payload_upload(
+        self, function_id: str, run_id: str, field: str, **data: Unpack[RunPayloadUploadRequestDict]
+    ) -> run_payloads_compat.UploadResponse:
+        "Prepare Run Payload Upload (`POST /functions/{function_id}/runs/{run_id}/payloads/{field}/upload`)."
+        request = wire_request(models.RunPayloadUploadRequest, data)
+        return await self.request(api.prepare_run_payload_upload(function_id, run_id, field, request))
 
 
 class FunctionsOperations(RunPayloadsOperations):
@@ -196,6 +207,112 @@ class FunctionsOperations(RunPayloadsOperations):
         "List Functions (`GET /functions/`)."
         request = wire_request(core.ListFunctionsRequest, data)
         return self.request(api.list_functions(params=request))
+
+
+class AsyncFunctionsOperations(AsyncRunPayloadsOperations):
+    "Async twin of `FunctionsOperations`, for `AsyncNotteClient`."
+
+    def __init__(
+        self,
+        root_client: "AsyncNotteClient",
+        api_key: str | None = None,
+        server_url: str | None = None,
+        verbose: bool = False,
+    ):
+        super().__init__(
+            root_client=root_client,
+            base_endpoint_path="functions",
+            api_key=api_key,
+            server_url=server_url,
+            verbose=verbose,
+        )
+
+    async def download_run_payload(self, function_id: str, run_id: str, field: str) -> Any:
+        "Download Run Payload (`GET /functions/{function_id}/runs/{run_id}/payloads/{field}`)."
+        return await self._request(api.download_run_payload(function_id, run_id, field), check_response_detail=False)
+
+    @track_usage("cloud.function.create")
+    async def create(
+        self, *, query: FunctionCreateParametersQueryDict | None = None, **data: Unpack[CreateFunctionRequestDict]
+    ) -> core.GetFunctionResponse:
+        "Function Create (`POST /functions/`)."
+        files = {"file": data["path"]}
+        request = wire_request(
+            models.BodyFunctionCreateFunctionsPost, {key: value for key, value in data.items() if key not in ["path"]}
+        )
+        return await self._request_upload(api.function_create(request, params=wire_request(None, query or {})), files)
+
+    @track_usage("cloud.function.delete")
+    async def delete(self, function_id: str) -> models.DeleteFunctionResponse:
+        "Function Delete (`DELETE /functions/{function_id}`)."
+        return await self.request(api.function_delete(function_id))
+
+    @track_usage("cloud.function.get")
+    async def download_url(
+        self, function_id: str, **data: Unpack[GetFunctionRequestDict]
+    ) -> core.GetFunctionWithLinkResponse:
+        "Function Download Url (`GET /functions/{function_id}`)."
+        request = wire_request(core.GetFunctionRequest, data)
+        return await self.request(api.function_download_url(function_id, params=request))
+
+    @track_usage("cloud.function.fork")
+    async def fork(self, function_id: str) -> core.GetFunctionResponse:
+        "Function Fork (`POST /functions/{function_id}/fork`)."
+        return await self.request(api.function_fork(function_id))
+
+    async def metadata_update(
+        self, function_id: str, **data: Unpack[FunctionMetadataUpdateRequestDict]
+    ) -> core.GetFunctionResponse:
+        "Function Metadata Update (`PATCH /functions/{function_id}`)."
+        request = wire_request(models.FunctionMetadataUpdateRequest, data)
+        return await self.request(api.function_metadata_update(function_id, request))
+
+    async def rollback(
+        self,
+        function_id: str,
+        *,
+        query: FunctionRollbackParametersQueryDict | None = None,
+        **data: Unpack[FunctionRollbackRequestDict],
+    ) -> core.GetFunctionResponse:
+        "Function Rollback (`POST /functions/{function_id}/rollback`)."
+        request = wire_request(models.FunctionRollbackRequest, data)
+        return await self.request(api.function_rollback(function_id, request, params=wire_request(None, query or {})))
+
+    async def run_stop(self, function_id: str, run_id: str) -> core.UpdateFunctionRunResponse:
+        "Function Run Stop (`DELETE /functions/{function_id}/runs/{run_id}`)."
+        return await self.request(api.function_run_stop(function_id, run_id))
+
+    async def runtime_health(
+        self, **data: Unpack[FunctionRuntimeHealthParametersQueryDict]
+    ) -> models.FunctionRuntimeHealthResponse:
+        "Function Runtime Health (`GET /functions/health`)."
+        request = wire_request(models.FunctionRuntimeHealthParametersQuery, data)
+        return await self.request(api.function_runtime_health(params=request))
+
+    async def delete_schedule(self, function_id: str) -> models.ScheduleDeleteResponse:
+        "Function Schedule Delete (`DELETE /functions/{function_id}/schedule`)."
+        return await self.request(api.function_schedule_delete(function_id))
+
+    async def set_schedule(
+        self, function_id: str, **data: Unpack[FunctionScheduleCreateRequestDict]
+    ) -> models.ScheduleResponse:
+        "Function Schedule Set (`POST /functions/{function_id}/schedule`)."
+        request = wire_request(models.FunctionScheduleCreateRequest, data)
+        return await self.request(api.function_schedule_set(function_id, request))
+
+    async def list_runs(
+        self, function_id: str, **data: Unpack[ListFunctionRunsRequestDict]
+    ) -> core.ListFunctionRunsResponse:
+        "List Function Runs By Function Id (`GET /functions/{function_id}/runs/`)."
+        _ = data.setdefault("only_active", True)
+        request = wire_request(core.ListFunctionRunsRequest, data)
+        return await self.request(api.list_function_runs_by_function_id(function_id, params=request))
+
+    @track_usage("cloud.function.list")
+    async def list(self, **data: Unpack[ListFunctionsRequestDict]) -> core.ListFunctionsResponse:
+        "List Functions (`GET /functions/`)."
+        request = wire_request(core.ListFunctionsRequest, data)
+        return await self.request(api.list_functions(params=request))
 
 
 class SessionsOperations(BaseClient):
@@ -381,6 +498,176 @@ class SessionsOperations(BaseClient):
         return self._request_upload(api.upload_session_file(session_id, request), files)
 
 
+class AsyncSessionsOperations(AsyncBaseClient):
+    "Async twin of `SessionsOperations`, for `AsyncNotteClient`."
+
+    async def create_payment(
+        self,
+        session_id: str,
+        *,
+        query: CreatePaymentParametersQueryDict | None = None,
+        idempotency_key: str,
+        **data: Unpack[PaymentRequestDict],
+    ) -> models.PaymentResponse:
+        "Create Payment (`POST /sessions/{session_id}/payments`)."
+        request = wire_request(models.PaymentRequest, data)
+        return await self.request(
+            api.create_payment(session_id, request, params=wire_request(None, query or {})),
+            headers={"idempotency-key": idempotency_key},
+        )
+
+    @track_usage("cloud.files.delete")
+    async def delete_session_file(self, session_id: str, file_id: str) -> None:
+        "Delete Session File (`DELETE /sessions/{session_id}/files/{file_id}`)."
+        _ = await self.request(api.delete_session_file(session_id, file_id))
+
+    @track_usage("cloud.files.download")
+    async def download_session_file(self, session_id: str, file_id: str) -> bytes:
+        "Download Session File (`GET /sessions/{session_id}/files/{file_id}`)."
+        return await self._request_bytes(api.download_session_file(session_id, file_id))
+
+    async def get_session_script(
+        self, session_id: str, **data: Unpack[GetSessionScriptParametersQueryDict]
+    ) -> models.AgentFunctionCodeResponse:
+        "Get Session Script (`GET /sessions/{session_id}/workflow/code`).\n\nGenerate a Python script from a session's trajectory.\n\nThis endpoint generates executable Python code that replicates the session's actions,\nwith proper `client.AgentFallback` blocks for steps that were executed by agents.\n\nReturns both a Python script and JSON actions list."
+        request = wire_request(models.GetSessionScriptParametersQuery, data)
+        return await self.request(api.get_session_script(session_id, params=request))
+
+    @track_usage("cloud.files.list")
+    async def list_session_files(
+        self, session_id: str, **data: Unpack[ListSessionFilesParametersQueryDict]
+    ) -> models.SessionFilesPage:
+        "List Session Files (`GET /sessions/{session_id}/files`)."
+        request = wire_request(models.ListSessionFilesParametersQuery, data)
+        return await self.request(api.list_session_files(session_id, params=request))
+
+    @track_usage("cloud.session.list")
+    async def list(self, **data: Unpack[SessionListRequestDict]) -> Sequence[core.SessionResponse]:
+        "List Sessions (`GET /sessions/`)."
+        request = wire_request(core.SessionListRequest, data)
+        return await self.request_list(api.list_sessions(params=request))
+
+    @track_usage("cloud.session.execute")
+    async def execute(
+        self, session_id: str, body: actions.BaseAction, **data: Unpack[PageExecuteParametersQueryDict]
+    ) -> core.ExecutionResultResponse:
+        "Page Execute (`POST /sessions/{session_id}/page/execute`)."
+        request = wire_request(models.PageExecuteParametersQuery, data)
+        return await self.request(page_api.page_execute(session_id, body, params=request))
+
+    @track_usage("cloud.session.observe")
+    async def observe(
+        self,
+        session_id: str,
+        *,
+        query: PageObserveParametersQueryDict | None = None,
+        **data: Unpack[core.ObserveRequestDict],
+    ) -> core.ObserveResponse:
+        "Page Observe (`POST /sessions/{session_id}/page/observe`)."
+        request = core.ObserveRequest.model_validate(data)
+        return await self.request(page_api.page_observe(session_id, request, params=wire_request(None, query or {})))
+
+    @track_usage("cloud.session.scrape")
+    async def scrape(
+        self,
+        session_id: str,
+        *,
+        query: PageScrapeParametersQueryDict | None = None,
+        **data: Unpack[core.ScrapeRequestDict],
+    ) -> core.ScrapeResponse:
+        "Page Scrape (`POST /sessions/{session_id}/page/scrape`)."
+        request = core.ScrapeRequest.model_validate(data)
+        return await self.request(page_api.page_scrape(session_id, request, params=wire_request(None, query or {})))
+
+    async def page_screenshot(self, session_id: str, **data: Unpack[PageScreenshotParametersQueryDict]) -> Any:
+        "Page Screenshot (`POST /sessions/{session_id}/page/screenshot`)."
+        request = wire_request(models.PageScreenshotParametersQuery, data)
+        return await self._request(api.page_screenshot(session_id, params=request), check_response_detail=False)
+
+    async def auth_readiness(self, session_id: str) -> core.SessionAuthResponse:
+        "Session Auth Readiness (`GET /sessions/{session_id}/auth`)."
+        return await self.request(api.session_auth_readiness(session_id), timeout=10)
+
+    @track_usage("cloud.session.cookies.get")
+    async def get_cookies(self, session_id: str) -> core.GetCookiesResponse:
+        "Session Cookies Get (`GET /sessions/{session_id}/cookies`)."
+        return await self.request(api.session_cookies_get(session_id))
+
+    @track_usage("cloud.session.debug")
+    async def debug_info(self, session_id: str) -> core.SessionDebugResponse:
+        "Session Debug Info (`GET /sessions/{session_id}/debug`)."
+        return await self.request(api.session_debug_info(session_id))
+
+    async def mouse_replay(
+        self, session_id: str, **data: Unpack[SessionMouseReplayParametersQueryDict]
+    ) -> models.MouseReplayPage:
+        "Session Mouse Replay (`GET /sessions/{session_id}/replay/mouse`)."
+        request = wire_request(models.SessionMouseReplayParametersQuery, data)
+        return await self.request(api.session_mouse_replay(session_id, params=request))
+
+    async def network_logs(
+        self, session_id: str, **data: Unpack[SessionNetworkLogsParametersQueryDict]
+    ) -> models.NetworkLogsResponse:
+        "Session Network Logs (`GET /sessions/{session_id}/network/logs`)."
+        request = wire_request(models.SessionNetworkLogsParametersQuery, data)
+        return await self.request(api.session_network_logs(session_id, params=request))
+
+    @track_usage("cloud.session.offset")
+    async def offset(self, session_id: str) -> models.SessionOffsetResponse:
+        "Session Offset (`GET /sessions/{session_id}/offset`)."
+        return await self.request(api.session_offset(session_id))
+
+    async def profile_preview(
+        self, session_id: str, **data: Unpack[SessionProfilePreviewParametersQueryDict]
+    ) -> nested_models.SessionProfilePreviewResponse:
+        "Session Profile Preview (`GET /sessions/{session_id}/profile-preview`)."
+        request = wire_request(models.SessionProfilePreviewParametersQuery, data)
+        return await self.request(api.session_profile_preview(session_id, params=request))
+
+    @track_usage("cloud.session.profile.save")
+    async def save_profile(
+        self, session_id: str, **data: Unpack[SessionProfileSaveRequestDict]
+    ) -> profiles_compat.ProfileResponse:
+        "Session Profile Save (`POST /sessions/{session_id}/profile/save`)."
+        request = wire_request(models.SessionProfileSaveRequest, data)
+        return await self.request(api.session_profile_save(session_id, request))
+
+    @track_usage("cloud.session.start")
+    async def start(self, **data: Unpack[SessionStartRequestDict]) -> core.SessionResponse:
+        "Session Start (`POST /sessions/start`)."
+        request = wire_request(None, core.SessionStartRequest.from_data(dict(data)).model_dump(context={"wire": True}))
+        return await self.request(api.session_start(request))
+
+    @track_usage("cloud.session.status")
+    async def status(self, session_id: str) -> core.SessionResponse:
+        "Session Status (`GET /sessions/{session_id}`)."
+        return await self.request(api.session_status(session_id))
+
+    @track_usage("cloud.files.execute")
+    async def execute_session_file(
+        self,
+        session_id: str,
+        *,
+        query: ExecuteSessionFileParametersQueryDict | None = None,
+        **data: Unpack[FileExecutionRequestDict],
+    ) -> models.ApiExecutionResponse:
+        "Execute Session File (`POST /sessions/{session_id}/page/execute/file`)."
+        request = wire_request(models.FileExecutionRequest, data)
+        return await self.request(api.execute_session_file(session_id, request, params=wire_request(None, query or {})))
+
+    @track_usage("cloud.files.upload")
+    async def upload_session_file(
+        self, session_id: str, **data: Unpack[UploadSessionFileRequestDict]
+    ) -> models.SessionFile:
+        "Upload Session File (`POST /sessions/{session_id}/files`)."
+        files = {"file": data["file"]}
+        request = wire_request(
+            models.BodyUploadSessionFileSessionsSessionIdFilesPost,
+            {key: value for key, value in data.items() if key not in ["file"]},
+        )
+        return await self._request_upload(api.upload_session_file(session_id, request), files)
+
+
 class FilesOperations(BaseClient):
     def __init__(
         self,
@@ -419,6 +706,50 @@ class FilesOperations(BaseClient):
         "Execute Session File (`POST /sessions/{session_id}/page/execute/file`)."
         request = wire_request(models.FileExecutionRequest, data)
         return self.request(api.execute_session_file(session_id, request, params=wire_request(None, query or {})))
+
+
+class AsyncFilesOperations(AsyncBaseClient):
+    "Async twin of `FilesOperations`, for `AsyncNotteClient`."
+
+    def __init__(
+        self,
+        root_client: "AsyncNotteClient",
+        api_key: str | None = None,
+        server_url: str | None = None,
+        verbose: bool = False,
+    ):
+        super().__init__(
+            root_client=root_client,
+            base_endpoint_path="sessions",
+            api_key=api_key,
+            server_url=server_url,
+            verbose=verbose,
+        )
+
+    @track_usage("cloud.files.delete")
+    async def delete(self, session_id: str, file_id: str) -> None:
+        "Delete Session File (`DELETE /sessions/{session_id}/files/{file_id}`)."
+        _ = await self.request(api.delete_session_file(session_id, file_id))
+
+    @track_usage("cloud.files.list")
+    async def list(
+        self, session_id: str, **data: Unpack[ListSessionFilesParametersQueryDict]
+    ) -> models.SessionFilesPage:
+        "List Session Files (`GET /sessions/{session_id}/files`)."
+        request = wire_request(models.ListSessionFilesParametersQuery, data)
+        return await self.request(api.list_session_files(session_id, params=request))
+
+    @track_usage("cloud.files.execute")
+    async def execute(
+        self,
+        session_id: str,
+        *,
+        query: ExecuteSessionFileParametersQueryDict | None = None,
+        **data: Unpack[FileExecutionRequestDict],
+    ) -> models.ApiExecutionResponse:
+        "Execute Session File (`POST /sessions/{session_id}/page/execute/file`)."
+        request = wire_request(models.FileExecutionRequest, data)
+        return await self.request(api.execute_session_file(session_id, request, params=wire_request(None, query or {})))
 
 
 class PersonasOperations(BaseClient):
@@ -474,6 +805,65 @@ class PersonasOperations(BaseClient):
         "Persona Update (`PATCH /personas/{persona_id}`)."
         request = wire_request(models.PersonaUpdateRequest, data)
         return self.request(api.persona_update(persona_id, request))
+
+
+class AsyncPersonasOperations(AsyncBaseClient):
+    "Async twin of `PersonasOperations`, for `AsyncNotteClient`."
+
+    def __init__(
+        self,
+        root_client: "AsyncNotteClient",
+        api_key: str | None = None,
+        server_url: str | None = None,
+        verbose: bool = False,
+    ):
+        super().__init__(
+            root_client=root_client,
+            base_endpoint_path="personas",
+            api_key=api_key,
+            server_url=server_url,
+            verbose=verbose,
+        )
+
+    async def list(self, **data: Unpack[PersonaListRequestDict]) -> Sequence[models.PersonaResponse]:
+        "List Personas (`GET /personas`)."
+        request = wire_request(core.PersonaListRequest, data)
+        return await self.request_list(api.list_personas(params=request))
+
+    @track_usage("cloud.personas.create")
+    async def create(self, **data: Unpack[PersonaCreateRequestDict]) -> models.PersonaResponse:
+        "Persona Create (`POST /personas/create`)."
+        request = wire_request(models.PersonaCreateRequest, data)
+        return await self.request(api.persona_create(request))
+
+    @track_usage("cloud.personas.delete")
+    async def delete(self, persona_id: str) -> models.DeletePersonaResponse:
+        "Persona Delete (`DELETE /personas/{persona_id}`)."
+        return await self.request(api.persona_delete(persona_id))
+
+    @track_usage("cloud.personas.emails.list")
+    async def emails_list(
+        self, persona_id: str, **data: Unpack[MessageReadRequestDict]
+    ) -> Sequence[core.EmailResponse]:
+        "Persona Emails List (`GET /personas/{persona_id}/emails`)."
+        request = wire_request(models.PersonaEmailsListParametersQuery, data)
+        return await self.request_list(api.persona_emails_list(persona_id, params=request))
+
+    @track_usage("cloud.personas.get")
+    async def get(self, persona_id: str) -> models.PersonaResponse:
+        "Persona Get (`GET /personas/{persona_id}`)."
+        return await self.request(api.persona_get(persona_id))
+
+    @track_usage("cloud.personas.sms.list")
+    async def sms_list(self, persona_id: str, **data: Unpack[MessageReadRequestDict]) -> Sequence[models.SMSResponse]:
+        "Persona Sms List (`GET /personas/{persona_id}/sms`)."
+        request = wire_request(models.PersonaEmailsListParametersQuery, data)
+        return await self.request_list(api.persona_sms_list(persona_id, params=request))
+
+    async def update(self, persona_id: str, **data: Unpack[PersonaUpdateRequestDict]) -> models.PersonaResponse:
+        "Persona Update (`PATCH /personas/{persona_id}`)."
+        request = wire_request(models.PersonaUpdateRequest, data)
+        return await self.request(api.persona_update(persona_id, request))
 
 
 class ProfilesOperations(BaseClient):
@@ -539,6 +929,73 @@ class ProfilesOperations(BaseClient):
         "Profile State Set (`POST /profiles/{profile_id}/state`)."
         request = wire_request(models.ProfileStateImportRequest, data)
         return self.request(api.profile_state_set(profile_id, request))
+
+
+class AsyncProfilesOperations(AsyncBaseClient):
+    "Async twin of `ProfilesOperations`, for `AsyncNotteClient`."
+
+    def __init__(
+        self,
+        root_client: "AsyncNotteClient",
+        api_key: str | None = None,
+        server_url: str | None = None,
+        verbose: bool = False,
+    ):
+        super().__init__(
+            root_client=root_client,
+            base_endpoint_path="profiles",
+            api_key=api_key,
+            server_url=server_url,
+            verbose=verbose,
+        )
+
+    async def cookies_get(self, profile_id: str) -> core.GetCookiesResponse:
+        "Profile Cookies Get (`GET /profiles/{profile_id}/cookies`)."
+        return await self.request(api.profile_cookies_get(profile_id))
+
+    async def cookies_set(
+        self, profile_id: str, **data: Unpack[ProfileCookiesImportRequestDict]
+    ) -> models.ProfileCookiesImportResponse:
+        "Profile Cookies Set (`POST /profiles/{profile_id}/cookies`)."
+        request = wire_request(models.ProfileCookiesImportRequest, data)
+        return await self.request(api.profile_cookies_set(profile_id, request))
+
+    @track_usage("cloud.profile.create")
+    async def create(self, **data: Unpack[ProfileCreateRequestDict]) -> profiles_compat.ProfileResponse:
+        "Profile Create (`POST /profiles/create`)."
+        request = wire_request(models.ProfileCreateRequest, data)
+        return await self.request(api.profile_create(request))
+
+    @track_usage("cloud.profile.delete")
+    async def delete(self, profile_id: str) -> bool:
+        "Profile Delete (`DELETE /profiles/{profile_id}`)."
+        return (await self.request(api.profile_delete(profile_id))).success
+
+    async def duplicate(
+        self, profile_id: str, **data: Unpack[ProfileDuplicateRequestDict]
+    ) -> profiles_compat.ProfileResponse:
+        "Profile Duplicate (`POST /profiles/{profile_id}/duplicate`)."
+        request = wire_request(models.ProfileDuplicateRequest, data)
+        return await self.request(api.profile_duplicate(profile_id, request))
+
+    @track_usage("cloud.profile.get")
+    async def get(self, profile_id: str) -> profiles_compat.ProfileResponse:
+        "Profile Get (`GET /profiles/{profile_id}`)."
+        return await self.request(api.profile_get(profile_id))
+
+    @track_usage("cloud.profile.list")
+    async def list(self, **data: Unpack[ProfileListRequestDict]) -> Sequence[profiles_compat.ProfileResponse]:
+        "Profile List (`GET /profiles`)."
+        _ = data.setdefault("page_size", 20)  # SDK default differs from API 10.
+        request = wire_request(profiles_compat.ProfileListRequest, data)
+        return await self.request_list(api.profile_list(params=request))
+
+    async def state_set(
+        self, profile_id: str, **data: Unpack[ProfileStateImportRequestDict]
+    ) -> models.ProfileStateImportResponse:
+        "Profile State Set (`POST /profiles/{profile_id}/state`)."
+        request = wire_request(models.ProfileStateImportRequest, data)
+        return await self.request(api.profile_state_set(profile_id, request))
 
 
 class VaultsOperations(BaseClient):
@@ -643,3 +1100,115 @@ class VaultsOperations(BaseClient):
         "Vault Update (`PATCH /vaults/{vault_id}`)."
         request = wire_request(models.VaultUpdateRequest, data)
         return self.request(api.vault_update(vault_id, request))
+
+
+class AsyncVaultsOperations(AsyncBaseClient):
+    "Async twin of `VaultsOperations`, for `AsyncNotteClient`."
+
+    def __init__(
+        self,
+        root_client: "AsyncNotteClient",
+        api_key: str | None = None,
+        server_url: str | None = None,
+        verbose: bool = False,
+    ):
+        super().__init__(
+            root_client=root_client,
+            base_endpoint_path="vaults",
+            api_key=api_key,
+            server_url=server_url,
+            verbose=verbose,
+        )
+
+    @track_usage("cloud.vault.list")
+    async def list(self, **data: Unpack[VaultListRequestDict]) -> Sequence[models.Vault]:
+        "List Vaults (`GET /vaults`)."
+        request = wire_request(core.VaultListRequest, data)
+        return await self.request_list(api.list_vaults(params=request))
+
+    @track_usage("cloud.vault.create")
+    async def create(self, **data: Unpack[VaultCreateRequestDict]) -> models.Vault:
+        "Vault Create (`POST /vaults/create`)."
+        request = wire_request(models.VaultCreateRequest, data)
+        return await self.request(api.vault_create(request))
+
+    @track_usage("cloud.vault.credentials.add")
+    async def credentials_add(
+        self, vault_id: str, **data: Unpack[AddCredentialsRequestDict]
+    ) -> models.AddCredentialsResponse:
+        "Vault Credentials Add (`POST /vaults/{vault_id}/credentials`)."
+        values = dict(data)
+        nested = {key: values.pop(key) for key in list(values) if key not in ["url"]}
+        values["credentials"] = nested
+        request = wire_request(core.AddCredentialsRequest, values)
+        return await self.request(api.vault_credentials_add(vault_id, request))
+
+    @track_usage("cloud.vault.credentials.delete")
+    async def credentials_delete(
+        self, vault_id: str, **data: Unpack[DeleteCredentialsRequestDict]
+    ) -> models.DeleteCredentialsResponse:
+        "Vault Credentials Delete (`DELETE /vaults/{vault_id}/credentials`)."
+        request = wire_request(models.VaultCredentialsDeleteParametersQuery, data)
+        return await self.request(api.vault_credentials_delete(vault_id, params=request))
+
+    @track_usage("cloud.vault.credentials.get")
+    async def credentials_get(
+        self, vault_id: str, **data: Unpack[GetCredentialsRequestDict]
+    ) -> core.GetCredentialsResponse:
+        "Vault Credentials Get (`GET /vaults/{vault_id}/credentials`)."
+        request = wire_request(models.VaultCredentialsGetParametersQuery, data)
+        return await self.request(api.vault_credentials_get(vault_id, params=request))
+
+    @track_usage("cloud.vault.credentials.list")
+    async def credentials_list(
+        self, vault_id: str, **data: Unpack[ListCredentialsRequestDict]
+    ) -> core.ListCredentialsResponse:
+        "Vault Credentials List (`GET /vaults/{vault_id}`)."
+        endpoint = api.vault_credentials_list(vault_id)
+        if data:
+            endpoint = endpoint.with_params(wire_request(None, data))
+        return await self.request(endpoint)
+
+    @track_usage("cloud.vault.credit_card.delete")
+    async def credit_card_delete(
+        self, vault_id: str, **data: Unpack[DeleteCreditCardRequestDict]
+    ) -> models.DeleteCreditCardResponse:
+        "Vault Credit Card Delete (`DELETE /vaults/{vault_id}/card`)."
+        endpoint = api.vault_credit_card_delete(vault_id)
+        if data:
+            endpoint = endpoint.with_params(wire_request(None, data))
+        return await self.request(endpoint)
+
+    @track_usage("cloud.vault.credit_card.get")
+    async def credit_card_get(
+        self, vault_id: str, **data: Unpack[GetCreditCardRequestDict]
+    ) -> core.GetCreditCardResponse:
+        "Vault Credit Card Get (`GET /vaults/{vault_id}/card`)."
+        endpoint = api.vault_credit_card_get(vault_id)
+        if data:
+            endpoint = endpoint.with_params(wire_request(None, data))
+        return await self.request(endpoint)
+
+    @track_usage("cloud.vault.credit_card.set")
+    async def credit_card_set(
+        self, vault_id: str, **data: Unpack[AddCreditCardRequestDict]
+    ) -> models.AddCreditCardResponse:
+        "Vault Credit Card Set (`POST /vaults/{vault_id}/card`)."
+        values = dict(data)
+        nested = {key: values.pop(key) for key in list(values) if key not in []}
+        values["credit_card"] = nested
+        request = wire_request(core.AddCreditCardRequest, values)
+        return await self.request(api.vault_credit_card_set(vault_id, request))
+
+    @track_usage("cloud.vault.delete")
+    async def delete(self, vault_id: str, **data: Unpack[DeleteVaultRequestDict]) -> models.DeleteVaultResponse:
+        "Vault Delete (`DELETE /vaults/{vault_id}`)."
+        endpoint = api.vault_delete(vault_id)
+        if data:
+            endpoint = endpoint.with_params(wire_request(None, data))
+        return await self.request(endpoint)
+
+    async def update(self, vault_id: str, **data: Unpack[VaultUpdateRequestDict]) -> models.Vault:
+        "Vault Update (`PATCH /vaults/{vault_id}`)."
+        request = wire_request(models.VaultUpdateRequest, data)
+        return await self.request(api.vault_update(vault_id, request))

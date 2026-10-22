@@ -24,6 +24,7 @@ import time
 from collections.abc import Callable
 from email.utils import parsedate_to_datetime
 
+import anyio
 import httpcore
 import httpx
 
@@ -35,7 +36,8 @@ from notte_sdk.errors import (
     NotteSSLError,
 )
 
-# Exceptions that wrap the socket or TLS error that caused them.
+# Exceptions that wrap the socket or TLS error that caused them. anyio, the async
+# transport's network layer, raises `BrokenResourceError` from the socket error.
 _WRAPPERS = (
     NotteRequestError,
     httpx.HTTPError,
@@ -43,6 +45,7 @@ _WRAPPERS = (
     httpcore.TimeoutException,
     httpcore.ProtocolError,
     httpcore.ProxyError,
+    anyio.BrokenResourceError,
 )
 
 DEFAULT_MAX_RETRIES = 3

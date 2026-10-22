@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased: AsyncNotteClient (preview)
+
+`from notte_sdk import AsyncNotteClient` is an asyncio client on `httpx.AsyncClient`, with the
+same constructor arguments as `NotteClient`. Its `sessions`, `functions`, `files`, `personas`,
+`profiles` and `vaults` resources have the API methods of the sync resources as coroutines, with
+the same names, arguments, results, retries and exceptions. Use `async with AsyncNotteClient() as
+client:` or `await client.aclose()`: an unclosed client emits a `ResourceWarning` when it is
+garbage collected. A client's connections belong to the event loop that opened them; using it
+from another open loop raises `RuntimeError`. Preview: not yet available are the methods the sync
+resources extend beyond the API call (`sessions.stop`, `set_cookies`, `replay`, `debug_tab_info`,
+`page` and the viewers; `functions.run_start`, `update`, `create_run`, `get_curl`,
+`run_get_metadata`, `run_update_metadata`; `files.upload`, `download`, `metadata`; `vaults.get`;
+`personas.create_number`, `delete_number`), `managed_auth`, and the `Session`, `Function`,
+`Persona`, `Vault` and `FileStorage` objects.
+
 ## Unreleased: httpx transport
 
 The Python SDK sends HTTP with httpx instead of requests: one pooled connection set per
