@@ -48,7 +48,7 @@ export NOTTE_ACT_LABELS=html      # show elements as rendered HTML instead of ac
 
 ### What the decider sees
 
-By default (`NOTTE_ACT_LABELS=accessible`) each element is named the way a screen reader would name it: its `aria-label`, the label text next to a form field, a button's text, then `alt`, `placeholder` or `title`. The page is sent as its visible text, with each element shown in place as `[I1] Full name`. A label that names the field next to it is not repeated as its own line or offered as a separate element. Roles, operations, live state and `<select>` options are the same in both modes.
+By default (`NOTTE_ACT_LABELS=accessible`) each element is named by its accessible name, the name a screen reader announces (the observation's `accessible_name`: its `<label>`, `aria-labelledby`, `aria-label`, a button's text, then `alt`, `title` or `placeholder`). The page is sent as its visible text, with each element shown in place as `[I1] Full name`. A label next to a field whose text is the field's name is not repeated as its own line or offered as a separate element. Roles, operations, live state and `<select>` options are the same in both modes. With a server whose observations carry no `accessible_name`, names are approximated from the rendered page (the label-like text next to a field, then the element's own attributes).
 
 `NOTTE_ACT_LABELS=html` sends each element's rendered HTML (`<input name="name">`) and the rendered page instead. On pages where several elements differ only by their label text (two checkboxes with the same `name`, a list of todo toggles), the accessible names are what tells them apart.
 
