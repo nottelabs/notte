@@ -557,11 +557,15 @@ class RemoteSession(SyncResource):
         try:
             await asyncio.shield(stop_task)
         except asyncio.CancelledError:
-            # A cancelled to_thread call keeps stopping the session. Wait for it before exiting.
-            try:
-                await stop_task
-            except Exception:
-                logger.exception("Could not stop session after cancelled exit")
+            # A cancelled to_thread call keeps stopping the session. Wait for it before exiting,
+            # through further cancellations too; asyncio.wait never cancels the task it waits on.
+            while not stop_task.done():
+                try:
+                    _ = await asyncio.wait({stop_task})
+                except asyncio.CancelledError:
+                    pass
+            if (stop_error := stop_task.exception()) is not None:
+                logger.error(f"Could not stop session after cancelled exit: {stop_error}")
             raise
         except Exception as stop_error:
             if exc_val is None:

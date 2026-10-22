@@ -187,9 +187,10 @@ async def test_cancelled_async_context_exit_waits_for_the_session_stop() -> None
     exit_task = asyncio.create_task(session.__aexit__(None, None, None))
     while not entered.is_set():
         await asyncio.sleep(0.001)
-    _ = exit_task.cancel()
-    await asyncio.sleep(0.01)
-    assert not exit_task.done(), "the exit returned while the session was still stopping"
+    for _attempt in range(2):  # a second cancellation must not end the wait either
+        _ = exit_task.cancel()
+        await asyncio.sleep(0.01)
+        assert not exit_task.done(), "the exit returned while the session was still stopping"
     release.set()
     with pytest.raises(asyncio.CancelledError):
         await exit_task
