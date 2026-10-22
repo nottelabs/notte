@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING, Any, Literal, Unpack, overload
 from urllib.parse import urlsplit
 from webbrowser import open as open_browser
 
-import requests
 from notte_core import __version__ as notte_core_version
 from notte_core.actions import BaseAction, InteractionActionUnion
 from notte_core.actions.typedicts import (
@@ -76,6 +75,7 @@ from notte_sdk._generated.public import (
 )
 from notte_sdk._generated.resources import SessionsOperations
 from notte_sdk._retry import is_retryable_status
+from notte_sdk._transport import TransportError
 from notte_sdk.endpoints.base import NotteEndpoint
 from notte_sdk.endpoints.files import RemoteFileStorage
 from notte_sdk.endpoints.page import PageClient
@@ -84,6 +84,9 @@ from notte_sdk.websockets.base import WebsocketService
 from notte_sdk.websockets.jupyter import display_image_in_notebook
 
 if TYPE_CHECKING:
+    # `fetch` returns the response notte_core builds from the page, not an SDK transport object.
+    from requests import Response
+
     from notte_sdk.client import NotteClient
 
 # Retry configuration constants
@@ -673,7 +676,7 @@ class RemoteSession(SyncResource):
                         self.response = result
                         return
                 errors = 0
-            except (requests.RequestException, NotteAPIError) as exc:
+            except (TransportError, NotteAPIError) as exc:
                 if isinstance(exc, NotteAPIError) and 400 <= (exc.error.get("status") or 0) < 500:
                     raise
                 errors += 1
@@ -703,7 +706,7 @@ class RemoteSession(SyncResource):
                         self.response = result
                         return
                 errors = 0
-            except (requests.RequestException, NotteAPIError) as exc:
+            except (TransportError, NotteAPIError) as exc:
                 if isinstance(exc, NotteAPIError) and 400 <= (exc.error.get("status") or 0) < 500:
                     raise
                 errors += 1
@@ -1566,7 +1569,7 @@ class RemoteSession(SyncResource):
         json: Any = None,
         data: FetchData | None = None,
         timeout: float | None = None,
-    ) -> requests.Response:
+    ) -> "Response":
         """
         Issue an HTTP request from the page the session is on and return the response.
 

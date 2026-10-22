@@ -7,12 +7,12 @@ from tempfile import TemporaryFile
 from typing import Any, Literal
 from urllib.parse import urlsplit
 
-import requests
 from pydantic import BaseModel, RootModel
 
 from notte_sdk._compat.run_payloads import UploadReference
 from notte_sdk._compat.run_payloads import UploadResponse as UploadResponse
 from notte_sdk._generated.resources import RunPayloadsOperations
+from notte_sdk._transport import get_object, put_object
 
 INLINE_FIELD_BYTES = 1024 * 1024
 MAX_PAYLOAD_BYTES = 256 * 1024 * 1024
@@ -65,19 +65,10 @@ def offload_run_fields(
             if upload.reference.size_bytes != size or upload.reference.sha256 != checksum:
                 raise ValueError("Run payload upload reference does not match the local payload")
             _ = payload.seek(0)
-            # A separate session keeps the API token, preview selector and
-            # capability headers out of the storage request.
-            with requests.Session() as storage_session:
-                with storage_session.put(
-                    _storage_url(upload.url),
-                    data=payload,
-                    headers=upload.headers,
-                    timeout=(30, 300),
-                    allow_redirects=False,
-                ) as response:
-                    response.raise_for_status()
-                    if not 200 <= response.status_code < 300:
-                        raise ValueError("Run payload upload did not complete")
+            # The storage request never carries the API token, preview selector or capability headers.
+            status = put_object(_storage_url(upload.url), payload, headers=upload.headers, timeout=(30, 300))
+            if not 200 <= status < 300:
+                raise ValueError("Run payload upload did not complete")
             references[field] = upload.reference.model_dump()
             if field == "result" and isinstance(data[field], str):
                 data["result_preview"] = data[field][:16000]
@@ -103,18 +94,14 @@ def resolve_run_fields(data: dict[str, Any]) -> dict[str, Any]:
             raise ValueError(f"Missing download URL for function run payload field: {field}")
         with TemporaryFile(mode="w+b") as payload:
             digest = hashlib.sha256()
-            with requests.Session() as storage_session:
-                with storage_session.get(
-                    _storage_url(url), stream=True, timeout=(30, 300), allow_redirects=False
-                ) as response:
-                    response.raise_for_status()
-                    if response.status_code != 200:
-                        raise ValueError("Run payload download did not complete")
-                    for chunk in response.iter_content(chunk_size=64 * 1024):
-                        if payload.tell() + len(chunk) > reference.size_bytes:
-                            raise ValueError("Run payload download exceeds its declared size")
-                        _ = payload.write(chunk)
-                        digest.update(chunk)
+            with get_object(_storage_url(url), timeout=(30, 300), chunk_size=64 * 1024) as (status, chunks):
+                if status != 200:
+                    raise ValueError("Run payload download did not complete")
+                for chunk in chunks:
+                    if payload.tell() + len(chunk) > reference.size_bytes:
+                        raise ValueError("Run payload download exceeds its declared size")
+                    _ = payload.write(chunk)
+                    digest.update(chunk)
             if payload.tell() != reference.size_bytes or base64.b64encode(digest.digest()).decode() != reference.sha256:
                 raise ValueError("Run payload download failed size/checksum verification")
             _ = payload.seek(0)

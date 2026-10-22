@@ -62,7 +62,7 @@ def test_download_is_id_based(files_client: FileStorageClient, tmp_path: Path) -
     response.iter_content.return_value = [b"hello"]
     with (
         patch.object(files_client, "metadata", return_value=file_metadata()),
-        patch("notte_sdk.endpoints.files.requests.get", return_value=response) as get,
+        patch("notte_sdk._transport.requests.get", return_value=response) as get,
     ):
         destination = files_client.download("session-id", "file-id", str(tmp_path))
 
@@ -78,7 +78,7 @@ def test_download_sanitizes_server_filename(files_client: FileStorageClient, tmp
     metadata = file_metadata().model_copy(update={"filename": filename})
     with (
         patch.object(files_client, "metadata", return_value=metadata),
-        patch("notte_sdk.endpoints.files.requests.get", return_value=response),
+        patch("notte_sdk._transport.requests.get", return_value=response),
     ):
         destination = files_client.download("session-id", "file-id", str(tmp_path))
 
@@ -96,7 +96,7 @@ def test_download_does_not_follow_predictable_temporary_symlink(
     response.iter_content.return_value = [b"download"]
     with (
         patch.object(files_client, "metadata", return_value=file_metadata()),
-        patch("notte_sdk.endpoints.files.requests.get", return_value=response),
+        patch("notte_sdk._transport.requests.get", return_value=response),
     ):
         destination = files_client.download("session-id", "file-id", str(tmp_path))
 

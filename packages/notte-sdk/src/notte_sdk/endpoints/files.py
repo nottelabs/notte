@@ -5,15 +5,14 @@ import tempfile
 from pathlib import Path, PureWindowsPath
 from typing import final
 
-import requests
 from notte_core.cache import CacheDirectory, ensure_cache_directory
 from notte_core.storage import BaseStorage, FileInfo
 from notte_core.telemetry import track_usage
 from typing_extensions import override
 
+from notte_sdk._generated import operations as api
 from notte_sdk._generated.resources import FilesOperations
-from notte_sdk.endpoints.base import NotteEndpoint
-from notte_sdk.errors import NotteAPIError
+from notte_sdk._requests import wire_request
 from notte_sdk.types import FileSource, SessionFile, SessionFilesPage
 
 
@@ -29,20 +28,13 @@ NOTTE_CACHE_DIR = _get_cache_dir()
 class FileStorageClient(FilesOperations):
     """Client for session-owned uploads and browser downloads."""
 
-    @staticmethod
-    def _file_endpoint(session_id: str, file_id: str | None = None) -> str:
-        path = f"{session_id}/files"
-        return f"{path}/{file_id}" if file_id is not None else path
-
     @track_usage("cloud.files.upload")
     def upload(self, session_id: str, file_path: str, upload_file_name: str | None = None) -> SessionFile:
         path = Path(file_path)
         if not path.is_file():
             raise FileNotFoundError(f"Cannot upload file {file_path}: it is not a file")
-        endpoint = NotteEndpoint(path=self._file_endpoint(session_id), response=SessionFile, method="POST")
-        with path.open("rb") as payload:
-            files = {"file": (upload_file_name or path.name, payload)}
-            return self.request(endpoint.model_copy(update={"files": files}))
+        endpoint = api.upload_session_file(session_id, wire_request(None, {}))
+        return self.request_upload(endpoint, {"file": (upload_file_name or path.name, path)})
 
     def metadata(self, session_id: str, file_id: str) -> SessionFile:
         offset = 0
@@ -66,32 +58,22 @@ class FileStorageClient(FilesOperations):
         destination = directory / safe_name
         if destination.exists() and not force:
             raise FileExistsError(f"{destination} already exists; pass force=True to overwrite it")
-        endpoint = NotteEndpoint(path=self._file_endpoint(session_id, file_id), response=SessionFile, method="GET")
-        response = requests.get(
-            self.request_path(endpoint),
-            headers=self.headers(),
-            timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
-            stream=True,
-        )
-        if not response.ok:
-            raise NotteAPIError(path=f"sessions/{session_id}/files/{file_id}", response=response)
         temporary: Path | None = None
         try:
-            with tempfile.NamedTemporaryFile(
-                mode="wb",
-                dir=directory,
-                prefix=f".{destination.name}.",
-                suffix=".part",
-                delete=False,
-            ) as output:
-                temporary = Path(output.name)
-                for chunk in response.iter_content(self.DEFAULT_FILE_CHUNK_SIZE):
-                    if chunk:
+            with self.stream_bytes(api.download_session_file(session_id, file_id)) as chunks:
+                with tempfile.NamedTemporaryFile(
+                    mode="wb",
+                    dir=directory,
+                    prefix=f".{destination.name}.",
+                    suffix=".part",
+                    delete=False,
+                ) as output:
+                    temporary = Path(output.name)
+                    for chunk in chunks:
                         _ = output.write(chunk)
             _ = temporary.replace(destination)
             temporary = None
         finally:
-            response.close()
             if temporary is not None:
                 temporary.unlink(missing_ok=True)
         return str(destination)

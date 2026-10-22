@@ -47,6 +47,25 @@ def download_run_payload(
     )
 
 
+def function_create(
+    body: BaseModel,
+    *,
+    params: BaseModel | None = None,
+) -> NotteEndpoint[core.GetFunctionResponse]:
+    """Function Create (`POST /functions/`).
+
+    Body: multipart/form-data, attach files with `BaseClient.request_upload`.
+    Parses response schema `FunctionResponse` with `GetFunctionResponse`.
+    """
+    return NotteEndpoint(
+        method="POST",
+        path="/functions/",
+        response=core.GetFunctionResponse,
+        request=body,
+        params=params,
+    )
+
+
 def function_delete(
     function_id: str,
 ) -> NotteEndpoint[models.DeleteFunctionResponse]:
@@ -139,6 +158,22 @@ def function_run_get_metadata(
     )
 
 
+def function_run_start(
+    function_id: str,
+    body: BaseModel,
+) -> NotteEndpoint[runtime.RawResponse]:
+    """Function Run Start (`POST /functions/{function_id}/runs/start`).
+
+    Header `x-notte-api-key` (required): pass it to `BaseClient.request(headers=...)`.
+    """
+    return NotteEndpoint(
+        method="POST",
+        path=f"/functions/{_segment(function_id)}/runs/start",
+        response=runtime.RawResponse,
+        request=body,
+    )
+
+
 def function_run_stop(
     function_id: str,
     run_id: str,
@@ -199,6 +234,26 @@ def function_schedule_set(
         path=f"/functions/{_segment(function_id)}/schedule",
         response=models.ScheduleResponse,
         request=body,
+    )
+
+
+def function_update(
+    function_id: str,
+    body: BaseModel,
+    *,
+    params: BaseModel | None = None,
+) -> NotteEndpoint[core.GetFunctionResponse]:
+    """Function Update (`POST /functions/{function_id}`).
+
+    Body: multipart/form-data, attach files with `BaseClient.request_upload`.
+    Parses response schema `FunctionResponse` with `GetFunctionResponse`.
+    """
+    return NotteEndpoint(
+        method="POST",
+        path=f"/functions/{_segment(function_id)}",
+        response=core.GetFunctionResponse,
+        request=body,
+        params=params,
     )
 
 
@@ -479,6 +534,21 @@ def delete_session_file(
     )
 
 
+def download_session_file(
+    session_id: str,
+    file_id: str,
+) -> NotteEndpoint[runtime.RawResponse]:
+    """Download Session File (`GET /sessions/{session_id}/files/{file_id}`).
+
+    Responds with a file: read it with `BaseClient.request_bytes` or `stream_bytes`.
+    """
+    return NotteEndpoint(
+        method="GET",
+        path=f"/sessions/{_segment(session_id)}/files/{_segment(file_id)}",
+        response=runtime.RawResponse,
+    )
+
+
 def list_session_files(
     session_id: str,
     *,
@@ -506,6 +576,22 @@ def execute_session_file(
         response=models.ApiExecutionResponse,
         request=body,
         params=params,
+    )
+
+
+def upload_session_file(
+    session_id: str,
+    body: BaseModel,
+) -> NotteEndpoint[models.SessionFile]:
+    """Upload Session File (`POST /sessions/{session_id}/files`).
+
+    Body: multipart/form-data, attach files with `BaseClient.request_upload`.
+    """
+    return NotteEndpoint(
+        method="POST",
+        path=f"/sessions/{_segment(session_id)}/files",
+        response=models.SessionFile,
+        request=body,
     )
 
 

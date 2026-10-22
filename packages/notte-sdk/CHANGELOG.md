@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased: generated page, function and session-file methods
+
+The Python SDK now generates every operation in `openapi/resources.json` under the Node SDK's
+names, in snake_case. New methods: `client.sessions.scrape`, `observe` and `execute` (the plain
+API calls, returning the same core types as `client.sessions.page`), and the session-file aliases
+`client.sessions.upload_session_file`, `download_session_file` (returns the file's bytes),
+`list_session_files`, `delete_session_file` and `execute_session_file`. `client.functions.create`
+is generated with the same arguments and result; it no longer sends the local file path as an
+extra form field. Existing methods, including `client.sessions.page`, `client.files` and
+`client.functions.run_start`, behave as before.
+
 ## Unreleased — accessible names in observations
 
 Observations give each interactive element its accessible name, the name a screen reader announces:

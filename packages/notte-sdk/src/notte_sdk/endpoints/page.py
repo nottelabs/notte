@@ -22,15 +22,13 @@ from notte_core.types import (
     ScrapeMarkdownParamsDict,
     ScrapeRequest,
     ScrapeRequestDict,
-    ScrapeResponse,
 )
 from pydantic import BaseModel, RootModel
-from requests.exceptions import ChunkedEncodingError
-from requests.exceptions import ConnectionError as RequestsConnectionError
-from requests.exceptions import Timeout as RequestsTimeout
 from typing_extensions import final
 
-from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
+from notte_sdk._generated import endpoints as page_api
+from notte_sdk._transport import INTERRUPTED_ERRORS
+from notte_sdk.endpoints.base import BaseClient
 from notte_sdk.errors import NotteAPIError
 
 if TYPE_CHECKING:
@@ -100,46 +98,6 @@ class PageClient(BaseClient):
             verbose=verbose,
             server_url=server_url,
         )
-
-    @staticmethod
-    def _page_scrape_endpoint(session_id: str | None = None) -> NotteEndpoint[ScrapeResponse]:
-        """
-        Creates a NotteEndpoint for the scrape action.
-
-        Returns:
-            NotteEndpoint[ObserveResponse]: An endpoint configured with the scrape path,
-            POST method, and an expected ObserveResponse.
-        """
-        path = PageClient.PAGE_SCRAPE
-        if session_id is not None:
-            path = path.format(session_id=session_id)
-        return NotteEndpoint(path=path, response=ScrapeResponse, method="POST")
-
-    @staticmethod
-    def _page_observe_endpoint(session_id: str | None = None) -> NotteEndpoint[ObserveResponse]:
-        """
-        Creates a NotteEndpoint for observe operations.
-
-        Returns:
-            NotteEndpoint[ObserveResponse]: An endpoint configured with the observe path,
-            using the HTTP POST method and expecting an ObserveResponse.
-        """
-        path = PageClient.PAGE_OBSERVE
-        if session_id is not None:
-            path = path.format(session_id=session_id)
-        return NotteEndpoint(path=path, response=ObserveResponse, method="POST")
-
-    @staticmethod
-    def _page_execute_endpoint(session_id: str | None = None) -> NotteEndpoint[ExecutionResultResponse]:
-        """
-        Creates a NotteEndpoint for initiating a step action.
-
-        Returns a NotteEndpoint configured with the 'POST' method using the PAGE_STEP path and expecting an ObserveResponse.
-        """
-        path = PageClient.PAGE_EXECUTE
-        if session_id is not None:
-            path = path.format(session_id=session_id)
-        return NotteEndpoint(path=path, response=ExecutionResultResponse, method="POST")
 
     # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
     @overload
@@ -219,8 +177,7 @@ class PageClient(BaseClient):
             ScrapeFailedError: If structured data extraction fails and raise_on_failure=True.
         """
         request = ScrapeRequest.model_validate(data)
-        endpoint = PageClient._page_scrape_endpoint(session_id=session_id)
-        response = self.request(endpoint.with_request(request))
+        response = self.request(page_api.page_scrape(session_id, request))
         # Handle structured data scraping
         structured = response.structured
         if request.requires_schema():
@@ -297,8 +254,7 @@ class PageClient(BaseClient):
         instructions = data.get("instructions")
         _warn_deprecated_observe(instructions, data.get("perception_type"))
         request = ObserveRequest.model_validate(data)
-        endpoint = PageClient._page_observe_endpoint(session_id=session_id)
-        obs_response = self.request(endpoint.with_request(request))
+        obs_response = self.request(page_api.page_observe(session_id, request))
         if instructions is not None:
             return list(obs_response.space.interaction_actions)
         return obs_response
@@ -320,7 +276,6 @@ class PageClient(BaseClient):
         Returns:
             An Observation object constructed from the API response.
         """
-        endpoint = PageClient._page_execute_endpoint(session_id=session_id)
         budget = self.root_client.captcha_timeout_seconds
         deadline: float | None = time.monotonic() + budget if isinstance(action, CaptchaSolveAction) else None
         params = CaptchaExecuteParams(captcha_timeout_seconds=budget)
@@ -374,9 +329,10 @@ class PageClient(BaseClient):
             request_timeout = min(10.0, remaining) if polling else self.DEFAULT_REQUEST_TIMEOUT_SECONDS
             try:
                 result = self.request(
-                    endpoint.with_request(request_action).with_params(params.model_copy()), timeout=request_timeout
+                    page_api.page_execute(session_id, request_action, params=params.model_copy()),
+                    timeout=request_timeout,
                 )
-            except (RequestsTimeout, RequestsConnectionError, ChunkedEncodingError):
+            except INTERRUPTED_ERRORS:
                 if not polling or params.captcha_id is None:
                     raise
                 time.sleep(min(1.0, max(0, (deadline or time.monotonic()) - time.monotonic())))

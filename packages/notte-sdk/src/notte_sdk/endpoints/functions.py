@@ -4,7 +4,6 @@ import json
 import re
 from typing import TYPE_CHECKING, Any, ClassVar, Unpack, cast, final, overload
 
-import requests
 from notte_core.errors import NotteBaseError
 from notte_core.logging import logger
 from notte_core.telemetry import track_usage
@@ -20,11 +19,9 @@ from typing_extensions import override
 
 from notte_sdk._generated import operations as api
 from notte_sdk._generated.public import (
-    CreateFunctionRequest,
     CreateFunctionRequestDict,
     FunctionRunGetMetadataParametersQueryDict,
     FunctionRunUpdateRequestDict,
-    GetFunctionRequest,
     GetFunctionResponse,
     GetFunctionRunResponse,
     GetFunctionWithLinkResponse,
@@ -33,9 +30,9 @@ from notte_sdk._generated.public import (
 )
 from notte_sdk._generated.resources import FunctionsOperations
 from notte_sdk._requests import wire_request
+from notte_sdk._transport import TransportError, get_text
 from notte_sdk.endpoints.base import NotteEndpoint
 from notte_sdk.endpoints.run_payloads import RunUpdateBody, offload_run_fields, resolve_run_fields
-from notte_sdk.errors import NotteAPIError
 
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
@@ -90,41 +87,6 @@ class FunctionsClient(FunctionsOperations):
     FUNCTION_RUN_TIMEOUT: ClassVar[int] = 60 * 5  # 5 minutes
 
     @staticmethod
-    def _create_function_endpoint() -> NotteEndpoint[GetFunctionResponse]:
-        """
-        Returns a NotteEndpoint configured for creating a new function.
-
-        Returns:
-            A NotteEndpoint with the POST method that expects a GetFunctionResponse.
-        """
-        return NotteEndpoint(
-            path=FunctionsClient.CREATE_FUNCTION,
-            response=GetFunctionResponse,
-            method="POST",
-        )
-
-    @staticmethod
-    def _update_function_endpoint(function_id: str, restricted: bool = True) -> NotteEndpoint[GetFunctionResponse]:
-        """
-        Returns a NotteEndpoint configured for updating a function.
-
-        Args:
-            function_id: The ID of the function to update.
-
-        Returns:
-            A NotteEndpoint with the POST method that expects a GetFunctionResponse.
-        """
-        return NotteEndpoint(
-            path=(
-                function_id
-                if restricted is True
-                else FunctionsClient.UPDATE_FUNCTION.format(function_id=function_id, restricted=restricted)
-            ),
-            response=GetFunctionResponse,
-            method="POST",
-        )
-
-    @staticmethod
     def _create_function_run_endpoint(function_id: str) -> NotteEndpoint[CreateFunctionRunResponse]:
         """
         Returns a NotteEndpoint configured for creating a new function run.
@@ -146,33 +108,6 @@ class FunctionsClient(FunctionsOperations):
             method="POST",
         )
 
-    @staticmethod
-    def _start_function_run_endpoint_without_run_id(function_id: str) -> NotteEndpoint[FunctionRunResponse]:
-        """
-        Returns a NotteEndpoint configured for starting a new function run.
-        """
-        return NotteEndpoint(
-            path=FunctionsClient.START_FUNCTION_RUN_WITHOUT_RUN_ID.format(function_id=function_id),
-            response=FunctionRunResponse,
-            method="POST",
-        )
-
-    @track_usage("cloud.function.create")
-    def create(self, **data: Unpack[CreateFunctionRequestDict]) -> GetFunctionResponse:
-        """
-        Create a new function.
-
-        Args:
-            **data: Unpacked dictionary containing the function creation parameters.
-
-        Returns:
-            GetFunctionResponse: The created function information.
-        """
-        request = wire_request(CreateFunctionRequest, data)
-        endpoint = self._create_function_endpoint().with_file(data["path"]).with_request(request)
-        response = self.request(endpoint)
-        return response
-
     @track_usage("cloud.function.update")
     def update(
         self, function_id: str, restricted: bool = True, **data: Unpack[UpdateFunctionRequestDict]
@@ -187,11 +122,12 @@ class FunctionsClient(FunctionsOperations):
         Returns:
             GetFunctionResponse: The updated function information.
         """
-        endpoint = self._update_function_endpoint(function_id, restricted=restricted).with_file(data["path"])
+        # `restricted` defaults to true server-side, so it is only sent to lift the restriction.
+        query: dict[str, Any] = {} if restricted else {"restricted": False}
         if (version := data.get("version")) is not None:
-            endpoint = endpoint.with_params(wire_request(GetFunctionRequest, {"version": version}))
-        response = self.request(endpoint)
-        return response
+            query["version"] = version
+        endpoint = api.function_update(function_id, wire_request(None, {}), params=wire_request(None, query))
+        return self.request_upload(endpoint, {"file": data["path"]})
 
     def create_run(self, function_id: str) -> CreateFunctionRunResponse:
         request = CreateFunctionRunRequest()
@@ -301,34 +237,21 @@ class FunctionsClient(FunctionsOperations):
         endpoint = self._start_function_run_endpoint(function_id=function_id, run_id=function_run_id).with_request(
             request
         )
-
+        # The runtime receives the caller's key in this header (Authorization is not forwarded).
         headers = {"x-notte-api-key": self.token}
-        headers["Content-Type"] = "application/json"
-        headers = self.headers(headers=headers)
-        url = self.request_path(endpoint)
-        req_data = request.model_dump_json(exclude_none=True)
         timeout = timeout or self.FUNCTION_RUN_TIMEOUT
 
         if not stream:
-            res = requests.post(url=url, headers=headers, data=req_data, timeout=timeout, stream=True)
-            if not res.ok:
-                raise NotteAPIError(path=self._error_path(endpoint), response=res)
-            return FunctionRunResponse.model_validate(res.json())
+            return FunctionRunResponse.model_validate(self.request_once(endpoint, headers=headers, timeout=timeout))
 
         INITIAL = object()
         result: Any = INITIAL
 
         session_id = None
-        with requests.post(url=url, headers=headers, data=req_data, timeout=timeout, stream=True) as res:
-            if not res.ok:
-                raise NotteAPIError(path=self._error_path(endpoint), response=res)
-            for line in res.iter_lines():
-                if not line:  # Skip empty lines
-                    continue
-
+        with self.stream_lines(endpoint, headers=headers, timeout=timeout) as lines:
+            for utf in lines:
                 try:
                     # Lambda streaming often uses Server-Sent Events format
-                    utf = line.decode("utf-8")
                     if utf.startswith("data: "):
                         message = json.loads(utf[6:])
                         log_msg = message.get("message", "")
@@ -366,7 +289,7 @@ class FunctionsClient(FunctionsOperations):
         return FunctionRunResponse.model_validate_json(result)
 
     def get_curl(self, function_id: str, **variables: Any) -> str:
-        endpoint = self._start_function_run_endpoint_without_run_id(function_id=function_id)
+        endpoint = api.function_run_start(function_id, wire_request(None, {}))
         path = self.request_path(endpoint)
         variables_str = json.dumps(variables, indent=4)
         # Indent the variables JSON to align with the surrounding structure (skip first line)
@@ -571,12 +494,10 @@ class NotteFunction:
 
         file_url = self.get_url(version=version, decryption_key=decryption_key)
         try:
-            response = requests.get(file_url, timeout=self.client.DEFAULT_REQUEST_TIMEOUT_SECONDS)
-            response.raise_for_status()
-        except requests.RequestException as e:
+            code_content = get_text(file_url, timeout=self.client.DEFAULT_REQUEST_TIMEOUT_SECONDS)
+        except TransportError as e:
             raise ValueError(f"Failed to download function code from {file_url} in 30 seconds: {e}")
 
-        code_content = response.text
         if final_path is None:
             return code_content
         with open(final_path, "w") as f:

@@ -27,7 +27,7 @@ def test_small_update_remains_inline_and_preserves_unset_fields():
     client = NotteClient(api_key="test")
     with (
         patch.object(client.functions, "request") as request,
-        patch("notte_sdk.endpoints.run_payloads.requests.Session") as s3,
+        patch("notte_sdk._transport.requests.Session") as s3,
     ):
         client.functions.run_update_metadata("fn", "run", status="closed", result="ok")
     body = request.call_args.args[0].request.model_dump()
@@ -48,7 +48,7 @@ def test_large_logs_are_uploaded_before_final_update_without_api_credentials():
     with (
         patch("notte_sdk.endpoints.run_payloads.INLINE_FIELD_BYTES", 10),
         patch.object(client.functions, "request", return_value=upload) as request,
-        patch("notte_sdk.endpoints.run_payloads.requests.Session", return_value=session),
+        patch("notte_sdk._transport.requests.Session", return_value=session),
     ):
         body = offload_run_fields(client.functions, "fn", "run", original)
     assert uploaded == [raw]
@@ -69,7 +69,7 @@ def test_upload_failure_never_finalizes_run():
     with (
         patch("notte_sdk.endpoints.run_payloads.INLINE_FIELD_BYTES", 1),
         patch.object(client.functions, "request", return_value=upload) as request,
-        patch("notte_sdk.endpoints.run_payloads.requests.Session", return_value=storage_session(response)),
+        patch("notte_sdk._transport.requests.Session", return_value=storage_session(response)),
     ):
         with pytest.raises(RuntimeError, match="upload unavailable"):
             client.functions.run_update_metadata("fn", "run", status="closed", result="long result")
@@ -97,7 +97,7 @@ def test_download_verifies_all_bytes_before_decoding(failure):
         "payloads": {"logs": ref.model_dump()},
         "payload_urls": {"logs": "https://storage/object"},
     }
-    with patch("notte_sdk.endpoints.run_payloads.requests.Session", return_value=session):
+    with patch("notte_sdk._transport.requests.Session", return_value=session):
         if failure:
             with pytest.raises(ValueError):
                 resolve_run_fields(data)
@@ -110,7 +110,7 @@ def test_download_verifies_all_bytes_before_decoding(failure):
 @pytest.mark.parametrize("urls", [{}, {"logs": ""}, {"logs": None}])
 def test_missing_download_url_fails_before_storage_request(urls):
     data = {"payloads": {"logs": reference(b"[]").model_dump()}, "payload_urls": urls}
-    with patch("notte_sdk.endpoints.run_payloads.requests.Session") as storage:
+    with patch("notte_sdk._transport.requests.Session") as storage:
         with pytest.raises(ValueError, match="Missing download URL.*logs"):
             resolve_run_fields(data)
     storage.assert_not_called()
@@ -125,7 +125,7 @@ def test_result_preview_is_bounded_and_full_result_is_in_storage():
         patch.object(client, "request", return_value=upload),
         patch("notte_sdk.endpoints.run_payloads.INLINE_FIELD_BYTES", 1),
         patch(
-            "notte_sdk.endpoints.run_payloads.requests.Session",
+            "notte_sdk._transport.requests.Session",
             return_value=storage_session(MagicMock(status_code=200)),
         ),
     ):
@@ -163,7 +163,7 @@ def test_run_update_serializes_python_values_before_offloading(threshold):
     with (
         patch("notte_sdk.endpoints.run_payloads.INLINE_FIELD_BYTES", threshold),
         patch.object(client, "request", side_effect=respond) as request,
-        patch("notte_sdk.endpoints.run_payloads.requests.Session", return_value=session),
+        patch("notte_sdk._transport.requests.Session", return_value=session),
     ):
         client.run_update_metadata("fn", "run", status="closed", variables={"at": stamp}, result=identifier)
     body = request.call_args.args[0].request.model_dump()

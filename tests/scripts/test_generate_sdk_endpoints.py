@@ -187,20 +187,24 @@ def test_generated_methods_keep_public_names_and_telemetry(spec: dict[str, Any])
 
 
 def test_shared_table_controls_all_resource_membership() -> None:
-    generated = {name for resource in gen.RESOURCES for name in resource.operations}
+    generated = {(name, method) for resource in gen.RESOURCES for name, method in resource.methods}
+    # Every alias is generated; a primary method is unless its entry declares `pythonImplementation`.
     expected = {
-        name for name, entry in gen.NAMING.items() if not entry.get("exclude") and not entry.get("pythonImplementation")
+        (name, gen.snake_case(target["method"]))
+        for name, entry in gen.NAMING.items()
+        if not entry.get("exclude")
+        for target in [*([] if entry.get("pythonImplementation") else [entry]), *entry.get("aliases", [])]
     }
     assert generated == expected
+    # Every mapped operation has a factory, so no client spells out a path the spec describes.
+    factories = {name for resource in gen.RESOURCES for name in gen._factories(resource.name)}
+    mapped = {name for name, entry in gen.NAMING.items() if not entry.get("exclude")}
+    assert factories | gen.PAGE_OPERATIONS.keys() == mapped
     from notte_sdk import NotteClient
-    from notte_sdk.endpoints.page import PageClient
 
     client = NotteClient(api_key="test-api-key")  # pragma: allowlist secret
     for name, entry in gen.NAMING.items():
         if entry.get("exclude"):
             continue
-        if entry.get("pythonImplementation", "").startswith("PageClient."):
-            method = entry["pythonImplementation"].split(":")[0].split(".")[1]
-            assert hasattr(PageClient, method)
-        else:
-            assert hasattr(getattr(client, entry["resource"]), gen.public_method(name))
+        for target in [entry, *entry.get("aliases", [])]:
+            assert hasattr(getattr(client, target["resource"]), gen.snake_case(target["method"])), (name, target)
