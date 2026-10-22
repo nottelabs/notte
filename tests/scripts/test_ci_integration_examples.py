@@ -25,6 +25,8 @@ def workspace(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.setenv("NOTTE_API_KEY", "fixture-ci-key")
     monkeypatch.setenv("OPENAI_API_KEY", "fixture-provider-key")
     monkeypatch.delenv("BRAINTRUST_API_KEY", raising=False)
+    # CI sets this to dependabot[bot] on Dependabot PRs, which narrows the live phase to inngest and temporal.
+    monkeypatch.delenv("GITHUB_ACTOR", raising=False)
     stub = """#!/usr/bin/env python3
 import json, os, sys
 import zipfile
