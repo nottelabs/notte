@@ -5,7 +5,7 @@ import os
 import re
 import subprocess
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 import yaml
@@ -24,7 +24,6 @@ def test_shared_queue_only_contains_staging_test_jobs() -> None:
         ("node-sdk-ci.yml", "integration-tests"),
         ("test-cicd.yml", "staging-and-live"),
         ("docs-tests-cicd.yml", "execution"),
-        ("paired-sdk-examples.yml", "live"),
         ("readme-check.yml", "live"),
     }
     queued = set()
@@ -35,6 +34,27 @@ def test_shared_queue_only_contains_staging_test_jobs() -> None:
             if "notte-live-api" in str(job.get("concurrency", {})):
                 queued.add((path.name, job_id))
     assert queued == expected
+
+
+def test_paired_shards_share_six_slots_across_overlapping_runs(monkeypatch: pytest.MonkeyPatch) -> None:
+    live = workflow("paired-sdk-examples.yml")["jobs"]["live"]
+    assert live["strategy"]["matrix"] == {"include": "${{ fromJSON(needs.changes.outputs.scope).paired_matrix }}"}
+    assert "max-parallel" not in live["strategy"]
+    assert live["concurrency"] == {
+        "group": "notte-paired-live-${{ github.ref }}-${{ matrix.slot }}",
+        "queue": "max",
+        "cancel-in-progress": False,
+    }
+    # The group omits the shard count, so a full run (18 shards) overlapping a
+    # scoped run (2 shards) on the same ref still shares the same six queues.
+    slots: set[str] = set()
+    for paired_count in (18, 2):
+        monkeypatch.setattr(ci_scope, "INTEGRATION_EXAMPLES", {f"p{i}": "x" for i in range(paired_count * 2)})
+        matrix = cast(list[dict[str, str]], ci_scope.select("workflow_dispatch", "", "")["paired_matrix"])
+        assert [entry["shard"] for entry in matrix] == [f"{i}/{paired_count}" for i in range(1, paired_count + 1)]
+        slots |= {entry["slot"] for entry in matrix}
+    assert ci_scope.PAIRED_SLOTS == 6
+    assert slots == {str(slot) for slot in range(1, ci_scope.PAIRED_SLOTS + 1)}
 
 
 def test_documentation_checks_start_independently() -> None:
@@ -245,7 +265,6 @@ def test_native_examples_have_one_existing_required_owner() -> None:
     assert not (WORKFLOWS / "selenium-integration.yml").exists()
     jobs = workflow("paired-sdk-examples.yml")["jobs"]
     assert set(jobs) == {"changes", "checks", "live"}
-    assert jobs["live"]["strategy"]["matrix"] == {"shard": "${{ fromJSON(needs.changes.outputs.scope).paired_shards }}"}
     assert jobs["live"]["env"]["NOTTE_DOCS_SHARD"] == "${{ matrix.shard }}"
     assert jobs["live"]["timeout-minutes"] == 20
     assert set(jobs["live"]["needs"]) == {"changes", "checks"}
