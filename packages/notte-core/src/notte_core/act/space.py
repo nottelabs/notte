@@ -39,7 +39,6 @@ from notte_core.actions import (
     SelectDropdownOptionAction,
     WaitAction,
 )
-from notte_core.dom_tree import DomNode
 from notte_core.element_state import ElementState, SelectOption, page_fingerprint
 from notte_core.observation import Observation
 from notte_core.snapshot import ViewportData
@@ -82,16 +81,12 @@ class ObservedPage:
     # live element state by action id (empty when a cloud observe response does not carry it)
     states: Mapping[str, ElementState]
     fingerprint: str
-    # clickable `<label>` id -> id of the field it labels (`for`, or the field inside it), "" for none;
-    # None when unknown (no DOM, e.g. a cloud observation): labels are then kept as elements of their own
-    label_targets: Mapping[str, str] | None = None
 
     @staticmethod
     def from_observation(
         observation: Observation,
         states: Mapping[str, ElementState] | None = None,
         fingerprint: str | None = None,
-        label_targets: Mapping[str, str] | None = None,
     ) -> "ObservedPage":
         """Wrap an observation. The live state and fingerprint default to the observation's own (absent from
         an older server's observe response); without a fingerprint, it hashes the URL and the actions' ids
@@ -109,7 +104,6 @@ class ObservedPage:
             viewport=observation.metadata.viewport,
             states=states or {},
             fingerprint=fingerprint or page_fingerprint(url, ((a.id, a.text_label or "", None) for a in actions)),
-            label_targets=label_targets,
         )
 
     def signature(self, element_id: str) -> str | None:
@@ -164,51 +158,6 @@ class ActSpace:
         return operations
 
 
-def _scope(node: DomNode, *, shadow: bool) -> int:
-    """The nearest `<iframe>` (and, with `shadow`, shadow host) ancestor of `node`, 0 for the main document.
-
-    Ids, and so `<label for>`, are unique only within one document or shadow root. The DOM payload lists a
-    shadow host's shadow children and its slotted (light DOM) children together, so the shadow scope is only
-    an approximation: a slotted node gets its host's scope although it belongs to the host's document."""
-    ancestor = node.parent
-    while ancestor is not None:
-        attributes = ancestor.attributes
-        if (shadow and ancestor.computed_attributes.shadow_root) or (
-            attributes is not None and attributes.tag_name.lower() in ("iframe", "frame")
-        ):
-            return id(ancestor)
-        ancestor = ancestor.parent
-    return 0
-
-
-def label_targets(nodes: Mapping[str, DomNode]) -> dict[str, str]:
-    """For every interactive `<label>` among `nodes` (by action id), the action id of the field it labels: the
-    one its `for` attribute names in the same document or shadow root, else the field inside it; "" when it
-    labels no offered field (e.g. a hidden custom checkbox, whose label is then the only way to toggle it)."""
-    by_scope: dict[tuple[int, str], str] = {}
-    by_document: dict[tuple[int, str], list[str]] = {}
-    for node_id, node in nodes.items():
-        if node.attributes is not None and node.attributes.id_name:
-            by_scope[(_scope(node, shadow=True), node.attributes.id_name)] = node_id
-            by_document.setdefault((_scope(node, shadow=False), node.attributes.id_name), []).append(node_id)
-    targets: dict[str, str] = {}
-    for node_id, node in nodes.items():
-        attributes = node.attributes
-        if attributes is None or attributes.tag_name.lower() != "label":
-            continue
-        label_for = attributes.label_for or ""
-        # the field in the label's own shadow root first; else (a slotted label, see `_scope`) the only field with
-        # that id in its document, never a guess between several
-        target = by_scope.get((_scope(node, shadow=True), label_for))
-        if target is None and label_for:
-            candidates = by_document.get((_scope(node, shadow=False), label_for), [])
-            target = candidates[0] if len(candidates) == 1 else None
-        if target is None:
-            target = next((n.id for n in node.interaction_nodes() if n.id and n.id != node_id), None)
-        targets[node_id] = target or ""
-    return targets
-
-
 def description_lines(description: str) -> dict[str, str]:
     """The rendered element of every action id in an action space description (`I1[:]<input ...>`), on one
     line: an element rendered over several lines (a `<select>` and its options) is joined with spaces."""
@@ -239,15 +188,11 @@ def _description_blocks(description: str) -> list[tuple[str | None, str]]:
     return blocks
 
 
-NameSource = Literal["before", "after"]
-
-
-def _accessible_name(
-    action: InteractionAction, rendered: str, before: str | None, after: str | None
-) -> tuple[str, NameSource | None]:
-    """An accessible name from the rendered element, approximating the browser's: `aria-label`, the
-    label-like text or `<label>` next to a form field (before a text field, after a checkbox or radio), the button
-    value or visible text, then `alt` / `placeholder` / `title`, notte's `text_label`, a link's `href`."""
+def _approximate_name(action: InteractionAction, rendered: str, before: str | None, after: str | None) -> str:
+    """A name from the rendered element, for observations without `accessible_name` (an older server):
+    `aria-label`, the label-like text or `<label>` next to a form field (before a text field, after a checkbox or
+    radio), the button value or visible text, then `alt` / `placeholder` / `title`, notte's `text_label`, a link's
+    `href`. Also the fallback of an element the observation leaves unnamed (without `before` / `after`)."""
     match = _RENDERED_ELEMENT.match(rendered)
     tag, attributes, content = "", dict[str, str](), ""
     if match is not None:
@@ -259,49 +204,54 @@ def _accessible_name(
         return text if text is not None and len(text) <= MAX_NEARBY_LABEL_LENGTH else None
 
     role = _role(action, rendered)
-    candidates: list[tuple[str | None, NameSource | None]] = [(attributes.get("aria_label"), None)]
+    candidates = [attributes.get("aria_label")]
     if tag == "input" and attributes.get("type") in ("submit", "button", "reset"):
-        candidates.append((attributes.get("value"), None))
+        candidates.append(attributes.get("value"))
     if role in ("checkbox", "radio"):
-        candidates.append((nearby(after), "after"))
-        candidates.append((nearby(before), "before"))
+        candidates += [nearby(after), nearby(before)]
     elif role in ("textbox", "combobox", "select"):
-        candidates.append((nearby(before), "before"))
-    candidates += [
-        (c, None) for c in (content, attributes.get("alt"), attributes.get("placeholder"), attributes.get("title"))
-    ]
+        candidates.append(nearby(before))
+    candidates += [content, attributes.get("alt"), attributes.get("placeholder"), attributes.get("title")]
     # an unnamed link (an icon) is at least its destination
-    candidates += [(action.text_label, None), (attributes.get("href"), None)]
-    for candidate, source in candidates:
-        if candidate is not None and candidate.strip():
-            return candidate.strip(), source
-    return role, None
+    candidates += [action.text_label, attributes.get("href")]
+    return next((c.strip() for c in candidates if c is not None and c.strip()), role)
 
 
 @dataclass(frozen=True)
 class _Names:
     # accessible name by action id
     names: dict[str, str]
-    # description blocks used as the name of the element next to them (a text or a clickable `<label>`)
+    # description blocks that are the label of the element next to them (a text or a clickable `<label>`)
     used: frozenset[int]
-    # clickable `<label>` elements that name the field next to them: the field is offered instead
+    # clickable `<label>` elements that label the field next to them: the field is offered instead
     labels: frozenset[str]
 
 
+def _same_text(a: str, b: str) -> bool:
+    return " ".join(a.split()).casefold() == " ".join(b.split()).casefold()
+
+
 def _names(page: ObservedPage) -> _Names:
+    """Each element's name: the observation's `accessible_name` (computed in the browser, like Chromium's), or
+    for an observation without any (an older server) an approximation from the rendered page (`_approximate_name`).
+
+    A text or clickable `<label>` next to a form field whose text is the field's name is the field's label: it is
+    not repeated as a line of its own and, with real names, a clickable `<label>` is not offered as an element
+    either (clicking it only focuses or toggles the field). Without real names the label stays an element, since
+    its text may have been taken for the name of the wrong field."""
     blocks = _description_blocks(page.description)
     actions = {action.id: action for action in page.actions}
+    real = any(action.accessible_name for action in page.actions)
     names: dict[str, str] = {}
     used: set[int] = set()
+    labels: set[str] = set()
 
     def toggle(index: int) -> bool:
         action = actions.get(blocks[index][0] or "") if index >= 0 else None
         return action is not None and _role(action, blocks[index][1]) in ("checkbox", "radio")
 
-    targets = page.label_targets
-
-    def label(index: int, field: str) -> str | None:
-        """A text, or a `<label>` element (clickable labels get an id), that can name `field` next to it."""
+    def label(index: int) -> str | None:
+        """A text, or a `<label>` element (clickable labels get an id), that can name a field next to it."""
         if not 0 <= index < len(blocks) or blocks[index][0] is None:
             return None
         key, content = blocks[index]
@@ -309,33 +259,44 @@ def _names(page: ObservedPage) -> _Names:
             match = _RENDERED_ELEMENT.match(content)
             if match is None or match.group(1).lower() != "label":
                 return None
-            # a label known to belong to another field (or to none) does not name this one
-            if targets is not None and targets.get(key or "") != field:
-                return None
             content = match.group(3)
         return " ".join(content.split()) or None
 
-    labels: set[str] = set()
     for i, (key, content) in enumerate(blocks):
         action = actions.get(key or "")
-        if key is not None and action is not None and key not in names:
-            # the label right after a checkbox or radio is its own, not the next field's
-            before = None if i >= 2 and toggle(i - 2) else label(i - 1, key)
-            names[key], source = _accessible_name(action, content, before, label(i + 1, key))
-            if source is None:
+        if key is None or action is None or key in names:
+            continue
+        role = _role(action, content)
+        # the label right after a checkbox or radio is its own, not the next field's
+        before = None if i >= 2 and toggle(i - 2) else label(i - 1)
+        after = label(i + 1)
+        if real:
+            names[key] = (action.accessible_name or "").strip() or _approximate_name(action, content, None, None)
+        else:
+            names[key] = _approximate_name(action, content, before, after)
+        if role in ("checkbox", "radio"):
+            neighbours = [(i + 1, after), (i - 1, before)]
+        elif role in _FIELDS:
+            neighbours = [(i - 1, before)]
+        else:
+            neighbours = []
+        for index, text in neighbours:
+            if text is None or not _same_text(text, names[key]):
                 continue
-            index = i - 1 if source == "before" else i + 1
             label_key = blocks[index][0]
             if label_key == "_":
                 used.add(index)
-            elif label_key is not None and targets is not None:
-                # a label that names its own field is not an element of its own (clicking it only focuses or
-                # toggles the field). Without the DOM links the label is kept: it may be another control.
+            elif real and label_key is not None:
                 used.add(index)
                 labels.add(label_key)
+            break
     return _Names(
         names={k: v for k, v in names.items() if k not in labels}, used=frozenset(used), labels=frozenset(labels)
     )
+
+
+# roles whose label is the text (or `<label>`) right before them
+_FIELDS = ("textbox", "combobox", "select")
 
 
 def accessible_names(page: ObservedPage) -> dict[str, str]:
@@ -345,7 +306,7 @@ def accessible_names(page: ObservedPage) -> dict[str, str]:
 
 
 def label_elements(page: ObservedPage) -> frozenset[str]:
-    """Ids of the clickable `<label>` elements whose text names the field next to them."""
+    """Ids of the clickable `<label>` elements that label the field next to them (only with real names)."""
     return _names(page).labels
 
 
