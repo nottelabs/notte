@@ -50,9 +50,10 @@ jobs:
             --json number,isCrossRepository --jq '[.[] | select(.isCrossRepository | not)][0].number // empty')
           manual=false
           if [ -n "$PR_NUMBER" ]; then
-            authors=$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json commits \
-              --jq '[.commits[].authors[].email] | unique | .[]')
-            if grep -qvxF '41898282+github-actions[bot]@users.noreply.github.com' <<<"$authors"; then
+            # Committers too: amending or rebasing the bot's commit keeps it as the author.
+            people=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/commits" \
+              --jq '.[].commit | .author.email, .committer.email' | sort -u)
+            if grep -qvxF '41898282+github-actions[bot]@users.noreply.github.com' <<<"$people"; then
               manual=true
               echo "::notice::Refresh PR #$PR_NUMBER has manual commits; not overwriting it. Merge or close it to resume refreshes."
             fi
