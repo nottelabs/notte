@@ -32,6 +32,7 @@ jobs:
       pull-requests: read
     outputs:
       manual: ${{ steps.check.outputs.manual }}
+      tip: ${{ steps.check.outputs.tip }}
     steps:
       - name: Check for manual commits on the refresh PR
         id: check
@@ -40,8 +41,13 @@ jobs:
           BRANCH: chore/bump-openapi
         run: |
           set -euo pipefail
+          # The bump job force-pushes only over this tip, so a push made meanwhile is kept.
+          tip=$(gh api "repos/$GITHUB_REPOSITORY/git/matching-refs/heads/$BRANCH" \
+            --jq ".[] | select(.ref == \"refs/heads/$BRANCH\") | .object.sha")
+          echo "tip=$tip" >> "$GITHUB_OUTPUT"
+          # `--head` also matches forks' branches of the same name.
           PR_NUMBER=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$BRANCH" --base main --state open \
-            --json number --jq '.[0].number // empty')
+            --json number,isCrossRepository --jq '[.[] | select(.isCrossRepository | not)][0].number // empty')
           manual=false
           if [ -n "$PR_NUMBER" ]; then
             authors=$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json commits \
@@ -158,6 +164,7 @@ jobs:
           GENERATORS: ${{ steps.generators.outputs.report }}
           GENERATORS_FAILED: ${{ steps.generators.outputs.failed }}
           CONTRACT_FAILED: ${{ steps.contract.outputs.failed }}
+          TIP: ${{ needs.owner.outputs.tip }}
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
@@ -191,9 +198,11 @@ jobs:
 
           git checkout -B "$BRANCH"
           git commit -m "$TITLE"
-          git push --force origin "$BRANCH"
+          # An empty tip means the branch must still not exist.
+          git push --force-with-lease="$BRANCH:$TIP" origin "$BRANCH"
 
-          PR_NUMBER=$(gh pr list --head "$BRANCH" --base main --state open --json number --jq '.[0].number // empty')
+          PR_NUMBER=$(gh pr list --head "$BRANCH" --base main --state open \
+            --json number,isCrossRepository --jq '[.[] | select(.isCrossRepository | not)][0].number // empty')
           if [ -n "$PR_NUMBER" ]; then
             echo "Updating existing PR #$PR_NUMBER"
             gh pr edit "$PR_NUMBER" --title "$TITLE" --body "$BODY"
