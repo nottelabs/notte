@@ -240,6 +240,11 @@ class RoutingTests(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertEqual(ci.integration_examples_for_path(path), set(ci.INTEGRATION_EXAMPLES))
                 self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
+                harness = path in ci.INTEGRATION_INPUTS or path == ".github/workflows/paired-sdk-examples.yml"
+                self.assertEqual(
+                    ci.integration_examples_for_path(path, shared_inputs=False),
+                    set(ci.INTEGRATION_EXAMPLES) if harness else set(),
+                )
 
     def test_offline_generator_and_its_tests_use_the_lightweight_suite(self) -> None:
         for path in ("docs/src/scripts/generate_llms.py", "tests/test_generate_llms_offline.py"):
@@ -472,6 +477,23 @@ class GitHistoryTests(unittest.TestCase):
         self.assertTrue(scope["paired_static"] and scope["paired_live"])
         self.assertFalse(scope["paired_snippets_live"])
         self.assertEqual(scope["paired_shards"], ["1/1"])
+
+    def test_pull_requests_run_native_projects_only_for_their_own_inputs(self) -> None:
+        sdk = self.commit({"packages/notte-sdk/src/notte_sdk/client.py": "client = True\n", "uv.lock": "lock = 1\n"})
+        scope = self.scope("pull_request", self.base, sdk)
+        self.assertEqual(scope["integration_examples"], [])
+        self.assertTrue(scope["paired_live"] and scope["paired_snippets_live"])
+        self.assertEqual(scope["paired_shards"], ["1/2", "2/2"])
+        self.assertEqual(self.scope("push", self.base, sdk)["integration_examples"], sorted(ci.INTEGRATION_EXAMPLES))
+        unknown = self.commit({"scripts/new_tool.py": "tool = True\n"})
+        self.assertEqual(self.scope("pull_request", sdk, unknown)["integration_examples"], [])
+        self.assertEqual(self.scope("push", sdk, unknown)["integration_examples"], sorted(ci.INTEGRATION_EXAMPLES))
+        project = self.commit({"examples/temporal/src/workflow.ts": "workflow = True\n"})
+        self.assertEqual(self.scope("pull_request", unknown, project)["integration_examples"], ["temporal"])
+        runner = self.commit({"scripts/ci_integration_examples.py": "runner = True\n"})
+        self.assertEqual(
+            self.scope("pull_request", project, runner)["integration_examples"], sorted(ci.INTEGRATION_EXAMPLES)
+        )
 
     def test_snippet_changes_do_not_repeat_unrelated_native_projects(self) -> None:
         head = self.commit({"docs/src/testers/sessions/index.py": "snippet = True\n"})

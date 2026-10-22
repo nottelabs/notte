@@ -112,22 +112,24 @@ INTEGRATION_WORKFLOWS = {
 }
 
 
-def integration_examples_for_path(path: str) -> set[str]:
-    """Native projects share SDK/build inputs, but do not run for project prose."""
+def integration_examples_for_path(path: str, *, shared_inputs: bool = True) -> set[str]:
+    """Native projects share SDK/build inputs, but do not run for project prose.
+
+    Without shared_inputs (pull requests), SDK, lockfile and build changes select
+    no native project; they run every project on the push to main instead."""
     if path.startswith("integrations/terraform-provider-notte/") and "terraform-profiles" in INTEGRATION_EXAMPLES:
         return set() if path.endswith((".md", ".mdx", ".txt")) else {"terraform-profiles"}
-    if path in INTEGRATION_INPUTS | PYTHON_CONFIG | NODE_CONFIG or path in {
-        ".github/workflows/paired-sdk-examples.yml",
-        "node-sdk/tsconfig.json",
-        "node-sdk/tsup.config.ts",
-    }:
+    if path in INTEGRATION_INPUTS or path == ".github/workflows/paired-sdk-examples.yml":
         return set(INTEGRATION_EXAMPLES)
+    shared: set[str] = set(INTEGRATION_EXAMPLES) if shared_inputs else set()
+    if path in PYTHON_CONFIG | NODE_CONFIG or path in {"node-sdk/tsconfig.json", "node-sdk/tsup.config.ts"}:
+        return shared
     if path.startswith(("packages/notte-sdk/", "packages/notte-core/", "src/")):
-        return set() if path.endswith(("/README.md", "/CHANGELOG.md")) else set(INTEGRATION_EXAMPLES)
+        return set() if path.endswith(("/README.md", "/CHANGELOG.md")) else shared
     if path.startswith("node-sdk/") and not path.startswith("node-sdk/test/"):
-        return set() if path.endswith((".md", ".mdx", ".txt")) else set(INTEGRATION_EXAMPLES)
+        return set() if path.endswith((".md", ".mdx", ".txt")) else shared
     if path.startswith(".github/actions/python-setup/"):
-        return set(INTEGRATION_EXAMPLES)
+        return shared
     if path in RECIPE_INPUTS:
         return RECIPE_INPUTS[path] & INTEGRATION_EXAMPLES.keys()
     for name in INTEGRATION_EXAMPLES:
@@ -432,7 +434,7 @@ def select(event: str, base: str, head: str) -> dict[str, bool | str | list[str]
                 native_examples = (
                     changed_registry_examples(base, head)
                     if path == "scripts/integration_examples.json"
-                    else integration_examples_for_path(path)
+                    else integration_examples_for_path(path, shared_inputs=event != "pull_request")
                 )
                 if path == "scripts/integration_examples.json" and not native_examples:
                     path_scopes.discard("paired_live")
@@ -441,7 +443,7 @@ def select(event: str, base: str, head: str) -> dict[str, bool | str | list[str]
                     path, code_changed=code_changed
                 ) and not native_example_input(path)
                 integration_examples |= native_examples
-                if path_scopes == ALL:
+                if path_scopes == ALL and event != "pull_request":
                     integration_examples |= set(INTEGRATION_EXAMPLES)
                 if path.endswith((".py", ".pyi")):
                     selected.add("python_static")
