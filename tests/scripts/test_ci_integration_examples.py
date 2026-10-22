@@ -1396,11 +1396,16 @@ def test_native_npm_test_projects_preserve_modes_and_only_notte_credentials(
 
 
 def test_mongodb_live_owns_one_limited_fixture_and_original_source_suite(
-    workspace: Path, monkeypatch: pytest.MonkeyPatch
+    workspace: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     shipped_project(workspace, monkeypatch, "mongodb", "NOTTE_DOCS_PYTHON")
     monkeypatch.setenv("MONGODB_URI", "mongodb://outside.invalid")
+    monkeypatch.setattr(runner, "kernel_release", lambda: "7.0.0-1017-azure (Ubuntu 7.0.0-1017.17-azure 7.0.14)")
     runner.main()
+    image = "mongo:7.0.45@sha256:c53852c00c23ca9f23fc39690350ffa9a80e3642fe8f96879726d8da0abe80a7"
+    assert f"MongoDB fixture: {image} on Linux 7.0.0-1017-azure (Ubuntu 7.0.0-1017.17-azure 7.0.14)\n" in (
+        capsys.readouterr().out
+    )
     observed = calls(workspace)
     commands = [call["args"] for call in observed]
     docker = [call for call in observed if call["args"][0] == "docker"]
@@ -1414,7 +1419,7 @@ def test_mongodb_live_owns_one_limited_fixture_and_original_source_suite(
     assert create[create.index("--health-cmd") + 1] == "mongosh --quiet --eval 'db.adminCommand({ ping: 1 }).ok'"
     for option, value in (("--health-interval", "5s"), ("--health-timeout", "5s"), ("--health-retries", "20")):
         assert create[create.index(option) + 1] == value
-    assert create[-1] == "mongo:8.0.34@sha256:4a4ab5d4834207389e0d7270fac988e21ffedccecba77991a552f755df229907"
+    assert create[-1] == image
     assert all(call["args"][-1] == name for call in docker[1:])
     assert docker[-1]["args"] == ["docker", "rm", "--force", "--volumes", name]
     assert all(not call["credentials"] for call in docker)
@@ -1428,6 +1433,22 @@ def test_mongodb_live_owns_one_limited_fixture_and_original_source_suite(
     assert ["uv", "pip", "install", "pymongo==4.19.0"] in commands
     assert ["uv", "pip", "check"] in commands
     assert commands.index(docker[2]["args"]) < commands.index(native[0]["args"]) < commands.index(docker[3]["args"])
+
+
+@pytest.mark.parametrize("signature", ["Ubuntu 7.0.0-1017.17-azure 7.0.14\n", None])
+def test_kernel_release_adds_ubuntu_upstream_version_when_available(
+    monkeypatch: pytest.MonkeyPatch, signature: str | None
+) -> None:
+    def read_text(path: Path) -> str:
+        assert path == Path("/proc/version_signature")
+        if signature is None:
+            raise FileNotFoundError(path)
+        return signature
+
+    monkeypatch.setattr(runner.platform, "release", lambda: "7.0.0-1017-azure")
+    monkeypatch.setattr(Path, "read_text", read_text)
+    expected = "7.0.0-1017-azure (Ubuntu 7.0.0-1017.17-azure 7.0.14)" if signature else "7.0.0-1017-azure"
+    assert runner.kernel_release() == expected
 
 
 def test_mongodb_static_and_unselected_shard_never_start_docker(
