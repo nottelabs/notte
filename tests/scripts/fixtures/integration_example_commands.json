@@ -34,7 +34,7 @@
         {"args": ["npm", "run", "test:live"], "cwd": "$ROOT/examples/anthropic-computer-use/typescript"},
         {"args": ["uv", "pip", "install", "--python", "$ROOT/examples/anthropic-computer-use/.venv/bin/python", "-e", "$ROOT/packages/notte-core", "-e", "$ROOT/packages/notte-sdk"], "cwd": "$ROOT/examples/anthropic-computer-use"},
         {"args": ["uv", "pip", "check", "--python", "$ROOT/examples/anthropic-computer-use/.venv/bin/python"], "cwd": "$ROOT/examples/anthropic-computer-use"},
-        {"args": ["npm", "install", "--no-save", "--package-lock=false", "$ROOT/node-sdk"], "cwd": "$ROOT/examples/anthropic-computer-use/typescript"},
+        {"args": ["npm", "install", "--no-save", "$ROOT/node-sdk"], "cwd": "$ROOT/examples/anthropic-computer-use/typescript"},
         {"args": ["npm", "run", "typecheck"], "cwd": "$ROOT/examples/anthropic-computer-use/typescript"},
         {"args": ["python", "-m", "unittest", "discover", "-s", "python", "-p", "test_live.py", "-v"], "cwd": "$ROOT/examples/anthropic-computer-use"},
         {"args": ["npm", "run", "test:live"], "cwd": "$ROOT/examples/anthropic-computer-use/typescript"}
@@ -64,7 +64,7 @@
         {"args": ["npm", "run", "test:live"], "cwd": "$ROOT/examples/deepagents/typescript"},
         {"args": ["uv", "pip", "install", "--python", "$ROOT/examples/deepagents/.venv/bin/python", "-e", "$ROOT/packages/notte-core", "-e", "$ROOT/packages/notte-sdk"], "cwd": "$ROOT/examples/deepagents"},
         {"args": ["uv", "pip", "check", "--python", "$ROOT/examples/deepagents/.venv/bin/python"], "cwd": "$ROOT/examples/deepagents"},
-        {"args": ["npm", "install", "--no-save", "--package-lock=false", "$ROOT/node-sdk"], "cwd": "$ROOT/examples/deepagents/typescript"},
+        {"args": ["npm", "install", "--no-save", "$ROOT/node-sdk"], "cwd": "$ROOT/examples/deepagents/typescript"},
         {"args": ["npm", "run", "typecheck"], "cwd": "$ROOT/examples/deepagents/typescript"},
         {"args": ["python", "-m", "unittest", "-v", "test_agent.py"], "cwd": "$ROOT/examples/deepagents"},
         {"args": ["npm", "run", "test:live"], "cwd": "$ROOT/examples/deepagents/typescript"}
@@ -84,7 +84,7 @@
         {"args": ["npm", "test"], "cwd": "$ROOT/examples/gemini-computer-use"},
         {"args": ["uv", "pip", "install", "--python", "$ROOT/examples/gemini-computer-use/.venv/bin/python", "-e", "$ROOT/packages/notte-core", "-e", "$ROOT/packages/notte-sdk"], "cwd": "$ROOT/examples/gemini-computer-use"},
         {"args": ["uv", "pip", "check", "--python", "$ROOT/examples/gemini-computer-use/.venv/bin/python"], "cwd": "$ROOT/examples/gemini-computer-use"},
-        {"args": ["npm", "install", "--no-save", "--package-lock=false", "$ROOT/node-sdk"], "cwd": "$ROOT/examples/gemini-computer-use"},
+        {"args": ["npm", "install", "--no-save", "$ROOT/node-sdk"], "cwd": "$ROOT/examples/gemini-computer-use"},
         {"args": ["npm", "run", "typecheck"], "cwd": "$ROOT/examples/gemini-computer-use"},
         {"args": ["python", "-m", "unittest", "-v", "test_agent.py"], "cwd": "$ROOT/examples/gemini-computer-use"},
         {"args": ["npm", "test"], "cwd": "$ROOT/examples/gemini-computer-use"}
@@ -102,7 +102,7 @@
         {"args": ["npm", "test"], "cwd": "$ROOT/examples/github-actions"},
         {"args": ["uv", "sync", "--locked", "--package", "notte-sdk", "--no-dev"], "cwd": "$ROOT"},
         {"args": ["uv", "pip", "install", "--python", "$ROOT/.venv/bin/python", "playwright==1.64.0"], "cwd": "$ROOT"},
-        {"args": ["npm", "install", "--no-save", "--package-lock=false", "$ROOT/node-sdk"], "cwd": "$ROOT/examples/github-actions"},
+        {"args": ["npm", "install", "--no-save", "$ROOT/node-sdk"], "cwd": "$ROOT/examples/github-actions"},
         {"args": ["python", "-m", "unittest", "test_cli_signals", "test_live", "-v"], "cwd": "$ROOT/examples/github-actions"},
         {"args": ["npm", "test"], "cwd": "$ROOT/examples/github-actions"}
       ]
@@ -137,7 +137,7 @@
         {"args": ["npm", "run", "test:live"], "cwd": "$ROOT/examples/openai-computer-use/typescript"},
         {"args": ["uv", "pip", "install", "--python", "$ROOT/examples/openai-computer-use/.venv/bin/python", "-e", "$ROOT/packages/notte-core", "-e", "$ROOT/packages/notte-sdk"], "cwd": "$ROOT/examples/openai-computer-use"},
         {"args": ["uv", "pip", "check", "--python", "$ROOT/examples/openai-computer-use/.venv/bin/python"], "cwd": "$ROOT/examples/openai-computer-use"},
-        {"args": ["npm", "install", "--no-save", "--package-lock=false", "$ROOT/node-sdk"], "cwd": "$ROOT/examples/openai-computer-use/typescript"},
+        {"args": ["npm", "install", "--no-save", "$ROOT/node-sdk"], "cwd": "$ROOT/examples/openai-computer-use/typescript"},
         {"args": ["npm", "run", "typecheck"], "cwd": "$ROOT/examples/openai-computer-use/typescript"},
         {"args": ["python", "-m", "unittest", "discover", "-s", "python", "-p", "test_live.py", "-v"], "cwd": "$ROOT/examples/openai-computer-use"},
         {"args": ["npm", "run", "test:live"], "cwd": "$ROOT/examples/openai-computer-use/typescript"}
@@ -159,7 +159,7 @@
         {"args": ["npm", "run", "test:live"], "cwd": "$ROOT/examples/selenium"},
         {"args": ["uv", "pip", "install", "--python", "$ROOT/examples/selenium/.venv/bin/python", "-e", "$ROOT/packages/notte-core", "-e", "$ROOT/packages/notte-sdk"], "cwd": "$ROOT/examples/selenium"},
         {"args": ["uv", "pip", "check", "--python", "$ROOT/examples/selenium/.venv/bin/python"], "cwd": "$ROOT/examples/selenium"},
-        {"args": ["npm", "install", "--no-save", "--package-lock=false", "$ROOT/node-sdk"], "cwd": "$ROOT/examples/selenium"},
+        {"args": ["npm", "install", "--no-save", "$ROOT/node-sdk"], "cwd": "$ROOT/examples/selenium"},
         {"args": ["npm", "run", "typecheck"], "cwd": "$ROOT/examples/selenium"},
         {"args": ["python", "install_driver.py"], "cwd": "$ROOT/examples/selenium"},
         {"args": ["python", "-m", "unittest", "-v", "test_selenium"], "cwd": "$ROOT/examples/selenium"},
@@ -183,7 +183,7 @@
         {"args": ["npm", "run", "typecheck"], "cwd": "$ROOT/examples/trigger"},
         {"args": ["npm", "test"], "cwd": "$ROOT/examples/trigger"},
         {"args": ["npm", "run", "test:live"], "cwd": "$ROOT/examples/trigger"},
-        {"args": ["npm", "install", "--no-save", "--package-lock=false", "$ROOT/node-sdk"], "cwd": "$ROOT/examples/trigger"},
+        {"args": ["npm", "install", "--no-save", "$ROOT/node-sdk"], "cwd": "$ROOT/examples/trigger"},
         {"args": ["npm", "run", "typecheck"], "cwd": "$ROOT/examples/trigger"},
         {"args": ["npm", "test"], "cwd": "$ROOT/examples/trigger"},
         {"args": ["npm", "run", "test:live"], "cwd": "$ROOT/examples/trigger"}

@@ -19,6 +19,10 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
 - `make test` is the offline gate. `make test-live` runs tests marked
   `staging` or `live` and needs `NOTTE_API_KEY`; set `NOTTE_API_URL` to point
   the SDK at a different API.
+- Native integration examples (`examples/*`, run by
+  `scripts/ci_integration_examples.py`) install the local `node-sdk` with
+  `npm install --no-save`. Don't add `--package-lock=false`: it ignores the
+  example's lockfile, so a new upstream release can break CI.
 
 ## Public API
 

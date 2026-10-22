@@ -527,7 +527,7 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
                 run(["uv", "pip", "check", "--python", str(python)], project, install_env)
                 if project.name == "pipedream":
                     run(
-                        ["npm", "install", "--no-save", "--package-lock=false", str(ROOT / "node-sdk")],
+                        ["npm", "install", "--no-save", str(ROOT / "node-sdk")],
                         project,
                         install_env,
                     )
@@ -561,7 +561,7 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
         ):
             if sdk == "source":
                 run(
-                    ["npm", "install", "--no-save", "--package-lock=false", str(ROOT / "node-sdk")],
+                    ["npm", "install", "--no-save", str(ROOT / "node-sdk")],
                     project,
                     install_env,
                 )
@@ -581,7 +581,7 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
                 run(["uv", "sync", "--locked", "--package", "notte-sdk", "--no-dev"], ROOT, install_env)
                 run(["uv", "pip", "install", "--python", str(python), "playwright==1.64.0"], ROOT, install_env)
                 run(
-                    ["npm", "install", "--no-save", "--package-lock=false", str(ROOT / "node-sdk")],
+                    ["npm", "install", "--no-save", str(ROOT / "node-sdk")],
                     project,
                     install_env,
                 )
@@ -636,7 +636,7 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
             )
             run(["uv", "pip", "check", "--python", str(python)], project, install_env)
             run(
-                ["npm", "install", "--no-save", "--package-lock=false", str(ROOT / "node-sdk")],
+                ["npm", "install", "--no-save", str(ROOT / "node-sdk")],
                 typescript,
                 install_env,
             )

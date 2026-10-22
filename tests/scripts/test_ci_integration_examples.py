@@ -222,7 +222,7 @@ def test_live_resolves_both_sdks_and_limits_credentials(workspace: Path, monkeyp
     source = next(command for command in commands if command[:3] == ["uv", "pip", "install"])
     assert source[-4:] == ["-e", str(workspace / "packages/notte-core"), "-e", str(workspace / "packages/notte-sdk")]
     assert "--no-deps" not in source
-    assert ["npm", "install", "--no-save", "--package-lock=false", str(workspace / "node-sdk")] in commands
+    assert ["npm", "install", "--no-save", str(workspace / "node-sdk")] in commands
     assert commands.count(["npm", "run", "typecheck"]) == 2
     assert len([command for command in commands if command[:3] == ["uv", "pip", "check"]]) == 2
     assert commands.index(source) > commands.index(tests[1]["args"])
@@ -288,7 +288,7 @@ def test_gemini_root_commands_preserve_offline_and_paid_boundaries(
     source = next(command for command in commands if "-e" in command)
     assert source[-4:] == ["-e", str(workspace / "packages/notte-core"), "-e", str(workspace / "packages/notte-sdk")]
     assert "--no-deps" not in source
-    assert ["npm", "install", "--no-save", "--package-lock=false", str(workspace / "node-sdk")] in commands
+    assert ["npm", "install", "--no-save", str(workspace / "node-sdk")] in commands
     assert len([command for command in commands if command[:3] == ["uv", "pip", "check"]]) == 2
 
 
@@ -453,7 +453,7 @@ def test_node_projects_keep_existing_sdk_modes_and_no_paid_pr_calls(
     source = [command for command in commands if command[:2] == ["npm", "install"]]
     assert len(source) == count - 1
     if source:
-        assert source[0] == ["npm", "install", "--no-save", "--package-lock=false", str(workspace / "node-sdk")]
+        assert source[0] == ["npm", "install", "--no-save", str(workspace / "node-sdk")]
         assert commands.count(["npm", "test"]) == 3
         assert commands.count(["npm", "run", "typecheck"]) == 3
     if name == "inngest":
@@ -531,7 +531,7 @@ def test_github_actions_retains_flat_tests_and_selected_source_python(
     commands = [call["args"] for call in observed]
     assert ["python", "-m", "unittest", "test_publish", "test_cli_signals", "-v"] in commands
     assert ["uv", "pip", "install", "--python", str(workspace / ".venv/bin/python"), "playwright==1.64.0"] in commands
-    assert ["npm", "install", "--no-save", "--package-lock=false", str(workspace / "node-sdk")] in commands
+    assert ["npm", "install", "--no-save", str(workspace / "node-sdk")] in commands
 
 
 @pytest.mark.parametrize("name,convention", [("trigger", "node-project"), ("openai-agents", "NOTTE_DOCS_PYTHON")])
@@ -763,7 +763,7 @@ def test_box_preserves_root_static_capture_suites_and_credential_boundaries(
     assert source[-4:] == ["-e", str(workspace / "packages/notte-core"), "-e", str(workspace / "packages/notte-sdk")]
     assert "--no-deps" not in source
     assert commands.index(source) > commands.index(native[1]["args"])
-    assert ["npm", "install", "--no-save", "--package-lock=false", str(workspace / "node-sdk")] in commands
+    assert ["npm", "install", "--no-save", str(workspace / "node-sdk")] in commands
     assert not any("test_box" in command or "test:live" in command for command in commands)
 
 
@@ -901,7 +901,7 @@ def test_stripe_link_retains_native_driver_alias_offline_tests_and_wallet_bounda
     assert "--no-deps" not in source
     assert commands.index(source) > commands.index(native[0]["args"])
     assert commands.count(["npm", "run", "typecheck"]) == 2
-    assert ["npm", "install", "--no-save", "--package-lock=false", str(workspace / "node-sdk")] in commands
+    assert ["npm", "install", "--no-save", str(workspace / "node-sdk")] in commands
 
 
 def test_stripe_link_native_driver_failure_reaches_paired_gate_before_source(
@@ -1270,7 +1270,7 @@ def test_pipedream_keeps_independent_native_languages_and_real_python_without_ve
     ]
     assert str(project) not in source and "--no-deps" not in source
     assert commands.index(source) > commands.index(suites[1]["args"])
-    assert ["npm", "install", "--no-save", "--package-lock=false", str(workspace / "node-sdk")] in commands
+    assert ["npm", "install", "--no-save", str(workspace / "node-sdk")] in commands
     assert not any("compileall" in command or "test:live" in command for command in commands)
     assert commands.count(["uv", "pip", "check", "--python", str(python)]) == 2
 
@@ -1359,7 +1359,7 @@ def test_e2e_preserves_unit_native_cli_modes_and_disables_telemetry(
         ["npm", "run", "test:unit"],
         ["npm", "run", "test:live"],
         ["npm", "test"],
-        ["npm", "install", "--no-save", "--package-lock=false", str(workspace / "node-sdk")],
+        ["npm", "install", "--no-save", str(workspace / "node-sdk")],
         ["npm", "run", "typecheck"],
         ["npm", "run", "test:unit"],
         ["npm", "run", "test:live"],
