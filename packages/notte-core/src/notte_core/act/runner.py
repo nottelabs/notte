@@ -88,9 +88,10 @@ class ActDriver(Protocol):
         what `is_fresh` will compare against."""
         ...
 
-    async def is_fresh(self, page: ObservedPage, element_id: str | None) -> bool:
+    async def is_fresh(self, page: ObservedPage, element_id: str | None, *, focus: bool = False) -> bool:
         """Right before acting: the page still matches `page` (same URL and, for an element target,
-        the same element under the same id). As cheap as the session allows."""
+        the same element under the same id; with `focus`, the same focused element). As cheap as the
+        session allows."""
         ...
 
     async def execute(self, action: BaseAction, raise_on_failure: bool) -> ExecutionResult: ...
@@ -264,7 +265,10 @@ async def run_act(
             return run.result(status="proposed", action=action, **common)
 
         step = time.perf_counter()
-        fresh = await driver.is_fresh(page, None if target is None else target.element_id)
+        # Enter goes to the focused element: it must still be the one the decision saw
+        fresh = await driver.is_fresh(
+            page, None if target is None else target.element_id, focus=decision.operation == "PRESS_ENTER"
+        )
         run.timings.fresh_ms += _ms(step)
         if not fresh:
             if attempt == 0:
