@@ -308,7 +308,7 @@ def test_act_until_done_does_not_count_scrolls_as_unchanged() -> None:
 
 
 def _signature(tag: str, text: str, value: Any = None, checked: Any = None, options: Any = None) -> list[Any]:
-    return [tag, text, value, checked, None, None, None, None, None, None, None, None, None, None, options]
+    return [tag, text, value, checked, None, None, None, None, None, None, None, None, None, None, options, []]
 
 
 def test_signature_baseline_must_match_the_observation() -> None:
@@ -371,7 +371,7 @@ async def test_vault_secrets_typed_earlier_are_masked() -> None:
         async def observe(self, observation: Any) -> ObservedPage:  # pyright: ignore[reportUnusedParameter]
             return page
 
-        async def is_fresh(self, page: ObservedPage, element_id: str | None) -> bool:  # pyright: ignore[reportUnusedParameter]
+        async def is_fresh(self, page: ObservedPage, element_id: str | None, *, focus: bool = False) -> bool:  # pyright: ignore[reportUnusedParameter]
             return True
 
         async def execute(self, action: Any, raise_on_failure: bool) -> ExecutionResult:  # pyright: ignore[reportUnusedParameter]
@@ -594,3 +594,22 @@ def test_a_variable_cut_by_the_browser_is_masked() -> None:
     assert value == "x" * 190 + "{{token}}" and token[:10] not in value
     # an uncut value is masked as before, and ordinary text is left alone
     assert history.privacy.cut_text("plain") == "plain"
+
+
+def test_past_the_cap_the_elements_in_view_are_offered_first() -> None:
+    from notte_core.act.space import MAX_ELEMENTS
+
+    actions: list[InteractionAction] = [
+        ClickAction(id=f"B{i}", text_label=f"b{i}") for i in range(1, MAX_ELEMENTS + 51)
+    ]
+    description = "\n".join(f"{a.id}[:]<button>{a.text_label}</button>" for a in actions)
+    # the last 10 buttons are in the viewport (the page is scrolled to its end)
+    in_view = frozenset(a.id for a in actions[-10:])
+    page = _page(description=description, actions=actions, states={}, in_view=in_view)
+    offered = [e["index"] for e in build_act_space(page, labels="accessible").elements]
+    assert len(offered) == MAX_ELEMENTS and in_view <= set(offered)
+    # page order is kept: the first ones fill the rest
+    assert offered[: MAX_ELEMENTS - 10] == [a.id for a in actions[: MAX_ELEMENTS - 10]]
+    # under the cap, everything is offered
+    small = _page(description=description, actions=actions[:20], states={})
+    assert len(build_act_space(small, labels="accessible").elements) == 20

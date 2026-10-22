@@ -842,7 +842,7 @@ class RemoteActDriver:
             self._signatures = await asyncio.to_thread(self._read_signatures, signature_xpaths(page))
         return page
 
-    async def is_fresh(self, page: ObservedPage, element_id: str | None) -> bool:
+    async def is_fresh(self, page: ObservedPage, element_id: str | None, *, focus: bool = False) -> bool:
         before = self._signatures
         if before.url is not None and before.url != page.url:
             return False
@@ -851,7 +851,7 @@ class RemoteActDriver:
             check = await asyncio.to_thread(
                 self._evaluate, remote_signatures_expression(xpaths, "compare", self._token)
             )
-            return before.unchanged(check, element_id)
+            return before.unchanged(check, element_id, focus=focus)
         current = ObservedPage.from_observation(await asyncio.to_thread(self._observe))
         return same_target(page, current, element_id)
 

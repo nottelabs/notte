@@ -412,12 +412,14 @@ class LlmDecider:
 
 
 def _endpoint() -> LlmSettings | None:
-    """The `NOTTE_LLM_*` endpoint when it has an API key (`NOTTE_LLM_API_KEY`, or `OPENROUTER_API_KEY` on OpenRouter)."""
+    """The `NOTTE_LLM_*` endpoint when it has an API key (`NOTTE_LLM_API_KEY`, or `OPENROUTER_API_KEY` on OpenRouter).
+
+    Invalid `NOTTE_LLM_*` settings (a custom base URL without a model, a malformed URL or number) raise with the
+    settings' own message, instead of reading as a missing key."""
     try:
         settings = LlmSettings.from_env(model=os.getenv("NOTTE_ACT_MODEL"))
-    except ValueError:
-        # a custom NOTTE_LLM_BASE_URL without a model
-        return None
+    except ValueError as e:
+        raise DeciderNotAvailableError(f"The NOTTE_LLM_* settings are invalid: {e}") from e
     key = settings.api_key
     return settings if key is not None and key.get_secret_value() else None
 
