@@ -19,12 +19,31 @@ Nothing else is retried: 500, other 5xx codes, and 4xx always surface as is.
 """
 
 import random
+import socket
 import time
 from collections.abc import Callable
 from email.utils import parsedate_to_datetime
 
-import requests
-from urllib3.exceptions import MaxRetryError, NameResolutionError, NewConnectionError
+import httpcore
+import httpx
+
+from notte_sdk.errors import (
+    NotteConnectionError,
+    NotteConnectTimeoutError,
+    NotteRequestError,
+    NotteRequestTimeoutError,
+    NotteSSLError,
+)
+
+# Exceptions that wrap the socket or TLS error that caused them.
+_WRAPPERS = (
+    NotteRequestError,
+    httpx.HTTPError,
+    httpcore.NetworkError,
+    httpcore.TimeoutException,
+    httpcore.ProtocolError,
+    httpcore.ProxyError,
+)
 
 DEFAULT_MAX_RETRIES = 3
 """Retries after the first attempt, unless ``NotteClient(max_retries=...)`` says otherwise."""
@@ -50,23 +69,39 @@ def is_retryable_status(status: int, method: str) -> bool:
     return status in _REFUSED_STATUSES or (status in _GATEWAY_STATUSES and is_idempotent_method(method))
 
 
-def _connection_never_opened(error: requests.ConnectionError) -> bool:
-    if isinstance(error, requests.ConnectTimeout):
+def root_cause(error: BaseException) -> BaseException:
+    """The socket or TLS error below a transport failure, e.g. the `OSError` of an `httpx.ConnectError`.
+
+    httpcore re-raises with `from None`, so the original error is only in `__context__`. An
+    implicit `__context__` is never followed: it can be an unrelated error the caller was handling.
+    """
+    while isinstance(error, _WRAPPERS):
+        inner = error.__cause__
+        if inner is None and error.__suppress_context__:
+            inner = error.__context__
+        if inner is None:
+            break
+        error = inner
+    return error
+
+
+def _connection_never_opened(error: NotteConnectionError) -> bool:
+    if isinstance(error, NotteConnectTimeoutError):
         return True
-    reason = error.args[0] if error.args else None
-    if isinstance(reason, MaxRetryError):
-        reason = reason.reason
-    # An unknown host is a configuration error, not a transient failure.
-    return isinstance(reason, NewConnectionError) and not isinstance(reason, NameResolutionError)
+    if not isinstance(error.__cause__, httpx.ConnectError):
+        return False
+    # An unknown host is a configuration error, not a transient failure. A TLS
+    # handshake reset was already retried by the transport.
+    return not isinstance(root_cause(error), (socket.gaierror, ConnectionResetError))
 
 
 def is_retryable_exception(error: BaseException, method: str) -> bool:
-    """Whether a ``requests`` failure is a connection error that is retried for this method."""
-    if isinstance(error, requests.exceptions.SSLError):
+    """Whether a transport failure is a connection error that is retried for this method."""
+    if isinstance(error, NotteSSLError):
         return False
-    if isinstance(error, requests.ConnectionError) and _connection_never_opened(error):
+    if isinstance(error, NotteConnectionError) and _connection_never_opened(error):
         return True
-    if isinstance(error, (requests.ConnectionError, requests.ReadTimeout)):
+    if isinstance(error, (NotteConnectionError, NotteRequestTimeoutError)):
         return is_idempotent_method(method)
     return False
 

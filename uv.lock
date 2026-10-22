@@ -2587,11 +2587,12 @@ version = "1.10.0.dev0"
 source = { editable = "packages/notte-sdk" }
 dependencies = [
     { name = "cryptography" },
+    { name = "httpcore" },
+    { name = "httpx" },
     { name = "notte-core" },
     { name = "pydantic", extra = ["email"] },
     { name = "requests" },
     { name = "secretstorage", marker = "sys_platform == 'linux'" },
-    { name = "urllib3" },
     { name = "websockets" },
 ]
 
@@ -2603,12 +2604,13 @@ playwright = [
 [package.metadata]
 requires-dist = [
     { name = "cryptography", specifier = ">=43.0.3" },
+    { name = "httpcore", specifier = ">=1.0.0,<2" },
+    { name = "httpx", specifier = ">=0.28.1,<1" },
     { name = "notte-core", editable = "packages/notte-core" },
     { name = "playwright", marker = "extra == 'playwright'", specifier = "~=1.55" },
     { name = "pydantic", extras = ["email"], specifier = ">=2.10.6,<3" },
     { name = "requests", specifier = ">=2.32.3,<3" },
     { name = "secretstorage", marker = "sys_platform == 'linux'", specifier = ">=3.3" },
-    { name = "urllib3", specifier = ">=2.2.3,<3" },
     { name = "websockets", specifier = ">=13.1" },
 ]
 provides-extras = ["playwright"]

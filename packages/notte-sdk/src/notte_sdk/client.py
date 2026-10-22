@@ -1,8 +1,10 @@
 # pyright: reportImportCycles=false
 import math
 import os
+import weakref
 from functools import partial
-from typing import Any, Literal, Unpack, cast, overload
+from types import TracebackType
+from typing import Any, Literal, Self, Unpack, cast, overload
 
 from notte_core import enable_nest_asyncio
 from notte_core.actions import GotoAction
@@ -13,6 +15,7 @@ from pydantic import BaseModel
 from typing_extensions import final
 
 from notte_sdk._retry import DEFAULT_MAX_RETRIES
+from notte_sdk._transport import SharedHttpClient
 from notte_sdk.auth import MISSING_API_KEY_MESSAGE, resolve_api_key
 from notte_sdk.endpoints.base import BaseClient
 from notte_sdk.endpoints.files import FileStorageClient, RemoteFileStorage
@@ -65,6 +68,9 @@ class NotteClient:
         if type(max_retries) is not int or max_retries < 0:
             raise ValueError("max_retries must be a non-negative integer")
         self.max_retries: int = max_retries
+        # One connection pool for every resource client below.
+        self._http: SharedHttpClient = SharedHttpClient()
+        _ = weakref.finalize(self, self._http.close)
         # Resolve once so the keyring is read at most once per client.
         api_key = resolve_api_key(api_key, server_url or os.getenv("NOTTE_API_URL") or BaseClient.DEFAULT_NOTTE_API_URL)
         if api_key is None:
@@ -93,6 +99,25 @@ class NotteClient:
 
         if self.sessions.server_url != self.sessions.DEFAULT_NOTTE_API_URL:
             logger.warning(f"NOTTE_API_URL is set to: {self.sessions.server_url}")
+
+    def close(self) -> None:
+        """Close pooled HTTP connections.
+
+        Connections are also closed when the client is garbage collected. The
+        client stays usable: a later request opens a new connection.
+        """
+        self._http.close()
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        self.close()
 
     @property
     def Session(self) -> type[RemoteSession]:
