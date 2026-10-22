@@ -97,7 +97,7 @@ schema a model in `notte_core.types` first, and the next generation binds it.
 | --- | --- |
 | `make sdk-endpoints` | regenerate the module |
 | `sdk-endpoints` pre-commit hook (`--check`) | the committed module is what the snapshot, the bindings and the models generate, and every `api.<operation>(` the SDK calls exists. Offline. Runs on changes to the snapshot, the SDK, `notte_core.types` and the scripts |
-| `bump-openapi` workflow | after fetching the staging spec, regenerates the module and commits it with the snapshot, so an endpoint change is a reviewable diff. A spec the bindings no longer fit leaves the module stale: the PR's hook fails and the generator's error is in the PR body |
+| `bump-openapi` workflow | after fetching the staging spec, regenerates the module and commits it with the snapshot, so an endpoint change is a reviewable diff. A spec the bindings no longer fit leaves the module stale: the PR is opened as a draft with the generator's error in its body, the run fails, and the PR's hook fails until it is fixed |
 | `make openapi-check-prod` (release gate) | also runs `--check --against https://api.notte.cc`: every operation the SDK calls must generate identically from the production spec (same method, path, parameters, models). Operations the SDK does not call cannot block a release |
 | `--report` | lists generated operations as used / unused, and calls with no operation |
 

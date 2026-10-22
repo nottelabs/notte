@@ -2,7 +2,8 @@ name: bump-openapi
 
 # The only live staging-spec refresh: propose one reviewable PR containing the
 # snapshot, both SDKs and the TypeScript reference. Drift cannot fail unrelated PRs.
-# Generator/contract failures are reported in the refresh PR for manual resolution.
+# If a generator or the contract check fails, the refresh PR is opened (or moved back)
+# as a draft with the failure at the top of its body, and the run fails.
 
 on:
   schedule:
@@ -20,8 +21,48 @@ permissions:
   contents: read
 
 jobs:
-  bump:
+  owner:
+    # Someone who pushed to the open refresh PR (for example to map new operations or
+    # fix the contract) owns it until it merges or closes; never force-push over that.
     if: github.repository == 'nottelabs/notte'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      manual: ${{ steps.check.outputs.manual }}
+      tip: ${{ steps.check.outputs.tip }}
+    steps:
+      - name: Check for manual commits on the refresh PR
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: chore/bump-openapi
+        run: |
+          set -euo pipefail
+          # The bump job force-pushes only over this tip, so a push made meanwhile is kept.
+          tip=$(gh api "repos/$GITHUB_REPOSITORY/git/matching-refs/heads/$BRANCH" \
+            --jq ".[] | select(.ref == \"refs/heads/$BRANCH\") | .object.sha")
+          echo "tip=$tip" >> "$GITHUB_OUTPUT"
+          # `--head` also matches forks' branches of the same name.
+          PR_NUMBER=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$BRANCH" --base main --state open \
+            --json number,isCrossRepository --jq '[.[] | select(.isCrossRepository | not)][0].number // empty')
+          manual=false
+          if [ -n "$PR_NUMBER" ]; then
+            # Committers too: amending or rebasing the bot's commit keeps it as the author.
+            people=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/commits" \
+              --jq '.[].commit | .author.email, .committer.email' | sort -u)
+            if grep -qvxF '41898282+github-actions[bot]@users.noreply.github.com' <<<"$people"; then
+              manual=true
+              echo "::notice::Refresh PR #$PR_NUMBER has manual commits; not overwriting it. Merge or close it to resume refreshes."
+            fi
+          fi
+          echo "manual=$manual" >> "$GITHUB_OUTPUT"
+
+  bump:
+    needs: owner
+    if: needs.owner.outputs.manual == 'false'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
@@ -66,12 +107,21 @@ jobs:
       - name: Regenerate both SDKs and the TypeScript reference
         id: generators
         # Keep the refreshed snapshot and report failures in the PR, even if a
-        # generator cannot consume the new contract. Never auto-merge this PR.
+        # generator cannot consume the new contract. `-k` runs every generator so
+        # one report lists all failures; the last step fails the run. Never auto-merge this PR.
+        env:
+          NO_COLOR: '1'
         run: |
+          log="$RUNNER_TEMP/generators.log"
+          status=0
+          make --no-print-directory -k sdk-generate-all >"$log" 2>&1 || status=$?
+          cat "$log"
+          delimiter="EOF_$(openssl rand -hex 8)"
           {
-            echo "report<<EOF"
-            make --no-print-directory -k sdk-generate-all 2>&1 || true
-            echo "EOF"
+            echo "failed=$([ "$status" -eq 0 ] && echo false || echo true)"
+            echo "report<<$delimiter"
+            cat "$log"
+            echo "$delimiter"
           } >> "$GITHUB_OUTPUT"
 
       - name: Detect drift
@@ -91,15 +141,20 @@ jobs:
           git diff --cached --stat
 
       - name: Check the contract
-        # Reported in the PR body; the PR's own pre-commit run is what blocks the merge.
+        # Reported in the PR body and fails the run; the PR's own pre-commit run blocks the merge.
         if: steps.drift.outputs.changes == 'true'
         id: contract
         run: |
-          set -o pipefail
+          log="$RUNNER_TEMP/contract.log"
+          status=0
+          uv run --no-sync python scripts/openapi_contract.py --check >"$log" 2>&1 || status=$?
+          cat "$log"
+          delimiter="EOF_$(openssl rand -hex 8)"
           {
-            echo "report<<EOF"
-            uv run --no-sync python scripts/openapi_contract.py --check 2>&1 || true
-            echo "EOF"
+            echo "failed=$([ "$status" -eq 0 ] && echo false || echo true)"
+            echo "report<<$delimiter"
+            cat "$log"
+            echo "$delimiter"
           } >> "$GITHUB_OUTPUT"
 
       - name: Open or update the pull request
@@ -108,17 +163,35 @@ jobs:
           GH_TOKEN: ${{ secrets.SUBMODULE_BUMP_PAT }}
           REPORT: ${{ steps.contract.outputs.report }}
           GENERATORS: ${{ steps.generators.outputs.report }}
+          GENERATORS_FAILED: ${{ steps.generators.outputs.failed }}
+          CONTRACT_FAILED: ${{ steps.contract.outputs.failed }}
+          TIP: ${{ needs.owner.outputs.tip }}
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           TITLE="chore: refresh the OpenAPI snapshot from staging"
+          STATUS="Generation and the contract check passed."
+          DRAFT=false
+          if [ "$GENERATORS_FAILED" = "true" ] || [ "$CONTRACT_FAILED" = "true" ]; then
+            DRAFT=true
+            # shellcheck disable=SC2016
+            STATUS='> [!CAUTION]
+          > **Not mergeable as is.** Fix the cause on this branch (map new operations in `openapi/resources.json`, change `notte_core.types`, or fix a generator), run `make sdk-generate-all` and push. Scheduled runs leave this PR alone once it has manual commits.'
+            if [ "$GENERATORS_FAILED" = "true" ]; then
+              STATUS+=$'\n> - A generator failed, so some SDK files are not regenerated.'
+            fi
+            if [ "$CONTRACT_FAILED" = "true" ]; then
+              STATUS+=$'\n> - The contract check reports new drift.'
+            fi
+          fi
           # The Markdown code fences in the format string are literal.
           # shellcheck disable=SC2016
-          BODY=$(printf '%s\n\n%s\n\n%s\n\n```\n%s\n```\n\n%s\n\n```\n%s\n```\n' \
+          BODY=$(printf '%s\n\n%s\n\n%s\n\n%s\n\n```\n%s\n```\n\n%s\n\n```\n%s\n```\n' \
             "Automated refresh of \`openapi/openapi.json\` from $NOTTE_API_URL ($(date -u '+%Y-%m-%d %H:%M UTC'))." \
             "Opened by \`.github/workflows/openapi-bump.yml\`. Review the contract and generated changes before merging." \
+            "$STATUS" \
             "Contract check (\`scripts/openapi_contract.py\`). If it reports new drift, change \`notte_core.types\` instead of merging:" \
             "$REPORT" \
             "Python models/endpoints, Node client/resources/proxy patterns and TypeScript reference (\`make sdk-generate-all\`):" \
@@ -126,16 +199,45 @@ jobs:
 
           git checkout -B "$BRANCH"
           git commit -m "$TITLE"
-          git push --force origin "$BRANCH"
+          # An empty tip means the branch must still not exist.
+          git push --force-with-lease="$BRANCH:$TIP" origin "$BRANCH"
 
-          PR_NUMBER=$(gh pr list --head "$BRANCH" --base main --state open --json number --jq '.[0].number // empty')
+          PR_NUMBER=$(gh pr list --head "$BRANCH" --base main --state open \
+            --json number,isCrossRepository --jq '[.[] | select(.isCrossRepository | not)][0].number // empty')
           if [ -n "$PR_NUMBER" ]; then
             echo "Updating existing PR #$PR_NUMBER"
             gh pr edit "$PR_NUMBER" --title "$TITLE" --body "$BODY"
+            IS_DRAFT=$(gh pr view "$PR_NUMBER" --json isDraft --jq .isDraft)
+            if [ "$DRAFT" = "true" ] && [ "$IS_DRAFT" = "false" ]; then
+              gh pr ready "$PR_NUMBER" --undo
+            elif [ "$DRAFT" = "false" ] && [ "$IS_DRAFT" = "true" ]; then
+              gh pr ready "$PR_NUMBER"
+            fi
           else
-            PR_NUMBER=$(gh pr create --base main --head "$BRANCH" --title "$TITLE" --body "$BODY" \
+            DRAFT_FLAG=""
+            if [ "$DRAFT" = "true" ]; then DRAFT_FLAG="--draft"; fi
+            PR_NUMBER=$(gh pr create --base main --head "$BRANCH" --title "$TITLE" --body "$BODY" ${DRAFT_FLAG:+"$DRAFT_FLAG"} \
               | sed -n 's|.*pull/\([0-9]*\).*|\1|p' | head -1)
             echo "Created PR #$PR_NUMBER"
           fi
 
-          echo "Refresh PR #$PR_NUMBER is ready for review; it is not auto-merged."
+          if [ "$DRAFT" = "true" ]; then
+            echo "Refresh PR #$PR_NUMBER is a draft: generation or the contract check failed."
+          else
+            echo "Refresh PR #$PR_NUMBER is ready for review; it is not auto-merged."
+          fi
+
+      - name: Fail if generation or the contract check failed
+        # After the draft PR is pushed, so the failure is visible both here and in the PR.
+        if: steps.generators.outputs.failed == 'true' || steps.contract.outputs.failed == 'true'
+        env:
+          GENERATORS_FAILED: ${{ steps.generators.outputs.failed }}
+          CONTRACT_FAILED: ${{ steps.contract.outputs.failed }}
+        run: |
+          if [ "$GENERATORS_FAILED" = "true" ]; then
+            echo "::error::make sdk-generate-all failed; see the 'Regenerate both SDKs' step log."
+          fi
+          if [ "$CONTRACT_FAILED" = "true" ]; then
+            echo "::error::scripts/openapi_contract.py --check reports new drift; see the 'Check the contract' step log."
+          fi
+          exit 1

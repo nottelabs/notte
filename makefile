@@ -209,9 +209,13 @@ sdk-endpoints-check:
 
 # SDK-owned models, side by side with the existing public API during migration.
 .PHONY: sdk-codegen sdk-codegen-check
+# Endpoints read the generated models, so they run after them, and run even if
+# model generation fails so one run reports both; the target fails if either did.
 sdk-codegen:
-	uv run --no-sync python scripts/generate_sdk_models.py
-	uv run --no-sync python scripts/generate_sdk_endpoints.py
+	status=0; \
+	uv run --no-sync python scripts/generate_sdk_models.py || status=1; \
+	uv run --no-sync python scripts/generate_sdk_endpoints.py || status=1; \
+	exit $$status
 
 sdk-codegen-check:
 	uv run --no-sync python scripts/generate_sdk_models.py --check
@@ -223,8 +227,9 @@ openapi-refresh:
 	$(MAKE) openapi-fetch
 	$(MAKE) -k sdk-generate-all
 
-# Keep independent generators running even if one reports an incompatible contract.
-sdk-generate-all: sdk-codegen sdk-endpoints node-sdk-codegen
+# Keep independent generators running even if one reports an incompatible contract;
+# make still exits non-zero if any of them failed.
+sdk-generate-all: sdk-codegen node-sdk-codegen
 
 node-sdk-codegen:
 	cd node-sdk && npm run generate && npm run docs:generate
