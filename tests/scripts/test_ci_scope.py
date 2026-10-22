@@ -445,7 +445,7 @@ class GitHistoryTests(unittest.TestCase):
         self.git("commit", "-qm", "Test change")
         return self.git("rev-parse", "HEAD")
 
-    def scope(self, event: str, base: str, head: str) -> dict[str, bool | str | list[str]]:
+    def scope(self, event: str, base: str, head: str) -> dict[str, bool | str | list[str] | list[dict[str, str]]]:
         original_git = ci.git
         with patch.object(ci, "git", side_effect=lambda *args: original_git("-C", str(self.repo), *args)):
             return ci.select(event, base, head)

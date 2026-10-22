@@ -35,6 +35,8 @@ SDK_EXAMPLES = {"docs_static"} | GROUPS["paired"] | GROUPS["readme"]
 POLICY = {"scripts/ci_scope.py", "tests/scripts/test_ci_scope.py"}
 PYTHON_CONFIG = {"pyproject.toml", "uv.lock", ".python-version"}
 NODE_CONFIG = {"node-sdk/package.json", "node-sdk/package-lock.json"}
+# Paired live shards that may run against staging at once for one ref, across runs.
+PAIRED_SLOTS = 6
 INTEGRATION_INPUTS = {
     "scripts/integration_examples.json",
     "scripts/ci_integration_examples.py",
@@ -396,7 +398,7 @@ def changed_registry_examples(base: str, head: str) -> set[str]:
         return set(INTEGRATION_EXAMPLES)
 
 
-def select(event: str, base: str, head: str) -> dict[str, bool | str | list[str]]:
+def select(event: str, base: str, head: str) -> dict[str, bool | str | list[str] | list[dict[str, str]]]:
     selected: set[str] = ALL.copy()
     integration_examples: set[str] = set(INTEGRATION_EXAMPLES)
     paired_snippets_live = True
@@ -468,6 +470,11 @@ def select(event: str, base: str, head: str) -> dict[str, bool | str | list[str]
         "integration_examples": sorted(integration_examples),
         "paired_snippets_live": paired_snippets_live,
         "paired_shards": [f"{index}/{paired_count}" for index in range(1, paired_count + 1)],
+        # Shards share PAIRED_SLOTS queues per ref, so overlapping runs stay within the limit too.
+        "paired_matrix": [
+            {"shard": f"{index}/{paired_count}", "slot": str((index - 1) % PAIRED_SLOTS + 1)}
+            for index in range(1, paired_count + 1)
+        ],
     }
 
 

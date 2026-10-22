@@ -95,21 +95,21 @@ jobs:
       (github.event_name != 'pull_request' && github.ref == 'refs/heads/main'))
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    name: live (${{ matrix.shard }})
     strategy:
       fail-fast: false
-      # Shards own disjoint examples and resources; this bounds their combined staging load.
-      max-parallel: 6
       matrix:
-        shard: ${{ fromJSON(needs.changes.outputs.scope).paired_shards }}
+        include: ${{ fromJSON(needs.changes.outputs.scope).paired_matrix }}
     env:
       NOTTE_API_URL: https://us-staging.notte.cc
       NOTTE_DOCS_LIVE: '1'
       NOTTE_DOCS_SHARD: ${{ matrix.shard }}
       VITEST_INTEGRATION: '1'
-    # One queue per shard: a newer push waits for the same shard of an older run,
-    # but shards no longer wait for each other or for the other live suites.
+    # Shards own disjoint examples and resources. Each takes one of six slot queues
+    # shared by every run of this ref, so at most six run against staging at once,
+    # and they no longer wait for the other live suites.
     concurrency:
-      group: notte-paired-live-${{ github.ref }}-${{ matrix.shard }}
+      group: notte-paired-live-${{ github.ref }}-${{ matrix.slot }}
       queue: max
       cancel-in-progress: false
     steps:
