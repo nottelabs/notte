@@ -599,3 +599,17 @@ async def test_another_observation_during_the_decision_does_not_switch_the_targe
     result = await session.aact("continue", decider=decider)
     assert result.status == "executed"
     assert await page.inner_text("#out") == "target"
+
+
+@pytest.mark.asyncio
+async def test_fields_get_their_real_names(session: NotteSession) -> None:
+    # names the old adjacency approximation got wrong: a `<label for>` away from its field, `aria-labelledby`
+    page = """<html><body><form>
+<label for="phone">Phone number</label><p>We only call about your order.</p><input id="phone" name="tel">
+<span id="when">Delivery date</span><input aria-labelledby="when" name="d1">
+</form></body></html>"""
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    decider = FakeDecider(choices=[{"operation": "DONE"}])
+    _ = await session.aact("look", decider=decider)
+    labels = [e["label"] for e in decider.states[0].elements if e["role"] == "textbox"]
+    assert labels == ["Phone number", "Delivery date"]
