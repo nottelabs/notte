@@ -1,65 +1,12 @@
 ---
 title: "ValueWithPlaceholder"
-description: "A string used for storing sensitive information that you do not want to be visible in logging or tracebacks"
+description: "A secret value that shows its placeholder instead of the value"
 ---
 
 
 
-When the secret value is nonempty, it is displayed as `'**********'` instead of the underlying value in
-calls to `repr()` and `str()`. If the value _is_ empty, it is displayed as `''`.
-
-Two `SecretStr` types compare equal if the secret values are equal. Constant-time comparison is achieved
-(using `secrets.compare_digest()`).
-
-```python
-from pydantic import BaseModel, SecretStr
-
-class User(BaseModel):
-    username: str
-    password: SecretStr
-
-user = User(username='scolvin', password='password1')
-
-print(user)
-#> username='scolvin' password=SecretStr('**********')
-print(user.password.get_secret_value())
-#> password1
-print((SecretStr('password'), SecretStr('')))
-#> (SecretStr('**********'), SecretStr(''))
-```
-
-As seen above, by default, `SecretStr` (and `SecretBytes`)
-will be serialized as `**********` when serializing to json.
-
-You can use a [field serializer](https://docs.pydantic.dev/latest/concepts/serialization/#field-serializers) to dump the
-secret as plain-text when serializing to json.
-
-```python
-from pydantic import BaseModel, SecretBytes, SecretStr, field_serializer
-
-class Model(BaseModel):
-    password: SecretStr
-    password_bytes: SecretBytes
-
-    @field_serializer('password', 'password_bytes', when_used='json')
-    def dump_secret(self, v):
-        return v.get_secret_value()
-
-model = Model(password='IAmSensitive', password_bytes=b'IAmSensitiveBytes')
-print(model)
-#> password=SecretStr('**********') password_bytes=SecretBytes(b'**********')
-print(model.password)
-#> **********
-print(model.model_dump())
-'''
-{
-    'password': SecretStr('**********'),
-    'password_bytes': SecretBytes(b'**********'),
-}
-'''
-print(model.model_dump_json())
-#> {"password":"IAmSensitive","password_bytes":"IAmSensitiveBytes"}
-```
+`str()`, `repr()` and serialization show the placeholder (or `''` when the value is empty), so a credential
+filled into an action never appears in logs or traces. Use `get_secret_value()` to read the real value
 
 ## Methods
 
