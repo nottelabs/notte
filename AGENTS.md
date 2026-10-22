@@ -34,3 +34,13 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
 After changing `packages/notte-sdk/src/`, run `make docs-sdk` (the
 `docs-sdk-generate` pre-commit hook runs the same target) and commit the
 generated files. `make docs-check` fails if they are out of date.
+
+## OpenAPI refresh
+
+Every operation in `openapi/openapi.json` needs an entry in
+`openapi/resources.json`: a resource method, or `exclude` with a reason. Both
+SDK generators also reject entries for operations the spec no longer has, so
+add or remove entries in the same change as the spec. The scheduled
+`openapi-bump.yml` refresh opens a draft PR and fails when generation or the
+contract check fails. Fix it on `chore/bump-openapi`. Scheduled runs leave
+that PR alone once it has manual commits.
