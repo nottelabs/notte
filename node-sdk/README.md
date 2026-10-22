@@ -41,7 +41,8 @@ make openapi-refresh OPENAPI_URL=https://api.notte.cc     # production
 Review and commit the snapshot and all generated diffs together. If a generator
 rejects the new contract, resolve the reported incompatibility before committing.
 The scheduled `openapi-bump.yml` workflow proposes this same combined refresh as
-one PR for manual review in `nottelabs/notte`; it is repository-guarded and does not
+one PR for manual review in `nottelabs/notte`; if a generator fails, the PR is a draft
+with the error in its body and the run fails. It is repository-guarded and does not
 run in `nottelabs/notte-v2`. There is no separate live Node generation check.
 
 ### Generated resource methods

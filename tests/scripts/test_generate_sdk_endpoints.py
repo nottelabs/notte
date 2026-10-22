@@ -164,6 +164,21 @@ def test_new_operations_require_a_mapping_or_exclusion(spec: dict[str, Any]) -> 
         gen.check_naming(spec)
 
 
+def test_an_unmapped_operation_fails_the_command_without_writing(
+    spec: dict[str, Any], tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # `make sdk-generate-all` and the refresh workflow rely on this exit status.
+    spec["paths"]["/new-resource"] = {"get": {"operationId": "new_resource"}}
+    snapshot = tmp_path / "openapi.json"
+    _ = snapshot.write_text(json.dumps(spec))
+    monkeypatch.setattr(gen, "SNAPSHOT", snapshot)
+    monkeypatch.setattr(gen, "OUTPUT", tmp_path / "_generated" / "endpoints.py")
+    monkeypatch.setattr(sys, "argv", ["generate_sdk_endpoints.py"])
+    assert gen.main() == 1
+    assert "Unmapped operations: ['new_resource']" in capsys.readouterr().err
+    assert not (tmp_path / "_generated").exists()
+
+
 def test_generated_methods_keep_public_names_and_telemetry(spec: dict[str, Any]) -> None:
     source = gen.render_resources(spec)["resources.py"]
     assert "def credentials_add(" in source

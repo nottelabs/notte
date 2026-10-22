@@ -223,8 +223,9 @@ openapi-refresh:
 	$(MAKE) openapi-fetch
 	$(MAKE) -k sdk-generate-all
 
-# Keep independent generators running even if one reports an incompatible contract.
-sdk-generate-all: sdk-codegen sdk-endpoints node-sdk-codegen
+# Keep independent generators running even if one reports an incompatible contract;
+# make still exits non-zero if any of them failed. sdk-codegen includes sdk-endpoints.
+sdk-generate-all: sdk-codegen node-sdk-codegen
 
 node-sdk-codegen:
 	cd node-sdk && npm run generate && npm run docs:generate
