@@ -7,7 +7,7 @@ operation's endpoint, and keep the core types PageClient shares with local sessi
 import ast
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, get_type_hints
 
 import pytest
 from notte_core.actions import GotoAction
@@ -175,7 +175,7 @@ def test_upload_of_a_missing_file_is_rejected_before_sending(
 
 
 # The HTTP library is a transport detail: only these modules may import it, so swapping it
-# touches nothing else. `sessions.fetch` returns the response notte_core builds (typing only).
+# touches nothing else. `sessions.fetch` returns the response notte_core builds (`FetchResponse`).
 TRANSPORT_MODULES = {"_transport.py", "_retry.py", "errors.py", "endpoints/base.py"}
 
 
@@ -200,3 +200,10 @@ def _runtime_imports(tree: ast.Module) -> set[str]:
 )
 def test_only_transport_modules_import_the_http_library(module: str) -> None:
     assert "requests" not in _runtime_imports(ast.parse((SDK / module).read_text()))
+
+
+def test_fetch_return_type_resolves_at_runtime() -> None:
+    import requests
+    from notte_sdk.endpoints.sessions import RemoteSession
+
+    assert get_type_hints(RemoteSession.fetch)["return"] is requests.Response

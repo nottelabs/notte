@@ -130,6 +130,10 @@ def _encoding_for(headers: Mapping[str, str], content: bytes) -> str | None:
     return "utf-8"
 
 
+# What `RemoteSession.fetch` returns, so SDK modules can name it without importing the HTTP library.
+FetchResponse = requests.Response
+
+
 def response_from_evaluated(raw: str) -> requests.Response:
     """Turn the envelope `build_fetch_script` returns into a `requests.Response`.
 

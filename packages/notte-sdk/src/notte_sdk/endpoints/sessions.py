@@ -41,7 +41,7 @@ from notte_core.actions.typedicts import (
 from notte_core.config import CookieDict, PerceptionType, config, create_or_append_cookies_to_file
 from notte_core.data import StructuredData, TBaseModel
 from notte_core.errors import EvaluateJsNoDataError, NotteBaseError
-from notte_core.fetch import FetchData, build_fetch_script, response_from_evaluated
+from notte_core.fetch import FetchData, FetchResponse, build_fetch_script, response_from_evaluated
 from notte_core.logging import logger
 from notte_core.observation import ExecutionResult
 from notte_core.resource import SyncResource
@@ -84,9 +84,6 @@ from notte_sdk.websockets.base import WebsocketService
 from notte_sdk.websockets.jupyter import display_image_in_notebook
 
 if TYPE_CHECKING:
-    # `fetch` returns the response notte_core builds from the page, not an SDK transport object.
-    from requests import Response
-
     from notte_sdk.client import NotteClient
 
 # Retry configuration constants
@@ -1569,7 +1566,7 @@ class RemoteSession(SyncResource):
         json: Any = None,
         data: FetchData | None = None,
         timeout: float | None = None,
-    ) -> "Response":
+    ) -> FetchResponse:
         """
         Issue an HTTP request from the page the session is on and return the response.
 
