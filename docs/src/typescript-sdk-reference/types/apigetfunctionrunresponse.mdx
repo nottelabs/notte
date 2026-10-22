@@ -13,6 +13,8 @@ This is an internal import alias for the API model `GetFunctionRunResponse`. It 
 
 ```typescript
 type ApiGetFunctionRunResponse = {
+    artifact_sdk_generation?: FunctionSdkGeneration;
+    sdk_generation?: FunctionSdkGeneration;
     /**
      * Function Id
      *
@@ -73,8 +75,6 @@ type ApiGetFunctionRunResponse = {
      * Function Version
      */
     function_version?: string | null;
-    artifact_sdk_generation?: FunctionSdkGeneration;
-    sdk_generation?: FunctionSdkGeneration;
     /**
      * Payloads
      */
@@ -103,6 +103,14 @@ type ApiGetFunctionRunResponse = {
 ```
 
 ## Fields
+
+<ParamField body="artifact_sdk_generation" type={"FunctionSdkGeneration | undefined"}>
+
+</ParamField>
+
+<ParamField body="sdk_generation" type={"FunctionSdkGeneration | undefined"}>
+
+</ParamField>
 
 <ParamField body="function_id" type={"string"} required>
 The ID of the function
@@ -145,14 +153,6 @@ Whether the function has been run locally or on the cloud
 </ParamField>
 
 <ParamField body="function_version" type={"string | null | undefined"}>
-
-</ParamField>
-
-<ParamField body="artifact_sdk_generation" type={"FunctionSdkGeneration | undefined"}>
-
-</ParamField>
-
-<ParamField body="sdk_generation" type={"FunctionSdkGeneration | undefined"}>
 
 </ParamField>
 

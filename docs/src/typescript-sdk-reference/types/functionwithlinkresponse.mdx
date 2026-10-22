@@ -22,6 +22,14 @@ export type FunctionWithLinkResponse = {
      */
     default_runtime?: 'standard' | 'extended';
     /**
+     * Sdk Generation
+     */
+    sdk_generation?: 'v19' | 'v110';
+    /**
+     * Upload Sdk Version
+     */
+    upload_sdk_version?: string | null;
+    /**
      * Function Id
      *
      * The ID of the function
@@ -87,14 +95,6 @@ export type FunctionWithLinkResponse = {
      * The ID of the reference function (i.e whether the function was forked from another function or not)
      */
     reference_workflow_id?: string | null;
-    /**
-     * Sdk Generation
-     */
-    sdk_generation?: 'v19' | 'v110';
-    /**
-     * Upload Sdk Version
-     */
-    upload_sdk_version?: string | null;
     /**
      * Published
      */
@@ -172,6 +172,14 @@ URL to download file from
 
 </ParamField>
 
+<ParamField body="sdk_generation" type={"\"v19\" | \"v110\" | undefined"}>
+
+</ParamField>
+
+<ParamField body="upload_sdk_version" type={"string | null | undefined"}>
+
+</ParamField>
+
 <ParamField body="function_id" type={"string"} required>
 The ID of the function
 </ParamField>
@@ -214,14 +222,6 @@ Whether the function is public and can beshared with other users
 
 <ParamField body="reference_workflow_id" type={"string | null | undefined"}>
 The ID of the reference function (i.e whether the function was forked from another function or not)
-</ParamField>
-
-<ParamField body="sdk_generation" type={"\"v19\" | \"v110\" | undefined"}>
-
-</ParamField>
-
-<ParamField body="upload_sdk_version" type={"string | null | undefined"}>
-
 </ParamField>
 
 <ParamField body="published" type={"boolean | undefined"}>

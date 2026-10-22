@@ -21,6 +21,9 @@ export const DEFAULT_ALLOWED_PATTERNS: RegExp[] = [
 
   // Data endpoints
   /^data$/, // /data
+  /^data\/analytics$/, // /data/analytics
+  /^data\/analytics\/requests$/, // /data/analytics/requests
+  /^data\/analytics\/requests\/[^\/]+$/, // /data/analytics/requests/{request_id}
   /^data\/brand\/retrieve$/, // /data/brand/retrieve
   /^data\/cache$/, // /data/cache
   /^data\/maps\/search$/, // /data/maps/search

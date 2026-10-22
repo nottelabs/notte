@@ -82,6 +82,9 @@
   "deliveries": {
     "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
   },
+  "detail": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
   "disconnect_payment_wallet": {
     "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
   },
@@ -208,6 +211,10 @@
   },
   "health_check": {
     "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
+  },
+  "history": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper.",
+    "nodeOperation": "history_"
   },
   "invalidate": {
     "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
@@ -504,6 +511,9 @@
     "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
   },
   "styleguide_endpoint": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "summary": {
     "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
   },
   "update": {
