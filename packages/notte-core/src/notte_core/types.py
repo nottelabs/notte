@@ -23,6 +23,7 @@ from pydantic import (
     model_serializer,
     model_validator,
 )
+from pydantic.main import IncEx
 from pyotp import TOTP
 from typing_extensions import NotRequired, TypedDict, deprecated, override
 
@@ -102,8 +103,8 @@ class _RawRequestObject(BaseModel):
             }
         return RootModel[dict[str, Any]](data).model_dump(
             mode=info.mode,
-            include=info.include,
-            exclude=info.exclude,
+            include=cast("IncEx | None", info.include),
+            exclude=cast("IncEx | None", info.exclude),
             exclude_none=info.exclude_none,
             exclude_unset=info.exclude_unset,
             exclude_defaults=info.exclude_defaults,
@@ -1162,8 +1163,8 @@ class SessionStartRequest(_SessionStartRequest):
             }
         return RootModel[dict[str, Any]](data).model_dump(
             mode=info.mode,
-            include=info.include,
-            exclude=info.exclude,
+            include=cast("IncEx | None", info.include),
+            exclude=cast("IncEx | None", info.exclude),
             exclude_none=info.exclude_none,
             exclude_unset=info.exclude_unset,
             exclude_defaults=info.exclude_defaults,
