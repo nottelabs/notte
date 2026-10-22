@@ -1322,6 +1322,10 @@ export type CheckActionInput = {
      * Text Label
      */
     text_label?: string | null;
+    /**
+     * Accessible Name
+     */
+    accessible_name?: string | null;
     param?: ActionParameter | null;
     /**
      * Timeout
@@ -1368,6 +1372,10 @@ export type CheckActionOutput = {
      */
     text_label?: string | null;
     /**
+     * Accessible Name
+     */
+    accessible_name?: string | null;
+    /**
      * Timeout
      *
      * Action timeout in milliseconds
@@ -1411,6 +1419,10 @@ export type ClickActionInput = {
      * Text Label
      */
     text_label?: string | null;
+    /**
+     * Accessible Name
+     */
+    accessible_name?: string | null;
     param?: ActionParameter | null;
     /**
      * Timeout
@@ -1452,6 +1464,10 @@ export type ClickActionOutput = {
      * Text Label
      */
     text_label?: string | null;
+    /**
+     * Accessible Name
+     */
+    accessible_name?: string | null;
     /**
      * Timeout
      *
@@ -2219,6 +2235,10 @@ export type DownloadFileActionInput = {
      * Text Label
      */
     text_label?: string | null;
+    /**
+     * Accessible Name
+     */
+    accessible_name?: string | null;
     param?: ActionParameter | null;
     /**
      * Timeout
@@ -2261,6 +2281,10 @@ export type DownloadFileActionOutput = {
      */
     text_label?: string | null;
     /**
+     * Accessible Name
+     */
+    accessible_name?: string | null;
+    /**
      * Timeout
      *
      * Action timeout in milliseconds
@@ -2285,6 +2309,60 @@ export type EducationClue = {
      * Graduation Year
      */
     graduation_year?: number | null;
+};
+
+/**
+ * ElementState
+ */
+export type ElementState = {
+    /**
+     * Value
+     */
+    value?: string | null;
+    /**
+     * Valuetruncated
+     */
+    valueTruncated?: boolean;
+    /**
+     * Valuedigest
+     */
+    valueDigest?: string | null;
+    /**
+     * Filled
+     */
+    filled?: boolean | null;
+    /**
+     * Checked
+     */
+    checked?: boolean | null;
+    /**
+     * Mixed
+     */
+    mixed?: boolean | null;
+    /**
+     * Options
+     */
+    options?: Array<SelectOption> | null;
+    /**
+     * Optionstruncated
+     */
+    optionsTruncated?: boolean;
+    /**
+     * Multiple
+     */
+    multiple?: boolean | null;
+    /**
+     * Expanded
+     */
+    expanded?: boolean | null;
+    /**
+     * Selected
+     */
+    selected?: boolean | null;
+    /**
+     * Pressed
+     */
+    pressed?: boolean | 'mixed' | null;
 };
 
 /**
@@ -2553,6 +2631,10 @@ export type FallbackFillActionInput = {
      * Text Label
      */
     text_label?: string | null;
+    /**
+     * Accessible Name
+     */
+    accessible_name?: string | null;
     param?: ActionParameter | null;
     /**
      * Timeout
@@ -2602,6 +2684,10 @@ export type FallbackFillActionOutput = {
      * Text Label
      */
     text_label?: string | null;
+    /**
+     * Accessible Name
+     */
+    accessible_name?: string | null;
     /**
      * Timeout
      *
@@ -2677,6 +2763,10 @@ export type FillActionInput = {
      * Text Label
      */
     text_label?: string | null;
+    /**
+     * Accessible Name
+     */
+    accessible_name?: string | null;
     param?: ActionParameter | null;
     /**
      * Timeout
@@ -2726,6 +2816,10 @@ export type FillActionOutput = {
      * Text Label
      */
     text_label?: string | null;
+    /**
+     * Accessible Name
+     */
+    accessible_name?: string | null;
     /**
      * Timeout
      *
@@ -4500,6 +4594,10 @@ export type MultiFactorFillActionInput = {
      * Text Label
      */
     text_label?: string | null;
+    /**
+     * Accessible Name
+     */
+    accessible_name?: string | null;
     param?: ActionParameter | null;
     /**
      * Timeout
@@ -4549,6 +4647,10 @@ export type MultiFactorFillActionOutput = {
      * Text Label
      */
     text_label?: string | null;
+    /**
+     * Accessible Name
+     */
+    accessible_name?: string | null;
     /**
      * Timeout
      *
@@ -4985,6 +5087,20 @@ export type Observation = {
      * Available actions in the current state
      */
     space: ActionSpace;
+    /**
+     * Element States
+     *
+     * Live state of the interactive elements that have one (current value, checked state, select options, aria state), by action id. Not rendered into the action descriptions.
+     */
+    element_states?: {
+        [key: string]: ElementState;
+    } | null;
+    /**
+     * Fingerprint
+     *
+     * Hash of the page URL and of the id, label and live state of every interactive element: it changes when the page offers other actions or a field value changes.
+     */
+    fingerprint?: string | null;
 };
 
 /**
@@ -6979,6 +7095,10 @@ export type SelectDropdownOptionActionInput = {
      * Text Label
      */
     text_label?: string | null;
+    /**
+     * Accessible Name
+     */
+    accessible_name?: string | null;
     param?: ActionParameter | null;
     /**
      * Timeout
@@ -7025,6 +7145,10 @@ export type SelectDropdownOptionActionOutput = {
      */
     text_label?: string | null;
     /**
+     * Accessible Name
+     */
+    accessible_name?: string | null;
+    /**
      * Timeout
      *
      * Action timeout in milliseconds
@@ -7034,6 +7158,28 @@ export type SelectDropdownOptionActionOutput = {
      * Value
      */
     value: string;
+};
+
+/**
+ * SelectOption
+ */
+export type SelectOption = {
+    /**
+     * Value
+     */
+    value: string;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Selected
+     */
+    selected?: boolean;
+    /**
+     * Disabled
+     */
+    disabled?: boolean;
 };
 
 /**
@@ -7869,6 +8015,10 @@ export type UploadFileActionInput = {
      * Text Label
      */
     text_label?: string | null;
+    /**
+     * Accessible Name
+     */
+    accessible_name?: string | null;
     param?: ActionParameter | null;
     /**
      * Timeout
@@ -7914,6 +8064,10 @@ export type UploadFileActionOutput = {
      * Text Label
      */
     text_label?: string | null;
+    /**
+     * Accessible Name
+     */
+    accessible_name?: string | null;
     /**
      * Timeout
      *
@@ -8851,6 +9005,10 @@ export type FallbackFillActionInputWritable = {
      * Text Label
      */
     text_label?: string | null;
+    /**
+     * Accessible Name
+     */
+    accessible_name?: string | null;
     param?: ActionParameter | null;
     /**
      * Timeout
@@ -8901,6 +9059,10 @@ export type FallbackFillActionOutputWritable = {
      */
     text_label?: string | null;
     /**
+     * Accessible Name
+     */
+    accessible_name?: string | null;
+    /**
      * Timeout
      *
      * Action timeout in milliseconds
@@ -8948,6 +9110,10 @@ export type FillActionInputWritable = {
      * Text Label
      */
     text_label?: string | null;
+    /**
+     * Accessible Name
+     */
+    accessible_name?: string | null;
     param?: ActionParameter | null;
     /**
      * Timeout
@@ -8997,6 +9163,10 @@ export type FillActionOutputWritable = {
      * Text Label
      */
     text_label?: string | null;
+    /**
+     * Accessible Name
+     */
+    accessible_name?: string | null;
     /**
      * Timeout
      *
@@ -9617,6 +9787,10 @@ export type MultiFactorFillActionInputWritable = {
      * Text Label
      */
     text_label?: string | null;
+    /**
+     * Accessible Name
+     */
+    accessible_name?: string | null;
     param?: ActionParameter | null;
     /**
      * Timeout
@@ -9667,6 +9841,10 @@ export type MultiFactorFillActionOutputWritable = {
      */
     text_label?: string | null;
     /**
+     * Accessible Name
+     */
+    accessible_name?: string | null;
+    /**
      * Timeout
      *
      * Action timeout in milliseconds
@@ -9706,6 +9884,20 @@ export type ObservationWritable = {
      * Available actions in the current state
      */
     space: ActionSpaceWritable;
+    /**
+     * Element States
+     *
+     * Live state of the interactive elements that have one (current value, checked state, select options, aria state), by action id. Not rendered into the action descriptions.
+     */
+    element_states?: {
+        [key: string]: ElementState;
+    } | null;
+    /**
+     * Fingerprint
+     *
+     * Hash of the page URL and of the id, label and live state of every interactive element: it changes when the page offers other actions or a field value changes.
+     */
+    fingerprint?: string | null;
 };
 
 /**
@@ -9894,6 +10086,10 @@ export type SelectDropdownOptionActionInputWritable = {
      * Text Label
      */
     text_label?: string | null;
+    /**
+     * Accessible Name
+     */
+    accessible_name?: string | null;
     param?: ActionParameter | null;
     /**
      * Timeout
@@ -9939,6 +10135,10 @@ export type SelectDropdownOptionActionOutputWritable = {
      * Text Label
      */
     text_label?: string | null;
+    /**
+     * Accessible Name
+     */
+    accessible_name?: string | null;
     /**
      * Timeout
      *

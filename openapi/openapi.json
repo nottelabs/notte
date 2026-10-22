@@ -20157,6 +20157,17 @@
             ],
             "title": "Text Label"
           },
+          "accessible_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accessible Name"
+          },
           "param": {
             "anyOf": [
               {
@@ -20250,6 +20261,17 @@
             ],
             "title": "Text Label"
           },
+          "accessible_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accessible Name"
+          },
           "timeout": {
             "type": "integer",
             "minimum": 0.0,
@@ -20327,6 +20349,17 @@
               }
             ],
             "title": "Text Label"
+          },
+          "accessible_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accessible Name"
           },
           "param": {
             "anyOf": [
@@ -20408,6 +20441,17 @@
               }
             ],
             "title": "Text Label"
+          },
+          "accessible_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accessible Name"
           },
           "timeout": {
             "type": "integer",
@@ -21775,6 +21819,17 @@
             ],
             "title": "Text Label"
           },
+          "accessible_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accessible Name"
+          },
           "param": {
             "anyOf": [
               {
@@ -21856,6 +21911,17 @@
             ],
             "title": "Text Label"
           },
+          "accessible_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accessible Name"
+          },
           "timeout": {
             "type": "integer",
             "minimum": 0.0,
@@ -21922,6 +21988,139 @@
         "additionalProperties": false,
         "type": "object",
         "title": "EducationClue"
+      },
+      "ElementState": {
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "valueTruncated": {
+            "type": "boolean",
+            "title": "Valuetruncated",
+            "default": false
+          },
+          "valueDigest": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valuedigest"
+          },
+          "filled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filled"
+          },
+          "checked": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checked"
+          },
+          "mixed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mixed"
+          },
+          "options": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/SelectOption"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Options"
+          },
+          "optionsTruncated": {
+            "type": "boolean",
+            "title": "Optionstruncated",
+            "default": false
+          },
+          "multiple": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Multiple"
+          },
+          "expanded": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expanded"
+          },
+          "selected": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected"
+          },
+          "pressed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "string",
+                "const": "mixed"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pressed"
+          }
+        },
+        "type": "object",
+        "title": "ElementState"
       },
       "EmailReadAction": {
         "properties": {
@@ -22336,6 +22535,17 @@
             ],
             "title": "Text Label"
           },
+          "accessible_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accessible Name"
+          },
           "param": {
             "anyOf": [
               {
@@ -22442,6 +22652,17 @@
               }
             ],
             "title": "Text Label"
+          },
+          "accessible_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accessible Name"
           },
           "timeout": {
             "type": "integer",
@@ -22582,6 +22803,17 @@
             ],
             "title": "Text Label"
           },
+          "accessible_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accessible Name"
+          },
           "param": {
             "anyOf": [
               {
@@ -22688,6 +22920,17 @@
               }
             ],
             "title": "Text Label"
+          },
+          "accessible_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accessible Name"
           },
           "timeout": {
             "type": "integer",
@@ -25900,6 +26143,17 @@
             ],
             "title": "Text Label"
           },
+          "accessible_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accessible Name"
+          },
           "param": {
             "anyOf": [
               {
@@ -26006,6 +26260,17 @@
               }
             ],
             "title": "Text Label"
+          },
+          "accessible_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accessible Name"
           },
           "timeout": {
             "type": "integer",
@@ -26958,6 +27223,33 @@
           "space": {
             "$ref": "#/components/schemas/ActionSpace",
             "description": "Available actions in the current state"
+          },
+          "element_states": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/ElementState"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Element States",
+            "description": "Live state of the interactive elements that have one (current value, checked state, select options, aria state), by action id. Not rendered into the action descriptions."
+          },
+          "fingerprint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fingerprint",
+            "description": "Hash of the page URL and of the id, label and live state of every interactive element: it changes when the page offers other actions or a field value changes."
           }
         },
         "type": "object",
@@ -30707,6 +30999,17 @@
             ],
             "title": "Text Label"
           },
+          "accessible_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accessible Name"
+          },
           "param": {
             "anyOf": [
               {
@@ -30809,6 +31112,17 @@
             ],
             "title": "Text Label"
           },
+          "accessible_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accessible Name"
+          },
           "timeout": {
             "type": "integer",
             "minimum": 0.0,
@@ -30835,6 +31149,34 @@
           "value"
         ],
         "title": "SelectDropdownOptionAction"
+      },
+      "SelectOption": {
+        "properties": {
+          "value": {
+            "type": "string",
+            "title": "Value"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "selected": {
+            "type": "boolean",
+            "title": "Selected",
+            "default": false
+          },
+          "disabled": {
+            "type": "boolean",
+            "title": "Disabled",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "value",
+          "label"
+        ],
+        "title": "SelectOption"
       },
       "SemanticDetection": {
         "properties": {
@@ -32246,6 +32588,17 @@
             ],
             "title": "Text Label"
           },
+          "accessible_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accessible Name"
+          },
           "param": {
             "anyOf": [
               {
@@ -32338,6 +32691,17 @@
               }
             ],
             "title": "Text Label"
+          },
+          "accessible_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accessible Name"
           },
           "timeout": {
             "type": "integer",

@@ -31,6 +31,20 @@ export type Observation = {
      * Available actions in the current state
      */
     space: ActionSpace;
+    /**
+     * Element States
+     *
+     * Live state of the interactive elements that have one (current value, checked state, select options, aria state), by action id. Not rendered into the action descriptions.
+     */
+    element_states?: {
+        [key: string]: ElementState;
+    } | null;
+    /**
+     * Fingerprint
+     *
+     * Hash of the page URL and of the id, label and live state of every interactive element: it changes when the page offers other actions or a field value changes.
+     */
+    fingerprint?: string | null;
 };
 ```
 
@@ -56,8 +70,17 @@ Base64 encoded screenshot of the current page
 Available actions in the current state
 </ParamField>
 
+<ParamField body="element_states" type={"{ [key: string]: ElementState; } | null | undefined"}>
+Live state of the interactive elements that have one (current value, checked state, select options, aria state), by action id. Not rendered into the action descriptions.
+</ParamField>
+
+<ParamField body="fingerprint" type={"string | null | undefined"}>
+Hash of the page URL and of the id, label and live state of every interactive element: it changes when the page offers other actions or a field value changes.
+</ParamField>
+
 ## Related types
 
 - [ActionSpace](/typescript-sdk-reference/types/actionspace)
+- [ElementState](/typescript-sdk-reference/types/elementstate)
 - [Screenshot](/typescript-sdk-reference/types/screenshot)
 - [SnapshotMetadata](/typescript-sdk-reference/types/snapshotmetadata)
