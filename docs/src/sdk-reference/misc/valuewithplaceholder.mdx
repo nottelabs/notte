@@ -31,7 +31,7 @@ print((SecretStr('password'), SecretStr('')))
 As seen above, by default, [`SecretStr`][pydantic.types.SecretStr] (and [`SecretBytes`][pydantic.types.SecretBytes])
 will be serialized as `**********` when serializing to json.
 
-You can use a [field serializer](../concepts/serialization.md#field-serializers) to dump the
+You can use a [field serializer](https://docs.pydantic.dev/latest/concepts/serialization/#field-serializers) to dump the
 secret as plain-text when serializing to json.
 
 ```python
