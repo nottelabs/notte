@@ -142,11 +142,12 @@ def test_function_multipart_contract(client: NotteClient, monkeypatch: pytest.Mo
     _ = client.functions.create(path=str(path), name="fixture")
     _ = client.functions.update("fn", path=str(path), version="v1", restricted=False)
     assert [(c.method, c.url.removeprefix(SERVER), c.params) for c in api.calls] == [
-        ("POST", "/functions/", None),
-        ("POST", "/functions/fn?restricted=False", {"version": "v1"}),
+        ("POST", "/functions/", {}),
+        ("POST", "/functions/fn", {"restricted": False, "version": "v1"}),
     ]
-    assert api.calls[0].data == {"path": str(path), "name": "fixture"}
-    assert api.calls[1].data is None
+    # The local path is the uploaded file, not a form field.
+    assert api.calls[0].data == {"name": "fixture"}
+    assert api.calls[1].data == {}
     assert all("Content-Type" not in c.headers for c in api.calls)
 
 

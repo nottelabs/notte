@@ -105,6 +105,7 @@
     "resource": "files",
     "telemetry": "cloud.files.download",
     "pythonImplementation": "FileStorageClient.download: file IO and streaming download.",
+    "pythonBinaryResponse": true,
     "nodeParseAs": "blob"
   },
   "extract_product_endpoint": {
@@ -116,8 +117,7 @@
   "function_create": {
     "method": "create",
     "resource": "functions",
-    "telemetry": "cloud.function.create",
-    "pythonImplementation": "FunctionsClient.create: multipart upload from a local file."
+    "telemetry": "cloud.function.create"
   },
   "function_delete": {
     "method": "delete",
@@ -306,20 +306,17 @@
   "page_execute": {
     "method": "execute",
     "resource": "sessions",
-    "telemetry": "cloud.session.execute",
-    "pythonImplementation": "PageClient.execute: core action dispatch shared with local sessions."
+    "telemetry": "cloud.session.execute"
   },
   "page_observe": {
     "method": "observe",
     "resource": "sessions",
-    "telemetry": "cloud.session.observe",
-    "pythonImplementation": "PageClient.observe: core observation shared with local sessions."
+    "telemetry": "cloud.session.observe"
   },
   "page_scrape": {
     "method": "scrape",
     "resource": "sessions",
-    "telemetry": "cloud.session.scrape",
-    "pythonImplementation": "PageClient.scrape: core structured data shared with local sessions."
+    "telemetry": "cloud.session.scrape"
   },
   "page_screenshot": {
     "method": "pageScreenshot",

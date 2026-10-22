@@ -1,11 +1,12 @@
 """Runtime selection travels outside script variables and survives request conversion."""
 
 import json
+from functools import partial
 from types import SimpleNamespace
 from unittest.mock import MagicMock, Mock
 
 import pytest
-from notte_sdk.endpoints import functions
+from notte_sdk import _transport as transport
 from notte_sdk.endpoints.functions import FunctionsClient, NotteFunction
 from notte_sdk.types import RunFunctionRequest, StartFunctionRunRequest
 
@@ -24,7 +25,7 @@ def test_high_level_run_forwards_runtime(runtime):
 @pytest.mark.parametrize("runtime", [None, "standard", "extended"])
 @pytest.mark.parametrize("stream", [False, True])
 def test_transport_preserves_selection(monkeypatch, runtime, stream):
-    endpoint = SimpleNamespace(with_request=lambda request: request)
+    endpoint = SimpleNamespace(with_request=lambda request: SimpleNamespace(request=request))
     client = SimpleNamespace(
         token="test",
         headers=lambda headers: headers,
@@ -32,6 +33,9 @@ def test_transport_preserves_selection(monkeypatch, runtime, stream):
         _start_function_run_endpoint=lambda **kwargs: endpoint,
         FUNCTION_RUN_TIMEOUT=900,
     )
+    # The real transport helpers, bound to the fake client.
+    for name in ("_request_once", "_stream_lines", "_open_once"):
+        setattr(client, name, partial(getattr(FunctionsClient, name), client))
     post = MagicMock(
         return_value=SimpleNamespace(
             json=lambda: {
@@ -48,7 +52,7 @@ def test_transport_preserves_selection(monkeypatch, runtime, stream):
     post.return_value.iter_lines.return_value = [
         ("data: " + json.dumps({"type": "result", "message": json.dumps(post.return_value.json())})).encode()
     ]
-    monkeypatch.setattr(functions.requests, "post", post)
+    monkeypatch.setattr(transport.requests, "post", post)
     FunctionsClient.run_start(
         client, "run", function_id="function", variables={"wait_seconds": 960}, stream=stream, runtime=runtime
     )
@@ -72,7 +76,7 @@ def test_invalid_runtime_is_sent_and_api_422_is_typed(monkeypatch, stream):
     response.status_code = 422
     response._content = b'{"detail": "invalid runtime"}'
     post = MagicMock(return_value=response)
-    monkeypatch.setattr(functions.requests, "post", post)
+    monkeypatch.setattr(transport.requests, "post", post)
     function = SimpleNamespace(client=client.functions, response=SimpleNamespace(function_id="function"))
     with pytest.raises(NotteAPIError) as error:
         NotteFunction.run(function, function_run_id="run", runtime="invalid", stream=stream)

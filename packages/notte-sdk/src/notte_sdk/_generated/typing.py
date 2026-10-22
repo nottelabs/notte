@@ -46,6 +46,19 @@ class RunPayloadUploadRequestDict(TypedDict):
     sha256: Required[str]
 
 
+class CreateFunctionRequestDict(TypedDict):
+    "Request dictionary for creating a function.\n\nArgs:\n    path: The path to the function to upload."
+
+    path: Required[str]
+    name: NotRequired[str | None]
+    description: NotRequired[str | None]
+    shared: NotRequired[bool]
+
+
+class FunctionCreateParametersQueryDict(TypedDict):
+    restricted: NotRequired[bool]
+
+
 class GetFunctionRequestDict(TypedDict):
     "Request dictionary for getting a function.\n\nArgs:\n    function_id: The ID of the function to get.\n    version: The version of the function to get."
 
@@ -125,11 +138,32 @@ class GetSessionScriptParametersQueryDict(TypedDict):
     infer_response_format: NotRequired[bool]
 
 
+class ListSessionFilesParametersQueryDict(TypedDict):
+    source: NotRequired[str | None]
+    limit: NotRequired[int]
+    offset: NotRequired[int]
+
+
 class SessionListRequestDict(TypedDict):
     page: NotRequired[int]
     page_size: NotRequired[int]
     only_active: NotRequired[bool]
     include_system: NotRequired[bool | None]
+
+
+class PageExecuteParametersQueryDict(TypedDict):
+    captcha_id: NotRequired[str | None]
+    captcha_timeout_seconds: NotRequired[float]
+    target_page_id: NotRequired[str | None]
+    target_generation: NotRequired[int | None]
+
+
+class PageObserveParametersQueryDict(TypedDict):
+    update_metadata: NotRequired[bool]
+
+
+class PageScrapeParametersQueryDict(TypedDict):
+    update_metadata: NotRequired[bool]
 
 
 class PageScreenshotParametersQueryDict(TypedDict):
@@ -193,12 +227,6 @@ class SessionStopRequestDict(TypedDict):
     close_reason: NotRequired[Literal["manual", "error"]]
 
 
-class ListSessionFilesParametersQueryDict(TypedDict):
-    source: NotRequired[str | None]
-    limit: NotRequired[int]
-    offset: NotRequired[int]
-
-
 class FileExecutionRequestDict(TypedDict):
     action: Required[models.UploadFileActionInput | models.DownloadFileActionInput]
     target_id: Required[str]
@@ -207,6 +235,10 @@ class FileExecutionRequestDict(TypedDict):
 
 class ExecuteSessionFileParametersQueryDict(TypedDict):
     update_metadata: NotRequired[bool]
+
+
+class UploadSessionFileRequestDict(TypedDict):
+    file: Required[str]
 
 
 class PersonaListRequestDict(TypedDict):
@@ -316,15 +348,6 @@ class CreditCardDict(TypedDict):
     card_number: Required[str]
     card_cvv: Required[str]
     card_full_expiration: Required[str]
-
-
-class CreateFunctionRequestDict(TypedDict):
-    "Request dictionary for creating a function.\n\nArgs:\n    path: The path to the function to upload."
-
-    path: Required[str]
-    name: NotRequired[str | None]
-    description: NotRequired[str | None]
-    shared: NotRequired[bool]
 
 
 class UpdateFunctionRequestDict(TypedDict):

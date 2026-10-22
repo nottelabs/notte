@@ -1,10 +1,15 @@
-"""Request-scoped HTTPS recovery, before any application request is sent."""
+"""HTTP transport: request-scoped HTTPS recovery, retries, streaming and object storage.
+
+This module and `endpoints/base.py` are the only SDK modules that use the HTTP library.
+Everything else goes through the transport-neutral helpers below or `BaseClient`.
+"""
 
 import random
 import ssl
 import time
-from collections.abc import Callable
-from typing import Any, Protocol, cast
+from collections.abc import Callable, Generator, Iterator, Mapping
+from contextlib import contextmanager
+from typing import IO, Any, Protocol, cast
 
 import requests
 from notte_core.logging import logger
@@ -157,3 +162,56 @@ def _rewind_files(positions: list[tuple[Any, int]] | None) -> bool:
         except (AttributeError, OSError, ValueError):
             return False
     return True
+
+
+# Any failure to send a request or to read its response, such as a timeout or a reset connection.
+TransportError = requests.RequestException
+# The request was cut short before a full response arrived: a timeout, a dropped connection
+# or a truncated body. Callers that only read state can safely ask again.
+INTERRUPTED_ERRORS: tuple[type[TransportError], ...] = (
+    requests.Timeout,
+    requests.ConnectionError,
+    requests.exceptions.ChunkedEncodingError,
+)
+
+
+def open_stream(url: str, *, headers: Mapping[str, str], timeout: float, data: str | None = None) -> requests.Response:
+    """Send one request, a POST when `data` is given and a GET otherwise, without reading its body.
+
+    There are no retries. The caller reads the body and closes the response.
+    """
+    if data is not None:
+        return requests.post(url=url, headers=dict(headers), data=data, timeout=timeout, stream=True)
+    return requests.get(url, headers=dict(headers), timeout=timeout, stream=True)
+
+
+def get_text(url: str, *, timeout: float) -> str:
+    """Download a public URL (no API credentials) as text; raises `TransportError` on any failure."""
+    response = requests.get(url, timeout=timeout)
+    response.raise_for_status()
+    return response.text
+
+
+# Object storage URLs are presigned: they get a separate session so the API token, preview
+# selector and capability headers never reach them, and their redirects are not followed.
+
+
+def put_object(url: str, payload: IO[bytes], *, headers: Mapping[str, str], timeout: tuple[float, float]) -> int:
+    """Upload `payload` to a presigned storage URL and return the response status (2xx)."""
+    with requests.Session() as storage_session:
+        with storage_session.put(
+            url, data=payload, headers=dict(headers), timeout=timeout, allow_redirects=False
+        ) as response:
+            response.raise_for_status()
+            return response.status_code
+
+
+@contextmanager
+def get_object(
+    url: str, *, timeout: tuple[float, float], chunk_size: int
+) -> Generator[tuple[int, Iterator[bytes]], None, None]:
+    """Stream a presigned storage URL: yields the response status (2xx) and the body's chunks."""
+    with requests.Session() as storage_session:
+        with storage_session.get(url, stream=True, timeout=timeout, allow_redirects=False) as response:
+            response.raise_for_status()
+            yield response.status_code, response.iter_content(chunk_size=chunk_size)

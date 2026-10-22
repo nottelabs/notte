@@ -5,8 +5,8 @@ from unittest.mock import MagicMock
 import pytest
 import requests
 from notte_core.logging import logger
+from notte_sdk import _transport as transport
 from notte_sdk._generated import operations as api
-from notte_sdk.endpoints import functions
 from notte_sdk.endpoints.base import BaseClient
 from notte_sdk.endpoints.functions import FunctionsClient
 
@@ -60,7 +60,7 @@ def test_session_start_does_not_log_api_key(monkeypatch, key_source, explicit_st
         ]
     ]
     post = MagicMock(return_value=response)
-    monkeypatch.setattr(functions.requests, "post", post)
+    monkeypatch.setattr(transport.requests, "post", post)
     captured = io.StringIO()
     handler = logger.add(captured, level="INFO")
     try:

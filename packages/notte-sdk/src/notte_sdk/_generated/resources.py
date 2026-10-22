@@ -3,22 +3,26 @@
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any, Unpack
 
+from notte_core import actions
 from notte_core import types as core
 from notte_core.telemetry import track_usage
 
 from notte_sdk._compat import profiles as profiles_compat
 from notte_sdk._compat import run_payloads as run_payloads_compat
+from notte_sdk._generated import endpoints as page_api
 from notte_sdk._generated import models, nested_models
 from notte_sdk._generated import operations as api
 from notte_sdk._generated.typing import (
     AddCredentialsRequestDict,
     AddCreditCardRequestDict,
+    CreateFunctionRequestDict,
     CreatePaymentParametersQueryDict,
     DeleteCredentialsRequestDict,
     DeleteCreditCardRequestDict,
     DeleteVaultRequestDict,
     ExecuteSessionFileParametersQueryDict,
     FileExecutionRequestDict,
+    FunctionCreateParametersQueryDict,
     FunctionMetadataUpdateRequestDict,
     FunctionRollbackParametersQueryDict,
     FunctionRollbackRequestDict,
@@ -35,6 +39,9 @@ from notte_sdk._generated.typing import (
     ListFunctionsRequestDict,
     ListSessionFilesParametersQueryDict,
     MessageReadRequestDict,
+    PageExecuteParametersQueryDict,
+    PageObserveParametersQueryDict,
+    PageScrapeParametersQueryDict,
     PageScreenshotParametersQueryDict,
     PaymentRequestDict,
     PersonaCreateRequestDict,
@@ -54,6 +61,7 @@ from notte_sdk._generated.typing import (
     SessionStartRequestDict,
     SessionStopRequestDict,
     SetCookiesRequestDict,
+    UploadSessionFileRequestDict,
     VaultCreateRequestDict,
     VaultListRequestDict,
     VaultUpdateRequestDict,
@@ -93,6 +101,17 @@ class FunctionsOperations(RunPayloadsOperations):
     def download_run_payload(self, function_id: str, run_id: str, field: str) -> Any:
         "Download Run Payload (`GET /functions/{function_id}/runs/{run_id}/payloads/{field}`)."
         return self._request(api.download_run_payload(function_id, run_id, field), check_response_detail=False)
+
+    @track_usage("cloud.function.create")
+    def create(
+        self, *, query: FunctionCreateParametersQueryDict | None = None, **data: Unpack[CreateFunctionRequestDict]
+    ) -> core.GetFunctionResponse:
+        "Function Create (`POST /functions/`)."
+        files = {"file": data["path"]}
+        request = wire_request(
+            models.BodyFunctionCreateFunctionsPost, {key: value for key, value in data.items() if key not in ["path"]}
+        )
+        return self._request_upload(api.function_create(request, params=wire_request(None, query or {})), files)
 
     @track_usage("cloud.function.delete")
     def delete(self, function_id: str) -> models.DeleteFunctionResponse:
@@ -195,6 +214,16 @@ class SessionsOperations(BaseClient):
             headers={"idempotency-key": idempotency_key},
         )
 
+    @track_usage("cloud.files.delete")
+    def delete_session_file(self, session_id: str, file_id: str) -> None:
+        "Delete Session File (`DELETE /sessions/{session_id}/files/{file_id}`)."
+        _ = self.request(api.delete_session_file(session_id, file_id))
+
+    @track_usage("cloud.files.download")
+    def download_session_file(self, session_id: str, file_id: str) -> bytes:
+        "Download Session File (`GET /sessions/{session_id}/files/{file_id}`)."
+        return self._request_bytes(api.download_session_file(session_id, file_id))
+
     def get_session_script(
         self, session_id: str, **data: Unpack[GetSessionScriptParametersQueryDict]
     ) -> models.AgentFunctionCodeResponse:
@@ -202,11 +231,51 @@ class SessionsOperations(BaseClient):
         request = wire_request(models.GetSessionScriptParametersQuery, data)
         return self.request(api.get_session_script(session_id, params=request))
 
+    @track_usage("cloud.files.list")
+    def list_session_files(
+        self, session_id: str, **data: Unpack[ListSessionFilesParametersQueryDict]
+    ) -> models.SessionFilesPage:
+        "List Session Files (`GET /sessions/{session_id}/files`)."
+        request = wire_request(models.ListSessionFilesParametersQuery, data)
+        return self.request(api.list_session_files(session_id, params=request))
+
     @track_usage("cloud.session.list")
     def list(self, **data: Unpack[SessionListRequestDict]) -> Sequence[core.SessionResponse]:
         "List Sessions (`GET /sessions/`)."
         request = wire_request(core.SessionListRequest, data)
         return self.request_list(api.list_sessions(params=request))
+
+    @track_usage("cloud.session.execute")
+    def execute(
+        self, session_id: str, body: actions.BaseAction, **data: Unpack[PageExecuteParametersQueryDict]
+    ) -> core.ExecutionResultResponse:
+        "Page Execute (`POST /sessions/{session_id}/page/execute`)."
+        request = wire_request(models.PageExecuteParametersQuery, data)
+        return self.request(page_api.page_execute(session_id, body, params=request))
+
+    @track_usage("cloud.session.observe")
+    def observe(
+        self,
+        session_id: str,
+        *,
+        query: PageObserveParametersQueryDict | None = None,
+        **data: Unpack[core.ObserveRequestDict],
+    ) -> core.ObserveResponse:
+        "Page Observe (`POST /sessions/{session_id}/page/observe`)."
+        request = core.ObserveRequest.model_validate(data)
+        return self.request(page_api.page_observe(session_id, request, params=wire_request(None, query or {})))
+
+    @track_usage("cloud.session.scrape")
+    def scrape(
+        self,
+        session_id: str,
+        *,
+        query: PageScrapeParametersQueryDict | None = None,
+        **data: Unpack[core.ScrapeRequestDict],
+    ) -> core.ScrapeResponse:
+        "Page Scrape (`POST /sessions/{session_id}/page/scrape`)."
+        request = core.ScrapeRequest.model_validate(data)
+        return self.request(page_api.page_scrape(session_id, request, params=wire_request(None, query or {})))
 
     def page_screenshot(self, session_id: str, **data: Unpack[PageScreenshotParametersQueryDict]) -> Any:
         "Page Screenshot (`POST /sessions/{session_id}/page/screenshot`)."
@@ -288,6 +357,28 @@ class SessionsOperations(BaseClient):
         "Session Stop (`DELETE /sessions/{session_id}/stop`)."
         request = wire_request(models.SessionStopParametersQuery, data)
         return self.request(api.session_stop(session_id, params=request))
+
+    @track_usage("cloud.files.execute")
+    def execute_session_file(
+        self,
+        session_id: str,
+        *,
+        query: ExecuteSessionFileParametersQueryDict | None = None,
+        **data: Unpack[FileExecutionRequestDict],
+    ) -> models.ApiExecutionResponse:
+        "Execute Session File (`POST /sessions/{session_id}/page/execute/file`)."
+        request = wire_request(models.FileExecutionRequest, data)
+        return self.request(api.execute_session_file(session_id, request, params=wire_request(None, query or {})))
+
+    @track_usage("cloud.files.upload")
+    def upload_session_file(self, session_id: str, **data: Unpack[UploadSessionFileRequestDict]) -> models.SessionFile:
+        "Upload Session File (`POST /sessions/{session_id}/files`)."
+        files = {"file": data["file"]}
+        request = wire_request(
+            models.BodyUploadSessionFileSessionsSessionIdFilesPost,
+            {key: value for key, value in data.items() if key not in ["file"]},
+        )
+        return self._request_upload(api.upload_session_file(session_id, request), files)
 
 
 class FilesOperations(BaseClient):

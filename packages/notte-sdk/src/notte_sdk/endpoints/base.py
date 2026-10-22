@@ -2,7 +2,8 @@ import json
 import os
 import re
 from abc import ABC
-from collections.abc import Sequence
+from collections.abc import Generator, Iterator, Mapping, Sequence
+from contextlib import ExitStack, contextmanager
 from json import JSONDecodeError
 from typing import TYPE_CHECKING, Any, ClassVar, Generic, Literal, Self, TypeVar, cast
 from urllib.parse import quote, urljoin
@@ -14,7 +15,7 @@ from pydantic import BaseModel, ConfigDict, ValidationError
 from requests.exceptions import ConnectionError
 
 from notte_sdk._retry import DEFAULT_MAX_RETRIES
-from notte_sdk._transport import request_session, send_with_retries
+from notte_sdk._transport import open_stream, request_session, send_with_retries
 from notte_sdk.auth import MISSING_API_KEY_MESSAGE, resolve_api_key
 from notte_sdk.errors import AuthenticationError, NotteAPIError, NotteAPIExecutionError
 
@@ -22,6 +23,8 @@ if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
 
 TResponse = TypeVar("TResponse", bound=BaseModel, covariant=True)
+# A local file to upload: its path, or `(filename, path)` to send it under another name.
+UploadFile = str | os.PathLike[str] | tuple[str, str | os.PathLike[str]]
 
 # Global variable to cache PyPI version check result
 _cached_pypi_version: str | None = None
@@ -430,6 +433,18 @@ class BaseClient(ABC):
             ValueError: If a POST request is attempted without a request model.
             NotteAPIError: If the API response indicates a failure.
         """
+        response = self._send_checked(endpoint, headers=headers, timeout=timeout)
+        if response.status_code == 204 or getattr(response, "content", None) == b"":
+            return {}
+        response_dict: Any = response.json()
+        if check_response_detail and isinstance(response_dict, dict) and "detail" in response_dict:
+            raise NotteAPIError(path=self._error_path(endpoint), response=response)
+        return cast(Any, response_dict)
+
+    def _send_checked(
+        self, endpoint: NotteEndpoint[TResponse], *, headers: dict[str, str] | None, timeout: float | None
+    ) -> requests.Response:
+        """Send `endpoint` with retries; a non-2xx response raises the matching error."""
         headers = self.headers(headers=headers)
         url = self.request_path(endpoint)
         params = endpoint.params.model_dump(exclude_none=True) if endpoint.params is not None else None
@@ -469,12 +484,7 @@ class BaseClient(ABC):
                 raise NotteAPIExecutionError(path=self._error_path(endpoint), response=response)
 
             raise NotteAPIError(path=self._error_path(endpoint), response=response)
-        if response.status_code == 204 or getattr(response, "content", None) == b"":
-            return {}
-        response_dict: Any = response.json()
-        if check_response_detail and isinstance(response_dict, dict) and "detail" in response_dict:
-            raise NotteAPIError(path=self._error_path(endpoint), response=response)
-        return cast(Any, response_dict)
+        return response
 
     def _send(
         self,
@@ -604,6 +614,92 @@ class BaseClient(ABC):
             else:
                 # Re-raise original error if no upgrade suggestion needed
                 raise
+
+    def _request_upload(self, endpoint: NotteEndpoint[TResponse], files: Mapping[str, UploadFile]) -> TResponse:
+        """
+        Sends the endpoint as multipart form data with local files attached, and returns the validated response.
+
+        The endpoint's request model is sent as the form fields. Each file is opened for the request
+        and closed afterwards; retries resend it from the start.
+
+        Args:
+            endpoint: The API endpoint to send.
+            files: Form field name to the local file to upload, or to `(filename, path)` to send it under another name.
+
+        Raises:
+            ValueError: If a file does not exist.
+        """
+        with ExitStack() as stack:
+            uploads: dict[str, Any] = {}
+            for name, upload in files.items():
+                filename, path = upload if isinstance(upload, tuple) else (None, upload)
+                if not os.path.exists(path):
+                    raise ValueError("The file doesn't exist!")
+                handle = stack.enter_context(open(path, "rb"))
+                uploads[name] = handle if filename is None else (filename, handle)
+            return self.request(endpoint.model_copy(update={"files": uploads}))
+
+    def _request_bytes(self, endpoint: NotteEndpoint[TResponse]) -> bytes:
+        """
+        Sends the endpoint and returns its raw response body, for operations that respond with a file.
+
+        Raises:
+            NotteAPIError: If the API response indicates a failure.
+        """
+        return self._send_checked(endpoint, headers=None, timeout=None).content
+
+    @contextmanager
+    def _stream_bytes(self, endpoint: NotteEndpoint[TResponse]) -> Generator[Iterator[bytes], None, None]:
+        """
+        Sends the GET endpoint once and yields its response body in chunks, without holding it in memory.
+
+        Raises:
+            NotteAPIError: If the API response indicates a failure.
+        """
+        response = open_stream(
+            self.request_path(endpoint), headers=self.headers(), timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS
+        )
+        try:
+            if not response.ok:
+                raise NotteAPIError(path=self._error_path(endpoint), response=response)
+            yield (chunk for chunk in response.iter_content(self.DEFAULT_FILE_CHUNK_SIZE) if chunk)
+        finally:
+            response.close()
+
+    def _request_once(self, endpoint: NotteEndpoint[TResponse], *, headers: dict[str, str], timeout: float) -> Any:
+        """
+        Sends the endpoint's JSON request once, without retries, and returns the decoded JSON response.
+
+        Raises:
+            NotteAPIError: If the API response indicates a failure.
+        """
+        response = self._open_once(endpoint, headers=headers, timeout=timeout)
+        if not response.ok:
+            raise NotteAPIError(path=self._error_path(endpoint), response=response)
+        return response.json()
+
+    @contextmanager
+    def _stream_lines(
+        self, endpoint: NotteEndpoint[TResponse], *, headers: dict[str, str], timeout: float
+    ) -> Generator[Iterator[str], None, None]:
+        """
+        Sends the endpoint's JSON request once, without retries, and yields the response's non-empty lines
+        as they arrive, decoded as UTF-8: the server-sent events of a streaming response.
+
+        Raises:
+            NotteAPIError: If the API response indicates a failure.
+        """
+        with self._open_once(endpoint, headers=headers, timeout=timeout) as response:
+            if not response.ok:
+                raise NotteAPIError(path=self._error_path(endpoint), response=response)
+            yield (line.decode("utf-8") for line in response.iter_lines() if line)
+
+    def _open_once(
+        self, endpoint: NotteEndpoint[TResponse], *, headers: dict[str, str], timeout: float
+    ) -> requests.Response:
+        data = endpoint.request.model_dump_json(exclude_none=True) if endpoint.request is not None else ""
+        headers = self.headers(headers={**headers, "Content-Type": "application/json"})
+        return open_stream(self.request_path(endpoint), headers=headers, data=data, timeout=timeout)
 
     def _request_file(
         self, endpoint: NotteEndpoint[TResponse], file_type: str, output_file: str | None = None

@@ -27,8 +27,8 @@ def capture(monkeypatch: pytest.MonkeyPatch, payload: Any, status: int = 200) ->
         response._content = recorded.content
         return response
 
-    monkeypatch.setattr("notte_sdk.endpoints.files.requests.get", lambda url, **kw: send("GET", url, **kw))
-    monkeypatch.setattr("notte_sdk.endpoints.files.requests.delete", lambda url, **kw: send("DELETE", url, **kw))
+    monkeypatch.setattr("notte_sdk._transport.requests.get", lambda url, **kw: send("GET", url, **kw))
+    monkeypatch.setattr("notte_sdk._transport.requests.delete", lambda url, **kw: send("DELETE", url, **kw))
     return session
 
 

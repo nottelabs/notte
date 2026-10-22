@@ -33,6 +33,12 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
 - If an SDK change needs server-side support that doesn't exist yet, ask
   before changing course. Don't drop or weaken the requirement on your own.
 
+## HTTP transport
+
+Only `_transport.py`, `_retry.py`, `errors.py` and `endpoints/base.py` in `notte_sdk`
+import `requests`. Other SDK code goes through `BaseClient` and the `_transport`
+helpers; a test fails on any other import.
+
 ## Generated docs
 
 After changing `packages/notte-sdk/src/`, run `make docs-sdk` (the

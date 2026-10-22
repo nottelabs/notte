@@ -40,7 +40,7 @@ def test_payload_upload_wire_contract(
     reference = {"upload_id": "upload", "size_bytes": len(raw), "sha256": checksum}
     api = fake(monkeypatch, {"reference": reference, "url": "https://storage.example/object", "headers": {}})
     storage = storage_session(MagicMock(status_code=200))
-    monkeypatch.setattr("notte_sdk.endpoints.run_payloads.requests.Session", lambda: storage)
+    monkeypatch.setattr("notte_sdk._transport.requests.Session", lambda: storage)
     monkeypatch.setattr("notte_sdk.endpoints.run_payloads.INLINE_FIELD_BYTES", 1)
     result = offload_run_fields(client.functions, function_id, run_id, fields)
     assert result == {"payloads": {"logs": reference}}

@@ -65,21 +65,25 @@ def check_naming(spec: dict[str, Any]) -> None:
     for entry in NAMING.values():
         if entry.get("exclude"):
             continue
-        key = (entry["resource"], entry["method"])
-        if key in names:
-            raise GenerationError(f"Duplicate resource method: {key}")
-        names.add(key)
+        for key in [
+            (entry["resource"], entry["method"]),
+            *((a["resource"], a["method"]) for a in entry.get("aliases", [])),
+        ]:
+            if key in names:
+                raise GenerationError(f"Duplicate resource method: {key}")
+            names.add(key)
 
 
-def public_method(operation: str) -> str:
-    return re.sub(r"(?<!^)(?=[A-Z])", "_", NAMING[operation]["method"]).lower()
+def snake_case(method: str) -> str:
+    return re.sub(r"(?<!^)(?=[A-Z])", "_", method).lower()
 
 
 # Headers the client sets on every request (BaseClient.headers), so they are not parameters.
 CLIENT_HEADERS = {"authorization", "x-notte-request-origin", "x-notte-sdk-version", "x-db-preview"}
 
-# The hand-written clients call the generated factories as `api.<operation>(...)`.
-USAGE_PATTERN = re.compile(r"\bapi\.([a-z_][a-z0-9_]*)\(")
+# The clients call the generated factories as `api.<operation>(...)`, or `page_api.<operation>(...)`
+# for the shared page factories of this module.
+USAGE_PATTERN = re.compile(r"\b(?:page_)?api\.([a-z_][a-z0-9_]*)\(")
 
 METHOD_ORDER = {"get": 0, "post": 1, "put": 2, "patch": 3, "delete": 4}
 
@@ -216,6 +220,10 @@ class Bound:
     body: Binding | None
     response: Binding | None
     query: Binding | None
+    # Multipart file fields: schema property -> public keyword (a local path).
+    files: dict[str, str] = field(default_factory=dict)
+    # Shared page operations call the core-bound `page_api` factories (see PAGE_OPERATIONS).
+    page: bool = False
 
 
 def _bind(spec: JsonObject, operations: list[Operation], strict: bool) -> list[Bound]:
@@ -251,7 +259,7 @@ def _docstring(bound: Bound) -> list[str]:
         what = f"`{op.body_schema}`" if op.body_schema else "an inline schema"
         notes.append(f"Body: {what} ({op.body_content_type}) has no model in notte_core.")
     elif op.body_content_type == "multipart/form-data":
-        notes.append("Body: multipart/form-data, attach the file with `with_file`.")
+        notes.append("Body: multipart/form-data, attach files with `BaseClient._request_upload`.")
     if op.query_params and bound.query is None:
         names = ", ".join(f"{name}{' (required)' if req else ''}" for name, req in op.query_params.items())
         notes.append(f"Query: {names}.")
@@ -269,7 +277,7 @@ def _docstring(bound: Bound) -> list[str]:
         case "none":
             notes.append("Responds with no content.")
         case "binary":
-            notes.append("Responds with a file: read it with `BaseClient.request_path`, not `request`.")
+            notes.append("Responds with a file: read it with `BaseClient._request_bytes` or `_stream_bytes`.")
         case "untyped":
             notes.append("Responds with an untyped body (no schema): parsed as `RawResponse`.")
         case _:
@@ -424,24 +432,37 @@ def _generated_models() -> ModuleType:
 @dataclass(frozen=True)
 class Resource:
     name: str
-    operations: tuple[str, ...]
+    # (operation, Python method name): the table's method and its aliases, in snake_case.
+    methods: tuple[tuple[str, str], ...]
     client_path: str = ""
+
+    @property
+    def operations(self) -> tuple[str, ...]:
+        return tuple(dict.fromkeys(operation for operation, _ in self.methods))
+
+
+def _group(operation: str, resource: str) -> str:
+    return "RunPayloads" if operation == "prepare_run_payload_upload" else resource.title()
+
+
+def _members(name: str) -> tuple[tuple[str, str], ...]:
+    members: list[tuple[str, str]] = []
+    for operation, entry in NAMING.items():
+        if entry.get("exclude"):
+            continue
+        # `pythonImplementation` keeps the primary method hand-written; aliases are still generated.
+        targets = [] if entry.get("pythonImplementation") else [(entry["resource"], entry["method"])]
+        targets += [(alias["resource"], alias["method"]) for alias in entry.get("aliases", [])]
+        members.extend(
+            (operation, snake_case(method)) for resource, method in targets if _group(operation, resource) == name
+        )
+    return tuple(members)
 
 
 # Resource membership comes exclusively from the shared operation table. The one
 # payload mixin avoids a runtime import cycle in multipart/payload conveniences.
 RESOURCES = tuple(
-    Resource(
-        name,
-        tuple(
-            operation
-            for operation, entry in NAMING.items()
-            if not entry.get("exclude")
-            and not entry.get("pythonImplementation")
-            and ("RunPayloads" if operation == "prepare_run_payload_upload" else entry["resource"].title()) == name
-        ),
-        path,
-    )
+    Resource(name, _members(name), path)
     for name, path in (
         ("RunPayloads", ""),
         ("Functions", "functions"),
@@ -452,6 +473,30 @@ RESOURCES = tuple(
         ("Vaults", "vaults"),
     )
 )
+# Every mapped operation gets a factory in operations.py, including the ones whose
+# primary method is hand-written, so no client spells out a path the spec describes.
+# Shared page operations reuse the core-bound factories of endpoints.py instead.
+PAGE_OPERATIONS = {
+    # operation: (core body model and keywords, or the positional body type)
+    "page_observe": ("ObserveRequest", "ObserveRequestDict"),
+    "page_scrape": ("ScrapeRequest", "ScrapeRequestDict"),
+    "page_execute": ("actions.BaseAction", None),
+}
+
+
+def _factories(name: str) -> tuple[str, ...]:
+    """Operations whose factory is emitted with resource `name` (their primary resource)."""
+    return tuple(
+        operation
+        for operation, entry in NAMING.items()
+        if not entry.get("exclude")
+        and operation not in PAGE_OPERATIONS
+        and _group(operation, entry["resource"]) == name
+    )
+
+
+# Multipart file fields are sent from a local path; these keep their public keyword.
+FILE_KEYWORDS = {"BodyFunctionCreateFunctionsPost": {"file": "path"}}
 # Behavior-rich types keep their core identity. Request serialization bypasses
 # business validators; openapi_contract.py guards these core/schema bindings.
 CORE_MODELS = {
@@ -520,6 +565,7 @@ KEYWORD_NAMES = {
     "ExternalProxy": "ExternalProxyDict",
     "TailnetProxy": "TailnetProxyDict",
     "BodyFunctionCreateFunctionsPost": "CreateFunctionRequestDict",
+    "BodyUploadSessionFileSessionsSessionIdFilesPost": "UploadSessionFileRequestDict",
     "FunctionUpdateParametersQuery": "UpdateFunctionRequestDict",
     "ListFunctionsParametersQuery": "ListFunctionsRequestDict",
     "ListFunctionRunsByFunctionIdParametersQuery": "ListFunctionRunsRequestDict",
@@ -625,20 +671,25 @@ def _binding(index: dict[str, str], ref: str) -> Binding:
     return Binding(alias, public_name, model)
 
 
-def _bound(index: dict[str, str], op: Operation) -> Bound:
+def _bound(index: dict[str, str], op: Operation, spec: JsonObject, *, method: bool = True) -> Bound:
+    """Bind an operation's models. `method=False` binds only its factory (hand-written primary method)."""
+    entry = NAMING[op.op_id]
     # Function clients expose the page envelope, unlike other list clients.
     if op.name in {"list_functions", "list_function_runs_by_function_id"}:
         op = replace(op, response_shape="object", response_schema=f"PaginatedResponse_{op.response_schema}_")
     # Existing SDK calls omit these optional API-only metadata switches.
     if op.name in {"session_cookies_set", "session_cookies_get", "session_offset"}:
         op = replace(op, query_params={})
-    if op.response_shape == "untyped" and NAMING[op.op_id].get("pythonRawResponse"):
+    if op.response_shape == "untyped" and (entry.get("pythonRawResponse") or not method):
         op = replace(op, response_shape="raw")
-    if op.response_shape not in {"object", "array", "page", "none", "raw"} or (
-        op.response_schema is None and op.response_shape not in {"none", "raw"}
+    if op.response_shape == "binary" and not (entry.get("pythonBinaryResponse") or not method):
+        raise GenerationError(f"{op.name}: binary response needs `pythonBinaryResponse`")
+    if op.response_shape not in {"object", "array", "page", "none", "raw", "binary"} or (
+        op.response_schema is None and op.response_shape not in {"none", "raw", "binary"}
     ):
         raise GenerationError(f"{op.name}: unsupported resource response {op.response_shape}")
-    if set(op.header_params) != set(NAMING[op.op_id].get("pythonHeaders", [])) or op.method not in {
+    # Factories leave headers to the caller (`BaseClient.request(headers=...)`).
+    if (method and set(op.header_params) != set(entry.get("pythonHeaders", []))) or op.method not in {
         "GET",
         "POST",
         "PATCH",
@@ -646,21 +697,48 @@ def _bound(index: dict[str, str], op: Operation) -> Bound:
     }:
         raise GenerationError(f"{op.name}: unsupported headers/method")
     body = query = None
+    files: dict[str, str] = {}
+    page = op.name in PAGE_OPERATIONS
     if op.body_content_type:
-        if op.body_content_type != "application/json" or op.body_schema is None or not op.body_required:
+        multipart = op.body_content_type == "multipart/form-data"
+        if (
+            not (op.body_content_type == "application/json" or multipart)
+            or (op.body_schema is None and not page)
+            or not op.body_required
+        ):
             raise GenerationError(f"{op.name}: unsupported resource body")
-        body = _binding(index, f"#/components/schemas/{op.body_schema}")
+        if op.body_schema is not None:
+            body = _binding(index, f"#/components/schemas/{op.body_schema}")
+        if multipart:
+            assert body is not None
+            properties = cast(JsonObject, spec["components"]["schemas"][op.body_schema]).get("properties", {})
+            renames = FILE_KEYWORDS.get(body.model.__name__, {})
+            files = {
+                name: renames.get(name, name)
+                for name, schema in cast(JsonObject, properties).items()
+                if cast(JsonObject, schema).get("contentMediaType") == "application/octet-stream"
+                or cast(JsonObject, schema).get("format") == "binary"
+            }
+            if not files:
+                raise GenerationError(f"{op.name}: multipart body without a file field")
     if op.query_params:
         query = _binding(index, f"#/paths/{op.path.lstrip('/')}/{op.method.lower()}/parameters")
     response = (
         Binding("runtime", "RawResponse", BaseModel)
-        if op.response_shape in {"none", "raw"}
+        if op.response_shape in {"none", "raw", "binary"}
         else _binding(index, f"#/components/schemas/{op.response_schema}")
     )
+    if page:
+        # Shared with local sessions: core models at the public boundary.
+        body_model, _ = PAGE_OPERATIONS[op.name]
+        response_name = CORE_OPERATIONS[op.name][1]
+        assert response_name is not None
+        response = Binding("core", response_name, getattr(wire_types, response_name))
+        body = None if "." in body_model else Binding("core", body_model, getattr(wire_types, body_model))
     # Preserve the existing public wire paths (including their trailing slash).
-    if op.name in {"list_functions", "list_function_runs_by_function_id", "list_sessions"}:
+    if op.name in {"list_functions", "list_function_runs_by_function_id", "list_sessions", "function_create"}:
         op = replace(op, path=op.path.rstrip("/") + "/")
-    return Bound(op, body, response, query)
+    return Bound(op, body, response, query, files, page)
 
 
 def _keywords(binding: Binding, classes: dict[str, ast.ClassDef]) -> str:
@@ -734,14 +812,18 @@ def _keywords(binding: Binding, classes: dict[str, ast.ClassDef]) -> str:
             if binding.model.model_fields[field].is_required() and field not in OPTIONAL_KEYWORDS.get(name, set())
             else "NotRequired"
         )
-        public_field = "path" if name == "BodyFunctionCreateFunctionsPost" and field == "file" else field
+        public_field = FILE_KEYWORDS.get(name, {}).get(field, field)
         lines.append(f"    {public_field}: {required}[{ast.unparse(annotation)}]")
     if name == "FunctionUpdateParametersQuery":
         lines.append("    path: Required[str]")
     return "\n".join(lines) + "\n"
 
 
-def _method(bound: Bound) -> str:
+def _keyword_name(binding: Binding) -> str:
+    return KEYWORD_NAMES.get(binding.model.__name__, f"{binding.model.__name__}Dict")
+
+
+def _method(bound: Bound, name: str) -> str:
     op = bound.operation
     assert bound.response is not None
     args = ["self", *(f"{p}: str" for p in op.path_params)]
@@ -752,22 +834,36 @@ def _method(bound: Bound) -> str:
     if op.description:
         doc += "\n\n" + op.description.replace(chr(34) * 3, " ")
     lines: list[str] = ["        " + repr(doc)]
+    if bound.page and bound.body is None:
+        # An inline union body (the action to execute) is passed as a model.
+        args.append(f"body: {PAGE_OPERATIONS[op.name][0]}")
+        call_args.append("body")
     if bound.body and bound.query or op.header_params:
         args.append("*")
     if bound.body and bound.query:
-        query_name = KEYWORD_NAMES.get(bound.query.model.__name__, f"{bound.query.model.__name__}Dict")
-        args.append(f"query: {query_name} | None = None")
+        args.append(f"query: {_keyword_name(bound.query)} | None = None")
         call_args.append("params=wire_request(None, query or {})")
     for header in op.header_params:
         args.append(f"{header.replace('-', '_')}: str")
     if request := bound.body or bound.query:
-        keyword_name = KEYWORD_NAMES.get(request.model.__name__, f"{request.model.__name__}Dict")
+        keyword_name = _keyword_name(request)
+        if bound.page and bound.body is not None:
+            keyword_name = f"core.{PAGE_OPERATIONS[op.name][1]}"
         args.append(f"**data: Unpack[{keyword_name}]")
         if op.name == "profile_list":
             lines.append('        _ = data.setdefault("page_size", 20)  # SDK default differs from API 10.')
         if op.name == "list_function_runs_by_function_id":
             lines.append('        _ = data.setdefault("only_active", True)')
-        if op.name == "session_start":
+        if bound.page and bound.body is not None:
+            # Validated like PageClient: core models serialize `response_format` and friends.
+            lines.append(f"        request = {bound.body.ref}.model_validate(data)")
+        elif bound.files:
+            # File fields are local paths, uploaded as files; the other fields are form fields.
+            uploads = ", ".join(f"{field!r}: data[{keyword!r}]" for field, keyword in bound.files.items())
+            lines.append(f"        files = {{{uploads}}}")
+            fields = f"{{key: value for key, value in data.items() if key not in {sorted(bound.files.values())!r}}}"
+            lines.append(f"        request = wire_request({request.ref}, {fields})")
+        elif op.name == "session_start":
             lines.append(
                 "        request = wire_request(None, core.SessionStartRequest.from_data(dict(data)).model_dump(context={'wire': True}))"
             )
@@ -790,13 +886,18 @@ def _method(bound: Bound) -> str:
     runtime = "request"
     if op.response_shape == "array" or entry.get("pythonUnwrapItems"):
         runtime, returns = "request_list", f"Sequence[{returns}]"
-    endpoint = f"api.{op.name}({', '.join(call_args)})"
+    endpoint = f"{'page_api' if bound.page else 'api'}.{op.name}({', '.join(call_args)})"
     if op.name in EMPTY_REQUESTS:
         lines.append(f"        endpoint = {endpoint}")
         lines.append("        if data:\n            endpoint = endpoint.with_params(wire_request(None, data))")
         endpoint = "endpoint"
     if op.response_shape == "raw":
         runtime, returns = "_request", "Any"
+    if op.response_shape == "binary":
+        runtime, returns = "_request_bytes", "bytes"
+    if bound.files:
+        endpoint += ", files"
+        runtime = "_request_upload"
     headers = ""
     if op.header_params:
         headers = (
@@ -815,7 +916,7 @@ def _method(bound: Bound) -> str:
     if op.response_shape == "none":
         returns = "None"
     decorator = f"    @track_usage({entry['telemetry']!r})\n" if entry.get("telemetry") else ""
-    return decorator + f"    def {public_method(op.op_id)}({', '.join(args)}) -> {returns}:\n" + "\n".join(lines) + "\n"
+    return decorator + f"    def {name}({', '.join(args)}) -> {returns}:\n" + "\n".join(lines) + "\n"
 
 
 def render_resources(spec: JsonObject) -> dict[str, str]:
@@ -840,7 +941,7 @@ def render_resources(spec: JsonObject) -> dict[str, str]:
         + "from collections.abc import Sequence\nfrom typing import TYPE_CHECKING, Any, Unpack\nfrom notte_core.telemetry import track_usage\n"
         + imports
     )
-    clients += "from notte_sdk._requests import wire_request\nfrom notte_sdk._generated import operations as api\nfrom notte_sdk._generated.typing import *\nfrom notte_sdk.endpoints.base import BaseClient\n"
+    clients += "from notte_core import actions\nfrom notte_sdk._requests import wire_request\nfrom notte_sdk._generated import operations as api\nfrom notte_sdk._generated import endpoints as page_api\nfrom notte_sdk._generated.typing import *\nfrom notte_sdk.endpoints.base import BaseClient\n"
     clients += "\nif TYPE_CHECKING:\n    from notte_sdk.client import NotteClient\n"
     keywords: dict[str, str] = {}
     public: dict[str, str] = {
@@ -877,12 +978,28 @@ def render_resources(spec: JsonObject) -> dict[str, str]:
         super().__init__(root_client=root_client, base_endpoint_path={resource.client_path!r},
                          api_key=api_key, server_url=server_url, verbose=verbose)
 """
-        for name in resource.operations:
+        for name in _factories(resource.name):
             if name not in operations:
                 raise GenerationError(f"Migrated operation {name} is absent from the spec")
-            bound = _bound(index, operations[name])
+            bound = _bound(index, operations[name], spec, method=not NAMING[name].get("pythonImplementation"))
+            factory = _render_operation(bound)
+            for request in (bound.body, bound.query):
+                if request:
+                    factory = factory.replace(f": {request.ref}", ": BaseModel")
+            factories += "\n\n" + factory + "\n"
+        for name, method in resource.methods:
+            if name not in operations:
+                raise GenerationError(f"Migrated operation {name} is absent from the spec")
+            bound = _bound(index, operations[name], spec)
             for binding in (bound.body, bound.query, bound.response):
-                if binding is None or binding.alias == "runtime" or binding.model.__name__ == "ProfileDeleteResponse":
+                if (
+                    binding is None
+                    or binding.alias == "runtime"
+                    or binding.model.__name__ == "ProfileDeleteResponse"
+                    or (bound.page and binding is not bound.query)
+                    # Multipart bodies are keyword dictionaries plus local files, not public models.
+                    or (bound.files and binding is bound.body)
+                ):
                     continue
                 public_name = (
                     KEYWORD_NAMES.get(binding.model.__name__, "").removesuffix("Dict")
@@ -890,17 +1007,10 @@ def render_resources(spec: JsonObject) -> dict[str, str]:
                     else ""
                 )
                 public[public_name or binding.name] = binding.ref
-            factory = _render_operation(bound)
+            clients += "\n" + _method(bound, method)
             for request in (bound.body, bound.query):
-                if request:
-                    factory = factory.replace(f": {request.ref}", ": BaseModel")
-            factories += "\n\n" + factory + "\n"
-            clients += "\n" + _method(bound)
-            for request in (bound.body, bound.query):
-                if request:
-                    keywords[KEYWORD_NAMES.get(request.model.__name__, f"{request.model.__name__}Dict")] = _keywords(
-                        request, classes
-                    )
+                if request and not (bound.page and request is bound.body):
+                    keywords[_keyword_name(request)] = _keywords(request, classes)
     for nested in (
         "CredentialsDictInput",
         "CreditCardDictInput",
@@ -1001,7 +1111,7 @@ def render_resources(spec: JsonObject) -> dict[str, str]:
 
 def migrated_contracts(spec: JsonObject) -> dict[str, str]:
     """Include referenced schemas in the production gate, not just factory names."""
-    wanted = {name for resource in RESOURCES for name in resource.operations}
+    wanted = {name for resource in RESOURCES for name in (*resource.operations, *_factories(resource.name))}
     contracts: dict[str, str] = {}
     for path, methods in spec["paths"].items():
         for method, operation in methods.items():

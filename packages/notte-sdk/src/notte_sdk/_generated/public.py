@@ -67,6 +67,9 @@ from notte_sdk._generated.models import (
 from notte_sdk._generated.models import FileExecutionRequest as FileExecutionRequest
 from notte_sdk._generated.models import FileSource as FileSource
 from notte_sdk._generated.models import (
+    FunctionCreateParametersQuery as FunctionCreateParametersQuery,
+)
+from notte_sdk._generated.models import (
     FunctionMetadataUpdateRequest as FunctionMetadataUpdateRequest,
 )
 from notte_sdk._generated.models import (
@@ -98,6 +101,15 @@ from notte_sdk._generated.models import (
 )
 from notte_sdk._generated.models import MouseReplayPage as MouseReplayPage
 from notte_sdk._generated.models import NetworkLogsResponse as NetworkLogsResponse
+from notte_sdk._generated.models import (
+    PageExecuteParametersQuery as PageExecuteParametersQuery,
+)
+from notte_sdk._generated.models import (
+    PageObserveParametersQuery as PageObserveParametersQuery,
+)
+from notte_sdk._generated.models import (
+    PageScrapeParametersQuery as PageScrapeParametersQuery,
+)
 from notte_sdk._generated.models import (
     PageScreenshotParametersQuery as PageScreenshotParametersQuery,
 )
@@ -196,6 +208,9 @@ from notte_sdk._generated.typing import (
     FileExecutionRequestDict as FileExecutionRequestDict,
 )
 from notte_sdk._generated.typing import (
+    FunctionCreateParametersQueryDict as FunctionCreateParametersQueryDict,
+)
+from notte_sdk._generated.typing import (
     FunctionMetadataUpdateRequestDict as FunctionMetadataUpdateRequestDict,
 )
 from notte_sdk._generated.typing import (
@@ -240,6 +255,15 @@ from notte_sdk._generated.typing import (
 )
 from notte_sdk._generated.typing import MessageReadRequestDict as MessageReadRequestDict
 from notte_sdk._generated.typing import NotteProxyDict as NotteProxyDict
+from notte_sdk._generated.typing import (
+    PageExecuteParametersQueryDict as PageExecuteParametersQueryDict,
+)
+from notte_sdk._generated.typing import (
+    PageObserveParametersQueryDict as PageObserveParametersQueryDict,
+)
+from notte_sdk._generated.typing import (
+    PageScrapeParametersQueryDict as PageScrapeParametersQueryDict,
+)
 from notte_sdk._generated.typing import (
     PageScreenshotParametersQueryDict as PageScreenshotParametersQueryDict,
 )
@@ -291,6 +315,9 @@ from notte_sdk._generated.typing import TailnetProxyDict as TailnetProxyDict
 from notte_sdk._generated.typing import (
     UpdateFunctionRequestDict as UpdateFunctionRequestDict,
 )
+from notte_sdk._generated.typing import (
+    UploadSessionFileRequestDict as UploadSessionFileRequestDict,
+)
 from notte_sdk._generated.typing import VaultCreateRequestDict as VaultCreateRequestDict
 from notte_sdk._generated.typing import VaultListRequestDict as VaultListRequestDict
 from notte_sdk._generated.typing import VaultUpdateRequestDict as VaultUpdateRequestDict
@@ -331,6 +358,8 @@ __all__ = [
     "FileExecutionRequest",
     "FileExecutionRequestDict",
     "FileSource",
+    "FunctionCreateParametersQuery",
+    "FunctionCreateParametersQueryDict",
     "FunctionMetadataUpdateRequest",
     "FunctionMetadataUpdateRequestDict",
     "FunctionRollbackParametersQuery",
@@ -379,6 +408,12 @@ __all__ = [
     "NetworkLogsResponse",
     "NotteProxy",
     "NotteProxyDict",
+    "PageExecuteParametersQuery",
+    "PageExecuteParametersQueryDict",
+    "PageObserveParametersQuery",
+    "PageObserveParametersQueryDict",
+    "PageScrapeParametersQuery",
+    "PageScrapeParametersQueryDict",
     "PageScreenshotParametersQuery",
     "PageScreenshotParametersQueryDict",
     "PaymentRequest",
@@ -445,6 +480,7 @@ __all__ = [
     "UpdateFunctionRequestDict",
     "UpdateFunctionRunResponse",
     "UploadResponse",
+    "UploadSessionFileRequestDict",
     "Vault",
     "VaultCreateRequest",
     "VaultCreateRequestDict",
