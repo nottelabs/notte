@@ -1,8 +1,13 @@
-from unittest.mock import MagicMock, patch
+from collections.abc import Iterator
+from contextlib import contextmanager
+from typing import Any
+from unittest.mock import patch
 
+import httpx
 import pytest
 import requests
 from notte_sdk.endpoints.base import BaseClient, _cached_pypi_version, _version_check_performed
+from notte_sdk.errors import NotteHTTPStatusError
 from pydantic import ValidationError
 
 
@@ -38,13 +43,34 @@ def reset_global_state():
     base_module._version_check_performed = original_performed
 
 
+class FakePyPI:
+    """pypi.org behind the version check's HTTP client, recording each request."""
+
+    def __init__(self, payload: Any = None, status: int = 200, error: Exception | None = None) -> None:
+        self.payload: Any = payload
+        self.status: int = status
+        self.error: Exception | None = error
+        self.requests: list[httpx.Request] = []
+
+    def _handle(self, request: httpx.Request) -> httpx.Response:
+        self.requests.append(request)
+        if self.error is not None:
+            raise self.error
+        return httpx.Response(self.status, json=self.payload)
+
+    @contextmanager
+    def serve(self) -> Iterator["FakePyPI"]:
+        def client() -> httpx.Client:
+            return httpx.Client(transport=httpx.MockTransport(self._handle))
+
+        with patch("notte_sdk.endpoints.base.http_client", side_effect=client):
+            yield self
+
+
 @pytest.fixture
 def mock_pypi_response():
     """Mock successful PyPI API response."""
-    mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = {"info": {"version": "1.7.2"}}
-    mock_response.raise_for_status.return_value = None
+    mock_response = FakePyPI({"info": {"version": "1.7.2"}})
     return mock_response
 
 
@@ -54,12 +80,12 @@ class TestBaseClientVersionCheck:
     def test_version_check_skipped_for_dev_version(self, api_key: str, reset_global_state):
         """Test that version check is skipped for development versions containing '.dev'."""
         with patch("notte_sdk.endpoints.base.notte_core_version", "1.4.4.dev0"):
-            with patch("requests.get") as mock_get:
+            with FakePyPI({}).serve() as mock_get:
                 # Create BaseClient - should skip version check for .dev version
                 _ = BaseClient(MockNotteClient(), None, api_key=api_key)
 
                 # Verify no PyPI request was made
-                mock_get.assert_not_called()
+                assert mock_get.requests == []
 
                 # Verify global state
                 import notte_sdk.endpoints.base as base_module
@@ -70,17 +96,17 @@ class TestBaseClientVersionCheck:
     def test_version_check_performed_for_production_version(self, api_key: str, reset_global_state, mock_pypi_response):
         """Test that version check is performed for production versions."""
         with patch("notte_sdk.endpoints.base.notte_core_version", "1.5.0"):
-            with patch("requests.get", return_value=mock_pypi_response) as mock_get:
+            with mock_pypi_response.serve() as mock_get:
                 # Create BaseClient - should perform version check for production version
                 _ = BaseClient(MockNotteClient(), None, api_key=api_key)
 
                 # Verify PyPI request was made
-                mock_get.assert_called_once()
+                assert len(mock_get.requests) == 1
 
                 # Check the request details
-                call_args = mock_get.call_args
-                assert "https://pypi.org/pypi/notte-sdk/json" in call_args[0][0]
-                assert call_args[1]["headers"]["User-Agent"].startswith("notte-sdk/")
+                request = mock_get.requests[-1]
+                assert "https://pypi.org/pypi/notte-sdk/json" in str(request.url)
+                assert request.headers["User-Agent"].startswith("notte-sdk/")
 
                 # Verify global state
                 import notte_sdk.endpoints.base as base_module
@@ -91,7 +117,7 @@ class TestBaseClientVersionCheck:
     def test_version_mismatch_warning_logged(self, api_key: str, reset_global_state, mock_pypi_response):
         """Test that a warning is logged when there's a version mismatch."""
         with patch("notte_sdk.endpoints.base.notte_core_version", "1.5.0"):
-            with patch("requests.get", return_value=mock_pypi_response):
+            with mock_pypi_response.serve():
                 with patch("notte_sdk.endpoints.base.logger.warning") as mock_logger:
                     # Create BaseClient - should warn about version mismatch
                     _ = BaseClient(MockNotteClient(), None, api_key=api_key)
@@ -105,13 +131,10 @@ class TestBaseClientVersionCheck:
 
     def test_no_warning_when_versions_match(self, api_key: str, reset_global_state):
         """Test that no warning is logged when versions match."""
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {"info": {"version": "1.5.0"}}
-        mock_response.raise_for_status.return_value = None
+        mock_response = FakePyPI({"info": {"version": "1.5.0"}})
 
         with patch("notte_sdk.endpoints.base.notte_core_version", "1.5.0"):
-            with patch("requests.get", return_value=mock_response):
+            with mock_response.serve():
                 with patch("notte_sdk.endpoints.base.logger.warning") as mock_logger:
                     # Create BaseClient - versions match, no warning expected
                     _ = BaseClient(MockNotteClient(), None, api_key=api_key)
@@ -122,7 +145,7 @@ class TestBaseClientVersionCheck:
     def test_version_check_only_performed_once(self, api_key: str, reset_global_state, mock_pypi_response):
         """Test that version check is only performed once per process."""
         with patch("notte_sdk.endpoints.base.notte_core_version", "1.5.0"):
-            with patch("requests.get", return_value=mock_pypi_response) as mock_get:
+            with mock_pypi_response.serve() as mock_get:
                 # Create first BaseClient
                 _ = BaseClient(MockNotteClient(), None, api_key=api_key)
 
@@ -130,7 +153,7 @@ class TestBaseClientVersionCheck:
                 _ = BaseClient(MockNotteClient(), None, api_key=api_key)
 
                 # Verify PyPI request was made only once
-                assert mock_get.call_count == 1
+                assert len(mock_get.requests) == 1
 
                 # Verify global state
                 import notte_sdk.endpoints.base as base_module
@@ -141,7 +164,7 @@ class TestBaseClientVersionCheck:
     def test_version_check_silent_failure_on_network_error(self, api_key: str, reset_global_state):
         """Test that version check fails silently on network errors."""
         with patch("notte_sdk.endpoints.base.notte_core_version", "1.5.0"):
-            with patch("requests.get", side_effect=requests.RequestException("Network error")):
+            with FakePyPI(error=httpx.ConnectError("Network error")).serve():
                 with patch("notte_sdk.endpoints.base.logger.warning") as mock_logger:
                     # Create BaseClient - should handle network error silently
                     _ = BaseClient(MockNotteClient(), None, api_key=api_key)
@@ -157,13 +180,10 @@ class TestBaseClientVersionCheck:
 
     def test_version_check_silent_failure_on_json_error(self, api_key: str, reset_global_state):
         """Test that version check fails silently on JSON parsing errors."""
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {"unexpected": "format"}  # Missing 'info' key
-        mock_response.raise_for_status.return_value = None
+        mock_response = FakePyPI({"unexpected": "format"})  # Missing 'info' key
 
         with patch("notte_sdk.endpoints.base.notte_core_version", "1.5.0"):
-            with patch("requests.get", return_value=mock_response):
+            with mock_response.serve():
                 with patch("notte_sdk.endpoints.base.logger.warning") as mock_logger:
                     # Create BaseClient - should handle JSON error silently
                     _ = BaseClient(MockNotteClient(), None, api_key=api_key)
@@ -179,7 +199,7 @@ class TestBaseClientVersionCheck:
 
     def test_private_get_latest_pypi_version_method(self, api_key: str, mock_pypi_response):
         """Test the private _get_latest_pypi_version method directly."""
-        with patch("requests.get", return_value=mock_pypi_response) as mock_get:
+        with mock_pypi_response.serve() as mock_get:
             client = BaseClient(MockNotteClient(), None, api_key=api_key)
 
             # Test the private method directly
@@ -188,29 +208,28 @@ class TestBaseClientVersionCheck:
             assert version == "1.7.2"
 
             # Verify request details
-            call_args = mock_get.call_args
-            assert "https://pypi.org/pypi/test-package/json" in call_args[0][0]
-            assert "User-Agent" in call_args[1]["headers"]
+            request = mock_get.requests[-1]
+            assert "https://pypi.org/pypi/test-package/json" in str(request.url)
+            assert "User-Agent" in request.headers
 
     def test_private_method_raises_on_http_error(self, api_key: str):
         """Test that _get_latest_pypi_version raises on HTTP errors."""
-        mock_response = MagicMock()
-        mock_response.raise_for_status.side_effect = requests.HTTPError("404 Not Found")
+        mock_response = FakePyPI({"message": "Not Found"}, status=404)
 
-        with patch("requests.get", return_value=mock_response):
+        with mock_response.serve():
             client = BaseClient(MockNotteClient(), None, api_key=api_key)
 
-            with pytest.raises(requests.HTTPError):
+            # The SDK error is still a requests.HTTPError for existing handlers.
+            with pytest.raises(requests.HTTPError) as error:
                 _ = client._get_latest_pypi_version("nonexistent-package")
+            assert isinstance(error.value, NotteHTTPStatusError)
+            assert error.value.response.status_code == 404
 
     def test_private_method_raises_on_key_error(self, api_key: str):
         """Test that _get_latest_pypi_version raises on missing keys."""
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {"unexpected": "format"}
-        mock_response.raise_for_status.return_value = None
+        mock_response = FakePyPI({"unexpected": "format"})
 
-        with patch("requests.get", return_value=mock_response):
+        with mock_response.serve():
             client = BaseClient(MockNotteClient(), None, api_key=api_key)
 
             with pytest.raises(KeyError):
@@ -219,36 +238,30 @@ class TestBaseClientVersionCheck:
     def test_user_agent_header_format(self, api_key: str, reset_global_state):
         """Test that the User-Agent header is properly formatted."""
         with patch("notte_sdk.endpoints.base.notte_core_version", "1.5.0"):
-            with patch("requests.get") as mock_get:
-                mock_response = MagicMock()
-                mock_response.status_code = 200
-                mock_response.json.return_value = {"info": {"version": "1.7.2"}}
-                mock_response.raise_for_status.return_value = None
-                mock_get.return_value = mock_response
-
+            with FakePyPI({"info": {"version": "1.7.2"}}).serve() as mock_get:
                 _ = BaseClient(MockNotteClient(), None, api_key=api_key)
 
                 # Check User-Agent header format
-                call_args = mock_get.call_args
-                user_agent = call_args[1]["headers"]["User-Agent"]
+                request = mock_get.requests[-1]
+                user_agent = request.headers["User-Agent"]
                 assert user_agent.startswith("notte-sdk/")
                 assert "(https://github.com/NotteAI/notte)" in user_agent
 
     def test_timeout_configuration(self, api_key: str, reset_global_state):
         """Test that the request uses the correct timeout."""
         with patch("notte_sdk.endpoints.base.notte_core_version", "1.5.0"):
-            with patch("requests.get") as mock_get:
-                mock_response = MagicMock()
-                mock_response.status_code = 200
-                mock_response.json.return_value = {"info": {"version": "1.7.2"}}
-                mock_response.raise_for_status.return_value = None
-                mock_get.return_value = mock_response
-
+            with FakePyPI({"info": {"version": "1.7.2"}}).serve() as mock_get:
                 _ = BaseClient(MockNotteClient(), None, api_key=api_key)
 
                 # Check timeout parameter
-                call_args = mock_get.call_args
-                assert call_args[1]["timeout"] == BaseClient.DEFAULT_REQUEST_TIMEOUT_SECONDS
+                request = mock_get.requests[-1]
+                seconds = BaseClient.DEFAULT_REQUEST_TIMEOUT_SECONDS
+                assert request.extensions["timeout"] == {
+                    "connect": seconds,
+                    "read": seconds,
+                    "write": seconds,
+                    "pool": seconds,
+                }
 
     def test_version_comparison_logic(self, api_key: str, reset_global_state):
         """Test the version comparison logic in _should_suggest_upgrade method."""
@@ -305,12 +318,9 @@ class TestBaseClientVersionCheck:
 
         with patch("notte_sdk.endpoints.base.notte_core_version", "1.7.0"):
             # Mock PyPI response to return our test version
-            mock_pypi_response = MagicMock()
-            mock_pypi_response.status_code = 200
-            mock_pypi_response.json.return_value = {"info": {"version": "1.8.0"}}
-            mock_pypi_response.raise_for_status.return_value = None
+            mock_pypi_response = FakePyPI({"info": {"version": "1.8.0"}})
 
-            with patch("requests.get", return_value=mock_pypi_response):
+            with mock_pypi_response.serve():
                 with patch.object(BaseClient, "_request") as mock_request:
                     # Mock a response that will cause validation error
                     mock_request.return_value = {"unexpected_field": "value"}
@@ -378,7 +388,7 @@ class TestBaseClientVersionCheck:
 
         with patch("notte_sdk.endpoints.base.notte_core_version", "1.7.0"):
             # Mock PyPI to fail so no cached version is set
-            with patch("requests.get", side_effect=requests.RequestException("Network error")):
+            with FakePyPI(error=httpx.ConnectError("Network error")).serve():
                 with patch.object(BaseClient, "_request") as mock_request:
                     # Mock a response that will cause validation error
                     mock_request.return_value = {"unexpected_field": "value"}
@@ -410,12 +420,9 @@ class TestBaseClientVersionCheck:
 
         with patch("notte_sdk.endpoints.base.notte_core_version", "1.7.0"):
             # Mock PyPI response to return our test version
-            mock_pypi_response = MagicMock()
-            mock_pypi_response.status_code = 200
-            mock_pypi_response.json.return_value = {"info": {"version": "1.8.0"}}
-            mock_pypi_response.raise_for_status.return_value = None
+            mock_pypi_response = FakePyPI({"info": {"version": "1.8.0"}})
 
-            with patch("requests.get", return_value=mock_pypi_response):
+            with mock_pypi_response.serve():
                 with patch.object(BaseClient, "_request") as mock_request:
                     # Mock a list response that will cause validation error
                     mock_request.return_value = [{"unexpected_field": "value"}]

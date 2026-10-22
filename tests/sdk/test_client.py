@@ -26,6 +26,8 @@ from notte_sdk.types import (
     VaultListRequest,
 )
 
+from tests.sdk.test_generated_endpoints import FakeSession, fake
+
 
 @pytest.fixture
 def api_key() -> str:
@@ -70,12 +72,12 @@ def test_client_initialization_without_api_key() -> None:
             _ = NotteClient()
 
 
-def test_base_client_accepts_empty_success_response(client: NotteClient) -> None:
-    response = MagicMock(status_code=204, content=b"")
-    with patch("notte_sdk._transport._RequestSession.get", return_value=response):
-        result = client.sessions._request(NotteEndpoint(path="empty", response=SessionResponse, method="GET"))
+def test_base_client_accepts_empty_success_response(client: NotteClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    api = fake(monkeypatch, None, 204)
+    result = client.sessions._request(NotteEndpoint(path="empty", response=SessionResponse, method="GET"))
 
     assert result == {}
+    assert len(api.calls) == 1
 
 
 @pytest.fixture
@@ -95,175 +97,166 @@ def session_response_dict(session_id: str, close: bool = False) -> dict[str, Any
     }
 
 
-def test_open_viewer_true_spawns_viewer(client: NotteClient, session_id: str) -> None:
+def test_open_viewer_true_spawns_viewer(client: NotteClient, session_id: str, monkeypatch: pytest.MonkeyPatch) -> None:
     """Test that open_viewer=True spawns the viewer."""
-    with patch("notte_sdk._transport._RequestSession.post") as mock_post:
-        mock_response = session_response_dict(session_id)
-        mock_post.return_value.status_code = 200
-        mock_post.return_value.json.return_value = mock_response
-
-        session = client.Session(open_viewer=True, _client=client.sessions)
-        with patch.object(session, "viewer") as mock_viewer:
-            session.start()
-            # Viewer should be called when open_viewer=True
-            mock_viewer.assert_called_once()
+    _ = fake(monkeypatch, session_response_dict(session_id))
+    session = client.Session(open_viewer=True, _client=client.sessions)
+    with patch.object(session, "viewer") as mock_viewer:
+        session.start()
+        # Viewer should be called when open_viewer=True
+        mock_viewer.assert_called_once()
 
 
-def test_open_viewer_false_no_viewer(client: NotteClient, session_id: str) -> None:
+def test_open_viewer_false_no_viewer(client: NotteClient, session_id: str, monkeypatch: pytest.MonkeyPatch) -> None:
     """Test that open_viewer=False does not spawn the viewer."""
-    with patch("notte_sdk._transport._RequestSession.post") as mock_post:
-        mock_response = session_response_dict(session_id)
-        mock_post.return_value.status_code = 200
-        mock_post.return_value.json.return_value = mock_response
-
-        session = client.Session(open_viewer=False, _client=client.sessions)
-        with patch.object(session, "viewer") as mock_viewer:
-            session.start()
-            # Viewer should not be called when open_viewer=False
-            mock_viewer.assert_not_called()
+    _ = fake(monkeypatch, session_response_dict(session_id))
+    session = client.Session(open_viewer=False, _client=client.sessions)
+    with patch.object(session, "viewer") as mock_viewer:
+        session.start()
+        # Viewer should not be called when open_viewer=False
+        mock_viewer.assert_not_called()
 
 
-def test_remote_session_omits_headless_on_wire(client: NotteClient, session_id: str, headers: dict[str, str]) -> None:
-    with patch("notte_sdk._transport._RequestSession.post") as mock_post:
-        mock_response = session_response_dict(session_id)
-        mock_post.return_value.status_code = 200
-        mock_post.return_value.json.return_value = mock_response
-
-        session = client.Session(open_viewer=True, _client=client.sessions)
-        with patch.object(session, "viewer"):
-            session.start()
-
-        # Verify the request was made
-        assert mock_post.called
-
-        # Get the call arguments - find the start request
-        calls = [call for call in mock_post.call_args_list if "start" in str(call)]
-        if calls:
-            call_args = calls[0]
-            request_data = json.loads(call_args.kwargs["data"])
-            assert "headless" not in request_data
-            assert "advanced_stealth" not in request_data
-
-
-def test_remote_cdp_session_omits_viewport_on_wire(client: NotteClient, session_id: str) -> None:
-    with patch("notte_sdk._transport._RequestSession.post") as mock_post:
-        mock_post.return_value.status_code = 200
-        mock_post.return_value.json.return_value = session_response_dict(session_id)
-
-        session = client.Session(cdp_url="ws://localhost:9222")
+def test_remote_session_omits_headless_on_wire(
+    client: NotteClient, session_id: str, headers: dict[str, str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    api = fake(monkeypatch, session_response_dict(session_id))
+    session = client.Session(open_viewer=True, _client=client.sessions)
+    with patch.object(session, "viewer"):
         session.start()
 
-    mock_post.assert_called_once()
-    request_data = json.loads(mock_post.call_args.kwargs["data"])
+    # Verify the request was made
+    assert api.calls
+
+    # Get the call arguments - find the start request
+    calls = [call for call in api.calls if call.method == "POST" and "start" in call.url]
+    if calls:
+        request_data = json.loads(calls[0].data)
+        assert "headless" not in request_data
+        assert "advanced_stealth" not in request_data
+
+
+def test_remote_cdp_session_omits_viewport_on_wire(
+    client: NotteClient, session_id: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    api = fake(monkeypatch, session_response_dict(session_id))
+    session = client.Session(cdp_url="ws://localhost:9222")
+    session.start()
+
+    assert len(api.calls) == 1
+    request_data = json.loads(api.calls[0].data)
     assert request_data["cdp_url"] == "ws://localhost:9222"
     assert "viewport_width" not in request_data
     assert "viewport_height" not in request_data
 
 
-def _start_session(mock_post: MagicMock, client: NotteClient, session_id: str) -> SessionResponse:
+def _start_session(api: FakeSession, client: NotteClient, session_id: str) -> SessionResponse:
     """
     Mocks the HTTP response for starting a session and triggers session initiation.
 
-    Configures the provided mock_post to simulate a successful HTTP response using a session
-    dictionary constructed with the given session_id, then calls client.sessions.start() and
-    returns its response.
+    Configures the fake API to answer with a session dictionary constructed with the given
+    session_id, then calls client.sessions.start() and returns its response.
     """
-    mock_response = session_response_dict(session_id)
-    mock_post.return_value.status_code = 200
-    mock_post.return_value.json.return_value = mock_response
+    api.payload = session_response_dict(session_id)
+    api.status_code = 200
     return client.sessions.start()
 
 
-def _stop_session(mock_delete: MagicMock, client: NotteClient, session_id: str) -> SessionResponse:
-    mock_response = session_response_dict(session_id, close=True)
-    mock_delete.return_value.status_code = 200
-    mock_delete.return_value.json.return_value = mock_response
+def _stop_session(api: FakeSession, client: NotteClient, session_id: str) -> SessionResponse:
+    api.payload = session_response_dict(session_id, close=True)
+    api.status_code = 200
     return client.sessions.stop(session_id)
 
 
-@patch("notte_sdk._transport._RequestSession.post")
+def _timeout(seconds: float) -> dict[str, float]:
+    # requests applied one timeout to connecting and to each read; httpx also bounds writes and the pool.
+    return {"connect": seconds, "read": seconds, "write": seconds, "pool": seconds}
+
+
 @pytest.mark.order(1)
-def test_start_session(mock_post: MagicMock, client: NotteClient, session_id: str, headers: dict[str, str]) -> None:
+def test_start_session(
+    client: NotteClient, session_id: str, headers: dict[str, str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    api = fake(monkeypatch, None)
     session_data: SessionStartRequestDict = {"viewport_width": 1920, "viewport_height": 1080}
-    response = _start_session(mock_post=mock_post, client=client, session_id=session_id)
+    response = _start_session(api, client=client, session_id=session_id)
     assert response.session_id == session_id
     assert response.error is None
 
-    mock_post.assert_called_once_with(
-        url=f"{client.sessions.server_url}/sessions/start",
-        headers=headers,
-        data=SessionStartRequest.from_data(session_data).model_dump_json(exclude_none=True),
-        params=None,
-        timeout=client.sessions.DEFAULT_REQUEST_TIMEOUT_SECONDS,
-        files=None,
-        json=None,
-    )
+    assert len(api.calls) == 1
+    call = api.calls[0]
+    assert (call.method, call.url) == ("POST", f"{client.sessions.server_url}/sessions/start")
+    assert call.headers == headers
+    assert call.data == SessionStartRequest.from_data(session_data).model_dump_json(exclude_none=True)
+    assert call.params == {}
+    assert call.files == {}
+    assert call.timeout == _timeout(client.sessions.DEFAULT_REQUEST_TIMEOUT_SECONDS)
 
 
-@patch("notte_sdk._transport._RequestSession.delete")
 @pytest.mark.order(2)
-def test_close_session(mock_delete: MagicMock, client: NotteClient, session_id: str, headers: dict[str, str]) -> None:
-    response = _stop_session(mock_delete=mock_delete, client=client, session_id=session_id)
+def test_close_session(
+    client: NotteClient, session_id: str, headers: dict[str, str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    api = fake(monkeypatch, None)
+    response = _stop_session(api, client=client, session_id=session_id)
     assert response.session_id == session_id
     assert response.status == "closed"
     headers_copy = headers.copy()
     headers_copy.pop("Content-Type")
-    mock_delete.assert_called_once_with(
-        url=f"{client.sessions.server_url}/sessions/{session_id}/stop",
-        headers=headers_copy,
-        params={},
-        timeout=client.sessions.DEFAULT_REQUEST_TIMEOUT_SECONDS,
-    )
+    assert len(api.calls) == 1
+    call = api.calls[0]
+    assert (call.method, call.url) == ("DELETE", f"{client.sessions.server_url}/sessions/{session_id}/stop")
+    assert call.headers == headers_copy
+    assert call.params == {}
+    assert call.data is None
+    assert call.timeout == _timeout(client.sessions.DEFAULT_REQUEST_TIMEOUT_SECONDS)
 
 
-@patch("notte_sdk._transport._RequestSession.post")
-def test_scrape(mock_post: MagicMock, client: NotteClient, session_id: str, headers: dict[str, str]) -> None:
+def test_scrape(client: NotteClient, session_id: str, headers: dict[str, str], monkeypatch: pytest.MonkeyPatch) -> None:
     mock_response = {
         "markdown": "test space",
         "session": session_response_dict(session_id),
     }
-    mock_post.return_value.status_code = 200
-    mock_post.return_value.json.return_value = mock_response
+    api = fake(monkeypatch, mock_response)
 
     data = client.sessions.page.scrape(session_id)
 
     assert isinstance(data, str)
     assert data == "test space"
-    mock_post.assert_called_once()
-    actual_call = mock_post.call_args
-    assert actual_call.kwargs["headers"] == headers
-    assert "model" not in json.loads(actual_call.kwargs["data"])
+    assert len(api.calls) == 1
+    assert api.calls[0].method == "POST"
+    assert api.calls[0].headers == headers
+    assert "model" not in json.loads(api.calls[0].data)
 
 
-@patch("notte_sdk._transport._RequestSession.post")
-def test_scrape_sends_model(mock_post: MagicMock, client: NotteClient, session_id: str) -> None:
-    mock_post.return_value.status_code = 200
-    mock_post.return_value.json.return_value = {
-        "markdown": "test space",
-        "structured": {"success": True, "error": None, "data": {"title": "t"}},
-        "session": session_response_dict(session_id),
-    }
+def test_scrape_sends_model(client: NotteClient, session_id: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    api = fake(
+        monkeypatch,
+        {
+            "markdown": "test space",
+            "structured": {"success": True, "error": None, "data": {"title": "t"}},
+            "session": session_response_dict(session_id),
+        },
+    )
 
     _ = client.sessions.page.scrape(session_id, instructions="extract", model="vertex_ai/gemini-3.5-flash")
 
-    body = json.loads(mock_post.call_args.kwargs["data"])
+    body = json.loads(api.calls[0].data)
     assert body["model"] == "vertex_ai/gemini-3.5-flash"
     assert body["instructions"] == "extract"
 
 
 @pytest.mark.parametrize("start_session", [True, False])
-@patch("notte_sdk._transport._RequestSession.delete")
-@patch("notte_sdk._transport._RequestSession.post")
 def test_observe(
-    mock_post: MagicMock,
-    mock_delete: MagicMock,
     client: NotteClient,
     headers: dict[str, str],
     start_session: bool,
     session_id: str,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    api = fake(monkeypatch, None)
     if start_session:
-        _ = _start_session(mock_post, client, session_id)
+        _ = _start_session(api, client, session_id)
     mock_response = {
         "started_at": dt.datetime.now(),
         "ended_at": dt.datetime.now(),
@@ -290,11 +283,12 @@ def test_observe(
             "browser_actions": [s.model_dump() for s in BrowserAction.list()],
             "category": "homepage",
         },
-        "screenshot": {"raw": Observation.empty().screenshot.raw},
+        # as the API sends it: base64 text
+        "screenshot": Observation.empty().screenshot.model_dump(mode="json"),
         "progress": None,
     }
-    mock_post.return_value.status_code = 200
-    mock_post.return_value.json.return_value = mock_response
+    api.payload = mock_response
+    calls_before = len(api.calls)
 
     observation = client.sessions.page.observe(session_id=session_id)
 
@@ -305,24 +299,22 @@ def test_observe(
     assert observation.screenshot.raw == Observation.empty().screenshot.raw
 
     if not start_session:
-        mock_post.assert_called_once()
-    actual_call = mock_post.call_args
-    assert actual_call.kwargs["headers"] == headers
+        assert len(api.calls) == 1
+    actual_call = api.calls[calls_before]
+    assert actual_call.method == "POST"
+    assert actual_call.headers == headers
 
     if start_session:
-        _ = _stop_session(mock_delete=mock_delete, client=client, session_id=session_id)
+        _ = _stop_session(api, client=client, session_id=session_id)
 
 
 @pytest.mark.parametrize("start_session", [True, False])
-@patch("notte_sdk._transport._RequestSession.delete")
-@patch("notte_sdk._transport._RequestSession.post")
 def test_step(
-    mock_post: MagicMock,
-    mock_delete: MagicMock,
     client: NotteClient,
     headers: dict[str, str],
     start_session: bool,
     session_id: str,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """
     Tests the client's step method with an optional session start.
@@ -333,8 +325,9 @@ def test_step(
     The test asserts that the returned observation contains the expected metadata and that
     the HTTP request includes the appropriate authorization header and JSON payload.
     """
+    api = fake(monkeypatch, None)
     if start_session:
-        _ = _start_session(mock_post, client, session_id)
+        _ = _start_session(api, client, session_id)
     mock_response = {
         "started_at": dt.datetime.now(),
         "ended_at": dt.datetime.now(),
@@ -345,8 +338,8 @@ def test_step(
         "success": True,
         "message": "test message",
     }
-    mock_post.return_value.status_code = 200
-    mock_post.return_value.json.return_value = mock_response
+    api.payload = mock_response
+    calls_before = len(api.calls)
 
     step_data: ExecutionRequestDict = {
         "type": "fill",
@@ -362,14 +355,15 @@ def test_step(
     assert obs.message == "test message"
 
     if not start_session:
-        mock_post.assert_called_once()
-    actual_call = mock_post.call_args
-    assert actual_call.kwargs["headers"] == headers
-    assert json.loads(actual_call.kwargs["data"])["id"] == "I1"
-    assert json.loads(actual_call.kwargs["data"])["value"] == "#submit-button"
+        assert len(api.calls) == 1
+    actual_call = api.calls[calls_before]
+    assert actual_call.method == "POST"
+    assert actual_call.headers == headers
+    assert json.loads(actual_call.data)["id"] == "I1"
+    assert json.loads(actual_call.data)["value"] == "#submit-button"
 
     if start_session:
-        _ = _stop_session(mock_delete=mock_delete, client=client, session_id=session_id)
+        _ = _stop_session(api, client=client, session_id=session_id)
 
 
 def test_format_observe_response(client: NotteClient, session_id: str) -> None:
@@ -451,18 +445,21 @@ def test_solve_captchas_defaults_to_enabled_but_can_be_disabled() -> None:
 @pytest.mark.parametrize("options, expected", [({}, None), ({"block_ads": True}, True), ({"block_ads": False}, False)])
 @pytest.mark.parametrize("high_level", [True, False])
 def test_ad_blocking_is_serialized_for_remote_sessions(
-    client: NotteClient, session_id: str, options: SessionStartRequestDict, expected: bool | None, high_level: bool
+    client: NotteClient,
+    session_id: str,
+    options: SessionStartRequestDict,
+    expected: bool | None,
+    high_level: bool,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    with patch("notte_sdk._transport._RequestSession.post") as mock_post:
-        mock_post.return_value.status_code = 200
-        mock_post.return_value.json.return_value = session_response_dict(session_id)
-        if high_level:
-            session = client.Session(**options)
-            session.start()
-        else:
-            _ = client.sessions.start(**options)
-    mock_post.assert_called_once()
-    payload = json.loads(mock_post.call_args.kwargs["data"])
+    api = fake(monkeypatch, session_response_dict(session_id))
+    if high_level:
+        session = client.Session(**options)
+        session.start()
+    else:
+        _ = client.sessions.start(**options)
+    assert len(api.calls) == 1
+    payload = json.loads(api.calls[0].data)
     if expected is None:
         assert "block_ads" not in payload
     else:
@@ -501,28 +498,33 @@ def test_managed_auth_ids_are_serialized_without_local_validation() -> None:
         assert SessionStartRequest.from_data({"auth_ids": invalid}).auth_ids == invalid
 
 
-@patch("notte_sdk._transport._RequestSession.post")
-def test_managed_auth_connection_check(mock_post: MagicMock, client: NotteClient, headers: dict[str, str]) -> None:
+def test_managed_auth_connection_check(
+    client: NotteClient, headers: dict[str, str], monkeypatch: pytest.MonkeyPatch
+) -> None:
     auth_id = "55555555-5555-5555-5555-555555555555"
-    mock_post.return_value.status_code = 200
-    mock_post.return_value.json.return_value = {
-        "connection_id": auth_id,
-        "status": "authenticated",
-        "message": "Authentication check completed",
-    }
+    api = fake(
+        monkeypatch,
+        {
+            "connection_id": auth_id,
+            "status": "authenticated",
+            "message": "Authentication check completed",
+        },
+    )
 
     result = client.managed_auth.check_connection(auth_id)
 
     assert result.status == "authenticated"
-    mock_post.assert_called_once_with(
-        url=f"{client.managed_auth.server_url}/managed-auth/connections/{auth_id}/check",
-        headers=headers,
-        data="{}",
-        params=None,
-        timeout=client.managed_auth.DEFAULT_REQUEST_TIMEOUT_SECONDS,
-        files=None,
-        json=None,
+    assert len(api.calls) == 1
+    call = api.calls[0]
+    assert (call.method, call.url) == (
+        "POST",
+        f"{client.managed_auth.server_url}/managed-auth/connections/{auth_id}/check",
     )
+    assert call.headers == headers
+    assert call.data == "{}"
+    assert call.params == {}
+    assert call.files == {}
+    assert call.timeout == _timeout(client.managed_auth.DEFAULT_REQUEST_TIMEOUT_SECONDS)
 
 
 def test_system_session_filter_is_session_specific_and_only_sent_explicitly() -> None:
@@ -574,31 +576,33 @@ def test_idle_timeout_validation(monkeypatch, value) -> None:
     assert_start_api_validation(monkeypatch, {"idle_timeout_minutes": value})
 
 
-def test_session_start_with_new_timeout_params(client: NotteClient, session_id: str) -> None:
+def test_session_start_with_new_timeout_params(
+    client: NotteClient, session_id: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test session start with new timeout parameters."""
     max_duration_minutes = 10
     idle_timeout_minutes = 5
-    with patch("notte_sdk._transport._RequestSession.post") as mock_post:
-        mock_post.return_value.status_code = 200
-        mock_post.return_value.json.return_value = {
+    api = fake(
+        monkeypatch,
+        {
             "session_id": session_id,
             "max_duration_minutes": max_duration_minutes,
             "idle_timeout_minutes": idle_timeout_minutes,
             "status": "active",
             "created_at": dt.datetime.now().isoformat(),
             "last_accessed_at": dt.datetime.now().isoformat(),
-        }
+        },
+    )
 
-        session = client.Session(
-            max_duration_minutes=max_duration_minutes,
-            idle_timeout_minutes=idle_timeout_minutes,
-            _client=client.sessions,
-        )
-        session.start()
+    session = client.Session(
+        max_duration_minutes=max_duration_minutes,
+        idle_timeout_minutes=idle_timeout_minutes,
+        _client=client.sessions,
+    )
+    session.start()
 
-        # Verify the request was made with correct params
-        assert mock_post.called
-        call_args = mock_post.call_args
-        request_data = json.loads(call_args[1]["data"])
-        assert request_data["max_duration_minutes"] == max_duration_minutes
-        assert request_data["idle_timeout_minutes"] == idle_timeout_minutes
+    # Verify the request was made with correct params
+    assert api.calls
+    request_data = json.loads(api.calls[-1].data)
+    assert request_data["max_duration_minutes"] == max_duration_minutes
+    assert request_data["idle_timeout_minutes"] == idle_timeout_minutes

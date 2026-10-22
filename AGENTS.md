@@ -35,9 +35,12 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
 
 ## HTTP transport
 
-Only `_transport.py`, `_retry.py`, `errors.py` and `endpoints/base.py` in `notte_sdk`
-import `requests`. Other SDK code goes through `BaseClient` and the `_transport`
-helpers; a test fails on any other import.
+The SDK sends HTTP with httpx. Only `_transport.py`, `_retry.py`, `errors.py` and
+`endpoints/base.py` in `notte_sdk` import `httpx`, `httpcore` or `requests` (kept for
+the exception classes `errors.py` extends). Other SDK code goes through `BaseClient`
+and the `_transport` helpers; a test fails on any other import. Offline tests answer
+requests with `fake()` from `tests/sdk/test_generated_endpoints.py`, an
+`httpx.MockTransport`; don't patch `requests`.
 
 ## Generated docs
 

@@ -4,7 +4,6 @@ import json
 from typing import Any
 
 import pytest
-import requests
 from notte_core import __version__
 from notte_sdk import NotteClient
 from notte_sdk.errors import NotteAPIError
@@ -18,18 +17,7 @@ client = capture_client
 
 
 def capture(monkeypatch: pytest.MonkeyPatch, payload: Any, status: int = 200) -> FakeSession:
-    session = fake(monkeypatch, payload, status)
-
-    def send(method: str, url: str, **kwargs: Any) -> requests.Response:
-        recorded = session._call(method, url, **kwargs)
-        response = requests.Response()
-        response.status_code = recorded.status_code
-        response._content = recorded.content
-        return response
-
-    monkeypatch.setattr("notte_sdk._transport.requests.get", lambda url, **kw: send("GET", url, **kw))
-    monkeypatch.setattr("notte_sdk._transport.requests.delete", lambda url, **kw: send("DELETE", url, **kw))
-    return session
+    return fake(monkeypatch, payload, status)
 
 
 def test_files_json_wire_contract(client: NotteClient, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -48,9 +36,9 @@ def test_files_json_wire_contract(client: NotteClient, monkeypatch: pytest.Monke
     assert client.files.delete("session-id", "file-id") is None
     assert [(c.method, c.url.removeprefix(SERVER), c.params, c.data) for c in session.calls] == [
         ("GET", "/sessions/session-id/files", {}, None),
-        ("GET", "/sessions/session-id/files", {"limit": 0, "offset": -1, "source": "session_download"}, None),
+        ("GET", "/sessions/session-id/files", {"limit": "0", "offset": "-1", "source": "session_download"}, None),
         ("GET", "/sessions/session-id/files", {"source": "invalid"}, None),
-        ("DELETE", "/sessions/session-id/files/file-id", None, None),
+        ("DELETE", "/sessions/session-id/files/file-id", {}, None),
     ]
     assert events == ["cloud.files.list"] * 3 + ["cloud.files.delete"]
     for call in session.calls:
@@ -147,7 +135,7 @@ def test_file_execution_targets_one_browser_tab(client: NotteClient, monkeypatch
     assert result.action.type == "upload_file"
     call = session.calls[0]
     assert (call.method, call.url) == ("POST", SERVER + "/sessions/session%2Fid/page/execute/file")
-    assert call.params == {"update_metadata": False}
+    assert call.params == {"update_metadata": "False"}
     body = json.loads(call.data)
     assert body["target_id"] == "browser-target"
     assert body["record"] is False

@@ -4,7 +4,6 @@ import base64
 import hashlib
 import json
 from typing import Any
-from unittest.mock import MagicMock
 
 import pytest
 from notte_core import __version__
@@ -13,7 +12,7 @@ from notte_sdk.endpoints.run_payloads import offload_run_fields
 from notte_sdk.errors import NotteAPIError
 
 from tests.sdk.test_generated_endpoints import SERVER, fake
-from tests.sdk.test_run_payloads import storage_session
+from tests.sdk.test_run_payloads import Storage, sent_headers
 from tests.sdk.test_vaults_codegen import client as capture_client
 
 client = capture_client
@@ -39,8 +38,8 @@ def test_payload_upload_wire_contract(
     checksum = base64.b64encode(hashlib.sha256(raw).digest()).decode()
     reference = {"upload_id": "upload", "size_bytes": len(raw), "sha256": checksum}
     api = fake(monkeypatch, {"reference": reference, "url": "https://storage.example/object", "headers": {}})
-    storage = storage_session(MagicMock(status_code=200))
-    monkeypatch.setattr("notte_sdk._transport.requests.Session", lambda: storage)
+    storage = Storage()
+    monkeypatch.setattr("notte_sdk._transport.http_client", storage.client)
     monkeypatch.setattr("notte_sdk.endpoints.run_payloads.INLINE_FIELD_BYTES", 1)
     result = offload_run_fields(client.functions, function_id, run_id, fields)
     assert result == {"payloads": {"logs": reference}}
@@ -48,7 +47,7 @@ def test_payload_upload_wire_contract(
     assert (call.method, call.url, call.params) == (
         "POST",
         SERVER + route + "/payloads/logs/upload",
-        None,
+        {},
     )
     assert json.loads(call.data) == {"size_bytes": len(raw), "sha256": checksum}
     assert call.headers == {
@@ -57,8 +56,12 @@ def test_payload_upload_wire_contract(
         "x-notte-request-origin": "sdk-python",
         "Content-Type": "application/json",
     }
-    assert storage.put.call_args.kwargs["headers"] == {}
-    assert storage.put.call_args.kwargs["allow_redirects"] is False
+    # The storage request carries none of the API headers.
+    assert [(request.method, str(request.url)) for request in storage.requests] == [
+        ("PUT", "https://storage.example/object")
+    ]
+    assert sent_headers(storage.requests[0]) == {}
+    assert storage.uploads == [raw]
 
 
 @pytest.mark.parametrize("status", [404, 422])
@@ -79,10 +82,10 @@ def test_legacy_managed_auth_wire_contract(client: NotteClient, monkeypatch: pyt
     assert client.managed_auth.refresh_connection("connection", wait=False).auth_retry == 0
     assert client.managed_auth.reauthenticate_connection("connection", auth_retry=2).status == "succeeded"
     assert [(c.method, c.url.removeprefix(SERVER), c.params) for c in api.calls] == [
-        ("POST", "/managed-auth/connections/connection/check", None),
-        ("GET", "/managed-auth/operations/operation", None),
-        ("POST", "/managed-auth/connections/connection/refresh", None),
-        ("POST", "/managed-auth/connections/connection/reauthenticate", None),
+        ("POST", "/managed-auth/connections/connection/check", {}),
+        ("GET", "/managed-auth/operations/operation", {}),
+        ("POST", "/managed-auth/connections/connection/refresh", {}),
+        ("POST", "/managed-auth/connections/connection/reauthenticate", {}),
     ]
     assert [json.loads(c.data) for c in api.calls if c.method == "POST"] == [{}, {}, {"auth_retry": 2}]
 

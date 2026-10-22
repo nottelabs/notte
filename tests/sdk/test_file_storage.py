@@ -3,6 +3,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 from notte_sdk.endpoints.files import FileStorageClient, RemoteFileStorage
+from notte_sdk.errors import NotteAPIError
 from notte_sdk.types import FileSource, SessionFile, SessionFilesPage
 
 from tests.sdk.test_generated_endpoints import fake
@@ -57,29 +58,40 @@ def test_list_uses_session_endpoint(files_client: FileStorageClient, monkeypatch
     assert session.calls[0].params == {"source": "user_upload"}
 
 
-def test_download_is_id_based(files_client: FileStorageClient, tmp_path: Path) -> None:
-    response = Mock(ok=True)
-    response.iter_content.return_value = [b"hello"]
-    with (
-        patch.object(files_client, "metadata", return_value=file_metadata()),
-        patch("notte_sdk._transport.requests.get", return_value=response) as get,
-    ):
+def test_download_is_id_based(files_client: FileStorageClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    api = fake(monkeypatch, b"hello")
+    with patch.object(files_client, "metadata", return_value=file_metadata()):
         destination = files_client.download("session-id", "file-id", str(tmp_path))
 
     assert Path(destination).read_bytes() == b"hello"
-    assert get.call_args.args[0] == "https://api.notte.test/sessions/session-id/files/file-id"
-    response.close.assert_called_once()
+    assert [(c.method, c.url) for c in api.calls] == [
+        ("GET", "https://api.notte.test/sessions/session-id/files/file-id")
+    ]
+    assert api.calls[0].headers["Authorization"] == "Bearer test-api-key"  # pragma: allowlist secret
+    assert api.bodies[0].closed
+
+
+def test_download_error_raises_api_error(
+    files_client: FileStorageClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    api = fake(monkeypatch, {"detail": "File not found"}, 404)
+    with patch.object(files_client, "metadata", return_value=file_metadata()):
+        with pytest.raises(NotteAPIError) as error:
+            _ = files_client.download("session-id", "file-id", str(tmp_path))
+
+    assert error.value.status_code == 404
+    assert error.value.error == {"detail": "File not found"}
+    assert api.bodies[0].closed
+    assert list(tmp_path.iterdir()) == []
 
 
 @pytest.mark.parametrize("filename", ["../../secret.txt", "..\\..\\secret.txt", "/tmp/secret.txt"])
-def test_download_sanitizes_server_filename(files_client: FileStorageClient, tmp_path: Path, filename: str) -> None:
-    response = Mock(ok=True)
-    response.iter_content.return_value = [b"hello"]
+def test_download_sanitizes_server_filename(
+    files_client: FileStorageClient, tmp_path: Path, filename: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _ = fake(monkeypatch, b"hello")
     metadata = file_metadata().model_copy(update={"filename": filename})
-    with (
-        patch.object(files_client, "metadata", return_value=metadata),
-        patch("notte_sdk._transport.requests.get", return_value=response),
-    ):
+    with patch.object(files_client, "metadata", return_value=metadata):
         destination = files_client.download("session-id", "file-id", str(tmp_path))
 
     assert Path(destination) == tmp_path / "secret.txt"
@@ -87,17 +99,13 @@ def test_download_sanitizes_server_filename(files_client: FileStorageClient, tmp
 
 
 def test_download_does_not_follow_predictable_temporary_symlink(
-    files_client: FileStorageClient, tmp_path: Path
+    files_client: FileStorageClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     outside = tmp_path.parent / "outside.txt"
     outside.write_text("safe")
     (tmp_path / ".input.txt.part").symlink_to(outside)
-    response = Mock(ok=True)
-    response.iter_content.return_value = [b"download"]
-    with (
-        patch.object(files_client, "metadata", return_value=file_metadata()),
-        patch("notte_sdk._transport.requests.get", return_value=response),
-    ):
+    _ = fake(monkeypatch, b"download")
+    with patch.object(files_client, "metadata", return_value=file_metadata()):
         destination = files_client.download("session-id", "file-id", str(tmp_path))
 
     assert Path(destination).read_bytes() == b"download"

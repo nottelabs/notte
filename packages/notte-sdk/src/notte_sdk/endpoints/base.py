@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import weakref
 from abc import ABC
 from collections.abc import Generator, Iterator, Mapping, Sequence
 from contextlib import ExitStack, contextmanager
@@ -8,16 +9,33 @@ from json import JSONDecodeError
 from typing import TYPE_CHECKING, Any, ClassVar, Generic, Literal, Self, TypeVar, cast
 from urllib.parse import quote, urljoin
 
-import requests
+import httpx
 from notte_core import __version__ as notte_core_version
 from notte_core.logging import logger
 from pydantic import BaseModel, ConfigDict, ValidationError
-from requests.exceptions import ConnectionError
 
 from notte_sdk._retry import DEFAULT_MAX_RETRIES
-from notte_sdk._transport import open_stream, request_session, send_with_retries
+from notte_sdk._transport import (
+    SharedHttpClient,
+    decode_json,
+    form_fields,
+    http_client,
+    iter_lines,
+    multipart_files,
+    raise_for_status,
+    send,
+    send_with_retries,
+    stream,
+    with_query,
+)
 from notte_sdk.auth import MISSING_API_KEY_MESSAGE, resolve_api_key
-from notte_sdk.errors import AuthenticationError, NotteAPIError, NotteAPIExecutionError
+from notte_sdk.errors import (
+    AuthenticationError,
+    NotteAPIError,
+    NotteAPIExecutionError,
+    NotteConnectionError,
+    NotteRequestError,
+)
 
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
@@ -106,6 +124,8 @@ class BaseClient(ABC):
     # Set per instance in __init__. Declared here with a default so clients
     # built without running __init__ still resolve it.
     db_preview: str | None = None
+    # Connections of a client built without a NotteClient, opened on first use.
+    _own_http: SharedHttpClient | None = None
 
     def __init__(
         self,
@@ -146,6 +166,17 @@ class BaseClient(ABC):
         self.check_and_warn_version_mismatch()
 
     @property
+    def http(self) -> httpx.Client:
+        """The pooled HTTP client shared by every resource of the owning `NotteClient`."""
+        shared = getattr(self.root_client, "_http", None)
+        if not isinstance(shared, SharedHttpClient):
+            shared = self._own_http
+            if shared is None:
+                shared = self._own_http = SharedHttpClient()
+                _ = weakref.finalize(self, shared.close)
+        return shared.get()
+
+    @property
     def max_retries(self) -> int:
         """Retries for transient failures, from ``NotteClient(max_retries=...)``."""
         value = getattr(self.root_client, "max_retries", DEFAULT_MAX_RETRIES)
@@ -174,24 +205,29 @@ class BaseClient(ABC):
             The latest version string from PyPI
 
         Raises:
-            requests.RequestException: If the PyPI API request fails
+            NotteRequestError: If the PyPI API request fails
             KeyError: If the package is not found or the response format is unexpected
         """
         try:
             # Include proper User-Agent header as recommended by PyPI
             headers = {"User-Agent": f"notte-sdk/{notte_core_version} (https://github.com/NotteAI/notte)"}
 
-            response = requests.get(
-                f"https://pypi.org/pypi/{package_name}/json",
-                headers=headers,
-                timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
-            )
-            response.raise_for_status()
+            with http_client() as client:
+                response = send(
+                    client,
+                    client.build_request(
+                        "GET",
+                        f"https://pypi.org/pypi/{package_name}/json",
+                        headers=headers,
+                        timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+                    ),
+                )
+            raise_for_status(response)
 
-            data = response.json()
+            data = decode_json(response)
             return data["info"]["version"]
 
-        except requests.RequestException as e:
+        except NotteRequestError as e:
             logger.debug(f"Failed to fetch PyPI information for {package_name}: {e}")
             raise
         except KeyError as e:
@@ -316,16 +352,20 @@ class BaseClient(ABC):
         Health check the Notte API.
         """
         try:
-            response = requests.get(
-                f"{self.server_url}/{self.HEALTH_CHECK_ENDPOINT}",
-                headers={"x-notte-request-origin": self.REQUEST_ORIGIN, "x-notte-sdk-version": notte_core_version},
+            response = send(
+                self.http,
+                self.http.build_request(
+                    "GET",
+                    f"{self.server_url}/{self.HEALTH_CHECK_ENDPOINT}",
+                    headers={"x-notte-request-origin": self.REQUEST_ORIGIN, "x-notte-sdk-version": notte_core_version},
+                ),
             )
             if response.status_code != 200:
                 logger.error(f"⚠️ Health check failed with status code {response.status_code}.")
                 raise Exception(
                     f"Health check failed with status code {response.status_code}. Please check your server URL."
                 )
-        except ConnectionError as e:
+        except NotteConnectionError as e:
             logger.error(f"⚠️ Health check failed with error: {e}. Please check your server URL.")
             raise Exception(
                 "Health check failed because the server is not reachable. Please check your server URL."
@@ -436,14 +476,14 @@ class BaseClient(ABC):
         response = self._send_checked(endpoint, headers=headers, timeout=timeout)
         if response.status_code == 204 or getattr(response, "content", None) == b"":
             return {}
-        response_dict: Any = response.json()
+        response_dict: Any = decode_json(response)
         if check_response_detail and isinstance(response_dict, dict) and "detail" in response_dict:
             raise NotteAPIError(path=self._error_path(endpoint), response=response)
         return cast(Any, response_dict)
 
     def _send_checked(
         self, endpoint: NotteEndpoint[TResponse], *, headers: dict[str, str] | None, timeout: float | None
-    ) -> requests.Response:
+    ) -> httpx.Response:
         """Send `endpoint` with retries; a non-2xx response raises the matching error."""
         headers = self.headers(headers=headers)
         url = self.request_path(endpoint)
@@ -494,45 +534,35 @@ class BaseClient(ABC):
         headers: dict[str, str],
         params: dict[str, Any] | None,
         timeout: float | None,
-    ) -> requests.Response:
-        files = endpoint.files if endpoint.files is not None else None
+    ) -> httpx.Response:
+        files = multipart_files(endpoint.files) if endpoint.files is not None else None
         headers = dict(headers)
-        with request_session() as session:
-            match endpoint.method:
-                case "GET":
-                    response = session.get(
-                        url=url,
-                        headers=headers,
-                        params=params,
-                        timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
-                    )
-                case "POST" | "PATCH":
-                    if endpoint.request is None:
-                        data = None
-                    elif files is None:
-                        data = endpoint.request.model_dump_json(exclude_none=True)
-                        headers["Content-Type"] = "application/json"
-                    else:
-                        # if files is not None, data must not be a string
-                        data = endpoint.request.model_dump(exclude_none=True)
-                    method = session.post if endpoint.method == "POST" else session.patch
-                    response = method(
-                        url=url,
-                        headers=headers,
-                        data=data,
-                        params=params,
-                        timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
-                        files=files,
-                        json=None,
-                    )
-                case "DELETE":
-                    response = session.delete(
-                        url=url,
-                        headers=headers,
-                        params=params,
-                        timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
-                    )
-        return response
+        url = with_query(url, params)
+        timeout = timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS
+        match endpoint.method:
+            case "GET" | "DELETE":
+                request = self.http.build_request(endpoint.method, url, headers=headers, timeout=timeout)
+            case "POST" | "PATCH":
+                content = None
+                data = None
+                if endpoint.request is None:
+                    pass
+                elif files is None:
+                    content = endpoint.request.model_dump_json(exclude_none=True)
+                    headers["Content-Type"] = "application/json"
+                else:
+                    # multipart: the request fields are sent as form fields next to the files
+                    data = form_fields(endpoint.request.model_dump(exclude_none=True))
+                request = self.http.build_request(
+                    endpoint.method,
+                    url,
+                    headers=headers,
+                    content=content,
+                    data=data,
+                    files=files,
+                    timeout=timeout,
+                )
+        return send(self.http, request)
 
     def request(
         self, endpoint: NotteEndpoint[TResponse], headers: dict[str, str] | None = None, timeout: float | None = None
@@ -656,15 +686,14 @@ class BaseClient(ABC):
         Raises:
             NotteAPIError: If the API response indicates a failure.
         """
-        response = open_stream(
-            self.request_path(endpoint), headers=self.headers(), timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS
+        request = self.http.build_request(
+            "GET", self.request_path(endpoint), headers=self.headers(), timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS
         )
-        try:
-            if not response.ok:
+        with stream(self.http, request) as response:
+            if response.is_error:
+                _ = response.read()
                 raise NotteAPIError(path=self._error_path(endpoint), response=response)
-            yield (chunk for chunk in response.iter_content(self.DEFAULT_FILE_CHUNK_SIZE) if chunk)
-        finally:
-            response.close()
+            yield (chunk for chunk in response.iter_bytes(self.DEFAULT_FILE_CHUNK_SIZE) if chunk)
 
     def _request_once(self, endpoint: NotteEndpoint[TResponse], *, headers: dict[str, str], timeout: float) -> Any:
         """
@@ -673,10 +702,10 @@ class BaseClient(ABC):
         Raises:
             NotteAPIError: If the API response indicates a failure.
         """
-        response = self._open_once(endpoint, headers=headers, timeout=timeout)
-        if not response.ok:
+        response = send(self.http, self._once_request(endpoint, headers=headers, timeout=timeout))
+        if response.is_error:
             raise NotteAPIError(path=self._error_path(endpoint), response=response)
-        return response.json()
+        return decode_json(response)
 
     @contextmanager
     def _stream_lines(
@@ -689,26 +718,29 @@ class BaseClient(ABC):
         Raises:
             NotteAPIError: If the API response indicates a failure.
         """
-        with self._open_once(endpoint, headers=headers, timeout=timeout) as response:
-            if not response.ok:
+        with stream(self.http, self._once_request(endpoint, headers=headers, timeout=timeout)) as response:
+            if response.is_error:
+                _ = response.read()
                 raise NotteAPIError(path=self._error_path(endpoint), response=response)
-            yield (line.decode("utf-8") for line in response.iter_lines() if line)
+            yield (line.decode("utf-8") for line in iter_lines(response) if line)
 
-    def _open_once(
+    def _once_request(
         self, endpoint: NotteEndpoint[TResponse], *, headers: dict[str, str], timeout: float
-    ) -> requests.Response:
-        data = endpoint.request.model_dump_json(exclude_none=True) if endpoint.request is not None else ""
+    ) -> httpx.Request:
+        """The POST that `_request_once` and `_stream_lines` send: the request model as JSON."""
+        content = endpoint.request.model_dump_json(exclude_none=True) if endpoint.request is not None else ""
         headers = self.headers(headers={**headers, "Content-Type": "application/json"})
-        return open_stream(self.request_path(endpoint), headers=headers, data=data, timeout=timeout)
+        return self.http.build_request(
+            "POST", self.request_path(endpoint), headers=headers, content=content, timeout=timeout
+        )
 
     def _request_file(
         self, endpoint: NotteEndpoint[TResponse], file_type: str, output_file: str | None = None
     ) -> bytes:
         url = self.request_path(endpoint)
-        response = requests.get(
-            url=url,
-            headers=self.headers(),
-            timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+        response = send(
+            self.http,
+            self.http.build_request("GET", url, headers=self.headers(), timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS),
         )
 
         try:
@@ -727,15 +759,12 @@ class BaseClient(ABC):
         return response.content
 
     def request_download(self, url: str, file_path: str) -> bool:
-        with requests.get(
-            url=url,
-            stream=True,
-            timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
-        ) as r:
-            r.raise_for_status()
+        request = self.http.build_request("GET", url, timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS)
+        with stream(self.http, request) as r:
+            raise_for_status(r)
 
             with open(file_path, "wb") as f:
-                for chunk in r.iter_content(chunk_size=self.DEFAULT_FILE_CHUNK_SIZE):
+                for chunk in r.iter_bytes(chunk_size=self.DEFAULT_FILE_CHUNK_SIZE):
                     _ = f.write(chunk)
 
         return True

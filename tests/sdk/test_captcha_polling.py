@@ -6,8 +6,8 @@ from notte_core.actions import CaptchaSolveAction, ClickAction, WaitAction
 from notte_core.observation import utc_now
 from notte_sdk.client import NotteClient
 from notte_sdk.endpoints.page import PageClient
+from notte_sdk.errors import NotteConnectionError, NotteReadTimeoutError, NotteStreamError
 from notte_sdk.types import CaptchaStatus, ExecutionResultResponse
-from requests.exceptions import ChunkedEncodingError, Timeout
 
 
 @pytest.fixture
@@ -103,7 +103,7 @@ def test_total_deadline_is_not_reset_by_polls(client):
     assert page.request.call_count == 3
 
 
-@pytest.mark.parametrize("error", [Timeout, ChunkedEncodingError])
+@pytest.mark.parametrize("error", [NotteReadTimeoutError, NotteConnectionError, NotteStreamError])
 def test_ordinary_transport_timeout_never_retries(client, error):
     page, _ = client
     page.request = MagicMock(side_effect=error())
@@ -112,7 +112,7 @@ def test_ordinary_transport_timeout_never_retries(client, error):
     assert page.request.call_count == 1
 
 
-@pytest.mark.parametrize("error", [Timeout, ChunkedEncodingError])
+@pytest.mark.parametrize("error", [NotteReadTimeoutError, NotteConnectionError, NotteStreamError])
 def test_poll_transport_timeout_resumes_same_solve(client, error):
     page, _ = client
     action = CaptchaSolveAction()
@@ -139,7 +139,7 @@ def test_missing_poll_status_cannot_report_action_success(client):
     assert page.request.call_count == 2
 
 
-@pytest.mark.parametrize("error", [Timeout, ChunkedEncodingError])
+@pytest.mark.parametrize("error", [NotteReadTimeoutError, NotteConnectionError, NotteStreamError])
 def test_initial_solve_transport_failure_is_not_retried(client, error):
     page, _ = client
     page.request = MagicMock(side_effect=error("initial response lost"))

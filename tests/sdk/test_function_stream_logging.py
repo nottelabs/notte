@@ -3,12 +3,13 @@ import json
 from unittest.mock import MagicMock
 
 import pytest
-import requests
 from notte_core.logging import logger
-from notte_sdk import _transport as transport
 from notte_sdk._generated import operations as api
 from notte_sdk.endpoints.base import BaseClient
 from notte_sdk.endpoints.functions import FunctionsClient
+from notte_sdk.errors import NotteConnectionError, NotteRequestTimeoutError
+
+from tests.sdk.test_generated_endpoints import fake
 
 
 @pytest.mark.parametrize("key_source", ["argument", "environment"])
@@ -30,9 +31,9 @@ def test_session_start_does_not_log_api_key(monkeypatch, key_source, explicit_st
         case "missing":
             root_client.sessions.request.return_value.viewer_url = None
         case "error":
-            root_client.sessions.request.side_effect = requests.ConnectionError(f"Request failed: {api_key}")
+            root_client.sessions.request.side_effect = NotteConnectionError(f"Request failed: {api_key}")
         case "timeout":
-            root_client.sessions.request.side_effect = requests.Timeout(f"Request timed out: {api_key}")
+            root_client.sessions.request.side_effect = NotteRequestTimeoutError(f"Request timed out: {api_key}")
         case "legacy_api_key":
             root_client.sessions.request.return_value.viewer_url = viewer_url.replace(
                 "&jwt=fake-session-jwt", f"?token={api_key}"
@@ -49,18 +50,17 @@ def test_session_start_does_not_log_api_key(monkeypatch, key_source, explicit_st
         "status": "closed",
         "result": {"ok": True},
     }
-    response = MagicMock()
-    response.__enter__.return_value = response
-    response.iter_lines.return_value = [
-        ("data: " + json.dumps(event)).encode()
-        for event in [
-            {"type": "session_start", "message": session_id},
-            {"type": "log", "message": "Function is running"},
-            {"type": "result", "message": json.dumps(result)},
-        ]
-    ]
-    post = MagicMock(return_value=response)
-    monkeypatch.setattr(transport.requests, "post", post)
+    stream = fake(
+        monkeypatch,
+        b"\n\n".join(
+            ("data: " + json.dumps(event)).encode()
+            for event in [
+                {"type": "session_start", "message": session_id},
+                {"type": "log", "message": "Function is running"},
+                {"type": "result", "message": json.dumps(result)},
+            ]
+        ),
+    )
     captured = io.StringIO()
     handler = logger.add(captured, level="INFO")
     try:
@@ -82,5 +82,9 @@ def test_session_start_does_not_log_api_key(monkeypatch, key_source, explicit_st
     assert "Function is running" in output
     assert completed.session_id == session_id
     assert completed.result == {"ok": True}
-    assert post.call_args.kwargs["headers"]["Authorization"] == f"Bearer {api_key}"
-    assert post.call_args.kwargs["headers"]["x-notte-api-key"] == api_key
+    assert [(call.method, call.url) for call in stream.calls] == [
+        ("POST", "https://example.invalid/functions/function-123/runs/run-123")
+    ]
+    assert stream.calls[0].headers["Authorization"] == f"Bearer {api_key}"
+    assert stream.calls[0].headers["x-notte-api-key"] == api_key
+    assert stream.bodies[0].closed

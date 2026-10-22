@@ -53,15 +53,15 @@ def test_session_wire_contract(client: NotteClient, monkeypatch: pytest.MonkeyPa
     api.payload = {"session_id": "session", "status": "active", "operations": []}
     assert client.sessions.auth_readiness("session").status == "active"
     assert [(c.method, c.url.removeprefix(SERVER), c.params) for c in api.calls] == [
-        ("POST", "/sessions/start", None),
-        ("GET", "/sessions/session", None),
+        ("POST", "/sessions/start", {}),
+        ("GET", "/sessions/session", {}),
         ("GET", "/sessions/", {}),
         ("DELETE", "/sessions/session/stop", {}),
-        ("POST", "/sessions/session/cookies", None),
-        ("GET", "/sessions/session/cookies", None),
-        ("GET", "/sessions/session/offset", None),
-        ("GET", "/sessions/session/replay", None),
-        ("GET", "/sessions/session/auth", None),
+        ("POST", "/sessions/session/cookies", {}),
+        ("GET", "/sessions/session/cookies", {}),
+        ("GET", "/sessions/session/offset", {}),
+        ("GET", "/sessions/session/replay", {}),
+        ("GET", "/sessions/session/auth", {}),
     ]
     assert json.loads(api.calls[0].data) == DEFAULT_START
     assert json.loads(api.calls[4].data) == {"cookies": [COOKIE]}
@@ -259,7 +259,7 @@ def test_debug_response_and_legacy_tab(client: NotteClient, monkeypatch: pytest.
     assert api.calls[0].url == SERVER + "/sessions/s%2Fone%3F%23/debug"
     api.payload = tab
     assert isinstance(client.sessions.debug_tab_info("session", tab_idx=1), TabSessionDebugResponse)
-    assert api.calls[-1].params == {"tab_idx": 1}
+    assert api.calls[-1].params == {"tab_idx": "1"}
     assert api.calls[-1].url == SERVER + "/sessions/session/debug/tab"
 
 
