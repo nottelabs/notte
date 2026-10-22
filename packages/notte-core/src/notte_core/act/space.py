@@ -81,6 +81,8 @@ class ObservedPage:
     # live element state by action id (empty when a cloud observe response does not carry it)
     states: Mapping[str, ElementState]
     fingerprint: str
+    # ids of the actions in the current viewport (from the screenshot's boxes; empty when unknown)
+    in_view: frozenset[str] = frozenset()
 
     @staticmethod
     def from_observation(
@@ -96,6 +98,15 @@ class ObservedPage:
         if states is None:
             states = observation.element_states
         fingerprint = fingerprint or observation.fingerprint
+        in_view = frozenset(
+            box.notte_id
+            for box in observation.screenshot.bboxes
+            if box.notte_id is not None
+            and box.absolute_y + box.height > 0
+            and box.absolute_y < box.viewport_height
+            and box.absolute_x + box.width > 0
+            and box.absolute_x < box.viewport_width
+        )
         return ObservedPage(
             url=url,
             title=observation.metadata.title,
@@ -104,11 +115,12 @@ class ObservedPage:
             viewport=observation.metadata.viewport,
             states=states or {},
             fingerprint=fingerprint or page_fingerprint(url, ((a.id, a.text_label or "", None) for a in actions)),
+            in_view=in_view,
         )
 
     def signature(self, element_id: str) -> str | None:
-        """What a decision about `element_id` depends on: its type, label, selectors (including the iframe
-        and shadow-root path used to execute it) and live state."""
+        """What a decision about `element_id` depends on: its type, label and accessible name, selectors
+        (including the iframe and shadow-root path used to execute it) and live state."""
         for action in self.actions:
             if action.id == element_id:
                 selectors = action.selectors
@@ -117,6 +129,7 @@ class ObservedPage:
                     [
                         action.type,
                         action.text_label or "",
+                        action.accessible_name or "",
                         "" if selectors is None else selectors.model_dump_json(),
                         "" if state is None else state.digest(),
                     ]
@@ -413,6 +426,20 @@ def _element(
     return element
 
 
+def _offered(page: ObservedPage) -> list[InteractionAction]:
+    """The actions offered to the decider, in page order: all of them, or past `MAX_ELEMENTS` the ones in the
+    current viewport first, so that scrolling brings the others in reach."""
+    actions = [action for action in page.actions if action.id]
+    if len(actions) <= MAX_ELEMENTS:
+        return actions
+    kept = {action.id for action in actions if action.id in page.in_view}
+    for action in actions:
+        if len(kept) >= MAX_ELEMENTS:
+            break
+        kept.add(action.id)
+    return [action for action in actions if action.id in kept][:MAX_ELEMENTS]
+
+
 def build_act_space(
     page: ObservedPage,
     *,
@@ -434,7 +461,7 @@ def build_act_space(
         if operation not in element["operations"]:
             element["operations"].append(operation)
 
-    for action in page.actions[:MAX_ELEMENTS]:
+    for action in _offered(page):
         if not action.id or (names is not None and action.id in names.labels):
             continue
         line = lines.get(action.id, "")
