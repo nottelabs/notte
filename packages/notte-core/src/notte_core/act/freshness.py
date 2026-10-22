@@ -47,9 +47,23 @@ ELEMENT_SIGNATURES_JS = """(xpaths) => {
                 option.value, option.label, option.selected,
                 option.disabled || Boolean(option.closest("optgroup[disabled]"))
             ]) : null,
+            // what names the element from outside it: its <label>s and aria-labelledby targets
+            [
+                ...(el.labels ? Array.from(el.labels, label => label.innerText) : []),
+                ...(el.getAttribute("aria-labelledby") || "").split(/\\s+/).filter(Boolean).map(ref => {
+                    const root = el.getRootNode();
+                    const target = (root.getElementById ? root : document).getElementById(ref);
+                    return target ? target.textContent : null;
+                }),
+            ],
         ];
     }
-    return { url: location.href, elements };
+    // the focused element (where Enter goes), by position in the document
+    const active = document.activeElement;
+    const focus = active && active !== document.body && active !== document.documentElement
+        ? `${active.tagName}:${Array.prototype.indexOf.call(document.querySelectorAll("*"), active)}`
+        : null;
+    return { url: location.href, elements, focus };
 }"""
 
 
@@ -101,6 +115,8 @@ def remote_signatures_expression(xpaths: dict[str, str], mode: Literal["store", 
             if (signature === null) {{ elements[id] = null; continue; }}
             const copy = signature.slice();
             copy[2] = typeof copy[2] === "boolean" ? copy[2] : null;
+            // an aria-labelledby target can be an editable element: keep its text in the page
+            copy[15] = null;
             let el = null;
             try {{
                 el = document.evaluate(xpaths[id], document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
@@ -108,7 +124,7 @@ def remote_signatures_expression(xpaths: dict[str, str], mode: Literal["store", 
             if (el && (el.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName))) copy[1] = null;
             elements[id] = copy;
         }}
-        return JSON.stringify({{ url: current.url, elements }});
+        return JSON.stringify({{ url: current.url, elements, focus: current.focus }});
     }}
     const stored = baselines.get(token);
     const unchanged = {{}};
@@ -116,7 +132,8 @@ def remote_signatures_expression(xpaths: dict[str, str], mode: Literal["store", 
         unchanged[id] = Boolean(stored) && current.elements[id] !== null
             && JSON.stringify(stored.elements[id] ?? null) === JSON.stringify(current.elements[id]);
     }}
-    return JSON.stringify({{ url: current.url, unchanged }});
+    const focusUnchanged = Boolean(stored) && stored.focus === current.focus;
+    return JSON.stringify({{ url: current.url, unchanged, focusUnchanged }});
 }})()"""
 
 
@@ -126,19 +143,26 @@ class Signatures:
     def __init__(self, result: dict[str, Any] | None) -> None:
         self.url: str | None = None if result is None else result.get("url")
         self.elements: dict[str, Any] = {} if result is None else dict(result.get("elements") or {})
+        # the focused element, where a pressed key goes (None: the page body)
+        self.focus: str | None = None if result is None else result.get("focus")
 
     def has(self, element_id: str) -> bool:
         return self.elements.get(element_id) is not None
 
-    def unchanged(self, check: dict[str, Any] | None, element_id: str | None) -> bool:
-        """A cloud `compare` result (`remote_signatures_expression`): same URL and, for `element_id`, unchanged."""
+    def unchanged(self, check: dict[str, Any] | None, element_id: str | None, *, focus: bool = False) -> bool:
+        """A cloud `compare` result (`remote_signatures_expression`): same URL, `element_id` unchanged and, with
+        `focus`, the same focused element."""
         if check is None or check.get("url") is None or check.get("url") != self.url:
+            return False
+        if focus and check.get("focusUnchanged") is not True:
             return False
         flags: Any = check.get("unchanged") or {}
         return element_id is None or (isinstance(flags, dict) and cast(dict[str, Any], flags).get(element_id) is True)
 
-    def matches(self, current: "Signatures", element_id: str | None) -> bool:
+    def matches(self, current: "Signatures", element_id: str | None, *, focus: bool = False) -> bool:
         if current.url is None or current.url != self.url:
+            return False
+        if focus and current.focus != self.focus:
             return False
         return element_id is None or current.elements.get(element_id) == self.elements.get(element_id)
 
@@ -178,8 +202,8 @@ class Signatures:
         return True
 
 
-# entries of an `ELEMENT_SIGNATURES_JS` signature: tag, text, value, checked, ..., options (the last)
-_SIGNATURE_FIELDS = 15
+# entries of an `ELEMENT_SIGNATURES_JS` signature: tag, text, value, checked, ..., options, external label texts
+_SIGNATURE_FIELDS = 16
 
 
 def _normalized(text: str) -> str:

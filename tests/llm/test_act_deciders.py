@@ -530,3 +530,21 @@ async def test_an_empty_model_reply_is_no_answer(monkeypatch: pytest.MonkeyPatch
     assert (await LlmDecider("vendor/model").choose(STATE, QUESTIONS)).answers == {}
     with pytest.raises(InvalidDecisionError):
         _ = await LlmWriter("vendor/model").write(WriteContext(goal="g", field={}, page={}))
+
+
+@pytest.mark.parametrize(
+    ("variables", "match"),
+    [
+        ({"NOTTE_LLM_BASE_URL": "https://llm.test/v1", "NOTTE_LLM_API_KEY": "k"}, "NOTTE_LLM_MODEL"),
+        ({"NOTTE_LLM_BASE_URL": "ftp://llm.test", "NOTTE_LLM_API_KEY": "k"}, "HTTP"),
+    ],
+)
+def test_invalid_llm_settings_say_what_is_wrong(
+    monkeypatch: pytest.MonkeyPatch, variables: dict[str, str], match: str
+) -> None:
+    for name, value in variables.items():
+        monkeypatch.setenv(name, value)
+    with pytest.raises(DeciderNotAvailableError, match=match) as exc:
+        _ = default_decider()
+    # not a missing key: the key is there
+    assert "invalid" in str(exc.value)
