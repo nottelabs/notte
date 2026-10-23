@@ -12,7 +12,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 <AgentMdNotice />
 
 <Note>
-`AsyncNotteClient` is in preview: its API may still change.
+Available from `notte-sdk` 1.10.0. `AsyncNotteClient` is in preview: its API may still change.
 </Note>
 
 `AsyncNotteClient` is the asyncio version of <Visibility for="humans">[`NotteClient`](/sdk-reference/manual/index)</Visibility><Visibility for="agents">[`NotteClient`](/sdk-reference/manual/index.md)</Visibility>. Use it when your code already runs in an event loop (an async web server or agent framework, for example), or to run sessions, scrapes and functions concurrently without threads. In synchronous code, keep using `NotteClient`.
