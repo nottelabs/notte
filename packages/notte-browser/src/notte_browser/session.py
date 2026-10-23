@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import datetime as dt
+import time
 from collections.abc import Mapping, Sequence
 from dataclasses import replace
 from pathlib import Path
@@ -31,6 +32,7 @@ from notte_core.act import (
     same_target,
 )
 from notte_core.act.freshness import ELEMENT_SIGNATURES_JS, Signatures, signature_xpaths
+from notte_core.act.settle import CAP_MS, POLL_MS, SETTLE_TRACKER_JS, TRACKED_REQUESTS, SettleState, settled
 from notte_core.act.wait import WAIT_FOR_CHANGE_JS, interrupted_by_navigation, wait_failure, wait_result
 from notte_core.actions import (
     BaseAction,
@@ -107,7 +109,7 @@ from notte_browser import execution
 from notte_browser.action_space import build_action_space
 from notte_browser.captcha import captcha_solver_available
 from notte_browser.dom.locate import locate_element
-from notte_browser.driver import Locator, Page
+from notte_browser.driver import JSHandle, Locator, Page, Request
 from notte_browser.errors import (
     BrowserNotStartedError,
     CaptchaSolverNotAvailableError,
@@ -129,6 +131,89 @@ if TYPE_CHECKING:
     from notte_sdk.endpoints.personas import BasePersona
 
 
+class _Settle:
+    """What an `act()` action starts on `page`, tracked from right before it, until the page settles
+    (`notte_core.act.settle`)."""
+
+    def __init__(self, page: Page, tracker: JSHandle) -> None:
+        self.page: Page = page
+        self._tracker: JSHandle = tracker
+        self._started: float = time.perf_counter()
+        self._in_flight: set[Request] = set()
+        self._first: float | None = None
+        self._last: float | None = None
+        page.on("request", self._request_started)
+        page.on("requestfinished", self._request_ended)
+        page.on("requestfailed", self._request_ended)
+
+    @classmethod
+    async def start(cls, page: Page) -> _Settle | None:
+        try:
+            return cls(page, await page.evaluate_handle(SETTLE_TRACKER_JS))
+        except PlaywrightError:
+            return None
+
+    def _changed(self) -> None:
+        now = (time.perf_counter() - self._started) * 1000
+        if self._first is None:
+            self._first = now
+        self._last = now
+
+    def _request_started(self, request: Request) -> None:
+        if request.resource_type in TRACKED_REQUESTS:
+            self._in_flight.add(request)
+            self._changed()
+
+    def _request_ended(self, request: Request) -> None:
+        if request in self._in_flight:
+            self._in_flight.discard(request)
+            self._changed()
+
+    def _left_ms(self) -> float:
+        return CAP_MS - (time.perf_counter() - self._started) * 1000
+
+    async def wait(self, *, typed: bool) -> None:
+        """Until the page settles, at most `CAP_MS` after the tracking started."""
+        try:
+            async with asyncio.timeout(max(self._left_ms(), 0) / 1000):
+                while True:
+                    page: dict[str, Any] = await self._tracker.evaluate("(t, typed) => t.state(typed)", typed)
+                    firsts = [t for t in (page["first"], self._first) if t is not None]
+                    lasts = [t for t in (page["last"], self._last) if t is not None]
+                    state = SettleState(
+                        elapsed_ms=page["elapsed"],
+                        first_change_ms=min(firsts, default=None),
+                        last_change_ms=max(lasts, default=None),
+                        in_flight=len(self._in_flight),
+                        last_dom_change_ms=page["dom"],
+                        url_changed_ms=page["urlAt"],
+                        suggestions_changed=page["suggested"],
+                    )
+                    if settled(state):
+                        return
+                    await asyncio.sleep(POLL_MS / 1000)
+        except TimeoutError:
+            pass
+        except PlaywrightError:
+            # a navigation to a new document destroyed the tracker: let the new page load, within the cap
+            try:
+                if self._left_ms() > 0:
+                    await self.page.wait_for_load_state("load", timeout=self._left_ms())
+            except PlaywrightError:
+                pass
+
+    async def close(self) -> None:
+        _ = self.page.remove_listener("request", self._request_started)
+        _ = self.page.remove_listener("requestfinished", self._request_ended)
+        _ = self.page.remove_listener("requestfailed", self._request_ended)
+        try:
+            await self._tracker.evaluate("t => t.dispose()")
+            await self._tracker.dispose()
+        except PlaywrightError:
+            # the document is gone, and the handle with it
+            pass
+
+
 class LocalActDriver:
     """How `act()` / `choose()` / `check()` read and drive a local session (`notte_core.act.ActDriver`).
 
@@ -138,7 +223,8 @@ class LocalActDriver:
     fall back to a new snapshot without screenshot.
 
     The action runs on the element of the snapshot the decision was checked against, even if another call
-    observes the session meanwhile (which renumbers the ids of the session's own snapshot).
+    observes the session meanwhile (which renumbers the ids of the session's own snapshot). It returns once the
+    page has settled (`notte_core.act.settle`).
     """
 
     def __init__(self, session: NotteSession, *, capture_signatures: bool = True) -> None:
@@ -211,7 +297,17 @@ class LocalActDriver:
             node = self._snapshot.dom_node.interaction_nodes_by_id.get(action.id)
             if node is not None:
                 action = action.model_copy(update={"selector": await resolve_selectors(node)})
-        return await self.session.aexecute(action, raise_on_failure=raise_on_failure)
+        # the next observation must see what the action started (suggestions, a client-side navigation)
+        settle = await _Settle.start(self.session.window.page)
+        try:
+            result = await self.session.aexecute(action, raise_on_failure=raise_on_failure)
+            # a new tab the action opened was already waited for by the session
+            if settle is not None and result.success and settle.page is self.session.window.page:
+                await settle.wait(typed=isinstance(action, FillAction))
+        finally:
+            if settle is not None:
+                await settle.close()
+        return result
 
     @staticmethod
     async def _settle(page: Page, url: str, started: dt.datetime, timeout_ms: int) -> None:
