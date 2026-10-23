@@ -645,3 +645,49 @@ def test_past_the_cap_the_elements_in_view_are_offered_first() -> None:
     # under the cap, everything is offered
     small = _page(description=description, actions=actions[:20], states={})
     assert len(build_act_space(small, labels="accessible").elements) == 20
+
+
+# an observation that describes disabled controls: without an id, with a `disabled` attribute
+DISABLED_DESCRIPTION = """### Content of 'WebArea' component with text 'body content'
+_[:]Name
+_[:]<input disabled></input>
+B1[:]<button>Enable</button>
+_[:]<button disabled>Submit</button>
+_[:]<input placeholder="City" name="city" disabled></input>
+_[:]<button disabled>Save</button>
+_[:]Email
+I1[:]<input type="text" name="email"></input>"""
+
+
+@pytest.mark.parametrize("named", [True, False])
+def test_disabled_controls_are_shown_without_operations(named: bool) -> None:
+    actions: list[InteractionAction] = [
+        ClickAction(id="B1", text_label="Enable", accessible_name="Enable" if named else None),
+        FillAction(id="I1", value="", text_label="email", accessible_name="Email" if named else None),
+    ]
+    page = _page(states={}, description=DISABLED_DESCRIPTION, actions=actions)
+
+    assert accessible_text(page).splitlines() == [
+        # an unnamed disabled field is shown by its role, after the text before it
+        "Name",
+        "textbox (disabled)",
+        "[B1] Enable",
+        "Submit (disabled)",
+        "City (disabled)",
+        "Save (disabled)",
+        "[I1] Email",
+    ]
+    # offered: the enabled controls only
+    assert [e["index"] for e in build_act_space(page, labels="accessible").elements] == ["B1", "I1"]
+    # a disabled control does not name the field after it
+    assert accessible_names(page)["I1"] == "Email"
+
+
+def test_a_disabled_control_is_not_the_label_of_the_next_field() -> None:
+    description = """### Content of 'WebArea' component with text 'body content'
+_[:]<button disabled>Search</button>
+I1[:]<input type="text" name="q"></input>"""
+    page = _page(states={}, description=description, actions=[FillAction(id="I1", value="", text_label="q")])
+    # without real names, the text before a field names it; a disabled button's markup does not
+    assert accessible_names(page)["I1"] != "Search" and "<button" not in accessible_names(page)["I1"]
+    assert accessible_text(page).splitlines() == ["Search (disabled)", f"[I1] {accessible_names(page)['I1']}"]
