@@ -838,3 +838,35 @@ async def test_typing_an_unlisted_option_is_offered_by_the_operation(session: No
     _ = await session.window.page.goto(f"data:text/html,{quote(PAGE)}")
     _ = await session.aact("look", decider=decider)
     assert decider.questions[1]["operation"].criteria["TYPE_TEXT"] == OPERATION_LABELS["TYPE_TEXT"]
+
+
+@pytest.mark.asyncio
+async def test_page_text_follows_the_viewport(session: NotteSession) -> None:
+    def page(count: int) -> str:
+        paragraphs = "".join(f"<p>Paragraph {i}: " + "lorem ipsum dolor sit amet " * 8 + "</p>" for i in range(count))
+        return f"<h1>Annual review</h1><a href='#top'>Top link</a>{paragraphs}<label>Note <input id='note'></label>"
+
+    _ = await session.window.page.goto(f"data:text/html,{quote(page(30))}")
+    decider = FakeDecider(choices=[{"operation": "DONE"}, {"answer": "no"}])
+    _ = await session.aact("look", decider=decider)
+    # the field further down is not an element yet, and the action is decided on the text in view
+    assert [e["label"] for e in decider.states[0].elements] == ["Top link"]
+    text = decider.states[0].page.text
+    assert "] Top link" in text and "Note" not in text
+    assert text.endswith("characters of page text below the viewport not shown: scroll down to read them)")
+    # a question about the page reads all of it, and where each part is
+    _ = await session.achoose("Is there a note field?", ["yes", "no"], decider=decider)
+    text = decider.states[1].page.text
+    below = text.index("--- below the viewport: scroll down to reach ---")
+    assert text.index("] Top link") < below < text.index("Note")
+
+    # past the page text cap
+    _ = await session.window.page.goto(f"data:text/html,{quote(page(80))}")
+    _ = await session.window.page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+    ids = await _ids(session)
+    decider = FakeDecider(choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["note"]}], texts=["hello"])
+    _ = await session.aact("write hello in the note", decider=decider)
+    # scrolled to the bottom, the decider and the writer read the bottom of the page, not its top
+    for text in (decider.states[0].page.text, decider.contexts[0].page["text"]):
+        assert f"[{ids['note']}] Note" in text and "Annual review" not in text
+    assert await session.window.page.input_value("#note") == "hello"
