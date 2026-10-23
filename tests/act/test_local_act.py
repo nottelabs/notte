@@ -3,6 +3,7 @@
 import asyncio
 import json
 from collections.abc import AsyncIterator
+from typing import Any
 from urllib.parse import quote
 
 import pytest
@@ -760,6 +761,34 @@ async def test_wait_is_bounded_on_a_page_that_does_not_change(session: NotteSess
     # recorded with the session's other actions
     waits = [r for r in session.trajectory.execution_results() if isinstance(r.action, WaitAction)]
     assert [r.message for r in waits] == [message]
+
+
+@pytest.mark.asyncio
+async def test_a_wait_that_ends_on_a_navigation_stays_within_its_bound(
+    session: NotteSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # the next page loads, but keeps polling: its network is never idle. The wait still ends within its 3 s
+    poll = "<p>Next page</p><script>setInterval(() => fetch('http://slow.test/poll'), 100)</script>"
+
+    async def next_page(route: Any) -> None:
+        await route.fulfill(body=poll, content_type="text/html")
+
+    async def answer_later(route: Any) -> None:
+        await asyncio.sleep(0.3)
+        await route.fulfill(body="ok")
+
+    await session.window.page.route("http://slow.test/", next_page)
+    await session.window.page.route("http://slow.test/poll", answer_later)
+
+    async def network_idle() -> None:
+        # what the session's own settle (network idle, up to 10 s) takes on such a page
+        await asyncio.sleep(10)
+
+    monkeypatch.setattr(session.window, "long_wait", network_idle)
+    _ = await session.window.page.goto(f"data:text/html,{quote('<p>Redirecting</p>')}")
+    message, elapsed = await _wait(session, arm="setTimeout(() => location.href = 'http://slow.test/', 500)")
+    assert message.startswith("The page navigated") and elapsed < 4
+    assert session.window.page.url == "http://slow.test/"
 
 
 @pytest.mark.asyncio
