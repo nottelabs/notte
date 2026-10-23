@@ -788,12 +788,15 @@ async def test_typed_inputs_show_their_type_and_format(session: NotteSession) ->
     assert elements[ids["date"]]["type"] == "date" and elements[ids["date"]]["format"] == "YYYY-MM-DD"
     assert elements[ids["qty"]]["type"] == "number" and "format" not in elements[ids["qty"]]
     assert "type" not in elements[ids["name"]] and "format" not in elements[ids["name"]]
-    # a file input takes no typed text
-    assert elements[ids["cv"]]["type"] == "file" and elements[ids["cv"]]["operations"] == ["CLICK"]
-    assert ids["cv"] not in decider.questions[0]["type_text_target"].criteria
+    # a file input is shown, with no operation: act() cannot upload a file, and a click opens a chooser
+    assert elements[ids["cv"]]["type"] == "file" and elements[ids["cv"]]["operations"] == []
+    assert all(
+        ids["cv"] not in question.criteria for name, question in decider.questions[0].items() if name != "operation"
+    )
     # the decider sees the format in the target, and the writer gets it with the field
     assert decider.questions[0]["type_text_target"].criteria[ids["date"]]["format"] == "YYYY-MM-DD"
     assert decider.contexts[0].field == {
+        "index": ids["date"],
         "label": "Date",
         "role": "textbox",
         "value": "",
@@ -916,3 +919,132 @@ async def test_an_unlisted_option_is_typed_by_its_label(session: NotteSession) -
     assert result.execution is not None and result.execution.success
     # Playwright's select_option matches a string against option values and labels
     assert await session.window.page.input_value("#country") == "PT"
+
+
+@pytest.mark.asyncio
+async def test_a_listbox_or_slider_is_not_a_text_field(session: NotteSession) -> None:
+    # a combobox's suggestion list (some options scrolled out of its view) and a pane splitter get I ids
+    page = """<label for="to">Where to?</label><input id="to" role="combobox" aria-expanded="true" aria-controls="s">
+<ul id="s" role="listbox" aria-label="Search suggestions"><li role="option">Tokyo, Japan</li></ul>
+<ul id="n" role="listbox" style="height:40px;overflow:auto" tabindex="0">
+<li role="option" style="height:30px">1</li><li role="option" style="height:30px;visibility:hidden">2</li></ul>
+<div id="split" role="slider" aria-label="Draggable pane splitter" tabindex="0" aria-valuenow="50"
+style="width:10px;height:60px;background:#888"></div>"""
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    ids = await _ids(session)
+    decider = FakeDecider(choices=[{"operation": "DONE"}])
+    _ = await session.aact("Go to Tokyo", decider=decider)
+    elements = {e["index"]: e for e in decider.states[0].elements}
+    # no TYPE_TEXT (a fill fails on them), and a listbox offers no CLICK either: it would land on an option
+    assert elements[ids["s"]] == {"index": ids["s"], "label": "Search suggestions", "role": "listbox", "operations": []}
+    assert elements[ids["n"]]["role"] == "listbox" and elements[ids["n"]]["operations"] == []
+    assert elements[ids["split"]]["role"] == "slider" and elements[ids["split"]]["operations"] == ["CLICK"]
+    # an unnamed listbox is not named after the text of the options it hides
+    assert elements[ids["n"]]["label"] == "listbox"
+    assert not {ids["s"], ids["n"], ids["split"]} & set(decider.questions[0]["type_text_target"].criteria)
+    assert "Tokyo, Japan" in [e["label"] for e in elements.values() if e["role"] == "option"]
+
+
+@pytest.mark.asyncio
+async def test_unnamed_fields_are_named_by_context_not_content(session: NotteSession) -> None:
+    # a date picker's month and year selects, and a text field with no label tied to it
+    years = "".join(f"<option{' selected' if y == 2026 else ''}>{y}</option>" for y in range(1900, 2101))
+    months = "".join(f"<option>{m}</option>" for m in ("January", "February", "March", "October", "December"))
+    page = f"""<p>Date of Birth</p><input id="birth" value="23 Oct 2026">
+<select id="month">{months}</select><select id="year">{years}</select>
+<p>Notes</p><textarea id="notes">already typed</textarea>"""
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    ids = await _ids(session)
+    decider = FakeDecider(choices=[{"operation": "DONE"}])
+    _ = await session.aact("Set the birth date", decider=decider)
+    labels = {e["index"]: e["label"] for e in decider.states[0].elements}
+    assert labels[ids["birth"]] == "Date of Birth" and labels[ids["notes"]] == "Notes"
+    assert labels[ids["month"]] == "January … December" and labels[ids["year"]] == "1900 … 2100"
+    text = decider.states[0].page.text
+    assert f"[{ids['year']}] 1900 … 2100" in text and "1901" not in text and "23 Oct 2026" not in text
+
+
+@pytest.mark.asyncio
+async def test_a_file_input_offers_nothing_and_blocked_says_why(session: NotteSession) -> None:
+    from notte_core.act.prompts import BLOCKED, BLOCKED_FILE_UPLOAD
+
+    page = """<form><input id="file" type="file" name="file"><input type="submit" value="Upload"></form>"""
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    ids = await _ids(session)
+    decider = FakeDecider(choices=[{"operation": "BLOCKED"}])
+    result = await session.aact("Upload report.pdf", decider=decider, raise_on_failure=False)
+    element = next(e for e in decider.states[0].elements if e["index"] == ids["file"])
+    assert element["type"] == "file" and element["operations"] == []
+    assert ids["file"] not in decider.questions[0]["click_target"].criteria
+    # the decider is told, and so is the caller
+    assert decider.questions[0]["operation"].criteria["BLOCKED"] == BLOCKED_FILE_UPLOAD
+    assert result.status == "blocked" and "file upload is not supported by act()" in (result.message or "")
+    # on other pages, BLOCKED is unchanged
+    _ = await session.window.page.goto(f"data:text/html,{quote(PAGE)}")
+    decider = FakeDecider(choices=[{"operation": "DONE"}])
+    _ = await session.aact("look", decider=decider)
+    assert decider.questions[0]["operation"].criteria["BLOCKED"] == BLOCKED
+
+
+@pytest.mark.asyncio
+async def test_only_the_dialog_is_offered_while_it_covers_the_page(session: NotteSession) -> None:
+    # the page behind the dialog is aria-hidden, not covered: still hit-testable, so observed
+    page = """<main aria-hidden="true"><a href="#f">Flights</a><button aria-label="Main menu"></button></main>
+<div role="dialog" aria-modal="true" style="position:fixed;top:40px;left:40px">
+<input aria-label="Where else?" role="combobox"></div>"""
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    decider = FakeDecider(choices=[{"operation": "DONE"}])
+    _ = await session.aact("Fly from Paris", decider=decider)
+    assert [e["label"] for e in decider.states[0].elements] == ["Where else?"]
+    assert all("Flights" not in str(question.criteria) for question in decider.questions[0].values())
+
+
+@pytest.mark.asyncio
+async def test_a_field_with_no_value_is_skipped_not_blocked(session: NotteSession) -> None:
+    page = """<form><p>Travel dates</p><input id="dep" aria-label="Departure" placeholder="Leave on">
+<label for="from">From</label><input id="from" value="Paris">
+<label for="notes">Notes</label><textarea id="notes"></textarea><button type="button">Search</button></form>"""
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    ids = await _ids(session)
+    search = next(n.id for n in session.snapshot.interaction_nodes() if n.inner_text() == "Search")
+    decider = FakeDecider(
+        choices=[
+            {"operation": "TYPE_TEXT", "type_text_target": ids["dep"]},
+            {"operation": "CLICK", "click_target": search},
+        ],
+        texts=[None],
+    )
+    result = await session.aact("Search flights from Paris", decider=decider)
+    # the writer is told what is around the field and what the other fields hold
+    context = decider.contexts[0]
+    assert context.field == {
+        "index": ids["dep"],
+        "label": "Departure",
+        "role": "textbox",
+        "value": "",
+        "placeholder": "Leave on",
+        "nearby": "Travel dates",
+    }
+    assert context.page["fields"] == [{"index": ids["from"], "label": "From", "value": "Paris"}]
+    # no value: decided again without that field, which the history explains
+    assert result.status == "executed" and result.target == search
+    assert ids["dep"] not in decider.questions[1]["type_text_target"].criteria
+    assert decider.states[1].recent_actions[-1] == {
+        "action": "Departure",
+        "kind": "TYPE_TEXT",
+        "text": None,
+        "page_changed": False,
+        "error": "NoValueFromInstruction",
+    }
+
+    # "" in an empty field is no value either; twice in one call blocks
+    decider = FakeDecider(
+        choices=[
+            {"operation": "TYPE_TEXT", "type_text_target": ids["notes"]},
+            {"operation": "TYPE_TEXT", "type_text_target": ids["dep"]},
+        ],
+        texts=["", None],
+    )
+    blocked = await session.aact("Search flights", decider=decider, raise_on_failure=False)
+    assert blocked.status == "blocked" and "Departure" in (blocked.message or "")
+    assert await session.window.page.input_value("#notes") == ""

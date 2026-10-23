@@ -881,3 +881,28 @@ I1[:]<input role="combobox"></input>"""
     # the rendered page does not show `readonly`: without the signatures the input is filled
     assert kind(page) == "FillAction"
     assert kind(replace(page, readonly=signatures.readonly())) == "SelectDropdownOptionAction"
+
+
+def test_field_context_reads_the_text_before_a_field() -> None:
+    from notte_core.act.space import field_context
+
+    description = """_[:]State and City
+_[:]Select State
+I1[:]<select>A
+B</select>
+_[:]Select City
+I2[:]<input type="text" role="combobox" placeholder="Type a city"></input>"""
+    actions: list[InteractionAction] = [
+        SelectDropdownOptionAction(id="I1", value="<sample_value>", text_label="A B", accessible_name="State"),
+        FillAction(id="I2", value="<sample_value>", text_label="", accessible_name=""),
+    ]
+    page = _page(description=description, actions=actions, states={})
+    assert field_context(page, "I1", "accessible", exclude="State") == {"nearby": "State and City / Select State"}
+    # the unnamed combobox is named by the text before it, so that text is its label, not nearby text
+    assert accessible_names(page)["I2"] == "Select City"
+    assert field_context(page, "I2", "accessible", exclude="Select City") == {"placeholder": "Type a city"}
+    # the rendered page: a select's option lines are not text before the next field
+    assert field_context(page, "I2", "html", exclude="combobox") == {
+        "placeholder": "Type a city",
+        "nearby": "Select City",
+    }
