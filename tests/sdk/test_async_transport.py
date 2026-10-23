@@ -5,6 +5,7 @@ Its own lifecycle (one pooled client, event-loop binding, fork, close) is tested
 
 import asyncio
 import gc
+import json
 import os
 import random
 import signal
@@ -420,6 +421,23 @@ async def test_responses(monkeypatch: pytest.MonkeyPatch, answer: Callable[[], h
         lambda api: api._request_bytes(endpoint()),
     ):
         _ = await same(monkeypatch, sequence(answer), run)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("method", "body"),
+    [
+        *(("request_list", body) for body in [None, 3, True, "text", {"page": 1}, {"items": 3}]),
+        *(("request", body) for body in [None, 3, True, "text", [1, 2]]),
+    ],
+)
+async def test_unexpected_json_shape_is_an_api_error(monkeypatch: pytest.MonkeyPatch, method: str, body: Any) -> None:
+    # A 200 whose JSON is not the object or list the method expects carries the response's status and body.
+    content = json.dumps(body).encode()
+    answer = sequence(lambda: httpx.Response(200, content=content, headers={"content-type": "application/json"}))
+    result = await same(monkeypatch, answer, lambda api: getattr(api, method)(endpoint()))
+    assert result.outcome[:2] == ("error", NotteAPIError)
+    assert f"failed with status code 200: {body}" in result.outcome[2]
 
 
 @pytest.mark.asyncio

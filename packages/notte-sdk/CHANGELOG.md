@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased: unexpected JSON responses raise `NotteAPIError`
+
+When a successful API response is not the JSON object or list a method expects (for example
+`null`, a number, or a page object without a list of `items`), the sync and async clients raise
+`NotteAPIError` with the response's status code and body, instead of an `AttributeError` or
+`TypeError`.
+
 ## Unreleased: AsyncNotteClient (preview)
 
 `from notte_sdk import AsyncNotteClient` is an asyncio client on `httpx.AsyncClient`, with the
