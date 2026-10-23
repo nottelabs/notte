@@ -1,3 +1,4 @@
+import threading
 from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import Any
@@ -113,6 +114,28 @@ class TestBaseClientVersionCheck:
 
                 assert base_module._version_check_performed is True
                 assert base_module._cached_pypi_version == "1.7.2"
+
+    def test_async_client_checks_off_the_calling_thread(self, api_key: str, reset_global_state):
+        """An async client is often built inside a running event loop: the PyPI request must not block it."""
+        from notte_sdk import AsyncNotteClient
+
+        threads: list[threading.Thread] = []
+
+        def latest(_self: BaseClient, _package: str) -> str:
+            threads.append(threading.current_thread())
+            return "1.5.0"
+
+        with (
+            patch("notte_sdk.endpoints.base.notte_core_version", "1.5.0"),
+            patch("notte_sdk.endpoints.base._ClientCore._get_latest_pypi_version", latest),
+        ):
+            _ = AsyncNotteClient(api_key=api_key)
+            for thread in threading.enumerate():
+                if thread.name == "notte-sdk-version-check":
+                    thread.join(5)
+        # One check per process, even though every async resource client ran __init__.
+        assert len(threads) == 1
+        assert threads[0] is not threading.main_thread()
 
     def test_version_mismatch_warning_logged(self, api_key: str, reset_global_state, mock_pypi_response):
         """Test that a warning is logged when there's a version mismatch."""

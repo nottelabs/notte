@@ -299,7 +299,7 @@ class SharedHttpClient:
             client.close()
 
 
-_SHARED_CLIENTS: "weakref.WeakSet[SharedHttpClient]" = weakref.WeakSet()
+_SHARED_CLIENTS: "weakref.WeakSet[SharedHttpClient | AsyncSharedHttpClient]" = weakref.WeakSet()
 
 
 def _reset_shared_clients_after_fork() -> None:
@@ -797,9 +797,17 @@ class AsyncSharedHttpClient:
     """
 
     def __init__(self) -> None:
+        # Event loops in different threads can share one client: the lock makes the ownership
+        # check and pool creation one step. Nothing awaits while it is held.
+        self._lock: threading.Lock = threading.Lock()
         self._client: httpx.AsyncClient | None = None
         self._pid: int | None = None
         self._loop: weakref.ref[asyncio.AbstractEventLoop] | None = None
+        _SHARED_CLIENTS.add(self)
+
+    def _after_fork_in_child(self) -> None:
+        # A thread that held the lock during fork does not exist in the child.
+        self._lock = threading.Lock()
 
     def _owner_loop(self) -> asyncio.AbstractEventLoop | None:
         """The open event loop the current connections belong to, if any."""
@@ -808,27 +816,29 @@ class AsyncSharedHttpClient:
 
     def get(self) -> httpx.AsyncClient:
         loop = asyncio.get_running_loop()
-        # A forked child must not share the parent's TLS connections.
-        if self._client is not None and self._pid == os.getpid():
-            owner = self._owner_loop()
-            if owner is loop:
-                return self._client
-            if owner is not None:
-                raise RuntimeError(_OTHER_LOOP)
-        self._client = async_http_client()
-        self._pid = os.getpid()
-        self._loop = weakref.ref(loop)
-        return self._client
+        with self._lock:
+            # A forked child must not share the parent's TLS connections.
+            if self._client is not None and self._pid == os.getpid():
+                owner = self._owner_loop()
+                if owner is loop:
+                    return self._client
+                if owner is not None:
+                    raise RuntimeError(_OTHER_LOOP)
+            self._client = async_http_client()
+            self._pid = os.getpid()
+            self._loop = weakref.ref(loop)
+            return self._client
 
     async def aclose(self) -> None:
         """Close pooled connections. A later request opens a new client."""
-        if self._client is None:
-            return
-        owned = self._pid == os.getpid()
-        owner = self._owner_loop()
-        if owned and owner is not None and owner is not asyncio.get_running_loop():
-            raise RuntimeError(_OTHER_LOOP)
-        client, self._client = self._client, None
+        with self._lock:
+            if self._client is None:
+                return
+            owned = self._pid == os.getpid()
+            owner = self._owner_loop()
+            if owned and owner is not None and owner is not asyncio.get_running_loop():
+                raise RuntimeError(_OTHER_LOOP)
+            client, self._client = self._client, None
         # A child never closes its parent's connections; nothing can close those of a closed loop.
         if owned and owner is not None:
             await client.aclose()

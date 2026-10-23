@@ -11,6 +11,7 @@ import signal
 import socket
 import ssl
 import threading
+import time
 import warnings
 from collections.abc import AsyncIterator, Callable, Iterator
 from dataclasses import dataclass, field
@@ -944,6 +945,43 @@ async def test_another_open_loop_fails_clearly(
     assert pooled.is_closed
     assert await client.sessions._request(endpoint()) == {}
     await client.aclose()
+
+
+@pytest.mark.timeout(10)
+def test_loops_in_two_threads_cannot_both_take_the_pool() -> None:
+    shared = AsyncSharedHttpClient()
+    created: list[Mock] = []
+    both_waiting = threading.Barrier(2)
+
+    def slow_client() -> Mock:
+        # SSL setup is slow enough for a second thread to pass an unlocked ownership check.
+        time.sleep(0.2)
+        client = Mock(spec=httpx.AsyncClient)
+        created.append(client)
+        return client
+
+    outcomes: list[object] = []
+
+    def first_request() -> None:
+        async def get() -> object:
+            _ = both_waiting.wait(5)
+            try:
+                return shared.get()
+            except RuntimeError as error:
+                return error
+
+        outcomes.append(asyncio.run(get()))
+
+    with patch("notte_sdk._transport.async_http_client", side_effect=slow_client):
+        threads = [threading.Thread(target=first_request) for _ in range(2)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join(5)
+    # One loop owns the only pool; the other gets the other-loop error, not a second pool.
+    assert len(created) == 1
+    assert sorted(type(outcome).__name__ for outcome in outcomes) == ["Mock", "RuntimeError"]
+    assert shared._client is created[0]  # pyright: ignore[reportPrivateUsage]
 
 
 @pytest.mark.asyncio

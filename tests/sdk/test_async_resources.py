@@ -424,15 +424,23 @@ def every_async_method() -> Iterator[tuple[str, str]]:
             yield name, method
 
 
+# Methods whose `**data` needs a local file: the keyword that takes its path.
+FILE_KEYWORDS = {("functions", "create"): "path", ("sessions", "upload_session_file"): "file"}
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("resource,method", list(every_async_method()), ids=lambda value: value)
 async def test_every_async_method_sends_what_its_sync_twin_sends(
-    monkeypatch: pytest.MonkeyPatch, resource: str, method: str
+    monkeypatch: pytest.MonkeyPatch, upload: str, resource: str, method: str
 ) -> None:
     args, kwargs = arguments(getattr(getattr(AsyncNotteClient(api_key=KEY), resource), method))
-    _ = await assert_same_exchange(
+    if keyword := FILE_KEYWORDS.get((resource, method)):
+        kwargs[keyword] = upload
+    exchange = await assert_same_exchange(
         monkeypatch, answer({}), lambda c: getattr(getattr(c, resource), method)(*args, **kwargs)
     )
+    # Equal and empty would prove nothing: each case must reach the wire.
+    assert exchange.calls, f"{resource}.{method} sent no request: {exchange.outcome}"
 
 
 # ---------------------------------------------------------------------------

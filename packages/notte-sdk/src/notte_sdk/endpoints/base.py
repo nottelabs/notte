@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import threading
 import weakref
 from abc import ABC
 from collections.abc import AsyncGenerator, AsyncIterator, Generator, Iterator, Mapping, Sequence
@@ -192,6 +193,9 @@ class _ClientCore(ABC, Generic[TRoot]):
     and async I/O methods only send, read and await.
     """
 
+    # Whether the once-per-process PyPI version check runs on a background thread.
+    _check_version_in_background: ClassVar[bool] = False
+
     DEFAULT_NOTTE_API_URL: ClassVar[str] = "https://api.notte.cc"
     DEFAULT_REQUEST_TIMEOUT_SECONDS: ClassVar[int] = 60
     DEFAULT_FILE_CHUNK_SIZE: ClassVar[int] = 8192
@@ -306,6 +310,14 @@ class _ClientCore(ABC, Generic[TRoot]):
         if ".dev" in notte_core_version:
             return
 
+        if self._check_version_in_background:
+            # A blocking PyPI request; async clients are often created inside a running event loop.
+            threading.Thread(target=self._warn_if_outdated, name="notte-sdk-version-check", daemon=True).start()
+        else:
+            self._warn_if_outdated()
+
+    def _warn_if_outdated(self) -> None:
+        global _cached_pypi_version
         try:
             # Get latest version from PyPI
             latest_version = self._get_latest_pypi_version("notte-sdk")
@@ -863,6 +875,7 @@ class AsyncBaseClient(_ClientCore["AsyncNotteClient"]):
 
     # Connections of a client built without an AsyncNotteClient, opened on first use.
     _own_http: AsyncSharedHttpClient | None = None
+    _check_version_in_background: ClassVar[bool] = True
 
     def __init__(
         self,
