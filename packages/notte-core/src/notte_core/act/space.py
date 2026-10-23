@@ -239,6 +239,29 @@ class _Names:
     used: frozenset[int]
     # clickable `<label>` elements that label the field next to them: the field is offered instead
     labels: frozenset[str]
+    # the name of each disabled control (a `_[:]<... disabled>` block, without an id), by block index
+    disabled: dict[int, str] = field(default_factory=dict)
+
+
+def _disabled(content: str) -> str | None:
+    """The name of a control the observation describes as disabled (rendered without an id, with a `disabled`
+    attribute): its text, `aria-label`, `placeholder`, `title` or `value`, else its role. None for anything else.
+    The text before an unnamed field is left as it is: it may be a heading, not the field's label."""
+    match = _RENDERED_ELEMENT.match(content)
+    if match is None or "disabled" not in _RENDERED_ATTRIBUTE.sub("", match.group(2)).split():
+        return None
+    attributes = dict(_RENDERED_ATTRIBUTE.findall(match.group(2)))
+    candidates = [" ".join(match.group(3).split()), attributes.get("aria_label"), attributes.get("placeholder")]
+    candidates += [attributes.get("title"), attributes.get("value"), attributes.get("role")]
+    tag = match.group(1).lower()
+    if tag == "textarea" or (tag == "input" and attributes.get("type", "text") in _TEXT_INPUT_TYPES):
+        candidates.append("textbox")
+    candidates.append(attributes.get("type") if tag == "input" else tag)
+    return next(c.strip() for c in candidates if c is not None and c.strip())
+
+
+# input types shown as `textbox` when a disabled field has no name
+_TEXT_INPUT_TYPES = ("text", "email", "password", "search", "tel", "url", "number")
 
 
 def _same_text(a: str, b: str) -> bool:
@@ -269,6 +292,9 @@ def _names(page: ObservedPage) -> _Names:
         if not 0 <= index < len(blocks) or blocks[index][0] is None:
             return None
         key, content = blocks[index]
+        if key == "_" and _disabled(content) is not None:
+            # a disabled control is not a label
+            return None
         if key != "_":
             match = _RENDERED_ELEMENT.match(content)
             if match is None or match.group(1).lower() != "label":
@@ -276,7 +302,12 @@ def _names(page: ObservedPage) -> _Names:
             content = match.group(3)
         return " ".join(content.split()) or None
 
+    disabled: dict[int, str] = {}
     for i, (key, content) in enumerate(blocks):
+        name = _disabled(content) if key == "_" else None
+        if name is not None:
+            disabled[i] = name
+            continue
         action = actions.get(key or "")
         if key is None or action is None or key in names:
             continue
@@ -305,7 +336,10 @@ def _names(page: ObservedPage) -> _Names:
                 labels.add(label_key)
             break
     return _Names(
-        names={k: v for k, v in names.items() if k not in labels}, used=frozenset(used), labels=frozenset(labels)
+        names={k: v for k, v in names.items() if k not in labels},
+        used=frozenset(used),
+        labels=frozenset(labels),
+        disabled=disabled,
     )
 
 
@@ -325,7 +359,8 @@ def label_elements(page: ObservedPage) -> frozenset[str]:
 
 
 def accessible_text(page: ObservedPage, display_text: Callable[[str], str] = str) -> str:
-    """The page as visible text, each element replaced by `[<id>] <accessible name>` in reading order.
+    """The page as visible text, each element replaced by `[<id>] <accessible name>` in reading order, and each
+    disabled control by `<name> (disabled)`.
 
     The markers keep what the HTML rendering is needed for (where an element sits relative to the
     text: the price next to a button, the result a link opens) without its markup. The page's own
@@ -340,6 +375,9 @@ def accessible_text(page: ObservedPage, display_text: Callable[[str], str] = str
         if key is None:
             if "'WebArea'" not in content:
                 lines.append(content.removeprefix("### "))
+        elif i in names.disabled:
+            # shown, so the decider knows the control exists and can wait for it; it offers no operation
+            lines.append(f"{_cut(display_text(names.disabled[i]), MAX_LABEL_LENGTH)} (disabled)")
         elif key == "_":
             lines.append(content)
         else:
