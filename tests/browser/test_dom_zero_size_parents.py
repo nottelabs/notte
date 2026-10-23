@@ -1,7 +1,7 @@
 """`observe()` keeps the content of a zero-size element below the fold.
 
-An inline `<li>` around a floated link (a common pager markup), or an inline element around a positioned
-one, has an empty box, while its children are laid out elsewhere. Below the viewport, the DOM build used to
+An inline `<li>` around a floated link (a common pager markup), or inline elements around a positioned
+one, have an empty box, while the link is laid out elsewhere. Below the viewport, the DOM build used to
 drop such an element with its whole subtree, so the link was missing from the snapshot, both as a
 node and as text, while the text after it was kept.
 """
@@ -20,6 +20,9 @@ PAGES = {
     """,
     "inline parent of a positioned link": """
         <p><span><a href="/page/2/" style="position: absolute">Next</a></span></p>
+    """,
+    "nested inline parents of a positioned link": """
+        <p><span><span><a href="/page/2/" style="position: absolute">Next</a></span></span></p>
     """,
 }
 
