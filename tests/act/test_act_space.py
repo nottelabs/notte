@@ -114,7 +114,7 @@ def test_build_act_space_with_live_state() -> None:
 
 
 def test_build_act_space_without_live_state_types_the_select_option() -> None:
-    # remote sessions: no state, a native select is set by typing its option label
+    # without live state, a native select is set by typing its option label
     space = build_act_space(_page(states={}))
     assert "SELECT" not in space.targets
     assert space.targets["TYPE_TEXT"]["I3"].kind == "select_text"
@@ -603,8 +603,8 @@ Beta</select>"""
     actions: list[InteractionAction] = [
         SelectDropdownOptionAction(id="I1", value="<sample_value>", text_label="country")
     ]
-    cloud = _page(description=description, actions=actions, states={})
-    assert accessible_text(cloud) == "[I1] Country (options: Alpha, Beta)"
+    stateless = _page(description=description, actions=actions, states={})
+    assert accessible_text(stateless) == "[I1] Country (options: Alpha, Beta)"
     # with live state the options are SELECT targets: not repeated in the text
     state = ElementState(
         value="a",

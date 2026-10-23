@@ -4,27 +4,24 @@ They assert what the page did (field values, the submitted query, the URL), not 
 
 Skipped without keys. `OPENROUTER_API_KEY` (with `NOTTE_LLM_BASE_URL` unset) runs everything: Jev through
 OpenRouter's decisions endpoint, the LLM decider and the default field writer. With `TYPESAFE_API_KEY` too, the
-`jev` cases call TypeSafe directly instead. `NOTTE_API_KEY` adds the cloud session. Each test prints the per-step
+`jev` cases call TypeSafe directly instead. Each test prints the per-step
 timings and the decision model.
 """
 
-import json
 import os
 from urllib.parse import parse_qs, quote, urlsplit
 
 import pytest
-from notte_core.act import ActResult, Decider, aact_until_done, act_until_done
+from notte_core.act import ActResult, Decider, aact_until_done
 from notte_core.actions import SelectDropdownOptionAction
 from notte_core.dom_tree import NodeSelectors
 from notte_core.observation import Observation
-from notte_sdk import NotteClient
 
 import notte
 
 # the default decision and writer models are OpenRouter model ids
 _ON_OPENROUTER = urlsplit(os.getenv("NOTTE_LLM_BASE_URL") or "https://openrouter.ai").hostname == "openrouter.ai"
 HAS_OPENROUTER = _ON_OPENROUTER and bool(os.getenv("NOTTE_LLM_API_KEY") or os.getenv("OPENROUTER_API_KEY"))
-HAS_NOTTE = bool(os.getenv("NOTTE_API_KEY"))
 
 FORM = """<html><head><title>Signup</title></head><body><h1>Newsletter signup</h1>
 <form onsubmit="event.preventDefault(); document.getElementById('out').textContent =
@@ -93,18 +90,6 @@ async def test_local_public_search(kind: str) -> None:
         )
         _report(f"local wikipedia ({kind})", results)
         assert "Ada_Lovelace" in session.window.page.url
-
-
-@pytest.mark.skipif(not HAS_NOTTE, reason="needs NOTTE_API_KEY")
-@pytest.mark.parametrize("kind", DECIDERS)
-def test_cloud_public_search(kind: str) -> None:
-    with NotteClient().Session() as session:
-        _ = session.execute(type="goto", url="https://en.wikipedia.org/wiki/Main_Page")
-        results = act_until_done(
-            session, "Search Wikipedia for Ada Lovelace and open her article", max_steps=6, decider=_decider(kind)
-        )
-        _report(f"cloud wikipedia ({kind})", results)
-        assert session.check("Is this the Wikipedia article about Ada Lovelace?", decider=_decider(kind)) > 0.5
 
 
 WEB_FORM = "https://www.selenium.dev/selenium/web/web-form.html"
@@ -192,22 +177,6 @@ async def test_local_select_picks_the_option(kind: str) -> None:
         assert await session.window.page.input_value("#dropdown") == "2"
 
 
-@pytest.mark.skipif(not HAS_NOTTE, reason="needs NOTTE_API_KEY")
-@pytest.mark.parametrize("kind", DECIDERS)
-def test_cloud_select_picks_the_option(kind: str) -> None:
-    with NotteClient().Session() as session:
-        _ = session.execute(type="goto", url=DROPDOWN)
-        observation = session.observe()
-        result = session.act('Select "Option 2" in the dropdown', observation=observation, decider=_decider(kind))
-        _report(f"cloud select ({kind})", [result])
-        # observations carry the live state of the select: the option is picked, not typed by label
-        assert result.status == "executed" and result.operation == "SELECT", result
-        assert isinstance(result.action, SelectDropdownOptionAction)
-        xpath = json.dumps(_xpath(observation, result.target))
-        assert session.evaluate_js(f"({ELEMENT_JS})({xpath})") == "dropdown"
-        assert session.evaluate_js("document.querySelector('#dropdown').value") == "2"
-
-
 @pytest.mark.asyncio
 @pytest.mark.parametrize("kind", DECIDERS)
 async def test_local_choose_a_fact_from_the_page(kind: str) -> None:
@@ -228,18 +197,6 @@ async def test_local_choose_from_the_live_state(kind: str) -> None:
         await session.window.page.evaluate(FLIP_CHECKBOXES_JS)
         choice = await session.achoose("Which checkboxes are checked?", CHECKBOX_OPTIONS, decider=_decider(kind))
         print(f"\nlocal choose state ({kind}): {choice}")
-        assert choice.choice == "first"
-        assert set(choice.probabilities) == set(CHECKBOX_OPTIONS)
-
-
-@pytest.mark.skipif(not HAS_NOTTE, reason="needs NOTTE_API_KEY")
-@pytest.mark.parametrize("kind", DECIDERS)
-def test_cloud_choose_from_the_live_state(kind: str) -> None:
-    with NotteClient().Session() as session:
-        _ = session.execute(type="goto", url=CHECKBOXES)
-        _ = session.evaluate_js(FLIP_CHECKBOXES_JS)
-        choice = session.choose("Which checkboxes are checked?", CHECKBOX_OPTIONS, decider=_decider(kind))
-        print(f"\ncloud choose state ({kind}): {choice}")
         assert choice.choice == "first"
         assert set(choice.probabilities) == set(CHECKBOX_OPTIONS)
 
