@@ -1,4 +1,7 @@
+import os
+import signal
 import threading
+import warnings
 from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import Any
@@ -136,6 +139,35 @@ class TestBaseClientVersionCheck:
         # One check per process, even though every async resource client ran __init__.
         assert len(threads) == 1
         assert threads[0] is not threading.main_thread()
+
+    def test_fork_while_another_thread_holds_the_version_check_lock(self, api_key: str, reset_global_state):
+        import notte_sdk.endpoints.base as base_module
+
+        holding, release = threading.Event(), threading.Event()
+
+        def hold() -> None:
+            with base_module._version_check_lock:
+                holding.set()
+                _ = release.wait(5)
+
+        holder = threading.Thread(target=hold)
+        holder.start()
+        _ = holding.wait(5)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)  # fork() in a multi-threaded process
+            pid = os.fork()
+        if pid == 0:  # child: the holding thread does not exist here
+            code = 1
+            try:
+                _ = signal.alarm(5)  # a hang on the inherited lock ends the child with SIGALRM
+                _ = BaseClient(MockNotteClient(), None, api_key=api_key)
+                code = 0
+            finally:
+                os._exit(code)
+        release.set()
+        holder.join()
+        _, status = os.waitpid(pid, 0)
+        assert os.waitstatus_to_exitcode(status) == 0, "the forked child hung on the inherited lock"
 
     def test_version_mismatch_warning_logged(self, api_key: str, reset_global_state, mock_pypi_response):
         """Test that a warning is logged when there's a version mismatch."""

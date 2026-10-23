@@ -59,6 +59,16 @@ _version_check_performed: bool = False
 _version_check_lock = threading.Lock()
 
 
+def _reset_version_check_lock_after_fork() -> None:
+    # A thread that held the lock during fork does not exist in the child.
+    global _version_check_lock
+    _version_check_lock = threading.Lock()
+
+
+if hasattr(os, "register_at_fork"):
+    os.register_at_fork(after_in_child=_reset_version_check_lock_after_fork)
+
+
 class RawResponse(BaseModel):
     """A JSON object response whose schema has no model in `notte_core.types` yet.
 
