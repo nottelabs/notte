@@ -1,0 +1,65 @@
+"""The WAIT of `act()`: wait for the page to change, up to a bound, instead of a fixed delay.
+
+A WAIT is chosen when the needed control is not ready yet (a disabled field, results still loading).
+A fixed delay is either too short for slow pages (the decider sees the same page and gives up) or wasted
+on fast ones. The page script below returns as soon as the DOM changes and then stays quiet for
+`QUIET_MS` (at most `SETTLE_MS` after the first change, for pages that never stop changing), or after
+`timeout_ms` without a change. Inline `style` changes (animations) do not count. A navigation also ends
+the wait; the session reports it as a change.
+
+The bound (`WAIT_MS` in `notte_core.act.space`) is 3 s: long enough for the usual asynchronous updates
+(a spinner, a debounced search, an XHR that fills a list) to land in one step, short enough that a WAIT
+on a page that does not change costs little. The decider observes the page again after each WAIT and
+can wait again.
+"""
+
+import datetime as dt
+import json
+
+from notte_core.actions import WaitAction
+from notte_core.observation import ExecutionResult
+
+QUIET_MS = 200
+SETTLE_MS = 1_000
+
+WAIT_FOR_CHANGE_JS = f"""(timeoutMs) => new Promise((resolve) => {{
+    let changed = false;
+    let quiet = null;
+    let settle = null;
+    let cap = null;
+    let observer = null;
+    const done = () => {{
+        if (observer) observer.disconnect();
+        clearTimeout(quiet);
+        clearTimeout(settle);
+        clearTimeout(cap);
+        resolve(changed ? "changed" : "unchanged");
+    }};
+    observer = new MutationObserver((mutations) => {{
+        if (!mutations.some((m) => m.type !== "attributes" || m.attributeName !== "style")) return;
+        changed = true;
+        clearTimeout(quiet);
+        quiet = setTimeout(done, {QUIET_MS});
+        if (settle === null) settle = setTimeout(done, {SETTLE_MS});
+    }});
+    observer.observe(document, {{ subtree: true, childList: true, characterData: true, attributes: true }});
+    cap = setTimeout(done, timeoutMs);
+}})"""
+
+
+def remote_wait_expression(timeout_ms: int) -> str:
+    """The `evaluate_js` expression of the wait, for cloud sessions."""
+    return f"({WAIT_FOR_CHANGE_JS})({json.dumps(timeout_ms)})"
+
+
+def wait_result(outcome: str, started: dt.datetime, timeout_ms: int) -> ExecutionResult:
+    """The `ExecutionResult` of a WAIT that ended with `outcome`: `changed`, `navigated` or `unchanged`."""
+    ended = dt.datetime.now(dt.timezone.utc)
+    elapsed = round((ended - started).total_seconds() * 1000)
+    message = {
+        "changed": f"The page changed after {elapsed} ms.",
+        "navigated": f"The page navigated after {elapsed} ms.",
+    }.get(outcome, f"The page did not change in {timeout_ms} ms.")
+    return ExecutionResult(
+        action=WaitAction(time_ms=timeout_ms), success=True, message=message, started_at=started, ended_at=ended
+    )
