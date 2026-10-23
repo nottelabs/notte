@@ -24,6 +24,8 @@ HIDDEN = """
 <div style="height: 0; overflow: hidden"><p>ZERO_HEIGHT</p></div>
 <details><summary>Summary</summary>CLOSED_DETAILS</details>
 <div hidden="until-found">UNTIL_FOUND</div>
+<div hidden="until-found"><span style="display: contents">UNTIL_FOUND_IN_CONTENTS</span></div>
+<div style="position: relative; height: 0; overflow: hidden"><span style="position: absolute">CLIPPED_ABSOLUTE</span></div>
 """
 
 KEPT = (
@@ -34,6 +36,10 @@ KEPT = (
 <label>Country <select><option>OPTION_ONE</option><option>OPTION_TWO</option></select></label>
 <a href="/next"><span style="display: contents">CONTENTS_LABEL</span></a>
 <button><span aria-hidden="true">ICON_TEXT</span></button>
+<div style="visibility: hidden"><span style="display: contents; visibility: visible">VISIBLE_IN_HIDDEN</span></div>
+<div style="position: relative"><div style="height: 0; overflow: hidden">
+  <span style="position: absolute; top: 0">ESCAPES_CLIPPING</span>
+</div></div>
 """
     + SPACER
     + """
@@ -66,6 +72,8 @@ async def test_hidden_text_is_not_in_the_description() -> None:
         "ZERO_HEIGHT",
         "CLOSED_DETAILS",
         "UNTIL_FOUND",
+        "UNTIL_FOUND_IN_CONTENTS",
+        "CLIPPED_ABSOLUTE",
     ]:
         assert hidden not in description
         assert hidden not in texts
@@ -82,6 +90,8 @@ async def test_offscreen_and_labelling_text_is_kept() -> None:
         "OPTION_TWO",
         "CONTENTS_LABEL",
         "ICON_TEXT",
+        "VISIBLE_IN_HIDDEN",
+        "ESCAPES_CLIPPING",
         "BELOW_FOLD",
         "FADES_IN_ON_SCROLL",
         "ARIA_HIDDEN_BELOW_FOLD",
@@ -103,6 +113,7 @@ async def test_hidden_controls_are_not_offered() -> None:
       <input type="checkbox" style="opacity: 0; position: absolute; inset: 0; width: 100%; height: 100%">
     </label>
     <button aria-hidden="true" tabindex="-1">Next day</button>
+    <div style="visibility: hidden"><button style="visibility: visible">Shown in a hidden parent</button></div>
     """
     async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
         _ = await session.window.page.goto(f"data:text/html,{quote(markup)}")
@@ -116,3 +127,5 @@ async def test_hidden_controls_are_not_offered() -> None:
     assert any(node.attributes is not None and node.attributes.type == "checkbox" for node in nodes)
     # `aria-hidden` does not hide a control the user can see and click
     assert "Next day" in labels
+    # `visibility` can be set back to `visible` inside a hidden parent
+    assert "Shown in a hidden parent" in labels

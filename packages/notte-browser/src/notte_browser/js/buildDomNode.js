@@ -488,10 +488,10 @@
 	 * What hides the content of an element, inherited down the tree (see `contentScope`).
 	 *
 	 * - `ariaHidden`: inside `aria-hidden="true"`, and not inside focusable content
-	 * - `clipped`: inside an element that clips its overflow to an empty box (`height: 0; overflow: hidden`)
+	 * - `clipper`: the element that clips the content to an empty box (`height: 0; overflow: hidden`), or null
 	 * - `inControl`: inside a highlighted or disabled element, whose text is its label
 	 */
-	const VISIBLE_SCOPE = { ariaHidden: false, clipped: false, inControl: false };
+	const VISIBLE_SCOPE = { ariaHidden: false, clipper: null, inControl: false };
 
 	/**
 	 * Checks if an element can be reached with the Tab key. Focusable content stays visible inside an
@@ -523,6 +523,23 @@
 	}
 
 	/**
+	 * Checks if an element is laid out outside the box of a clipping ancestor: a fixed element, or an
+	 * absolutely positioned one whose containing block (its nearest positioned ancestor) is outside the
+	 * clipping element.
+	 *
+	 * @param {HTMLElement} element - The element to check.
+	 * @param {HTMLElement} clipper - The clipping ancestor.
+	 * @returns {boolean} Whether the element escapes the clipping.
+	 */
+	function escapesClip(element, clipper) {
+		const position = getCachedComputedStyle(element)?.position;
+		if (position === "fixed") return true;
+		if (position !== "absolute") return false;
+		const containingBlock = element.offsetParent;
+		return containingBlock === null || !clipper.contains(containingBlock);
+	}
+
+	/**
 	 * The scope of an element's children: what hides them, given the element and its own scope.
 	 *
 	 * @param {HTMLElement} element - The element.
@@ -534,38 +551,50 @@
 		let ariaHidden = scope.ariaHidden;
 		if (element.getAttribute("aria-hidden") === "true") ariaHidden = !isFocusable(element);
 		else if (ariaHidden && isFocusable(element)) ariaHidden = false;
-		let clipped = scope.clipped;
-		const position = getCachedComputedStyle(element)?.position;
-		// a positioned element may be laid out outside the clipping box: assume it is not clipped
-		if (position === "fixed" || position === "absolute") clipped = false;
-		if (clipsToNothing(element)) clipped = true;
+		let clipper = scope.clipper;
+		// an element that escapes the clipping is assumed not to be clipped by an outer clipper either
+		if (clipper !== null && escapesClip(element, clipper)) clipper = null;
+		if (clipsToNothing(element)) clipper = element;
 		const inControl = scope.inControl || isControl;
-		if (ariaHidden === scope.ariaHidden && clipped === scope.clipped && inControl === scope.inControl) return scope;
-		return { ariaHidden, clipped, inControl };
+		if (ariaHidden === scope.ariaHidden && clipper === scope.clipper && inControl === scope.inControl) return scope;
+		return { ariaHidden, clipper, inControl };
 	}
 
 	/**
-	 * Checks if an element is rendered: not under `display: none`, `visibility: hidden` or a skipped
-	 * `content-visibility` (`hidden="until-found"`, a closed `<details>`), nor `opacity: 0` when
-	 * `checkOpacity` is set. The options of a `<select>` and `display: contents` elements have no box
-	 * of their own, which `checkVisibility` reads as hidden: they are rendered when the select (the
-	 * parent) is, and `visibility`, which they pass on to their content, is not `hidden`.
+	 * The element itself, or its nearest ancestor with a box when it is `display: contents`.
+	 *
+	 * @param {HTMLElement} element - The element.
+	 * @returns {HTMLElement} The element with the box.
+	 */
+	function boxOf(element) {
+		while (element.parentElement && getCachedComputedStyle(element)?.display === "contents") {
+			element = element.parentElement;
+		}
+		return element;
+	}
+
+	/**
+	 * Checks if an element is rendered: not under `display: none` or a skipped `content-visibility`
+	 * (`hidden="until-found"`, a closed `<details>`), not `visibility: hidden` unless `checkVisibility`
+	 * is unset, and not under `opacity: 0` when `checkOpacity` is set.
+	 *
+	 * `visibility` is read on the element itself, as a child can be visible in a hidden parent. The
+	 * options of a `<select>` and `display: contents` elements have no box of their own, which
+	 * `checkVisibility` reads as hidden: the box checked is the select's, or the nearest ancestor's.
 	 *
 	 * @param {HTMLElement} element - The element to check.
 	 * @param {boolean} checkOpacity - Whether `opacity: 0` hides the element.
+	 * @param {boolean} checkVisibility - Whether `visibility: hidden` hides the element.
 	 * @returns {boolean} Whether the element is rendered.
 	 */
-	function isRendered(element, checkOpacity) {
+	function isRendered(element, checkOpacity, checkVisibility = true) {
 		if (element.localName === "option" || element.localName === "optgroup") {
 			element = element.closest("select") ?? element;
 		}
-		let boxed = element;
-		while (boxed.parentElement && getCachedComputedStyle(boxed)?.display === "contents") {
-			boxed = boxed.parentElement;
-		}
-		if (boxed !== element && getCachedComputedStyle(element)?.visibility !== "visible") return false;
-		if (typeof boxed.checkVisibility !== "function") return true;
-		return boxed.checkVisibility({ checkOpacity, checkVisibilityCSS: true });
+		if (checkVisibility && getCachedComputedStyle(element)?.visibility !== "visible") return false;
+		const box = boxOf(element);
+		if (typeof box.checkVisibility !== "function") return true;
+		return box.checkVisibility({ checkOpacity, checkVisibilityCSS: false });
 	}
 
 	/**
@@ -582,14 +611,14 @@
 	 * @returns {boolean} Whether the text node is hidden.
 	 */
 	function isTextNodeHidden(textNode, scope) {
-		if (scope.clipped) return true;
+		if (scope.clipper !== null) return true;
 		const parent = textNode.parentElement;
 		if (!isRendered(parent, false)) return true;
-		// the content a rendered parent skips (`hidden="until-found"`, a closed `<details>`): its
-		// elements are not rendered, but its own text nodes have a box
-		if (getCachedComputedStyle(parent)?.contentVisibility === "hidden" || (parent.localName === "details" && !parent.open)) {
-			return true;
-		}
+		// the content a rendered box skips (`hidden="until-found"`, a closed `<details>` outside its
+		// `<summary>`): its elements are not rendered, but its own text nodes have a box
+		const box = boxOf(parent);
+		if (getCachedComputedStyle(box)?.contentVisibility === "hidden") return true;
+		if (box.localName === "details" && !box.open && parent.closest("summary")?.parentElement !== box) return true;
 		const range = document.createRange();
 		range.selectNodeContents(textNode);
 		const rects = Array.from(range.getClientRects());
@@ -608,8 +637,8 @@
 	/**
 	 * Checks if a highlight candidate (a visible element) is hidden: clipped away, or on screen with
 	 * `opacity: 0` (see `isTextNodeHidden`). A form control with `opacity: 0` is still a control
-	 * (custom checkboxes and file inputs are drawn over by their label): it is hidden only when its
-	 * parent is. `aria-hidden` does not hide a control the user can see and click (Google Flights'
+	 * (custom checkboxes and file inputs are drawn over by their label): only its parent's opacity
+	 * hides it. `aria-hidden` does not hide a control the user can see and click (Google Flights'
 	 * previous / next day buttons are `aria-hidden`).
 	 *
 	 * @param {HTMLElement} element - The element to check.
@@ -617,11 +646,11 @@
 	 * @returns {boolean} Whether the element is hidden.
 	 */
 	function isElementHidden(element, scope) {
-		const position = getCachedComputedStyle(element)?.position;
-		if (scope.clipped && position !== "fixed" && position !== "absolute") return true;
+		if (scope.clipper !== null && !escapesClip(element, scope.clipper)) return true;
 		if (!isOnScreen(getCachedBoundingRect(element))) return false;
-		const isFormControl = DISABLEABLE_TAGS.has(element.localName);
-		return !isRendered(isFormControl && element.parentElement ? element.parentElement : element, true);
+		if (!DISABLEABLE_TAGS.has(element.localName)) return !isRendered(element, true);
+		const parent = element.parentElement;
+		return !isRendered(element, false) || (parent !== null && !isRendered(parent, true, false));
 	}
 
 	/**
