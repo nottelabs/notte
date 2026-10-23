@@ -13,8 +13,6 @@ import VersionHistory from "/snippets/functions/management/version_history.mdx";
 import ViewRunHistory from "/snippets/functions/management/view_run_history.mdx";
 import CheckRunStatus from "/snippets/functions/management/check_run_status.mdx";
 import FilterActiveRuns from "/snippets/functions/management/filter_active_runs.mdx";
-import AccessReplay from "/snippets/functions/management/access_replay.mdx";
-import ReplayAfterRun from "/snippets/functions/management/replay_after_run.mdx";
 import StopRunning from "/snippets/functions/management/stop_running.mdx";
 import ForkFunction from "/snippets/functions/management/fork_function.mdx";
 import ModifyForked from "/snippets/functions/management/modify_forked.mdx";
@@ -35,7 +33,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-Manage the lifecycle of your Functions including updates, versioning, monitoring executions, and viewing replays.
+Manage the lifecycle of your Functions including updates, versioning, and monitoring executions.
 
 ## Viewing Functions
 
@@ -123,26 +121,6 @@ to your Function's ID and the run ID returned by its execution.
 View only running executions:
 
 <FilterActiveRuns />
-
-## Viewing Replays
-
-### Access Function Replay
-
-Watch MP4 replay of Function execution:
-
-<AccessReplay />
-
-**Replay features:**
-- Video recording of browser session
-- Shows all actions taken
-- Useful for debugging failures
-- Available after running a function
-
-### Replay After Run
-
-Get replay immediately after execution:
-
-<ReplayAfterRun />
 
 ## Managing Runs
 

@@ -140,9 +140,8 @@ def hints(function: Callable[..., Any], sync: type, async_: type) -> dict[str, A
     return {name: async_ if value is sync else value for name, value in typing.get_type_hints(function).items()}
 
 
-# Sync methods without an async twin yet: `replay` waits on `sessions.replay`, which the async
-# sessions client does not have yet.
-PENDING = {NotteFunction: {"replay"}, RemoteFileStorage: set()}
+# Sync methods without an async twin yet.
+PENDING: dict[type, set[str]] = {NotteFunction: set(), RemoteFileStorage: set()}
 # Members that are not async twins of a sync method, and why.
 FUNCTION_EXCEPTIONS = {
     # Properties: they send no request, and raise until the function was awaited or used.

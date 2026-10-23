@@ -305,8 +305,7 @@ class AsyncNotteClient:
     exceptions, except `functions.get_curl` and `functions.decode_message`, which only format text
     and stay plain methods. So do `health_check` and the methods of the `Session`, `Function`,
     `Persona`, `Vault` and `FileStorage` objects that call the API (their methods without I/O,
-    such as `generate_password()`, stay plain). Not yet available: `AsyncNotteFunction.replay`.
-    It will be added later.
+    such as `generate_password()`, stay plain).
 
     **Example:**
     ```python
