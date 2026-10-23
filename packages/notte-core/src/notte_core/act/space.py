@@ -95,6 +95,9 @@ class ObservedPage:
     fingerprint: str
     # ids of the actions in the current viewport (from the screenshot's boxes; empty when unknown)
     in_view: frozenset[str] = frozenset()
+    # ids of the read-only fields (from the element signatures read after observing for an executable decision;
+    # empty when unknown, as for a dry run)
+    readonly: frozenset[str] = frozenset()
 
     @staticmethod
     def from_observation(
@@ -472,8 +475,6 @@ def _page_text(
 ) -> str:
     lines = _description_lines(page.description) if labels == "html" else _accessible_lines(page, display_text)
     viewport = _viewport_lines(page, lines) if windowed else None
-    if viewport is not None:
-        viewport = _with_nearby_text(lines, *viewport)
     if viewport is None or viewport == (0, len(lines)):
         text = "\n".join(line for _, line in lines)
         return text if length is None else _cut(text, length)
@@ -526,32 +527,6 @@ def _description_lines(description: str) -> list[tuple[str | None, str]]:
         match = _DESCRIPTION_LINE.match(line.strip())
         lines.append((None if match is None else match.group(1), line))
     return lines
-
-
-def _with_nearby_text(lines: Sequence[tuple[str | None, str]], first: int, last: int) -> tuple[int, int]:
-    """`[first, last)` widened, where it ends on an element in view, to the text lines right next to it (up to
-    `NEARBY_TEXT` characters, up to the next element). Only elements are known to be in view: the text next to
-    them, like the instructions or confirmation under a form, may be too, whatever the scroll position estimate
-    says. A boundary set by the estimate alone stays where it is."""
-
-    def text(i: int) -> int | None:
-        return len(lines[i][1]) + 1 if 0 <= i < len(lines) and lines[i][0] is None else None
-
-    if 0 < last and lines[last - 1][0] is not None:
-        used = 0
-        while (size := text(last)) is not None and used + size <= NEARBY_TEXT:
-            used += size
-            last += 1
-    if first < len(lines) and lines[first][0] is not None:
-        used = 0
-        while (size := text(first - 1)) is not None and used + size <= NEARBY_TEXT:
-            used += size
-            first -= 1
-    return first, last
-
-
-# text kept on each side of the part of the page found in the viewport (`_with_nearby_text`)
-NEARBY_TEXT = 1_000
 
 
 def _viewport_lines(page: ObservedPage, lines: Sequence[tuple[str | None, str]]) -> tuple[int, int] | None:
@@ -769,8 +744,9 @@ def build_act_space(
                     add("TYPE_TEXT", target("fill"), element)
                 add("CLICK", target("click"), element)
             case "combobox":
+                # a read-only combobox input opens a list: its option is chosen by label, not typed in
                 editable = (
-                    (line.startswith(("<input", "<textarea")) and "readonly" not in line)
+                    (line.startswith(("<input", "<textarea")) and action.id not in page.readonly)
                     or 'contenteditable="true"' in line
                     or 'contenteditable="plaintext-only"' in line
                 )
