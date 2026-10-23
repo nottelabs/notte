@@ -1,6 +1,7 @@
 ### Content of 'WebArea' component with text 'body content'
 L1[:]<a href="https://duckduckgo.com/about" title="Learn about DuckDuckGo" aria_label="Learn about DuckDuckGo"></a>
 I1[:]<input type="text" value="" placeholder="Search without being tracked" name="q" role="combobox" aria_label="Search with DuckDuckGo" aria_expanded="true"></input>
+_[:]<button type="submit" aria_label="Search" disabled></button>
 L2[:]<a href="https://duck.ai/">Chat</a>
 B1[:]<button>Menu</button>
 _[:]Switch to DuckDuckGo. It’s private and free!

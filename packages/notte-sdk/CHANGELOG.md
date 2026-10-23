@@ -9,6 +9,31 @@ was off-screen, the DOM snapshot dropped it with its whole subtree, so the link 
 node and as text. Such elements are now kept like any other off-screen element. Elements inside
 the viewport are unchanged.
 
+## Unreleased: disabled controls in observations
+
+Observations describe disabled controls instead of dropping them: a disabled input, select, textarea or
+button, a control inside a disabled `<fieldset>`, and a link or widget with `aria-disabled="true"`. Each
+is rendered in the action space description without an action id and with a `disabled` attribute, e.g.
+`_[:]<input type="text" disabled></input>` or `_[:]<button disabled>Submit</button>` (a disabled button
+used to appear as its text only, a disabled field not at all). They offer no action, and their nodes have
+the new `DomNode.disabled` set, with their live state and accessible name. Controls inside a disabled
+`<fieldset>` are no longer offered as actions. Ids and descriptions of enabled elements are unchanged.
+
+## Unreleased: sessions stopped when `with` entry fails
+
+`with client.Session(...) as session:` now stops the session when entering the block fails after
+the session was created, for example on an invalid `cookie_file`, a failed cookie upload or a
+`KeyboardInterrupt`. The session is stopped with `close_reason="error"` and the original exception
+is raised. Before, `__exit__` never ran in that case and the browser kept running until its idle
+timeout.
+
+## Unreleased: unexpected JSON responses raise `NotteAPIError`
+
+When a successful API response is not the JSON object or list a method expects (for example
+`null`, a number, or a page object without a list of `items`), the sync and async clients raise
+`NotteAPIError` with the response's status code and body, instead of an `AttributeError` or
+`TypeError`.
+
 ## Unreleased: AsyncNotteClient (preview)
 
 `from notte_sdk import AsyncNotteClient` is an asyncio client on `httpx.AsyncClient`, with the
@@ -20,9 +45,19 @@ garbage collected. A client's connections belong to the event loop that opened t
 from another open loop raises `RuntimeError`. Preview: not yet available are the methods the sync
 resources extend beyond the API call (`sessions.stop`, `set_cookies`, `replay`, `debug_tab_info`,
 `page` and the viewers; `functions.run_start`, `update`, `create_run`, `get_curl`,
-`run_get_metadata`, `run_update_metadata`; `files.upload`, `download`, `metadata`; `vaults.get`;
-`personas.create_number`, `delete_number`), `managed_auth`, and the `Session`, `Function`,
-`Persona`, `Vault` and `FileStorage` objects.
+`run_get_metadata`, `run_update_metadata`; `files.upload`, `download`, `metadata`), `scrape`, and
+the `Session`, `Function` and `FileStorage` objects.
+
+`AsyncNotteClient` also has `personas.create_number` and `delete_number`, `vaults.get`,
+`managed_auth`, `health_check()`, and the `Persona` and `Vault` objects (`AsyncNottePersona`,
+`AsyncNotteVault`). Their methods that call the API are coroutines with the same names and
+arguments as the sync versions, and send the same requests. Methods without I/O, such as
+`generate_password()` and the vault's redaction helpers, stay plain methods. Create or load an object with
+`persona = await client.Persona(...)`, or use `async with client.Persona(...) as persona:` to also
+delete it on exit. Credentials go through the same vault code as `NotteVault`, so values read from
+the vault are masked the same way. `AsyncNottePersona` implements `aemails`, `asms`,
+`await_emails` and `await_sms`, and `AsyncNotteVault` implements the `*_async` vault methods, with
+async requests, so a local session can use them without blocking its event loop.
 
 ## Unreleased: httpx transport
 

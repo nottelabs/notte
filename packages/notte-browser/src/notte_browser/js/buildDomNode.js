@@ -812,7 +812,8 @@
 		) {
 			return 'DISABLED_ATTRIBUTE';
 		}
-		if (element.disabled) {
+		// `:disabled` also matches the controls of a disabled `<fieldset>`, whose `.disabled` is false
+		if (element.disabled || element.matches(':disabled')) {
 			return 'DISABLED_PROPERTY';
 		}
 		if (element.inert || element.hasAttribute('inert') || element.getAttribute('aria-inert') === 'true') {
@@ -1264,14 +1265,15 @@
 	 * separate from its parent (if the parent is also interactive).
 	 *
 	 * @param {HTMLElement} element - The element to check.
+	 * @param {boolean} ignoreDisabled - Whether to answer as if the element were enabled.
 	 * @returns {boolean} Whether the element is a distinct interaction.
 	 */
-	function isElementDistinctInteraction(element) {
+	function isElementDistinctInteraction(element, ignoreDisabled = false) {
 		if (!element || element.nodeType !== Node.ELEMENT_NODE) {
 			return false;
 		}
 
-		if (getDisabledReason(element, getCachedComputedStyle(element)) !== null) {
+		if (!ignoreDisabled && getDisabledReason(element, getCachedComputedStyle(element)) !== null) {
 			return false;
 		}
 
@@ -1406,6 +1408,42 @@
 		}
 
 		return false; // Did not highlight
+	}
+
+	const DISABLEABLE_TAGS = new Set(['button', 'input', 'select', 'textarea']);
+
+	/**
+	 * Checks if an element is a control that cannot be used yet: a form control that is `disabled`
+	 * (or inside a disabled `<fieldset>`), or a control or widget with `aria-disabled="true"`.
+	 *
+	 * @param {HTMLElement} element - The element to check.
+	 * @returns {boolean} Whether the element is a disabled control.
+	 */
+	function isDisabledControl(element) {
+		const tagName = element.tagName.toLowerCase();
+		if (DISABLEABLE_TAGS.has(tagName) && element.matches(':disabled')) return true;
+		if (element.getAttribute('aria-disabled') !== 'true') return false;
+		const role = element.getAttribute('role');
+		return DISABLEABLE_TAGS.has(tagName) ||
+			(tagName === 'a' && element.hasAttribute('href')) ||
+			(role !== null && INTERACTIVE_ROLES.has(role));
+	}
+
+	/**
+	 * Marks a disabled control as `disabled` when it would be highlighted if it were enabled (same
+	 * nesting and viewport rules). It gets no highlight index: it is described, but offers no action.
+	 *
+	 * @param {Object} nodeData - The node data object.
+	 * @param {HTMLElement} node - The node to check.
+	 * @param {boolean} isParentHighlighted - Whether the parent node is highlighted.
+	 * @returns {boolean} Whether the node was marked.
+	 */
+	function handleDisabledControl(nodeData, node, isParentHighlighted) {
+		if (!isDisabledControl(node)) return false;
+		if (isParentHighlighted && !isElementDistinctInteraction(node, true)) return false;
+		if (!isInExpandedViewport(node, viewportExpansion)) return false;
+		nodeData.disabled = true;
+		return true;
 	}
 
 	/**
@@ -1563,7 +1601,8 @@
 					nodeData.pointerElement = isPointerElementWithHover(node);
 					// Call the dedicated highlighting function
 					nodeWasHighlighted = handleHighlighting(nodeData, node, parentIframe, isParentHighlighted);
-					if (nodeData.highlightIndex !== undefined) {
+					const isDisabled = nodeData.disabledReason && handleDisabledControl(nodeData, node, isParentHighlighted);
+					if (nodeData.highlightIndex !== undefined || isDisabled) {
 						const state = getLiveState(node);
 						if (state !== undefined) nodeData.state = state;
 						const accessibleName = getAccessibleName(node);

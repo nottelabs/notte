@@ -11,8 +11,8 @@ L4[:]<a href="https://www.anthropologie.com/account/hearted-products"></a>
 L5[:]<a href="https://www.anthropologie.com/cart">Product Count
 1</a>
 _[:]Ship or Pick Up
-_[:]Delivery
-_[:]Payment
+_[:]<button role="link" disabled>Delivery</button>
+_[:]<button role="link" disabled>Payment</button>
 _[:]Ship or Pick Up
 _[:]Already Have an Account?
 _[:]Sign in to check out faster.

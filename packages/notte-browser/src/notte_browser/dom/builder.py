@@ -44,13 +44,15 @@ class RawNode(TypedDict):
     isInteractive: NotRequired[bool]
     isEditable: NotRequired[bool]
     disabledReason: NotRequired[str | None]
+    # a disabled control that would be highlighted if it were enabled (it has no highlight index)
+    disabled: NotRequired[bool]
     pointerElement: NotRequired[bool]
     highlightIndex: NotRequired[int]
     shadowRoot: NotRequired[bool]
     bbox: NotRequired[dict[str, float] | None]
-    # live value / checked state / select options of highlighted elements (`ElementState`)
+    # live value / checked state / select options of highlighted and disabled elements (`ElementState`)
     state: NotRequired[dict[str, Any]]
-    # accessible name of highlighted elements, when they have one
+    # accessible name of highlighted and disabled elements, when they have one
     accessibleName: NotRequired[str]
     # visible iframe elements of the child frames the caller asked about
     frameIndex: NotRequired[int]
@@ -205,6 +207,7 @@ class _TreeBuilder:
             bbox=BoundingBox.model_validate(bbox) if bbox else None,
             state=ElementState.from_payload(raw.get("state")),
             accessible_name=raw.get("accessibleName"),
+            disabled=raw.get("disabled", False),
         )
         for child in children:
             child.set_parent(node)
