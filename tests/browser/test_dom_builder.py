@@ -26,7 +26,7 @@ def _element(tag: str, xpath: str, children: list[str], highlight: int | None = 
 
 
 def _text(text: str, visible: bool = True) -> RawNode:
-    return {"type": "TEXT_NODE", "text": text, "isVisible": visible}
+    return {"type": "TEXT_NODE", "text": text, "isInViewport": visible}
 
 
 def _frame(nodes: dict[str, RawNode], root_id: str) -> RawFrame:

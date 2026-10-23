@@ -3,17 +3,12 @@ _[:]normal
 _[:]Skip to content
 L1[:]<a href="https://www.polywood.com/"></a>
 L2[:]<a href="https://www.polywood.com/cart" aria_label="Cart"></a>
-_[:]Order summary
-_[:]Original price
-_[:]$229.00
 _[:]POLYWOOD Checkout
 _[:]Express checkout
 L3[:]<a href="https://www.polywood.com/checkouts/cn/Z2NwLXVzLXdlc3QxOjAxSz..." aria_label="Shop Pay"></a>
-_[:]Show more options
 _[:]OR
 _[:]Contact
 L4[:]<a href="https://account.polywood.com/authentication/oauth/authorize?...">Log in</a>
-_[:]Email
 M1[:]<div></div>
 I1[:]<input type="email" value="" placeholder="Email" name="email"></input>
 B1[:]<input type="checkbox" name="marketing_opt_in"></input>
@@ -21,16 +16,12 @@ M2[:]<label>I'd like to receive emails from POLYWOOD about outdoor living, new p
 _[:]Delivery
 _[:]Country/Region
 I2[:]<select name="countryCode">United States</select>
-_[:]First name
 M3[:]<div></div>
 I3[:]<input type="text" value="" placeholder="First name" name="firstName"></input>
-_[:]Last name
 M4[:]<div></div>
 I4[:]<input type="text" value="" placeholder="Last name" name="lastName"></input>
-_[:]Company (optional)
 M5[:]<div></div>
 I5[:]<input type="text" value="" placeholder="Company (optional)" name="company"></input>
-_[:]Address
 M6[:]<div></div>
 I6[:]<input type="text" value="" placeholder="Address" name="address1" role="combobox" aria_expanded="false"></input>
 _[:]Apartment, suite, etc. (optional)
@@ -106,13 +97,10 @@ _[:]Payment
 _[:]All transactions are secure and encrypted.
 _[:]Credit card
 _[:]+4
-_[:]+5
 _[:]Additional payment methods
 _[:]Card number
 _[:]Expiration date (MM / YY)
 _[:]Security code
-_[:]Issue date (MM / YY)
-_[:]Issue number
 _[:]Name on card
 _[:]Use shipping address as billing address
 _[:]PayPal
@@ -127,7 +115,6 @@ _[:]Terms of Service
 _[:]and acknowledge the
 _[:]Privacy Policy
 _[:].
-_[:]Submit
 _[:]Refund policy
 _[:]Shipping policy
 _[:]Privacy policy
@@ -144,13 +131,10 @@ _[:]Presidential Rocking Chair
 _[:]Slate Grey
 _[:]1
 _[:]$229.00
-_[:]Scroll for more items
-_[:]Discount code or gift card
 _[:]Discount code or gift card
 M7[:]<div></div>
 I7[:]<input type="text" value="" placeholder="Discount code or gift card" name="reductions"></input>
 _[:]Apply
-_[:]Submit
 _[:]Estimated Ship Date 7/23 - 7/25
 _[:](If you order by 3 PM ET 7/16)
 _[:]Cost summary

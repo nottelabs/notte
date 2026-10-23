@@ -411,7 +411,7 @@
         "python_selector": null,
         "xpath_selector": "html/body/div[1]/div/div/div/div[2]/div/button"
       },
-      "text_label": "Your Cart 1 item Winnie Outdoor Side Table Black Frame Qty 1 Original price: $427 Price: $278 Ready-to-Ship",
+      "text_label": "1 item Winnie Outdoor Side Table Black Frame Qty 1 Original price: $427 Price: $278 Ready-to-Ship",
       "timeout": 15000,
       "type": "click"
     },
@@ -436,7 +436,7 @@
         "python_selector": null,
         "xpath_selector": "html/body/div[1]/div/div/div/div[2]/div/button/div[1]"
       },
-      "text_label": "Your Cart 1 item",
+      "text_label": "1 item",
       "timeout": 15000,
       "type": "click"
     },

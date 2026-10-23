@@ -485,12 +485,152 @@
 	}
 
 	/**
-	 * Checks if a text node is visible.
+	 * What hides the content of an element, inherited down the tree (see `contentScope`).
+	 *
+	 * - `ariaHidden`: inside `aria-hidden="true"`, and not inside focusable content
+	 * - `clipped`: inside an element that clips its overflow to an empty box (`height: 0; overflow: hidden`)
+	 * - `inControl`: inside a highlighted or disabled element, whose text is its label
+	 */
+	const VISIBLE_SCOPE = { ariaHidden: false, clipped: false, inControl: false };
+
+	/**
+	 * Checks if an element can be reached with the Tab key. Focusable content stays visible inside an
+	 * `aria-hidden` subtree.
+	 *
+	 * @param {HTMLElement} element - The element to check.
+	 * @returns {boolean} Whether the element is focusable.
+	 */
+	function isFocusable(element) {
+		return element.tabIndex >= 0 && !element.matches(':disabled');
+	}
+
+	/**
+	 * Checks if an element clips its content to an empty box: a block with `overflow` other than
+	 * `visible` and no height (or width) in that direction, as collapsed accordions and menus are.
+	 * Inline elements, and elements without a box (`display: contents`, the options of a `<select>`),
+	 * do not clip.
+	 *
+	 * @param {HTMLElement} element - The element to check.
+	 * @returns {boolean} Whether the element clips its content to an empty box.
+	 */
+	function clipsToNothing(element) {
+		const style = getCachedComputedStyle(element);
+		if (!style || style.display === "inline" || style.display === "contents") return false;
+		if (!getCachedClientRects(element)?.length) return false;
+		const rect = getCachedBoundingRect(element);
+		if (!rect) return false;
+		return (style.overflowY !== "visible" && rect.height === 0) || (style.overflowX !== "visible" && rect.width === 0);
+	}
+
+	/**
+	 * The scope of an element's children: what hides them, given the element and its own scope.
+	 *
+	 * @param {HTMLElement} element - The element.
+	 * @param {Object} scope - The scope of the element.
+	 * @param {boolean} isControl - Whether the element is highlighted or disabled.
+	 * @returns {Object} The scope of its children.
+	 */
+	function contentScope(element, scope, isControl) {
+		let ariaHidden = scope.ariaHidden;
+		if (element.getAttribute("aria-hidden") === "true") ariaHidden = !isFocusable(element);
+		else if (ariaHidden && isFocusable(element)) ariaHidden = false;
+		let clipped = scope.clipped;
+		const position = getCachedComputedStyle(element)?.position;
+		// a positioned element may be laid out outside the clipping box: assume it is not clipped
+		if (position === "fixed" || position === "absolute") clipped = false;
+		if (clipsToNothing(element)) clipped = true;
+		const inControl = scope.inControl || isControl;
+		if (ariaHidden === scope.ariaHidden && clipped === scope.clipped && inControl === scope.inControl) return scope;
+		return { ariaHidden, clipped, inControl };
+	}
+
+	/**
+	 * Checks if an element is rendered: not under `display: none`, `visibility: hidden` or a skipped
+	 * `content-visibility` (`hidden="until-found"`, a closed `<details>`), nor `opacity: 0` when
+	 * `checkOpacity` is set. The options of a `<select>` and `display: contents` elements have no box
+	 * of their own, which `checkVisibility` reads as hidden: they are rendered when the select (the
+	 * parent) is, and `visibility`, which they pass on to their content, is not `hidden`.
+	 *
+	 * @param {HTMLElement} element - The element to check.
+	 * @param {boolean} checkOpacity - Whether `opacity: 0` hides the element.
+	 * @returns {boolean} Whether the element is rendered.
+	 */
+	function isRendered(element, checkOpacity) {
+		if (element.localName === "option" || element.localName === "optgroup") {
+			element = element.closest("select") ?? element;
+		}
+		let boxed = element;
+		while (boxed.parentElement && getCachedComputedStyle(boxed)?.display === "contents") {
+			boxed = boxed.parentElement;
+		}
+		if (boxed !== element && getCachedComputedStyle(element)?.visibility !== "visible") return false;
+		if (typeof boxed.checkVisibility !== "function") return true;
+		return boxed.checkVisibility({ checkOpacity, checkVisibilityCSS: true });
+	}
+
+	/**
+	 * Checks if a text node is hidden: not rendered, clipped away, or with an empty box.
+	 *
+	 * `opacity: 0` and `aria-hidden` hide text on screen only. Below the fold, content waiting to fade
+	 * in on scroll has `opacity: 0`, and the visible text next to a control is often `aria-hidden`
+	 * (the control carries the name), while the control is offered only once it is in view. Inside a
+	 * highlighted element, `aria-hidden` text is kept: it is part of what the element shows (an icon).
+	 * Text that is rendered outside the viewport is not hidden.
 	 *
 	 * @param {Text} textNode - The text node to check.
-	 * @returns {boolean} Whether the text node is visible.
+	 * @param {Object} scope - The scope of its parent element.
+	 * @returns {boolean} Whether the text node is hidden.
 	 */
-	function isTextNodeVisible(textNode) {
+	function isTextNodeHidden(textNode, scope) {
+		if (scope.clipped) return true;
+		const parent = textNode.parentElement;
+		if (!isRendered(parent, false)) return true;
+		// the content a rendered parent skips (`hidden="until-found"`, a closed `<details>`): its
+		// elements are not rendered, but its own text nodes have a box
+		if (getCachedComputedStyle(parent)?.contentVisibility === "hidden" || (parent.localName === "details" && !parent.open)) {
+			return true;
+		}
+		const range = document.createRange();
+		range.selectNodeContents(textNode);
+		const rects = Array.from(range.getClientRects());
+		// no box at all (the text of a `<textarea>`): nothing says it is hidden
+		if (rects.length === 0) return false;
+		if (rects.every((rect) => rect.width === 0 || rect.height === 0)) return true;
+		if (!rects.some(isOnScreen)) return false;
+		if (scope.ariaHidden && !scope.inControl) return true;
+		return !isRendered(parent, true);
+	}
+
+	function isOnScreen(rect) {
+		return rect.bottom > 0 && rect.top < window.innerHeight && rect.right > 0 && rect.left < window.innerWidth;
+	}
+
+	/**
+	 * Checks if a highlight candidate (a visible element) is hidden: clipped away, or on screen with
+	 * `opacity: 0` (see `isTextNodeHidden`). A form control with `opacity: 0` is still a control
+	 * (custom checkboxes and file inputs are drawn over by their label): it is hidden only when its
+	 * parent is. `aria-hidden` does not hide a control the user can see and click (Google Flights'
+	 * previous / next day buttons are `aria-hidden`).
+	 *
+	 * @param {HTMLElement} element - The element to check.
+	 * @param {Object} scope - The scope of the element.
+	 * @returns {boolean} Whether the element is hidden.
+	 */
+	function isElementHidden(element, scope) {
+		const position = getCachedComputedStyle(element)?.position;
+		if (scope.clipped && position !== "fixed" && position !== "absolute") return true;
+		if (!isOnScreen(getCachedBoundingRect(element))) return false;
+		const isFormControl = DISABLEABLE_TAGS.has(element.localName);
+		return !isRendered(isFormControl && element.parentElement ? element.parentElement : element, true);
+	}
+
+	/**
+	 * Checks if a text node is in the (expanded) viewport and rendered.
+	 *
+	 * @param {Text} textNode - The text node to check.
+	 * @returns {boolean} Whether the text node is in the viewport.
+	 */
+	function isTextNodeInViewport(textNode) {
 		try {
 			// Special case: when viewportExpansion is -1, consider all text nodes as visible
 			if (viewportExpansion === -1) {
@@ -1452,9 +1592,10 @@
 	 * @param {HTMLElement} node - The node to process.
 	 * @param {HTMLElement | null} parentIframe - The parent iframe node.
 	 * @param {boolean} isParentHighlighted - Whether the parent node is highlighted.
+	 * @param {Object} scope - What hides the node (see `VISIBLE_SCOPE`).
 	 * @returns {string | null} The ID of the node data object, or null if the node is not processed.
 	 */
-	function buildDomTree(node, parentIframe = null, isParentHighlighted = false) {
+	function buildDomTree(node, parentIframe = null, isParentHighlighted = false, scope = VISIBLE_SCOPE) {
 		// Fast rejection checks first
 		if (!node || node.id === HIGHLIGHT_CONTAINER_ID ||
 			(node.nodeType !== Node.ELEMENT_NODE && node.nodeType !== Node.TEXT_NODE)) {
@@ -1503,11 +1644,16 @@
 				return null;
 			}
 
+			// hidden text is left out; text outside the viewport is kept
+			if (isTextNodeHidden(node, scope)) {
+				return null;
+			}
+
 			const id = `${ID.current++}`;
 			DOM_HASH_MAP[id] = {
 				type: "TEXT_NODE",
 				text: textContent,
-				isVisible: isTextNodeVisible(node),
+				isInViewport: isTextNodeInViewport(node),
 			};
 			return id;
 		}
@@ -1585,7 +1731,7 @@
 				const role = node.getAttribute('role');
 				const isMenuContainer = role === 'menu' || role === 'menubar' || role === 'listbox';
 
-				if (nodeData.isTopElement || isMenuContainer) {
+				if ((nodeData.isTopElement || isMenuContainer) && !isElementHidden(node, scope)) {
 					const interactiveResult = isInteractiveElement(node);
 
 					// Parse interactive result for disabled state
@@ -1611,6 +1757,8 @@
 				}
 			}
 		}
+
+		const childScope = contentScope(node, scope, nodeData.highlightIndex !== undefined || nodeData.disabled === true);
 
 		// Process children, with special handling for iframes and rich text editors
 		if (node.tagName) {
@@ -1642,7 +1790,7 @@
 			) {
 				// Process all child nodes to capture formatted text
 				for (const child of node.childNodes) {
-					const domElement = buildDomTree(child, parentIframe, nodeWasHighlighted);
+					const domElement = buildDomTree(child, parentIframe, nodeWasHighlighted, childScope);
 					if (domElement) nodeData.children.push(domElement);
 				}
 			}
@@ -1651,7 +1799,7 @@
 				if (node.shadowRoot) {
 					nodeData.shadowRoot = true;
 					for (const child of node.shadowRoot.childNodes) {
-						const domElement = buildDomTree(child, parentIframe, nodeWasHighlighted);
+						const domElement = buildDomTree(child, parentIframe, nodeWasHighlighted, childScope);
 						if (domElement) nodeData.children.push(domElement);
 					}
 				}
@@ -1659,7 +1807,7 @@
 				for (const child of node.childNodes) {
 					// Pass the highlighted status of the *current* node to its children
 					const passHighlightStatusToChild = nodeWasHighlighted || isParentHighlighted;
-					const domElement = buildDomTree(child, parentIframe, passHighlightStatusToChild);
+					const domElement = buildDomTree(child, parentIframe, passHighlightStatusToChild, childScope);
 					if (domElement) nodeData.children.push(domElement);
 				}
 			}

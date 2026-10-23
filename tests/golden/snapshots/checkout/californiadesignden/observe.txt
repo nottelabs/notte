@@ -2,9 +2,6 @@
 _[:]normal
 _[:]Skip to content
 L1[:]<a href="https://www.californiadesignden.com/"></a>
-_[:]Order summary
-_[:]Original price
-_[:]$59.99
 L2[:]<a href="https://www.californiadesignden.com/cart">Cart</a>
 _[:]Information
 _[:]Shipping
@@ -12,11 +9,9 @@ _[:]Payment
 _[:]Information
 _[:]Express checkout
 L3[:]<a href="https://www.californiadesignden.com/checkouts/cn/Z2NwLXVzLXd..." aria_label="Shop Pay"></a>
-_[:]Show more options
 _[:]OR
 _[:]Contact
 L4[:]<a href="https://shopify.com/authentication/2463760495/oauth/authoriz...">Log in</a>
-_[:]Email
 M1[:]<div></div>
 I1[:]<input type="email" value="" placeholder="Email" name="email"></input>
 B1[:]<input type="checkbox" name="marketing_opt_in"></input>
@@ -24,13 +19,10 @@ M2[:]<label>Email me with news and offers</label>
 _[:]Shipping address
 _[:]Country/Region
 I2[:]<select name="countryCode">United States</select>
-_[:]First name
 M3[:]<div></div>
 I3[:]<input type="text" value="" placeholder="First name" name="firstName"></input>
-_[:]Last name
 M4[:]<div></div>
 I4[:]<input type="text" value="" placeholder="Last name" name="lastName"></input>
-_[:]Company (optional)
 M5[:]<div></div>
 I5[:]<input type="text" value="" placeholder="Company (optional)" name="company"></input>
 _[:]Address
@@ -121,13 +113,10 @@ _[:]Queen / Full - Duvet Cover & Sham Set
 _[:]Color: Bright White
 _[:]1
 _[:]$59.99
-_[:]Scroll for more items
-_[:]Discount code or gift card
 _[:]Discount code or gift card
 M6[:]<div></div>
 I6[:]<input type="text" value="" placeholder="Discount code or gift card" name="reductions"></input>
 _[:]Apply
-_[:]Submit
 _[:]Cost summary
 _[:]Item
 _[:]Value

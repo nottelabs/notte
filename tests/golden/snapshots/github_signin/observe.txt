@@ -1,15 +1,5 @@
 ### Content of 'WebArea' component with text 'body content'
 L1[:]<a href="https://github.com/login#start-of-content">Skip to content</a>
-_[:]You signed in with another tab or window.
-_[:]Reload
-_[:]to refresh your session.
-_[:]You signed out in another tab or window.
-_[:]Reload
-_[:]to refresh your session.
-_[:]You switched accounts on another tab or window.
-_[:]Reload
-_[:]to refresh your session.
-_[:]Dismiss alert
 _[:]Sign in to GitHub
 _[:]Username or email address
 I1[:]<input type="text" name="login"></input>
@@ -17,11 +7,6 @@ _[:]Password
 I2[:]<input type="password" name="password"></input>
 L2[:]<a href="https://github.com/password_reset">Forgot password?</a>
 B1[:]<input type="submit" value="Sign in" name="commit"></input>
-_[:]This browser or device is reporting partial passkey support.
-_[:]Webauthn isn't supported. Use a different browser or device to use your passkey.
-_[:]Loading
-_[:]Waiting for input from browser interaction...
-_[:]Continue with passkey
 _[:]Password login alternatives
 B2[:]<button type="button">Sign in with a passkey</button>
 _[:]New to GitHub?
@@ -32,7 +17,6 @@ L6[:]<a href="https://docs.github.com/">Docs</a>
 L7[:]<a href="https://support.github.com/">Contact GitHub Support</a>
 B3[:]<button type="button">Manage cookies</button>
 B4[:]<button type="button">Do not share my personal information</button>
-_[:]You can’t perform that action at this time.
 
 # interaction actions
 L1	click	'Skip to content'	'Skip to content'	html > body > div:nth-of-type(1) > div:nth-of-type(1) > a.px-2.py-4.color-bg-accent-emphasis.color-fg-on-emphasis.show-on-focus.js-skip-to-content[href="https://github.com/login#start-of-content"]	html/body/div[1]/div[1]/a	in_iframe=False	in_shadow_root=False
