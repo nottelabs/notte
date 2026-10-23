@@ -38,6 +38,7 @@ from notte_core.act.space import (
     Target,
     act_questions,
     build_act_space,
+    field_context,
     interpret,
     label_mode,
     needs_text,
@@ -74,6 +75,10 @@ from notte_core.observation import ExecutionResult, Observation
 HISTORY_SIZE = 10
 WRITER_HISTORY_SIZE = 6
 WRITER_PAGE_TEXT_LENGTH = 6_000
+# the other fields with a value sent to the writer (`page.fields`), the closest to the target
+WRITER_FIELDS = 12
+# the `error` of a history entry for a field the writer had no value for (nothing was typed)
+NO_VALUE = "NoValueFromInstruction"
 
 
 class ActDriver(Protocol):
@@ -200,6 +205,8 @@ async def run_act(
     labels = label_mode()
     # text written for a field, reused if a stale page forces a new decision on the same field
     written: dict[tuple[str, str, str], str] = {}
+    # the fields the writer had no value for, not offered to TYPE_TEXT when deciding again
+    no_text: set[tuple[str, str]] = set()
 
     for attempt in range(2):
         step = time.perf_counter()
@@ -209,7 +216,11 @@ async def run_act(
         history.privacy.remember_secrets(driver.secret_replacements())
 
         space = build_act_space(
-            page, display_text=history.privacy.text, labels=labels, display_cut=history.privacy.cut_text
+            page,
+            display_text=history.privacy.text,
+            labels=labels,
+            display_cut=history.privacy.cut_text,
+            no_text=no_text,
         )
         model_page = history.privacy.page(page)
         state = DecisionState(
@@ -242,6 +253,8 @@ async def run_act(
                 if decision.operation == "BLOCKED"
                 else f"confidence {decision.confidence:.2f} is below min_confidence={min_confidence}"
             )
+            if space.file_input:
+                reason += f" ({prompts.FILE_UPLOAD_UNSUPPORTED})"
             return _blocked(run, reason, raise_on_failure, common)
 
         target = decision.target
@@ -251,7 +264,7 @@ async def run_act(
             text = written.get(key)
             if text is None:
                 step = time.perf_counter()
-                context = _write_context(instruction, target, model_page, history, variables, driver, labels)
+                context = _write_context(instruction, target, space, model_page, history, variables, driver, labels)
                 try:
                     text = await _write(decider, context)
                 except ContentFilterError as e:
@@ -261,8 +274,24 @@ async def run_act(
                     run.timings.write_ms += _ms(step)
                     return _invalid(run, e, raise_on_failure, page.fingerprint, common)
                 run.timings.write_ms += _ms(step)
-                # "" clears a field, but names no option of a dropdown
-                if text is None or (text == "" and target.kind == "select_text"):
+                # "" clears a field, but names no option of a dropdown and clears nothing in an empty field
+                if text is None or (text == "" and (target.kind == "select_text" or not target.value)):
+                    if attempt == 0:
+                        # the field is not the next step (a vague label, a field the goal does not mention):
+                        # decide again without it, the decider told through the history
+                        no_text.add((target.element_id, target.label))
+                        history.entries.append(
+                            ActHistoryEntry(
+                                action=target.label,
+                                kind="TYPE_TEXT",
+                                text=None,
+                                fingerprint=page.fingerprint,
+                                page_changed=False,
+                                pending=False,
+                                error=NO_VALUE,
+                            )
+                        )
+                        continue
                     return _blocked(
                         run, f"no value to type in {target.label!r} from the instruction", raise_on_failure, common
                     )
@@ -383,13 +412,23 @@ def same_target(page: ObservedPage, current: ObservedPage, element_id: str | Non
 def _write_context(
     instruction: str,
     target: Target,
+    space: ActSpace,
     page: ObservedPage,
     history: ActHistory,
     variables: Mapping[str, str],
     driver: ActDriver,
     labels: LabelMode,
 ) -> WriteContext:
-    field: dict[str, Any] = {"label": target.label, "role": target.role, "value": target.value or ""}
+    """The field (with its id, as in the page text's `[I1]` markers, and its placeholder and the text before it
+    when they say more than its label), the page text around it, and the values of the other fields: a short or
+    vague label ("Departure") is read with the rest of the form."""
+    field: dict[str, Any] = {
+        "index": target.element_id,
+        "label": target.label,
+        "role": target.role,
+        "value": target.value or "",
+    }
+    field.update(field_context(page, target.element_id, labels, history.privacy.text, exclude=target.label))
     if target.input_type is not None:
         field["type"] = target.input_type
     if target.value_format is not None:
@@ -398,13 +437,24 @@ def _write_context(
     return WriteContext(
         goal=history.privacy.text(instruction),
         field=field,
-        page={"title": page.title, "text": text},
+        page={"title": page.title, "text": text, "fields": _other_fields(space, target.element_id)},
         recent_actions=history.privacy.payload(
             [{"action": e["action"], "text": e["text"]} for e in history.recent(WRITER_HISTORY_SIZE)]
         ),
         variables=sorted(variables),
         credentials=_credentials(driver.has_vault),
     )
+
+
+def _other_fields(space: ActSpace, element_id: str) -> list[dict[str, str]]:
+    """The other fields of the page that hold a value (label and value), the `WRITER_FIELDS` closest to the target."""
+    fields = [e for e in space.elements if e.get("role") in ("textbox", "combobox", "select")]
+    position = next((i for i, e in enumerate(fields) if e["index"] == element_id), 0)
+    filled = [(i, e) for i, e in enumerate(fields) if e["index"] != element_id and e.get("value")]
+    closest = sorted(filled, key=lambda pair: abs(pair[0] - position))[:WRITER_FIELDS]
+    return [
+        {"index": e["index"], "label": e["label"], "value": e["value"]} for _, e in sorted(closest, key=lambda p: p[0])
+    ]
 
 
 async def run_choose(
