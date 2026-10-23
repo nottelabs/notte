@@ -957,9 +957,19 @@ async def awrite_chunks(chunks: AsyncIterator[bytes], output: IO[bytes]) -> None
         _ = await asyncio.to_thread(output.write, chunk)
 
 
+async def _aopen_client() -> httpx.AsyncClient:
+    """A new client for one call (object storage, public downloads), built in a worker thread:
+    its SSL context reads the CA bundle from disk.
+
+    The pooled client of `AsyncSharedHttpClient` is built on the loop instead, once per
+    `AsyncNotteClient` and event loop: its lock cannot be held across an await.
+    """
+    return await asyncio.to_thread(async_http_client)
+
+
 async def aget_text(url: str, *, timeout: float) -> str:
     """The async twin of `get_text`."""
-    async with async_http_client() as client:
+    async with await _aopen_client() as client:
         response = await asend(client, client.build_request("GET", url, timeout=timeout))
     await araise_for_status(response)
     return response.text
@@ -992,7 +1002,7 @@ async def aput_object(url: str, payload: IO[bytes], *, headers: Mapping[str, str
     request_headers = httpx.Headers(headers)
     if "Content-Length" not in request_headers:
         request_headers["Content-Length"] = str(size)
-    async with async_http_client() as storage_session:
+    async with await _aopen_client() as storage_session:
         request = storage_session.build_request(
             "PUT", url, content=_aread_chunks(payload), headers=request_headers, timeout=_storage_timeout(timeout)
         )
@@ -1007,7 +1017,7 @@ async def aget_object(
     url: str, *, timeout: tuple[float, float], chunk_size: int
 ) -> AsyncGenerator[tuple[int, AsyncIterator[bytes]]]:
     """The async twin of `get_object`: yields the response status (2xx) and the body's chunks."""
-    async with async_http_client() as storage_session:
+    async with await _aopen_client() as storage_session:
         request = storage_session.build_request("GET", url, timeout=_storage_timeout(timeout))
         async with astream(storage_session, request, follow_redirects=False) as response:
             await araise_for_status(response)

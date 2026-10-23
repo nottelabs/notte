@@ -37,6 +37,7 @@ from tests.sdk.test_async_resources import (
     Exchange,
     exchange_async,
     exchange_sync,
+    mocked,
 )
 from tests.sdk.test_generated_endpoints import SERVER
 
@@ -895,3 +896,31 @@ async def test_cancelled_payload_download_closes_its_file(monkeypatch: pytest.Mo
     monkeypatch.setattr(run_payloads, "_PayloadDownload", blocking)
     download = await blocking.cancel_while_creating(run_payloads.aresolve_run_fields(stored_run(b"[]")))
     assert download._file.closed
+
+
+@pytest.mark.asyncio
+async def test_per_call_clients_build_their_ssl_context_off_the_event_loop(monkeypatch: pytest.MonkeyPatch) -> None:
+    from notte_sdk import _transport
+
+    loop_thread = threading.get_ident()
+    threads: list[int] = []
+    ssl_context = _transport._ssl_context
+
+    def recording_ssl_context() -> Any:
+        threads.append(threading.get_ident())
+        return ssl_context()
+
+    def storage(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, content=b"body")
+
+    real_client = _transport.async_http_client
+    monkeypatch.setattr(_transport, "_ssl_context", recording_ssl_context)
+    # The real client, which reads the CA bundle, answered in place of the network.
+    monkeypatch.setattr(_transport, "async_http_client", lambda: mocked(real_client(), storage))
+    url = f"https://{STORAGE_HOST}/object"
+    assert await _transport.aget_text(url, timeout=5) == "body"
+    assert await _transport.aput_object(url, io.BytesIO(b"x"), headers={}, timeout=(5, 5)) == 200
+    async with _transport.aget_object(url, timeout=(5, 5), chunk_size=4) as (status, chunks):
+        assert (status, b"".join([chunk async for chunk in chunks])) == (200, b"body")
+    assert len(threads) == 3
+    assert loop_thread not in threads
