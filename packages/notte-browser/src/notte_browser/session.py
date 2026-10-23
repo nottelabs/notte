@@ -9,6 +9,7 @@ trajectory events, and the public sync/async methods and generated overloads.
 from __future__ import annotations
 
 import asyncio
+import datetime as dt
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Unpack, overload
@@ -29,6 +30,7 @@ from notte_core.act import (
     same_target,
 )
 from notte_core.act.freshness import ELEMENT_SIGNATURES_JS, Signatures, signature_xpaths
+from notte_core.act.wait import WAIT_FOR_CHANGE_JS, wait_result
 from notte_core.actions import (
     BaseAction,
     EvaluateJsAction,
@@ -210,6 +212,17 @@ class LocalActDriver:
             if node is not None:
                 action = action.model_copy(update={"selector": await resolve_selectors(node)})
         return await self.session.aexecute(action, raise_on_failure=raise_on_failure)
+
+    async def wait_for_change(self, timeout_ms: int) -> ExecutionResult:
+        started = dt.datetime.now(dt.timezone.utc)
+        page = self.session.window.page
+        try:
+            outcome: str = await page.evaluate(WAIT_FOR_CHANGE_JS, timeout_ms)
+        except PlaywrightError:
+            # a navigation destroys the page script: let the new page load
+            outcome = "navigated"
+            await self.session.window.long_wait()
+        return wait_result(outcome, started, timeout_ms)
 
 
 # TODO: ACT callback
