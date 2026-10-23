@@ -6,11 +6,13 @@ from typing import Any
 import pytest
 from notte_core.act import ActHistory, ActResult, Answer, Answers, ObservedPage, act_until_done
 from notte_core.act.errors import InvalidDecisionError
+from notte_core.act.prompts import DIALOG_COVERS_PAGE
 from notte_core.act.space import (
     accessible_names,
     accessible_text,
     act_questions,
     build_act_space,
+    covered_by_dialog,
     description_lines,
     interpret,
     label_elements,
@@ -691,3 +693,15 @@ I1[:]<input type="text" name="q"></input>"""
     # without real names, the text before a field names it; a disabled button's markup does not
     assert accessible_names(page)["I1"] != "Search" and "<button" not in accessible_names(page)["I1"]
     assert accessible_text(page).splitlines() == ["Search (disabled)", f"[I1] {accessible_names(page)['I1']}"]
+
+
+def test_a_dialog_hides_the_page_only_without_the_page_component() -> None:
+    dialog = """### Content of 'dialog' component with text 'Cookies'
+_[:]We use cookies
+B1[:]<button>Accept all</button>"""
+    assert covered_by_dialog(dialog)
+    # the page itself, with or without its header, is not covered
+    assert not covered_by_dialog(ACCESSIBLE_DESCRIPTION) and not covered_by_dialog(DESCRIPTION)
+    page = _page(description=dialog, actions=[ClickAction(id="B1", text_label="Accept all")], states={})
+    for labels in ("accessible", "html"):
+        assert page_state(page, labels).text.splitlines()[0] == DIALOG_COVERS_PAGE
