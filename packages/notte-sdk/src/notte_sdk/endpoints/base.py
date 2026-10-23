@@ -549,13 +549,14 @@ class _ClientCore(ABC, Generic[TRoot]):
             raise NotteAPIError(path=self._error_path(endpoint), response=response)
         return cast(Any, response_dict)
 
-    def _validate(self, endpoint: NotteEndpoint[TResponse], response: Any) -> TResponse:
-        """Parse a decoded JSON object with the endpoint's response model."""
-        if not isinstance(response, dict):
+    def _validate(self, endpoint: NotteEndpoint[TResponse], response: httpx.Response) -> TResponse:
+        """Decode a successful response and parse its JSON object with the endpoint's response model."""
+        response_dict = self._decode(endpoint, response, check_response_detail=True)
+        if not isinstance(response_dict, dict):
             raise NotteAPIError(path=self._error_path(endpoint), response=response)
 
         try:
-            return endpoint.response.model_validate(response, context={"sdk_response": True})
+            return endpoint.response.model_validate(response_dict, context={"sdk_response": True})
         except ValidationError as e:
             # Check if we should suggest an upgrade
             should_upgrade, cached_version = self._should_suggest_upgrade()
@@ -569,13 +570,13 @@ class _ClientCore(ABC, Generic[TRoot]):
                 # Re-raise original error if no upgrade suggestion needed
                 raise
 
-    def _validate_list(self, endpoint: NotteEndpoint[TResponse], response_list: Any) -> Sequence[TResponse]:
-        """Parse a decoded JSON list, or a page's `items`, with the endpoint's response model."""
+    def _validate_list(self, endpoint: NotteEndpoint[TResponse], response: httpx.Response) -> Sequence[TResponse]:
+        """Decode a successful response and parse its JSON list, or a page's `items`, with the response model."""
+        response_list = self._decode(endpoint, response, check_response_detail=True)
+        if isinstance(response_list, dict) and "items" in response_list:
+            response_list = cast(dict[str, Any], response_list)["items"]
         if not isinstance(response_list, list):
-            if "items" in response_list:
-                response_list = response_list["items"]
-            if not isinstance(response_list, list):
-                raise NotteAPIError(path=self._error_path(endpoint), response=response_list)
+            raise NotteAPIError(path=self._error_path(endpoint), response=response)
 
         try:
             return [endpoint.response.model_validate(item, context={"sdk_response": True}) for item in response_list]  # pyright: ignore[reportUnknownVariableType]
@@ -746,7 +747,7 @@ class BaseClient(_ClientCore["NotteClient"]):
         Raises:
             NotteAPIError: If the API response is not a dictionary.
         """
-        response: Any = self._request(endpoint, headers=headers, timeout=timeout)
+        response = self._send_checked(endpoint, headers=headers, timeout=timeout)
         return self._validate(endpoint, response)
 
     def request_list(self, endpoint: NotteEndpoint[TResponse]) -> Sequence[TResponse]:
@@ -766,8 +767,8 @@ class BaseClient(_ClientCore["NotteClient"]):
         Raises:
             NotteAPIError: If the response is not a list.
         """
-        response_list: Any = self._request(endpoint)
-        return self._validate_list(endpoint, response_list)
+        response = self._send_checked(endpoint, headers=None, timeout=None)
+        return self._validate_list(endpoint, response)
 
     def _request_upload(self, endpoint: NotteEndpoint[TResponse], files: Mapping[str, UploadFile]) -> TResponse:
         """
@@ -968,11 +969,11 @@ class AsyncBaseClient(_ClientCore["AsyncNotteClient"]):
         self, endpoint: NotteEndpoint[TResponse], headers: dict[str, str] | None = None, timeout: float | None = None
     ) -> TResponse:
         """Requests the specified API endpoint and returns the validated response."""
-        return self._validate(endpoint, await self._request(endpoint, headers=headers, timeout=timeout))
+        return self._validate(endpoint, await self._send_checked(endpoint, headers=headers, timeout=timeout))
 
     async def request_list(self, endpoint: NotteEndpoint[TResponse]) -> Sequence[TResponse]:
         """Retrieves and validates a list of responses from the API."""
-        return self._validate_list(endpoint, await self._request(endpoint))
+        return self._validate_list(endpoint, await self._send_checked(endpoint, headers=None, timeout=None))
 
     async def _request_upload(self, endpoint: NotteEndpoint[TResponse], files: Mapping[str, UploadFile]) -> TResponse:
         """Sends the endpoint as multipart form data with local files attached, and returns the validated response."""
