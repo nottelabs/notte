@@ -389,6 +389,10 @@ def _write_context(
     labels: LabelMode,
 ) -> WriteContext:
     field: dict[str, Any] = {"label": target.label, "role": target.role, "value": target.value or ""}
+    if target.input_type is not None:
+        field["type"] = target.input_type
+    if target.value_format is not None:
+        field["format"] = target.value_format
     text = page_text(page, labels, history.privacy.text)
     return WriteContext(
         goal=history.privacy.text(instruction),
