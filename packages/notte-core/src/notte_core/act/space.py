@@ -333,7 +333,13 @@ def _names(page: ObservedPage) -> _Names:
         before = None if i >= 2 and toggle(i - 2) else label(i - 1)
         after = label(i + 1)
         if real:
-            names[key] = (action.accessible_name or "").strip() or _approximate_name(action, content, None, None)
+            # an unnamed checkbox or radio (no `<label>` tied to it) is named by the label-like text next to it,
+            # so two of them can be told apart; other unnamed elements are not (the text before a field may be a
+            # heading)
+            toggle_role = role in ("checkbox", "radio")
+            names[key] = (action.accessible_name or "").strip() or _approximate_name(
+                action, content, before if toggle_role else None, after if toggle_role else None
+            )
         else:
             names[key] = _approximate_name(action, content, before, after)
         if role in ("checkbox", "radio"):
@@ -466,6 +472,8 @@ def _page_text(
 ) -> str:
     lines = _description_lines(page.description) if labels == "html" else _accessible_lines(page, display_text)
     viewport = _viewport_lines(page, lines) if windowed else None
+    if viewport is not None:
+        viewport = _with_nearby_text(lines, *viewport)
     if viewport is None or viewport == (0, len(lines)):
         text = "\n".join(line for _, line in lines)
         return text if length is None else _cut(text, length)
@@ -518,6 +526,32 @@ def _description_lines(description: str) -> list[tuple[str | None, str]]:
         match = _DESCRIPTION_LINE.match(line.strip())
         lines.append((None if match is None else match.group(1), line))
     return lines
+
+
+def _with_nearby_text(lines: Sequence[tuple[str | None, str]], first: int, last: int) -> tuple[int, int]:
+    """`[first, last)` widened, where it ends on an element in view, to the text lines right next to it (up to
+    `NEARBY_TEXT` characters, up to the next element). Only elements are known to be in view: the text next to
+    them, like the instructions or confirmation under a form, may be too, whatever the scroll position estimate
+    says. A boundary set by the estimate alone stays where it is."""
+
+    def text(i: int) -> int | None:
+        return len(lines[i][1]) + 1 if 0 <= i < len(lines) and lines[i][0] is None else None
+
+    if 0 < last and lines[last - 1][0] is not None:
+        used = 0
+        while (size := text(last)) is not None and used + size <= NEARBY_TEXT:
+            used += size
+            last += 1
+    if first < len(lines) and lines[first][0] is not None:
+        used = 0
+        while (size := text(first - 1)) is not None and used + size <= NEARBY_TEXT:
+            used += size
+            first -= 1
+    return first, last
+
+
+# text kept on each side of the part of the page found in the viewport (`_with_nearby_text`)
+NEARBY_TEXT = 1_000
 
 
 def _viewport_lines(page: ObservedPage, lines: Sequence[tuple[str | None, str]]) -> tuple[int, int] | None:
@@ -782,7 +816,11 @@ def build_act_space(
         PressKeyAction(key="Enter"),
     )
     space.controls["GO_BACK"] = Control("GO_BACK", "Go back to the previous page", GoBackAction())
-    space.controls["WAIT"] = Control("WAIT", "Wait for the page to change (at most 3 s)", WaitAction(time_ms=WAIT_MS))
+    space.controls["WAIT"] = Control(
+        "WAIT",
+        "Wait for the page to change (at most 3 s): a disabled control to be enabled, results to load",
+        WaitAction(time_ms=WAIT_MS),
+    )
     return space
 
 

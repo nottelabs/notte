@@ -9,7 +9,8 @@ import pytest
 import pytest_asyncio
 from notte_browser.session import NotteSession
 from notte_core.act import InvalidDecisionError, NoActionFoundError, WriteContext
-from notte_core.actions import CheckAction, FillAction, SelectDropdownOptionAction
+from notte_core.actions import CheckAction, FillAction, SelectDropdownOptionAction, WaitAction
+from notte_core.errors import ActionExecutionError
 
 from tests.act.fakes import FakeDecider
 
@@ -721,13 +722,21 @@ async def test_a_raised_failure_is_recorded_too(session: NotteSession) -> None:
     assert "error" in decider.states[-1].recent_actions[0]
 
 
-WAIT_PAGE = """<input id="field" disabled aria-label="Name"><p id="status">Loading</p>
-<script>setTimeout(() => {{ document.getElementById('field').disabled = false;
-document.getElementById('status').textContent = 'Ready'; }}, {delay});</script>"""
+WAIT_PAGE = '<input id="field" disabled aria-label="Name"><p id="status">Loading</p>'
+# enables the field 1.5 s after it runs
+ENABLE_LATER = """setTimeout(() => { document.getElementById('field').disabled = false;
+document.getElementById('status').textContent = 'Ready'; }, 1500)"""
 
 
-async def _wait(session: NotteSession) -> tuple[str, float]:
-    decider = FakeDecider(choices=[{"operation": "WAIT"}])
+async def _wait(session: NotteSession, arm: str | None = None) -> tuple[str, float]:
+    """One WAIT decision. `arm` (a page script) runs when the WAIT is decided: a timer it starts is counted from
+    the decision, not from the page load, however long observing and deciding take."""
+
+    async def on_choose() -> None:
+        if arm is not None:
+            _ = await session.window.page.evaluate(arm)
+
+    decider = FakeDecider(choices=[{"operation": "WAIT"}], on_choose=on_choose)
     loop = asyncio.get_running_loop()
     started = loop.time()
     result = await session.aact("Type a name once the field is ready", decider=decider)
@@ -737,9 +746,9 @@ async def _wait(session: NotteSession) -> tuple[str, float]:
 
 @pytest.mark.asyncio
 async def test_wait_ends_when_the_page_changes(session: NotteSession) -> None:
-    # the page enables its field 1.5 s after loading: past the old fixed 1 s, within the bound
-    _ = await session.window.page.goto(f"data:text/html,{quote(WAIT_PAGE.format(delay=1500))}")
-    message, elapsed = await _wait(session)
+    # the page enables its field 1.5 s after the WAIT is decided: past the old fixed 1 s, within the bound
+    _ = await session.window.page.goto(f"data:text/html,{quote(WAIT_PAGE)}")
+    message, elapsed = await _wait(session, arm=ENABLE_LATER)
     assert message.startswith("The page changed") and elapsed < 2.8
     assert await session.window.page.is_enabled("#field")
 
@@ -748,13 +757,34 @@ async def test_wait_ends_when_the_page_changes(session: NotteSession) -> None:
 async def test_wait_is_bounded_on_a_page_that_does_not_change(session: NotteSession) -> None:
     message, elapsed = await _wait(session)
     assert message == "The page did not change in 3000 ms." and 2.9 < elapsed < 4.5
+    # recorded with the session's other actions
+    waits = [r for r in session.trajectory.execution_results() if isinstance(r.action, WaitAction)]
+    assert [r.message for r in waits] == [message]
+
+
+@pytest.mark.asyncio
+async def test_a_wait_whose_script_fails_is_a_failed_wait(
+    session: NotteSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from notte_browser import session as local
+
+    # a page that breaks the script (not a navigation): the wait fails, it is not reported as a change
+    monkeypatch.setattr(local, "WAIT_FOR_CHANGE_JS", "() => { throw new Error('blocked by the page') }")
+    decider = FakeDecider(choices=[{"operation": "WAIT"}, {"operation": "WAIT"}, {"operation": "DONE"}])
+    result = await session.aact("wait", decider=decider, raise_on_failure=False)
+    assert result.execution is not None and not result.execution.success
+    assert "blocked by the page" in result.execution.message
+    with pytest.raises(ActionExecutionError):
+        _ = await session.aact("wait", decider=decider)
+    _ = await session.aact("wait", decider=decider, raise_on_failure=False)
+    assert [entry.get("error") for entry in decider.states[-1].recent_actions] == ["ActionExecutionError"] * 2
 
 
 @pytest.mark.asyncio
 async def test_wait_ends_on_a_navigation(session: NotteSession) -> None:
-    page = "<p>Redirecting</p><script>setTimeout(() => location.href = 'about:blank', 300)</script>"
-    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
-    message, elapsed = await _wait(session)
+    _ = await session.window.page.goto(f"data:text/html,{quote('<p>Redirecting</p>')}")
+    # the page navigates 500 ms after the WAIT is decided: after the freshness check, during the wait
+    message, elapsed = await _wait(session, arm="setTimeout(() => location.href = 'about:blank', 500)")
     assert message.startswith("The page navigated") and elapsed < 2.8
     assert session.window.page.url == "about:blank"
 

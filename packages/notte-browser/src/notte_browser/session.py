@@ -30,7 +30,7 @@ from notte_core.act import (
     same_target,
 )
 from notte_core.act.freshness import ELEMENT_SIGNATURES_JS, Signatures, signature_xpaths
-from notte_core.act.wait import WAIT_FOR_CHANGE_JS, wait_result
+from notte_core.act.wait import WAIT_FOR_CHANGE_JS, interrupted_by_navigation, wait_failure, wait_result
 from notte_core.actions import (
     BaseAction,
     EvaluateJsAction,
@@ -211,16 +211,25 @@ class LocalActDriver:
                 action = action.model_copy(update={"selector": await resolve_selectors(node)})
         return await self.session.aexecute(action, raise_on_failure=raise_on_failure)
 
-    async def wait_for_change(self, timeout_ms: int) -> ExecutionResult:
+    async def wait_for_change(self, timeout_ms: int, raise_on_failure: bool) -> ExecutionResult:
         started = dt.datetime.now(dt.timezone.utc)
         page = self.session.window.page
+        url = page.url
         try:
             outcome: str = await page.evaluate(WAIT_FOR_CHANGE_JS, timeout_ms)
-        except PlaywrightError:
-            # a navigation destroys the page script: let the new page load
-            outcome = "navigated"
-            await self.session.window.long_wait()
-        return wait_result(outcome, started, timeout_ms)
+            result = wait_result(outcome, started, timeout_ms)
+        except PlaywrightError as e:
+            if interrupted_by_navigation(str(e), url, page.url):
+                # let the new page load
+                await self.session.window.long_wait()
+                result = wait_result("navigated", started, timeout_ms)
+            else:
+                result = wait_failure(str(e).splitlines()[0] if str(e) else type(e).__name__, url, started, timeout_ms)
+        # recorded like the session's other actions
+        await self.session.trajectory.append(result)
+        if raise_on_failure and result.exception is not None:
+            raise result.exception
+        return result
 
 
 # TODO: ACT callback

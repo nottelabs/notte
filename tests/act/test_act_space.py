@@ -826,3 +826,51 @@ B1[:]<button>Cancel</button>"""
         lines = page_state(page, labels, viewport_only=True).text.splitlines()
         assert lines[0] == DIALOG_COVERS_PAGE
     assert "Confirm (disabled)" in page_state(page, "accessible", viewport_only=True).text
+
+
+def test_text_right_after_the_elements_in_view_is_kept() -> None:
+    # a short form at the top of a tall page (a large image below): the scroll position estimate covers only
+    # the first lines of the text, the elements in view cover the form, the confirmation under it is kept
+    description = """### Content of 'WebArea' component with text 'body content'
+_[:]Checkout
+I1[:]<input type="text" name="coupon"></input>
+B1[:]<button>Apply</button>
+_[:]Coupon applied: 20% off your order.
+_[:]Delivery in 3 to 5 days."""
+    actions: list[InteractionAction] = [
+        FillAction(id="I1", value="", text_label="coupon", accessible_name="Coupon"),
+        ClickAction(id="B1", text_label="Apply", accessible_name="Apply"),
+    ]
+    page = _scrolled_page(description, actions, scroll_y=0, in_view=frozenset({"I1", "B1"}))
+    text = page_state(page, "accessible", viewport_only=True).text
+    assert "Coupon applied: 20% off your order." in text and "Delivery in 3 to 5 days." in text
+
+
+def test_unnamed_checkboxes_are_named_by_the_text_next_to_them() -> None:
+    # a list whose checkboxes have no accessible name (the item text is not their label)
+    description = """### Content of 'WebArea' component with text 'body content'
+_[:]todos
+I1[:]<input type="text" name="new"></input>
+B1[:]<input type="checkbox"></input>
+_[:]buy milk
+B2[:]<button>Delete</button>
+B3[:]<input type="checkbox"></input>
+_[:]walk the dog"""
+    actions: list[InteractionAction] = [
+        FillAction(id="I1", value="", text_label="new", accessible_name="New todo"),
+        CheckAction(id="B1", value=True, text_label=""),
+        ClickAction(id="B2", text_label="Delete", accessible_name="Delete"),
+        CheckAction(id="B3", value=True, text_label=""),
+    ]
+    page = _page(states={}, description=description, actions=actions)
+    names = accessible_names(page)
+    assert names["B1"] == "buy milk" and names["B3"] == "walk the dog"
+    # the field is not named by the heading before it
+    assert names["I1"] == "New todo"
+    assert accessible_text(page).splitlines() == [
+        "todos",
+        "[I1] New todo",
+        "[B1] buy milk",
+        "[B2] Delete",
+        "[B3] walk the dog",
+    ]
