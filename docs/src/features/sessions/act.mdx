@@ -71,6 +71,8 @@ Only the elements in the viewport are offered. On a page taller than the viewpor
 
 `blocked` raises `NoActionFoundError` unless `raise_on_failure=False` (the default follows the session's `raise_on_failure`). An action that fails to execute raises like `session.execute()` does.
 
+When the writer finds no value for the field the decider picked (the instruction does not mention it), nothing is typed: the decider chooses again without that field, and the skipped field is recorded in the history. File inputs offer no operation: `act()` cannot upload a file, so the decider answers `BLOCKED` and the message says so (use `session.execute(type="upload_file", ...)`).
+
 <ActOptions />
 
 - `variables`: the writer answers `{{name}}` and Notte substitutes the value after the model call, so values never reach a model.
