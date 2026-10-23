@@ -67,32 +67,50 @@ def recorded_vault_ids(prefix: str) -> list[str]:
     return [line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
+def _scoped_data(prefix: str, data: dict[str, Any]) -> dict[str, Any]:
+    """Give an unnamed or default vault a unique name under this run's prefix."""
+    name = data.get("name")
+    if name is not None and name != "default":
+        return data
+    candidate = f"{prefix}-{uuid4().hex[:8]}"
+    if not _VAULT_NAME_RE.match(candidate):
+        candidate = re.sub(r"[^a-zA-Z0-9_-]+", "-", candidate)
+    return {**data, "name": candidate}
+
+
+def _record(prefix: str, vault: Any) -> None:
+    vault_id = getattr(vault, "vault_id", None)
+    if isinstance(vault_id, str) and vault_id:
+        record_vault_id(prefix, vault_id)
+
+
 def install() -> None:
-    """Patch vault create so this CI run owns a unique name prefix."""
+    """Patch sync and async vault create so this CI run owns a unique name prefix."""
     global _installed
     prefix = run_prefix()
     if prefix is None or _installed:
         return
 
+    from notte_sdk._generated.resources import AsyncVaultsOperations
     from notte_sdk.endpoints.vaults import VaultsClient
 
     original_create = VaultsClient.create
+    original_acreate = AsyncVaultsOperations.create
 
     @wraps(original_create)
     def create(self: Any, **data: Any) -> Any:
-        name = data.get("name")
-        if name is None or name == "default":
-            candidate = f"{prefix}-{uuid4().hex[:8]}"
-            if not _VAULT_NAME_RE.match(candidate):
-                candidate = re.sub(r"[^a-zA-Z0-9_-]+", "-", candidate)
-            data = {**data, "name": candidate}
-        vault = original_create(self, **data)
-        vault_id = getattr(vault, "vault_id", None)
-        if isinstance(vault_id, str) and vault_id:
-            record_vault_id(prefix, vault_id)
+        vault = original_create(self, **_scoped_data(prefix, data))
+        _record(prefix, vault)
+        return vault
+
+    @wraps(original_acreate)
+    async def acreate(self: Any, **data: Any) -> Any:
+        vault = await original_acreate(self, **_scoped_data(prefix, data))
+        _record(prefix, vault)
         return vault
 
     VaultsClient.create = create
+    AsyncVaultsOperations.create = acreate
     _installed = True
     print(f"[ci-vault-scope] installed create patch prefix={prefix!r}", file=sys.stderr)
 

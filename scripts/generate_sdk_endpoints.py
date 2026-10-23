@@ -473,6 +473,15 @@ RESOURCES = tuple(
         ("Vaults", "vaults"),
     )
 )
+# Each `*Operations` class has an `Async*Operations` twin with the same methods and signatures,
+# for `AsyncNotteClient`. These generated methods are left off the twin: the hand-written sync
+# client overrides them with more than the wire call (validation, polling, state or local
+# files), so an async plain wire call under the same name would behave differently. They come
+# with the async port of those clients; tests/sdk/test_async_resources.py pins the list.
+ASYNC_PENDING = {
+    "Sessions": ("stop", "set_cookies", "replay"),
+    "Functions": ("run_get_metadata", "run_update_metadata"),
+}
 # Every mapped operation gets a factory in operations.py, including the ones whose
 # primary method is hand-written, so no client spells out a path the spec describes.
 # Shared page operations reuse the core-bound factories of endpoints.py instead.
@@ -823,7 +832,8 @@ def _keyword_name(binding: Binding) -> str:
     return KEYWORD_NAMES.get(binding.model.__name__, f"{binding.model.__name__}Dict")
 
 
-def _method(bound: Bound, name: str) -> str:
+def _method(bound: Bound, name: str, *, asynchronous: bool = False) -> str:
+    """One resource method; `asynchronous` renders its `Async*Operations` twin (same signature, awaited)."""
     op = bound.operation
     assert bound.response is not None
     args = ["self", *(f"{p}: str" for p in op.path_params)]
@@ -907,16 +917,19 @@ def _method(bound: Bound, name: str) -> str:
     call = f"self.{runtime}({endpoint}{headers}{raw})"
     if op.name == "session_auth_readiness":
         call = f"self.{runtime}({endpoint}, timeout=10)"
+    if asynchronous:
+        call = f"await {call}"
     if field := RESULT_FIELDS.get(op.name):
         annotation = bound.response.model.model_fields[field].annotation
         if not (isinstance(annotation, type) and issubclass(annotation, bool)):
             raise GenerationError(f"{op.name}: result field must remain bool")
-        call, returns = f"{call}.{field}", "bool"
+        call, returns = f"({call}).{field}" if asynchronous else f"{call}.{field}", "bool"
     lines.append(f"        _ = {call}" if op.response_shape == "none" else f"        return {call}")
     if op.response_shape == "none":
         returns = "None"
     decorator = f"    @track_usage({entry['telemetry']!r})\n" if entry.get("telemetry") else ""
-    return decorator + f"    def {name}({', '.join(args)}) -> {returns}:\n" + "\n".join(lines) + "\n"
+    definition = "async def" if asynchronous else "def"
+    return decorator + f"    {definition} {name}({', '.join(args)}) -> {returns}:\n" + "\n".join(lines) + "\n"
 
 
 def render_resources(spec: JsonObject) -> dict[str, str]:
@@ -941,8 +954,8 @@ def render_resources(spec: JsonObject) -> dict[str, str]:
         + "from collections.abc import Sequence\nfrom typing import TYPE_CHECKING, Any, Unpack\nfrom notte_core.telemetry import track_usage\n"
         + imports
     )
-    clients += "from notte_core import actions\nfrom notte_sdk._requests import wire_request\nfrom notte_sdk._generated import operations as api\nfrom notte_sdk._generated import endpoints as page_api\nfrom notte_sdk._generated.typing import *\nfrom notte_sdk.endpoints.base import BaseClient\n"
-    clients += "\nif TYPE_CHECKING:\n    from notte_sdk.client import NotteClient\n"
+    clients += "from notte_core import actions\nfrom notte_sdk._requests import wire_request\nfrom notte_sdk._generated import operations as api\nfrom notte_sdk._generated import endpoints as page_api\nfrom notte_sdk._generated.typing import *\nfrom notte_sdk.endpoints.base import AsyncBaseClient, BaseClient\n"
+    clients += "\nif TYPE_CHECKING:\n    from notte_sdk.client import AsyncNotteClient, NotteClient\n"
     keywords: dict[str, str] = {}
     public: dict[str, str] = {
         "Credential": "credentials.Credential",
@@ -968,16 +981,32 @@ def render_resources(spec: JsonObject) -> dict[str, str]:
         "SessionFile": "models.SessionFile",
         "FileSource": "models.FileSource",
     }
+    methods = {resource.name: {method for _, method in resource.methods} for resource in RESOURCES}
+    for name, pending in ASYNC_PENDING.items():
+        if unknown := set(pending) - methods.get(name, set()):
+            raise GenerationError(f"ASYNC_PENDING lists methods {name}Operations lacks: {sorted(unknown)}")
     for resource in RESOURCES:
-        base = "RunPayloadsOperations" if resource.name == "Functions" else "BaseClient"
-        clients += f"\n\nclass {resource.name}Operations({base}):\n"
-        if resource.client_path:
-            clients += f"""
-    def __init__(self, root_client: "NotteClient", api_key: str | None = None,
+        sync_class = async_class = ""
+        for prefix, root, base in (
+            ("", "NotteClient", "BaseClient"),
+            ("Async", "AsyncNotteClient", "AsyncBaseClient"),
+        ):
+            if resource.name == "Functions":
+                base = f"{prefix}RunPayloadsOperations"
+            source = f"\n\nclass {prefix}{resource.name}Operations({base}):\n"
+            if prefix:
+                source += f'    "Async twin of `{resource.name}Operations`, for `AsyncNotteClient`."\n'
+            if resource.client_path:
+                source += f"""
+    def __init__(self, root_client: "{root}", api_key: str | None = None,
                  server_url: str | None = None, verbose: bool = False):
         super().__init__(root_client=root_client, base_endpoint_path={resource.client_path!r},
                          api_key=api_key, server_url=server_url, verbose=verbose)
 """
+            if prefix:
+                async_class = source
+            else:
+                sync_class = source
         for name in _factories(resource.name):
             if name not in operations:
                 raise GenerationError(f"Migrated operation {name} is absent from the spec")
@@ -1007,10 +1036,13 @@ def render_resources(spec: JsonObject) -> dict[str, str]:
                     else ""
                 )
                 public[public_name or binding.name] = binding.ref
-            clients += "\n" + _method(bound, method)
+            sync_class += "\n" + _method(bound, method)
+            if method not in ASYNC_PENDING.get(resource.name, ()):
+                async_class += "\n" + _method(bound, method, asynchronous=True)
             for request in (bound.body, bound.query):
                 if request and not (bound.page and request is bound.body):
                     keywords[_keyword_name(request)] = _keywords(request, classes)
+        clients += sync_class + async_class
     for nested in (
         "CredentialsDictInput",
         "CreditCardDictInput",

@@ -1,3 +1,7 @@
+import os
+import signal
+import threading
+import warnings
 from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import Any
@@ -113,6 +117,58 @@ class TestBaseClientVersionCheck:
 
                 assert base_module._version_check_performed is True
                 assert base_module._cached_pypi_version == "1.7.2"
+
+    def test_async_client_checks_off_the_calling_thread(self, api_key: str, reset_global_state):
+        """An async client is often built inside a running event loop: the PyPI request must not block it."""
+        from notte_sdk import AsyncNotteClient
+
+        threads: list[threading.Thread] = []
+
+        def latest(_self: BaseClient, _package: str) -> str:
+            threads.append(threading.current_thread())
+            return "1.5.0"
+
+        with (
+            patch("notte_sdk.endpoints.base.notte_core_version", "1.5.0"),
+            patch("notte_sdk.endpoints.base._ClientCore._get_latest_pypi_version", latest),
+        ):
+            _ = AsyncNotteClient(api_key=api_key)
+            for thread in threading.enumerate():
+                if thread.name == "notte-sdk-version-check":
+                    thread.join(5)
+        # One check per process, even though every async resource client ran __init__.
+        assert len(threads) == 1
+        assert threads[0] is not threading.main_thread()
+
+    @pytest.mark.skipif(not hasattr(os, "fork"), reason="os.fork is POSIX only")
+    def test_fork_while_another_thread_holds_the_version_check_lock(self, api_key: str, reset_global_state):
+        import notte_sdk.endpoints.base as base_module
+
+        holding, release = threading.Event(), threading.Event()
+
+        def hold() -> None:
+            with base_module._version_check_lock:
+                holding.set()
+                _ = release.wait(5)
+
+        holder = threading.Thread(target=hold)
+        holder.start()
+        _ = holding.wait(5)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)  # fork() in a multi-threaded process
+            pid = os.fork()
+        if pid == 0:  # child: the holding thread does not exist here
+            code = 1
+            try:
+                _ = signal.alarm(5)  # a hang on the inherited lock ends the child with SIGALRM
+                _ = BaseClient(MockNotteClient(), None, api_key=api_key)
+                code = 0
+            finally:
+                os._exit(code)
+        release.set()
+        holder.join()
+        _, status = os.waitpid(pid, 0)
+        assert os.waitstatus_to_exitcode(status) == 0, "the forked child hung on the inherited lock"
 
     def test_version_mismatch_warning_logged(self, api_key: str, reset_global_state, mock_pypi_response):
         """Test that a warning is logged when there's a version mismatch."""
@@ -401,6 +457,27 @@ class TestBaseClientVersionCheck:
                     # Check that the error message is the original Pydantic error
                     error_message = str(exc_info.value)
                     assert "Pydantic validation failed" not in error_message  # Should not have our custom message
+
+    @pytest.mark.parametrize("body", [None, [1], "text", {"message": 7}])
+    def test_422_upgrade_hint_tolerates_any_json_body(self, api_key: str, reset_global_state, body: Any):
+        import notte_sdk.endpoints.base as base_module
+        from notte_sdk.endpoints.base import NotteEndpoint
+        from notte_sdk.errors import NotteAPIError
+        from pydantic import BaseModel
+
+        base_module._cached_pypi_version = "1.8.0"
+        endpoint = NotteEndpoint(path="/test", response=BaseModel, method="GET")
+        response = httpx.Response(422, json=body, request=httpx.Request("GET", "https://api.example.test/test"))
+        with (
+            patch("notte_sdk.endpoints.base.notte_core_version", "1.7.0"),
+            # No real PyPI request: the version check at construction gets the cached version.
+            patch("notte_sdk.endpoints.base._ClientCore._get_latest_pypi_version", return_value="1.8.0") as pypi,
+        ):
+            client = BaseClient(MockNotteClient(), None, api_key=api_key)
+            assert pypi.call_count == 1
+            # A proxy's 422 body is reported as an API error, not an AttributeError or TypeError.
+            with pytest.raises(NotteAPIError):
+                client._check_status(endpoint, response)
 
     def test_pydantic_validation_error_in_request_list_with_upgrade(self, api_key: str, reset_global_state):
         """Test that ValidationError in request_list is enhanced with upgrade message when appropriate."""

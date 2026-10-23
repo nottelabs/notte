@@ -42,6 +42,13 @@ and the `_transport` helpers; a test fails on any other import. Offline tests an
 requests with `fake()` from `tests/sdk/test_generated_endpoints.py`, an
 `httpx.MockTransport`; don't patch `requests`.
 
+`AsyncNotteClient` uses the async twins in the same modules (`AsyncBaseClient`,
+`asend_with_retries`, `astream`, ...). The sync and async I/O are written side by side;
+every decision (retry policy, error translation, handshake recovery, encoding, response
+checks) lives in one helper both call, so change it there, not in one twin. Async tests use
+`afake()` from `tests/sdk/test_async_resources.py`; transport changes need a scenario in
+`tests/sdk/test_async_transport.py`, which runs it through both clients and compares.
+
 ## Generated docs
 
 After changing `packages/notte-sdk/src/`, run `make docs-sdk` (the

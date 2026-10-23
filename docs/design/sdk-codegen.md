@@ -92,6 +92,30 @@ the stateful layer use `BaseClient` methods (`request`, `request_list`, `_reques
 helpers for object storage and public downloads, so the transport can change by editing
 those modules only.
 
+## Async resources
+
+Each generated `*Operations` class has an `Async*Operations` twin in the same
+`resources.py`, rendered by the same `_method` with `async def` and `await`: same names,
+signatures, docstrings and telemetry. `AsyncNotteClient` exposes them. The twin leaves out
+the generated methods listed in `ASYNC_PENDING` (`sessions.stop`, `set_cookies`, `replay`,
+`functions.run_get_metadata`, `run_update_metadata`): the hand-written sync clients override
+them with more than the wire call, so a plain async call under the same name would behave
+differently. Hand-written-only sync methods (`page`, viewers, `run_start`, `update`, file
+transfers, `vaults.get`, phone numbers) have no async twin yet either.
+`tests/sdk/test_async_resources.py` pins that list, requires every other generated method
+to have an async twin with the same signature (and the reverse), and sends a sample of
+calls plus every async method through both clients to compare the requests.
+
+`AsyncBaseClient` (in `endpoints/base.py`) mirrors `BaseClient` method for method,
+including `_stream_bytes`, `_request_once` and `_stream_lines` for the async stateful layer.
+Both inherit `_ClientCore`, which owns headers, paths and every response check; the async
+transport in `_transport.py` shares retry decisions (`_RetryBudget`), error translation,
+handshake recovery, encoding and line splitting with the sync one. The I/O is hand-written
+twice rather than generated from one source: it is small, its sync and async lifecycles
+differ (thread lock and fork handling versus event-loop binding and `ResourceWarning`),
+and the sync transport stays unchanged. `tests/sdk/test_async_transport.py` runs each
+retry, deadline, redirect, error and handshake scenario through both and compares them.
+
 ## Unpublished routes
 
 Backend should publish these routes; none is added to the committed spec here:

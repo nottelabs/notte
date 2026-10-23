@@ -1,10 +1,11 @@
 import json
 import os
 import re
+import threading
 import weakref
 from abc import ABC
-from collections.abc import Generator, Iterator, Mapping, Sequence
-from contextlib import ExitStack, contextmanager
+from collections.abc import AsyncGenerator, AsyncIterator, Generator, Iterator, Mapping, Sequence
+from contextlib import ExitStack, asynccontextmanager, contextmanager
 from json import JSONDecodeError
 from typing import TYPE_CHECKING, Any, ClassVar, Generic, Literal, Self, TypeVar, cast
 from urllib.parse import quote, urljoin
@@ -16,7 +17,12 @@ from pydantic import BaseModel, ConfigDict, ValidationError
 
 from notte_sdk._retry import DEFAULT_MAX_RETRIES
 from notte_sdk._transport import (
+    AsyncSharedHttpClient,
     SharedHttpClient,
+    aiter_lines,
+    asend,
+    asend_with_retries,
+    astream,
     decode_json,
     form_fields,
     http_client,
@@ -38,15 +44,29 @@ from notte_sdk.errors import (
 )
 
 if TYPE_CHECKING:
-    from notte_sdk.client import NotteClient
+    from notte_sdk.client import AsyncNotteClient, NotteClient
 
 TResponse = TypeVar("TResponse", bound=BaseModel, covariant=True)
+# The client that owns a resource client: `NotteClient` or `AsyncNotteClient`.
+TRoot = TypeVar("TRoot")
 # A local file to upload: its path, or `(filename, path)` to send it under another name.
 UploadFile = str | os.PathLike[str] | tuple[str, str | os.PathLike[str]]
 
 # Global variable to cache PyPI version check result
 _cached_pypi_version: str | None = None
 _version_check_performed: bool = False
+# Clients built on several threads at once must still claim the check only once.
+_version_check_lock = threading.Lock()
+
+
+def _reset_version_check_lock_after_fork() -> None:
+    # A thread that held the lock during fork does not exist in the child.
+    global _version_check_lock
+    _version_check_lock = threading.Lock()
+
+
+if hasattr(os, "register_at_fork"):
+    os.register_at_fork(after_in_child=_reset_version_check_lock_after_fork)
 
 
 class RawResponse(BaseModel):
@@ -113,7 +133,81 @@ class NotteEndpoint(BaseModel, Generic[TResponse]):
         return self.model_copy(update={"files": file_model})
 
 
-class BaseClient(ABC):
+def _build_request(
+    client: httpx.Client | httpx.AsyncClient,
+    endpoint: NotteEndpoint[TResponse],
+    *,
+    url: str,
+    headers: dict[str, str],
+    params: dict[str, Any] | None,
+    timeout: float,
+) -> httpx.Request:
+    """The request `BaseClient._send` and `AsyncBaseClient._send` send for an endpoint."""
+    files = multipart_files(endpoint.files) if endpoint.files is not None else None
+    headers = dict(headers)
+    url = with_query(url, params)
+    match endpoint.method:
+        case "GET" | "DELETE":
+            return client.build_request(endpoint.method, url, headers=headers, timeout=timeout)
+        case "POST" | "PATCH":
+            content = None
+            data = None
+            if endpoint.request is None:
+                pass
+            elif files is None:
+                content = endpoint.request.model_dump_json(exclude_none=True)
+                headers["Content-Type"] = "application/json"
+            else:
+                # multipart: the request fields are sent as form fields next to the files
+                data = form_fields(endpoint.request.model_dump(exclude_none=True))
+            return client.build_request(
+                endpoint.method,
+                url,
+                headers=headers,
+                content=content,
+                data=data,
+                files=files,
+                timeout=timeout,
+            )
+
+
+def _json_post(
+    client: httpx.Client | httpx.AsyncClient,
+    endpoint: NotteEndpoint[TResponse],
+    *,
+    url: str,
+    headers: dict[str, str],
+    timeout: float,
+) -> httpx.Request:
+    """The POST that `_request_once` and `_stream_lines` send: the request model as JSON."""
+    content = endpoint.request.model_dump_json(exclude_none=True) if endpoint.request is not None else ""
+    return client.build_request("POST", url, headers=headers, content=content, timeout=timeout)
+
+
+@contextmanager
+def _open_uploads(files: Mapping[str, UploadFile]) -> Generator[dict[str, Any]]:
+    """Open the local files of a multipart upload for one request and close them afterwards."""
+    with ExitStack() as stack:
+        uploads: dict[str, Any] = {}
+        for name, upload in files.items():
+            filename, path = upload if isinstance(upload, tuple) else (None, upload)
+            if not os.path.exists(path):
+                raise ValueError("The file doesn't exist!")
+            handle = stack.enter_context(open(path, "rb"))
+            uploads[name] = handle if filename is None else (filename, handle)
+        yield uploads
+
+
+class _ClientCore(ABC, Generic[TRoot]):
+    """What `BaseClient` and `AsyncBaseClient` share: configuration, headers, paths and response checks.
+
+    Neither subclass decides anything about a request or response on its own: the sync
+    and async I/O methods only send, read and await.
+    """
+
+    # Whether the once-per-process PyPI version check runs on a background thread.
+    _check_version_in_background: ClassVar[bool] = False
+
     DEFAULT_NOTTE_API_URL: ClassVar[str] = "https://api.notte.cc"
     DEFAULT_REQUEST_TIMEOUT_SECONDS: ClassVar[int] = 60
     DEFAULT_FILE_CHUNK_SIZE: ClassVar[int] = 8192
@@ -124,35 +218,16 @@ class BaseClient(ABC):
     # Set per instance in __init__. Declared here with a default so clients
     # built without running __init__ still resolve it.
     db_preview: str | None = None
-    # Connections of a client built without a NotteClient, opened on first use.
-    _own_http: SharedHttpClient | None = None
 
     def __init__(
         self,
-        root_client: "NotteClient",
+        root_client: TRoot,
         base_endpoint_path: str | None,
         server_url: str | None = None,
         api_key: str | None = None,
         verbose: bool = False,
     ):
-        """
-        Initialize a new API client instance.
-
-        Sets up the client by resolving an API key from the provided parameter, the
-        NOTTE_API_KEY environment variable, or the notte-cli keyring. Selects the server
-        URL (defaulting to a preconfigured server if none is provided), initializes a
-        mapping of endpoints using the implemented 'endpoints' method, and stores an
-        optional base endpoint path for constructing request URLs.
-
-        Args:
-            base_endpoint_path: Optional base path to be prefixed to endpoint URLs.
-            api_key: Optional API key for authentication; if not supplied, retrieved from
-                the NOTTE_API_KEY environment variable or the notte-cli keyring.
-
-        Raises:
-            AuthenticationError: If an API key cannot be resolved.
-        """
-        self.root_client = root_client  # pyright: ignore [reportUnannotatedClassAttribute]
+        self.root_client: TRoot = root_client
         self.server_url: str = server_url or os.getenv("NOTTE_API_URL") or self.DEFAULT_NOTTE_API_URL
         token = resolve_api_key(api_key, self.server_url)
         if token is None:
@@ -164,17 +239,6 @@ class BaseClient(ABC):
 
         # Check for version mismatch and warn user if needed
         self.check_and_warn_version_mismatch()
-
-    @property
-    def http(self) -> httpx.Client:
-        """The pooled HTTP client shared by every resource of the owning `NotteClient`."""
-        shared = getattr(self.root_client, "_http", None)
-        if not isinstance(shared, SharedHttpClient):
-            shared = self._own_http
-            if shared is None:
-                shared = self._own_http = SharedHttpClient()
-                _ = weakref.finalize(self, shared.close)
-        return shared.get()
 
     @property
     def max_retries(self) -> int:
@@ -249,15 +313,23 @@ class BaseClient(ABC):
         global _cached_pypi_version, _version_check_performed
 
         # Only check once per process
-        if _version_check_performed:
-            return
-
-        _version_check_performed = True
+        with _version_check_lock:
+            if _version_check_performed:
+                return
+            _version_check_performed = True
 
         # Skip version check for development versions
         if ".dev" in notte_core_version:
             return
 
+        if self._check_version_in_background:
+            # A blocking PyPI request; async clients are often created inside a running event loop.
+            threading.Thread(target=self._warn_if_outdated, name="notte-sdk-version-check", daemon=True).start()
+        else:
+            self._warn_if_outdated()
+
+    def _warn_if_outdated(self) -> None:
+        global _cached_pypi_version
         try:
             # Get latest version from PyPI
             latest_version = self._get_latest_pypi_version("notte-sdk")
@@ -347,31 +419,6 @@ class BaseClient(ABC):
 
         return base_message
 
-    def health_check(self) -> None:
-        """
-        Health check the Notte API.
-        """
-        try:
-            response = send(
-                self.http,
-                self.http.build_request(
-                    "GET",
-                    f"{self.server_url}/{self.HEALTH_CHECK_ENDPOINT}",
-                    headers={"x-notte-request-origin": self.REQUEST_ORIGIN, "x-notte-sdk-version": notte_core_version},
-                ),
-            )
-            if response.status_code != 200:
-                logger.error(f"⚠️ Health check failed with status code {response.status_code}.")
-                raise Exception(
-                    f"Health check failed with status code {response.status_code}. Please check your server URL."
-                )
-        except NotteConnectionError as e:
-            logger.error(f"⚠️ Health check failed with error: {e}. Please check your server URL.")
-            raise Exception(
-                "Health check failed because the server is not reachable. Please check your server URL."
-            ) from e
-        logger.info("🔥 Health check passed. API ready to serve requests.")
-
     def headers(self, headers: dict[str, str] | None = None) -> dict[str, str]:
         """
         Return HTTP headers for authenticated API requests.
@@ -446,6 +493,175 @@ class BaseClient(ABC):
             return endpoint.path.lstrip("/")
         return f"{self.base_endpoint_path}/{endpoint.path}"
 
+    def _prepare(
+        self, endpoint: NotteEndpoint[TResponse], headers: dict[str, str] | None
+    ) -> tuple[str, dict[str, str], dict[str, Any] | None]:
+        """The URL, headers and query parameters of an endpoint's request."""
+        headers = self.headers(headers=headers)
+        url = self.request_path(endpoint)
+        params = endpoint.params.model_dump(exclude_none=True) if endpoint.params is not None else None
+        if self.verbose:
+            logger.info(f"Making `{endpoint.method}` request to `{endpoint.path}` with params `{params}`.")
+        return url, headers, params
+
+    def _check_status(self, endpoint: NotteEndpoint[TResponse], response: httpx.Response) -> None:
+        """Raise the matching error for a non-2xx response, whose body was read."""
+        if not 200 <= response.status_code < 300:
+            # Check for 422 status code with Pydantic validation errors first
+            if response.status_code == 422:
+                should_upgrade, cached_version = self._should_suggest_upgrade()
+                if should_upgrade and cached_version:
+                    try:
+                        error_data = response.json()
+                        # A proxy or gateway can answer 422 with any JSON, not only the API's object;
+                        # the runtime check also covers a non-string message.
+                        message = (
+                            cast(dict[str, str], error_data).get("message") if isinstance(error_data, dict) else None
+                        )
+                        error_message = message if isinstance(message, str) else ""
+
+                        # Check if this looks like a Pydantic validation error
+                        if (
+                            "extra_forbidden" in error_message
+                            or "Extra inputs are not permitted" in error_message
+                            or "'type':" in error_message
+                        ):
+                            # Enhance the error with upgrade suggestion
+                            upgrade_msg = self._create_upgrade_error_message(
+                                "API returned 422 validation error", cached_version, error_message
+                            )
+                            raise RuntimeError(upgrade_msg)
+                    except (JSONDecodeError, KeyError):
+                        # If we can't parse the response, fall through to normal error handling
+                        pass
+
+            if response.headers.get("x-error-class") == "NotteApiExecutionError":
+                raise NotteAPIExecutionError(path=self._error_path(endpoint), response=response)
+
+            raise NotteAPIError(path=self._error_path(endpoint), response=response)
+
+    def _decode(self, endpoint: NotteEndpoint[TResponse], response: httpx.Response, check_response_detail: bool) -> Any:
+        """The JSON body of a successful response; `{}` when it has none."""
+        if response.status_code == 204 or getattr(response, "content", None) == b"":
+            return {}
+        response_dict: Any = decode_json(response)
+        if check_response_detail and isinstance(response_dict, dict) and "detail" in response_dict:
+            raise NotteAPIError(path=self._error_path(endpoint), response=response)
+        return cast(Any, response_dict)
+
+    def _validate(self, endpoint: NotteEndpoint[TResponse], response: Any) -> TResponse:
+        """Parse a decoded JSON object with the endpoint's response model."""
+        if not isinstance(response, dict):
+            raise NotteAPIError(path=self._error_path(endpoint), response=response)
+
+        try:
+            return endpoint.response.model_validate(response, context={"sdk_response": True})
+        except ValidationError as e:
+            # Check if we should suggest an upgrade
+            should_upgrade, cached_version = self._should_suggest_upgrade()
+
+            if should_upgrade and cached_version:
+                # Enhance the error message with upgrade suggestion
+                upgrade_msg = self._create_upgrade_error_message("Pydantic validation failed", cached_version)
+                # Create a RuntimeError with enhanced message but keep original as cause
+                raise RuntimeError(upgrade_msg) from e
+            else:
+                # Re-raise original error if no upgrade suggestion needed
+                raise
+
+    def _validate_list(self, endpoint: NotteEndpoint[TResponse], response_list: Any) -> Sequence[TResponse]:
+        """Parse a decoded JSON list, or a page's `items`, with the endpoint's response model."""
+        if not isinstance(response_list, list):
+            if "items" in response_list:
+                response_list = response_list["items"]
+            if not isinstance(response_list, list):
+                raise NotteAPIError(path=self._error_path(endpoint), response=response_list)
+
+        try:
+            return [endpoint.response.model_validate(item, context={"sdk_response": True}) for item in response_list]  # pyright: ignore[reportUnknownVariableType]
+        except ValidationError as e:
+            # Check if we should suggest an upgrade
+            should_upgrade, cached_version = self._should_suggest_upgrade()
+
+            if should_upgrade and cached_version:
+                # Enhance the error message with upgrade suggestion
+                upgrade_msg = self._create_upgrade_error_message(
+                    "Pydantic validation failed for list response", cached_version
+                )
+                # Create a RuntimeError with enhanced message but keep original as cause
+                raise RuntimeError(upgrade_msg) from e
+            else:
+                # Re-raise original error if no upgrade suggestion needed
+                raise
+
+
+class BaseClient(_ClientCore["NotteClient"]):
+    # Connections of a client built without a NotteClient, opened on first use.
+    _own_http: SharedHttpClient | None = None
+
+    def __init__(
+        self,
+        root_client: "NotteClient",
+        base_endpoint_path: str | None,
+        server_url: str | None = None,
+        api_key: str | None = None,
+        verbose: bool = False,
+    ):
+        """
+        Initialize a new API client instance.
+
+        Sets up the client by resolving an API key from the provided parameter, the
+        NOTTE_API_KEY environment variable, or the notte-cli keyring. Selects the server
+        URL (defaulting to a preconfigured server if none is provided), initializes a
+        mapping of endpoints using the implemented 'endpoints' method, and stores an
+        optional base endpoint path for constructing request URLs.
+
+        Args:
+            base_endpoint_path: Optional base path to be prefixed to endpoint URLs.
+            api_key: Optional API key for authentication; if not supplied, retrieved from
+                the NOTTE_API_KEY environment variable or the notte-cli keyring.
+
+        Raises:
+            AuthenticationError: If an API key cannot be resolved.
+        """
+        super().__init__(root_client, base_endpoint_path, server_url=server_url, api_key=api_key, verbose=verbose)
+
+    @property
+    def http(self) -> httpx.Client:
+        """The pooled HTTP client shared by every resource of the owning `NotteClient`."""
+        shared = getattr(self.root_client, "_http", None)
+        if not isinstance(shared, SharedHttpClient):
+            shared = self._own_http
+            if shared is None:
+                shared = self._own_http = SharedHttpClient()
+                _ = weakref.finalize(self, shared.close)
+        return shared.get()
+
+    def health_check(self) -> None:
+        """
+        Health check the Notte API.
+        """
+        try:
+            response = send(
+                self.http,
+                self.http.build_request(
+                    "GET",
+                    f"{self.server_url}/{self.HEALTH_CHECK_ENDPOINT}",
+                    headers={"x-notte-request-origin": self.REQUEST_ORIGIN, "x-notte-sdk-version": notte_core_version},
+                ),
+            )
+            if response.status_code != 200:
+                logger.error(f"⚠️ Health check failed with status code {response.status_code}.")
+                raise Exception(
+                    f"Health check failed with status code {response.status_code}. Please check your server URL."
+                )
+        except NotteConnectionError as e:
+            logger.error(f"⚠️ Health check failed with error: {e}. Please check your server URL.")
+            raise Exception(
+                "Health check failed because the server is not reachable. Please check your server URL."
+            ) from e
+        logger.info("🔥 Health check passed. API ready to serve requests.")
+
     def _request(
         self,
         endpoint: NotteEndpoint[TResponse],
@@ -474,56 +690,20 @@ class BaseClient(ABC):
             NotteAPIError: If the API response indicates a failure.
         """
         response = self._send_checked(endpoint, headers=headers, timeout=timeout)
-        if response.status_code == 204 or getattr(response, "content", None) == b"":
-            return {}
-        response_dict: Any = decode_json(response)
-        if check_response_detail and isinstance(response_dict, dict) and "detail" in response_dict:
-            raise NotteAPIError(path=self._error_path(endpoint), response=response)
-        return cast(Any, response_dict)
+        return self._decode(endpoint, response, check_response_detail)
 
     def _send_checked(
         self, endpoint: NotteEndpoint[TResponse], *, headers: dict[str, str] | None, timeout: float | None
     ) -> httpx.Response:
         """Send `endpoint` with retries; a non-2xx response raises the matching error."""
-        headers = self.headers(headers=headers)
-        url = self.request_path(endpoint)
-        params = endpoint.params.model_dump(exclude_none=True) if endpoint.params is not None else None
-        if self.verbose:
-            logger.info(f"Making `{endpoint.method}` request to `{endpoint.path}` with params `{params}`.")
+        url, headers, params = self._prepare(endpoint, headers)
         response = send_with_retries(
             endpoint,
             lambda remaining: self._send(endpoint, url=url, headers=headers, params=params, timeout=remaining),
             max_retries=self.max_retries,
             timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
         )
-        if not 200 <= response.status_code < 300:
-            # Check for 422 status code with Pydantic validation errors first
-            if response.status_code == 422:
-                should_upgrade, cached_version = self._should_suggest_upgrade()
-                if should_upgrade and cached_version:
-                    try:
-                        error_data = response.json()
-                        error_message = error_data.get("message", "")
-
-                        # Check if this looks like a Pydantic validation error
-                        if (
-                            "extra_forbidden" in error_message
-                            or "Extra inputs are not permitted" in error_message
-                            or "'type':" in error_message
-                        ):
-                            # Enhance the error with upgrade suggestion
-                            upgrade_msg = self._create_upgrade_error_message(
-                                "API returned 422 validation error", cached_version, error_message
-                            )
-                            raise RuntimeError(upgrade_msg)
-                    except (JSONDecodeError, KeyError):
-                        # If we can't parse the response, fall through to normal error handling
-                        pass
-
-            if response.headers.get("x-error-class") == "NotteApiExecutionError":
-                raise NotteAPIExecutionError(path=self._error_path(endpoint), response=response)
-
-            raise NotteAPIError(path=self._error_path(endpoint), response=response)
+        self._check_status(endpoint, response)
         return response
 
     def _send(
@@ -535,33 +715,14 @@ class BaseClient(ABC):
         params: dict[str, Any] | None,
         timeout: float | None,
     ) -> httpx.Response:
-        files = multipart_files(endpoint.files) if endpoint.files is not None else None
-        headers = dict(headers)
-        url = with_query(url, params)
-        timeout = timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS
-        match endpoint.method:
-            case "GET" | "DELETE":
-                request = self.http.build_request(endpoint.method, url, headers=headers, timeout=timeout)
-            case "POST" | "PATCH":
-                content = None
-                data = None
-                if endpoint.request is None:
-                    pass
-                elif files is None:
-                    content = endpoint.request.model_dump_json(exclude_none=True)
-                    headers["Content-Type"] = "application/json"
-                else:
-                    # multipart: the request fields are sent as form fields next to the files
-                    data = form_fields(endpoint.request.model_dump(exclude_none=True))
-                request = self.http.build_request(
-                    endpoint.method,
-                    url,
-                    headers=headers,
-                    content=content,
-                    data=data,
-                    files=files,
-                    timeout=timeout,
-                )
+        request = _build_request(
+            self.http,
+            endpoint,
+            url=url,
+            headers=headers,
+            params=params,
+            timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+        )
         return send(self.http, request)
 
     def request(
@@ -586,23 +747,7 @@ class BaseClient(ABC):
             NotteAPIError: If the API response is not a dictionary.
         """
         response: Any = self._request(endpoint, headers=headers, timeout=timeout)
-        if not isinstance(response, dict):
-            raise NotteAPIError(path=self._error_path(endpoint), response=response)
-
-        try:
-            return endpoint.response.model_validate(response, context={"sdk_response": True})
-        except ValidationError as e:
-            # Check if we should suggest an upgrade
-            should_upgrade, cached_version = self._should_suggest_upgrade()
-
-            if should_upgrade and cached_version:
-                # Enhance the error message with upgrade suggestion
-                upgrade_msg = self._create_upgrade_error_message("Pydantic validation failed", cached_version)
-                # Create a RuntimeError with enhanced message but keep original as cause
-                raise RuntimeError(upgrade_msg) from e
-            else:
-                # Re-raise original error if no upgrade suggestion needed
-                raise
+        return self._validate(endpoint, response)
 
     def request_list(self, endpoint: NotteEndpoint[TResponse]) -> Sequence[TResponse]:
         # Handle the case where TResponse is a list of BaseModel
@@ -622,28 +767,7 @@ class BaseClient(ABC):
             NotteAPIError: If the response is not a list.
         """
         response_list: Any = self._request(endpoint)
-        if not isinstance(response_list, list):
-            if "items" in response_list:
-                response_list = response_list["items"]
-            if not isinstance(response_list, list):
-                raise NotteAPIError(path=self._error_path(endpoint), response=response_list)
-
-        try:
-            return [endpoint.response.model_validate(item, context={"sdk_response": True}) for item in response_list]  # pyright: ignore[reportUnknownVariableType]
-        except ValidationError as e:
-            # Check if we should suggest an upgrade
-            should_upgrade, cached_version = self._should_suggest_upgrade()
-
-            if should_upgrade and cached_version:
-                # Enhance the error message with upgrade suggestion
-                upgrade_msg = self._create_upgrade_error_message(
-                    "Pydantic validation failed for list response", cached_version
-                )
-                # Create a RuntimeError with enhanced message but keep original as cause
-                raise RuntimeError(upgrade_msg) from e
-            else:
-                # Re-raise original error if no upgrade suggestion needed
-                raise
+        return self._validate_list(endpoint, response_list)
 
     def _request_upload(self, endpoint: NotteEndpoint[TResponse], files: Mapping[str, UploadFile]) -> TResponse:
         """
@@ -659,14 +783,7 @@ class BaseClient(ABC):
         Raises:
             ValueError: If a file does not exist.
         """
-        with ExitStack() as stack:
-            uploads: dict[str, Any] = {}
-            for name, upload in files.items():
-                filename, path = upload if isinstance(upload, tuple) else (None, upload)
-                if not os.path.exists(path):
-                    raise ValueError("The file doesn't exist!")
-                handle = stack.enter_context(open(path, "rb"))
-                uploads[name] = handle if filename is None else (filename, handle)
+        with _open_uploads(files) as uploads:
             return self.request(endpoint.model_copy(update={"files": uploads}))
 
     def _request_bytes(self, endpoint: NotteEndpoint[TResponse]) -> bytes:
@@ -728,11 +845,8 @@ class BaseClient(ABC):
         self, endpoint: NotteEndpoint[TResponse], *, headers: dict[str, str], timeout: float
     ) -> httpx.Request:
         """The POST that `_request_once` and `_stream_lines` send: the request model as JSON."""
-        content = endpoint.request.model_dump_json(exclude_none=True) if endpoint.request is not None else ""
         headers = self.headers(headers={**headers, "Content-Type": "application/json"})
-        return self.http.build_request(
-            "POST", self.request_path(endpoint), headers=headers, content=content, timeout=timeout
-        )
+        return _json_post(self.http, endpoint, url=self.request_path(endpoint), headers=headers, timeout=timeout)
 
     def _request_file(
         self, endpoint: NotteEndpoint[TResponse], file_type: str, output_file: str | None = None
@@ -768,3 +882,144 @@ class BaseClient(ABC):
                     _ = f.write(chunk)
 
         return True
+
+
+class AsyncBaseClient(_ClientCore["AsyncNotteClient"]):
+    """The async twin of `BaseClient`: the same requests, retries and errors on `httpx.AsyncClient`.
+
+    Every method below mirrors the `BaseClient` method of the same name.
+    """
+
+    # Connections of a client built without an AsyncNotteClient, opened on first use.
+    _own_http: AsyncSharedHttpClient | None = None
+    _check_version_in_background: ClassVar[bool] = True
+
+    def __init__(
+        self,
+        root_client: "AsyncNotteClient",
+        base_endpoint_path: str | None,
+        server_url: str | None = None,
+        api_key: str | None = None,
+        verbose: bool = False,
+    ):
+        super().__init__(root_client, base_endpoint_path, server_url=server_url, api_key=api_key, verbose=verbose)
+
+    @property
+    def http(self) -> httpx.AsyncClient:
+        """The pooled HTTP client shared by every resource of the owning `AsyncNotteClient`.
+
+        Raises `RuntimeError` when used from another event loop than the one that opened it.
+        """
+        shared = getattr(self.root_client, "_http", None)
+        if not isinstance(shared, AsyncSharedHttpClient):
+            shared = self._own_http
+            if shared is None:
+                shared = self._own_http = AsyncSharedHttpClient()
+                _ = weakref.finalize(self, shared.warn_unclosed)
+        return shared.get()
+
+    async def _request(
+        self,
+        endpoint: NotteEndpoint[TResponse],
+        headers: dict[str, str] | None = None,
+        timeout: float | None = None,
+        *,
+        check_response_detail: bool = True,
+    ) -> Any:
+        """Executes an HTTP request for the given API endpoint and returns the decoded JSON response."""
+        response = await self._send_checked(endpoint, headers=headers, timeout=timeout)
+        return self._decode(endpoint, response, check_response_detail)
+
+    async def _send_checked(
+        self, endpoint: NotteEndpoint[TResponse], *, headers: dict[str, str] | None, timeout: float | None
+    ) -> httpx.Response:
+        """Send `endpoint` with retries; a non-2xx response raises the matching error."""
+        url, headers, params = self._prepare(endpoint, headers)
+        response = await asend_with_retries(
+            endpoint,
+            lambda remaining: self._send(endpoint, url=url, headers=headers, params=params, timeout=remaining),
+            max_retries=self.max_retries,
+            timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+        )
+        self._check_status(endpoint, response)
+        return response
+
+    async def _send(
+        self,
+        endpoint: NotteEndpoint[TResponse],
+        *,
+        url: str,
+        headers: dict[str, str],
+        params: dict[str, Any] | None,
+        timeout: float | None,
+    ) -> httpx.Response:
+        http = self.http
+        request = _build_request(
+            http,
+            endpoint,
+            url=url,
+            headers=headers,
+            params=params,
+            timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+        )
+        return await asend(http, request)
+
+    async def request(
+        self, endpoint: NotteEndpoint[TResponse], headers: dict[str, str] | None = None, timeout: float | None = None
+    ) -> TResponse:
+        """Requests the specified API endpoint and returns the validated response."""
+        return self._validate(endpoint, await self._request(endpoint, headers=headers, timeout=timeout))
+
+    async def request_list(self, endpoint: NotteEndpoint[TResponse]) -> Sequence[TResponse]:
+        """Retrieves and validates a list of responses from the API."""
+        return self._validate_list(endpoint, await self._request(endpoint))
+
+    async def _request_upload(self, endpoint: NotteEndpoint[TResponse], files: Mapping[str, UploadFile]) -> TResponse:
+        """Sends the endpoint as multipart form data with local files attached, and returns the validated response."""
+        with _open_uploads(files) as uploads:
+            return await self.request(endpoint.model_copy(update={"files": uploads}))
+
+    async def _request_bytes(self, endpoint: NotteEndpoint[TResponse]) -> bytes:
+        """Sends the endpoint and returns its raw response body, for operations that respond with a file."""
+        return (await self._send_checked(endpoint, headers=None, timeout=None)).content
+
+    @asynccontextmanager
+    async def _stream_bytes(self, endpoint: NotteEndpoint[TResponse]) -> AsyncGenerator[AsyncIterator[bytes]]:
+        """Sends the GET endpoint once and yields its response body in chunks, without holding it in memory."""
+        http = self.http
+        request = http.build_request(
+            "GET", self.request_path(endpoint), headers=self.headers(), timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS
+        )
+        async with astream(http, request) as response:
+            if response.is_error:
+                _ = await response.aread()
+                raise NotteAPIError(path=self._error_path(endpoint), response=response)
+            yield (chunk async for chunk in response.aiter_bytes(self.DEFAULT_FILE_CHUNK_SIZE) if chunk)
+
+    async def _request_once(
+        self, endpoint: NotteEndpoint[TResponse], *, headers: dict[str, str], timeout: float
+    ) -> Any:
+        """Sends the endpoint's JSON request once, without retries, and returns the decoded JSON response."""
+        response = await asend(self.http, self._once_request(endpoint, headers=headers, timeout=timeout))
+        if response.is_error:
+            raise NotteAPIError(path=self._error_path(endpoint), response=response)
+        return decode_json(response)
+
+    @asynccontextmanager
+    async def _stream_lines(
+        self, endpoint: NotteEndpoint[TResponse], *, headers: dict[str, str], timeout: float
+    ) -> AsyncGenerator[AsyncIterator[str]]:
+        """Sends the endpoint's JSON request once, without retries, and yields the response's non-empty
+        lines as they arrive, decoded as UTF-8: the server-sent events of a streaming response."""
+        async with astream(self.http, self._once_request(endpoint, headers=headers, timeout=timeout)) as response:
+            if response.is_error:
+                _ = await response.aread()
+                raise NotteAPIError(path=self._error_path(endpoint), response=response)
+            yield (line.decode("utf-8") async for line in aiter_lines(response) if line)
+
+    def _once_request(
+        self, endpoint: NotteEndpoint[TResponse], *, headers: dict[str, str], timeout: float
+    ) -> httpx.Request:
+        """The POST that `_request_once` and `_stream_lines` send: the request model as JSON."""
+        headers = self.headers(headers={**headers, "Content-Type": "application/json"})
+        return _json_post(self.http, endpoint, url=self.request_path(endpoint), headers=headers, timeout=timeout)
