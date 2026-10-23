@@ -1,3 +1,5 @@
+import asyncio
+import io
 import json
 import os
 import re
@@ -7,7 +9,7 @@ from abc import ABC
 from collections.abc import AsyncGenerator, AsyncIterator, Generator, Iterator, Mapping, Sequence
 from contextlib import ExitStack, asynccontextmanager, contextmanager
 from json import JSONDecodeError
-from typing import TYPE_CHECKING, Any, ClassVar, Generic, Literal, Self, TypeVar, cast
+from typing import IO, TYPE_CHECKING, Any, ClassVar, Generic, Literal, Self, TypeVar, cast
 from urllib.parse import quote, urljoin
 
 import httpx
@@ -20,9 +22,11 @@ from notte_sdk._transport import (
     AsyncSharedHttpClient,
     SharedHttpClient,
     aiter_lines,
+    araise_for_status,
     asend,
     asend_with_retries,
     astream,
+    awrite_chunks,
     decode_json,
     form_fields,
     http_client,
@@ -184,18 +188,49 @@ def _json_post(
     return client.build_request("POST", url, headers=headers, content=content, timeout=timeout)
 
 
+def _upload_paths(files: Mapping[str, UploadFile]) -> Iterator[tuple[str, str | None, str | os.PathLike[str]]]:
+    """Each upload's form field, filename override and local path; raises for a missing file."""
+    for name, upload in files.items():
+        filename, path = upload if isinstance(upload, tuple) else (None, upload)
+        if not os.path.exists(path):
+            raise ValueError("The file doesn't exist!")
+        yield name, filename, path
+
+
+def _upload_part(filename: str | None, handle: IO[bytes]) -> Any:
+    return handle if filename is None else (filename, handle)
+
+
 @contextmanager
 def _open_uploads(files: Mapping[str, UploadFile]) -> Generator[dict[str, Any]]:
     """Open the local files of a multipart upload for one request and close them afterwards."""
     with ExitStack() as stack:
         uploads: dict[str, Any] = {}
-        for name, upload in files.items():
-            filename, path = upload if isinstance(upload, tuple) else (None, upload)
-            if not os.path.exists(path):
-                raise ValueError("The file doesn't exist!")
-            handle = stack.enter_context(open(path, "rb"))
-            uploads[name] = handle if filename is None else (filename, handle)
+        for name, filename, path in _upload_paths(files):
+            uploads[name] = _upload_part(filename, stack.enter_context(open(path, "rb")))
         yield uploads
+
+
+class _UploadBuffer(io.BytesIO):
+    """A local file's bytes, named like the open file so `multipart_files` names its part the same."""
+
+    def __init__(self, content: bytes, name: str) -> None:
+        super().__init__(content)
+        self.name: str = name
+
+
+def _read_uploads(files: Mapping[str, UploadFile]) -> dict[str, Any]:
+    """`_open_uploads` for `AsyncBaseClient`: each file read whole, to run in a worker thread.
+
+    httpx encodes a multipart body synchronously, on `AsyncClient` too, so an open file would be
+    read on the event loop. Its bytes are read first instead and held in memory for the request
+    and its retries, which rewind them like a file.
+    """
+    uploads: dict[str, Any] = {}
+    for name, filename, path in _upload_paths(files):
+        with open(path, "rb") as handle:
+            uploads[name] = _upload_part(filename, _UploadBuffer(handle.read(), handle.name))
+    return uploads
 
 
 class _ClientCore(ABC, Generic[TRoot]):
@@ -996,9 +1031,12 @@ class AsyncBaseClient(_ClientCore["AsyncNotteClient"]):
         return self._validate_list(endpoint, await self._send_checked(endpoint, headers=None, timeout=None))
 
     async def _request_upload(self, endpoint: NotteEndpoint[TResponse], files: Mapping[str, UploadFile]) -> TResponse:
-        """Sends the endpoint as multipart form data with local files attached, and returns the validated response."""
-        with _open_uploads(files) as uploads:
-            return await self.request(endpoint.model_copy(update={"files": uploads}))
+        """Sends the endpoint as multipart form data with local files attached, and returns the validated response.
+
+        The files are read in a worker thread and held in memory for the request (see `_read_uploads`).
+        """
+        uploads = await asyncio.to_thread(_read_uploads, files)
+        return await self.request(endpoint.model_copy(update={"files": uploads}))
 
     async def _request_bytes(self, endpoint: NotteEndpoint[TResponse]) -> bytes:
         """Sends the endpoint and returns its raw response body, for operations that respond with a file."""
@@ -1044,3 +1082,17 @@ class AsyncBaseClient(_ClientCore["AsyncNotteClient"]):
         """The POST that `_request_once` and `_stream_lines` send: the request model as JSON."""
         headers = self.headers(headers={**headers, "Content-Type": "application/json"})
         return _json_post(self.http, endpoint, url=self.request_path(endpoint), headers=headers, timeout=timeout)
+
+    async def request_download(self, url: str, file_path: str) -> bool:
+        """Downloads `url` (no API credentials) to `file_path`, writing the file off the event loop."""
+        http = self.http
+        request = http.build_request("GET", url, timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS)
+        async with astream(http, request) as r:
+            await araise_for_status(r)
+            f = await asyncio.to_thread(open, file_path, "wb")
+            try:
+                await awrite_chunks(r.aiter_bytes(chunk_size=self.DEFAULT_FILE_CHUNK_SIZE), f)
+            finally:
+                await asyncio.to_thread(f.close)
+
+        return True

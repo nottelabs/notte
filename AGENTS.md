@@ -48,6 +48,9 @@ every decision (retry policy, error translation, handshake recovery, encoding, r
 checks) lives in one helper both call, so change it there, not in one twin. Async tests use
 `afake()` from `tests/sdk/test_async_resources.py`; transport changes need a scenario in
 `tests/sdk/test_async_transport.py`, which runs it through both clients and compares.
+Async code never reads or writes local files on the event loop: use `asyncio.to_thread`
+(httpx reads multipart files synchronously, so `AsyncBaseClient._request_upload` reads them
+in a thread first). `tests/sdk/test_async_functions_files.py` checks this for functions and files.
 
 ## Generated docs
 

@@ -97,11 +97,10 @@ those modules only.
 Each generated `*Operations` class has an `Async*Operations` twin in the same
 `resources.py`, rendered by the same `_method` with `async def` and `await`: same names,
 signatures, docstrings and telemetry. `AsyncNotteClient` exposes them. The twin leaves out
-the generated methods listed in `ASYNC_PENDING` (`sessions.stop`, `set_cookies`, `replay`,
-`functions.run_get_metadata`, `run_update_metadata`): the hand-written sync clients override
-them with more than the wire call, so a plain async call under the same name would behave
-differently. Hand-written-only sync methods (`page`, viewers, `run_start`, `update`, file
-transfers) have no async twin yet either.
+the generated methods listed in `ASYNC_PENDING` (`sessions.stop`, `set_cookies`, `replay`):
+the hand-written sync clients override them with more than the wire call, so a plain async
+call under the same name would behave differently. Hand-written-only sync methods (`page`,
+viewers) have no async twin yet either.
 `tests/sdk/test_async_resources.py` pins that list, requires every other generated method
 to have an async twin with the same signature (and the reverse), and sends a sample of
 calls plus every async method through both clients to compare the requests.
@@ -117,6 +116,18 @@ the `asyncio.run` wrappers of those bases. An async constructor cannot call the 
 `AwaitableResource` runs `start()` on `await obj` and `async with obj`, once.
 `tests/sdk/test_async_personas_vaults.py` checks the method list and signatures, and runs
 each flow, the polling helpers and their time-outs through both clients.
+
+`AsyncFunctionsClient`, `AsyncFileStorageClient`, `AsyncNotteFunction` and
+`AsyncRemoteFileStorage` are the hand-written async twins of the functions and files layer,
+next to their sync classes. The logic stays in helpers both call: run-stream decoding
+(`_RunEvents`), run-payload spooling, checksums and download verification
+(`endpoints/run_payloads.py`), and request building. The async side does every local file
+read and write in a worker thread. httpx encodes a multipart body synchronously even on
+`AsyncClient`, so `AsyncBaseClient._request_upload` reads each upload whole in a thread first.
+Object storage has async twins (`aput_object`, `aget_object`, `aget_text`) with the same
+rules: a separate client, no API headers, no redirects. `aput_object` streams the payload from
+a thread with an explicit `Content-Length`. `tests/sdk/test_async_functions_files.py` runs each
+flow through both clients and compares the API and storage requests and results.
 
 `AsyncBaseClient` (in `endpoints/base.py`) mirrors `BaseClient` method for method,
 including `_stream_bytes`, `_request_once` and `_stream_lines` for the async stateful layer.

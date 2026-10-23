@@ -480,7 +480,6 @@ RESOURCES = tuple(
 # with the async port of those clients; tests/sdk/test_async_resources.py pins the list.
 ASYNC_PENDING = {
     "Sessions": ("stop", "set_cookies", "replay"),
-    "Functions": ("run_get_metadata", "run_update_metadata"),
 }
 # Every mapped operation gets a factory in operations.py, including the ones whose
 # primary method is hand-written, so no client spells out a path the spec describes.

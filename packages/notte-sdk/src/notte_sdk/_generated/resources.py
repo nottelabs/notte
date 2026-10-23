@@ -278,9 +278,23 @@ class AsyncFunctionsOperations(AsyncRunPayloadsOperations):
         request = wire_request(models.FunctionRollbackRequest, data)
         return await self.request(api.function_rollback(function_id, request, params=wire_request(None, query or {})))
 
+    async def run_get_metadata(
+        self, function_id: str, run_id: str, **data: Unpack[FunctionRunGetMetadataParametersQueryDict]
+    ) -> core.GetFunctionRunResponse:
+        "Function Run Get Metadata (`GET /functions/{function_id}/runs/{run_id}`)."
+        request = wire_request(models.FunctionRunGetMetadataParametersQuery, data)
+        return await self.request(api.function_run_get_metadata(function_id, run_id, params=request))
+
     async def run_stop(self, function_id: str, run_id: str) -> core.UpdateFunctionRunResponse:
         "Function Run Stop (`DELETE /functions/{function_id}/runs/{run_id}`)."
         return await self.request(api.function_run_stop(function_id, run_id))
+
+    async def run_update_metadata(
+        self, function_id: str, run_id: str, **data: Unpack[FunctionRunUpdateRequestDict]
+    ) -> core.UpdateFunctionRunResponse:
+        "Function Run Update Metadata (`PATCH /functions/{function_id}/runs/{run_id}`)."
+        request = wire_request(models.FunctionRunUpdateRequest, data)
+        return await self.request(api.function_run_update_metadata(function_id, run_id, request))
 
     async def runtime_health(
         self, **data: Unpack[FunctionRuntimeHealthParametersQueryDict]

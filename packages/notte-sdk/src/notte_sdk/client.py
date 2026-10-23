@@ -15,8 +15,6 @@ from pydantic import BaseModel
 from typing_extensions import final
 
 from notte_sdk._generated.resources import (
-    AsyncFilesOperations,
-    AsyncFunctionsOperations,
     AsyncProfilesOperations,
     AsyncSessionsOperations,
 )
@@ -24,8 +22,13 @@ from notte_sdk._retry import DEFAULT_MAX_RETRIES
 from notte_sdk._transport import AsyncSharedHttpClient, SharedHttpClient
 from notte_sdk.auth import MISSING_API_KEY_MESSAGE, resolve_api_key
 from notte_sdk.endpoints.base import BaseClient
-from notte_sdk.endpoints.files import FileStorageClient, RemoteFileStorage
-from notte_sdk.endpoints.functions import FunctionsClient, NotteFunction
+from notte_sdk.endpoints.files import (
+    AsyncFileStorageClient,
+    AsyncRemoteFileStorage,
+    FileStorageClient,
+    RemoteFileStorage,
+)
+from notte_sdk.endpoints.functions import AsyncFunctionsClient, AsyncNotteFunction, FunctionsClient, NotteFunction
 from notte_sdk.endpoints.managed_auth import AsyncManagedAuthClient, ManagedAuthClient
 from notte_sdk.endpoints.personas import AsyncNottePersona, AsyncPersonasClient, NottePersona, PersonasClient
 from notte_sdk.endpoints.profiles import ProfilesClient
@@ -276,11 +279,11 @@ class AsyncNotteClient:
     `sessions`, `functions`, `files`, `personas`, `profiles`, `vaults` and `managed_auth` have the
     same methods as on `NotteClient`, as coroutines, with the same arguments, results and
     exceptions, and so do `health_check` and the methods of the `Persona` and `Vault` objects that
-    call the API (their methods without I/O, such as `generate_password()`, stay plain). Not yet available:
-    the methods the sync resources extend beyond the API call (for example `sessions.stop`,
-    `sessions.replay`, the viewers and `sessions.page`, `functions.run_start`, `functions.update`,
-    `files.upload` and `files.download`), `scrape`, and the `Session`, `Function` and `FileStorage`
-    objects. They will be added later.
+    call the API (their methods without I/O, such as `generate_password()`, stay plain). `Function`
+    and `FileStorage` create `AsyncNotteFunction` and `AsyncRemoteFileStorage`. Not yet available:
+    the session methods the sync resources extend beyond the API call (for example
+    `sessions.stop`, `sessions.replay`, the viewers and `sessions.page`), `scrape`,
+    `AsyncNotteFunction.replay`, and the `Session` object. They will be added later.
 
     **Example:**
     ```python
@@ -338,10 +341,10 @@ class AsyncNotteClient:
         self.managed_auth: AsyncManagedAuthClient = AsyncManagedAuthClient(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
         )
-        self.files: AsyncFilesOperations = AsyncFilesOperations(
+        self.files: AsyncFileStorageClient = AsyncFileStorageClient(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
         )
-        self.functions: AsyncFunctionsOperations = AsyncFunctionsOperations(
+        self.functions: AsyncFunctionsClient = AsyncFunctionsClient(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
         )
 
@@ -370,6 +373,14 @@ class AsyncNotteClient:
     @property
     def Persona(self) -> type[AsyncNottePersona]:
         return cast(type[AsyncNottePersona], partial(AsyncNottePersona, _client=self))
+
+    @property
+    def FileStorage(self) -> type[AsyncRemoteFileStorage]:
+        return cast(type[AsyncRemoteFileStorage], partial(AsyncRemoteFileStorage, _client=self.files))
+
+    @property
+    def Function(self) -> type[AsyncNotteFunction]:
+        return cast(type[AsyncNotteFunction], partial(AsyncNotteFunction, _client=self))
 
     async def health_check(self) -> None:
         """
