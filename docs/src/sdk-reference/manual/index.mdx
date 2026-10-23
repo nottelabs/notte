@@ -123,3 +123,7 @@ From there, you're able to create browser sessions, run new agents, or manage cr
     </Card>
   </Visibility>
 </CardGroup>
+
+## Async client
+
+For asyncio code, use <Visibility for="humans">[`AsyncNotteClient`](/sdk-reference/manual/async)</Visibility><Visibility for="agents">[`AsyncNotteClient`](/sdk-reference/manual/async.md)</Visibility>, where the methods that call the API are coroutines with the same names and arguments (a few helpers that make no request stay plain methods).

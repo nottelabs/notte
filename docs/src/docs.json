@@ -487,6 +487,7 @@
                 "group": "Getting Started",
                 "pages": [
                   "sdk-reference/manual/index",
+                  "sdk-reference/manual/async",
                   "sdk-reference/authentication",
                   "sdk-reference/errors",
                   "sdk-reference/rate-limits"

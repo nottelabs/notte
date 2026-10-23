@@ -181,6 +181,11 @@
     "guides/mysql/scrape_function.py": "Hosted Notte Function handler; the Function runtime executes Python code. Also provides the same scrape helper to the Python direct-write example.",
     "guides/mysql/scrape_to_mysql.py": "Python companion to the scheduled Function guide, shared by the direct scheduler script and its FastAPI MySQL receiver. This page documents a Python deployment, not a cross-language SDK integration.",
     "guides/mysql/mysql_receiver.py": "FastAPI receiver used by the Python-only hosted Function guide. It imports the direct-write companion to keep both documented database write paths identical.",
-    "guides/mysql/deploy_function.py": "Deploys the Python-only hosted Function from the MySQL guide; the uploaded handler runs in the Python Function runtime."
+    "guides/mysql/deploy_function.py": "Deploys the Python-only hosted Function from the MySQL guide; the uploaded handler runs in the Python Function runtime.",
+    "client/async_client.py": "AsyncNotteClient is the Python asyncio client; the TypeScript SDK is already async, so a pair would repeat the existing NotteClient examples.",
+    "client/async_function.py": "AsyncNotteClient is the Python asyncio client; the TypeScript SDK is already async, so a pair would repeat the existing NotteClient examples.",
+    "client/async_persona_vault.py": "AsyncNotteClient is the Python asyncio client; the TypeScript SDK is already async, so a pair would repeat the existing NotteClient examples.",
+    "client/async_scrape.py": "AsyncNotteClient is the Python asyncio client; the TypeScript SDK is already async, so a pair would repeat the existing NotteClient examples.",
+    "client/async_session.py": "AsyncNotteClient is the Python asyncio client; the TypeScript SDK is already async, so a pair would repeat the existing NotteClient examples."
   }
 }
