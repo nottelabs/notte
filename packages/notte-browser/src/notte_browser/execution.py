@@ -35,7 +35,8 @@ from notte_core.actions import (
 )
 from notte_core.config import config
 from notte_core.credentials.types import get_str_value
-from notte_core.errors import ActionExecutionError, NotteTimeoutError
+from notte_core.dom_tree import DomNode, NodeSelectors
+from notte_core.errors import ActionExecutionError, NotteTimeoutError, SnapshotProcessingError
 from notte_core.logging import logger
 from notte_core.profiling import profiler
 from notte_core.snapshot import BrowserSnapshot
@@ -43,8 +44,10 @@ from notte_core.storage import BaseStorage
 
 from notte_browser.captcha import solve_captcha
 from notte_browser.dom.locate import locate_element
+from notte_browser.dom.parsing import parse_dom
 from notte_browser.driver import Error, Frame, JSHandle, Locator
 from notte_browser.errors import (
+    InvalidLocatorRuntimeError,
     PlaywrightTimeoutError,
     ScrollActionFailedError,
     capture_playwright_errors,
@@ -52,6 +55,7 @@ from notte_browser.errors import (
 from notte_browser.files import download_file, upload_file
 from notte_browser.form_filling import FormFiller
 from notte_browser.js import script
+from notte_browser.resolution import resolve_selectors
 from notte_browser.window import BrowserWindow
 
 _BLUR_ACTIVE_ELEMENT = script("blur_active_element.js")
@@ -345,6 +349,60 @@ async def execute_interaction_action(
     return True
 
 
+async def _locate(window: BrowserWindow, action: InteractionAction, snapshot: BrowserSnapshot | None) -> Locator:
+    """Locates the element of an action. The CSS and XPath selectors of an observed element are paths from the
+    root of the page: when part of the page re-renders after it was observed (a list of results updating), they
+    can match nothing. The element is then found again in the current page by what it is (see `_find_again`)."""
+    assert action.selectors is not None
+    try:
+        return await locate_element(window.page, action.selectors)
+    except InvalidLocatorRuntimeError:
+        observed = _observed_node(action, snapshot)
+        if observed is None:
+            raise
+        selectors = await _find_again(window, observed)
+        if selectors is None:
+            raise
+        logger.info(f"Element {action.id} moved since it was observed: found again by its role, name and text")
+        return await locate_element(window.page, selectors)
+
+
+def _observed_node(action: InteractionAction, snapshot: BrowserSnapshot | None) -> DomNode | None:
+    """The observed node an action targets, when it was located with that node's selectors."""
+    if snapshot is None or action.selectors is None:
+        return None
+    node = snapshot.dom_node.interaction_nodes_by_id.get(action.id)
+    if node is None or node.computed_attributes.selectors is None:
+        return None
+    if node.computed_attributes.selectors.css_selector != action.selectors.css_selector:
+        # the action was given selectors of its own
+        return None
+    return node
+
+
+def _identity(node: DomNode) -> tuple[str, str, str, str]:
+    tag_name = node.attributes.tag_name if node.attributes is not None else ""
+    name = " ".join((node.accessible_name or "").split())
+    return tag_name, node.get_role_str(), name, " ".join(node.inner_text().split())
+
+
+async def _find_again(window: BrowserWindow, observed: DomNode) -> NodeSelectors | None:
+    """The selectors of the one interaction node of the current page with the observed node's tag, role,
+    accessible name and text. None when there is no such node, or more than one: the element is not guessed."""
+    identity = _identity(observed)
+    if len(identity[2]) == 0 and len(identity[3]) == 0:
+        return None
+    try:
+        dom = await parse_dom(window.page)
+    except (Error, SnapshotProcessingError) as e:
+        logger.debug(f"Could not read the page to find element {observed.id} again: {type(e).__name__}")
+        return None
+    matches = [node for node in dom.interaction_nodes() if _identity(node) == identity]
+    if len(matches) != 1:
+        return None
+    return await resolve_selectors(matches[0])
+
+
 async def _interact(
     window: BrowserWindow,
     action: InteractionAction,
@@ -356,7 +414,7 @@ async def _interact(
 ) -> None:
     assert action.selectors is not None
     # locate element (possibly in iframe)
-    locator: Locator = await locate_element(window.page, action.selectors)
+    locator: Locator = await _locate(window, action, prev_snapshot)
 
     match action:
         # Interaction actions
