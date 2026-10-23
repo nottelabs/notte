@@ -1,0 +1,20 @@
+# @sniptest filename=async_session.py
+import asyncio
+
+from notte_sdk import AsyncNotteClient
+
+
+async def main() -> None:
+    async with AsyncNotteClient() as client:
+        # the session is stopped when the block exits, also on errors and cancellation
+        async with client.Session() as session:
+            _ = await session.execute(type="goto", url="https://example.com")
+            markdown = await session.scrape()
+            print(markdown)
+
+            # the async Playwright page, connected to the same browser
+            page = await session.page
+            print(await page.title())
+
+
+asyncio.run(main())

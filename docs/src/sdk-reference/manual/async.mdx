@@ -1,0 +1,63 @@
+---
+title: "AsyncNotteClient"
+description: "Call the Notte API from asyncio code with the async Python client (preview)"
+---
+import AsyncClient from '/snippets/client/async_client.mdx';
+import AsyncSession from '/snippets/client/async_session.mdx';
+import AsyncScrape from '/snippets/client/async_scrape.mdx';
+import AsyncFunction from '/snippets/client/async_function.mdx';
+import AsyncPersonaVault from '/snippets/client/async_persona_vault.mdx';
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+<Note>
+`AsyncNotteClient` is in preview: its API may still change.
+</Note>
+
+`AsyncNotteClient` is the asyncio version of <Visibility for="humans">[`NotteClient`](/sdk-reference/manual/index)</Visibility><Visibility for="agents">[`NotteClient`](/sdk-reference/manual/index.md)</Visibility>. Use it when your code already runs in an event loop (an async web server or agent framework, for example), or to run sessions, scrapes and functions concurrently without threads. In synchronous code, keep using `NotteClient`.
+
+It takes the same constructor arguments as `NotteClient` and reads `NOTTE_API_KEY` the same way. Its resources (`sessions`, `functions`, `files`, `personas`, `profiles`, `vaults` and `managed_auth`), `health_check()` and `scrape()` have the same methods as on `NotteClient`, with the same names, arguments, results and exceptions, as coroutines: add `await`. `client.Session`, `client.Function`, `client.Persona`, `client.Vault` and `client.FileStorage` return async versions of the same objects.
+
+## Open and close the client
+
+<AsyncClient />
+
+Connections open on the first request. Close them with `async with` or `await client.aclose()`. They cannot be closed when the client is garbage collected, so an unclosed client emits a `ResourceWarning` instead. After `aclose()`, the client stays usable: the next request opens new connections.
+
+## Sessions
+
+<AsyncSession />
+
+- `async with client.Session()` starts the session and stops it when the block exits, also when entering the block fails or the task is cancelled. There is no sync `with` block.
+- `await session.page` returns the async Playwright page. It needs `pip install "notte-sdk[playwright]"`.
+- `client.Session(session_id)` attaches to an existing session without sending a request. The first method that needs the session's state reads it.
+
+## Scrape
+
+<AsyncScrape />
+
+`await client.scrape(url, ...)` takes the same arguments as `NotteClient.scrape`, including `response_format` and `instructions`. It starts a session, scrapes the page and stops the session, also when the scrape fails.
+
+## Functions
+
+<AsyncFunction />
+
+`my_function.py` is a function file as described in [Creating Functions](/features/functions/creating). `function.run()` takes the same arguments as the sync `run()`.
+
+## Personas and vaults
+
+The sync `Persona` and `Vault` objects call the API in their constructor. An async constructor cannot, so `await` the object to create it, or to load it when you pass an ID: `persona = await client.Persona(persona_id)`. `async with` does the same and also deletes it on exit.
+
+<AsyncPersonaVault />
+
+## Event loops and files
+
+- A client's connections belong to the event loop that made its first request. Using the client from another event loop while that loop is still open raises `RuntimeError`, so create one client per event loop. Once the first loop is closed, the next request opens new connections in the current loop.
+- Local files, such as function code, uploads, downloads and cookie files, are read and written off the event loop.
+
+## What is not async
+
+- Methods that send no request stay plain methods: `client.functions.get_curl()`, `client.functions.decode_message()` and `vault.generate_password()`, for example.
+- The deprecated notte 1.9 names, such as `client.workflows`, `client.Workflow` and `client.functions.run()`, exist only on `NotteClient`. Use the current names.
+- `RemoteSession.apage` and `RemoteSession.await_for_auth()` have no async counterpart: on an async session, `session.page` and `session.wait_for_auth()` are already awaitable.

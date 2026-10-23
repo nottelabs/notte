@@ -1,3 +1,4 @@
+import contextlib
 import io
 import os
 import re
@@ -258,6 +259,20 @@ def handle_storage_upload_file(
 ) -> None:
     code = code.replace("/path/to/document.pdf", "tests/data/test.pdf")
     run_example(eval_example, code=code)
+
+
+@handle_file("client/async_function.py")
+def handle_async_function(
+    eval_example: EvalExample,
+    code: str,
+) -> None:
+    if FAST_MODE or TYPE_CHECK_MODE:
+        run_example(eval_example, code=code)
+        return
+    # The example deploys `my_function.py` from the working directory: give it an owned one.
+    with tempfile.TemporaryDirectory() as directory, contextlib.chdir(directory):
+        _ = Path("my_function.py").write_text("def run(url: str) -> str:\n    return url\n")
+        run_example(eval_example, code=code)
 
 
 @handle_file("sessions/external_cdp.py")
