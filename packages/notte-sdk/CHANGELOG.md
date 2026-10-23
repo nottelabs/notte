@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased: sessions stopped when `with` entry fails
+
+`with client.Session(...) as session:` now stops the session when entering the block fails after
+the session was created, for example on an invalid `cookie_file`, a failed cookie upload or a
+`KeyboardInterrupt`. The session is stopped with `close_reason="error"` and the original exception
+is raised. Before, `__exit__` never ran in that case and the browser kept running until its idle
+timeout.
+
 ## Unreleased: unexpected JSON responses raise `NotteAPIError`
 
 When a successful API response is not the JSON object or list a method expects (for example
