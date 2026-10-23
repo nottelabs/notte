@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased: `act()`, `choose()` and `check()`
+
+Local sessions (`notte.Session`) gain `act(instruction)`: one observe → decide → execute step, where a
+decider picks one operation and its target from typed multiple-choice questions about the page.
+`choose(question, options)` and `check(question)` ask the same decider about the current page. Async
+versions are `aact`, `achoose` and `acheck`. Deciders live in `notte-llm` and load only when one of these
+methods runs: `JevDecider` (TypeSafe's Jev, through OpenRouter with `OPENROUTER_API_KEY` or on TypeSafe with
+`TYPESAFE_API_KEY`) by default, or `LlmDecider` on the `NOTTE_LLM_*` endpoint (`NOTTE_ACT_DECIDER=llm`).
+Deciders see elements by their accessible names and the page as visible text (`NOTTE_ACT_LABELS=html` sends
+the rendered HTML instead). The default field writer is `inception/mercury-3` on OpenRouter
+(`NOTTE_ACT_TEXT_MODEL` overrides it), falling back to the decision model when the writer's provider refuses
+on content-policy grounds. Cloud sessions do not support these methods yet.
+
 ## Unreleased: controls outside the viewport in observations
 
 Observations describe the links, buttons, fields and options above and below the viewport. Only
