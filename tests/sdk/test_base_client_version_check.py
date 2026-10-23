@@ -140,6 +140,7 @@ class TestBaseClientVersionCheck:
         assert len(threads) == 1
         assert threads[0] is not threading.main_thread()
 
+    @pytest.mark.skipif(not hasattr(os, "fork"), reason="os.fork is POSIX only")
     def test_fork_while_another_thread_holds_the_version_check_lock(self, api_key: str, reset_global_state):
         import notte_sdk.endpoints.base as base_module
 
