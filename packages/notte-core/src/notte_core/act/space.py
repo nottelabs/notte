@@ -83,14 +83,14 @@ def label_mode() -> LabelMode:
 
 @dataclass(frozen=True)
 class ObservedPage:
-    """What `act()` needs from one observation of the page (local or remote session)."""
+    """What `act()` needs from one observation of the page."""
 
     url: str
     title: str
     description: str
     actions: Sequence[InteractionAction]
     viewport: ViewportData | None
-    # live element state by action id (empty when a cloud observe response does not carry it)
+    # live element state by action id (empty when the observation does not carry it)
     states: Mapping[str, ElementState]
     fingerprint: str
     # ids of the actions in the current viewport (from the screenshot's boxes; empty when unknown)
@@ -429,7 +429,7 @@ def _accessible_lines(page: ObservedPage, display_text: Callable[[str], str]) ->
 
 def _rendered_options(page: ObservedPage, key: str, rendered: str) -> list[str]:
     """The option labels of a `<select>` rendered over several lines, when the live state does not list them
-    (a cloud observation without it): the decider and the writer still see what can be chosen."""
+    (an observation without it): the decider and the writer still see what can be chosen."""
     state = page.states.get(key)
     if state is not None and state.options is not None:
         return []

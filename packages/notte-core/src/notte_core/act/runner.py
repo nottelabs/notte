@@ -2,7 +2,7 @@
 # written text reused when a stale page forces a new decision, the last 10 actions as history) are
 # adapted from jev-ultrafast (`jev_ultrafast/agent.py`), Copyright (c) 2026 Browser Use, MIT License
 # (see `LICENSE-jev-ultrafast`).
-"""The `act()` / `choose()` / `check()` flow, shared by local and remote sessions.
+"""The `act()` / `choose()` / `check()` flow, independent of how a session is driven.
 
 A session plugs in through an `ActDriver` (observe, re-check, execute); the decider answers.
 
@@ -126,7 +126,7 @@ class ActHistory:
     """The last `act()` actions of a session, sent to the decider as `recent_actions`.
 
     `page_changed` is filled in by the next observation (comparing page fingerprints), so it costs no
-    extra observation. A fill without live state (remote sessions) leaves it unknown.
+    extra observation. A fill on a driver without live state leaves it unknown.
     """
 
     entries: deque[ActHistoryEntry] = field(default_factory=lambda: deque(maxlen=HISTORY_SIZE))
@@ -296,7 +296,7 @@ async def run_act(
                 status="stale", message="The page kept changing between decision and execution.", **common
             )
 
-        # without live state (remote sessions) a typed value does not change the fingerprint
+        # without live state a typed value does not change the fingerprint
         unknown = decision.operation == "TYPE_TEXT" and len(page.states) == 0
         entry = ActHistoryEntry(
             action=label, kind=decision.operation, text=text, fingerprint=page.fingerprint, pending=not unknown
@@ -315,7 +315,7 @@ async def run_act(
         if not execution.success:
             entry.error = "ExecutionFailed" if execution.exception is None else type(execution.exception).__name__
         if unknown:
-            # The loop must not mistake unobservable cloud fills for lack of progress.
+            # The loop must not mistake unobservable fills for lack of progress.
             common["fingerprint"] = None
         history.entries.append(entry)
         return run.result(status="executed", action=action, execution=execution, message=execution.message, **common)

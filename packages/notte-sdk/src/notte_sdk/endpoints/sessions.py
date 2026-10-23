@@ -1,36 +1,17 @@
 import asyncio
-import datetime as dt
-import json
 import os
 import random
 import time
-import uuid
-from collections.abc import Awaitable, Callable, Coroutine, Mapping, Sequence
-from dataclasses import replace
+from collections.abc import Awaitable, Callable, Coroutine, Mapping
 from enum import StrEnum
 from pathlib import Path
 from types import TracebackType
-from typing import TYPE_CHECKING, Any, Literal, Unpack, cast, overload
+from typing import TYPE_CHECKING, Any, Literal, Unpack, overload
 from urllib.parse import urlsplit
 from webbrowser import open as open_browser
 
 from notte_core import __version__ as notte_core_version
-from notte_core.act import (
-    ActHistory,
-    ActResult,
-    Choice,
-    Decider,
-    ObservedPage,
-    close_decider,
-    default_decider,
-    run_act,
-    run_check,
-    run_choose,
-    same_target,
-)
-from notte_core.act.freshness import Signatures, remote_signatures_expression, signature_xpaths
-from notte_core.act.wait import interrupted_by_navigation, remote_wait_expression, wait_failure, wait_result
-from notte_core.actions import BaseAction, InteractionAction, InteractionActionUnion
+from notte_core.actions import BaseAction, InteractionActionUnion
 from notte_core.actions.typedicts import (
     CaptchaSolveActionDict,
     CheckActionDict,
@@ -62,7 +43,7 @@ from notte_core.data import StructuredData, TBaseModel
 from notte_core.errors import EvaluateJsNoDataError, NotteBaseError
 from notte_core.fetch import FetchData, FetchResponse, build_fetch_script, response_from_evaluated
 from notte_core.logging import logger
-from notte_core.observation import ExecutionResult, Observation
+from notte_core.observation import ExecutionResult
 from notte_core.resource import SyncResource
 from notte_core.telemetry import track_usage
 from notte_core.types import (
@@ -782,118 +763,6 @@ def _evaluated(result: ExecutionResult, raise_on_failure: bool) -> str | Executi
     return result.data.markdown
 
 
-class RemoteActDriver:
-    """How `act()` / `choose()` / `check()` read and drive a cloud session (`notte_core.act.ActDriver`).
-
-    `act()` runs client-side on top of the observe / execute endpoints (no server-side act endpoint).
-    When the observe response carries the live element state (`Observation.element_states`: field values,
-    checked state, select options) and its fingerprint, decisions use it like local sessions do, and a
-    `<select>` option is chosen from its options. A server that does not return them leaves the fields
-    empty: decisions then rely on the action descriptions only, and a `<select>` is set by typing its
-    option label.
-
-    Freshness: after observing, one `evaluate_js` call records the element signatures
-    (`notte_core.act.freshness`) before the decider thinks; right before acting, a second one reads the
-    target's. When that fails (or for iframe / shadow-root targets), a new observation is compared.
-
-    The action is sent with the decided element's selectors, so it runs on that element even if another
-    observation of the session renumbered the ids meanwhile. Shadow-root targets keep their id: the server
-    builds their selectors from its snapshot, which the freshness check has just compared.
-    """
-
-    def __init__(self, session: "RemoteSession", *, capture_signatures: bool = True) -> None:
-        self.session: "RemoteSession" = session
-        self._signatures: Signatures = Signatures(None)
-        self._capture_signatures: bool = capture_signatures
-        # this act() call's baseline in the page (overlapping calls on the same session each have their own)
-        self._token: str = uuid.uuid4().hex
-        # the page of the current decision: its selectors pin the executed element
-        self._page: ObservedPage | None = None
-
-    @property
-    def has_vault(self) -> bool:
-        return self.session.request.vault_id is not None
-
-    def secret_replacements(self) -> Mapping[str, str]:
-        # the cloud vault substitutes secrets server-side, and the observe response carries no field values
-        return {}
-
-    def _observe(self) -> Observation:
-        # always the fast perception, whatever the session's default
-        return self.session.observe(perception_type="fast")
-
-    def _evaluate(self, code: str) -> dict[str, Any] | None:
-        try:
-            result = self.session.execute(type="evaluate_js", code=code, raise_on_failure=False)
-        except Exception:
-            # This optimization must not leave a failed transport task running after act().
-            # is_fresh falls back to a full observation when signatures are unavailable.
-            return None
-        if not result.success or result.data is None:
-            return None
-        try:
-            value: Any = json.loads(result.data.markdown)
-        except ValueError:
-            return None
-        return cast(dict[str, Any], value) if isinstance(value, dict) else None
-
-    def _read_signatures(self, xpaths: dict[str, str]) -> Signatures:
-        # the baseline stays in the page; what comes back (and is recorded) has no field values
-        return Signatures(self._evaluate(remote_signatures_expression(xpaths, "store", self._token)))
-
-    async def observe(self, observation: Observation | None) -> ObservedPage:
-        # A supplied observation has no trusted signature baseline. Refresh it before
-        # executable decisions, including after navigation to another page at the same XPath.
-        if observation is None or self._capture_signatures:
-            observation = await asyncio.to_thread(self._observe)
-        page = ObservedPage.from_observation(observation)
-        if self._capture_signatures:
-            self._signatures = await asyncio.to_thread(self._read_signatures, signature_xpaths(page))
-            page = replace(page, readonly=self._signatures.readonly())
-        self._page = page
-        return page
-
-    async def is_fresh(self, page: ObservedPage, element_id: str | None, *, focus: bool = False) -> bool:
-        before = self._signatures
-        if before.url is not None and before.url != page.url:
-            return False
-        if before.url is not None and (element_id is None or before.consistent(page, element_id)):
-            xpaths = {} if element_id is None else signature_xpaths(page, element_id)
-            check = await asyncio.to_thread(
-                self._evaluate, remote_signatures_expression(xpaths, "compare", self._token)
-            )
-            return before.unchanged(check, element_id, focus=focus)
-        current = ObservedPage.from_observation(await asyncio.to_thread(self._observe))
-        return same_target(page, current, element_id)
-
-    async def execute(self, action: BaseAction, raise_on_failure: bool) -> ExecutionResult:
-        if isinstance(action, InteractionAction) and action.selector is None and self._page is not None:
-            observed = next((a for a in self._page.actions if a.id == action.id), None)
-            selectors = None if observed is None else observed.selectors
-            if selectors is not None and not selectors.in_shadow_root:
-                action = action.model_copy(update={"selector": selectors})
-        return await asyncio.to_thread(self.session.execute, action, raise_on_failure=raise_on_failure)
-
-    async def wait_for_change(self, timeout_ms: int, raise_on_failure: bool) -> ExecutionResult:
-        started = dt.datetime.now(dt.timezone.utc)
-        result = await asyncio.to_thread(
-            self.session.execute, type="evaluate_js", code=remote_wait_expression(timeout_ms), raise_on_failure=False
-        )
-        if result.success:
-            return wait_result(result.data.markdown if result.data is not None else "unchanged", started, timeout_ms)
-        url = None if self._page is None else self._page.url
-        current = await asyncio.to_thread(
-            self.session.execute, type="evaluate_js", code="location.href", raise_on_failure=False
-        )
-        url_after = current.data.markdown if current.success and current.data is not None else None
-        if interrupted_by_navigation(result.message, url, url_after):
-            return wait_result("navigated", started, timeout_ms)
-        failure = wait_failure(result.message, url or "", started, timeout_ms)
-        if raise_on_failure and failure.exception is not None:
-            raise failure.exception
-        return failure
-
-
 class RemoteSession(SyncResource):
     """
     A remote session that can be managed through the Notte API.
@@ -985,9 +854,6 @@ class RemoteSession(SyncResource):
         self._async_playwright_context: "PlaywrightAsync | None" = None
         self._async_playwright_browser: "BrowserAsync | None" = None
         self._async_playwright_page: "PageAsync | None" = None
-        # `act()`: decider resolved on first use, last actions sent to the decider as history
-        self._decider: Decider | None = None
-        self._act_history: ActHistory = ActHistory()
 
     @override
     def __enter__(self) -> Self:  # pyright: ignore [reportMissingSuperCall]
@@ -1195,7 +1061,6 @@ class RemoteSession(SyncResource):
                 create_or_append_cookies_to_file(self._cookie_file, cookies)
             except Exception as e:
                 logger.error(f"🍪 Error saving cookies to {self._cookie_file}: {e}")
-        self._release_decider()
         try:
             self.response = self.client.stop(session_id=self.session_id, close_reason=close_reason)
         except Exception as e:
@@ -1715,154 +1580,6 @@ class RemoteSession(SyncResource):
         data = _with_perception(data, self.default_perception_type)
         return self.client.page.observe(session_id=self.session_id, **data)  # pyright: ignore[reportUnknownVariableType, reportArgumentType, reportCallIssue]
 
-    def _resolve_decider(self, decider: Decider | None) -> Decider:
-        if decider is not None:
-            return decider
-        if self._decider is None:
-            self._decider = default_decider()
-        return self._decider
-
-    def _release_decider(self) -> None:
-        # only the decider this session resolved: deciders passed with `decider=` belong to the caller
-        decider, self._decider = self._decider, None
-        if decider is not None:
-            close_decider(decider)
-
-    @track_usage("cloud.session.act")
-    async def aact(
-        self,
-        instruction: str,
-        *,
-        variables: Mapping[str, str] | None = None,
-        dry_run: bool = False,
-        min_confidence: float = 0.0,
-        observation: Observation | None = None,
-        raise_on_failure: bool | None = None,
-        decider: Decider | None = None,
-    ) -> ActResult:
-        """Async version of `act`: carry out one step of a natural-language instruction."""
-        return await run_act(
-            RemoteActDriver(self, capture_signatures=not dry_run),
-            self._resolve_decider(decider),
-            self._act_history,
-            instruction,
-            variables=variables,
-            dry_run=dry_run,
-            min_confidence=min_confidence,
-            observation=observation,
-            raise_on_failure=self.default_raise_on_failure if raise_on_failure is None else raise_on_failure,
-        )
-
-    def act(
-        self,
-        instruction: str,
-        *,
-        variables: Mapping[str, str] | None = None,
-        dry_run: bool = False,
-        min_confidence: float = 0.0,
-        observation: Observation | None = None,
-        raise_on_failure: bool | None = None,
-        decider: Decider | None = None,
-    ) -> ActResult:
-        """Carry out one step of a natural-language instruction: observe, pick one action, execute it.
-
-        Runs in the client on top of `observe()` and `execute()`: the decider is called from your
-        machine with your keys (`OPENROUTER_API_KEY` for Jev through OpenRouter, or `TYPESAFE_API_KEY`), and needs
-        `pip install 'notte[llm]'` unless you pass `decider=`. Decisions use the live field values and
-        `<select>` options when the observe response carries them, else the action descriptions only.
-
-        import ActCloud from '/snippets/act/act_cloud.mdx';
-
-        <ActCloud />
-
-        Args:
-            instruction: what to do, e.g. "search for running shoes".
-            variables: values for `{{name}}` placeholders in typed text, substituted after the model call.
-            dry_run: choose the action but do not run it (`status="proposed"`).
-            min_confidence: below this decider confidence, nothing runs (`status="blocked"`).
-            observation: optional observation for read-only decisions; executable decisions refresh it first.
-            raise_on_failure: raise `NoActionFoundError` when blocked, and the execution error when the
-                action fails. Defaults to the session's `raise_on_failure`.
-            decider: decider to use for this call.
-
-        Returns:
-            ActResult: `status` (`executed`, `proposed`, `done`, `blocked`, `stale`), the `action`, its
-            `execution`, the decider's `confidence` / `probabilities` and per-step `timings`.
-        """
-        return asyncio.run(
-            self.aact(
-                instruction,
-                variables=variables,
-                dry_run=dry_run,
-                min_confidence=min_confidence,
-                observation=observation,
-                raise_on_failure=raise_on_failure,
-                decider=decider,
-            )
-        )
-
-    @track_usage("cloud.session.choose")
-    async def achoose(
-        self,
-        question: str,
-        options: Sequence[str] | Mapping[str, str],
-        *,
-        observation: Observation | None = None,
-        decider: Decider | None = None,
-    ) -> Choice:
-        """Async version of `choose`: pick one of `options` about the current page."""
-        return await run_choose(
-            RemoteActDriver(self, capture_signatures=False),
-            self._resolve_decider(decider),
-            self._act_history,
-            question,
-            options,
-            observation=observation,
-        )
-
-    def choose(
-        self,
-        question: str,
-        options: Sequence[str] | Mapping[str, str],
-        *,
-        observation: Observation | None = None,
-        decider: Decider | None = None,
-    ) -> Choice:
-        """Pick one of `options` about the current page, with a probability per option.
-
-        `options` is a list of options, or a mapping from option key to a description of the option.
-        Runs client-side like `act()`, with the same decider.
-
-        import ChooseCheck from '/snippets/act/choose_check.mdx';
-
-        <ChooseCheck />
-        """
-        return asyncio.run(self.achoose(question, options, observation=observation, decider=decider))
-
-    @track_usage("cloud.session.check")
-    async def acheck(
-        self, question: str, *, observation: Observation | None = None, decider: Decider | None = None
-    ) -> float:
-        """Async version of `check`: the probability that a yes/no question holds on the current page."""
-        return await run_check(
-            RemoteActDriver(self, capture_signatures=False),
-            self._resolve_decider(decider),
-            self._act_history,
-            question,
-            observation=observation,
-        )
-
-    def check(self, question: str, *, observation: Observation | None = None, decider: Decider | None = None) -> float:
-        """The probability (0 to 1) that a yes/no question holds on the current page.
-
-        With an LLM decider (no calibrated probabilities) the answer is 0.0 or 1.0.
-
-        import ChooseCheck from '/snippets/act/choose_check.mdx';
-
-        <ChooseCheck />
-        """
-        return asyncio.run(self.acheck(question, observation=observation, decider=decider))
-
     # BEGIN GENERATED OVERLOADS: execute (scripts/generate_action_overloads.py)
     @overload
     def execute(
@@ -2289,7 +2006,6 @@ class AsyncRemoteSession:
       so `apage` is not needed.
     - `wait_for_auth` is a coroutine, so `await_for_auth` is not needed.
     - `storage` is an `AsyncRemoteFileStorage`.
-    - `act()`, `choose()` and `check()` are not available yet: use `RemoteSession.aact` / `achoose` / `acheck`.
     - `client.Session(session_id)` does no I/O: it attaches to the session, and the first method
       that needs its state reads it.
     - There is no sync `with` block: use `async with`.
