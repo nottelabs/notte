@@ -95,7 +95,7 @@ Only the elements in the viewport are offered. On a page taller than the viewpor
 
 <ActLoop />
 
-`act()` sends the last 10 `act()` actions of the session to the decider, with whether each changed the page and, for an action that failed, its error class (never the error message), so repeating the same instruction makes progress instead of retrying a failed action. A `WAIT` returns as soon as the page changes and settles, or after 3 seconds.
+`act()` sends the last 10 `act()` actions of the session to the decider, with whether each changed the page and, for an action that failed, its error class (never the error message), so repeating the same instruction makes progress instead of retrying a failed action. A `WAIT` returns as soon as the page changes and settles, or after 3 seconds. Other actions return once the page has reacted to them (the requests they started have finished and the page has been quiet for a moment, at most 3 seconds), so the next call sees, for example, the suggestions a search box loads after typing, or the page a client-side link renders.
 
 ## Guards
 

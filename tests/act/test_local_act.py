@@ -9,7 +9,7 @@ from urllib.parse import quote
 import pytest
 import pytest_asyncio
 from notte_browser.session import NotteSession
-from notte_core.act import InvalidDecisionError, NoActionFoundError, WriteContext
+from notte_core.act import DecisionState, InvalidDecisionError, NoActionFoundError, WriteContext
 from notte_core.actions import CheckAction, FillAction, SelectDropdownOptionAction, WaitAction
 from notte_core.errors import ActionExecutionError
 
@@ -916,3 +916,95 @@ async def test_an_unlisted_option_is_typed_by_its_label(session: NotteSession) -
     assert result.execution is not None and result.execution.success
     # Playwright's select_option matches a string against option values and labels
     assert await session.window.page.input_value("#country") == "PT"
+
+
+# the next observation sees what an action started (`notte_core.act.settle`)
+COMBOBOX = """<label for="to">Where to?</label>
+<input id="to" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="list">
+<ul id="list" role="listbox"></ul>
+<script>
+const input = document.getElementById('to'), list = document.getElementById('list');
+const show = () => { list.innerHTML = '<li role=option>Tokyo, Japan</li><li role=option>Haneda Airport (HND)</li>';
+  input.setAttribute('aria-expanded', 'true'); };
+input.addEventListener('input', () => LOAD);
+</script>"""
+# suggestions from a request, or after a debounce with nothing in flight
+SUGGEST = {
+    "fetch": "fetch('/suggest?q=' + input.value).then(show)",
+    "timer": "setTimeout(show, 600)",
+}
+
+SPA = """<h1>Code</h1><a id="issues" href="/issues">Issues</a><button>Go to file</button>
+<script>
+const render = () => { document.body.innerHTML = '<h1>Issues</h1><button>Labels</button>'; };
+document.getElementById('issues').addEventListener('click', (e) => { e.preventDefault(); NAVIGATE; });
+</script>"""
+NAVIGATE = {
+    # fetch the next page, then pushState and render it
+    "fetch": "fetch('/issues.json').then(() => { history.pushState({}, '', '/issues'); render(); })",
+    # pushState first, render later
+    "timer": "setTimeout(() => history.pushState({}, '', '/issues'), 300); setTimeout(render, 1500)",
+}
+
+
+async def _serve(session: NotteSession, html: str, delay: float = 0.6) -> None:
+    """`html` at http://app.test/; every other path answers after `delay` seconds."""
+
+    async def app(route: Any) -> None:
+        if route.request.url == "http://app.test/":
+            await route.fulfill(body=html, content_type="text/html")
+            return
+        await asyncio.sleep(delay)
+        await route.fulfill(body="{}", content_type="application/json")
+
+    await session.window.page.route("http://app.test/**", app)
+    _ = await session.window.page.goto("http://app.test/")
+
+
+async def _next_state(session: NotteSession, decider: FakeDecider, instruction: str) -> DecisionState:
+    result = await session.aact(instruction, decider=decider)
+    assert result.status == "executed" and result.success
+    _ = await session.aact(instruction, decider=decider)
+    return decider.states[-1]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("load", list(SUGGEST))
+async def test_typing_waits_for_the_suggestions(session: NotteSession, load: str) -> None:
+    await _serve(session, COMBOBOX.replace("LOAD", SUGGEST[load]))
+    ids = await _ids(session)
+    decider = FakeDecider(
+        choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["to"]}, {"operation": "DONE"}], texts=["Tokyo"]
+    )
+    state = await _next_state(session, decider, "Fly to Tokyo")
+    labels = [e["label"] for e in state.elements]
+    assert "Tokyo, Japan" in labels and "Haneda Airport (HND)" in labels
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("navigate", list(NAVIGATE))
+async def test_a_client_side_navigation_is_observed_once_rendered(session: NotteSession, navigate: str) -> None:
+    await _serve(session, SPA.replace("NAVIGATE", NAVIGATE[navigate]))
+    ids = await _ids(session)
+    decider = FakeDecider(choices=[{"operation": "CLICK", "click_target": ids["issues"]}, {"operation": "DONE"}])
+    state = await _next_state(session, decider, "Open the issues")
+    assert state.page.url == "http://app.test/issues"
+    assert [e["label"] for e in state.elements] == ["Labels"]
+
+
+@pytest.mark.asyncio
+async def test_typing_in_a_plain_field_costs_little(session: NotteSession) -> None:
+    ids = await _ids(session)
+    decider = FakeDecider(choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["name"]}], texts=["Jane"])
+    result = await session.aact("Sign up as Jane", decider=decider)
+    assert result.success and result.timings.execute_ms < 800
+
+
+@pytest.mark.asyncio
+async def test_the_settle_is_bounded_on_a_page_that_keeps_loading(session: NotteSession) -> None:
+    # every click starts a request that never answers within the bound
+    page = "<button onclick=\"fetch('/slow')\">Load</button>"
+    await _serve(session, page, delay=10)
+    decider = FakeDecider(choices=[{"operation": "CLICK"}])
+    result = await session.aact("Load", decider=decider)
+    assert result.success and result.timings.execute_ms < 3_800
