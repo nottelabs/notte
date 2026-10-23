@@ -4,7 +4,8 @@
 # Copyright (c) 2026 Browser Use. Licensed under the MIT License: see `LICENSE-jev-ultrafast`
 # next to this file. Changes: notte-specific operation labels (controls, PRESS_ENTER, typing an
 # unlisted dropdown option), native date / time fields in the date picker rule, the format / variable /
-# credential / clearing rules of the field writer, the dialog line, and the choose / check rules.
+# credential / clearing rules of the field writer, the dialog line, the choose / check rules, and the rule on
+# page text outside the viewport.
 """Instructions sent with the questions of `act()` / `choose()` / `check()` and to the field writer."""
 
 NEXT_ACTION = """Advance the user's entire goal from the CURRENT page using one operation.
@@ -20,7 +21,8 @@ If Search/Submit is visible and the required fields are ready, CLICK it immediat
 Recent WAIT actions are not evidence of loading. Prefer a useful visible control over WAIT.
 A recent action with an error failed: do not repeat it unchanged.
 DONE requires visible evidence that ALL requirements are satisfied. If asked to open a result,
-a matching link is not enough. BLOCKED means no supported operation can make progress."""
+a matching link is not enough. BLOCKED means no supported operation can make progress.
+Only the part of the page in the viewport is shown: scroll to see and reach the rest."""
 
 TARGET = """Choose the best observed target if the next operation is the one specified in this question.
 Use the user's entire goal, field values, nearby text, and recent actions. This question chooses only

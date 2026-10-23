@@ -388,30 +388,34 @@ def accessible_text(page: ObservedPage, display_text: Callable[[str], str] = str
 
     The markers keep what the HTML rendering is needed for (where an element sits relative to the
     text: the price next to a button, the result a link opens) without its markup. The page's own
-    component header is dropped; dialog headers are kept (they say a modal is open), after a first
-    line saying that the page behind the dialog is hidden.
+    component header is dropped; dialog headers are kept (they say a modal is open).
     """
+    return "\n".join(line for _, line in _accessible_lines(page, display_text))
+
+
+def _accessible_lines(page: ObservedPage, display_text: Callable[[str], str]) -> list[tuple[str | None, str]]:
+    """`accessible_text` as (element id or None, line) pairs."""
     names = _names(page)
-    lines: list[str] = [prompts.DIALOG_COVERS_PAGE] if covered_by_dialog(page.description) else []
+    lines: list[tuple[str | None, str]] = []
     for i, (key, content) in enumerate(_description_blocks(page.description)):
         if i in names.used:
             # already the name of the element next to it
             continue
         if key is None:
             if "'WebArea'" not in content:
-                lines.append(content.removeprefix("### "))
+                lines.append((None, content.removeprefix("### ")))
         elif i in names.disabled:
             # shown, so the decider knows the control exists and can wait for it; it offers no operation
-            lines.append(f"{_cut(display_text(names.disabled[i]), MAX_LABEL_LENGTH)} (disabled)")
+            lines.append((None, f"{_cut(display_text(names.disabled[i]), MAX_LABEL_LENGTH)} (disabled)"))
         elif key == "_":
-            lines.append(content)
+            lines.append((None, content))
         else:
             marker = f"[{key}] {_cut(display_text(names.names.get(key, key)), MAX_LABEL_LENGTH)}"
             options = _rendered_options(page, key, content)
             if options:
                 marker += f" (options: {_cut(display_text(', '.join(options)), MAX_LABEL_LENGTH)})"
-            lines.append(marker)
-    return "\n".join(lines)
+            lines.append((key, marker))
+    return lines
 
 
 def _rendered_options(page: ObservedPage, key: str, rendered: str) -> list[str]:
@@ -426,13 +430,152 @@ def _rendered_options(page: ObservedPage, key: str, rendered: str) -> list[str]:
     return [line.strip() for line in match.group(3).splitlines() if line.strip()]
 
 
-def page_text(page: ObservedPage, labels: LabelMode = "html", display_text: Callable[[str], str] = str) -> str:
-    """The page text sent to the models: the rendered description, or `accessible_text`."""
-    if labels == "accessible":
-        return accessible_text(page, display_text)
-    if covered_by_dialog(page.description):
-        return prompts.DIALOG_COVERS_PAGE + "\n" + page.description
-    return page.description
+def page_text(
+    page: ObservedPage,
+    labels: LabelMode = "html",
+    display_text: Callable[[str], str] = str,
+    length: int | None = None,
+    focus: str | None = None,
+    viewport_only: bool = False,
+) -> str:
+    """The page text sent to the models: the rendered description, or `accessible_text`, after a first line saying
+    that a dialog hides the page when the page shows only its dialogs (`covered_by_dialog`).
+
+    Only the elements in the viewport are offered, while the page text covers the whole page. On a page
+    taller than the viewport (see `_viewport_lines`):
+    - `viewport_only` (the text an action is decided on): the text of the viewport, and a line saying
+      whether there is more above or below, as the elements offered are those the decider can see;
+    - otherwise the whole text, with headers saying which part is above, in and below the viewport. Past
+      `length`, it is cut around the viewport (around the `focus` element, when given), not at the top."""
+    text = _page_text(page, labels, display_text, length, focus, viewport_only)
+    return prompts.DIALOG_COVERS_PAGE + "\n" + text if covered_by_dialog(page.description) else text
+
+
+def _page_text(
+    page: ObservedPage,
+    labels: LabelMode,
+    display_text: Callable[[str], str],
+    length: int | None,
+    focus: str | None,
+    viewport_only: bool,
+) -> str:
+    lines = _description_lines(page.description) if labels == "html" else _accessible_lines(page, display_text)
+    viewport = _viewport_lines(page, lines)
+    if viewport is None or viewport == (0, len(lines)):
+        text = "\n".join(line for _, line in lines)
+        return text if length is None else _cut(text, length)
+    first, last = viewport
+    shown = [line for _, line in lines]
+    if viewport_only:
+        text = "\n".join(shown[first:last])
+        below = len("\n".join(shown[last:]))
+        out = [NOT_SHOWN_ABOVE] if first > 0 else []
+        out.append(text if length is None else _cut(text, length))
+        if below > 0:
+            out.append(NOT_SHOWN_BELOW.format(below))
+        return "\n".join(out)
+    start, end = 0, len(shown)
+    if length is not None and len("\n".join(shown)) > length:
+        shown = [_cut(line, length // 2) for line in shown]
+        anchor = next((i for i, (key, _) in enumerate(lines) if key is not None and key == focus), first)
+        start, end = _window(shown, anchor, length - _HEADERS_LENGTH)
+    out = ["..."] if start > 0 else []
+    region = None
+    for i in range(start, end):
+        current = ABOVE_VIEWPORT if i < first else IN_VIEWPORT if i < last else BELOW_VIEWPORT
+        if current != region:
+            out.append(current)
+            region = current
+        out.append(shown[i])
+    if end < len(shown):
+        out.append("...")
+    return "\n".join(out)
+
+
+ABOVE_VIEWPORT = "--- above the viewport ---"
+IN_VIEWPORT = "--- in the viewport ---"
+BELOW_VIEWPORT = "--- below the viewport: scroll down to reach ---"
+NOT_SHOWN_ABOVE = "(page text above the viewport not shown: scroll up to read it)"
+NOT_SHOWN_BELOW = "(about {} characters of page text below the viewport not shown: scroll down to read them)"
+# the headers and "..." lines added to a cut page text
+_HEADERS_LENGTH = len(ABOVE_VIEWPORT) + len(IN_VIEWPORT) + len(BELOW_VIEWPORT) + 16
+# page text kept above the viewport when the text is cut around it
+TEXT_ABOVE_VIEWPORT = 2_000
+# two in-view elements further apart than this in the text are not in the same part of the page
+# (a sticky header and the content scrolled to): a viewport holds a few thousand characters at most
+_VIEWPORT_TEXT_GAP = 4_000
+
+
+def _description_lines(description: str) -> list[tuple[str | None, str]]:
+    """The rendered page's lines as (element id or None, line) pairs."""
+    lines: list[tuple[str | None, str]] = []
+    for line in description.splitlines():
+        match = _DESCRIPTION_LINE.match(line.strip())
+        lines.append((None if match is None else match.group(1), line))
+    return lines
+
+
+def _viewport_lines(page: ObservedPage, lines: Sequence[tuple[str | None, str]]) -> tuple[int, int] | None:
+    """The lines `[first, last)` of the page text in the viewport, or None when the page fits in the viewport
+    (or its size is unknown).
+
+    The observation only says which elements are in view, not which text: the viewport is the run of in-view
+    elements next to where the scroll position falls in the text (the scroll position as a fraction of the
+    page height, applied to the text length), widened to that estimate when both agree. Without elements in
+    view (a long article), it is the estimate alone."""
+    viewport = page.viewport
+    if viewport is None or viewport.total_height <= viewport.viewport_height + 2 or len(lines) == 0:
+        return None
+    starts: list[int] = []
+    offset = 0
+    for _, line in lines:
+        starts.append(offset)
+        offset += len(line) + 1
+    length = offset
+    low = viewport.scroll_y / viewport.total_height * length
+    high = min(viewport.scroll_y + viewport.viewport_height, viewport.total_height) / viewport.total_height * length
+    gap = max(_VIEWPORT_TEXT_GAP, high - low)
+    ids = {key for key, _ in lines if key is not None}
+    in_view = ids & page.in_view or ids
+    clusters: list[list[int]] = []
+    for i, (key, _) in enumerate(lines):
+        if key not in in_view:
+            continue
+        if len(clusters) > 0 and starts[i] - starts[clusters[-1][-1]] <= gap:
+            clusters[-1].append(i)
+        else:
+            clusters.append([i])
+
+    def distance(cluster: list[int]) -> float:
+        return max(0.0, starts[cluster[0]] - high, low - starts[cluster[-1]])
+
+    # the lines the scroll position estimate covers
+    estimate_first = next((i for i in range(len(lines)) if starts[i] + len(lines[i][1]) >= low), len(lines) - 1)
+    estimate_last = max(estimate_first + 1, next((i for i in range(len(lines)) if starts[i] >= high), len(lines)))
+    if len(clusters) == 0:
+        return estimate_first, estimate_last
+    cluster = min(clusters, key=lambda c: (distance(c), -len(c)))
+    if distance(cluster) > gap:
+        return cluster[0], cluster[-1] + 1
+    return min(cluster[0], estimate_first), max(cluster[-1] + 1, estimate_last)
+
+
+def _window(lines: Sequence[str], anchor: int, length: int) -> tuple[int, int]:
+    """The lines `[start, end)` to send of a page text longer than `length`: from `TEXT_ABOVE_VIEWPORT` above the
+    `anchor` line, as far down as `length` allows, then further up if the end of the page is reached."""
+    start = anchor
+    above = 0
+    while start > 0 and above + len(lines[start - 1]) + 1 <= TEXT_ABOVE_VIEWPORT:
+        start -= 1
+        above += len(lines[start]) + 1
+    end, used = start, 0
+    while end < len(lines) and used + len(lines[end]) + 1 <= length:
+        used += len(lines[end]) + 1
+        end += 1
+    while start > 0 and used + len(lines[start - 1]) + 1 <= length:
+        start -= 1
+        used += len(lines[start]) + 1
+    return start, max(end, start + 1)
 
 
 def _cut(text: str, length: int) -> str:
@@ -638,10 +781,15 @@ def build_act_space(
     return space
 
 
-def page_state(page: ObservedPage, labels: LabelMode = "html", display_text: Callable[[str], str] = str) -> PageState:
-    return PageState(
-        url=page.url, title=page.title, text=_cut(page_text(page, labels, display_text), MAX_PAGE_TEXT_LENGTH)
-    )
+def page_state(
+    page: ObservedPage,
+    labels: LabelMode = "html",
+    display_text: Callable[[str], str] = str,
+    *,
+    viewport_only: bool = False,
+) -> PageState:
+    text = page_text(page, labels, display_text, MAX_PAGE_TEXT_LENGTH, viewport_only=viewport_only)
+    return PageState(url=page.url, title=page.title, text=text)
 
 
 def act_questions(space: ActSpace, goal: str) -> dict[str, Question]:
