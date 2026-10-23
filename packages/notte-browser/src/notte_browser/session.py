@@ -11,6 +11,7 @@ from __future__ import annotations
 import asyncio
 import datetime as dt
 from collections.abc import Mapping, Sequence
+from dataclasses import replace
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Unpack, overload
 
@@ -176,6 +177,7 @@ class LocalActDriver:
             page = ObservedPage.from_observation(observation)
         if self._capture_signatures:
             self._signatures = await self._read_signatures(signature_xpaths(page))
+            page = replace(page, readonly=self._signatures.readonly())
         return page
 
     async def is_fresh(self, page: ObservedPage, element_id: str | None, *, focus: bool = False) -> bool:

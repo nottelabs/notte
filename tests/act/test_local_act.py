@@ -900,3 +900,36 @@ async def test_page_text_follows_the_viewport(session: NotteSession) -> None:
     for text in (decider.states[0].page.text, decider.contexts[0].page["text"]):
         assert f"[{ids['note']}] Note" in text and "Annual review" not in text
     assert await session.window.page.input_value("#note") == "hello"
+
+
+@pytest.mark.asyncio
+async def test_a_read_only_combobox_is_set_by_its_option_label(session: NotteSession) -> None:
+    # the rendered page does not show `readonly`: the element signatures do
+    page = """<label for="country">Country</label>
+<input id="country" role="combobox" readonly aria-controls="list" aria-expanded="false" onclick="list.hidden=false">
+<ul id="list" role="listbox" hidden><li role="option" onclick="country.value='France'">France</li></ul>"""
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    ids = await _ids(session)
+    decider = FakeDecider(choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["country"]}], texts=["France"])
+    result = await session.aact("Choose France", decider=decider, raise_on_failure=False)
+    # chosen from the list by its label, not typed into the read-only input
+    assert isinstance(result.action, SelectDropdownOptionAction) and result.action.value == "France"
+
+
+@pytest.mark.asyncio
+async def test_an_unlisted_option_is_typed_by_its_label(session: NotteSession) -> None:
+    # 60 options: the live state lists the first 50, the others are typed by label; labels are not values
+    options = (
+        "".join(f'<option value="C{i}">Country {i}</option>' for i in range(59))
+        + '<option value="PT">Portugal</option>'
+    )
+    _ = await session.window.page.goto(
+        f"data:text/html,{quote(f'<select id=country><option value=>Choose</option>{options}</select>')}"
+    )
+    ids = await _ids(session)
+    decider = FakeDecider(choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["country"]}], texts=["Portugal"])
+    result = await session.aact("Set the country to Portugal", decider=decider)
+    assert isinstance(result.action, SelectDropdownOptionAction) and result.action.value == "Portugal"
+    assert result.execution is not None and result.execution.success
+    # Playwright's select_option matches a string against option values and labels
+    assert await session.window.page.input_value("#country") == "PT"
