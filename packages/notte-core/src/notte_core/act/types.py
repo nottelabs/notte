@@ -128,7 +128,7 @@ class ActResult(BaseModel):
     operation_probabilities: dict[str, float] = Field(default_factory=dict)
     model: str | None = None
     message: str | None = None
-    # fingerprint of the decision page; None for cloud fills whose changes cannot be observed
+    # fingerprint of the decision page; None for fills whose changes cannot be observed (no live state)
     fingerprint: str | None = None
     timings: ActTimings = Field(default_factory=ActTimings)
 

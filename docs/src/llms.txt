@@ -404,9 +404,6 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [stop](https://docs.notte.cc/sdk-reference/remotesession/stop.md): Stop the session and clean up resources
 - [observe](https://docs.notte.cc/sdk-reference/remotesession/observe.md): Observes the current session page
 - [execute](https://docs.notte.cc/sdk-reference/remotesession/execute.md): Executes an action on the current session page
-- [act](https://docs.notte.cc/sdk-reference/remotesession/act.md): Carry out one step of a natural-language instruction: observe, pick one action, execute it
-- [choose](https://docs.notte.cc/sdk-reference/remotesession/choose.md): Pick one of `options` about the current page, with a probability per option
-- [check](https://docs.notte.cc/sdk-reference/remotesession/check.md): The probability (0 to 1) that a yes/no question holds on the current page
 - [scrape](https://docs.notte.cc/sdk-reference/remotesession/scrape.md): Scrape the current page data
 - [fetch](https://docs.notte.cc/sdk-reference/remotesession/fetch.md): Issue an HTTP request from the page the session is on and return the response
 - [replay](https://docs.notte.cc/sdk-reference/remotesession/replay.md): Get presigned URLs for the session replay
