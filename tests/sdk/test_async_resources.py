@@ -54,22 +54,14 @@ PENDING = {
         "viewer_cdp",
         "viewer_notebook",
     },
-    "functions": {
-        # Overrides of generated methods.
-        "run_get_metadata",  # resolves payload references
-        "run_update_metadata",  # offloads large fields to storage first
-        # Hand-written only.
-        "create_run",  # an unpublished route
-        "decode_message",
-        "get_curl",
-        "run_start",  # streams the run's server-sent events
-        "update",  # uploads a local file, positional `restricted`
-    },
-    "files": {"download", "metadata", "upload"},  # local files
+    "functions": set(),
+    "files": set(),
     "personas": set(),
     "profiles": set(),
     "vaults": set(),
 }
+# Async resource methods that stay plain methods: they only format text and send nothing.
+NOT_COROUTINES = {"functions": {"decode_message", "get_curl"}}
 
 
 @pytest.fixture(autouse=True)
@@ -165,31 +157,31 @@ def resource_members(cls: type, stop: type) -> set[str]:
 
 @pytest.mark.parametrize("name", RESOURCES)
 def test_async_resources_have_the_sync_methods_except_the_pending_ones(name: str) -> None:
-    sync, generated, async_ = resource_classes(name)
-    async_methods = resource_members(async_, AsyncBaseClient)
-    client_methods = resource_members(async_client_class(name), AsyncBaseClient)
+    sync, generated, async_generated = resource_classes(name)
+    async_methods = resource_members(async_client_class(name), AsyncBaseClient)
     generated_methods = resource_members(generated, BaseClient)
     # Methods the hand-written client defines (new or overriding a generated one), and its
     # `PageClient`. The deprecated 1.x aliases are not carried over to the new client.
     handwritten = resource_members(sync, generated) - set(_RENAMED_METHODS.get(sync, {}))
     handwritten |= {"page"} & set(vars(getattr(NotteClient(api_key=KEY, server_url=SERVER), name)))
-    # Every generated method has an async twin, unless the sync client overrides it.
-    assert async_methods == generated_methods - handwritten
-    # The async client adds only ports of hand-written sync methods.
-    assert client_methods - async_methods <= handwritten
-    # The pinned list of what is still missing on the async resource.
-    assert (generated_methods | handwritten) - client_methods == PENDING[name]
+    # Every generated method has a generated async twin, unless the sync client overrides it
+    # and the async client does not yet.
+    assert resource_members(async_generated, AsyncBaseClient) == generated_methods - (handwritten & PENDING[name])
+    # Nothing the sync client lacks, and the pinned list of what is still missing.
+    assert async_methods <= generated_methods | handwritten
+    assert (generated_methods | handwritten) - async_methods == PENDING[name]
     assert not hasattr(getattr(AsyncNotteClient(api_key=KEY, server_url=SERVER), name), "page")
 
 
 @pytest.mark.parametrize("name", RESOURCES)
 def test_async_twins_have_the_same_signatures(name: str) -> None:
-    sync, _, _ = resource_classes(name)
+    sync = resource_classes(name)[0]
     async_ = async_client_class(name)
     for method in resource_members(async_, AsyncBaseClient):
+        # The sync client's method: generated, or the hand-written override.
         sync_method = getattr(sync, method)
         async_method = getattr(async_, method)
-        assert inspect.iscoroutinefunction(async_method), method
+        assert inspect.iscoroutinefunction(async_method) is (method not in NOT_COROUTINES.get(name, set())), method
         assert not inspect.iscoroutinefunction(sync_method), method
         assert inspect.signature(async_method) == inspect.signature(sync_method), method
         assert inspect.getdoc(async_method) == inspect.getdoc(sync_method), method
@@ -254,6 +246,11 @@ def recorder(
     return seen, handle
 
 
+def mocked(client: Any, handle: Callable[[httpx.Request], httpx.Response]) -> Any:
+    client._transport = httpx.MockTransport(handle)
+    return client
+
+
 def exchange_sync(
     monkeypatch: pytest.MonkeyPatch,
     handler: Callable[[httpx.Request], httpx.Response],
@@ -267,6 +264,8 @@ def exchange_sync(
     sleeps: list[float] = []
     with monkeypatch.context() as patch:
         patch.setattr(SharedHttpClient, "get", lambda _: client)
+        # Object storage and public downloads use their own clients.
+        patch.setattr("notte_sdk._transport.http_client", lambda: mocked(http_client(), handle))
         patch.setattr("notte_sdk._transport.time.sleep", sleeps.append)
         random.seed(0)
         notte = NotteClient(api_key=KEY, server_url=SERVER, max_retries=max_retries)
@@ -294,6 +293,7 @@ async def exchange_async(
 
     with monkeypatch.context() as patch:
         patch.setattr(AsyncSharedHttpClient, "get", lambda _: client)
+        patch.setattr("notte_sdk._transport.async_http_client", lambda: mocked(async_http_client(), handle))
         patch.setattr("notte_sdk._transport.asyncio.sleep", sleep)
         random.seed(0)
         notte = AsyncNotteClient(api_key=KEY, server_url=SERVER, max_retries=max_retries)
@@ -444,11 +444,18 @@ def arguments(method: Callable[..., Any]) -> tuple[list[Any], dict[str, Any]]:
 def every_async_method() -> Iterator[tuple[str, str]]:
     for name in RESOURCES:
         for method in sorted(resource_members(async_client_class(name), AsyncBaseClient)):
-            yield name, method
+            # Plain methods send nothing; the signature test covers them.
+            if method not in NOT_COROUTINES.get(name, set()):
+                yield name, method
 
 
 # Methods whose `**data` needs a local file: the keyword that takes its path.
-FILE_KEYWORDS = {("functions", "create"): "path", ("sessions", "upload_session_file"): "file"}
+FILE_KEYWORDS = {
+    ("functions", "create"): "path",
+    ("functions", "update"): "path",
+    ("files", "upload"): "file_path",
+    ("sessions", "upload_session_file"): "file",
+}
 
 
 @pytest.mark.asyncio
@@ -456,9 +463,18 @@ FILE_KEYWORDS = {("functions", "create"): "path", ("sessions", "upload_session_f
 async def test_every_async_method_sends_what_its_sync_twin_sends(
     monkeypatch: pytest.MonkeyPatch, upload: str, resource: str, method: str
 ) -> None:
-    args, kwargs = arguments(getattr(getattr(AsyncNotteClient(api_key=KEY), resource), method))
+    bound = getattr(getattr(AsyncNotteClient(api_key=KEY), resource), method)
+    args, kwargs = arguments(bound)
     if keyword := FILE_KEYWORDS.get((resource, method)):
-        kwargs[keyword] = upload
+        positional = [
+            parameter.name
+            for parameter in inspect.signature(bound).parameters.values()
+            if parameter.kind is parameter.POSITIONAL_OR_KEYWORD
+        ]
+        if keyword in positional:
+            args[positional.index(keyword)] = upload
+        else:
+            kwargs[keyword] = upload
     exchange = await assert_same_exchange(
         monkeypatch, answer({}), lambda c: getattr(getattr(c, resource), method)(*args, **kwargs)
     )

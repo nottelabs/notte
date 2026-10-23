@@ -25,7 +25,7 @@ from collections.abc import AsyncGenerator, AsyncIterator, Awaitable, Callable, 
 from contextlib import asynccontextmanager, contextmanager
 from contextvars import ContextVar
 from http.cookiejar import CookieJar
-from typing import IO, Any, Protocol, TypedDict, cast
+from typing import IO, Any, ParamSpec, Protocol, TypedDict, TypeVar, cast
 from urllib.parse import urlencode
 
 import anyio
@@ -611,6 +611,7 @@ def get_text(url: str, *, timeout: float) -> str:
 
 # Object storage URLs are presigned: they get a separate client so the API token, preview
 # selector and capability headers never reach them, and their redirects are not followed.
+# `aget_text`, `aput_object` and `aget_object` below are their async twins, under the same rules.
 
 
 def _storage_timeout(timeout: tuple[float, float]) -> httpx.Timeout:
@@ -903,6 +904,124 @@ async def aiter_lines(response: httpx.Response) -> AsyncIterator[bytes]:
             yield line
     for line in lines.end():
         yield line
+
+
+_P = ParamSpec("_P")
+_T = TypeVar("_T")
+
+
+async def _until_done(task: "asyncio.Future[_T]") -> asyncio.CancelledError | None:
+    """Wait for `task` even if the caller is cancelled meanwhile; returns that cancellation."""
+    cancelled: asyncio.CancelledError | None = None
+    while not task.done():
+        try:
+            _ = await asyncio.wait({task})
+        except asyncio.CancelledError as error:
+            cancelled = error
+    return cancelled
+
+
+async def athread_owned(
+    release: Callable[[_T], object], func: Callable[_P, _T], /, *args: _P.args, **kwargs: _P.kwargs
+) -> _T:
+    """`asyncio.to_thread(func, ...)` for a call that creates a file or opens a handle.
+
+    Cancelling `to_thread` does not stop its worker, whose result would then be lost: a created
+    file stays on disk, a handle stays open. When the caller is cancelled, this waits for the
+    worker, passes its result to `release` (in a thread) and re-raises the cancellation.
+    """
+    task = asyncio.ensure_future(asyncio.to_thread(func, *args, **kwargs))
+    cancelled = await _until_done(task)
+    if cancelled is None:
+        return task.result()
+    if not task.cancelled() and task.exception() is None:
+        await athread_finally(release, task.result())
+    raise cancelled
+
+
+async def athread_finally(func: Callable[_P, object], /, *args: _P.args, **kwargs: _P.kwargs) -> None:
+    """`asyncio.to_thread(func, ...)` for cleanup: it completes even if the caller is cancelled
+    again meanwhile, and that cancellation is re-raised after it."""
+    task = asyncio.ensure_future(asyncio.to_thread(func, *args, **kwargs))
+    cancelled = await _until_done(task)
+    error = None if task.cancelled() else task.exception()
+    if cancelled is not None:
+        raise cancelled
+    if error is not None:
+        raise error
+
+
+async def awrite_chunks(chunks: AsyncIterator[bytes], output: IO[bytes]) -> None:
+    """Write a streamed body to a local file, each write in a worker thread, off the event loop."""
+    async for chunk in chunks:
+        _ = await asyncio.to_thread(output.write, chunk)
+
+
+async def _aopen_client() -> httpx.AsyncClient:
+    """A new client for one call (object storage, public downloads), built in a worker thread:
+    its SSL context reads the CA bundle from disk.
+
+    The pooled client of `AsyncSharedHttpClient` is built on the loop instead, once per
+    `AsyncNotteClient` and event loop: its lock cannot be held across an await.
+    """
+    return await asyncio.to_thread(async_http_client)
+
+
+async def aget_text(url: str, *, timeout: float) -> str:
+    """The async twin of `get_text`."""
+    async with await _aopen_client() as client:
+        response = await asend(client, client.build_request("GET", url, timeout=timeout))
+    await araise_for_status(response)
+    return response.text
+
+
+# Read size for streamed storage uploads, as httpx reads a file body.
+_UPLOAD_CHUNK_SIZE = 64 * 1024
+
+
+def _remaining_length(payload: IO[bytes]) -> int:
+    start = payload.tell()
+    size = payload.seek(0, os.SEEK_END) - start
+    _ = payload.seek(start)
+    return size
+
+
+async def _aread_chunks(payload: IO[bytes]) -> AsyncIterator[bytes]:
+    while chunk := await asyncio.to_thread(payload.read, _UPLOAD_CHUNK_SIZE):
+        yield chunk
+
+
+async def aput_object(url: str, payload: IO[bytes], *, headers: Mapping[str, str], timeout: tuple[float, float]) -> int:
+    """The async twin of `put_object`. `payload` is read in a worker thread, never on the event loop.
+
+    httpx reads a file body synchronously, so the payload is streamed from an async iterator
+    instead. Its length is sent as `Content-Length`, as httpx sends a file's: presigned storage
+    URLs reject chunked uploads.
+    """
+    size = await asyncio.to_thread(_remaining_length, payload)
+    request_headers = httpx.Headers(headers)
+    if "Content-Length" not in request_headers:
+        request_headers["Content-Length"] = str(size)
+    async with await _aopen_client() as storage_session:
+        request = storage_session.build_request(
+            "PUT", url, content=_aread_chunks(payload), headers=request_headers, timeout=_storage_timeout(timeout)
+        )
+        async with astream(storage_session, request, follow_redirects=False) as response:
+            _ = await response.aread()
+            await araise_for_status(response)
+            return response.status_code
+
+
+@asynccontextmanager
+async def aget_object(
+    url: str, *, timeout: tuple[float, float], chunk_size: int
+) -> AsyncGenerator[tuple[int, AsyncIterator[bytes]]]:
+    """The async twin of `get_object`: yields the response status (2xx) and the body's chunks."""
+    async with await _aopen_client() as storage_session:
+        request = storage_session.build_request("GET", url, timeout=_storage_timeout(timeout))
+        async with astream(storage_session, request, follow_redirects=False) as response:
+            await araise_for_status(response)
+            yield response.status_code, response.aiter_bytes(chunk_size=chunk_size)
 
 
 async def asend_with_retries(

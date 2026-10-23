@@ -33,11 +33,16 @@ same constructor arguments as `NotteClient`. Its `sessions`, `functions`, `files
 the same names, arguments, results, retries and exceptions. Use `async with AsyncNotteClient() as
 client:` or `await client.aclose()`: an unclosed client emits a `ResourceWarning` when it is
 garbage collected. A client's connections belong to the event loop that opened them; using it
-from another open loop raises `RuntimeError`. Preview: not yet available are the methods the sync
-resources extend beyond the API call (`sessions.stop`, `set_cookies`, `replay`, `debug_tab_info`,
-`page` and the viewers; `functions.run_start`, `update`, `create_run`, `get_curl`,
-`run_get_metadata`, `run_update_metadata`; `files.upload`, `download`, `metadata`), `scrape`, and
-the `Session`, `Function` and `FileStorage` objects.
+from another open loop raises `RuntimeError`.
+
+Functions and files are complete: `functions.run_start` (streamed logs or a single response),
+`update`, `create_run`, `get_curl`, `run_get_metadata` and `run_update_metadata` (large run
+fields go through object storage, with the same checks), and `files.upload`, `download` and
+`metadata`. `client.Function(...)` returns an `AsyncNotteFunction` with the `NotteFunction`
+methods as coroutines, except `replay`. Creating a function is a request, so await it:
+`function = await client.Function(path="my_function.py")`. `client.FileStorage(...)` returns an
+`AsyncRemoteFileStorage`. Local files are read and written off the event loop; an uploaded file
+is read into memory before it is sent.
 
 `AsyncNotteClient` also has `personas.create_number` and `delete_number`, `vaults.get`,
 `managed_auth`, `health_check()`, and the `Persona` and `Vault` objects (`AsyncNottePersona`,
@@ -49,6 +54,10 @@ delete it on exit. Credentials go through the same vault code as `NotteVault`, s
 the vault are masked the same way. `AsyncNottePersona` implements `aemails`, `asms`,
 `await_emails` and `await_sms`, and `AsyncNotteVault` implements the `*_async` vault methods, with
 async requests, so a local session can use them without blocking its event loop.
+
+Preview: not yet available are the session methods the sync resources extend beyond the API call
+(`sessions.stop`, `set_cookies`, `replay`, `debug_tab_info`, `page` and the viewers), `scrape`,
+`AsyncNotteFunction.replay`, and the `Session` object.
 
 ## Unreleased: httpx transport
 
