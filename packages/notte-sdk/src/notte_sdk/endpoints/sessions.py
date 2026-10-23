@@ -57,7 +57,7 @@ from notte_core.types import (
     TabSessionDebugRequest,
 )
 from pydantic import BaseModel
-from typing_extensions import final, override
+from typing_extensions import Self, final, override
 
 from notte_sdk._generated import operations as api
 from notte_sdk._generated.public import (
@@ -483,6 +483,31 @@ class RemoteSession(SyncResource):
         self._async_playwright_context: "PlaywrightAsync | None" = None
         self._async_playwright_browser: "BrowserAsync | None" = None
         self._async_playwright_page: "PageAsync | None" = None
+
+    @override
+    def __enter__(self) -> Self:  # pyright: ignore [reportMissingSuperCall]
+        """
+        Context manager entry point: starts the session.
+
+        If the entry fails after the session was created (an invalid cookie file, a failed cookie
+        upload or an interrupt), the session is stopped before the error is raised, since the
+        context manager never exits then.
+
+        Returns:
+            RemoteSession: The session instance.
+        """
+        created = self.response is None
+        try:
+            self.start()
+        except BaseException:
+            # A failed authentication wait already stopped the session.
+            if created and self.response is not None and self.response.status != "closed":
+                try:
+                    self.stop(close_reason="error")
+                except Exception as stop_error:
+                    logger.error(f"Failed to stop session after context manager entry failed: {stop_error}")
+            raise
+        return self
 
     @override
     def __exit__(  # pyright: ignore [reportMissingSuperCall]

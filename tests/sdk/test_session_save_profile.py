@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock, patch
 
+import httpx
 import pytest
 from notte_sdk._generated import operations as api
 from notte_sdk.endpoints.base import BaseClient
@@ -38,7 +39,7 @@ def test_save_profile_endpoint_targets_session() -> None:
 )
 def test_client_save_profile_sends_the_target(data: dict[str, str], expected: dict[str, str]) -> None:
     client = _client()
-    with patch.object(BaseClient, "_request", return_value=PROFILE) as request:
+    with patch.object(BaseClient, "_send_checked", return_value=httpx.Response(200, json=PROFILE)) as request:
         profile = client.save_profile("session-id", **data)  # pyright: ignore[reportArgumentType]
 
     endpoint = request.call_args.args[0]

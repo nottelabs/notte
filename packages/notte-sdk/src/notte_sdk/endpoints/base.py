@@ -445,6 +445,30 @@ class _ClientCore(ABC, Generic[TRoot]):
             **(headers or {}),
         }
 
+    def _health_check_request(self, http: httpx.Client | httpx.AsyncClient) -> httpx.Request:
+        """The unauthenticated `GET /health` that `health_check` sends once, without retries."""
+        return http.build_request(
+            "GET",
+            f"{self.server_url}/{self.HEALTH_CHECK_ENDPOINT}",
+            headers={"x-notte-request-origin": self.REQUEST_ORIGIN, "x-notte-sdk-version": notte_core_version},
+        )
+
+    @staticmethod
+    def _check_health(response: httpx.Response) -> None:
+        """Raise unless the health check answered 200."""
+        if response.status_code != 200:
+            logger.error(f"⚠️ Health check failed with status code {response.status_code}.")
+            raise Exception(
+                f"Health check failed with status code {response.status_code}. Please check your server URL."
+            )
+        logger.info("🔥 Health check passed. API ready to serve requests.")
+
+    @staticmethod
+    def _health_check_unreachable(error: NotteConnectionError) -> Exception:
+        """The error `health_check` raises (from `error`) when the server cannot be reached."""
+        logger.error(f"⚠️ Health check failed with error: {error}. Please check your server URL.")
+        return Exception("Health check failed because the server is not reachable. Please check your server URL.")
+
     def _with_db_preview(self, url: str) -> str:
         """Add the preview-branch selector to a websocket URL.
 
@@ -549,13 +573,14 @@ class _ClientCore(ABC, Generic[TRoot]):
             raise NotteAPIError(path=self._error_path(endpoint), response=response)
         return cast(Any, response_dict)
 
-    def _validate(self, endpoint: NotteEndpoint[TResponse], response: Any) -> TResponse:
-        """Parse a decoded JSON object with the endpoint's response model."""
-        if not isinstance(response, dict):
+    def _validate(self, endpoint: NotteEndpoint[TResponse], response: httpx.Response) -> TResponse:
+        """Decode a successful response and parse its JSON object with the endpoint's response model."""
+        response_dict = self._decode(endpoint, response, check_response_detail=True)
+        if not isinstance(response_dict, dict):
             raise NotteAPIError(path=self._error_path(endpoint), response=response)
 
         try:
-            return endpoint.response.model_validate(response, context={"sdk_response": True})
+            return endpoint.response.model_validate(response_dict, context={"sdk_response": True})
         except ValidationError as e:
             # Check if we should suggest an upgrade
             should_upgrade, cached_version = self._should_suggest_upgrade()
@@ -569,13 +594,13 @@ class _ClientCore(ABC, Generic[TRoot]):
                 # Re-raise original error if no upgrade suggestion needed
                 raise
 
-    def _validate_list(self, endpoint: NotteEndpoint[TResponse], response_list: Any) -> Sequence[TResponse]:
-        """Parse a decoded JSON list, or a page's `items`, with the endpoint's response model."""
+    def _validate_list(self, endpoint: NotteEndpoint[TResponse], response: httpx.Response) -> Sequence[TResponse]:
+        """Decode a successful response and parse its JSON list, or a page's `items`, with the response model."""
+        response_list = self._decode(endpoint, response, check_response_detail=True)
+        if isinstance(response_list, dict) and "items" in response_list:
+            response_list = cast(dict[str, Any], response_list)["items"]
         if not isinstance(response_list, list):
-            if "items" in response_list:
-                response_list = response_list["items"]
-            if not isinstance(response_list, list):
-                raise NotteAPIError(path=self._error_path(endpoint), response=response_list)
+            raise NotteAPIError(path=self._error_path(endpoint), response=response)
 
         try:
             return [endpoint.response.model_validate(item, context={"sdk_response": True}) for item in response_list]  # pyright: ignore[reportUnknownVariableType]
@@ -642,25 +667,10 @@ class BaseClient(_ClientCore["NotteClient"]):
         Health check the Notte API.
         """
         try:
-            response = send(
-                self.http,
-                self.http.build_request(
-                    "GET",
-                    f"{self.server_url}/{self.HEALTH_CHECK_ENDPOINT}",
-                    headers={"x-notte-request-origin": self.REQUEST_ORIGIN, "x-notte-sdk-version": notte_core_version},
-                ),
-            )
-            if response.status_code != 200:
-                logger.error(f"⚠️ Health check failed with status code {response.status_code}.")
-                raise Exception(
-                    f"Health check failed with status code {response.status_code}. Please check your server URL."
-                )
+            response = send(self.http, self._health_check_request(self.http))
         except NotteConnectionError as e:
-            logger.error(f"⚠️ Health check failed with error: {e}. Please check your server URL.")
-            raise Exception(
-                "Health check failed because the server is not reachable. Please check your server URL."
-            ) from e
-        logger.info("🔥 Health check passed. API ready to serve requests.")
+            raise self._health_check_unreachable(e) from e
+        self._check_health(response)
 
     def _request(
         self,
@@ -746,7 +756,7 @@ class BaseClient(_ClientCore["NotteClient"]):
         Raises:
             NotteAPIError: If the API response is not a dictionary.
         """
-        response: Any = self._request(endpoint, headers=headers, timeout=timeout)
+        response = self._send_checked(endpoint, headers=headers, timeout=timeout)
         return self._validate(endpoint, response)
 
     def request_list(self, endpoint: NotteEndpoint[TResponse]) -> Sequence[TResponse]:
@@ -766,8 +776,8 @@ class BaseClient(_ClientCore["NotteClient"]):
         Raises:
             NotteAPIError: If the response is not a list.
         """
-        response_list: Any = self._request(endpoint)
-        return self._validate_list(endpoint, response_list)
+        response = self._send_checked(endpoint, headers=None, timeout=None)
+        return self._validate_list(endpoint, response)
 
     def _request_upload(self, endpoint: NotteEndpoint[TResponse], files: Mapping[str, UploadFile]) -> TResponse:
         """
@@ -918,6 +928,17 @@ class AsyncBaseClient(_ClientCore["AsyncNotteClient"]):
                 _ = weakref.finalize(self, shared.warn_unclosed)
         return shared.get()
 
+    async def health_check(self) -> None:
+        """
+        Health check the Notte API.
+        """
+        http = self.http
+        try:
+            response = await asend(http, self._health_check_request(http))
+        except NotteConnectionError as e:
+            raise self._health_check_unreachable(e) from e
+        self._check_health(response)
+
     async def _request(
         self,
         endpoint: NotteEndpoint[TResponse],
@@ -968,11 +989,11 @@ class AsyncBaseClient(_ClientCore["AsyncNotteClient"]):
         self, endpoint: NotteEndpoint[TResponse], headers: dict[str, str] | None = None, timeout: float | None = None
     ) -> TResponse:
         """Requests the specified API endpoint and returns the validated response."""
-        return self._validate(endpoint, await self._request(endpoint, headers=headers, timeout=timeout))
+        return self._validate(endpoint, await self._send_checked(endpoint, headers=headers, timeout=timeout))
 
     async def request_list(self, endpoint: NotteEndpoint[TResponse]) -> Sequence[TResponse]:
         """Retrieves and validates a list of responses from the API."""
-        return self._validate_list(endpoint, await self._request(endpoint))
+        return self._validate_list(endpoint, await self._send_checked(endpoint, headers=None, timeout=None))
 
     async def _request_upload(self, endpoint: NotteEndpoint[TResponse], files: Mapping[str, UploadFile]) -> TResponse:
         """Sends the endpoint as multipart form data with local files attached, and returns the validated response."""

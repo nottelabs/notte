@@ -101,10 +101,22 @@ the generated methods listed in `ASYNC_PENDING` (`sessions.stop`, `set_cookies`,
 `functions.run_get_metadata`, `run_update_metadata`): the hand-written sync clients override
 them with more than the wire call, so a plain async call under the same name would behave
 differently. Hand-written-only sync methods (`page`, viewers, `run_start`, `update`, file
-transfers, `vaults.get`, phone numbers) have no async twin yet either.
+transfers) have no async twin yet either.
 `tests/sdk/test_async_resources.py` pins that list, requires every other generated method
 to have an async twin with the same signature (and the reverse), and sends a sample of
 calls plus every async method through both clients to compare the requests.
+
+The ported hand-written resource methods (`AsyncPersonasClient.create_number`,
+`delete_number`, `AsyncVaultsClient.get`, `AsyncManagedAuthClient`) subclass the async
+generated classes next to their sync twins, and build their requests with the same helpers.
+`AsyncNottePersona` and `AsyncNotteVault` have every public `NottePersona` / `NotteVault`
+method as a coroutine, except those without I/O (`generate_password`, the `BaseVault`
+redaction helpers). They inherit `BasePersona` and `BaseVault`, so polling, credential
+tracking and placeholder replacement are the same code. Their sync-named coroutines override
+the `asyncio.run` wrappers of those bases. An async constructor cannot call the API, so
+`AwaitableResource` runs `start()` on `await obj` and `async with obj`, once.
+`tests/sdk/test_async_personas_vaults.py` checks the method list and signatures, and runs
+each flow, the polling helpers and their time-outs through both clients.
 
 `AsyncBaseClient` (in `endpoints/base.py`) mirrors `BaseClient` method for method,
 including `_stream_bytes`, `_request_once` and `_stream_lines` for the async stateful layer.

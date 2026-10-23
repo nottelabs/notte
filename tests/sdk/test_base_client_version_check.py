@@ -377,9 +377,9 @@ class TestBaseClientVersionCheck:
             mock_pypi_response = FakePyPI({"info": {"version": "1.8.0"}})
 
             with mock_pypi_response.serve():
-                with patch.object(BaseClient, "_request") as mock_request:
+                with patch.object(BaseClient, "_send_checked") as mock_request:
                     # Mock a response that will cause validation error
-                    mock_request.return_value = {"unexpected_field": "value"}
+                    mock_request.return_value = httpx.Response(200, json={"unexpected_field": "value"})
 
                     client = BaseClient(MockNotteClient(), None, api_key=api_key)
 
@@ -412,9 +412,9 @@ class TestBaseClientVersionCheck:
         base_module._version_check_performed = True  # Prevent real PyPI request
 
         with patch("notte_sdk.endpoints.base.notte_core_version", "1.8.0"):  # Current version is newer
-            with patch.object(BaseClient, "_request") as mock_request:
+            with patch.object(BaseClient, "_send_checked") as mock_request:
                 # Mock a response that will cause validation error
-                mock_request.return_value = {"unexpected_field": "value"}
+                mock_request.return_value = httpx.Response(200, json={"unexpected_field": "value"})
 
                 client = BaseClient(MockNotteClient(), None, api_key=api_key)
 
@@ -445,9 +445,9 @@ class TestBaseClientVersionCheck:
         with patch("notte_sdk.endpoints.base.notte_core_version", "1.7.0"):
             # Mock PyPI to fail so no cached version is set
             with FakePyPI(error=httpx.ConnectError("Network error")).serve():
-                with patch.object(BaseClient, "_request") as mock_request:
+                with patch.object(BaseClient, "_send_checked") as mock_request:
                     # Mock a response that will cause validation error
-                    mock_request.return_value = {"unexpected_field": "value"}
+                    mock_request.return_value = httpx.Response(200, json={"unexpected_field": "value"})
 
                     client = BaseClient(MockNotteClient(), None, api_key=api_key)
 
@@ -500,9 +500,9 @@ class TestBaseClientVersionCheck:
             mock_pypi_response = FakePyPI({"info": {"version": "1.8.0"}})
 
             with mock_pypi_response.serve():
-                with patch.object(BaseClient, "_request") as mock_request:
+                with patch.object(BaseClient, "_send_checked") as mock_request:
                     # Mock a list response that will cause validation error
-                    mock_request.return_value = [{"unexpected_field": "value"}]
+                    mock_request.return_value = httpx.Response(200, json=[{"unexpected_field": "value"}])
 
                     client = BaseClient(MockNotteClient(), None, api_key=api_key)
 
