@@ -916,3 +916,26 @@ async def test_an_unlisted_option_is_typed_by_its_label(session: NotteSession) -
     assert result.execution is not None and result.execution.success
     # Playwright's select_option matches a string against option values and labels
     assert await session.window.page.input_value("#country") == "PT"
+
+
+CONSENT_PAGE = """<header><a href="#home">Home</a> <a href="#pricing">Pricing</a></header><h1>Acme</h1>
+<div id="backdrop" style="position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center">
+<div role="dialog" aria-modal="true" aria-labelledby="t" style="background:#fff;padding:24px">
+<h2 id="t">We value your privacy</h2><p>We use cookies.</p>
+<button onclick="backdrop.remove()">Accept all</button> <button onclick="backdrop.remove()">Reject all</button>
+</div></div>"""
+
+
+@pytest.mark.asyncio
+async def test_a_dialog_over_the_page_is_closed_by_its_own_operation(session: NotteSession) -> None:
+    _ = await session.window.page.goto(f"data:text/html,{quote(CONSENT_PAGE)}")
+    decider = FakeDecider(choices=[{"operation": "CLOSE_DIALOG", "close_dialog_target": "B2"}, {"operation": "DONE"}])
+    result = await session.aact("Open the Pricing page", decider=decider)
+    # offered only while the dialog covers the page, executed as a click on the chosen button
+    assert "CLOSE_DIALOG" in decider.questions[0]["operation"].criteria
+    assert result.status == "executed" and result.operation == "CLOSE_DIALOG" and result.target == "B2"
+    assert await session.window.page.locator("#backdrop").count() == 0
+    _ = await session.aact("Open the Pricing page", decider=decider)
+    assert "CLOSE_DIALOG" not in decider.questions[1]["operation"].criteria
+    assert decider.states[1].recent_actions[0]["kind"] == "CLOSE_DIALOG"
+    assert "Pricing" in decider.states[1].page.text
