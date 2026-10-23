@@ -2287,6 +2287,7 @@ class AsyncRemoteSession:
       so `apage` is not needed.
     - `wait_for_auth` is a coroutine, so `await_for_auth` is not needed.
     - `storage` is an `AsyncRemoteFileStorage`.
+    - `act()`, `choose()` and `check()` are not available yet: use `RemoteSession.aact` / `achoose` / `acheck`.
     - `client.Session(session_id)` does no I/O: it attaches to the session, and the first method
       that needs its state reads it.
     - There is no sync `with` block: use `async with`.
