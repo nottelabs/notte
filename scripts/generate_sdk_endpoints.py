@@ -478,9 +478,7 @@ RESOURCES = tuple(
 # client overrides them with more than the wire call (validation, polling, state or local
 # files), so an async plain wire call under the same name would behave differently. They come
 # with the async port of those clients; tests/sdk/test_async_resources.py pins the list.
-ASYNC_PENDING = {
-    "Sessions": ("stop", "set_cookies", "replay"),
-}
+ASYNC_PENDING: dict[str, tuple[str, ...]] = {}
 # Every mapped operation gets a factory in operations.py, including the ones whose
 # primary method is hand-written, so no client spells out a path the spec describes.
 # Shared page operations reuse the core-bound factories of endpoints.py instead.

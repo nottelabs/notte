@@ -207,17 +207,26 @@ def test_generated_overloads_are_up_to_date() -> None:
 
 
 @pytest.mark.parametrize(
-    ("path", "class_name", "method", "hidden"),
+    ("path", "class_name", "method", "label", "hidden"),
     [
-        (generator.LOCAL_SESSION, "NotteSession", "aexecute", LOCAL_SESSION_HIDDEN_ACTIONS),
-        (generator.LOCAL_SESSION, "NotteSession", "execute", LOCAL_SESSION_HIDDEN_ACTIONS),
-        (generator.REMOTE_SESSION, "RemoteSession", "execute", SDK_SESSION_HIDDEN_ACTIONS),
+        (generator.LOCAL_SESSION, "NotteSession", "aexecute", None, LOCAL_SESSION_HIDDEN_ACTIONS),
+        (generator.LOCAL_SESSION, "NotteSession", "execute", None, LOCAL_SESSION_HIDDEN_ACTIONS),
+        (generator.REMOTE_SESSION, "RemoteSession", "execute", None, SDK_SESSION_HIDDEN_ACTIONS),
+        (
+            generator.REMOTE_SESSION,
+            "AsyncRemoteSession",
+            "execute",
+            "AsyncRemoteSession.execute",
+            SDK_SESSION_HIDDEN_ACTIONS,
+        ),
     ],
 )
 def test_execute_overloads_cover_exactly_the_exposed_actions(
-    path: Path, class_name: str, method: str, hidden: frozenset[str]
+    path: Path, class_name: str, method: str, label: str | None, hidden: frozenset[str]
 ) -> None:
-    (target,) = [target for target in generator.TARGETS if (target.path, target.method) == (path, method)]
+    (target,) = [
+        target for target in generator.TARGETS if (target.path, target.method, target.label) == (path, method, label)
+    ]
     assert target.hidden == hidden
 
     overloaded = _overload_typedicts_in_file(path, class_name, method)

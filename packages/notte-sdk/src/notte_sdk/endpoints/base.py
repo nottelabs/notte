@@ -239,6 +239,11 @@ def _read_uploads(files: Mapping[str, UploadFile]) -> dict[str, Any]:
     return uploads
 
 
+def _write_file(path: str, content: bytes) -> None:
+    with open(path, "wb") as f:
+        _ = f.write(content)
+
+
 class _ClientCore(ABC, Generic[TRoot]):
     """What `BaseClient` and `AsyncBaseClient` share: configuration, headers, paths and response checks.
 
@@ -614,6 +619,20 @@ class _ClientCore(ABC, Generic[TRoot]):
             raise NotteAPIError(path=self._error_path(endpoint), response=response)
         return cast(Any, response_dict)
 
+    def _check_file(self, response: httpx.Response, file_type: str, output_file: str | None) -> None:
+        """Raise unless `response` is a file (not a JSON error) and `output_file` has the `file_type` extension."""
+        try:
+            response_dict: Any = response.json()
+            if isinstance(response_dict, dict) and "detail" in response_dict:
+                raise ValueError(cast(dict[str, Any], response_dict)["detail"])
+            raise ValueError(f"Relpay content should not be a dict, got {response_dict}")
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            # Not JSON: the file itself. Binary content, such as an MP4, may not even decode as text.
+            pass
+
+        if output_file is not None and not output_file.endswith(f".{file_type}"):
+            raise ValueError(f"Output file must have a .{file_type} extension.")
+
     def _validate(self, endpoint: NotteEndpoint[TResponse], response: httpx.Response) -> TResponse:
         """Decode a successful response and parse its JSON object with the endpoint's response model."""
         response_dict = self._decode(endpoint, response, check_response_detail=True)
@@ -907,20 +926,9 @@ class BaseClient(_ClientCore["NotteClient"]):
             self.http,
             self.http.build_request("GET", url, headers=self.headers(), timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS),
         )
-
-        try:
-            response_dict: Any = response.json()
-            if isinstance(response_dict, dict) and "detail" in response_dict:
-                raise ValueError(cast(dict[str, Any], response_dict)["detail"])
-            raise ValueError(f"Relpay content should not be a dict, got {response_dict}")
-        except json.JSONDecodeError:
-            pass
-
+        self._check_file(response, file_type, output_file)
         if output_file is not None:
-            if not output_file.endswith(f".{file_type}"):
-                raise ValueError(f"Output file must have a .{file_type} extension.")
-            with open(output_file, "wb") as f:
-                _ = f.write(response.content)
+            _write_file(output_file, response.content)
         return response.content
 
     def request_download(self, url: str, file_path: str) -> bool:
@@ -1103,3 +1111,19 @@ class AsyncBaseClient(_ClientCore["AsyncNotteClient"]):
                 await athread_finally(f.close)
 
         return True
+
+    async def _request_file(
+        self, endpoint: NotteEndpoint[TResponse], file_type: str, output_file: str | None = None
+    ) -> bytes:
+        """Downloads the endpoint's file; with `output_file`, also writes it there, off the event loop."""
+        http = self.http
+        response = await asend(
+            http,
+            http.build_request(
+                "GET", self.request_path(endpoint), headers=self.headers(), timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS
+            ),
+        )
+        self._check_file(response, file_type, output_file)
+        if output_file is not None:
+            await asyncio.to_thread(_write_file, output_file, response.content)
+        return response.content

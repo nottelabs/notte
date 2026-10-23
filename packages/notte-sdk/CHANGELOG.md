@@ -34,6 +34,19 @@ When a successful API response is not the JSON object or list a method expects (
 `NotteAPIError` with the response's status code and body, instead of an `AttributeError` or
 `TypeError`.
 
+## Unreleased: session reset and failed `async with` entries
+
+`RemoteSession.reset()` stops the session and starts a new one; it used to raise "Session already
+started". `async with session:` now stops the session when its start created it and then failed,
+for example on a cookie file or cookie upload error, instead of leaving the browser running. A
+repeated cancellation during that cleanup, including its stop request, no longer abandons it.
+Leaving a `with` or `async with` block stops the session even when closing the local Playwright
+connection fails, and the block's own exception is the one raised; a failed browser close no longer
+leaves the Playwright driver process running. `RemoteSession`'s `async with` exit now runs the stop
+off the event loop, and a cancellation during the exit no longer cuts its cleanup short; it is raised
+once the session is stopped. Entering an already started or attached session (`client.Session(id)`)
+is still rejected, but no longer stops that session. The same holds for `AsyncRemoteSession`.
+
 ## Unreleased: AsyncNotteClient (preview)
 
 `from notte_sdk import AsyncNotteClient` is an asyncio client on `httpx.AsyncClient`, with the
@@ -64,9 +77,18 @@ the vault are masked the same way. `AsyncNottePersona` implements `aemails`, `as
 `await_emails` and `await_sms`, and `AsyncNotteVault` implements the `*_async` vault methods, with
 async requests, so a local session can use them without blocking its event loop.
 
-Preview: not yet available are the session methods the sync resources extend beyond the API call
-(`sessions.stop`, `set_cookies`, `replay`, `debug_tab_info`, `page` and the viewers), `scrape`,
-`AsyncNotteFunction.replay`, and the `Session` object.
+`AsyncNotteClient.Session(...)` creates an `AsyncRemoteSession`, with the methods of
+`RemoteSession` as coroutines: `start`, `stop`, `status`, `wait_for_auth`, `scrape`, `observe`,
+`execute`, `evaluate_js`, `fetch`, cookies, `replay`, `cdp_url`, the viewers and the rest, with the
+same arguments, typed overloads, retries, CAPTCHA polling and results. Use `async with
+client.Session() as session:`; a session started by a cancelled or failed entry is stopped.
+`await session.page` is the async Playwright page. Differences: there is no `storage` yet, and
+`client.Session(session_id)` reads the session's status on first use instead of in the
+constructor. `client.sessions` also has `stop`, `set_cookies`, `replay`, `debug_tab_info`, the
+viewers and `page`. Local cookie files are read and written off the event loop.
+
+Preview: not yet available are `AsyncNotteClient.scrape`, `AsyncNotteFunction.replay` and
+`AsyncRemoteSession.storage`.
 
 ## Unreleased: httpx transport
 
