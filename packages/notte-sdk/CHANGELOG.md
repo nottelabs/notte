@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased: off-screen links in zero-size parents
+
+Observations keep the content of a zero-size element below the viewport when one of its children
+is visible. An inline element around a floated or absolutely positioned link (for example
+`<li style="display: inline">` around a floated "Next" link in a pager) has an empty box. When it
+was off-screen, the DOM snapshot dropped it with its whole subtree, so the link was missing as a
+node and as text. Such elements are now kept like any other off-screen element. Elements inside
+the viewport are unchanged.
+
 ## Unreleased: AsyncNotteClient (preview)
 
 `from notte_sdk import AsyncNotteClient` is an asyncio client on `httpx.AsyncClient`, with the

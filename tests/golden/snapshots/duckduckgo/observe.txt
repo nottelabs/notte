@@ -78,12 +78,16 @@ _[:]1.8 million ratings
 _[:]4.7
 _[:]2.1 million reviews
 _[:]The company best known for its search engine is launching a new set of tools aimed at creating an ‘easy button’ for protecting your data online.
+_[:]WIRED Magazine
 _[:]Read article on WIRED Magazine
 _[:]Tackling email privacy has been a major goal for DuckDuckGo, as the company pushes for privacy-friendly methods for various online tasks.
+_[:]The Verge
 _[:]Read article on The Verge
 _[:]It doesn’t allow targeted advertising, results are not based on your search history, and you’ll see fewer ads based on your search. It’s easy to use and install, too.
+_[:]USA Today
 _[:]Read article on USA Today
 _[:]The 13-year-old company appears to be in a prime position to fulfill internet users’ increasing desire for privacy in an age of data leaks, breaches and scandals.
+_[:]CNET
 _[:]Read article on CNET
 _[:]Still have questions?
 _[:]What is DuckDuckGo?

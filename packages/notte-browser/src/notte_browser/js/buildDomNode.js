@@ -568,6 +568,27 @@
 	}
 
 	/**
+	 * Checks if a zero-size element has a visible child with a non-empty box. Its own empty rect
+	 * then says nothing about where its content is: an inline element around a floated or
+	 * positioned link has an empty rect while the link is laid out (and visible) elsewhere.
+	 * Children that are laid out but not rendered (e.g. under `hidden="until-found"`) don't count.
+	 *
+	 * @param {HTMLElement} element - The element to check.
+	 * @returns {boolean} Whether a visible child element has a width and a height.
+	 */
+	function hasVisibleSizedChild(element) {
+		for (const child of element.children) {
+			const rect = getCachedBoundingRect(child);
+			if (!rect || rect.width === 0 || rect.height === 0) continue;
+			if (typeof child.checkVisibility !== 'function' ||
+				child.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Checks if an element is accepted.
 	 *
 	 * @param {HTMLElement} element - The element to check.
@@ -1472,7 +1493,7 @@
 				rect.top > window.innerHeight + viewportExpansion ||
 				rect.right < -viewportExpansion ||
 				rect.left > window.innerWidth + viewportExpansion
-			))) {
+			) && !hasVisibleSizedChild(node))) {
 				// console.log("Skipping node outside viewport (quick check):", node.tagName, rect);
 				return null;
 			}
