@@ -258,9 +258,14 @@ def test_remote_supplied_observation_is_refreshed_before_act(monkeypatch: pytest
     assert remote.executed == []
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize("mode", ["choose", "check", "done", "blocked", "dry_run"])
-async def test_remote_early_returns_leave_no_signature_tasks(monkeypatch: pytest.MonkeyPatch, mode: str) -> None:
+def test_remote_early_returns_leave_no_signature_tasks(monkeypatch: pytest.MonkeyPatch, mode: str) -> None:
+    # run on a loop of its own, closed at the end (`asyncio.run`): an event loop left open is finalized later,
+    # in whatever test is running then, with a ResourceWarning
+    asyncio.run(_early_returns_leave_no_signature_tasks(monkeypatch, mode))
+
+
+async def _early_returns_leave_no_signature_tasks(monkeypatch: pytest.MonkeyPatch, mode: str) -> None:
     completed: list[bool] = []
     errors: list[dict[str, Any]] = []
     remote = _Remote([_observation()])

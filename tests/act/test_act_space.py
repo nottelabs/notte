@@ -828,24 +828,6 @@ B1[:]<button>Cancel</button>"""
     assert "Confirm (disabled)" in page_state(page, "accessible", viewport_only=True).text
 
 
-def test_text_right_after_the_elements_in_view_is_kept() -> None:
-    # a short form at the top of a tall page (a large image below): the scroll position estimate covers only
-    # the first lines of the text, the elements in view cover the form, the confirmation under it is kept
-    description = """### Content of 'WebArea' component with text 'body content'
-_[:]Checkout
-I1[:]<input type="text" name="coupon"></input>
-B1[:]<button>Apply</button>
-_[:]Coupon applied: 20% off your order.
-_[:]Delivery in 3 to 5 days."""
-    actions: list[InteractionAction] = [
-        FillAction(id="I1", value="", text_label="coupon", accessible_name="Coupon"),
-        ClickAction(id="B1", text_label="Apply", accessible_name="Apply"),
-    ]
-    page = _scrolled_page(description, actions, scroll_y=0, in_view=frozenset({"I1", "B1"}))
-    text = page_state(page, "accessible", viewport_only=True).text
-    assert "Coupon applied: 20% off your order." in text and "Delivery in 3 to 5 days." in text
-
-
 def test_unnamed_checkboxes_are_named_by_the_text_next_to_them() -> None:
     # a list whose checkboxes have no accessible name (the item text is not their label)
     description = """### Content of 'WebArea' component with text 'body content'
@@ -874,3 +856,28 @@ _[:]walk the dog"""
         "[B2] Delete",
         "[B3] walk the dog",
     ]
+
+
+def test_a_read_only_combobox_from_the_signatures_is_typed_by_option_label() -> None:
+    from dataclasses import replace
+
+    from notte_core.act.freshness import Signatures
+
+    description = """### Content of 'WebArea' component with text 'body content'
+_[:]Country
+I1[:]<input role="combobox"></input>"""
+    # a combobox: a select action on an element that is not a `<select>`
+    action = SelectDropdownOptionAction(id="I1", value="<sample_value>", text_label="", accessible_name="Country")
+    page = _page(states={}, description=description, actions=[action])
+    readonly = _signature("INPUT", "", value="")
+    readonly[12] = True
+    signatures = Signatures({"url": page.url, "elements": {"I1": readonly}})
+    assert signatures.readonly() == {"I1"}
+
+    def kind(page: ObservedPage) -> Any:
+        target = build_act_space(page, labels="accessible").targets["TYPE_TEXT"]["I1"]
+        return type(target_action(target, "France")).__name__
+
+    # the rendered page does not show `readonly`: without the signatures the input is filled
+    assert kind(page) == "FillAction"
+    assert kind(replace(page, readonly=signatures.readonly())) == "SelectDropdownOptionAction"

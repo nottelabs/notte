@@ -6,6 +6,7 @@ import random
 import time
 import uuid
 from collections.abc import Awaitable, Callable, Coroutine, Mapping, Sequence
+from dataclasses import replace
 from enum import StrEnum
 from pathlib import Path
 from types import TracebackType
@@ -846,9 +847,10 @@ class RemoteActDriver:
         if observation is None or self._capture_signatures:
             observation = await asyncio.to_thread(self._observe)
         page = ObservedPage.from_observation(observation)
-        self._page = page
         if self._capture_signatures:
             self._signatures = await asyncio.to_thread(self._read_signatures, signature_xpaths(page))
+            page = replace(page, readonly=self._signatures.readonly())
+        self._page = page
         return page
 
     async def is_fresh(self, page: ObservedPage, element_id: str | None, *, focus: bool = False) -> bool:
