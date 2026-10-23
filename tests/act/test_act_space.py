@@ -796,3 +796,33 @@ def test_an_action_is_decided_on_the_text_in_view(labels: Any) -> None:
     page = _scrolled_page(near, [ClickAction(id="L1", text_label="Top link")], scroll_y=0)
     text = page_state(page, labels, viewport_only=True).text
     assert "Top link" in text and "Bottom link" not in text
+
+
+def test_disabled_controls_and_the_dialog_line_compose_with_the_viewport_text() -> None:
+    filler = "\n".join(f"_[:]Paragraph {i}: " + "lorem ipsum dolor sit amet " * 8 for i in range(60))
+    description = f"""### Content of 'WebArea' component with text 'body content'
+{filler}
+_[:]Shipping
+B1[:]<button>Edit address</button>
+_[:]<button disabled>Pay now</button>
+I1[:]<input type="text" name="coupon"></input>"""
+    actions: list[InteractionAction] = [
+        ClickAction(id="B1", text_label="Edit address", accessible_name="Edit address"),
+        FillAction(id="I1", value="", text_label="coupon", accessible_name="Coupon"),
+    ]
+    page = _scrolled_page(description, actions, scroll_y=13_680, in_view=frozenset({"B1", "I1"}))
+    # the decision text: the viewport only, with the disabled control in it
+    text = page_state(page, "accessible", viewport_only=True).text.splitlines()
+    assert text[-4:] == ["Shipping", "[B1] Edit address", "Pay now (disabled)", "[I1] Coupon"]
+    assert not any(line.startswith("Paragraph 1:") for line in text)
+
+    # a dialog over the page: the dialog line first, whatever part of the text is shown
+    dialog = """### Content of 'dialog' component with text 'Confirm'
+_[:]Are you sure?
+_[:]<button disabled>Confirm</button>
+B1[:]<button>Cancel</button>"""
+    page = _scrolled_page(dialog, [ClickAction(id="B1", text_label="Cancel", accessible_name="Cancel")], 13_680)
+    for labels in ("accessible", "html"):
+        lines = page_state(page, labels, viewport_only=True).text.splitlines()
+        assert lines[0] == DIALOG_COVERS_PAGE
+    assert "Confirm (disabled)" in page_state(page, "accessible", viewport_only=True).text
