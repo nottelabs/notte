@@ -69,6 +69,8 @@ class _Remote:
         self.js_calls: list[str] = []
         self.stored: dict[str, Any] | None = None
         self.answers: list[dict[str, Any]] = []
+        self.wait_outcome: str = "changed"
+        self.fail_executions: bool = False
 
     def observe(self, **kwargs: Any) -> Observation:
         self.observe_calls += 1
@@ -79,6 +81,12 @@ class _Remote:
         self, action: BaseAction | None = None, *, raise_on_failure: bool | None = None, **kwargs: Any
     ) -> ExecutionResult:
         now = dt.datetime.now(dt.timezone.utc)
+        if kwargs.get("type") == "evaluate_js" and "MutationObserver" in kwargs["code"]:
+            # the WAIT script (`notte_core.act.wait`)
+            self.js_calls.append(kwargs["code"])
+            js = EvaluateJsAction(code=kwargs["code"])
+            data = DataSpace(markdown=self.wait_outcome)
+            return ExecutionResult(action=js, success=True, message="ok", data=data, started_at=now, ended_at=now)
         if kwargs.get("type") == "evaluate_js":
             self.js_calls.append(kwargs["code"])
             state = self.signatures.pop(0) if self.signatures else None
@@ -102,6 +110,11 @@ class _Remote:
             return ExecutionResult(action=js, success=True, message="ok", data=data, started_at=now, ended_at=now)
         assert action is not None and raise_on_failure in (True, False)
         self.executed.append(action)
+        if self.fail_executions:
+            error = TimeoutError("Timeout 15000ms exceeded waiting for the private@example.test field")
+            return ExecutionResult(
+                action=action, success=False, message=str(error), exception=error, started_at=now, ended_at=now
+            )
         return ExecutionResult(action=action, success=True, message="ok", started_at=now, ended_at=now)
 
 
@@ -356,3 +369,31 @@ def test_remote_act_keeps_the_id_of_a_shadow_root_target(monkeypatch: pytest.Mon
 
     assert result.status == "executed"
     assert isinstance(remote.executed[0], ClickAction) and remote.executed[0].selector is None
+
+
+def test_remote_wait_waits_for_a_change_in_the_page(monkeypatch: pytest.MonkeyPatch) -> None:
+    remote = _Remote([_observation()])
+    session = _session(remote, monkeypatch)
+    result = session.act("wait for the results", decider=FakeDecider(choices=[{"operation": "WAIT"}]))
+    assert result.status == "executed" and result.execution is not None and result.execution.success
+    assert result.execution.message.startswith("The page changed")
+    # one page script, no fixed-delay wait action
+    assert remote.executed == [] and "MutationObserver" in remote.js_calls[-1]
+
+    remote.wait_outcome = "unchanged"
+    result = session.act("wait for the results", decider=FakeDecider(choices=[{"operation": "WAIT"}]))
+    assert result.execution is not None and result.execution.message == "The page did not change in 3000 ms."
+
+
+def test_remote_failed_action_is_recorded_with_its_error_class(monkeypatch: pytest.MonkeyPatch) -> None:
+    remote = _Remote([_observation()])
+    remote.fail_executions = True
+    session = _session(remote, monkeypatch)
+    decider = FakeDecider(choices=[{"operation": "CLICK", "click_target": "B1"}, {"operation": "DONE"}])
+
+    failed = session.act("click search", decider=decider, raise_on_failure=False)
+    assert failed.status == "executed" and failed.execution is not None and not failed.execution.success
+    _ = session.act("click search", decider=decider, raise_on_failure=False)
+    assert decider.states[-1].recent_actions == [
+        {"action": "Search", "kind": "CLICK", "text": None, "page_changed": False, "error": "TimeoutError"}
+    ]
