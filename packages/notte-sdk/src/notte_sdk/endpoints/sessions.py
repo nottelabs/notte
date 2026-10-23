@@ -1,4 +1,5 @@
 import asyncio
+import datetime as dt
 import json
 import os
 import random
@@ -27,6 +28,7 @@ from notte_core.act import (
     same_target,
 )
 from notte_core.act.freshness import Signatures, remote_signatures_expression, signature_xpaths
+from notte_core.act.wait import remote_wait_expression, wait_result
 from notte_core.actions import BaseAction, InteractionAction, InteractionActionUnion
 from notte_core.actions.typedicts import (
     CaptchaSolveActionDict,
@@ -869,6 +871,16 @@ class RemoteActDriver:
             if selectors is not None and not selectors.in_shadow_root:
                 action = action.model_copy(update={"selector": selectors})
         return await asyncio.to_thread(self.session.execute, action, raise_on_failure=raise_on_failure)
+
+    async def wait_for_change(self, timeout_ms: int) -> ExecutionResult:
+        started = dt.datetime.now(dt.timezone.utc)
+        result = await asyncio.to_thread(
+            self.session.execute, type="evaluate_js", code=remote_wait_expression(timeout_ms), raise_on_failure=False
+        )
+        if not result.success:
+            # a navigation interrupts the page script
+            return wait_result("navigated", started, timeout_ms)
+        return wait_result(result.data.markdown if result.data is not None else "unchanged", started, timeout_ms)
 
 
 class RemoteSession(SyncResource):

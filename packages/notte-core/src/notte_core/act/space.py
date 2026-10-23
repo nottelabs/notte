@@ -46,7 +46,8 @@ from notte_core.snapshot import ViewportData
 MAX_ELEMENTS = 250
 MAX_LABEL_LENGTH = 300
 MAX_PAGE_TEXT_LENGTH = 12_000
-WAIT_MS = 1_000
+# the longest a WAIT lasts: it ends as soon as the page changes (see `notte_core.act.wait`)
+WAIT_MS = 3_000
 
 Operation = Literal["CLICK", "TYPE_TEXT", "SELECT"]
 TargetKind = Literal["click", "check", "fill", "select_option", "select_text"]
@@ -545,7 +546,7 @@ def build_act_space(
         PressKeyAction(key="Enter"),
     )
     space.controls["GO_BACK"] = Control("GO_BACK", "Go back to the previous page", GoBackAction())
-    space.controls["WAIT"] = Control("WAIT", "Wait for the page to update", WaitAction(time_ms=WAIT_MS))
+    space.controls["WAIT"] = Control("WAIT", "Wait for the page to change (at most 3 s)", WaitAction(time_ms=WAIT_MS))
     return space
 
 

@@ -96,11 +96,11 @@ Local sessions read the **live state** of form controls (the current value of in
 
 <ActLoop />
 
-`act()` sends the last 10 `act()` actions of the session (with whether each changed the page) to the decider, so repeating the same instruction makes progress.
+`act()` sends the last 10 `act()` actions of the session to the decider, with whether each changed the page and, for an action that failed, its error class (never the error message), so repeating the same instruction makes progress instead of retrying a failed action. A `WAIT` returns as soon as the page changes and settles, or after 3 seconds.
 
 ## Guards
 
-- **Strict answers.** The chosen option must be one of the offered keys, probabilities must cover exactly the offered options, sum to 1 and favor the choice; otherwise `InvalidDecisionError` and nothing runs.
+- **Strict answers.** The chosen option must be one of the offered keys, probabilities must cover exactly the offered options, sum to 1 and favor the choice. An invalid answer (or field value) is asked again once; a second one raises `InvalidDecisionError` (or returns `blocked` with `raise_on_failure=False`), and nothing runs.
 - **Fresh page.** Right before acting, Notte checks the page still matches the decision: same URL and same target element (text, value, checked state). Locally this costs a few milliseconds (element signatures read by XPath); on cloud sessions one `evaluate_js` call. If the page changed, Notte decides again once (reusing the text already written for the same field), then returns `stale`.
 - **One decision, one action.** A decision is never reused after the page changed; `dry_run` proposals are only executed if you call `session.execute(result.action)`.
 
