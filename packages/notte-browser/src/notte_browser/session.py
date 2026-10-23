@@ -213,6 +213,23 @@ class LocalActDriver:
                 action = action.model_copy(update={"selector": await resolve_selectors(node)})
         return await self.session.aexecute(action, raise_on_failure=raise_on_failure)
 
+    @staticmethod
+    async def _settle(page: Page, url: str, started: dt.datetime, timeout_ms: int) -> None:
+        """After a navigation ended the wait: let the new page commit and load, within what is left of the wait. A
+        page still loading then is observed as it is, and the decider can wait again."""
+
+        def left() -> float:
+            return timeout_ms - (dt.datetime.now(dt.timezone.utc) - started).total_seconds() * 1000
+
+        try:
+            if page.url == url and left() > 0:
+                # the page script stops when the navigation starts, before the new URL is committed
+                await page.wait_for_url(lambda current: current != url, wait_until="commit", timeout=left())
+            if left() > 0:
+                await page.wait_for_load_state("load", timeout=left())
+        except PlaywrightError:
+            pass
+
     async def wait_for_change(self, timeout_ms: int, raise_on_failure: bool) -> ExecutionResult:
         started = dt.datetime.now(dt.timezone.utc)
         page = self.session.window.page
@@ -222,8 +239,7 @@ class LocalActDriver:
             result = wait_result(outcome, started, timeout_ms)
         except PlaywrightError as e:
             if interrupted_by_navigation(str(e), url, page.url):
-                # let the new page load
-                await self.session.window.long_wait()
+                await self._settle(page, url, started, timeout_ms)
                 result = wait_result("navigated", started, timeout_ms)
             else:
                 result = wait_failure(str(e).splitlines()[0] if str(e) else type(e).__name__, url, started, timeout_ms)
