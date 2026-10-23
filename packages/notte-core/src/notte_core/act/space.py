@@ -60,6 +60,17 @@ _RENDERED_ELEMENT = re.compile(r"^<(\w+)([^>]*)>(.*)</\1>$", re.DOTALL)
 _RENDERED_ATTRIBUTE = re.compile(r'(\w+)="([^"]*)"')
 # a text next to a field is taken as its label (the rendered page has no `<label for>` links) when short
 MAX_NEARBY_LABEL_LENGTH = 80
+# the only value format the browser accepts for these input types (`fill` rejects any other)
+INPUT_FORMATS = {
+    "date": "YYYY-MM-DD",
+    "time": "HH:MM",
+    "datetime-local": "YYYY-MM-DDTHH:MM",
+    "month": "YYYY-MM",
+    "week": "YYYY-Www",
+    "color": "#rrggbb",
+}
+# input types shown to the models (`type`): the formatted ones, numbers, and files (which take no typed text)
+_SHOWN_INPUT_TYPES = (*INPUT_FORMATS, "number", "range", "file")
 
 
 def label_mode() -> LabelMode:
@@ -149,6 +160,9 @@ class Target:
     checked: bool | None = None
     role: str = ""
     value: str | None = None
+    # the `type` of an `<input>` with a specific value (`_SHOWN_INPUT_TYPES`) and its format (`INPUT_FORMATS`)
+    input_type: str | None = None
+    value_format: str | None = None
 
 
 @dataclass(frozen=True)
@@ -167,6 +181,9 @@ class ActSpace:
     @property
     def operations(self) -> dict[str, str]:
         operations = {key: prompts.OPERATION_LABELS[key] for key in self.targets}
+        if any(target.kind == "select_text" for target in self.targets.get("TYPE_TEXT", {}).values()):
+            # a dropdown option that is not listed (`more_options`) is picked by typing its label
+            operations["TYPE_TEXT"] = prompts.TYPE_TEXT_OPTION
         operations.update({key: control.label for key, control in self.controls.items()})
         operations.update(DONE=prompts.DONE, BLOCKED=prompts.BLOCKED)
         return operations
@@ -358,16 +375,24 @@ def label_elements(page: ObservedPage) -> frozenset[str]:
     return _names(page).labels
 
 
+def covered_by_dialog(description: str) -> bool:
+    """An open dialog hides the page: the observation shows only the dialog (its component header, without
+    the page's own `WebArea` one)."""
+    headers = [content for key, content in _description_blocks(description) if key is None]
+    return len(headers) > 0 and not any("'WebArea'" in header for header in headers)
+
+
 def accessible_text(page: ObservedPage, display_text: Callable[[str], str] = str) -> str:
     """The page as visible text, each element replaced by `[<id>] <accessible name>` in reading order, and each
     disabled control by `<name> (disabled)`.
 
     The markers keep what the HTML rendering is needed for (where an element sits relative to the
     text: the price next to a button, the result a link opens) without its markup. The page's own
-    component header is dropped; dialog headers are kept (they say a modal is open).
+    component header is dropped; dialog headers are kept (they say a modal is open), after a first
+    line saying that the page behind the dialog is hidden.
     """
     names = _names(page)
-    lines: list[str] = []
+    lines: list[str] = [prompts.DIALOG_COVERS_PAGE] if covered_by_dialog(page.description) else []
     for i, (key, content) in enumerate(_description_blocks(page.description)):
         if i in names.used:
             # already the name of the element next to it
@@ -403,7 +428,11 @@ def _rendered_options(page: ObservedPage, key: str, rendered: str) -> list[str]:
 
 def page_text(page: ObservedPage, labels: LabelMode = "html", display_text: Callable[[str], str] = str) -> str:
     """The page text sent to the models: the rendered description, or `accessible_text`."""
-    return page.description if labels == "html" else accessible_text(page, display_text)
+    if labels == "accessible":
+        return accessible_text(page, display_text)
+    if covered_by_dialog(page.description):
+        return prompts.DIALOG_COVERS_PAGE + "\n" + page.description
+    return page.description
 
 
 def _cut(text: str, length: int) -> str:
@@ -431,6 +460,15 @@ def _role(action: InteractionAction, line: str) -> str:
             return "select" if line.startswith("<select") else "combobox"
         case _:
             return "clickable"
+
+
+def _input_type(line: str) -> str | None:
+    """The `type` of a rendered `<input>` when it is one of `_SHOWN_INPUT_TYPES` (a date, a number, a file)."""
+    match = _RENDERED_ELEMENT.match(line)
+    if match is None or match.group(1).lower() != "input":
+        return None
+    input_type = dict(_RENDERED_ATTRIBUTE.findall(match.group(2))).get("type", "").lower()
+    return input_type if input_type in _SHOWN_INPUT_TYPES else None
 
 
 def _element(
@@ -511,8 +549,16 @@ def build_act_space(
         element = _element(
             action, label, role, state, has_live_state, display_text, labels, display_cut or display_text
         )
+        input_type = _input_type(line) if role == "textbox" else None
+        value_format = None if input_type is None else INPUT_FORMATS.get(input_type)
+        if input_type is not None:
+            element["type"] = input_type
+        if value_format is not None:
+            element["format"] = value_format
         current = element.get("value")
-        base: dict[str, Any] = {k: element[k] for k in ("role", "checked", "selected", "expanded") if k in element}
+        base: dict[str, Any] = {
+            k: element[k] for k in ("role", "type", "format", "checked", "selected", "expanded") if k in element
+        }
 
         def target(kind: TargetKind, key: str | None = None, option: SelectOption | None = None) -> Target:
             key = key or action.id
@@ -530,11 +576,15 @@ def build_act_space(
                 checked=None if state is None else state.checked,
                 role=role,
                 value=current,
+                input_type=input_type,
+                value_format=value_format,
             )
 
         match role:
             case "textbox":
-                add("TYPE_TEXT", target("fill"), element)
+                # a file input takes a file, not typed text
+                if input_type != "file":
+                    add("TYPE_TEXT", target("fill"), element)
                 add("CLICK", target("click"), element)
             case "combobox":
                 editable = (
