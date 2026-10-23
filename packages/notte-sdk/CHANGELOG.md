@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased: disabled controls in observations
+
+Observations describe disabled controls instead of dropping them: a disabled input, select, textarea or
+button, a control inside a disabled `<fieldset>`, and a link or widget with `aria-disabled="true"`. Each
+is rendered in the action space description without an action id and with a `disabled` attribute, e.g.
+`_[:]<input type="text" disabled></input>` or `_[:]<button disabled>Submit</button>` (a disabled button
+used to appear as its text only, a disabled field not at all). They offer no action, and their nodes have
+the new `DomNode.disabled` set, with their live state and accessible name. Controls inside a disabled
+`<fieldset>` are no longer offered as actions. Ids and descriptions of enabled elements are unchanged.
+
 ## Unreleased: sessions stopped when `with` entry fails
 
 `with client.Session(...) as session:` now stops the session when entering the block fails after

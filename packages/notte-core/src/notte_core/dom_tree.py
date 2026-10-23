@@ -319,6 +319,9 @@ class DomNode:
     # accessible name of an interactive element, as the browser computes it for screen readers
     # (`aria-labelledby`, `<label>`, `aria-label`, `alt`, text content, ...); None when it has none
     accessible_name: str | None = None
+    # a disabled control (`disabled`, in a disabled `<fieldset>`, or `aria-disabled="true"`): it has no
+    # id and no action, and is rendered in the action space description with a `disabled` attribute
+    disabled: bool = False
 
     @override
     def __repr__(self) -> str:
