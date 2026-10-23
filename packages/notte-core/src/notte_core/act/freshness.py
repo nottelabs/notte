@@ -5,18 +5,11 @@ value, checked / disabled / aria state, found at the element's XPath). Right bef
 the target's signature again: if it differs, or the URL changed, the decision is stale. The recorded
 signature is read after the observation, so it is first checked against what the observation showed
 (`Signatures.consistent`): a page that changed in between falls back to a new observation. This costs a
-few milliseconds locally (one `page.evaluate`) and one `evaluate_js` call for cloud sessions, instead
-of a full observation. Elements in iframes or shadow roots have no usable XPath: sessions fall back
-to comparing a new observation (`same_target`).
-
-On cloud sessions a script's result is recorded with the session's actions, so field values must not be
-returned: `remote_signatures_expression` keeps the full baseline in the page and returns it without field
-values or editable text (`store`), then compares in the page and returns only whether each element is
-unchanged (`compare`).
+few milliseconds (one `page.evaluate`) instead of a full observation. Elements in iframes or shadow roots
+have no usable XPath: sessions fall back to comparing a new observation (`same_target`).
 """
 
-import json
-from typing import Any, Literal, cast
+from typing import Any, cast
 
 from notte_core.act.space import ObservedPage, description_lines
 
@@ -80,63 +73,6 @@ def signature_xpaths(page: ObservedPage, element_id: str | None = None) -> dict[
     return xpaths
 
 
-# where the cloud baselines are kept in the page (a non-enumerable property of `window`), by token
-_BASELINE_KEY = "__notteActSignatures"
-# baselines kept per page: overlapping act() calls each have their own
-_MAX_BASELINES = 16
-
-
-def remote_signatures_expression(xpaths: dict[str, str], mode: Literal["store", "compare"], token: str) -> str:
-    """An `evaluate_js` expression (a JSON string result) for cloud sessions, whose script results are recorded.
-
-    - `store`: reads the signatures of `xpaths`, keeps them in the page under `token`, and returns them with no
-      field value (only whether a password is filled) and no text of an editable element.
-    - `compare`: reads them again and returns, by id, whether each is unchanged since the `store` of the same
-      `token` (and the URL). Each act() call uses its own token, so overlapping calls never compare against
-      each other's baseline.
-    Field values never leave the page.
-    """
-    return f"""(() => {{
-    const run = {ELEMENT_SIGNATURES_JS};
-    const xpaths = {json.dumps(xpaths)};
-    const current = run(xpaths);
-    const key = {json.dumps(_BASELINE_KEY)};
-    const token = {json.dumps(token)};
-    if (!(window[key] instanceof Map)) {{
-        Object.defineProperty(window, key, {{ value: new Map(), configurable: true, writable: true, enumerable: false }});
-    }}
-    const baselines = window[key];
-    if ({json.dumps(mode)} === "store") {{
-        baselines.delete(token);
-        baselines.set(token, current);
-        while (baselines.size > {_MAX_BASELINES}) baselines.delete(baselines.keys().next().value);
-        const elements = {{}};
-        for (const [id, signature] of Object.entries(current.elements)) {{
-            if (signature === null) {{ elements[id] = null; continue; }}
-            const copy = signature.slice();
-            copy[2] = typeof copy[2] === "boolean" ? copy[2] : null;
-            // an aria-labelledby target can be an editable element: keep its text in the page
-            copy[15] = null;
-            let el = null;
-            try {{
-                el = document.evaluate(xpaths[id], document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-            }} catch (e) {{}}
-            if (el && (el.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName))) copy[1] = null;
-            elements[id] = copy;
-        }}
-        return JSON.stringify({{ url: current.url, elements, focus: current.focus }});
-    }}
-    const stored = baselines.get(token);
-    const unchanged = {{}};
-    for (const id of Object.keys(xpaths)) {{
-        unchanged[id] = Boolean(stored) && current.elements[id] !== null
-            && JSON.stringify(stored.elements[id] ?? null) === JSON.stringify(current.elements[id]);
-    }}
-    const focusUnchanged = Boolean(stored) && stored.focus === current.focus;
-    return JSON.stringify({{ url: current.url, unchanged, focusUnchanged }});
-}})()"""
-
-
 class Signatures:
     """The signatures recorded after an observation, and the comparison right before acting."""
 
@@ -156,16 +92,6 @@ class Signatures:
             for element_id, fields in self.elements.items()
             if isinstance(fields, list) and len(cast(list[Any], fields)) == _SIGNATURE_FIELDS and fields[12] is True
         )
-
-    def unchanged(self, check: dict[str, Any] | None, element_id: str | None, *, focus: bool = False) -> bool:
-        """A cloud `compare` result (`remote_signatures_expression`): same URL, `element_id` unchanged and, with
-        `focus`, the same focused element."""
-        if check is None or check.get("url") is None or check.get("url") != self.url:
-            return False
-        if focus and check.get("focusUnchanged") is not True:
-            return False
-        flags: Any = check.get("unchanged") or {}
-        return element_id is None or (isinstance(flags, dict) and cast(dict[str, Any], flags).get(element_id) is True)
 
     def matches(self, current: "Signatures", element_id: str | None, *, focus: bool = False) -> bool:
         if current.url is None or current.url != self.url:

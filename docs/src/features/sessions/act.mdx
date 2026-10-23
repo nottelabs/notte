@@ -3,7 +3,6 @@ title: Act, choose and check
 description: Run one step of a natural-language instruction, or ask typed questions about the page
 ---
 import ActLocal from "/snippets/act/act_local.mdx";
-import ActCloud from "/snippets/act/act_cloud.mdx";
 import ActOptions from "/snippets/act/act_options.mdx";
 import ChooseCheck from "/snippets/act/choose_check.mdx";
 import ActLoop from "/snippets/act/act_loop.mdx";
@@ -17,7 +16,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 The decider never writes selectors or actions: Notte turns the observed page into multiple-choice questions, validates the answers strictly (an answer that is not one of the offered options executes nothing), and maps the chosen option back to a Notte action.
 
 <Note>
-`act()`, `choose()` and `check()` are available in the Python SDK, on local sessions (`notte.Session`) and cloud sessions (`client.Session`). Cloud sessions run them in your process, on top of `observe()` and `execute()`.
+`act()`, `choose()` and `check()` are available in the Python SDK on local sessions (`notte.Session`). Cloud sessions (`client.Session`) do not support them yet.
 </Note>
 
 ## Setup
@@ -80,11 +79,9 @@ Only the elements in the viewport are offered. On a page taller than the viewpor
 - `observation`: decide on an observation you already have instead of observing again.
 - `decider`: pass a decider explicitly (see [Deciders](#deciders)).
 
-### Cloud sessions
+### Live state
 
-<ActCloud />
-
-Local sessions read the **live state** of form controls (the current value of inputs, checked state, the options of a `<select>`), so the decider sees what a field already holds. Long option lists are cut to their first 50 options; the others are selected by typing their label. A `<select multiple>` takes one option per `act()`, and each selection replaces the previous one. Cloud sessions get the same state when the observe response carries it (`Observation.element_states`). With a server that does not return it, cloud decisions rely on the element descriptions only, and a `<select>` is set by typing its option label.
+`act()` reads the **live state** of form controls (the current value of inputs, checked state, the options of a `<select>`), so the decider sees what a field already holds. Long option lists are cut to their first 50 options; the others are selected by typing their label. A `<select multiple>` takes one option per `act()`, and each selection replaces the previous one.
 
 ## Choose and check
 
@@ -103,7 +100,7 @@ Local sessions read the **live state** of form controls (the current value of in
 ## Guards
 
 - **Strict answers.** The chosen option must be one of the offered keys, probabilities must cover exactly the offered options, sum to 1 and favor the choice. An invalid answer (or field value) is asked again once; a second one raises `InvalidDecisionError` (or returns `blocked` with `raise_on_failure=False`), and nothing runs.
-- **Fresh page.** Right before acting, Notte checks the page still matches the decision: same URL and same target element (text, value, checked state). Locally this costs a few milliseconds (element signatures read by XPath); on cloud sessions one `evaluate_js` call. If the page changed, Notte decides again once (reusing the text already written for the same field), then returns `stale`.
+- **Fresh page.** Right before acting, Notte checks the page still matches the decision: same URL and same target element (text, value, checked state). This costs a few milliseconds (element signatures read by XPath). If the page changed, Notte decides again once (reusing the text already written for the same field), then returns `stale`.
 - **One decision, one action.** A decision is never reused after the page changed; `dry_run` proposals are only executed if you call `session.execute(result.action)`.
 
 ## Deciders

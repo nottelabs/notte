@@ -15,7 +15,6 @@ can wait again.
 """
 
 import datetime as dt
-import json
 
 from notte_core.actions import WaitAction
 from notte_core.errors import ActionExecutionError
@@ -47,11 +46,6 @@ WAIT_FOR_CHANGE_JS = f"""(timeoutMs) => new Promise((resolve) => {{
     observer.observe(document, {{ subtree: true, childList: true, characterData: true, attributes: true }});
     cap = setTimeout(done, timeoutMs);
 }})"""
-
-
-def remote_wait_expression(timeout_ms: int) -> str:
-    """The `evaluate_js` expression of the wait, for cloud sessions."""
-    return f"({WAIT_FOR_CHANGE_JS})({json.dumps(timeout_ms)})"
 
 
 # how the browser reports a page script ended by a navigation
