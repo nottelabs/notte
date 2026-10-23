@@ -212,7 +212,7 @@ async def run_act(
         )
         model_page = history.privacy.page(page)
         state = DecisionState(
-            page=page_state(model_page, labels, history.privacy.text),
+            page=page_state(model_page, labels, history.privacy.text, viewport_only=True),
             elements=space.elements,
             recent_actions=history.privacy.payload(history.recent()),
         )
@@ -393,11 +393,11 @@ def _write_context(
         field["type"] = target.input_type
     if target.value_format is not None:
         field["format"] = target.value_format
-    text = page_text(page, labels, history.privacy.text)
+    text = page_text(page, labels, history.privacy.text, WRITER_PAGE_TEXT_LENGTH, focus=target.element_id)
     return WriteContext(
         goal=history.privacy.text(instruction),
         field=field,
-        page={"title": page.title, "text": text[:WRITER_PAGE_TEXT_LENGTH]},
+        page={"title": page.title, "text": text},
         recent_actions=history.privacy.payload(
             [{"action": e["action"], "text": e["text"]} for e in history.recent(WRITER_HISTORY_SIZE)]
         ),
