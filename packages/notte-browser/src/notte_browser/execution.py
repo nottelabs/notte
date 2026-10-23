@@ -358,9 +358,9 @@ async def _locate(window: BrowserWindow, action: InteractionAction, snapshot: Br
         return await locate_element(window.page, action.selectors)
     except InvalidLocatorRuntimeError:
         observed = _observed_node(action, snapshot)
-        if observed is None:
+        if observed is None or snapshot is None:
             raise
-        selectors = await _find_again(window, observed)
+        selectors = await _find_again(window, observed, snapshot)
         if selectors is None:
             raise
         logger.info(f"Element {action.id} moved since it was observed: found again by its role, name and text")
@@ -374,23 +374,31 @@ def _observed_node(action: InteractionAction, snapshot: BrowserSnapshot | None) 
     node = snapshot.dom_node.interaction_nodes_by_id.get(action.id)
     if node is None or node.computed_attributes.selectors is None:
         return None
-    if node.computed_attributes.selectors.css_selector != action.selectors.css_selector:
+    observed = node.computed_attributes.selectors
+    if (observed.css_selector, observed.iframe_parent_css_selectors) != (
+        action.selectors.css_selector,
+        action.selectors.iframe_parent_css_selectors,
+    ):
         # the action was given selectors of its own
         return None
     return node
 
 
-def _identity(node: DomNode) -> tuple[str, str, str, str]:
+def _identity(node: DomNode) -> tuple[str, str, str, str, str]:
     tag_name = node.attributes.tag_name if node.attributes is not None else ""
+    href = (node.attributes.href if node.attributes is not None else None) or ""
     name = " ".join((node.accessible_name or "").split())
-    return tag_name, node.get_role_str(), name, " ".join(node.inner_text().split())
+    return tag_name, node.get_role_str(), name, " ".join(node.inner_text().split()), href
 
 
-async def _find_again(window: BrowserWindow, observed: DomNode) -> NodeSelectors | None:
+async def _find_again(window: BrowserWindow, observed: DomNode, snapshot: BrowserSnapshot) -> NodeSelectors | None:
     """The selectors of the one interaction node of the current page with the observed node's tag, role,
-    accessible name and text. None when there is no such node, or more than one: the element is not guessed."""
+    accessible name, text and link. None when there is no such node or more than one, or when the observed
+    page already had several (two "Delete" buttons): the element is not guessed."""
     identity = _identity(observed)
     if len(identity[2]) == 0 and len(identity[3]) == 0:
+        return None
+    if sum(_identity(node) == identity for node in snapshot.dom_node.interaction_nodes()) != 1:
         return None
     try:
         dom = await parse_dom(window.page)
