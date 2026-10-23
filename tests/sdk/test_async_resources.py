@@ -38,22 +38,10 @@ PAGE = dict(page=1, page_size=10, has_next=False, has_previous=False)
 RESOURCES = ("sessions", "functions", "files", "personas", "profiles", "vaults")
 
 # Sync resource members that `AsyncNotteClient` does not have yet: the methods the hand-written
-# sync clients add or override with more than the wire call, and `sessions.page`. The async
-# stateful layer ports them; remove each entry as its async twin lands.
+# sync clients add or override with more than the wire call. The async stateful layer ports
+# them; remove each entry as its async twin lands.
 PENDING = {
-    "sessions": {
-        # Overrides of generated methods.
-        "replay",  # polls until the replay is ready
-        "set_cookies",  # accepts a cookie file, validates the arguments
-        "stop",  # raises unless the session closed
-        # Hand-written only.
-        "debug_tab_info",  # an unpublished route
-        "page",  # `PageClient`: CAPTCHA polling, structured-data unwrapping, observe deprecations
-        "viewer",
-        "viewer_browser",
-        "viewer_cdp",
-        "viewer_notebook",
-    },
+    "sessions": set(),
     "functions": set(),
     "files": set(),
     "personas": set(),
@@ -158,19 +146,19 @@ def resource_members(cls: type, stop: type) -> set[str]:
 @pytest.mark.parametrize("name", RESOURCES)
 def test_async_resources_have_the_sync_methods_except_the_pending_ones(name: str) -> None:
     sync, generated, async_generated = resource_classes(name)
-    async_methods = resource_members(async_client_class(name), AsyncBaseClient)
+    resource = getattr(AsyncNotteClient(api_key=KEY, server_url=SERVER), name)
     generated_methods = resource_members(generated, BaseClient)
     # Methods the hand-written client defines (new or overriding a generated one), and its
     # `PageClient`. The deprecated 1.x aliases are not carried over to the new client.
     handwritten = resource_members(sync, generated) - set(_RENAMED_METHODS.get(sync, {}))
     handwritten |= {"page"} & set(vars(getattr(NotteClient(api_key=KEY, server_url=SERVER), name)))
-    # Every generated method has a generated async twin, unless the sync client overrides it
-    # and the async client does not yet.
+    async_methods = resource_members(type(resource), AsyncBaseClient) | ({"page"} & set(vars(resource)))
+    # Every generated method has an async twin, unless the sync client overrides it and its
+    # async override is still pending.
     assert resource_members(async_generated, AsyncBaseClient) == generated_methods - (handwritten & PENDING[name])
-    # Nothing the sync client lacks, and the pinned list of what is still missing.
+    # The async resource has nothing the sync one lacks, and the pinned list of what it is still missing.
     assert async_methods <= generated_methods | handwritten
     assert (generated_methods | handwritten) - async_methods == PENDING[name]
-    assert not hasattr(getattr(AsyncNotteClient(api_key=KEY, server_url=SERVER), name), "page")
 
 
 @pytest.mark.parametrize("name", RESOURCES)
@@ -432,11 +420,13 @@ def arguments(method: Callable[..., Any]) -> tuple[list[Any], dict[str, Any]]:
     for parameter in inspect.signature(method).parameters.values():
         if parameter.name == "self" or parameter.kind is parameter.VAR_KEYWORD:
             continue
+        if parameter.default is not parameter.empty:
+            continue
         if parameter.name == "body":
             args.append(Goto(url="https://example.com"))
         elif parameter.kind is parameter.POSITIONAL_OR_KEYWORD:
             args.append(f"{parameter.name}-1")
-        elif parameter.default is parameter.empty:
+        else:
             kwargs[parameter.name] = f"{parameter.name}-1"
     return args, kwargs
 
@@ -456,6 +446,8 @@ FILE_KEYWORDS = {
     ("files", "upload"): "file_path",
     ("sessions", "upload_session_file"): "file",
 }
+# Methods that refuse to send without one of their optional arguments.
+REQUIRED_KEYWORDS: dict[tuple[str, str], dict[str, Any]] = {("sessions", "set_cookies"): {"cookies": []}}
 
 
 @pytest.mark.asyncio
@@ -475,6 +467,7 @@ async def test_every_async_method_sends_what_its_sync_twin_sends(
             args[positional.index(keyword)] = upload
         else:
             kwargs[keyword] = upload
+    kwargs.update(REQUIRED_KEYWORDS.get((resource, method), {}))
     exchange = await assert_same_exchange(
         monkeypatch, answer({}), lambda c: getattr(getattr(c, resource), method)(*args, **kwargs)
     )

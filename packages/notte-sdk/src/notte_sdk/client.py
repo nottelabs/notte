@@ -16,7 +16,6 @@ from typing_extensions import final
 
 from notte_sdk._generated.resources import (
     AsyncProfilesOperations,
-    AsyncSessionsOperations,
 )
 from notte_sdk._retry import DEFAULT_MAX_RETRIES
 from notte_sdk._transport import AsyncSharedHttpClient, SharedHttpClient
@@ -32,7 +31,13 @@ from notte_sdk.endpoints.functions import AsyncFunctionsClient, AsyncNotteFuncti
 from notte_sdk.endpoints.managed_auth import AsyncManagedAuthClient, ManagedAuthClient
 from notte_sdk.endpoints.personas import AsyncNottePersona, AsyncPersonasClient, NottePersona, PersonasClient
 from notte_sdk.endpoints.profiles import ProfilesClient
-from notte_sdk.endpoints.sessions import RemoteSession, SessionsClient, SessionViewerType
+from notte_sdk.endpoints.sessions import (
+    AsyncRemoteSession,
+    AsyncSessionsClient,
+    RemoteSession,
+    SessionsClient,
+    SessionViewerType,
+)
 from notte_sdk.endpoints.vaults import AsyncNotteVault, AsyncVaultsClient, NotteVault, VaultsClient
 from notte_sdk.errors import AuthenticationError
 
@@ -274,24 +279,24 @@ class NotteClient:
 @final
 class AsyncNotteClient:
     """
-    Async client for the Notte API. Preview: the API resources only, for now.
+    Async client for the Notte API (preview).
 
     `sessions`, `functions`, `files`, `personas`, `profiles`, `vaults` and `managed_auth` have the
     same methods as on `NotteClient`, as coroutines, with the same arguments, results and
     exceptions, except `functions.get_curl` and `functions.decode_message`, which only format text
-    and stay plain methods. So do `health_check` and the methods of the `Persona` and `Vault`
-    objects that call the API (their methods without I/O, such as `generate_password()`, stay
-    plain). `Function` and `FileStorage` create `AsyncNotteFunction` and `AsyncRemoteFileStorage`.
-    Not yet available: the session methods the sync resources extend beyond the API call (for example
-    `sessions.stop`, `sessions.replay`, the viewers and `sessions.page`), `scrape`,
-    `AsyncNotteFunction.replay`, and the `Session` object. They will be added later.
+    and stay plain methods. So do `health_check` and the methods of the `Session`, `Function`,
+    `Persona`, `Vault` and `FileStorage` objects that call the API (their methods without I/O,
+    such as `generate_password()`, stay plain). Not yet available: `scrape`,
+    `AsyncNotteFunction.replay` and `AsyncRemoteSession.storage`. They will be added later.
 
     **Example:**
     ```python
     from notte_sdk import AsyncNotteClient
 
     async with AsyncNotteClient() as client:
-        sessions = await client.sessions.list()
+        async with client.Session() as session:
+            _ = await session.execute(type="goto", url="https://www.notte.cc")
+            markdown = await session.scrape()
     ```
 
     Connections open on the first request and belong to the event loop that made it. Close them
@@ -313,7 +318,7 @@ class AsyncNotteClient:
 
         Args:
             api_key: Optional API key for authentication.
-            viewer_type: Kept for the session viewers, which are not available on this client yet.
+            viewer_type: How the session viewers open the live session.
             captcha_timeout_seconds: Total CAPTCHA wait budget, separate from action and HTTP timeouts.
             max_retries: Retries for transient failures (502, 503, 504, 529, and connection errors),
                 with exponential backoff and full jitter. ``Retry-After`` is honored. POST and PATCH
@@ -323,12 +328,11 @@ class AsyncNotteClient:
         api_key = _validated_settings(api_key, server_url, captcha_timeout_seconds, max_retries)
         self.captcha_timeout_seconds: float = captcha_timeout_seconds
         self.max_retries: int = max_retries
-        self._viewer_type: SessionViewerType = viewer_type
         # One connection pool for every resource client below.
         self._http: AsyncSharedHttpClient = AsyncSharedHttpClient()
         _ = weakref.finalize(self, self._http.warn_unclosed)
-        self.sessions: AsyncSessionsOperations = AsyncSessionsOperations(
-            root_client=self, base_endpoint_path="sessions", api_key=api_key, server_url=server_url, verbose=verbose
+        self.sessions: AsyncSessionsClient = AsyncSessionsClient(
+            root_client=self, api_key=api_key, server_url=server_url, verbose=verbose, viewer_type=viewer_type
         )
         self.personas: AsyncPersonasClient = AsyncPersonasClient(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
@@ -351,6 +355,10 @@ class AsyncNotteClient:
 
         if self.sessions.server_url != self.sessions.DEFAULT_NOTTE_API_URL:
             logger.warning(f"NOTTE_API_URL is set to: {self.sessions.server_url}")
+
+    @property
+    def Session(self) -> type[AsyncRemoteSession]:
+        return cast(type[AsyncRemoteSession], partial(AsyncRemoteSession, _client=self.sessions))
 
     async def aclose(self) -> None:
         """Close pooled HTTP connections. The client stays usable: a later request opens new ones."""

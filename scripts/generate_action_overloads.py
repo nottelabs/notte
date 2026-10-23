@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Generate the per-action `execute()` overloads from the action registry.
 
-`NotteSession.execute/aexecute` (notte-browser) and `RemoteSession.execute` (notte-sdk) take an
-action as keyword arguments, typed by one `**kwargs: Unpack[XxxActionDict]` overload per action.
+`NotteSession.execute/aexecute` (notte-browser) and `RemoteSession.execute` / `AsyncRemoteSession.execute`
+(notte-sdk) take an action as keyword arguments, typed by one `**kwargs: Unpack[XxxActionDict]` overload
+per action.
 This script writes those overloads between the markers
 
     # BEGIN GENERATED OVERLOADS: <method> (scripts/generate_action_overloads.py)
@@ -53,20 +54,30 @@ class Target:
     hidden: frozenset[str]
     # where the `execute(action: BaseAction)` overload goes relative to the per-action ones
     action_overload: Literal["first", "last"]
+    # the marker name, when the file has another target of the same method
+    label: str | None = None
 
     @property
     def begin(self) -> str:
-        return f"# BEGIN GENERATED OVERLOADS: {self.method} (scripts/generate_action_overloads.py)"
+        return f"# BEGIN GENERATED OVERLOADS: {self.label or self.method} (scripts/generate_action_overloads.py)"
 
     @property
     def end(self) -> str:
-        return f"# END GENERATED OVERLOADS: {self.method}"
+        return f"# END GENERATED OVERLOADS: {self.label or self.method}"
 
 
 TARGETS: tuple[Target, ...] = (
     Target(LOCAL_SESSION, "aexecute", is_async=True, hidden=LOCAL_HIDDEN_ACTIONS, action_overload="first"),
     Target(LOCAL_SESSION, "execute", is_async=False, hidden=LOCAL_HIDDEN_ACTIONS, action_overload="first"),
     Target(REMOTE_SESSION, "execute", is_async=False, hidden=REMOTE_HIDDEN_ACTIONS, action_overload="last"),
+    Target(
+        REMOTE_SESSION,
+        "execute",
+        is_async=True,
+        hidden=REMOTE_HIDDEN_ACTIONS,
+        action_overload="last",
+        label="AsyncRemoteSession.execute",
+    ),
 )
 
 

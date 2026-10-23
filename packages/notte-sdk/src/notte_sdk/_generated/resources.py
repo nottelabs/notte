@@ -607,6 +607,12 @@ class AsyncSessionsOperations(AsyncBaseClient):
         "Session Cookies Get (`GET /sessions/{session_id}/cookies`)."
         return await self.request(api.session_cookies_get(session_id))
 
+    @track_usage("cloud.session.cookies.set")
+    async def set_cookies(self, session_id: str, **data: Unpack[SetCookiesRequestDict]) -> core.SetCookiesResponse:
+        "Session Cookies Set (`POST /sessions/{session_id}/cookies`)."
+        request = wire_request(core.SetCookiesRequest, data)
+        return await self.request(api.session_cookies_set(session_id, request))
+
     @track_usage("cloud.session.debug")
     async def debug_info(self, session_id: str) -> core.SessionDebugResponse:
         "Session Debug Info (`GET /sessions/{session_id}/debug`)."
@@ -646,6 +652,11 @@ class AsyncSessionsOperations(AsyncBaseClient):
         request = wire_request(models.SessionProfileSaveRequest, data)
         return await self.request(api.session_profile_save(session_id, request))
 
+    @track_usage("cloud.session.replay")
+    async def replay(self, session_id: str) -> core.ReplayResponse:
+        "Session Replay (`GET /sessions/{session_id}/replay`)."
+        return await self.request(api.session_replay(session_id))
+
     @track_usage("cloud.session.start")
     async def start(self, **data: Unpack[SessionStartRequestDict]) -> core.SessionResponse:
         "Session Start (`POST /sessions/start`)."
@@ -656,6 +667,12 @@ class AsyncSessionsOperations(AsyncBaseClient):
     async def status(self, session_id: str) -> core.SessionResponse:
         "Session Status (`GET /sessions/{session_id}`)."
         return await self.request(api.session_status(session_id))
+
+    @track_usage("cloud.session.stop")
+    async def stop(self, session_id: str, **data: Unpack[SessionStopRequestDict]) -> core.SessionResponse:
+        "Session Stop (`DELETE /sessions/{session_id}/stop`)."
+        request = wire_request(models.SessionStopParametersQuery, data)
+        return await self.request(api.session_stop(session_id, params=request))
 
     @track_usage("cloud.files.execute")
     async def execute_session_file(

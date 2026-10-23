@@ -22,17 +22,19 @@ from notte_core.types import (
     ScrapeMarkdownParamsDict,
     ScrapeRequest,
     ScrapeRequestDict,
+    ScrapeResponse,
 )
 from pydantic import BaseModel, RootModel
 from typing_extensions import final
 
+from notte_sdk._flow import Call, Flow, Sleep, arun, run
 from notte_sdk._generated import endpoints as page_api
 from notte_sdk._transport import INTERRUPTED_ERRORS
-from notte_sdk.endpoints.base import BaseClient
+from notte_sdk.endpoints.base import AsyncBaseClient, BaseClient
 from notte_sdk.errors import NotteAPIError
 
 if TYPE_CHECKING:
-    from notte_sdk.client import NotteClient
+    from notte_sdk.client import AsyncNotteClient, NotteClient
 
 OBSERVE_MIGRATION_URL = "https://docs.notte.cc/features/sessions/observe-migration"
 # Frames in these packages are skipped so the warning points at the caller's code.
@@ -59,6 +61,180 @@ def _warn_deprecated_observe(instructions: str | None, perception_type: Percepti
         frame, stacklevel = frame.f_back, stacklevel + 1
     for message in messages:
         warnings.warn(f"{message} See {OBSERVE_MIGRATION_URL}", DeprecationWarning, stacklevel=stacklevel)
+
+
+def _scrape_result(
+    request: ScrapeRequest, response: ScrapeResponse, raise_on_failure: bool
+) -> StructuredData[BaseModel] | BaseModel | dict[str, Any] | str:
+    """What `scrape` returns for `response`: the markdown, or the unwrapped or wrapped structured data."""
+    # Handle structured data scraping
+    structured = response.structured
+    if request.requires_schema():
+        if structured is None:
+            error_message = "Failed to scrape structured data. This should not happen. Please report this issue."
+            if raise_on_failure:
+                raise ScrapeFailedError(error_message)
+            return StructuredData[BaseModel](success=False, error=error_message, data=None)
+        # Use structured.get() which raises ScrapeFailedError if failed, and unwraps RootModel
+        if raise_on_failure:
+            extracted_data = structured.get()
+            # Validate against response_format if provided
+            if request.response_format is not None:
+                extracted_data_dict = (
+                    extracted_data.model_dump() if isinstance(extracted_data, BaseModel) else extracted_data  # pyright: ignore[reportUnnecessaryIsInstance]
+                )
+                extracted_data = request.response_format.model_validate(extracted_data_dict)
+            return extracted_data
+        structured_data = cast(Any, structured.data)
+        if isinstance(structured_data, RootModel):
+            # unwrap RootModel
+            structured_data = cast(Any, structured_data.root)
+            structured.data = structured_data
+        if request.response_format is not None and structured_data is not None:
+            structured.data = request.response_format.model_validate(structured_data)
+        return structured
+    return response.markdown
+
+
+def _observe_request(data: ObserveRequestDict) -> ObserveRequest:
+    """The observe request for `data`, warning about its deprecated arguments."""
+    _warn_deprecated_observe(data.get("instructions"), data.get("perception_type"))
+    return ObserveRequest.model_validate(data)
+
+
+def _observe_result(
+    request: ObserveRequest, response: ObserveResponse
+) -> ObserveResponse | list[InteractionActionUnion]:
+    """What `observe` returns: the observation, or its interaction actions when `instructions` were given."""
+    if request.instructions is not None:
+        return list(response.space.interaction_actions)
+    return response
+
+
+def _execute_flow(
+    budget: float, session_id: str, action: ActionUnion, action_timeout: float
+) -> Flow[ExecutionResultResponse]:
+    """`execute`: send `action`, then poll a CAPTCHA it ran into and replay the action when allowed."""
+    deadline: float | None = time.monotonic() + budget if isinstance(action, CaptchaSolveAction) else None
+    params = CaptchaExecuteParams(captcha_timeout_seconds=budget)
+    original: ExecutionResultResponse | None = None
+    request_action = action
+    last: ExecutionResultResponse | None = None
+
+    def finished(result: ExecutionResultResponse) -> ExecutionResultResponse:
+        if deadline is not None:
+            logger.info(
+                f"CAPTCHA wait finished after {time.monotonic() - (deadline - budget):.2f}s: success={result.success}"
+            )
+        return result
+
+    def failure(message: str, code: str) -> ExecutionResultResponse:
+        from notte_core.observation import utc_now
+
+        result = (
+            original
+            or last
+            or ExecutionResultResponse(
+                action=action,
+                success=False,
+                message=message,
+                started_at=utc_now(),
+                ended_at=utc_now(),
+            )
+        )
+        return finished(
+            result.model_copy(
+                update={
+                    "action": action,
+                    "success": False,
+                    "message": message,
+                    "code": code,
+                    "exception": NotteBaseError(message, message, message),
+                    "exception_detail": None,
+                    "captcha": last.captcha if last is not None else result.captcha,
+                }
+            )
+        )
+
+    while True:
+        remaining = budget if deadline is None else deadline - time.monotonic()
+        if remaining <= 0:
+            return failure("CAPTCHA wait deadline exceeded", "captcha_timeout")
+        params.captcha_timeout_seconds = remaining
+        polling = isinstance(request_action, CaptchaSolveAction)
+        # A solve request only starts/reads background work. Ordinary actions
+        # retain their normal request timeout and are never retried on transport errors.
+        request_timeout = min(10.0, remaining) if polling else action_timeout
+        try:
+            result: ExecutionResultResponse = yield Call(
+                "request",
+                (page_api.page_execute(session_id, request_action, params=params.model_copy()),),
+                {"timeout": request_timeout},
+            )
+        except INTERRUPTED_ERRORS:
+            if not polling or params.captcha_id is None:
+                raise
+            yield Sleep(min(1.0, max(0, (deadline or time.monotonic()) - time.monotonic())))
+            continue
+        except NotteAPIError as exc:
+            if not polling or params.captcha_id is None or exc.status_code not in (408, 429, 502, 503, 504):
+                raise
+            yield Sleep(min(1.0, max(0, (deadline or time.monotonic()) - time.monotonic())))
+            continue
+        last = result
+        status = result.captcha
+        if status is None:
+            if params.captcha_id is not None:
+                return failure("Server omitted CAPTCHA polling status", "captcha_protocol_error")
+            return finished(result)
+        if params.captcha_id is not None and status.captcha_id != params.captcha_id:
+            return failure("Server returned a different CAPTCHA solve", "captcha_protocol_error")
+        if deadline is None:
+            deadline = time.monotonic() + budget
+        if original is None and not isinstance(action, CaptchaSolveAction) and result.action_executed is True:
+            original = result
+        if status.state == "cancelled" and status.cancel_reason == "navigation" and original is not None:
+            # Navigation ends the old page's wait, not the action that already
+            # executed. Retain cancellation metadata and never replay input.
+            return finished(original.model_copy(update={"captcha": status}))
+        if (
+            status.state == "cancelled"
+            and status.cancel_reason == "navigation"
+            and isinstance(action, WaitAction)
+            and result.action_executed is False
+        ):
+            # A passive wait has no old-page target. Recheck readiness on
+            # the new document without restarting the CAPTCHA deadline.
+            # Clicks and other actions still fail rather than crossing pages.
+            # Keep the requested wait duration: the CAPTCHA budget is
+            # separate from action execution and its HTTP timeout.
+            params = CaptchaExecuteParams(captcha_timeout_seconds=max(0.001, deadline - time.monotonic()))
+            request_action = action
+            yield Sleep(min(1.0, max(0, deadline - time.monotonic())))
+            continue
+        if status.state in ("failed", "cancelled"):
+            return failure(status.message or f"CAPTCHA {status.state}", f"captcha_{status.state}")
+        if status.state == "solved":
+            if isinstance(action, CaptchaSolveAction):
+                return finished(result)
+            if original is not None:
+                return finished(original.model_copy(update={"captcha": status}))
+            # Only the explicit not-executed contract permits replay.
+            if params.captcha_id is None and result.action_executed is not False:
+                return finished(result)
+            params = CaptchaExecuteParams(
+                captcha_timeout_seconds=max(0.001, deadline - time.monotonic()),
+                target_page_id=status.page_id,
+                target_generation=status.generation,
+            )
+            request_action = action
+            continue
+        if not isinstance(action, CaptchaSolveAction) and original is None and params.captcha_id is None:
+            if result.action_executed is not False:
+                return failure("Server did not confirm whether the action executed", "captcha_execution_unknown")
+        params.captcha_id = status.captcha_id
+        request_action = CaptchaSolveAction()
+        yield Sleep(min(max(0.1, status.retry_after_ms / 1000), 1.0, max(0, deadline - time.monotonic())))
 
 
 @final
@@ -177,34 +353,7 @@ class PageClient(BaseClient):
             ScrapeFailedError: If structured data extraction fails and raise_on_failure=True.
         """
         request = ScrapeRequest.model_validate(data)
-        response = self.request(page_api.page_scrape(session_id, request))
-        # Handle structured data scraping
-        structured = response.structured
-        if request.requires_schema():
-            if structured is None:
-                error_message = "Failed to scrape structured data. This should not happen. Please report this issue."
-                if raise_on_failure:
-                    raise ScrapeFailedError(error_message)
-                return StructuredData[BaseModel](success=False, error=error_message, data=None)
-            # Use structured.get() which raises ScrapeFailedError if failed, and unwraps RootModel
-            if raise_on_failure:
-                extracted_data = structured.get()
-                # Validate against response_format if provided
-                if request.response_format is not None:
-                    extracted_data_dict = (
-                        extracted_data.model_dump() if isinstance(extracted_data, BaseModel) else extracted_data  # pyright: ignore[reportUnnecessaryIsInstance]
-                    )
-                    extracted_data = request.response_format.model_validate(extracted_data_dict)
-                return extracted_data
-            structured_data = cast(Any, structured.data)
-            if isinstance(structured_data, RootModel):
-                # unwrap RootModel
-                structured_data = cast(Any, structured_data.root)
-                structured.data = structured_data
-            if request.response_format is not None and structured_data is not None:
-                structured.data = request.response_format.model_validate(structured_data)
-            return structured
-        return response.markdown
+        return _scrape_result(request, self.request(page_api.page_scrape(session_id, request)), raise_on_failure)
 
     @overload
     def observe(
@@ -251,13 +400,8 @@ class PageClient(BaseClient):
             ObserveResponse: The formatted observation result from the API response when no instructions provided.
             list[InteractionActionUnion]: The filtered list of actions when instructions is provided.
         """
-        instructions = data.get("instructions")
-        _warn_deprecated_observe(instructions, data.get("perception_type"))
-        request = ObserveRequest.model_validate(data)
-        obs_response = self.request(page_api.page_observe(session_id, request))
-        if instructions is not None:
-            return list(obs_response.space.interaction_actions)
-        return obs_response
+        request = _observe_request(data)
+        return _observe_result(request, self.request(page_api.page_observe(session_id, request)))
 
     @track_usage("cloud.session.execute")
     def execute(self, session_id: str, action: ActionUnion) -> ExecutionResultResponse:
@@ -276,123 +420,195 @@ class PageClient(BaseClient):
         Returns:
             An Observation object constructed from the API response.
         """
-        budget = self.root_client.captcha_timeout_seconds
-        deadline: float | None = time.monotonic() + budget if isinstance(action, CaptchaSolveAction) else None
-        params = CaptchaExecuteParams(captcha_timeout_seconds=budget)
-        original: ExecutionResultResponse | None = None
-        request_action = action
-        last: ExecutionResultResponse | None = None
+        return run(
+            self,
+            _execute_flow(
+                self.root_client.captcha_timeout_seconds, session_id, action, self.DEFAULT_REQUEST_TIMEOUT_SECONDS
+            ),
+        )
 
-        def finished(result: ExecutionResultResponse) -> ExecutionResultResponse:
-            if deadline is not None:
-                logger.info(
-                    f"CAPTCHA wait finished after {time.monotonic() - (deadline - budget):.2f}s: success={result.success}"
-                )
-            return result
 
-        def failure(message: str, code: str) -> ExecutionResultResponse:
-            from notte_core.observation import utc_now
+@final
+class AsyncPageClient(AsyncBaseClient):
+    """The async twin of `PageClient`, for `AsyncNotteClient`: the same requests, polling and results."""
 
-            result = (
-                original
-                or last
-                or ExecutionResultResponse(
-                    action=action,
-                    success=False,
-                    message=message,
-                    started_at=utc_now(),
-                    ended_at=utc_now(),
-                )
-            )
-            return finished(
-                result.model_copy(
-                    update={
-                        "action": action,
-                        "success": False,
-                        "message": message,
-                        "code": code,
-                        "exception": NotteBaseError(message, message, message),
-                        "exception_detail": None,
-                        "captcha": last.captcha if last is not None else result.captcha,
-                    }
-                )
-            )
+    # Session
+    PAGE_SCRAPE = "{session_id}/page/scrape"
+    PAGE_OBSERVE = "{session_id}/page/observe"
+    PAGE_EXECUTE = "{session_id}/page/execute"
 
-        while True:
-            remaining = budget if deadline is None else deadline - time.monotonic()
-            if remaining <= 0:
-                return failure("CAPTCHA wait deadline exceeded", "captcha_timeout")
-            params.captcha_timeout_seconds = remaining
-            polling = isinstance(request_action, CaptchaSolveAction)
-            # A solve request only starts/reads background work. Ordinary actions
-            # retain their normal request timeout and are never retried on transport errors.
-            request_timeout = min(10.0, remaining) if polling else self.DEFAULT_REQUEST_TIMEOUT_SECONDS
-            try:
-                result = self.request(
-                    page_api.page_execute(session_id, request_action, params=params.model_copy()),
-                    timeout=request_timeout,
-                )
-            except INTERRUPTED_ERRORS:
-                if not polling or params.captcha_id is None:
-                    raise
-                time.sleep(min(1.0, max(0, (deadline or time.monotonic()) - time.monotonic())))
-                continue
-            except NotteAPIError as exc:
-                if not polling or params.captcha_id is None or exc.status_code not in (408, 429, 502, 503, 504):
-                    raise
-                time.sleep(min(1.0, max(0, (deadline or time.monotonic()) - time.monotonic())))
-                continue
-            last = result
-            status = result.captcha
-            if status is None:
-                if params.captcha_id is not None:
-                    return failure("Server omitted CAPTCHA polling status", "captcha_protocol_error")
-                return finished(result)
-            if params.captcha_id is not None and status.captcha_id != params.captcha_id:
-                return failure("Server returned a different CAPTCHA solve", "captcha_protocol_error")
-            if deadline is None:
-                deadline = time.monotonic() + budget
-            if original is None and not isinstance(action, CaptchaSolveAction) and result.action_executed is True:
-                original = result
-            if status.state == "cancelled" and status.cancel_reason == "navigation" and original is not None:
-                # Navigation ends the old page's wait, not the action that already
-                # executed. Retain cancellation metadata and never replay input.
-                return finished(original.model_copy(update={"captcha": status}))
-            if (
-                status.state == "cancelled"
-                and status.cancel_reason == "navigation"
-                and isinstance(action, WaitAction)
-                and result.action_executed is False
-            ):
-                # A passive wait has no old-page target. Recheck readiness on
-                # the new document without restarting the CAPTCHA deadline.
-                # Clicks and other actions still fail rather than crossing pages.
-                # Keep the requested wait duration: the CAPTCHA budget is
-                # separate from action execution and its HTTP timeout.
-                params = CaptchaExecuteParams(captcha_timeout_seconds=max(0.001, deadline - time.monotonic()))
-                request_action = action
-                time.sleep(min(1.0, max(0, deadline - time.monotonic())))
-                continue
-            if status.state in ("failed", "cancelled"):
-                return failure(status.message or f"CAPTCHA {status.state}", f"captcha_{status.state}")
-            if status.state == "solved":
-                if isinstance(action, CaptchaSolveAction):
-                    return finished(result)
-                if original is not None:
-                    return finished(original.model_copy(update={"captcha": status}))
-                # Only the explicit not-executed contract permits replay.
-                if params.captcha_id is None and result.action_executed is not False:
-                    return finished(result)
-                params = CaptchaExecuteParams(
-                    captcha_timeout_seconds=max(0.001, deadline - time.monotonic()),
-                    target_page_id=status.page_id,
-                    target_generation=status.generation,
-                )
-                request_action = action
-                continue
-            if not isinstance(action, CaptchaSolveAction) and original is None and params.captcha_id is None:
-                if result.action_executed is not False:
-                    return failure("Server did not confirm whether the action executed", "captcha_execution_unknown")
-            params.captcha_id = status.captcha_id
-            request_action = CaptchaSolveAction()
-            time.sleep(min(max(0.1, status.retry_after_ms / 1000), 1.0, max(0, deadline - time.monotonic())))
+    def __init__(
+        self,
+        root_client: "AsyncNotteClient",
+        api_key: str | None = None,
+        verbose: bool = False,
+        server_url: str | None = None,
+    ):
+        """
+        Initialize the AsyncPageClient instance.
+
+        Configures the client with the page base endpoint for interacting with the Notte API and initializes session tracking for subsequent requests.
+
+        Args:
+            api_key: Optional API key used for authenticating API requests.
+        """
+        # TODO: change to page base endpoint when it's deployed
+        super().__init__(
+            root_client=root_client,
+            base_endpoint_path="sessions",
+            api_key=api_key,
+            verbose=verbose,
+            server_url=server_url,
+        )
+
+    # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
+    @overload
+    async def scrape(
+        self,
+        session_id: str,
+        *,
+        response_format: type[TBaseModel],
+        instructions: str | None = None,
+        raise_on_failure: Literal[True] = ...,
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> TBaseModel: ...
+
+    # response_format provided, raise_on_failure=False -> wrapped StructuredData[TBaseModel]
+    @overload
+    async def scrape(
+        self,
+        session_id: str,
+        *,
+        response_format: type[TBaseModel],
+        instructions: str | None = None,
+        raise_on_failure: Literal[False],
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> StructuredData[TBaseModel]: ...
+
+    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel as dict
+    @overload
+    async def scrape(
+        self,
+        session_id: str,
+        *,
+        instructions: str,
+        raise_on_failure: Literal[True] = ...,
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> dict[str, Any]: ...
+
+    # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
+    @overload
+    async def scrape(
+        self,
+        session_id: str,
+        *,
+        instructions: str,
+        raise_on_failure: Literal[False],
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> StructuredData[BaseModel]: ...
+
+    # markdown catch-all LAST: open Unpack[TypedDict] otherwise swallows every kwargs call under ty
+    @overload
+    async def scrape(
+        self, session_id: str, /, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]
+    ) -> str: ...
+
+    @track_usage("cloud.session.scrape")
+    async def scrape(
+        self, session_id: str, *, raise_on_failure: bool = True, **data: Unpack[ScrapeRequestDict]
+    ) -> StructuredData[BaseModel] | BaseModel | dict[str, Any] | str:
+        """
+        Scrapes a page using provided parameters via the Notte API.
+
+        Validates the scraped request data to ensure that either a URL or session ID is provided.
+        If both are omitted, raises an InvalidRequestError. The request is sent to the configured
+        scrape endpoint and the resulting response is formatted into an Observation object.
+
+        Args:
+            session_id: The session ID to scrape from.
+            raise_on_failure: If True (default), raises ScrapeFailedError when structured data
+                extraction fails. If False, returns the StructuredData with success=False.
+            **data: Arbitrary keyword arguments validated against ScrapeRequestDict.
+
+        Returns:
+            When using instructions/response_format and raise_on_failure=True: returns the extracted data directly.
+            When raise_on_failure=False: returns StructuredData wrapper so user can check .success.
+            For markdown scraping: returns str.
+
+        Raises:
+            ScrapeFailedError: If structured data extraction fails and raise_on_failure=True.
+        """
+        request = ScrapeRequest.model_validate(data)
+        return _scrape_result(request, await self.request(page_api.page_scrape(session_id, request)), raise_on_failure)
+
+    @overload
+    async def observe(
+        self,
+        session_id: str,
+        *,
+        instructions: str,
+        url: str | None = None,
+        perception_type: PerceptionType | None = None,
+        **pagination: Unpack[PaginationParamsDict],
+    ) -> list[InteractionActionUnion]: ...
+
+    @overload
+    async def observe(
+        self,
+        session_id: str,
+        *,
+        instructions: None = None,
+        url: str | None = None,
+        perception_type: PerceptionType | None = None,
+        **pagination: Unpack[PaginationParamsDict],
+    ) -> ObserveResponse: ...
+
+    @track_usage("cloud.session.observe")
+    async def observe(
+        self, session_id: str, **data: Unpack[ObserveRequestDict]
+    ) -> ObserveResponse | list[InteractionActionUnion]:
+        """
+        Observes a page via the Notte API.
+
+        Constructs and validates an observation request from the provided keyword arguments.
+        Either a 'url' or a 'session_id' must be supplied; otherwise, an InvalidRequestError is raised.
+        The request is sent to the observe endpoint, and the response is formatted into an Observation object.
+
+        Deprecated: `perception_type='deep'` and `instructions` are removed on December 1, 2026, and passing
+        either emits a `DeprecationWarning`. Use `perception_type='fast'` (the default) instead of `'deep'`.
+        For `instructions`: `<<ALTERNATIVE FOR instructions: session.act() — pending>>`. See the migration guide: https://docs.notte.cc/features/sessions/observe-migration
+
+        Parameters:
+            session_id: The session ID to observe.
+            **data: Arbitrary keyword arguments corresponding to observation request fields.
+
+        Returns:
+            ObserveResponse: The formatted observation result from the API response when no instructions provided.
+            list[InteractionActionUnion]: The filtered list of actions when instructions is provided.
+        """
+        request = _observe_request(data)
+        return _observe_result(request, await self.request(page_api.page_observe(session_id, request)))
+
+    @track_usage("cloud.session.execute")
+    async def execute(self, session_id: str, action: ActionUnion) -> ExecutionResultResponse:
+        """
+        Sends a step action request and returns an ExecutionResponseWithSession.
+
+        Validates the provided keyword arguments to ensure they conform to the step
+        request schema, retrieves the step endpoint, submits the request, and transforms
+        the API response into an Observation.
+
+        Args:
+            session_id: The session ID to execute the action on.
+            action: The action to execute. For InteractionActions, the timeout can be set
+                directly on the action object via the `timeout` field.
+
+        Returns:
+            An Observation object constructed from the API response.
+        """
+        return await arun(
+            self,
+            _execute_flow(
+                self.root_client.captcha_timeout_seconds, session_id, action, self.DEFAULT_REQUEST_TIMEOUT_SECONDS
+            ),
+        )

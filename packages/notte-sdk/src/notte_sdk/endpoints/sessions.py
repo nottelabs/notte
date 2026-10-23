@@ -2,7 +2,7 @@ import asyncio
 import os
 import random
 import time
-from collections.abc import Mapping
+from collections.abc import Awaitable, Callable, Coroutine, Mapping
 from enum import StrEnum
 from pathlib import Path
 from types import TracebackType
@@ -59,8 +59,10 @@ from notte_core.types import (
 from pydantic import BaseModel
 from typing_extensions import Self, final, override
 
+from notte_sdk._flow import Call, Flow, Sleep, arun, run
 from notte_sdk._generated import operations as api
 from notte_sdk._generated.public import (
+    GetCookiesResponse,
     ProfileResponse,
     ReplayResponse,
     SessionDebugResponse,
@@ -73,18 +75,18 @@ from notte_sdk._generated.public import (
     SetCookiesResponse,
     TabSessionDebugResponse,
 )
-from notte_sdk._generated.resources import SessionsOperations
+from notte_sdk._generated.resources import AsyncSessionsOperations, SessionsOperations
 from notte_sdk._retry import is_retryable_status
 from notte_sdk._transport import TransportError
 from notte_sdk.endpoints.base import NotteEndpoint
 from notte_sdk.endpoints.files import RemoteFileStorage
-from notte_sdk.endpoints.page import PageClient
+from notte_sdk.endpoints.page import AsyncPageClient, PageClient
 from notte_sdk.errors import NotteAPIError
 from notte_sdk.websockets.base import WebsocketService
 from notte_sdk.websockets.jupyter import display_image_in_notebook
 
 if TYPE_CHECKING:
-    from notte_sdk.client import NotteClient
+    from notte_sdk.client import AsyncNotteClient, NotteClient
 
 # Retry configuration constants
 CLUSTER_OVERLOAD_RETRY_DELAY = 30  # seconds to wait before retrying on 529 errors
@@ -231,11 +233,7 @@ class SessionsClient(SessionsOperations):
             SessionResponse: The validated response from the session stop request.
         """
         logger.info(f"[Session] {session_id} is stopping")
-        response = super().stop(session_id, **data)
-        if response.status != "closed":
-            raise RuntimeError(f"[Session] {session_id} failed to stop")
-        logger.info(f"[Session] {session_id} stopped")
-        return response
+        return _checked_stop(session_id, super().stop(session_id, **data))
 
     @override
     def set_cookies(
@@ -257,13 +255,7 @@ class SessionsClient(SessionsOperations):
         Returns:
             SetCookiesResponse: The response from the upload cookies request.
         """
-        if cookies is not None and cookie_file is not None:
-            raise ValueError("Cannot provide both cookies and cookie_file")
-        if cookie_file is not None:
-            cookies = SetCookiesRequest.from_json(cookie_file).cookies
-        if cookies is None:
-            raise ValueError("Have to provide either cookies or cookie_file")
-        return super().set_cookies(session_id, cookies=cookies, **data)
+        return super().set_cookies(session_id, cookies=_cookies_to_set(cookies, cookie_file), **data)
 
     @track_usage("cloud.session.debug.tab")
     def debug_tab_info(self, session_id: str, tab_idx: int | None = None) -> TabSessionDebugResponse:
@@ -280,9 +272,7 @@ class SessionsClient(SessionsOperations):
         Returns:
             TabSessionDebugResponse: The response containing debug information for the specified tab.
         """
-        params = TabSessionDebugRequest(tab_idx=tab_idx) if tab_idx is not None else None
-        endpoint = SessionsClient._session_debug_tab_endpoint(session_id=session_id, params=params)
-        return self.request(endpoint)
+        return self.request(_debug_tab_endpoint(session_id, tab_idx))
 
     @override
     @track_usage("cloud.session.replay")
@@ -313,30 +303,7 @@ class SessionsClient(SessionsOperations):
                 if the timeout is exceeded.
             TimeoutError: If the replay does not become available within ``timeout`` seconds.
         """
-        endpoint = api.session_replay(session_id)
-        if not wait:
-            return self.request(endpoint)
-
-        logger.info(f"Waiting for replay of session {session_id} to be ready (timeout={timeout}s)...")
-        deadline = time.monotonic() + timeout
-        while True:
-            try:
-                response = self.request(endpoint)
-                logger.info(f"Replay for session {session_id} is ready")
-                return response
-            except NotteAPIError as e:
-                if e.status_code != 404:
-                    raise
-                error_msg = e.error.get("message", "") or e.error.get("detail", "")
-                # The replay service can lag behind a successful stop response
-                # while background cleanup persists the session and video.
-                if "still active" in error_msg and not _session_closed:
-                    raise ValueError(
-                        f"Session {session_id} is still active — close the session first to generate the replay."
-                    ) from e
-                if time.monotonic() + poll_interval > deadline:
-                    raise TimeoutError(f"Replay for session {session_id} not ready within {timeout}s") from e
-                time.sleep(poll_interval)
+        return run(self, _replay_flow(session_id, wait, timeout, poll_interval, _session_closed))
 
     @track_usage("cloud.session.viewer.browser")
     def viewer_browser(self, session_id: str, _viewer_url: str | None) -> None:
@@ -344,9 +311,7 @@ class SessionsClient(SessionsOperations):
         Opens live session replay in browser (frame by frame)
         """
         if _viewer_url is None:
-            _viewer_url = self.status(session_id=session_id).viewer_url
-            if _viewer_url is None:
-                raise ValueError("Viewer URL is not available. Session might be stopped.")
+            _viewer_url = _require_viewer_url(self.status(session_id=session_id).viewer_url)
         _ = open_browser(_viewer_url, new=1)
 
     @track_usage("cloud.session.viewer.notebook")
@@ -390,6 +355,412 @@ class SessionsClient(SessionsOperations):
                 _ = self.viewer_notebook(session_id=session_id)
             case SessionViewerType.CDP:
                 self.viewer_cdp(session_id=session_id)
+
+
+# #######################################################################
+# Shared by the sync and async sessions. The flows (see `notte_sdk._flow`) hold
+# every polling and retry decision; `SessionsClient` / `RemoteSession` run them
+# with blocking calls, `AsyncSessionsClient` / `AsyncRemoteSession` await them.
+# #######################################################################
+
+
+def _checked_stop(session_id: str, response: SessionResponse) -> SessionResponse:
+    """The stop response, unless the session did not close."""
+    if response.status != "closed":
+        raise RuntimeError(f"[Session] {session_id} failed to stop")
+    logger.info(f"[Session] {session_id} stopped")
+    return response
+
+
+def _cookies_to_set(
+    cookies: list[CookieDict] | list[Cookie] | None, cookie_file: str | Path | None
+) -> list[CookieDict] | list[Cookie]:
+    """The cookies `set_cookies` sends: `cookies`, or those read from `cookie_file`."""
+    if cookies is not None and cookie_file is not None:
+        raise ValueError("Cannot provide both cookies and cookie_file")
+    if cookie_file is not None:
+        cookies = SetCookiesRequest.from_json(cookie_file).cookies
+    if cookies is None:
+        raise ValueError("Have to provide either cookies or cookie_file")
+    return cookies
+
+
+def _debug_tab_endpoint(session_id: str, tab_idx: int | None) -> NotteEndpoint[TabSessionDebugResponse]:
+    params = TabSessionDebugRequest(tab_idx=tab_idx) if tab_idx is not None else None
+    return SessionsClient._session_debug_tab_endpoint(session_id=session_id, params=params)  # pyright: ignore [reportPrivateUsage]
+
+
+def _replay_flow(
+    session_id: str, wait: bool, timeout: float, poll_interval: float, session_closed: bool
+) -> Flow[ReplayResponse]:
+    """`replay`: get the replay, polling until it is ready with `wait`."""
+    endpoint = api.session_replay(session_id)
+    if not wait:
+        return (yield Call("request", (endpoint,)))
+
+    logger.info(f"Waiting for replay of session {session_id} to be ready (timeout={timeout}s)...")
+    deadline = time.monotonic() + timeout
+    while True:
+        try:
+            response = yield Call("request", (endpoint,))
+            logger.info(f"Replay for session {session_id} is ready")
+            return response
+        except NotteAPIError as e:
+            if e.status_code != 404:
+                raise
+            error_msg = e.error.get("message", "") or e.error.get("detail", "")
+            # The replay service can lag behind a successful stop response
+            # while background cleanup persists the session and video.
+            if "still active" in error_msg and not session_closed:
+                raise ValueError(
+                    f"Session {session_id} is still active — close the session first to generate the replay."
+                ) from e
+            if time.monotonic() + poll_interval > deadline:
+                raise TimeoutError(f"Replay for session {session_id} not ready within {timeout}s") from e
+            yield Sleep(poll_interval)
+
+
+def _require_viewer_url(viewer_url: str | None) -> str:
+    if viewer_url is None:
+        raise ValueError("Viewer URL is not available. Session might be stopped.")
+    return viewer_url
+
+
+def _start_flow(
+    client: "SessionsClient | AsyncSessionsClient", request: SessionStartRequest, tries: int
+) -> Flow[SessionResponse | None]:
+    """`start`: create the session, retrying server errors the transport did not retry."""
+    if request.auth_ids:
+        tries = 1  # A timed-out create may already have submitted credentials.
+    orig_tries = tries
+    while tries > 0:
+        tries -= 1
+        try:
+            response = yield Call("start", kwargs=request.model_dump())
+            return response
+        except NotteAPIError as e:
+            # retry if 5XX error
+            status: int | None = e.error.get("status")
+
+            # raise if no tries left
+            if tries == 0:
+                raise
+
+            # raise if error is a 4XX or status is unknown
+            if status is None or 400 <= status < 500:
+                raise
+
+            if client.max_retries > 0 and is_retryable_status(status, "POST"):
+                raise
+
+            # on 529: cluster overload, retry with backoff
+            retry_str = f"{orig_tries - tries}/{orig_tries - 1}"
+            if status == 529:
+                logger.warning(
+                    f"Failed to start session due to cluster overload, retrying in {CLUSTER_OVERLOAD_RETRY_DELAY} seconds ({retry_str})..."
+                )
+                yield Sleep(CLUSTER_OVERLOAD_RETRY_DELAY)
+            else:
+                logger.warning(f"Failed to start session: retrying ({retry_str})")
+    return None
+
+
+def _auth_flow(session_id: str, timeout: float) -> Flow[SessionResponse]:
+    """`wait_for_auth`: poll authentication readiness, then return the active session's status."""
+    deadline = time.monotonic() + timeout
+    errors = 0
+    while time.monotonic() < deadline:
+        try:
+            result = yield Call("auth_readiness", (session_id,))
+            if result.status == "active":
+                result = yield Call("status", (session_id,))
+                if result.status == "active":
+                    return result
+            errors = 0
+        except (TransportError, NotteAPIError) as exc:
+            if isinstance(exc, NotteAPIError) and 400 <= (exc.error.get("status") or 0) < 500:
+                raise
+            errors += 1
+            if errors >= 3:
+                raise
+            yield Sleep(1)
+            continue
+        if result.status != "authenticating":
+            raise RuntimeError(result.error or "Session authentication failed")
+        yield Sleep(random.uniform(0.8, 1.2))
+    raise TimeoutError("Timed out waiting for session authentication")
+
+
+async def _finish(task: "asyncio.Task[None]") -> bool:
+    """Wait until `task` is done; cancelling the waiter does not cancel or abandon the task.
+
+    Returns whether the waiter was cancelled meanwhile.
+    """
+    cancelled = False
+    while not task.done():
+        try:
+            _ = await asyncio.wait({task})
+        except asyncio.CancelledError:
+            cancelled = True
+    return cancelled
+
+
+def _has_session(session: "RemoteSession | AsyncRemoteSession") -> bool:
+    """Whether the session object already stands for a remote session: started, or attached by id."""
+    if session.response is not None:
+        return True
+    return isinstance(session, AsyncRemoteSession) and session._attached_id is not None  # pyright: ignore [reportPrivateUsage]
+
+
+async def _guarded_entry(
+    session: "RemoteSession | AsyncRemoteSession",
+    *,
+    start: Callable[[], Coroutine[Any, Any, None]],
+    wait_for_auth: Callable[[], Awaitable[None]],
+    stop: Callable[[], Coroutine[Any, Any, None]],
+) -> None:
+    """`async with` entry: start, then wait for authentication; a session started meanwhile is stopped
+    if the entry fails or is cancelled, since the context manager never exits then."""
+    # Only a session this entry creates is stopped: entering an already started or attached
+    # session is rejected by `start`, and must not close a browser someone else is using.
+    created_here = not _has_session(session)
+    start_task = asyncio.create_task(start())
+    try:
+        # Cancellation does not stop the start: it can still create the session.
+        await asyncio.shield(start_task)
+        if session.request.wait_for_authentication:
+            await wait_for_auth()
+    except BaseException:
+        # Let the start finish, whether it succeeds or fails: it may have created the session
+        # before failing (a cookie file or upload error), and that session must still be stopped.
+        # Another cancellation must not abandon the start, nor the stop below.
+        _ = await _finish(start_task)
+        # A session the start already stopped itself (a failed authentication wait) is closed:
+        # no second stop request. The same rule as `RemoteSession.__enter__`.
+        if created_here and session.response is not None and session.response.status != "closed":
+            stop_task = asyncio.create_task(stop())
+            _ = await _finish(stop_task)
+            if not stop_task.cancelled() and (stop_error := stop_task.exception()) is not None:
+                logger.error(f"Could not clean up session after a failed or cancelled entry: {stop_error}")
+        raise
+
+
+async def _close_async_playwright(session: "RemoteSession | AsyncRemoteSession") -> None:
+    """Close the async Playwright browser, then stop its driver. A failure is logged, not raised,
+    and does not skip the other step: a failed browser close must not leak the driver process.
+    Each handle is dropped only once its close was attempted."""
+    if session._async_playwright_browser is not None:  # pyright: ignore [reportPrivateUsage]
+        try:
+            await session._async_playwright_browser.close()  # pyright: ignore [reportPrivateUsage]
+        except Exception as close_error:
+            logger.error(f"Failed to close the Playwright browser: {close_error}")
+        session._async_playwright_browser = None  # pyright: ignore [reportPrivateUsage]
+    session._async_playwright_page = None  # pyright: ignore [reportPrivateUsage]
+    if session._async_playwright_context is not None:  # pyright: ignore [reportPrivateUsage]
+        try:
+            await session._async_playwright_context.stop()  # pyright: ignore [reportPrivateUsage]
+        except Exception as stop_error:
+            logger.error(f"Failed to stop the Playwright driver: {stop_error}")
+        session._async_playwright_context = None  # pyright: ignore [reportPrivateUsage]
+
+
+async def _async_exit(
+    session: "RemoteSession | AsyncRemoteSession",
+    exc_val: BaseException | None,
+    stop: Callable[[Literal["manual", "error"]], Awaitable[None]],
+) -> None:
+    """`async with` exit: close the async Playwright connection, then stop the session."""
+    if exc_val is not None:
+        logger.warning(f"Session exiting because of exception: {exc_val}")
+
+    async def cleanup() -> None:
+        # Clean up async playwright resources. A dead local driver must not keep the remote browser
+        # running, nor replace the block's own exception: it is logged and the session stopped anyway.
+        await _close_async_playwright(session)
+        await stop("error" if exc_val is not None else "manual")
+
+    # One task, waited for through cancellations: a cancel must not cut the cleanup short and
+    # leave the driver or the remote browser running. It is honoured once the cleanup is done.
+    cleanup_task = asyncio.create_task(cleanup())
+    cancelled = await _finish(cleanup_task)
+    if not cleanup_task.cancelled() and (stop_error := cleanup_task.exception()) is not None:
+        if exc_val is None:
+            raise stop_error
+        logger.error(f"Failed to stop session after async context manager exception: {stop_error}")
+
+    if isinstance(exc_val, KeyboardInterrupt):
+        raise KeyboardInterrupt() from None
+    if cancelled and exc_val is None:
+        raise asyncio.CancelledError()
+
+
+def _forget_stopped_session(session: "RemoteSession | AsyncRemoteSession") -> None:
+    """Drop the state of the session `reset` stopped, so `start` creates a new one.
+
+    The async Playwright driver stays for the next page; the browser and page it connected to
+    belonged to the stopped session.
+    """
+    session.response = None
+    session._async_playwright_browser = None  # pyright: ignore [reportPrivateUsage]
+    session._async_playwright_page = None  # pyright: ignore [reportPrivateUsage]
+
+
+def _already_stopped(error: Exception) -> bool:
+    return "already stopped" in str(error).lower() or "already closed" in str(error).lower()
+
+
+def _cookie_dicts(response: GetCookiesResponse) -> list[CookieDict]:
+    return [cookie.model_dump() for cookie in response.cookies]  # type: ignore
+
+
+def _profile_save_data(profile_id: str | None, name: str | None) -> SessionProfileSaveRequestDict:
+    """The `save_profile` request for its arguments, which are checked first."""
+    if profile_id is not None and name is not None:
+        raise ValueError("profile_id and name are mutually exclusive")
+    if profile_id is not None and not profile_id.strip():
+        raise ValueError("profile_id must not be empty")
+    if name is not None and not name.strip():
+        raise ValueError("name must not be empty")
+    data: SessionProfileSaveRequestDict = {}
+    if profile_id is not None:
+        data["profile_id"] = profile_id
+    if name is not None:
+        data["name"] = name
+    return data
+
+
+def _known_cdp_url(
+    client: "SessionsClient | AsyncSessionsClient", request: SessionStartRequest, response: SessionResponse | None
+) -> str | None:
+    """The session's CDP url, or None when only `debug_info` knows it."""
+    if response is None:
+        raise ValueError("You need to start the session first to get the cdp url")
+    if request.cdp_url is not None:
+        # cdp url from another session provider. It is handed to us by the
+        # caller and served by someone else, so it gets no preview selector.
+        return request.cdp_url
+    # The remaining urls are websocket endpoints on our own API, which reads
+    # the preview branch from the query string. Without it the handshake is
+    # served from the default database and rejects a preview-branch session.
+    if response.cdp_url is not None:
+        return client._with_db_preview(response.cdp_url)  # pyright: ignore [reportPrivateUsage]
+    return None
+
+
+def _cdp_headers(
+    client: "SessionsClient | AsyncSessionsClient", request: SessionStartRequest, cdp_url: str
+) -> dict[str, str] | None:
+    """Headers for this API's CDP connection: the SDK identity, and the runner capability if set.
+
+    Nothing is sent to a CDP endpoint served by someone else.
+    """
+    if request.cdp_url is not None:
+        return None
+    target = urlsplit(cdp_url)
+    api = urlsplit(client.server_url)
+    secure = target.scheme == "wss" and api.scheme == "https"
+    plain = target.scheme == "ws" and api.scheme == "http"
+    default_port = 443 if secure else 80
+    target_port = target.port if target.port is not None else default_port
+    api_port = api.port if api.port is not None else default_port
+    if not ((secure or plain) and target.hostname == api.hostname and target_port == api_port):
+        return None
+    headers = {"x-notte-request-origin": client.REQUEST_ORIGIN, "x-notte-sdk-version": notte_core_version}
+    # The capability is a credential: only ever sent over TLS.
+    if secure and (capability := os.getenv("NOTTE_AUTH_CAPABILITY")):
+        headers["x-notte-auth-capability"] = capability
+    return headers
+
+
+async def _async_page(
+    session: "RemoteSession | AsyncRemoteSession", cdp_url: Callable[[], Awaitable[str]]
+) -> "PageAsync":
+    """The async Playwright page connected to the session over CDP, connecting on first use."""
+    if not _async_playwright_available:
+        raise ImportError("Playwright not installed. Use `pip install notte-sdk[playwright]` to install it.")
+
+    # Return cached page if already connected
+    if session._async_playwright_page is not None:  # pyright: ignore [reportPrivateUsage]
+        return session._async_playwright_page  # pyright: ignore [reportPrivateUsage]
+
+    try:
+        # Initialize async playwright context
+        if session._async_playwright_context is None:  # pyright: ignore [reportPrivateUsage]
+            if _async_playwright is None:
+                raise RuntimeError("Playwright is not initialized")
+            session._async_playwright_context = await _async_playwright().start()  # pyright: ignore [reportPrivateUsage]
+
+        # Connect to browser via CDP
+        if session._async_playwright_browser is None:  # pyright: ignore [reportPrivateUsage]
+            url = await cdp_url()
+            session._async_playwright_browser = await session._async_playwright_context.chromium.connect_over_cdp(  # pyright: ignore [reportPrivateUsage]
+                url,
+                headers=session._cdp_headers(url),  # pyright: ignore [reportPrivateUsage]
+            )
+            _install_server_owned_dialog_policy(session._async_playwright_browser)  # pyright: ignore [reportPrivateUsage]
+
+        # Get the first page from the first context
+        session._async_playwright_page = session._async_playwright_browser.contexts[0].pages[0]  # pyright: ignore [reportPrivateUsage]
+        return session._async_playwright_page  # pyright: ignore [reportPrivateUsage]
+    except Exception as e:
+        raise RuntimeError("Failed to access the async playwright page from CDP") from e
+
+
+def _with_perception(data: ObserveRequestDict, default: PerceptionType) -> ObserveRequestDict:
+    """Observe `data`, with the session's default perception type unless one is given."""
+    if data.get("perception_type") is None:
+        data["perception_type"] = default
+    return data
+
+
+def _action_from(action: BaseAction | None, kwargs: dict[str, Any]) -> BaseAction:
+    """The action `execute` runs: `action`, or one built from keyword arguments."""
+    # Fast path: if action is already a BaseAction, use it directly
+    if isinstance(action, BaseAction):
+        return action
+    if kwargs:
+        if "type" not in kwargs:
+            raise ValueError("Missing required action field: 'type'")
+        # Convert kwargs to BaseAction using fast mapping
+        return action_dict_to_base_action(kwargs)  # type: ignore[arg-type]
+    if action is None:
+        raise ValueError("No action provided")
+    # Fallback for dict (shouldn't happen with new API, but kept for compatibility)
+    return ExecutionRequest.get_action(action=action, data=None)  # pyright: ignore [reportUnreachable]
+
+
+def _checked_execution(
+    result: ExecutionResult, action: BaseAction, raise_on_failure: bool | None, default_raise_on_failure: bool
+) -> ExecutionResult:
+    """`result`, unless the action failed and failures raise."""
+    # raise exception if needed
+    _raise_on_failure = raise_on_failure if raise_on_failure is not None else default_raise_on_failure
+    # Gate on "did the action fail", not "did something throw", to mirror the local session.
+    if _raise_on_failure and not result.success:
+        logger.error(f"🚨 Execution failed with message: '{result.message}'")
+        if result.exception is not None:
+            # `ExecutionResult` validation rehydrated the concrete error type, messages
+            # and flags from the structured `exception_detail` wire payload.
+            raise result.exception
+        # An API build that predates `exception_detail` may report a failure without
+        # an exception; the message is all the caller has to go on.
+        fallback_message = str(result.message).strip() or f"Failed to execute action: {action.type}"
+        raise NotteBaseError(
+            dev_message=fallback_message,
+            user_message=fallback_message,
+            agent_message=fallback_message,
+        )
+    return result
+
+
+def _evaluated(result: ExecutionResult, raise_on_failure: bool) -> str | ExecutionResult:
+    """What `evaluate_js` returns for the `evaluate_js` action's result."""
+    if not raise_on_failure:
+        return result
+    if result.data is None:
+        # an API build that predates the eval-js fix reports success without data
+        raise EvaluateJsNoDataError()
+    return result.data.markdown
 
 
 class RemoteSession(SyncResource):
@@ -516,13 +887,21 @@ class RemoteSession(SyncResource):
         if exc_val is not None:
             logger.warning(f"Session exiting because of exception: {exc_val}")
 
-        # Clean up sync playwright resources
+        # Clean up sync playwright resources. A dead local driver must not keep the remote browser
+        # running, nor replace the block's own exception: log it and stop the session anyway.
+        # The browser and the driver are closed separately: a failed close must not leak the driver.
         if self._playwright_browser is not None:
-            self._playwright_browser.close()
-            self._playwright_browser = None
+            try:
+                self._playwright_browser.close()
+            except Exception as close_error:
+                logger.error(f"Failed to close the Playwright browser: {close_error}")
         if self._playwright_context is not None:
-            self._playwright_context.stop()
-            self._playwright_context = None
+            try:
+                self._playwright_context.stop()
+            except Exception as stop_error:
+                logger.error(f"Failed to stop the Playwright driver: {stop_error}")
+        self._playwright_browser = None
+        self._playwright_context = None
         self._playwright_page = None
 
         try:
@@ -542,20 +921,12 @@ class RemoteSession(SyncResource):
         Returns:
             RemoteSession: The session instance.
         """
-        start_task = asyncio.create_task(asyncio.to_thread(self.start, wait_for_authentication=False))
-        try:
-            await asyncio.shield(start_task)
-            if self.request.wait_for_authentication:
-                await self.await_for_auth()
-        except BaseException:
-            # A cancelled to_thread call continues creating the session. Reap its result.
-            try:
-                await start_task
-                if self.response is not None:
-                    await asyncio.to_thread(self.stop, close_reason="error")
-            except Exception:
-                logger.exception("Could not clean up session after cancelled entry")
-            raise
+        await _guarded_entry(
+            self,
+            start=lambda: asyncio.to_thread(self.start, wait_for_authentication=False),
+            wait_for_auth=lambda: self.await_for_auth(),
+            stop=lambda: asyncio.to_thread(self.stop, close_reason="error"),
+        )
         return self
 
     async def __aexit__(
@@ -564,27 +935,12 @@ class RemoteSession(SyncResource):
         """
         Async context manager exit point with cleanup of async playwright resources.
         """
-        if exc_val is not None:
-            logger.warning(f"Session exiting because of exception: {exc_val}")
 
-        # Clean up async playwright resources
-        if self._async_playwright_browser is not None:
-            await self._async_playwright_browser.close()
-            self._async_playwright_browser = None
-        if self._async_playwright_context is not None:
-            await self._async_playwright_context.stop()
-            self._async_playwright_context = None
-        self._async_playwright_page = None
+        async def stop(close_reason: Literal["manual", "error"]) -> None:
+            # A blocking stop (cookie saving, the stop request) runs off the event loop.
+            await asyncio.to_thread(self.stop, close_reason=close_reason)
 
-        try:
-            self.stop(close_reason="error" if exc_val is not None else "manual")
-        except Exception as stop_error:
-            if exc_val is None:
-                raise
-            logger.error(f"Failed to stop session after async context manager exception: {stop_error}")
-
-        if isinstance(exc_val, KeyboardInterrupt):
-            raise KeyboardInterrupt() from None
+        await _async_exit(self, exc_val, stop)
 
     # #######################################################################
     # ############################# Session #################################
@@ -625,39 +981,7 @@ class RemoteSession(SyncResource):
         if self.response is not None:
             raise ValueError("Session already started")
 
-        if self.request.auth_ids:
-            tries = 1  # A timed-out create may already have submitted credentials.
-        orig_tries = tries
-        while tries > 0:
-            tries -= 1
-            try:
-                self.response = self.client.start(**self.request.model_dump())
-                break
-            except NotteAPIError as e:
-                # retry if 5XX error
-                status: int | None = e.error.get("status")
-
-                # raise if no tries left
-                if tries == 0:
-                    raise
-
-                # raise if error is a 4XX or status is unknown
-                if status is None or 400 <= status < 500:
-                    raise
-
-                if self.client.max_retries > 0 and is_retryable_status(status, "POST"):
-                    raise
-
-                # on 529: cluster overload, retry with backoff
-                retry_str = f"{orig_tries - tries}/{orig_tries - 1}"
-                if status == 529:
-                    logger.warning(
-                        f"Failed to start session due to cluster overload, retrying in {CLUSTER_OVERLOAD_RETRY_DELAY} seconds ({retry_str})..."
-                    )
-                    time.sleep(CLUSTER_OVERLOAD_RETRY_DELAY)
-                else:
-                    logger.warning(f"Failed to start session: retrying ({retry_str})")
-
+        self.response = run(self.client, _start_flow(self.client, self.request, tries))
         self.storage = self.storage.for_session(self.session_id)
 
         logger.info(f"[Session] {self.session_id} started")
@@ -687,29 +1011,7 @@ class RemoteSession(SyncResource):
             raise ValueError("Session has not started")
         if self.response.status == "active":
             return
-        deadline = time.monotonic() + timeout
-        errors = 0
-        while time.monotonic() < deadline:
-            try:
-                result = self.client.auth_readiness(self.response.session_id)
-                if result.status == "active":
-                    result = self.client.status(self.response.session_id)
-                    if result.status == "active":
-                        self.response = result
-                        return
-                errors = 0
-            except (TransportError, NotteAPIError) as exc:
-                if isinstance(exc, NotteAPIError) and 400 <= (exc.error.get("status") or 0) < 500:
-                    raise
-                errors += 1
-                if errors >= 3:
-                    raise
-                time.sleep(1)
-                continue
-            if result.status != "authenticating":
-                raise RuntimeError(result.error or "Session authentication failed")
-            time.sleep(random.uniform(0.8, 1.2))
-        raise TimeoutError("Timed out waiting for session authentication")
+        self.response = run(self.client, _auth_flow(self.response.session_id, timeout))
 
     async def await_for_auth(self, timeout: float = 615) -> None:
         """Async readiness wait; blocking HTTP calls run outside the event loop."""
@@ -717,29 +1019,7 @@ class RemoteSession(SyncResource):
             raise ValueError("Session has not started")
         if self.response.status == "active":
             return
-        deadline = time.monotonic() + timeout
-        errors = 0
-        while time.monotonic() < deadline:
-            try:
-                result = await asyncio.to_thread(self.client.auth_readiness, self.response.session_id)
-                if result.status == "active":
-                    result = await asyncio.to_thread(self.client.status, self.response.session_id)
-                    if result.status == "active":
-                        self.response = result
-                        return
-                errors = 0
-            except (TransportError, NotteAPIError) as exc:
-                if isinstance(exc, NotteAPIError) and 400 <= (exc.error.get("status") or 0) < 500:
-                    raise
-                errors += 1
-                if errors >= 3:
-                    raise
-                await asyncio.sleep(1)
-                continue
-            if result.status != "authenticating":
-                raise RuntimeError(result.error or "Session authentication failed")
-            await asyncio.sleep(random.uniform(0.8, 1.2))
-        raise TimeoutError("Timed out waiting for session authentication")
+        self.response = await arun(self.client, _auth_flow(self.response.session_id, timeout), in_thread=True)
 
     @override
     def stop(self, close_reason: Literal["manual", "error"] = "manual") -> None:
@@ -784,10 +1064,24 @@ class RemoteSession(SyncResource):
         try:
             self.response = self.client.stop(session_id=self.session_id, close_reason=close_reason)
         except Exception as e:
-            if "already stopped" in str(e).lower() or "already closed" in str(e).lower():
+            if _already_stopped(e):
                 logger.warning(f"Session {self.session_id} was already stopped")
             else:
                 raise
+
+    @override
+    def reset(self) -> None:
+        """
+        Stop the session, then start a new one with the same configuration.
+
+        The new session has a new session ID. A Playwright page must be opened again.
+        """
+        self.stop()
+        _forget_stopped_session(self)
+        # The sync Playwright driver stays for the next page, like the async one.
+        self._playwright_browser = None
+        self._playwright_page = None
+        self.start()
 
     @property
     def session_id(self) -> str:
@@ -973,8 +1267,7 @@ class RemoteSession(SyncResource):
         Raises:
             ValueError: If the session hasn't been started yet (no session_id available).
         """
-        cookies = self.client.get_cookies(session_id=self.session_id).cookies
-        return [cookie.model_dump() for cookie in cookies]  # type: ignore
+        return _cookie_dicts(self.client.get_cookies(session_id=self.session_id))
 
     def save_profile(self, profile_id: str | None = None, name: str | None = None) -> ProfileResponse:
         """
@@ -998,17 +1291,7 @@ class RemoteSession(SyncResource):
             ValueError: If both ``profile_id`` and ``name`` are provided, or if either is empty.
             ValueError: If the session hasn't been started yet (no session_id available).
         """
-        if profile_id is not None and name is not None:
-            raise ValueError("profile_id and name are mutually exclusive")
-        if profile_id is not None and not profile_id.strip():
-            raise ValueError("profile_id must not be empty")
-        if name is not None and not name.strip():
-            raise ValueError("name must not be empty")
-        data: SessionProfileSaveRequestDict = {}
-        if profile_id is not None:
-            data["profile_id"] = profile_id
-        if name is not None:
-            data["name"] = name
+        data = _profile_save_data(profile_id, name)
         return self.client.save_profile(session_id=self.session_id, **data)
 
     def debug_info(self) -> SessionDebugResponse:
@@ -1041,42 +1324,17 @@ class RemoteSession(SyncResource):
         Raises:
             ValueError: If the session hasn't been started yet (no session_id available).
         """
-        if self.response is None:
-            raise ValueError("You need to start the session first to get the cdp url")
-        if self.request.cdp_url is not None:
-            # cdp url from another session provider. It is handed to us by the
-            # caller and served by someone else, so it gets no preview selector.
-            return self.request.cdp_url
-        # The remaining urls are websocket endpoints on our own API, which reads
-        # the preview branch from the query string. Without it the handshake is
-        # served from the default database and rejects a preview-branch session.
-        if self.response.cdp_url is not None:
-            return self.client._with_db_preview(self.response.cdp_url)  # pyright: ignore [reportPrivateUsage]
+        if (known := _known_cdp_url(self.client, self.request, self.response)) is not None:
+            return known
         # cdp url from the session provider
-        debug = self.debug_info()
-        return self.client._with_db_preview(debug.ws.cdp)  # pyright: ignore [reportPrivateUsage]
+        return self.client._with_db_preview(self.debug_info().ws.cdp)  # pyright: ignore [reportPrivateUsage]
 
     def _cdp_headers(self, cdp_url: str) -> dict[str, str] | None:
         """Headers for this API's CDP connection: the SDK identity, and the runner capability if set.
 
         Nothing is sent to a CDP endpoint served by someone else.
         """
-        if self.request.cdp_url is not None:
-            return None
-        target = urlsplit(cdp_url)
-        api = urlsplit(self.client.server_url)
-        secure = target.scheme == "wss" and api.scheme == "https"
-        plain = target.scheme == "ws" and api.scheme == "http"
-        default_port = 443 if secure else 80
-        target_port = target.port if target.port is not None else default_port
-        api_port = api.port if api.port is not None else default_port
-        if not ((secure or plain) and target.hostname == api.hostname and target_port == api_port):
-            return None
-        headers = {"x-notte-request-origin": self.client.REQUEST_ORIGIN, "x-notte-sdk-version": notte_core_version}
-        # The capability is a credential: only ever sent over TLS.
-        if secure and (capability := os.getenv("NOTTE_AUTH_CAPABILITY")):
-            headers["x-notte-auth-capability"] = capability
-        return headers
+        return _cdp_headers(self.client, self.request, cdp_url)
 
     @property
     def page(self) -> "PageSync":
@@ -1164,36 +1422,13 @@ class RemoteSession(SyncResource):
             ImportError: If playwright is not installed. Install with `pip install notte-sdk[playwright]`
             ValueError: If the session hasn't been started yet (no session_id available).
         """
-        if not _async_playwright_available:
-            raise ImportError("Playwright not installed. Use `pip install notte-sdk[playwright]` to install it.")
-
-        # Return cached page if already connected
-        if self._async_playwright_page is not None:
-            return self._async_playwright_page
-
-        if self._playwright_browser is not None:
+        if _async_playwright_available and self._async_playwright_page is None and self._playwright_browser is not None:
             raise RuntimeError("Session Page has been initialized with sync playwright. Use `session.page` instead.")
 
-        try:
-            # Initialize async playwright context
-            if self._async_playwright_context is None:
-                if _async_playwright is None:
-                    raise RuntimeError("Playwright is not initialized")
-                self._async_playwright_context = await _async_playwright().start()
+        async def cdp_url() -> str:
+            return self.cdp_url()
 
-            # Connect to browser via CDP
-            if self._async_playwright_browser is None:
-                cdp_url = self.cdp_url()
-                self._async_playwright_browser = await self._async_playwright_context.chromium.connect_over_cdp(
-                    cdp_url, headers=self._cdp_headers(cdp_url)
-                )
-                _install_server_owned_dialog_policy(self._async_playwright_browser)
-
-            # Get the first page from the first context
-            self._async_playwright_page = self._async_playwright_browser.contexts[0].pages[0]
-            return self._async_playwright_page
-        except Exception as e:
-            raise RuntimeError("Failed to access the async playwright page from CDP") from e
+        return await _async_page(self, cdp_url)
 
     # #######################################################################
     # ############################# PAGE ####################################
@@ -1342,8 +1577,7 @@ class RemoteSession(SyncResource):
             ObserveResponse: The formatted observation result from the API response when no instructions provided.
             list[InteractionActionUnion]: The filtered list of actions when instructions is provided.
         """
-        if data.get("perception_type") is None:
-            data["perception_type"] = self.default_perception_type
+        data = _with_perception(data, self.default_perception_type)
         return self.client.page.observe(session_id=self.session_id, **data)  # pyright: ignore[reportUnknownVariableType, reportArgumentType, reportCallIssue]
 
     # BEGIN GENERATED OVERLOADS: execute (scripts/generate_action_overloads.py)
@@ -1518,39 +1752,9 @@ class RemoteSession(SyncResource):
         Raises:
             Exception: If raise_on_failure is True and the action execution fails.
         """
-        # Fast path: if action is already a BaseAction, use it directly
-        if isinstance(action, BaseAction):
-            action_obj = action
-        elif kwargs:
-            if "type" not in kwargs:
-                raise ValueError("Missing required action field: 'type'")
-            # Convert kwargs to BaseAction using fast mapping
-            action_obj = action_dict_to_base_action(kwargs)  # type: ignore[arg-type]
-        elif action is None:
-            raise ValueError("No action provided")
-        else:
-            # Fallback for dict (shouldn't happen with new API, but kept for compatibility)
-            action_obj = ExecutionRequest.get_action(action=action, data=None)  # pyright: ignore [reportUnreachable]
-
+        action_obj = _action_from(action, kwargs)
         result = self.client.page.execute(session_id=self.session_id, action=action_obj)
-        # raise exception if needed
-        _raise_on_failure = raise_on_failure if raise_on_failure is not None else self.default_raise_on_failure
-        # Gate on "did the action fail", not "did something throw", to mirror the local session.
-        if _raise_on_failure and not result.success:
-            logger.error(f"🚨 Execution failed with message: '{result.message}'")
-            if result.exception is not None:
-                # `ExecutionResult` validation rehydrated the concrete error type, messages
-                # and flags from the structured `exception_detail` wire payload.
-                raise result.exception
-            # An API build that predates `exception_detail` may report a failure without
-            # an exception; the message is all the caller has to go on.
-            fallback_message = str(result.message).strip() or f"Failed to execute action: {action_obj.type}"
-            raise NotteBaseError(
-                dev_message=fallback_message,
-                user_message=fallback_message,
-                agent_message=fallback_message,
-            )
-        return result
+        return _checked_execution(result, action_obj, raise_on_failure, self.default_raise_on_failure)
 
     # raise_on_failure=True (default) -> the evaluated string; failures raise
     @overload
@@ -1573,13 +1777,9 @@ class RemoteSession(SyncResource):
         payload = json.loads(session.evaluate_js("(async () => JSON.stringify(await res.json()))()"))
         ```
         """
-        result = self.execute(type="evaluate_js", code=code, raise_on_failure=raise_on_failure)
-        if not raise_on_failure:
-            return result
-        if result.data is None:
-            # an API build that predates the eval-js fix reports success without data
-            raise EvaluateJsNoDataError()
-        return result.data.markdown
+        return _evaluated(
+            self.execute(type="evaluate_js", code=code, raise_on_failure=raise_on_failure), raise_on_failure
+        )
 
     def fetch(
         self,
@@ -1617,3 +1817,670 @@ class RemoteSession(SyncResource):
             url, method=method, headers=headers, params=params, json_body=json, data=data, timeout=timeout
         )
         return response_from_evaluated(self.evaluate_js(script))
+
+
+@final
+class AsyncSessionsClient(AsyncSessionsOperations):
+    """The async twin of `SessionsClient`, for `AsyncNotteClient`: the same methods as coroutines."""
+
+    def __init__(
+        self,
+        root_client: "AsyncNotteClient",
+        api_key: str | None = None,
+        server_url: str | None = None,
+        verbose: bool = False,
+        viewer_type: SessionViewerType = SessionViewerType.BROWSER,
+    ):
+        super().__init__(
+            root_client=root_client,
+            base_endpoint_path="sessions",
+            server_url=server_url,
+            api_key=api_key,
+            verbose=verbose,
+        )
+        self.page: AsyncPageClient = AsyncPageClient(
+            root_client=root_client, api_key=api_key, verbose=verbose, server_url=server_url
+        )
+        self.viewer_type: SessionViewerType = viewer_type
+
+    @override
+    async def stop(self, session_id: str, **data: Unpack[SessionStopRequestDict]) -> SessionResponse:
+        """
+        Stops an active session.
+
+        Raises:
+            RuntimeError: If the session did not close.
+        """
+        logger.info(f"[Session] {session_id} is stopping")
+        return _checked_stop(session_id, await super().stop(session_id, **data))
+
+    @override
+    async def set_cookies(
+        self,
+        session_id: str,
+        cookies: list[CookieDict] | list[Cookie] | None = None,
+        cookie_file: str | Path | None = None,
+        **data: Any,
+    ) -> SetCookiesResponse:
+        """
+        Uploads cookies to the session.
+
+        Accepts either cookies or cookie_file (json format, read off the event loop) as argument.
+        """
+        if cookie_file is not None:
+            cookies = await asyncio.to_thread(_cookies_to_set, cookies, cookie_file)
+        return await super().set_cookies(session_id, cookies=_cookies_to_set(cookies, None), **data)
+
+    @track_usage("cloud.session.debug.tab")
+    async def debug_tab_info(self, session_id: str, tab_idx: int | None = None) -> TabSessionDebugResponse:
+        """Retrieves debug information for a tab of the session (all tabs without `tab_idx`)."""
+        return await self.request(_debug_tab_endpoint(session_id, tab_idx))
+
+    @override
+    @track_usage("cloud.session.replay")
+    async def replay(
+        self,
+        session_id: str,
+        wait: bool = True,
+        timeout: float = 240.0,
+        poll_interval: float = 5.0,
+        *,
+        _session_closed: bool = False,
+    ) -> ReplayResponse:
+        """
+        Get presigned URLs for session replay; with `wait` (the default), poll until it is ready.
+
+        Raises:
+            NotteAPIError: If the replay is not found and ``wait`` is False.
+            TimeoutError: If the replay does not become available within ``timeout`` seconds.
+        """
+        return await arun(self, _replay_flow(session_id, wait, timeout, poll_interval, _session_closed))
+
+    @track_usage("cloud.session.viewer.browser")
+    async def viewer_browser(self, session_id: str, _viewer_url: str | None) -> None:
+        """
+        Opens live session replay in browser (frame by frame)
+        """
+        if _viewer_url is None:
+            _viewer_url = _require_viewer_url((await self.status(session_id=session_id)).viewer_url)
+        _ = await asyncio.to_thread(open_browser, _viewer_url, new=1)
+
+    @track_usage("cloud.session.viewer.notebook")
+    async def viewer_notebook(self, session_id: str) -> WebsocketService:
+        """
+        Returns a WebsocketJupyterDisplay for displaying live session replay in Jupyter notebook.
+        """
+        debug_info = await self.debug_info(session_id=session_id)
+        return WebsocketService(
+            wss_url=self._with_db_preview(debug_info.ws.recording), process=display_image_in_notebook
+        )
+
+    @track_usage("cloud.session.viewer.cdp")
+    async def viewer_cdp(self, session_id: str) -> None:
+        """
+        Opens a browser tab with the debug URL for visualizing the session.
+        """
+        debug_info = await self.debug_info(session_id=session_id)
+        _ = await asyncio.to_thread(open_browser, debug_info.debug_url)
+
+    @track_usage("cloud.session.viewer")
+    async def viewer(self, session_id: str, _viewer_url: str | None = None) -> None:
+        """
+        Open the viewer for the session based on the viewer_type.
+        """
+        match self.viewer_type:
+            case SessionViewerType.BROWSER:
+                await self.viewer_browser(session_id=session_id, _viewer_url=_viewer_url)
+            case SessionViewerType.JUPYTER:
+                _ = await self.viewer_notebook(session_id=session_id)
+            case SessionViewerType.CDP:
+                await self.viewer_cdp(session_id=session_id)
+
+
+class AsyncRemoteSession:
+    """
+    The async twin of `RemoteSession`, returned by `AsyncNotteClient.Session`: the same methods, as coroutines.
+
+    **Example:**
+    ```python
+    from notte_sdk import AsyncNotteClient
+
+    async with AsyncNotteClient() as client:
+        async with client.Session() as session:
+            _ = await session.execute(type="goto", url="https://www.notte.cc")
+            markdown = await session.scrape()
+    ```
+
+    Differences from `RemoteSession`:
+
+    - `page` is the async Playwright page (`await session.page`); there is no sync Playwright page,
+      so `apage` is not needed.
+    - `wait_for_auth` is a coroutine, so `await_for_auth` is not needed.
+    - The session has no `storage` yet.
+    - `client.Session(session_id)` does no I/O: it attaches to the session, and the first method
+      that needs its state reads it.
+    - There is no sync `with` block: use `async with`.
+    """
+
+    @overload
+    def __init__(
+        self,
+        *,
+        perception_type: PerceptionType = "fast",
+        raise_on_failure: bool = config.raise_on_session_execution_failure,
+        cookie_file: str | Path | None = None,
+        open_viewer: bool = False,
+        _client: AsyncSessionsClient | None = None,
+        **data: Unpack[SessionStartRequestDict],
+    ) -> None: ...
+
+    @overload
+    def __init__(self, /, session_id: str, *, _client: AsyncSessionsClient | None = None) -> None: ...
+
+    def __init__(
+        self,
+        session_id: str | None = None,
+        *,
+        perception_type: PerceptionType = "fast",
+        cookie_file: str | Path | None = None,
+        raise_on_failure: bool = config.raise_on_session_execution_failure,
+        open_viewer: bool = False,
+        _client: AsyncSessionsClient | None = None,
+        **data: Unpack[SessionStartRequestDict],
+    ) -> None:
+        """
+        Create a new AsyncRemoteSession instance with the specified configuration.
+
+        Takes the arguments of `RemoteSession`, except `storage`.
+        """
+        if _client is None:
+            raise ValueError("AsyncSessionsClient is required")
+
+        # Filter out open_viewer from data before validating with SessionStartRequest
+        # (open_viewer is a RemoteSession parameter, not a SessionStartRequest field)
+        request_data = {k: v for k, v in data.items() if k != "open_viewer"}
+        self.request: SessionStartRequest = SessionStartRequest.from_data(request_data)
+        self._open_viewer: bool = open_viewer
+
+        self.client: AsyncSessionsClient = _client
+        self.response: SessionResponse | None = None
+        # An attached session's status, read on first use: a constructor cannot await.
+        self._attached_id: str | None = session_id
+        self.default_perception_type: PerceptionType = perception_type
+        self.default_raise_on_failure: bool = raise_on_failure
+        self._cookie_file: Path | None = Path(cookie_file) if cookie_file is not None else None
+        self._async_playwright_context: "PlaywrightAsync | None" = None
+        self._async_playwright_browser: "BrowserAsync | None" = None
+        self._async_playwright_page: "PageAsync | None" = None
+
+    async def _loaded(self) -> SessionResponse | None:
+        """The session's latest response, after reading an attached session's status."""
+        if self.response is None and self._attached_id is not None:
+            self.response = await self.client.status(session_id=self._attached_id)
+            self._attached_id = None
+        return self.response
+
+    async def __aenter__(self) -> "AsyncRemoteSession":
+        """Start the session and wait for authentication; a cancelled entry stops the session it started."""
+        await _guarded_entry(
+            self,
+            start=lambda: self.start(wait_for_authentication=False),
+            wait_for_auth=lambda: self.wait_for_auth(),
+            stop=lambda: self.stop(close_reason="error"),
+        )
+        return self
+
+    async def __aexit__(
+        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
+    ) -> None:
+        """Close the async Playwright connection and stop the session."""
+
+        async def stop(close_reason: Literal["manual", "error"]) -> None:
+            await self.stop(close_reason=close_reason)
+
+        await _async_exit(self, exc_val, stop)
+
+    # #######################################################################
+    # ############################# Session #################################
+    # #######################################################################
+
+    async def start(self, tries: int = 3, *, wait_for_authentication: bool | None = None) -> None:
+        """
+        Start the session using the configured request.
+
+        We strongly recommend `async with client.Session() as session:` instead, which also stops it.
+
+        Raises:
+            ValueError: If the session was already started.
+        """
+        if await self._loaded() is not None:
+            raise ValueError("Session already started")
+
+        self.response = await arun(self.client, _start_flow(self.client, self.request, tries))
+
+        logger.info(f"[Session] {self.session_id} started")
+        should_wait = (
+            self.request.wait_for_authentication if wait_for_authentication is None else wait_for_authentication
+        )
+        if should_wait:
+            try:
+                await self.wait_for_auth()
+            except BaseException:
+                await self.stop(close_reason="error")
+                raise
+
+        if self._open_viewer:
+            await self.viewer()
+        # try to load cookies from file
+        if self._cookie_file is not None:
+            if await asyncio.to_thread(self._cookie_file.exists):
+                logger.info(f"🍪 Automatically loading cookies from {self._cookie_file}")
+                _ = await self.set_cookies(cookie_file=self._cookie_file)
+            else:
+                logger.warning(f"🍪 Cookie file {self._cookie_file} not found, skipping cookie loading")
+
+    async def wait_for_auth(self, timeout: float = 615) -> None:
+        """Wait for this browser to be ready without restarting or relogging it."""
+        response = await self._loaded()
+        if response is None:
+            raise ValueError("Session has not started")
+        if response.status == "active":
+            return
+        self.response = await arun(self.client, _auth_flow(response.session_id, timeout))
+
+    async def stop(self, close_reason: Literal["manual", "error"] = "manual") -> None:
+        """
+        Stop the session and clean up resources.
+
+        Raises:
+            ValueError: If the session hasn't been started yet (no session_id available).
+            RuntimeError: If the session fails to close properly.
+        """
+        if self._cookie_file is not None:
+            try:
+                cookies = await self.get_cookies()
+                await asyncio.to_thread(create_or_append_cookies_to_file, self._cookie_file, cookies)
+            except Exception as e:
+                logger.error(f"🍪 Error saving cookies to {self._cookie_file}: {e}")
+        try:
+            self.response = await self.client.stop(session_id=self.session_id, close_reason=close_reason)
+        except Exception as e:
+            if _already_stopped(e):
+                logger.warning(f"Session {self.session_id} was already stopped")
+            else:
+                raise
+
+    async def reset(self) -> None:
+        """
+        Stop the session, then start a new one with the same configuration.
+
+        The new session has a new session ID. A Playwright page must be opened again.
+        """
+        await self.stop()
+        _forget_stopped_session(self)
+        self._attached_id = None
+        await self.start()
+
+    @property
+    def session_id(self) -> str:
+        """
+        Get the ID of the current session.
+
+        Raises:
+            ValueError: If the session hasn't been started yet (no response available).
+        """
+        if self.response is not None:
+            return self.response.session_id
+        if self._attached_id is not None:
+            return self._attached_id
+        raise ValueError("You need to start the session first to get the session id")
+
+    async def offset(self) -> int:
+        """Get the trajectory offset of the session."""
+        return (await self.client.offset(session_id=self.session_id)).offset
+
+    async def replay(
+        self,
+        wait: bool = True,
+        timeout: float = 240.0,
+        poll_interval: float = 5.0,
+    ) -> ReplayResponse:
+        """
+        Get presigned URLs for the session replay; by default, poll until it is ready.
+
+        Raises:
+            ValueError: If the session hasn't been started yet (no session_id available).
+            TimeoutError: If the replay does not become available within ``timeout`` seconds.
+        """
+        response = await self._loaded()
+        return await self.client.replay(
+            session_id=self.session_id,
+            wait=wait,
+            timeout=timeout,
+            poll_interval=poll_interval,
+            _session_closed=response is not None and response.status == "closed",
+        )
+
+    async def viewer_browser(self) -> None:
+        """Opens live session replay in browser (frame by frame) in a new browser tab."""
+        response = await self._loaded()
+        _viewer_url = response.viewer_url if response is not None else None
+        return await self.client.viewer_browser(self.session_id, _viewer_url=_viewer_url)
+
+    async def viewer_notebook(self) -> WebsocketService:
+        """Returns a WebsocketJupyterDisplay for displaying live session replay in Jupyter notebook."""
+        return await self.client.viewer_notebook(session_id=self.session_id)
+
+    async def viewer_cdp(self) -> None:
+        """Open a browser tab with the debug URL for visualizing the session."""
+        await self.client.viewer_cdp(session_id=self.session_id)
+
+    async def viewer(self) -> None:
+        """
+        Open the viewer for the session based on the viewer_type.
+        """
+        match self.client.viewer_type:
+            case SessionViewerType.BROWSER:
+                await self.viewer_browser()
+            case SessionViewerType.JUPYTER:
+                _ = await self.viewer_notebook()
+            case SessionViewerType.CDP:
+                await self.viewer_cdp()
+
+    async def status(self) -> SessionResponse:
+        """Get the current status of the session."""
+        return await self.client.status(session_id=self.session_id)
+
+    async def set_cookies(
+        self,
+        cookies: list[CookieDict] | None = None,
+        cookie_file: str | Path | None = None,
+    ) -> SetCookiesResponse:
+        """
+        Uploads cookies to the session: `cookies` (list of dicts) or `cookie_file` (json file path).
+
+        Raises:
+            ValueError: If both cookies and cookie_file are provided, or if neither is provided.
+        """
+        return await self.client.set_cookies(session_id=self.session_id, cookies=cookies, cookie_file=cookie_file)
+
+    async def get_cookies(self) -> list[CookieDict]:
+        """Gets cookies from the session."""
+        return _cookie_dicts(await self.client.get_cookies(session_id=self.session_id))
+
+    async def save_profile(self, profile_id: str | None = None, name: str | None = None) -> ProfileResponse:
+        """
+        Saves the session's current browser state into a profile, without stopping the session.
+
+        Raises:
+            ValueError: If both ``profile_id`` and ``name`` are provided, or if either is empty.
+        """
+        data = _profile_save_data(profile_id, name)
+        return await self.client.save_profile(session_id=self.session_id, **data)
+
+    async def debug_info(self) -> SessionDebugResponse:
+        """Get detailed debug information for the session."""
+        return await self.client.debug_info(session_id=self.session_id)
+
+    async def cdp_url(self) -> str:
+        """
+        Get the Chrome DevTools Protocol WebSocket URL for the session.
+
+        Raises:
+            ValueError: If the session hasn't been started yet (no session_id available).
+        """
+        if (known := _known_cdp_url(self.client, self.request, await self._loaded())) is not None:
+            return known
+        # cdp url from the session provider
+        return self.client._with_db_preview((await self.debug_info()).ws.cdp)  # pyright: ignore [reportPrivateUsage]
+
+    def _cdp_headers(self, cdp_url: str) -> dict[str, str] | None:
+        """Headers for this API's CDP connection: the SDK identity, and the runner capability if set."""
+        return _cdp_headers(self.client, self.request, cdp_url)
+
+    @property
+    async def page(self) -> "PageAsync":
+        """
+        Get an async Playwright page connected to the session via CDP.
+
+        The connection is established lazily on first access and cached for subsequent calls.
+
+        ```python
+        page = await session.page
+        await page.goto("https://www.google.com")
+        ```
+
+        Raises:
+            ImportError: If playwright is not installed. Install with `pip install notte-sdk[playwright]`
+        """
+        return await _async_page(self, self.cdp_url)
+
+    # #######################################################################
+    # ############################# PAGE ####################################
+    # #######################################################################
+
+    # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
+    @overload
+    async def scrape(
+        self,
+        *,
+        response_format: type[TBaseModel],
+        instructions: str | None = None,
+        raise_on_failure: Literal[True] = ...,
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> TBaseModel: ...
+
+    # response_format provided, raise_on_failure=False -> wrapped StructuredData[TBaseModel]
+    @overload
+    async def scrape(
+        self,
+        *,
+        response_format: type[TBaseModel],
+        instructions: str | None = None,
+        raise_on_failure: Literal[False],
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> StructuredData[TBaseModel]: ...
+
+    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel as dict
+    @overload
+    async def scrape(
+        self, *, instructions: str, raise_on_failure: Literal[True] = ..., **params: Unpack[ScrapeMarkdownParamsDict]
+    ) -> dict[str, Any]: ...
+
+    # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
+    @overload
+    async def scrape(
+        self, *, instructions: str, raise_on_failure: Literal[False], **params: Unpack[ScrapeMarkdownParamsDict]
+    ) -> StructuredData[BaseModel]: ...
+
+    # markdown catch-all LAST: open Unpack[TypedDict] otherwise swallows every kwargs call under ty
+    @overload
+    async def scrape(self, /, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
+
+    async def scrape(
+        self, *, raise_on_failure: bool = True, **data: Unpack[ScrapeRequestDict]
+    ) -> StructuredData[BaseModel] | BaseModel | dict[str, Any] | str:
+        """
+        Scrape the current page data: markdown, or structured data with `response_format` or `instructions`.
+
+        Returns:
+            Extracted data as structured data, markdown text, or a StructuredData wrapper when
+            ``raise_on_failure=False``.
+        """
+        return await self.client.page.scrape(self.session_id, raise_on_failure=raise_on_failure, **data)
+
+    @overload
+    async def observe(
+        self,
+        *,
+        instructions: str,
+        url: str | None = None,
+        perception_type: PerceptionType | None = None,
+        **pagination: Unpack[PaginationParamsDict],
+    ) -> list[InteractionActionUnion]: ...
+
+    @overload
+    async def observe(
+        self,
+        *,
+        instructions: None = None,
+        url: str | None = None,
+        perception_type: PerceptionType | None = None,
+        **pagination: Unpack[PaginationParamsDict],
+    ) -> ObserveResponse: ...
+
+    async def observe(self, **data: Unpack[ObserveRequestDict]) -> ObserveResponse | list[InteractionActionUnion]:
+        """
+        Observes the current session page: its actions, a screenshot and metadata.
+
+        Deprecated: `perception_type='deep'` and `instructions` are removed on December 1, 2026, and passing
+        either emits a `DeprecationWarning`. See the migration guide: https://docs.notte.cc/features/sessions/observe-migration
+        """
+        data = _with_perception(data, self.default_perception_type)
+        return await self.client.page.observe(session_id=self.session_id, **data)  # pyright: ignore[reportUnknownVariableType, reportArgumentType, reportCallIssue]
+
+    # BEGIN GENERATED OVERLOADS: AsyncRemoteSession.execute (scripts/generate_action_overloads.py)
+    @overload
+    async def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[FormFillActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[GotoActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[GotoNewTabActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CloseTabActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[SwitchTabActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[GoBackActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[GoForwardActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ReloadActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[WaitActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[PressKeyActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ScrollUpActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ScrollDownActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CaptchaSolveActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[EmailVerificationReadActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[EvaluateJsActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ClickActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[FillActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[MultiFactorFillActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[FallbackFillActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CheckActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[SelectDropdownOptionActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[UploadFileActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[DownloadFileActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    async def execute(self, action: BaseAction, *, raise_on_failure: bool | None = None) -> ExecutionResult: ...
+
+    # END GENERATED OVERLOADS: AsyncRemoteSession.execute
+
+    async def execute(
+        self,
+        action: BaseAction | None = None,
+        *,
+        raise_on_failure: bool | None = None,
+        **kwargs: Any,
+    ) -> ExecutionResult:
+        """
+        Executes an action on the current session page, given as an action object or as keyword arguments.
+
+        Raises:
+            Exception: If raise_on_failure is True and the action execution fails.
+        """
+        action_obj = _action_from(action, kwargs)
+        result = await self.client.page.execute(session_id=self.session_id, action=action_obj)
+        return _checked_execution(result, action_obj, raise_on_failure, self.default_raise_on_failure)
+
+    # raise_on_failure=True (default) -> the evaluated string; failures raise
+    @overload
+    async def evaluate_js(self, code: str, *, raise_on_failure: Literal[True] = ...) -> str: ...
+
+    # raise_on_failure=False -> the ExecutionResult envelope, like execute()
+    @overload
+    async def evaluate_js(self, code: str, *, raise_on_failure: Literal[False]) -> ExecutionResult: ...
+
+    async def evaluate_js(self, code: str, *, raise_on_failure: bool = True) -> str | ExecutionResult:
+        """Evaluate JavaScript on the current page and return its result as a string."""
+        return _evaluated(
+            await self.execute(type="evaluate_js", code=code, raise_on_failure=raise_on_failure), raise_on_failure
+        )
+
+    async def fetch(
+        self,
+        url: str,
+        *,
+        method: str = "GET",
+        headers: Mapping[str, str] | None = None,
+        params: Mapping[str, Any] | None = None,
+        json: Any = None,
+        data: FetchData | None = None,
+        timeout: float | None = None,
+    ) -> FetchResponse:
+        """Issue an HTTP request from the page the session is on and return the response."""
+        script = build_fetch_script(
+            url, method=method, headers=headers, params=params, json_body=json, data=data, timeout=timeout
+        )
+        return response_from_evaluated(await self.evaluate_js(script))

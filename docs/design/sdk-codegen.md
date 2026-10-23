@@ -97,13 +97,22 @@ those modules only.
 Each generated `*Operations` class has an `Async*Operations` twin in the same
 `resources.py`, rendered by the same `_method` with `async def` and `await`: same names,
 signatures, docstrings and telemetry. `AsyncNotteClient` exposes them. The twin leaves out
-the generated methods listed in `ASYNC_PENDING` (`sessions.stop`, `set_cookies`, `replay`):
-the hand-written sync clients override them with more than the wire call, so a plain async
-call under the same name would behave differently. Hand-written-only sync methods (`page`,
-viewers) have no async twin yet either.
+the generated methods listed in `ASYNC_PENDING` (empty now): a method goes there while the
+hand-written sync client overrides it with more than the wire call and has no async override
+yet, since a plain async call under the same name would behave differently.
 `tests/sdk/test_async_resources.py` pins that list, requires every other generated method
 to have an async twin with the same signature (and the reverse), and sends a sample of
 calls plus every async method through both clients to compare the requests.
+
+Sessions have their async stateful layer: `AsyncSessionsClient` (with `AsyncPageClient` as
+`page`) overrides the generated twins like `SessionsClient` does, and `AsyncNotteClient.Session`
+creates an `AsyncRemoteSession`, with the `RemoteSession` methods as coroutines. Operations
+that take several requests (session start retries, the authentication wait, replay polling and
+the CAPTCHA loop of `execute`) are generators (see `_flow.py`): they yield the client call or
+sleep they need, and `run` or `arun` performs it, so the sync and async sessions share every
+decision. `tests/sdk/test_async_sessions.py` pins the methods the async session leaves out
+(`apage`, `await_for_auth`, and `storage` until the async file storage is wired in) and runs each
+scenario through both sessions to compare requests, sleeps and results.
 
 The ported hand-written resource methods (`AsyncPersonasClient.create_number`,
 `delete_number`, `AsyncVaultsClient.get`, `AsyncManagedAuthClient`) subclass the async

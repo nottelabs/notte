@@ -73,8 +73,12 @@ async def test_async_context_waits_before_yielding():
 @pytest.mark.asyncio
 async def test_cancelled_async_wait_closes_the_started_session():
     session = bare_session()
-    session.response = SimpleNamespace(session_id="session", status="authenticating")
-    session.start = MagicMock()
+    # The start creates the session, as the real one does; only a session the entry created is stopped.
+    session.start = MagicMock(
+        side_effect=lambda **_: setattr(
+            session, "response", SimpleNamespace(session_id="session", status="authenticating")
+        )
+    )
     session.await_for_auth = AsyncMock(side_effect=asyncio.CancelledError())
     with pytest.raises(asyncio.CancelledError):
         await session.__aenter__()
