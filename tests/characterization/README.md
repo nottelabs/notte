@@ -31,8 +31,9 @@ control receives the action and other controls keep their state. They cover all
 native controls, the custom button/checkbox/combobox/options/menuitem/tab, both
 iframe depths, both shadow depths, generated controls, and controls inside and
 outside both dialogs. ARIA options are clicked by id; native/custom comboboxes
-are selected by id. The listbox and menu containers are pinned in snapshots but
-are not treated as editable/independent controls. Each case checks stable ids
+are selected by id. The listbox container is pinned in snapshots but is not
+treated as an editable/independent control. The menu container is not offered:
+it only holds one menu item with the same name. Each case checks stable ids
 across two unchanged observations. Two additional tests cover unknown ids and
 removed elements with both cached and refreshed observations.
 

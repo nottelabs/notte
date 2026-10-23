@@ -451,56 +451,6 @@
   },
   {
     "category": "Interaction action",
-    "description": "<div></div>",
-    "model_dump": {
-      "accessible_name": null,
-      "category": "Interaction action",
-      "description": "<div></div>",
-      "id": "M1",
-      "press_enter": null,
-      "selector": {
-        "css_selector": "html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div > div > div > a > div",
-        "iframe_parent_css_selectors": [],
-        "in_iframe": false,
-        "in_shadow_root": false,
-        "notte_selector": "http://golden.test/checkout/article.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:8381830176837464980:-2263017896090566302:-5684463418888230769:-8769535454040683100:8545474677232581275:1267439804252035241:-1330976588956008822:488446132635407962:728520255028746337:3320642849327943296:-4336701046307007361:-4321955886038961771:-519047374781719540:-4781691773640328989:-9066423235864271119:8402481069312163123:-7046939383319129217:7227843387299275576:9126948101840398608:-2651969551846832524:-8088820889650096403:397152918557342587:7536631532780100195:5196210143247368268:6059663377761180874:-5506370568481844011",
-        "playwright_selector": null,
-        "python_selector": null,
-        "xpath_selector": "html/body/div[1]/div/main/div/div/div[1]/div[2]/div[1]/div[2]/div[1]/div/div/div/a/div"
-      },
-      "text_label": "",
-      "timeout": 15000,
-      "type": "click"
-    },
-    "param": null
-  },
-  {
-    "category": "Interaction action",
-    "description": "<picture></picture>",
-    "model_dump": {
-      "accessible_name": null,
-      "category": "Interaction action",
-      "description": "<picture></picture>",
-      "id": "M2",
-      "press_enter": null,
-      "selector": {
-        "css_selector": "html > body > div:nth-of-type(1) > div > main > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div > div > div > a > div > picture",
-        "iframe_parent_css_selectors": [],
-        "in_iframe": false,
-        "in_shadow_root": false,
-        "notte_selector": "http://golden.test/checkout/article.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:8381830176837464980:-2263017896090566302:-5684463418888230769:-8769535454040683100:8545474677232581275:1267439804252035241:-1330976588956008822:488446132635407962:728520255028746337:3320642849327943296:-4336701046307007361:-4321955886038961771:-519047374781719540:-4781691773640328989:-9066423235864271119:8402481069312163123:-7046939383319129217:7227843387299275576:9126948101840398608:-2651969551846832524:-8088820889650096403:397152918557342587:7536631532780100195:5196210143247368268:6059663377761180874:-5506370568481844011:8077524451458290270:-5775218566652606344",
-        "playwright_selector": null,
-        "python_selector": null,
-        "xpath_selector": "html/body/div[1]/div/main/div/div/div[1]/div[2]/div[1]/div[2]/div[1]/div/div/div/a/div/picture"
-      },
-      "text_label": "",
-      "timeout": 15000,
-      "type": "click"
-    },
-    "param": null
-  },
-  {
-    "category": "Interaction action",
     "description": "<a href=\"https://www.article.com/product/28855/portima-c-side-table-oak\"></a>",
     "model_dump": {
       "accessible_name": "Portima C Side Table - Oak",

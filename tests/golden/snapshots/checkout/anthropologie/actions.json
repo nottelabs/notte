@@ -51,31 +51,6 @@
   },
   {
     "category": "Interaction action",
-    "description": "<picture></picture>",
-    "model_dump": {
-      "accessible_name": null,
-      "category": "Interaction action",
-      "description": "<picture></picture>",
-      "id": "M1",
-      "press_enter": null,
-      "selector": {
-        "css_selector": "html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > header > div > div > div > div:nth-of-type(1) > div > div:nth-of-type(1) > a > picture",
-        "iframe_parent_css_selectors": [],
-        "in_iframe": false,
-        "in_shadow_root": false,
-        "notte_selector": "http://golden.test/checkout/anthropologie.html:4527775504046182633:3609651542926669075:-1206399714643329741:-7785470383901919982:5656977022867044673:5189760451607522566:-7716465208831419130:-7367951983184482658:7851733314820643935:-1510718530553573067:8988007118534368662:-8320416804438092527:-8858908211044368306:3246228024024680508:-206599963172992591:-7416781847122265966:2756471281452316544:5188178414344159606:-6761857526173067792:2635164284044080908:-8520479271697720267:-7588967696653549113:-1174985489994073895:6119358718195492218:2593912779594447916:4712003269409095705",
-        "playwright_selector": null,
-        "python_selector": null,
-        "xpath_selector": "html/body/div[2]/div/div[1]/header/div/div/div/div[1]/div/div[1]/a/picture"
-      },
-      "text_label": "",
-      "timeout": 15000,
-      "type": "click"
-    },
-    "param": null
-  },
-  {
-    "category": "Interaction action",
     "description": "<a href=\"https://www.anthropologie.com/anthrohome?brand-switch=1&ref=tab\"></a>",
     "model_dump": {
       "accessible_name": "AnthroHome",
@@ -92,31 +67,6 @@
         "playwright_selector": null,
         "python_selector": null,
         "xpath_selector": "html/body/div[2]/div/div[1]/header/div/div/div/div[1]/div/div[2]/a"
-      },
-      "text_label": "",
-      "timeout": 15000,
-      "type": "click"
-    },
-    "param": null
-  },
-  {
-    "category": "Interaction action",
-    "description": "<picture></picture>",
-    "model_dump": {
-      "accessible_name": null,
-      "category": "Interaction action",
-      "description": "<picture></picture>",
-      "id": "M2",
-      "press_enter": null,
-      "selector": {
-        "css_selector": "html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > header > div > div > div > div:nth-of-type(1) > div > div:nth-of-type(2) > a > picture",
-        "iframe_parent_css_selectors": [],
-        "in_iframe": false,
-        "in_shadow_root": false,
-        "notte_selector": "http://golden.test/checkout/anthropologie.html:4527775504046182633:3609651542926669075:-1206399714643329741:-7785470383901919982:5656977022867044673:5189760451607522566:-7716465208831419130:-7367951983184482658:7851733314820643935:-1510718530553573067:8988007118534368662:-8320416804438092527:-8858908211044368306:3246228024024680508:-206599963172992591:-7416781847122265966:2756471281452316544:5188178414344159606:-6761857526173067792:2635164284044080908:-6070361359898180103:-1414088227215296351:1429670379739765693:1839705880565411306:5262520167830975051:-7805235637892965482",
-        "playwright_selector": null,
-        "python_selector": null,
-        "xpath_selector": "html/body/div[2]/div/div[1]/header/div/div/div/div[1]/div/div[2]/a/picture"
       },
       "text_label": "",
       "timeout": 15000,
@@ -349,31 +299,6 @@
         "playwright_selector": null,
         "python_selector": null,
         "xpath_selector": "html/body/div[2]/div/div[1]/div[1]/main/div[2]/div[2]/div/div[2]/div/div[1]/div/div/h3/button"
-      },
-      "text_label": "Promo Code",
-      "timeout": 15000,
-      "type": "click"
-    },
-    "param": null
-  },
-  {
-    "category": "Interaction action",
-    "description": "<div></div>",
-    "model_dump": {
-      "accessible_name": null,
-      "category": "Interaction action",
-      "description": "<div></div>",
-      "id": "M3",
-      "press_enter": null,
-      "selector": {
-        "css_selector": "html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div > h3 > button > div",
-        "iframe_parent_css_selectors": [],
-        "in_iframe": false,
-        "in_shadow_root": false,
-        "notte_selector": "http://golden.test/checkout/anthropologie.html:4527775504046182633:3609651542926669075:-1206399714643329741:-7785470383901919982:5656977022867044673:5189760451607522566:-7716465208831419130:-7367951983184482658:831342815460846787:5179339535625656601:-2797542822661667296:-7287117206831984837:-2815852676280619358:2682081040974616949:6387151974809041514:-7309068646683738539:-5157538451792449880:-4334832655921558591:1550613906932768793:7882775895722109357:-7910999373373892303:36400916716560990:-4231999236211577384:184288140950806138:662123251024938276:2469094897479518945:-6859553100200713716:6013859606344360923:-972343623440805034:2283734529503296980:531080418176629719:7278334388845073524:3174560659398574195:210648343636124812",
-        "playwright_selector": null,
-        "python_selector": null,
-        "xpath_selector": "html/body/div[2]/div/div[1]/div[1]/main/div[2]/div[2]/div/div[2]/div/div[1]/div/div/h3/button/div"
       },
       "text_label": "Promo Code",
       "timeout": 15000,

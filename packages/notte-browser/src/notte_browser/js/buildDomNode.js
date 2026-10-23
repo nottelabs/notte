@@ -1001,8 +1001,9 @@
 	 * One of the things we tried at the beginning was also to use event listeners, and other fancy class, style stuff -> what actually worked best was just combining most things with computed cursor style :)
 	 *
 	 * @param {HTMLElement} element - The element to check.
+	 * @param {boolean} usePointerCursor - Whether a pointer cursor alone makes the element interactive.
 	 */
-	function isInteractiveElement(element) {
+	function isInteractiveElement(element, usePointerCursor = enable_pointer_elements) {
 		if (!element || element.nodeType !== Node.ELEMENT_NODE) {
 			return false;
 		}
@@ -1020,7 +1021,7 @@
 		let isInteractiveCursor = isPointerElementWithHover(element);
 
 		// Genius fix for almost all interactive elements
-		if (isInteractiveCursor && enable_pointer_elements) {
+		if (isInteractiveCursor && usePointerCursor) {
 			return true;
 		}
 
@@ -1420,8 +1421,13 @@
 		// Avoid highlighting elements whose parent is <body> (top-level wrappers)
 		const isParentBody = element.parentElement && element.parentElement.isSameNode(document.body);
 
+		// `cursor` is inherited: the text and icon wrappers inside a link or a button have its pointer
+		// cursor, which says nothing about them
+		const parentCursor = element.parentElement ? getCachedComputedStyle(element.parentElement)?.cursor : undefined;
+		const hasOwnCursor = getCachedComputedStyle(element)?.cursor !== parentCursor;
+
 		return (
-			(isInteractiveElement(element) || hasInteractiveAttributes || hasInteractiveClass) &&
+			(isInteractiveElement(element, enable_pointer_elements && hasOwnCursor) || hasInteractiveAttributes || hasInteractiveClass) &&
 			hasVisibleChildren &&
 			isInKnownContainer &&
 			!isParentBody

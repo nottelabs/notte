@@ -6,6 +6,5 @@ I1[:]<div tabindex="0" role="combobox" aria_label="Custom choice" aria_expanded=
 I2[:]<div role="listbox" aria_label="Fruit choices"></div>
 O1[:]<div tabindex="0" role="option">Apple</div>
 O2[:]<div tabindex="0" role="option">Banana</div>
-M1[:]<div role="menu"></div>
 B3[:]<div tabindex="0" role="menuitem">Settings</div>
 B4[:]<div tabindex="0" role="tab">Overview</div>

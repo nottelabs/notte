@@ -116,3 +116,56 @@ def test_names_and_attributes() -> None:
     # a button without text is named after its type
     assert button.text == "submit"
     assert root.text == "body content"
+
+
+def _ids(root: DomNode) -> list[tuple[str, str]]:
+    return [(node.id or "", node.inner_text()) for node in root.interaction_nodes()]
+
+
+def test_generic_clickables_inside_a_control_get_no_id() -> None:
+    # GitHub's "Fork" link: the pointer cursor of the link is inherited by its label and counter
+    nodes: dict[str, RawNode] = {
+        "1": _text("Fork"),
+        "2": _element("span", "/body/a/span/span[1]", ["1"], highlight=1),
+        "3": _text("17.1k"),
+        "4": _element("span", "/body/a/span/span[2]", ["3"], highlight=2),
+        "5": _element("span", "/body/a/span", ["2", "4"], highlight=3),
+        "6": _element("a", "/body/a", ["5"], highlight=0, href="/fork"),
+        # an element inside a control with a name of its own may do something else
+        "7": _text("Tag"),
+        "8": _element("span", "/body/button/span", [], highlight=5, **{"aria-label": "Remove tag"}),
+        "9": _element("button", "/body/button", ["7", "8"], highlight=4),
+        "10": _element("body", "/body", ["6", "9"]),
+    }
+    nodes["8"]["accessibleName"] = "Remove tag"
+    root = build_dom_tree(_frame(nodes, "10"), url="https://example.com")
+    assert root is not None
+    assert _ids(root) == [("L1", "Fork 17.1k"), ("B1", "Tag"), ("M1", "")]
+    # the link is rendered with its text, which its highlighted children used to hide
+    fork = root.children[0]
+    assert fork.type is NodeType.INTERACTION
+    inner = [node for node in fork.flatten()[1:] if node.type is not NodeType.TEXT]
+    assert len(inner) == 3 and all(node.id is None and node.type is NodeType.OTHER for node in inner)
+
+
+def test_a_generic_clickable_around_one_control_with_the_same_name_gets_no_id() -> None:
+    nodes: dict[str, RawNode] = {
+        # Amazon's search button: `<div>Go</div>` with a pointer cursor around the submit input
+        "1": _text("Go"),
+        "2": _element("span", "/body/div[1]/span", ["1"]),
+        "3": _element("input", "/body/div[1]/input", [], highlight=1, type="submit"),
+        "4": _element("div", "/body/div[1]", ["2", "3"], highlight=0),
+        # a clickable row around a button with another name: both are kept
+        "5": _text("10:40 AM Paris - Tokyo"),
+        "6": _element("button", "/body/div[2]/button", [], highlight=3, **{"aria-label": "Emissions"}),
+        "7": _element("div", "/body/div[2]", ["5", "6"], highlight=2),
+        # a clickable element on its own is kept
+        "8": _text("Widgets"),
+        "9": _element("span", "/body/span", ["8"], highlight=4),
+        "10": _element("body", "/body", ["4", "7", "9"]),
+    }
+    nodes["3"]["accessibleName"] = "Go"
+    nodes["6"]["accessibleName"] = "Emissions"
+    root = build_dom_tree(_frame(nodes, "10"), url="https://example.com")
+    assert root is not None
+    assert _ids(root) == [("B1", ""), ("M1", "10:40 AM Paris - Tokyo"), ("B2", ""), ("M2", "Widgets")]
