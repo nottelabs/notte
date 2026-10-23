@@ -149,6 +149,14 @@ class Signatures:
     def has(self, element_id: str) -> bool:
         return self.elements.get(element_id) is not None
 
+    def readonly(self) -> frozenset[str]:
+        """Ids of the read-only fields (`el.readOnly`, which the rendered page does not show)."""
+        return frozenset(
+            element_id
+            for element_id, fields in self.elements.items()
+            if isinstance(fields, list) and len(cast(list[Any], fields)) == _SIGNATURE_FIELDS and fields[12] is True
+        )
+
     def unchanged(self, check: dict[str, Any] | None, element_id: str | None, *, focus: bool = False) -> bool:
         """A cloud `compare` result (`remote_signatures_expression`): same URL, `element_id` unchanged and, with
         `focus`, the same focused element."""
