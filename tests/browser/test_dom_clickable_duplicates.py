@@ -17,6 +17,7 @@ PAGE = """
 <div class="clickable" onclick="this.dataset.clicked = 1">10:40 AM Paris - Tokyo
   <button aria-label="Emissions"><b>i</b></button>
 </div>
+<button>Tag <span onclick="this.dataset.removed = 1">x</span></button>
 """
 
 
@@ -33,5 +34,8 @@ async def test_a_control_is_offered_once() -> None:
         ("M1", "Widgets"),
         ("M2", "10:40 AM Paris - Tokyo i"),
         ("B2", "i"),
+        # a nested element with a click handler of its own may do something else
+        ("B3", "Tag x"),
+        ("M3", "x"),
     ]
     assert 'L1[:]<a href="/fork">Fork\n17.1k</a>' in observation.space.description

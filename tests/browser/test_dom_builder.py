@@ -169,3 +169,29 @@ def test_a_generic_clickable_around_one_control_with_the_same_name_gets_no_id() 
     root = build_dom_tree(_frame(nodes, "10"), url="https://example.com")
     assert root is not None
     assert _ids(root) == [("B1", ""), ("M1", "10:40 AM Paris - Tokyo"), ("B2", ""), ("M2", "Widgets")]
+
+
+def test_generic_clickables_that_may_do_something_else_keep_their_id() -> None:
+    nodes: dict[str, RawNode] = {
+        # inside a control, with a click handler of its own: `<button>Tag<span onclick="...">×</span></button>`
+        "1": _text("Tag"),
+        "2": _text("×"),
+        "3": _element("span", "/body/button/span", ["2"], highlight=1, onclick="removeTag()"),
+        "4": _element("button", "/body/button", ["1", "3"], highlight=0),
+        # a row named "Open details" around an icon button named "Favorite"
+        "5": _element("button", "/body/div[1]/button", [], highlight=3),
+        "6": _element("div", "/body/div[1]", ["5"], highlight=2, **{"aria-label": "Open details"}),
+        # two wrappers around a "Go" button: both are duplicates
+        "7": _element("input", "/body/div[2]/div/input", [], highlight=6, type="submit"),
+        "8": _element("div", "/body/div[2]/div", ["7"], highlight=5),
+        "9": _element("div", "/body/div[2]", ["8"], highlight=4),
+        "10": _element("body", "/body", ["4", "6", "9"]),
+    }
+    nodes["3"]["clickHandler"] = True
+    nodes["5"]["accessibleName"] = "Favorite"
+    nodes["6"]["accessibleName"] = "Open details"
+    nodes["7"]["accessibleName"] = "Go"
+    root = build_dom_tree(_frame(nodes, "10"), url="https://example.com")
+    assert root is not None
+    ids = [(node.id, node.accessible_name) for node in root.interaction_nodes()]
+    assert ids == [("B1", None), ("M1", None), ("M2", "Open details"), ("B2", "Favorite"), ("B3", "Go")]

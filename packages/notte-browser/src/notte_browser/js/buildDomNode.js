@@ -1788,6 +1788,8 @@
 						if (state !== undefined) nodeData.state = state;
 						const accessibleName = getAccessibleName(node);
 						if (accessibleName !== undefined) nodeData.accessibleName = accessibleName;
+						// a click handler of its own: the element may do something else than the control around it
+						if (node.hasAttribute("onclick") || typeof node.onclick === "function") nodeData.clickHandler = true;
 					}
 				}
 			}

@@ -56,6 +56,8 @@ class RawNode(TypedDict):
     state: NotRequired[dict[str, Any]]
     # accessible name of highlighted and disabled elements, when they have one
     accessibleName: NotRequired[str]
+    # a highlighted element with a click handler of its own (`onclick`)
+    clickHandler: NotRequired[bool]
     # visible iframe elements of the child frames the caller asked about
     frameIndex: NotRequired[int]
     frameOffset: NotRequired[dict[str, float]]
@@ -93,6 +95,8 @@ class _Highlight:
     control: bool
     text: str
     name: str
+    # it has a click handler of its own
+    handler: bool
     children: list["_Highlight"] = field(default_factory=list)
 
     def descendants(self) -> list["_Highlight"]:
@@ -104,26 +108,34 @@ def duplicate_clickables(root: RawNode, nodes: dict[str, RawNode]) -> set[int]:
 
     A pointer cursor makes an element clickable, and pages put one on containers around their controls. Such
     an element is a duplicate when it is:
-    - inside a control (a link, a button, ...): clicking it clicks the control, unless it has a name of its own;
-    - around a single control with the same text or name (a `<div>Go</div>` around a "Go" button).
+    - inside a control (a link, a button, ...): clicking it clicks the control, unless it has a name or a
+      click handler of its own;
+    - around a single control, and named like it: its name, or else its text, is empty or the control's text
+      or name (a `<div>Go</div>` around a "Go" button).
     """
     highlights = _highlights(root, nodes)
     duplicates: set[int] = set()
 
     def inside(node: _Highlight, in_control: bool) -> None:
-        if in_control and not node.control and len(node.name) == 0:
+        if in_control and not node.control and len(node.name) == 0 and not node.handler:
             duplicates.add(node.index)
         for child in node.children:
             inside(child, in_control or node.control)
 
+    def around(node: _Highlight) -> None:
+        # nested wrappers first: a wrapper around a wrapper of the control is then around the control alone
+        for child in node.children:
+            around(child)
+        if node.control or node.index in duplicates:
+            return
+        nested = [child for child in node.descendants() if child.index not in duplicates]
+        label = node.name or node.text
+        if len(nested) == 1 and nested[0].control and label in ("", nested[0].text, nested[0].name):
+            duplicates.add(node.index)
+
     for node in highlights:
         inside(node, False)
-    for node in (node for top in highlights for node in (top, *top.descendants())):
-        if node.control or node.index in duplicates:
-            continue
-        nested = [child for child in node.descendants() if child.index not in duplicates]
-        if len(nested) == 1 and nested[0].control and node.text in ("", nested[0].text, nested[0].name):
-            duplicates.add(node.index)
+        around(node)
     return duplicates
 
 
@@ -145,7 +157,8 @@ def _highlights(raw: RawNode, nodes: dict[str, RawNode]) -> list[_Highlight]:
     role = NodeRole.from_element(_tag(tag_name), raw.get("attributes", {}))
     control = isinstance(role, NodeRole) and role.short_id() in _CONTROL_SHORT_IDS
     name = _normalize(raw.get("accessibleName", ""))
-    return [_Highlight(index, control, _normalize(_raw_text(raw, nodes)), name, children)]
+    text = _normalize(_raw_text(raw, nodes))
+    return [_Highlight(index, control, text, name, raw.get("clickHandler", False), children)]
 
 
 def _raw_text(raw: RawNode, nodes: dict[str, RawNode]) -> str:
