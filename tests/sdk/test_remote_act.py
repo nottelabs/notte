@@ -325,3 +325,34 @@ def test_remote_act_without_state_types_the_select_label(monkeypatch: pytest.Mon
     assert isinstance(result.action, SelectDropdownOptionAction) and result.action.value == "French"
     elements = {e["index"]: e for e in decider.states[0].elements}
     assert "value" not in elements["I1"] and "options" not in elements["I2"]
+
+
+def test_remote_act_sends_the_decided_elements_selectors(monkeypatch: pytest.MonkeyPatch) -> None:
+    # an id names the element of the server's latest observation: the selectors pin the one decided on
+    remote = _Remote([_observation()])
+    session = _session(remote, monkeypatch)
+    decider = FakeDecider(choices=[{"operation": "CLICK", "click_target": "B1"}])
+
+    result = session.act("click search", decider=decider)
+
+    assert result.status == "executed"
+    clicked = remote.executed[0]
+    assert isinstance(clicked, ClickAction) and clicked.id == "B1"
+    assert clicked.selectors is not None and clicked.selectors.xpath_selector == "html/body/form/button"
+
+
+def test_remote_act_keeps_the_id_of_a_shadow_root_target(monkeypatch: pytest.MonkeyPatch) -> None:
+    # the server builds a shadow-root element's selectors from its snapshot: send the id only
+    observation = _observation()
+    button = observation.space.interaction_actions[2]
+    assert button.selectors is not None
+    shadow = button.model_copy(update={"selector": button.selectors.model_copy(update={"in_shadow_root": True})})
+    observation.space.interaction_actions[2] = shadow
+    remote = _Remote([observation])
+    session = _session(remote, monkeypatch)
+    decider = FakeDecider(choices=[{"operation": "CLICK", "click_target": "B1"}])
+
+    result = session.act("click search", decider=decider)
+
+    assert result.status == "executed"
+    assert isinstance(remote.executed[0], ClickAction) and remote.executed[0].selector is None
