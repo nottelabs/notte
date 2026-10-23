@@ -111,8 +111,8 @@ that take several requests (session start retries, the authentication wait, repl
 the CAPTCHA loop of `execute`) are generators (see `_flow.py`): they yield the client call or
 sleep they need, and `run` or `arun` performs it, so the sync and async sessions share every
 decision. `tests/sdk/test_async_sessions.py` pins the methods the async session leaves out
-(`apage`, `await_for_auth`, and `storage` until the async file storage is wired in) and runs each
-scenario through both sessions to compare requests, sleeps and results.
+(`apage` and `await_for_auth`) and runs each scenario through both sessions to compare requests,
+sleeps and results.
 
 The ported hand-written resource methods (`AsyncPersonasClient.create_number`,
 `delete_number`, `AsyncVaultsClient.get`, `AsyncManagedAuthClient`) subclass the async
