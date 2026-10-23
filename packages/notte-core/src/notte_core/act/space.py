@@ -447,8 +447,11 @@ def page_text(
       whether there is more above or below, as the elements offered are those the decider can see;
     - otherwise the whole text, with headers saying which part is above, in and below the viewport. Past
       `length`, it is cut around the viewport (around the `focus` element, when given), not at the top."""
-    text = _page_text(page, labels, display_text, length, focus, viewport_only)
-    return prompts.DIALOG_COVERS_PAGE + "\n" + text if covered_by_dialog(page.description) else text
+    if covered_by_dialog(page.description):
+        # the description is the dialog alone, which is on screen whatever the page's scroll position
+        text = _page_text(page, labels, display_text, length, None, viewport_only, windowed=False)
+        return prompts.DIALOG_COVERS_PAGE + "\n" + text
+    return _page_text(page, labels, display_text, length, focus, viewport_only)
 
 
 def _page_text(
@@ -458,9 +461,11 @@ def _page_text(
     length: int | None,
     focus: str | None,
     viewport_only: bool,
+    *,
+    windowed: bool = True,
 ) -> str:
     lines = _description_lines(page.description) if labels == "html" else _accessible_lines(page, display_text)
-    viewport = _viewport_lines(page, lines)
+    viewport = _viewport_lines(page, lines) if windowed else None
     if viewport is None or viewport == (0, len(lines)):
         text = "\n".join(line for _, line in lines)
         return text if length is None else _cut(text, length)
