@@ -52,6 +52,8 @@ By default (`NOTTE_ACT_LABELS=accessible`) each element is named by its accessib
 
 `NOTTE_ACT_LABELS=html` sends each element's rendered HTML (`<input name="name">`) and the rendered page instead. On pages where several elements differ only by their label text (two checkboxes with the same `name`, a list of todo toggles), the accessible names are what tells them apart.
 
+Only the elements in the viewport are offered. On a page taller than the viewport, `act()` decides on the text in the viewport, with a line saying there is more above or below, so the decider scrolls to reach the rest. `choose()` and `check()` read the whole page text, marked with the part above, in and below the viewport. Past 12,000 characters, it is cut around the current scroll position, not at the top of the page.
+
 ## Act
 
 <ActLocal />
