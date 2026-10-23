@@ -81,7 +81,7 @@ remain spec-owned; high-level agent APIs and their tests are no longer included.
 | ❌  | 5.6 | `fork()` | `functionFork` unwrapped. | `NotteFunction.fork()` | P2 | |
 | ❌  | 5.7 | `updateRun()` | `functionRunUpdateMetadata` unwrapped. | `client.functions.run_update_metadata(function_id, run_id, ...)` | P2 | |
 | ❌  | 5.8 | `getCurl()` | Not present. | `NotteFunction.get_curl(**variables)` | P2 | |
-| ✅  | 5.9 | `replay()` on function | Not present, and removed from Python: replay the run's session instead. | n/a | P3 | |
+| ❌  | 5.9 | `replay()` on function | Not present, and removed from Python: replay the run's session instead. | n/a | P3 | |
 | ❌  | 5.10 | Local execution | Not present. | `run(local=True)` via `SecureScriptRunner` + `LogCapture` | P3 | |
 | ✅  | 5.11 | Schedules and rollback | `functionScheduleSet`, `functionScheduleDelete`, `functionRollback` unwrapped (neither SDK wraps them). | n/a | P3 | |
 | ❌  | 5.12 | `functionRuntimeHealth` | Unwrapped (neither SDK wraps it). | n/a | P3 | |
