@@ -26,6 +26,8 @@ from notte_sdk._transport import (
     asend,
     asend_with_retries,
     astream,
+    athread_finally,
+    athread_owned,
     awrite_chunks,
     decode_json,
     form_fields,
@@ -209,6 +211,10 @@ def _open_uploads(files: Mapping[str, UploadFile]) -> Generator[dict[str, Any]]:
         for name, filename, path in _upload_paths(files):
             uploads[name] = _upload_part(filename, stack.enter_context(open(path, "rb")))
         yield uploads
+
+
+def _close(handle: IO[bytes]) -> None:
+    handle.close()
 
 
 class _UploadBuffer(io.BytesIO):
@@ -1089,10 +1095,11 @@ class AsyncBaseClient(_ClientCore["AsyncNotteClient"]):
         request = http.build_request("GET", url, timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS)
         async with astream(http, request) as r:
             await araise_for_status(r)
-            f = await asyncio.to_thread(open, file_path, "wb")
+            # A cancellation while the file opens still closes it.
+            f = await athread_owned(_close, open, file_path, "wb")
             try:
                 await awrite_chunks(r.aiter_bytes(chunk_size=self.DEFAULT_FILE_CHUNK_SIZE), f)
             finally:
-                await asyncio.to_thread(f.close)
+                await athread_finally(f.close)
 
         return True

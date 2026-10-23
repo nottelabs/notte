@@ -15,7 +15,7 @@ from typing_extensions import override
 from notte_sdk._generated import operations as api
 from notte_sdk._generated.resources import AsyncFilesOperations, FilesOperations
 from notte_sdk._requests import wire_request
-from notte_sdk._transport import awrite_chunks
+from notte_sdk._transport import athread_finally, athread_owned, awrite_chunks
 from notte_sdk.endpoints.base import NotteEndpoint, UploadFile
 from notte_sdk.types import FileSource, SessionFile, SessionFilesPage
 
@@ -72,6 +72,11 @@ def _partial_file(destination: Path) -> IO[bytes]:
         suffix=".part",
         delete=False,
     )
+
+
+def _discard_partial(output: IO[bytes]) -> None:
+    output.close()
+    Path(output.name).unlink(missing_ok=True)
 
 
 @final
@@ -134,17 +139,18 @@ class AsyncFileStorageClient(AsyncFilesOperations):
         temporary: Path | None = None
         try:
             async with self._stream_bytes(api.download_session_file(session_id, file_id)) as chunks:
-                output = await asyncio.to_thread(_partial_file, destination)
+                # A cancellation while the file is created still removes it.
+                output = await athread_owned(_discard_partial, _partial_file, destination)
                 temporary = Path(output.name)
                 try:
                     await awrite_chunks(chunks, output)
                 finally:
-                    await asyncio.to_thread(output.close)
+                    await athread_finally(output.close)
             _ = await asyncio.to_thread(temporary.replace, destination)
             temporary = None
         finally:
             if temporary is not None:
-                await asyncio.to_thread(temporary.unlink, missing_ok=True)
+                await athread_finally(temporary.unlink, missing_ok=True)
         return str(destination)
 
 

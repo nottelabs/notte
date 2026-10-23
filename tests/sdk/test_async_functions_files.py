@@ -21,6 +21,7 @@ import httpx
 import pytest
 from notte_core.logging import logger
 from notte_sdk import AsyncNotteClient, NotteClient
+from notte_sdk._transport import AsyncSharedHttpClient, async_http_client
 from notte_sdk._v1_aliases import _RENAMED_ATTRS, _RENAMED_METHODS
 from notte_sdk.endpoints import base as base_module
 from notte_sdk.endpoints import files as files_module
@@ -812,3 +813,85 @@ async def test_request_download_matches_sync(monkeypatch: pytest.MonkeyPatch, tm
     missing = {("GET", "storage"): httpx.Response(404)}
     failed = await same_exchange(monkeypatch, missing, flow)
     assert failed.outcome[1].__name__ == "NotteHTTPStatusError"
+
+
+# ---------------------------------------------------------------------------
+# Cancelled while a worker thread creates a file: nothing is left behind
+
+
+class Blocking:
+    """A file factory whose worker thread waits until released, so the caller can be cancelled meanwhile."""
+
+    def __init__(self, factory: Callable[..., Any]) -> None:
+        self.factory: Callable[..., Any] = factory
+        self.started: threading.Event = threading.Event()
+        self.release: threading.Event = threading.Event()
+        self.done: threading.Event = threading.Event()
+        self.created: list[Any] = []
+
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        self.started.set()
+        assert self.release.wait(5)
+        created = self.factory(*args, **kwargs)
+        self.created.append(created)
+        self.done.set()
+        return created
+
+    async def cancel_while_creating(self, call: Coroutine[Any, Any, Any]) -> Any:
+        """Cancel `call` while its worker creates the file; returns what the worker created."""
+        task = asyncio.ensure_future(call)
+        assert await asyncio.to_thread(self.started.wait, 5)
+        _ = task.cancel()
+        self.release.set()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+        # Without ownership of the worker's result, the task ends before the worker does.
+        assert await asyncio.to_thread(self.done.wait, 5)
+        return self.created[0]
+
+
+@pytest.mark.asyncio
+async def test_cancelled_download_leaves_no_partial_file(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    blocking = Blocking(files_module._partial_file)
+    monkeypatch.setattr(files_module, "_partial_file", blocking)
+    pages = [[file_entry("file-2", "second.txt")]]
+    client = async_http_client()
+    client._transport = httpx.MockTransport(Api(file_routes(pages)))
+    monkeypatch.setattr(AsyncSharedHttpClient, "get", lambda _: client)
+    notte = AsyncNotteClient(api_key=KEY, server_url=SERVER)
+    output = await blocking.cancel_while_creating(notte.files.download("s-1", "file-2", str(tmp_path)))
+    assert output.closed
+    assert list(tmp_path.iterdir()) == []
+    await client.aclose()
+
+
+@pytest.mark.asyncio
+async def test_cancelled_request_download_closes_its_file(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    blocking = Blocking(open)
+    monkeypatch.setattr(base_module, "open", blocking, raising=False)
+    client = async_http_client()
+    client._transport = httpx.MockTransport(Api({("GET", "storage"): b"body"}))
+    monkeypatch.setattr(AsyncSharedHttpClient, "get", lambda _: client)
+    notte = AsyncNotteClient(api_key=KEY, server_url=SERVER)
+    call = notte.sessions.request_download(f"https://{STORAGE_HOST}/file", str(tmp_path / "file"))
+    assert (await blocking.cancel_while_creating(call)).closed
+    await client.aclose()
+
+
+@pytest.mark.asyncio
+async def test_cancelled_payload_spool_closes_its_file(monkeypatch: pytest.MonkeyPatch) -> None:
+    blocking = Blocking(run_payloads._spool)
+    monkeypatch.setattr(run_payloads, "_spool", blocking)
+    monkeypatch.setattr(run_payloads, "INLINE_FIELD_BYTES", 1)
+    notte = AsyncNotteClient(api_key=KEY, server_url=SERVER)
+    call = run_payloads.aoffload_run_fields(notte.functions, "f-1", "r-1", {"logs": ["log"]})
+    payload, _, _ = await blocking.cancel_while_creating(call)
+    assert payload.closed
+
+
+@pytest.mark.asyncio
+async def test_cancelled_payload_download_closes_its_file(monkeypatch: pytest.MonkeyPatch) -> None:
+    blocking = Blocking(run_payloads._PayloadDownload)
+    monkeypatch.setattr(run_payloads, "_PayloadDownload", blocking)
+    download = await blocking.cancel_while_creating(run_payloads.aresolve_run_fields(stored_run(b"[]")))
+    assert download._file.closed

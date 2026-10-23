@@ -17,7 +17,7 @@ from pydantic import BaseModel, RootModel
 from notte_sdk._compat.run_payloads import UploadReference
 from notte_sdk._compat.run_payloads import UploadResponse as UploadResponse
 from notte_sdk._generated.resources import AsyncRunPayloadsOperations, RunPayloadsOperations
-from notte_sdk._transport import aget_object, aput_object, get_object, put_object
+from notte_sdk._transport import aget_object, aput_object, athread_finally, athread_owned, get_object, put_object
 
 INLINE_FIELD_BYTES = 1024 * 1024
 MAX_PAYLOAD_BYTES = 256 * 1024 * 1024
@@ -78,6 +78,11 @@ def _spool(field: str, value: Any) -> tuple[IO[bytes], int, str] | None:
         raise
 
 
+def _close_spooled(spooled: tuple[IO[bytes], int, str] | None) -> None:
+    if spooled is not None:
+        spooled[0].close()
+
+
 def _upload_url(upload: UploadResponse, size: int, checksum: str) -> str:
     if upload.reference.size_bytes != size or upload.reference.sha256 != checksum:
         raise ValueError("Run payload upload reference does not match the local payload")
@@ -135,7 +140,8 @@ async def aoffload_run_fields(
     for field in PAYLOAD_FIELDS:
         if field not in data or data[field] is None:
             continue
-        spooled = await asyncio.to_thread(_spool, field, data[field])
+        # A cancellation while the field is spooled still closes its file.
+        spooled = await athread_owned(_close_spooled, _spool, field, data[field])
         if spooled is None:
             continue
         payload, size, checksum = spooled
@@ -146,7 +152,7 @@ async def aoffload_run_fields(
             url = _upload_url(upload, size, checksum)
             _check_uploaded(await aput_object(url, payload, headers=upload.headers, timeout=_STORAGE_TIMEOUT))
         finally:
-            await asyncio.to_thread(payload.close)
+            await athread_finally(payload.close)
         _replace_with_reference(data, references, field, upload)
     return _with_references(data, references)
 
@@ -194,6 +200,10 @@ class _PayloadDownload:
         self._file.close()
 
 
+def _close_download(payload: _PayloadDownload) -> None:
+    payload.close()
+
+
 def resolve_run_fields(data: dict[str, Any]) -> dict[str, Any]:
     """Hydrate on the caller's machine, checking the bytes before decoding JSON."""
     data = dict(data)
@@ -220,7 +230,8 @@ async def aresolve_run_fields(data: dict[str, Any]) -> dict[str, Any]:
     urls = data.pop("payload_urls", {})
     for field, raw_reference in references.items():
         reference, url = _download_reference(field, raw_reference, urls)
-        payload = await asyncio.to_thread(_PayloadDownload, reference)
+        # A cancellation while the spool file is created still closes it.
+        payload = await athread_owned(_close_download, _PayloadDownload, reference)
         try:
             async with aget_object(url, timeout=_STORAGE_TIMEOUT, chunk_size=_CHUNK_SIZE) as (status, chunks):
                 payload.check_status(status)
@@ -228,5 +239,5 @@ async def aresolve_run_fields(data: dict[str, Any]) -> dict[str, Any]:
                     await asyncio.to_thread(payload.write, chunk)
             data[field] = await asyncio.to_thread(payload.load)
         finally:
-            await asyncio.to_thread(payload.close)
+            await athread_finally(payload.close)
     return data

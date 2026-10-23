@@ -25,7 +25,7 @@ from collections.abc import AsyncGenerator, AsyncIterator, Awaitable, Callable, 
 from contextlib import asynccontextmanager, contextmanager
 from contextvars import ContextVar
 from http.cookiejar import CookieJar
-from typing import IO, Any, Protocol, TypedDict, cast
+from typing import IO, Any, ParamSpec, Protocol, TypedDict, TypeVar, cast
 from urllib.parse import urlencode
 
 import anyio
@@ -904,6 +904,51 @@ async def aiter_lines(response: httpx.Response) -> AsyncIterator[bytes]:
             yield line
     for line in lines.end():
         yield line
+
+
+_P = ParamSpec("_P")
+_T = TypeVar("_T")
+
+
+async def _until_done(task: "asyncio.Future[_T]") -> asyncio.CancelledError | None:
+    """Wait for `task` even if the caller is cancelled meanwhile; returns that cancellation."""
+    cancelled: asyncio.CancelledError | None = None
+    while not task.done():
+        try:
+            _ = await asyncio.wait({task})
+        except asyncio.CancelledError as error:
+            cancelled = error
+    return cancelled
+
+
+async def athread_owned(
+    release: Callable[[_T], object], func: Callable[_P, _T], /, *args: _P.args, **kwargs: _P.kwargs
+) -> _T:
+    """`asyncio.to_thread(func, ...)` for a call that creates a file or opens a handle.
+
+    Cancelling `to_thread` does not stop its worker, whose result would then be lost: a created
+    file stays on disk, a handle stays open. When the caller is cancelled, this waits for the
+    worker, passes its result to `release` (in a thread) and re-raises the cancellation.
+    """
+    task = asyncio.ensure_future(asyncio.to_thread(func, *args, **kwargs))
+    cancelled = await _until_done(task)
+    if cancelled is None:
+        return task.result()
+    if not task.cancelled() and task.exception() is None:
+        await athread_finally(release, task.result())
+    raise cancelled
+
+
+async def athread_finally(func: Callable[_P, object], /, *args: _P.args, **kwargs: _P.kwargs) -> None:
+    """`asyncio.to_thread(func, ...)` for cleanup: it completes even if the caller is cancelled
+    again meanwhile, and that cancellation is re-raised after it."""
+    task = asyncio.ensure_future(asyncio.to_thread(func, *args, **kwargs))
+    cancelled = await _until_done(task)
+    error = None if task.cancelled() else task.exception()
+    if cancelled is not None:
+        raise cancelled
+    if error is not None:
+        raise error
 
 
 async def awrite_chunks(chunks: AsyncIterator[bytes], output: IO[bytes]) -> None:
