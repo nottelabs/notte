@@ -881,3 +881,56 @@ I1[:]<input role="combobox"></input>"""
     # the rendered page does not show `readonly`: without the signatures the input is filled
     assert kind(page) == "FillAction"
     assert kind(replace(page, readonly=signatures.readonly())) == "SelectDropdownOptionAction"
+
+
+COOKIE_DIALOG = """### Content of 'dialog' component with text ''
+_[:]We value your privacy
+_[:]We use cookies to improve your experience.
+B1[:]<button type="button">Accept all</button>
+B2[:]<button type="button">Reject all</button>
+I1[:]<input type="checkbox" name="analytics"></input>
+_[:]Analytics cookies"""
+
+
+def test_closing_a_dialog_over_the_page_is_an_operation_of_its_own() -> None:
+    actions: list[InteractionAction] = [
+        ClickAction(id="B1", text_label="Accept all", accessible_name="Accept all"),
+        ClickAction(id="B2", text_label="Reject all", accessible_name="Reject all"),
+        CheckAction(id="I1", value=True, text_label="analytics", accessible_name="Analytics cookies"),
+    ]
+    page = _page(states={}, description=COOKIE_DIALOG, actions=actions)
+    space = build_act_space(page, labels="accessible")
+    # the dialog's buttons close it; a toggle inside it does not
+    assert set(space.targets["CLOSE_DIALOG"]) == {"B1", "B2"}
+    assert "CLOSE_DIALOG" in space.operations
+    questions = act_questions(space, "Open the Pricing page")
+    assert set(questions["close_dialog_target"].criteria) == {"B1", "B2"}
+    elements = {e["index"]: e for e in space.elements}
+    assert (
+        elements["B1"]["operations"] == ["CLICK", "CLOSE_DIALOG"] and "CLOSE_DIALOG" not in elements["I1"]["operations"]
+    )
+
+    # answered like any target operation, executed as a click on the chosen button
+    answers = Answers(
+        answers={
+            "operation": Answer(
+                choice="CLOSE_DIALOG", probabilities=_spread(space.operations, "CLOSE_DIALOG"), confidence=0.9
+            ),
+            "close_dialog_target": Answer(choice="B2", probabilities={"B1": 0.2, "B2": 0.8}, confidence=0.8),
+        },
+        model="fake",
+    )
+    decision = interpret(answers, space)
+    assert decision.target is not None
+    action = target_action(decision.target, None)
+    assert isinstance(action, ClickAction) and action.id == "B2"
+
+
+def test_a_page_without_a_dialog_has_no_close_operation() -> None:
+    space = build_act_space(_page(), labels="accessible")
+    assert "CLOSE_DIALOG" not in space.operations and "CLOSE_DIALOG" not in space.targets
+
+
+def _spread(keys: Any, choice: str) -> dict[str, float]:
+    rest = 0.1 / (len(keys) - 1)
+    return {k: 0.9 if k == choice else rest for k in keys}

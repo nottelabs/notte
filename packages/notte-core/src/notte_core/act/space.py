@@ -49,7 +49,7 @@ MAX_PAGE_TEXT_LENGTH = 12_000
 # the longest a WAIT lasts: it ends as soon as the page changes (see `notte_core.act.wait`)
 WAIT_MS = 3_000
 
-Operation = Literal["CLICK", "TYPE_TEXT", "SELECT"]
+Operation = Literal["CLICK", "TYPE_TEXT", "SELECT", "CLOSE_DIALOG"]
 TargetKind = Literal["click", "check", "fill", "select_option", "select_text"]
 LabelMode = Literal["html", "accessible"]
 
@@ -780,6 +780,21 @@ def build_act_space(
             case _:
                 add("CLICK", target("click"), element)
         space.elements.append(element)
+
+    if covered_by_dialog(page.description):
+        # The page shows only its open dialog: closing it (accept, reject, dismiss) is an operation of its own, with
+        # the dialog's buttons and links as targets. As a CLICK among others, a goal on the page behind the dialog
+        # read as one no operation can reach.
+        close = {
+            key: target
+            for key, target in space.targets.get("CLICK", {}).items()
+            if target.kind == "click" and target.element_id in lines
+        }
+        if close:
+            space.targets["CLOSE_DIALOG"] = close
+            for element in space.elements:
+                if element["index"] in close:
+                    element["operations"].append("CLOSE_DIALOG")
 
     viewport = page.viewport
     if viewport is None or viewport.scroll_y + viewport.viewport_height < viewport.total_height - 2:
