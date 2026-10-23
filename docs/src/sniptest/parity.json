@@ -173,7 +173,6 @@
     "vaults/manual.py"
   ],
   "python_only": {
-    "act/act_cloud.py": "session.act() / choose() / check() are Python-only for now (the Node SDK has no act() yet), and running the example needs a TypeSafe or OpenRouter key.",
     "act/act_local.py": "session.act() / choose() / check() are Python-only for now (the Node SDK has no act() yet), and running the example needs a TypeSafe or OpenRouter key.",
     "act/act_loop.py": "session.act() / choose() / check() are Python-only for now (the Node SDK has no act() yet), and running the example needs a TypeSafe or OpenRouter key.",
     "act/act_options.py": "session.act() / choose() / check() are Python-only for now (the Node SDK has no act() yet), and running the example needs a TypeSafe or OpenRouter key.",
