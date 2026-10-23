@@ -27,7 +27,7 @@ from notte_core.act import (
     same_target,
 )
 from notte_core.act.freshness import Signatures, remote_signatures_expression, signature_xpaths
-from notte_core.actions import BaseAction, InteractionActionUnion
+from notte_core.actions import BaseAction, InteractionAction, InteractionActionUnion
 from notte_core.actions.typedicts import (
     CaptchaSolveActionDict,
     CheckActionDict,
@@ -792,6 +792,10 @@ class RemoteActDriver:
     Freshness: after observing, one `evaluate_js` call records the element signatures
     (`notte_core.act.freshness`) before the decider thinks; right before acting, a second one reads the
     target's. When that fails (or for iframe / shadow-root targets), a new observation is compared.
+
+    The action is sent with the decided element's selectors, so it runs on that element even if another
+    observation of the session renumbered the ids meanwhile. Shadow-root targets keep their id: the server
+    builds their selectors from its snapshot, which the freshness check has just compared.
     """
 
     def __init__(self, session: "RemoteSession", *, capture_signatures: bool = True) -> None:
@@ -800,6 +804,8 @@ class RemoteActDriver:
         self._capture_signatures: bool = capture_signatures
         # this act() call's baseline in the page (overlapping calls on the same session each have their own)
         self._token: str = uuid.uuid4().hex
+        # the page of the current decision: its selectors pin the executed element
+        self._page: ObservedPage | None = None
 
     @property
     def has_vault(self) -> bool:
@@ -838,6 +844,7 @@ class RemoteActDriver:
         if observation is None or self._capture_signatures:
             observation = await asyncio.to_thread(self._observe)
         page = ObservedPage.from_observation(observation)
+        self._page = page
         if self._capture_signatures:
             self._signatures = await asyncio.to_thread(self._read_signatures, signature_xpaths(page))
         return page
@@ -856,6 +863,11 @@ class RemoteActDriver:
         return same_target(page, current, element_id)
 
     async def execute(self, action: BaseAction, raise_on_failure: bool) -> ExecutionResult:
+        if isinstance(action, InteractionAction) and action.selector is None and self._page is not None:
+            observed = next((a for a in self._page.actions if a.id == action.id), None)
+            selectors = None if observed is None else observed.selectors
+            if selectors is not None and not selectors.in_shadow_root:
+                action = action.model_copy(update={"selector": selectors})
         return await asyncio.to_thread(self.session.execute, action, raise_on_failure=raise_on_failure)
 
 
