@@ -468,8 +468,13 @@ class TestBaseClientVersionCheck:
         base_module._cached_pypi_version = "1.8.0"
         endpoint = NotteEndpoint(path="/test", response=BaseModel, method="GET")
         response = httpx.Response(422, json=body, request=httpx.Request("GET", "https://api.example.test/test"))
-        with patch("notte_sdk.endpoints.base.notte_core_version", "1.7.0"):
+        with (
+            patch("notte_sdk.endpoints.base.notte_core_version", "1.7.0"),
+            # No real PyPI request: the version check at construction gets the cached version.
+            patch("notte_sdk.endpoints.base._ClientCore._get_latest_pypi_version", return_value="1.8.0") as pypi,
+        ):
             client = BaseClient(MockNotteClient(), None, api_key=api_key)
+            assert pypi.call_count == 1
             # A proxy's 422 body is reported as an API error, not an AttributeError or TypeError.
             with pytest.raises(NotteAPIError):
                 client._check_status(endpoint, response)
