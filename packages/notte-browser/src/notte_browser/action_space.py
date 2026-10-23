@@ -12,6 +12,7 @@ def build_action_space(dom_node: DomNode) -> ActionSpace:
 
     The description renders the page's interactive elements (attributes cut to 60 characters, and
     only the open dialogs when the page has some), and every interaction node becomes one action.
+    Disabled controls are rendered without an id (`_[:]<button disabled>Send</button>`) and offer no action.
     """
     description = render_interactions(
         dom_node,
@@ -88,9 +89,9 @@ def render_node(
     *,
     include_children: bool = True,
 ) -> str:
-    if node.id is None:
+    if node.id is None and not node.disabled:
         raise InvalidInternalCheckError(
-            check="Node should have an id",
+            check="Node should have an id or be disabled",
             url=node.get_url(),
             dev_advice="This should never happen.",
         )
@@ -104,6 +105,8 @@ def render_node(
     )
     if len(attrs_relevant) > 0:
         attrs_str = " " + " ".join([f'{key}="{value}"' for key, value in attrs_relevant.items()])
+    if node.disabled:
+        attrs_str += " disabled"
     if include_children:
         children_str = "\n".join(children_texts(node)).strip()
     else:
@@ -134,6 +137,10 @@ def format_node(
             is_parent_interaction = True
             html_description = render_node(node, max_len_per_attribute)
             node_texts.append(f"{node.id}[:]{html_description}")
+        elif node.disabled:
+            # described (with its text) like an interactive element, but without an id to act on
+            is_parent_interaction = True
+            node_texts.append(f"_[:]{render_node(node, max_len_per_attribute)}")
 
         # Process children regardless
         for child in node.children:
@@ -150,8 +157,8 @@ def children_texts(root_node: DomNode) -> list[str]:
     texts: list[str] = []
 
     def collect_text(node: DomNode) -> None:
-        # Skip this branch if we hit a highlighted element (except for the current node)
-        if node.id is not None and node.id != root_node.id:
+        # Skip this branch if we hit a highlighted or disabled element (except for the current node)
+        if (node.id is not None or node.disabled) and node is not root_node:
             return
 
         if node.get_role_str() == "text" and len(node.text.strip()) > 0:
