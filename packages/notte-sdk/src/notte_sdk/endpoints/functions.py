@@ -638,6 +638,8 @@ class NotteFunction:
             function_run_id = self.client.create_run(self.function_id).function_run_id
 
         self._function_run_id = function_run_id
+        # A run that fails before answering must not leave `replay` on an earlier run's session.
+        self._session_id = None
         logger.info(
             f"[Function Run] {function_run_id} created and scheduled for cloud execution with raise_on_failure={raise_on_failure}."
         )
@@ -649,9 +651,11 @@ class NotteFunction:
             timeout=timeout,
             variables=variables,
         )
+        # Only the current run's session: a later run that started meanwhile owns `replay`.
+        if self._function_run_id == function_run_id:
+            self._session_id = res.session_id
         if raise_on_failure and res.status == "failed":
             raise FailedToRunCloudFunctionError(self.function_id, function_run_id, res)
-        self._session_id = res.session_id
         return res
 
     def stop_run(self, run_id: str) -> UpdateFunctionRunResponse:
@@ -1019,6 +1023,8 @@ class AsyncNotteFunction:
             function_run_id = (await self.client.create_run(response.function_id)).function_run_id
 
         self._function_run_id = function_run_id
+        # A run that fails before answering must not leave `replay` on an earlier run's session.
+        self._session_id = None
         logger.info(
             f"[Function Run] {function_run_id} created and scheduled for cloud execution with raise_on_failure={raise_on_failure}."
         )
@@ -1030,9 +1036,11 @@ class AsyncNotteFunction:
             timeout=timeout,
             variables=variables,
         )
+        # Only the current run's session: a later run that started meanwhile owns `replay`.
+        if self._function_run_id == function_run_id:
+            self._session_id = res.session_id
         if raise_on_failure and res.status == "failed":
             raise FailedToRunCloudFunctionError(response.function_id, function_run_id, res)
-        self._session_id = res.session_id
         return res
 
     async def stop_run(self, run_id: str) -> UpdateFunctionRunResponse:

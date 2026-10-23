@@ -564,6 +564,57 @@ async def test_function_replay_sends_the_same_requests(
             assert not expected.calls
 
 
+def two_run_routes(second: str) -> Routes:
+    """Run r-1 opens session s-1; run r-2 then fails (`failed`, opening s-2) or never answers (`error`)."""
+    created = iter(["r-1", "r-2"])
+
+    def create(_: httpx.Request) -> dict[str, Any]:
+        return {**RUN, "function_run_id": next(created), "status": "created"}
+
+    def run(request: httpx.Request) -> httpx.Response:
+        run_id = request.url.path.rsplit("/", 1)[-1]
+        if run_id == "r-2" and second == "error":
+            return httpx.Response(500, json={"detail": "boom"})
+        session, status = ("s-1", "closed") if run_id == "r-1" else ("s-2", "failed")
+        body = {"function_id": "f-1", "function_run_id": run_id, "session_id": session, "status": status}
+        return httpx.Response(200, json={**body, "result": "1"})
+
+    return {
+        ("GET", "/functions/f-1"): LINK,
+        ("POST", "/functions/f-1/runs/create"): create,
+        ("POST", "/functions/f-1/runs/r-1"): run,
+        ("POST", "/functions/f-1/runs/r-2"): run,
+        ("GET", "/sessions/s-1/replay"): READY[1],
+        ("GET", "/sessions/s-2/replay"): READY[1],
+    }
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("second", ["failed", "error"])
+async def test_replay_follows_the_latest_run(monkeypatch: pytest.MonkeyPatch, second: str) -> None:
+    # A later run that fails, or never answers, must not leave `replay` on the earlier run's session.
+    async def flow(c: Any, wait: Any) -> Any:
+        function = c.Function("f-1")
+        _ = await wait(function.run(stream=False))
+        try:
+            _ = await wait(function.run(stream=False))
+        except Exception:
+            pass
+        return await wait(function.replay(wait=False))
+
+    expected = exchange_sync(monkeypatch, Api(two_run_routes(second)), lambda c: _drive(flow(c, _passthrough)))
+    actual = await exchange_async(monkeypatch, Api(two_run_routes(second)), lambda c: flow(c, _await))
+    assert actual == expected
+    replays = [call.url for call in expected.calls if call.url.endswith("/replay")]
+    if second == "failed":
+        # The failed run's own session: the replay that shows what went wrong.
+        assert replays == [f"{SERVER}/sessions/s-2/replay"] and expected.outcome[0] == "ok"
+    else:
+        assert replays == []
+        assert expected.outcome[:2] == ("error", ValueError)
+        assert "Session ID not found in your function run r-2" in expected.outcome[2]
+
+
 # ---------------------------------------------------------------------------
 # Run payloads: the same verification, the same storage requests
 

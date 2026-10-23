@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased: function replay follows the latest run
+
+`NotteFunction.replay()` (and `AsyncNotteFunction.replay()`) always uses the session of the latest
+`run()`. Before, a later run that failed kept pointing `replay` at an earlier run's session; now a
+failed run replays its own session, and a run that never answered raises "Session ID not found".
+
 ## Unreleased: `AsyncRemoteSession.storage`
 
 `AsyncRemoteSession` has the `storage` attribute and constructor argument of `RemoteSession`, as
