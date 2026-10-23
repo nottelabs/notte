@@ -1848,8 +1848,17 @@ class AsyncSessionsClient(AsyncSessionsOperations):
         """
         Stops an active session.
 
-        Raises:
-            RuntimeError: If the session did not close.
+        This method sends a request to the session stop endpoint using the specified
+        session ID or the currently active session. It validates the server response,
+        clears the internal session state, and returns the validated response.
+
+        Parameters:
+            session_id (str, optional): The identifier of the session to close. If not
+                provided, the active session ID is used. Raises ValueError if no active
+                session exists.
+
+        Returns:
+            SessionResponse: The validated response from the session stop request.
         """
         logger.info(f"[Session] {session_id} is stopping")
         return _checked_stop(session_id, await super().stop(session_id, **data))
@@ -1865,7 +1874,14 @@ class AsyncSessionsClient(AsyncSessionsOperations):
         """
         Uploads cookies to the session.
 
-        Accepts either cookies or cookie_file (json format, read off the event loop) as argument.
+        Accepts either cookies or cookie_file as argument.
+
+        Args:
+            cookies: The list of cookies (can be obtained from session.get_cookies)
+            cookie_file: The path to the cookie file (json format)
+
+        Returns:
+            SetCookiesResponse: The response from the upload cookies request.
         """
         if cookie_file is not None:
             cookies = await asyncio.to_thread(_cookies_to_set, cookies, cookie_file)
@@ -1873,7 +1889,19 @@ class AsyncSessionsClient(AsyncSessionsOperations):
 
     @track_usage("cloud.session.debug.tab")
     async def debug_tab_info(self, session_id: str, tab_idx: int | None = None) -> TabSessionDebugResponse:
-        """Retrieves debug information for a tab of the session (all tabs without `tab_idx`)."""
+        """
+        Retrieves debug information for a specific tab in the current session.
+
+        If no session ID is provided, the active session is used. If a tab index is provided, the
+        debug request is scoped to that tab.
+
+        Parameters:
+            session_id (str, optional): The session identifier to use.
+            tab_idx (int, optional): The index of the tab for which to retrieve debug info.
+
+        Returns:
+            TabSessionDebugResponse: The response containing debug information for the specified tab.
+        """
         return await self.request(_debug_tab_endpoint(session_id, tab_idx))
 
     @override
@@ -1888,10 +1916,21 @@ class AsyncSessionsClient(AsyncSessionsOperations):
         _session_closed: bool = False,
     ) -> ReplayResponse:
         """
-        Get presigned URLs for session replay; with `wait` (the default), poll until it is ready.
+        Get presigned URLs for session replay.
+
+        Args:
+            session_id: The identifier of the session to get the replay for.
+            wait: If True (default), poll until the replay is ready instead of
+                raising on 404.
+            timeout: Maximum seconds to wait for the replay to become available.
+            poll_interval: Seconds between polling attempts.
+
+        Returns:
+            ReplayResponse: Presigned URLs for HLS playlist and MP4 download.
 
         Raises:
-            NotteAPIError: If the replay is not found and ``wait`` is False.
+            NotteAPIError: If the replay is not found and ``wait`` is False, or
+                if the timeout is exceeded.
             TimeoutError: If the replay does not become available within ``timeout`` seconds.
         """
         return await arun(self, _replay_flow(session_id, wait, timeout, poll_interval, _session_closed))
@@ -1919,6 +1958,16 @@ class AsyncSessionsClient(AsyncSessionsOperations):
     async def viewer_cdp(self, session_id: str) -> None:
         """
         Opens a browser tab with the debug URL for visualizing the session.
+
+        Retrieves debug information for the specified session and opens
+        its debug URL in the default web browser.
+
+        Args:
+            session_id (str, optional): The session identifier to use.
+                If not provided, the current session ID is used.
+
+        Returns:
+            None
         """
         debug_info = await self.debug_info(session_id=session_id)
         _ = await asyncio.to_thread(open_browser, debug_info.debug_url)

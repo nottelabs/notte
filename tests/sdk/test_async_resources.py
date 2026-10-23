@@ -446,8 +446,12 @@ FILE_KEYWORDS = {
     ("files", "upload"): "file_path",
     ("sessions", "upload_session_file"): "file",
 }
-# Methods that refuse to send without one of their optional arguments.
-REQUIRED_KEYWORDS: dict[tuple[str, str], dict[str, Any]] = {("sessions", "set_cookies"): {"cookies": []}}
+# Methods that refuse to send without one of their optional arguments, and the viewer that only
+# fetches its URL when none is given.
+REQUIRED_KEYWORDS: dict[tuple[str, str], dict[str, Any]] = {
+    ("sessions", "set_cookies"): {"cookies": []},
+    ("sessions", "viewer_browser"): {"_viewer_url": None},
+}
 
 
 @pytest.mark.asyncio
@@ -455,19 +459,24 @@ REQUIRED_KEYWORDS: dict[tuple[str, str], dict[str, Any]] = {("sessions", "set_co
 async def test_every_async_method_sends_what_its_sync_twin_sends(
     monkeypatch: pytest.MonkeyPatch, upload: str, resource: str, method: str
 ) -> None:
+    # The viewers open a local browser tab: never from a test.
+    monkeypatch.setattr("notte_sdk.endpoints.sessions.open_browser", lambda *_args, **_kwargs: True)
     bound = getattr(getattr(AsyncNotteClient(api_key=KEY), resource), method)
     args, kwargs = arguments(bound)
+    # The positional arguments `arguments()` filled: the required ones, in order.
+    positional = [
+        parameter.name
+        for parameter in inspect.signature(bound).parameters.values()
+        if parameter.kind is parameter.POSITIONAL_OR_KEYWORD and parameter.default is parameter.empty
+    ]
+    overrides = dict(REQUIRED_KEYWORDS.get((resource, method), {}))
     if keyword := FILE_KEYWORDS.get((resource, method)):
-        positional = [
-            parameter.name
-            for parameter in inspect.signature(bound).parameters.values()
-            if parameter.kind is parameter.POSITIONAL_OR_KEYWORD
-        ]
-        if keyword in positional:
-            args[positional.index(keyword)] = upload
+        overrides[keyword] = upload
+    for name, value in overrides.items():
+        if name in positional:
+            args[positional.index(name)] = value
         else:
-            kwargs[keyword] = upload
-    kwargs.update(REQUIRED_KEYWORDS.get((resource, method), {}))
+            kwargs[name] = value
     exchange = await assert_same_exchange(
         monkeypatch, answer({}), lambda c: getattr(getattr(c, resource), method)(*args, **kwargs)
     )
