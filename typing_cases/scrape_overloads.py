@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import reveal_type
 
 from notte_browser.session import NotteSession
-from notte_sdk import NotteClient
+from notte_sdk import AsyncNotteClient, NotteClient
 from notte_sdk.endpoints.page import PageClient
 from notte_sdk.endpoints.sessions import RemoteSession
 from pydantic import BaseModel
@@ -43,6 +43,17 @@ def _check_client(client: NotteClient) -> None:
     markdown = client.scrape("https://example.com")
     reveal_type(markdown)
     with_model = client.scrape("https://example.com", response_format=Profile, model="google/gemini-3.5-flash")
+    reveal_type(with_model)
+
+
+async def _check_async_client(client: AsyncNotteClient) -> None:
+    response_format = await client.scrape("https://example.com", response_format=Profile)
+    reveal_type(response_format)
+    instructions = await client.scrape("https://example.com", instructions="extract")
+    reveal_type(instructions)
+    markdown = await client.scrape("https://example.com")
+    reveal_type(markdown)
+    with_model = await client.scrape("https://example.com", response_format=Profile, model="google/gemini-3.5-flash")
     reveal_type(with_model)
 
 

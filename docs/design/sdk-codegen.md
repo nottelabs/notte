@@ -114,6 +114,11 @@ decision. `tests/sdk/test_async_sessions.py` pins the methods the async session 
 (`apage` and `await_for_auth`) and runs each scenario through both sessions to compare requests,
 sleeps and results.
 
+`NotteClient.scrape` and `AsyncNotteClient.scrape` open the same session (`_scrape_session`) with
+`with` / `async with`, so a failed scrape still stops it, and run the same `_scrape_flow` on it:
+the goto, the check of its result and the scrape. `tests/sdk/test_async_client_scrape.py` compares
+their signatures, docstrings and requests.
+
 The ported hand-written resource methods (`AsyncPersonasClient.create_number`,
 `delete_number`, `AsyncVaultsClient.get`, `AsyncManagedAuthClient`) subclass the async
 generated classes next to their sync twins, and build their requests with the same helpers.

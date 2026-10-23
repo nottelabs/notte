@@ -94,7 +94,11 @@ the session's status on first use instead of in the constructor. `client.session
 `stop`, `set_cookies`, `replay`, `debug_tab_info`, the viewers and `page`. Local cookie files are
 read and written off the event loop.
 
-Preview: not yet available are `AsyncNotteClient.scrape` and `AsyncNotteFunction.replay`.
+`await client.scrape(url, ...)` is `NotteClient.scrape` as a coroutine, with the same arguments
+and typed overloads: it starts a session, goes to `url`, scrapes the page and stops the session,
+also when the scrape fails.
+
+Preview: not yet available is `AsyncNotteFunction.replay`.
 
 ## Unreleased: httpx transport
 
