@@ -16,8 +16,9 @@ the `Session`, `Function` and `FileStorage` objects.
 
 `AsyncNotteClient` also has `personas.create_number` and `delete_number`, `vaults.get`,
 `managed_auth`, `health_check()`, and the `Persona` and `Vault` objects (`AsyncNottePersona`,
-`AsyncNotteVault`). They have the methods of the sync versions as coroutines, with the same names
-and arguments, and send the same requests. Create or load an object with
+`AsyncNotteVault`). Their methods that call the API are coroutines with the same names and
+arguments as the sync versions, and send the same requests. Methods without I/O, such as
+`generate_password()` and the vault's redaction helpers, stay plain methods. Create or load an object with
 `persona = await client.Persona(...)`, or use `async with client.Persona(...) as persona:` to also
 delete it on exit. Credentials go through the same vault code as `NotteVault`, so values read from
 the vault are masked the same way. `AsyncNottePersona` implements `aemails`, `asms`,
