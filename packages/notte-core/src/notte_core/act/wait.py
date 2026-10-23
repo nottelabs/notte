@@ -5,7 +5,8 @@ A fixed delay is either too short for slow pages (the decider sees the same page
 on fast ones. The page script below returns as soon as the DOM changes and then stays quiet for
 `QUIET_MS` (at most `SETTLE_MS` after the first change, for pages that never stop changing), or after
 `timeout_ms` without a change. Inline `style` changes (animations) do not count. A navigation also ends
-the wait; the session reports it as a change.
+the wait (the browser destroys the page script, or the URL changed); the session reports it as a change. Any
+other failure of the script is a failed WAIT.
 
 The bound (`WAIT_MS` in `notte_core.act.space`) is 3 s: long enough for the usual asynchronous updates
 (a spinner, a debounced search, an XHR that fills a list) to land in one step, short enough that a WAIT
@@ -17,6 +18,7 @@ import datetime as dt
 import json
 
 from notte_core.actions import WaitAction
+from notte_core.errors import ActionExecutionError
 from notte_core.observation import ExecutionResult
 
 QUIET_MS = 200
@@ -50,6 +52,31 @@ WAIT_FOR_CHANGE_JS = f"""(timeoutMs) => new Promise((resolve) => {{
 def remote_wait_expression(timeout_ms: int) -> str:
     """The `evaluate_js` expression of the wait, for cloud sessions."""
     return f"({WAIT_FOR_CHANGE_JS})({json.dumps(timeout_ms)})"
+
+
+# how the browser reports a page script ended by a navigation
+_NAVIGATION_ERRORS = ("Execution context was destroyed", "most likely because of a navigation")
+
+
+def interrupted_by_navigation(error: str, url_before: str | None, url_after: str | None) -> bool:
+    """A failed wait script was ended by a navigation (not a script error or a timeout)."""
+    if any(marker in error for marker in _NAVIGATION_ERRORS):
+        return True
+    return url_before is not None and url_after is not None and url_after != url_before
+
+
+def wait_failure(reason: str, url: str, started: dt.datetime, timeout_ms: int) -> ExecutionResult:
+    """The `ExecutionResult` of a WAIT whose page script failed (`reason`: the error)."""
+    ended = dt.datetime.now(dt.timezone.utc)
+    error = ActionExecutionError(action_id="wait", url=url, reason=reason)
+    return ExecutionResult(
+        action=WaitAction(time_ms=timeout_ms),
+        success=False,
+        message=error.dev_message,
+        exception=error,
+        started_at=started,
+        ended_at=ended,
+    )
 
 
 def wait_result(outcome: str, started: dt.datetime, timeout_ms: int) -> ExecutionResult:
