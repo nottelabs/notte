@@ -1,3 +1,4 @@
+import asyncio
 from abc import ABC, abstractmethod
 from collections.abc import Generator
 from types import TracebackType
@@ -12,8 +13,17 @@ class AwaitableResource(ABC):
     `start()` only calls the API the first time.
     """
 
+    async def start(self) -> None:
+        """Create or fetch the resource, once: concurrent callers wait for the first one."""
+        # Without the lock, two tasks could both see an unstarted object and each create one,
+        # leaving the first untracked and never deleted. Created on first use, so it binds to that loop.
+        lock = self.__dict__.setdefault("_start_lock", asyncio.Lock())
+        async with lock:
+            await self._start()
+
     @abstractmethod
-    async def start(self) -> None: ...
+    async def _start(self) -> None:
+        """Create or fetch the resource unless that was already done."""
 
     @abstractmethod
     async def stop(self) -> None: ...

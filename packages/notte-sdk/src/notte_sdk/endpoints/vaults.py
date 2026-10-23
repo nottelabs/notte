@@ -226,7 +226,7 @@ class AsyncNotteVault(BaseVault, AwaitableResource):
         return self._vault_id
 
     @override
-    async def start(self) -> None:
+    async def _start(self) -> None:
         """Create the vault, or check that `vault_id` exists, unless that was already done."""
         if self._ready:
             return

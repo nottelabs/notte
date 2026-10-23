@@ -401,6 +401,33 @@ async def test_persona_inbox_reads_overlap_on_one_event_loop(monkeypatch: pytest
     await client.aclose()
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("kind", ["vault", "persona"])
+async def test_concurrent_starts_create_one_resource(monkeypatch: pytest.MonkeyPatch, kind: str) -> None:
+    """Tasks awaiting the same new object share one create: a second create would leak, never deleted."""
+    creates = 0
+    release = asyncio.Event()
+
+    async def handle(request: httpx.Request) -> httpx.Response:
+        nonlocal creates
+        creates += 1
+        # Hold the first create open, so an unguarded second start would send its own.
+        await asyncio.wait_for(release.wait(), timeout=5)
+        return httpx.Response(200, json=VAULT if kind == "vault" else VAULT_PERSONA)
+
+    client = async_http_client()
+    client._transport = httpx.MockTransport(handle)
+    monkeypatch.setattr(AsyncSharedHttpClient, "get", lambda _: client)
+    async with AsyncNotteClient(api_key=KEY, server_url=SERVER) as notte:
+        resource = notte.Vault(name="v") if kind == "vault" else notte.Persona()
+        starts = asyncio.gather(resource.start(), resource.start(), resource.start())
+        await asyncio.sleep(0.05)
+        release.set()
+        _ = await starts
+    assert creates == 1
+    await client.aclose()
+
+
 # ---------------------------------------------------------------------------
 # Vaults
 

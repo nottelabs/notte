@@ -448,7 +448,7 @@ class AsyncNottePersona(AwaitableResource, BasePersona):
         self.vault_client: AsyncVaultsClient = _client.vaults
 
     @override
-    async def start(self) -> None:
+    async def _start(self) -> None:
         """Create the persona, or fetch `persona_id`, unless that was already done."""
         if self.response is not None:
             return
