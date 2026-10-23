@@ -7,6 +7,7 @@ The parity helpers here (`afake`, `exchange_sync`/`exchange_async`) are shared w
 import asyncio
 import inspect
 import random
+import sys
 from collections.abc import AsyncIterator, Callable, Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -20,6 +21,7 @@ from notte_sdk._transport import AsyncSharedHttpClient, SharedHttpClient, async_
 from notte_sdk._v1_aliases import _RENAMED_METHODS
 from notte_sdk.actions import Goto
 from notte_sdk.endpoints.base import AsyncBaseClient, BaseClient
+from notte_sdk.endpoints.vaults import VaultsClient
 from pydantic import BaseModel
 from pydantic_core import to_json
 
@@ -68,6 +70,19 @@ PENDING = {
     "profiles": set(),
     "vaults": {"get"},
 }
+
+
+@pytest.fixture(autouse=True)
+def without_ci_vault_scope(monkeypatch: pytest.MonkeyPatch) -> None:
+    # In CI, tests/conftest.py wraps sync and async `vaults.create` to name and record the vaults a
+    # run creates. That wrapper is not SDK behavior: restore the generated methods, and keep these
+    # fake vaults out of the cleanup list.
+    scope = sys.modules.get("ci_vault_scope")
+    if scope is None or not getattr(scope, "_installed", False):
+        return
+    monkeypatch.setattr(scope, "record_vault_id", lambda *_: pytest.fail("Fake vault must not enter CI cleanup"))
+    monkeypatch.delattr(VaultsClient, "create")
+    monkeypatch.setattr(resources.AsyncVaultsOperations, "create", resources.AsyncVaultsOperations.create.__wrapped__)
 
 
 # ---------------------------------------------------------------------------
