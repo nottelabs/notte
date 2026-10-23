@@ -275,7 +275,8 @@ class AsyncNotteClient:
 
     `sessions`, `functions`, `files`, `personas`, `profiles`, `vaults` and `managed_auth` have the
     same methods as on `NotteClient`, as coroutines, with the same arguments, results and
-    exceptions, and so do `health_check` and the `Persona` and `Vault` objects. Not yet available:
+    exceptions, and so do `health_check` and the methods of the `Persona` and `Vault` objects that
+    call the API (their methods without I/O, such as `generate_password()`, stay plain). Not yet available:
     the methods the sync resources extend beyond the API call (for example `sessions.stop`,
     `sessions.replay`, the viewers and `sessions.page`, `functions.run_start`, `functions.update`,
     `files.upload` and `files.download`), `scrape`, and the `Session`, `Function` and `FileStorage`
