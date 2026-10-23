@@ -9,10 +9,11 @@ from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
-from notte_core.act import aact_until_done, act_until_done
+from notte_core.act import ActResult, aact_until_done, act_until_done
 from notte_core.actions import BaseAction, ClickAction, EvaluateJsAction, FillAction, SelectDropdownOptionAction
 from notte_core.data import DataSpace
 from notte_core.element_state import ElementState, SelectOption
+from notte_core.errors import ActionExecutionError
 from notte_core.observation import ExecutionResult, Observation
 from notte_core.snapshot import SnapshotMetadata, ViewportData
 from notte_core.space import ActionSpace
@@ -70,6 +71,8 @@ class _Remote:
         self.stored: dict[str, Any] | None = None
         self.answers: list[dict[str, Any]] = []
         self.wait_outcome: str = "changed"
+        self.wait_error: str | None = None
+        self.url: str = "https://search.test/"
         self.fail_executions: bool = False
 
     def observe(self, **kwargs: Any) -> Observation:
@@ -85,7 +88,13 @@ class _Remote:
             # the WAIT script (`notte_core.act.wait`)
             self.js_calls.append(kwargs["code"])
             js = EvaluateJsAction(code=kwargs["code"])
+            if self.wait_error is not None:
+                return ExecutionResult(action=js, success=False, message=self.wait_error, started_at=now, ended_at=now)
             data = DataSpace(markdown=self.wait_outcome)
+            return ExecutionResult(action=js, success=True, message="ok", data=data, started_at=now, ended_at=now)
+        if kwargs.get("type") == "evaluate_js" and kwargs["code"] == "location.href":
+            js = EvaluateJsAction(code=kwargs["code"])
+            data = DataSpace(markdown=self.url)
             return ExecutionResult(action=js, success=True, message="ok", data=data, started_at=now, ended_at=now)
         if kwargs.get("type") == "evaluate_js":
             self.js_calls.append(kwargs["code"])
@@ -397,3 +406,27 @@ def test_remote_failed_action_is_recorded_with_its_error_class(monkeypatch: pyte
     assert decider.states[-1].recent_actions == [
         {"action": "Search", "kind": "CLICK", "text": None, "page_changed": False, "error": "TimeoutError"}
     ]
+
+
+def test_remote_wait_failures_are_failures_unless_the_page_navigated(monkeypatch: pytest.MonkeyPatch) -> None:
+    remote = _Remote([_observation()])
+    session = _session(remote, monkeypatch)
+
+    def wait(**kwargs: Any) -> ActResult:
+        return session.act("wait for the results", decider=FakeDecider(choices=[{"operation": "WAIT"}]), **kwargs)
+
+    remote.wait_error = "Error: Uncaught TypeError: blocked by the page"
+    failed = wait(raise_on_failure=False)
+    assert failed.execution is not None and not failed.execution.success
+    assert "blocked by the page" in failed.execution.message
+    with pytest.raises(ActionExecutionError):
+        _ = wait()
+
+    # the browser says the script was ended by a navigation, or the URL changed
+    remote.wait_error = "Execution context was destroyed, most likely because of a navigation"
+    result = wait()
+    assert result.execution is not None and result.execution.success
+    assert result.execution.message.startswith("The page navigated")
+    remote.wait_error, remote.url = "Error: script ended", "https://search.test/results"
+    result = wait()
+    assert result.execution is not None and result.execution.message.startswith("The page navigated")
