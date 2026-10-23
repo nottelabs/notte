@@ -387,6 +387,7 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 ### Getting Started
 
 - [NotteClient](https://docs.notte.cc/sdk-reference/manual/index.md): The starting point for all operations
+- [AsyncNotteClient](https://docs.notte.cc/sdk-reference/manual/async.md): Call the Notte API from asyncio code with the async Python client (preview)
 - [Authentication](https://docs.notte.cc/sdk-reference/authentication.md): Authenticate with the Notte SDK
 - [Error Handling](https://docs.notte.cc/sdk-reference/errors.md): Handle errors in the Notte SDK
 - [Rate Limits](https://docs.notte.cc/sdk-reference/rate-limits.md): Handle rate limits in the Notte SDK
