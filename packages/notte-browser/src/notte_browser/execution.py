@@ -43,7 +43,7 @@ from notte_core.snapshot import BrowserSnapshot
 from notte_core.storage import BaseStorage
 
 from notte_browser.captcha import solve_captcha
-from notte_browser.dom.locate import locate_element
+from notte_browser.dom.locate import locate_element, selectors_through_shadow_dom
 from notte_browser.dom.parsing import parse_dom
 from notte_browser.driver import Error, Frame, JSHandle, Locator
 from notte_browser.errors import (
@@ -358,7 +358,8 @@ async def _locate(window: BrowserWindow, action: InteractionAction, snapshot: Br
         return await locate_element(window.page, action.selectors)
     except InvalidLocatorRuntimeError:
         observed = _observed_node(action, snapshot)
-        if observed is None or snapshot is None:
+        # on another page, an element with the same identity is not the observed one
+        if observed is None or snapshot is None or snapshot.metadata.url != window.page.url:
             raise
         selectors = await _find_again(window, observed, snapshot)
         if selectors is None:
@@ -368,17 +369,22 @@ async def _locate(window: BrowserWindow, action: InteractionAction, snapshot: Br
 
 
 def _observed_node(action: InteractionAction, snapshot: BrowserSnapshot | None) -> DomNode | None:
-    """The observed node an action targets, when it was located with that node's selectors."""
+    """The observed node an action targets, when it was located with that node's selectors (an empty XPath is
+    the default of selectors given as a dict)."""
     if snapshot is None or action.selectors is None:
         return None
     node = snapshot.dom_node.interaction_nodes_by_id.get(action.id)
     if node is None or node.computed_attributes.selectors is None:
         return None
     observed = node.computed_attributes.selectors
+    if observed.in_shadow_root:
+        # resolution rewrites the XPath of a node in a shadow root
+        observed = selectors_through_shadow_dom(node)
+    given = action.selectors
     if (observed.css_selector, observed.iframe_parent_css_selectors) != (
-        action.selectors.css_selector,
-        action.selectors.iframe_parent_css_selectors,
-    ):
+        given.css_selector,
+        given.iframe_parent_css_selectors,
+    ) or given.xpath_selector not in ("", observed.xpath_selector):
         # the action was given selectors of its own
         return None
     return node

@@ -51,6 +51,19 @@ async def test_a_moved_element_is_found_again() -> None:
     assert clicked == "Tokyo 6:40 PM"
 
 
+@pytest.mark.asyncio
+async def test_an_element_is_not_found_again_on_another_page() -> None:
+    async with NotteSession(headless=True) as session:
+        tokyo = await _observe_then_rerender(session, ["Lisbon 7:05 AM", *ROWS])
+        # the same list on another page (an in-page navigation keeps the document)
+        _ = await session.window.page.evaluate("() => { history.pushState({}, '', '#page-2') }")
+        result = await session.aexecute(type="click", id=tokyo, raise_on_failure=False)
+        clicked = await session.window.page.evaluate("() => document.body.dataset.clicked")
+
+    assert not result.success
+    assert clicked is None
+
+
 @pytest.mark.parametrize(
     ("observed", "rows"),
     [
