@@ -1,6 +1,6 @@
 [project]
 name = "notte-core"
-version = "1.10.0.dev0"
+version = "1.10.1.dev0"
 description = "Shared models, actions and config for the Notte packages"
 readme = "README.md"
 authors = [

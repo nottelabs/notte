@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'win32'",
@@ -2410,7 +2410,7 @@ wheels = [
 
 [[package]]
 name = "notte"
-version = "1.10.0.dev0"
+version = "1.10.1.dev0"
 source = { editable = "." }
 dependencies = [
     { name = "notte-browser" },
@@ -2499,7 +2499,7 @@ lint = [{ name = "ruff", specifier = "==0.11.10" }]
 
 [[package]]
 name = "notte-browser"
-version = "1.10.0.dev0"
+version = "1.10.1.dev0"
 source = { editable = "packages/notte-browser" }
 dependencies = [
     { name = "beautifulsoup4" },
@@ -2526,7 +2526,7 @@ requires-dist = [
 
 [[package]]
 name = "notte-core"
-version = "1.10.0.dev0"
+version = "1.10.1.dev0"
 source = { editable = "packages/notte-core" }
 dependencies = [
     { name = "loguru" },
@@ -2564,7 +2564,7 @@ provides-extras = ["profiling"]
 
 [[package]]
 name = "notte-llm"
-version = "1.10.0.dev0"
+version = "1.10.1.dev0"
 source = { editable = "packages/notte-llm" }
 dependencies = [
     { name = "chevron" },
@@ -2583,7 +2583,7 @@ requires-dist = [
 
 [[package]]
 name = "notte-sdk"
-version = "1.10.0.dev0"
+version = "1.10.1.dev0"
 source = { editable = "packages/notte-sdk" }
 dependencies = [
     { name = "cryptography" },
