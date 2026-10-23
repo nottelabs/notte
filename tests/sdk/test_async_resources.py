@@ -444,11 +444,18 @@ def arguments(method: Callable[..., Any]) -> tuple[list[Any], dict[str, Any]]:
 def every_async_method() -> Iterator[tuple[str, str]]:
     for name in RESOURCES:
         for method in sorted(resource_members(async_client_class(name), AsyncBaseClient)):
-            yield name, method
+            # Plain methods send nothing; the signature test covers them.
+            if method not in NOT_COROUTINES.get(name, set()):
+                yield name, method
 
 
 # Methods whose `**data` needs a local file: the keyword that takes its path.
-FILE_KEYWORDS = {("functions", "create"): "path", ("sessions", "upload_session_file"): "file"}
+FILE_KEYWORDS = {
+    ("functions", "create"): "path",
+    ("functions", "update"): "path",
+    ("files", "upload"): "file_path",
+    ("sessions", "upload_session_file"): "file",
+}
 
 
 @pytest.mark.asyncio
@@ -456,9 +463,18 @@ FILE_KEYWORDS = {("functions", "create"): "path", ("sessions", "upload_session_f
 async def test_every_async_method_sends_what_its_sync_twin_sends(
     monkeypatch: pytest.MonkeyPatch, upload: str, resource: str, method: str
 ) -> None:
-    args, kwargs = arguments(getattr(getattr(AsyncNotteClient(api_key=KEY), resource), method))
+    bound = getattr(getattr(AsyncNotteClient(api_key=KEY), resource), method)
+    args, kwargs = arguments(bound)
     if keyword := FILE_KEYWORDS.get((resource, method)):
-        kwargs[keyword] = upload
+        positional = [
+            parameter.name
+            for parameter in inspect.signature(bound).parameters.values()
+            if parameter.kind is parameter.POSITIONAL_OR_KEYWORD
+        ]
+        if keyword in positional:
+            args[positional.index(keyword)] = upload
+        else:
+            kwargs[keyword] = upload
     exchange = await assert_same_exchange(
         monkeypatch, answer({}), lambda c: getattr(getattr(c, resource), method)(*args, **kwargs)
     )
