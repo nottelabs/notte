@@ -17,10 +17,8 @@ from typing_extensions import final
 from notte_sdk._generated.resources import (
     AsyncFilesOperations,
     AsyncFunctionsOperations,
-    AsyncPersonasOperations,
     AsyncProfilesOperations,
     AsyncSessionsOperations,
-    AsyncVaultsOperations,
 )
 from notte_sdk._retry import DEFAULT_MAX_RETRIES
 from notte_sdk._transport import AsyncSharedHttpClient, SharedHttpClient
@@ -28,11 +26,11 @@ from notte_sdk.auth import MISSING_API_KEY_MESSAGE, resolve_api_key
 from notte_sdk.endpoints.base import BaseClient
 from notte_sdk.endpoints.files import FileStorageClient, RemoteFileStorage
 from notte_sdk.endpoints.functions import FunctionsClient, NotteFunction
-from notte_sdk.endpoints.managed_auth import ManagedAuthClient
-from notte_sdk.endpoints.personas import NottePersona, PersonasClient
+from notte_sdk.endpoints.managed_auth import AsyncManagedAuthClient, ManagedAuthClient
+from notte_sdk.endpoints.personas import AsyncNottePersona, AsyncPersonasClient, NottePersona, PersonasClient
 from notte_sdk.endpoints.profiles import ProfilesClient
 from notte_sdk.endpoints.sessions import RemoteSession, SessionsClient, SessionViewerType
-from notte_sdk.endpoints.vaults import NotteVault, VaultsClient
+from notte_sdk.endpoints.vaults import AsyncNotteVault, AsyncVaultsClient, NotteVault, VaultsClient
 from notte_sdk.errors import AuthenticationError
 
 enable_nest_asyncio()
@@ -275,12 +273,13 @@ class AsyncNotteClient:
     """
     Async client for the Notte API. Preview: the API resources only, for now.
 
-    `sessions`, `functions`, `files`, `personas`, `profiles` and `vaults` have the same methods as
-    on `NotteClient`, as coroutines, with the same arguments, results and exceptions. Not yet
-    available: the methods the sync resources extend beyond the API call (for example
-    `sessions.stop`, `sessions.replay`, the viewers and `sessions.page`, `functions.run_start`,
-    `functions.update`, `files.upload` and `files.download`, `vaults.get`), `managed_auth`, and the
-    `Session`, `Function`, `Persona`, `Vault` and `FileStorage` objects. They will be added later.
+    `sessions`, `functions`, `files`, `personas`, `profiles`, `vaults` and `managed_auth` have the
+    same methods as on `NotteClient`, as coroutines, with the same arguments, results and
+    exceptions, and so do `health_check` and the `Persona` and `Vault` objects. Not yet available:
+    the methods the sync resources extend beyond the API call (for example `sessions.stop`,
+    `sessions.replay`, the viewers and `sessions.page`, `functions.run_start`, `functions.update`,
+    `files.upload` and `files.download`), `scrape`, and the `Session`, `Function` and `FileStorage`
+    objects. They will be added later.
 
     **Example:**
     ```python
@@ -326,13 +325,16 @@ class AsyncNotteClient:
         self.sessions: AsyncSessionsOperations = AsyncSessionsOperations(
             root_client=self, base_endpoint_path="sessions", api_key=api_key, server_url=server_url, verbose=verbose
         )
-        self.personas: AsyncPersonasOperations = AsyncPersonasOperations(
+        self.personas: AsyncPersonasClient = AsyncPersonasClient(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
         )
-        self.vaults: AsyncVaultsOperations = AsyncVaultsOperations(
+        self.vaults: AsyncVaultsClient = AsyncVaultsClient(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
         )
         self.profiles: AsyncProfilesOperations = AsyncProfilesOperations(
+            root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
+        )
+        self.managed_auth: AsyncManagedAuthClient = AsyncManagedAuthClient(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
         )
         self.files: AsyncFilesOperations = AsyncFilesOperations(
@@ -359,3 +361,17 @@ class AsyncNotteClient:
         traceback: TracebackType | None,
     ) -> None:
         await self.aclose()
+
+    @property
+    def Vault(self) -> type[AsyncNotteVault]:
+        return cast(type[AsyncNotteVault], partial(AsyncNotteVault, _client=self.vaults))
+
+    @property
+    def Persona(self) -> type[AsyncNottePersona]:
+        return cast(type[AsyncNottePersona], partial(AsyncNottePersona, _client=self))
+
+    async def health_check(self) -> None:
+        """
+        Health check the Notte API.
+        """
+        return await self.sessions.health_check()
