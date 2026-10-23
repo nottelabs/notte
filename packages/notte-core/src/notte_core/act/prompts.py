@@ -3,7 +3,7 @@
 # 452c1ad2dd628008f1d5608f28158d76e49e6cc0.
 # Copyright (c) 2026 Browser Use. Licensed under the MIT License: see `LICENSE-jev-ultrafast`
 # next to this file. Changes: notte-specific operation labels (controls, PRESS_ENTER, typing an
-# unlisted dropdown option), native date / time fields in the date picker rule, the format / variable /
+# unlisted dropdown option, closing a dialog), native date / time fields in the date picker rule, the format / variable /
 # credential / clearing rules of the field writer, the dialog line, the choose / check rules, and the rule on
 # page text outside the viewport.
 """Instructions sent with the questions of `act()` / `choose()` / `check()` and to the field writer."""
@@ -50,6 +50,7 @@ OPERATION_LABELS = {
     "CLICK": "Click an element, button, menu option, autocomplete suggestion, or calendar day.",
     "TYPE_TEXT": "Enter or replace text in an editable field. A small LLM will supply the value from the goal.",
     "SELECT": "Select an observed dropdown value.",
+    "CLOSE_DIALOG": "Close the dialog that covers the page (accept, reject or dismiss it) to reach the page behind it.",
 }
 # TYPE_TEXT when a dropdown has options that are not listed (`more_options`, or no option list)
 TYPE_TEXT_OPTION = (
