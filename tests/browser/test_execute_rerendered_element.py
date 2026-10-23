@@ -84,3 +84,45 @@ async def test_an_element_that_cannot_be_found_again_is_not_guessed(observed: li
     assert not result.success
     assert "could not be located" in result.message
     assert clicked is None
+
+
+@pytest.mark.asyncio
+async def test_an_element_is_not_found_again_in_another_frame() -> None:
+    async with NotteSession(headless=True) as session:
+        tokyo = await _observe_then_rerender(session, ["Paris 10:40 AM"])
+        # the only "Tokyo" row left is in an iframe
+        frame = '<iframe srcdoc="<div class=row style=cursor:pointer>Tokyo 6:40 PM</div>"></iframe>'
+        _ = await session.window.page.evaluate(f"() => document.body.insertAdjacentHTML('beforeend', '{frame}')")
+        _ = await session.window.page.wait_for_timeout(300)
+        result = await session.aexecute(type="click", id=tokyo, raise_on_failure=False)
+
+    assert not result.success
+    assert "could not be located" in result.message
+
+
+SHADOW_PAGE = """
+<div id="host"></div>
+<script>
+  const root = document.getElementById("host").attachShadow({ mode: "open" });
+  root.innerHTML = '<ul><li><button>Paris</button></li><li><button>Tokyo</button></li></ul>';
+  root.addEventListener("click", (event) => { document.body.dataset.clicked = event.target.textContent });
+</script>
+"""
+
+
+@pytest.mark.asyncio
+async def test_a_moved_element_in_a_shadow_root_is_found_again() -> None:
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(SHADOW_PAGE)}")
+        observation = await session.aobserve()
+        # the observed action, with the selectors observe returned
+        tokyo = next(action for action in observation.space.interaction_actions if action.text_label == "Tokyo")
+        _ = await session.window.page.evaluate(
+            """() => { document.getElementById("host").shadowRoot.querySelector("ul").outerHTML =
+              '<ol><div><button>Lisbon</button></div><div><button>Tokyo</button></div></ol>' }"""
+        )
+        result = await session.aexecute(tokyo, raise_on_failure=False)
+        clicked = await session.window.page.evaluate("() => document.body.dataset.clicked")
+
+    assert result.success, result.message
+    assert clicked == "Tokyo"

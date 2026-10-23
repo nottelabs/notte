@@ -377,29 +377,33 @@ def _observed_node(action: InteractionAction, snapshot: BrowserSnapshot | None) 
     if node is None or node.computed_attributes.selectors is None:
         return None
     observed = node.computed_attributes.selectors
+    xpaths = {"", observed.xpath_selector}
     if observed.in_shadow_root:
         # resolution rewrites the XPath of a node in a shadow root
-        observed = selectors_through_shadow_dom(node)
+        xpaths.add(selectors_through_shadow_dom(node).xpath_selector)
     given = action.selectors
     if (observed.css_selector, observed.iframe_parent_css_selectors) != (
         given.css_selector,
         given.iframe_parent_css_selectors,
-    ) or given.xpath_selector not in ("", observed.xpath_selector):
+    ) or given.xpath_selector not in xpaths:
         # the action was given selectors of its own
         return None
     return node
 
 
-def _identity(node: DomNode) -> tuple[str, str, str, str, str]:
+def _identity(node: DomNode) -> tuple[str, str, str, str, str, tuple[str, ...]]:
     tag_name = node.attributes.tag_name if node.attributes is not None else ""
     href = (node.attributes.href if node.attributes is not None else None) or ""
     name = " ".join((node.accessible_name or "").split())
-    return tag_name, node.get_role_str(), name, " ".join(node.inner_text().split()), href
+    # the element is looked for in its own frame only
+    selectors = node.computed_attributes.selectors
+    frame = tuple(selectors.iframe_parent_css_selectors) if selectors is not None else ()
+    return tag_name, node.get_role_str(), name, " ".join(node.inner_text().split()), href, frame
 
 
 async def _find_again(window: BrowserWindow, observed: DomNode, snapshot: BrowserSnapshot) -> NodeSelectors | None:
     """The selectors of the one interaction node of the current page with the observed node's tag, role,
-    accessible name, text and link. None when there is no such node or more than one, or when the observed
+    accessible name, text, link and frame. None when there is no such node or more than one, or when the observed
     page already had several (two "Delete" buttons): the element is not guessed."""
     identity = _identity(observed)
     if len(identity[2]) == 0 and len(identity[3]) == 0:
