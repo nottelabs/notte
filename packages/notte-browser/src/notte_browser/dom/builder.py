@@ -111,7 +111,7 @@ def duplicate_clickables(root: RawNode, nodes: dict[str, RawNode]) -> set[int]:
     - inside a control (a link, a button, ...): clicking it clicks the control, unless it has a name or a
       click handler of its own;
     - around a single control, and named like it: its name, or else its text, is empty or the control's text
-      or name (a `<div>Go</div>` around a "Go" button).
+      or name (a `<div>Go</div>` around a "Go" button), unless it has a click handler of its own.
     """
     highlights = _highlights(root, nodes)
     duplicates: set[int] = set()
@@ -126,7 +126,7 @@ def duplicate_clickables(root: RawNode, nodes: dict[str, RawNode]) -> set[int]:
         # nested wrappers first: a wrapper around a wrapper of the control is then around the control alone
         for child in node.children:
             around(child)
-        if node.control or node.index in duplicates:
+        if node.control or node.handler or node.index in duplicates:
             return
         nested = [child for child in node.descendants() if child.index not in duplicates]
         label = node.name or node.text

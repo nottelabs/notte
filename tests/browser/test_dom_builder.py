@@ -185,13 +185,28 @@ def test_generic_clickables_that_may_do_something_else_keep_their_id() -> None:
         "7": _element("input", "/body/div[2]/div/input", [], highlight=6, type="submit"),
         "8": _element("div", "/body/div[2]/div", ["7"], highlight=5),
         "9": _element("div", "/body/div[2]", ["8"], highlight=4),
-        "10": _element("body", "/body", ["4", "6", "9"]),
+        # a row with a click handler of its own around two wrappers of a button
+        "11": _element("button", "/body/div[3]/div/div/button", [], highlight=10),
+        "12": _element("div", "/body/div[3]/div/div", ["11"], highlight=9),
+        "13": _element("div", "/body/div[3]/div", ["12"], highlight=8),
+        "14": _element("div", "/body/div[3]", ["13"], highlight=7, onclick="openDetails()"),
+        "10": _element("body", "/body", ["4", "6", "9", "14"]),
     }
     nodes["3"]["clickHandler"] = True
+    nodes["14"]["clickHandler"] = True
+    nodes["11"]["accessibleName"] = "Favorite"
     nodes["5"]["accessibleName"] = "Favorite"
     nodes["6"]["accessibleName"] = "Open details"
     nodes["7"]["accessibleName"] = "Go"
     root = build_dom_tree(_frame(nodes, "10"), url="https://example.com")
     assert root is not None
     ids = [(node.id, node.accessible_name) for node in root.interaction_nodes()]
-    assert ids == [("B1", None), ("M1", None), ("M2", "Open details"), ("B2", "Favorite"), ("B3", "Go")]
+    assert ids == [
+        ("B1", None),
+        ("M1", None),
+        ("M2", "Open details"),
+        ("B2", "Favorite"),
+        ("B3", "Go"),
+        ("M3", None),
+        ("B4", "Favorite"),
+    ]
