@@ -19,7 +19,7 @@ HTML (`<input placeholder="Search">`) and sends the rendered page (`I1[:]<input 
 import math
 import os
 import re
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Collection, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
@@ -180,6 +180,8 @@ class ActSpace:
     elements: list[dict[str, Any]] = field(default_factory=list)
     targets: dict[str, dict[str, Target]] = field(default_factory=dict)
     controls: dict[str, Control] = field(default_factory=dict)
+    # the page has a file input (no operation uploads a file)
+    file_input: bool = False
 
     @property
     def operations(self) -> dict[str, str]:
@@ -188,7 +190,9 @@ class ActSpace:
             # a dropdown option that is not listed (`more_options`) is picked by typing its label
             operations["TYPE_TEXT"] = prompts.TYPE_TEXT_OPTION
         operations.update({key: control.label for key, control in self.controls.items()})
-        operations.update(DONE=prompts.DONE, BLOCKED=prompts.BLOCKED)
+        operations.update(
+            DONE=prompts.DONE, BLOCKED=prompts.BLOCKED_FILE_UPLOAD if self.file_input else prompts.BLOCKED
+        )
         return operations
 
 
@@ -243,12 +247,30 @@ def _approximate_name(action: InteractionAction, rendered: str, before: str | No
         candidates.append(attributes.get("value"))
     if role in ("checkbox", "radio"):
         candidates += [nearby(after), nearby(before)]
-    elif role in ("textbox", "combobox", "select"):
+    elif role in _FIELDS:
         candidates.append(nearby(before))
-    candidates += [content, attributes.get("alt"), attributes.get("placeholder"), attributes.get("title")]
-    # an unnamed link (an icon) is at least its destination
-    candidates += [action.text_label, attributes.get("href")]
+    if role in _FIELDS or role == "listbox":
+        # the content of a field is its value, or its options: not a name ("January February March ...")
+        if tag == "select" and match is not None:
+            candidates.append(_option_range([line.strip() for line in match.group(3).splitlines()]))
+        candidates += [attributes.get("placeholder"), attributes.get("title")]
+        # notte's `text_label` of a field is its `aria-label`, `name`, value or options text
+        text_label = " ".join((action.text_label or "").split())
+        if text_label not in (content, attributes.get("value")):
+            candidates.append(text_label)
+    else:
+        candidates += [content, attributes.get("alt"), attributes.get("placeholder"), attributes.get("title")]
+        # an unnamed link (an icon) is at least its destination
+        candidates += [action.text_label, attributes.get("href")]
     return next((c.strip() for c in candidates if c is not None and c.strip()), role)
+
+
+def _option_range(options: Sequence[str]) -> str | None:
+    """A nameless `<select>` named by its options: the first and last ("1900 … 2100"), or both when two."""
+    options = [option for option in options if option]
+    if len(options) <= 2:
+        return ", ".join(options) or None
+    return f"{options[0]} … {options[-1]}"
 
 
 @dataclass(frozen=True)
@@ -337,11 +359,14 @@ def _names(page: ObservedPage) -> _Names:
         after = label(i + 1)
         if real:
             # an unnamed checkbox or radio (no `<label>` tied to it) is named by the label-like text next to it,
-            # so two of them can be told apart; other unnamed elements are not (the text before a field may be a
-            # heading)
+            # so two of them can be told apart; an unnamed text field or combobox by the text before it (a
+            # heading at worst, still closer than its role or its value); other unnamed elements are not
             toggle_role = role in ("checkbox", "radio")
             names[key] = (action.accessible_name or "").strip() or _approximate_name(
-                action, content, before if toggle_role else None, after if toggle_role else None
+                action,
+                content,
+                before if toggle_role or role in ("textbox", "combobox") else None,
+                after if toggle_role else None,
             )
         else:
             names[key] = _approximate_name(action, content, before, after)
@@ -371,6 +396,8 @@ def _names(page: ObservedPage) -> _Names:
 
 # roles whose label is the text (or `<label>`) right before them
 _FIELDS = ("textbox", "combobox", "select")
+# ARIA roles of elements that take typed text
+_TEXT_ROLES = ("textbox", "searchbox", "combobox", "spinbutton")
 
 
 def accessible_names(page: ObservedPage) -> dict[str, str]:
@@ -610,7 +637,12 @@ def _role(action: InteractionAction, line: str) -> str:
         case "O", _:
             return "option"
         case "I", "fill":
-            return "textbox"
+            # an ARIA widget that is not a text field (a listbox, a slider) also gets an I id and a fill action
+            match = _RENDERED_ELEMENT.match(line)
+            if match is None or match.group(1).lower() in ("input", "textarea"):
+                return "textbox"
+            role = dict(_RENDERED_ATTRIBUTE.findall(match.group(2))).get("role", "").split(" ")[0].lower()
+            return role if role and role not in _TEXT_ROLES else "textbox"
         case "I", "check":
             return "radio" if 'type="radio"' in line else "checkbox"
         case "I", "select_dropdown_option":
@@ -660,10 +692,12 @@ def _element(
     return element
 
 
-def _offered(page: ObservedPage) -> list[InteractionAction]:
+def _offered(page: ObservedPage, rendered: Mapping[str, str]) -> list[InteractionAction]:
     """The actions offered to the decider, in page order: all of them, or past `MAX_ELEMENTS` the ones in the
-    current viewport first, so that scrolling brings the others in reach."""
-    actions = [action for action in page.actions if action.id]
+    current viewport first, so that scrolling brings the others in reach. While a dialog covers the page, only the
+    dialog's (the `rendered` ones), as the page text leaves out the page behind it."""
+    dialog = covered_by_dialog(page.description)
+    actions = [action for action in page.actions if action.id and (not dialog or action.id in rendered)]
     if len(actions) <= MAX_ELEMENTS:
         return actions
     kept = {action.id for action in actions if action.id in page.in_view}
@@ -680,9 +714,11 @@ def build_act_space(
     display_text: Callable[[str], str] = str,
     labels: LabelMode = "html",
     display_cut: Callable[[str], str] | None = None,
+    no_text: Collection[tuple[str, str]] = (),
 ) -> ActSpace:
     """`display_text` masks the presentation strings; `display_cut` (default `display_text`) the live values the
-    browser cut, where a protected value can start at the cut."""
+    browser cut, where a protected value can start at the cut. `no_text`: the (element id, label) of the fields
+    the writer had no value for, not offered to TYPE_TEXT again."""
     # Determine IDs, roles and supported operations from the original page. Only
     # presentation strings pass through display_text, before their display caps.
     lines = description_lines(page.description)
@@ -691,16 +727,18 @@ def build_act_space(
     has_live_state = len(page.states) > 0
 
     def add(operation: Operation, target: Target, element: dict[str, Any]) -> None:
+        if operation == "TYPE_TEXT" and (target.element_id, target.label) in no_text:
+            return
         _ = space.targets.setdefault(operation, {}).__setitem__(target.key, target)
         if operation not in element["operations"]:
             element["operations"].append(operation)
 
-    for action in _offered(page):
+    for action in _offered(page, lines):
         if not action.id or (names is not None and action.id in names.labels):
             continue
         line = lines.get(action.id, "")
         shown = line if names is None else names.names.get(action.id)
-        label = _cut(display_text(shown or action.text_label or action.id), MAX_LABEL_LENGTH)
+        label = _cut(display_text(shown or action.accessible_name or action.text_label or action.id), MAX_LABEL_LENGTH)
         role = _role(action, line)
         state = page.states.get(action.id)
         element = _element(
@@ -738,11 +776,17 @@ def build_act_space(
             )
 
         match role:
+            case "textbox" if input_type == "file":
+                # a file input takes a file, which act() cannot upload, and clicking it opens a file chooser that
+                # nothing answers: no operation (the decider is told, see `ActSpace.operations`)
+                space.file_input = True
             case "textbox":
-                # a file input takes a file, not typed text
-                if input_type != "file":
-                    add("TYPE_TEXT", target("fill"), element)
+                add("TYPE_TEXT", target("fill"), element)
                 add("CLICK", target("click"), element)
+            case "listbox":
+                # the list of a combobox's suggestions or a custom select: its options are the targets; typing
+                # in it fails, and a click lands on whichever option is under its center
+                pass
             case "combobox":
                 # a read-only combobox input opens a list: its option is chosen by label, not typed in
                 editable = (
@@ -813,6 +857,37 @@ def build_act_space(
         WaitAction(time_ms=WAIT_MS),
     )
     return space
+
+
+def field_context(
+    page: ObservedPage,
+    element_id: str,
+    labels: LabelMode,
+    display_text: Callable[[str], str] = str,
+    *,
+    exclude: str = "",
+) -> dict[str, str]:
+    """What the writer is told about a field besides its label (`exclude`, left out when they repeat it): its
+    `placeholder` and the page text right before it (`nearby`: "Select State" next to an unnamed combobox)."""
+    context: dict[str, str] = {}
+    match = _RENDERED_ELEMENT.match(description_lines(page.description).get(element_id, ""))
+    placeholder = None if match is None else dict(_RENDERED_ATTRIBUTE.findall(match.group(2))).get("placeholder")
+    if placeholder and not _same_text(placeholder, exclude):
+        context["placeholder"] = _cut(display_text(placeholder), MAX_NEARBY_LABEL_LENGTH)
+    lines = _description_lines(page.description) if labels == "html" else _accessible_lines(page, display_text)
+    position = next((i for i, (key, _) in enumerate(lines) if key == element_id), None)
+    before: list[str] = []
+    # up to two lines of text, up to the previous element (in the rendered page, an element's next lines continue it)
+    for key, line in reversed(lines[: position or 0]):
+        text = line.strip()
+        if key is not None or len(before) == 2 or (labels == "html" and not text.startswith("_[:]")):
+            break
+        text = text.removeprefix("_[:]").strip()
+        if text and not _same_text(text, exclude):
+            before.insert(0, _cut(text, MAX_NEARBY_LABEL_LENGTH))
+    if before:
+        context["nearby"] = " / ".join(before)
+    return context
 
 
 def page_state(
