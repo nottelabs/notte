@@ -1239,14 +1239,15 @@
 	 * separate from its parent (if the parent is also interactive).
 	 *
 	 * @param {HTMLElement} element - The element to check.
+	 * @param {boolean} ignoreDisabled - Whether to answer as if the element were enabled.
 	 * @returns {boolean} Whether the element is a distinct interaction.
 	 */
-	function isElementDistinctInteraction(element) {
+	function isElementDistinctInteraction(element, ignoreDisabled = false) {
 		if (!element || element.nodeType !== Node.ELEMENT_NODE) {
 			return false;
 		}
 
-		if (getDisabledReason(element, getCachedComputedStyle(element)) !== null) {
+		if (!ignoreDisabled && getDisabledReason(element, getCachedComputedStyle(element)) !== null) {
 			return false;
 		}
 
@@ -1413,7 +1414,7 @@
 	 */
 	function handleDisabledControl(nodeData, node, isParentHighlighted) {
 		if (!isDisabledControl(node)) return false;
-		if (isParentHighlighted && !isElementDistinctInteraction(node)) return false;
+		if (isParentHighlighted && !isElementDistinctInteraction(node, true)) return false;
 		if (!isInExpandedViewport(node, viewportExpansion)) return false;
 		nodeData.disabled = true;
 		return true;

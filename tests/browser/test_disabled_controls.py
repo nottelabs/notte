@@ -19,7 +19,7 @@ PAGE = """
 <button style="cursor: not-allowed" disabled>Styled</button>
 <fieldset disabled><legend>Shipping</legend><input name="city" placeholder="City"></fieldset>
 <div role="button" aria-disabled="true" tabindex="0">Next step</div>
-<a href="/next">Next page</a>
+<a href="/next">Next page <button disabled>Save</button></a>
 """
 
 
@@ -44,9 +44,11 @@ async def test_disabled_controls_are_described_without_actions() -> None:
             "_[:]Shipping",
             '_[:]<input placeholder="City" name="city" disabled></input>',
             '_[:]<div tabindex="0" role="button" disabled>Next step</div>',
+            # inside a link, a disabled button is described on its own, like an enabled one
             'L1[:]<a href="/next">Next page</a>',
+            "_[:]<button disabled>Save</button>",
         ]
-        assert actions == [("B1", "Enable"), ("L1", "Next page")]
+        assert actions == [("B1", "Enable"), ("L1", "Next page Save")]
 
         disabled = [node for node in session.snapshot.dom_node.flatten() if node.disabled]
         assert [(node.id, node.accessible_name) for node in disabled] == [
@@ -55,6 +57,7 @@ async def test_disabled_controls_are_described_without_actions() -> None:
             (None, "Styled"),
             (None, "City"),
             (None, "Next step"),
+            (None, "Save"),
         ]
         assert disabled[0].state == ElementState(value="")
 
@@ -62,4 +65,4 @@ async def test_disabled_controls_are_described_without_actions() -> None:
         _ = await session.aexecute(type="click", id="B1")
         lines, actions = await _observe(session)
         assert lines[1] == "I1[:]<input></input>"
-        assert actions == [("I1", ""), ("B1", "Enable"), ("L1", "Next page")]
+        assert actions == [("I1", ""), ("B1", "Enable"), ("L1", "Next page Save")]
