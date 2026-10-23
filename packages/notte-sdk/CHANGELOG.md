@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased: `AsyncRemoteSession.storage`
+
+`AsyncRemoteSession` has the `storage` attribute and constructor argument of `RemoteSession`, as
+an `AsyncRemoteFileStorage` (by default one on `client.files`). It is bound to the session the same
+way: on `client.Session(session_id)`, on `start()`, and to the new session on `reset()`. Upload,
+list and download files with `await session.storage.upload(path)`, `list()` and `download(file_id)`.
+
 ## Unreleased: off-screen links in zero-size parents
 
 Observations keep the content of a zero-size element below the viewport when one of its
@@ -82,13 +89,12 @@ async requests, so a local session can use them without blocking its event loop.
 `execute`, `evaluate_js`, `fetch`, cookies, `replay`, `cdp_url`, the viewers and the rest, with the
 same arguments, typed overloads, retries, CAPTCHA polling and results. Use `async with
 client.Session() as session:`; a session started by a cancelled or failed entry is stopped.
-`await session.page` is the async Playwright page. Differences: there is no `storage` yet, and
-`client.Session(session_id)` reads the session's status on first use instead of in the
-constructor. `client.sessions` also has `stop`, `set_cookies`, `replay`, `debug_tab_info`, the
-viewers and `page`. Local cookie files are read and written off the event loop.
+`await session.page` is the async Playwright page. Difference: `client.Session(session_id)` reads
+the session's status on first use instead of in the constructor. `client.sessions` also has
+`stop`, `set_cookies`, `replay`, `debug_tab_info`, the viewers and `page`. Local cookie files are
+read and written off the event loop.
 
-Preview: not yet available are `AsyncNotteClient.scrape`, `AsyncNotteFunction.replay` and
-`AsyncRemoteSession.storage`.
+Preview: not yet available are `AsyncNotteClient.scrape` and `AsyncNotteFunction.replay`.
 
 ## Unreleased: httpx transport
 

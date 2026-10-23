@@ -24,11 +24,13 @@ from notte_sdk._transport import AsyncSharedHttpClient, async_http_client
 from notte_sdk._v1_aliases import _RENAMED_METHODS
 from notte_sdk.endpoints import sessions
 from notte_sdk.endpoints.base import AsyncBaseClient, BaseClient, NotteEndpoint
+from notte_sdk.endpoints.files import AsyncRemoteFileStorage, RemoteFileStorage
 from notte_sdk.endpoints.page import AsyncPageClient, PageClient
 from notte_sdk.endpoints.sessions import AsyncRemoteSession, AsyncSessionsClient, RemoteSession, SessionsClient
 from notte_sdk.types import CaptchaStatus, ExecutionResultResponse
 from pydantic import BaseModel
 
+from tests.sdk.test_async_functions_files import file_entry, file_routes, same_exchange
 from tests.sdk.test_async_resources import KEY, SESSION, exchange_async, exchange_sync
 from tests.sdk.test_generated_endpoints import PROFILE, SERVER
 
@@ -40,8 +42,6 @@ SYNC_ONLY = {
     "apage": "the async session's `page` is the async Playwright page",
     "await_for_auth": "the async session's `wait_for_auth` is a coroutine",
 }
-# Attributes still missing on the async session; they come with the async file storage.
-PENDING_ATTRIBUTES = {"storage"}
 
 
 def public_members(cls: type) -> dict[str, Any]:
@@ -83,15 +83,28 @@ def test_async_session_has_the_sync_session_methods() -> None:
     assert inspect.iscoroutinefunction(RemoteSession.apage.fget)
 
 
-def test_async_session_constructor_takes_the_sync_arguments_except_storage() -> None:
-    sync = inspect.signature(RemoteSession.__init__).parameters
-    async_ = inspect.signature(AsyncRemoteSession.__init__).parameters
-    assert [name for name in sync if name not in PENDING_ATTRIBUTES] == list(async_)
+def test_async_session_constructor_takes_the_sync_arguments() -> None:
+    def parameters(init: Callable[..., Any]) -> list[tuple[str, Any, Any]]:
+        return [(p.name, p.kind, p.default) for p in inspect.signature(init).parameters.values()]
+
+    assert parameters(AsyncRemoteSession.__init__) == parameters(RemoteSession.__init__)
+    sync_overloads = typing.get_overloads(RemoteSession.__init__)
+    async_overloads = typing.get_overloads(AsyncRemoteSession.__init__)
+    assert [parameters(o) for o in async_overloads] == [parameters(o) for o in sync_overloads]
+    assert typing.get_type_hints(AsyncRemoteSession.__init__)["storage"] == AsyncRemoteFileStorage | None
+    assert typing.get_type_hints(RemoteSession.__init__)["storage"] == RemoteFileStorage | None
     sync_session = NotteClient(api_key=KEY, server_url=SERVER).Session()
-    async_session = AsyncNotteClient(api_key=KEY, server_url=SERVER).Session()
+    client = AsyncNotteClient(api_key=KEY, server_url=SERVER)
+    async_session = client.Session()
     assert isinstance(async_session, AsyncRemoteSession)
     attributes = {name for name in vars(sync_session) if not name.startswith("_")}
-    assert {name for name in vars(async_session) if not name.startswith("_")} == attributes - PENDING_ATTRIBUTES
+    assert {name for name in vars(async_session) if not name.startswith("_")} == attributes
+    # The default storage is on the client's files, and unbound until the session starts.
+    assert isinstance(async_session.storage, sessions.AsyncRemoteFileStorage)
+    assert async_session.storage.client is client.files
+    for session in (sync_session, async_session):
+        with pytest.raises(ValueError, match="A session ID is required"):
+            _ = session.storage.session_id
 
 
 @pytest.mark.parametrize("sync,async_", [(SessionsClient, AsyncSessionsClient), (PageClient, AsyncPageClient)])
@@ -690,19 +703,95 @@ def test_reset_stops_the_session_and_starts_a_new_one(monkeypatch: pytest.Monkey
     assert exchange.outcome == ("ok", {**exchange.outcome[1], "session_id": "s-2"})
 
 
-def test_sync_reset_binds_the_storage_to_the_new_session(monkeypatch: pytest.MonkeyPatch) -> None:
+def unwrapped(session: Any) -> RemoteSession | AsyncRemoteSession:
+    """The session behind a scenario's argument, to read its attributes."""
+    return session._session if isinstance(session, Awaiting) else session
+
+
+def test_start_and_reset_bind_the_storage_to_the_session(monkeypatch: pytest.MonkeyPatch) -> None:
     second = {**SESSION, "session_id": "s-2"}
     routes = {**SESSION_ROUTES, ("POST", "/sessions/start"): [(200, SESSION), (200, second)]}
 
-    def call(client: NotteClient) -> list[str]:
-        session = client.Session()
-        session.start()
-        first = session.storage.session_id
-        session.reset()
-        return [first, session.storage.session_id, session.session_id]
+    async def scenario(session: Any) -> list[Any]:
+        storage = unwrapped(session).storage
+        await session.start()
+        # An unbound storage is bound in place; one bound to the stopped session is replaced.
+        started = unwrapped(session).storage
+        await session.reset()
+        reset = unwrapped(session).storage
+        return [
+            started is storage,
+            started.session_id,
+            reset is started,
+            reset.session_id,
+            reset.client is storage.client,
+        ]
 
-    exchange = exchange_sync(monkeypatch, router(routes), call)
-    assert exchange.outcome == ("ok", ["s-1", "s-2", "s-2"])
+    exchange = same_on_both(monkeypatch, routes, scenario)
+    assert exchange.outcome == ("ok", [True, "s-1", False, "s-2", True])
+
+
+def test_attached_session_storage_is_bound_to_its_id(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def attach(client: AsyncNotteClient) -> str:
+        return client.Session("s-1").storage.session_id
+
+    sync = exchange_sync(monkeypatch, router(SESSION_ROUTES), lambda client: client.Session("s-1").storage.session_id)
+    async_ = asyncio.run(exchange_async(monkeypatch, router(SESSION_ROUTES), attach))
+    assert sync.outcome == async_.outcome == ("ok", "s-1")
+    # The async constructor reads no status: the storage is bound without a request.
+    assert not async_.calls
+
+
+def test_session_uses_the_storage_it_is_given(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def scenario(session: Any) -> list[Any]:
+        given = unwrapped(session).storage
+        await session.start()
+        return [unwrapped(session).storage is given, given.session_id]
+
+    def run(client: NotteClient | AsyncNotteClient, storage_id: str | None) -> Any:
+        session = client.Session(storage=client.FileStorage(storage_id))
+        return scenario(session if isinstance(session, AsyncRemoteSession) else Awaiting(session))
+
+    for storage_id, expected in [(None, [True, "s-1"]), ("s-9", [False, "s-9"])]:
+        sync = exchange_sync(monkeypatch, router(SESSION_ROUTES), lambda c: asyncio.run(run(c, storage_id)))
+        assert asyncio.run(exchange_async(monkeypatch, router(SESSION_ROUTES), lambda c: run(c, storage_id))) == sync
+        assert sync.outcome == ("ok", expected)
+
+
+@pytest.mark.asyncio
+async def test_session_storage_uploads_and_downloads_with_the_same_requests(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    upload = tmp_path / "notes.txt"
+    _ = upload.write_text("upload-data")
+    routes = {
+        **file_routes([[file_entry("file-1"), file_entry("file-2", "second.txt", "session_download")]]),
+        ("POST", "/sessions/start"): SESSION,
+        ("DELETE", "/sessions/s-1/stop"): CLOSED,
+    }
+
+    async def flow(client: Any, wait: Callable[[Any], Awaitable[Any]]) -> list[Any]:
+        session = client.Session()
+        await wait(session.start())
+        uploaded = await wait(session.storage.upload(str(upload), "renamed.txt"))
+        listed = await wait(session.storage.list())
+        path = await wait(session.storage.download("file-2", str(tmp_path / "out"), force=True))
+        await wait(session.stop())
+        return [uploaded, listed, Path(path).name, Path(path).read_text()]
+
+    exchange = await same_exchange(monkeypatch, routes, flow)
+    assert exchange.outcome[0] == "ok", exchange.outcome
+    assert exchange.outcome[1][2:] == ["second.txt", "hello"]
+    sent = [(call.method, call.url.removeprefix(SERVER).split("?")[0]) for call in exchange.calls]
+    assert sent == [
+        ("POST", "/sessions/start"),
+        ("POST", "/sessions/s-1/files"),
+        ("GET", "/sessions/s-1/files"),
+        ("GET", "/sessions/s-1/files"),
+        ("GET", "/sessions/s-1/files/file-2"),
+        STOP,
+    ]
+    assert exchange.calls[1].files == {"file": ("renamed.txt", b"upload-data", "text/plain")}
 
 
 # ---------------------------------------------------------------------------

@@ -79,7 +79,7 @@ from notte_sdk._generated.resources import AsyncSessionsOperations, SessionsOper
 from notte_sdk._retry import is_retryable_status
 from notte_sdk._transport import TransportError
 from notte_sdk.endpoints.base import NotteEndpoint
-from notte_sdk.endpoints.files import RemoteFileStorage
+from notte_sdk.endpoints.files import AsyncRemoteFileStorage, RemoteFileStorage
 from notte_sdk.endpoints.page import AsyncPageClient, PageClient
 from notte_sdk.errors import NotteAPIError
 from notte_sdk.websockets.base import WebsocketService
@@ -2005,7 +2005,7 @@ class AsyncRemoteSession:
     - `page` is the async Playwright page (`await session.page`); there is no sync Playwright page,
       so `apage` is not needed.
     - `wait_for_auth` is a coroutine, so `await_for_auth` is not needed.
-    - The session has no `storage` yet.
+    - `storage` is an `AsyncRemoteFileStorage`.
     - `client.Session(session_id)` does no I/O: it attaches to the session, and the first method
       that needs its state reads it.
     - There is no sync `with` block: use `async with`.
@@ -2015,6 +2015,7 @@ class AsyncRemoteSession:
     def __init__(
         self,
         *,
+        storage: AsyncRemoteFileStorage | None = None,
         perception_type: PerceptionType = "fast",
         raise_on_failure: bool = config.raise_on_session_execution_failure,
         cookie_file: str | Path | None = None,
@@ -2030,6 +2031,7 @@ class AsyncRemoteSession:
         self,
         session_id: str | None = None,
         *,
+        storage: AsyncRemoteFileStorage | None = None,
         perception_type: PerceptionType = "fast",
         cookie_file: str | Path | None = None,
         raise_on_failure: bool = config.raise_on_session_execution_failure,
@@ -2040,7 +2042,8 @@ class AsyncRemoteSession:
         """
         Create a new AsyncRemoteSession instance with the specified configuration.
 
-        Takes the arguments of `RemoteSession`, except `storage`.
+        Takes the arguments of `RemoteSession`; `storage` is an `AsyncRemoteFileStorage`, by default
+        one on the client's `files`.
         """
         if _client is None:
             raise ValueError("AsyncSessionsClient is required")
@@ -2055,6 +2058,9 @@ class AsyncRemoteSession:
         self.response: SessionResponse | None = None
         # An attached session's status, read on first use: a constructor cannot await.
         self._attached_id: str | None = session_id
+        self.storage: AsyncRemoteFileStorage = storage or AsyncRemoteFileStorage(_client=_client.root_client.files)
+        if session_id is not None:
+            self.storage = self.storage.for_session(session_id)
         self.default_perception_type: PerceptionType = perception_type
         self.default_raise_on_failure: bool = raise_on_failure
         self._cookie_file: Path | None = Path(cookie_file) if cookie_file is not None else None
@@ -2106,6 +2112,7 @@ class AsyncRemoteSession:
             raise ValueError("Session already started")
 
         self.response = await arun(self.client, _start_flow(self.client, self.request, tries))
+        self.storage = self.storage.for_session(self.session_id)
 
         logger.info(f"[Session] {self.session_id} started")
         should_wait = (
