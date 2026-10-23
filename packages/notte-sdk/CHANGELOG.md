@@ -68,9 +68,11 @@ Functions and files are complete: `functions.run_start` (streamed logs or a sing
 `update`, `create_run`, `get_curl`, `run_get_metadata` and `run_update_metadata` (large run
 fields go through object storage, with the same checks), and `files.upload`, `download` and
 `metadata`. `client.Function(...)` returns an `AsyncNotteFunction` with the `NotteFunction`
-methods as coroutines, except `replay`. Creating a function is a request, so await it:
-`function = await client.Function(path="my_function.py")`. `client.FileStorage(...)` returns an
-`AsyncRemoteFileStorage`. Local files are read and written off the event loop; an uploaded file
+methods as coroutines. Creating a function is a request, so await it:
+`function = await client.Function(path="my_function.py")`. `await function.replay()` returns the
+same `ReplayResponse` as the sync method; its `download()` is a blocking call, so run it with
+`asyncio.to_thread` or fetch `mp4_url` with an async HTTP client. `client.FileStorage(...)`
+returns an `AsyncRemoteFileStorage`. Local files are read and written off the event loop; an uploaded file
 is read into memory before it is sent.
 
 `AsyncNotteClient` also has `personas.create_number` and `delete_number`, `vaults.get`,
@@ -97,8 +99,6 @@ read and written off the event loop.
 `await client.scrape(url, ...)` is `NotteClient.scrape` as a coroutine, with the same arguments
 and typed overloads: it starts a session, goes to `url`, scrapes the page and stops the session,
 also when the scrape fails.
-
-Preview: not yet available is `AsyncNotteFunction.replay`.
 
 ## Unreleased: httpx transport
 

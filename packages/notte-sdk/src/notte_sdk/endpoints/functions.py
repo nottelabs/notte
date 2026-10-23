@@ -407,6 +407,17 @@ def _run_variables(
     return variables
 
 
+def _replay_session_id(function_run_id: str | None, session_id: str | None) -> str:
+    """The session `replay` gets the replay of: the one the last `run` opened."""
+    if function_run_id is None:
+        raise ValueError("You should call `run` before calling `replay`")
+    if session_id is None:
+        raise ValueError(
+            f"Session ID not found in your function run {function_run_id}. Please check that your function is creating at least one `client.Session` in the `run` function."
+        )
+    return session_id
+
+
 class NotteFunction:
     """
     Notte function that runs on the Notte cloud.
@@ -495,14 +506,8 @@ class NotteFunction:
             timeout: Maximum seconds to wait (default 120).
             poll_interval: Seconds between polling attempts (default 2).
         """
-        if self._function_run_id is None:
-            raise ValueError("You should call `run` before calling `replay`")
-        if self._session_id is None:
-            raise ValueError(
-                f"Session ID not found in your function run {self._function_run_id}. Please check that your function is creating at least one `client.Session` in the `run` function."
-            )
         return self.root_client.sessions.replay(
-            session_id=self._session_id,
+            session_id=_replay_session_id(self._function_run_id, self._session_id),
             wait=wait,
             timeout=timeout,
             poll_interval=poll_interval,
@@ -855,6 +860,35 @@ class AsyncNotteFunction:
         """
         fork_response = await self.client.fork(function_id=await self._created())
         return AsyncNotteFunction(function_id=fork_response.function_id, _client=self.root_client)
+
+    async def replay(
+        self,
+        wait: bool = True,
+        timeout: float = 120.0,
+        poll_interval: float = 2.0,
+    ) -> ReplayResponse:
+        """
+        Get presigned URLs for the function run replay.
+
+        ```python
+        function = client.Function("<your-function-id>")
+        await function.run()
+        replay = await function.replay()
+        print(replay.mp4_url)  # Presigned URL for MP4 download
+        await asyncio.to_thread(replay.download, "function.mp4")  # `download` blocks
+        ```
+
+        Args:
+            wait: If True (default), poll until the replay is ready.
+            timeout: Maximum seconds to wait (default 120).
+            poll_interval: Seconds between polling attempts (default 2).
+        """
+        return await self.root_client.sessions.replay(
+            session_id=_replay_session_id(self._function_run_id, self._session_id),
+            wait=wait,
+            timeout=timeout,
+            poll_interval=poll_interval,
+        )
 
     async def update(self, path: str, version: str | None = None, restricted: bool = True) -> None:
         """

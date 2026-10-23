@@ -20,6 +20,7 @@ from typing import Any
 import httpx
 import pytest
 from notte_core.logging import logger
+from notte_core.types import ReplayResponse
 from notte_sdk import AsyncNotteClient, NotteClient
 from notte_sdk._transport import AsyncSharedHttpClient, async_http_client
 from notte_sdk._v1_aliases import _RENAMED_ATTRS, _RENAMED_METHODS
@@ -28,6 +29,7 @@ from notte_sdk.endpoints import files as files_module
 from notte_sdk.endpoints import run_payloads
 from notte_sdk.endpoints.files import AsyncRemoteFileStorage, RemoteFileStorage
 from notte_sdk.endpoints.functions import AsyncNotteFunction, NotteFunction
+from notte_sdk.errors import NotteAPIError
 
 from tests.sdk.test_async_resources import (
     FUNCTION,
@@ -140,9 +142,8 @@ def hints(function: Callable[..., Any], sync: type, async_: type) -> dict[str, A
     return {name: async_ if value is sync else value for name, value in typing.get_type_hints(function).items()}
 
 
-# Sync methods without an async twin yet: `replay` waits on `sessions.replay`, which the async
-# sessions client does not have yet.
-PENDING = {NotteFunction: {"replay"}, RemoteFileStorage: set()}
+# Sync methods without an async twin yet.
+PENDING: dict[type, set[str]] = {NotteFunction: set(), RemoteFileStorage: set()}
 # Members that are not async twins of a sync method, and why.
 FUNCTION_EXCEPTIONS = {
     # Properties: they send no request, and raise until the function was awaited or used.
@@ -480,6 +481,87 @@ async def test_unawaited_function_properties_explain_what_to_do(code: str) -> No
         _ = function.function_id
     with pytest.raises(ValueError, match="await"):
         _ = function.response
+
+
+def test_replay_has_the_sync_signature_and_docstring() -> None:
+    sync, async_ = NotteFunction.replay, AsyncNotteFunction.replay
+    assert inspect.signature(async_) == inspect.signature(sync)
+    # The same summary and arguments; the example awaits.
+    sync_doc, async_doc = inspect.getdoc(sync), inspect.getdoc(async_)
+    assert sync_doc is not None and async_doc is not None
+    assert async_doc.splitlines()[0] == sync_doc.splitlines()[0]
+    assert async_doc.partition("Args:")[1:] == sync_doc.partition("Args:")[1:]
+
+
+def replay_routes(*replays: tuple[int, dict[str, Any]], session_id: str | None = "s-9") -> Routes:
+    """A run that opened `session_id`, then the replay answers in turn (the last one repeats)."""
+    answers = list(replays)
+
+    def replay(_: httpx.Request) -> httpx.Response:
+        status, payload = answers.pop(0) if len(answers) > 1 else answers[0]
+        return httpx.Response(status, json=payload)
+
+    run = {"function_id": "f-1", "function_run_id": "r-1", "session_id": session_id, "status": "closed"}
+    return {
+        ("GET", "/functions/f-1"): LINK,
+        ("POST", "/functions/f-1/runs/create"): {**RUN, "status": "created"},
+        ("POST", "/functions/f-1/runs/r-1"): {**run, "result": "1"},
+        ("GET", "/sessions/s-9/replay"): replay,
+    }
+
+
+NOT_FOUND = (404, {"detail": "replay not found"})
+READY = (200, {"mp4_url": "https://cdn.test/r.mp4", "expires_at": STAMP})
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "case,replays,options",
+    [
+        ("polls_until_ready", (NOT_FOUND, READY), {"poll_interval": 3}),
+        # A timeout shorter than one poll interval: the first miss times out, whatever the clock says.
+        ("times_out", (NOT_FOUND,), {"timeout": 1, "poll_interval": 2}),
+        ("no_wait", (NOT_FOUND,), {"wait": False}),
+        ("no_session", (READY,), {}),
+        ("no_run", (READY,), {}),
+    ],
+)
+async def test_function_replay_sends_the_same_requests(
+    monkeypatch: pytest.MonkeyPatch, case: str, replays: tuple[tuple[int, dict[str, Any]], ...], options: dict[str, Any]
+) -> None:
+    async def flow(c: Any, wait: Any) -> Any:
+        function = c.Function("f-1")
+        if case != "no_run":
+            _ = await wait(function.run(stream=False))
+        return await wait(function.replay(**options))
+
+    session_id = None if case == "no_session" else "s-9"
+    # Fresh routes per client: the replay answers are consumed in turn.
+    expected = exchange_sync(
+        monkeypatch, Api(replay_routes(*replays, session_id=session_id)), lambda c: _drive(flow(c, _passthrough))
+    )
+    actual = await exchange_async(
+        monkeypatch, Api(replay_routes(*replays, session_id=session_id)), lambda c: flow(c, _await)
+    )
+    assert actual == expected
+    replay_calls = [call for call in expected.calls if call.url.endswith("/sessions/s-9/replay")]
+    match case:
+        case "polls_until_ready":
+            assert expected.outcome == ("ok", {**dict.fromkeys(ReplayResponse.model_fields), **READY[1]})
+            assert len(replay_calls) == 2 and expected.sleeps == [3]
+        case "times_out":
+            assert expected.outcome[:2] == ("error", TimeoutError)
+            assert len(replay_calls) == 1 and expected.sleeps == []
+        case "no_wait":
+            assert expected.outcome[:2] == ("error", NotteAPIError)
+            assert len(replay_calls) == 1 and expected.sleeps == []
+        case "no_session":
+            assert expected.outcome[:2] == ("error", ValueError)
+            assert "Session ID not found in your function run r-1" in expected.outcome[2]
+            assert not replay_calls
+        case _:
+            assert expected.outcome == ("error", ValueError, "You should call `run` before calling `replay`")
+            assert not expected.calls
 
 
 # ---------------------------------------------------------------------------
