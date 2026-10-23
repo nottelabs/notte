@@ -259,3 +259,92 @@ fi
     if scenario == "new":
         assert "git push origin chore/python-version-after-v1.9.1" in commands
     assert "gh pr merge" not in commands
+
+
+def _prepare_step(name: str) -> dict:
+    steps = _load_workflow("prepare-release.yml")["jobs"]["draft"]["steps"]
+    return next(step for step in steps if step.get("name") == name)
+
+
+def test_prepare_release_checks_everything_before_drafting_the_release() -> None:
+    workflow = _load_workflow("prepare-release.yml")
+    job = workflow["jobs"]["draft"]
+    steps = job["steps"]
+    names = [step.get("name") for step in steps]
+
+    assert list(_triggers(workflow)) == ["workflow_dispatch"]
+    assert _triggers(workflow)["workflow_dispatch"]["inputs"]["version"]["required"] is True
+    assert "github.ref == 'refs/heads/main'" in job["if"]
+    assert workflow["permissions"] == {"contents": "read"}
+    assert job["permissions"] == {"contents": "write"}
+    assert steps[0]["with"]["persist-credentials"] is False
+
+    # A failing check stops the job before the draft: no step may run past a failure.
+    assert not any("continue-on-error" in step or "if" in step for step in steps)
+    assert (
+        names.index("Check the version and the workspace")
+        < names.index("Check the release does not exist yet")
+        < names.index("Check the wire models against production")
+        < names.index("Draft the release")
+    )
+    assert names[-1] == "Draft the release"
+    assert "make openapi-check-prod" in _prepare_step("Check the wire models against production")["run"]
+
+    draft = _prepare_step("Draft the release")["run"]
+    assert 'gh release create "$TAG" --draft --target "$GITHUB_SHA"' in draft
+    assert "--generate-notes" in draft
+    assert "gh release create" not in "\n".join(step.get("run", "") for step in steps[:-1])
+
+
+@pytest.mark.parametrize(
+    ("version", "tag"), [("1.9.1", "v1.9.1"), ("v1.9.1", "v1.9.1"), ("1.9", None), ("1.9.2", None)]
+)
+def test_prepare_release_accepts_only_the_workspace_version(tmp_path: Path, version: str, tag: str | None) -> None:
+    (tmp_path / "scripts").mkdir()
+    shutil.copyfile(ROOT / "scripts/release_version.py", tmp_path / "scripts/release_version.py")
+    (tmp_path / "pyproject.toml").write_text('[project]\nname = "notte"\nversion = "1.9.1.dev0"\n')
+    (tmp_path / "packages").mkdir()
+    output = tmp_path / "output"
+    output.touch()
+    result = subprocess.run(
+        ["bash", "-c", _prepare_step("Check the version and the workspace")["run"]],
+        cwd=tmp_path,
+        env={**os.environ, "VERSION": version, "GITHUB_OUTPUT": str(output)},
+        capture_output=True,
+        text=True,
+    )
+    assert (result.returncode == 0) is (tag is not None), result.stderr
+    assert output.read_text() == (f"tag={tag}\n" if tag else "")
+
+
+@pytest.mark.parametrize("scenario", ["new", "tag", "release"])
+def test_prepare_release_rejects_an_existing_tag_or_release(tmp_path: Path, scenario: str) -> None:
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    # Stands in for `gh api ... --jq`, printing what the filter would select.
+    gh = fake_bin / "gh"
+    gh.write_text(
+        """#!/bin/sh
+case "$*" in
+  *matching-refs/tags/v1.9.1*) [ "$SCENARIO" = tag ] && echo refs/tags/v1.9.1 ;;
+  *releases*) [ "$SCENARIO" = release ] && echo https://github.com/nottelabs/notte/releases/tag/untagged-1 ;;
+esac
+exit 0
+"""
+    )
+    gh.chmod(0o755)
+    result = subprocess.run(
+        ["bash", "-c", _prepare_step("Check the release does not exist yet")["run"]],
+        env={
+            **os.environ,
+            "PATH": f"{fake_bin}:{os.environ['PATH']}",
+            "SCENARIO": scenario,
+            "TAG": "v1.9.1",
+            "GITHUB_REPOSITORY": "nottelabs/notte",
+        },
+        capture_output=True,
+        text=True,
+    )
+    assert (result.returncode == 0) is (scenario == "new"), result.stdout + result.stderr
+    if scenario != "new":
+        assert "v1.9.1 already exists" in result.stdout
