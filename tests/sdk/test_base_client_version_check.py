@@ -457,6 +457,22 @@ class TestBaseClientVersionCheck:
                     error_message = str(exc_info.value)
                     assert "Pydantic validation failed" not in error_message  # Should not have our custom message
 
+    @pytest.mark.parametrize("body", [None, [1], "text", {"message": 7}])
+    def test_422_upgrade_hint_tolerates_any_json_body(self, api_key: str, reset_global_state, body: Any):
+        import notte_sdk.endpoints.base as base_module
+        from notte_sdk.endpoints.base import NotteEndpoint
+        from notte_sdk.errors import NotteAPIError
+        from pydantic import BaseModel
+
+        base_module._cached_pypi_version = "1.8.0"
+        endpoint = NotteEndpoint(path="/test", response=BaseModel, method="GET")
+        response = httpx.Response(422, json=body, request=httpx.Request("GET", "https://api.example.test/test"))
+        with patch("notte_sdk.endpoints.base.notte_core_version", "1.7.0"):
+            client = BaseClient(MockNotteClient(), None, api_key=api_key)
+            # A proxy's 422 body is reported as an API error, not an AttributeError or TypeError.
+            with pytest.raises(NotteAPIError):
+                client._check_status(endpoint, response)
+
     def test_pydantic_validation_error_in_request_list_with_upgrade(self, api_key: str, reset_global_state):
         """Test that ValidationError in request_list is enhanced with upgrade message when appropriate."""
         from notte_sdk.endpoints.base import NotteEndpoint

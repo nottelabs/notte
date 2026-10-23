@@ -513,7 +513,12 @@ class _ClientCore(ABC, Generic[TRoot]):
                 if should_upgrade and cached_version:
                     try:
                         error_data = response.json()
-                        error_message = error_data.get("message", "")
+                        # A proxy or gateway can answer 422 with any JSON, not only the API's object;
+                        # the runtime check also covers a non-string message.
+                        message = (
+                            cast(dict[str, str], error_data).get("message") if isinstance(error_data, dict) else None
+                        )
+                        error_message = message if isinstance(message, str) else ""
 
                         # Check if this looks like a Pydantic validation error
                         if (
