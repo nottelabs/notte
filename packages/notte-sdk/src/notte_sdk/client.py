@@ -4,16 +4,18 @@ import os
 import weakref
 from functools import partial
 from types import TracebackType
-from typing import Any, Literal, Self, Unpack, cast, overload
+from typing import Any, Literal, Self, TypeVar, Unpack, cast, overload
 
 from notte_core import enable_nest_asyncio
 from notte_core.actions import GotoAction
 from notte_core.data import StructuredData, TBaseModel
 from notte_core.logging import logger
+from notte_core.observation import ExecutionResult
 from notte_core.types import ScrapeMarkdownParamsDict, ScrapeRequestDict
 from pydantic import BaseModel
 from typing_extensions import final
 
+from notte_sdk._flow import Call, Flow, arun, run
 from notte_sdk._generated.resources import (
     AsyncProfilesOperations,
 )
@@ -57,6 +59,28 @@ def _validated_settings(
     if api_key is None:
         raise AuthenticationError(MISSING_API_KEY_MESSAGE)
     return api_key
+
+
+# Shared by `NotteClient.scrape` and `AsyncNotteClient.scrape`, which open the session with
+# `with` / `async with` and run the flow (see `notte_sdk._flow`) on it.
+_Session = TypeVar("_Session", RemoteSession, AsyncRemoteSession)
+
+
+def _scrape_session(session: type[_Session]) -> _Session:
+    """The session `scrape` opens: no viewer, fast perception."""
+    return session(open_viewer=False, perception_type="fast")
+
+
+def _scrape_flow(
+    url: str, raise_on_failure: bool, data: ScrapeRequestDict
+) -> Flow[StructuredData[BaseModel] | BaseModel | dict[str, Any] | str]:
+    """`scrape` in the open session: go to `url`, then scrape the page."""
+    # best-effort navigation: scrape whatever loaded unless the goto
+    # actually threw server side
+    result: ExecutionResult = yield Call("execute", (GotoAction(url=url),), {"raise_on_failure": False})
+    if not result.success and result.exception is not None:
+        raise result.exception
+    return (yield Call("scrape", kwargs={"raise_on_failure": raise_on_failure, **data}))
 
 
 @final
@@ -267,13 +291,8 @@ class NotteClient:
             When raise_on_failure=False: returns StructuredData wrapper so user can check .success.
             For markdown scraping: returns str.
         """
-        with self.Session(open_viewer=False, perception_type="fast") as session:
-            # best-effort navigation: scrape whatever loaded unless the goto
-            # actually threw server side
-            result = session.execute(GotoAction(url=url), raise_on_failure=False)
-            if not result.success and result.exception is not None:
-                raise result.exception
-            return session.scrape(raise_on_failure=raise_on_failure, **data)
+        with _scrape_session(self.Session) as session:
+            return run(session, _scrape_flow(url, raise_on_failure, data))
 
 
 @final
@@ -286,8 +305,8 @@ class AsyncNotteClient:
     exceptions, except `functions.get_curl` and `functions.decode_message`, which only format text
     and stay plain methods. So do `health_check` and the methods of the `Session`, `Function`,
     `Persona`, `Vault` and `FileStorage` objects that call the API (their methods without I/O,
-    such as `generate_password()`, stay plain). Not yet available: `scrape` and
-    `AsyncNotteFunction.replay`. They will be added later.
+    such as `generate_password()`, stay plain). Not yet available: `AsyncNotteFunction.replay`.
+    It will be added later.
 
     **Example:**
     ```python
@@ -396,3 +415,106 @@ class AsyncNotteClient:
         Health check the Notte API.
         """
         return await self.sessions.health_check()
+
+    # response_format provided, raise_on_failure=True (default) -> unwrapped TBaseModel
+    @overload
+    async def scrape(
+        self,
+        /,
+        url: str,
+        *,
+        response_format: type[TBaseModel],
+        instructions: str | None = None,
+        raise_on_failure: Literal[True] = ...,
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> TBaseModel: ...
+
+    # response_format provided, raise_on_failure=False -> wrapped StructuredData[TBaseModel]
+    @overload
+    async def scrape(
+        self,
+        /,
+        url: str,
+        *,
+        response_format: type[TBaseModel],
+        instructions: str | None = None,
+        raise_on_failure: Literal[False],
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> StructuredData[TBaseModel]: ...
+
+    # instructions only, raise_on_failure=True (default) -> unwrapped BaseModel
+    @overload
+    async def scrape(
+        self,
+        /,
+        url: str,
+        *,
+        instructions: str,
+        raise_on_failure: Literal[True] = ...,
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> dict[str, Any]: ...
+
+    # instructions only, raise_on_failure=False -> wrapped StructuredData[BaseModel]
+    @overload
+    async def scrape(
+        self,
+        /,
+        url: str,
+        *,
+        instructions: str,
+        raise_on_failure: Literal[False],
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> StructuredData[BaseModel]: ...
+
+    # markdown catch-all LAST: open Unpack[TypedDict] otherwise swallows every kwargs call under ty
+    @overload
+    async def scrape(
+        self, /, url: str, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]
+    ) -> str: ...
+
+    async def scrape(
+        self, /, url: str, *, raise_on_failure: bool = True, **data: Unpack[ScrapeRequestDict]
+    ) -> StructuredData[BaseModel] | BaseModel | dict[str, Any] | str:
+        """
+        Scrape the current page data.
+
+        This endpoint is a wrapper around the `session.scrape` method that automatically starts a new session, goes to the given URL, and scrapes the page.
+
+        **Example:**
+        ```python
+        from notte_sdk import AsyncNotteClient
+
+        async with AsyncNotteClient() as client:
+            markdown = await client.scrape("https://www.google.com", only_main_content=False)
+        ```
+
+        With structured data:
+        ```python
+        from notte_sdk import AsyncNotteClient
+        from pydantic import BaseModel
+
+        # Define your Pydantic model
+        ...
+
+        async with AsyncNotteClient() as client:
+            data = await client.scrape(
+                "https://www.notte.cc",
+                response_format=Product,
+                instructions="Extract the products names and prices"
+            )
+        ```
+
+        Args:
+            url: The URL to scrape.
+            raise_on_failure: If True (default), raises ScrapeFailedError when structured data
+                extraction fails and returns the extracted data directly. If False, returns
+                the StructuredData wrapper so user can check .success.
+            **data: Additional parameters for the scrape.
+
+        Returns:
+            When using instructions/response_format and raise_on_failure=True: returns the extracted data directly.
+            When raise_on_failure=False: returns StructuredData wrapper so user can check .success.
+            For markdown scraping: returns str.
+        """
+        async with _scrape_session(self.Session) as session:
+            return await arun(session, _scrape_flow(url, raise_on_failure, data))

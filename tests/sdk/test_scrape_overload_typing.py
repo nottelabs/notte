@@ -29,6 +29,11 @@ EXPECTED_REVEALS = (
     "dict[str, Any]",
     "str",
     "Profile",
+    # AsyncNotteClient
+    "Profile",
+    "dict[str, Any]",
+    "str",
+    "Profile",
     # PageClient
     "Profile",
     "dict[str, Any]",
