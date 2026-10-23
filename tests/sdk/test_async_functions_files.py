@@ -140,9 +140,8 @@ def hints(function: Callable[..., Any], sync: type, async_: type) -> dict[str, A
     return {name: async_ if value is sync else value for name, value in typing.get_type_hints(function).items()}
 
 
-# Sync methods without an async twin yet: `replay` waits on `sessions.replay`, which the async
-# sessions client does not have yet.
-PENDING = {NotteFunction: {"replay"}, RemoteFileStorage: set()}
+# Sync methods without an async twin yet.
+PENDING: dict[type, set[str]] = {NotteFunction: set(), RemoteFileStorage: set()}
 # Members that are not async twins of a sync method, and why.
 FUNCTION_EXCEPTIONS = {
     # Properties: they send no request, and raise until the function was awaited or used.
@@ -247,6 +246,7 @@ def run_routes(stream_status: str = "closed") -> Routes:
         ("GET", "/functions/f-1/runs/r-1"): RUN,
         ("PATCH", "/functions/f-1/runs/r-1"): UPDATED_RUN,
         ("GET", "/sessions/s-9"): SESSION_STATUS,
+        ("GET", "/sessions/s-9/replay"): {"mp4_url": "https://cdn.test/r.mp4", "expires_at": STAMP},
         ("GET", "storage"): CODE.encode(),
     }
 
@@ -385,6 +385,11 @@ def function_flows(code: str, tmp_path: Path) -> dict[str, Flow]:
     async def run_once_with_run_id(c: Any, wait: Any) -> Any:
         return await wait(c.Function("f-1").run(stream=False, function_run_id="r-1", input_variables={"x": 1}))
 
+    async def replay_run_session(c: Any, wait: Any) -> Any:
+        # Functions have no `replay`: replay the session the run returned.
+        result = await wait(c.Function("f-1").run(stream=False))
+        return await wait(c.sessions.replay(session_id=result.session_id))
+
     async def failed_run(c: Any, wait: Any) -> Any:
         return await wait(c.Function("f-1").run())
 
@@ -422,6 +427,7 @@ def function_flows(code: str, tmp_path: Path) -> dict[str, Flow]:
     [
         "create_and_run",
         "run_once_with_run_id",
+        "replay_run_session",
         "failed_run",
         "run_rejects_version",
         "lifecycle",
@@ -449,6 +455,9 @@ async def test_function_objects_send_the_same_requests(
         assert exchange.outcome[1].__name__ == "FailedToRunCloudFunctionError"
     else:
         assert exchange.outcome[0] == "ok", exchange.outcome
+    if name == "replay_run_session":
+        assert ("GET", f"{SERVER}/sessions/s-9/replay") in [(call.method, call.url) for call in exchange.calls]
+        assert exchange.outcome[1]["mp4_url"] == "https://cdn.test/r.mp4"
     if name == "download":
         storage = [call for call in exchange.calls if STORAGE_HOST in call.url]
         assert storage and all("Authorization" not in call.headers for call in storage)

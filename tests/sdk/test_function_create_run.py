@@ -23,7 +23,6 @@ def test_create_run_does_not_execute_or_fetch_function() -> None:
     create.assert_called_once_with("function-123")
     get.assert_not_called()
     run.assert_not_called()
-    assert function._function_run_id is None
 
 
 def test_created_run_can_be_executed_without_creating_another() -> None:

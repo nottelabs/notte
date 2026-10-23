@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased: `NotteFunction.replay` removed
+
+`NotteFunction.replay()` is removed. It replayed the one session the last `run()` reported, but a
+function run can open no session or several. Replay a session of the run with
+`client.sessions.replay(result.session_id)`, where `result` is what `run()` returned.
+
 ## Unreleased: `AsyncRemoteSession.storage`
 
 `AsyncRemoteSession` has the `storage` attribute and constructor argument of `RemoteSession`, as
@@ -68,7 +74,7 @@ Functions and files are complete: `functions.run_start` (streamed logs or a sing
 `update`, `create_run`, `get_curl`, `run_get_metadata` and `run_update_metadata` (large run
 fields go through object storage, with the same checks), and `files.upload`, `download` and
 `metadata`. `client.Function(...)` returns an `AsyncNotteFunction` with the `NotteFunction`
-methods as coroutines, except `replay`. Creating a function is a request, so await it:
+methods as coroutines. Creating a function is a request, so await it:
 `function = await client.Function(path="my_function.py")`. `client.FileStorage(...)` returns an
 `AsyncRemoteFileStorage`. Local files are read and written off the event loop; an uploaded file
 is read into memory before it is sent.
@@ -97,8 +103,6 @@ read and written off the event loop.
 `await client.scrape(url, ...)` is `NotteClient.scrape` as a coroutine, with the same arguments
 and typed overloads: it starts a session, goes to `url`, scrapes the page and stops the session,
 also when the scrape fails.
-
-Preview: not yet available is `AsyncNotteFunction.replay`.
 
 ## Unreleased: httpx transport
 

@@ -14,7 +14,6 @@ from notte_core.types import (
     CreateFunctionRunResponse,
     FunctionRunResponse,
     FunctionRuntime,
-    ReplayResponse,
     RunFunctionRequestDict,
 )
 from typing_extensions import override
@@ -442,8 +441,6 @@ class NotteFunction:
             function_id = self._response.function_id
             logger.info(f"[Function] {function_id} created successfully.")
         self._function_id: str = function_id
-        self._session_id: str | None = None
-        self._function_run_id: str | None = None
         self.decryption_key: str | None = decryption_key
 
     @property
@@ -472,41 +469,6 @@ class NotteFunction:
     @property
     def function_id(self) -> str:
         return self.response.function_id
-
-    def replay(
-        self,
-        wait: bool = True,
-        timeout: float = 120.0,
-        poll_interval: float = 2.0,
-    ) -> ReplayResponse:
-        """
-        Get presigned URLs for the function run replay.
-
-        ```python
-        function = notte.Function("<your-function-id>")
-        function.run()
-        replay = function.replay()
-        print(replay.mp4_url)  # Presigned URL for MP4 download
-        replay.download("function.mp4")
-        ```
-
-        Args:
-            wait: If True (default), poll until the replay is ready.
-            timeout: Maximum seconds to wait (default 120).
-            poll_interval: Seconds between polling attempts (default 2).
-        """
-        if self._function_run_id is None:
-            raise ValueError("You should call `run` before calling `replay`")
-        if self._session_id is None:
-            raise ValueError(
-                f"Session ID not found in your function run {self._function_run_id}. Please check that your function is creating at least one `client.Session` in the `run` function."
-            )
-        return self.root_client.sessions.replay(
-            session_id=self._session_id,
-            wait=wait,
-            timeout=timeout,
-            poll_interval=poll_interval,
-        )
 
     def update(self, path: str, version: str | None = None, restricted: bool = True) -> None:
         """
@@ -632,7 +594,6 @@ class NotteFunction:
         if function_run_id is None:
             function_run_id = self.client.create_run(self.function_id).function_run_id
 
-        self._function_run_id = function_run_id
         logger.info(
             f"[Function Run] {function_run_id} created and scheduled for cloud execution with raise_on_failure={raise_on_failure}."
         )
@@ -646,7 +607,6 @@ class NotteFunction:
         )
         if raise_on_failure and res.status == "failed":
             raise FailedToRunCloudFunctionError(self.function_id, function_run_id, res)
-        self._session_id = res.session_id
         return res
 
     def stop_run(self, run_id: str) -> UpdateFunctionRunResponse:
@@ -794,8 +754,6 @@ class AsyncNotteFunction:
             data["path"] = _validate_path(data.get("path"))
             self._create = data
         self._function_id: str | None = function_id
-        self._session_id: str | None = None
-        self._function_run_id: str | None = None
         self.decryption_key: str | None = decryption_key
         # Concurrent first uses create the function and fetch its metadata once.
         self._lock: asyncio.Lock = asyncio.Lock()
@@ -984,7 +942,6 @@ class AsyncNotteFunction:
         if function_run_id is None:
             function_run_id = (await self.client.create_run(response.function_id)).function_run_id
 
-        self._function_run_id = function_run_id
         logger.info(
             f"[Function Run] {function_run_id} created and scheduled for cloud execution with raise_on_failure={raise_on_failure}."
         )
@@ -998,7 +955,6 @@ class AsyncNotteFunction:
         )
         if raise_on_failure and res.status == "failed":
             raise FailedToRunCloudFunctionError(response.function_id, function_run_id, res)
-        self._session_id = res.session_id
         return res
 
     async def stop_run(self, run_id: str) -> UpdateFunctionRunResponse:
