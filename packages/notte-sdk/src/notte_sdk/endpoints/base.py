@@ -55,6 +55,8 @@ UploadFile = str | os.PathLike[str] | tuple[str, str | os.PathLike[str]]
 # Global variable to cache PyPI version check result
 _cached_pypi_version: str | None = None
 _version_check_performed: bool = False
+# Clients built on several threads at once must still claim the check only once.
+_version_check_lock = threading.Lock()
 
 
 class RawResponse(BaseModel):
@@ -301,10 +303,10 @@ class _ClientCore(ABC, Generic[TRoot]):
         global _cached_pypi_version, _version_check_performed
 
         # Only check once per process
-        if _version_check_performed:
-            return
-
-        _version_check_performed = True
+        with _version_check_lock:
+            if _version_check_performed:
+                return
+            _version_check_performed = True
 
         # Skip version check for development versions
         if ".dev" in notte_core_version:
