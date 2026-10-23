@@ -66,9 +66,9 @@ PENDING = {
         "update",  # uploads a local file, positional `restricted`
     },
     "files": {"download", "metadata", "upload"},  # local files
-    "personas": {"create_number", "delete_number"},  # an unpublished route
+    "personas": set(),
     "profiles": set(),
-    "vaults": {"get"},
+    "vaults": set(),
 }
 
 
@@ -153,6 +153,11 @@ def resource_classes(name: str) -> tuple[type, type, type]:
     return sync, generated, getattr(resources, f"Async{generated.__name__}")
 
 
+def async_client_class(name: str) -> type:
+    """The class of `AsyncNotteClient().<name>`: the async generated class, or a hand-written subclass."""
+    return type(getattr(AsyncNotteClient(api_key=KEY, server_url=SERVER), name))
+
+
 def resource_members(cls: type, stop: type) -> set[str]:
     """Public methods of a resource class, without those of `BaseClient` / `AsyncBaseClient`."""
     return set().union(*(members(base) for base in cls.__mro__[: cls.__mro__.index(stop)]))
@@ -162,6 +167,7 @@ def resource_members(cls: type, stop: type) -> set[str]:
 def test_async_resources_have_the_sync_methods_except_the_pending_ones(name: str) -> None:
     sync, generated, async_ = resource_classes(name)
     async_methods = resource_members(async_, AsyncBaseClient)
+    client_methods = resource_members(async_client_class(name), AsyncBaseClient)
     generated_methods = resource_members(generated, BaseClient)
     # Methods the hand-written client defines (new or overriding a generated one), and its
     # `PageClient`. The deprecated 1.x aliases are not carried over to the new client.
@@ -169,16 +175,19 @@ def test_async_resources_have_the_sync_methods_except_the_pending_ones(name: str
     handwritten |= {"page"} & set(vars(getattr(NotteClient(api_key=KEY, server_url=SERVER), name)))
     # Every generated method has an async twin, unless the sync client overrides it.
     assert async_methods == generated_methods - handwritten
+    # The async client adds only ports of hand-written sync methods.
+    assert client_methods - async_methods <= handwritten
     # The pinned list of what is still missing on the async resource.
-    assert (generated_methods | handwritten) - async_methods == PENDING[name]
+    assert (generated_methods | handwritten) - client_methods == PENDING[name]
     assert not hasattr(getattr(AsyncNotteClient(api_key=KEY, server_url=SERVER), name), "page")
 
 
 @pytest.mark.parametrize("name", RESOURCES)
 def test_async_twins_have_the_same_signatures(name: str) -> None:
-    _, generated, async_ = resource_classes(name)
+    sync, _, _ = resource_classes(name)
+    async_ = async_client_class(name)
     for method in resource_members(async_, AsyncBaseClient):
-        sync_method = getattr(generated, method)
+        sync_method = getattr(sync, method)
         async_method = getattr(async_, method)
         assert inspect.iscoroutinefunction(async_method), method
         assert not inspect.iscoroutinefunction(sync_method), method
@@ -434,8 +443,7 @@ def arguments(method: Callable[..., Any]) -> tuple[list[Any], dict[str, Any]]:
 
 def every_async_method() -> Iterator[tuple[str, str]]:
     for name in RESOURCES:
-        _, _, async_ = resource_classes(name)
-        for method in sorted(resource_members(async_, AsyncBaseClient)):
+        for method in sorted(resource_members(async_client_class(name), AsyncBaseClient)):
             yield name, method
 
 

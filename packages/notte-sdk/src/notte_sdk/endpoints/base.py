@@ -445,6 +445,30 @@ class _ClientCore(ABC, Generic[TRoot]):
             **(headers or {}),
         }
 
+    def _health_check_request(self, http: httpx.Client | httpx.AsyncClient) -> httpx.Request:
+        """The unauthenticated `GET /health` that `health_check` sends once, without retries."""
+        return http.build_request(
+            "GET",
+            f"{self.server_url}/{self.HEALTH_CHECK_ENDPOINT}",
+            headers={"x-notte-request-origin": self.REQUEST_ORIGIN, "x-notte-sdk-version": notte_core_version},
+        )
+
+    @staticmethod
+    def _check_health(response: httpx.Response) -> None:
+        """Raise unless the health check answered 200."""
+        if response.status_code != 200:
+            logger.error(f"⚠️ Health check failed with status code {response.status_code}.")
+            raise Exception(
+                f"Health check failed with status code {response.status_code}. Please check your server URL."
+            )
+        logger.info("🔥 Health check passed. API ready to serve requests.")
+
+    @staticmethod
+    def _health_check_unreachable(error: NotteConnectionError) -> Exception:
+        """The error `health_check` raises (from `error`) when the server cannot be reached."""
+        logger.error(f"⚠️ Health check failed with error: {error}. Please check your server URL.")
+        return Exception("Health check failed because the server is not reachable. Please check your server URL.")
+
     def _with_db_preview(self, url: str) -> str:
         """Add the preview-branch selector to a websocket URL.
 
@@ -642,25 +666,10 @@ class BaseClient(_ClientCore["NotteClient"]):
         Health check the Notte API.
         """
         try:
-            response = send(
-                self.http,
-                self.http.build_request(
-                    "GET",
-                    f"{self.server_url}/{self.HEALTH_CHECK_ENDPOINT}",
-                    headers={"x-notte-request-origin": self.REQUEST_ORIGIN, "x-notte-sdk-version": notte_core_version},
-                ),
-            )
-            if response.status_code != 200:
-                logger.error(f"⚠️ Health check failed with status code {response.status_code}.")
-                raise Exception(
-                    f"Health check failed with status code {response.status_code}. Please check your server URL."
-                )
+            response = send(self.http, self._health_check_request(self.http))
         except NotteConnectionError as e:
-            logger.error(f"⚠️ Health check failed with error: {e}. Please check your server URL.")
-            raise Exception(
-                "Health check failed because the server is not reachable. Please check your server URL."
-            ) from e
-        logger.info("🔥 Health check passed. API ready to serve requests.")
+            raise self._health_check_unreachable(e) from e
+        self._check_health(response)
 
     def _request(
         self,
@@ -917,6 +926,17 @@ class AsyncBaseClient(_ClientCore["AsyncNotteClient"]):
                 shared = self._own_http = AsyncSharedHttpClient()
                 _ = weakref.finalize(self, shared.warn_unclosed)
         return shared.get()
+
+    async def health_check(self) -> None:
+        """
+        Health check the Notte API.
+        """
+        http = self.http
+        try:
+            response = await asend(http, self._health_check_request(http))
+        except NotteConnectionError as e:
+            raise self._health_check_unreachable(e) from e
+        self._check_health(response)
 
     async def _request(
         self,

@@ -11,9 +11,19 @@ garbage collected. A client's connections belong to the event loop that opened t
 from another open loop raises `RuntimeError`. Preview: not yet available are the methods the sync
 resources extend beyond the API call (`sessions.stop`, `set_cookies`, `replay`, `debug_tab_info`,
 `page` and the viewers; `functions.run_start`, `update`, `create_run`, `get_curl`,
-`run_get_metadata`, `run_update_metadata`; `files.upload`, `download`, `metadata`; `vaults.get`;
-`personas.create_number`, `delete_number`), `managed_auth`, and the `Session`, `Function`,
-`Persona`, `Vault` and `FileStorage` objects.
+`run_get_metadata`, `run_update_metadata`; `files.upload`, `download`, `metadata`), `scrape`, and
+the `Session`, `Function` and `FileStorage` objects.
+
+`AsyncNotteClient` also has `personas.create_number` and `delete_number`, `vaults.get`,
+`managed_auth`, `health_check()`, and the `Persona` and `Vault` objects (`AsyncNottePersona`,
+`AsyncNotteVault`). Their methods that call the API are coroutines with the same names and
+arguments as the sync versions, and send the same requests. Methods without I/O, such as
+`generate_password()` and the vault's redaction helpers, stay plain methods. Create or load an object with
+`persona = await client.Persona(...)`, or use `async with client.Persona(...) as persona:` to also
+delete it on exit. Credentials go through the same vault code as `NotteVault`, so values read from
+the vault are masked the same way. `AsyncNottePersona` implements `aemails`, `asms`,
+`await_emails` and `await_sms`, and `AsyncNotteVault` implements the `*_async` vault methods, with
+async requests, so a local session can use them without blocking its event loop.
 
 ## Unreleased: httpx transport
 
