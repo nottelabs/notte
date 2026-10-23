@@ -705,3 +705,94 @@ B1[:]<button>Accept all</button>"""
     page = _page(description=dialog, actions=[ClickAction(id="B1", text_label="Accept all")], states={})
     for labels in ("accessible", "html"):
         assert page_state(page, labels).text.splitlines()[0] == DIALOG_COVERS_PAGE
+
+
+def _scrolled_page(description: str, actions: list[InteractionAction], scroll_y: int, **kwargs: Any) -> ObservedPage:
+    """A page 20 viewports tall, scrolled to `scroll_y`."""
+    viewport = ViewportData(
+        scroll_x=0, scroll_y=scroll_y, viewport_width=1280, viewport_height=720, total_width=1280, total_height=14_400
+    )
+    return _page(description=description, actions=actions, states={}, viewport=viewport, **kwargs)
+
+
+def _paragraphs(first: int, count: int) -> list[str]:
+    return [f"_[:]Paragraph {i}: " + "lorem ipsum dolor sit amet " * 6 for i in range(first, first + count)]
+
+
+@pytest.mark.parametrize("labels", ["accessible", "html"])
+def test_page_text_says_what_is_below_the_viewport(labels: Any) -> None:
+    # only the elements in the viewport are offered: a link further down is plain text
+    description = "\n".join(
+        ["L1[:]<a href='#a'>Top link</a>", *_paragraphs(0, 3), *_paragraphs(3, 40), "_[:]Bottom link"]
+    )
+    page = _scrolled_page(description, [ClickAction(id="L1", text_label="Top link")], scroll_y=0)
+    text = page_state(page, labels).text
+    assert [e["index"] for e in build_act_space(page, labels=labels).elements] == ["L1"]
+    in_view, below = (
+        text.index("--- in the viewport ---"),
+        text.index("--- below the viewport: scroll down to reach ---"),
+    )
+    assert in_view < text.index("Top link") < below < text.index("Bottom link")
+    assert "--- above the viewport ---" not in text
+
+
+@pytest.mark.parametrize("labels", ["accessible", "html"])
+def test_long_page_text_follows_the_scroll_position(labels: Any) -> None:
+    from notte_core.act.space import MAX_PAGE_TEXT_LENGTH
+
+    paragraphs = _paragraphs(0, 300)
+    actions: list[InteractionAction] = [ClickAction(id="L1", text_label="Download the Q3 report")]
+    bottom = "\n".join(["_[:]Annual review", *paragraphs, "L1[:]<a href='q3'>Download the Q3 report</a>"])
+    top = "\n".join(["_[:]Annual review", *paragraphs, "_[:]Download the Q3 report"])
+
+    at_top = page_state(_scrolled_page(top, [], scroll_y=0), labels).text
+    middle = page_state(_scrolled_page(top, [], scroll_y=7_200), labels).text
+    at_bottom = page_state(_scrolled_page(bottom, actions, scroll_y=13_680), labels).text
+    for text in (at_top, middle, at_bottom):
+        assert len(text) <= MAX_PAGE_TEXT_LENGTH
+    assert "Annual review" in at_top and "Paragraph 150:" not in at_top
+    # halfway down the page, the text is halfway down the page too
+    assert "Annual review" not in middle and "Paragraph 150:" in middle
+    assert middle.index("--- above the viewport ---") < middle.index("--- in the viewport ---")
+    # at the bottom, the link in view and the text around it, not the top of the page
+    assert "Annual review" not in at_bottom and "Download the Q3 report" in at_bottom
+    assert at_bottom.startswith("...\n--- above the viewport ---")
+
+
+def test_a_sticky_header_does_not_pull_the_page_text_to_the_top() -> None:
+    # a header that stays in view (sticky) is at the top of the text, the content scrolled to at the bottom
+    description = "\n".join(
+        ["B1[:]<button>Main menu</button>", *_paragraphs(0, 300), "L1[:]<a href='#next'>Next chapter</a>"]
+    )
+    actions: list[InteractionAction] = [
+        ClickAction(id="B1", text_label="Main menu"),
+        ClickAction(id="L1", text_label="Next chapter"),
+    ]
+    text = page_state(_scrolled_page(description, actions, scroll_y=13_680), "accessible").text
+    assert "[L1] Next chapter" in text and "Paragraph 299:" in text and "Paragraph 0:" not in text
+
+
+def test_page_text_is_unmarked_when_it_is_all_in_view() -> None:
+    page = _scrolled_page(DESCRIPTION, _actions(), scroll_y=0)
+    assert page_state(page, "html").text == DESCRIPTION
+    # and on a page that fits in the viewport
+    assert page_state(_page(viewport=None), "html").text == DESCRIPTION
+
+
+@pytest.mark.parametrize("labels", ["accessible", "html"])
+def test_an_action_is_decided_on_the_text_in_view(labels: Any) -> None:
+    # the decider is offered the elements in view: it reads the text in view, and that there is more
+    paragraphs = _paragraphs(0, 300)
+    description = "\n".join(["_[:]Annual review", *paragraphs, "_[:]Download the Q3 report"])
+    top = page_state(_scrolled_page(description, [], scroll_y=0), labels, viewport_only=True).text
+    middle = page_state(_scrolled_page(description, [], scroll_y=7_200), labels, viewport_only=True).text
+    assert "Annual review" in top.splitlines()[0] and "Paragraph 150:" not in top
+    assert top.endswith("characters of page text below the viewport not shown: scroll down to read them)")
+    assert middle.startswith("(page text above the viewport not shown: scroll up to read it)")
+    assert "Paragraph 150:" in middle and "Annual review" not in middle and "Download the Q3 report" not in middle
+    assert len(middle) < len("\n".join(paragraphs)) / 10
+
+    near = "\n".join(["L1[:]<a href='#a'>Top link</a>", *_paragraphs(0, 40), "_[:]Bottom link"])
+    page = _scrolled_page(near, [ClickAction(id="L1", text_label="Top link")], scroll_y=0)
+    text = page_state(page, labels, viewport_only=True).text
+    assert "Top link" in text and "Bottom link" not in text
