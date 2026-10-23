@@ -1,19 +1,34 @@
 # Changelog
 
-## Unreleased: `NotteFunction.replay` removed
+## 1.10.0
+
+The first release after 1.9.7. Highlights:
+
+- `AsyncNotteClient` (preview), an asyncio client with the API methods of `NotteClient` as
+  coroutines, including sessions, functions, files, personas and vaults.
+- The SDK sends HTTP with httpx instead of requests. Transport errors still subclass the
+  `requests` exceptions.
+- Generated resource methods use the Node SDK names. The 1.9 names keep working as deprecated
+  aliases until 2.0.
+- Agents, local replay and image scraping are removed, and workflows are now functions. See
+  "Migrating from 1.x".
+- `NotteFunction.replay()` is removed without a deprecation period. Replay the run's session
+  with `client.sessions.replay(...)`.
+
+### `NotteFunction.replay` removed
 
 `NotteFunction.replay()` is removed. It replayed the one session the last `run()` reported, but a
 function run can open no session or several. Replay a session of the run with
 `client.sessions.replay(result.session_id)`, where `result` is what `run()` returned.
 
-## Unreleased: `AsyncRemoteSession.storage`
+### `AsyncRemoteSession.storage`
 
 `AsyncRemoteSession` has the `storage` attribute and constructor argument of `RemoteSession`, as
 an `AsyncRemoteFileStorage` (by default one on `client.files`). It is bound to the session the same
 way: on `client.Session(session_id)`, on `start()`, and to the new session on `reset()`. Upload,
 list and download files with `await session.storage.upload(path)`, `list()` and `download(file_id)`.
 
-## Unreleased: off-screen links in zero-size parents
+### Off-screen links in zero-size parents
 
 Observations keep the content of a zero-size element below the viewport when one of its
 descendants is visible. An inline element around a floated or absolutely positioned link (for example
@@ -22,7 +37,7 @@ was off-screen, the DOM snapshot dropped it with its whole subtree, so the link 
 node and as text. Such elements are now kept like any other off-screen element. Elements inside
 the viewport are unchanged.
 
-## Unreleased: disabled controls in observations
+### Disabled controls in observations
 
 Observations describe disabled controls instead of dropping them: a disabled input, select, textarea or
 button, a control inside a disabled `<fieldset>`, and a link or widget with `aria-disabled="true"`. Each
@@ -32,7 +47,7 @@ used to appear as its text only, a disabled field not at all). They offer no act
 the new `DomNode.disabled` set, with their live state and accessible name. Controls inside a disabled
 `<fieldset>` are no longer offered as actions. Ids and descriptions of enabled elements are unchanged.
 
-## Unreleased: sessions stopped when `with` entry fails
+### Sessions stopped when `with` entry fails
 
 `with client.Session(...) as session:` now stops the session when entering the block fails after
 the session was created, for example on an invalid `cookie_file`, a failed cookie upload or a
@@ -40,14 +55,14 @@ the session was created, for example on an invalid `cookie_file`, a failed cooki
 is raised. Before, `__exit__` never ran in that case and the browser kept running until its idle
 timeout.
 
-## Unreleased: unexpected JSON responses raise `NotteAPIError`
+### Unexpected JSON responses raise `NotteAPIError`
 
 When a successful API response is not the JSON object or list a method expects (for example
 `null`, a number, or a page object without a list of `items`), the sync and async clients raise
 `NotteAPIError` with the response's status code and body, instead of an `AttributeError` or
 `TypeError`.
 
-## Unreleased: session reset and failed `async with` entries
+### Session reset and failed `async with` entries
 
 `RemoteSession.reset()` stops the session and starts a new one; it used to raise "Session already
 started". `async with session:` now stops the session when its start created it and then failed,
@@ -60,7 +75,7 @@ off the event loop, and a cancellation during the exit no longer cuts its cleanu
 once the session is stopped. Entering an already started or attached session (`client.Session(id)`)
 is still rejected, but no longer stops that session. The same holds for `AsyncRemoteSession`.
 
-## Unreleased: AsyncNotteClient (preview)
+### `AsyncNotteClient` (preview)
 
 `from notte_sdk import AsyncNotteClient` is an asyncio client on `httpx.AsyncClient`, with the
 same constructor arguments as `NotteClient`. Its `sessions`, `functions`, `files`, `personas`,
@@ -104,7 +119,7 @@ read and written off the event loop.
 and typed overloads: it starts a session, goes to `url`, scrapes the page and stops the session,
 also when the scrape fails.
 
-## Unreleased: httpx transport
+### httpx transport
 
 The Python SDK sends HTTP with httpx instead of requests: one pooled connection set per
 `NotteClient`, closed by the new `NotteClient.close()`, by `with NotteClient() as client:`, or
@@ -117,7 +132,7 @@ classes is deprecated. `NotteHTTPStatusError.response` is an `httpx.Response`. D
 default `User-Agent` is `python-httpx/<version>`, multipart file parts carry a content type, and
 a timeout while reading a response body is a `Timeout` rather than a `ConnectionError`.
 
-## Unreleased: generated page, function and session-file methods
+### Generated page, function and session-file methods
 
 The Python SDK now generates every operation in `openapi/resources.json` under the Node SDK's
 names, in snake_case. New methods: `client.sessions.scrape`, `observe` and `execute` (the plain
@@ -128,7 +143,7 @@ is generated with the same arguments and result; it no longer sends the local fi
 extra form field. Existing methods, including `client.sessions.page`, `client.files` and
 `client.functions.run_start`, behave as before.
 
-## Unreleased — accessible names in observations
+### Accessible names in observations
 
 Observations give each interactive element its accessible name, the name a screen reader announces:
 `aria-labelledby`, `<label for>` or a wrapping `<label>`, `aria-label`, `alt`, `<legend>`, a button's
@@ -138,7 +153,7 @@ cannot contain what was typed. It is available as `DomNode.accessible_name` and 
 `accessible_name` of interaction actions (`None` when the element has no name). Names are cut to 200
 characters. `text_label`, action ids and descriptions are unchanged.
 
-## Unreleased — LLM content refusals
+### LLM content refusals
 
 `LLMEngine` raises the new `ContentFilterError` (an `LLMProviderError` that names the model) when a
 provider refuses a request on content-policy grounds: OpenRouter, OpenAI and Azure content-filter
@@ -146,7 +161,7 @@ errors (as 400/403/422, or embedded in a 200 body) and a `content_filter` finish
 content. These were reported as `InvalidAPIKeyError`; 401, and 403 without a content-policy
 marker, still are. `LLMEngine(timeout=...)` sets the per-attempt HTTP timeout (default 60 s).
 
-## Unreleased — live element state in observations
+### Live element state in observations
 
 Observations read the live state of form controls: the current value of inputs, textareas and
 contenteditable elements, checked state, `<select>` options, and `aria-expanded` / `aria-selected` /
@@ -157,7 +172,7 @@ whether they are filled. Values a session's vault typed are replaced by their pl
 observation's state and fingerprint (`Observation.from_snapshot` now requires the `secrets` to mask),
 and card values the vault typed are now part of `BaseVault.get_replacement_map()`.
 
-## Unreleased — deprecated observe options
+### Deprecated observe options
 
 `observe(instructions=...)` and `perception_type="deep"` are deprecated and will be
 removed from the API on December 1, 2026. Passing either to `observe()` (on a
@@ -166,14 +181,14 @@ removed from the API on December 1, 2026. Passing either to `observe()` (on a
 Use `perception_type="fast"` (the default) instead of `"deep"`. For `instructions`:
 `<<ALTERNATIVE FOR instructions: session.act() — pending>>`. Migration guide: https://docs.notte.cc/features/sessions/observe-migration
 
-## Unreleased — deprecated 1.x aliases
+### Deprecated 1.x aliases
 
 Restored surviving core import paths and matching resource method names as lazy,
 warning-once runtime aliases. `workflows` / `Workflow` forward to functions;
 `NotteFunction.run(local=False)` ignores the retired keyword, while `local=True`
 raises a migration error. No generated code or package structure changes.
 
-## Unreleased — unused browser and core helpers
+### Unused browser and core helpers
 
 Removed unused Python helpers: `PlaywrightManager.set_playwright`, `FormFiller.get_found_fields`,
 `NotteSession.start_from`, `NotteSession.execute_saved_actions`, `resolve_domain_to_url`,
@@ -181,34 +196,34 @@ Removed unused Python helpers: `PlaywrightManager.set_playwright`, `FormFiller.g
 `ActionSpace.interaction_markdown`, `is_empty`, and `sample`. Callers of these methods must migrate;
 select actions from `ActionSpace.actions` explicitly instead of using `sample`.
 
-## Unreleased — removed prompt APIs
+### Removed prompt APIs
 
 Removed credential prompt helpers inherited by `NotteVault` (`instructions` and
 `system_instructions`), `CredentialField.instructions` / `default_instructions`,
 and the unused `instruction_name` / `exposed` metadata. Credential substitution,
 validation, serialization, and masking are unchanged.
 
-## Unreleased — interaction renderer functions
+### Interaction renderer functions
 
 Replaced `InteractionOnlyDomNodeRenderingPipe` with functions in `notte_browser.rendering.interaction_only`:
 `forward` becomes `render_interactions`, `format` becomes `format_node`, and `render_node` and
 `children_texts` keep their names. The attribute constant is now `INCLUDE_ATTRIBUTES`.
 Rendering output is unchanged; callers importing the class must use the module functions.
 
-## Unreleased — removed prompt APIs
+### Removed agent action helpers
 
 Removed the agent-only action helpers `non_agent_fields`, `model_dump_agent`,
 and `model_dump_agent_json`, and the unused `ActionParameterValue` export.
 Regular action serialization, IDs, and descriptions are unchanged.
 
-## Unreleased — retired core errors
+### Retired core errors
 
 Nine unused core error classes and `notte_core.errors.validation` are removed.
 Serialized errors naming these retired classes now rehydrate as `NotteBaseError`,
 preserving all messages and retry/notify flags but losing the retired subtype identity.
 Active error subtypes still rehydrate to their own classes.
 
-## Unreleased — core configuration cleanup
+### Core configuration cleanup
 
 Removed the unused core cache diagnostics (`get_cache_info`, `get_legacy_cache_locations`,
 `check_for_legacy_data`), telemetry compatibility attributes (`TELEMETRY_DIR`, `USER_ID_PATH`,
@@ -216,7 +231,7 @@ Removed the unused core cache diagnostics (`get_cache_info`, `get_legacy_cache_l
 `max_error_length`, and `solve_captchas` are removed; old TOML keys still warn and are skipped.
 Session-request `solve_captchas`, cache paths, and PostHog/Scarf delivery are unchanged.
 
-## Unreleased (1.10) — public resource names
+### Public resource names
 
 Generated resource methods follow the Node SDK names (snake_case in Python).
 Deprecated runtime aliases are provided until notte 2.0 (see below). Stateful convenience methods retain their 1.10 behavior.
@@ -314,6 +329,8 @@ Not covered by this layer:
   keep scripts on 1.x until their agent loops are replaced.
 - Image scraping (`only_images`) and local replay: retain 1.x or implement an
   explicit image extractor/use cloud replay.
+- `NotteFunction.replay()`: replay a session of the run with
+  `client.sessions.replay(result.session_id)`.
 - `screenshot_type`: remove the retired option.
 - `execute(type="scrape")`: use `session.scrape(...)` and adapt the result.
 - `perception_type` on the local constructor: move the option to observe/execute;

@@ -1,7 +1,14 @@
 # Changelog
 
-## Unreleased
+## 1.10.0
 
+- **Breaking:** the agent API is removed: `client.Agent()`, `client.agents`,
+  `prepareAgentRequest`, `parseAgentStatusMessage` and the `AgentConstructor`,
+  `AgentRunRequest` and `AgentUpdateHandler` types.
+- **Breaking:** `client.sessions.profileSave(sessionId, body)` is renamed
+  `client.sessions.saveProfile(sessionId, body)`.
+- Add `client.files` (`upload`, `download`, `list`, `delete` and `execute` for
+  session files), `client.sessions.mouseReplay()` and `client.profiles.stateSet()`.
 - `observe({ instructions })` and `perception_type: 'deep'` (per call or as the
   session default) are deprecated and will be removed from the API on December 1,
   2026. `session.observe()` warns once per session for each; requests are
@@ -11,6 +18,9 @@
   `ImageCategory` or `ImageData`, and `DataSpace.images` is removed. Remove uses
   of those types and the response field; omit `scrape_images` and `only_images`
   or set them to `false` when sending scraping requests.
+
+## 1.9.7 and earlier
+
 - `session.fetch()` refuses plaintext `http:` targets and redirects by default
   because the request carries the page's cookies; pass `allowInsecure: true`
   to override. Relative URLs resolve against the page.
