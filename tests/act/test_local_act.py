@@ -652,3 +652,84 @@ async def test_enter_is_stale_when_the_focus_moved(session: NotteSession) -> Non
     # a focus that stays put lets Enter through
     still = await session.aact("submit", decider=FakeDecider(choices=[{"operation": "PRESS_ENTER"}]))
     assert still.status == "executed"
+
+
+@pytest.mark.asyncio
+async def test_typed_inputs_show_their_type_and_format(session: NotteSession) -> None:
+    form = """<html><body>
+<label for="date">Date</label> <input id="date" type="date">
+<label for="qty">Tickets</label> <input id="qty" type="number" value="1">
+<label for="cv">CV</label> <input id="cv" type="file">
+<label for="name">Name</label> <input id="name"></body></html>"""
+    _ = await session.window.page.goto(f"data:text/html,{quote(form)}")
+    ids = await _ids(session)
+    decider = FakeDecider(choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["date"]}], texts=["2026-11-15"])
+    result = await session.aact("Pick 15 November 2026", decider=decider)
+
+    elements = {e["index"]: e for e in decider.states[0].elements}
+    assert elements[ids["date"]]["type"] == "date" and elements[ids["date"]]["format"] == "YYYY-MM-DD"
+    assert elements[ids["qty"]]["type"] == "number" and "format" not in elements[ids["qty"]]
+    assert "type" not in elements[ids["name"]] and "format" not in elements[ids["name"]]
+    # a file input takes no typed text
+    assert elements[ids["cv"]]["type"] == "file" and elements[ids["cv"]]["operations"] == ["CLICK"]
+    assert ids["cv"] not in decider.questions[0]["type_text_target"].criteria
+    # the decider sees the format in the target, and the writer gets it with the field
+    assert decider.questions[0]["type_text_target"].criteria[ids["date"]]["format"] == "YYYY-MM-DD"
+    assert decider.contexts[0].field == {
+        "label": "Date",
+        "role": "textbox",
+        "value": "",
+        "type": "date",
+        "format": "YYYY-MM-DD",
+    }
+    assert result.success and await session.window.page.input_value("#date") == "2026-11-15"
+
+
+@pytest.mark.asyncio
+async def test_a_dialog_says_the_page_is_behind_it(session: NotteSession, monkeypatch: pytest.MonkeyPatch) -> None:
+    from notte_core.act.prompts import DIALOG_COVERS_PAGE
+
+    page = """<html><body><nav><a href="#pricing">Pricing</a></nav>
+<div style="position:fixed;inset:0;background:#0008"><div role="dialog" aria-modal="true">
+<h2>Cookies</h2><button>Accept all</button></div></div></body></html>"""
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    for labels in ("accessible", "html"):
+        monkeypatch.setenv("NOTTE_ACT_LABELS", labels)
+        decider = FakeDecider(choices=[{"operation": "DONE"}])
+        _ = await session.aact("open the Pricing page", decider=decider)
+        # only the dialog is observed: the first line says the page is behind it
+        assert [e["label"] for e in decider.states[0].elements] == (
+            ["Accept all"] if labels == "accessible" else ["<button>Accept all</button>"]
+        )
+        assert decider.states[0].page.text.splitlines()[0] == DIALOG_COVERS_PAGE
+
+    # without a dialog, no such line
+    _ = await session.window.page.goto(f"data:text/html,{quote(PAGE)}")
+    decider = FakeDecider(choices=[{"operation": "DONE"}])
+    _ = await session.aact("look", decider=decider)
+    assert DIALOG_COVERS_PAGE not in decider.states[0].page.text
+
+
+@pytest.mark.asyncio
+async def test_typing_an_unlisted_option_is_offered_by_the_operation(session: NotteSession) -> None:
+    from notte_core.act.prompts import OPERATION_LABELS, TYPE_TEXT_OPTION
+
+    options = "".join(f"<option value='c{i}'>Country {i:03d}</option>" for i in range(120))
+    page = f"<label for='c'>Country</label><select id='c'><option value=''>Pick</option>{options}</select>"
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    ids = await _ids(session)
+    decider = FakeDecider(
+        choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["c"]}, {"operation": "DONE"}],
+        texts=["Country 100"],
+    )
+    result = await session.aact("Pick Country 100", decider=decider)
+
+    element = decider.states[0].elements[0]
+    assert element["more_options"] is True and "Country 100" not in {o["label"] for o in element["options"]}
+    # the TYPE_TEXT operation says it also picks an option that is not listed
+    assert decider.questions[0]["operation"].criteria["TYPE_TEXT"] == TYPE_TEXT_OPTION
+    assert result.success and await session.window.page.input_value("#c") == "c100"
+    # a page without such a dropdown keeps the plain label
+    _ = await session.window.page.goto(f"data:text/html,{quote(PAGE)}")
+    _ = await session.aact("look", decider=decider)
+    assert decider.questions[1]["operation"].criteria["TYPE_TEXT"] == OPERATION_LABELS["TYPE_TEXT"]
