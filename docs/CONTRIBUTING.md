@@ -29,18 +29,23 @@ Follow the instructions in the [setup docs](../docs/setup.md) file.
 The Python packages and the Node SDK are released together, from one tag and at
 one version. To cut a release:
 
-1. Merge the previous release's automatic development-version PR. Check that
-   the Python workspace version matches the intended release by running
-   `python3 scripts/release_version.py validate vX.Y.Z` on `main`.
+1. Merge the previous release's automatic development-version PR.
    If the previous Python release published and passed its installation check,
    but the workflow failed before opening that PR, run
    `python3 scripts/release_version.py next vPREVIOUS_VERSION` and `uv lock`,
    then commit the changes, open the version PR, and merge it into `main`
    before cutting the next release.
-2. Open [Releases](https://github.com/nottelabs/notte/releases) and draft a new
-   release with a new tag `vX.Y.Z` targeting `main`. Generate the release notes
-   and publish the release.
-3. Pushing the tag runs two workflows:
+2. Run the [Prepare release](https://github.com/nottelabs/notte/actions/workflows/prepare-release.yml)
+   workflow on `main` with the version `X.Y.Z`. It checks that the version is a
+   stable `X.Y.Z` matching the Python workspace, that no `vX.Y.Z` tag or
+   release exists yet, and that production serves the wire models the SDK uses
+   (`make openapi-check-prod`). If production fails the check, wait for the
+   backend deploy and run it again. When every check passes, it creates a draft
+   release `vX.Y.Z` targeting the checked `main` commit, with generated notes.
+3. Open the draft on [Releases](https://github.com/nottelabs/notte/releases),
+   edit the notes and publish it. Publishing creates the tag. A tag ruleset
+   only accepts `vX.Y.Z` names for `v*` tags.
+4. Pushing the tag runs two workflows:
    - `pypi-release.yml` builds and publishes the root `notte` package and every
      package under `packages/` to PyPI as `X.Y.Z`, verifies the install from
      PyPI, then triggers the docs deployment.

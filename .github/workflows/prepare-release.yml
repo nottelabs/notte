@@ -1,0 +1,88 @@
+name: Prepare release
+
+# Run the release checks before anything is public, then open a draft release with
+# generated notes. Review and publish the draft from the Releases page: publishing
+# creates the vX.Y.Z tag, which runs pypi-release.yml and node-sdk-publish.yml.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Stable version to release (X.Y.Z or vX.Y.Z)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prepare-release
+  cancel-in-progress: false
+
+env:
+  DISABLE_TELEMETRY: "true"
+
+jobs:
+  draft:
+    if: github.repository == 'nottelabs/notte' && github.ref == 'refs/heads/main'
+    name: Check and draft the release
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ inputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version-file: ".python-version"
+
+      - name: Check the version and the workspace
+        id: version
+        run: |
+          set -euo pipefail
+          tag="v${VERSION#v}"
+          python3 scripts/release_version.py validate "$tag"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Check the release does not exist yet
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          tags=$(gh api "repos/$GITHUB_REPOSITORY/git/matching-refs/tags/$TAG" \
+            --jq ".[] | select(.ref == \"refs/tags/$TAG\") | .ref")
+          # Drafts have no tag yet, so look for them among the releases.
+          releases=$(gh api --paginate "repos/$GITHUB_REPOSITORY/releases" \
+            --jq ".[] | select(.tag_name == \"$TAG\") | .html_url")
+          if [ -n "$tags$releases" ]; then
+            echo "::error::$TAG already exists: ${releases:-tag $TAG}"
+            exit 1
+          fi
+
+      - name: Check the wire models against production
+        # The same gate pypi-release.yml runs; fail here, before the release is public.
+        run: |
+          uv sync --all-packages
+          make openapi-check-prod
+
+      - name: Draft the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          url=$(gh release create "$TAG" --draft --target "$GITHUB_SHA" --title "$TAG" --generate-notes)
+          echo "Draft release for $GITHUB_SHA: $url" >> "$GITHUB_STEP_SUMMARY"
+          echo "Review the notes and publish the draft: $url"
