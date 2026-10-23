@@ -14,7 +14,10 @@ A session plugs in through an `ActDriver` (observe, re-check, execute); the deci
 5. `dry_run`: return the action as `proposed`;
 6. re-check the page: if the target changed since the observation, decide again once (reusing the
    written text for the same field), then give up with `stale`; the decision is never reused;
-7. execute, and record the action in the session's history (last 10, sent as `recent_actions`).
+7. execute, and record the action in the session's history (last 10, sent as `recent_actions`), with the
+   error class when it failed. A WAIT waits for the page to change, up to `WAIT_MS`.
+
+An invalid answer (decision or field value) is asked again once; a second invalid answer blocks.
 """
 
 import time
@@ -24,9 +27,12 @@ from dataclasses import dataclass, field
 from typing import Any, Protocol
 
 import notte_core.act.prompts as prompts
-from notte_core.act.errors import NoActionFoundError
+from notte_core.act.errors import InvalidDecisionError, NoActionFoundError
 from notte_core.act.privacy import ActPrivacy
 from notte_core.act.space import (
+    WAIT_MS,
+    ActSpace,
+    Decision,
     LabelMode,
     ObservedPage,
     Target,
@@ -96,6 +102,10 @@ class ActDriver(Protocol):
 
     async def execute(self, action: BaseAction, raise_on_failure: bool) -> ExecutionResult: ...
 
+    async def wait_for_change(self, timeout_ms: int) -> ExecutionResult:
+        """Wait until the page changes (DOM change or navigation), at most `timeout_ms` (`notte_core.act.wait`)."""
+        ...
+
 
 @dataclass
 class ActHistoryEntry:
@@ -106,6 +116,8 @@ class ActHistoryEntry:
     page_changed: bool | None = None
     # filled in by the next observation; False when it cannot be known (see `ActHistory`)
     pending: bool = True
+    # the error class of a failed execution (never its message: it can quote page content or values)
+    error: str | None = None
 
 
 @dataclass
@@ -127,6 +139,7 @@ class ActHistory:
     def recent(self, limit: int = HISTORY_SIZE) -> list[dict[str, Any]]:
         return [
             {"action": e.action, "kind": e.kind, "text": e.text, "page_changed": e.page_changed}
+            | ({} if e.error is None else {"error": e.error})
             for e in list(self.entries)[-limit:]
         ]
 
@@ -205,10 +218,12 @@ async def run_act(
         )
         step = time.perf_counter()
         questions = act_questions(space, history.privacy.text(instruction))
-        answers = await decider.choose(state, questions)
+        try:
+            decision = await _decide(decider, state, questions, space, run)
+        except InvalidDecisionError as e:
+            run.timings.decide_ms += _ms(step)
+            return _invalid(run, e, raise_on_failure, page.fingerprint)
         run.timings.decide_ms += _ms(step)
-        run.model = answers.model
-        decision = interpret(answers, space)
         common: dict[str, Any] = dict(
             fingerprint=page.fingerprint,
             operation=decision.operation,
@@ -237,10 +252,13 @@ async def run_act(
                 step = time.perf_counter()
                 context = _write_context(instruction, target, model_page, history, variables, driver, labels)
                 try:
-                    text = await decider.write(context)
+                    text = await _write(decider, context)
                 except ContentFilterError as e:
                     run.timings.write_ms += _ms(step)
                     return _blocked(run, f"the field writer refused: {e.dev_message}", raise_on_failure, common, e)
+                except InvalidDecisionError as e:
+                    run.timings.write_ms += _ms(step)
+                    return _invalid(run, e, raise_on_failure, page.fingerprint, common)
                 run.timings.write_ms += _ms(step)
                 # "" clears a field, but names no option of a dropdown
                 if text is None or (text == "" and target.kind == "select_text"):
@@ -277,22 +295,68 @@ async def run_act(
                 status="stale", message="The page kept changing between decision and execution.", **common
             )
 
-        step = time.perf_counter()
-        execution = await driver.execute(action, raise_on_failure)
-        run.timings.execute_ms += _ms(step)
         # without live state (remote sessions) a typed value does not change the fingerprint
         unknown = decision.operation == "TYPE_TEXT" and len(page.states) == 0
+        entry = ActHistoryEntry(
+            action=label, kind=decision.operation, text=text, fingerprint=page.fingerprint, pending=not unknown
+        )
+        step = time.perf_counter()
+        try:
+            if decision.operation == "WAIT":
+                execution = await driver.wait_for_change(WAIT_MS)
+            else:
+                execution = await driver.execute(action, raise_on_failure)
+        except Exception as e:
+            entry.error = type(e).__name__
+            history.entries.append(entry)
+            raise
+        run.timings.execute_ms += _ms(step)
+        if not execution.success:
+            entry.error = "ExecutionFailed" if execution.exception is None else type(execution.exception).__name__
         if unknown:
             # The loop must not mistake unobservable cloud fills for lack of progress.
             common["fingerprint"] = None
-        history.entries.append(
-            ActHistoryEntry(
-                action=label, kind=decision.operation, text=text, fingerprint=page.fingerprint, pending=not unknown
-            )
-        )
+        history.entries.append(entry)
         return run.result(status="executed", action=action, execution=execution, message=execution.message, **common)
 
     raise AssertionError("unreachable")  # pragma: no cover
+
+
+async def _decide(
+    decider: Decider, state: DecisionState, questions: dict[str, Question], space: ActSpace, run: _Run
+) -> Decision:
+    """The decision, asked again once if the answer is invalid (raises the second `InvalidDecisionError`)."""
+    for attempt in range(2):
+        try:
+            answers = await decider.choose(state, questions)
+            run.model = answers.model
+            return interpret(answers, space)
+        except InvalidDecisionError:
+            if attempt == 1:
+                raise
+    raise AssertionError("unreachable")  # pragma: no cover
+
+
+async def _write(decider: Decider, context: WriteContext) -> str | None:
+    """The field value, asked again once if the writer's answer is invalid."""
+    try:
+        return await decider.write(context)
+    except InvalidDecisionError:
+        return await decider.write(context)
+
+
+def _invalid(
+    run: _Run,
+    error: InvalidDecisionError,
+    raise_on_failure: bool,
+    fingerprint: str,
+    common: dict[str, Any] | None = None,
+) -> ActResult:
+    """Two invalid answers in a row: nothing ran. Raises `error` unless `raise_on_failure=False`."""
+    if raise_on_failure:
+        raise error
+    fields = common if common is not None else {"fingerprint": fingerprint}
+    return run.result(status="blocked", message=f"the decider answered invalidly twice: {error.dev_message}", **fields)
 
 
 def _blocked(
