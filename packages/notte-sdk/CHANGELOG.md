@@ -18,8 +18,9 @@ The first release after 1.9.7. Highlights:
 ### `NotteFunction.replay` removed
 
 `NotteFunction.replay()` is removed. It replayed the one session the last `run()` reported, but a
-function run can open no session or several. Replay a session of the run with
-`client.sessions.replay(result.session_id)`, where `result` is what `run()` returned.
+function run can open no session or several. `result.session_id`, where `result` is what `run()`
+returned, holds at most one session ID, and is `None` when the run opened no session. When it is
+set, replay that session with `client.sessions.replay(result.session_id)`.
 
 ### `AsyncRemoteSession.storage`
 
@@ -329,7 +330,7 @@ Not covered by this layer:
   keep scripts on 1.x until their agent loops are replaced.
 - Image scraping (`only_images`) and local replay: retain 1.x or implement an
   explicit image extractor/use cloud replay.
-- `NotteFunction.replay()`: replay a session of the run with
+- `NotteFunction.replay()`: when `result.session_id` is not `None`, replay that session with
   `client.sessions.replay(result.session_id)`.
 - `screenshot_type`: remove the retired option.
 - `execute(type="scrape")`: use `session.scrape(...)` and adapt the result.
