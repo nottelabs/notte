@@ -952,6 +952,8 @@ def test_loops_in_two_threads_cannot_both_take_the_pool() -> None:
     shared = AsyncSharedHttpClient()
     created: list[Mock] = []
     both_waiting = threading.Barrier(2)
+    # Both loops stay open until both have checked ownership: a closed owner loop is replaced.
+    both_checked = threading.Barrier(2)
 
     def slow_client() -> Mock:
         # SSL setup is slow enough for a second thread to pass an unlocked ownership check.
@@ -969,6 +971,8 @@ def test_loops_in_two_threads_cannot_both_take_the_pool() -> None:
                 return shared.get()
             except RuntimeError as error:
                 return error
+            finally:
+                _ = both_checked.wait(5)
 
         outcomes.append(asyncio.run(get()))
 
