@@ -8,7 +8,7 @@ from urllib.parse import quote
 import pytest
 import pytest_asyncio
 from notte_browser.session import NotteSession
-from notte_core.act import InvalidDecisionError, NoActionFoundError
+from notte_core.act import InvalidDecisionError, NoActionFoundError, WriteContext
 from notte_core.actions import CheckAction, FillAction, SelectDropdownOptionAction
 
 from tests.act.fakes import FakeDecider
@@ -156,8 +156,44 @@ async def test_invalid_answers_execute_nothing(session: NotteSession) -> None:
             answers.answers["operation"].probabilities["CLICK"] = 0.95
             return answers
 
+    # asked again once, then raised (nothing executed)
+    broken = Broken(choices=[{"operation": "DONE"}] * 2)
     with pytest.raises(InvalidDecisionError):
-        _ = await session.aact("anything", decider=Broken(choices=[{"operation": "DONE"}]))
+        _ = await session.aact("anything", decider=broken)
+    assert len(broken.states) == 2
+
+    # raise_on_failure=False: blocked, not raised
+    result = await session.aact("anything", decider=Broken(choices=[{"operation": "DONE"}] * 2), raise_on_failure=False)
+    assert result.status == "blocked" and result.execution is None and "invalid" in (result.message or "")
+
+
+@pytest.mark.asyncio
+async def test_an_invalid_answer_is_asked_again_once(session: NotteSession) -> None:
+    class BrokenOnce(FakeDecider):
+        async def choose(self, state, questions):  # pyright: ignore[reportMissingParameterType, reportUnknownParameterType]
+            answers = await super().choose(state, questions)  # pyright: ignore[reportUnknownArgumentType]
+            if len(self.states) == 1:
+                answers.answers.pop("operation")
+            return answers
+
+    decider = BrokenOnce(choices=[{"operation": "DONE"}] * 2)
+    result = await session.aact("anything", decider=decider)
+    assert result.status == "done" and len(decider.states) == 2
+
+
+@pytest.mark.asyncio
+async def test_an_invalid_field_value_is_asked_again_once(session: NotteSession) -> None:
+    ids = await _ids(session)
+
+    class BadWriter(FakeDecider):
+        async def write(self, context: WriteContext) -> str | None:
+            self.contexts.append(context)
+            raise InvalidDecisionError("the field writer returned no valid field value; nothing typed")
+
+    decider = BadWriter(choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["name"]}])
+    result = await session.aact("Type Jane", decider=decider, raise_on_failure=False)
+    assert result.status == "blocked" and result.execution is None and len(decider.contexts) == 2
+    assert await session.window.page.input_value("#name") == ""
 
 
 @pytest.mark.asyncio
@@ -652,3 +688,72 @@ async def test_enter_is_stale_when_the_focus_moved(session: NotteSession) -> Non
     # a focus that stays put lets Enter through
     still = await session.aact("submit", decider=FakeDecider(choices=[{"operation": "PRESS_ENTER"}]))
     assert still.status == "executed"
+
+
+@pytest.mark.asyncio
+async def test_a_failed_action_is_recorded_as_failed(session: NotteSession) -> None:
+    # a date input rejects a value that is not YYYY-MM-DD: the fill fails
+    _ = await session.window.page.goto(f"data:text/html,{quote('<label for=d>Date</label><input id=d type=date>')}")
+    ids = await _ids(session)
+    decider = FakeDecider(
+        choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["d"]}, {"operation": "DONE"}],
+        texts=["15/11/2026 secret-looking text"],
+    )
+    failed = await session.aact("Pick 15 November 2026", decider=decider, raise_on_failure=False)
+    assert failed.execution is not None and not failed.execution.success
+    _ = await session.aact("Pick 15 November 2026", decider=decider, raise_on_failure=False)
+    [entry] = decider.states[-1].recent_actions
+    # the error class, never the message (it can quote the page or the value)
+    assert entry["error"] and entry["error"].isidentifier()
+    assert "Malformed" not in json.dumps(entry)
+
+
+@pytest.mark.asyncio
+async def test_a_raised_failure_is_recorded_too(session: NotteSession) -> None:
+    _ = await session.window.page.goto(f"data:text/html,{quote('<label for=d>Date</label><input id=d type=date>')}")
+    ids = await _ids(session)
+    decider = FakeDecider(
+        choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["d"]}, {"operation": "DONE"}], texts=["15/11/2026"]
+    )
+    with pytest.raises(Exception):  # noqa: B017 (whatever the session raises for a failed fill)
+        _ = await session.aact("Pick 15 November 2026", decider=decider)
+    _ = await session.aact("Pick 15 November 2026", decider=decider, raise_on_failure=False)
+    assert "error" in decider.states[-1].recent_actions[0]
+
+
+WAIT_PAGE = """<input id="field" disabled aria-label="Name"><p id="status">Loading</p>
+<script>setTimeout(() => {{ document.getElementById('field').disabled = false;
+document.getElementById('status').textContent = 'Ready'; }}, {delay});</script>"""
+
+
+async def _wait(session: NotteSession) -> tuple[str, float]:
+    decider = FakeDecider(choices=[{"operation": "WAIT"}])
+    loop = asyncio.get_running_loop()
+    started = loop.time()
+    result = await session.aact("Type a name once the field is ready", decider=decider)
+    assert result.status == "executed" and result.execution is not None and result.execution.success
+    return result.execution.message, loop.time() - started
+
+
+@pytest.mark.asyncio
+async def test_wait_ends_when_the_page_changes(session: NotteSession) -> None:
+    # the page enables its field 1.5 s after loading: past the old fixed 1 s, within the bound
+    _ = await session.window.page.goto(f"data:text/html,{quote(WAIT_PAGE.format(delay=1500))}")
+    message, elapsed = await _wait(session)
+    assert message.startswith("The page changed") and elapsed < 2.8
+    assert await session.window.page.is_enabled("#field")
+
+
+@pytest.mark.asyncio
+async def test_wait_is_bounded_on_a_page_that_does_not_change(session: NotteSession) -> None:
+    message, elapsed = await _wait(session)
+    assert message == "The page did not change in 3000 ms." and 2.9 < elapsed < 4.5
+
+
+@pytest.mark.asyncio
+async def test_wait_ends_on_a_navigation(session: NotteSession) -> None:
+    page = "<p>Redirecting</p><script>setTimeout(() => location.href = 'about:blank', 300)</script>"
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    message, elapsed = await _wait(session)
+    assert message.startswith("The page navigated") and elapsed < 2.8
+    assert session.window.page.url == "about:blank"
