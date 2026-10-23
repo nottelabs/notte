@@ -102,8 +102,9 @@ class ActDriver(Protocol):
 
     async def execute(self, action: BaseAction, raise_on_failure: bool) -> ExecutionResult: ...
 
-    async def wait_for_change(self, timeout_ms: int) -> ExecutionResult:
-        """Wait until the page changes (DOM change or navigation), at most `timeout_ms` (`notte_core.act.wait`)."""
+    async def wait_for_change(self, timeout_ms: int, raise_on_failure: bool) -> ExecutionResult:
+        """Wait until the page changes (DOM change or navigation), at most `timeout_ms` (`notte_core.act.wait`).
+        A failed wait raises, like `execute`, with `raise_on_failure`."""
         ...
 
 
@@ -303,7 +304,7 @@ async def run_act(
         step = time.perf_counter()
         try:
             if decision.operation == "WAIT":
-                execution = await driver.wait_for_change(WAIT_MS)
+                execution = await driver.wait_for_change(WAIT_MS, raise_on_failure)
             else:
                 execution = await driver.execute(action, raise_on_failure)
         except Exception as e:

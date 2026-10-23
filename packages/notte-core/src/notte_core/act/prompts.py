@@ -21,7 +21,8 @@ If Search/Submit is visible and the required fields are ready, CLICK it immediat
 Recent WAIT actions are not evidence of loading. Prefer a useful visible control over WAIT.
 A recent action with an error failed: do not repeat it unchanged.
 DONE requires visible evidence that ALL requirements are satisfied. If asked to open a result,
-a matching link is not enough. BLOCKED means no supported operation can make progress.
+a matching link is not enough. BLOCKED means no supported operation can make progress: a dialog over
+the page can be closed, a disabled control can be waited for, and text below the viewport can be scrolled to.
 Only the part of the page in the viewport is shown: scroll to see and reach the rest."""
 
 TARGET = """Choose the best observed target if the next operation is the one specified in this question.
