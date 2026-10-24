@@ -889,7 +889,8 @@ _[:]We use cookies to improve your experience.
 B1[:]<button type="button">Accept all</button>
 B2[:]<button type="button">Reject all</button>
 I1[:]<input type="checkbox" name="analytics"></input>
-_[:]Analytics cookies"""
+_[:]Analytics cookies
+I2[:]<input type="text" name="q" role="combobox"></input>"""
 
 
 def test_closing_a_dialog_over_the_page_is_an_operation_of_its_own() -> None:
@@ -897,10 +898,11 @@ def test_closing_a_dialog_over_the_page_is_an_operation_of_its_own() -> None:
         ClickAction(id="B1", text_label="Accept all", accessible_name="Accept all"),
         ClickAction(id="B2", text_label="Reject all", accessible_name="Reject all"),
         CheckAction(id="I1", value=True, text_label="analytics", accessible_name="Analytics cookies"),
+        SelectDropdownOptionAction(id="I2", value="<sample_value>", text_label="", accessible_name="Search"),
     ]
     page = _page(states={}, description=COOKIE_DIALOG, actions=actions)
     space = build_act_space(page, labels="accessible")
-    # the dialog's buttons close it; a toggle inside it does not
+    # the dialog's buttons close it; a toggle or a field inside it (a search box) does not
     assert set(space.targets["CLOSE_DIALOG"]) == {"B1", "B2"}
     assert "CLOSE_DIALOG" in space.operations
     questions = act_questions(space, "Open the Pricing page")
