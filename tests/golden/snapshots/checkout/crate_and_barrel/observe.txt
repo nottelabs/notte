@@ -1,5 +1,4 @@
 ### Content of 'WebArea' component with text 'body content'
-_[:]Loading
 L1[:]<a href="https://www.crateandbarrel.com/">Crate and Barrel</a>
 _[:]Checkout
 _[:]Shipping
@@ -28,8 +27,6 @@ _[:]Required
 I3[:]<input type="text" value="" placeholder="" name="Address1"></input>
 B1[:]<button type="button">Add apt, suite or other
 optional</button>
-_[:]Apartment, Suite, Building, Other
-_[:]optional
 _[:]Zip Code
 _[:]Required
 I4[:]<input type="text" value="" name="zipCode"></input>
@@ -103,7 +100,6 @@ AE (Military)
 AP (Military)</select>
 _[:]Phone Number
 _[:]Required
-_[:]We may need to contact you with shipping or order questions.
 _[:]Use as billing address
 _[:]Next
 _[:]Order Summary
@@ -126,23 +122,14 @@ _[:]Crate and Barrel
 _[:]©2025
 _[:]Home
 _[:]Your Cart
-_[:]Give Us
-_[:]Feedback
 _[:]Privacy Policy
 _[:]Terms of Use
 _[:]Site Index
-_[:](800) 967-6696
 _[:]Stay in Touch
-_[:]Terms of Use
-_[:]Privacy Policy
 _[:]Contact Us
 _[:](800) 967-6696
 _[:]Give Us
 _[:]Feedback
-_[:]©2025 Crate and Barrel. All rights reserved.
-_[:];
-_[:]Close Popup
-_[:]Modal Popup
 _[:]normal
 
 # interaction actions

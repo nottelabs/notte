@@ -20,7 +20,6 @@ B1[:]<button type="button">Sign In</button>
 _[:]Check out as a guest
 _[:]Email Address
 I1[:]<input type="email" value="" name="emailAddress"></input>
-_[:]Please enter Email Address
 B2[:]<input type="checkbox" value="true" name="emailOptIn"></input>
 _[:]Please send me Anthropologie offers, promotions, and other commercial messages. (You may unsubscribe at any time.)
 B3[:]<button tabindex="0" role="tab">Ship</button>
@@ -156,15 +155,11 @@ _[:]Vanuatu
 _[:]Vatican City
 _[:]Venezuela
 _[:]First Name
-_[:]Please enter First Name
 _[:]Last Name
-_[:]Please enter Last Name
 _[:]Street Address
-_[:]Please enter Street Address
 _[:]Address 2
 _[:]PO Box
 _[:]City
-_[:]Please enter City
 _[:]State
 _[:]Select a State
 _[:]Alabama
@@ -225,12 +220,9 @@ _[:]Washington
 _[:]West Virginia
 _[:]Wisconsin
 _[:]Wyoming
-_[:]Please enter State
 _[:]ZIP Code
-_[:]Please enter ZIP Code
 _[:]Mobile Number
 _[:]+1
-_[:]Please enter Mobile Number
 _[:]Order Summary
 L6[:]<a href="tel:8003092500">800.309.2500</a>
 _[:]Subtotal
@@ -243,7 +235,6 @@ _[:]Total
 _[:]$58.00
 B5[:]<button type="button" aria_expanded="false"></button>
 M3[:]<div>Promo Code</div>
-_[:]Apply
 B6[:]<button type="button">Ship to this address</button>
 _[:]Anthropologie Footer
 _[:]Questions?
@@ -259,45 +250,7 @@ _[:]Accessibility
 _[:]URBN.com
 _[:]Do Not Sell My Personal Info
 _[:]© 2025 URBN.com. All Rights Reserved.
-_[:]Can we help?
-_[:]For immediate assistance, please use our Chat feature below.
-_[:]Start chat
-_[:]Close
 _[:]normal
-_[:]Manage Cookie Preferences
-_[:]Make selections below to opt-in for optional cookies.
-_[:]Cookie use policy
-_[:]Allow All
-_[:]Manage Consent Preferences
-_[:]Strictly Necessary Cookies
-_[:]Always Active
-_[:]These cookies are necessary for the website to function and cannot be switched off in our systems. They are usually only set in response to actions made by you which amount to a request for services, such as setting your privacy preferences, logging in or filling in forms. You can set your browser to block or alert you about these cookies, but some parts of the site will not then work. These cookies do not store any personally identifiable information.
-_[:]Analytics
-_[:]Analytics
-_[:]Analytics cookies help us improve our website by collecting and reporting info on how you use it. They collect information in a way that does not directly identify anyone.
-_[:]Personalization
-_[:]Personalization
-_[:]Personalisation cookies collect information about your use of this site in order to display content and experiences that are relevant to you.
-_[:]Marketing
-_[:]Marketing
-_[:]Marketing cookies collect information about your use of this and other sites to enable display ads and other marketing that is more relevant to you.
-_[:]Cookie List
-_[:]Clear
-_[:]checkbox label
-_[:]label
-_[:]Apply
-_[:]Cancel
-_[:]Consent
-_[:]Leg.Interest
-_[:]checkbox label
-_[:]label
-_[:]checkbox label
-_[:]label
-_[:]checkbox label
-_[:]label
-_[:]Confirm My Choices
-_[:]Live chat:
-_[:]Chat with an Expert
 
 # interaction actions
 L1	click	'Learn more'	'Learn more'	html > body > div:nth-of-type(1) > span > a[href="https://www.anthropologie.com/help/privacy-policy"]	html/body/div[1]/span/a	in_iframe=False	in_shadow_root=False

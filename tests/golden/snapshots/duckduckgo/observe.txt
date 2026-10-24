@@ -15,15 +15,12 @@ L5[:]<a href="#features"></a>
 _[:]Protection. Privacy. Peace of mind. Get our browser on all your devices.
 _[:]Search and browse with the DuckDuckGo browser for more protection. Unlike Chrome and other browsers, we don't track you.
 _[:]Download DuckDuckGo today!
-_[:]Available on the following platforms
 _[:]Desktop & Mobile Browser
-_[:]DuckDuckGo Browser
 _[:]Mac
 _[:]Windows
 _[:]iOS
 _[:]Android
 _[:]Desktop Browser Extension
-_[:]DuckDuckGo Extension
 _[:]Chrome
 _[:]Edge
 _[:]Firefox

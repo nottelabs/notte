@@ -1,20 +1,13 @@
 ### Content of 'WebArea' component with text 'body content'
 _[:]normal
 _[:]Skip to content
-_[:]Order summary
-_[:]Original price
-_[:]$5,800.00
-_[:]Sale price
-_[:]$4,060.00
 L1[:]<a href="https://www.arhaus.com/"></a>
 L2[:]<a href="https://www.arhaus.com/cart" aria_label="Cart"></a>
 _[:]Arhaus Checkout
 _[:]Express checkout
-_[:]Show more options
 _[:]OR
 _[:]Contact
 L3[:]<a href="https://www.arhaus.com/account/login?checkout_url=%2Fcheckou...">Log in</a>
-_[:]Email
 M1[:]<div></div>
 I1[:]<input type="email" value="" placeholder="Email" name="email"></input>
 B1[:]<input type="checkbox" name="marketing_opt_in"></input>
@@ -22,19 +15,14 @@ M2[:]<label>Email me with news and offers</label>
 _[:]Delivery
 _[:]Country/Region
 I2[:]<select name="countryCode">United States</select>
-_[:]First name
 M3[:]<div></div>
 I3[:]<input type="text" value="" placeholder="First name" name="firstName"></input>
-_[:]Last name
 M4[:]<div></div>
 I4[:]<input type="text" value="" placeholder="Last name" name="lastName"></input>
-_[:]Address
 M5[:]<div></div>
 I5[:]<input type="text" value="" placeholder="Address" name="address1" role="combobox" aria_expanded="false"></input>
-_[:]Apartment, suite, etc. (optional)
 M6[:]<div></div>
 I6[:]<input type="text" value="" placeholder="Apartment, suite, etc. (optional)" name="address2"></input>
-_[:]City
 _[:]State
 _[:]Alabama
 _[:]Alaska
@@ -98,7 +86,6 @@ _[:]U.S. Virgin Islands
 _[:]Armed Forces Americas
 _[:]Armed Forces Europe
 _[:]Armed Forces Pacific
-_[:]ZIP code
 _[:]Phone
 _[:]Save this information for next time
 _[:]Shipping method
@@ -109,13 +96,10 @@ _[:]Credit card
 _[:]Card number
 _[:]Expiration date (MM / YY)
 _[:]Security code
-_[:]Issue date (MM / YY)
-_[:]Issue number
 _[:]Name on card
 _[:]Use shipping address as billing address
 _[:]Archarge Credit Card
 _[:]Pay now
-_[:]Submit
 _[:]Refund policy
 _[:]Shipping policy
 _[:]Privacy policy
@@ -139,13 +123,10 @@ _[:]Original price
 _[:]$5,800.00
 _[:]Discounted price
 _[:]$4,060.00
-_[:]Scroll for more items
 _[:]Discount
-_[:]Discount Code or Trade ID
 M7[:]<div></div>
 I7[:]<input type="text" value="" placeholder="Discount Code or Trade ID" name="reductions"></input>
 _[:]Apply
-_[:]Submit
 _[:]Have an Archarge reward?
 B2[:]<button type="button" aria_expanded="false">Click here</button>
 _[:]for details.

@@ -2,11 +2,6 @@
 _[:]normal
 _[:]Skip to content
 L1[:]<a href="https://society6.com/"></a>
-_[:]Order summary
-_[:]Original price
-_[:]$299.00
-_[:]Sale price
-_[:]$269.10
 _[:]Society6 Checkout
 _[:]Express checkout
 L2[:]<a href="https://society6.com/checkouts/cn/Z2NwLXVzLWVhc3QxOjAxSzA4Mz..." aria_label="Shop Pay"></a>
@@ -14,7 +9,6 @@ B1[:]<button type="button">Show more options</button>
 _[:]OR
 _[:]Contact
 L3[:]<a href="https://account.society6.com/authentication/oauth/authorize?...">Log in</a>
-_[:]Email
 M1[:]<div></div>
 I1[:]<input type="email" value="" placeholder="Email" name="email"></input>
 B2[:]<input type="checkbox" name="marketing_opt_in"></input>
@@ -23,13 +17,10 @@ _[:]Delivery
 _[:]Country/Region
 I2[:]<select name="countryCode">Canada
 United States</select>
-_[:]First name
 M3[:]<div></div>
 I3[:]<input type="text" value="" placeholder="First name" name="firstName"></input>
-_[:]Last name
 M4[:]<div></div>
 I4[:]<input type="text" value="" placeholder="Last name" name="lastName"></input>
-_[:]Company (optional)
 M5[:]<div></div>
 I5[:]<input type="text" value="" placeholder="Company (optional)" name="company"></input>
 _[:]Address
@@ -107,13 +98,10 @@ _[:]Payment
 _[:]All transactions are secure and encrypted.
 _[:]Credit card
 _[:]+4
-_[:]+5
 _[:]Additional payment methods
 _[:]Card number
 _[:]Expiration date (MM / YY)
 _[:]Security code
-_[:]Issue date (MM / YY)
-_[:]Issue number
 _[:]Name on card
 _[:]Use shipping address as billing address
 _[:]PayPal
@@ -128,7 +116,6 @@ _[:]Terms of Service
 _[:]and acknowledge the
 _[:]Privacy Policy
 _[:].
-_[:]Submit
 _[:]Refund policy
 _[:]Shipping policy
 _[:]Privacy policy
@@ -154,13 +141,10 @@ _[:]Original price
 _[:]$299.00
 _[:]Discounted price
 _[:]$269.10
-_[:]Scroll for more items
-_[:]Discount code or gift card
 _[:]Discount code or gift card
 M6[:]<div></div>
 I6[:]<input type="text" value="" placeholder="Discount code or gift card" name="reductions"></input>
 _[:]Apply
-_[:]Submit
 _[:]Cost summary
 _[:]Item
 _[:]Value

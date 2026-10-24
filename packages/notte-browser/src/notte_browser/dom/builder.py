@@ -31,9 +31,11 @@ from notte_browser.driver import ElementHandle
 class RawNode(TypedDict):
     """One node of the `buildDomNode.js` payload (`{rootId, map}`, children given by id)."""
 
-    # text nodes: `type` = "TEXT_NODE", `text` and `isVisible` only
+    # text nodes: `type` = "TEXT_NODE", `text` and `isInViewport` only (hidden text is not in the payload;
+    # text rendered outside the viewport is, with `isInViewport` false)
     type: NotRequired[str]
     text: NotRequired[str]
+    isInViewport: NotRequired[bool]
     # elements
     tagName: NotRequired[str]
     xpath: NotRequired[str]
@@ -114,7 +116,7 @@ class _TreeBuilder:
                 text=raw["text"],  # pyright: ignore[reportTypedDictNotRequiredAccess]
                 children=[],
                 attributes=None,
-                computed_attributes=ComputedDomAttributes(in_viewport=raw["isVisible"]),  # pyright: ignore[reportTypedDictNotRequiredAccess]
+                computed_attributes=ComputedDomAttributes(in_viewport=raw["isInViewport"]),  # pyright: ignore[reportTypedDictNotRequiredAccess]
             )
 
         tag_name = raw.get("tagName")
