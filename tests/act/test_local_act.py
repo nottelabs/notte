@@ -1187,3 +1187,43 @@ async def test_reset_forgets_the_previous_actions(session: NotteSession) -> None
     _ = await session.window.page.goto(f"data:text/html,{quote(PAGE)}")
     _ = await session.aact("Type Jane", decider=decider)
     assert decider.states[-1].recent_actions == []
+
+
+@pytest.mark.asyncio
+async def test_a_reset_keeping_the_browser_keeps_masking_private_values() -> None:
+    private = "jane.private@example.test"
+    session = NotteSession(headless=True, keep_alive=True)
+    await session.astart()
+    try:
+        _ = await session.window.page.goto(f"data:text/html,{quote(PAGE)}")
+        ids = await _ids(session)
+        decider = FakeDecider(
+            choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["name"]}, {"answer": "a"}],
+            texts=["{{email}}"],
+        )
+        _ = await session.aact("Type the email", variables={"email": private}, decider=decider)
+        # the browser stays open with the value in the field
+        await session.areset()
+        assert await session.window.page.input_value("#name") == private
+        _ = await session.achoose("Which?", ["a", "b"], decider=decider)
+        assert private not in decider.states[-1].model_dump_json()
+        assert decider.states[-1].recent_actions == []
+    finally:
+        session._keep_alive = False  # pyright: ignore[reportPrivateUsage]
+        await session.astop()
+
+
+@pytest.mark.asyncio
+async def test_an_invalid_page_answer_is_asked_again_once(session: NotteSession) -> None:
+    class BrokenOnce(FakeDecider):
+        async def choose(self, state, questions):  # pyright: ignore[reportMissingParameterType, reportUnknownParameterType]
+            answers = await super().choose(state, questions)  # pyright: ignore[reportUnknownArgumentType]
+            if len(self.states) == 1:
+                answers.answers["answer"].probabilities["missing"] = 0.0
+            return answers
+
+    decider = BrokenOnce(choices=[{"answer": "Signup"}] * 2)
+    choice = await session.achoose("Which page is this?", ["Signup", "Login"], decider=decider)
+    assert choice.choice == "Signup" and len(decider.states) == 2
+    decider = BrokenOnce(choices=[{"answer": "YES"}] * 2)
+    assert await session.acheck("Is it a form?", decider=decider) == pytest.approx(0.9)

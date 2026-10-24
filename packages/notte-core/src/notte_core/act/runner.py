@@ -51,6 +51,8 @@ from notte_core.act.space import (
 from notte_core.act.types import (
     ActResult,
     ActTimings,
+    Answer,
+    Answers,
     Choice,
     Decider,
     DecisionState,
@@ -368,6 +370,20 @@ async def _decide(
     raise AssertionError("unreachable")  # pragma: no cover
 
 
+async def _answer(
+    decider: Decider, state: DecisionState, questions: dict[str, Question], keys: Mapping[str, Any]
+) -> tuple[Answers, Answer]:
+    """The answer to a page question, asked again once if it is invalid (raises the second `InvalidDecisionError`)."""
+    for attempt in range(2):
+        answers = await decider.choose(state, questions)
+        try:
+            return answers, validate_answer(answers, "answer", keys)
+        except InvalidDecisionError:
+            if attempt == 1:
+                raise
+    raise AssertionError("unreachable")  # pragma: no cover
+
+
 async def _write(decider: Decider, context: WriteContext) -> str | None:
     """The field value, asked again once if the writer's answer is invalid."""
     try:
@@ -493,8 +509,7 @@ async def run_choose(
             instructions=history.privacy.payload({"goal": question, "rules": rules}),
         )
     }
-    answers = await decider.choose(state, questions)
-    answer = validate_answer(answers, "answer", sent)
+    answers, answer = await _answer(decider, state, questions, sent)
     option = {key: option for option, key in keys.items()}
     return Choice(
         choice=option[answer.choice],
