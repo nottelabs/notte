@@ -1163,3 +1163,27 @@ async def test_a_field_with_no_value_is_skipped_not_blocked(session: NotteSessio
     blocked = await session.aact("Search flights", decider=decider, raise_on_failure=False)
     assert blocked.status == "blocked" and "Departure" in (blocked.message or "")
     assert await session.window.page.input_value("#notes") == ""
+
+
+@pytest.mark.asyncio
+async def test_a_filled_password_can_be_cleared(session: NotteSession) -> None:
+    page = '<label for="pw">Password</label><input id="pw" type="password" value="hunter2">'
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    ids = await _ids(session)
+    decider = FakeDecider(choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["pw"]}], texts=[""])
+    result = await session.aact("Clear the password", decider=decider)
+    # a password shows only that it is filled, not its value: "" still clears it
+    assert result.status == "executed" and await session.window.page.input_value("#pw") == ""
+
+
+@pytest.mark.asyncio
+async def test_reset_forgets_the_previous_actions(session: NotteSession) -> None:
+    ids = await _ids(session)
+    decider = FakeDecider(
+        choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["name"]}, {"operation": "DONE"}], texts=["Jane"]
+    )
+    _ = await session.aact("Type Jane", decider=decider)
+    await session.areset()
+    _ = await session.window.page.goto(f"data:text/html,{quote(PAGE)}")
+    _ = await session.aact("Type Jane", decider=decider)
+    assert decider.states[-1].recent_actions == []
