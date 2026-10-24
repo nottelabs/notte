@@ -166,31 +166,6 @@
   },
   {
     "category": "Interaction action",
-    "description": "<div role=\"menu\"></div>",
-    "model_dump": {
-      "accessible_name": null,
-      "category": "Interaction action",
-      "description": "<div role=\"menu\"></div>",
-      "id": "M1",
-      "press_enter": null,
-      "selector": {
-        "css_selector": "html > body > div:nth-of-type(5)[role=\"menu\"]",
-        "iframe_parent_css_selectors": [],
-        "in_iframe": false,
-        "in_shadow_root": false,
-        "notte_selector": "http://characterization.test/aria:4527775504046182633:3609651542926669075:625988667316178361:7010189922962489332",
-        "playwright_selector": null,
-        "python_selector": null,
-        "xpath_selector": "html/body/div[5]"
-      },
-      "text_label": "Settings",
-      "timeout": 15000,
-      "type": "click"
-    },
-    "param": null
-  },
-  {
-    "category": "Interaction action",
     "description": "<div tabindex=\"0\" role=\"menuitem\"></div>",
     "model_dump": {
       "accessible_name": "Settings",

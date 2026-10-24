@@ -56,6 +56,8 @@ class RawNode(TypedDict):
     state: NotRequired[dict[str, Any]]
     # accessible name of highlighted and disabled elements, when they have one
     accessibleName: NotRequired[str]
+    # a highlighted element with a click handler of its own (`onclick`)
+    clickHandler: NotRequired[bool]
     # visible iframe elements of the child frames the caller asked about
     frameIndex: NotRequired[int]
     frameOffset: NotRequired[dict[str, float]]
@@ -75,11 +77,112 @@ class RawFrame:
 
 def build_dom_tree(frame: RawFrame, url: str) -> DomNode | None:
     """Builds the tree of the main frame (with its grafted child frames). `url` prefixes the notte selectors."""
-    return _TreeBuilder().build(frame.nodes[frame.root_id], frame.nodes, url)
+    root = frame.nodes[frame.root_id]
+    builder = _TreeBuilder(duplicates=duplicate_clickables(root, frame.nodes))
+    return builder.build(root, frame.nodes, url)
+
+
+# the short ids of the roles of real controls: links, buttons (tabs, checkboxes, ...), inputs and options
+_CONTROL_SHORT_IDS = frozenset({"L", "B", "I", "O"})
+
+
+@dataclass
+class _Highlight:
+    """A highlighted node, with the highlighted nodes nested in it."""
+
+    index: int
+    # a link, button, input or option; else a generic clickable (`M`), e.g. a `<div>` with a pointer cursor
+    control: bool
+    text: str
+    name: str
+    # it has a click handler of its own
+    handler: bool
+    children: list["_Highlight"] = field(default_factory=list)
+
+    def descendants(self) -> list["_Highlight"]:
+        return [node for child in self.children for node in (child, *child.descendants())]
+
+
+def duplicate_clickables(root: RawNode, nodes: dict[str, RawNode]) -> set[int]:
+    """The highlight indices of the generic clickables that duplicate a real control, which get no id.
+
+    A pointer cursor makes an element clickable, and pages put one on containers around their controls. Such
+    an element is a duplicate when it is:
+    - inside a control (a link, a button, ...): clicking it clicks the control, unless it has a name or a
+      click handler of its own;
+    - around a single control, and named like it: its name, or else its text, is empty or the control's text
+      or name (a `<div>Go</div>` around a "Go" button), unless it has a click handler of its own.
+    """
+    highlights = _highlights(root, nodes)
+    duplicates: set[int] = set()
+
+    def inside(node: _Highlight, in_control: bool) -> None:
+        if in_control and not node.control and len(node.name) == 0 and not node.handler:
+            duplicates.add(node.index)
+        for child in node.children:
+            inside(child, in_control or node.control)
+
+    def around(node: _Highlight) -> None:
+        # nested wrappers first: a wrapper around a wrapper of the control is then around the control alone
+        for child in node.children:
+            around(child)
+        if node.control or node.handler or node.index in duplicates:
+            return
+        nested = [child for child in node.descendants() if child.index not in duplicates]
+        label = node.name or node.text
+        if len(nested) == 1 and nested[0].control and label in ("", nested[0].text, nested[0].name):
+            duplicates.add(node.index)
+
+    for node in highlights:
+        inside(node, False)
+        around(node)
+    return duplicates
+
+
+def _highlights(raw: RawNode, nodes: dict[str, RawNode]) -> list[_Highlight]:
+    """The highlighted nodes under `raw` (itself included) that are not nested in another one, with their own
+    nested highlighted nodes. Child frames are included."""
+    children: list[_Highlight] = []
+    for child_id in raw.get("children", []):
+        child = nodes.get(child_id)
+        if child is not None:
+            children.extend(_highlights(child, nodes))
+    frame = raw.get("frame")
+    if frame is not None:
+        children.extend(_highlights(frame.nodes[frame.root_id], frame.nodes))
+    index = raw.get("highlightIndex")
+    tag_name = raw.get("tagName")
+    if index is None or tag_name is None:
+        return children
+    role = NodeRole.from_element(_tag(tag_name), raw.get("attributes", {}))
+    control = isinstance(role, NodeRole) and role.short_id() in _CONTROL_SHORT_IDS
+    name = _normalize(raw.get("accessibleName", ""))
+    text = _normalize(_raw_text(raw, nodes))
+    return [_Highlight(index, control, text, name, raw.get("clickHandler", False), children)]
+
+
+def _raw_text(raw: RawNode, nodes: dict[str, RawNode]) -> str:
+    if raw.get("type") == "TEXT_NODE":
+        return raw.get("text", "")
+    texts = (_raw_text(child, nodes) for child_id in raw.get("children", []) if (child := nodes.get(child_id)))
+    return " ".join(texts)
+
+
+def _normalize(text: str) -> str:
+    return " ".join(text.split()).lower()
+
+
+def _tag(tag_name: str) -> str:
+    """The tag name of an element, with the `wiz_` prefix of Google's custom elements replaced."""
+    if tag_name.startswith("wiz_"):
+        return tag_name[len("wiz_") :].replace("_", "-")
+    return tag_name
 
 
 @dataclass
 class _TreeBuilder:
+    # the highlight indices of the nodes that get no id (see `duplicate_clickables`)
+    duplicates: set[int] = field(default_factory=set)
     id_counters: defaultdict[str, int] = field(default_factory=lambda: defaultdict(lambda: 1))
 
     def build(self, root: RawNode, nodes: dict[str, RawNode], url: str) -> DomNode | None:
@@ -131,6 +234,8 @@ class _TreeBuilder:
             raise ValueError(f"XPath is None for node: {raw}")
 
         highlight_index = raw.get("highlightIndex")
+        if highlight_index in self.duplicates:
+            highlight_index = None
         # the CSS path and the iframe check read the tag and attributes as the script returned them
         css_path = build_csspath(tag_name=tag_name, xpath=xpath, attributes=attributes, highlight_index=highlight_index)
         notte_selector = ":".join([notte_selector, str(hash(xpath)), str(hash(css_path))])
@@ -152,8 +257,7 @@ class _TreeBuilder:
             in_shadow_root = False
             iframe_parent_css_paths = iframe_parent_css_paths + [css_path]
 
-        if tag_name.startswith("wiz_"):
-            tag_name = tag_name[len("wiz_") :].replace("_", "-")
+        tag_name = _tag(tag_name)
         attributes = cleanup_aria_attributes(attributes)
         if len(tag_name) == 0 and not attributes.get("role") and (len(attributes) > 0 or len(child_ids) > 0):
             raise ValueError(f"No tag_name found for element with attributes: {attributes}")

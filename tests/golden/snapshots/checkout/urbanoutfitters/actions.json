@@ -26,31 +26,6 @@
   },
   {
     "category": "Interaction action",
-    "description": "<picture></picture>",
-    "model_dump": {
-      "accessible_name": null,
-      "category": "Interaction action",
-      "description": "<picture></picture>",
-      "id": "M1",
-      "press_enter": null,
-      "selector": {
-        "css_selector": "html > body > div:nth-of-type(1) > div > div:nth-of-type(1) > header > div > div > div > div:nth-of-type(1) > div > div > a > picture",
-        "iframe_parent_css_selectors": [],
-        "in_iframe": false,
-        "in_shadow_root": false,
-        "notte_selector": "http://golden.test/checkout/urbanoutfitters.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:3156670575289201912:6378651388737280184:272185808239662543:-9130029914923174315:-1398789436366937188:-2025656866940625521:-6415881096437286802:1023994791524086688:2320971791487794626:-1052258984399772533:3064080234446576505:3749539365531625196:2731340822202424120:1525511452944299263:-7866532067266109432:-2487421920547343412:5971238674947724067:2420450593048748036:-709191069379412301:6198169916235391078",
-        "playwright_selector": null,
-        "python_selector": null,
-        "xpath_selector": "html/body/div[1]/div/div[1]/header/div/div/div/div[1]/div/div/a/picture"
-      },
-      "text_label": "",
-      "timeout": 15000,
-      "type": "click"
-    },
-    "param": null
-  },
-  {
-    "category": "Interaction action",
     "description": "<a href=\"https://www.urbanoutfitters.com/account/hearted-products\"></a>",
     "model_dump": {
       "accessible_name": "Favorites",
@@ -330,31 +305,6 @@
         "playwright_selector": null,
         "python_selector": null,
         "xpath_selector": "html/body/div[1]/div/div[1]/div[1]/main/div[2]/div[2]/div/div[2]/div/div[1]/div/div/h3/button"
-      },
-      "text_label": "Promo Code",
-      "timeout": 15000,
-      "type": "click"
-    },
-    "param": null
-  },
-  {
-    "category": "Interaction action",
-    "description": "<div></div>",
-    "model_dump": {
-      "accessible_name": null,
-      "category": "Interaction action",
-      "description": "<div></div>",
-      "id": "M2",
-      "press_enter": null,
-      "selector": {
-        "css_selector": "html > body > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div > h3 > button > div",
-        "iframe_parent_css_selectors": [],
-        "in_iframe": false,
-        "in_shadow_root": false,
-        "notte_selector": "http://golden.test/checkout/urbanoutfitters.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:3156670575289201912:6378651388737280184:-8496308230912463791:-5097437054300092743:454886152992192387:-8066550740631909137:-1111842944295825124:8058678821057720793:6050290010432449013:2477948203937356151:-466226928108598547:2995168244457711489:-4895994270417803258:-9134040538583378679:5643730469096999271:-3726642972736053705:-1440637967884371475:-6532819547418383794:-262889082337487102:6282544993025707751:2073110341851399394:-3328978697820414037:6941880697241857538:-3451367178216298878:3641648838132991722:1382643272874193720:-3933181266903377195:-2788157644736543561",
-        "playwright_selector": null,
-        "python_selector": null,
-        "xpath_selector": "html/body/div[1]/div/div[1]/div[1]/main/div[2]/div[2]/div/div[2]/div/div[1]/div/div/h3/button/div"
       },
       "text_label": "Promo Code",
       "timeout": 15000,

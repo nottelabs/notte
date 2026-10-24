@@ -108,6 +108,9 @@
 
 	const HIGHLIGHT_CONTAINER_ID = "playwright-highlight-container";
 
+	// Mouse handlers that make an element interactive, and that make a wrapper a click target of its own.
+	const CLICK_HANDLER_ATTRS = ["onclick", "onmousedown", "onmouseup", "ondblclick"];
+
 	// Live state of the interactive elements (see `getLiveState`): longer values and option lists are cut.
 	const MAX_STATE_VALUE_LENGTH = 200;
 	const MAX_STATE_OPTIONS = 50;
@@ -1001,8 +1004,9 @@
 	 * One of the things we tried at the beginning was also to use event listeners, and other fancy class, style stuff -> what actually worked best was just combining most things with computed cursor style :)
 	 *
 	 * @param {HTMLElement} element - The element to check.
+	 * @param {boolean} usePointerCursor - Whether a pointer cursor alone makes the element interactive.
 	 */
-	function isInteractiveElement(element) {
+	function isInteractiveElement(element, usePointerCursor = enable_pointer_elements) {
 		if (!element || element.nodeType !== Node.ELEMENT_NODE) {
 			return false;
 		}
@@ -1020,7 +1024,7 @@
 		let isInteractiveCursor = isPointerElementWithHover(element);
 
 		// Genius fix for almost all interactive elements
-		if (isInteractiveCursor && enable_pointer_elements) {
+		if (isInteractiveCursor && usePointerCursor) {
 			return true;
 		}
 
@@ -1172,8 +1176,7 @@
 				}
 			}
 			// Fallback: Check common event attributes if getEventListeners is not available (getEventListeners doesn't work in page.evaluate context)
-			const commonMouseAttrs = ['onclick', 'onmousedown', 'onmouseup', 'ondblclick'];
-			for (const attr of commonMouseAttrs) {
+			for (const attr of CLICK_HANDLER_ATTRS) {
 				if (element.hasAttribute(attr) || typeof element[attr] === 'function') {
 					return true;
 				}
@@ -1420,8 +1423,13 @@
 		// Avoid highlighting elements whose parent is <body> (top-level wrappers)
 		const isParentBody = element.parentElement && element.parentElement.isSameNode(document.body);
 
+		// `cursor` is inherited: the text and icon wrappers inside a link or a button have its pointer
+		// cursor, which says nothing about them
+		const parentCursor = element.parentElement ? getCachedComputedStyle(element.parentElement)?.cursor : undefined;
+		const hasOwnCursor = getCachedComputedStyle(element)?.cursor !== parentCursor;
+
 		return (
-			(isInteractiveElement(element) || hasInteractiveAttributes || hasInteractiveClass) &&
+			(isInteractiveElement(element, enable_pointer_elements && hasOwnCursor) || hasInteractiveAttributes || hasInteractiveClass) &&
 			hasVisibleChildren &&
 			isInKnownContainer &&
 			!isParentBody
@@ -1782,6 +1790,11 @@
 						if (state !== undefined) nodeData.state = state;
 						const accessibleName = getAccessibleName(node);
 						if (accessibleName !== undefined) nodeData.accessibleName = accessibleName;
+						// a mouse handler of its own (the ones `isInteractiveElement` counts): the element may do
+						// something else than the control around or inside it
+						if (CLICK_HANDLER_ATTRS.some((attr) => node.hasAttribute(attr) || typeof node[attr] === "function")) {
+							nodeData.clickHandler = true;
+						}
 					}
 				}
 			}

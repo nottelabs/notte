@@ -4,9 +4,7 @@ L1[:]<a href="https://www.anthropologie.com/help/privacy-policy">Learn more</a>
 _[:].
 _[:]Skip to main content
 L2[:]<a href="https://www.anthropologie.com/?ref=logo"></a>
-M1[:]<picture></picture>
 L3[:]<a href="https://www.anthropologie.com/anthrohome?brand-switch=1&ref=..."></a>
-M2[:]<picture></picture>
 L4[:]<a href="https://www.anthropologie.com/account/hearted-products"></a>
 L5[:]<a href="https://www.anthropologie.com/cart">Product Count
 1</a>
@@ -233,8 +231,7 @@ _[:]Estimated Tax
 _[:]$0.00
 _[:]Total
 _[:]$58.00
-B5[:]<button type="button" aria_expanded="false"></button>
-M3[:]<div>Promo Code</div>
+B5[:]<button type="button" aria_expanded="false">Promo Code</button>
 B6[:]<button type="button">Ship to this address</button>
 _[:]Anthropologie Footer
 _[:]Questions?
@@ -255,9 +252,7 @@ _[:]normal
 # interaction actions
 L1	click	'Learn more'	'Learn more'	html > body > div:nth-of-type(1) > span > a[href="https://www.anthropologie.com/help/privacy-policy"]	html/body/div[1]/span/a	in_iframe=False	in_shadow_root=False
 L2	click	''	'Anthropologie'	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > header > div > div > div > div:nth-of-type(1) > div > div:nth-of-type(1) > a.c-pwa-link.c-pwa-link--client.c-pwa-header-tabs__logo[href="https://www.anthropologie.com/?ref=logo"]	html/body/div[2]/div/div[1]/header/div/div/div/div[1]/div/div[1]/a	in_iframe=False	in_shadow_root=False
-M1	click	''	None	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > header > div > div > div > div:nth-of-type(1) > div > div:nth-of-type(1) > a > picture	html/body/div[2]/div/div[1]/header/div/div/div/div[1]/div/div[1]/a/picture	in_iframe=False	in_shadow_root=False
 L3	click	''	'AnthroHome'	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > header > div > div > div > div:nth-of-type(1) > div > div:nth-of-type(2) > a.c-pwa-link.c-pwa-header-tabs__logo[href="https://www.anthropologie.com/anthrohome?brand-switch=1&ref=tab"]	html/body/div[2]/div/div[1]/header/div/div/div/div[1]/div/div[2]/a	in_iframe=False	in_shadow_root=False
-M2	click	''	None	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > header > div > div > div > div:nth-of-type(1) > div > div:nth-of-type(2) > a > picture	html/body/div[2]/div/div[1]/header/div/div/div/div[1]/div/div[2]/a/picture	in_iframe=False	in_shadow_root=False
 L4	click	''	'Favorites'	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > header > div > div > div > div:nth-of-type(2) > a.c-pwa-link.c-pwa-link--client.c-pwa-main-bar__heart-link[href="https://www.anthropologie.com/account/hearted-products"]	html/body/div[2]/div/div[1]/header/div/div/div/div[2]/a	in_iframe=False	in_shadow_root=False
 L5	click	'Product Count 1'	'My Shopping Cart Product Count 1'	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > header > div > div > div > div:nth-of-type(2) > div > div > a.c-pwa-link.c-pwa-link--client.c-pwa-site-basket__link[href="https://www.anthropologie.com/cart"]	html/body/div[2]/div/div[1]/header/div/div/div/div[2]/div/div/a	in_iframe=False	in_shadow_root=False
 B1	click	'Sign In'	'SIGN IN'	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(1) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > button.o-pwa-button-secondary[type="button"]	html/body/div[2]/div/div[1]/div[1]/main/div[2]/div[1]/div/div[2]/div[1]/div[1]/div/div/div[2]/button	in_iframe=False	in_shadow_root=False
@@ -267,5 +262,4 @@ B3	click	'Ship'	'SHIP'	html > body > div:nth-of-type(2) > div > div:nth-of-type(
 B4	click	'Pick Up'	'PICK UP'	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(1) > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(2).c-pwa-tabs__tab[id="urbn-tab-pickup-tab"][role="tab"]	html/body/div[2]/div/div[1]/div[1]/main/div[2]/div[1]/div/div[2]/div[2]/div[1]/button[2]	in_iframe=False	in_shadow_root=False
 L6	click	'800.309.2500'	'800.309.2500'	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > a.c-pwa-contact[href="tel:8003092500"]	html/body/div[2]/div/div[1]/div[1]/main/div[2]/div[2]/div/div[1]/div/a	in_iframe=False	in_shadow_root=False
 B5	click	'Promo Code'	'Promo Code'	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div > h3 > button.o-pwa-button-none.o-pwa-accordion__toggle[type="button"]	html/body/div[2]/div/div[1]/div[1]/main/div[2]/div[2]/div/div[2]/div/div[1]/div/div/h3/button	in_iframe=False	in_shadow_root=False
-M3	click	'Promo Code'	None	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div > h3 > button > div	html/body/div[2]/div/div[1]/div[1]/main/div[2]/div[2]/div/div[2]/div/div[1]/div/div/h3/button/div	in_iframe=False	in_shadow_root=False
 B6	click	'Ship to this address'	'SHIP TO THIS ADDRESS'	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > div > div:nth-of-type(3) > button.o-pwa-button-cart.s-pwa-proceed-button[type="button"]	html/body/div[2]/div/div[1]/div[1]/main/div[2]/div[2]/div/div[2]/div/div[3]/button	in_iframe=False	in_shadow_root=False
