@@ -22122,6 +22122,38 @@
         "type": "object",
         "title": "ElementState"
       },
+      "EmailAttachment": {
+        "properties": {
+          "filename": {
+            "type": "string",
+            "title": "Filename",
+            "description": "Filename, as the sender named it"
+          },
+          "content_type": {
+            "type": "string",
+            "title": "Content Type",
+            "description": "MIME type, as the sender declared it"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "title": "Size Bytes",
+            "description": "Size in bytes"
+          },
+          "download_url": {
+            "type": "string",
+            "title": "Download Url",
+            "description": "Signed download URL, valid for one hour"
+          }
+        },
+        "type": "object",
+        "required": [
+          "filename",
+          "content_type",
+          "size_bytes",
+          "download_url"
+        ],
+        "title": "EmailAttachment"
+      },
       "EmailReadAction": {
         "properties": {
           "type": {
@@ -22235,6 +22267,14 @@
             ],
             "title": "Html Content",
             "description": "HTML body, can be uncorrelated with raw content"
+          },
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/EmailAttachment"
+            },
+            "type": "array",
+            "title": "Attachments",
+            "description": "Files attached to the email, with short-lived download URLs"
           }
         },
         "type": "object",
