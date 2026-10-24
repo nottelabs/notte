@@ -1268,6 +1268,8 @@ class NotteSession(AsyncResource, SyncResource):
             logger.info("🌊 Resetting environment...")
         self.trajectory = Trajectory()
         self.snapshot = None
+        # the actions of the previous browser session are not this one's history
+        self._act_history = ActHistory()
         # reset the window
         await super().areset()
 
