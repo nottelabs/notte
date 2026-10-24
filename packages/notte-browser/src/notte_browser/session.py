@@ -1232,8 +1232,9 @@ class NotteSession(AsyncResource, SyncResource):
             logger.info("🌊 Resetting environment...")
         self.trajectory = Trajectory()
         self.snapshot = None
-        # the actions of the previous browser session are not this one's history
-        self._act_history = ActHistory()
+        # the actions of the previous browser session are not this one's history. With `keep_alive` the browser
+        # (and the values typed in it) stays open: keep masking the protected values, which the page may show
+        self._act_history = ActHistory(privacy=self._act_history.privacy) if self._keep_alive else ActHistory()
         # reset the window
         await super().areset()
 
