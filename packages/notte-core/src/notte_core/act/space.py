@@ -163,6 +163,8 @@ class Target:
     checked: bool | None = None
     role: str = ""
     value: str | None = None
+    # the field holds a value it does not show (a password)
+    filled: bool = False
     # the `type` of an `<input>` with a specific value (`_SHOWN_INPUT_TYPES`) and its format (`INPUT_FORMATS`)
     input_type: str | None = None
     value_format: str | None = None
@@ -771,6 +773,7 @@ def build_act_space(
                 checked=None if state is None else state.checked,
                 role=role,
                 value=current,
+                filled=state is not None and state.filled is True,
                 input_type=input_type,
                 value_format=value_format,
             )
