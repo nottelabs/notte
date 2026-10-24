@@ -275,7 +275,8 @@ async def run_act(
                     return _invalid(run, e, raise_on_failure, page.fingerprint, common)
                 run.timings.write_ms += _ms(step)
                 # "" clears a field, but names no option of a dropdown and clears nothing in an empty field
-                if text is None or (text == "" and (target.kind == "select_text" or not target.value)):
+                empty = not target.value and not target.filled
+                if text is None or (text == "" and (target.kind == "select_text" or empty)):
                     if attempt == 0:
                         # the field is not the next step (a vague label, a field the goal does not mention):
                         # decide again without it, the decider told through the history
