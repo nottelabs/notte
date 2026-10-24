@@ -647,7 +647,7 @@ describe('Session Unit Tests', () => {
       const messages = warn.mock.calls.map(([message]) => String(message)).filter((message) => message.includes('December 1, 2026'));
       expect(messages).toHaveLength(2);
       expect(messages[0]).toContain('`observe({ instructions })` is deprecated');
-      expect(messages[0]).toContain('<<ALTERNATIVE FOR instructions: session.act() — pending>>');
+      expect(messages[0]).toContain('pick from the returned actions yourself');
       expect(messages[1]).toContain("use `perception_type: 'fast'` (the default)");
       for (const message of messages) {
         expect(message).toContain('https://docs.notte.cc/features/sessions/observe-migration');
@@ -666,6 +666,26 @@ describe('Session Unit Tests', () => {
       await deep.start();
       await deep.observe();
       expect(warn).toHaveBeenCalledWith(expect.stringContaining("`perception_type: 'deep'` is deprecated"));
+      warn.mockRestore();
+    });
+
+    it('gives a complete replacement for each deprecated observe option', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+      const session = new Session(mockClient);
+      await session.start();
+      await session.observe({ instructions: 'click jobs', perception_type: 'deep' });
+      const messages = warn.mock.calls.map(([message]) => String(message)).filter((message) => message.includes('December 1, 2026'));
+      expect(messages).toHaveLength(2);
+      for (const message of messages) {
+        expect(message).not.toMatch(/<<|>>|pending/i);
+      }
+      // The replacement for instructions: observe without them, which never warns.
+      warn.mockClear();
+      await session.observe();
+      const lastBody = (vi.mocked(pageObserve).mock.lastCall?.[0] as unknown as { body?: Record<string, unknown> } | undefined)?.body ?? {};
+      expect(lastBody.instructions).toBeUndefined();
+      expect(lastBody.perception_type ?? 'fast').toBe('fast');
+      expect(warn.mock.calls.filter(([message]) => String(message).includes('December 1, 2026'))).toEqual([]);
       warn.mockRestore();
     });
 
