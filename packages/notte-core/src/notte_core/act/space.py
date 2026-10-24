@@ -832,7 +832,8 @@ def build_act_space(
         close = {
             key: target
             for key, target in space.targets.get("CLICK", {}).items()
-            if target.kind == "click" and target.element_id in lines
+            # a button or link closes a dialog; clicking a field inside it (a search box) does not
+            if target.kind == "click" and target.element_id in lines and target.role in ("button", "link")
         }
         if close:
             space.targets["CLOSE_DIALOG"] = close
