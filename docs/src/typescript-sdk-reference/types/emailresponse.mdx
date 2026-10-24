@@ -53,6 +53,12 @@ export type EmailResponse = {
      * HTML body, can be uncorrelated with raw content
      */
     html_content?: string | null;
+    /**
+     * Attachments
+     *
+     * Files attached to the email, with short-lived download URLs
+     */
+    attachments?: Array<EmailAttachment>;
 };
 ```
 
@@ -85,3 +91,11 @@ Raw textual body, can be uncorrelated with html content
 <ParamField body="html_content" type={"string | null | undefined"}>
 HTML body, can be uncorrelated with raw content
 </ParamField>
+
+<ParamField body="attachments" type={"EmailAttachment[] | undefined"}>
+Files attached to the email, with short-lived download URLs
+</ParamField>
+
+## Related types
+
+- [EmailAttachment](/typescript-sdk-reference/types/emailattachment)
