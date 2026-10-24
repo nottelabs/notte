@@ -108,6 +108,9 @@
 
 	const HIGHLIGHT_CONTAINER_ID = "playwright-highlight-container";
 
+	// Mouse handlers that make an element interactive, and that make a wrapper a click target of its own.
+	const CLICK_HANDLER_ATTRS = ["onclick", "onmousedown", "onmouseup", "ondblclick"];
+
 	// Live state of the interactive elements (see `getLiveState`): longer values and option lists are cut.
 	const MAX_STATE_VALUE_LENGTH = 200;
 	const MAX_STATE_OPTIONS = 50;
@@ -1173,8 +1176,7 @@
 				}
 			}
 			// Fallback: Check common event attributes if getEventListeners is not available (getEventListeners doesn't work in page.evaluate context)
-			const commonMouseAttrs = ['onclick', 'onmousedown', 'onmouseup', 'ondblclick'];
-			for (const attr of commonMouseAttrs) {
+			for (const attr of CLICK_HANDLER_ATTRS) {
 				if (element.hasAttribute(attr) || typeof element[attr] === 'function') {
 					return true;
 				}
@@ -1788,8 +1790,11 @@
 						if (state !== undefined) nodeData.state = state;
 						const accessibleName = getAccessibleName(node);
 						if (accessibleName !== undefined) nodeData.accessibleName = accessibleName;
-						// a click handler of its own: the element may do something else than the control around it
-						if (node.hasAttribute("onclick") || typeof node.onclick === "function") nodeData.clickHandler = true;
+						// a mouse handler of its own (the ones `isInteractiveElement` counts): the element may do
+						// something else than the control around or inside it
+						if (CLICK_HANDLER_ATTRS.some((attr) => node.hasAttribute(attr) || typeof node[attr] === "function")) {
+							nodeData.clickHandler = true;
+						}
 					}
 				}
 			}
