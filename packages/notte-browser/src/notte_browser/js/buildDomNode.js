@@ -1330,17 +1330,73 @@
 	}
 
 	/**
+	 * Whether the scrolled area of a box starts at its end along an axis: at the bottom of a
+	 * `column-reverse` flex box, at the right of a right-to-left box (or a `row-reverse` left-to-right
+	 * one), where Chromium's scroll offsets go negative. Null when it is not known (vertical writing
+	 * modes, `wrap-reverse`).
+	 *
+	 * @param {CSSStyleDeclaration} style - The computed style of the box.
+	 * @param {boolean} vertical - The axis: vertical or horizontal.
+	 * @returns {boolean | null} Whether the scrolled area starts at the end, or null.
+	 */
+	function scrollStartsAtEnd(style, vertical) {
+		if (style.writingMode !== "horizontal-tb") return null;
+		const flex = style.display === "flex" || style.display === "inline-flex";
+		if (flex && style.flexWrap === "wrap-reverse") return null;
+		if (vertical) return flex && style.flexDirection === "column-reverse";
+		const rtl = style.direction === "rtl";
+		return flex && style.flexDirection === "row-reverse" ? !rtl : rtl;
+	}
+
+	/**
+	 * Where a box that clips its overflow can show its content along an axis, in viewport coordinates:
+	 * its own box, or, along an axis it scrolls (`auto` or `scroll`, with overflowing content), the whole
+	 * area it scrolls through. Its scroll sizes are scaled to its box on screen (`transform: scale`).
+	 * Null when the box does not clip along the axis (`overflow: visible`, or no box of its own to clip
+	 * with: `display: contents` or `inline`, as in `clipsToNothing`), or when where its scrolled area lies
+	 * is not known.
+	 *
+	 * @param {HTMLElement} box - The box.
+	 * @param {DOMRect} rect - Its bounding rect.
+	 * @param {CSSStyleDeclaration} style - Its computed style.
+	 * @param {boolean} vertical - The axis: vertical or horizontal.
+	 * @returns {{start: number, end: number, scrolls: boolean} | null} The range, and whether the box scrolls.
+	 */
+	function visibleRange(box, rect, style, vertical) {
+		const overflow = vertical ? style.overflowY : style.overflowX;
+		if (overflow === "visible" || style.display === "contents" || style.display === "inline") return null;
+		if (!getCachedClientRects(box)?.length) return null;
+		const [rectStart, rectEnd] = vertical ? [rect.top, rect.bottom] : [rect.left, rect.right];
+		const scrollSize = vertical ? box.scrollHeight : box.scrollWidth;
+		const clientSize = vertical ? box.clientHeight : box.clientWidth;
+		const scrolls = (overflow === "auto" || overflow === "scroll") && scrollSize > clientSize;
+		if (!scrolls) return { start: rectStart, end: rectEnd, scrolls };
+		const atEnd = scrollStartsAtEnd(style, vertical);
+		if (atEnd === null) return { start: -Infinity, end: Infinity, scrolls };
+		const layoutSize = vertical ? box.offsetHeight : box.offsetWidth;
+		const scale = layoutSize > 0 ? (rectEnd - rectStart) / layoutSize : 1;
+		const clientStart = (vertical ? box.clientTop : box.clientLeft) * scale;
+		const offset = (vertical ? box.scrollTop : box.scrollLeft) * scale;
+		// the edge the scrolled area starts from, where the current scroll offset has moved it
+		const origin = rectStart + clientStart - offset + (atEnd ? clientSize * scale : 0);
+		return atEnd ?
+			{ start: origin - scrollSize * scale, end: origin, scrolls } :
+			{ start: origin, end: origin + scrollSize * scale, scrolls };
+	}
+
+	/**
 	 * Checks if scrolling cannot bring an element above or below the viewport into view:
-	 * - it is laid out outside the box of an ancestor that clips its overflow without scrolling
-	 *   (`overflow: hidden` or `clip`, as carousels and "show more" sections are);
+	 * - it is laid out outside where an ancestor that clips its overflow can show it: outside its box
+	 *   (`overflow: hidden` or `clip`, as carousels and "show more" sections are, or an axis an `auto`
+	 *   box has nothing to scroll on), or outside the area a scrollable ancestor scrolls through (before
+	 *   the start of its content);
 	 * - it is fixed, or inside a fixed element, outside the viewport (a closed slide-in panel): scrolling
 	 *   the page does not move it. A fixed panel on screen that scrolls can still bring it into view, and a
 	 *   sticky element scrolls with the page until it sticks: both are reachable.
 	 *
-	 * A scrollable ancestor (`auto` or `scroll`, with content overflowing it) can bring the element anywhere
-	 * in its box along the axes it scrolls, if the element is in the area it scrolls through: the ancestors
-	 * above it are checked against that box (and with its position, for what it escapes). `<body>` and
-	 * `<html>` are not checked: their overflow is the page's.
+	 * A scrollable ancestor can bring the element anywhere in its box along the axes it scrolls: the
+	 * ancestors above it are checked against that box (and with its position, for what it escapes).
+	 * `<body>` and `<html>` are not checked: their overflow is the page's.
 	 *
 	 * @param {HTMLElement} element - The element to check.
 	 * @returns {boolean} Whether scrolling cannot reveal the element.
@@ -1355,22 +1411,12 @@
 			if (!style) continue;
 			const box = ancestor === element ? null : getCachedBoundingRect(ancestor);
 			if (box && !escapesClip(owner, ancestor)) {
-				const clipsY = style.overflowY === "hidden" || style.overflowY === "clip";
-				const clipsX = style.overflowX === "hidden" || style.overflowX === "clip";
-				if (clipsY && (rect.bottom <= box.top || rect.top >= box.bottom)) return true;
-				if (clipsX && (rect.right <= box.left || rect.left >= box.right)) return true;
-				const scrollsY = (style.overflowY === "auto" || style.overflowY === "scroll") && ancestor.scrollHeight > ancestor.clientHeight;
-				const scrollsX = (style.overflowX === "auto" || style.overflowX === "scroll") && ancestor.scrollWidth > ancestor.clientWidth;
-				// content laid out before the start of the scrolled area (a negative offset) is never scrolled to
-				if (scrollsY) {
-					const start = box.top + ancestor.clientTop - ancestor.scrollTop;
-					if (rect.bottom <= start || rect.top >= start + ancestor.scrollHeight) return true;
-				}
-				// (in a right-to-left box, the scrolled area starts on the right: not checked)
-				if (scrollsX && style.direction === "ltr") {
-					const start = box.left + ancestor.clientLeft - ancestor.scrollLeft;
-					if (rect.right <= start || rect.left >= start + ancestor.scrollWidth) return true;
-				}
+				const y = visibleRange(ancestor, box, style, true);
+				const x = visibleRange(ancestor, box, style, false);
+				if (y !== null && (rect.bottom <= y.start || rect.top >= y.end)) return true;
+				if (x !== null && (rect.right <= x.start || rect.left >= x.end)) return true;
+				const scrollsY = y !== null && y.scrolls;
+				const scrollsX = x !== null && x.scrolls;
 				if (scrollsY || scrollsX) {
 					rect = {
 						top: scrollsY ? box.top : rect.top,
