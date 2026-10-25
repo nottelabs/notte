@@ -48,6 +48,8 @@ dev = [
     # Local HTTP servers in the browser tests (aiohttp.web).
     "aiohttp>=3.11.13",
     "basedpyright>=1.40.2",
+    # Exercises notte_core.credentials.bitwarden (the `notte-core[bitwarden]` extra).
+    "bitwarden-sdk>=2.0.0",
     # Generates SDK-owned wire models from the committed OpenAPI snapshot.
     "datamodel-code-generator==0.86.0",
     "jupyter>=1.1.1",

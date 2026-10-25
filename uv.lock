@@ -2617,6 +2617,7 @@ playwright = [
 dev = [
     { name = "aiohttp" },
     { name = "basedpyright" },
+    { name = "bitwarden-sdk" },
     { name = "datamodel-code-generator" },
     { name = "jupyter" },
     { name = "lxml-stubs" },
@@ -2660,6 +2661,7 @@ provides-extras = ["llm", "playwright", "bitwarden"]
 dev = [
     { name = "aiohttp", specifier = ">=3.11.13" },
     { name = "basedpyright", specifier = ">=1.40.2" },
+    { name = "bitwarden-sdk", specifier = ">=2.0.0" },
     { name = "datamodel-code-generator", specifier = "==0.86.0" },
     { name = "jupyter", specifier = ">=1.1.1" },
     { name = "lxml-stubs", specifier = ">=0.5.1" },

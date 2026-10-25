@@ -24,16 +24,17 @@ CONNECTION_FAILED = {"error": {"code": "connection_failed", "message": "connecti
 class FakeAac:
     """An `aac` executable that prints `stdout`, exits with `exit_code` and records each call's arguments, $HOME and $AAC_TOKEN."""
 
-    def __init__(self, tmp_path: Path, stdout: str, exit_code: int = 0) -> None:
+    def __init__(self, tmp_path: Path, stdout: str, exit_code: int = 0, delay: float = 0) -> None:
         self.path: Path = tmp_path / "aac"
         self.calls_file: Path = tmp_path / "calls.jsonl"
         output_file = tmp_path / "stdout.txt"
         _ = output_file.write_text(stdout)
         _ = self.path.write_text(
             "#!/usr/bin/env python3\n"
-            "import json, os, sys\n"
+            "import json, os, sys, time\n"
             f"with open({str(self.calls_file)!r}, 'a') as f:\n"
             "    f.write(json.dumps({'args': sys.argv[1:], 'home': os.environ.get('HOME'), 'token': os.environ.get('AAC_TOKEN')}) + '\\n')\n"
+            f"time.sleep({delay})\n"
             f"sys.stdout.write(open({str(output_file)!r}).read())\n"
             f"sys.exit({exit_code})\n"
         )
@@ -171,6 +172,19 @@ class TestAacVaultPairing:
             _ = vault.get_credentials("https://github.com")
             _ = vault.get_credentials("https://github.com")
         assert fake_aac.tokens == ["ENV-TOK-123", None]
+
+    def test_concurrent_first_requests_pair_once(self, tmp_path: Path) -> None:
+        fake = FakeAac(tmp_path, _credential_response(GITHUB_CREDENTIAL), delay=0.5)
+
+        async def request_twice(vault: AacVault) -> None:
+            _ = await asyncio.gather(
+                vault.get_credentials_async("https://github.com"), vault.get_credentials_async("https://github.com")
+            )
+
+        with AacVault(token="ABC-DEF-123", aac_path=str(fake.path)) as vault:
+            asyncio.run(request_twice(vault))
+        assert fake.tokens == ["ABC-DEF-123", None]
+        assert fake.homes[0] == fake.homes[1]
 
     def test_pairs_in_a_private_home_removed_on_stop(self, fake_aac: FakeAac, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("HOME", "/home/user")
