@@ -17,6 +17,8 @@
     return {
         hasScrolled: () => window.scrollY !== initialY ||
             Array.from(positions).some(([node, top]) => node.isConnected && node.scrollTop !== top),
+        // where the page and the wheel target's scrollers are now: unchanged between two reads once the scroll ended
+        position: () => [window.scrollY, ...Array.from(positions.keys(), (node) => node.isConnected ? node.scrollTop : null)],
         dispose: () => {
             window.removeEventListener('wheel', onWheel, true);
             positions.clear();
