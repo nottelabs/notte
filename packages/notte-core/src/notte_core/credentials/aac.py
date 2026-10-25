@@ -44,7 +44,8 @@ class AacVault(BaseVault, SyncResource):
 
     The user runs `aac listen` on their machine and shares the pairing token it prints. The first
     credential request pairs with that token; later requests reuse the connection. The vault keeps that
-    connection apart from the ones the user's `aac` has cached, and forgets it on `stop()`.
+    connection apart from the ones the user's `aac` has cached, and forgets it on `stop()`: a restarted
+    vault pairs again with its token (a rendezvous code only pairs once, a PSK token can pair again).
 
         with AacVault(token="ABC-DEF-GHI") as vault, notte.Session(vault=vault) as session:
             session.execute(type="goto", url="https://github.com/login")
@@ -71,6 +72,7 @@ class AacVault(BaseVault, SyncResource):
         """
         super().__init__()
         self.token: str | None = token or os.environ.get("AAC_TOKEN")
+        self._initial_token: str | None = self.token
         self.proxy_url: str = proxy_url
         self._session: str | None = session
         self._timeout: int = timeout
@@ -90,6 +92,8 @@ class AacVault(BaseVault, SyncResource):
         if self._home is not None:
             shutil.rmtree(self._home, ignore_errors=True)
             self._home = None
+        # the paired connection is gone: a restarted vault pairs again rather than use the user's cached connections
+        self.token = self._initial_token
 
     def _request_credential(self, domain: str) -> _AacCredential | None:
         """Request the credential for `domain` through the tunnel, pairing first if a token is pending."""
