@@ -178,6 +178,25 @@ def test_events_are_sent_before_a_short_script_exits(slow_endpoint: Collector, t
     assert sum(body.count(b'"test.exit"') for body in slow_endpoint.posthog_bodies()) == 3
 
 
+def test_events_from_threads_still_running_at_exit_are_sent(slow_endpoint: Collector, tmp_path: Path) -> None:
+    # The `threading` exit hook runs before Python waits for non-daemon threads, so the late event is sent
+    # by the `atexit` flush.
+    code = (
+        "import threading, time\n"
+        "def late():\n"
+        "    time.sleep(0.5)\n"
+        "    telemetry.capture_event('test.late')\n"
+        "telemetry.capture_event('test.early')\n"
+        "threading.Thread(target=late).start()\n"
+    )
+
+    _ = run_script(code, slow_endpoint, tmp_path)
+
+    for event in ("test.early", "test.late"):
+        assert slow_endpoint.scarf_events().count(event) == 1
+        assert sum(body.count(f'"{event}"'.encode()) for body in slow_endpoint.posthog_bodies()) == 1
+
+
 def test_exit_waits_a_bounded_time_for_an_unresponsive_endpoint(hanging_endpoint: Collector, tmp_path: Path) -> None:
     code = "for _ in range(3):\n    telemetry.capture_event('test.exit', {'status': 'success'})\n"
 
@@ -187,14 +206,16 @@ def test_exit_waits_a_bounded_time_for_an_unresponsive_endpoint(hanging_endpoint
     assert elapsed < 6
 
 
+@pytest.mark.skipif(not hasattr(os, "fork"), reason="os.fork is POSIX only")
 def test_forked_children_send_their_own_events_once(slow_endpoint: Collector, tmp_path: Path) -> None:
     # The fork happens while the parent's worker is creating its clients and sending its first event,
-    # with a second event still queued: the child must neither hang nor resend the parent's events.
+    # with a second event still queued: the child must neither hang nor resend the parent's events, and
+    # its exit must send its own. Only Scarf is checked: PostHog's exit flush is an `atexit` handler, which
+    # a multiprocessing child skips.
     code = (
         "import multiprocessing\n"
         "def child():\n"
         "    telemetry.capture_event('test.child')\n"
-        "    assert telemetry.flush(timeout=5)\n"
         "if __name__ == '__main__':\n"
         "    telemetry.capture_event('test.parent')\n"
         "    telemetry.capture_event('test.parent')\n"

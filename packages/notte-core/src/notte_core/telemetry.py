@@ -1,3 +1,4 @@
+import atexit
 import importlib.metadata as metadata
 import inspect
 import logging
@@ -191,6 +192,9 @@ def get_or_create_installation_id(scarf_client: Any | None = None) -> str:
 def _clients() -> tuple[Any | None, Any | None, str]:
     """PostHog client, Scarf client and installation id, created on first use."""
     posthog_client = setup_posthog()
+    # Covers events captured by non-daemon threads after the `threading` exit hook ran. Registered after
+    # PostHog's client, so it runs before PostHog's own exit flush, which then sends what it was handed.
+    _ = atexit.register(_flush_at_exit)
     scarf_client = setup_scarf()
     return posthog_client, scarf_client, get_or_create_installation_id(scarf_client)
 
@@ -269,20 +273,28 @@ class _EventQueue:
 
 _event_queue = _EventQueue(MAX_QUEUED_EVENTS)
 _exit_flush_registered = False
+_exit_flush_timed_out = False
 
 
 def _flush_at_exit() -> None:
-    _ = _event_queue.flush(EXIT_FLUSH_TIMEOUT_SECONDS)
+    global _exit_flush_timed_out
+    # Runs from two exit hooks; once the endpoint has failed to keep up, the second does not wait again.
+    if _exit_flush_timed_out:
+        return
+    _exit_flush_timed_out = not _event_queue.flush(EXIT_FLUSH_TIMEOUT_SECONDS)
 
 
 def _register_exit_flush() -> None:
     global _exit_flush_registered
     if _exit_flush_registered:
         return
-    # `threading._register_atexit` (also used by `concurrent.futures`) runs before `atexit` handlers,
-    # so PostHog's own exit flush still delivers what we hand it, and it also runs when a
-    # multiprocessing child started with `fork` exits, which skips `atexit`.
-    threading._register_atexit(_flush_at_exit)  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
+    # `threading._register_atexit` (also used by `concurrent.futures`) runs before `atexit` handlers, so
+    # PostHog's own exit flush still delivers what we hand it, and it also runs when a multiprocessing child
+    # started with `fork` exits, which skips `atexit`.
+    try:
+        threading._register_atexit(_flush_at_exit)  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
+    except RuntimeError:
+        return  # shutdown has started; the `atexit` flush registered in `_clients` still runs
     _exit_flush_registered = True
 
 
