@@ -1603,3 +1603,21 @@ async def test_a_page_submitted_with_enter_is_observed_once_rendered_not_once_it
     assert result.timings.execute_ms < 2_000
     _ = await session.aact("Search for lamp", decider=decider)
     assert [e["label"] for e in decider.states[-1].elements] == ["First result"]
+
+
+# a click makes the page inert, then a script renders the dialog it opens (its code loaded on first use)
+LATE_DIALOG = """<main id="main"><button id="open" onclick="
+document.getElementById('main').inert = true;
+setTimeout(() => document.body.insertAdjacentHTML('beforeend',
+  '<div role=dialog aria-label=Search><input id=query aria-label=Query><button>Close</button></div>'), 600)
+">Search</button><p>Some page text</p></main>"""
+
+
+@pytest.mark.asyncio
+async def test_a_dialog_rendered_after_the_page_went_inert_is_observed(session: NotteSession) -> None:
+    _ = await session.window.page.goto(f"data:text/html,{quote(LATE_DIALOG)}")
+    ids = await _ids(session)
+    decider = FakeDecider(choices=[{"operation": "CLICK", "click_target": ids["open"]}, {"operation": "DONE"}])
+    state = await _next_state(session, decider, "Search")
+    # not the inert page with nothing to act on: the dialog
+    assert [e["label"] for e in state.elements] == ["Query", "Close"]
