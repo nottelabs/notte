@@ -434,10 +434,11 @@ def accessible_text(page: ObservedPage, display_text: Callable[[str], str] = str
 def _accessible_lines(page: ObservedPage, display_text: Callable[[str], str]) -> list[tuple[str | None, str]]:
     """`accessible_text` as (element id or None, line) pairs."""
     names = _names(page)
+    empty = _empty_listboxes(page)
     lines: list[tuple[str | None, str]] = []
     for i, (key, content) in enumerate(_description_blocks(page.description)):
-        if i in names.used:
-            # already the name of the element next to it
+        if i in names.used or key in empty:
+            # already the name of the element next to it, or a list with nothing to choose
             continue
         if key is None:
             if "'WebArea'" not in content:
@@ -454,6 +455,30 @@ def _accessible_lines(page: ObservedPage, display_text: Callable[[str], str]) ->
                 marker += f" (options: {_cut(display_text(', '.join(options)), MAX_LABEL_LENGTH)})"
             lines.append((key, marker))
     return lines
+
+
+def _empty_listboxes(page: ObservedPage) -> frozenset[str]:
+    """Ids of the ARIA listboxes rendered with nothing in them and no option after them: a combobox's popup that
+    lists no suggestion (a search box with none for the typed text). A listbox offers no operation (its options
+    do), and shown, an empty one reads as suggestions still to choose: it is left out of the elements and the
+    page text."""
+    actions = {action.id: action for action in page.actions}
+    empty: set[str] = set()
+    listbox: str | None = None
+    for key, content in _description_blocks(page.description):
+        if key is None or key == "_":
+            continue
+        if listbox is not None and not key.startswith("O"):
+            empty.add(listbox)
+        listbox = None
+        rendered = " ".join(content.splitlines())
+        match = _RENDERED_ELEMENT.match(rendered)
+        action = actions.get(key)
+        if action is not None and match is not None and not match.group(3).strip():
+            listbox = key if _role(action, rendered) == "listbox" else None
+    if listbox is not None:
+        empty.add(listbox)
+    return frozenset(empty)
 
 
 def _rendered_options(page: ObservedPage, key: str, rendered: str) -> list[str]:
@@ -502,7 +527,11 @@ def _page_text(
     *,
     windowed: bool = True,
 ) -> str:
-    lines = _description_lines(page.description) if labels == "html" else _accessible_lines(page, display_text)
+    if labels == "html":
+        empty = _empty_listboxes(page)
+        lines = [(key, line) for key, line in _description_lines(page.description) if key not in empty]
+    else:
+        lines = _accessible_lines(page, display_text)
     viewport = _viewport_lines(page, lines) if windowed else None
     if viewport is None or viewport == (0, len(lines)):
         text = "\n".join(line for _, line in lines)
@@ -735,8 +764,9 @@ def build_act_space(
         if operation not in element["operations"]:
             element["operations"].append(operation)
 
+    empty = _empty_listboxes(page)
     for action in _offered(page, lines):
-        if not action.id or (names is not None and action.id in names.labels):
+        if not action.id or (names is not None and action.id in names.labels) or action.id in empty:
             continue
         line = lines.get(action.id, "")
         shown = line if names is None else names.names.get(action.id)
