@@ -395,10 +395,10 @@ def _has_body_content(html: str) -> bool:
         return False
     if body is None:
         return False
-    if next(body.iter(*_CONTENT_ELEMENTS), None) is not None:
-        return True
     for element in list(body.iter(*_NON_CONTENT_TAGS)):
         _remove_subtree(element)
+    if next(body.iter(*_CONTENT_ELEMENTS), None) is not None:
+        return True
     return bool(cast(str, lxml_html.tostring(body, method="text", encoding="unicode")).strip())
 
 

@@ -16,6 +16,11 @@ STALL = '<link rel="stylesheet" href="https://fonts.test/style.css"><script>wind
 CONTENT = "<h1>Company</h1><p>Founded in 2025</p>"
 HEAD_STALL = f"<html><head><title>Stalled page</title>{STALL}</head><body>{CONTENT}</body></html>"
 BODY_STALL = f"<html><head><title>Stalled page</title></head><body>{STALL}{CONTENT}</body></html>"
+# A tracking pixel in <noscript> is not page content, although the snapshot parses it as an image.
+PIXEL_STALL = (
+    "<html><head><title>Stalled page</title></head>"
+    f'<body><noscript><img src="https://pixel.test/p.gif"></noscript>{STALL}{CONTENT}</body></html>'
+)
 IFRAME_FIRST = (
     "<html><head><title>Stalled page</title></head>"
     f'<body><iframe src="https://frame.test/"></iframe>{STALL}{CONTENT}</body></html>'
@@ -56,7 +61,7 @@ async def _markdown(session: NotteSession, params: ScrapeParams = FULL_PAGE) -> 
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("page", [HEAD_STALL, BODY_STALL], ids=["head", "body"])
+@pytest.mark.parametrize("page", [HEAD_STALL, BODY_STALL, PIXEL_STALL], ids=["head", "body", "noscript-pixel"])
 async def test_page_whose_parser_waits_is_empty_not_its_title(session: NotteSession, page: str) -> None:
     stylesheet = await _open_stalled_page(session, page)
     assert await session.window.page.evaluate("document.readyState") == "loading"
