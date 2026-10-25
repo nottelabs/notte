@@ -31,6 +31,7 @@ from notte_core.act import (
     run_choose,
     same_target,
 )
+from notte_core.act.context import element_contexts
 from notte_core.act.freshness import ELEMENT_SIGNATURES_JS, Signatures, signature_xpaths
 from notte_core.act.settle import CAP_MS, POLL_MS, SETTLE_TRACKER_JS, TRACKED_REQUESTS, SettleState, settled
 from notte_core.act.wait import WAIT_FOR_CHANGE_JS, interrupted_by_navigation, wait_failure, wait_result
@@ -261,6 +262,7 @@ class LocalActDriver:
         self._snapshot = snapshot if snapshot is not None and snapshot.metadata == observation.metadata else None
         if snapshot is not None and snapshot.metadata == observation.metadata:
             page = ObservedPage.from_observation(observation, snapshot.element_states(), snapshot.fingerprint())
+            page = replace(page, contexts=element_contexts(snapshot.dom_node))
         else:
             page = ObservedPage.from_observation(observation)
         if self._capture_signatures:
