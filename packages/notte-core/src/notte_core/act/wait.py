@@ -4,7 +4,7 @@ A WAIT is chosen when the needed control is not ready yet (a disabled field, res
 A fixed delay is either too short for slow pages (the decider sees the same page and gives up) or wasted
 on fast ones. The page script below returns as soon as the DOM changes and then stays quiet for
 `QUIET_MS` (at most `SETTLE_MS` after the first change, for pages that never stop changing), or after
-`timeout_ms` without a change, in the page, its same-origin frames or its open shadow roots (up to `MAX_ROOTS`).
+`timeout_ms` without a change (a DOM change or a URL change within the document), in the page, its same-origin frames or its open shadow roots (up to `MAX_ROOTS`).
 Inline `style` changes (animations) do not count. A navigation also ends
 the wait (the browser destroys the page script, or the URL changed); the session reports it as a change. Any
 other failure of the script is a failed WAIT.
@@ -42,26 +42,56 @@ NESTED_ROOTS_JS = f"""(() => {{
     return roots;
 }})()"""
 
+# A function: `watchUrl(onChange)` calls `onChange()` when the page's URL changes within the document (pushState,
+# replaceState, a hash change), even with no DOM change, and returns a function that stops watching. The
+# Navigation API's `currententrychange` fires within the change; a 50 ms poll covers the rest.
+WATCH_URL_JS = """(onChange) => {
+    let url = location.href;
+    const check = () => {
+        if (location.href === url) return;
+        url = location.href;
+        onChange();
+    };
+    const navigation = window.navigation;
+    if (navigation) navigation.addEventListener("currententrychange", check);
+    window.addEventListener("hashchange", check);
+    window.addEventListener("popstate", check);
+    const poll = setInterval(check, 50);
+    return () => {
+        if (navigation) navigation.removeEventListener("currententrychange", check);
+        window.removeEventListener("hashchange", check);
+        window.removeEventListener("popstate", check);
+        clearInterval(poll);
+    };
+}"""
+
 WAIT_FOR_CHANGE_JS = f"""(timeoutMs) => new Promise((resolve) => {{
     let changed = false;
+    let navigated = false;
     let quiet = null;
     let settle = null;
     let cap = null;
     let observer = null;
+    let stopUrl = null;
     const done = () => {{
         if (observer) observer.disconnect();
+        if (stopUrl) stopUrl();
         clearTimeout(quiet);
         clearTimeout(settle);
         clearTimeout(cap);
-        resolve(changed ? "changed" : "unchanged");
+        resolve(navigated ? "navigated" : changed ? "changed" : "unchanged");
     }};
-    observer = new MutationObserver((mutations) => {{
-        if (!mutations.some((m) => m.type !== "attributes" || m.attributeName !== "style")) return;
+    const change = () => {{
         changed = true;
         clearTimeout(quiet);
         quiet = setTimeout(done, {QUIET_MS});
         if (settle === null) settle = setTimeout(done, {SETTLE_MS});
+    }};
+    observer = new MutationObserver((mutations) => {{
+        if (mutations.some((m) => m.type !== "attributes" || m.attributeName !== "style")) change();
     }});
+    // a navigation within the document (pushState, a hash change) is a change too, DOM change or not
+    stopUrl = ({WATCH_URL_JS})(() => {{ navigated = true; change(); }});
     // act() also targets elements in same-origin frames and open shadow roots: watch them too
     const roots = {NESTED_ROOTS_JS};
     for (const root of roots) {{
