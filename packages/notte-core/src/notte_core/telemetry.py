@@ -294,7 +294,10 @@ def _register_exit_flush() -> None:
     try:
         threading._register_atexit(_flush_at_exit)  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
     except RuntimeError:
-        return  # shutdown has started; the `atexit` flush registered in `_clients` still runs
+        # Shutdown has started. `atexit` handlers have not run yet; the one `_clients` registers later
+        # still runs first, and this one covers an exit before the worker gets there.
+        _ = atexit.register(_flush_at_exit)
+        return
     _exit_flush_registered = True
 
 

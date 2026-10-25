@@ -197,6 +197,23 @@ def test_events_from_threads_still_running_at_exit_are_sent(slow_endpoint: Colle
         assert sum(body.count(f'"{event}"'.encode()) for body in slow_endpoint.posthog_bodies()) == 1
 
 
+@pytest.mark.skipif(sys.version_info[:2] == (3, 12), reason="Python 3.12 starts no thread during shutdown")
+def test_a_first_event_captured_during_shutdown_is_sent(slow_endpoint: Collector, tmp_path: Path) -> None:
+    # The only event comes from a non-daemon thread after the main thread finished, when the `threading`
+    # exit hook can no longer be registered.
+    code = (
+        "import threading, time\n"
+        "def late():\n"
+        "    time.sleep(0.3)\n"
+        "    telemetry.capture_event('test.late_first')\n"
+        "threading.Thread(target=late).start()\n"
+    )
+
+    _ = run_script(code, slow_endpoint, tmp_path)
+
+    assert slow_endpoint.scarf_events().count("test.late_first") == 1
+
+
 def test_exit_waits_a_bounded_time_for_an_unresponsive_endpoint(hanging_endpoint: Collector, tmp_path: Path) -> None:
     code = "for _ in range(3):\n    telemetry.capture_event('test.exit', {'status': 'success'})\n"
 
