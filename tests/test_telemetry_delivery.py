@@ -29,6 +29,7 @@ def test_track_usage_delivers_metadata_only_to_telemetry_clients(monkeypatch: py
 
     with pytest.raises(RuntimeError, match=secret):
         decorated(api_token=secret)
+    assert telemetry.flush(timeout=5)
 
     assert posthog_events == [
         (

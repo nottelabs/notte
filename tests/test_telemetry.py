@@ -120,6 +120,7 @@ def test_capture_event_copies_properties_per_destination(monkeypatch: pytest.Mon
     properties: dict[str, Any] = {"status": "success"}
 
     telemetry.capture_event("test.event", properties=properties)
+    assert telemetry.flush(timeout=5)
 
     assert properties == {"status": "success"}
     assert set(telemetry.POSTHOG_EVENT_SETTINGS) <= set(sent["posthog"])

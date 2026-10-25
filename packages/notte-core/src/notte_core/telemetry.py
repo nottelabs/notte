@@ -3,7 +3,9 @@ import inspect
 import logging
 import os
 import platform
+import threading
 import uuid
+from collections import deque
 from functools import cache, wraps
 from pathlib import Path
 from typing import Any, Callable, TypeVar
@@ -205,10 +207,120 @@ def get_system_info() -> dict[str, Any]:
     }
 
 
+MAX_QUEUED_EVENTS = 1000
+EXIT_FLUSH_TIMEOUT_SECONDS = 1.0
+FORK_WAIT_SECONDS = 2.0
+
+
+class _EventQueue:
+    """Sends events from one background thread so telemetry never blocks the caller.
+
+    The queue keeps the newest `max_events` events and drops the oldest when full.
+    """
+
+    def __init__(self, max_events: int) -> None:
+        self.max_events: int = max_events
+        self.reset()
+
+    def reset(self) -> None:
+        self._condition: threading.Condition = threading.Condition()
+        self._events: deque[tuple[str, dict[str, Any]]] = deque(maxlen=self.max_events)
+        self._sending: bool = False
+        self._worker: threading.Thread | None = None
+        self._first_send_done: threading.Event = threading.Event()
+
+    def put(self, event_name: str, properties: dict[str, Any]) -> None:
+        with self._condition:
+            if len(self._events) == self.max_events:
+                logger.debug("Telemetry queue is full, dropping the oldest event")
+            self._events.append((event_name, properties))
+            if self._worker is None:
+                worker = threading.Thread(target=self._run, name="notte-telemetry", daemon=True)
+                worker.start()
+                self._worker = worker
+            self._condition.notify()
+
+    def _run(self) -> None:
+        while True:
+            with self._condition:
+                while not self._events:
+                    _ = self._condition.wait()
+                event_name, properties = self._events.popleft()
+                self._sending = True
+            try:
+                _send_event(event_name, properties)
+            except Exception as e:
+                logger.debug(f"Failed to send telemetry event {event_name}: {e}")
+            finally:
+                self._first_send_done.set()
+                with self._condition:
+                    self._sending = False
+                    self._condition.notify_all()
+
+    def flush(self, timeout: float) -> bool:
+        """Wait up to `timeout` seconds for queued events to be sent. Returns whether the queue drained."""
+        with self._condition:
+            return self._condition.wait_for(lambda: not self._events and not self._sending, timeout)
+
+    def wait_for_first_send(self, timeout: float) -> None:
+        if self._worker is not None:
+            _ = self._first_send_done.wait(timeout)
+
+
+_event_queue = _EventQueue(MAX_QUEUED_EVENTS)
+_exit_flush_registered = False
+
+
+def _flush_at_exit() -> None:
+    _ = _event_queue.flush(EXIT_FLUSH_TIMEOUT_SECONDS)
+
+
+def _register_exit_flush() -> None:
+    global _exit_flush_registered
+    if _exit_flush_registered:
+        return
+    # `threading._register_atexit` (also used by `concurrent.futures`) runs before `atexit` handlers,
+    # so PostHog's own exit flush still delivers what we hand it, and it also runs when a
+    # multiprocessing child started with `fork` exits, which skips `atexit`.
+    threading._register_atexit(_flush_at_exit)  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
+    _exit_flush_registered = True
+
+
+def _wait_before_fork() -> None:
+    # The first send imports modules lazily (the PostHog and Scarf clients, PostHog's platform lookup,
+    # requests' proxy handling). Forking while the worker holds an import lock leaves that module locked
+    # forever in the child, so a fork waits (bounded) for the first send; later sends reuse those modules.
+    _event_queue.wait_for_first_send(FORK_WAIT_SECONDS)
+
+
+def _reset_after_fork() -> None:
+    # The parent sends its own queued events. The child starts with an empty queue and new clients,
+    # since the parent's worker thread does not exist in the child and Scarf's HTTP connection is shared.
+    _event_queue.reset()
+    _clients.cache_clear()
+
+
+if hasattr(os, "register_at_fork"):  # not available on Windows
+    os.register_at_fork(before=_wait_before_fork, after_in_child=_reset_after_fork)
+
+
+def flush(timeout: float = EXIT_FLUSH_TIMEOUT_SECONDS) -> bool:
+    """Wait up to `timeout` seconds for captured events to be sent. Returns whether all were sent."""
+    return _event_queue.flush(timeout)
+
+
 def capture_event(event_name: str, properties: dict[str, Any] | None = None) -> None:
-    """Capture an event if telemetry is enabled."""
+    """Capture an event if telemetry is enabled. Events are sent in the background."""
     if DISABLE_TELEMETRY:
         return None
+    try:
+        _register_exit_flush()
+        _event_queue.put(event_name, dict(properties or {}))
+    except Exception as e:
+        logger.debug(f"Failed to queue telemetry event {event_name}: {e}")
+
+
+def _send_event(event_name: str, properties: dict[str, Any]) -> None:
     try:
         posthog_client, scarf_client, installation_id = _clients()
     except Exception as e:
