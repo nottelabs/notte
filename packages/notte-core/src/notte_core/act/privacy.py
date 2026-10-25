@@ -14,10 +14,24 @@ from notte_core.act.space import ObservedPage
 _LINE_BREAK = r"(?:\n[ \t]*(?:[A-Z]\d+|_)\[:\]|\s)+"
 
 
+@dataclass(frozen=True)
+class _Patterns:
+    """The patterns of a set of replacements (`ActPrivacy._compiled`)."""
+
+    # the replacements they were built from
+    source: tuple[tuple[str, str], ...]
+    # every protected literal, and the `{{name}}` placeholders, in one pattern
+    literals: re.Pattern[str]
+    # a protected value with line breaks as the page may show it, and its placeholder
+    multiline: tuple[tuple[re.Pattern[str], str], ...]
+
+
 @dataclass
 class ActPrivacy:
     # Retain old values too: callers may change a variable or omit variables on later calls.
     replacements: dict[str, str] = field(default_factory=dict, repr=False)
+    # masking runs on every element and line of the page: its patterns are built once per set of replacements
+    _patterns: _Patterns | None = field(default=None, init=False, repr=False, compare=False)
 
     def remember(self, variables: Mapping[str, str]) -> None:
         for name, value in variables.items():
@@ -54,21 +68,32 @@ class ActPrivacy:
         if not self.replacements:
             return value
         # One pass avoids replacing parts of placeholders emitted by another replacement.
-        literals = "|".join(re.escape(key) for key in sorted(self.replacements, key=len, reverse=True))
-        pattern = r"\{\{[A-Za-z_][A-Za-z0-9_]*\}\}|" + literals
-        value = re.sub(pattern, lambda match: self.replacements.get(match.group(), match.group()), value)
+        value = self._compiled().literals.sub(lambda match: self.replacements.get(match.group(), match.group()), value)
         return self._multiline(value)
+
+    def _compiled(self) -> _Patterns:
+        source = tuple(self.replacements.items())
+        if self._patterns is None or self._patterns.source != source:
+            literals = sorted(self.replacements, key=len, reverse=True)
+            pattern = r"\{\{[A-Za-z_][A-Za-z0-9_]*\}\}|" + "|".join(re.escape(key) for key in literals)
+            multiline: list[tuple[re.Pattern[str], str]] = []
+            for literal in literals:
+                if "\n" not in literal and "\r" not in literal:
+                    continue
+                parts = [re.escape(part) for part in re.split(r"\s+", literal.strip()) if part]
+                if len(parts) < 2:
+                    continue
+                multiline.append((re.compile(_LINE_BREAK.join(parts)), self.replacements[literal]))
+            self._patterns = _Patterns(source, re.compile(pattern), tuple(multiline))
+        return self._patterns
 
     def _multiline(self, value: str) -> str:
         """Mask the protected values that span lines wherever the page shows them: with other whitespace between
         their lines, or as consecutive lines of the rendered page (each with its `_[:]` / `I1[:]` prefix)."""
-        for literal in sorted(self.replacements, key=len, reverse=True):
-            if "\n" not in literal and "\r" not in literal:
-                continue
-            parts = [re.escape(part) for part in re.split(r"\s+", literal.strip()) if part]
-            if len(parts) < 2:
-                continue
-            value = re.sub(_LINE_BREAK.join(parts), self.replacements[literal], value)
+        if not self.replacements:
+            return value
+        for pattern, placeholder in self._compiled().multiline:
+            value = pattern.sub(placeholder, value)
         return value
 
     def payload(self, value: Any) -> Any:
@@ -83,6 +108,8 @@ class ActPrivacy:
     def page(self, page: ObservedPage) -> ObservedPage:
         # This copy supplies only display metadata/text, never action structure.
         # Preserve rendered action-ID prefixes that the model uses as references.
+        if not self.replacements:
+            return page
         description = "\n".join(
             match[1] + self.text(match[2])
             if (match := re.match(r"^(\s*[A-Z]\d+\[:\])(.*)$", line))
@@ -91,9 +118,13 @@ class ActPrivacy:
         )
         # a value with a line break is rendered as two lines: mask it across them too
         description = self._multiline(description)
+        url, title = self.text(page.url), self.text(page.title)
+        if (url, title, description) == (page.url, page.title, page.description):
+            # nothing to mask: the page itself, and what was already read from it (`space._once`)
+            return page
         return replace(
             page,
-            url=self.text(page.url),
-            title=self.text(page.title),
+            url=url,
+            title=title,
             description=description,
         )

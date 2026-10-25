@@ -58,34 +58,39 @@ class _Headings:
         self.last: dict[int, str | None] = {}
         self.elements: dict[int, bool] = {}
         self.count: dict[int, int] = {}
-        # iterative post-order: real pages nest deeper than recursion handles comfortably
-        stack: list[tuple[DomNode, bool]] = [(root, False)]
-        while stack:
-            node, done = stack.pop()
-            if not done:
-                stack.append((node, True))
-                stack.extend((child, False) for child in node.children)
-                continue
-            count = (node.id is not None) + sum(self.count[id(child)] for child in node.children)
-            self.count[id(node)] = count
-            if node.get_role_str() == "heading":
+        # each node's role, read once
+        self.role: dict[int, str] = {}
+        # breadth-first, without recursion (real pages nest deeper than recursion handles comfortably): read
+        # backwards, every node comes after its children
+        nodes = [root]
+        for node in nodes:
+            nodes.extend(node.children)
+        for node in reversed(nodes):
+            key = id(node)
+            role = self.role[key] = node.get_role_str()
+            count = int(node.id is not None)
+            for child in node.children:
+                count += self.count[id(child)]
+            self.count[key] = count
+            if role == "heading":
                 # kept whole: titles are cut when shown, after masking (`shorten`)
-                self.last[id(node)] = _text(node) or None
-                self.elements[id(node)] = False
+                self.last[key] = _text(node) or None
+                self.elements[key] = False
                 continue
             last: str | None = None
             elements = node.id is not None
             for child in node.children:
                 last = self.last[id(child)] or last
                 elements = elements or self.elements[id(child)]
-            self.last[id(node)] = last
-            self.elements[id(node)] = elements
+            self.last[key] = last
+            self.elements[key] = elements
 
     def title(self, node: DomNode) -> str | None:
         """The title `node` gives to the siblings after it: a heading, or a block that holds a heading and no
         element (the header of a section, a card's title block)."""
-        if node.get_role_str() == "heading" or not self.elements[id(node)]:
-            return self.last[id(node)]
+        key = id(node)
+        if self.role[key] == "heading" or not self.elements[key]:
+            return self.last[key]
         return None
 
 
@@ -99,23 +104,24 @@ def element_contexts(root: DomNode) -> dict[str, str]:
         node, around = stack.pop()
         if node.id is not None and around:
             contexts[node.id] = SEPARATOR.join(around[-MAX_TITLES:])
-        role = node.get_role_str()
+        role = headings.role[id(node)]
         if role in _LANDMARKS:
             around = ()
-        name = " ".join(node.text.split())
-        if name and node.id is None and role in _NAMED_CONTAINERS:
-            around = _append(around, name)
+        if node.id is None and role in _NAMED_CONTAINERS:
+            around = _append(around, " ".join(node.text.split()))
         current: str | None = None
         previous: DomNode | None = None
         children: list[tuple[DomNode, tuple[str, ...]]] = []
         for child in node.children:
-            titles = _append(around, current)
-            if previous is not None and headings.last[id(child)] is None and headings.count[id(child)] == 1:
-                # a lone element without a heading (a card's button) is titled by the block right before it that
-                # has one (the card's name, price and links), as both belong to the same item
-                titles = _append(titles, headings.last[id(previous)])
-            # a heading titles the siblings after it, not itself
-            children.append((child, titles))
+            # a part of the page without elements has no context to give: only its title is read (below)
+            if headings.count[id(child)] > 0:
+                titles = _append(around, current)
+                if previous is not None and headings.last[id(child)] is None and headings.count[id(child)] == 1:
+                    # a lone element without a heading (a card's button) is titled by the block right before it that
+                    # has one (the card's name, price and links), as both belong to the same item
+                    titles = _append(titles, headings.last[id(previous)])
+                # a heading titles the siblings after it, not itself
+                children.append((child, titles))
             current = headings.title(child) or current
             previous = child
         stack.extend(reversed(children))
