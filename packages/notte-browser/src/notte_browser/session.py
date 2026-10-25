@@ -34,6 +34,7 @@ from notte_core.act import (
 from notte_core.act.context import element_contexts
 from notte_core.act.freshness import ELEMENT_SIGNATURES_JS, Signatures, signature_xpaths
 from notte_core.act.settle import CAP_MS, POLL_MS, SETTLE_TRACKER_JS, TRACKED_REQUESTS, SettleState, settled
+from notte_core.act.space import shown_contexts
 from notte_core.act.wait import WAIT_FOR_CHANGE_JS, interrupted_by_navigation, wait_failure, wait_result
 from notte_core.actions import (
     BaseAction,
@@ -272,8 +273,10 @@ class LocalActDriver:
         before = self._signatures
         if before.url is not None and before.url != page.url:
             return False
-        # without a baseline (the signature script failed after observing), compare a new snapshot
-        if before.url is not None and (element_id is None or before.consistent(page, element_id)):
+        # without a baseline (the signature script failed after observing), compare a new snapshot. So does a target
+        # shown with its section's titles: the element signature does not cover what is around it
+        fast = element_id is None or (before.consistent(page, element_id) and element_id not in shown_contexts(page))
+        if before.url is not None and fast:
             xpaths = {} if element_id is None else signature_xpaths(page, element_id)
             return before.matches(await self._read_signatures(xpaths), element_id, focus=focus)
         snapshot = await self.session.window.snapshot(screenshot=False)
@@ -289,6 +292,7 @@ class LocalActDriver:
             viewport=snapshot.metadata.viewport,
             states=snapshot.element_states(),
             fingerprint=snapshot.fingerprint(),
+            contexts=element_contexts(snapshot.dom_node),
         )
         return same_target(page, current, element_id)
 
