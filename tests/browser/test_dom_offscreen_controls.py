@@ -24,6 +24,9 @@ PAGE = """
 <a href="/home"><img alt="Home" width="20" height="20" src="data:image/gif;base64,R0lGODlhAQABAAAAACw="></a>
 <div style="height: 40px; overflow: hidden"><div style="height: 100px"></div><button>CLIPPED_AWAY</button></div>
 <div style="height: 40px; overflow: auto"><div style="height: 100px"></div><button>Scrolled to in its box</button></div>
+<div style="height: 40px; overflow: hidden"><div style="height: 40px; overflow: auto">
+  <div style="height: 100px"></div><button>Scrolled to in a clipped box</button>
+</div></div>
 <div style="display: none"><a href="/a">DISPLAY_NONE</a></div>
 <div style="visibility: hidden"><a href="/b">VISIBILITY_HIDDEN</a></div>
 <div style="height: 0; overflow: hidden"><a href="/c">ZERO_HEIGHT</a></div>
@@ -45,6 +48,7 @@ BELOW = [
     # clipped away by a box that does not scroll: what scrolling cannot reveal stays text
     "_[:]CLIPPED_AWAY",
     "_[:]<button>Scrolled to in its box</button>",
+    "_[:]<button>Scrolled to in a clipped box</button>",
     # a generic clickable (a `<summary>`) is not described as a control off-screen
     "_[:]Notes",
     "_[:]LEFT_OF_VIEWPORT",
@@ -79,6 +83,7 @@ async def test_controls_outside_the_viewport_are_described_without_actions() -> 
             (None, "link", ""),
             (None, "link", ""),
             (None, "button", "Scrolled to in its box"),
+            (None, "button", "Scrolled to in a clipped box"),
         ]
 
         # scrolled into view, they are actions like any other, and the link now above the viewport is described

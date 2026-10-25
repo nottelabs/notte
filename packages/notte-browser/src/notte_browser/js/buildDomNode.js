@@ -1313,24 +1313,27 @@
 
 	/**
 	 * Checks if an element is laid out outside the box of an ancestor that clips its overflow without
-	 * scrolling (`overflow: hidden` or `clip`, as carousels and "show more" sections are): scrolling the
-	 * page does not reveal it. A scrollable ancestor (`auto`, `scroll`) does not count, nor do `<body>` and
-	 * `<html>`, whose overflow is the page's.
+	 * scrolling (`overflow: hidden` or `clip`, as carousels and "show more" sections are): scrolling does
+	 * not reveal it. A scrollable ancestor (`auto`, `scroll`) does not clip: scrolling it can bring the
+	 * element anywhere in its box, so the ancestors above it are checked against that box. `<body>` and
+	 * `<html>` are not checked: their overflow is the page's.
 	 *
 	 * @param {HTMLElement} element - The element to check.
 	 * @returns {boolean} Whether a clipping ancestor hides the element.
 	 */
 	function isClippedAway(element) {
-		const rect = getCachedBoundingRect(element);
+		let rect = getCachedBoundingRect(element);
 		for (let ancestor = element.parentElement; ancestor && ancestor !== document.body; ancestor = ancestor.parentElement) {
 			const style = getCachedComputedStyle(ancestor);
-			const clipsY = style?.overflowY === "hidden" || style?.overflowY === "clip";
-			const clipsX = style?.overflowX === "hidden" || style?.overflowX === "clip";
-			if ((!clipsY && !clipsX) || escapesClip(element, ancestor)) continue;
 			const box = getCachedBoundingRect(ancestor);
-			if (!box) continue;
+			if (!style || !box || escapesClip(element, ancestor)) continue;
+			const clipsY = style.overflowY === "hidden" || style.overflowY === "clip";
+			const clipsX = style.overflowX === "hidden" || style.overflowX === "clip";
 			if (clipsY && (rect.bottom <= box.top || rect.top >= box.bottom)) return true;
 			if (clipsX && (rect.right <= box.left || rect.left >= box.right)) return true;
+			if (style.overflowY === "auto" || style.overflowY === "scroll" || style.overflowX === "auto" || style.overflowX === "scroll") {
+				rect = box;
+			}
 		}
 		return false;
 	}
