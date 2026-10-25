@@ -28,6 +28,10 @@ dependencies = [
 profiling = [
     "opentelemetry-sdk>=1.34.1",
 ]
+# `notte_core.credentials.bitwarden.BitwardenVault`. Imported only when the vault starts.
+bitwarden = [
+    "bitwarden-sdk>=2.0.0",
+]
 
 
 [build-system]
