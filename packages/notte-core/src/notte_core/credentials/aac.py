@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import tempfile
 import threading
+from pathlib import Path
 from typing import Unpack
 
 from pydantic import BaseModel, ValidationError
@@ -18,7 +19,6 @@ from notte_core.url import get_root_domain
 
 
 class _AacError(BaseModel):
-    code: str
     message: str
 
 
@@ -26,6 +26,16 @@ class _AacCredential(BaseModel):
     username: str | None = None
     password: str | None = None
     totp: str | None = None
+
+
+class _AacCachedConnection(BaseModel):
+    pass
+
+
+class _AacConnectionCache(BaseModel):
+    """`~/.access-protocol/connection_cache_remote_client.json`, where `aac connect` saves paired connections."""
+
+    connections: list[_AacCachedConnection]
 
 
 class _AacResponse(BaseModel):
@@ -136,6 +146,7 @@ class AacVault(BaseVault, SyncResource):
                 cmd, capture_output=True, text=True, timeout=self._timeout + 30, check=False, env=env
             )
         except subprocess.TimeoutExpired:
+            self._forget_token_once_paired(succeeded=False)
             logger.warning(f"[AacVault] Credential request for {domain} timed out")
             return None
 
@@ -145,9 +156,7 @@ class AacVault(BaseVault, SyncResource):
         except ValidationError:
             response = None
         error = None if response is None else response.error
-        if response is not None and (response.success or (error is not None and error.code == "credential_not_found")):
-            # paired: `aac` cached the connection, and a rendezvous code only works once
-            self.token = None
+        self._forget_token_once_paired(succeeded=response is not None and response.success)
         if result.returncode != 0 or response is None or not response.success or response.credential is None:
             message = (
                 error.message if error is not None else (result.stderr.strip() or f"exit code {result.returncode}")
@@ -155,6 +164,21 @@ class AacVault(BaseVault, SyncResource):
             logger.warning(f"[AacVault] Credential request failed for {domain}: {message}")
             return None
         return response.credential
+
+    def _forget_token_once_paired(self, succeeded: bool) -> None:
+        """Drop the token once it paired: a rendezvous code only works once, and later requests use the connection."""
+        if self.token is None or self._home is None:
+            return
+        if not succeeded:
+            # `aac` saves the connection as soon as pairing succeeds, even if the credential request then
+            # fails (timed out, denied, not found): the vault's private home holds no other connection
+            cache = Path(self._home) / ".access-protocol" / "connection_cache_remote_client.json"
+            try:
+                succeeded = len(_AacConnectionCache.model_validate_json(cache.read_text()).connections) > 0
+            except (OSError, ValidationError):
+                return
+        if succeeded:
+            self.token = None
 
     @override
     async def _get_credentials_impl(self, url: str) -> CredentialsDict | None:
