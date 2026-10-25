@@ -1,9 +1,12 @@
+import atexit
 import importlib.metadata as metadata
 import inspect
 import logging
 import os
 import platform
+import threading
 import uuid
+from collections import deque
 from functools import cache, wraps
 from pathlib import Path
 from typing import Any, Callable, TypeVar
@@ -186,9 +189,18 @@ def get_or_create_installation_id(scarf_client: Any | None = None) -> str:
 
 
 @cache
+def _posthog_client() -> Any | None:
+    client = setup_posthog()
+    # Covers events captured by non-daemon threads after the `threading` exit hook ran. Registered after
+    # PostHog's client, so it runs before PostHog's own exit flush, which then sends what it was handed.
+    _ = atexit.register(_flush_at_exit)
+    return client
+
+
+@cache
 def _clients() -> tuple[Any | None, Any | None, str]:
     """PostHog client, Scarf client and installation id, created on first use."""
-    posthog_client = setup_posthog()
+    posthog_client = _posthog_client()
     scarf_client = setup_scarf()
     return posthog_client, scarf_client, get_or_create_installation_id(scarf_client)
 
@@ -205,10 +217,139 @@ def get_system_info() -> dict[str, Any]:
     }
 
 
+MAX_QUEUED_EVENTS = 1000
+EXIT_FLUSH_TIMEOUT_SECONDS = 1.0
+FORK_WAIT_SECONDS = 2.0
+
+
+class _EventQueue:
+    """Sends events from one background thread so telemetry never blocks the caller.
+
+    The queue keeps the newest `max_events` events and drops the oldest when full.
+    """
+
+    def __init__(self, max_events: int) -> None:
+        self.max_events: int = max_events
+        self.reset()
+
+    def reset(self) -> None:
+        self._condition: threading.Condition = threading.Condition()
+        self._events: deque[tuple[str, dict[str, Any]]] = deque(maxlen=self.max_events)
+        self._sending: bool = False
+        self._worker: threading.Thread | None = None
+        self._first_send_done: threading.Event = threading.Event()
+
+    def put(self, event_name: str, properties: dict[str, Any]) -> None:
+        with self._condition:
+            if len(self._events) == self.max_events:
+                logger.debug("Telemetry queue is full, dropping the oldest event")
+            self._events.append((event_name, properties))
+            if self._worker is None:
+                worker = threading.Thread(target=self._run, name="notte-telemetry", daemon=True)
+                worker.start()
+                self._worker = worker
+            self._condition.notify()
+
+    def _run(self) -> None:
+        while True:
+            with self._condition:
+                while not self._events:
+                    _ = self._condition.wait()
+                event_name, properties = self._events.popleft()
+                self._sending = True
+            try:
+                _send_event(event_name, properties)
+            except Exception as e:
+                logger.debug(f"Failed to send telemetry event {event_name}: {e}")
+            finally:
+                self._first_send_done.set()
+                with self._condition:
+                    self._sending = False
+                    self._condition.notify_all()
+
+    def flush(self, timeout: float) -> bool:
+        """Wait up to `timeout` seconds for queued events to be handed to the clients. Returns whether it drained."""
+        with self._condition:
+            return self._condition.wait_for(lambda: not self._events and not self._sending, timeout)
+
+    def wait_for_first_send(self, timeout: float) -> None:
+        if self._worker is not None:
+            _ = self._first_send_done.wait(timeout)
+
+
+_event_queue = _EventQueue(MAX_QUEUED_EVENTS)
+_exit_flush_registered = False
+_exit_flush_timed_out = False
+
+
+def _flush_at_exit() -> None:
+    global _exit_flush_timed_out
+    # Runs from two exit hooks; once the endpoint has failed to keep up, the second does not wait again.
+    if _exit_flush_timed_out:
+        return
+    _exit_flush_timed_out = not _event_queue.flush(EXIT_FLUSH_TIMEOUT_SECONDS)
+
+
+def _register_exit_flush() -> None:
+    global _exit_flush_registered
+    if _exit_flush_registered:
+        return
+    # `threading._register_atexit` (also used by `concurrent.futures`) runs before `atexit` handlers, so
+    # PostHog's own exit flush still delivers what we hand it, and it also runs when a multiprocessing child
+    # started with `fork` exits, which skips `atexit`.
+    try:
+        threading._register_atexit(_flush_at_exit)  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
+    except RuntimeError:
+        # Shutdown has started and only non-daemon threads are left. Create PostHog's client on this thread
+        # (no network I/O), so its exit flush and ours exist before `atexit` handlers run.
+        try:
+            _ = _posthog_client()
+        except Exception as e:
+            logger.debug(f"Failed to initialize telemetry: {e}")
+        return
+    _exit_flush_registered = True
+
+
+def _wait_before_fork() -> None:
+    # The first send imports modules lazily (the PostHog and Scarf clients, PostHog's platform lookup,
+    # requests' proxy handling). Forking while the worker holds an import lock leaves that module locked
+    # forever in the child, so a fork waits (bounded) for the first send; later sends reuse those modules.
+    _event_queue.wait_for_first_send(FORK_WAIT_SECONDS)
+
+
+def _reset_after_fork() -> None:
+    # The parent sends its own queued events. The child starts with an empty queue and new clients,
+    # since the parent's worker thread does not exist in the child and Scarf's HTTP connection is shared.
+    _event_queue.reset()
+    _posthog_client.cache_clear()
+    _clients.cache_clear()
+
+
+if hasattr(os, "register_at_fork"):  # not available on Windows
+    os.register_at_fork(before=_wait_before_fork, after_in_child=_reset_after_fork)
+
+
+def flush(timeout: float = EXIT_FLUSH_TIMEOUT_SECONDS) -> bool:
+    """Wait up to `timeout` seconds for captured events to be handed to the telemetry clients.
+
+    Returns whether the queue drained. Scarf events are sent by then; PostHog's client sends from its own
+    queue and flushes it at exit.
+    """
+    return _event_queue.flush(timeout)
+
+
 def capture_event(event_name: str, properties: dict[str, Any] | None = None) -> None:
-    """Capture an event if telemetry is enabled."""
+    """Capture an event if telemetry is enabled. Events are sent in the background."""
     if DISABLE_TELEMETRY:
         return None
+    try:
+        _register_exit_flush()
+        _event_queue.put(event_name, dict(properties or {}))
+    except Exception as e:
+        logger.debug(f"Failed to queue telemetry event {event_name}: {e}")
+
+
+def _send_event(event_name: str, properties: dict[str, Any]) -> None:
     try:
         posthog_client, scarf_client, installation_id = _clients()
     except Exception as e:
