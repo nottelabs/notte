@@ -22,10 +22,13 @@ The settle replaces the session's fixed waits around an action (`notte_browser.e
 a click or a key press for a tab it may open, the network going idle then 500 ms after a navigation, 200 ms before and
 after a scroll. So it also covers what those waited for:
 - a navigation to a new document ends the tracking of the old one: the new one is tracked from its first render
-  (`DOMContentLoaded`) and settled like the first (its grace still counted from the action), then waited for until it
-  has loaded, at most `NAVIGATION_CAP_MS` after the action (the session's load timeout);
-- a tab the action opens ends the tracking: the session switches to it, then settles it from its first render and
-  waits until it has loaded, within the same bound. A tab is noticed while the page settles, so at least `GRACE_MS` after the action;
+  (`DOMContentLoaded`), its grace still counted from the action, at most `NAVIGATION_CAP_MS` after the action (the
+  session's load timeout). After a click, as the session waited for the network to go idle: until its requests are
+  done and its DOM has settled (what it renders from the data it fetches after its load event), then until it has
+  loaded. After a key press or a back / forward, as the session waited for the load only: until its DOM has settled
+  or it has loaded, whichever comes first, its requests not waited for (analytics and polling keep some in flight for
+  seconds on IKEA's search; GitHub's search renders for ~800 ms after its load event);
+- a tab the action opens ends the tracking: the session switches to it, then waits for it the same way. A tab is noticed while the page settles, so at least `GRACE_MS` after the action;
 - a scroll ends once its position is stable (`notte_browser.execution`).
 
 Bounds (local Chromium on real sites): Google Flights renders a city's suggestions 90-160 ms after the

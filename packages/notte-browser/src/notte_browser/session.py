@@ -177,18 +177,18 @@ class _Settle:
 
     @classmethod
     async def opened_page(cls, page: Page) -> None:
-        """A tab the action opened: until it has loaded and settled, at most `NAVIGATION_CAP_MS`."""
+        """A tab the action opened: until it has rendered or loaded (`_rendered_or_loaded`), at most
+        `NAVIGATION_CAP_MS`."""
         try:
             async with asyncio.timeout(NAVIGATION_CAP_MS / 1000):
-                # tracked from its first render, while it loads
                 await page.wait_for_load_state("domcontentloaded")
                 settle = await cls.start(page)
                 if settle is not None:
                     try:
-                        await settle.wait()
+                        # opened by a click: waited for as the session did (its network going idle)
+                        await settle._rendered_or_loaded(GRACE_MS, requests=True)
                     finally:
                         await settle.close()
-                await page.wait_for_load_state("load")
         except TimeoutError:
             pass
         except PlaywrightError:
@@ -217,17 +217,17 @@ class _Settle:
     def _left_ms(self, cap_ms: float) -> float:
         return cap_ms - (time.perf_counter() - self._began) * 1000
 
-    async def _poll(self, typed: bool, grace_ms: float) -> None:
-        """Until the current document settles or a tab opens."""
+    async def _poll(self, typed: bool, grace_ms: float, *, requests: bool = True) -> None:
+        """Until the current document settles or a tab opens. Without `requests`, on the DOM alone."""
         while not self.opened:
             page: dict[str, Any] = await self._tracker.evaluate("(t, typed) => t.state(typed)", typed)
-            firsts = [t for t in (page["first"], self._first) if t is not None]
-            lasts = [t for t in (page["last"], self._last) if t is not None]
+            firsts = [t for t in (page["first"], self._first if requests else None) if t is not None]
+            lasts = [t for t in (page["last"], self._last if requests else None) if t is not None]
             state = SettleState(
                 elapsed_ms=page["elapsed"],
                 first_change_ms=min(firsts, default=None),
                 last_change_ms=max(lasts, default=None),
-                in_flight=len(self._in_flight),
+                in_flight=len(self._in_flight) if requests else 0,
                 last_dom_change_ms=page["dom"],
                 url_changed_ms=page["urlAt"],
                 suggestions_changed=page["suggested"],
@@ -237,9 +237,31 @@ class _Settle:
                 return
             await asyncio.sleep(POLL_MS / 1000)
 
-    async def wait(self, *, typed: bool = False, grace_ms: float = GRACE_MS) -> None:
+    async def _rendered_or_loaded(self, grace_ms: float, *, requests: bool = False) -> None:
+        """A new document, tracked from `DOMContentLoaded`: until its DOM has settled or it has loaded, whichever
+        comes first. Without `requests`, its own requests are not waited for: a page's analytics and polling keep
+        some in flight for seconds, while what it renders is in the DOM. With them, until they are done and the DOM
+        has settled, then until it has loaded: what it renders from the data it fetches is waited for."""
+        if requests:
+            await self._poll(False, grace_ms)
+            await self.page.wait_for_load_state("load")
+            return
+        rendered = asyncio.ensure_future(self._poll(False, grace_ms, requests=False))
+        loaded = asyncio.ensure_future(self.page.wait_for_load_state("load"))
+        try:
+            done, _ = await asyncio.wait({rendered, loaded}, return_when=asyncio.FIRST_COMPLETED)
+        finally:
+            for task in (rendered, loaded):
+                _ = task.cancel()
+            _ = await asyncio.gather(rendered, loaded, return_exceptions=True)
+        for task in done:
+            # a navigation again (the tracker is gone) or a closed page
+            task.result()
+
+    async def wait(self, *, typed: bool = False, grace_ms: float = GRACE_MS, document_requests: bool = False) -> None:
         """Until the page settles, at most `CAP_MS` after the action started; after a navigation to a new document,
-        until that document has loaded and settled, at most `NAVIGATION_CAP_MS` after the action started."""
+        until that document has rendered or loaded (`_rendered_or_loaded`, waiting for its requests with
+        `document_requests`), at most `NAVIGATION_CAP_MS` after the action started."""
         try:
             async with asyncio.timeout(max(self._left_ms(CAP_MS), 0) / 1000):
                 await self._poll(typed, grace_ms)
@@ -252,15 +274,14 @@ class _Settle:
         for _ in range(MAX_DOCUMENTS):
             try:
                 async with asyncio.timeout(max(self._left_ms(NAVIGATION_CAP_MS), 0) / 1000):
-                    # track the new document from its first render, while it loads: what the old one did is over, its
-                    # requests still count
+                    # track the new document from its first render: what the old one did is over
                     await self.page.wait_for_load_state("domcontentloaded")
                     self._tracker = await self.page.evaluate_handle(SETTLE_TRACKER_JS)
                     self._started, self._first, self._last = time.perf_counter(), None, None
-                    # what a script or a framework renders once the document is parsed; with no change at all, the
-                    # action's grace counts from the action
-                    await self._poll(False, max(grace_ms - (self._started - self._began) * 1000, 0))
-                    await self.page.wait_for_load_state("load")
+                    # with no change at all, the action's grace counts from the action
+                    await self._rendered_or_loaded(
+                        max(grace_ms - (self._started - self._began) * 1000, 0), requests=document_requests
+                    )
                 return
             except TimeoutError:
                 return
@@ -381,7 +402,13 @@ class LocalActDriver:
             if settle is not None and result.success:
                 # a click or a key press can start its effect later than a fill (a timer, a debounced handler)
                 grace_ms = LONG_GRACE_MS if isinstance(action, (ClickAction, PressKeyAction)) else GRACE_MS
-                await settle.wait(typed=isinstance(action, FillAction), grace_ms=grace_ms)
+                # the page a click opens is waited for as the session did (its network going idle): until its
+                # requests are done. After a key press or a back / forward, the session waited for its load only
+                await settle.wait(
+                    typed=isinstance(action, FillAction),
+                    grace_ms=grace_ms,
+                    document_requests=isinstance(action, ClickAction),
+                )
         finally:
             execution.FIXED_WAITS.reset(fixed_waits)
             if settle is not None:
