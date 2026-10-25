@@ -388,7 +388,8 @@ _LIVE_DOCUMENT_STATE = """() => {
 
 
 def _has_body_content(html: str) -> bool:
-    """Whether the document's body holds content to scrape: text outside scripts and styles, or an iframe or image."""
+    """Whether the document's body holds content to scrape: visible text outside scripts and styles, or an
+    iframe or image."""
     try:
         body = lxml_html.document_fromstring(html).find("body")
     except (etree.ParserError, ValueError):
@@ -397,6 +398,7 @@ def _has_body_content(html: str) -> bool:
         return False
     for element in list(body.iter(*_NON_CONTENT_TAGS)):
         _remove_subtree(element)
+    _remove_hidden_elements(body)
     if next(body.iter(*_CONTENT_ELEMENTS), None) is not None:
         return True
     return bool(cast(str, lxml_html.tostring(body, method="text", encoding="unicode")).strip())
