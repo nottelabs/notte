@@ -170,7 +170,10 @@ def format_node(
 
 
 def _named_by_attributes(node: DomNode) -> bool:
-    return node.attributes is not None and len(node.attributes.relevant_attrs(OFFSCREEN_NAME_ATTRIBUTES)) > 0
+    """It has a non-empty name attribute (`title=""` names nothing)."""
+    if node.attributes is None:
+        return False
+    return any(str(value).strip() for value in node.attributes.relevant_attrs(OFFSCREEN_NAME_ATTRIBUTES).values())
 
 
 def _unnamed_offscreen(node: DomNode) -> bool:

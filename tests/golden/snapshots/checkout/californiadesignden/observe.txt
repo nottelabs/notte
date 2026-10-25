@@ -22,6 +22,7 @@ I3[:]<input type="text" value="" placeholder="First name" name="firstName"></inp
 I4[:]<input type="text" value="" placeholder="Last name" name="lastName"></input>
 I5[:]<input type="text" value="" placeholder="Company (optional)" name="company"></input>
 _[:]Address
+_[:]<input type="text" value="" placeholder="Address" role="combobox"></input>
 _[:]Apartment, suite, etc. (optional)
 _[:]<input type="text" value="" placeholder="Apartment, suite, etc. (optional)"></input>
 _[:]City

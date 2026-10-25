@@ -1296,44 +1296,105 @@
 
 	/**
 	 * Checks if an element is above or below the (expanded) viewport, where scrolling the page brings it:
-	 * entirely outside the viewport vertically, and across it horizontally. Content left or right of the
-	 * viewport is not: scrolling does not reveal it (off-canvas menus, skip links, carousel slides).
+	 * the center of its middle box (where `isTopElement` looks for it) is outside the viewport vertically,
+	 * and the element is across it horizontally. A control cut by the edge of the viewport, with its center
+	 * outside, is then off-screen rather than in view. Content left or right of the viewport is not:
+	 * scrolling does not reveal it (off-canvas menus, skip links, carousel slides).
 	 *
 	 * @param {HTMLElement} element - The element to check.
 	 * @returns {boolean} Whether the element is above or below the viewport.
 	 */
 	function isAboveOrBelowViewport(element) {
 		if (viewportExpansion === -1) return false;
+		const rects = getCachedClientRects(element);
 		const rect = getCachedBoundingRect(element);
-		if (!rect || rect.width === 0 || rect.height === 0) return false;
-		const outside = rect.bottom < -viewportExpansion || rect.top > window.innerHeight + viewportExpansion;
+		if (!rects || rects.length === 0 || !rect || rect.width === 0 || rect.height === 0) return false;
+		const middle = rects[Math.floor(rects.length / 2)];
+		const centerY = middle.top + middle.height / 2;
+		const outside = centerY < -viewportExpansion || centerY > window.innerHeight + viewportExpansion;
 		const across = rect.right > -viewportExpansion && rect.left < window.innerWidth + viewportExpansion;
 		return outside && across;
 	}
 
 	/**
-	 * Checks if an element is laid out outside the box of an ancestor that clips its overflow without
-	 * scrolling (`overflow: hidden` or `clip`, as carousels and "show more" sections are): scrolling does
-	 * not reveal it. A scrollable ancestor (`auto`, `scroll`) does not clip: scrolling it can bring the
-	 * element anywhere in its box, so the ancestors above it are checked against that box. `<body>` and
-	 * `<html>` are not checked: their overflow is the page's.
+	 * Checks if an element is a control that scrolling the page can bring into view (see `handleHighlighting`).
 	 *
 	 * @param {HTMLElement} element - The element to check.
-	 * @returns {boolean} Whether a clipping ancestor hides the element.
+	 * @returns {boolean} Whether the element is an off-screen control.
 	 */
-	function isClippedAway(element) {
-		let rect = getCachedBoundingRect(element);
-		for (let ancestor = element.parentElement; ancestor && ancestor !== document.body; ancestor = ancestor.parentElement) {
+	function isOffscreenControl(element) {
+		// not rendered (in a closed `<details>`, `hidden="until-found"`), or out of reach of scrolling:
+		// `isTopElement` rules these out in view
+		return isOffscreenCandidate(element) && isAboveOrBelowViewport(element) && isRendered(element, false) &&
+			!isOutOfReach(element);
+	}
+
+	/**
+	 * Checks if scrolling cannot bring an element above or below the viewport into view:
+	 * - it is laid out outside the box of an ancestor that clips its overflow without scrolling
+	 *   (`overflow: hidden` or `clip`, as carousels and "show more" sections are);
+	 * - it is fixed, or inside a fixed element, outside the viewport (a closed slide-in panel): scrolling
+	 *   the page does not move it. A sticky element scrolls with the page until it sticks: it is reachable.
+	 *
+	 * A scrollable ancestor (`auto` or `scroll`, with content overflowing it) can bring the element anywhere
+	 * in its box along the axes it scrolls: the ancestors above it are checked against that box (and with
+	 * its position, for what it escapes). `<body>` and `<html>` are not checked: their overflow is the page's.
+	 *
+	 * @param {HTMLElement} element - The element to check.
+	 * @returns {boolean} Whether scrolling cannot reveal the element.
+	 */
+	function isOutOfReach(element) {
+		const elementRect = getCachedBoundingRect(element);
+		let rect = { top: elementRect.top, bottom: elementRect.bottom, left: elementRect.left, right: elementRect.right };
+		// the element whose box `rect` is: the element, or the scrollable ancestor it can be scrolled anywhere in
+		let owner = element;
+		for (let ancestor = element; ancestor && ancestor !== document.body; ancestor = ancestor.parentElement) {
 			const style = getCachedComputedStyle(ancestor);
+			if (!style) continue;
+			if (style.position === "fixed") {
+				return rect.bottom <= -viewportExpansion || rect.top >= window.innerHeight + viewportExpansion ||
+					rect.right <= -viewportExpansion || rect.left >= window.innerWidth + viewportExpansion;
+			}
+			if (ancestor === element) continue;
 			const box = getCachedBoundingRect(ancestor);
-			if (!style || !box || escapesClip(element, ancestor)) continue;
+			if (!box || escapesClip(owner, ancestor)) continue;
 			const clipsY = style.overflowY === "hidden" || style.overflowY === "clip";
 			const clipsX = style.overflowX === "hidden" || style.overflowX === "clip";
 			if (clipsY && (rect.bottom <= box.top || rect.top >= box.bottom)) return true;
 			if (clipsX && (rect.right <= box.left || rect.left >= box.right)) return true;
-			if (style.overflowY === "auto" || style.overflowY === "scroll" || style.overflowX === "auto" || style.overflowX === "scroll") {
-				rect = box;
+			const scrollsY = (style.overflowY === "auto" || style.overflowY === "scroll") && ancestor.scrollHeight > ancestor.clientHeight;
+			const scrollsX = (style.overflowX === "auto" || style.overflowX === "scroll") && ancestor.scrollWidth > ancestor.clientWidth;
+			if (scrollsY || scrollsX) {
+				rect = {
+					top: scrollsY ? box.top : rect.top,
+					bottom: scrollsY ? box.bottom : rect.bottom,
+					left: scrollsX ? box.left : rect.left,
+					right: scrollsX ? box.right : rect.right,
+				};
+				owner = ancestor;
 			}
+		}
+		return false;
+	}
+
+	const EXCLUDED_CONTENT = "svg, script, style, link, meta, noscript, template";
+
+	/**
+	 * Checks if an element has text that the page description keeps: a non-empty text node that is
+	 * rendered and not inside an element the tree leaves out (see `isElementAccepted`). The `<title>` of
+	 * an `<svg>` icon is in `textContent`, but not in the description.
+	 *
+	 * @param {HTMLElement} element - The element to check.
+	 * @returns {boolean} Whether the element has text in the description.
+	 */
+	function hasDescribedText(element) {
+		const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+		for (let text = walker.nextNode(); text !== null; text = walker.nextNode()) {
+			const parent = text.parentElement;
+			if (!parent || !text.textContent.trim()) continue;
+			const excluded = parent.closest(EXCLUDED_CONTENT);
+			if (excluded !== null && element.contains(excluded)) continue;
+			if (isRendered(parent, false)) return true;
 		}
 		return false;
 	}
@@ -1603,9 +1664,10 @@
 	 * @param {HTMLElement} node - The node to highlight.
 	 * @param {HTMLElement | null} parentIframe - The parent iframe node.
 	 * @param {boolean} isParentHighlighted - Whether the parent node is highlighted.
+	 * @param {boolean} isOffscreen - Whether the node is a control above or below the viewport.
 	 * @returns {boolean} Whether the element was highlighted.
 	 */
-	function handleHighlighting(nodeData, node, parentIframe, isParentHighlighted) {
+	function handleHighlighting(nodeData, node, parentIframe, isParentHighlighted, isOffscreen = false) {
 		if (!nodeData.isInteractive) return false; // Not interactive, definitely don't highlight
 
 		let shouldHighlight = false;
@@ -1628,7 +1690,7 @@
 
 			// When viewportExpansion is -1, all interactive elements should get a highlight index
 			// regardless of viewport status
-			if (nodeData.isInViewport || viewportExpansion === -1) {
+			if (!isOffscreen && (nodeData.isInViewport || viewportExpansion === -1)) {
 				nodeData.highlightIndex = highlightIndex++;
 				if (ELEMENTS) ELEMENTS[nodeData.highlightIndex] = node;
 
@@ -1642,7 +1704,7 @@
 					}
 					return true; // Successfully highlighted
 				}
-			} else if (isAboveOrBelowViewport(node)) {
+			} else if (isOffscreen || (!nodeData.isInViewport && isOffscreenControl(node))) {
 				// described like a highlighted element (its nested elements too), but without a highlight
 				// index: it offers no action until it is scrolled into view
 				nodeData.offscreen = true;
@@ -1834,11 +1896,9 @@
 				// Special handling for ARIA menu containers - check interactivity even if not top element
 				const role = node.getAttribute('role');
 				const isMenuContainer = role === 'menu' || role === 'menubar' || role === 'listbox';
-				// a control above or below the viewport: described, without an action (see `handleHighlighting`)
-				// (not rendered, in a closed `<details>` or `hidden="until-found"`, or clipped away by an ancestor:
-				// `isTopElement` rules these out in view)
-				const isOffscreen = !nodeData.isTopElement && isOffscreenCandidate(node) && isAboveOrBelowViewport(node) &&
-					isRendered(node, false) && !isClippedAway(node);
+				// a control above or below the viewport: described, without an action (see `handleHighlighting`);
+				// a menu container cut by the edge of the viewport keeps its highlight index
+				const isOffscreen = !nodeData.isTopElement && !isMenuContainer && isOffscreenControl(node);
 
 				if ((nodeData.isTopElement || isMenuContainer || isOffscreen) && !isElementHidden(node, scope)) {
 					const interactiveResult = isOffscreen
@@ -1857,10 +1917,10 @@
 					// Add pointer element detection using dedicated function
 					nodeData.pointerElement = !isOffscreen && isPointerElementWithHover(node);
 					// Call the dedicated highlighting function
-					nodeWasHighlighted = handleHighlighting(nodeData, node, parentIframe, isParentHighlighted);
+					nodeWasHighlighted = handleHighlighting(nodeData, node, parentIframe, isParentHighlighted, isOffscreen);
 					const isDisabled = nodeData.disabledReason && handleDisabledControl(nodeData, node, isParentHighlighted);
 					// an off-screen link or button without text is named like in view (an image link by its `alt`)
-					if (nodeData.offscreen && !FIELD_TAGS.has(node.localName) && !node.textContent.trim()) {
+					if (nodeData.offscreen && !FIELD_TAGS.has(node.localName) && !hasDescribedText(node)) {
 						const accessibleName = getAccessibleName(node);
 						if (accessibleName !== undefined) nodeData.accessibleName = accessibleName;
 					}

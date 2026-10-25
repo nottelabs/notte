@@ -93,3 +93,72 @@ async def test_controls_outside_the_viewport_are_described_without_actions() -> 
         assert '_[:]<a href="/wiki/Bletchley_Park" title="Bletchley Park">Bletchley Park</a>' not in lines
         assert 'L1[:]<a href="/wiki/Bletchley_Park" title="Bletchley Park">Bletchley Park</a>' in lines
         assert [action_id for action_id, _ in actions] == ["L1", "B1", "I1", "L2", "L3", "M1", "M2"]
+
+
+REACH = """
+<h1>Top</h1>
+<div style="height: 2000px"></div>
+<button title="" style="width: 20px; height: 20px"></button>
+<a href="/home"><svg width="20" height="20"><title>Home</title><rect width="20" height="20"></rect></svg></a>
+<button style="position: fixed; top: 1500px; left: 10px">FIXED_BELOW</button>
+<div style="position: fixed; top: 1500px; left: 200px"><a href="/panel">IN_FIXED_PANEL</a></div>
+<div style="position: sticky; top: 0"><a href="/section">Sticky section link</a></div>
+<div style="position: relative">
+  <div style="height: 40px; overflow: hidden">
+    <div style="position: absolute; top: 60px; height: 40px; overflow: auto">
+      <div style="height: 100px"></div><button>In a scrollable box that escapes its clipping</button>
+    </div>
+  </div>
+</div>
+<div style="width: 50px; overflow: hidden"><div style="width: 300px; height: 40px; overflow: auto">
+  <div style="height: 100px"></div><button style="margin-left: 150px">BESIDE</button>
+</div></div>
+<div style="height: 400px"></div>
+"""
+
+
+@pytest.mark.asyncio
+async def test_only_controls_that_scrolling_reaches_are_described() -> None:
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(REACH)}")
+        lines, _ = await _observe(session)
+
+        assert lines == [
+            "_[:]Top",
+            # an empty `title` names nothing: the button says nothing and is left out
+            # an SVG icon's `<title>` is not in the description: the link is named by it
+            "_[:]<a>Home</a>",
+            # page scrolling does not move fixed content: it stays text
+            "_[:]FIXED_BELOW",
+            "_[:]IN_FIXED_PANEL",
+            # sticky content scrolls with the page until it sticks
+            "_[:]<a>Sticky section link</a>",
+            # its scrollable box escapes the clipping box (positioned outside it), and scrolls down to it
+            "_[:]<button>In a scrollable box that escapes its clipping</button>",
+            # its box scrolls down, not sideways: it stays out of the clipping box's width
+            "_[:]BESIDE",
+        ]
+
+        # the sticky link is in view once scrolled to; the fixed ones never are
+        _ = await session.window.page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+        _, actions = await _observe(session)
+        assert ("L2", "Sticky section link") in actions
+        assert all(label not in ("FIXED_BELOW", "IN_FIXED_PANEL") for _, label in actions)
+
+
+FOLD = """
+<button style="position: absolute; top: 650px; left: 10px; height: 60px">Center in view</button>
+<button style="position: absolute; top: 700px; left: 300px; height: 60px">Center below the fold</button>
+<div style="height: 2000px"></div>
+"""
+
+
+@pytest.mark.asyncio
+async def test_a_control_cut_by_the_edge_of_the_viewport_is_in_one_list() -> None:
+    # a control is in view when its center is (where `isTopElement` looks for it), else described off-screen:
+    # one cut by the bottom edge is either offered or described, whatever the platform's text metrics
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(FOLD)}")
+        lines, actions = await _observe(session)
+        assert lines == ["B1[:]<button>Center in view</button>", "_[:]<button>Center below the fold</button>"]
+        assert actions == [("B1", "Center in view")]

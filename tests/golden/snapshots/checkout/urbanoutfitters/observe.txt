@@ -152,7 +152,9 @@ Vanuatu
 Vatican City
 Venezuela</select>
 _[:]First Name
+_[:]<input type="text" value="" placeholder=""></input>
 _[:]Last Name
+_[:]<input type="text" value="" placeholder=""></input>
 _[:]Street Address
 _[:]<input type="text" value="" placeholder="Please use the following line if more than 35 characters"></input>
 _[:]Address 2
