@@ -1481,3 +1481,13 @@ async def test_a_context_shared_by_same_named_elements_is_not_shown(session: Not
     # three unnamed buttons of the same section: "(in: Flight search)" tells none of them apart
     assert all("context" not in elements[ids[k]] for k in ("prev", "next", "prev2"))
     assert "(in: " not in decider.states[0].page.text
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("move", ["history.pushState({}, '', '#results')", "location.hash = 'results'"])
+async def test_wait_ends_on_a_navigation_within_the_document(session: NotteSession, move: str) -> None:
+    # the URL changes 500 ms after the WAIT is decided, with no DOM change (an http page: a data: URL cannot pushState)
+    await _serve(session, "<p>Results</p>")
+    message, elapsed = await _wait(session, arm=f"setTimeout(() => {{ {move}; }}, 500)")
+    assert message.startswith("The page navigated") and elapsed < 2.8
+    assert session.window.page.url.endswith("#results")
