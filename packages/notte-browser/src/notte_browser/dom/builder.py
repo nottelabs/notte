@@ -24,7 +24,7 @@ from notte_core.logging import logger
 from notte_core.node_type import NodeRole, NodeType
 from typing_extensions import NotRequired, TypedDict
 
-from notte_browser.dom.csspaths import build_csspath
+from notte_browser.dom.csspaths import build_csspath, child_css_path, xpath_to_css_path
 from notte_browser.driver import ElementHandle
 
 
@@ -213,7 +213,11 @@ class _TreeBuilder:
         in_shadow_root: bool,
         iframe_parent_css_paths: list[str],
         notte_selector: str,
+        parent_xpath: str | None = None,
+        parent_css_path: str = "",
     ) -> DomNode | None:
+        """`parent_xpath` and `parent_css_path`: the XPath of the parent element and its CSS path from
+        `xpath_to_css_path`, which the node's own CSS path extends."""
         if raw.get("type") == "TEXT_NODE":
             return DomNode(
                 id=None,
@@ -240,7 +244,16 @@ class _TreeBuilder:
         if highlight_index in self.duplicates:
             highlight_index = None
         # the CSS path and the iframe check read the tag and attributes as the script returned them
-        css_path = build_csspath(tag_name=tag_name, xpath=xpath, attributes=attributes, highlight_index=highlight_index)
+        base_css_path = (
+            xpath_to_css_path(xpath) if parent_xpath is None else child_css_path(parent_xpath, parent_css_path, xpath)
+        )
+        css_path = build_csspath(
+            tag_name=tag_name,
+            xpath=xpath,
+            attributes=attributes,
+            highlight_index=highlight_index,
+            base_selector=base_css_path,
+        )
         notte_selector = ":".join([notte_selector, str(hash(xpath)), str(hash(css_path))])
         shadow_root = raw.get("shadowRoot", False)
         if shadow_root:
@@ -278,7 +291,16 @@ class _TreeBuilder:
             child_raw = nodes.get(child_id)
             if child_raw is None:
                 continue
-            child = self.node(child_raw, nodes, in_iframe, in_shadow_root, iframe_parent_css_paths, notte_selector)
+            child = self.node(
+                child_raw,
+                nodes,
+                in_iframe,
+                in_shadow_root,
+                iframe_parent_css_paths,
+                notte_selector,
+                parent_xpath=xpath,
+                parent_css_path=base_css_path,
+            )
             if child is not None:
                 children.append(child)
         frame = raw.get("frame")

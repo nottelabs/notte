@@ -222,56 +222,23 @@ class DomAttributes:
             )
         }
 
-        keys = set(DomAttributes.__dataclass_fields__.keys())
-        excluded_keys = set(
-            [
-                "browser_user_highlight_id",
-                "class",
-                "style",
-                "data_jsl10n",
-                "keyshortcuts",
-                "rel",
-                "ng_non_bindable",
-                "c_wiz",
-                "ssk",
-                "soy_skip",
-                "key",
-                "method",
-                "eid",
-                "view",
-                "pivot",
-            ]
-        )
-
-        extra_keys = set(kwargs.keys()).difference(keys).difference(excluded_keys)
+        keys = _DOM_ATTRIBUTE_NAMES
+        extra_keys = set(kwargs.keys()).difference(keys).difference(_EXCLUDED_DOM_ATTRIBUTES)
         if len(extra_keys) > 0:
             add_dom_errors(extra_keys, kwargs)
 
-        return DomAttributes(**{key: kwargs.get(key, None) for key in keys})  # type: ignore[arg-type]
+        values: dict[str, AttributeValue] = dict(_NO_DOM_ATTRIBUTES)
+        values.update((key, value) for key, value in kwargs.items() if key in keys)
+        return DomAttributes(**values)  # type: ignore[arg-type]
 
     def relevant_attrs(
         self,
         include_attributes: frozenset[str] | None = None,
         max_len_per_attribute: int | None = None,
     ) -> dict[str, str | bool | int]:
-        disabled_attrs = set(
-            [
-                "tag_name",
-                "class_name",
-                "width",
-                "height",
-                "size",
-                "lang",
-                "dir",
-                "action",
-                "role",
-                "aria_label",
-                "name",
-            ]
-        ).difference(include_attributes or frozenset())
+        disabled_attrs = _DISABLED_RELEVANT_ATTRIBUTES.difference(include_attributes or frozenset())
         attrs: dict[str, str | bool | int] = {}
-        for attribute in fields(self):
-            key = attribute.name
+        for key in _DOM_ATTRIBUTE_FIELDS:
             value: AttributeValue = getattr(self, key)
             if (
                 key not in disabled_attrs
@@ -288,6 +255,46 @@ class DomAttributes:
         # only display relevant attributes
         attrs = self.relevant_attrs()
         return f"{self.__class__.__name__}({attrs})"
+
+
+# read once: `safe_init` and `relevant_attrs` run for every element of every snapshot
+_DOM_ATTRIBUTE_FIELDS = tuple(attribute.name for attribute in fields(DomAttributes))
+_DOM_ATTRIBUTE_NAMES = frozenset(_DOM_ATTRIBUTE_FIELDS)
+_NO_DOM_ATTRIBUTES: dict[str, None] = dict.fromkeys(_DOM_ATTRIBUTE_FIELDS)
+_EXCLUDED_DOM_ATTRIBUTES = frozenset(
+    [
+        "browser_user_highlight_id",
+        "class",
+        "style",
+        "data_jsl10n",
+        "keyshortcuts",
+        "rel",
+        "ng_non_bindable",
+        "c_wiz",
+        "ssk",
+        "soy_skip",
+        "key",
+        "method",
+        "eid",
+        "view",
+        "pivot",
+    ]
+)
+_DISABLED_RELEVANT_ATTRIBUTES = frozenset(
+    [
+        "tag_name",
+        "class_name",
+        "width",
+        "height",
+        "size",
+        "lang",
+        "dir",
+        "action",
+        "role",
+        "aria_label",
+        "name",
+    ]
+)
 
 
 @dataclass(frozen=True)
