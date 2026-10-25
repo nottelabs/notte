@@ -9,6 +9,7 @@ from collections.abc import Coroutine
 from typing import Any, Callable, ClassVar, NotRequired, Unpack, cast
 
 from pydantic import BaseModel, Field, model_serializer
+from pyotp import parse_uri
 from pyotp.totp import TOTP
 from typing_extensions import TypedDict, override
 
@@ -277,6 +278,16 @@ class CreditCardDict(TypedDict, total=True):
     card_full_expiration: str
 
 
+def totp_code(secret: str) -> str:
+    """Current code of a TOTP seed: base32, or an otpauth:// URI (its digits, period and algorithm apply)."""
+    if secret.startswith("otpauth://"):
+        otp = parse_uri(secret)
+        if not isinstance(otp, TOTP):
+            raise ValueError("Only otpauth://totp URIs are supported for MFA")
+        return otp.now()
+    return TOTP(secret).now()
+
+
 class BaseVault(ABC):
     """Base class for vault implementations that handle credential storage and retrieval."""
 
@@ -496,7 +507,7 @@ class BaseVault(ABC):
         updated_creds: CredentialsDict = {}  # pyright: ignore[reportAssignmentType]
         for key, cred in credentials.items():
             if CredentialField.registry.get(key) is MFAField:
-                actual_val = TOTP(cred).now()  # pyright: ignore[reportArgumentType]
+                actual_val = totp_code(cred)  # pyright: ignore[reportArgumentType]
                 updated_creds[key] = actual_val
             else:
                 updated_creds[key] = cred

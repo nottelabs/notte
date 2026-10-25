@@ -28,9 +28,9 @@ def aac_results(monkeypatch: pytest.MonkeyPatch) -> list[subprocess.CompletedPro
     run = subprocess.run
 
     def recording_run(
-        cmd: list[str], *, capture_output: bool, text: bool, timeout: int, check: bool
+        cmd: list[str], *, capture_output: bool, text: bool, timeout: int, check: bool, env: dict[str, str] | None
     ) -> subprocess.CompletedProcess[str]:
-        result = run(cmd, capture_output=capture_output, text=text, timeout=timeout, check=check)
+        result = run(cmd, capture_output=capture_output, text=text, timeout=timeout, check=check, env=env)
         results.append(result)
         return result
 
