@@ -8,8 +8,9 @@ from notte_browser.scrape import page_markdown
 from notte_sdk.types import ScrapeParams
 
 
-async def _loaded(_expression: str) -> str:
-    return "complete"
+async def _loaded(_expression: str) -> list[str | bool]:
+    # a loaded document whose live body has nothing more than the snapshot
+    return ["complete", False]
 
 
 # a loaded window without iframes

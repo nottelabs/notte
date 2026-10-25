@@ -376,29 +376,51 @@ async def _frames_in_document_order(frame: Frame) -> list[Frame]:
 
 
 _READY_STATE_TIMEOUT_S = 1
+# Body elements whose text is not page content, and body elements that are content without text.
+_NON_CONTENT_TAGS = ("script", "style", "noscript", "template")
+_CONTENT_ELEMENTS = ("iframe", "img")
+# Page-side counterpart of `_has_body_content`, read only when the snapshot's body is empty.
+_LIVE_DOCUMENT_STATE = """() => {
+    const body = document.body;
+    const content = body !== null && (body.innerText.trim() !== "" || body.querySelector("iframe, img") !== null);
+    return [document.readyState, content];
+}"""
+
+
+def _has_body_content(html: str) -> bool:
+    """Whether the document's body holds content to scrape: text outside scripts and styles, or an iframe or image."""
+    try:
+        body = lxml_html.document_fromstring(html).find("body")
+    except (etree.ParserError, ValueError):
+        return False
+    if body is None:
+        return False
+    if next(body.iter(*_CONTENT_ELEMENTS), None) is not None:
+        return True
+    for element in list(body.iter(*_NON_CONTENT_TAGS)):
+        _remove_subtree(element)
+    return bool(cast(str, lxml_html.tostring(body, method="text", encoding="unicode")).strip())
 
 
 async def _body_not_parsed_yet(window: BrowserWindow, snapshot: BrowserSnapshot) -> bool:
-    """Whether the snapshot holds a document whose body the browser has not parsed yet.
+    """Whether the snapshot was taken before the browser parsed the page's body.
 
     The parser stops at an inline script until the stylesheets before it have loaded, so one stalled
-    stylesheet in `<head>` leaves the document `loading` with an empty body, even after the load timeout.
+    stylesheet leaves the document `loading` with an empty body, even after the load timeout. A snapshot
+    with an empty body is also stale when the live page has parsed content since it was taken.
     """
+    if _has_body_content(snapshot.html_content):
+        return False
     try:
-        ready_state = await asyncio.wait_for(
-            window.page.evaluate("document.readyState"), timeout=_READY_STATE_TIMEOUT_S
+        ready_state, live_content = cast(
+            tuple[str, bool],
+            await asyncio.wait_for(window.page.evaluate(_LIVE_DOCUMENT_STATE), timeout=_READY_STATE_TIMEOUT_S),
         )
     except PlaywrightError:
         return False
     except TimeoutError:
         return False
-    if ready_state != "loading":
-        return False
-    try:
-        body = lxml_html.document_fromstring(snapshot.html_content).find("body")
-    except (etree.ParserError, ValueError):
-        return True
-    return body is None or not cast(str, lxml_html.tostring(body, method="text", encoding="unicode")).strip()
+    return ready_state == "loading" or live_content
 
 
 async def page_markdown(window: BrowserWindow, snapshot: BrowserSnapshot, params: ScrapeParams) -> str:

@@ -11,13 +11,16 @@ from patchright.async_api import Route
 
 import notte
 
-# The inline script waits for the stylesheet before it, so the parser stops in <head> until the CSS arrives.
-PAGE = (
-    "<html><head><title>Stalled page</title>"
-    '<link rel="stylesheet" href="https://fonts.test/style.css">'
-    "<script>window.ready = true;</script>"
-    "</head><body><h1>Company</h1><p>Founded in 2025</p></body></html>"
+# An inline script waits for the stylesheet before it, so the parser stops at the script until the CSS arrives.
+STALL = '<link rel="stylesheet" href="https://fonts.test/style.css"><script>window.ready = true;</script>'
+CONTENT = "<h1>Company</h1><p>Founded in 2025</p>"
+HEAD_STALL = f"<html><head><title>Stalled page</title>{STALL}</head><body>{CONTENT}</body></html>"
+BODY_STALL = f"<html><head><title>Stalled page</title></head><body>{STALL}{CONTENT}</body></html>"
+IFRAME_FIRST = (
+    "<html><head><title>Stalled page</title></head>"
+    f'<body><iframe src="https://frame.test/"></iframe>{STALL}{CONTENT}</body></html>'
 )
+FRAME = "<p>framed content</p>"
 EMPTY_BODY = "<html><head><title>Empty page</title></head><body></body></html>"
 
 FULL_PAGE = ScrapeParams(only_main_content=False)
@@ -29,13 +32,15 @@ async def session() -> AsyncIterator[NotteSession]:
         yield session
 
 
-async def _open_stalled_page(session: NotteSession) -> asyncio.Event:
-    """Open PAGE with its stylesheet held back until the returned event is set."""
+async def _open_stalled_page(session: NotteSession, page: str = HEAD_STALL) -> asyncio.Event:
+    """Open `page` with its stylesheet held back until the returned event is set."""
     stylesheet = asyncio.Event()
 
     async def serve(route: Route) -> None:
         if route.request.url == "https://example.test/":
-            await route.fulfill(body=PAGE, content_type="text/html")
+            await route.fulfill(body=page, content_type="text/html")
+        elif route.request.url == "https://frame.test/":
+            await route.fulfill(body=FRAME, content_type="text/html")
         else:
             await stylesheet.wait()
             await route.fulfill(body="h1 { color: red; }", content_type="text/css")
@@ -51,8 +56,9 @@ async def _markdown(session: NotteSession, params: ScrapeParams = FULL_PAGE) -> 
 
 
 @pytest.mark.asyncio
-async def test_page_whose_parser_waits_in_head_is_empty_not_its_title(session: NotteSession) -> None:
-    stylesheet = await _open_stalled_page(session)
+@pytest.mark.parametrize("page", [HEAD_STALL, BODY_STALL], ids=["head", "body"])
+async def test_page_whose_parser_waits_is_empty_not_its_title(session: NotteSession, page: str) -> None:
+    stylesheet = await _open_stalled_page(session, page)
     assert await session.window.page.evaluate("document.readyState") == "loading"
 
     with pytest.raises(EmptyPageContentError):
@@ -62,6 +68,37 @@ async def test_page_whose_parser_waits_in_head_is_empty_not_its_title(session: N
     _ = await session.window.page.wait_for_load_state("domcontentloaded")
     markdown = await _markdown(session)
     assert "Founded in 2025" in markdown
+
+
+@pytest.mark.asyncio
+async def test_snapshot_taken_before_the_parser_caught_up_is_empty(session: NotteSession) -> None:
+    stylesheet = await _open_stalled_page(session)
+    snapshot = await session.window.snapshot(skip_dom=True, screenshot=False)
+
+    stylesheet.set()
+    _ = await session.window.page.wait_for_load_state("domcontentloaded")
+
+    with pytest.raises(EmptyPageContentError):
+        _ = await page_markdown(session.window, snapshot, FULL_PAGE)
+
+
+@pytest.mark.asyncio
+async def test_iframe_parsed_before_the_stall_is_scraped(session: NotteSession) -> None:
+    stylesheet = await _open_stalled_page(session, IFRAME_FIRST)
+    try:
+        frame = session.window.page.frame(url="https://frame.test/")
+        for _ in range(50):
+            if frame is not None:
+                break
+            await asyncio.sleep(0.1)
+            frame = session.window.page.frame(url="https://frame.test/")
+        assert frame is not None
+        await frame.wait_for_load_state("domcontentloaded")
+
+        markdown = await _markdown(session)
+        assert "framed content" in markdown
+    finally:
+        stylesheet.set()
 
 
 @pytest.mark.asyncio
