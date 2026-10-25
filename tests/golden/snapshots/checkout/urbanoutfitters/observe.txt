@@ -152,74 +152,83 @@ Vanuatu
 Vatican City
 Venezuela</select>
 _[:]First Name
+_[:]<input type="text" value="" placeholder=""></input>
 _[:]Last Name
+_[:]<input type="text" value="" placeholder=""></input>
 _[:]Street Address
+_[:]<input type="text" value="" placeholder="Please use the following line if more than 35 characters"></input>
 _[:]Address 2
+_[:]<input type="text" value="" placeholder="Building, Suite or Apartment Number"></input>
+_[:]<input type="checkbox" value="true"></input>
 _[:]PO Box
 _[:]City
+_[:]<input type="text" value="" placeholder=""></input>
 _[:]State
-_[:]Select a State
-_[:]Alabama
-_[:]Alaska
-_[:]American Samoa
-_[:]Arizona
-_[:]Arkansas
-_[:]Armed Forces - Americas
-_[:]Armed Forces - Europe
-_[:]Armed Forces - Pacific
-_[:]California
-_[:]Colorado
-_[:]Connecticut
-_[:]Delaware
-_[:]District of Columbia
-_[:]Florida
-_[:]Georgia
-_[:]Guam
-_[:]Hawaii
-_[:]Idaho
-_[:]Illinois
-_[:]Indiana
-_[:]Iowa
-_[:]Kansas
-_[:]Kentucky
-_[:]Louisiana
-_[:]Maine
-_[:]Maryland
-_[:]Massachusetts
-_[:]Michigan
-_[:]Minnesota
-_[:]Mississippi
-_[:]Missouri
-_[:]Montana
-_[:]Nebraska
-_[:]Nevada
-_[:]New Hampshire
-_[:]New Jersey
-_[:]New Mexico
-_[:]New York
-_[:]North Carolina
-_[:]North Dakota
-_[:]Ohio
-_[:]Oklahoma
-_[:]Oregon
-_[:]Pennsylvania
-_[:]Puerto Rico
-_[:]Rhode Island
-_[:]South Carolina
-_[:]South Dakota
-_[:]Tennessee
-_[:]Texas
-_[:]Utah
-_[:]Vermont
-_[:]Virgin Islands
-_[:]Virginia
-_[:]Washington
-_[:]West Virginia
-_[:]Wisconsin
-_[:]Wyoming
+_[:]<select>Select a State
+Alabama
+Alaska
+American Samoa
+Arizona
+Arkansas
+Armed Forces - Americas
+Armed Forces - Europe
+Armed Forces - Pacific
+California
+Colorado
+Connecticut
+Delaware
+District of Columbia
+Florida
+Georgia
+Guam
+Hawaii
+Idaho
+Illinois
+Indiana
+Iowa
+Kansas
+Kentucky
+Louisiana
+Maine
+Maryland
+Massachusetts
+Michigan
+Minnesota
+Mississippi
+Missouri
+Montana
+Nebraska
+Nevada
+New Hampshire
+New Jersey
+New Mexico
+New York
+North Carolina
+North Dakota
+Ohio
+Oklahoma
+Oregon
+Pennsylvania
+Puerto Rico
+Rhode Island
+South Carolina
+South Dakota
+Tennessee
+Texas
+Utah
+Vermont
+Virgin Islands
+Virginia
+Washington
+West Virginia
+Wisconsin
+Wyoming</select>
 _[:]ZIP Code
+_[:]<input type="text" value=""></input>
 _[:]Mobile Number
 _[:]+1
+_[:]<input type="tel" value="" placeholder="(xxx) xxx-xxxx"></input>
+_[:]<button>tooltip</button>
 _[:]Order Summary
 L5[:]<a href="tel:8002822200">800.282.2200</a>
 _[:]Subtotal
@@ -234,17 +243,17 @@ B5[:]<button type="button" aria_expanded="false">Promo Code</button>
 B6[:]<button type="button">Continue</button>
 _[:]Urban Outfitters Footer
 _[:]Questions?
-_[:]Contact Us
-_[:]Store Locator
-_[:]Shipping
-_[:]Returns + Exchanges
-_[:]Sign Up For Email
-_[:]Privacy Policy
-_[:]Terms of Use
-_[:]CA Transparency
-_[:]Accessibility
-_[:]URBN.com
-_[:]Do Not Sell My Personal Info
+_[:]<a>Contact Us</a>
+_[:]<a>Store Locator</a>
+_[:]<a>Shipping</a>
+_[:]<a>Returns + Exchanges</a>
+_[:]<a>Sign Up For Email</a>
+_[:]<a>Privacy Policy</a>
+_[:]<a>Terms of Use</a>
+_[:]<a>CA Transparency</a>
+_[:]<a>Accessibility</a>
+_[:]<a>URBN.com</a>
+_[:]<a>Do Not Sell My Personal Info</a>
 _[:]© 2025 URBN US Retail, LLC. All Rights Reserved.
 _[:]normal
 

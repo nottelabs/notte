@@ -20,100 +20,113 @@ I4[:]<input type="text" value="" placeholder="Last name" name="lastName"></input
 I5[:]<input type="text" value="" placeholder="Company (optional)" name="company"></input>
 I6[:]<input type="text" value="" placeholder="Address" name="address1" role="combobox" aria_expanded="false"></input>
 _[:]Apartment, suite, etc. (optional)
+_[:]<input type="text" value="" placeholder="Apartment, suite, etc. (optional)"></input>
 _[:]City
+_[:]<input type="text" value="" placeholder="City"></input>
 _[:]State
-_[:]Alabama
-_[:]Alaska
-_[:]American Samoa
-_[:]Arizona
-_[:]Arkansas
-_[:]California
-_[:]Colorado
-_[:]Connecticut
-_[:]Delaware
-_[:]Micronesia
-_[:]Florida
-_[:]Georgia
-_[:]Guam
-_[:]Hawaii
-_[:]Idaho
-_[:]Illinois
-_[:]Indiana
-_[:]Iowa
-_[:]Kansas
-_[:]Kentucky
-_[:]Louisiana
-_[:]Maine
-_[:]Marshall Islands
-_[:]Maryland
-_[:]Massachusetts
-_[:]Michigan
-_[:]Minnesota
-_[:]Mississippi
-_[:]Missouri
-_[:]Montana
-_[:]Nebraska
-_[:]Nevada
-_[:]New Hampshire
-_[:]New Jersey
-_[:]New Mexico
-_[:]New York
-_[:]North Carolina
-_[:]North Dakota
-_[:]Northern Mariana Islands
-_[:]Ohio
-_[:]Oklahoma
-_[:]Oregon
-_[:]Palau
-_[:]Pennsylvania
-_[:]Puerto Rico
-_[:]Rhode Island
-_[:]South Carolina
-_[:]South Dakota
-_[:]Tennessee
-_[:]Texas
-_[:]Utah
-_[:]Vermont
-_[:]Virginia
-_[:]Washington
-_[:]Washington DC
-_[:]West Virginia
-_[:]Wisconsin
-_[:]Wyoming
-_[:]U.S. Virgin Islands
-_[:]Armed Forces Americas
-_[:]Armed Forces Europe
-_[:]Armed Forces Pacific
+_[:]<select>Alabama
+Alaska
+American Samoa
+Arizona
+Arkansas
+California
+Colorado
+Connecticut
+Delaware
+Micronesia
+Florida
+Georgia
+Guam
+Hawaii
+Idaho
+Illinois
+Indiana
+Iowa
+Kansas
+Kentucky
+Louisiana
+Maine
+Marshall Islands
+Maryland
+Massachusetts
+Michigan
+Minnesota
+Mississippi
+Missouri
+Montana
+Nebraska
+Nevada
+New Hampshire
+New Jersey
+New Mexico
+New York
+North Carolina
+North Dakota
+Northern Mariana Islands
+Ohio
+Oklahoma
+Oregon
+Palau
+Pennsylvania
+Puerto Rico
+Rhode Island
+South Carolina
+South Dakota
+Tennessee
+Texas
+Utah
+Vermont
+Virginia
+Washington
+Washington DC
+West Virginia
+Wisconsin
+Wyoming
+U.S. Virgin Islands
+Armed Forces Americas
+Armed Forces Europe
+Armed Forces Pacific</select>
 _[:]ZIP code
+_[:]<input type="text" value="" placeholder="ZIP code"></input>
 _[:]Phone
+_[:]<input type="tel" value="" placeholder="Phone"></input>
+_[:]<button aria_label="More information about Phone"></button>
+_[:]<input type="text" value="" aria_label="First name"></input>
 _[:]Shipping method - Select the dropdown for White Glove Delivery
 _[:]Enter your shipping address to view available shipping methods.
 _[:]Payment
 _[:]All transactions are secure and encrypted.
+_[:]<input type="radio"></input>
 _[:]Credit card
-_[:]+4
-_[:]Additional payment methods
+_[:]<button>+4
+Additional payment methods</button>
 _[:]Card number
 _[:]Expiration date (MM / YY)
 _[:]Security code
+_[:]<button aria_label="More information about Security code"></button>
 _[:]Name on card
+_[:]<input type="checkbox"></input>
 _[:]Use shipping address as billing address
+_[:]<input type="radio"></input>
 _[:]PayPal
+_[:]<input type="radio"></input>
 _[:]Check / Money Order
 _[:]Remember me
+_[:]<input type="checkbox"></input>
 _[:]Save my information for a faster checkout with a Shop account
 _[:]Mobile phone number
+_[:]<input type="tel" value="+1" placeholder="Mobile phone number"></input>
 _[:]Secure and encrypted
-_[:]Pay now
+_[:]<button>Pay now</button>
 _[:]Your info will be saved to a Shop account. By continuing, you agree to Shop’s
-_[:]Terms of Service
+_[:]<a>Terms of Service</a>
 _[:]and acknowledge the
-_[:]Privacy Policy
+_[:]<a>Privacy Policy</a>
 _[:].
-_[:]Refund policy
-_[:]Shipping policy
-_[:]Privacy policy
-_[:]Terms of service
+_[:]<button>Refund policy</button>
+_[:]<button>Shipping policy</button>
+_[:]<button>Privacy policy</button>
+_[:]<button>Terms of service</button>
 _[:]Order summary
 _[:]Shopping cart
 _[:]Product image

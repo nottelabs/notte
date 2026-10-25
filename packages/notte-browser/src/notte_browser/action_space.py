@@ -3,7 +3,7 @@ from notte_core.config import config
 from notte_core.dom_tree import DomNode
 from notte_core.errors import InvalidInternalCheckError
 from notte_core.logging import logger
-from notte_core.node_type import NodeType
+from notte_core.node_type import NodeRole, NodeType
 from notte_core.space import ActionSpace
 
 
@@ -12,7 +12,9 @@ def build_action_space(dom_node: DomNode) -> ActionSpace:
 
     The description renders the page's interactive elements (attributes cut to 60 characters, and
     only the open dialogs when the page has some), and every interaction node becomes one action.
-    Disabled controls are rendered without an id (`_[:]<button disabled>Send</button>`) and offer no action.
+    Disabled controls are rendered without an id (`_[:]<button disabled>Send</button>`) and offer no action, as
+    are the links, buttons, fields and options above or below the viewport, with fewer attributes
+    (`_[:]<a>About</a>`).
     """
     description = render_interactions(
         dom_node,
@@ -82,6 +84,12 @@ INCLUDE_ATTRIBUTES: frozenset[str] = frozenset(
     ]
 )
 
+# an element above or below the viewport is rendered with what says what it is (its tag and `role`, an input's
+# `type`, and its text, or its name when it has no text), not where it goes: a long page has hundreds of them
+# (`href` and `title` would double the description of a Wikipedia article), and they offer no action until
+# scrolled to
+OFFSCREEN_NAME_ATTRIBUTES: frozenset[str] = frozenset(["aria_label", "title", "alt", "placeholder", "value"])
+
 
 def render_node(
     node: DomNode,
@@ -89,29 +97,37 @@ def render_node(
     *,
     include_children: bool = True,
 ) -> str:
-    if node.id is None and not node.disabled:
+    if node.id is None and not node.disabled and not node.offscreen:
         raise InvalidInternalCheckError(
-            check="Node should have an id or be disabled",
+            check="Node should have an id, or be disabled or off-screen",
             url=node.get_url(),
             dev_advice="This should never happen.",
         )
     attrs = node.attributes
     if attrs is None:
         raise ValueError(f"Attributes are None for node: {node}")
+    if include_children:
+        children_str = "\n".join(children_texts(node)).strip()
+    else:
+        # Action descriptions used childless copies with text=inner_text(), without attribute truncation.
+        children_str = node.inner_text().strip() if node.get_role_str() == "text" else ""
+    include_attributes = INCLUDE_ATTRIBUTES
+    if node.offscreen:
+        include_attributes = frozenset(["role", "type"] if attrs.tag_name.lower() == "input" else ["role"])
+        if len(children_str) == 0:
+            include_attributes = include_attributes | OFFSCREEN_NAME_ATTRIBUTES
+            if not _named_by_attributes(node):
+                # only images or icons inside: their name (`<a><img alt="Home"></a>` is rendered `<a>Home</a>`)
+                children_str = (node.accessible_name or "").strip()
     attrs_str = ""
     attrs_relevant = attrs.relevant_attrs(
-        include_attributes=INCLUDE_ATTRIBUTES,
+        include_attributes=include_attributes,
         max_len_per_attribute=max_len_per_attribute,
     )
     if len(attrs_relevant) > 0:
         attrs_str = " " + " ".join([f'{key}="{value}"' for key, value in attrs_relevant.items()])
     if node.disabled:
         attrs_str += " disabled"
-    if include_children:
-        children_str = "\n".join(children_texts(node)).strip()
-    else:
-        # Action descriptions used childless copies with text=inner_text(), without attribute truncation.
-        children_str = node.inner_text().strip() if node.get_role_str() == "text" else ""
     return f"<{attrs.tag_name}{attrs_str}>{children_str}</{attrs.tag_name}>"
 
 
@@ -137,7 +153,7 @@ def format_node(
             is_parent_interaction = True
             html_description = render_node(node, max_len_per_attribute)
             node_texts.append(f"{node.id}[:]{html_description}")
-        elif node.disabled:
+        elif node.disabled or (node.offscreen and not _unnamed_offscreen(node)):
             # described (with its text) like an interactive element, but without an id to act on
             is_parent_interaction = True
             node_texts.append(f"_[:]{render_node(node, max_len_per_attribute)}")
@@ -153,12 +169,31 @@ def format_node(
     return node_texts
 
 
+def _named_by_attributes(node: DomNode) -> bool:
+    """It has a non-empty name attribute (`title=""` names nothing)."""
+    if node.attributes is None:
+        return False
+    return any(str(value).strip() for value in node.attributes.relevant_attrs(OFFSCREEN_NAME_ATTRIBUTES).values())
+
+
+def _unnamed_offscreen(node: DomNode) -> bool:
+    """An off-screen link, button or option without text or name (a heading anchor, an unlabelled icon
+    button): its rendering would not say what it is. Off-screen fields, checkboxes and radios are described
+    even without a name, as in view: their label is the text next to them."""
+    if node.attributes is not None and node.attributes.tag_name.lower() in ("input", "select", "textarea"):
+        return False
+    if isinstance(node.role, NodeRole) and node.role.short_id() == "I":
+        return False
+    named = _named_by_attributes(node) or len((node.accessible_name or "").strip()) > 0
+    return not named and len(children_texts(node)) == 0
+
+
 def children_texts(root_node: DomNode) -> list[str]:
     texts: list[str] = []
 
     def collect_text(node: DomNode) -> None:
-        # Skip this branch if we hit a highlighted or disabled element (except for the current node)
-        if (node.id is not None or node.disabled) and node is not root_node:
+        # Skip this branch if we hit a highlighted, disabled or off-screen element (except for the current node)
+        if (node.id is not None or node.disabled or node.offscreen) and node is not root_node:
             return
 
         if node.get_role_str() == "text" and len(node.text.strip()) > 0:

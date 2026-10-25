@@ -16,36 +16,36 @@ _[:]Protection. Privacy. Peace of mind. Get our browser on all your devices.
 _[:]Search and browse with the DuckDuckGo browser for more protection. Unlike Chrome and other browsers, we don't track you.
 _[:]Download DuckDuckGo today!
 _[:]Desktop & Mobile Browser
-_[:]Mac
-_[:]Windows
-_[:]iOS
-_[:]Android
+_[:]<a>Mac</a>
+_[:]<a>Windows</a>
+_[:]<a>iOS</a>
+_[:]<a>Android</a>
 _[:]Desktop Browser Extension
-_[:]Chrome
-_[:]Edge
-_[:]Firefox
-_[:]Opera
+_[:]<a>Chrome</a>
+_[:]<a>Edge</a>
+_[:]<a>Firefox</a>
+_[:]<a>Opera</a>
 _[:]How It Works
 _[:]Search Protection
 _[:]Search without being tracked.
 _[:]Other search engines track your every search, from where you go to what you buy. We don't track your search history. Ever.
-_[:]Learn more
+_[:]<a>Learn more</a>
 _[:]Web Tracking Protection
 _[:]Stop creepy tracking from Facebook and Google.
 _[:]DuckDuckGo's powerful tracker blocking, in our browser and extension, helps stop privacy-invasive companies from collecting your personal information.
-_[:]Learn more
+_[:]<a>Learn more</a>
 _[:]Email Protection
 _[:]Intercept and remove email trackers.
 _[:]85% of emails sent through Duck Addresses contained hidden email trackers before we stripped them out. Email Protection zaps most trackers and forwards email to your regular inbox so you can read in peace.
-_[:]Learn more
+_[:]<a>Learn more</a>
 _[:]† Available on Android
 _[:]App Tracking Protection
 _[:]Block app trackers, day and night.
 _[:]Over 96% of popular free Android apps we tested allow other companies to invade your privacy, like using your location to map everywhere you go. Stop most of their spying and take back control of your personal information on Android!
-_[:]Learn more
+_[:]<a>Learn more</a>
 _[:]It's a myth that companies need to track you to make money.
 _[:]The DuckDuckGo browser and search engine have been free to use since day one. We make money from privacy-respecting ads, not by exploiting your data. When you search for “car” we show you a car ad — it's that simple.
-_[:]See how we make money
+_[:]<a>See how we make money</a>
 _[:]Get the same Internet, but with more protection.
 _[:]App Widgets
 _[:]All the features you expect, but with privacy built-in
@@ -71,71 +71,73 @@ _[:]Monthly Searches
 _[:]6 Million
 _[:]Monthly Downloads
 _[:]Get the free all-in-one privacy app for mobile
+_[:]<a aria_label="Download DuckDuckGo on the App Store"></a>
 _[:]4.9
 _[:]1.8 million ratings
+_[:]<a aria_label="Download DuckDuckGo on Google Play"></a>
 _[:]4.7
 _[:]2.1 million reviews
 _[:]The company best known for its search engine is launching a new set of tools aimed at creating an ‘easy button’ for protecting your data online.
 _[:]WIRED Magazine
-_[:]Read article on WIRED Magazine
+_[:]<a>Read article on WIRED Magazine</a>
 _[:]Tackling email privacy has been a major goal for DuckDuckGo, as the company pushes for privacy-friendly methods for various online tasks.
 _[:]The Verge
-_[:]Read article on The Verge
+_[:]<a>Read article on The Verge</a>
 _[:]It doesn’t allow targeted advertising, results are not based on your search history, and you’ll see fewer ads based on your search. It’s easy to use and install, too.
 _[:]USA Today
-_[:]Read article on USA Today
+_[:]<a>Read article on USA Today</a>
 _[:]The 13-year-old company appears to be in a prime position to fulfill internet users’ increasing desire for privacy in an age of data leaks, breaches and scandals.
 _[:]CNET
-_[:]Read article on CNET
+_[:]<a>Read article on CNET</a>
 _[:]Still have questions?
-_[:]What is DuckDuckGo?
+_[:]<button>What is DuckDuckGo?</button>
 _[:]At DuckDuckGo, we believe the best way to protect your personal information from hackers, scammers, and privacy-invasive companies is to stop it from being collected at all. That's why millions of people
-_[:]choose DuckDuckGo over Chrome and other browsers
+_[:]<a>choose DuckDuckGo over Chrome and other browsers</a>
 _[:]to search and browse online. Our built-in search engine is like Google but never tracks your searches. And our browsing protections, such as ad tracker blocking and cookie blocking, help stop other companies from collecting your data. Oh, and our browser is free — we make money from
-_[:]privacy-respecting search ads
+_[:]<a>privacy-respecting search ads</a>
 _[:], not by exploiting your data. Take back control of your personal information with the browser designed for data protection, not data collection.
-_[:]Learn more
-_[:]How does DuckDuckGo protect my privacy?
-_[:]Does DuckDuckGo block all trackers on websites I visit?
-_[:]How many people use DuckDuckGo?
-_[:]How does DuckDuckGo make money?
-_[:]Why use DuckDuckGo instead of Google?
-_[:]Is Incognito Mode private?
-_[:]How do DuckDuckGo Search results compare to Google's?
-_[:]Is DuckDuckGo owned by Google or any other entity?
+_[:]<a>Learn more</a>
+_[:]<button>How does DuckDuckGo protect my privacy?</button>
+_[:]<button>Does DuckDuckGo block all trackers on websites I visit?</button>
+_[:]<button>How many people use DuckDuckGo?</button>
+_[:]<button>How does DuckDuckGo make money?</button>
+_[:]<button>Why use DuckDuckGo instead of Google?</button>
+_[:]<button>Is Incognito Mode private?</button>
+_[:]<button>How do DuckDuckGo Search results compare to Google's?</button>
+_[:]<button>Is DuckDuckGo owned by Google or any other entity?</button>
 _[:]Learn More
-_[:]About DuckDuckGo
-_[:]About Our Browser
-_[:]Privacy Pro
+_[:]<a>About DuckDuckGo</a>
+_[:]<a>About Our Browser</a>
+_[:]<a>Privacy Pro</a>
 _[:]NEW
-_[:]What’s New
-_[:]Compare Privacy
-_[:]Blog
-_[:]Newsletter
+_[:]<a>What’s New</a>
+_[:]<a>Compare Privacy</a>
+_[:]<a>Blog</a>
+_[:]<a>Newsletter</a>
 _[:]Other Resources
-_[:]Help
-_[:]Community
-_[:]Careers
-_[:]Privacy Policy
-_[:]Terms of Service
-_[:]Press Kit
-_[:]Advertise on Search
+_[:]<a>Help</a>
+_[:]<a>Community</a>
+_[:]<a>Careers</a>
+_[:]<a>Privacy Policy</a>
+_[:]<a>Terms of Service</a>
+_[:]<a>Press Kit</a>
+_[:]<a>Advertise on Search</a>
 _[:]About DuckDuckGo
 _[:]At DuckDuckGo, we believe the best way to protect your personal information from hackers, scammers, and privacy-invasive companies is to stop it from being collected at all. That's why millions of people
-_[:]choose DuckDuckGo over Chrome and other browsers
+_[:]<a>choose DuckDuckGo over Chrome and other browsers</a>
 _[:]to search and browse online. Our built-in search engine is like Google but never tracks your searches. And our browsing protections, such as ad tracker blocking and cookie blocking, help stop other companies from collecting your data. Oh, and our browser is free — we make money from
-_[:]privacy-respecting search ads
+_[:]<a>privacy-respecting search ads</a>
 _[:], not by exploiting your data. Take back control of your personal information with the browser designed for data protection, not data collection. Available to download on
-_[:]Mac
+_[:]<a>Mac</a>
 _[:],
-_[:]Windows
+_[:]<a>Windows</a>
 _[:],
-_[:]iOS
+_[:]<a>iOS</a>
 _[:], and
-_[:]Android
+_[:]<a>Android</a>
 _[:].
 _[:]© 2025
-_[:]DuckDuckGo
+_[:]<a>DuckDuckGo</a>
 _[:]Protection. Privacy. Peace of mind.
 _[:]normal
 

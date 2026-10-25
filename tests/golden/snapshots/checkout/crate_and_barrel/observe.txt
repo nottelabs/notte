@@ -100,8 +100,11 @@ AE (Military)
 AP (Military)</select>
 _[:]Phone Number
 _[:]Required
+_[:]<button aria_label="help for phone number"></button>
+_[:]<input type="text" value=""></input>
+_[:]<input type="checkbox"></input>
 _[:]Use as billing address
-_[:]Next
+_[:]<button>Next</button>
 _[:]Order Summary
 L2[:]<a href="https://www.crateandbarrel.com/checkout/cart">Edit cart</a>
 _[:]Merchandise:
@@ -113,23 +116,23 @@ _[:]$1.81
 _[:]Order Total:
 _[:]$22.76
 _[:]To learn more about how we use your information, read our
-_[:]Privacy Policy
-_[:](opens in a new window/tab)
+_[:]<a>Privacy Policy
+(opens in a new window/tab)</a>
 _[:].
 _[:]Secure Checkout Shopping is always
-_[:]safe and secure
+_[:]<button>safe and secure</button>
 _[:]Crate and Barrel
 _[:]©2025
-_[:]Home
-_[:]Your Cart
-_[:]Privacy Policy
-_[:]Terms of Use
-_[:]Site Index
+_[:]<a>Home</a>
+_[:]<a>Your Cart</a>
+_[:]<a>Privacy Policy</a>
+_[:]<a>Terms of Use</a>
+_[:]<a>Site Index</a>
 _[:]Stay in Touch
-_[:]Contact Us
+_[:]<a>Contact Us</a>
 _[:](800) 967-6696
-_[:]Give Us
-_[:]Feedback
+_[:]<a>Give Us
+Feedback</a>
 _[:]normal
 
 # interaction actions
