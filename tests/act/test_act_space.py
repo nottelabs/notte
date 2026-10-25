@@ -1016,3 +1016,25 @@ def test_typing_changed_the_page_beyond_the_field() -> None:
     assert changed_beyond(before, issues("is:open label:bug", ["Crash on start"]), "I1", values)
     assert find_field(before, "Search issues", "is:open") == "I1"
     assert find_field(before, "Search issues", "is:closed") is None
+
+
+def test_a_protected_value_with_a_line_break_is_masked_across_lines() -> None:
+    from notte_core.act.privacy import ActPrivacy
+
+    privacy = ActPrivacy()
+    privacy.remember({"note": "private-first\nprivate-second"})
+    # shown back by the page as two rendered lines, or with the break collapsed to a space
+    description = """### Content of 'WebArea' component with text 'body content'
+_[:]Your note
+_[:]private-first
+_[:]private-second
+I1[:]<input type="text" name="q"></input>"""
+    page = _page(states={}, description=description, actions=[FillAction(id="I1", value="", text_label="q")])
+    masked = privacy.page(page)
+    assert "private-first" not in masked.description and "private-second" not in masked.description
+    assert "{{note}}" in masked.description and "I1[:]" in masked.description
+    for labels in ("accessible", "html"):
+        text = page_state(masked, labels, privacy.text).text
+        assert "private-first" not in text and "private-second" not in text
+    assert privacy.text("Note: private-first private-second.") == "Note: {{note}}."
+    assert privacy.payload({"recent": ["private-first\nprivate-second"]}) == {"recent": ["{{note}}"]}
