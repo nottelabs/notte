@@ -11,20 +11,31 @@ count, as in `notte_core.act.wait`), the fetch / XHR / document requests the pag
 The page is settled when:
 - no request started since the action is still running, and
 - nothing changed for `QUIET_MS` (or the DOM has kept changing for `SETTLE_MS`: some pages never stop), and
-- something changed, or `GRACE_MS` passed: an action with no visible effect costs at most `GRACE_MS`, and
+- something changed, or `GRACE_MS` passed (`LONG_GRACE_MS` after a click or a key press): an action with no
+  visible effect costs at most that, and
 - the change the action announced came, or `EXPECT_MS` passed: after typing into an autocomplete field (a
   combobox, `aria-autocomplete`, a listbox popup), its visible suggestions changed; after a URL change in
   the same document, the DOM changed (the new page rendered);
 and in any case after `CAP_MS`: a page that keeps loading is observed as it is, and the decider can WAIT.
 
+The settle replaces the session's fixed waits around an action (`notte_browser.execution.FIXED_WAITS`): 500 ms after
+a click or a key press for a tab it may open, the network going idle then 500 ms after a navigation, 200 ms before and
+after a scroll. So it also covers what those waited for:
+- a navigation to a new document ends the tracking of the old one: the new one is tracked from its first render
+  (`DOMContentLoaded`) and settled like the first (its grace still counted from the action), then waited for until it
+  has loaded, at most `NAVIGATION_CAP_MS` after the action (the session's load timeout);
+- a tab the action opens ends the tracking: the session switches to it, then settles it from its first render and
+  waits until it has loaded, within the same bound. A tab is noticed while the page settles, so at least `GRACE_MS` after the action;
+- a scroll ends once its position is stable (`notte_browser.execution`).
+
 Bounds (local Chromium on real sites): Google Flights renders a city's suggestions 90-160 ms after the
 fill, with a request in flight from the first millisecond; GitHub's "Issues" tab fetches for ~560 ms, then
 `pushState`s and renders until ~1.5 s, deferred requests included. `GRACE_MS` covers a reaction that
-starts right after the action (a re-render, a request); a click already takes 500 ms (the session's
-new-tab check), so it only costs typing and selecting that change nothing. `EXPECT_MS` is the pause after typing that let every city suggestion
-through in a Google Flights diagnostic. `CAP_MS` is the WAIT's bound.
-
-A navigation to a new document ends the tracking: the session's own load wait handles it.
+starts right after the action (a re-render, a request, a new tab): it is all a fill or a select with no visible effect
+costs. A click or a key press can start its effect later (a timer, a debounced handler, a tab opened by a script):
+`LONG_GRACE_MS` is the session's former fixed wait after them.
+`EXPECT_MS` is the pause after typing that let every city suggestion through in a Google Flights diagnostic.
+`CAP_MS` is the WAIT's bound.
 """
 
 from dataclasses import dataclass
@@ -34,9 +45,15 @@ from notte_core.act.wait import NESTED_ROOTS_JS, WATCH_URL_JS
 QUIET_MS = 200
 SETTLE_MS = 1_000
 GRACE_MS = 150
+LONG_GRACE_MS = 500
 EXPECT_MS = 1_500
 CAP_MS = 3_000
 POLL_MS = 50
+# after a navigation to a new document, or in a new tab: as long as the session waits for a page to load
+# (`timeout_goto_ms`)
+NAVIGATION_CAP_MS = 10_000
+# documents followed after an action (a navigation, then redirects by the page)
+MAX_DOCUMENTS = 3
 
 # Request types the page waits on. Images, fonts, media and beacons do not change what is observed;
 # websockets and event streams stay open.
@@ -130,6 +147,8 @@ class SettleState:
     url_changed_ms: float | None = None
     # None: not typed into an autocomplete field
     suggestions_changed: bool | None = None
+    # how long an action with no visible effect is waited for (`GRACE_MS`, `LONG_GRACE_MS`)
+    grace_ms: float = GRACE_MS
 
 
 def settled(state: SettleState) -> bool:
@@ -141,7 +160,7 @@ def settled(state: SettleState) -> bool:
         return False
     first, last = state.first_change_ms, state.last_change_ms
     if first is None or last is None:
-        if elapsed < GRACE_MS:
+        if elapsed < state.grace_ms:
             return False
     elif elapsed - last < QUIET_MS and elapsed - first < SETTLE_MS:
         return False

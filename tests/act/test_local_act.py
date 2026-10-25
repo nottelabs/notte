@@ -1526,3 +1526,58 @@ async def test_a_long_private_value_in_a_heading_is_masked_before_it_is_shortene
     _ = await session.aact("Add {{item}} to the cart", variables={"item": private}, decider=decider)
     shown = decider.states[0].model_dump_json()
     assert "(in: {{item}})" in shown and "private-private" not in shown
+
+
+SITE = {
+    "http://site.test/": """<a id="tab" href="/second" target="_blank">Open in a new tab</a>
+<button id="later" onclick="setTimeout(() => window.open('/second'), 100)">Open later</button>
+<a id="next" href="/next">Next page</a>""",
+    "http://site.test/second": "<h1>Second tab</h1><a id='back' href='/'>Home</a>",
+    # rendered once the page's own data arrives, after its load event
+    "http://site.test/next": """<h1>Next</h1><script>
+window.addEventListener('load', () => fetch('/data').then(() => {
+    document.body.insertAdjacentHTML('beforeend', '<button id="rendered">Rendered later</button>');
+}));
+</script>""",
+}
+
+
+async def _site(session: NotteSession) -> None:
+    """`SITE` on the context (new tabs included), each page answered after 200 ms."""
+
+    async def serve(route: Any) -> None:
+        await asyncio.sleep(0.2)
+        await route.fulfill(body=SITE.get(route.request.url, "not found"), content_type="text/html")
+
+    await session.window.page.context.route("http://site.test/**", serve)
+    _ = await session.window.page.goto("http://site.test/")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("opener", ["tab", "later"])
+async def test_act_continues_in_the_tab_an_action_opened(session: NotteSession, opener: str) -> None:
+    await _site(session)
+    ids = await _ids(session)
+    decider = FakeDecider(choices=[{"operation": "CLICK", "click_target": ids[opener]}, {"operation": "DONE"}])
+    state = await _next_state(session, decider, "Open the second page")
+    assert session.window.page.url == "http://site.test/second"
+    assert len(session.window.page.context.pages) == 2
+    assert state.page.url == "http://site.test/second" and "Second tab" in state.page.text
+
+
+@pytest.mark.asyncio
+async def test_a_navigation_is_observed_once_the_new_page_has_loaded_and_rendered(session: NotteSession) -> None:
+    await _site(session)
+    ids = await _ids(session)
+    decider = FakeDecider(choices=[{"operation": "CLICK", "click_target": ids["next"]}, {"operation": "DONE"}])
+    state = await _next_state(session, decider, "Go to the next page")
+    assert state.page.url == "http://site.test/next"
+    assert [e["label"] for e in state.elements] == ["Rendered later"]
+
+
+@pytest.mark.asyncio
+async def test_execute_outside_act_still_switches_to_a_new_tab(session: NotteSession) -> None:
+    await _site(session)
+    ids = await _ids(session)
+    result = await session.aexecute(type="click", id=ids["tab"])
+    assert result.success and session.window.page.url == "http://site.test/second"

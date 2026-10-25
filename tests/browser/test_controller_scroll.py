@@ -1,5 +1,7 @@
 import ast
+import time
 from collections.abc import AsyncIterator
+from contextvars import ContextVar
 from pathlib import Path
 from typing import cast
 from unittest.mock import AsyncMock, MagicMock
@@ -32,6 +34,14 @@ async def page() -> AsyncIterator[Page]:
             yield await browser.new_page(viewport={"width": 800, "height": 600})
         finally:
             await browser.close()
+
+
+@pytest.fixture(params=[True, False], ids=["fixed-waits", "act"])
+def fixed_waits(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> bool:
+    """The scroll with the session's fixed waits, and as `act()` runs it: until the scroll position is stable."""
+    waits = cast(bool, request.param)
+    monkeypatch.setattr(execution_module, "FIXED_WAITS", ContextVar("fixed_waits", default=waits))
+    return waits
 
 
 async def scroll(page: Page, action: ScrollDownAction | ScrollUpAction) -> bool:
@@ -84,7 +94,7 @@ async def test_documented_scroll_fixture_replaces_previous_page_styles(page: Pag
 @pytest.mark.parametrize("up", [False, True])
 @pytest.mark.parametrize("amount", [250, None])
 async def test_scroll_recognizes_actual_container_movement(
-    page: Page, layout: str, up: bool, amount: int | None, targeted: bool
+    page: Page, layout: str, up: bool, amount: int | None, targeted: bool, fixed_waits: bool
 ) -> None:
     frame = page.main_frame
     if layout == "document":
@@ -135,7 +145,7 @@ async def test_scroll_recognizes_actual_container_movement(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("up", [False, True])
-async def test_scroll_still_fails_at_panel_boundary(page: Page, up: bool) -> None:
+async def test_scroll_still_fails_at_panel_boundary(page: Page, up: bool, fixed_waits: bool) -> None:
     await page.set_content(PANEL_HTML)
     if not up:
         await page.evaluate("document.querySelector('#panel').scrollTop = 3000")
@@ -147,7 +157,7 @@ async def test_scroll_still_fails_at_panel_boundary(page: Page, up: bool) -> Non
 
 
 @pytest.mark.asyncio
-async def test_scroll_still_fails_on_non_scrollable_page(page: Page) -> None:
+async def test_scroll_still_fails_on_non_scrollable_page(page: Page, fixed_waits: bool) -> None:
     await page.set_content("<p>No scrolling here</p>")
     await page.mouse.move(100, 100)
 
@@ -156,7 +166,7 @@ async def test_scroll_still_fails_on_non_scrollable_page(page: Page) -> None:
 
 
 @pytest.mark.asyncio
-async def test_prevented_wheel_does_not_count_as_scroll(page: Page) -> None:
+async def test_prevented_wheel_does_not_count_as_scroll(page: Page, fixed_waits: bool) -> None:
     await page.set_content(PANEL_HTML)
     await page.evaluate("window.addEventListener('wheel', event => event.preventDefault(), {passive: false})")
     await page.mouse.move(100, 100)
@@ -164,6 +174,34 @@ async def test_prevented_wheel_does_not_count_as_scroll(page: Page) -> None:
     with pytest.raises(ScrollActionFailedError):
         await scroll(page, ScrollDownAction(amount=250))
     assert await page.locator("#panel").evaluate("panel => panel.scrollTop") == 0
+
+
+@pytest.mark.asyncio
+async def test_without_fixed_waits_a_scroll_ends_once_its_position_is_stable(
+    page: Page, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(execution_module, "FIXED_WAITS", ContextVar("fixed_waits", default=False))
+    # the page keeps scrolling for 300 ms after the wheel (a smooth-scroll script)
+    await page.set_content('<div style="height:6000px">Long page</div>')
+    await page.evaluate("""() => {
+        let animating = false;
+        window.addEventListener('scroll', () => {
+            if (animating) return;
+            animating = true;
+            const end = performance.now() + 300;
+            const step = () => { if (performance.now() < end) { window.scrollBy(0, 10); requestAnimationFrame(step); } };
+            requestAnimationFrame(step);
+        });
+    }""")
+    await page.mouse.move(100, 100)
+    start = time.perf_counter()
+    assert await scroll(page, ScrollDownAction(amount=250))
+    elapsed_ms = (time.perf_counter() - start) * 1000
+    ended = await page.evaluate("window.scrollY")
+    await page.wait_for_timeout(300)
+    assert await page.evaluate("window.scrollY") == ended
+    # waited for the animation, not for a fixed delay past it
+    assert 300 <= elapsed_ms < execution_module.SCROLL_CAP_MS
 
 
 @pytest.mark.asyncio

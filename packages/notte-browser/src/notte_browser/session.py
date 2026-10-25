@@ -33,17 +33,30 @@ from notte_core.act import (
 )
 from notte_core.act.context import element_contexts
 from notte_core.act.freshness import ELEMENT_SIGNATURES_JS, Signatures, signature_xpaths
-from notte_core.act.settle import CAP_MS, POLL_MS, SETTLE_TRACKER_JS, TRACKED_REQUESTS, SettleState, settled
+from notte_core.act.settle import (
+    CAP_MS,
+    GRACE_MS,
+    LONG_GRACE_MS,
+    MAX_DOCUMENTS,
+    NAVIGATION_CAP_MS,
+    POLL_MS,
+    SETTLE_TRACKER_JS,
+    TRACKED_REQUESTS,
+    SettleState,
+    settled,
+)
 from notte_core.act.space import shown_contexts
 from notte_core.act.wait import WAIT_FOR_CHANGE_JS, interrupted_by_navigation, wait_failure, wait_result
 from notte_core.actions import (
     BaseAction,
+    ClickAction,
     EvaluateJsAction,
     FallbackFillAction,
     FillAction,
     FormFillAction,
     InteractionAction,
     MultiFactorFillAction,
+    PressKeyAction,
     # ReadFileAction,
     ScrapeAction,
     SelectDropdownOptionAction,
@@ -137,18 +150,23 @@ enable_nest_asyncio()
 
 class _Settle:
     """What an `act()` action starts on `page`, tracked from right before it, until the page settles
-    (`notte_core.act.settle`)."""
+    (`notte_core.act.settle`): on the same document, on the document it navigated to, or the tab it opened."""
 
     def __init__(self, page: Page, tracker: JSHandle) -> None:
         self.page: Page = page
         self._tracker: JSHandle = tracker
-        self._started: float = time.perf_counter()
+        # when the action started (the caps), and when the tracking of the current document started
+        self._began: float = time.perf_counter()
+        self._started: float = self._began
         self._in_flight: set[Request] = set()
         self._first: float | None = None
         self._last: float | None = None
+        # the tabs opened since the action started: the page is watched no longer, the new tab is
+        self.opened: list[Page] = []
         page.on("request", self._request_started)
         page.on("requestfinished", self._request_ended)
         page.on("requestfailed", self._request_ended)
+        page.context.on("page", self._page_opened)
 
     @classmethod
     async def start(cls, page: Page) -> _Settle | None:
@@ -156,6 +174,26 @@ class _Settle:
             return cls(page, await page.evaluate_handle(SETTLE_TRACKER_JS))
         except PlaywrightError:
             return None
+
+    @classmethod
+    async def opened_page(cls, page: Page) -> None:
+        """A tab the action opened: until it has loaded and settled, at most `NAVIGATION_CAP_MS`."""
+        try:
+            async with asyncio.timeout(NAVIGATION_CAP_MS / 1000):
+                # tracked from its first render, while it loads
+                await page.wait_for_load_state("domcontentloaded")
+                settle = await cls.start(page)
+                if settle is not None:
+                    try:
+                        await settle.wait()
+                    finally:
+                        await settle.close()
+                await page.wait_for_load_state("load")
+        except TimeoutError:
+            pass
+        except PlaywrightError:
+            # closed meanwhile
+            pass
 
     def _changed(self) -> None:
         now = (time.perf_counter() - self._started) * 1000
@@ -173,40 +211,66 @@ class _Settle:
             self._in_flight.discard(request)
             self._changed()
 
-    def _left_ms(self) -> float:
-        return CAP_MS - (time.perf_counter() - self._started) * 1000
+    def _page_opened(self, page: Page) -> None:
+        self.opened.append(page)
 
-    async def wait(self, *, typed: bool) -> None:
-        """Until the page settles, at most `CAP_MS` after the tracking started."""
+    def _left_ms(self, cap_ms: float) -> float:
+        return cap_ms - (time.perf_counter() - self._began) * 1000
+
+    async def _poll(self, typed: bool, grace_ms: float) -> None:
+        """Until the current document settles or a tab opens."""
+        while not self.opened:
+            page: dict[str, Any] = await self._tracker.evaluate("(t, typed) => t.state(typed)", typed)
+            firsts = [t for t in (page["first"], self._first) if t is not None]
+            lasts = [t for t in (page["last"], self._last) if t is not None]
+            state = SettleState(
+                elapsed_ms=page["elapsed"],
+                first_change_ms=min(firsts, default=None),
+                last_change_ms=max(lasts, default=None),
+                in_flight=len(self._in_flight),
+                last_dom_change_ms=page["dom"],
+                url_changed_ms=page["urlAt"],
+                suggestions_changed=page["suggested"],
+                grace_ms=grace_ms,
+            )
+            if settled(state):
+                return
+            await asyncio.sleep(POLL_MS / 1000)
+
+    async def wait(self, *, typed: bool = False, grace_ms: float = GRACE_MS) -> None:
+        """Until the page settles, at most `CAP_MS` after the action started; after a navigation to a new document,
+        until that document has loaded and settled, at most `NAVIGATION_CAP_MS` after the action started."""
         try:
-            async with asyncio.timeout(max(self._left_ms(), 0) / 1000):
-                while True:
-                    page: dict[str, Any] = await self._tracker.evaluate("(t, typed) => t.state(typed)", typed)
-                    firsts = [t for t in (page["first"], self._first) if t is not None]
-                    lasts = [t for t in (page["last"], self._last) if t is not None]
-                    state = SettleState(
-                        elapsed_ms=page["elapsed"],
-                        first_change_ms=min(firsts, default=None),
-                        last_change_ms=max(lasts, default=None),
-                        in_flight=len(self._in_flight),
-                        last_dom_change_ms=page["dom"],
-                        url_changed_ms=page["urlAt"],
-                        suggestions_changed=page["suggested"],
-                    )
-                    if settled(state):
-                        return
-                    await asyncio.sleep(POLL_MS / 1000)
+            async with asyncio.timeout(max(self._left_ms(CAP_MS), 0) / 1000):
+                await self._poll(typed, grace_ms)
+            return
         except TimeoutError:
-            pass
+            return
         except PlaywrightError:
-            # a navigation to a new document destroyed the tracker: let the new page load, within the cap
+            # a navigation to a new document destroyed the tracker
+            pass
+        for _ in range(MAX_DOCUMENTS):
             try:
-                if self._left_ms() > 0:
-                    await self.page.wait_for_load_state("load", timeout=self._left_ms())
+                async with asyncio.timeout(max(self._left_ms(NAVIGATION_CAP_MS), 0) / 1000):
+                    # track the new document from its first render, while it loads: what the old one did is over, its
+                    # requests still count
+                    await self.page.wait_for_load_state("domcontentloaded")
+                    self._tracker = await self.page.evaluate_handle(SETTLE_TRACKER_JS)
+                    self._started, self._first, self._last = time.perf_counter(), None, None
+                    # what a script or a framework renders once the document is parsed; with no change at all, the
+                    # action's grace counts from the action
+                    await self._poll(False, max(grace_ms - (self._started - self._began) * 1000, 0))
+                    await self.page.wait_for_load_state("load")
+                return
+            except TimeoutError:
+                return
             except PlaywrightError:
-                pass
+                # navigated again (a redirect from the page), or the page closed
+                if self.page.is_closed():
+                    return
 
     async def close(self) -> None:
+        _ = self.page.context.remove_listener("page", self._page_opened)
         _ = self.page.remove_listener("request", self._request_started)
         _ = self.page.remove_listener("requestfinished", self._request_ended)
         _ = self.page.remove_listener("requestfailed", self._request_ended)
@@ -228,7 +292,8 @@ class LocalActDriver:
 
     The action runs on the element of the snapshot the decision was checked against, even if another call
     observes the session meanwhile (which renumbers the ids of the session's own snapshot). It returns once the
-    page has settled (`notte_core.act.settle`).
+    page has settled (`notte_core.act.settle`), without the session's fixed waits (`execution.FIXED_WAITS`): the
+    settle covers the navigation to a new document and the tab the action opened, which it switches to.
     """
 
     def __init__(self, session: NotteSession, *, capture_signatures: bool = True) -> None:
@@ -305,16 +370,28 @@ class LocalActDriver:
             node = self._snapshot.dom_node.interaction_nodes_by_id.get(action.id)
             if node is not None:
                 action = action.model_copy(update={"selector": await resolve_selectors(node)})
-        # the next observation must see what the action started (suggestions, a client-side navigation)
-        settle = await _Settle.start(self.session.window.page)
+        # the next observation must see what the action started (suggestions, a navigation, a new tab): the settle
+        # waits for it, in place of the session's fixed waits (`execution.FIXED_WAITS`)
+        page = self.session.window.page
+        tabs = list(page.context.pages)
+        settle = await _Settle.start(page)
+        fixed_waits = execution.FIXED_WAITS.set(False)
         try:
             result = await self.session.aexecute(action, raise_on_failure=raise_on_failure)
-            # a new tab the action opened was already waited for by the session
-            if settle is not None and result.success and settle.page is self.session.window.page:
-                await settle.wait(typed=isinstance(action, FillAction))
+            if settle is not None and result.success:
+                # a click or a key press can start its effect later than a fill (a timer, a debounced handler)
+                grace_ms = LONG_GRACE_MS if isinstance(action, (ClickAction, PressKeyAction)) else GRACE_MS
+                await settle.wait(typed=isinstance(action, FillAction), grace_ms=grace_ms)
         finally:
+            execution.FIXED_WAITS.reset(fixed_waits)
             if settle is not None:
                 await settle.close()
+        opened = [tab for tab in page.context.pages if tab not in tabs and not tab.is_closed()]
+        if result.success and opened:
+            # the session's own check: the last tab opened is the one acted on next
+            self.session.window.page = opened[-1]
+            await opened[-1].bring_to_front()
+            await _Settle.opened_page(opened[-1])
         return result
 
     @staticmethod

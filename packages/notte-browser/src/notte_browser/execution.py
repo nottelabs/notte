@@ -1,5 +1,6 @@
 import asyncio
 from contextlib import suppress
+from contextvars import ContextVar
 from typing import Literal
 
 from notte_core.actions import (
@@ -104,6 +105,59 @@ _SCROLL_TRACKER = script("scroll_tracker.js")
 
 # Page-side implementation: js/scroll_boundary.js
 _SCROLL_BOUNDARY = script("scroll_boundary.js")
+
+
+# `act()` waits itself, after each action, until the page has settled (`notte_core.act.settle`), which covers a new
+# tab, a navigation's load and what the action started. Set to False (by `act()` only), an action skips the fixed waits
+# below: the new-tab check after a click or a key press, the load wait after a navigation or a back / forward, and the
+# waits around a page scroll (without a selector), which then ends as soon as the scroll position is stable.
+FIXED_WAITS: ContextVar[bool] = ContextVar("fixed_waits", default=True)
+# without fixed waits: a scroll that has not started after `SCROLL_START_MS` failed (the fixed wait's length); one that
+# started has ended once its position is the same `SCROLL_STABLE_MS` apart, at most `SCROLL_CAP_MS` after the wheel
+SCROLL_START_MS = 200
+SCROLL_STABLE_MS = 50
+SCROLL_POLL_MS = 25
+SCROLL_CAP_MS = 1_000
+
+
+async def _scrolled(window: BrowserWindow, trackers: list[tuple[Frame, JSHandle]]) -> bool:
+    """Whether the wheel scrolled the page or one of its scrollers: after `SCROLL_START_MS` with fixed waits, else as
+    soon as the scroll has ended (its position is stable), or failed to start."""
+    if FIXED_WAITS.get():
+        await window.page.wait_for_timeout(SCROLL_START_MS)
+        for frame, tracker in trackers:
+            try:
+                if await tracker.evaluate("tracker => tracker.hasScrolled()"):
+                    return True
+            except Error as error:
+                if not _scroll_context_disappeared(frame, error):
+                    raise
+        return False
+    loop = asyncio.get_running_loop()
+    start = loop.time()
+    last: list[object] | None = None
+    stable_since = start
+    while True:
+        scrolled = False
+        positions: list[object] = []
+        for frame, tracker in trackers:
+            try:
+                moved, position = await tracker.evaluate("tracker => [tracker.hasScrolled(), tracker.position()]")
+            except Error as error:
+                if not _scroll_context_disappeared(frame, error):
+                    raise
+                continue
+            scrolled = scrolled or bool(moved)
+            positions.append(position)
+        now = loop.time()
+        if positions != last:
+            last, stable_since = positions, now
+        elapsed_ms = (now - start) * 1000
+        if scrolled and (now - stable_since) * 1000 >= SCROLL_STABLE_MS:
+            return True
+        if (not scrolled and elapsed_ms >= SCROLL_START_MS) or elapsed_ms >= SCROLL_CAP_MS:
+            return scrolled
+        await asyncio.sleep(SCROLL_POLL_MS / 1000)
 
 
 def _scroll_context_disappeared(frame: Frame, error: Error) -> bool:
@@ -257,9 +311,9 @@ async def execute_browser_action(window: BrowserWindow, action: BaseAction, *, v
         case WaitAction(time_ms=time_ms):
             await window.page.wait_for_timeout(time_ms)
         case GoBackAction():
-            await window.goto_and_wait(operation="back")
+            await window.goto_and_wait(operation="back", wait_until=None if FIXED_WAITS.get() else "commit")
         case GoForwardAction():
-            await window.goto_and_wait(operation="forward")
+            await window.goto_and_wait(operation="forward", wait_until=None if FIXED_WAITS.get() else "commit")
         case ReloadAction():
             _ = await window.page.reload()
             await window.long_wait()
@@ -268,7 +322,8 @@ async def execute_browser_action(window: BrowserWindow, action: BaseAction, *, v
         case ScrollUpAction(amount=amount) | ScrollDownAction(amount=amount):
             # blur the active element to prevent scroll from being blocked by the element
             await window.page.evaluate(_BLUR_ACTIVE_ELEMENT)
-            await window.page.wait_for_timeout(200)
+            if FIXED_WAITS.get():
+                await window.page.wait_for_timeout(200)
             if action.selector is not None:
                 await _scroll_target(window, action)
                 return True
@@ -287,17 +342,7 @@ async def execute_browser_action(window: BrowserWindow, action: BaseAction, *, v
                 await window.page.mouse.wheel(
                     delta_x=0, delta_y=(-amount if isinstance(action, ScrollUpAction) else amount)
                 )
-                await window.page.wait_for_timeout(200)
-                scrolled = False
-                for frame, tracker in trackers:
-                    try:
-                        if await tracker.evaluate("tracker => tracker.hasScrolled()"):
-                            scrolled = True
-                            break
-                    except Error as error:
-                        if not _scroll_context_disappeared(frame, error):
-                            raise
-                if not scrolled:
+                if not await _scrolled(window, trackers):
                     logger.info("🪦 Scroll action did not move the page or a scroll container. Failing action...")
                     raise ScrollActionFailedError()
             finally:
@@ -339,7 +384,7 @@ async def execute_interaction_action(
         if not scope.expired():
             raise
         raise NotteTimeoutError(message=f"Action timed out after {action.timeout}ms") from e
-    if original_url != window.page.url:
+    if original_url != window.page.url and FIXED_WAITS.get():
         if verbose:
             logger.info(f"🪦 Page navigation detected for action {action.id} waiting for networkidle")
         try:
@@ -561,8 +606,8 @@ async def execute(
             retval = await execute_browser_action(window, action, verbose=verbose)
         case _:
             raise ValueError(f"Unsupported action type: {type(action)}")
-    # Only check for new tabs if the action can potentially create one
-    if _can_create_tab(action):
+    # Only check for new tabs if the action can potentially create one (`act()` checks during its settle)
+    if _can_create_tab(action) and FIXED_WAITS.get():
         # add short wait before we check for new tabs to make sure that
         # the page has time to be created
         await window.short_wait()
