@@ -1533,6 +1533,10 @@ SITE = {
 <button id="later" onclick="setTimeout(() => window.open('/second'), 100)">Open later</button>
 <a id="next" href="/next">Next page</a>""",
     "http://site.test/second": "<h1>Second tab</h1><a id='back' href='/'>Home</a>",
+    # a search form, and its results page that keeps a request in flight (analytics, polling)
+    "http://site.test/search": """<form action="/results"><input id="q" name="q" aria-label="Search"></form>""",
+    "http://site.test/results": """<h1>Results</h1><a id="result" href="/second">First result</a>
+<script>fetch('/poll')</script>""",
     # rendered once the page's own data arrives, after its load event
     "http://site.test/next": """<h1>Next</h1><script>
 window.addEventListener('load', () => fetch('/data').then(() => {
@@ -1546,8 +1550,9 @@ async def _site(session: NotteSession) -> None:
     """`SITE` on the context (new tabs included), each page answered after 200 ms."""
 
     async def serve(route: Any) -> None:
-        await asyncio.sleep(0.2)
-        await route.fulfill(body=SITE.get(route.request.url, "not found"), content_type="text/html")
+        url = route.request.url.split("?")[0]
+        await asyncio.sleep(5 if url.endswith("/poll") else 0.2)
+        await route.fulfill(body=SITE.get(url, "not found"), content_type="text/html")
 
     await session.window.page.context.route("http://site.test/**", serve)
     _ = await session.window.page.goto("http://site.test/")
@@ -1581,3 +1586,20 @@ async def test_execute_outside_act_still_switches_to_a_new_tab(session: NotteSes
     ids = await _ids(session)
     result = await session.aexecute(type="click", id=ids["tab"])
     assert result.success and session.window.page.url == "http://site.test/second"
+
+
+@pytest.mark.asyncio
+async def test_a_page_submitted_with_enter_is_observed_once_rendered_not_once_its_requests_end(
+    session: NotteSession,
+) -> None:
+    await _site(session)
+    _ = await session.window.page.goto("http://site.test/search")
+    await session.window.page.fill("#q", "lamp")
+    await session.window.page.focus("#q")
+    decider = FakeDecider(choices=[{"operation": "PRESS_ENTER"}, {"operation": "DONE"}])
+    result = await session.aact("Search for lamp", decider=decider)
+    assert result.success and session.window.page.url == "http://site.test/results?q=lamp"
+    # the results page's request takes 5 s: not waited for
+    assert result.timings.execute_ms < 2_000
+    _ = await session.aact("Search for lamp", decider=decider)
+    assert [e["label"] for e in decider.states[-1].elements] == ["First result"]
