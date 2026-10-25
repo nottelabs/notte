@@ -24,7 +24,7 @@ CONNECTION_FAILED = {"error": {"code": "connection_failed", "message": "connecti
 class FakeAac:
     """An `aac` executable that prints `stdout`, exits with `exit_code` and records each call's arguments, $HOME and $AAC_TOKEN."""
 
-    def __init__(self, tmp_path: Path, stdout: str, exit_code: int = 0, delay: float = 0) -> None:
+    def __init__(self, tmp_path: Path, stdout: str, exit_code: int = 0, delay: float = 0, pairs: bool = True) -> None:
         self.path: Path = tmp_path / "aac"
         self.calls_file: Path = tmp_path / "calls.jsonl"
         output_file = tmp_path / "stdout.txt"
@@ -34,6 +34,12 @@ class FakeAac:
             "import json, os, sys, time\n"
             f"with open({str(self.calls_file)!r}, 'a') as f:\n"
             "    f.write(json.dumps({'args': sys.argv[1:], 'home': os.environ.get('HOME'), 'token': os.environ.get('AAC_TOKEN')}) + '\\n')\n"
+            # like `aac`, save the paired connection under $HOME before answering the credential request
+            f"if {pairs} and os.environ.get('AAC_TOKEN'):\n"
+            "    cache = os.path.join(os.environ['HOME'], '.access-protocol')\n"
+            "    os.makedirs(cache, exist_ok=True)\n"
+            "    with open(os.path.join(cache, 'connection_cache_remote_client.json'), 'w') as f:\n"
+            "        json.dump({'connections': [{'remote_fingerprint': 'ab' * 32}]}, f)\n"
             f"time.sleep({delay})\n"
             f"sys.stdout.write(open({str(output_file)!r}).read())\n"
             f"sys.exit({exit_code})\n"
@@ -212,14 +218,20 @@ class TestAacVaultPairing:
         assert fake_aac.homes[0] != fake_aac.homes[1]
 
     def test_keeps_the_token_when_pairing_fails(self, tmp_path: Path) -> None:
-        fake = FakeAac(tmp_path, json.dumps(CONNECTION_FAILED), exit_code=2)
+        fake = FakeAac(tmp_path, json.dumps(CONNECTION_FAILED), exit_code=2, pairs=False)
         with AacVault(token="ABC-DEF-123", aac_path=str(fake.path)) as vault:
             _ = asyncio.run(vault.get_credentials_async("https://github.com"))
             assert vault.token == "ABC-DEF-123"
 
-    def test_drops_the_token_when_paired_without_a_credential(self, tmp_path: Path) -> None:
-        not_found = {"error": {"code": "credential_not_found", "message": "not found"}, "success": False}
-        fake = FakeAac(tmp_path, json.dumps(not_found), exit_code=4)
+    @pytest.mark.parametrize(
+        "error",
+        [
+            {"code": "credential_not_found", "message": "not found"},
+            {"code": "general_error", "message": "Timeout waiting for credential response"},
+        ],
+    )
+    def test_drops_the_token_when_paired_without_a_credential(self, tmp_path: Path, error: dict[str, str]) -> None:
+        fake = FakeAac(tmp_path, json.dumps({"error": error, "success": False}), exit_code=1)
         with AacVault(token="ABC-DEF-123", aac_path=str(fake.path)) as vault:
             assert vault.get_credentials("https://github.com") is None
             assert vault.token is None
