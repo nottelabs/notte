@@ -5,6 +5,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import threading
 from typing import Unpack
 
 from pydantic import BaseModel, ValidationError
@@ -79,6 +80,8 @@ class AacVault(BaseVault, SyncResource):
         self._aac_path: str = aac_path
         # $HOME for `aac` once this vault pairs with a token, where `aac` keeps its identity and connections
         self._home: str | None = None
+        # one `aac` request at a time: concurrent first requests would pair twice with a single-use token
+        self._lock: threading.Lock = threading.Lock()
 
     @override
     def start(self) -> None:
@@ -97,6 +100,10 @@ class AacVault(BaseVault, SyncResource):
 
     def _request_credential(self, domain: str) -> _AacCredential | None:
         """Request the credential for `domain` through the tunnel, pairing first if a token is pending."""
+        with self._lock:
+            return self._request_credential_locked(domain)
+
+    def _request_credential_locked(self, domain: str) -> _AacCredential | None:
         cmd: list[str] = [
             self._aac_path,
             "connect",
