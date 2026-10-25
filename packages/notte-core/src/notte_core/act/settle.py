@@ -29,7 +29,7 @@ A navigation to a new document ends the tracking: the session's own load wait ha
 
 from dataclasses import dataclass
 
-from notte_core.act.wait import NESTED_ROOTS_JS
+from notte_core.act.wait import NESTED_ROOTS_JS, WATCH_URL_JS
 
 QUIET_MS = 200
 SETTLE_MS = 1_000
@@ -101,8 +101,7 @@ SETTLE_TRACKER_JS = """() => {
     for (const root of roots) {
         observer.observe(root, { subtree: true, childList: true, characterData: true, attributes: true });
     }
-    const navigation = window.navigation;
-    if (navigation) navigation.addEventListener("currententrychange", urlChanged);
+    const stopUrl = (WATCH_URL)(urlChanged);
     tracker.state = (typed) => {
         urlChanged();
         const suggested = typed && autocompletes(deepActive()) ? suggestions() !== before : null;
@@ -111,10 +110,10 @@ SETTLE_TRACKER_JS = """() => {
     };
     tracker.dispose = () => {
         observer.disconnect();
-        if (navigation) navigation.removeEventListener("currententrychange", urlChanged);
+        stopUrl();
     };
     return tracker;
-}""".replace("NESTED_ROOTS", NESTED_ROOTS_JS)
+}""".replace("NESTED_ROOTS", NESTED_ROOTS_JS).replace("WATCH_URL", WATCH_URL_JS)
 
 
 @dataclass(frozen=True)
