@@ -1864,15 +1864,34 @@
 	}
 
 	/**
+	 * The XPath of an element as the payload gives it: `xpathStep`, its last step, when its XPath is the XPath
+	 * of its parent in the payload followed by that step (the Python builder joins them back), else the whole
+	 * `xpath` (the children of `<body>`, whose XPath is `/body`, and of shadow roots). Whole XPaths were most
+	 * of the payload.
+	 *
+	 * @param {string} xpath - The XPath of the element.
+	 * @param {string | null} parentXPath - The XPath of its parent in the payload, or null.
+	 * @returns {{xpathStep: string} | {xpath: string}} The payload field.
+	 */
+	function payloadXPath(xpath, parentXPath) {
+		if (parentXPath !== null && xpath.startsWith(`${parentXPath}/`)) {
+			const step = xpath.slice(parentXPath.length + 1);
+			if (step.length > 0 && !step.includes("/")) return { xpathStep: step };
+		}
+		return { xpath };
+	}
+
+	/**
 	 * Creates a node data object for a given node and its descendants.
 	 *
 	 * @param {HTMLElement} node - The node to process.
 	 * @param {HTMLElement | null} parentIframe - The parent iframe node.
 	 * @param {boolean} isParentHighlighted - Whether the parent node is highlighted.
 	 * @param {Object} scope - What hides the node (see `VISIBLE_SCOPE`).
+	 * @param {string | null} parentXPath - The XPath of the node's parent in the payload (see `payloadXPath`).
 	 * @returns {string | null} The ID of the node data object, or null if the node is not processed.
 	 */
-	function buildDomTree(node, parentIframe = null, isParentHighlighted = false, scope = VISIBLE_SCOPE) {
+	function buildDomTree(node, parentIframe = null, isParentHighlighted = false, scope = VISIBLE_SCOPE, parentXPath = null) {
 		// Fast rejection checks first
 		if (!node || node.id === HIGHLIGHT_CONTAINER_ID ||
 			(node.nodeType !== Node.ELEMENT_NODE && node.nodeType !== Node.TEXT_NODE)) {
@@ -1894,7 +1913,7 @@
 
 			// Process children of body
 			for (const child of node.childNodes) {
-				const domElement = buildDomTree(child, parentIframe, false); // Body's children have no highlighted parent initially
+				const domElement = buildDomTree(child, parentIframe, false, VISIBLE_SCOPE, nodeData.xpath); // Body's children have no highlighted parent initially
 				if (domElement) nodeData.children.push(domElement);
 			}
 
@@ -1981,10 +2000,11 @@
 		  }
 		} nodeData - The node data object.
 		 */
+		const xpath = getXPathTree(node);
 		const nodeData = {
 			tagName: node.tagName.toLowerCase(),
 			attributes: {},
-			xpath: getXPathTree(node),
+			...payloadXPath(xpath, parentXPath),
 			children: [],
 		};
 
@@ -2091,7 +2111,7 @@
 			) {
 				// Process all child nodes to capture formatted text
 				for (const child of node.childNodes) {
-					const domElement = buildDomTree(child, parentIframe, nodeWasHighlighted, childScope);
+					const domElement = buildDomTree(child, parentIframe, nodeWasHighlighted, childScope, xpath);
 					if (domElement) nodeData.children.push(domElement);
 				}
 			}
@@ -2100,7 +2120,7 @@
 				if (node.shadowRoot) {
 					nodeData.shadowRoot = true;
 					for (const child of node.shadowRoot.childNodes) {
-						const domElement = buildDomTree(child, parentIframe, nodeWasHighlighted, childScope);
+						const domElement = buildDomTree(child, parentIframe, nodeWasHighlighted, childScope, xpath);
 						if (domElement) nodeData.children.push(domElement);
 					}
 				}
@@ -2108,7 +2128,7 @@
 				for (const child of node.childNodes) {
 					// Pass the highlighted status of the *current* node to its children
 					const passHighlightStatusToChild = nodeWasHighlighted || isParentHighlighted;
-					const domElement = buildDomTree(child, parentIframe, passHighlightStatusToChild, childScope);
+					const domElement = buildDomTree(child, parentIframe, passHighlightStatusToChild, childScope, xpath);
 					if (domElement) nodeData.children.push(domElement);
 				}
 			}

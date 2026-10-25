@@ -38,7 +38,9 @@ class RawNode(TypedDict):
     isInViewport: NotRequired[bool]
     # elements
     tagName: NotRequired[str]
+    # the XPath, or `xpathStep` alone when the XPath is the parent's (in the payload) followed by that step
     xpath: NotRequired[str]
+    xpathStep: NotRequired[str]
     attributes: NotRequired[dict[str, str]]
     children: NotRequired[list[str]]
     isVisible: NotRequired[bool]
@@ -219,7 +221,7 @@ class _TreeBuilder:
         parent_is_shadow_host: bool = False,
     ) -> DomNode | None:
         """`parent_xpath` and `parent_css_path`: the XPath of the parent element and its CSS path from
-        `xpath_to_css_path`, which the node's own CSS path extends.
+        `xpath_to_css_path`, which the node's own XPath (`xpathStep`) and CSS path extend.
 
         XPaths restart at a shadow root, where Playwright's XPath engine does not enter. Its CSS engine does,
         and its `>` goes from a shadow host to the top elements of its shadow root: the CSS path of an element
@@ -239,6 +241,9 @@ class _TreeBuilder:
         attributes = raw.get("attributes", {})
         child_ids = raw.get("children", [])
         xpath = raw.get("xpath")
+        xpath_step = raw.get("xpathStep")
+        if xpath is None and xpath_step is not None and parent_xpath is not None:
+            xpath = f"{parent_xpath}/{xpath_step}"
         if tag_name is None:
             if xpath is None and len(attributes) == 0 and len(child_ids) == 0:
                 return None
