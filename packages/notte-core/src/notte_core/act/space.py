@@ -313,6 +313,30 @@ def _disabled(content: str) -> str | None:
 _TEXT_INPUT_TYPES = ("text", "email", "password", "search", "tel", "url", "number")
 
 
+def _offscreen(content: str) -> str | None:
+    """`<name> (<role>` for a control the observation describes outside the viewport (rendered without an id, like
+    `_[:]<a>Bletchley Park</a>`): it offers no operation until scrolled into view. None for anything else."""
+    match = _RENDERED_ELEMENT.match(content)
+    if match is None:
+        return None
+    attributes = dict(_RENDERED_ATTRIBUTE.findall(match.group(2)))
+    tag = match.group(1).lower()
+    kind = attributes.get("type", "text") if tag == "input" else None
+    role = attributes.get("role") or {"a": "link", "select": "select", "textarea": "textbox"}.get(tag)
+    if role is None and kind is not None:
+        role = kind if kind in ("checkbox", "radio") else "textbox" if kind in _TEXT_INPUT_TYPES else kind
+    role = role or tag
+    candidates = [" ".join(match.group(3).split()), attributes.get("aria_label"), attributes.get("placeholder")]
+    candidates += [attributes.get("title"), attributes.get("value")]
+    name = next((c.strip() for c in candidates if c is not None and c.strip()), role)
+    return f"{name} ({role}"
+
+
+# where an off-screen control is, in the page text (`_page_text` replaces it with above / below the viewport)
+_WHERE = "\ue000"
+NOT_IN_VIEW = "not in view: scroll to reach it"
+
+
 def _same_text(a: str, b: str) -> bool:
     return " ".join(a.split()).casefold() == " ".join(b.split()).casefold()
 
@@ -341,8 +365,8 @@ def _names(page: ObservedPage) -> _Names:
         if not 0 <= index < len(blocks) or blocks[index][0] is None:
             return None
         key, content = blocks[index]
-        if key == "_" and _disabled(content) is not None:
-            # a disabled control is not a label
+        if key == "_" and _RENDERED_ELEMENT.match(content) is not None:
+            # a disabled or off-screen control is not a label
             return None
         if key != "_":
             match = _RENDERED_ELEMENT.match(content)
@@ -433,7 +457,7 @@ def accessible_text(page: ObservedPage, display_text: Callable[[str], str] = str
     text: the price next to a button, the result a link opens) without its markup. The page's own
     component header is dropped; dialog headers are kept (they say a modal is open).
     """
-    return "\n".join(line for _, line in _accessible_lines(page, display_text))
+    return "\n".join(line for _, line in _accessible_lines(page, display_text)).replace(_WHERE, NOT_IN_VIEW)
 
 
 def _accessible_lines(page: ObservedPage, display_text: Callable[[str], str]) -> list[tuple[str | None, str]]:
@@ -451,6 +475,9 @@ def _accessible_lines(page: ObservedPage, display_text: Callable[[str], str]) ->
         elif i in names.disabled:
             # shown, so the decider knows the control exists and can wait for it; it offers no operation
             lines.append((None, f"{_cut(display_text(names.disabled[i]), MAX_LABEL_LENGTH)} (disabled)"))
+        elif key == "_" and (control := _offscreen(content)) is not None:
+            # a link, button or field outside the viewport: what it is and where, with no operation until in view
+            lines.append((None, f"{_cut(display_text(control), MAX_LABEL_LENGTH)}, {_WHERE})"))
         elif key == "_":
             lines.append((None, content))
         else:
@@ -576,10 +603,14 @@ def _page_text(
         lines = _accessible_lines(page, display_text)
     viewport = _viewport_lines(page, lines) if windowed else None
     if viewport is None or viewport == (0, len(lines)):
-        text = "\n".join(line for _, line in lines)
+        text = "\n".join(line for _, line in lines).replace(_WHERE, NOT_IN_VIEW)
         return text if length is None else _cut(text, length)
     first, last = viewport
-    shown = [line for _, line in lines]
+    where = {range(0, first): "above the viewport", range(last, len(lines)): "below the viewport"}
+    shown = [
+        line.replace(_WHERE, next((w for r, w in where.items() if i in r), NOT_IN_VIEW))
+        for i, (_, line) in enumerate(lines)
+    ]
     if viewport_only:
         text = "\n".join(shown[first:last])
         below = len("\n".join(shown[last:]))
