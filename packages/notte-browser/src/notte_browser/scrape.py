@@ -375,6 +375,53 @@ async def _frames_in_document_order(frame: Frame) -> list[Frame]:
     return frames
 
 
+_READY_STATE_TIMEOUT_S = 1
+# Body elements whose text is not page content, and body elements that are content without text.
+_NON_CONTENT_TAGS = ("script", "style", "noscript", "template")
+_CONTENT_ELEMENTS = ("iframe", "img")
+# The live document's state and body, read only when the snapshot's body is empty. The body is judged by
+# `_has_body_content` like the snapshot's, so both checks apply the same rules.
+_LIVE_DOCUMENT_STATE = """() => [document.readyState, document.body === null ? "" : document.body.outerHTML]"""
+
+
+def _has_body_content(html: str) -> bool:
+    """Whether the document's body holds content to scrape: visible text outside scripts and styles, or an
+    iframe or image."""
+    try:
+        body = lxml_html.document_fromstring(html).find("body")
+    except (etree.ParserError, ValueError):
+        return False
+    if body is None:
+        return False
+    for element in list(body.iter(*_NON_CONTENT_TAGS)):
+        _remove_subtree(element)
+    _remove_hidden_elements(body)
+    if next(body.iter(*_CONTENT_ELEMENTS), None) is not None:
+        return True
+    return bool(cast(str, lxml_html.tostring(body, method="text", encoding="unicode")).strip())
+
+
+async def _body_not_parsed_yet(window: BrowserWindow, snapshot: BrowserSnapshot) -> bool:
+    """Whether the snapshot was taken before the browser parsed the page's body.
+
+    The parser stops at an inline script until the stylesheets before it have loaded, so one stalled
+    stylesheet leaves the document `loading` with an empty body, even after the load timeout. A snapshot
+    with an empty body is also stale when the live page has parsed content since it was taken.
+    """
+    if _has_body_content(snapshot.html_content):
+        return False
+    try:
+        ready_state, live_body = cast(
+            tuple[str, str],
+            await asyncio.wait_for(window.page.evaluate(_LIVE_DOCUMENT_STATE), timeout=_READY_STATE_TIMEOUT_S),
+        )
+    except PlaywrightError:
+        return False
+    except TimeoutError:
+        return False
+    return ready_state == "loading" or _has_body_content(f"<html>{live_body}</html>")
+
+
 async def page_markdown(window: BrowserWindow, snapshot: BrowserSnapshot, params: ScrapeParams) -> str:
     """The page as markdown: the whole page (markdownify), or only its main content (html2text) with
     `params.only_main_content`, followed by each iframe's content in document order unless `params.selector`
@@ -386,6 +433,9 @@ async def page_markdown(window: BrowserWindow, snapshot: BrowserSnapshot, params
     if params.only_main_content:
         content = _main_content_markdown(snapshot, params)
     else:
+        if params.selector is None and await _body_not_parsed_yet(window, snapshot):
+            # Converting now would return little more than the title: fail like an empty page so callers retry.
+            raise EmptyPageContentError(url=snapshot.metadata.url, nb_retries=1)
         content = converter.convert(snapshot.html_content)
 
     if params.selector is None:
