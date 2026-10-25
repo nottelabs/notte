@@ -1227,3 +1227,94 @@ async def test_an_invalid_page_answer_is_asked_again_once(session: NotteSession)
     assert choice.choice == "Signup" and len(decider.states) == 2
     decider = BrokenOnce(choices=[{"answer": "YES"}] * 2)
     assert await session.acheck("Is it a form?", decider=decider) == pytest.approx(0.9)
+
+
+SHOP = """<main>
+<h1>Desk lamp</h1><p>3,99€</p>
+<section><h2>Complete with</h2>
+  <div><div><a href="#bulb"><h3>LED bulb</h3></a><p>4,99€</p></div><button id="bulb-add">Add to cart</button></div>
+  <div><div><h3>Lamp shade</h3><p>9,99€</p></div><button id="shade-add">Add to cart</button></div>
+</section>
+<section><h2>How to get it</h2><button id="lamp-add">Add to cart</button><a id="stores" href="#s">Stores</a></section>
+</main>"""
+COOKIES = """<div role="dialog" aria-label="Cookies"><h2>Your privacy</h2><button id="accept">Accept</button></div>"""
+
+
+@pytest.mark.asyncio
+async def test_same_named_elements_carry_their_context(session: NotteSession) -> None:
+    _ = await session.window.page.goto(f"data:text/html,{quote(SHOP)}")
+    ids = await _ids(session)
+    decider = FakeDecider(choices=[{"operation": "DONE"}])
+    _ = await session.aact("Add the lamp to the cart", decider=decider)
+    elements = {e["index"]: e for e in decider.states[0].elements}
+    # each "Add to cart" says which section and item it belongs to
+    assert elements[ids["bulb-add"]]["context"] == "Complete with › LED bulb"
+    assert elements[ids["shade-add"]]["context"] == "Complete with › Lamp shade"
+    assert elements[ids["lamp-add"]]["context"] == "Desk lamp › How to get it"
+    # in the target criteria and the page text too
+    criteria = decider.questions[0]["click_target"].criteria
+    assert criteria[ids["bulb-add"]]["element"] == f"[{ids['bulb-add']}] Add to cart (in: Complete with › LED bulb)"
+    assert f"[{ids['lamp-add']}] Add to cart (in: Desk lamp › How to get it)" in decider.states[0].page.text
+    # a unique name needs no context
+    assert "context" not in elements[ids["stores"]]
+    assert f"[{ids['stores']}] Stores\n" in decider.states[0].page.text + "\n"
+
+
+@pytest.mark.asyncio
+async def test_a_dialog_does_not_take_the_titles_of_the_page_behind_it(session: NotteSession) -> None:
+    from notte_core.act.context import element_contexts
+
+    _ = await session.window.page.goto(f"data:text/html,{quote(SHOP + COOKIES)}")
+    ids = await _ids(session)
+    contexts = element_contexts(session.snapshot.dom_node)
+    assert contexts[ids["accept"]] == "Cookies › Your privacy"
+    # the title block before a card's button is the card's, not the next card's
+    assert contexts[ids["shade-add"]] == "Complete with › Lamp shade"
+
+
+@pytest.mark.asyncio
+async def test_the_writer_reads_the_context_of_a_same_named_field(session: NotteSession) -> None:
+    page = """<form><h2>Billing address</h2><label>Name <input id="billing"></label>
+<h2>Shipping address</h2><label>Name <input id="shipping"></label></form>"""
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    ids = await _ids(session)
+    decider = FakeDecider(choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["shipping"]}], texts=["Jane"])
+    _ = await session.aact("Ship to Jane", decider=decider)
+    assert decider.contexts[0].field["context"] == "Shipping address"
+    assert await session.window.page.input_value("#shipping") == "Jane"
+
+
+@pytest.mark.asyncio
+async def test_the_history_says_which_same_named_element_ran(session: NotteSession) -> None:
+    _ = await session.window.page.goto(f"data:text/html,{quote(SHOP)}")
+    ids = await _ids(session)
+    decider = FakeDecider(choices=[{"operation": "CLICK", "click_target": ids["bulb-add"]}, {"operation": "DONE"}])
+    _ = await session.aact("Add the lamp to the cart", decider=decider)
+    _ = await session.aact("Add the lamp to the cart", decider=decider)
+    assert decider.states[1].recent_actions[-1]["action"] == "Add to cart (in: Complete with › LED bulb)"
+
+
+@pytest.mark.asyncio
+async def test_the_writer_sees_the_controls_after_a_free_text_field(session: NotteSession) -> None:
+    page = """<input id="q" aria-label="Search in your own words" placeholder="Family flats in Paris with a pool">
+<button id="dates">Select dates</button><button id="guests">2 adults, 1 room</button><button>Search</button>"""
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    ids = await _ids(session)
+    decider = FakeDecider(choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["q"]}], texts=["Lisbon"])
+    _ = await session.aact("Hotels in Lisbon for 2 adults, 13 to 15 November", decider=decider)
+    # the dates and guests have their own controls: the writer is told, to type only the destination
+    assert decider.contexts[0].page["next_controls"] == ["Select dates", "2 adults, 1 room", "Search"]
+
+
+@pytest.mark.asyncio
+async def test_a_context_shared_by_same_named_elements_is_not_shown(session: NotteSession) -> None:
+    page = """<h2>Flight search</h2><input id="dep" aria-label="Departure"><button id="prev"></button>
+<button id="next"></button><input id="ret" aria-label="Return"><button id="prev2"></button>"""
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    ids = await _ids(session)
+    decider = FakeDecider(choices=[{"operation": "DONE"}])
+    _ = await session.aact("Search flights", decider=decider)
+    elements = {e["index"]: e for e in decider.states[0].elements}
+    # three unnamed buttons of the same section: "(in: Flight search)" tells none of them apart
+    assert all("context" not in elements[ids[k]] for k in ("prev", "next", "prev2"))
+    assert "(in: " not in decider.states[0].page.text

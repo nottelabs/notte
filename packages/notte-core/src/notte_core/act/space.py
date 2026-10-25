@@ -19,6 +19,7 @@ HTML (`<input placeholder="Search">`) and sends the rendered page (`I1[:]<input 
 import math
 import os
 import re
+from collections import Counter
 from collections.abc import Callable, Collection, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any, Literal
@@ -45,6 +46,7 @@ from notte_core.snapshot import ViewportData
 
 MAX_ELEMENTS = 250
 MAX_LABEL_LENGTH = 300
+MAX_CONTEXT_LENGTH = 120
 MAX_PAGE_TEXT_LENGTH = 12_000
 # the longest a WAIT lasts: it ends as soon as the page changes (see `notte_core.act.wait`)
 WAIT_MS = 3_000
@@ -98,6 +100,8 @@ class ObservedPage:
     # ids of the read-only fields (from the element signatures read after observing for an executable decision;
     # empty when unknown, as for a dry run)
     readonly: frozenset[str] = frozenset()
+    # the titles of the sections and items around each element (`notte_core.act.context`; empty when unknown)
+    contexts: Mapping[str, str] = field(default_factory=dict[str, str])
 
     @staticmethod
     def from_observation(
@@ -168,6 +172,8 @@ class Target:
     # the `type` of an `<input>` with a specific value (`_SHOWN_INPUT_TYPES`) and its format (`INPUT_FORMATS`)
     input_type: str | None = None
     value_format: str | None = None
+    # the titles of the sections and items around the element, when its name is not unique on the page
+    context: str | None = None
 
 
 @dataclass(frozen=True)
@@ -413,6 +419,36 @@ def label_elements(page: ObservedPage) -> frozenset[str]:
     return _names(page).labels
 
 
+def _contexts(page: ObservedPage, names: _Names) -> dict[str, str]:
+    """The context of each element whose name is not unique on the page (another element, or a text of the page,
+    has it: the same "Add to cart" for two products), when it tells the element apart: it says more than the name,
+    and no other element of that name has the same context (four unnamed "button"s of one form)."""
+    if not page.contexts:
+        return {}
+    counts = Counter(_key(name) for name in names.names.values())
+    blocks = _description_blocks(page.description)
+    # the texts of the page, except those that already are the name of the element next to them
+    counts.update(_key(content) for i, (key, content) in enumerate(blocks) if key == "_" and i not in names.used)
+    shared = Counter((_key(names.names[key]), context) for key, context in page.contexts.items() if key in names.names)
+    return {
+        key: context
+        for key, context in page.contexts.items()
+        if key in names.names
+        and counts[_key(names.names[key])] > 1
+        and shared[(_key(names.names[key]), context)] == 1
+        and not _same_text(context, names.names[key])
+    }
+
+
+def _key(text: str) -> str:
+    return " ".join(text.split()).casefold()
+
+
+def _in_context(label: str, context: str | None) -> str:
+    """An element's marker in the page text, with its context (`[B3] Add to cart (in: Complete with › Bulb)`)."""
+    return label if context is None else f"{label} (in: {context})"
+
+
 def covered_by_dialog(description: str) -> bool:
     """An open dialog hides the page: the observation shows only the dialog (its component header, without
     the page's own `WebArea` one)."""
@@ -434,6 +470,7 @@ def accessible_text(page: ObservedPage, display_text: Callable[[str], str] = str
 def _accessible_lines(page: ObservedPage, display_text: Callable[[str], str]) -> list[tuple[str | None, str]]:
     """`accessible_text` as (element id or None, line) pairs."""
     names = _names(page)
+    contexts = _contexts(page, names)
     lines: list[tuple[str | None, str]] = []
     for i, (key, content) in enumerate(_description_blocks(page.description)):
         if i in names.used:
@@ -448,7 +485,11 @@ def _accessible_lines(page: ObservedPage, display_text: Callable[[str], str]) ->
         elif key == "_":
             lines.append((None, content))
         else:
-            marker = f"[{key}] {_cut(display_text(names.names.get(key, key)), MAX_LABEL_LENGTH)}"
+            context = contexts.get(key)
+            marker = f"[{key}] " + _in_context(
+                _cut(display_text(names.names.get(key, key)), MAX_LABEL_LENGTH),
+                None if context is None else _cut(display_text(context), MAX_CONTEXT_LENGTH),
+            )
             options = _rendered_options(page, key, content)
             if options:
                 marker += f" (options: {_cut(display_text(', '.join(options)), MAX_LABEL_LENGTH)})"
@@ -724,7 +765,9 @@ def build_act_space(
     # Determine IDs, roles and supported operations from the original page. Only
     # presentation strings pass through display_text, before their display caps.
     lines = description_lines(page.description)
-    names = _names(page) if labels == "accessible" else None
+    all_names = _names(page)
+    names = all_names if labels == "accessible" else None
+    contexts = _contexts(page, all_names)
     space = ActSpace()
     has_live_state = len(page.states) > 0
 
@@ -752,6 +795,9 @@ def build_act_space(
             element["type"] = input_type
         if value_format is not None:
             element["format"] = value_format
+        context = contexts.get(action.id)
+        if context is not None:
+            element["context"] = _cut(display_text(context), MAX_CONTEXT_LENGTH)
         current = element.get("value")
         base: dict[str, Any] = {
             k: element[k] for k in ("role", "type", "format", "checked", "selected", "expanded") if k in element
@@ -760,7 +806,13 @@ def build_act_space(
         def target(kind: TargetKind, key: str | None = None, option: SelectOption | None = None) -> Target:
             key = key or action.id
             shown = label if option is None else f"{label} → {display_text(option.label)}"
-            criteria = {"element": f"[{key}] {shown}", "current_value": current or "", **base}
+            # the context goes in the element's text, as in the page text: a criterion key of its own swayed Jev's
+            # operation answer on pages where it did not matter
+            criteria = {
+                "element": f"[{key}] {_in_context(shown, element.get('context'))}",
+                "current_value": current or "",
+                **base,
+            }
             if option is not None:
                 criteria["option_value"] = display_text(option.value)
             return Target(
@@ -776,6 +828,7 @@ def build_act_space(
                 filled=state is not None and state.filled is True,
                 input_type=input_type,
                 value_format=value_format,
+                context=element.get("context"),
             )
 
         match role:

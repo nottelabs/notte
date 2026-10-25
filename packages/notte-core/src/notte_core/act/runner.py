@@ -79,6 +79,8 @@ WRITER_HISTORY_SIZE = 6
 WRITER_PAGE_TEXT_LENGTH = 6_000
 # the other fields with a value sent to the writer (`page.fields`), the closest to the target
 WRITER_FIELDS = 12
+# the elements right after the target sent to the writer (`page.next_controls`)
+WRITER_NEXT_CONTROLS = 4
 # the `error` of a history entry for a field the writer had no value for (nothing was typed)
 NO_VALUE = "NoValueFromInstruction"
 
@@ -303,7 +305,8 @@ async def run_act(
 
         if target is not None:
             action: BaseAction = target_action(target, None if text is None else substitute_variables(text, variables))
-            label = target.label
+            # which of two same-named elements ran ("Add to cart" of the product, not of the accessory)
+            label = target.label if target.context is None else f"{target.label} (in: {target.context})"
             if isinstance(action, CheckAction):
                 # "CLICK <checkbox>" alone reads as checking it: say which way it went
                 label = f"{'Check' if action.value else 'Uncheck'} {label}"
@@ -450,17 +453,31 @@ def _write_context(
         field["type"] = target.input_type
     if target.value_format is not None:
         field["format"] = target.value_format
+    if target.context is not None:
+        field["context"] = target.context
     text = page_text(page, labels, history.privacy.text, WRITER_PAGE_TEXT_LENGTH, focus=target.element_id)
     return WriteContext(
         goal=history.privacy.text(instruction),
         field=field,
-        page={"title": page.title, "text": text, "fields": _other_fields(space, target.element_id)},
+        page={
+            "title": page.title,
+            "text": text,
+            "fields": _other_fields(space, target.element_id),
+            "next_controls": _next_controls(space, target.element_id),
+        },
         recent_actions=history.privacy.payload(
             [{"action": e["action"], "text": e["text"]} for e in history.recent(WRITER_HISTORY_SIZE)]
         ),
         variables=sorted(variables),
         credentials=_credentials(driver.has_vault),
     )
+
+
+def _next_controls(space: ActSpace, element_id: str) -> list[str]:
+    """The labels of the elements right after the target (`WRITER_NEXT_CONTROLS`): the form's other controls (a
+    date picker, a guests selector) take their part of the goal, not a free-text field before them."""
+    position = next((i for i, e in enumerate(space.elements) if e["index"] == element_id), len(space.elements))
+    return [e["label"] for e in space.elements[position + 1 : position + 1 + WRITER_NEXT_CONTROLS]]
 
 
 def _other_fields(space: ActSpace, element_id: str) -> list[dict[str, str]]:
