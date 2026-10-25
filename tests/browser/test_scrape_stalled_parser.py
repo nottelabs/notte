@@ -124,11 +124,35 @@ async def test_selector_scrape_of_a_loading_page_is_left_alone(session: NotteSes
 
 
 @pytest.mark.asyncio
-async def test_loaded_page_with_an_empty_body_still_scrapes(session: NotteSession) -> None:
+@pytest.mark.parametrize(
+    "body,expected",
+    [
+        ("", None),
+        ('<img style="display: none" src="https://pixel.test/p.gif">', None),
+        ('<noscript><img src="https://pixel.test/p.gif"></noscript>', None),
+        ('<iframe style="display: none" src="https://frame.test/"></iframe>', "framed content"),
+    ],
+    ids=["empty", "hidden-image", "noscript-pixel", "hidden-iframe"],
+)
+async def test_loaded_page_without_visible_body_content_still_scrapes(
+    session: NotteSession, body: str, expected: str | None
+) -> None:
     async def serve(route: Route) -> None:
-        await route.fulfill(body=EMPTY_BODY, content_type="text/html")
+        if route.request.url == "https://frame.test/":
+            await route.fulfill(body=FRAME, content_type="text/html")
+        elif route.request.url == "https://example.test/":
+            await route.fulfill(
+                body=EMPTY_BODY.replace("<body></body>", f"<body>{body}</body>"), content_type="text/html"
+            )
+        else:
+            await route.fulfill(body=b"", content_type="image/gif")
 
     await session.window.page.route("**/*", serve)
     _ = await session.window.page.goto("https://example.test/", wait_until="load")
 
-    assert (await _markdown(session)).strip() == "Empty page"
+    markdown = await _markdown(session)
+    if expected is None:
+        assert markdown.strip() == "Empty page"
+    else:
+        # The hidden iframe's content still reaches the frame scrape.
+        assert markdown.startswith("Empty page") and expected in markdown

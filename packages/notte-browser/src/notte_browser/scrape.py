@@ -379,12 +379,9 @@ _READY_STATE_TIMEOUT_S = 1
 # Body elements whose text is not page content, and body elements that are content without text.
 _NON_CONTENT_TAGS = ("script", "style", "noscript", "template")
 _CONTENT_ELEMENTS = ("iframe", "img")
-# Page-side counterpart of `_has_body_content`, read only when the snapshot's body is empty.
-_LIVE_DOCUMENT_STATE = """() => {
-    const body = document.body;
-    const content = body !== null && (body.innerText.trim() !== "" || body.querySelector("iframe, img") !== null);
-    return [document.readyState, content];
-}"""
+# The live document's state and body, read only when the snapshot's body is empty. The body is judged by
+# `_has_body_content` like the snapshot's, so both checks apply the same rules.
+_LIVE_DOCUMENT_STATE = """() => [document.readyState, document.body === null ? "" : document.body.outerHTML]"""
 
 
 def _has_body_content(html: str) -> bool:
@@ -414,15 +411,15 @@ async def _body_not_parsed_yet(window: BrowserWindow, snapshot: BrowserSnapshot)
     if _has_body_content(snapshot.html_content):
         return False
     try:
-        ready_state, live_content = cast(
-            tuple[str, bool],
+        ready_state, live_body = cast(
+            tuple[str, str],
             await asyncio.wait_for(window.page.evaluate(_LIVE_DOCUMENT_STATE), timeout=_READY_STATE_TIMEOUT_S),
         )
     except PlaywrightError:
         return False
     except TimeoutError:
         return False
-    return ready_state == "loading" or live_content
+    return ready_state == "loading" or _has_body_content(f"<html>{live_body}</html>")
 
 
 async def page_markdown(window: BrowserWindow, snapshot: BrowserSnapshot, params: ScrapeParams) -> str:
