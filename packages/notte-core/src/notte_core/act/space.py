@@ -19,6 +19,7 @@ HTML (`<input placeholder="Search">`) and sends the rendered page (`I1[:]<input 
 import math
 import os
 import re
+from collections import Counter
 from collections.abc import Callable, Collection, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any, Literal
@@ -184,6 +185,8 @@ class ActSpace:
     controls: dict[str, Control] = field(default_factory=dict)
     # the page has a file input (no operation uploads a file)
     file_input: bool = False
+    # the labels of the fields holding text act() typed that is not submitted yet (`submitted: false`)
+    unsubmitted: list[str] = field(default_factory=list)
 
     @property
     def operations(self) -> dict[str, str]:
@@ -192,9 +195,11 @@ class ActSpace:
             # a dropdown option that is not listed (`more_options`) is picked by typing its label
             operations["TYPE_TEXT"] = prompts.TYPE_TEXT_OPTION
         operations.update({key: control.label for key, control in self.controls.items()})
-        operations.update(
-            DONE=prompts.DONE, BLOCKED=prompts.BLOCKED_FILE_UPLOAD if self.file_input else prompts.BLOCKED
-        )
+        done = prompts.DONE
+        if self.unsubmitted:
+            fields = ", ".join(repr(label) for label in self.unsubmitted)
+            done += " " + prompts.DONE_UNSUBMITTED.format(fields=fields)
+        operations.update(DONE=done, BLOCKED=prompts.BLOCKED_FILE_UPLOAD if self.file_input else prompts.BLOCKED)
         return operations
 
 
@@ -481,6 +486,43 @@ def _empty_listboxes(page: ObservedPage) -> frozenset[str]:
     return frozenset(empty)
 
 
+def find_field(page: ObservedPage, name: str, value: str) -> str | None:
+    """The id of the field named `name` (its accessible name) whose live value is `value`, or None (no such field,
+    or a page without live state)."""
+    names = accessible_names(page)
+    for action in page.actions:
+        state = page.states.get(action.id)
+        if names.get(action.id) != name or state is None or state.value is None:
+            continue
+        if state.value == value or (state.value_truncated and value.startswith(state.value)):
+            return action.id
+    return None
+
+
+def changed_beyond(before: ObservedPage, after: ObservedPage, field: str, values: Collection[str]) -> bool:
+    """Typing in the field `field` of `before` changed the page beyond the field: text or elements of `before` are
+    gone from `after` (a live filter, results replaced, a popup over the page). The field, suggestion lists and
+    their options, and text that repeats one of the field's `values` (before and after typing) are left out."""
+    compact = {"".join(value.split()).casefold() for value in values}
+    gone = _content(before, field) - _content(after, None)
+    return any("".join(line.split()).casefold() not in compact for line in gone)
+
+
+def _content(page: ObservedPage, field: str | None) -> Counter[str]:
+    """The lines of the page text without element ids, the element `field`, suggestion lists and options."""
+    rendered = description_lines(page.description)
+    actions = {action.id: action for action in page.actions}
+    content: Counter[str] = Counter()
+    for key, line in _accessible_lines(page, str):
+        if key is not None:
+            action = actions.get(key)
+            if key == field or (action is not None and _role(action, rendered.get(key, "")) in ("option", "listbox")):
+                continue
+            line = line.removeprefix(f"[{key}] ")
+        content[" ".join(line.split())] += 1
+    return content
+
+
 def _rendered_options(page: ObservedPage, key: str, rendered: str) -> list[str]:
     """The option labels of a `<select>` rendered over several lines, when the live state does not list them
     (an observation without it): the decider and the writer still see what can be chosen."""
@@ -746,10 +788,12 @@ def build_act_space(
     labels: LabelMode = "html",
     display_cut: Callable[[str], str] | None = None,
     no_text: Collection[tuple[str, str]] = (),
+    unsubmitted: Collection[str] = (),
 ) -> ActSpace:
     """`display_text` masks the presentation strings; `display_cut` (default `display_text`) the live values the
     browser cut, where a protected value can start at the cut. `no_text`: the (element id, label) of the fields
-    the writer had no value for, not offered to TYPE_TEXT again."""
+    the writer had no value for, not offered to TYPE_TEXT again. `unsubmitted`: the ids of the fields holding text
+    act() typed that nothing submitted yet (see `ActHistory`), shown with `submitted: false`."""
     # Determine IDs, roles and supported operations from the original page. Only
     # presentation strings pass through display_text, before their display caps.
     lines = description_lines(page.description)
@@ -782,6 +826,9 @@ def build_act_space(
             element["type"] = input_type
         if value_format is not None:
             element["format"] = value_format
+        if action.id in unsubmitted:
+            element["submitted"] = False
+            space.unsubmitted.append(label)
         current = element.get("value")
         base: dict[str, Any] = {
             k: element[k] for k in ("role", "type", "format", "checked", "selected", "expanded") if k in element
