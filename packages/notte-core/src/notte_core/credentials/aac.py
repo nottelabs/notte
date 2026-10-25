@@ -112,12 +112,16 @@ class AacVault(BaseVault, SyncResource):
         if self.token and self._home is None:
             # pair in a private $HOME: the new connection is the only one cached there, so later requests select it
             self._home = tempfile.mkdtemp(prefix="notte-aac-")
-        # `--token` and `--session` are mutually exclusive in `aac connect`
+        # `aac` reads the token from AAC_TOKEN, which keeps it out of the process table; an AAC_TOKEN
+        # inherited from this process would pair again with a token already used
+        env = {name: value for name, value in os.environ.items() if name != "AAC_TOKEN"}
+        if self._home is not None:
+            env["HOME"] = self._home
+        # the token and `--session` are mutually exclusive in `aac connect`
         if self.token:
-            cmd.extend(["--token", self.token])
+            env["AAC_TOKEN"] = self.token
         elif self._session and self._home is None:
             cmd.extend(["--session", self._session])
-        env = None if self._home is None else {**os.environ, "HOME": self._home}
 
         try:
             # the pairing handshake comes on top of the credential timeout

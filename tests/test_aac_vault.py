@@ -22,7 +22,7 @@ CONNECTION_FAILED = {"error": {"code": "connection_failed", "message": "connecti
 
 
 class FakeAac:
-    """An `aac` executable that prints `stdout`, exits with `exit_code` and records each call's arguments and $HOME."""
+    """An `aac` executable that prints `stdout`, exits with `exit_code` and records each call's arguments, $HOME and $AAC_TOKEN."""
 
     def __init__(self, tmp_path: Path, stdout: str, exit_code: int = 0) -> None:
         self.path: Path = tmp_path / "aac"
@@ -33,7 +33,7 @@ class FakeAac:
             "#!/usr/bin/env python3\n"
             "import json, os, sys\n"
             f"with open({str(self.calls_file)!r}, 'a') as f:\n"
-            "    f.write(json.dumps({'args': sys.argv[1:], 'home': os.environ.get('HOME')}) + '\\n')\n"
+            "    f.write(json.dumps({'args': sys.argv[1:], 'home': os.environ.get('HOME'), 'token': os.environ.get('AAC_TOKEN')}) + '\\n')\n"
             f"sys.stdout.write(open({str(output_file)!r}).read())\n"
             f"sys.exit({exit_code})\n"
         )
@@ -51,6 +51,10 @@ class FakeAac:
     @property
     def homes(self) -> list[str]:
         return [record["home"] for record in self._records()]  # pyright: ignore[reportReturnType]
+
+    @property
+    def tokens(self) -> list[str | None]:
+        return [record["token"] for record in self._records()]  # pyright: ignore[reportReturnType]
 
 
 def _credential_response(credential: Payload) -> str:
@@ -154,10 +158,19 @@ class TestAacVaultPairing:
         _ = asyncio.run(vault.get_credentials_async("https://github.com"))
         _ = asyncio.run(vault.get_credentials_async("https://github.com"))
 
-        first, second = fake_aac.calls
-        assert _flag(first, "--token") == "ABC-DEF-123"
-        assert "--token" not in second
+        # through the environment: the command line of a process is visible to other local users
+        assert fake_aac.tokens == ["ABC-DEF-123", None]
+        assert all("ABC-DEF-123" not in args and "--token" not in args for args in fake_aac.calls)
         assert vault.token is None
+
+    def test_does_not_pass_an_inherited_token_after_pairing(
+        self, fake_aac: FakeAac, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("AAC_TOKEN", "ENV-TOK-123")
+        with AacVault(aac_path=str(fake_aac.path)) as vault:
+            _ = vault.get_credentials("https://github.com")
+            _ = vault.get_credentials("https://github.com")
+        assert fake_aac.tokens == ["ENV-TOK-123", None]
 
     def test_pairs_in_a_private_home_removed_on_stop(self, fake_aac: FakeAac, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("HOME", "/home/user")
@@ -180,8 +193,7 @@ class TestAacVaultPairing:
             assert vault.token == "ABC-DEF-123"
             _ = vault.get_credentials("https://github.com")
 
-        first, second = fake_aac.calls
-        assert _flag(first, "--token") == _flag(second, "--token") == "ABC-DEF-123"
+        assert fake_aac.tokens == ["ABC-DEF-123", "ABC-DEF-123"]
         assert "/home/user" not in fake_aac.homes
         assert fake_aac.homes[0] != fake_aac.homes[1]
 
@@ -205,7 +217,7 @@ class TestAacVaultPairing:
 
         [args] = fake_aac.calls
         assert _flag(args, "--session") == "a1b2c3"
-        assert "--token" not in args
+        assert fake_aac.tokens == [None]
         assert fake_aac.homes == ["/home/user"]
 
     def test_reads_token_from_env(self, fake_aac: FakeAac, monkeypatch: pytest.MonkeyPatch) -> None:
