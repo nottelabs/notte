@@ -29,6 +29,8 @@ A navigation to a new document ends the tracking: the session's own load wait ha
 
 from dataclasses import dataclass
 
+from notte_core.act.wait import NESTED_ROOTS_JS
+
 QUIET_MS = 200
 SETTLE_MS = 1_000
 GRACE_MS = 150
@@ -45,15 +47,25 @@ TRACKED_REQUESTS = frozenset({"document", "fetch", "xhr"})
 # mutations of a render in the same task are reported), and, after typing, whether the visible suggestions
 # changed (`null` unless the focused element autocompletes).
 SETTLE_TRACKER_JS = """() => {
+    // the page, its same-origin frames and open shadow roots: an autocomplete field can be in any of them
+    const roots = NESTED_ROOTS;
     const t0 = performance.now();
     const now = () => performance.now() - t0;
     const tracker = { first: null, last: null, dom: null, urlAt: null, url: location.href };
     const deepActive = () => {
         let element = document.activeElement;
-        while (element && element.shadowRoot && element.shadowRoot.activeElement) {
-            element = element.shadowRoot.activeElement;
+        for (;;) {
+            if (element && element.shadowRoot && element.shadowRoot.activeElement) {
+                element = element.shadowRoot.activeElement;
+                continue;
+            }
+            let inner = null;
+            if (element && (element.tagName === "IFRAME" || element.tagName === "FRAME")) {
+                try { inner = element.contentDocument && element.contentDocument.activeElement; } catch (e) {}
+            }
+            if (!inner || inner === element) return element;
+            element = inner;
         }
-        return element;
     };
     const autocompletes = (element) => {
         if (!element || element.tagName === "SELECT") return false;
@@ -63,7 +75,7 @@ SETTLE_TRACKER_JS = """() => {
             || (autocomplete !== null && autocomplete !== "none")
             || popup === "listbox" || popup === "true";
     };
-    const suggestions = () => [...document.querySelectorAll("[role=option]")]
+    const suggestions = () => roots.flatMap((root) => [...root.querySelectorAll("[role=option]")])
         .filter((option) => {
             const box = option.getBoundingClientRect();
             return box.width > 0 && box.height > 0;
@@ -86,7 +98,9 @@ SETTLE_TRACKER_JS = """() => {
     const observer = new MutationObserver((mutations) => {
         if (mutations.some((m) => m.type !== "attributes" || m.attributeName !== "style")) tracker.dom = changed();
     });
-    observer.observe(document, { subtree: true, childList: true, characterData: true, attributes: true });
+    for (const root of roots) {
+        observer.observe(root, { subtree: true, childList: true, characterData: true, attributes: true });
+    }
     const navigation = window.navigation;
     if (navigation) navigation.addEventListener("currententrychange", urlChanged);
     tracker.state = (typed) => {
@@ -100,7 +114,7 @@ SETTLE_TRACKER_JS = """() => {
         if (navigation) navigation.removeEventListener("currententrychange", urlChanged);
     };
     return tracker;
-}"""
+}""".replace("NESTED_ROOTS", NESTED_ROOTS_JS)
 
 
 @dataclass(frozen=True)
