@@ -383,6 +383,8 @@
 
 	// Add a WeakMap cache for XPath strings
 	const xpathCache = new WeakMap();
+	// position of an element among its siblings of the same tag (see `getElementPosition`)
+	const positionCache = new WeakMap();
 
 	// // Initialize once and reuse
 	// const viewportObserver = new IntersectionObserver(
@@ -443,46 +445,45 @@
 		if (!currentElement.parentElement) {
 			return 0; // No parent means no siblings
 		}
+		if (positionCache.has(currentElement)) return positionCache.get(currentElement);
 
-		const tagName = currentElement.nodeName.toLowerCase();
-
-		const siblings = Array.from(currentElement.parentElement.children)
-			.filter((sib) => sib.nodeName.toLowerCase() === tagName);
-
-		if (siblings.length === 1) {
-			return 0; // Only element of its type
+		// the positions of all the children are computed at once: one pass over the siblings, not one per child
+		const children = currentElement.parentElement.children;
+		const counts = new Map();
+		for (const child of children) {
+			const tagName = child.nodeName.toLowerCase();
+			counts.set(tagName, (counts.get(tagName) ?? 0) + 1);
 		}
-
-		const index = siblings.indexOf(currentElement) + 1; // 1-based index
-		return index;
+		const seen = new Map();
+		for (const child of children) {
+			const tagName = child.nodeName.toLowerCase();
+			const index = (seen.get(tagName) ?? 0) + 1; // 1-based index
+			seen.set(tagName, index);
+			positionCache.set(child, counts.get(tagName) === 1 ? 0 : index); // 0: only element of its type
+		}
+		return positionCache.get(currentElement);
 	}
 
 
 	function getXPathTree(element, stopAtBoundary = true) {
 		if (xpathCache.has(element)) return xpathCache.get(element);
 
-		const segments = [];
-		let currentElement = element;
-
-		while (currentElement && currentElement.nodeType === Node.ELEMENT_NODE) {
-			// Stop if we hit a shadow root or iframe
-			if (
-				stopAtBoundary &&
-				(currentElement.parentNode instanceof ShadowRoot ||
-					currentElement.parentNode instanceof HTMLIFrameElement)
-			) {
-				break;
-			}
-
-			const position = getElementPosition(currentElement);
-			const tagName = currentElement.nodeName.toLowerCase();
+		let result = "";
+		// Stop if we hit a shadow root or iframe
+		if (
+			!stopAtBoundary ||
+			!(element.parentNode instanceof ShadowRoot || element.parentNode instanceof HTMLIFrameElement)
+		) {
+			const position = getElementPosition(element);
+			const tagName = element.nodeName.toLowerCase();
 			const xpathIndex = position > 0 ? `[${position}]` : "";
-			segments.unshift(`${tagName}${xpathIndex}`);
-
-			currentElement = currentElement.parentNode;
+			const segment = `${tagName}${xpathIndex}`;
+			// the parent's path is cached: the tree is built from the top, so it is usually already known
+			const parent = element.parentNode;
+			const parentPath = parent && parent.nodeType === Node.ELEMENT_NODE ? getXPathTree(parent, stopAtBoundary) : "";
+			result = parentPath ? `${parentPath}/${segment}` : segment;
 		}
 
-		const result = segments.join("/");
 		xpathCache.set(element, result);
 		return result;
 	}
@@ -622,15 +623,31 @@
 		const box = boxOf(parent);
 		if (getCachedComputedStyle(box)?.contentVisibility === "hidden") return true;
 		if (box.localName === "details" && !box.open && parent.closest("summary")?.parentElement !== box) return true;
-		const range = document.createRange();
-		range.selectNodeContents(textNode);
-		const rects = Array.from(range.getClientRects());
+		const rects = getTextRects(textNode);
 		// no box at all (the text of a `<textarea>`): nothing says it is hidden
 		if (rects.length === 0) return false;
 		if (rects.every((rect) => rect.width === 0 || rect.height === 0)) return true;
 		if (!rects.some(isOnScreen)) return false;
 		if (scope.ariaHidden && !scope.inControl) return true;
 		return !isRendered(parent, true);
+	}
+
+	const textRects = new WeakMap();
+
+	/**
+	 * The client rects of a text node, read once per build (`isTextNodeHidden` and `isTextNodeInViewport`
+	 * both look at them).
+	 *
+	 * @param {Text} textNode - The text node.
+	 * @returns {DOMRect[]} Its client rects.
+	 */
+	function getTextRects(textNode) {
+		if (textRects.has(textNode)) return textRects.get(textNode);
+		const range = document.createRange();
+		range.selectNodeContents(textNode);
+		const rects = Array.from(range.getClientRects());
+		textRects.set(textNode, rects);
+		return rects;
 	}
 
 	function isOnScreen(rect) {
@@ -684,9 +701,7 @@
 				}
 			}
 
-			const range = document.createRange();
-			range.selectNodeContents(textNode);
-			const rects = range.getClientRects(); // Use getClientRects for Range
+			const rects = getTextRects(textNode);
 
 			if (!rects || rects.length === 0) {
 				return false;
@@ -811,6 +826,36 @@
 		);
 	}
 
+	let hoverCursorRules = null;
+
+	/**
+	 * The `:hover` rules of the page's stylesheets that set a cursor, in stylesheet order, read once per
+	 * build: matching each element against every `:hover` rule of a large stylesheet was most of the
+	 * build. A rule without a cursor never decides the hover cursor, so it is left out.
+	 *
+	 * @returns {{baseSelector: string, cursor: string}[]} The rules, with `:hover` removed from their selector.
+	 */
+	function getHoverCursorRules() {
+		if (hoverCursorRules !== null) return hoverCursorRules;
+		hoverCursorRules = [];
+		for (const stylesheet of Array.from(document.styleSheets)) {
+			try {
+				for (const rule of Array.from(stylesheet.cssRules || [])) {
+					if (!rule.selectorText || !rule.selectorText.includes(':hover')) continue;
+					const cursor = rule.style?.cursor;
+					if (cursor && cursor !== '') {
+						// Remove :hover from selector to test match
+						hoverCursorRules.push({ baseSelector: rule.selectorText.replace(/:hover/g, ''), cursor });
+					}
+				}
+			} catch (e) {
+				// Skip CORS-protected stylesheets
+				continue;
+			}
+		}
+		return hoverCursorRules;
+	}
+
 	/**
 	 * Checks if an element has a pointer cursor including hover states.
 	 * This function analyzes both normal and :hover pseudo-class cursor values
@@ -882,46 +927,20 @@
 			// 'auto',        // Browser default
 		]);
 
-		// Parse CSS rules to find hover states
+		// Find the first `:hover` rule that matches the element and sets a cursor
 		let hoverCursor = null;
 		let foundHoverRule = false;
 
-		// Get all stylesheets
-		const stylesheets = Array.from(document.styleSheets);
-
-		for (let stylesheet of stylesheets) {
+		for (const rule of getHoverCursorRules()) {
 			try {
-				const rules = Array.from(stylesheet.cssRules || []);
-
-				for (let rule of rules) {
-					if (!rule.selectorText) continue;
-
-					// Check if this rule has :hover and matches our element
-					if (rule.selectorText.includes(':hover')) {
-						// Remove :hover from selector to test match
-						const baseSelector = rule.selectorText.replace(/:hover/g, '');
-
-						try {
-							// Check if element matches the base selector
-							if (element.matches(baseSelector)) {
-								const cursorValue = rule.style.cursor;
-								if (cursorValue && cursorValue !== '') {
-									hoverCursor = cursorValue;
-									foundHoverRule = true;
-									break;
-								}
-							}
-						} catch (e) {
-							// Skip invalid selectors
-							continue;
-						}
-					}
+				// Check if element matches the base selector
+				if (element.matches(rule.baseSelector)) {
+					hoverCursor = rule.cursor;
+					foundHoverRule = true;
+					break;
 				}
-
-				if (foundHoverRule) break;
-
 			} catch (e) {
-				// Skip CORS-protected stylesheets
+				// Skip invalid selectors
 				continue;
 			}
 		}
@@ -956,6 +975,8 @@
 		};
 	}
 
+	const pointerCache = new WeakMap();
+
 	/**
 	 * Checks if an element has a pointer cursor (clickable/interactive cursor),
 	 * including hover states. This function focuses specifically on cursor-based detection.
@@ -964,10 +985,14 @@
 	 * @returns {boolean} Whether the element has a pointer cursor (normal or hover).
 	 */
 	function isPointerElementWithHover(element) {
+		// asked up to three times per element (`isInteractiveElement`, `pointerElement`, the distinct interaction check)
+		if (pointerCache.has(element)) return pointerCache.get(element);
 		const cursorStates = getElementCursorStates(element);
 
 		// Element is interactive if it has pointer cursor in normal state OR hover state
-		return cursorStates.isInteractive || cursorStates.isHoverInteractive;
+		const result = cursorStates.isInteractive || cursorStates.isHoverInteractive;
+		pointerCache.set(element, result);
+		return result;
 	}
 
 	const NON_INTERACTIVE_CURSORS = new Set(['not-allowed', 'no-drop', 'wait', 'progress']);
@@ -1406,7 +1431,7 @@
 		let rect = { top: elementRect.top, bottom: elementRect.bottom, left: elementRect.left, right: elementRect.right };
 		// the element whose box `rect` is: the element, or the scrollable ancestor it can be scrolled anywhere in
 		let owner = element;
-		for (let ancestor = element; ancestor && ancestor !== document.body; ancestor = ancestor.parentElement) {
+		for (let ancestor = element; ancestor && ancestor !== document.body; ancestor = reachAncestor(ancestor)) {
 			const style = getCachedComputedStyle(ancestor);
 			if (!style) continue;
 			const box = ancestor === element ? null : getCachedBoundingRect(ancestor);
@@ -1436,7 +1461,32 @@
 		return false;
 	}
 
-	const EXCLUDED_CONTENT = "svg, script, style, link, meta, noscript, template";
+	const reachAncestors = new WeakMap();
+
+	/**
+	 * The nearest ancestor of an element that `isOutOfReach` has to look at: one that clips its overflow
+	 * (`visibleRange` is not null along an axis) or is fixed, below `<body>`. The others change nothing
+	 * there. Remembered per element: the off-screen controls of a page share most of their ancestors.
+	 *
+	 * @param {HTMLElement} element - The element.
+	 * @returns {HTMLElement | null} The ancestor, or null when there is none.
+	 */
+	function reachAncestor(element) {
+		if (reachAncestors.has(element)) return reachAncestors.get(element);
+		let ancestor = element.parentElement;
+		if (ancestor === document.body) ancestor = null;
+		if (ancestor !== null) {
+			const style = getCachedComputedStyle(ancestor);
+			const rect = getCachedBoundingRect(ancestor);
+			const matters = style.position === "fixed" ||
+				visibleRange(ancestor, rect, style, true) !== null || visibleRange(ancestor, rect, style, false) !== null;
+			if (!matters) ancestor = reachAncestor(ancestor);
+		}
+		reachAncestors.set(element, ancestor);
+		return ancestor;
+	}
+
+	const EXCLUDED_CONTENT ="svg, script, style, link, meta, noscript, template";
 
 	/**
 	 * Checks if an element has text that the page description keeps: a non-empty text node that is
