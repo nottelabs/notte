@@ -14,6 +14,8 @@ changes. The page has settled (`settled`) when:
 - nothing changed for `QUIET_MS` (or the DOM has kept changing for `SETTLE_MS`: some pages never stop), and
 - something changed, or the action's grace passed: an action with no visible effect costs at most its grace, and
 - after a URL change within the document, the DOM changed since (the new page rendered), or `EXPECT_MS` passed;
+- the change the caller expects came (`PageSettle.wait`'s `expect`, as `act()`'s suggestions after typing), or
+  `EXPECT_MS` passed;
 and in any case `CAP_MS` after the action: a page that keeps a request open is left as it is.
 
 A navigation to a new document ends the tracking of the old one. The new document is tracked from its first render
@@ -40,6 +42,7 @@ wait that followed them before.
 
 import asyncio
 import time
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Literal, TypedDict
 from urllib.parse import urlsplit
@@ -66,12 +69,17 @@ DocumentWait = Literal["requests", "loaded"]
 # streams stay open.
 TRACKED_REQUESTS = frozenset({"document", "fetch", "xhr"})
 
-# Page-side implementation: js/settle_tracker.js, watching the roots of js/nested_roots.js with js/watch_url.js
 NESTED_ROOTS_JS = script("nested_roots.js").strip()
 WATCH_URL_JS = script("watch_url.js").strip()
-SETTLE_TRACKER_JS = (
-    script("settle_tracker.js").replace("NESTED_ROOTS", NESTED_ROOTS_JS).replace("WATCH_URL", WATCH_URL_JS)
-)
+
+
+def page_script(js: str) -> str:
+    """A page script that watches the page: `NESTED_ROOTS` in it is js/nested_roots.js, `WATCH_URL` js/watch_url.js."""
+    return js.replace("NESTED_ROOTS", NESTED_ROOTS_JS).replace("WATCH_URL", WATCH_URL_JS)
+
+
+# Page-side implementation: js/settle_tracker.js
+SETTLE_TRACKER_JS = page_script(script("settle_tracker.js"))
 
 
 def _origin(url: str) -> tuple[str, str] | None:
@@ -103,6 +111,8 @@ class SettleState:
     url_changed_ms: float | None = None
     # how long an action with no visible effect is waited for
     grace_ms: float = GRACE_MS
+    # whether the change the caller expects came; None: none expected
+    expected: bool | None = None
 
 
 def settled(state: SettleState) -> bool:
@@ -117,6 +127,8 @@ def settled(state: SettleState) -> bool:
         if elapsed < state.grace_ms:
             return False
     elif elapsed - last < QUIET_MS and elapsed - first < SETTLE_MS:
+        return False
+    if state.expected is False and elapsed < EXPECT_MS:
         return False
     url, dom = state.url_changed_ms, state.last_dom_change_ms
     if url is None or (dom is not None and dom >= url):
@@ -230,12 +242,15 @@ class PageSettle:
     def _left_s(self, cap_ms: float) -> float:
         return max(cap_ms - (time.perf_counter() - self._began) * 1000, 0) / 1000
 
-    async def _poll(self, grace_ms: float, *, requests: bool = True) -> None:
+    async def _poll(
+        self, grace_ms: float, *, requests: bool = True, expect: Callable[[], Awaitable[bool | None]] | None = None
+    ) -> None:
         """Until the current document settles or a tab opens. Without `requests`, on the DOM alone."""
         assert self._tracker is not None
         first_page_change: float | None = None
         while not self.opened:
             page: _PageState = await self._tracker.evaluate("t => t.state()")
+            expected = None if expect is None else await expect()
             # times since the action: its input event in the page, else its end when the document was tracked from
             # before it, else since the document was tracked
             shift = page["inputAt"] if page["inputAt"] is not None else max((self._began - self._started) * 1000, 0)
@@ -265,6 +280,7 @@ class PageSettle:
                 last_dom_change_ms=since(page["dom"]),
                 url_changed_ms=since(page["urlAt"]),
                 grace_ms=grace_ms,
+                expected=expected,
             )
             if settled(state):
                 return
@@ -318,14 +334,21 @@ class PageSettle:
             # a navigation again (the tracker is gone) or a closed page
             _ = task.result()
 
-    async def wait(self, *, grace_ms: float = GRACE_MS, document: DocumentWait = "requests") -> None:
+    async def wait(
+        self,
+        *,
+        grace_ms: float = GRACE_MS,
+        document: DocumentWait = "requests",
+        expect: Callable[[], Awaitable[bool | None]] | None = None,
+    ) -> None:
         """Until the page settles, at most `CAP_MS` after the action started; after a navigation to a new document,
-        until that document is ready as `document` says, at most `timeout_goto_ms` after the action started. Never
+        until that document is ready as `document` says, at most `timeout_goto_ms` after the action started. On the
+        same document, `expect` tells whether the change the caller expects came (None: none expected). Never
         raises: a page that does not settle in time is left as it is."""
         if self._tracker is not None:
             try:
                 async with asyncio.timeout(self._left_s(CAP_MS)):
-                    await self._poll(grace_ms)
+                    await self._poll(grace_ms, expect=expect)
                 return
             except TimeoutError:
                 return

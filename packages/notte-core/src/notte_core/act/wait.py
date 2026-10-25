@@ -4,7 +4,7 @@ A WAIT is chosen when the needed control is not ready yet (a disabled field, res
 A fixed delay is either too short for slow pages (the decider sees the same page and gives up) or wasted
 on fast ones. The page script below returns as soon as the DOM changes and then stays quiet for
 `QUIET_MS` (at most `SETTLE_MS` after the first change, for pages that never stop changing), or after
-`timeout_ms` without a change (a DOM change or a URL change within the document), in the page, its same-origin frames or its open shadow roots (up to `MAX_ROOTS`).
+`timeout_ms` without a change (a DOM change or a URL change within the document), in the page, its same-origin frames or its open shadow roots.
 Inline `style` changes (animations) do not count. A navigation also ends
 the wait (the browser destroys the page script, or the URL changed); the session reports it as a change. Any
 other failure of the script is a failed WAIT.
@@ -23,48 +23,9 @@ from notte_core.observation import ExecutionResult
 
 QUIET_MS = 200
 SETTLE_MS = 1_000
-# the most documents and shadow roots watched: the page, its same-origin frames and its open shadow roots
-MAX_ROOTS = 50
-
-# An expression: the page's document, then its same-origin frames' documents and open shadow roots (nested ones
-# too), at most `MAX_ROOTS`. The page scripts that watch the page (WAIT, the settle) observe all of them.
-NESTED_ROOTS_JS = f"""(() => {{
-    const roots = [document];
-    for (let i = 0; i < roots.length && roots.length < {MAX_ROOTS}; i++) {{
-        for (const el of roots[i].querySelectorAll("*")) {{
-            if (roots.length >= {MAX_ROOTS}) break;
-            if (el.shadowRoot) roots.push(el.shadowRoot);
-            if (el.tagName === "IFRAME" || el.tagName === "FRAME") {{
-                try {{ if (el.contentDocument) roots.push(el.contentDocument); }} catch (e) {{}}
-            }}
-        }}
-    }}
-    return roots;
-}})()"""
-
-# A function: `watchUrl(onChange)` calls `onChange()` when the page's URL changes within the document (pushState,
-# replaceState, a hash change), even with no DOM change, and returns a function that stops watching. The
-# Navigation API's `currententrychange` fires within the change; a 50 ms poll covers the rest.
-WATCH_URL_JS = """(onChange) => {
-    let url = location.href;
-    const check = () => {
-        if (location.href === url) return;
-        url = location.href;
-        onChange();
-    };
-    const navigation = window.navigation;
-    if (navigation) navigation.addEventListener("currententrychange", check);
-    window.addEventListener("hashchange", check);
-    window.addEventListener("popstate", check);
-    const poll = setInterval(check, 50);
-    return () => {
-        if (navigation) navigation.removeEventListener("currententrychange", check);
-        window.removeEventListener("hashchange", check);
-        window.removeEventListener("popstate", check);
-        clearInterval(poll);
-    };
-}"""
-
+# `NESTED_ROOTS` and `WATCH_URL` are the session's page scripts (`notte_browser.settle`): the page's document, its
+# same-origin frames' documents and open shadow roots, and `watchUrl(onChange)`, which calls `onChange()` when the
+# URL changes within the document (pushState, replaceState, a hash change), even with no DOM change.
 WAIT_FOR_CHANGE_JS = f"""(timeoutMs) => new Promise((resolve) => {{
     let changed = false;
     let navigated = false;
@@ -91,9 +52,9 @@ WAIT_FOR_CHANGE_JS = f"""(timeoutMs) => new Promise((resolve) => {{
         if (mutations.some((m) => m.type !== "attributes" || m.attributeName !== "style")) change();
     }});
     // a navigation within the document (pushState, a hash change) is a change too, DOM change or not
-    stopUrl = ({WATCH_URL_JS})(() => {{ navigated = true; change(); }});
+    stopUrl = (WATCH_URL)(() => {{ navigated = true; change(); }});
     // act() also targets elements in same-origin frames and open shadow roots: watch them too
-    const roots = {NESTED_ROOTS_JS};
+    const roots = NESTED_ROOTS;
     for (const root of roots) {{
         observer.observe(root, {{ subtree: true, childList: true, characterData: true, attributes: true }});
     }}
