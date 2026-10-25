@@ -95,13 +95,7 @@ _[:]Phone
 _[:]<input type="tel" value="" placeholder="Phone"></input>
 _[:]<button aria_label="More information about Phone"></button>
 _[:]<input type="text" value="" aria_label="First name"></input>
-_[:]<input type="text" value="" aria_label="Last name"></input>
-_[:]<input type="text" value="" aria_label="Company"></input>
-_[:]<input type="text" value="" aria_label="Address"></input>
-_[:]<input type="text" value="" aria_label="Apartment, suite, etc."></input>
-_[:]<input type="text" value="" aria_label="City"></input>
-_[:]<input type="text" value="US" aria_label="Country/Region"></input>
-_[:]<input type="text" value="CA" aria_label="Province"></input>
+_[:]<input type="checkbox"></input>
 _[:]Text me with news and offers
 _[:]<button>Continue to shipping</button>
 _[:]<a>Return to cart</a>

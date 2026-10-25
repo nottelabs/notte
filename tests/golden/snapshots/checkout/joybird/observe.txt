@@ -77,6 +77,7 @@ _[:]Zip code *
 I9[:]<input type="text" value="" placeholder="" name="zipcode"></input>
 _[:]Phone (delivery contact) *
 I10[:]<input type="tel" value="" placeholder="" name="phone_number"></input>
+_[:]<input type="checkbox"></input>
 _[:]I'd also like to receive shipping updates via text message. By signing up, you agree to our
 _[:]Privacy Policy.
 _[:]<button>Continue to delivery</button>

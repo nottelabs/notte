@@ -1276,6 +1276,8 @@
 	}
 
 	const OFFSCREEN_CONTROL_TAGS = new Set(['a', 'button', 'input', 'select', 'textarea', 'option']);
+	// form fields, named by the label next to them rather than by their content
+	const FIELD_TAGS = new Set(['input', 'select', 'textarea']);
 
 	/**
 	 * Checks if an element is a link, button, form field or option by its tag or ARIA role: the controls
@@ -1307,6 +1309,30 @@
 		const outside = rect.bottom < -viewportExpansion || rect.top > window.innerHeight + viewportExpansion;
 		const across = rect.right > -viewportExpansion && rect.left < window.innerWidth + viewportExpansion;
 		return outside && across;
+	}
+
+	/**
+	 * Checks if an element is laid out outside the box of an ancestor that clips its overflow without
+	 * scrolling (`overflow: hidden` or `clip`, as carousels and "show more" sections are): scrolling the
+	 * page does not reveal it. A scrollable ancestor (`auto`, `scroll`) does not count, nor do `<body>` and
+	 * `<html>`, whose overflow is the page's.
+	 *
+	 * @param {HTMLElement} element - The element to check.
+	 * @returns {boolean} Whether a clipping ancestor hides the element.
+	 */
+	function isClippedAway(element) {
+		const rect = getCachedBoundingRect(element);
+		for (let ancestor = element.parentElement; ancestor && ancestor !== document.body; ancestor = ancestor.parentElement) {
+			const style = getCachedComputedStyle(ancestor);
+			const clipsY = style?.overflowY === "hidden" || style?.overflowY === "clip";
+			const clipsX = style?.overflowX === "hidden" || style?.overflowX === "clip";
+			if ((!clipsY && !clipsX) || escapesClip(element, ancestor)) continue;
+			const box = getCachedBoundingRect(ancestor);
+			if (!box) continue;
+			if (clipsY && (rect.bottom <= box.top || rect.top >= box.bottom)) return true;
+			if (clipsX && (rect.right <= box.left || rect.left >= box.right)) return true;
+		}
+		return false;
 	}
 
 	/**
@@ -1806,9 +1832,10 @@
 				const role = node.getAttribute('role');
 				const isMenuContainer = role === 'menu' || role === 'menubar' || role === 'listbox';
 				// a control above or below the viewport: described, without an action (see `handleHighlighting`)
-				// (not rendered: in a closed `<details>` or `hidden="until-found"`, which `isTopElement` rules out in view)
+				// (not rendered, in a closed `<details>` or `hidden="until-found"`, or clipped away by an ancestor:
+				// `isTopElement` rules these out in view)
 				const isOffscreen = !nodeData.isTopElement && isOffscreenCandidate(node) && isAboveOrBelowViewport(node) &&
-					isRendered(node, false);
+					isRendered(node, false) && !isClippedAway(node);
 
 				if ((nodeData.isTopElement || isMenuContainer || isOffscreen) && !isElementHidden(node, scope)) {
 					const interactiveResult = isOffscreen
@@ -1829,6 +1856,11 @@
 					// Call the dedicated highlighting function
 					nodeWasHighlighted = handleHighlighting(nodeData, node, parentIframe, isParentHighlighted);
 					const isDisabled = nodeData.disabledReason && handleDisabledControl(nodeData, node, isParentHighlighted);
+					// an off-screen link or button without text is named like in view (an image link by its `alt`)
+					if (nodeData.offscreen && !FIELD_TAGS.has(node.localName) && !node.textContent.trim()) {
+						const accessibleName = getAccessibleName(node);
+						if (accessibleName !== undefined) nodeData.accessibleName = accessibleName;
+					}
 					if (nodeData.highlightIndex !== undefined || isDisabled) {
 						const state = getLiveState(node);
 						if (state !== undefined) nodeData.state = state;

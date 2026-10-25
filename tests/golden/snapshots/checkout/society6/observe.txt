@@ -92,19 +92,14 @@ _[:]<input type="text" value="" placeholder="ZIP code"></input>
 _[:]Phone
 _[:]<input type="tel" value="" placeholder="Phone"></input>
 _[:]<button aria_label="More information about Phone"></button>
+_[:]<input type="checkbox"></input>
 _[:]Text me with news and offers
 _[:]<input type="text" value="" aria_label="First name"></input>
-_[:]<input type="text" value="" aria_label="Last name"></input>
-_[:]<input type="text" value="" aria_label="Company"></input>
-_[:]<input type="text" value="" aria_label="Address"></input>
-_[:]<input type="text" value="" aria_label="Apartment, suite, etc."></input>
-_[:]<input type="text" value="" aria_label="City"></input>
-_[:]<input type="text" value="US" aria_label="Country/Region"></input>
-_[:]<input type="text" value="CA" aria_label="Province"></input>
 _[:]Shipping method
 _[:]Enter your shipping address to view available shipping methods.
 _[:]Payment
 _[:]All transactions are secure and encrypted.
+_[:]<input type="radio"></input>
 _[:]Credit card
 _[:]<button>+4
 Additional payment methods</button>
@@ -113,10 +108,14 @@ _[:]Expiration date (MM / YY)
 _[:]Security code
 _[:]<button aria_label="More information about Security code"></button>
 _[:]Name on card
+_[:]<input type="checkbox"></input>
 _[:]Use shipping address as billing address
+_[:]<input type="radio"></input>
 _[:]PayPal
+_[:]<input type="radio"></input>
 _[:]Pay in full or in installments
 _[:]Remember me
+_[:]<input type="checkbox"></input>
 _[:]Save my information for a faster checkout with a Shop account
 _[:]Mobile phone number
 _[:]<input type="tel" value="+1" placeholder="Mobile phone number"></input>

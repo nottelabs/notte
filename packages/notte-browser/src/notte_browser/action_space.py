@@ -116,6 +116,9 @@ def render_node(
         include_attributes = frozenset(["role", "type"] if attrs.tag_name.lower() == "input" else ["role"])
         if len(children_str) == 0:
             include_attributes = include_attributes | OFFSCREEN_NAME_ATTRIBUTES
+            if not _named_by_attributes(node):
+                # only images or icons inside: their name (`<a><img alt="Home"></a>` is rendered `<a>Home</a>`)
+                children_str = (node.accessible_name or "").strip()
     attrs_str = ""
     attrs_relevant = attrs.relevant_attrs(
         include_attributes=include_attributes,
@@ -166,13 +169,20 @@ def format_node(
     return node_texts
 
 
+def _named_by_attributes(node: DomNode) -> bool:
+    return node.attributes is not None and len(node.attributes.relevant_attrs(OFFSCREEN_NAME_ATTRIBUTES)) > 0
+
+
 def _unnamed_offscreen(node: DomNode) -> bool:
-    """An off-screen link, button or option without text or name (a heading anchor, an icon button): its
-    rendering would not say what it is. Off-screen fields are described even without a name."""
-    if node.attributes is None or (isinstance(node.role, NodeRole) and node.role.short_id() == "I"):
+    """An off-screen link, button or option without text or name (a heading anchor, an unlabelled icon
+    button): its rendering would not say what it is. Off-screen fields, checkboxes and radios are described
+    even without a name, as in view: their label is the text next to them."""
+    if node.attributes is not None and node.attributes.tag_name.lower() in ("input", "select", "textarea"):
         return False
-    names = node.attributes.relevant_attrs(include_attributes=OFFSCREEN_NAME_ATTRIBUTES)
-    return len(names) == 0 and len(children_texts(node)) == 0
+    if isinstance(node.role, NodeRole) and node.role.short_id() == "I":
+        return False
+    named = _named_by_attributes(node) or len((node.accessible_name or "").strip()) > 0
+    return not named and len(children_texts(node)) == 0
 
 
 def children_texts(root_node: DomNode) -> list[str]:

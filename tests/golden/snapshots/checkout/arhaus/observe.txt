@@ -84,26 +84,23 @@ _[:]Armed Forces Pacific
 _[:]Phone
 _[:]<input type="tel" value="" placeholder="Phone"></input>
 _[:]<button aria_label="More information about Phone"></button>
+_[:]<input type="checkbox"></input>
 _[:]Save this information for next time
 _[:]<input type="text" value="" aria_label="First name"></input>
-_[:]<input type="text" value="" aria_label="Last name"></input>
-_[:]<input type="text" value="" aria_label="Address"></input>
-_[:]<input type="text" value="" aria_label="Apartment, suite, etc."></input>
-_[:]<input type="text" value="" aria_label="City"></input>
-_[:]<input type="text" value="US" aria_label="Country/Region"></input>
-_[:]<input type="text" value="CA" aria_label="Province"></input>
-_[:]<input type="text" value="CA" aria_label="Province"></input>
 _[:]Shipping method
 _[:]Enter your shipping address to view available shipping methods.
 _[:]Payment
 _[:]All transactions are secure and encrypted.
+_[:]<input type="radio"></input>
 _[:]Credit card
 _[:]Card number
 _[:]Expiration date (MM / YY)
 _[:]Security code
 _[:]<button aria_label="More information about Security code"></button>
 _[:]Name on card
+_[:]<input type="checkbox"></input>
 _[:]Use shipping address as billing address
+_[:]<input type="radio"></input>
 _[:]Archarge Credit Card
 _[:]<button>Pay now</button>
 _[:]<button>Refund policy</button>
