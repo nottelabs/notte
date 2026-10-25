@@ -34,7 +34,13 @@ from notte_core.act.context import element_contexts
 from notte_core.act.freshness import ELEMENT_SIGNATURES_JS, Signatures, signature_xpaths
 from notte_core.act.settle import SUGGESTIONS_JS
 from notte_core.act.space import shown_contexts
-from notte_core.act.wait import WAIT_FOR_CHANGE_JS, interrupted_by_navigation, wait_failure, wait_result
+from notte_core.act.wait import (
+    EMPTY_PAGE_WAIT_MS,
+    WAIT_FOR_CHANGE_JS,
+    interrupted_by_navigation,
+    wait_failure,
+    wait_result,
+)
 from notte_core.actions import (
     BaseAction,
     EvaluateJsAction,
@@ -153,6 +159,9 @@ class LocalActDriver:
 
     def __init__(self, session: NotteSession, *, capture_signatures: bool = True) -> None:
         self.session: NotteSession = session
+        # an action ran since the session's last observation: if the next one offers no element, the action made
+        # every element disappear (the page caught between two states), and the page is observed again
+        self._after_action: bool = session._act_history.acted_since_observed()  # pyright: ignore[reportPrivateUsage]
         self._signatures: Signatures = Signatures(None)
         self._capture_signatures: bool = capture_signatures
         # the snapshot the decision is taken (then checked) on: action ids are resolved against it
@@ -178,6 +187,14 @@ class LocalActDriver:
         # before executable decisions rather than endorsing old data with new signatures.
         if observation is None or self._capture_signatures:
             observation = await self.session.aobserve()
+            if self._after_action and len(observation.space.interaction_actions) == 0:
+                # the action made every element disappear: a page caught between two states (the page made inert, the
+                # dialog opening over it not rendered yet). Observed again: right away (it may have changed while it
+                # was observed), then once it has changed and settled
+                self._after_action = False
+                observation = await self.session.aobserve()
+                if len(observation.space.interaction_actions) == 0 and await self._changes(EMPTY_PAGE_WAIT_MS):
+                    observation = await self.session.aobserve()
         snapshot = self.session._snapshot  # pyright: ignore[reportPrivateUsage]
         # the live state only applies if the observation was built from the session's last snapshot
         self._snapshot = snapshot if snapshot is not None and snapshot.metadata == observation.metadata else None
@@ -190,6 +207,16 @@ class LocalActDriver:
             self._signatures = await self._read_signatures(signature_xpaths(page))
             page = replace(page, readonly=self._signatures.readonly())
         return page
+
+    async def _changes(self, timeout_ms: int) -> bool:
+        """The page changes (DOM or URL) within `timeout_ms`, and has settled since (`notte_core.act.wait`)."""
+        page = self.session.window.page
+        url = page.url
+        try:
+            outcome: str = await page.evaluate(_WAIT_FOR_CHANGE_JS, timeout_ms)
+        except PlaywrightError as e:
+            return interrupted_by_navigation(str(e), url, page.url)
+        return outcome != "unchanged"
 
     async def is_fresh(self, page: ObservedPage, element_id: str | None, *, focus: bool = False) -> bool:
         before = self._signatures

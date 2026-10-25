@@ -189,6 +189,10 @@ class ActHistory:
             if entry.typed is not None and entry.typed.name == typed.name:
                 entry.typed = None
 
+    def acted_since_observed(self) -> bool:
+        """An action other than a WAIT ran since the last observation (the next one tells what it changed)."""
+        return len(self.entries) > 0 and self.entries[-1].pending and self.entries[-1].kind != "WAIT"
+
     def unsubmitted(self) -> set[str]:
         """The ids, on the last observed page, of the fields holding typed text not submitted yet."""
         return {e.typed.element_id for e in self.entries if e.typed is not None and e.typed.before is None}
