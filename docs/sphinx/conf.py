@@ -99,6 +99,12 @@ def curate_reference(app: Sphinx, exception: Exception | None) -> None:
     }
     retired = {reference / (path.removeprefix("/sdk-reference/") + ".mdx") for path in replacements}
     retired.update((reference / "agentsclient").glob("*.mdx"))
+    # Autodoc adds these for the `proxies` types, with only the builtin `dict` / `StrEnum` docstrings. The
+    # `proxies` type lists the country codes and the NotteProxy, ExternalProxy and TailnetProxy pages the fields.
+    retired.update(
+        reference / "misc" / f"{name}.mdx"
+        for name in ("notteproxydict", "externalproxydict", "tailnetproxydict", "proxygeolocationcountry")
+    )
     for page in reference.rglob("*.mdx"):
         if page in retired:
             page.unlink()
