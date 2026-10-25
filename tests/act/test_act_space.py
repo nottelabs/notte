@@ -1070,3 +1070,94 @@ I2[:]<input type="text" name="name"></input>"""
     # an off-screen control is not the label of the field after it
     assert accessible_names(page)["I2"] == "Name"
     assert "Bletchley Park (link, not in view: scroll to reach it)" in accessible_text(page)
+
+
+SAME_NAMES = """_[:]Desk lamp
+B1[:]<button>Add to cart</button>
+_[:]LED bulb
+B2[:]<button>Add to cart</button>"""
+
+
+def _same_names_page(**kwargs: Any) -> ObservedPage:
+    actions: list[InteractionAction] = [
+        ClickAction(id="B1", text_label="Add to cart", accessible_name="Add to cart"),
+        ClickAction(id="B2", text_label="Add to cart", accessible_name="Add to cart"),
+    ]
+    return _page(states={}, description=SAME_NAMES, actions=actions, **kwargs)
+
+
+def test_a_changed_page_is_read_again() -> None:
+    from dataclasses import replace
+
+    from notte_core.act.space import shown_contexts
+
+    page = _same_names_page()
+    assert [e.get("context") for e in build_act_space(page, labels="accessible").elements] == [None, None]
+    assert shown_contexts(page) == frozenset()
+    # the same page with the titles around its elements: its names and contexts are read again, not reused
+    titled = replace(page, contexts={"B1": "Desk lamp", "B2": "Complete with › LED bulb"})
+    contexts = [e.get("context") for e in build_act_space(titled, labels="accessible").elements]
+    assert contexts == ["Desk lamp", "Complete with › LED bulb"]
+    assert shown_contexts(titled) == {"B1", "B2"}
+    assert "[B2] Add to cart (in: Complete with › LED bulb)" in page_state(titled, "accessible").text
+    # another description: other names
+    renamed = replace(
+        page,
+        description=SAME_NAMES.replace("<button>Add to cart</button>", "<button>Buy</button>", 1),
+        actions=[ClickAction(id="B1", text_label="Buy", accessible_name="Buy"), *page.actions[1:]],
+    )
+    assert accessible_names(renamed) == {"B1": "Buy", "B2": "Add to cart"}
+    assert shown_contexts(replace(renamed, contexts=titled.contexts)) == frozenset()
+    # the first page reads as it did
+    assert accessible_names(page) == {"B1": "Add to cart", "B2": "Add to cart"}
+    assert shown_contexts(page) == frozenset()
+
+
+def test_what_a_caller_does_with_a_pages_names_does_not_change_them() -> None:
+    page = _same_names_page()
+    names = accessible_names(page)
+    names["B1"] = "changed"
+    lines = description_lines(page.description)
+    lines.clear()
+    assert accessible_names(page)["B1"] == "Add to cart"
+    assert description_lines(page.description) == {
+        "B1": "<button>Add to cart</button>",
+        "B2": "<button>Add to cart</button>",
+    }
+    assert "[B1] Add to cart" in accessible_text(page)
+
+
+def test_masking_follows_the_values_protected_since_the_last_call() -> None:
+    from notte_core.act.privacy import ActPrivacy
+
+    privacy = ActPrivacy()
+    assert privacy.text("Lisbon to Tokyo") == "Lisbon to Tokyo"
+    privacy.remember({"city": "Lisbon"})
+    assert privacy.text("Lisbon to Tokyo") == "{{city}} to Tokyo"
+    privacy.remember({"destination": "Tokyo"})
+    assert privacy.text("Lisbon to Tokyo") == "{{city}} to {{destination}}"
+    privacy.remember({"note": "first line\nsecond line"})
+    assert privacy.text("Note: first line second line") == "Note: {{note}}"
+    # a value now masked by another placeholder
+    privacy.replacements["first line\nsecond line"] = "{{memo}}"
+    assert privacy.text("Note: first line second line") == "Note: {{memo}}"
+    privacy.replacements.clear()
+    assert privacy.text("Lisbon to Tokyo") == "Lisbon to Tokyo"
+
+
+def test_a_page_with_nothing_to_mask_is_read_as_it_is() -> None:
+    from notte_core.act.privacy import ActPrivacy
+
+    page = _page()
+    privacy = ActPrivacy()
+    assert privacy.page(page) is page
+    # a protected value the page does not show
+    privacy.remember({"city": "Lisbon"})
+    assert privacy.page(page) is page
+    assert "[B1] Sign in" in accessible_text(page)
+    # one it shows: a masked copy, read on its own
+    privacy.remember({"action": "Sign in"})
+    masked = privacy.page(page)
+    assert masked is not page and "{{action}}" in masked.description
+    assert "Sign in" not in accessible_text(masked)
+    assert "[B1] Sign in" in accessible_text(page)
