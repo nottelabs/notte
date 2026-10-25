@@ -2366,6 +2366,36 @@ export type ElementState = {
 };
 
 /**
+ * EmailAttachment
+ */
+export type EmailAttachment = {
+    /**
+     * Filename
+     *
+     * Filename, as the sender named it
+     */
+    filename: string;
+    /**
+     * Content Type
+     *
+     * MIME type, as the sender declared it
+     */
+    content_type: string;
+    /**
+     * Size Bytes
+     *
+     * Size in bytes
+     */
+    size_bytes: number;
+    /**
+     * Download Url
+     *
+     * Signed download URL, valid for one hour
+     */
+    download_url: string;
+};
+
+/**
  * EmailReadAction
  */
 export type EmailReadAction = {
@@ -2447,6 +2477,12 @@ export type EmailResponse = {
      * HTML body, can be uncorrelated with raw content
      */
     html_content?: string | null;
+    /**
+     * Attachments
+     *
+     * Files attached to the email, with short-lived download URLs
+     */
+    attachments?: Array<EmailAttachment>;
 };
 
 /**

@@ -3,7 +3,7 @@
   "info": {
     "title": "Notte API",
     "description": "Notte API is a REST API that allows you to interact with Notte. It is used to create cloud browser sessions, scrape webpages, and run web ai agents to act on your behalf on the internet.",
-    "version": "1.10.0",
+    "version": "1.10.1",
     "x-logo": {
       "url": "https://www.notte.cc/images/logo/logo-white.png"
     }
@@ -22122,6 +22122,38 @@
         "type": "object",
         "title": "ElementState"
       },
+      "EmailAttachment": {
+        "properties": {
+          "filename": {
+            "type": "string",
+            "title": "Filename",
+            "description": "Filename, as the sender named it"
+          },
+          "content_type": {
+            "type": "string",
+            "title": "Content Type",
+            "description": "MIME type, as the sender declared it"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "title": "Size Bytes",
+            "description": "Size in bytes"
+          },
+          "download_url": {
+            "type": "string",
+            "title": "Download Url",
+            "description": "Signed download URL, valid for one hour"
+          }
+        },
+        "type": "object",
+        "required": [
+          "filename",
+          "content_type",
+          "size_bytes",
+          "download_url"
+        ],
+        "title": "EmailAttachment"
+      },
       "EmailReadAction": {
         "properties": {
           "type": {
@@ -22235,6 +22267,14 @@
             ],
             "title": "Html Content",
             "description": "HTML body, can be uncorrelated with raw content"
+          },
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/EmailAttachment"
+            },
+            "type": "array",
+            "title": "Attachments",
+            "description": "Files attached to the email, with short-lived download URLs"
           }
         },
         "type": "object",
@@ -25002,7 +25042,7 @@
           "version": {
             "type": "string",
             "title": "Version",
-            "default": "1.10.0"
+            "default": "1.10.1"
           },
           "description": {
             "type": "string",
