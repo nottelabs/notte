@@ -9,6 +9,10 @@ from urllib.parse import quote, quote_plus
 
 from notte_core.act.space import ObservedPage
 
+# whitespace inside a protected value as the page may show it: spaces, line breaks, or a break onto the next line of
+# the rendered page, after that line's element prefix (`_[:]`, `I1[:]`)
+_LINE_BREAK = r"(?:\n[ \t]*(?:[A-Z]\d+|_)\[:\]|\s)+"
+
 
 @dataclass
 class ActPrivacy:
@@ -52,7 +56,20 @@ class ActPrivacy:
         # One pass avoids replacing parts of placeholders emitted by another replacement.
         literals = "|".join(re.escape(key) for key in sorted(self.replacements, key=len, reverse=True))
         pattern = r"\{\{[A-Za-z_][A-Za-z0-9_]*\}\}|" + literals
-        return re.sub(pattern, lambda match: self.replacements.get(match.group(), match.group()), value)
+        value = re.sub(pattern, lambda match: self.replacements.get(match.group(), match.group()), value)
+        return self._multiline(value)
+
+    def _multiline(self, value: str) -> str:
+        """Mask the protected values that span lines wherever the page shows them: with other whitespace between
+        their lines, or as consecutive lines of the rendered page (each with its `_[:]` / `I1[:]` prefix)."""
+        for literal in sorted(self.replacements, key=len, reverse=True):
+            if "\n" not in literal and "\r" not in literal:
+                continue
+            parts = [re.escape(part) for part in re.split(r"\s+", literal.strip()) if part]
+            if len(parts) < 2:
+                continue
+            value = re.sub(_LINE_BREAK.join(parts), self.replacements[literal], value)
+        return value
 
     def payload(self, value: Any) -> Any:
         if isinstance(value, str):
@@ -72,6 +89,8 @@ class ActPrivacy:
             else self.text(line)
             for line in page.description.split("\n")
         )
+        # a value with a line break is rendered as two lines: mask it across them too
+        description = self._multiline(description)
         return replace(
             page,
             url=self.text(page.url),
