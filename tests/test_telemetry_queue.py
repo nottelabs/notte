@@ -215,6 +215,26 @@ def test_a_first_event_captured_during_shutdown_is_sent(slow_endpoint: Collector
     assert sum(body.count(b'"test.late_first"') for body in slow_endpoint.posthog_bodies()) == 1
 
 
+def test_a_first_event_captured_during_shutdown_does_not_wait_for_the_endpoint(
+    hanging_endpoint: Collector, tmp_path: Path
+) -> None:
+    # A fresh installation also sends Scarf's package_download event; it must stay on the worker.
+    code = (
+        "import os, threading, time\n"
+        "def late():\n"
+        "    time.sleep(0.3)\n"
+        "    started = time.perf_counter()\n"
+        "    telemetry.capture_event('test.late_first')\n"
+        "    if time.perf_counter() - started > 0.5:\n"
+        "        os._exit(3)  # an assertion in a thread would not fail the process\n"
+        "threading.Thread(target=late).start()\n"
+    )
+
+    elapsed = run_script(code, hanging_endpoint, tmp_path)
+
+    assert elapsed < 6
+
+
 def test_exit_waits_a_bounded_time_for_an_unresponsive_endpoint(hanging_endpoint: Collector, tmp_path: Path) -> None:
     code = "for _ in range(3):\n    telemetry.capture_event('test.exit', {'status': 'success'})\n"
 

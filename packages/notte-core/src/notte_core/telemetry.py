@@ -189,12 +189,18 @@ def get_or_create_installation_id(scarf_client: Any | None = None) -> str:
 
 
 @cache
-def _clients() -> tuple[Any | None, Any | None, str]:
-    """PostHog client, Scarf client and installation id, created on first use."""
-    posthog_client = setup_posthog()
+def _posthog_client() -> Any | None:
+    client = setup_posthog()
     # Covers events captured by non-daemon threads after the `threading` exit hook ran. Registered after
     # PostHog's client, so it runs before PostHog's own exit flush, which then sends what it was handed.
     _ = atexit.register(_flush_at_exit)
+    return client
+
+
+@cache
+def _clients() -> tuple[Any | None, Any | None, str]:
+    """PostHog client, Scarf client and installation id, created on first use."""
+    posthog_client = _posthog_client()
     scarf_client = setup_scarf()
     return posthog_client, scarf_client, get_or_create_installation_id(scarf_client)
 
@@ -294,10 +300,10 @@ def _register_exit_flush() -> None:
     try:
         threading._register_atexit(_flush_at_exit)  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
     except RuntimeError:
-        # Shutdown has started and only non-daemon threads are left. Create the clients on this thread, so
-        # PostHog's exit flush and ours (registered by `_clients`) exist before `atexit` handlers run.
+        # Shutdown has started and only non-daemon threads are left. Create PostHog's client on this thread
+        # (no network I/O), so its exit flush and ours exist before `atexit` handlers run.
         try:
-            _ = _clients()
+            _ = _posthog_client()
         except Exception as e:
             logger.debug(f"Failed to initialize telemetry: {e}")
         return
@@ -315,6 +321,7 @@ def _reset_after_fork() -> None:
     # The parent sends its own queued events. The child starts with an empty queue and new clients,
     # since the parent's worker thread does not exist in the child and Scarf's HTTP connection is shared.
     _event_queue.reset()
+    _posthog_client.cache_clear()
     _clients.cache_clear()
 
 
