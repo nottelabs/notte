@@ -1,0 +1,29 @@
+---
+title: "EmailAttachment"
+description: ""
+---
+
+
+
+## Fields
+
+<ParamField path="filename" type="str" required>
+  Filename, as the sender named it
+</ParamField>
+
+<ParamField path="content_type" type="str" required>
+  MIME type, as the sender declared it
+</ParamField>
+
+<ParamField path="size_bytes" type="int" required>
+  Size in bytes
+</ParamField>
+
+<ParamField path="download_url" type="str" required>
+  Signed download URL, valid for one hour
+</ParamField>
+
+
+## Module
+
+`notte_core.types`
