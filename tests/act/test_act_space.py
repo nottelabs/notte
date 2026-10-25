@@ -961,3 +961,33 @@ I2[:]<input type="text" role="combobox" placeholder="Type a city"></input>"""
         "placeholder": "Type a city",
         "nearby": "Select City",
     }
+
+
+def test_an_empty_suggestion_list_is_not_shown() -> None:
+    # a search box's popup after typing a query it has no suggestions for: an empty listbox, no option after it
+    description = """### Content of 'dialog' component with text 'Quick search'
+_[:]Quick search
+I1[:]<input value="pallets/flask" role="combobox" aria_label="Search or jump to" aria_expanded="false"></input>
+I2[:]<ul role="listbox" aria_label="Search suggestions"></ul>
+L1[:]<a href="/tips">Search syntax tips</a>
+I3[:]<ul role="listbox" aria_label="Recent"></ul>"""
+    actions: list[InteractionAction] = [
+        SelectDropdownOptionAction(id="I1", value="<sample_value>", accessible_name="Search or jump to"),
+        FillAction(id="I2", value="<sample_value>", text_label="", accessible_name="Search suggestions"),
+        ClickAction(id="L1", text_label="Search syntax tips", accessible_name="Search syntax tips"),
+        FillAction(id="I3", value="<sample_value>", text_label="", accessible_name="Recent"),
+    ]
+    page = _page(description=description, actions=actions, states={"I1": ElementState(value="pallets/flask")})
+    for labels in ("accessible", "html"):
+        space = build_act_space(page, labels=labels)
+        assert [e["index"] for e in space.elements] == ["I1", "L1"]
+        text = page_state(page, labels).text
+        assert "Search suggestions" not in text and "Recent" not in text and "Search syntax tips" in text
+
+    # with its suggestions (options right after it), the list is shown
+    listed = description.replace("\nL1[:]", '\nO1[:]<li role="option">pallets/flask</li>\nL1[:]')
+    actions.append(SelectDropdownOptionAction(id="O1", value="<sample_value>", accessible_name="pallets/flask"))
+    page = _page(description=listed, actions=actions, states={})
+    elements = [e["index"] for e in build_act_space(page, labels="accessible").elements]
+    assert "I2" in elements and "O1" in elements and "I3" not in elements
+    assert "[I2] Search suggestions" in accessible_text(page)
