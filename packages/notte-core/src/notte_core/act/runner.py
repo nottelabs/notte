@@ -175,7 +175,7 @@ class ActHistory:
                 entry.typed = _still_typed(entry.typed, page)
 
     def acted(self, operation: str, target: Target | None) -> None:
-        """Before running `operation`: one that can submit typed text ends the tracking of every typed field."""
+        """After `operation` ran successfully: one that can submit typed text ends the tracking of every typed field."""
         click = operation in ("CLICK", "CLOSE_DIALOG") and (target is None or target.role not in _FORM_ROLES)
         if click or operation in ("PRESS_ENTER", "GO_BACK"):
             for entry in self.entries:
@@ -398,7 +398,6 @@ async def run_act(
         entry = ActHistoryEntry(
             action=label, kind=decision.operation, text=text, fingerprint=page.fingerprint, pending=not unknown
         )
-        history.acted(decision.operation, target)
         step = time.perf_counter()
         try:
             if decision.operation == "WAIT":
@@ -412,6 +411,9 @@ async def run_act(
         run.timings.execute_ms += _ms(step)
         if not execution.success:
             entry.error = "ExecutionFailed" if execution.exception is None else type(execution.exception).__name__
+        else:
+            # a submit that failed (or raised) submitted nothing: the typed text stays unsubmitted
+            history.acted(decision.operation, target)
         if unknown:
             # The loop must not mistake unobservable fills for lack of progress.
             common["fingerprint"] = None

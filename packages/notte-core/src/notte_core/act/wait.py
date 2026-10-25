@@ -26,6 +26,22 @@ SETTLE_MS = 1_000
 # the most documents and shadow roots watched: the page, its same-origin frames and its open shadow roots
 MAX_ROOTS = 50
 
+# An expression: the page's document, then its same-origin frames' documents and open shadow roots (nested ones
+# too), at most `MAX_ROOTS`. The page scripts that watch the page (WAIT, the settle) observe all of them.
+NESTED_ROOTS_JS = f"""(() => {{
+    const roots = [document];
+    for (let i = 0; i < roots.length && roots.length < {MAX_ROOTS}; i++) {{
+        for (const el of roots[i].querySelectorAll("*")) {{
+            if (roots.length >= {MAX_ROOTS}) break;
+            if (el.shadowRoot) roots.push(el.shadowRoot);
+            if (el.tagName === "IFRAME" || el.tagName === "FRAME") {{
+                try {{ if (el.contentDocument) roots.push(el.contentDocument); }} catch (e) {{}}
+            }}
+        }}
+    }}
+    return roots;
+}})()"""
+
 WAIT_FOR_CHANGE_JS = f"""(timeoutMs) => new Promise((resolve) => {{
     let changed = false;
     let quiet = null;
@@ -47,16 +63,7 @@ WAIT_FOR_CHANGE_JS = f"""(timeoutMs) => new Promise((resolve) => {{
         if (settle === null) settle = setTimeout(done, {SETTLE_MS});
     }});
     // act() also targets elements in same-origin frames and open shadow roots: watch them too
-    const roots = [document];
-    for (let i = 0; i < roots.length && roots.length < {MAX_ROOTS}; i++) {{
-        for (const el of roots[i].querySelectorAll("*")) {{
-            if (roots.length >= {MAX_ROOTS}) break;
-            if (el.shadowRoot) roots.push(el.shadowRoot);
-            if (el.tagName === "IFRAME" || el.tagName === "FRAME") {{
-                try {{ if (el.contentDocument) roots.push(el.contentDocument); }} catch (e) {{}}
-            }}
-        }}
-    }}
+    const roots = {NESTED_ROOTS_JS};
     for (const root of roots) {{
         observer.observe(root, {{ subtree: true, childList: true, characterData: true, attributes: true }});
     }}
