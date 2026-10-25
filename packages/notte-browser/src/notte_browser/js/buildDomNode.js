@@ -1352,7 +1352,9 @@
 	 * Where a box that clips its overflow can show its content along an axis, in viewport coordinates:
 	 * its own box, or, along an axis it scrolls (`auto` or `scroll`, with overflowing content), the whole
 	 * area it scrolls through. Its scroll sizes are scaled to its box on screen (`transform: scale`).
-	 * Null when the box does not clip along the axis, or when where its scrolled area lies is not known.
+	 * Null when the box does not clip along the axis (`overflow: visible`, or no box of its own to clip
+	 * with: `display: contents` or `inline`, as in `clipsToNothing`), or when where its scrolled area lies
+	 * is not known.
 	 *
 	 * @param {HTMLElement} box - The box.
 	 * @param {DOMRect} rect - Its bounding rect.
@@ -1362,7 +1364,8 @@
 	 */
 	function visibleRange(box, rect, style, vertical) {
 		const overflow = vertical ? style.overflowY : style.overflowX;
-		if (overflow === "visible") return null;
+		if (overflow === "visible" || style.display === "contents" || style.display === "inline") return null;
+		if (!getCachedClientRects(box)?.length) return null;
 		const [rectStart, rectEnd] = vertical ? [rect.top, rect.bottom] : [rect.left, rect.right];
 		const scrollSize = vertical ? box.scrollHeight : box.scrollWidth;
 		const clientSize = vertical ? box.clientHeight : box.clientWidth;

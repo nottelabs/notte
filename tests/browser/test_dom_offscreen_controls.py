@@ -187,6 +187,7 @@ SCROLL_BOXES = """
 <div style="position: fixed; top: 0; left: 1300px; width: 300px; height: 300px; overflow: auto">
   <div style="height: 2000px"></div><button style="position: relative; left: -500px">SHIFTED_OUT_OF_ITS_PANEL</button>
 </div>
+<div style="display: contents; overflow: auto"><input placeholder="In a box without a box"></div>
 <div style="height: 3000px"></div>
 """
 
@@ -207,4 +208,6 @@ async def test_scrollable_boxes_reach_the_area_they_scroll_through() -> None:
             "_[:]RTL_PAST_ITS_START",
             # an `auto` box clips the axis it has nothing to scroll on
             "_[:]SHIFTED_OUT_OF_ITS_PANEL",
+            # `display: contents` has no box: its `overflow` clips nothing
+            '_[:]<input placeholder="In a box without a box"></input>',
         ]
