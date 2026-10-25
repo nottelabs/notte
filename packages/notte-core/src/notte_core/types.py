@@ -1872,6 +1872,13 @@ class MessageReadRequest(SdkRequest):
     only_unread: Annotated[bool, Field(description="Return only previously unread emails")] = False
 
 
+class EmailAttachment(SdkResponse):
+    filename: Annotated[str, Field(description="Filename, as the sender named it")]
+    content_type: Annotated[str, Field(description="MIME type, as the sender declared it")]
+    size_bytes: Annotated[int, Field(description="Size in bytes")]
+    download_url: Annotated[str, Field(description="Signed download URL, valid for one hour")]
+
+
 class EmailResponse(SdkResponse):
     subject: Annotated[str, Field(description="Subject of the email")]
     email_id: Annotated[str, Field(description="Email UUID")]
@@ -1882,6 +1889,9 @@ class EmailResponse(SdkResponse):
         str | None, Field(description="Raw textual body, can be uncorrelated with html content")
     ] = None
     html_content: Annotated[str | None, Field(description="HTML body, can be uncorrelated with raw content")] = None
+    attachments: Annotated[
+        list[EmailAttachment], Field(description="Files attached to the email, with short-lived download URLs")
+    ] = Field(default_factory=list)
 
     def links(self) -> list[str]:
         if self.text_content is None:
