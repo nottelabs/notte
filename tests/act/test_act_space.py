@@ -1038,3 +1038,35 @@ I1[:]<input type="text" name="q"></input>"""
         assert "private-first" not in text and "private-second" not in text
     assert privacy.text("Note: private-first private-second.") == "Note: {{note}}."
     assert privacy.payload({"recent": ["private-first\nprivate-second"]}) == {"recent": ["{{note}}"]}
+
+
+def test_controls_outside_the_viewport_read_as_what_they_are_and_where() -> None:
+    # long enough to scroll, short enough not to be cut (`MAX_PAGE_TEXT_LENGTH`)
+    filler = "\n".join(f"_[:]Paragraph {i}: " + "lorem ipsum dolor sit amet " * 8 for i in range(30))
+    description = f"""### Content of 'WebArea' component with text 'body content'
+_[:]<a>Top of page</a>
+L1[:]<a href="#a">Contents</a>
+{filler}
+_[:]See also
+_[:]<a>Bletchley Park</a>
+_[:]<button>Subscribe</button>
+_[:]<input type="email" placeholder="Email"></input>
+_[:]Name
+I2[:]<input type="text" name="name"></input>"""
+    actions: list[InteractionAction] = [
+        ClickAction(id="L1", text_label="Contents", accessible_name="Contents"),
+        FillAction(id="I2", value="", text_label="name", accessible_name=""),
+    ]
+    page = _scrolled_page(description, actions, scroll_y=720, in_view=frozenset({"L1"}))
+    # choose() / check(): the whole page, each off-screen control by name, role and position
+    text = page_state(page, "accessible").text.splitlines()
+    assert "Top of page (link, above the viewport)" in text
+    assert "Bletchley Park (link, below the viewport)" in text
+    assert "Subscribe (button, below the viewport)" in text and "Email (textbox, below the viewport)" in text
+    # act(): not in the decision text in view, and never offered
+    decision = page_state(page, "accessible", viewport_only=True).text
+    assert "Bletchley Park" not in decision
+    assert [e["index"] for e in build_act_space(page, labels="accessible").elements] == ["L1", "I2"]
+    # an off-screen control is not the label of the field after it
+    assert accessible_names(page)["I2"] == "Name"
+    assert "Bletchley Park (link, not in view: scroll to reach it)" in accessible_text(page)
