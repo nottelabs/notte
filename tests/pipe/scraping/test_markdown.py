@@ -7,9 +7,14 @@ from types import SimpleNamespace
 from notte_browser.scrape import page_markdown
 from notte_sdk.types import ScrapeParams
 
-# a window without iframes
+
+async def _loaded(_expression: str) -> str:
+    return "complete"
+
+
+# a loaded window without iframes
 _FRAME = SimpleNamespace(url="https://example.com", child_frames=[])
-_WINDOW = SimpleNamespace(page=SimpleNamespace(url=_FRAME.url, main_frame=_FRAME))
+_WINDOW = SimpleNamespace(page=SimpleNamespace(url=_FRAME.url, main_frame=_FRAME, evaluate=_loaded))
 
 
 def _snapshot(html: str) -> SimpleNamespace:
