@@ -1241,3 +1241,91 @@ async def test_an_invalid_page_answer_is_asked_again_once(session: NotteSession)
     assert choice.choice == "Signup" and len(decider.states) == 2
     decider = BrokenOnce(choices=[{"answer": "YES"}] * 2)
     assert await session.acheck("Is it a form?", decider=decider) == pytest.approx(0.9)
+
+
+# an issue search applied by its button, a live filter, and a filter that puts its query in the URL as it is typed
+ISSUES = """<h1>Issues</h1>
+<label for="q">Search issues</label><input id="q" value="is:open">
+<button id="search" onclick="document.getElementById('shown').textContent = document.getElementById('q').value">Search</button>
+<p>Showing: <span id="shown">is:open</span></p>
+<label for="filter">Filter labels</label>
+<input id="filter" oninput="for (const li of document.querySelectorAll('#labels li'))
+  li.hidden = !li.textContent.includes(this.value)">
+<ul id="labels"><li>bug</li><li>docs</li><li>feature</li></ul>
+<label for="live">Find a milestone</label>
+<input id="live" oninput="history.replaceState(null, '', '?milestone=' + encodeURIComponent(this.value))">"""
+
+
+async def _type(session: NotteSession, decider: FakeDecider, field: str, text: str) -> DecisionState:
+    """Type `text` in the field `field` (its id attribute) and return the state of the next decision."""
+    ids = await _ids(session)
+    decider.choices += [{"operation": "TYPE_TEXT", "type_text_target": ids[field]}, {"operation": "DONE"}]
+    decider.texts.append(text)
+    return await _next_state(session, decider, "Show the open bugs")
+
+
+def _unsubmitted(state: DecisionState) -> list[str]:
+    return [e["label"] for e in state.elements if e.get("submitted") is False]
+
+
+@pytest.mark.asyncio
+async def test_typed_text_not_submitted_yet_is_shown_until_submitted(session: NotteSession) -> None:
+    await _serve(session, ISSUES)
+    decider = FakeDecider(choices=[])
+    state = await _type(session, decider, "q", "is:open label:bug")
+    # the field, the history and DONE say the query is typed, not applied
+    assert _unsubmitted(state) == ["Search issues"]
+    assert state.recent_actions[-1]["kind"] == "TYPE_TEXT" and state.recent_actions[-1]["submitted"] is False
+    done = decider.questions[-1]["operation"].criteria["DONE"]
+    assert "'Search issues' is not submitted" in done and "only asks to type it" in done
+
+    # clicking a checkbox or another field submits nothing; the Search button does
+    ids = await _ids(session)
+    decider.choices += [{"operation": "CLICK", "click_target": ids["filter"]}, {"operation": "DONE"}]
+    state = await _next_state(session, decider, "Show the open bugs")
+    assert _unsubmitted(state) == ["Search issues"]
+    decider.choices += [{"operation": "CLICK", "click_target": ids["search"]}, {"operation": "DONE"}]
+    state = await _next_state(session, decider, "Show the open bugs")
+    assert _unsubmitted(state) == [] and all("submitted" not in a for a in state.recent_actions)
+    assert decider.questions[-1]["operation"].criteria["DONE"] == "Every requirement is visibly satisfied."
+
+    # typed again: Enter submits it
+    state = await _type(session, decider, "q", "is:open label:docs")
+    assert _unsubmitted(state) == ["Search issues"]
+    decider.choices += [{"operation": "PRESS_ENTER"}, {"operation": "DONE"}]
+    state = await _next_state(session, decider, "Show the open bugs")
+    assert _unsubmitted(state) == []
+
+
+@pytest.mark.asyncio
+async def test_a_field_that_applies_what_is_typed_is_not_unsubmitted(session: NotteSession) -> None:
+    await _serve(session, ISSUES)
+    decider = FakeDecider(choices=[])
+    # a live filter hides the labels that do not match, a live search puts the query in the URL
+    state = await _type(session, decider, "filter", "bug")
+    assert "docs" not in state.page.text and _unsubmitted(state) == []
+    state = await _type(session, decider, "live", "v2")
+    assert state.page.url.endswith("?milestone=v2") and _unsubmitted(state) == []
+    # a field that applies nothing on its own is
+    state = await _type(session, decider, "q", "label:bug")
+    assert _unsubmitted(state) == ["Search issues"]
+    # the field no longer holds the text: tracking ends
+    await session.window.page.fill("#q", "")
+    decider.choices.append({"operation": "DONE"})
+    _ = await session.aact("Show the open bugs", decider=decider)
+    assert _unsubmitted(decider.states[-1]) == []
+
+
+@pytest.mark.asyncio
+async def test_a_goal_that_only_types_still_ends_done(session: NotteSession) -> None:
+    ids = await _ids(session)
+    decider = FakeDecider(
+        choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["name"]}, {"operation": "DONE"}], texts=["Jane"]
+    )
+    _ = await session.aact("Type Jane in the name field", decider=decider)
+    done = await session.aact("Type Jane in the name field", decider=decider)
+    # the field is marked, and DONE is still DONE: nothing is submitted on the decider's behalf
+    assert _unsubmitted(decider.states[-1]) == ["Name"]
+    assert done.status == "done" and done.success and done.action is None
+    assert await session.window.page.input_value("#name") == "Jane"
+    assert await session.window.page.text_content("#out") == ""
