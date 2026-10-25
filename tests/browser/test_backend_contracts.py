@@ -29,6 +29,10 @@ def _page() -> MagicMock:
     page.url = "https://example.com"
     page.is_closed.return_value = False
     page.context.pages = [page]
+    # the page does not react to actions: the settle's tracker (`notte_browser.settle`) reports no change
+    tracker = AsyncMock()
+    tracker.evaluate.return_value = {"elapsed": 1_000, "first": None, "last": None, "dom": None, "urlAt": None}
+    page.evaluate_handle = AsyncMock(return_value=tracker)
     return page
 
 

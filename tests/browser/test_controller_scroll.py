@@ -204,7 +204,8 @@ async def test_targeted_scroll_rejects_missing_selector(page: Page, monkeypatch:
 @pytest.mark.parametrize("outcome", ["moved", "no-op", "setup-error"])
 async def test_scroll_releases_trackers_on_success_and_failure(outcome: str) -> None:
     handle = AsyncMock()
-    handle.evaluate.return_value = outcome == "moved"
+    # whether the wheel scrolled, and where the scroll is
+    handle.evaluate.return_value = [outcome == "moved", [0]]
     frame = MagicMock()
     frame.evaluate_handle = AsyncMock(return_value=handle)
     window = MagicMock()
@@ -230,7 +231,7 @@ async def test_scroll_releases_trackers_on_success_and_failure(outcome: str) -> 
 @pytest.mark.parametrize("phase", ["setup", "check"])
 async def test_scroll_ignores_unrelated_destroyed_frame(phase: str) -> None:
     handle = AsyncMock()
-    handle.evaluate.return_value = True
+    handle.evaluate.return_value = [True, [0]]
     good_frame = MagicMock()
     good_frame.evaluate_handle = AsyncMock(return_value=handle)
     lost_frame = MagicMock()
