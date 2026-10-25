@@ -23,6 +23,12 @@ from notte_core.observation import ExecutionResult
 
 QUIET_MS = 200
 SETTLE_MS = 1_000
+# An action that made every element disappear left the page caught between two states (the page made inert, the
+# dialog that opens over it not rendered yet, as GitHub's search ~400 ms after the click, past the settle's quiet
+# window; a page that offered nothing before, as one waiting for a disabled control, is decided on as it is): `act()`
+# observes again right away (the page may have changed while it was observed), then once the page changed and settled,
+# after waiting at most this long for a change
+EMPTY_PAGE_WAIT_MS = 1_000
 # the most documents and shadow roots watched: the page, its same-origin frames and its open shadow roots
 MAX_ROOTS = 50
 
