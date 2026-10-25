@@ -1338,8 +1338,9 @@
 	 *   sticky element scrolls with the page until it sticks: both are reachable.
 	 *
 	 * A scrollable ancestor (`auto` or `scroll`, with content overflowing it) can bring the element anywhere
-	 * in its box along the axes it scrolls: the ancestors above it are checked against that box (and with
-	 * its position, for what it escapes). `<body>` and `<html>` are not checked: their overflow is the page's.
+	 * in its box along the axes it scrolls, if the element is in the area it scrolls through: the ancestors
+	 * above it are checked against that box (and with its position, for what it escapes). `<body>` and
+	 * `<html>` are not checked: their overflow is the page's.
 	 *
 	 * @param {HTMLElement} element - The element to check.
 	 * @returns {boolean} Whether scrolling cannot reveal the element.
@@ -1360,6 +1361,16 @@
 				if (clipsX && (rect.right <= box.left || rect.left >= box.right)) return true;
 				const scrollsY = (style.overflowY === "auto" || style.overflowY === "scroll") && ancestor.scrollHeight > ancestor.clientHeight;
 				const scrollsX = (style.overflowX === "auto" || style.overflowX === "scroll") && ancestor.scrollWidth > ancestor.clientWidth;
+				// content laid out before the start of the scrolled area (a negative offset) is never scrolled to
+				if (scrollsY) {
+					const start = box.top + ancestor.clientTop - ancestor.scrollTop;
+					if (rect.bottom <= start || rect.top >= start + ancestor.scrollHeight) return true;
+				}
+				// (in a right-to-left box, the scrolled area starts on the right: not checked)
+				if (scrollsX && style.direction === "ltr") {
+					const start = box.left + ancestor.clientLeft - ancestor.scrollLeft;
+					if (rect.right <= start || rect.left >= start + ancestor.scrollWidth) return true;
+				}
 				if (scrollsY || scrollsX) {
 					rect = {
 						top: scrollsY ? box.top : rect.top,
