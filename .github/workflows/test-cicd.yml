@@ -107,7 +107,7 @@ jobs:
         if: >-
           (github.event_name == 'push' || github.event_name == 'pull_request') &&
           !fromJSON(needs.changes.outputs.scope).python_static && !fromJSON(needs.changes.outputs.scope).lint_all
-        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           enable-cache: false
 
@@ -236,7 +236,7 @@ jobs:
             ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
             enable-cache: true
             cache-dependency-glob: "uv.lock"
@@ -376,7 +376,7 @@ jobs:
         run: python scripts/llm_matrix_report.py llm-provider-matrix.xml >> "$GITHUB_STEP_SUMMARY"
       - name: Upload provider results
         if: always() && env.OPENROUTER_API_KEY != ''
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: llm-provider-matrix
           path: llm-provider-matrix.xml
@@ -423,12 +423,12 @@ jobs:
 
       - run: git submodule update --init notte-cli
 
-      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: notte-cli/go.mod
           cache-dependency-path: notte-cli/go.sum
 
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
 
       - name: Use a dedicated, unlocked default keychain
         if: runner.os == 'macOS'
