@@ -294,9 +294,12 @@ def _register_exit_flush() -> None:
     try:
         threading._register_atexit(_flush_at_exit)  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
     except RuntimeError:
-        # Shutdown has started. `atexit` handlers have not run yet; the one `_clients` registers later
-        # still runs first, and this one covers an exit before the worker gets there.
-        _ = atexit.register(_flush_at_exit)
+        # Shutdown has started and only non-daemon threads are left. Create the clients on this thread, so
+        # PostHog's exit flush and ours (registered by `_clients`) exist before `atexit` handlers run.
+        try:
+            _ = _clients()
+        except Exception as e:
+            logger.debug(f"Failed to initialize telemetry: {e}")
         return
     _exit_flush_registered = True
 

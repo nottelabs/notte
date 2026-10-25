@@ -212,6 +212,7 @@ def test_a_first_event_captured_during_shutdown_is_sent(slow_endpoint: Collector
     _ = run_script(code, slow_endpoint, tmp_path)
 
     assert slow_endpoint.scarf_events().count("test.late_first") == 1
+    assert sum(body.count(b'"test.late_first"') for body in slow_endpoint.posthog_bodies()) == 1
 
 
 def test_exit_waits_a_bounded_time_for_an_unresponsive_endpoint(hanging_endpoint: Collector, tmp_path: Path) -> None:
