@@ -1061,6 +1061,20 @@ style="width:10px;height:60px;background:#888"></div>"""
 
 
 @pytest.mark.asyncio
+async def test_a_search_box_without_suggestions_shows_no_list(session: NotteSession) -> None:
+    # a quick-search dialog after typing a query: the suggestion list is on screen (its padding) with no option
+    page = """<div role="dialog" aria-modal="true" aria-label="Quick search"><h2>Quick search</h2>
+<input id="q" role="combobox" aria-expanded="false" aria-controls="s" aria-label="Search or jump to" value="flask">
+<ul id="s" role="listbox" aria-label="Search suggestions" style="padding:4px"></ul><a href="/tips">Search syntax tips</a></div>"""
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    decider = FakeDecider(choices=[{"operation": "DONE"}])
+    _ = await session.aact("Search for flask", decider=decider)
+    state = decider.states[0]
+    assert [e["role"] for e in state.elements] == ["combobox", "link"]
+    assert "Search suggestions" not in state.page.text and "Search syntax tips" in state.page.text
+
+
+@pytest.mark.asyncio
 async def test_unnamed_fields_are_named_by_context_not_content(session: NotteSession) -> None:
     # a date picker's month and year selects, and a text field with no label tied to it
     years = "".join(f"<option{' selected' if y == 2026 else ''}>{y}</option>" for y in range(1900, 2101))
