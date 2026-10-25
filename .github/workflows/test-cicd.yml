@@ -297,10 +297,10 @@ jobs:
           NOTTE_CI_EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           NOTTE_CI_LLM_PROVIDER: ${{ inputs.llm_provider || 'gemini' }}
           OPENAI_API_KEY: ${{ inputs.llm_provider == 'openai' && inputs.source_sha == (github.event.pull_request.head.sha || github.sha) && ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.run_attempt > 1) || (github.event_name == 'push' && github.ref == 'refs/heads/main' && !github.event.deleted)) && secrets.OPENAI_API_KEY || '' }}
-          NOTTE_LLM_BASE_URL: https://generativelanguage.googleapis.com/v1beta/openai
-          NOTTE_LLM_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          NOTTE_LLM_MODEL: gemini-3.5-flash-lite
-          NOTTE_TEST_DEFAULT_MODEL: gemini-3.8-flash
+          NOTTE_LLM_BASE_URL: https://openrouter.ai/api/v1
+          NOTTE_LLM_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          NOTTE_LLM_MODEL: google/gemini-3.5-flash-lite
+          NOTTE_TEST_DEFAULT_MODEL: google/gemini-3.8-flash
           NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_PY || secrets.NOTTE_API_KEY }}
           NOTTE_VAULT_TEST_EMAIL: ${{ secrets.NOTTE_VAULT_TEST_EMAIL }}
           NOTTE_VAULT_TEST_PASSWORD: ${{ secrets.NOTTE_VAULT_TEST_PASSWORD }}

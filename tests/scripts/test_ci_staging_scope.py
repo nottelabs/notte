@@ -397,6 +397,8 @@ def test_selected_provider_runs_the_full_live_suite(
     assert "github.event.pull_request.head.repo.full_name == github.repository && github.run_attempt > 1" in paid_key
     assert "inputs.source_sha == (github.event.pull_request.head.sha || github.sha)" in paid_key
     assert "github.event_name == 'push' && github.ref == 'refs/heads/main' && !github.event.deleted" in paid_key
+    assert step["env"]["NOTTE_LLM_BASE_URL"] == "https://openrouter.ai/api/v1"
+    assert step["env"]["NOTTE_LLM_API_KEY"] == "${{ secrets.OPENROUTER_API_KEY }}"
     output = tmp_path / "invocation.json"
     stub = tmp_path / "make"
     stub.write_text("""#!/usr/bin/env python3
@@ -423,10 +425,10 @@ Path(os.environ["OUTPUT"]).write_text(json.dumps({
             "CHECKED_OUT_SHA": ("a" if checkout_matches else "c") * 40,
             "GITHUB_SHA": "b" * 40,  # The PR's synthetic merge SHA differs from its actual source.
             "OPENAI_API_KEY": key,
-            "NOTTE_LLM_BASE_URL": "https://generativelanguage.googleapis.com/v1beta/openai",
-            "NOTTE_LLM_MODEL": "gemini-3.5-flash-lite",
-            "NOTTE_TEST_DEFAULT_MODEL": "gemini-3.5-flash-lite",
-            "NOTTE_LLM_API_KEY": "dummy-gemini-key",  # pragma: allowlist secret
+            "NOTTE_LLM_BASE_URL": "https://openrouter.ai/api/v1",
+            "NOTTE_LLM_MODEL": "google/gemini-3.5-flash-lite",
+            "NOTTE_TEST_DEFAULT_MODEL": "google/gemini-3.8-flash",
+            "NOTTE_LLM_API_KEY": "dummy-openrouter-key",  # pragma: allowlist secret
         },
         capture_output=True,
         text=True,
@@ -443,7 +445,7 @@ Path(os.environ["OUTPUT"]).write_text(json.dumps({
             assert invocation["default"] == "gpt-4.1-nano"
             assert invocation["key_matches"] is True
         else:
-            assert invocation["model"] == "gemini-3.5-flash-lite"
+            assert invocation["model"] == "google/gemini-3.5-flash-lite"
             assert invocation["key_matches"] is False
 
 
