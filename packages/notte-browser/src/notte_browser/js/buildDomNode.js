@@ -1334,7 +1334,8 @@
 	 * - it is laid out outside the box of an ancestor that clips its overflow without scrolling
 	 *   (`overflow: hidden` or `clip`, as carousels and "show more" sections are);
 	 * - it is fixed, or inside a fixed element, outside the viewport (a closed slide-in panel): scrolling
-	 *   the page does not move it. A sticky element scrolls with the page until it sticks: it is reachable.
+	 *   the page does not move it. A fixed panel on screen that scrolls can still bring it into view, and a
+	 *   sticky element scrolls with the page until it sticks: both are reachable.
 	 *
 	 * A scrollable ancestor (`auto` or `scroll`, with content overflowing it) can bring the element anywhere
 	 * in its box along the axes it scrolls: the ancestors above it are checked against that box (and with
@@ -1351,27 +1352,28 @@
 		for (let ancestor = element; ancestor && ancestor !== document.body; ancestor = ancestor.parentElement) {
 			const style = getCachedComputedStyle(ancestor);
 			if (!style) continue;
+			const box = ancestor === element ? null : getCachedBoundingRect(ancestor);
+			if (box && !escapesClip(owner, ancestor)) {
+				const clipsY = style.overflowY === "hidden" || style.overflowY === "clip";
+				const clipsX = style.overflowX === "hidden" || style.overflowX === "clip";
+				if (clipsY && (rect.bottom <= box.top || rect.top >= box.bottom)) return true;
+				if (clipsX && (rect.right <= box.left || rect.left >= box.right)) return true;
+				const scrollsY = (style.overflowY === "auto" || style.overflowY === "scroll") && ancestor.scrollHeight > ancestor.clientHeight;
+				const scrollsX = (style.overflowX === "auto" || style.overflowX === "scroll") && ancestor.scrollWidth > ancestor.clientWidth;
+				if (scrollsY || scrollsX) {
+					rect = {
+						top: scrollsY ? box.top : rect.top,
+						bottom: scrollsY ? box.bottom : rect.bottom,
+						left: scrollsX ? box.left : rect.left,
+						right: scrollsX ? box.right : rect.right,
+					};
+					owner = ancestor;
+				}
+			}
+			// after its own scrolling: a fixed panel on screen can be scrolled to what it holds
 			if (style.position === "fixed") {
 				return rect.bottom <= -viewportExpansion || rect.top >= window.innerHeight + viewportExpansion ||
 					rect.right <= -viewportExpansion || rect.left >= window.innerWidth + viewportExpansion;
-			}
-			if (ancestor === element) continue;
-			const box = getCachedBoundingRect(ancestor);
-			if (!box || escapesClip(owner, ancestor)) continue;
-			const clipsY = style.overflowY === "hidden" || style.overflowY === "clip";
-			const clipsX = style.overflowX === "hidden" || style.overflowX === "clip";
-			if (clipsY && (rect.bottom <= box.top || rect.top >= box.bottom)) return true;
-			if (clipsX && (rect.right <= box.left || rect.left >= box.right)) return true;
-			const scrollsY = (style.overflowY === "auto" || style.overflowY === "scroll") && ancestor.scrollHeight > ancestor.clientHeight;
-			const scrollsX = (style.overflowX === "auto" || style.overflowX === "scroll") && ancestor.scrollWidth > ancestor.clientWidth;
-			if (scrollsY || scrollsX) {
-				rect = {
-					top: scrollsY ? box.top : rect.top,
-					bottom: scrollsY ? box.bottom : rect.bottom,
-					left: scrollsX ? box.left : rect.left,
-					right: scrollsX ? box.right : rect.right,
-				};
-				owner = ancestor;
 			}
 		}
 		return false;

@@ -103,6 +103,9 @@ REACH = """
 <button style="position: fixed; top: 1500px; left: 10px">FIXED_BELOW</button>
 <div style="position: fixed; top: 1500px; left: 200px"><a href="/panel">IN_FIXED_PANEL</a></div>
 <div style="position: sticky; top: 0"><a href="/section">Sticky section link</a></div>
+<div style="position: fixed; top: 0; right: 0; width: 300px; height: 300px; overflow: auto">
+  <div style="height: 2000px"></div><button>In a fixed scrollable panel</button><input placeholder="Panel field">
+</div>
 <div style="position: relative">
   <div style="height: 40px; overflow: hidden">
     <div style="position: absolute; top: 60px; height: 40px; overflow: auto">
@@ -133,6 +136,9 @@ async def test_only_controls_that_scrolling_reaches_are_described() -> None:
             "_[:]IN_FIXED_PANEL",
             # sticky content scrolls with the page until it sticks
             "_[:]<a>Sticky section link</a>",
+            # a fixed panel on screen scrolls to what it holds
+            "_[:]<button>In a fixed scrollable panel</button>",
+            '_[:]<input placeholder="Panel field"></input>',
             # its scrollable box escapes the clipping box (positioned outside it), and scrolls down to it
             "_[:]<button>In a scrollable box that escapes its clipping</button>",
             # its box scrolls down, not sideways: it stays out of the clipping box's width
