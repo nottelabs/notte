@@ -22,7 +22,7 @@ CONNECTION_FAILED = {"error": {"code": "connection_failed", "message": "connecti
 
 
 class FakeAac:
-    """An `aac` executable that prints `stdout`, exits with `exit_code` and records each call's arguments."""
+    """An `aac` executable that prints `stdout`, exits with `exit_code` and records each call's arguments and $HOME."""
 
     def __init__(self, tmp_path: Path, stdout: str, exit_code: int = 0) -> None:
         self.path: Path = tmp_path / "aac"
@@ -31,19 +31,26 @@ class FakeAac:
         _ = output_file.write_text(stdout)
         _ = self.path.write_text(
             "#!/usr/bin/env python3\n"
-            "import json, sys\n"
+            "import json, os, sys\n"
             f"with open({str(self.calls_file)!r}, 'a') as f:\n"
-            "    f.write(json.dumps(sys.argv[1:]) + '\\n')\n"
+            "    f.write(json.dumps({'args': sys.argv[1:], 'home': os.environ.get('HOME')}) + '\\n')\n"
             f"sys.stdout.write(open({str(output_file)!r}).read())\n"
             f"sys.exit({exit_code})\n"
         )
         self.path.chmod(self.path.stat().st_mode | stat.S_IXUSR)
 
-    @property
-    def calls(self) -> list[list[str]]:
+    def _records(self) -> list[dict[str, list[str] | str | None]]:
         if not self.calls_file.exists():
             return []
         return [json.loads(line) for line in self.calls_file.read_text().splitlines()]
+
+    @property
+    def calls(self) -> list[list[str]]:
+        return [record["args"] for record in self._records()]  # pyright: ignore[reportReturnType]
+
+    @property
+    def homes(self) -> list[str]:
+        return [record["home"] for record in self._records()]  # pyright: ignore[reportReturnType]
 
 
 def _credential_response(credential: Payload) -> str:
@@ -90,13 +97,14 @@ class TestAacVaultGetCredentials:
         assert creds["mfa_secret"] != SEED
         assert pyotp.TOTP(SEED).verify(creds["mfa_secret"], valid_window=1)
 
-    def test_reads_the_seed_of_an_otpauth_uri(self, tmp_path: Path) -> None:
-        uri = f"otpauth://totp/GitHub:octocat?secret={SEED}&issuer=GitHub"
+    def test_applies_the_settings_of_an_otpauth_uri(self, tmp_path: Path) -> None:
+        uri = f"otpauth://totp/GitHub:octocat?secret={SEED}&issuer=GitHub&digits=8&period=60&algorithm=SHA256"
         fake = FakeAac(tmp_path, _credential_response({**GITHUB_CREDENTIAL, "totp": uri}))
         with AacVault(token="ABC-DEF-123", aac_path=str(fake.path)) as vault:
             creds = asyncio.run(vault.get_credentials_async("https://github.com"))
         assert creds is not None
-        assert pyotp.TOTP(SEED).verify(creds["mfa_secret"], valid_window=1)
+        assert len(creds["mfa_secret"]) == 8
+        assert pyotp.parse_uri(uri).verify(creds["mfa_secret"], valid_window=1)
 
     def test_tracks_credentials_for_screenshot_masking(self, vault: AacVault) -> None:
         _ = asyncio.run(vault.get_credentials_async("https://github.com"))
@@ -132,7 +140,9 @@ class TestAacVaultGetCredentials:
             assert asyncio.run(vault.get_credentials_async("https://github.com")) is None
 
     def test_returns_none_on_timeout(self, vault: AacVault, monkeypatch: pytest.MonkeyPatch) -> None:
-        def timeout(cmd: list[str], *, capture_output: bool, text: bool, timeout: int, check: bool) -> None:
+        def timeout(
+            cmd: list[str], *, capture_output: bool, text: bool, timeout: int, check: bool, env: dict[str, str] | None
+        ) -> None:
             raise subprocess.TimeoutExpired(cmd, timeout)
 
         monkeypatch.setattr(subprocess, "run", timeout)
@@ -149,6 +159,18 @@ class TestAacVaultPairing:
         assert "--token" not in second
         assert vault.token is None
 
+    def test_pairs_in_a_private_home_removed_on_stop(self, fake_aac: FakeAac, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("HOME", "/home/user")
+        # the session names a connection in the user's cache, which a paired vault does not use
+        with AacVault(token="ABC-DEF-123", session="a1b2c3", aac_path=str(fake_aac.path)) as vault:
+            _ = vault.get_credentials("https://github.com")
+            _ = vault.get_credentials("https://github.com")
+            first, second = fake_aac.homes
+            assert first == second != "/home/user"
+            assert Path(first).is_dir()
+            assert "--session" not in fake_aac.calls[1]
+        assert not Path(first).exists()
+
     def test_keeps_the_token_when_pairing_fails(self, tmp_path: Path) -> None:
         fake = FakeAac(tmp_path, json.dumps(CONNECTION_FAILED), exit_code=2)
         with AacVault(token="ABC-DEF-123", aac_path=str(fake.path)) as vault:
@@ -162,13 +184,15 @@ class TestAacVaultPairing:
             assert vault.get_credentials("https://github.com") is None
             assert vault.token is None
 
-    def test_uses_the_session_without_a_token(self, fake_aac: FakeAac) -> None:
+    def test_uses_the_session_without_a_token(self, fake_aac: FakeAac, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("HOME", "/home/user")
         with AacVault(session="a1b2c3", aac_path=str(fake_aac.path)) as vault:
             _ = asyncio.run(vault.get_credentials_async("https://github.com"))
 
         [args] = fake_aac.calls
         assert _flag(args, "--session") == "a1b2c3"
         assert "--token" not in args
+        assert fake_aac.homes == ["/home/user"]
 
     def test_reads_token_from_env(self, fake_aac: FakeAac, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("AAC_TOKEN", "ENV-TOK-123")

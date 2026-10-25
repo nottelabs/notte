@@ -4,9 +4,9 @@ import asyncio
 import os
 import shutil
 import subprocess
+import tempfile
 from typing import Unpack
 
-import pyotp
 from pydantic import BaseModel, ValidationError
 from typing_extensions import override
 
@@ -43,7 +43,8 @@ class AacVault(BaseVault, SyncResource):
     never bulk-loaded or persisted.
 
     The user runs `aac listen` on their machine and shares the pairing token it prints. The first
-    credential request pairs with that token; later requests reuse the connection `aac` caches.
+    credential request pairs with that token; later requests reuse the connection. The vault keeps that
+    connection apart from the ones the user's `aac` has cached, and forgets it on `stop()`.
 
         with AacVault(token="ABC-DEF-GHI") as vault, notte.Session(vault=vault) as session:
             session.execute(type="goto", url="https://github.com/login")
@@ -64,7 +65,7 @@ class AacVault(BaseVault, SyncResource):
                 `AAC_TOKEN` env var. Without a token, a connection cached by `aac` is used.
             proxy_url: WebSocket URL of the aac proxy server.
             session: Hex fingerprint (or unique prefix) of the cached connection to use when no token is
-                given. Required when `aac` has cached more than one connection.
+                given. Required when the user's `aac` has cached more than one connection.
             timeout: Seconds to wait for the user's provider to answer a credential request.
             aac_path: Path to the aac CLI binary.
         """
@@ -74,6 +75,8 @@ class AacVault(BaseVault, SyncResource):
         self._session: str | None = session
         self._timeout: int = timeout
         self._aac_path: str = aac_path
+        # $HOME for `aac` once this vault pairs with a token, where `aac` keeps its identity and connections
+        self._home: str | None = None
 
     @override
     def start(self) -> None:
@@ -84,7 +87,9 @@ class AacVault(BaseVault, SyncResource):
 
     @override
     def stop(self) -> None:
-        pass
+        if self._home is not None:
+            shutil.rmtree(self._home, ignore_errors=True)
+            self._home = None
 
     def _request_credential(self, domain: str) -> _AacCredential | None:
         """Request the credential for `domain` through the tunnel, pairing first if a token is pending."""
@@ -100,15 +105,21 @@ class AacVault(BaseVault, SyncResource):
             "--timeout",
             str(self._timeout),
         ]
+        if self.token and self._home is None:
+            # pair in a private $HOME: the new connection is the only one cached there, so later requests select it
+            self._home = tempfile.mkdtemp(prefix="notte-aac-")
         # `--token` and `--session` are mutually exclusive in `aac connect`
         if self.token:
             cmd.extend(["--token", self.token])
-        elif self._session:
+        elif self._session and self._home is None:
             cmd.extend(["--session", self._session])
+        env = None if self._home is None else {**os.environ, "HOME": self._home}
 
         try:
             # the pairing handshake comes on top of the credential timeout
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=self._timeout + 30, check=False)  # noqa: S603
+            result = subprocess.run(  # noqa: S603
+                cmd, capture_output=True, text=True, timeout=self._timeout + 30, check=False, env=env
+            )
         except subprocess.TimeoutExpired:
             logger.warning(f"[AacVault] Credential request for {domain} timed out")
             return None
@@ -144,10 +155,8 @@ class AacVault(BaseVault, SyncResource):
         if cred.username:
             result["username"] = cred.username
         if cred.totp:
-            # providers return the TOTP seed, either base32 or an otpauth:// URI; the base vault turns it into a code
-            result["mfa_secret"] = (
-                pyotp.parse_uri(cred.totp).secret if cred.totp.startswith("otpauth://") else cred.totp
-            )
+            # providers return the TOTP seed (base32 or an otpauth:// URI); the base vault turns it into a code
+            result["mfa_secret"] = cred.totp
         return result
 
     @override
