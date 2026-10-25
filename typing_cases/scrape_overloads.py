@@ -44,6 +44,10 @@ def _check_client(client: NotteClient) -> None:
     reveal_type(markdown)
     with_model = client.scrape("https://example.com", response_format=Profile, model="google/gemini-3.5-flash")
     reveal_type(with_model)
+    unproxied = client.scrape("https://example.com", response_format=Profile, proxies=False)
+    reveal_type(unproxied)
+    markdown_proxies = client.scrape("https://example.com", proxies="ch")
+    reveal_type(markdown_proxies)
 
 
 async def _check_async_client(client: AsyncNotteClient) -> None:
@@ -55,6 +59,10 @@ async def _check_async_client(client: AsyncNotteClient) -> None:
     reveal_type(markdown)
     with_model = await client.scrape("https://example.com", response_format=Profile, model="google/gemini-3.5-flash")
     reveal_type(with_model)
+    unproxied = await client.scrape("https://example.com", response_format=Profile, proxies=False)
+    reveal_type(unproxied)
+    markdown_proxies = await client.scrape("https://example.com", proxies="ch")
+    reveal_type(markdown_proxies)
 
 
 def _check_page(page: PageClient) -> None:
