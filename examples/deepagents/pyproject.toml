@@ -4,7 +4,7 @@ version = "0.0.0"
 requires-python = ">=3.11"
 dependencies = [
     "deepagents==0.7.26",
-    "fastmcp==4.1.0",
+    "fastmcp==4.1.2",
     "langchain[mcp]==1.4.6",
     "langchain-anthropic==1.7.6",
     "notte-sdk==1.9.7",
