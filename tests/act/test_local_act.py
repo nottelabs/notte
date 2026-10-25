@@ -3,14 +3,22 @@
 import asyncio
 import html
 import json
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Mapping
 from typing import Any
 from urllib.parse import quote
 
 import pytest
 import pytest_asyncio
 from notte_browser.session import NotteSession
-from notte_core.act import DecisionState, InvalidDecisionError, NoActionFoundError, WriteContext, prompts
+from notte_core.act import (
+    Answers,
+    DecisionState,
+    InvalidDecisionError,
+    NoActionFoundError,
+    Question,
+    WriteContext,
+    prompts,
+)
 from notte_core.actions import CheckAction, FillAction, SelectDropdownOptionAction, WaitAction
 from notte_core.errors import ActionExecutionError
 
@@ -1621,3 +1629,26 @@ async def test_a_dialog_rendered_after_the_page_went_inert_is_observed(session: 
     state = await _next_state(session, decider, "Search")
     # not the inert page with nothing to act on: the dialog
     assert [e["label"] for e in state.elements] == ["Query", "Close"]
+
+
+YEARS = "".join(f"<option value='{y}'>{y}</option>" for y in range(1900, 2101))
+YEAR_PAGE = f"<p>Date of birth</p><select id='year'>{YEARS}</select>"
+
+
+class _PrefersSelect(FakeDecider):
+    """Picks SELECT whenever it is offered, its first listed option, as Jev did on a cut year list; else TYPE_TEXT."""
+
+    async def choose(self, state: DecisionState, questions: Mapping[str, Question]) -> Answers:
+        operation = "SELECT" if "SELECT" in questions["operation"].criteria else "TYPE_TEXT"
+        self.choices = [{"operation": operation}, *self.choices[1:]]
+        return await super().choose(state, questions)
+
+
+@pytest.mark.asyncio
+async def test_a_value_left_out_of_a_cut_select_is_typed_not_picked_among_the_listed_ones(
+    session: NotteSession,
+) -> None:
+    _ = await session.window.page.goto(f"data:text/html,{quote(YEAR_PAGE)}")
+    decider = _PrefersSelect(choices=[{}], texts=["1990"])
+    result = await session.aact("Born in 1990", decider=decider)
+    assert result.success and await session.window.page.input_value("#year") == "1990"

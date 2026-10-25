@@ -254,6 +254,34 @@ def test_act_until_done_stops_after_three_unchanged_actions() -> None:
     assert len(results) == 4
 
 
+def _select(value: str, element: str = "I7", fingerprint: str | None = None) -> ActResult:
+    return ActResult.model_validate(
+        {
+            "instruction": "go",
+            "status": "executed",
+            "fingerprint": fingerprint or value,
+            "operation": "SELECT",
+            "target": f"{element}:1",
+            "action": SelectDropdownOptionAction(id=element, value=value),
+        }
+    )
+
+
+def test_act_until_done_stops_when_actions_on_one_element_alternate() -> None:
+    # each SELECT changes the value, so the page is never unchanged: 1900, 1901, 1900, 1901, ...
+    session = _ScriptedSession([_select("1900" if i % 2 == 0 else "1901") for i in range(20)])
+    assert [r.action for r in act_until_done(session, "go")] == [
+        SelectDropdownOptionAction(id="I7", value=v) for v in ("1900", "1901", "1900", "1901")
+    ]
+
+
+def test_act_until_done_goes_on_when_alternating_actions_are_on_different_elements() -> None:
+    # "Add to cart" then "Next item", twice: progress, not a loop
+    results = [_select("a", "I1", "p1"), _select("b", "I2", "p2"), _select("a", "I1", "p3"), _select("b", "I2", "p4")]
+    session = _ScriptedSession([*results, _result("done", "p5")])
+    assert len(act_until_done(session, "go")) == 5
+
+
 def test_act_until_done_ignores_waits_and_respects_the_budget() -> None:
     session = _ScriptedSession([_result(fingerprint="a", operation="WAIT") for _ in range(10)])
     assert len(act_until_done(session, "go", max_steps=6)) == 6
@@ -287,14 +315,17 @@ def test_signature_includes_the_frame_path() -> None:
     assert page(["iframe#a"]).signature("B1") != page(["iframe#b"]).signature("B1")
 
 
-def test_truncated_select_options_can_be_typed() -> None:
-    options = (SelectOption(value="v0", label="Option 0", selected=True), SelectOption(value="v1", label="Option 1"))
-    states = {"I3": ElementState(value="v0", options=options, options_truncated=True)}
+def test_a_cut_select_is_set_by_typing_any_of_its_options() -> None:
+    # a year select listing 1900-1949 of 1900-2100: the wanted 1990 is not among its options
+    options = tuple(SelectOption(value=str(y), label=str(y), selected=y == 1900) for y in range(1900, 1950))
+    states = {"I3": ElementState(value="1900", options=options, options_truncated=True)}
     space = build_act_space(_page(states=states))
     element = next(e for e in space.elements if e["index"] == "I3")
-    assert element["more_options"] is True
-    assert set(space.targets["SELECT"]) == {"I3:1"}
-    # the options left out of the live state are reachable by typing their label
+    # what is listed is shown, the list said to be cut
+    assert element["more_options"] is True and [o["label"] for o in element["options"]][:2] == ["1901", "1902"]
+    # no listed option to pick for a value that is not listed: typing sets any of them
+    assert element["operations"] == ["TYPE_TEXT"]
+    assert not any(target.element_id == "I3" for target in space.targets.get("SELECT", {}).values())
     assert space.targets["TYPE_TEXT"]["I3"].kind == "select_text"
 
 
