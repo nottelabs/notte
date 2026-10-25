@@ -5,8 +5,8 @@
 # next to this file. Changes: notte-specific operation labels (controls, PRESS_ENTER, typing an
 # unlisted dropdown option, closing a dialog), native date / time fields in the date picker rule, the format /
 # variable / credential / clearing / field context rules of the field writer, the dialog line, the file upload
-# line, the choose / check rules, the rule on page text outside the viewport, and submitting a typed query with
-# no suggestion listed.
+# line, the choose / check rules, the rule on page text outside the viewport, submitting a typed query with
+# no suggestion listed, and the DONE line for typed text not submitted yet.
 """Instructions sent with the questions of `act()` / `choose()` / `check()` and to the field writer."""
 
 NEXT_ACTION = """Advance the user's entire goal from the CURRENT page using one operation.
@@ -66,6 +66,11 @@ TYPE_TEXT_OPTION = (
 DIALOG_COVERS_PAGE = "A dialog covers the page: the page behind it is hidden until the dialog is closed."
 
 DONE = "Every requirement is visibly satisfied."
+# added to DONE while fields hold text act() typed that nothing submitted yet (`submitted: false`)
+DONE_UNSUBMITTED = (
+    "Text typed in {fields} is not submitted (submitted: false): enough if the goal only asks to type it, not for"
+    + " a search or filter, which needs it submitted."
+)
 BLOCKED = "No supported operation can progress."
 # BLOCKED on a page with a file input: no operation uploads a file
 FILE_UPLOAD_UNSUPPORTED = "file upload is not supported by act()"
