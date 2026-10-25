@@ -18,6 +18,8 @@ dependencies = [
 llm = ["notte-llm==1.10.1.dev0"]
 # Drive cloud sessions with Playwright over CDP (session.page / session.cdp_url()).
 playwright = ["notte-sdk[playwright]==1.10.1.dev0"]
+# Read session credentials from Bitwarden Secrets Manager (notte_core.credentials.bitwarden).
+bitwarden = ["notte-core[bitwarden]==1.10.1.dev0"]
 
 [tool.uv.sources]
 notte-core = { workspace = true }

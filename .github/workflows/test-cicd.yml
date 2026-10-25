@@ -279,6 +279,17 @@ jobs:
       - name: Install dependencies
         run: uv sync --dev --all-extras
 
+      # tests/integration/test_aac_vault_integration.py runs AacVault against the real CLI.
+      # Pinned: AacVault passes the flags of this release (later sources rename --proxy-url).
+      - name: Install aac CLI (Agent Access Protocol)
+        run: |
+          curl -sSfL -o aac.tar.gz https://github.com/bitwarden/agent-access/releases/download/v0.11.0/aac-linux-x86_64.tar.gz
+          echo "a05b35bcc2cb9c87bc32c2ffaf83a1e8f29ac32590e609621f92e8b94d86e368  aac.tar.gz" | sha256sum -c -
+          tar xzf aac.tar.gz aac
+          sudo mv aac /usr/local/bin/
+          rm aac.tar.gz
+          aac --version
+
       - name: Install patchright
         if: steps.cache-patchright.outputs.cache-hit != 'true'
         run: |
