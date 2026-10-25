@@ -1491,3 +1491,38 @@ async def test_wait_ends_on_a_navigation_within_the_document(session: NotteSessi
     message, elapsed = await _wait(session, arm=f"setTimeout(() => {{ {move}; }}, 500)")
     assert message.startswith("The page navigated") and elapsed < 2.8
     assert session.window.page.url.endswith("#results")
+
+
+CARDS = """<div class=card><h3 id=first>Desk lamp</h3><button>Add to cart</button></div>
+<div class=card><h3>Bulb</h3><button>Add to cart</button></div>"""
+
+
+@pytest.mark.asyncio
+async def test_a_card_that_changes_while_deciding_is_stale(session: NotteSession) -> None:
+    _ = await session.window.page.goto(f"data:text/html,{quote(CARDS)}")
+    _ = await session.aobserve()
+    first = next(n.id for n in session.snapshot.interaction_nodes() if n.get_role_str() == "button")
+    titles = iter(["Floor lamp", "Table lamp"])
+
+    async def retitle() -> None:
+        # the card now holds another product; its button, name and selectors stay the same
+        await session.window.page.eval_on_selector("#first", "(el, title) => el.textContent = title", next(titles))
+
+    decider = FakeDecider(choices=[{"operation": "CLICK", "click_target": first}] * 2, on_choose=retitle)
+    result = await session.aact("Add the desk lamp to the cart", decider=decider, raise_on_failure=False)
+    assert "(in: Desk lamp)" in decider.states[0].page.text
+    assert result.status == "stale" and result.execution is None
+
+
+@pytest.mark.asyncio
+async def test_a_long_private_value_in_a_heading_is_masked_before_it_is_shortened(session: NotteSession) -> None:
+    private = "private-" * 10
+    # a card's heading echoes the value, longer than a shown title
+    cards = (
+        f"<div><h3>{private}</h3><button>Add to cart</button></div><div><h3>Bulb</h3><button>Add to cart</button></div>"
+    )
+    _ = await session.window.page.goto(f"data:text/html,{quote(cards)}")
+    decider = FakeDecider(choices=[{"operation": "DONE"}])
+    _ = await session.aact("Add {{item}} to the cart", variables={"item": private}, decider=decider)
+    shown = decider.states[0].model_dump_json()
+    assert "(in: {{item}})" in shown and "private-private" not in shown

@@ -6,6 +6,8 @@ container, the heading before the element, and the name of a named container (a 
 `act()` shows it only for elements whose name is not unique on the page (see `notte_core.act.space`).
 """
 
+from collections.abc import Callable
+
 from notte_core.dom_tree import DomNode
 
 # containers whose accessible name titles what they hold
@@ -42,6 +44,12 @@ def _cut(text: str) -> str:
     return text if len(text) <= MAX_TITLE_LENGTH else text[:MAX_TITLE_LENGTH].rstrip() + "…"
 
 
+def shorten(context: str, mask: Callable[[str], str]) -> str:
+    """`context` as shown to a model: masked first (a title can echo a protected value, whose cut prefix no longer
+    matches it), then each title cut to `MAX_TITLE_LENGTH`."""
+    return SEPARATOR.join(_cut(title) for title in mask(context).split(SEPARATOR))
+
+
 class _Headings:
     """Per node: the text of the last heading it holds, whether it holds an element outside its headings (then it
     is a section or an item of its own, and its headings title only what it holds), and how many elements it holds."""
@@ -61,7 +69,8 @@ class _Headings:
             count = (node.id is not None) + sum(self.count[id(child)] for child in node.children)
             self.count[id(node)] = count
             if node.get_role_str() == "heading":
-                self.last[id(node)] = _cut(_text(node)) or None
+                # kept whole: titles are cut when shown, after masking (`shorten`)
+                self.last[id(node)] = _text(node) or None
                 self.elements[id(node)] = False
                 continue
             last: str | None = None
@@ -93,7 +102,7 @@ def element_contexts(root: DomNode) -> dict[str, str]:
         role = node.get_role_str()
         if role in _LANDMARKS:
             around = ()
-        name = _cut(" ".join(node.text.split()))
+        name = " ".join(node.text.split())
         if name and node.id is None and role in _NAMED_CONTAINERS:
             around = _append(around, name)
         current: str | None = None

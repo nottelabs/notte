@@ -25,6 +25,7 @@ from dataclasses import dataclass, field
 from typing import Any, Literal
 
 import notte_core.act.prompts as prompts
+from notte_core.act.context import shorten
 from notte_core.act.errors import InvalidDecisionError
 from notte_core.act.types import Answer, Answers, PageState, Question
 from notte_core.actions import (
@@ -151,6 +152,8 @@ class ObservedPage:
                         action.accessible_name or "",
                         "" if selectors is None else selectors.model_dump_json(),
                         "" if state is None else state.digest(),
+                        # the titles of its section and item (shown to tell same-named elements apart)
+                        self.contexts.get(element_id, ""),
                     ]
                 )
         return None
@@ -468,6 +471,11 @@ def _contexts(page: ObservedPage, names: _Names) -> dict[str, str]:
     }
 
 
+def shown_contexts(page: ObservedPage) -> frozenset[str]:
+    """Ids of the elements whose context is shown to the decider: a decision about one also depends on it."""
+    return frozenset(_contexts(page, _names(page)))
+
+
 def _key(text: str) -> str:
     return " ".join(text.split()).casefold()
 
@@ -520,7 +528,7 @@ def _accessible_lines(page: ObservedPage, display_text: Callable[[str], str]) ->
             context = contexts.get(key)
             marker = f"[{key}] " + _in_context(
                 _cut(display_text(names.names.get(key, key)), MAX_LABEL_LENGTH),
-                None if context is None else _cut(display_text(context), MAX_CONTEXT_LENGTH),
+                None if context is None else _cut(shorten(context, display_text), MAX_CONTEXT_LENGTH),
             )
             options = _rendered_options(page, key, content)
             if options:
@@ -904,7 +912,7 @@ def build_act_space(
             space.unsubmitted.append(label)
         context = contexts.get(action.id)
         if context is not None:
-            element["context"] = _cut(display_text(context), MAX_CONTEXT_LENGTH)
+            element["context"] = _cut(shorten(context, display_text), MAX_CONTEXT_LENGTH)
         current = element.get("value")
         base: dict[str, Any] = {
             k: element[k] for k in ("role", "type", "format", "checked", "selected", "expanded") if k in element
