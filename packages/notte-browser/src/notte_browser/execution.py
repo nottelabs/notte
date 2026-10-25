@@ -520,6 +520,14 @@ def _settled_goto(action: GotoAction) -> bool:
     return action.wait_until in (None, "load")
 
 
+def waits_for_reaction(action: BaseAction) -> bool:
+    """Whether `execute` waits for the page's reaction to `action` whatever it is (`_settle`). After the other
+    actions, it waits only for a navigation they started."""
+    return isinstance(action, (ClickAction, PressKeyAction, GoBackAction, GoForwardAction, ReloadAction)) or (
+        isinstance(action, InteractionAction) and action.press_enter is True
+    )
+
+
 async def _settle(
     settle: PageSettle, action: BaseAction, url: str, *, verbose: bool, new_document: bool = False
 ) -> None:
