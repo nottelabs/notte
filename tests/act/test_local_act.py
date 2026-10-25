@@ -1,6 +1,7 @@
 """`NotteSession.act()` / `choose()` / `check()` end to end on a local page, with a scripted decider."""
 
 import asyncio
+import html
 import json
 from collections.abc import AsyncIterator
 from typing import Any
@@ -1346,3 +1347,46 @@ async def test_wait_ends_on_a_change_inside_a_frame_or_shadow_root(session: Nott
     await session.window.page.wait_for_timeout(200)
     message, elapsed = await _wait(session, arm=arm[where])
     assert message.startswith("The page changed") and elapsed < 2.8
+
+
+@pytest.mark.asyncio
+async def test_typing_in_a_frame_waits_for_its_suggestions(session: NotteSession) -> None:
+    # the autocomplete field and its timer-loaded list are inside a same-origin frame
+    inner = COMBOBOX.replace("LOAD", SUGGEST["timer"])
+    page = (
+        f"<p>Book a flight</p><iframe id='f' width=600 height=400 srcdoc=\"{html.escape(inner, quote=True)}\"></iframe>"
+    )
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    await session.window.page.wait_for_timeout(300)
+    _ = await session.aobserve()
+    field = next(node.id for node in session.snapshot.interaction_nodes() if node.get_role_str() == "combobox")
+    decider = FakeDecider(
+        choices=[{"operation": "TYPE_TEXT", "type_text_target": field}, {"operation": "DONE"}], texts=["Tokyo"]
+    )
+    state = await _next_state(session, decider, "Fly to Tokyo")
+    labels = [e["label"] for e in state.elements]
+    assert "Tokyo, Japan" in labels and "Haneda Airport (HND)" in labels
+
+
+@pytest.mark.asyncio
+async def test_a_failed_submit_keeps_the_text_unsubmitted(
+    session: NotteSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    await _serve(session, ISSUES)
+    decider = FakeDecider(choices=[])
+    _ = await _type(session, decider, "q", "is:open label:bug")
+    ids = await _ids(session)
+    real_execute = session.aexecute
+
+    async def failing_submit(action: Any, **kwargs: Any) -> Any:
+        if getattr(action, "id", None) == ids["search"]:
+            raise RuntimeError("the click did not go through")
+        return await real_execute(action, **kwargs)
+
+    monkeypatch.setattr(session, "aexecute", failing_submit)
+    decider.choices += [{"operation": "CLICK", "click_target": ids["search"]}, {"operation": "DONE"}]
+    with pytest.raises(RuntimeError):
+        _ = await session.aact("Show the open bugs", decider=decider)
+    _ = await session.aact("Show the open bugs", decider=decider)
+    # nothing was submitted: the field still holds unsubmitted text
+    assert _unsubmitted(decider.states[-1]) == ["Search issues"]
