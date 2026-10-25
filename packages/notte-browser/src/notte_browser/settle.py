@@ -13,15 +13,22 @@ the page starts, its URL changes and, if asked, the tabs it opens. The page has 
 and in any case `CAP_MS` after the action: a page that keeps a request open is left as it is.
 
 A navigation to a new document ends the tracking of the old one. The new document is tracked from its first render
-(`DOMContentLoaded`), the grace still counted from the action, at most `timeout_goto_ms` after the action, and waited
+(`DOMContentLoaded`), with `GRACE_MS` for a script that renders once it is parsed, at most `timeout_goto_ms` after the
+action, and waited
 for as the fixed waits it replaces did (`DocumentWait`):
 - `requests` (after a click, which waited for the network to go idle): until its requests are done and its DOM has
   settled, then until it has loaded. What it renders from data it fetches after its load event is waited for;
 - `loaded` (after a back / forward, which waited for the load): until its DOM has settled and it has loaded;
 - `rendered` (after a key press, which waited 500 ms): until its DOM has settled or it has loaded, whichever comes
   first. Analytics and polling can keep requests in flight, and images loading, while the results are rendered.
-A tab opened while the page settles ends the settle: the tab is waited for next (`PageSettle.opened_tab`). A tab
-is known once its first response has arrived; from its first request, it is waited for like a request in flight.
+A tab opened while the page settles ends the settle: the tab is waited for next (`PageSettle.tab`), its requests
+tracked from when it appeared. A tab is known once its first response has arrived; from its first request, it is
+waited for like a request in flight.
+
+The grace and the caps count from the action itself: its input event in the page (a click's pointerdown, a key's
+keydown), else its end (`PageSettle.acted`). A click that waits for its element to become clickable does not use
+them up, and what the page did meanwhile (an overlay going away) is not taken for the click's effect. A new document that loads after it has settled (a slow image) is watched again
+from its load event, which can start more requests.
 
 `GRACE_MS` covers a reaction that starts right after the action (a re-render, a request). A click or a key press
 can start its effect later (a timer, a debounced handler, a tab opened by a script): `LONG_GRACE_MS` is the fixed
@@ -107,15 +114,16 @@ class PageSettle:
         self.page: Page = page
         # None: the page is between two documents, the next one is tracked
         self._tracker: JSHandle | None = tracker
-        # when the action started (the caps), and when the tracking of the current document started
+        # when the action ended (the grace and the caps), and when the tracking of the current document started
         self._began: float = time.perf_counter()
         self._started: float = self._began
         self._in_flight: set[Request] = set()
-        self._first: float | None = None
-        self._last: float | None = None
+        # when requests started or ended (ms since `_started`)
+        self._changes: list[float] = []
         self._tabs: bool = tabs
-        # the tabs opened since the action started: the page is waited for no longer
+        # the tabs opened since the action started: the page is waited for no longer. Each is tracked from then on
         self.opened: list[Page] = []
+        self._opened_settles: dict[Page, PageSettle] = {}
         # a tab is opening: its first request was sent
         self._opening: bool = False
         page.on("request", self._request_started)
@@ -135,21 +143,18 @@ class PageSettle:
             tracker = None
         return cls(page, tracker, tabs=tabs)
 
-    @classmethod
-    async def opened_tab(cls, page: Page) -> None:
-        """A tab an action opened, tracked from its first render: until its requests are done and its DOM has
-        settled, then until it has loaded, at most `timeout_goto_ms`."""
-        settle = cls(page, None, tabs=False)
-        try:
-            await settle.wait(document="requests")
-        finally:
-            await settle.close()
+    def acted(self) -> None:
+        """The action has ended: the grace and the caps count from now."""
+        self._began = time.perf_counter()
+
+    def tab(self, page: Page) -> "PageSettle":
+        """The settle of a tab the action opened, tracking its requests since it appeared (the caller closes it).
+        Wait for it as for a click's new page: `wait(document="requests")`."""
+        settle = self._opened_settles.pop(page, None)
+        return settle if settle is not None else PageSettle(page, None, tabs=False)
 
     def _changed(self) -> None:
-        now = (time.perf_counter() - self._started) * 1000
-        if self._first is None:
-            self._first = now
-        self._last = now
+        self._changes.append((time.perf_counter() - self._started) * 1000)
 
     def _request_started(self, request: Request) -> None:
         if request.resource_type in TRACKED_REQUESTS:
@@ -163,6 +168,8 @@ class PageSettle:
 
     def _page_opened(self, page: Page) -> None:
         self.opened.append(page)
+        # its first scripts can start requests before it is waited for
+        self._opened_settles[page] = PageSettle(page, None, tabs=False)
 
     def _context_request(self, request: Request) -> None:
         if not request.is_navigation_request():
@@ -181,37 +188,64 @@ class PageSettle:
         assert self._tracker is not None
         while not self.opened:
             page: dict[str, Any] = await self._tracker.evaluate("t => t.state()")
-            firsts = [t for t in (page["first"], self._first if requests else None) if t is not None]
-            lasts = [t for t in (page["last"], self._last if requests else None) if t is not None]
+            # times since the action: its input event in the page, else its end when the document was tracked from
+            # before it, else since the document was tracked
+            shift = page["inputAt"] if page["inputAt"] is not None else max((self._began - self._started) * 1000, 0)
+
+            def since(t: float | None) -> float | None:
+                return None if t is None else t - shift
+
+            changes = [t for t in self._changes if t >= shift] if requests else []
+            firsts = [t for t in (page["first"], min(changes, default=None)) if t is not None]
+            lasts = [t for t in (page["last"], max(changes, default=None)) if t is not None]
             state = SettleState(
-                elapsed_ms=page["elapsed"],
-                first_change_ms=min(firsts, default=None),
-                last_change_ms=max(lasts, default=None),
+                elapsed_ms=page["elapsed"] - shift,
+                first_change_ms=since(min(firsts, default=None)),
+                last_change_ms=since(max(lasts, default=None)),
                 in_flight=(len(self._in_flight) if requests else 0) + (1 if self._opening else 0),
-                last_dom_change_ms=page["dom"],
-                url_changed_ms=page["urlAt"],
+                last_dom_change_ms=since(page["dom"]),
+                url_changed_ms=since(page["urlAt"]),
                 grace_ms=grace_ms,
             )
             if settled(state):
                 return
             await asyncio.sleep(POLL_MS / 1000)
 
-    async def _loaded(self) -> None:
+    async def _loaded(self) -> bool:
+        """Until the document has loaded; whether it had not yet."""
         # a document restored from the back-forward cache has loaded already, and fires no new load event
-        if await self.page.evaluate("document.readyState") != "complete":
-            await self.page.wait_for_load_state("load")
+        if await self.page.evaluate("document.readyState") == "complete":
+            return False
+        await self.page.wait_for_load_state("load")
+        return True
+
+    async def _dispose_tracker(self) -> None:
+        if self._tracker is None:
+            return
+        tracker, self._tracker = self._tracker, None
+        try:
+            await tracker.evaluate("t => t.dispose()")
+            await tracker.dispose()
+        except Error:
+            # the document is gone, and the handle with it
+            pass
 
     async def _track_document(self) -> None:
-        """Tracks the new document from its first render: what the old one did is over."""
+        """Tracks the current document from its first render: what was tracked before is over."""
+        await self._dispose_tracker()
         if await self.page.evaluate("document.readyState") == "loading":
             await self.page.wait_for_load_state("domcontentloaded")
         self._tracker = await self.page.evaluate_handle(SETTLE_TRACKER_JS)
-        self._started, self._first, self._last = time.perf_counter(), None, None
+        self._started, self._changes = time.perf_counter(), []
 
     async def _new_document(self, grace_ms: float, document: DocumentWait) -> None:
         if document == "requests":
             await self._poll(grace_ms)
-            await self._loaded()
+            if await self._loaded():
+                # settled before its load event, which can start requests and renders of its own: a request its
+                # handlers started is in flight already, no grace is needed for it
+                await self._track_document()
+                await self._poll(0)
             return
         rendered = asyncio.ensure_future(self._poll(grace_ms, requests=False))
         loaded = asyncio.ensure_future(self._loaded())
@@ -224,7 +258,7 @@ class PageSettle:
             _ = await asyncio.gather(rendered, loaded, return_exceptions=True)
         for task in done:
             # a navigation again (the tracker is gone) or a closed page
-            task.result()
+            _ = task.result()
 
     async def wait(self, *, grace_ms: float = GRACE_MS, document: DocumentWait = "rendered") -> None:
         """Until the page settles, at most `CAP_MS` after the action started; after a navigation to a new document,
@@ -246,8 +280,9 @@ class PageSettle:
             try:
                 async with asyncio.timeout(self._left_s(config.timeout_goto_ms)):
                     await self._track_document()
-                    # with no change at all, the action's grace counts from the action
-                    await self._new_document(max(grace_ms - (self._started - self._began) * 1000, 0), document)
+                    # the new document is the action's effect: only what a script renders right after it was parsed
+                    # is waited for
+                    await self._new_document(GRACE_MS, document)
                 return
             except TimeoutError:
                 return
@@ -257,17 +292,13 @@ class PageSettle:
                     return
 
     async def close(self) -> None:
+        for settle in self._opened_settles.values():
+            await settle.close()
+        self._opened_settles.clear()
         if self._tabs:
             _ = self.page.context.remove_listener("page", self._page_opened)
             _ = self.page.context.remove_listener("request", self._context_request)
         _ = self.page.remove_listener("request", self._request_started)
         _ = self.page.remove_listener("requestfinished", self._request_ended)
         _ = self.page.remove_listener("requestfailed", self._request_ended)
-        if self._tracker is None:
-            return
-        try:
-            await self._tracker.evaluate("t => t.dispose()")
-            await self._tracker.dispose()
-        except Error:
-            # the document is gone, and the handle with it
-            pass
+        await self._dispose_tracker()

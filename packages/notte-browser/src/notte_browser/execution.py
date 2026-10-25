@@ -617,7 +617,6 @@ async def execute(
             case EvaluateJsAction():
                 if verbose:
                     logger.error("EvaluateJs action should not be executed inside the controller")
-                pass
             case HelpAction():
                 if verbose:
                     logger.error("Help action should not be executed inside the controller")
@@ -626,21 +625,27 @@ async def execute(
                 retval = await execute_browser_action(window, action, verbose=verbose)
             case _:
                 raise ValueError(f"Unsupported action type: {type(action)}")
-        if settle is not None and retval:
-            await _settle(settle, action, url, verbose=verbose)
+        if settle is not None:
+            settle.acted()
+            if retval:
+                await _settle(settle, action, url, verbose=verbose)
+        # Only check for new tabs if the action can potentially create one
+        if _can_create_tab(action) and len(context.pages) != len(tabs) and len(context.pages) > 0:
+            last = context.pages[-1]
+            # a new tab from goto_new_tab is the window's page already, and loaded
+            if last is not window.page:
+                if verbose:
+                    id_str = f" id={action.id}" if isinstance(action, InteractionAction) else ""
+                    logger.info(f"🪦 Action {action.type}{id_str} resulted in a new tab, switched to it...")
+                await last.bring_to_front()
+                window.page = last
+                if last not in tabs:
+                    tab = settle.tab(last) if settle is not None else PageSettle(last, None, tabs=False)
+                    try:
+                        await tab.wait(document="requests")
+                    finally:
+                        await tab.close()
     finally:
         if settle is not None:
             await settle.close()
-    # Only check for new tabs if the action can potentially create one
-    if _can_create_tab(action) and len(context.pages) != len(tabs) and len(context.pages) > 0:
-        last = context.pages[-1]
-        # a new tab from goto_new_tab is the window's page already, and loaded
-        if last is not window.page:
-            if verbose:
-                id_str = f" id={action.id}" if isinstance(action, InteractionAction) else ""
-                logger.info(f"🪦 Action {action.type}{id_str} resulted in a new tab, switched to it...")
-            await last.bring_to_front()
-            window.page = last
-            if last not in tabs:
-                await PageSettle.opened_tab(last)
     return retval
