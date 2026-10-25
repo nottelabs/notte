@@ -170,3 +170,41 @@ async def test_a_control_cut_by_the_edge_of_the_viewport_is_in_one_list() -> Non
         lines, actions = await _observe(session)
         assert lines == ["B1[:]<button>Center in view</button>", "_[:]<button>Center below the fold</button>"]
         assert actions == [("B1", "Center in view")]
+
+
+SCROLL_BOXES = """
+<div style="height: 300px; overflow: auto; transform: scale(2); transform-origin: top left; width: 200px">
+  <div style="height: 2000px"></div><button>Scaled</button>
+</div>
+<div style="height: 300px; overflow: auto; display: flex; flex-direction: column-reverse; width: 300px; margin-top: 400px">
+  <button>Newest</button><div style="flex: none; height: 2000px"></div><button>Older</button>
+</div>
+<div dir="rtl" style="height: 300px; width: 300px; overflow: auto">
+  <div style="width: 1000px; height: 2000px"></div>
+  <div style="width: 1000px"><button>Far left</button></div>
+  <button style="position: relative; left: 400px">RTL_PAST_ITS_START</button>
+</div>
+<div style="position: fixed; top: 0; left: 1300px; width: 300px; height: 300px; overflow: auto">
+  <div style="height: 2000px"></div><button style="position: relative; left: -500px">SHIFTED_OUT_OF_ITS_PANEL</button>
+</div>
+<div style="height: 3000px"></div>
+"""
+
+
+@pytest.mark.asyncio
+async def test_scrollable_boxes_reach_the_area_they_scroll_through() -> None:
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(SCROLL_BOXES)}")
+        lines, _ = await _observe(session)
+        assert lines == [
+            # scroll sizes are scaled like the box on screen
+            "_[:]<button>Scaled</button>",
+            # a reversed column scrolls up to older content (negative scroll offsets)
+            "_[:]<button>Newest</button>",
+            "_[:]<button>Older</button>",
+            # a right-to-left box scrolls left from its right edge, not past it
+            "_[:]<button>Far left</button>",
+            "_[:]RTL_PAST_ITS_START",
+            # an `auto` box clips the axis it has nothing to scroll on
+            "_[:]SHIFTED_OUT_OF_ITS_PANEL",
+        ]
