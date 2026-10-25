@@ -4,14 +4,20 @@ import os
 import weakref
 from functools import partial
 from types import TracebackType
-from typing import Any, Literal, Self, TypeVar, Unpack, cast, overload
+from typing import Any, Literal, Self, TypeAlias, TypeVar, Unpack, cast, overload
 
 from notte_core import enable_nest_asyncio
 from notte_core.actions import GotoAction
 from notte_core.data import StructuredData, TBaseModel
 from notte_core.logging import logger
 from notte_core.observation import ExecutionResult
-from notte_core.types import ScrapeMarkdownParamsDict, ScrapeRequestDict
+from notte_core.types import (
+    ProxyGeolocationCountry,
+    ProxyGeolocationCountryCode,
+    ProxySettings,
+    ScrapeMarkdownParamsDict,
+    ScrapeRequestDict,
+)
 from pydantic import BaseModel
 from typing_extensions import final
 
@@ -19,6 +25,7 @@ from notte_sdk._flow import Call, Flow, arun, run
 from notte_sdk._generated.resources import (
     AsyncProfilesOperations,
 )
+from notte_sdk._generated.typing import ProxySettingsDict
 from notte_sdk._retry import DEFAULT_MAX_RETRIES
 from notte_sdk._transport import AsyncSharedHttpClient, SharedHttpClient
 from notte_sdk.auth import MISSING_API_KEY_MESSAGE, resolve_api_key
@@ -66,9 +73,17 @@ def _validated_settings(
 _Session = TypeVar("_Session", RemoteSession, AsyncRemoteSession)
 
 
-def _scrape_session(session: type[_Session]) -> _Session:
-    """The session `scrape` opens: no viewer, fast perception."""
-    return session(open_viewer=False, perception_type="fast")
+# The `proxies` values `Session(proxies=...)` accepts.
+ScrapeProxies: TypeAlias = (
+    list[ProxySettings] | list[ProxySettingsDict] | bool | ProxyGeolocationCountry | ProxyGeolocationCountryCode
+)
+
+
+def _scrape_session(session: type[_Session], proxies: ScrapeProxies | None) -> _Session:
+    """The session `scrape` opens: no viewer, fast perception, and `proxies` when given."""
+    if proxies is None:
+        return session(open_viewer=False, perception_type="fast")
+    return session(open_viewer=False, perception_type="fast", proxies=proxies)
 
 
 def _scrape_flow(
@@ -201,6 +216,7 @@ class NotteClient:
         response_format: type[TBaseModel],
         instructions: str | None = None,
         raise_on_failure: Literal[True] = ...,
+        proxies: ScrapeProxies | None = None,
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> TBaseModel: ...
 
@@ -214,6 +230,7 @@ class NotteClient:
         response_format: type[TBaseModel],
         instructions: str | None = None,
         raise_on_failure: Literal[False],
+        proxies: ScrapeProxies | None = None,
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> StructuredData[TBaseModel]: ...
 
@@ -226,6 +243,7 @@ class NotteClient:
         *,
         instructions: str,
         raise_on_failure: Literal[True] = ...,
+        proxies: ScrapeProxies | None = None,
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> dict[str, Any]: ...
 
@@ -238,17 +256,30 @@ class NotteClient:
         *,
         instructions: str,
         raise_on_failure: Literal[False],
+        proxies: ScrapeProxies | None = None,
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> StructuredData[BaseModel]: ...
 
     # markdown catch-all LAST: open Unpack[TypedDict] otherwise swallows every kwargs call under ty
     @overload
     def scrape(
-        self, /, url: str, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]
+        self,
+        /,
+        url: str,
+        *,
+        raise_on_failure: bool = True,
+        proxies: ScrapeProxies | None = None,
+        **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> str: ...
 
     def scrape(
-        self, /, url: str, *, raise_on_failure: bool = True, **data: Unpack[ScrapeRequestDict]
+        self,
+        /,
+        url: str,
+        *,
+        raise_on_failure: bool = True,
+        proxies: ScrapeProxies | None = None,
+        **data: Unpack[ScrapeRequestDict],
     ) -> StructuredData[BaseModel] | BaseModel | dict[str, Any] | str:
         """
         Scrape the current page data.
@@ -284,6 +315,8 @@ class NotteClient:
             raise_on_failure: If True (default), raises ScrapeFailedError when structured data
                 extraction fails and returns the extracted data directly. If False, returns
                 the StructuredData wrapper so user can check .success.
+            proxies: Proxies for the session the scrape opens, with the same values as
+                `Session(proxies=...)`. Defaults to the session default.
             **data: Additional parameters for the scrape.
 
         Returns:
@@ -291,7 +324,7 @@ class NotteClient:
             When raise_on_failure=False: returns StructuredData wrapper so user can check .success.
             For markdown scraping: returns str.
         """
-        with _scrape_session(self.Session) as session:
+        with _scrape_session(self.Session, proxies) as session:
             return run(session, _scrape_flow(url, raise_on_failure, data))
 
 
@@ -425,6 +458,7 @@ class AsyncNotteClient:
         response_format: type[TBaseModel],
         instructions: str | None = None,
         raise_on_failure: Literal[True] = ...,
+        proxies: ScrapeProxies | None = None,
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> TBaseModel: ...
 
@@ -438,6 +472,7 @@ class AsyncNotteClient:
         response_format: type[TBaseModel],
         instructions: str | None = None,
         raise_on_failure: Literal[False],
+        proxies: ScrapeProxies | None = None,
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> StructuredData[TBaseModel]: ...
 
@@ -450,6 +485,7 @@ class AsyncNotteClient:
         *,
         instructions: str,
         raise_on_failure: Literal[True] = ...,
+        proxies: ScrapeProxies | None = None,
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> dict[str, Any]: ...
 
@@ -462,17 +498,30 @@ class AsyncNotteClient:
         *,
         instructions: str,
         raise_on_failure: Literal[False],
+        proxies: ScrapeProxies | None = None,
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> StructuredData[BaseModel]: ...
 
     # markdown catch-all LAST: open Unpack[TypedDict] otherwise swallows every kwargs call under ty
     @overload
     async def scrape(
-        self, /, url: str, *, raise_on_failure: bool = True, **params: Unpack[ScrapeMarkdownParamsDict]
+        self,
+        /,
+        url: str,
+        *,
+        raise_on_failure: bool = True,
+        proxies: ScrapeProxies | None = None,
+        **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> str: ...
 
     async def scrape(
-        self, /, url: str, *, raise_on_failure: bool = True, **data: Unpack[ScrapeRequestDict]
+        self,
+        /,
+        url: str,
+        *,
+        raise_on_failure: bool = True,
+        proxies: ScrapeProxies | None = None,
+        **data: Unpack[ScrapeRequestDict],
     ) -> StructuredData[BaseModel] | BaseModel | dict[str, Any] | str:
         """
         Scrape the current page data.
@@ -508,6 +557,8 @@ class AsyncNotteClient:
             raise_on_failure: If True (default), raises ScrapeFailedError when structured data
                 extraction fails and returns the extracted data directly. If False, returns
                 the StructuredData wrapper so user can check .success.
+            proxies: Proxies for the session the scrape opens, with the same values as
+                `Session(proxies=...)`. Defaults to the session default.
             **data: Additional parameters for the scrape.
 
         Returns:
@@ -515,5 +566,5 @@ class AsyncNotteClient:
             When raise_on_failure=False: returns StructuredData wrapper so user can check .success.
             For markdown scraping: returns str.
         """
-        async with _scrape_session(self.Session) as session:
+        async with _scrape_session(self.Session, proxies) as session:
             return await arun(session, _scrape_flow(url, raise_on_failure, data))

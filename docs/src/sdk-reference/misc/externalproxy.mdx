@@ -1,0 +1,28 @@
+---
+title: "ExternalProxy"
+description: "Opt-in raw construction for remote requests; normal construction still validates"
+---
+
+
+
+## Fields
+
+<ParamField path="type" type="Literal['external']" default="external">
+</ParamField>
+
+<ParamField path="server" type="str" required>
+</ParamField>
+
+<ParamField path="username" type="UnionType[str, None]">
+</ParamField>
+
+<ParamField path="password" type="UnionType[str, None]">
+</ParamField>
+
+<ParamField path="bypass" type="UnionType[str, None]">
+</ParamField>
+
+
+## Module
+
+`notte_core.types`

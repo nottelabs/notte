@@ -119,6 +119,18 @@ def test_failed_structured_scrape_raises_the_same(monkeypatch: pytest.MonkeyPatc
     assert exchange.calls[-1].params == {"close_reason": "error"}
 
 
+@pytest.mark.parametrize("proxies", [False, "ch"])
+def test_scrape_starts_its_session_with_the_given_proxies(monkeypatch: pytest.MonkeyPatch, proxies: Any) -> None:
+    default = same_on_both(routes((200, MARKDOWN)), monkeypatch)
+    exchange = same_on_both(routes((200, MARKDOWN)), monkeypatch, proxies=proxies)
+    assert sent(exchange) == [START, GOTO, SCRAPE, STOP]
+    # Without `proxies` the start request leaves them to the session default.
+    assert "proxies" not in json.loads(default.calls[0].data)
+    assert json.loads(exchange.calls[0].data) == {**json.loads(default.calls[0].data), "proxies": proxies}
+    # `proxies` configures the session, not the scrape request.
+    assert exchange.calls[2].data == default.calls[2].data
+
+
 # ---------------------------------------------------------------------------
 # Failures stop the session
 

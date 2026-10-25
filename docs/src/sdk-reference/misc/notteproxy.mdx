@@ -1,0 +1,25 @@
+---
+title: "NotteProxy"
+description: "Opt-in raw construction for remote requests; normal construction still validates"
+---
+
+
+
+## Fields
+
+<ParamField path="type" type="Literal['notte']" default="notte">
+</ParamField>
+
+<ParamField path="id" type="UnionType[str, None]">
+</ParamField>
+
+<ParamField path="country" type="UnionType[ProxyGeolocationCountry, None]">
+</ParamField>
+
+<ParamField path="city" type="UnionType[str, None]">
+</ParamField>
+
+
+## Module
+
+`notte_core.types`
