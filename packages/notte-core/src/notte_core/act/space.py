@@ -22,7 +22,9 @@ import re
 from collections import Counter
 from collections.abc import Callable, Collection, Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Literal
+from functools import lru_cache
+from types import MappingProxyType
+from typing import Any, Literal, TypeVar
 
 import notte_core.act.prompts as prompts
 from notte_core.act.context import shorten
@@ -103,6 +105,9 @@ class ObservedPage:
     readonly: frozenset[str] = frozenset()
     # the titles of the sections and items around each element (`notte_core.act.context`; empty when unknown)
     contexts: Mapping[str, str] = field(default_factory=dict[str, str])
+    # what is read from the page once per step and needed several times (names, contexts, ...), by `_once`. A
+    # changed page is a new `ObservedPage` (`dataclasses.replace` included), with an empty cache
+    _derived: dict[str, Any] = field(default_factory=dict[str, Any], init=False, repr=False, compare=False)
 
     @staticmethod
     def from_observation(
@@ -211,17 +216,37 @@ class ActSpace:
         return operations
 
 
+_T = TypeVar("_T")
+
+
+def _once(page: ObservedPage, key: str, compute: Callable[[], _T]) -> _T:
+    """`compute()`, once per page: what it reads from `page` is the same on every call."""
+    if key not in page._derived:  # pyright: ignore[reportPrivateUsage]
+        page._derived[key] = compute()  # pyright: ignore[reportPrivateUsage]
+    return page._derived[key]  # pyright: ignore[reportPrivateUsage]
+
+
 def description_lines(description: str) -> dict[str, str]:
     """The rendered element of every action id in an action space description (`I1[:]<input ...>`), on one
     line: an element rendered over several lines (a `<select>` and its options) is joined with spaces."""
+    return dict(_rendered_lines(description))
+
+
+# the page of the decision, its copy for the models and the page re-observed after an action: a few descriptions
+_DESCRIPTIONS_CACHED = 8
+
+
+@lru_cache(maxsize=_DESCRIPTIONS_CACHED)
+def _rendered_lines(description: str) -> Mapping[str, str]:
     lines: dict[str, str] = {}
     for key, content in _description_blocks(description):
         if key is not None and key != "_":
             _ = lines.setdefault(key, " ".join(content.splitlines()))
-    return lines
+    return MappingProxyType(lines)
 
 
-def _description_blocks(description: str) -> list[tuple[str | None, str]]:
+@lru_cache(maxsize=_DESCRIPTIONS_CACHED)
+def _description_blocks(description: str) -> tuple[tuple[str | None, str], ...]:
     """The rendered page as (`<id>` / `_` for text / None for a component header, content) blocks."""
     blocks: list[tuple[str | None, str]] = []
     for line in description.splitlines():
@@ -238,7 +263,7 @@ def _description_blocks(description: str) -> list[tuple[str | None, str]]:
             blocks[-1] = (blocks[-1][0], blocks[-1][1] + "\n" + line)
         else:
             blocks.append(("_", line))
-    return blocks
+    return tuple(blocks)
 
 
 def _approximate_name(action: InteractionAction, rendered: str, before: str | None, after: str | None) -> str:
@@ -350,6 +375,10 @@ def _same_text(a: str, b: str) -> bool:
 
 
 def _names(page: ObservedPage) -> _Names:
+    return _once(page, "names", lambda: _read_names(page))
+
+
+def _read_names(page: ObservedPage) -> _Names:
     """Each element's name: the observation's `accessible_name` (computed in the browser, like Chromium's), or
     for an observation without any (an older server) an approximation from the rendered page (`_approximate_name`).
 
@@ -442,7 +471,7 @@ _TEXT_ROLES = ("textbox", "searchbox", "combobox", "spinbutton")
 def accessible_names(page: ObservedPage) -> dict[str, str]:
     """The accessible name of every action rendered in the page description, by action id (clickable `<label>`
     elements that name the field next to them are left out: see `label_elements`)."""
-    return _names(page).names
+    return dict(_names(page).names)
 
 
 def label_elements(page: ObservedPage) -> frozenset[str]:
@@ -450,7 +479,11 @@ def label_elements(page: ObservedPage) -> frozenset[str]:
     return _names(page).labels
 
 
-def _contexts(page: ObservedPage, names: _Names) -> dict[str, str]:
+def _contexts(page: ObservedPage) -> Mapping[str, str]:
+    return _once(page, "contexts", lambda: _read_contexts(page, _names(page)))
+
+
+def _read_contexts(page: ObservedPage, names: _Names) -> dict[str, str]:
     """The context of each element whose name is not unique on the page (another element, or a text of the page,
     has it: the same "Add to cart" for two products), when it tells the element apart: it says more than the name,
     and no other element of that name has the same context (four unnamed "button"s of one form)."""
@@ -473,7 +506,7 @@ def _contexts(page: ObservedPage, names: _Names) -> dict[str, str]:
 
 def shown_contexts(page: ObservedPage) -> frozenset[str]:
     """Ids of the elements whose context is shown to the decider: a decision about one also depends on it."""
-    return frozenset(_contexts(page, _names(page)))
+    return frozenset(_contexts(page))
 
 
 def _key(text: str) -> str:
@@ -485,6 +518,7 @@ def _in_context(label: str, context: str | None) -> str:
     return label if context is None else f"{label} (in: {context})"
 
 
+@lru_cache(maxsize=_DESCRIPTIONS_CACHED)
 def covered_by_dialog(description: str) -> bool:
     """An open dialog hides the page: the observation shows only the dialog (its component header, without
     the page's own `WebArea` one)."""
@@ -507,7 +541,7 @@ def _accessible_lines(page: ObservedPage, display_text: Callable[[str], str]) ->
     """`accessible_text` as (element id or None, line) pairs."""
     names = _names(page)
     empty = _empty_listboxes(page)
-    contexts = _contexts(page, names)
+    contexts = _contexts(page)
     lines: list[tuple[str | None, str]] = []
     for i, (key, content) in enumerate(_description_blocks(page.description)):
         if i in names.used or key in empty:
@@ -538,6 +572,10 @@ def _accessible_lines(page: ObservedPage, display_text: Callable[[str], str]) ->
 
 
 def _empty_listboxes(page: ObservedPage) -> frozenset[str]:
+    return _once(page, "empty_listboxes", lambda: _read_empty_listboxes(page))
+
+
+def _read_empty_listboxes(page: ObservedPage) -> frozenset[str]:
     """Ids of the ARIA listboxes rendered with nothing in them and no option after them: a combobox's popup that
     lists no suggestion (a search box with none for the typed text). A listbox offers no operation (its options
     do), and shown, an empty one reads as suggestions still to choose: it is left out of the elements and the
@@ -564,7 +602,7 @@ def _empty_listboxes(page: ObservedPage) -> frozenset[str]:
 def find_field(page: ObservedPage, name: str, value: str) -> str | None:
     """The id of the field named `name` (its accessible name) whose live value is `value`, or None (no such field,
     or a page without live state)."""
-    names = accessible_names(page)
+    names = _names(page).names
     for action in page.actions:
         state = page.states.get(action.id)
         if names.get(action.id) != name or state is None or state.value is None:
@@ -585,7 +623,11 @@ def changed_beyond(before: ObservedPage, after: ObservedPage, field: str, values
 
 def _content(page: ObservedPage, field: str | None) -> Counter[str]:
     """The lines of the page text without element ids, the element `field`, suggestion lists and options."""
-    rendered = description_lines(page.description)
+    return _once(page, f"content:{field}", lambda: _read_content(page, field))
+
+
+def _read_content(page: ObservedPage, field: str | None) -> Counter[str]:
+    rendered = _rendered_lines(page.description)
     actions = {action.id: action for action in page.actions}
     content: Counter[str] = Counter()
     for key, line in _accessible_lines(page, str):
@@ -875,10 +917,9 @@ def build_act_space(
     act() typed that nothing submitted yet (see `ActHistory`), shown with `submitted: false`."""
     # Determine IDs, roles and supported operations from the original page. Only
     # presentation strings pass through display_text, before their display caps.
-    lines = description_lines(page.description)
-    all_names = _names(page)
-    names = all_names if labels == "accessible" else None
-    contexts = _contexts(page, all_names)
+    lines = _rendered_lines(page.description)
+    names = _names(page) if labels == "accessible" else None
+    contexts = _contexts(page)
     space = ActSpace()
     has_live_state = len(page.states) > 0
 
@@ -1042,7 +1083,7 @@ def field_context(
     """What the writer is told about a field besides its label (`exclude`, left out when they repeat it): its
     `placeholder` and the page text right before it (`nearby`: "Select State" next to an unnamed combobox)."""
     context: dict[str, str] = {}
-    match = _RENDERED_ELEMENT.match(description_lines(page.description).get(element_id, ""))
+    match = _RENDERED_ELEMENT.match(_rendered_lines(page.description).get(element_id, ""))
     placeholder = None if match is None else dict(_RENDERED_ATTRIBUTE.findall(match.group(2))).get("placeholder")
     if placeholder and not _same_text(placeholder, exclude):
         context["placeholder"] = _cut(display_text(placeholder), MAX_NEARBY_LABEL_LENGTH)
