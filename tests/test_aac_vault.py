@@ -171,6 +171,20 @@ class TestAacVaultPairing:
             assert "--session" not in fake_aac.calls[1]
         assert not Path(first).exists()
 
+    def test_pairs_again_after_a_restart(self, fake_aac: FakeAac, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("HOME", "/home/user")
+        vault = AacVault(token="ABC-DEF-123", aac_path=str(fake_aac.path))
+        with vault:
+            _ = vault.get_credentials("https://github.com")
+        with vault:
+            assert vault.token == "ABC-DEF-123"
+            _ = vault.get_credentials("https://github.com")
+
+        first, second = fake_aac.calls
+        assert _flag(first, "--token") == _flag(second, "--token") == "ABC-DEF-123"
+        assert "/home/user" not in fake_aac.homes
+        assert fake_aac.homes[0] != fake_aac.homes[1]
+
     def test_keeps_the_token_when_pairing_fails(self, tmp_path: Path) -> None:
         fake = FakeAac(tmp_path, json.dumps(CONNECTION_FAILED), exit_code=2)
         with AacVault(token="ABC-DEF-123", aac_path=str(fake.path)) as vault:
