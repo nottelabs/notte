@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased: controls outside the viewport in observations
+
+Observations describe the links, buttons, fields and options above and below the viewport. Only
+elements in the viewport get an action id, but the description covers the whole page: a link below
+the fold was rendered as its text alone (`_[:]Bletchley Park`), and a field not at all. They are now
+rendered without an id, with their tag, `role`, an input's `type`, and their text (or their name when
+they have no text), e.g. `_[:]<a>Bletchley Park</a>` or `_[:]<input type="email" placeholder="Email"></input>`.
+They offer no action until scrolled into view, and their nodes have the new `DomNode.offscreen` set.
+Hidden controls stay out, and so do off-screen links and buttons without text or name. Ids, actions and
+the description of the viewport are unchanged.
+
 ## 1.10.0
 
 The first release after 1.9.7. Highlights:

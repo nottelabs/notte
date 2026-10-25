@@ -82,7 +82,17 @@ _[:]Armed Forces Americas
 _[:]Armed Forces Europe
 _[:]Armed Forces Pacific
 _[:]Phone
+_[:]<input type="tel" value="" placeholder="Phone"></input>
+_[:]<button aria_label="More information about Phone"></button>
 _[:]Save this information for next time
+_[:]<input type="text" value="" aria_label="First name"></input>
+_[:]<input type="text" value="" aria_label="Last name"></input>
+_[:]<input type="text" value="" aria_label="Address"></input>
+_[:]<input type="text" value="" aria_label="Apartment, suite, etc."></input>
+_[:]<input type="text" value="" aria_label="City"></input>
+_[:]<input type="text" value="US" aria_label="Country/Region"></input>
+_[:]<input type="text" value="CA" aria_label="Province"></input>
+_[:]<input type="text" value="CA" aria_label="Province"></input>
 _[:]Shipping method
 _[:]Enter your shipping address to view available shipping methods.
 _[:]Payment
@@ -91,15 +101,16 @@ _[:]Credit card
 _[:]Card number
 _[:]Expiration date (MM / YY)
 _[:]Security code
+_[:]<button aria_label="More information about Security code"></button>
 _[:]Name on card
 _[:]Use shipping address as billing address
 _[:]Archarge Credit Card
-_[:]Pay now
-_[:]Refund policy
-_[:]Shipping policy
-_[:]Privacy policy
-_[:]Terms of service
-_[:]Contact information
+_[:]<button>Pay now</button>
+_[:]<button>Refund policy</button>
+_[:]<button>Shipping policy</button>
+_[:]<button>Privacy policy</button>
+_[:]<button>Terms of service</button>
+_[:]<button>Contact information</button>
 _[:]Order summary
 _[:]Shopping cart
 _[:]Product image

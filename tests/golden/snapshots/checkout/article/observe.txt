@@ -84,13 +84,14 @@ Canada</select>
 _[:]Delivery Method
 _[:]Courier ($19). Small items, such as lamps or pillows, can be sent by courier. Please note that purchases exceeding $200 will automatically qualify for ground-level shipping.
 _[:]Delivery Instructions (Optional)
-_[:]Continue to Payment
+_[:]<input type="text" value="" placeholder="e.g. buzzer number, gated community, etc."></input>
+_[:]<button>Continue to Payment</button>
 _[:]By completing your purchase, you agree to our
-_[:]Terms of Use
+_[:]<a>Terms of Use</a>
 _[:]and acknowledge that we will collect your email address and other personal information to send you order updates, promotional offers, and other communications. For more details on the categories of personal information we collect and how we use it, please review our
-_[:]Privacy Policy
+_[:]<a>Privacy Policy</a>
 _[:]. You have the right to opt-out of the sale of your personal information at any time. To exercise this right, please visit our
-_[:]Do Not Sell My Personal Information
+_[:]<a>Do Not Sell My Personal Information</a>
 _[:]page.
 _[:]Order Summary
 _[:]Delivery ETA:
@@ -214,23 +215,24 @@ _[:]Limited stock available.
 _[:]Order now to ensure the fastest delivery.
 _[:]30 day
 L6[:]<a href="https://www.article.com/help-center/returns#30-day-satisfact...">satisfaction guarantee.</a>
-_[:]Help Center
-_[:]+1.888.746.3455
+_[:]<a>Help Center</a>
+_[:]<a>+1.888.746.3455</a>
 _[:]LiveChat
-_[:]Email us
+_[:]<a>Email us</a>
 _[:]Get new products and promotions in your inbox.
-_[:]Subscribe
-_[:]Terms of Use
+_[:]<input type="email" value="" placeholder="Your email"></input>
+_[:]<button>Subscribe</button>
+_[:]<a>Terms of Use</a>
 _[:]-
-_[:]Privacy Policy
+_[:]<a>Privacy Policy</a>
 _[:]-
-_[:]Do Not Sell My Personal Information
+_[:]<a>Do Not Sell My Personal Information</a>
 _[:]-
-_[:]Cookie Settings
+_[:]<a>Cookie Settings</a>
 _[:]-
-_[:]Accessibility
+_[:]<a>Accessibility</a>
 _[:]-
-_[:]Shop
+_[:]<a>Shop</a>
 _[:]Copyright © 2025 Article.com. All rights reserved.
 _[:]normal
 

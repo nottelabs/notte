@@ -48,6 +48,9 @@ class RawNode(TypedDict):
     disabledReason: NotRequired[str | None]
     # a disabled control that would be highlighted if it were enabled (it has no highlight index)
     disabled: NotRequired[bool]
+    # an element above or below the viewport that would be highlighted in it (it has no highlight index,
+    # live state or accessible name)
+    offscreen: NotRequired[bool]
     pointerElement: NotRequired[bool]
     highlightIndex: NotRequired[int]
     shadowRoot: NotRequired[bool]
@@ -314,6 +317,10 @@ class _TreeBuilder:
             state=ElementState.from_payload(raw.get("state")),
             accessible_name=raw.get("accessibleName"),
             disabled=raw.get("disabled", False),
+            # only real controls: generic clickables are often wrappers, told apart by `duplicate_clickables` in view
+            offscreen=raw.get("offscreen", False)
+            and isinstance(role, NodeRole)
+            and role.short_id() in _CONTROL_SHORT_IDS,
         )
         for child in children:
             child.set_parent(node)

@@ -492,7 +492,7 @@
 	 *
 	 * - `ariaHidden`: inside `aria-hidden="true"`, and not inside focusable content
 	 * - `clipper`: the element that clips the content to an empty box (`height: 0; overflow: hidden`), or null
-	 * - `inControl`: inside a highlighted or disabled element, whose text is its label
+	 * - `inControl`: inside a highlighted, off-screen or disabled element (see `handleHighlighting`), whose text is its label
 	 */
 	const VISIBLE_SCOPE = { ariaHidden: false, clipper: null, inControl: false };
 
@@ -547,7 +547,7 @@
 	 *
 	 * @param {HTMLElement} element - The element.
 	 * @param {Object} scope - The scope of the element.
-	 * @param {boolean} isControl - Whether the element is highlighted or disabled.
+	 * @param {boolean} isControl - Whether the element is highlighted, off-screen or disabled.
 	 * @returns {Object} The scope of its children.
 	 */
 	function contentScope(element, scope, isControl) {
@@ -1275,6 +1275,40 @@
 		}
 	}
 
+	const OFFSCREEN_CONTROL_TAGS = new Set(['a', 'button', 'input', 'select', 'textarea', 'option']);
+
+	/**
+	 * Checks if an element is a link, button, form field or option by its tag or ARIA role: the controls
+	 * described above or below the viewport. Pointer cursors are not looked at there: the generic clickables
+	 * they find are not described off-screen, and reading every `:hover` rule of the page for each element
+	 * below the fold (`getElementCursorStates`) would make the walk several times slower.
+	 *
+	 * @param {HTMLElement} element - The element to check.
+	 * @returns {boolean} Whether the element is a control by its tag or role.
+	 */
+	function isOffscreenCandidate(element) {
+		const role = element.getAttribute('role');
+		if (role !== null && role !== '') return INTERACTIVE_ROLES.has(role);
+		return OFFSCREEN_CONTROL_TAGS.has(element.tagName.toLowerCase());
+	}
+
+	/**
+	 * Checks if an element is above or below the (expanded) viewport, where scrolling the page brings it:
+	 * entirely outside the viewport vertically, and across it horizontally. Content left or right of the
+	 * viewport is not: scrolling does not reveal it (off-canvas menus, skip links, carousel slides).
+	 *
+	 * @param {HTMLElement} element - The element to check.
+	 * @returns {boolean} Whether the element is above or below the viewport.
+	 */
+	function isAboveOrBelowViewport(element) {
+		if (viewportExpansion === -1) return false;
+		const rect = getCachedBoundingRect(element);
+		if (!rect || rect.width === 0 || rect.height === 0) return false;
+		const outside = rect.bottom < -viewportExpansion || rect.top > window.innerHeight + viewportExpansion;
+		const across = rect.right > -viewportExpansion && rect.left < window.innerWidth + viewportExpansion;
+		return outside && across;
+	}
+
 	/**
 	 * Checks if an element is within the expanded viewport.
 	 *
@@ -1579,8 +1613,11 @@
 					}
 					return true; // Successfully highlighted
 				}
-			} else {
-				// console.log(`Skipping highlight for ${nodeData.tagName} (outside viewport)`);
+			} else if (isAboveOrBelowViewport(node)) {
+				// described like a highlighted element (its nested elements too), but without a highlight
+				// index: it offers no action until it is scrolled into view
+				nodeData.offscreen = true;
+				return true;
 			}
 		}
 
@@ -1608,7 +1645,8 @@
 
 	/**
 	 * Marks a disabled control as `disabled` when it would be highlighted if it were enabled (same
-	 * nesting and viewport rules). It gets no highlight index: it is described, but offers no action.
+	 * nesting rules, in the viewport or above or below it). It gets no highlight index: it is described, but
+	 * offers no action.
 	 *
 	 * @param {Object} nodeData - The node data object.
 	 * @param {HTMLElement} node - The node to check.
@@ -1618,7 +1656,7 @@
 	function handleDisabledControl(nodeData, node, isParentHighlighted) {
 		if (!isDisabledControl(node)) return false;
 		if (isParentHighlighted && !isElementDistinctInteraction(node, true)) return false;
-		if (!isInExpandedViewport(node, viewportExpansion)) return false;
+		if (!isInExpandedViewport(node, viewportExpansion) && !isAboveOrBelowViewport(node)) return false;
 		nodeData.disabled = true;
 		return true;
 	}
@@ -1767,9 +1805,15 @@
 				// Special handling for ARIA menu containers - check interactivity even if not top element
 				const role = node.getAttribute('role');
 				const isMenuContainer = role === 'menu' || role === 'menubar' || role === 'listbox';
+				// a control above or below the viewport: described, without an action (see `handleHighlighting`)
+				// (not rendered: in a closed `<details>` or `hidden="until-found"`, which `isTopElement` rules out in view)
+				const isOffscreen = !nodeData.isTopElement && isOffscreenCandidate(node) && isAboveOrBelowViewport(node) &&
+					isRendered(node, false);
 
-				if ((nodeData.isTopElement || isMenuContainer) && !isElementHidden(node, scope)) {
-					const interactiveResult = isInteractiveElement(node);
+				if ((nodeData.isTopElement || isMenuContainer || isOffscreen) && !isElementHidden(node, scope)) {
+					const interactiveResult = isOffscreen
+						? (getDisabledReason(node, getCachedComputedStyle(node)) ?? true)
+						: isInteractiveElement(node);
 
 					// Parse interactive result for disabled state
 					if (typeof interactiveResult === 'string') {
@@ -1781,7 +1825,7 @@
 					}
 
 					// Add pointer element detection using dedicated function
-					nodeData.pointerElement = isPointerElementWithHover(node);
+					nodeData.pointerElement = !isOffscreen && isPointerElementWithHover(node);
 					// Call the dedicated highlighting function
 					nodeWasHighlighted = handleHighlighting(nodeData, node, parentIframe, isParentHighlighted);
 					const isDisabled = nodeData.disabledReason && handleDisabledControl(nodeData, node, isParentHighlighted);
@@ -1800,7 +1844,8 @@
 			}
 		}
 
-		const childScope = contentScope(node, scope, nodeData.highlightIndex !== undefined || nodeData.disabled === true);
+		const isControl = nodeData.highlightIndex !== undefined || nodeData.offscreen === true || nodeData.disabled === true;
+		const childScope = contentScope(node, scope, isControl);
 
 		// Process children, with special handling for iframes and rich text editors
 		if (node.tagName) {

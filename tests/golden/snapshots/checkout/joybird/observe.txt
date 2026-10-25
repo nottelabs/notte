@@ -1,5 +1,5 @@
 ### Content of 'WebArea' component with text 'body content'
-_[:]Skip to content
+_[:]<a>Skip to content</a>
 L1[:]<a href="https://joybird.com/" aria_label="Joybird"></a>
 L2[:]<a href="#email">1. Email</a>
 L3[:]<a href="#shipping">2. Shipping</a>
@@ -79,7 +79,7 @@ _[:]Phone (delivery contact) *
 I10[:]<input type="tel" value="" placeholder="" name="phone_number"></input>
 _[:]I'd also like to receive shipping updates via text message. By signing up, you agree to our
 _[:]Privacy Policy.
-_[:]Continue to delivery
+_[:]<button>Continue to delivery</button>
 B1[:]<button type="button" aria_label="Show/hide order summary" aria_expanded="true">1 item
 Winnie Outdoor Side Table
 Black Frame
@@ -102,11 +102,11 @@ _[:]$149
 B2[:]<button type="button" aria_expanded="false">Apply Gift Card/Promo Code +</button>
 _[:]Changed your mind?
 _[:]If you need to cancel your order, you must cancel within 24 hours in order to receive a full refund. Made to Order pieces cannot be cancelled after 24 hours and are not eligible for returns. For full details on returns & cancellations please visit:
-_[:]joybird.com/returns
-_[:]Call us
-_[:]888-282-0842
-_[:]Email us
-_[:]support@joybird.com
+_[:]<a>joybird.com/returns</a>
+_[:]<a>Call us</a>
+_[:]<a>888-282-0842</a>
+_[:]<a>Email us</a>
+_[:]<a>support@joybird.com</a>
 _[:]© 2025 Joybird, All rights reserved.
 _[:]insert
 
