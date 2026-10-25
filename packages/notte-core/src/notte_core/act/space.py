@@ -205,7 +205,7 @@ class ActSpace:
     def operations(self) -> dict[str, str]:
         operations = {key: prompts.OPERATION_LABELS[key] for key in self.targets}
         if any(target.kind == "select_text" for target in self.targets.get("TYPE_TEXT", {}).values()):
-            # a dropdown option that is not listed (`more_options`) is picked by typing its label
+            # the option of a dropdown whose list is cut (`more_options`) is picked by typing its label
             operations["TYPE_TEXT"] = prompts.TYPE_TEXT_OPTION
         operations.update({key: control.label for key, control in self.controls.items()})
         done = prompts.DONE
@@ -1016,6 +1016,10 @@ def build_act_space(
                     # no live state (an observe response without it): the writer types the option label
                     add("TYPE_TEXT", target("select_text"), element)
                 else:
+                    # a long list is cut (`ElementState.options`): any of its options, listed or not, is set by typing
+                    # its label. Offered as listed targets too, the cut list's options were picked when the wanted one
+                    # was not among them (the first of a year list, 1900, for 1990)
+                    cut = state is not None and state.options_truncated
                     listed: list[dict[str, str]] = []
                     element["options"] = listed
                     if state is not None and state.multiple:
@@ -1028,9 +1032,9 @@ def build_act_space(
                         listed.append(
                             {"index": key, "label": display_text(option.label), "value": display_text(option.value)}
                         )
-                        add("SELECT", target("select_option", key, option), element)
-                    if state is not None and state.options_truncated:
-                        # long lists are cut (`ElementState.options`): the other options are typed by label
+                        if not cut:
+                            add("SELECT", target("select_option", key, option), element)
+                    if cut:
                         element["more_options"] = True
                         add("TYPE_TEXT", target("select_text"), element)
             case _:

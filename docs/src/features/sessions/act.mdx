@@ -83,7 +83,7 @@ When the writer finds no value for the field the decider picked (the instruction
 
 ### Live state
 
-`act()` reads the **live state** of form controls (the current value of inputs, checked state, the options of a `<select>`), so the decider sees what a field already holds. Long option lists are cut to their first 50 options; the others are selected by typing their label. A `<select multiple>` takes one option per `act()`, and each selection replaces the previous one.
+`act()` reads the **live state** of form controls (the current value of inputs, checked state, the options of a `<select>`), so the decider sees what a field already holds. Long option lists are cut to their first 50 options; such a list is set by typing the label of any of its options, listed or not. A `<select multiple>` takes one option per `act()`, and each selection replaces the previous one.
 
 ## Choose and check
 

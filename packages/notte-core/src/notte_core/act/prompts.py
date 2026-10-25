@@ -65,10 +65,10 @@ OPERATION_LABELS = {
     "CLOSE_DIALOG": "Close the dialog that covers the page (accept, reject or dismiss it) to reach the page behind it."
     + " When one of the dialog's buttons does the goal's next step, CLICK it instead.",
 }
-# TYPE_TEXT when a dropdown has options that are not listed (`more_options`, or no option list)
+# TYPE_TEXT when a dropdown's list is cut (`more_options`) or not known (no option list)
 TYPE_TEXT_OPTION = (
-    "Enter or replace text in an editable field, or type the label of a dropdown option that is not listed"
-    + " (more_options). A small LLM will supply the value from the goal."
+    "Enter or replace text in an editable field, or set a dropdown whose list is cut (more_options) by typing the"
+    + " label of any of its options, listed or not. A small LLM will supply the value from the goal."
 )
 
 # first line of the page text when an open dialog hides the page (the observation shows only the dialog)
