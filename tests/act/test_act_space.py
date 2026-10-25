@@ -214,11 +214,11 @@ def test_history_fills_page_changed_on_next_observation() -> None:
 
     history = ActHistory()
     history.entries.append(ActHistoryEntry(action="Sign in", kind="CLICK", text=None, fingerprint="a"))
-    history.observed("b")
+    history.observed(_page(fingerprint="b"))
     history.entries.append(ActHistoryEntry(action="Help", kind="CLICK", text=None, fingerprint="b"))
-    history.observed("b")
+    history.observed(_page(fingerprint="b"))
     history.entries.append(ActHistoryEntry(action="x", kind="TYPE_TEXT", text="t", fingerprint="b", pending=False))
-    history.observed("c")
+    history.observed(_page(fingerprint="c"))
     assert [e["page_changed"] for e in history.recent()] == [True, False, None]
     for i in range(20):
         history.entries.append(ActHistoryEntry(action=str(i), kind="CLICK", text=None, fingerprint="z"))
@@ -991,3 +991,28 @@ I3[:]<ul role="listbox" aria_label="Recent"></ul>"""
     elements = [e["index"] for e in build_act_space(page, labels="accessible").elements]
     assert "I2" in elements and "O1" in elements and "I3" not in elements
     assert "[I2] Search suggestions" in accessible_text(page)
+
+
+def test_typing_changed_the_page_beyond_the_field() -> None:
+    from notte_core.act.space import changed_beyond, find_field
+
+    def issues(query: str, results: list[str]) -> ObservedPage:
+        # the query is also rendered next to the field (a highlighted copy, spaced differently)
+        lines = [
+            "_[:]Search issues",
+            f"_[:]{' : '.join(query.split(':'))}",
+            'I1[:]<input aria_label="Search issues"></input>',
+        ]
+        lines += [f'L{i}[:]<a href="/{i}">{r}</a>' for i, r in enumerate(results, 1)]
+        actions: list[InteractionAction] = [FillAction(id="I1", value="<sample_value>", text_label="Search issues")]
+        actions += [ClickAction(id=f"L{i}", text_label=r) for i, r in enumerate(results, 1)]
+        return _page(description="\n".join(lines), actions=actions, states={"I1": ElementState(value=query)})
+
+    before = issues("is:open", ["Crash on start", "Typo in docs"])
+    values = ["is:open label:bug", "is:open"]
+    # only the copy of the query changed: the query is typed, not applied
+    assert not changed_beyond(before, issues("is:open label:bug", ["Crash on start", "Typo in docs"]), "I1", values)
+    # a result is gone: the field filtered the page as it was typed in
+    assert changed_beyond(before, issues("is:open label:bug", ["Crash on start"]), "I1", values)
+    assert find_field(before, "Search issues", "is:open") == "I1"
+    assert find_field(before, "Search issues", "is:closed") is None
