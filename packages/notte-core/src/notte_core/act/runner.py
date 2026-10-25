@@ -36,9 +36,12 @@ from notte_core.act.space import (
     LabelMode,
     ObservedPage,
     Target,
+    accessible_names,
     act_questions,
     build_act_space,
+    changed_beyond,
     field_context,
+    find_field,
     interpret,
     label_mode,
     needs_text,
@@ -59,7 +62,7 @@ from notte_core.act.types import (
     Question,
     WriteContext,
 )
-from notte_core.actions import BaseAction, CheckAction
+from notte_core.actions import BaseAction, CheckAction, FillAction
 from notte_core.credentials.base import (
     CardCVVField,
     CardFullExpirationField,
@@ -116,6 +119,20 @@ class ActDriver(Protocol):
 
 
 @dataclass
+class TypedText:
+    """Text a TYPE_TEXT put in a field, while nothing submitted it (see `ActHistory`)."""
+
+    # the field's accessible name and the text typed (variables substituted): how the field is found again
+    name: str
+    value: str
+    url: str
+    # the page typed on, until the next observation tells whether typing alone changed the page (a live filter)
+    before: ObservedPage | None
+    # the field's id on the page typed on, then on the last observed page
+    element_id: str
+
+
+@dataclass
 class ActHistoryEntry:
     action: str
     kind: str
@@ -126,6 +143,12 @@ class ActHistoryEntry:
     pending: bool = True
     # the error class of a failed execution (never its message: it can quote page content or values)
     error: str | None = None
+    # a TYPE_TEXT whose text is not submitted yet
+    typed: TypedText | None = None
+
+
+# clicking these does not submit what was typed in a field
+_FORM_ROLES = ("textbox", "combobox", "checkbox", "radio", "select")
 
 
 @dataclass
@@ -134,22 +157,63 @@ class ActHistory:
 
     `page_changed` is filled in by the next observation (comparing page fingerprints), so it costs no
     extra observation. A fill on a driver without live state leaves it unknown.
+
+    Text typed in a field is `submitted: false` (in the history and on the field) while nothing submitted it: no
+    PRESS_ENTER, GO_BACK or click on anything but a form field since, the URL is the same and the field still holds
+    the text. A field that applies its text as it is typed (a live filter changing the URL or the page) is not.
     """
 
     entries: deque[ActHistoryEntry] = field(default_factory=lambda: deque(maxlen=HISTORY_SIZE))
     privacy: ActPrivacy = field(default_factory=ActPrivacy, repr=False)
 
-    def observed(self, fingerprint: str) -> None:
+    def observed(self, page: ObservedPage) -> None:
         if len(self.entries) > 0 and self.entries[-1].pending:
-            self.entries[-1].page_changed = fingerprint != self.entries[-1].fingerprint
+            self.entries[-1].page_changed = page.fingerprint != self.entries[-1].fingerprint
             self.entries[-1].pending = False
+        for entry in self.entries:
+            if entry.typed is not None:
+                entry.typed = _still_typed(entry.typed, page)
+
+    def acted(self, operation: str, target: Target | None) -> None:
+        """Before running `operation`: one that can submit typed text ends the tracking of every typed field."""
+        click = operation in ("CLICK", "CLOSE_DIALOG") and (target is None or target.role not in _FORM_ROLES)
+        if click or operation in ("PRESS_ENTER", "GO_BACK"):
+            for entry in self.entries:
+                entry.typed = None
+
+    def typed(self, typed: TypedText) -> None:
+        """`typed` was just typed: it replaces what was typed earlier in the same field."""
+        for entry in self.entries:
+            if entry.typed is not None and entry.typed.name == typed.name:
+                entry.typed = None
+
+    def unsubmitted(self) -> set[str]:
+        """The ids, on the last observed page, of the fields holding typed text not submitted yet."""
+        return {e.typed.element_id for e in self.entries if e.typed is not None and e.typed.before is None}
 
     def recent(self, limit: int = HISTORY_SIZE) -> list[dict[str, Any]]:
         return [
             {"action": e.action, "kind": e.kind, "text": e.text, "page_changed": e.page_changed}
             | ({} if e.error is None else {"error": e.error})
+            | ({} if e.typed is None or e.typed.before is not None else {"submitted": False})
             for e in list(self.entries)[-limit:]
         ]
+
+
+def _still_typed(typed: TypedText, page: ObservedPage) -> TypedText | None:
+    """`typed` on the newly observed `page`, or None once it is submitted or applied: the URL changed, the field no
+    longer holds the text, or (on the first observation after typing) typing changed the page beyond the field."""
+    if page.url != typed.url:
+        return None
+    element_id = find_field(page, typed.name, typed.value)
+    if element_id is None:
+        return None
+    if typed.before is not None:
+        before = typed.before.states.get(typed.element_id)
+        values = [typed.value, "" if before is None or before.value is None else before.value]
+        if changed_beyond(typed.before, page, typed.element_id, values):
+            return None
+    return TypedText(name=typed.name, value=typed.value, url=typed.url, before=None, element_id=element_id)
 
 
 def _ms(start: float) -> float:
@@ -214,7 +278,7 @@ async def run_act(
         step = time.perf_counter()
         page = await driver.observe(observation if attempt == 0 else None)
         run.timings.observe_ms += _ms(step)
-        history.observed(page.fingerprint)
+        history.observed(page)
         history.privacy.remember_secrets(driver.secret_replacements())
 
         space = build_act_space(
@@ -223,6 +287,7 @@ async def run_act(
             labels=labels,
             display_cut=history.privacy.cut_text,
             no_text=no_text,
+            unsubmitted=history.unsubmitted(),
         )
         model_page = history.privacy.page(page)
         state = DecisionState(
@@ -333,6 +398,7 @@ async def run_act(
         entry = ActHistoryEntry(
             action=label, kind=decision.operation, text=text, fingerprint=page.fingerprint, pending=not unknown
         )
+        history.acted(decision.operation, target)
         step = time.perf_counter()
         try:
             if decision.operation == "WAIT":
@@ -349,10 +415,24 @@ async def run_act(
         if unknown:
             # The loop must not mistake unobservable fills for lack of progress.
             common["fingerprint"] = None
+        elif isinstance(action, FillAction) and isinstance(action.value, str) and action.value and execution.success:
+            assert target is not None
+            entry.typed = _typed(page, target.element_id, action.value)
+            if entry.typed is not None:
+                history.typed(entry.typed)
         history.entries.append(entry)
         return run.result(status="executed", action=action, execution=execution, message=execution.message, **common)
 
     raise AssertionError("unreachable")  # pragma: no cover
+
+
+def _typed(page: ObservedPage, element_id: str, value: str) -> TypedText | None:
+    """What was typed in the field `element_id` of `page`, to tell later whether it was submitted (None for a field
+    without a name, which cannot be found again)."""
+    name = accessible_names(page).get(element_id)
+    if not name:
+        return None
+    return TypedText(name=name, value=value, url=page.url, before=page, element_id=element_id)
 
 
 async def _decide(
@@ -490,7 +570,7 @@ async def run_choose(
         raise ValueError("choose() needs at least two options")
     labels = label_mode()
     page = await driver.observe(observation)
-    history.observed(page.fingerprint)
+    history.observed(page)
     history.privacy.remember_secrets(driver.secret_replacements())
     model_page = history.privacy.page(page)
     state = DecisionState(
