@@ -1329,3 +1329,20 @@ async def test_a_goal_that_only_types_still_ends_done(session: NotteSession) -> 
     assert done.status == "done" and done.success and done.action is None
     assert await session.window.page.input_value("#name") == "Jane"
     assert await session.window.page.text_content("#out") == ""
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("where", ["frame", "shadow"])
+async def test_wait_ends_on_a_change_inside_a_frame_or_shadow_root(session: NotteSession, where: str) -> None:
+    pages = {
+        "frame": '<iframe id="f" srcdoc="<p id=s>Loading</p>"></iframe>',
+        "shadow": "<div id=host></div><script>host.attachShadow({mode:'open'}).innerHTML='<p id=s>Loading</p>'</script>",
+    }
+    arm = {
+        "frame": "setTimeout(() => document.getElementById('f').contentDocument.getElementById('s').textContent = 'Ready', 800)",
+        "shadow": "setTimeout(() => document.getElementById('host').shadowRoot.getElementById('s').textContent = 'Ready', 800)",
+    }
+    _ = await session.window.page.goto(f"data:text/html,{quote(pages[where])}")
+    await session.window.page.wait_for_timeout(200)
+    message, elapsed = await _wait(session, arm=arm[where])
+    assert message.startswith("The page changed") and elapsed < 2.8

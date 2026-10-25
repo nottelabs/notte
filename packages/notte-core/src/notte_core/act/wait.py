@@ -4,7 +4,8 @@ A WAIT is chosen when the needed control is not ready yet (a disabled field, res
 A fixed delay is either too short for slow pages (the decider sees the same page and gives up) or wasted
 on fast ones. The page script below returns as soon as the DOM changes and then stays quiet for
 `QUIET_MS` (at most `SETTLE_MS` after the first change, for pages that never stop changing), or after
-`timeout_ms` without a change. Inline `style` changes (animations) do not count. A navigation also ends
+`timeout_ms` without a change, in the page, its same-origin frames or its open shadow roots (up to `MAX_ROOTS`).
+Inline `style` changes (animations) do not count. A navigation also ends
 the wait (the browser destroys the page script, or the URL changed); the session reports it as a change. Any
 other failure of the script is a failed WAIT.
 
@@ -22,6 +23,8 @@ from notte_core.observation import ExecutionResult
 
 QUIET_MS = 200
 SETTLE_MS = 1_000
+# the most documents and shadow roots watched: the page, its same-origin frames and its open shadow roots
+MAX_ROOTS = 50
 
 WAIT_FOR_CHANGE_JS = f"""(timeoutMs) => new Promise((resolve) => {{
     let changed = false;
@@ -43,7 +46,20 @@ WAIT_FOR_CHANGE_JS = f"""(timeoutMs) => new Promise((resolve) => {{
         quiet = setTimeout(done, {QUIET_MS});
         if (settle === null) settle = setTimeout(done, {SETTLE_MS});
     }});
-    observer.observe(document, {{ subtree: true, childList: true, characterData: true, attributes: true }});
+    // act() also targets elements in same-origin frames and open shadow roots: watch them too
+    const roots = [document];
+    for (let i = 0; i < roots.length && roots.length < {MAX_ROOTS}; i++) {{
+        for (const el of roots[i].querySelectorAll("*")) {{
+            if (roots.length >= {MAX_ROOTS}) break;
+            if (el.shadowRoot) roots.push(el.shadowRoot);
+            if (el.tagName === "IFRAME" || el.tagName === "FRAME") {{
+                try {{ if (el.contentDocument) roots.push(el.contentDocument); }} catch (e) {{}}
+            }}
+        }}
+    }}
+    for (const root of roots) {{
+        observer.observe(root, {{ subtree: true, childList: true, characterData: true, attributes: true }});
+    }}
     cap = setTimeout(done, timeoutMs);
 }})"""
 
