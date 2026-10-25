@@ -140,7 +140,7 @@ def collector(scarf_delay: float, hang: bool = False) -> Iterator[Collector]:
 
 @pytest.fixture
 def slow_endpoint() -> Iterator[Collector]:
-    yield from collector(scarf_delay=0.2)
+    yield from collector(scarf_delay=0.05)
 
 
 @pytest.fixture

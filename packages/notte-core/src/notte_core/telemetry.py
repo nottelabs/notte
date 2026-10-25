@@ -262,7 +262,7 @@ class _EventQueue:
                     self._condition.notify_all()
 
     def flush(self, timeout: float) -> bool:
-        """Wait up to `timeout` seconds for queued events to be sent. Returns whether the queue drained."""
+        """Wait up to `timeout` seconds for queued events to be handed to the clients. Returns whether it drained."""
         with self._condition:
             return self._condition.wait_for(lambda: not self._events and not self._sending, timeout)
 
@@ -317,7 +317,11 @@ if hasattr(os, "register_at_fork"):  # not available on Windows
 
 
 def flush(timeout: float = EXIT_FLUSH_TIMEOUT_SECONDS) -> bool:
-    """Wait up to `timeout` seconds for captured events to be sent. Returns whether all were sent."""
+    """Wait up to `timeout` seconds for captured events to be handed to the telemetry clients.
+
+    Returns whether the queue drained. Scarf events are sent by then; PostHog's client sends from its own
+    queue and flushes it at exit.
+    """
     return _event_queue.flush(timeout)
 
 
