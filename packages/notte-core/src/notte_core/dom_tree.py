@@ -327,12 +327,12 @@ class DomNode:
     # (`aria-labelledby`, `<label>`, `aria-label`, `alt`, text content, ...); None when it has none
     accessible_name: str | None = None
     # a disabled control (`disabled`, in a disabled `<fieldset>`, or `aria-disabled="true"`): it has no
-    # id and no action, and is rendered in the action space description with a `disabled` attribute (and `checked`
-    # when it is checked)
+    # id and no action, and is rendered in the action space description with a `disabled` attribute (and `checked`,
+    # `pressed`, `selected` or `expanded` when it is)
     disabled: bool = False
     # a link, button, field or option above or below the viewport: it has no id and no action until it is
-    # scrolled into view, and is rendered in the action space description without an id (with `checked` when it is
-    # checked)
+    # scrolled into view, and is rendered in the action space description without an id (with `checked`, `pressed`,
+    # `selected` or `expanded` when it is)
     offscreen: bool = False
 
     @override

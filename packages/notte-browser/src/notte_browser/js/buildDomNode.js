@@ -2141,13 +2141,20 @@
 						const accessibleName = getAccessibleName(node);
 						if (accessibleName !== undefined) nodeData.accessibleName = accessibleName;
 					}
-					// an off-screen checkbox, radio or switch says whether it is checked, as in view. Not its other
-					// live state: a typed value would be in the description, which secrets are not masked in
+					// an off-screen checkbox, radio or switch says whether it is checked, and a toggle button, tab or
+					// menu button whether it is pressed, selected or expanded, as in view. Not its other live state: a
+					// typed value would be in the description, which secrets are not masked in
 					if (nodeData.offscreen) {
+						const state = {};
 						const checked = localNameOf(node) === "input" && (node.type === "checkbox" || node.type === "radio")
 							? node.checked
 							: parseAriaBoolean(node, "aria-checked");
-						if (checked !== undefined) nodeData.state = { checked };
+						if (checked !== undefined) state.checked = checked;
+						for (const key of ["pressed", "selected", "expanded"]) {
+							const value = parseAriaBoolean(node, `aria-${key}`);
+							if (value !== undefined) state[key] = value;
+						}
+						if (Object.keys(state).length > 0) nodeData.state = state;
 					}
 					if (nodeData.highlightIndex !== undefined || isDisabled) {
 						const state = getLiveState(node);
