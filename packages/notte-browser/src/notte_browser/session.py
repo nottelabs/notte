@@ -128,6 +128,7 @@ from notte_browser.errors import (
     ScrapeIsNotAnActionError,
 )
 from notte_browser.evaluation_result import evaluate_page
+from notte_browser.js import script
 from notte_browser.playwright import connect, launch
 from notte_browser.resolution import resolve, resolve_selectors
 from notte_browser.scrape import default_extractor, scrape_page
@@ -141,6 +142,7 @@ if TYPE_CHECKING:
 # act()'s page scripts, watching the page as the session's settle does
 _WAIT_FOR_CHANGE_JS = page_script(WAIT_FOR_CHANGE_JS)
 _SUGGESTIONS_JS = page_script(SUGGESTIONS_JS)
+_INNER_SCROLL_JS = script("act_scroll_directions.js")
 
 
 class LocalActDriver:
@@ -203,6 +205,8 @@ class LocalActDriver:
             page = replace(page, contexts=element_contexts(snapshot.dom_node))
         else:
             page = ObservedPage.from_observation(observation)
+        inner_scroll: list[Literal["up", "down"]] = await self.session.window.page.evaluate(_INNER_SCROLL_JS)
+        page = replace(page, inner_scroll=frozenset(inner_scroll))
         if self._capture_signatures:
             self._signatures = await self._read_signatures(signature_xpaths(page))
             page = replace(page, readonly=self._signatures.readonly())

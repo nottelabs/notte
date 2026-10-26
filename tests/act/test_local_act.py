@@ -1748,3 +1748,94 @@ async def test_same_named_fields_keep_their_own_unsubmitted_warnings(session: No
     marked = {e["index"] for e in decider.states[-1].elements if e.get("submitted") is False}
     assert marked == {ids["billing"], ids["shipping"]}
     assert [e.get("submitted") for e in decider.states[-1].recent_actions] == [False, False]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("shadow", [False, True])
+@pytest.mark.parametrize("reversed_list", [False, True])
+async def test_act_offers_inner_scroll_directions_without_document_scroll(
+    session: NotteSession, shadow: bool, reversed_list: bool
+) -> None:
+    content = (
+        '<div id="list" style="height:160px;width:240px;overflow-y:auto;'
+        + ("display:flex;flex-direction:column-reverse;" if reversed_list else "")
+        + '"><div style="height:1600px;flex-shrink:0">Orders</div></div>'
+    )
+    await session.window.page.set_content("<style>body{margin:0;overflow:hidden}</style><main></main>")
+    await session.window.page.evaluate(
+        "([content, shadow]) => { const host = document.querySelector('main'); "
+        "(shadow ? host.attachShadow({mode:'open'}) : host).innerHTML = content; }",
+        [content, shadow],
+    )
+    decider = FakeDecider(choices=[{"operation": "DONE"}] * 3)
+    selector = "document.querySelector('main').shadowRoot" if shadow else "document"
+    start, end = ("SCROLL_UP", "SCROLL_DOWN") if reversed_list else ("SCROLL_DOWN", "SCROLL_UP")
+    for position, expected in [(0, {start}), (80, {start, end}), (1600, {end})]:
+        await session.window.page.evaluate(
+            f"{selector}.querySelector('#list').scrollTop = {(-position if reversed_list else position)}"
+        )
+        _ = await session.aact("Find an order in the list", decider=decider, dry_run=True)
+        offered = set(decider.questions[-1]["operation"].criteria) & {"SCROLL_UP", "SCROLL_DOWN"}
+        assert offered == expected
+    assert await session.window.page.evaluate("document.scrollingElement.scrollHeight <= innerHeight")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "hidden",
+    [
+        "#list{display:none}",
+        "#list{visibility:hidden}",
+        "#list{opacity:0}",
+        "#list{overflow:hidden}",
+        "#list{position:fixed;top:-2000px}",
+        "main{height:0;overflow:hidden}",
+        "main{opacity:0}",
+        "#cover{position:fixed;inset:0;background:white;z-index:10}",
+    ],
+)
+async def test_act_does_not_offer_scroll_for_unreachable_inner_boxes(session: NotteSession, hidden: str) -> None:
+    await session.window.page.set_content(
+        "<style>body{margin:0;overflow:hidden}#list{height:160px;width:240px;overflow-y:auto}"
+        + hidden
+        + '</style><main><div id="list"><div style="height:1600px">Orders</div></div></main><div id="cover"></div>'
+    )
+    decider = FakeDecider(choices=[{"operation": "DONE"}])
+    _ = await session.aact("Find an order in the list", decider=decider, dry_run=True)
+    assert not set(decider.questions[-1]["operation"].criteria) & {"SCROLL_UP", "SCROLL_DOWN"}
+
+
+@pytest.mark.asyncio
+async def test_scroll_discovery_reads_forms_without_named_control_clobbering(session: NotteSession) -> None:
+    names = ["parentElement", "getRootNode", "shadowRoot", "checkVisibility", "getBoundingClientRect", "scrollHeight"]
+    controls = "".join(f'<input name="{name}">' for name in names)
+    await session.window.page.set_content(
+        "<style>body{margin:0;overflow:hidden}form{height:160px;overflow:auto}</style><form>"
+        + controls
+        + '<div style="height:1600px">Orders</div></form>'
+    )
+    decider = FakeDecider(choices=[{"operation": "DONE"}])
+    _ = await session.aact("Find an order in the form", decider=decider, dry_run=True)
+    assert "SCROLL_DOWN" in decider.questions[-1]["operation"].criteria
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("navigate", [False, True])
+async def test_private_urls_only_retain_page_text_after_navigation(session: NotteSession, navigate: bool) -> None:
+    async def serve(route: Route) -> None:
+        await route.fulfill(
+            body="<p>Account facts</p><button onclick=\"location.hash='next'\">Next</button>"
+            if navigate
+            else "<p>Account facts</p><button>Stay</button>",
+            content_type="text/html",
+        )
+
+    await session.window.page.context.route("http://account.test/**", serve)
+    _ = await session.window.page.goto("http://account.test/?token=private-token")
+    decider = FakeDecider(choices=[{"operation": "CLICK", "click_target": "B1"}, {"operation": "DONE"}])
+    for _ in range(2):
+        result = await session.aact("Continue {{token}}", variables={"token": "private-token"}, decider=decider)
+        assert result.success
+    recent = decider.states[-1].recent_actions
+    assert ("page" in recent[-1]) is navigate
+    assert "private-token" not in json.dumps(recent)
