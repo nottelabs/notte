@@ -61,6 +61,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           HAS_KEY: ${{ secrets.OPENROUTER_API_KEY != '' }}
+          FORK: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
           EVENT: ${{ github.event_name }}
           ACTION: ${{ github.event.action }}
           LABEL: ${{ github.event.label.name }}
@@ -79,16 +80,23 @@ jobs:
           # Paths that change what observe shows or what act does.
           paths='^(packages/notte-browser/src/notte_browser/(js|dom)/|packages/notte-core/src/notte_core/act/|packages/notte-llm/src/notte_llm/act\.py$|scripts/bench_act/|\.github/workflows/act-bench\.yml$)'
           run=false
-          if [ "$HAS_KEY" != true ]; then
-            echo "act bench skipped: OPENROUTER_API_KEY is not available (fork PRs get no secrets)." | tee -a "$GITHUB_STEP_SUMMARY"
-          elif [ "$EVENT" = workflow_dispatch ]; then
+          if [ "$EVENT" = workflow_dispatch ]; then
             run=true
           elif [ "$ACTION" = labeled ]; then
             if [ "$LABEL" = act-bench ]; then run=true; fi
           elif jq -e 'index("act-bench")' <<<"$PR_LABELS" >/dev/null; then
             run=true
-          elif gh api "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --paginate --jq '.[].filename' | grep -qE "$paths"; then
-            run=true
+          else
+            files=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --paginate --jq '.[].filename')
+            if grep -qE "$paths" <<<"$files"; then run=true; fi
+          fi
+          if [ "$run" = true ] && [ "$HAS_KEY" != true ]; then
+            if [ "$FORK" != true ]; then
+              echo "::error::the OPENROUTER_API_KEY repository secret is not set"
+              exit 1
+            fi
+            echo "act bench skipped: fork PRs get no secrets (OPENROUTER_API_KEY)." | tee -a "$GITHUB_STEP_SUMMARY"
+            run=false
           fi
           echo "run=$run" >> "$GITHUB_OUTPUT"
           [ "$run" = true ] || exit 0
