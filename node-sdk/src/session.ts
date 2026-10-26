@@ -550,6 +550,7 @@ export class Session {
       connection_generation: this.playwrightConnectionGeneration,
       cleanup_in_progress: this.playwrightCleanupInProgress,
       cached_page_id: cachedPage ? playwrightObjectId(cachedPage) : null,
+      cached_page: cachedPage ? playwrightPageState(cachedPage) : null,
     };
     try {
       state.browser_connected = browser.isConnected();

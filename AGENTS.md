@@ -206,3 +206,7 @@ the revision-5 lockfile. SDK model generation requires datamodel-code-generator
 Docs CI syncs the workspace before installing job-only dependencies, then uses
 `uv run --no-sync`; a later sync can remove those dependencies or replace an
 environment built with a Python version that differs from `.python-version`.
+
+Playwright lifecycle diagnostics for `RemoteSession` and `AsyncRemoteSession` share
+`_PlaywrightDiagnostics` in `endpoints/sessions.py`. Async page connection and cleanup
+run through `_async_page` and `_async_exit`; keep instrumentation in those shared paths.

@@ -2,6 +2,12 @@
 
 ## 1.10.0
 
+- `session.page()` logs unexpected page, tab, context and CDP connection closes
+  as warnings, with a redacted snapshot of the Playwright state (network URLs
+  keep only their origin). Closes caused by the SDK's own cleanup log at debug.
+  Set the level with the new `logLevel` client option or `NOTTE_LOG_LEVEL`;
+  the default `warn` prints nothing new for a normal session.
+
 - **Breaking:** the agent API is removed: `client.Agent()`, `client.agents`,
   `prepareAgentRequest`, `parseAgentStatusMessage` and the `AgentConstructor`,
   `AgentRunRequest` and `AgentUpdateHandler` types.
@@ -21,11 +27,6 @@
 
 ## 1.9.7 and earlier
 
-- `session.page()` logs unexpected page, tab, context and CDP connection closes
-  as warnings, with a redacted snapshot of the Playwright state (network URLs
-  keep only their origin). Closes caused by the SDK's own cleanup log at debug.
-  Set the level with the new `logLevel` client option or `NOTTE_LOG_LEVEL`;
-  the default `warn` prints nothing new for a normal session.
 - `session.fetch()` refuses plaintext `http:` targets and redirects by default
   because the request carries the page's cookies; pass `allowInsecure: true`
   to override. Relative URLs resolve against the page.

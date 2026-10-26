@@ -182,6 +182,23 @@ describe('session.page() lifecycle diagnostics', () => {
     ]);
   });
 
+  it.each([false, true])('reports the missing cached page closed state (%s)', async closed => {
+    const { session, page, context, browser } = await connectedSession();
+    page.closed = closed;
+    context.openPages = [];
+    browser.connected = false;
+
+    expect(await session.page()).toBe(page);
+
+    const state = JSON.parse(captured.at(-1)!.message.split(' state=')[1]);
+    expect(state.contexts[0].contains_cached_page).toBe(false);
+    expect(state.cached_page).toEqual({
+      page_id: state.cached_page_id,
+      is_closed: closed,
+      url: 'https://example.com',
+    });
+  });
+
   it('never logs URL credentials, paths, queries or fragments', async () => {
     const { browser } = await connectedSession(
       { logLevel: 'debug' },

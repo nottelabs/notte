@@ -2,11 +2,15 @@ import weakref
 from collections.abc import Iterator
 from pathlib import Path
 from types import SimpleNamespace
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
 import pytest
 from notte_sdk.endpoints import sessions
 from notte_sdk.endpoints.sessions import RemoteSession
+
+if TYPE_CHECKING:
+    from loguru import Message
 
 from tests.integration.test_local_cdp_session import cdp_browser  # noqa: F401  # pyright: ignore[reportUnusedImport]
 
@@ -35,10 +39,10 @@ def _session_for(cdp_url: str) -> RemoteSession:
 def lifecycle_logs() -> Iterator[list[tuple[str, str]]]:
     records: list[tuple[str, str]] = []
 
-    def sink(message: object) -> None:
-        record = message.record  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
-        if record["message"].startswith("[Session Playwright]"):  # pyright: ignore[reportUnknownMemberType]
-            records.append((record["level"].name, record["message"]))  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+    def sink(message: "Message") -> None:
+        record = message.record
+        if record["message"].startswith("[Session Playwright]"):
+            records.append((record["level"].name, record["message"]))
 
     handler_id = sessions.logger.add(sink, level="DEBUG")
     try:

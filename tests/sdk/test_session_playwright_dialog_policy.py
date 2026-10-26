@@ -6,7 +6,7 @@ from unittest.mock import ANY, AsyncMock, MagicMock
 import pytest
 from notte_core import __version__ as notte_core_version
 from notte_sdk.endpoints import sessions
-from notte_sdk.endpoints.sessions import RemoteSession
+from notte_sdk.endpoints.sessions import AsyncRemoteSession, RemoteSession
 
 CDP_URL = "wss://notte.example/cdp"
 SDK_HEADERS = {"x-notte-request-origin": "sdk-python", "x-notte-sdk-version": notte_core_version}
@@ -328,3 +328,54 @@ def test_new_tab_is_instrumented_even_when_its_id_is_reused(monkeypatch: pytest.
 
     for page in (first_page, second_page):
         assert [call.args[0] for call in page.on.call_args_list] == ["close", "crash"]
+
+
+@pytest.mark.parametrize("closed", [False, True])
+def test_missing_cached_page_still_reports_its_closed_state(closed: bool) -> None:
+    session = _bare_session()
+    browser, context, page = _browser_with_page()
+    context.pages = []
+    page.is_closed.return_value = closed
+    page.url = "https://example.com/private?token=secret"
+    browser.is_connected.return_value = False
+
+    state = session._playwright_state(browser, page)
+
+    assert state["contexts"][0]["contains_cached_page"] is False
+    assert state["cached_page"] == {
+        "page_id": state["cached_page_id"],
+        "is_closed": closed,
+        "url": "https://example.com",
+    }
+
+
+@pytest.mark.asyncio
+async def test_async_client_uses_shared_lifecycle_diagnostics(monkeypatch: pytest.MonkeyPatch) -> None:
+    session = AsyncRemoteSession(
+        session_id="session-id",
+        _client=MagicMock(server_url="https://notte.example", REQUEST_ORIGIN="sdk-python"),
+    )
+    browser, context, page = _browser_with_page()
+    browser.is_connected.return_value = True
+    page.is_closed.return_value = False
+    playwright = MagicMock()
+    playwright.chromium.connect_over_cdp = AsyncMock(return_value=browser)
+    starter = MagicMock(start=AsyncMock(return_value=playwright))
+    monkeypatch.setattr(sessions, "_async_playwright_available", True)
+    monkeypatch.setattr(sessions, "_async_playwright", MagicMock(return_value=starter))
+    session.cdp_url = AsyncMock(return_value=CDP_URL)
+    log_event = MagicMock()
+    session._log_playwright_event = log_event
+
+    assert await session.page is page
+    assert session._playwright_connection_generation == 1
+    assert log_event.call_args.args == ("sdk_playwright_connected",)
+    context.pages = []
+    assert await session.page is page
+    assert log_event.call_args.args == ("sdk_playwright_cached_page_unhealthy",)
+
+    session._cookie_file = None
+    session.client.stop = AsyncMock(side_effect=RuntimeError("network down"))
+    with pytest.raises(RuntimeError, match="network down"):
+        await session.stop()
+    assert session._playwright_cleanup_in_progress is False

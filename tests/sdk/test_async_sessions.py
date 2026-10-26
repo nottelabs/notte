@@ -1106,7 +1106,8 @@ async def test_page_is_the_async_playwright_page_and_closes_with_the_session(
         assert await session.page is page
     playwright.chromium.connect_over_cdp.assert_awaited_once()
     assert playwright.chromium.connect_over_cdp.await_args.args == ("wss://api.example/cdp",)
-    context.on.assert_called_once_with("dialog", sessions._observe_server_owned_dialog)
+    context.on.assert_any_call("dialog", sessions._observe_server_owned_dialog)
+    assert {call.args[0] for call in context.on.call_args_list} == {"dialog", "page", "close"}
     browser.close.assert_awaited_once()
     playwright.stop.assert_awaited_once()
 
