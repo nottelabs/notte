@@ -846,6 +846,23 @@
 		return false;
 	}
 
+	// the elements of an `<svg>` that hold its links and text (lowercase, as `isElementAccepted` compares them)
+	const SVG_CONTENT_TAGS = new Set(["g", "a", "text", "tspan", "textpath", "switch", "foreignobject"]);
+
+	/**
+	 * Checks if an `<svg>` has content to describe: links (`<a href>`) or text (`<text>`), as charts
+	 * and diagrams do. An icon (shapes only) is left out of the tree.
+	 *
+	 * @param {SVGSVGElement} svg - The `<svg>` element.
+	 * @returns {boolean} Whether the `<svg>` has links or text.
+	 */
+	function hasSvgContent(svg) {
+		for (const element of svg.querySelectorAll("a[href], text")) {
+			if (localNameOf(element) === "a" || element.textContent.trim()) return true;
+		}
+		return false;
+	}
+
 	/**
 	 * Checks if an element is accepted.
 	 *
@@ -862,6 +879,9 @@
 		const tagName = tagNameOf(element).toLowerCase();
 
 		if (alwaysAccept.has(tagName)) return true;
+		if (tagName === "svg") return hasSvgContent(element);
+		// inside a kept `<svg>`: its containers, text and controls, not the shapes that draw it
+		if (element instanceof SVGElement) return SVG_CONTENT_TAGS.has(tagName) || isInteractiveCandidate(element);
 
 		const leafElementDenyList = new Set([
 			"svg",
@@ -884,9 +904,11 @@
 	 */
 	function isElementVisible(element) {
 		const style = getCachedComputedStyle(element);
+		// SVG elements have no offset size: their size is their bounding box
+		const offsetWidth = propertyOf(element, "offsetWidth");
+		const rect = typeof offsetWidth === "number" ? null : getCachedBoundingRect(element);
 		return (
-			propertyOf(element, "offsetWidth") > 0 &&
-			propertyOf(element, "offsetHeight") > 0 &&
+			(rect === null ? offsetWidth > 0 && propertyOf(element, "offsetHeight") > 0 : rect.width > 0 && rect.height > 0) &&
 			style?.visibility !== "hidden" &&
 			style?.display !== "none"
 		);
