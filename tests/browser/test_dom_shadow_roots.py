@@ -80,3 +80,41 @@ async def test_selectors_of_elements_in_shadow_roots() -> None:
             ("input", 'html > body > my-form > my-field:nth-of-type(2) > input[id="i"]'),
             ("button", 'html > body > my-form > button[type="button"]'),
         ]
+
+
+def _same_tag_page(wrap: str, inner: str) -> str:
+    """A host with a light child and a shadow child of the same tag: they have the same CSS path, and Playwright's
+    XPath engine, which does not enter shadow roots, finds the light one from the host."""
+    light = inner.format(label="Light", title="light")
+    shadow = inner.format(label="Shadow", title="shadow").replace('"', '\\"')
+    return (
+        wrap.format(host=f"<x-box>{light}</x-box>")
+        + f"""
+<script>
+  document.querySelector("x-box").attachShadow({{ mode: "open" }}).innerHTML = "{shadow}<slot></slot>";
+</script>"""
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("wrap", ["{host}", "<div><p>Box</p>{host}</div>"])
+@pytest.mark.parametrize(
+    "inner",
+    [
+        "<button onclick=\"document.title = '{title}'\">{label}</button>",
+        "<div><button onclick=\"document.title = '{title}'\">{label}</button></div>",
+    ],
+)
+async def test_a_shadow_child_and_a_light_child_with_the_same_path_are_told_apart(wrap: str, inner: str) -> None:
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(f"data:text/html,{quote(_same_tag_page(wrap, inner))}")
+        obs = await session.aobserve()
+        buttons = {action.text_label: action.id for action in obs.space.interaction_actions}
+        assert sorted(buttons) == ["Light", "Shadow"]
+
+        for label, action_id in buttons.items():
+            _ = await page.evaluate("document.title = ''")
+            result = await session.aexecute(type="click", id=action_id)
+            assert result.success, result.message
+            assert await page.title() == label.lower()

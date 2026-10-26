@@ -3,6 +3,9 @@ from notte_core.logging import logger
 
 from notte_browser.driver import FrameLocator, Locator, Page
 from notte_browser.errors import InvalidLocatorRuntimeError
+from notte_browser.js import script
+
+_SHADOW_CHAIN_INDEX = script("shadow_chain_index.js")
 
 
 async def locale_element_in_iframes(page: Page, selectors: NodeSelectors) -> FrameLocator | Page:
@@ -32,14 +35,30 @@ async def locate_element(page: Page, selectors: NodeSelectors) -> Locator:
     if len(candidate_selectors) == 0:
         raise InvalidLocatorRuntimeError("No valid selector available", selector="")
 
+    steps = _shadow_steps(selectors) if selectors.in_shadow_root else []
     for selector in candidate_selectors:
+        if selector.startswith("xpath=") and any(not step.startswith("/") for step in steps[1:]):
+            # Playwright's XPath engine does not enter shadow roots: the chain would find a light child of the host
+            continue
         locator = frame.locator(selector)
         count = await locator.count()
+        if count > 1 and len(steps) > 1 and selector.startswith("css="):
+            # Playwright's CSS engine enters shadow roots, and its `>` goes from a host to both its light children and
+            # the top elements of its shadow root: the observed element is the one the XPath chain leads to
+            index = await locator.evaluate_all(_SHADOW_CHAIN_INDEX, steps)
+            if index >= 0:
+                return locator.nth(index)
         if count > 1:
             logger.debug(f"Found {count} elements for '{selector}'. Check out the dom tree for more details.")
         elif count == 1:
             return locator
     raise InvalidLocatorRuntimeError("count=0 for selector", selector=candidate_selectors[0])
+
+
+def _shadow_steps(selectors: NodeSelectors) -> list[str]:
+    """The XPaths of a chain through shadow roots (see `selectors_through_shadow_dom`): the first from the document,
+    the others from the element before, in its light tree when they start with "/", else in its shadow root."""
+    return [step.strip().removeprefix("xpath=") for step in selectors.xpath_selector.split(" >> ")]
 
 
 def selectors_through_shadow_dom(node: DomNode) -> NodeSelectors:
