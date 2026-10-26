@@ -1,4 +1,5 @@
 import asyncio
+import re
 from collections.abc import Awaitable, Callable
 from contextlib import suppress
 from typing import Literal
@@ -221,6 +222,83 @@ async def _append_text(window: BrowserWindow, locator: Locator, text: str, timeo
     await locator.focus(timeout=timeout)
     await locator.evaluate(_MOVE_CARET_TO_END, timeout=timeout)
     await window.page.keyboard.insert_text(text)
+
+
+_SLIDER_VALUE = script("slider_value.js")
+# the most keys pressed to move a slider to a value
+MAX_SLIDER_KEYS = 200
+# the keys that move a slider up and down, tried in this order: Up / Down are not swapped in a right-to-left page
+_SLIDER_KEYS = (("PageUp", "PageDown"), ("ArrowUp", "ArrowDown"), ("ArrowRight", "ArrowLeft"))
+_NUMBER = re.compile(r"-?\d+(?:\.\d+)?")
+
+
+async def _move_slider(
+    window: BrowserWindow, locator: Locator, value: str, slider: dict[str, float | None], budget: _ActionBudget
+) -> None:
+    """Move an ARIA slider (`role="slider"`, which `fill` cannot set) to the number in `value` with its keyboard, as
+    https://www.w3.org/WAI/ARIA/apg/patterns/slider/ defines it: Home / End for its ends, Page Up / Down while they
+    do not go past the value, then the arrows, reading `aria-valuenow` after each key. A value between two steps
+    ends on the closest step. `slider` is what `slider_value.js` read."""
+    match = _NUMBER.search(value.replace(",", ""))
+    if match is None:
+        raise ActionExecutionError("fill", window.page.url, reason=f"A slider takes a number, not {value!r}")
+    now, low, high = slider["now"], slider["min"], slider["max"]
+    if now is None:
+        raise ActionExecutionError("fill", window.page.url, reason="The slider has no aria-valuenow")
+    target = float(match.group())
+    if low is not None:
+        target = max(target, low)
+    if high is not None:
+        target = min(target, high)
+
+    def reached(current: float) -> bool:
+        return abs(current - target) <= 1e-9 * max(1.0, abs(target))
+
+    async def press(key: str, before: float) -> float:
+        await window.page.keyboard.press(key)
+        # a slider that re-renders updates `aria-valuenow` a little after the key
+        for _ in range(3):
+            state = await locator.evaluate(_SLIDER_VALUE, timeout=budget.remaining_ms())
+            after = None if state is None else state["now"]
+            if after is None:
+                raise ActionExecutionError("fill", window.page.url, reason="The slider lost its aria-valuenow")
+            if after != before:
+                return after
+            await window.page.wait_for_timeout(50)
+        return before
+
+    await locator.focus(timeout=budget.remaining_ms())
+    if not reached(now) and target in (low, high):
+        now = await press("Home" if target == low else "End", now)
+    keys = 0
+    while not reached(now):
+        if keys == len(_SLIDER_KEYS):
+            raise ActionExecutionError("fill", window.page.url, reason="The slider does not move with its keyboard")
+        up = target > now
+        increase, decrease = _SLIDER_KEYS[keys]
+        for _ in range(MAX_SLIDER_KEYS):
+            after = await press(increase if up else decrease, now)
+            if after == now or (after > now) != up:
+                # this key does nothing, or moves the other way: try the next ones
+                keys += 1
+                break
+            if (after > target) == up and not reached(after):
+                if keys == 0:
+                    # Page Up / Down went past the value: the arrows come back from there
+                    now = after
+                    keys += 1
+                    break
+                # between two steps: the closer one
+                if abs(after - target) > abs(now - target):
+                    _ = await press(decrease if up else increase, after)
+                return
+            now = after
+            if reached(now):
+                return
+        else:
+            raise ActionExecutionError(
+                "fill", window.page.url, reason=f"The slider did not reach {value!r} in {MAX_SLIDER_KEYS} keys"
+            )
 
 
 async def _scroll_target(window: BrowserWindow, action: ScrollUpAction | ScrollDownAction) -> None:
@@ -550,7 +628,10 @@ async def _interact(
                 await locator.evaluate("(el) => el.click()", timeout=budget.remaining_ms())
 
         case FillAction(value=value):
-            if text_contains_tabs(text=get_str_value(value)):
+            slider = await locator.evaluate(_SLIDER_VALUE, timeout=budget.remaining_ms())
+            if slider is not None:
+                await _move_slider(window, locator, get_str_value(value), slider, budget)
+            elif text_contains_tabs(text=get_str_value(value)):
                 if verbose:
                     logger.info(
                         "🪦 Indentation detected in fill action: simulating clipboard copy/paste for better string formatting"
