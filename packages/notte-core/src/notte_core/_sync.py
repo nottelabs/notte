@@ -49,6 +49,15 @@ if hasattr(os, "register_at_fork"):
     os.register_at_fork(after_in_child=_after_fork)
 
 
+def _wait_uninterrupted(event: threading.Event) -> None:
+    while not event.is_set():
+        try:
+            _ = event.wait()
+        except BaseException:
+            # Preserve the original interruption until the operation has settled.
+            continue
+
+
 def run_sync(coroutine: Coroutine[None, None, T]) -> T:
     """Run a coroutine from sync code, including inside a caller's running loop.
 
@@ -56,6 +65,16 @@ def run_sync(coroutine: Coroutine[None, None, T]) -> T:
     thread is an error: async implementations must await their async counterparts.
     """
     global _runner
+    started, settled = threading.Event(), threading.Event()
+
+    async def run_and_settle() -> T:
+        started.set()
+        try:
+            return await coroutine
+        finally:
+            settled.set()
+
+    wrapped = run_and_settle()
     try:
         with _lock:
             if _runner is None:
@@ -63,15 +82,18 @@ def run_sync(coroutine: Coroutine[None, None, T]) -> T:
             runner = _runner
         if threading.current_thread() is runner.thread:
             raise RuntimeError("Cannot call a Notte sync method from its event loop; await the async method instead.")
-        future = asyncio.run_coroutine_threadsafe(coroutine, runner.loop)
+        future = asyncio.run_coroutine_threadsafe(wrapped, runner.loop)
     except BaseException:
+        wrapped.close()
         coroutine.close()
         raise
     try:
         return future.result()
     except BaseException:
-        # In particular, Ctrl-C must not leave the browser operation running.
+        # Start the wrapper before cancelling so its finally block always runs.
+        _wait_uninterrupted(started)
         _ = future.cancel()
+        _wait_uninterrupted(settled)
         raise
 
 

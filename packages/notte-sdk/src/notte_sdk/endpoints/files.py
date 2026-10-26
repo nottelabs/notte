@@ -15,7 +15,7 @@ from typing_extensions import override
 from notte_sdk._generated import operations as api
 from notte_sdk._generated.resources import AsyncFilesOperations, FilesOperations
 from notte_sdk._requests import wire_request
-from notte_sdk._transport import athread_finally, athread_owned, awrite_chunks
+from notte_sdk._transport import athread, athread_finally, athread_owned, awrite_chunks
 from notte_sdk.endpoints.base import NotteEndpoint, UploadFile
 from notte_sdk.types import FileSource, SessionFile, SessionFilesPage
 
@@ -221,26 +221,22 @@ class RemoteFileStorage(_SessionStorage[FileStorageClient]):
     @override
     async def get_file(self, name: str) -> str | None:
         assert self.upload_dir is not None
-        match = self._named(await asyncio.to_thread(self.list, FileSource.USER_UPLOAD, limit=1000), name)
-        return None if match is None else await asyncio.to_thread(self.download, match.id, self.upload_dir, force=True)
+        match = self._named(await athread(self.list, FileSource.USER_UPLOAD, limit=1000), name)
+        return None if match is None else await athread(self.download, match.id, self.upload_dir, force=True)
 
     @override
     async def set_file(self, path: str) -> bool:
-        _ = await asyncio.to_thread(self.upload, path)
+        _ = await athread(self.upload, path)
         return True
 
     @override
     async def alist_uploaded_files(self) -> list[FileInfo]:
-        return [
-            self._file_info(file)
-            for file in (await asyncio.to_thread(self.list, FileSource.USER_UPLOAD, limit=1000)).files
-        ]
+        return [self._file_info(file) for file in (await athread(self.list, FileSource.USER_UPLOAD, limit=1000)).files]
 
     @override
     async def alist_downloaded_files(self) -> list[FileInfo]:
         return [
-            self._file_info(file)
-            for file in (await asyncio.to_thread(self.list, FileSource.SESSION_DOWNLOAD, limit=1000)).files
+            self._file_info(file) for file in (await athread(self.list, FileSource.SESSION_DOWNLOAD, limit=1000)).files
         ]
 
 

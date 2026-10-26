@@ -15,6 +15,7 @@ from typing_extensions import final, override
 
 from notte_sdk._generated.resources import AsyncPersonasOperations, PersonasOperations
 from notte_sdk._requests import wire_request
+from notte_sdk._transport import athread
 from notte_sdk.endpoints._async_resource import AwaitableResource
 from notte_sdk.endpoints.base import NotteEndpoint
 from notte_sdk.endpoints.vaults import AsyncNotteVault, AsyncVaultsClient, NotteVault
@@ -336,7 +337,7 @@ class NottePersona(SyncResource, BasePersona):
 
     @override
     async def aemails(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]:
-        return await asyncio.to_thread(self.emails, **data)
+        return await athread(self.emails, **data)
 
     @override
     def emails(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]:
@@ -363,7 +364,7 @@ class NottePersona(SyncResource, BasePersona):
 
     @override
     async def asms(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:
-        return await asyncio.to_thread(self.sms, **data)
+        return await athread(self.sms, **data)
 
     @override
     def sms(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:

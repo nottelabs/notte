@@ -90,6 +90,47 @@ def test_interrupt_cancels_background_operation() -> None:
     assert run_sync(asyncio.sleep(0, result=42)) == 42
 
 
+@pytest.mark.parametrize("interrupt_before_start", [False, True])
+def test_interrupt_waits_for_async_cleanup(interrupt_before_start: bool) -> None:
+    started, cleaned = threading.Event(), threading.Event()
+    blocked, release = threading.Event(), threading.Event()
+
+    if interrupt_before_start:
+        loop, _ = run_sync(loop_and_context(contextvars.ContextVar("value", default="ok")))
+
+        def block_loop() -> None:
+            blocked.set()
+            assert release.wait(5)
+
+        _ = loop.call_soon_threadsafe(block_loop)
+        assert blocked.wait(5)
+
+    async def operation() -> None:
+        try:
+            started.set()
+            await asyncio.Event().wait()
+        finally:
+            await asyncio.sleep(0.05)
+            cleaned.set()
+
+    def interrupt(_future: concurrent.futures.Future[None]) -> None:
+        if interrupt_before_start:
+            assert not started.is_set()
+            release.set()
+        else:
+            assert started.wait(5)
+        raise KeyboardInterrupt
+
+    try:
+        with patch.object(concurrent.futures.Future, "result", interrupt):
+            with pytest.raises(KeyboardInterrupt):
+                run_sync(operation())
+        assert cleaned.is_set()
+    finally:
+        release.set()
+        assert cleaned.wait(5)
+
+
 def test_imports_leave_asyncio_untouched_and_do_not_start_thread() -> None:
     subprocess.run(
         [
@@ -224,6 +265,49 @@ async def test_cancelled_vault_delete_settles_before_returning(kind: str) -> Non
         task.cancel()
         await asyncio.sleep(0)
         assert not task.done()
+        task.cancel()
+        await asyncio.sleep(0)
+        assert not task.done()
+        release.set()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+        assert settled.is_set()
+    finally:
+        release.set()
+        await asyncio.gather(task, return_exceptions=True)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("kind", ["upload", "email", "credentials"])
+async def test_cancelled_compatibility_call_settles_before_returning(kind: str) -> None:
+    from unittest.mock import Mock
+
+    from notte_sdk.endpoints.files import RemoteFileStorage
+    from notte_sdk.endpoints.personas import NottePersona
+    from notte_sdk.endpoints.vaults import NotteVault
+
+    started, release, settled = threading.Event(), threading.Event(), threading.Event()
+
+    def worker() -> None:
+        started.set()
+        assert release.wait(5)
+        settled.set()
+
+    if kind == "upload":
+        storage = RemoteFileStorage("session-test", _client=Mock())
+        storage.client.upload.side_effect = lambda *args, **kwargs: worker()
+        operation = storage.set_file("test.txt")
+    elif kind == "email":
+        persona = NottePersona("persona-test", _client=Mock())
+        persona.emails = Mock(side_effect=worker)
+        operation = persona.aemails()
+    else:
+        vault = NotteVault("vault-test", _client=Mock())
+        vault.vault_client.credentials_add.side_effect = lambda *args, **kwargs: worker()
+        operation = vault.add_credentials_async("example.com", username="ada")
+    task = asyncio.create_task(operation)
+    try:
+        assert await asyncio.to_thread(started.wait, 5)
         task.cancel()
         await asyncio.sleep(0)
         assert not task.done()

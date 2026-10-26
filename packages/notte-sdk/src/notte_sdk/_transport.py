@@ -939,9 +939,8 @@ async def athread_owned(
     raise cancelled
 
 
-async def athread_finally(func: Callable[_P, object], /, *args: _P.args, **kwargs: _P.kwargs) -> None:
-    """`asyncio.to_thread(func, ...)` for cleanup: it completes even if the caller is cancelled
-    again meanwhile, and that cancellation is re-raised after it."""
+async def athread(func: Callable[_P, _T], /, *args: _P.args, **kwargs: _P.kwargs) -> _T:
+    """Run blocking work off the loop, settling it before propagating cancellation."""
     task = asyncio.ensure_future(asyncio.to_thread(func, *args, **kwargs))
     cancelled = await _until_done(task)
     error = None if task.cancelled() else task.exception()
@@ -949,6 +948,13 @@ async def athread_finally(func: Callable[_P, object], /, *args: _P.args, **kwarg
         raise cancelled
     if error is not None:
         raise error
+    return task.result()
+
+
+async def athread_finally(func: Callable[_P, object], /, *args: _P.args, **kwargs: _P.kwargs) -> None:
+    """`asyncio.to_thread(func, ...)` for cleanup: it completes even if the caller is cancelled
+    again meanwhile, and that cancellation is re-raised after it."""
+    _ = await athread(func, *args, **kwargs)
 
 
 async def awrite_chunks(chunks: AsyncIterator[bytes], output: IO[bytes]) -> None:

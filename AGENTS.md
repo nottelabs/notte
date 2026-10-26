@@ -84,3 +84,6 @@ these wrappers or patch asyncio with `nest_asyncio`: browser objects belong to
 the loop that started them, and callers may already have a running loop.
 Local sessions must use one loop from start through stop; mixing sync and async
 methods while the browser is active raises `RuntimeError`.
+Async compatibility wrappers over synchronous SDK requests use
+`notte_sdk._transport.athread`, which settles the worker before propagating
+cancellation and preserves its return value. Deletes use `athread_finally`.
