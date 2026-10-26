@@ -53,11 +53,13 @@ uv run --no-sync python scripts/bench_act/report.py /tmp/act-bench-ab --summary 
   setup, and are not judged.
 - `--concurrency` defaults to half the CPU count.
 - Each run is its own process with its own browser and session. The fixture server is shared.
-- The versions of one task run back to back, so they see the same site and machine conditions. Which version
-  goes first alternates.
+- The versions of one task run back to back (one after the other, never at once), so they see the same site and
+  machine conditions. Which version goes first alternates. `--tree` takes `base=` and `head=` only.
+- Travel tasks count their dates from `--today` (default: today): a Friday 4 to 5 weeks ahead (`model.trip_dates`).
+  New tasks with dates should use it too, so they never ask for a past day.
 - Run files go to `OUT/<version>/<runner>__<task or first probe>__<repeat>.json`, worker logs to `OUT/_logs/`, and
   the plan and timings (wall time, load average) to `OUT/_meta/`.
-- An existing run file is not run again, so an interrupted run can be resumed.
+- An existing run file of the same commit is not run again, so an interrupted run can be resumed.
 
 ## CI
 

@@ -3,14 +3,15 @@ site misses, pass/fail rules and the merged report. No browser, no model."""
 
 import json
 import sys
+from datetime import date
 from pathlib import Path
 from typing import Any
 
 import pytest
 
-from scripts.bench_act import registry, report, rules
-from scripts.bench_act.model import Probe, Task
-from scripts.bench_act.tasks.real import GF_RESULTS, gf_search
+from scripts.bench_act import bench, registry, report, rules
+from scripts.bench_act.model import TODAY_ENV, Probe, Task, long_date, trip_dates
+from scripts.bench_act.tasks.real import GF_TFS, gf_results_url, gf_search
 
 FIXTURE_URL = "{fixtures}/form.html"
 
@@ -228,12 +229,14 @@ def test_report_check_exits_non_zero_when_a_rule_fails(tmp_path: Path, monkeypat
     assert "fixture task notte-local / f1 #1 failed" in summary.read_text()
 
 
-def test_gf_search_decodes_google_flights_urls() -> None:
-    search = gf_search(GF_RESULTS)
+def test_gf_search_decodes_google_flights_urls_for_any_trip_date() -> None:
+    captured = gf_results_url(date(2026, 11, 13))
+    assert captured.split("tfs=")[1].split("&")[0] == GF_TFS
+    search = gf_search(gf_results_url(date(2027, 2, 5)))
     assert search is not None
     assert search["trip"] == 2
     [leg] = search["legs"]
-    assert leg["date"] == "2026-11-13" and "/m/05qtj" in leg["from"] and "/m/07dfk" in leg["to"]
+    assert leg["date"] == "2027-02-05" and "/m/05qtj" in leg["from"] and "/m/07dfk" in leg["to"]
     assert gf_search("https://www.google.com/travel/flights") is None
 
 
@@ -354,3 +357,84 @@ def test_summary_shows_infra_misses_and_report_only_runners() -> None:
     assert "| notte-local | real | 0/0 | 0 | 1 |" in text
     assert "| notte-local-llm (report only) | real | 1/1 | 0 | 0 |" in text
     assert "0/0 (+1 infra miss)" in text
+
+
+def test_trip_dates_are_a_friday_four_to_five_weeks_ahead(monkeypatch: pytest.MonkeyPatch) -> None:
+    trip = trip_dates(date(2026, 10, 26))
+    assert trip.depart == date(2026, 11, 27) and trip.depart.weekday() == 4
+    assert (trip.back, trip.checkout) == (date(2026, 12, 4), date(2026, 11, 29))
+    assert trip_dates(date(2026, 10, 30)).depart == date(2026, 11, 27)  # 28 days ahead is already a Friday
+    monkeypatch.setenv(TODAY_ENV, "2027-03-01")
+    assert trip_dates().depart == date(2027, 4, 2)
+    assert long_date(date(2026, 11, 27)) == "27 November 2026"
+
+
+def test_probe_pages_that_are_not_there_are_site_misses() -> None:
+    url = "https://books.test/a"
+    ok = {"landing": {"url": url, "status": 200, "text": "A book"}, "probe_url": url}
+    assert rules.probe_site_miss(url, ok) is None
+    assert rules.probe_site_miss(url, {"nav_error": "TimeoutError: goto"}) == "navigation failed: TimeoutError: goto"
+    assert rules.probe_site_miss(url, {**ok, "landing": {"url": url, "status": 429, "text": ""}}) == (
+        f"HTTP 429 on {url}"
+    )
+    captcha = {**ok, "landing": {"url": url, "status": 200, "text": "Please solve this CAPTCHA"}}
+    assert rules.probe_site_miss(url, captcha) == f"block page ('CAPTCHA') on {url}"
+    assert rules.probe_site_miss(url, {**ok, "probe_url": "https://consent.test/"}) == "landed on https://consent.test/"
+    assert rules.probe_site_miss(FIXTURE_URL, {"nav_error": "x"}) is None
+    # a page that failed before any question: its probes are site misses, not wrong answers
+    run = {"runner": "probe-local-jev", "url": url, "suite": "real", "version": "head", "repeat": 1,
+           "names": ["p1", "p2"], "error": "TimeoutError: goto", "site_miss": "navigation failed: TimeoutError: goto"}  # fmt: skip
+    [r1, r2] = rules.probe_rows([run])
+    assert (r1.head, r1.head_misses, r2.head) == ([], ["navigation failed: TimeoutError: goto"], [])
+
+
+def test_versions_are_compared_repeat_by_repeat() -> None:
+    def run(version: str, repeat: int, success: bool, miss: str | None = None) -> dict[str, Any]:
+        return {**_task_run("r1", version, success), "repeat": repeat, "site_miss": miss}
+
+    # base pass, pass, fail; head pass, site miss, fail: the usable pairs agree
+    runs = [run("base", 1, True), run("base", 2, True), run("base", 3, False)]
+    runs += [run("head", 1, True), run("head", 2, False, "HTTP 503 on x"), run("head", 3, False)]
+    [row] = rules.task_rows(runs)
+    assert row.pairs == [(True, True), (False, False)] and row.delta == 0
+    assert row.base == [True, True, False] and row.head == [True, False]
+    assert not rules.judge(runs, [], [], with_base=True).warnings
+
+
+def test_unknown_suites_are_rejected() -> None:
+    with pytest.raises(ValueError, match="unknown suite 'fixture'"):
+        registry.select(_registry(), suites=["fixture"])
+
+
+def test_upload_is_a_blocked_capability_check() -> None:
+    [upload] = [t for t in registry.discover().tasks.values() if t.name == "upload"]
+    final = {"url": "https://the-internet.herokuapp.com/upload", "text": "File Uploader"}
+    blocked = {"steps": [{"status": "blocked", "operation": "BLOCKED"}]}
+    typed = {"steps": [{"status": "executed", "operation": "TYPE_TEXT"}, {"status": "blocked"}]}
+    assert upload.check(final, blocked)
+    assert not upload.check(final, typed)
+
+
+def test_resume_keeps_only_runs_of_the_same_commit(tmp_path: Path) -> None:
+    path = tmp_path / "run.json"
+    path.write_text(json.dumps({"sha": "a" * 40}))
+    assert bench.kept(path, "a" * 40)
+    assert not bench.kept(path, "b" * 40)
+    assert not bench.kept(path, None)
+
+
+def test_trees_are_base_and_head_only(tmp_path: Path) -> None:
+    assert bench.parse_trees([], tmp_path) == {"head": tmp_path}
+    trees = bench.parse_trees([f"head={tmp_path}/h", f"base={tmp_path}/b"], tmp_path)
+    assert list(trees) == ["base", "head"]
+    for specs in ([f"main={tmp_path}"], [f"base={tmp_path}"], [f"head={tmp_path}", f"head={tmp_path}"], ["head="]):
+        with pytest.raises(ValueError):
+            bench.parse_trees(specs, tmp_path)
+
+
+def test_each_version_pair_is_one_sequential_group() -> None:
+    items = registry.select(_registry())
+    jobs = registry.plan(items, ["notte-local", "probe-local-jev"], ["base", "head"], repeats=2)
+    groups = registry.pairs(jobs)
+    assert [job for group in groups for job in group] == jobs
+    assert all(len(g) == 2 and len({(j.runner, j.item, j.repeat) for j in g}) == 1 for g in groups)
