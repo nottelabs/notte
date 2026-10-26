@@ -492,6 +492,29 @@ describe('Session Unit Tests', () => {
       }
     });
 
+    it('keeps polling the old replay when a new session starts on the same object', async () => {
+      vi.mocked(sessionStop).mockResolvedValue({ data: sessionResponse({ session_id: 'old-session', status: 'closed' }) } as never);
+      vi.mocked(sessionStart)
+        .mockResolvedValueOnce({ data: sessionResponse({ session_id: 'old-session' }) } as never)
+        .mockResolvedValueOnce({ data: sessionResponse({ session_id: 'new-session' }) } as never);
+      const session = new Session(mockClient);
+      await session.start();
+      await session.stop();
+      let rejectFirst!: (error: unknown) => void;
+      vi.mocked(sessionReplay)
+        .mockImplementationOnce(() => new Promise<never>((_, reject) => { rejectFirst = reject; }))
+        .mockResolvedValueOnce({ data: replays[0] } as never);
+      const pending = session.replay();
+      await session.start();
+      rejectFirst(new NotteAPIError('/replay', 404, { replay_status: 'waiting_for_session', retryable: false }));
+      await expect(pending).resolves.toEqual(replays[0]);
+      expect(session.getId()).toBe('new-session');
+      expect(sessionReplay).toHaveBeenCalledTimes(2);
+      for (const [options] of vi.mocked(sessionReplay).mock.calls) {
+        expect(options.path).toEqual({ session_id: 'old-session' });
+      }
+    });
+
     it('does not poll when recording was disabled at creation', async () => {
       const session = new Session(mockClient);
       await session.start();

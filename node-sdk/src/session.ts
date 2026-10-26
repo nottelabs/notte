@@ -574,7 +574,7 @@ export class Session {
         }
         // Stop can complete before the replay service observes the closure.
         // Only reject immediately while this client still considers it active.
-        if (this.isActive && (waitingForClose || (error.apiMessage ?? '').includes('still active'))) {
+        if (this.isActive && this.sessionId === sessionId && (waitingForClose || (error.apiMessage ?? '').includes('still active'))) {
           throw new Error(`Session ${sessionId} is still active — close the session first to generate the replay.`, {
             cause: error,
           });
