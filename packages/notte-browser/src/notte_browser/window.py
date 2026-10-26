@@ -37,6 +37,7 @@ from notte_browser.driver import Browser, BrowserContext, CDPSession, Locator, P
 from notte_browser.errors import (
     BrowserExpiredError,
     EmptyPageContentError,
+    FirstPageOfTabError,
     InvalidLocatorRuntimeError,
     InvalidProxyError,
     InvalidURLError,
@@ -311,6 +312,20 @@ class BrowserWindow:
         cdp_page = self.tabs[tab_idx] if tab_idx is not None else self.page
         _ = self._cdp_sessions.pop(id(cdp_page), None)
 
+    async def back_is_the_blank_start_page(self) -> bool:
+        """Whether going back would load the blank page the tab was created on (`about:blank`, the first entry of
+        its history), not a page it opened. False when unknown (no CDP)."""
+        if not self.is_chromium_based:
+            return False
+        try:
+            session = await self.get_cdp_session()
+            history: dict[str, Any] = await session.send("Page.getNavigationHistory")  # pyright: ignore [reportUnknownMemberType]
+        except PlaywrightError:
+            return False
+        index: int = history["currentIndex"]
+        entries: list[dict[str, Any]] = history["entries"]
+        return index == 1 and entries[0]["url"] == "about:blank"
+
     async def _close_all_cdp_sessions(self) -> None:
         sessions = list(self._cdp_sessions.values())
         self._cdp_sessions.clear()
@@ -583,6 +598,10 @@ class BrowserWindow:
         operation: Literal["back", "forward"] | None = None,
         wait_until: WaitUntil | None = None,
     ) -> None:
+        if operation == "back" and await self.back_is_the_blank_start_page():
+            # the blank page loads no document of the session's: the page and what was typed in it would be lost
+            raise FirstPageOfTabError()
+
         def is_default_page():
             return self.page.url == "about:blank" and not url == "about:blank"
 
