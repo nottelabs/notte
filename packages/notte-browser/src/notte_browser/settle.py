@@ -389,7 +389,7 @@ class PageSettle:
                 return
             except Error:
                 # a navigation to a new document destroyed the tracker
-                pass
+                url_changed = False
         for _ in range(MAX_DOCUMENTS):
             if self.opened:
                 return
@@ -411,6 +411,7 @@ class PageSettle:
                 return
             except Error:
                 # navigated again (a redirect by the page), or the page closed
+                url_changed = False
                 if self.page.is_closed():
                     # A script can close its opener before its new tab's first response announces the page.
                     if self._tabs and not self.opened:

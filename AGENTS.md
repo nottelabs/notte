@@ -45,6 +45,8 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   unresponsive old page must not prevent navigation from starting.
   If startup expires before a hash goto, preserve the known URL change when
   tracking resumes so the existing render-wait rule still applies.
+  Clear that same-document expectation when navigation destroys the tracker:
+  a hash handler's redirect needs the destination's load and post-load waits.
 - Native integration examples (`examples/*`, run by
   `scripts/ci_integration_examples.py`) install the local `node-sdk` with
   `npm install --no-save`. Don't add `--package-lock=false`: it ignores the
