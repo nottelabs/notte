@@ -40,7 +40,7 @@ def redact(text: str) -> str:
 def run_job(job: dict[str, Any], fixtures: str) -> dict[str, Any]:
     registry = discover()
     runner = job["runner"]
-    kind = "llm" if runner.endswith("-llm") else "jev"
+    kind = runner.rsplit("-", 1)[-1] if runner.endswith(("-llm", "-scripted")) else "jev"
     record: dict[str, Any] = {
         "version": job["version"],
         "sha": job.get("sha"),

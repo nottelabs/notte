@@ -48,7 +48,9 @@ uv run --no-sync python scripts/bench_act/report.py /tmp/act-bench-ab --summary 
 ```
 
 - Runners: `notte-local` (Jev), `notte-local-llm`, `notte-local-html` (HTML labels), `probe-local-jev`,
-  `probe-local-llm`. The default is `notte-local,probe-local-jev`.
+  `probe-local-llm`. The default is `notte-local,probe-local-jev`. `notte-local-scripted` and
+  `probe-local-scripted` use no model and no key (scroll, then DONE): they time the browser side and the CI
+  setup, and are not judged.
 - `--concurrency` defaults to half the CPU count.
 - Each run is its own process with its own browser and session. The fixture server is shared.
 - The versions of one task run back to back, so they see the same site and machine conditions. Which version
