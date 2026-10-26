@@ -173,6 +173,9 @@ After changing `packages/notte-sdk/src/`, run `make docs-sdk` (the
 generated files. `make docs-check` fails if they are out of date.
 Manual SDK pages repeat constructor parameter fields; keep their type strings
 in sync with the generated `__init__.mdx` pages. Docs tests compare both.
+The reference also includes imported core models such as `ElementState`. Regenerate
+it after their fields or docstrings change, including when those changes arrive
+through a rebase onto `main`.
 
 ## OpenAPI refresh
 
