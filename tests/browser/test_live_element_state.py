@@ -2,6 +2,7 @@
 without changing the action ids or the rendered descriptions."""
 
 from collections.abc import AsyncIterator
+from typing import Literal
 from urllib.parse import quote
 
 import pytest
@@ -348,3 +349,24 @@ async def test_the_sort_order_of_a_column_is_read_on_its_header_and_sort_button(
     assert states["city-sort"] == ElementState(sort="ascending")
     # an unsorted column has no sort order
     assert states["name-sort"] is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("header", ["th", 'div role="columnheader"'])
+@pytest.mark.parametrize("sort", ["ascending", "descending", "other", "none"])
+async def test_the_sort_order_is_read_on_a_directly_clickable_header(
+    header: str, sort: Literal["ascending", "descending", "other", "none"]
+) -> None:
+    tag = header.split()[0]
+    html = f'<{header} id="sort" aria-sort="{sort}" onclick="void(0)">Age</{tag}>'
+    if tag == "th":
+        html = f"<table><thead><tr>{html}</tr></thead></table>"
+    else:
+        html = f'<div role="grid"><div role="row">{html}</div></div>'
+
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(_data_url(html))
+        _ = await session.aobserve()
+        states = _state_by_selector(session)
+
+    assert states["sort"] == (None if sort == "none" else ElementState(sort=sort))
