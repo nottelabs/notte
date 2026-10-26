@@ -113,6 +113,18 @@ def test_build_act_space_with_live_state() -> None:
     assert set(space.operations) == {"CLICK", "TYPE_TEXT", "SELECT", *space.controls, "DONE", "BLOCKED"}
 
 
+def test_a_sorted_column_shows_its_sort_order() -> None:
+    # after a sort, the header's `aria-sort` is the only sign of the order: its sort button carries it
+    description = DESCRIPTION + '\nB2[:]<span role="button" aria_label="Age: Activate to invert sorting"></span>'
+    actions = [*_actions(), ClickAction(id="B2", text_label="")]
+    space = build_act_space(
+        _page(description=description, actions=actions, states={**STATES, "B2": ElementState(sort="ascending")})
+    )
+    elements = {e["index"]: e for e in space.elements}
+    assert elements["B2"]["sort"] == "ascending"
+    assert "sort" not in elements["B1"]
+
+
 def test_build_act_space_without_live_state_types_the_select_option() -> None:
     # without live state, a native select is set by typing its option label
     space = build_act_space(_page(states={}))
