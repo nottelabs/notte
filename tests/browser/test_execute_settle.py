@@ -62,7 +62,7 @@ customElements.define('x-inner', class extends HTMLElement {
 <iframe id="inner" src="about:blank"></iframe>
 <a id="fetching-tab" href="/fetching-tab" target="_blank">Open a tab that fetches</a>
 <button id="replace-self" onclick="window.open('/fetching-tab'); window.close()">Replace this tab</button>
-<button id="close-self" onclick="window.close()">Close this tab</button>
+<button id="close-self" onclick="setTimeout(() => window.close(), 100)">Close this tab</button>
 <a id="download" href="/download" target="_blank">Download</a>
 <button id="pages" onclick="fetch('/data?delay=0.1').then(() => fetch('/data?delay=0.6')).then(() =>
     document.body.insertAdjacentHTML('beforeend', '<p>Both pages fetched</p>'))">Fetch pages</button>
@@ -484,7 +484,9 @@ async def test_a_new_tab_is_tracked_from_when_it_appears(session: NotteSession, 
 async def test_a_closing_page_waits_for_its_replacement_if_it_opens_one(
     session: NotteSession, site: str, replacement: bool
 ) -> None:
-    # A script-opened page can close itself, unlike the initial page of a browser context.
+    # A script-opened page can close itself, unlike the initial page of a browser context. `close-self` closes it
+    # right after the click returns: a close the driver reports before acknowledging the click is an error unless a
+    # tab replaces it (`test_a_click_reporting_a_closed_target_requires_a_live_replacement`)
     async with session.window.page.context.expect_page() as opened:
         await session.window.page.evaluate("window.open('/')")
     original = await opened.value
