@@ -116,6 +116,60 @@ async def test_offscreen_and_labelling_text_is_kept() -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("in_shadow", [False, True])
+async def test_closed_drawer_text_across_shadow_roots(in_shadow: bool) -> None:
+    markup = """
+    <aside id="drawer" style="position: fixed; top: 0; left: 0; width: 300px;
+                            height: 500px; transform: translateX(-110%)">
+      <drawer-content></drawer-content>
+    </aside>
+    <script>
+      document.querySelector('drawer-content').attachShadow({mode: 'open'}).innerHTML =
+        '<p>DRAWER_CONTENT</p>';
+    </script>
+    """
+    if in_shadow:
+        markup += """
+        <drawer-host></drawer-host>
+        <script>
+          document.querySelector('drawer-host').attachShadow({mode: 'open'})
+            .append(document.getElementById('drawer'));
+        </script>
+        """
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(markup)}")
+        assert "DRAWER_CONTENT" not in (await session.aobserve()).space.description
+        await session.window.page.locator("#drawer").evaluate("element => element.style.transform = 'none'")
+        assert "DRAWER_CONTENT" in (await session.aobserve()).space.description
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("style", ["transform: translateZ(0)", "filter: blur(0px)", "contain: layout"])
+@pytest.mark.parametrize("in_shadow", [False, True])
+async def test_fixed_text_in_scrolling_containing_block_is_kept(style: str, in_shadow: bool) -> None:
+    panel = '<p id="panel" style="position: fixed; top: 0; width: 200px; height: 50px">REACHABLE_FIXED_TEXT</p>'
+    if in_shadow:
+        panel = f"""
+        <fixed-content></fixed-content>
+        <script>
+          document.querySelector('fixed-content').attachShadow({{mode: 'open'}}).innerHTML = '{panel}';
+        </script>
+        """
+    markup = SPACER + f'<section style="{style}; height: 200px">{panel}</section>'
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(markup)}")
+        observation = await session.aobserve()
+        assert "REACHABLE_FIXED_TEXT" in observation.space.description
+        texts = [node for node in session.snapshot.dom_node.flatten() if node.text == "REACHABLE_FIXED_TEXT"]
+        assert texts and all(not node.computed_attributes.in_viewport for node in texts)
+        await session.window.page.locator("section").scroll_into_view_if_needed()
+        observation = await session.aobserve()
+        assert "REACHABLE_FIXED_TEXT" in observation.space.description
+        texts = [node for node in session.snapshot.dom_node.flatten() if node.text == "REACHABLE_FIXED_TEXT"]
+        assert any(node.computed_attributes.in_viewport for node in texts)
+
+
+@pytest.mark.asyncio
 async def test_hidden_controls_are_not_offered() -> None:
     markup = """
     <div style="opacity: 0"><button>FADED_MENU_ITEM</button></div>

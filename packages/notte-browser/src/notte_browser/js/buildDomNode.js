@@ -723,20 +723,29 @@
 
 	/**
 	 * Checks if an element is inside a fixed element laid out outside the viewport, as a closed off-canvas
-	 * drawer is (`transform: translateX(-100%)`): scrolling the page does not move it, so nothing in it
-	 * can be seen until a script brings it in. A fixed element without a box (a zero-size portal root
-	 * whose content overflows it) says nothing about where its content is.
+	 * drawer is (`transform: translateX(-100%)`). Only viewport-fixed panels count: a fixed element
+	 * with an offset parent (for example, a transformed ancestor) can move into view when scrolling.
+	 * A fixed element without a box (a zero-size portal root whose content overflows it) says nothing
+	 * about where its content is. Cross shadow roots so a drawer also hides its web components' text.
 	 *
 	 * @param {HTMLElement} element - The element to check.
 	 * @returns {boolean} Whether the element is in a fixed panel outside the viewport.
 	 */
 	function isInFixedPanelOffscreen(element) {
-		for (let ancestor = element; ancestor && ancestor !== BODY; ancestor = reachAncestor(ancestor)) {
+		for (let ancestor = element; ancestor; ancestor = composedParent(ancestor)) {
 			if (getCachedComputedStyle(ancestor)?.position !== "fixed") continue;
+			if (propertyOf(ancestor, "offsetParent") !== null) continue;
 			const rect = getCachedBoundingRect(ancestor);
 			return rect.width > 0 && rect.height > 0 && !isOnScreen(rect);
 		}
 		return false;
+	}
+
+	function composedParent(element) {
+		const parent = parentElementOf(element);
+		if (parent !== null) return parent;
+		const root = getRootNode(element);
+		return root instanceof ShadowRoot ? root.host : null;
 	}
 
 	/**

@@ -68,6 +68,12 @@ form's own (`<input name="children">` makes `form.children` that input). The
 same goes for `document.*` in the page's own world (`<img name="body">`).
 `tests/browser/test_dom_clobbered_properties.py` covers it.
 
+Off-screen fixed text is unreachable only when its panel is fixed to the viewport.
+In Chromium, a fixed element's non-null `offsetParent` identifies a containing block
+(for example, a transformed ancestor) that can scroll into view. Walk through shadow
+hosts when checking panels; `parentElement` alone stops inside web components.
+`tests/browser/test_dom_hidden_content.py` covers both cases.
+
 ## Public API
 
 - Don't remove or rename public methods without a deprecation first: keep the
