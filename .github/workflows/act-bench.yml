@@ -81,7 +81,7 @@ jobs:
           BASE_REF: ${{ inputs.base_ref }}
           SUITES: ${{ inputs.suites }}
           # PRs run the core tier; a manual run picks its tier (`all`: both)
-          TAGS: ${{ inputs.tags || (github.event_name == 'push' && 'ci-core') || 'ci-core' }}
+          TAGS: ${{ inputs.tags || (github.event_name == 'push' && 'all') || 'ci-core' }}
           RUNNERS: ${{ inputs.runners || 'notte-local,probe-local-jev' }}
           REPEATS: ${{ inputs.repeats || '1' }}
           SHARDS: ${{ inputs.shards || '4' }}
