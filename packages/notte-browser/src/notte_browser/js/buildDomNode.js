@@ -35,6 +35,7 @@
 	const nodeTypeOf = nativeGetter(Node.prototype, "nodeType");
 	const nodeNameOf = nativeGetter(Node.prototype, "nodeName");
 	const ownerDocumentOf = nativeGetter(Node.prototype, "ownerDocument");
+	const textContentOf = nativeGetter(Node.prototype, "textContent");
 	const childrenOf = nativeGetter(Element.prototype, "children");
 	const tagNameOf = nativeGetter(Element.prototype, "tagName");
 	const localNameOf = nativeGetter(Element.prototype, "localName");
@@ -52,6 +53,7 @@
 	const getRootNode = (node) => NODE.getRootNode.call(node);
 	const getBoundingClientRect = (element) => ELEMENT.getBoundingClientRect.call(element);
 	const getClientRects = (element) => ELEMENT.getClientRects.call(element);
+	const querySelectorAllOf = (element, selector) => ELEMENT.querySelectorAll.call(element, selector);
 	// `checkVisibility` is recent (Chrome 105): undefined where the browser does not have it
 	const checkVisibilityOf = ELEMENT.checkVisibility &&
 		((element, options) => ELEMENT.checkVisibility.call(element, options));
@@ -959,6 +961,32 @@
 		return false;
 	}
 
+	// the elements of an `<svg>` that hold its links and text (lowercase, as `isElementAccepted` compares them)
+	const SVG_CONTENT_TAGS = new Set(["g", "a", "text", "tspan", "textpath", "switch", "foreignobject"]);
+
+	/**
+	 * Checks if an `<svg>` has content to describe: links (`<a href>`), text (`<text>`), click handlers
+	 * or HTML in a `<foreignObject>` (a control, a label), as charts and diagrams do. An icon (shapes
+	 * only) is left out of the tree.
+	 *
+	 * @param {SVGSVGElement} svg - The `<svg>` element.
+	 * @returns {boolean} Whether the `<svg>` has links, text, click handlers or HTML content.
+	 */
+	function hasSvgContent(svg) {
+		for (const element of querySelectorAllOf(svg, "*")) {
+			if (hasAttribute(element, "onclick") || typeof propertyOf(element, "onclick") === "function") return true;
+			const tagName = localNameOf(element);
+			if (tagName === "a") {
+				if (hasAttribute(element, "href") || hasAttribute(element, "xlink:href")) return true;
+				continue;
+			}
+			if (tagName !== "text" && tagName !== "foreignObject") continue;
+			if (textContentOf(element).trim()) return true;
+			if (tagName === "foreignObject" && childrenOf(element).length > 0) return true;
+		}
+		return false;
+	}
+
 	/**
 	 * Checks if an element is accepted.
 	 *
@@ -975,6 +1003,9 @@
 		const tagName = tagNameOf(element).toLowerCase();
 
 		if (alwaysAccept.has(tagName)) return true;
+		if (tagName === "svg") return hasSvgContent(element);
+		// inside a kept `<svg>`: its containers, text and controls, not the shapes that draw it
+		if (element instanceof SVGElement) return SVG_CONTENT_TAGS.has(tagName) || isInteractiveCandidate(element);
 
 		const leafElementDenyList = new Set([
 			"svg",
@@ -997,9 +1028,11 @@
 	 */
 	function isElementVisible(element) {
 		const style = getCachedComputedStyle(element);
+		// SVG elements have no offset size: their size is their bounding box
+		const offsetWidth = propertyOf(element, "offsetWidth");
+		const rect = typeof offsetWidth === "number" ? null : getCachedBoundingRect(element);
 		return (
-			propertyOf(element, "offsetWidth") > 0 &&
-			propertyOf(element, "offsetHeight") > 0 &&
+			(rect === null ? offsetWidth > 0 && propertyOf(element, "offsetHeight") > 0 : rect.width > 0 && rect.height > 0) &&
 			style?.visibility !== "hidden" &&
 			style?.display !== "none"
 		);
@@ -1823,6 +1856,7 @@
 
 		// Quick attribute checks without getting full lists
 		const hasQuickInteractiveAttr = hasAttribute(element, "onclick") ||
+			typeof propertyOf(element, "onclick") === "function" ||
 			hasAttribute(element, "role") ||
 			hasAttribute(element, "tabindex") ||
 			hasAttribute(element, "aria-") ||
@@ -2191,8 +2225,12 @@
 			// Skip viewport check for fixed/sticky elements as they may appear anywhere
 			const isFixedOrSticky = style && (style.position === 'fixed' || style.position === 'sticky');
 
-			// Check if element has actual dimensions using offsetWidth/Height (quick check)
-			const hasSize = propertyOf(node, "offsetWidth") > 0 || propertyOf(node, "offsetHeight") > 0;
+			// Check if element has actual dimensions using offsetWidth/Height (quick check). SVG elements have no
+			// offset size: their size is their bounding box
+			const offsetWidth = propertyOf(node, "offsetWidth");
+			const hasSize = typeof offsetWidth === "number"
+				? offsetWidth > 0 || propertyOf(node, "offsetHeight") > 0
+				: !!rect && (rect.width > 0 || rect.height > 0);
 
 			// Use getBoundingClientRect for the quick OUTSIDE check.
 			// isInExpandedViewport will do the more accurate check later if needed.

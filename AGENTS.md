@@ -77,6 +77,11 @@ form's own (`<input name="children">` makes `form.children` that input). The
 same goes for `document.*` in the page's own world (`<img name="body">`).
 `tests/browser/test_dom_clobbered_properties.py` covers it.
 
+Patchright evaluates the DOM build in an isolated world, where a handler assigned
+by a page script is not readable through `element.onclick`. Regressions for those
+handler properties in the page world (the Playwright backend) evaluate
+`DOM_TREE_JS` with `isolated_context=False`, as the clobbering tests do.
+
 Only an editing host gets the implicit `contenteditable` textbox role. Carry the
 host flag from the DOM script into both role classification and duplicate detection;
 editable descendants with their own click handlers must retain their click actions.
