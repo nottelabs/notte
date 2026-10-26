@@ -323,6 +323,8 @@ class _Names:
     labels: frozenset[str]
     # the name of each disabled control (a `_[:]<... disabled>` block, without an id), by block index
     disabled: dict[int, str] = field(default_factory=dict)
+    # what each control outside the viewport is (`_offscreen`, a `_[:]<...>` block without an id), by block index
+    offscreen: dict[int, str] = field(default_factory=dict)
 
 
 def _disabled(content: str) -> str | None:
@@ -346,9 +348,15 @@ def _disabled(content: str) -> str | None:
 _TEXT_INPUT_TYPES = ("text", "email", "password", "search", "tel", "url", "number")
 
 
-def _offscreen(content: str) -> str | None:
-    """`<name> (<role>` for a control the observation describes outside the viewport (rendered without an id, like
-    `_[:]<a>Bletchley Park</a>`): it offers no operation until scrolled into view. None for anything else."""
+def _checked(content: str) -> bool:
+    """A control rendered without an id (disabled or off-screen) that the observation says is checked."""
+    match = _RENDERED_ELEMENT.match(content)
+    return match is not None and "checked" in _RENDERED_ATTRIBUTE.sub("", match.group(2)).split()
+
+
+def _offscreen_role(content: str) -> str | None:
+    """The role of a control the observation describes outside the viewport (rendered without an id, like
+    `_[:]<a>Bletchley Park</a>`), or None for anything else."""
     match = _RENDERED_ELEMENT.match(content)
     if match is None:
         return None
@@ -358,11 +366,45 @@ def _offscreen(content: str) -> str | None:
     role = attributes.get("role") or {"a": "link", "select": "select", "textarea": "textbox"}.get(tag)
     if role is None and kind is not None:
         role = kind if kind in ("checkbox", "radio") else "textbox" if kind in _TEXT_INPUT_TYPES else kind
-    role = role or tag
-    candidates = [" ".join(match.group(3).split()), attributes.get("aria_label"), attributes.get("placeholder")]
-    candidates += [attributes.get("title"), attributes.get("value")]
+    return role or tag
+
+
+def _offscreen(content: str, before: str | None = None, after: str | None = None) -> str | None:
+    """`<name> (<role>[, checked][, value: <value>]` for a control the observation describes outside the viewport: it
+    offers no operation until scrolled into view. None for anything else.
+
+    The observation gives no name to a field, checkbox or radio outside the viewport (its label is the text next to
+    it): like an unnamed one in view, a checkbox or radio is named by the label-like text `after` it (else `before`),
+    a text field by the text `before` it, and a text field's `value` is its value, not its name."""
+    role = _offscreen_role(content)
+    match = _RENDERED_ELEMENT.match(content)
+    if role is None or match is None:
+        return None
+    attributes = dict(_RENDERED_ATTRIBUTE.findall(match.group(2)))
+
+    def nearby(text: str | None) -> str | None:
+        return text if text is not None and len(text) <= MAX_NEARBY_LABEL_LENGTH else None
+
+    text = " ".join(match.group(3).split())
+    candidates = [text, attributes.get("aria_label")]
+    if role in ("checkbox", "radio"):
+        candidates += [nearby(after), nearby(before), attributes.get("title"), attributes.get("value")]
+    elif role == "textbox":
+        candidates = [
+            attributes.get("aria_label"),
+            nearby(before),
+            attributes.get("placeholder"),
+            attributes.get("title"),
+        ]
+    else:
+        candidates += [attributes.get("placeholder"), attributes.get("title"), attributes.get("value")]
     name = next((c.strip() for c in candidates if c is not None and c.strip()), role)
-    return f"{name} ({role}"
+    state = ", checked" if _checked(content) else ""
+    # a text area's or an editable element's text is its value
+    value = (attributes.get("value") or text).strip() if role == "textbox" else ""
+    if value:
+        state += f", value: {value}"
+    return f"{name} ({role}{state}"
 
 
 # where an off-screen control is, in the page text (`_page_text` replaces it with above / below the viewport)
@@ -394,8 +436,13 @@ def _read_names(page: ObservedPage) -> _Names:
     labels: set[str] = set()
 
     def toggle(index: int) -> bool:
-        action = actions.get(blocks[index][0] or "") if index >= 0 else None
-        return action is not None and _role(action, blocks[index][1]) in ("checkbox", "radio")
+        if index < 0:
+            return False
+        key, content = blocks[index]
+        if key == "_":
+            return _offscreen_role(content) in ("checkbox", "radio")
+        action = actions.get(key or "")
+        return action is not None and _role(action, content) in ("checkbox", "radio")
 
     def label(index: int) -> str | None:
         """A text, or a `<label>` element (clickable labels get an id), that can name a field next to it."""
@@ -413,10 +460,22 @@ def _read_names(page: ObservedPage) -> _Names:
         return " ".join(content.split()) or None
 
     disabled: dict[int, str] = {}
+    offscreen: dict[int, str] = {}
     for i, (key, content) in enumerate(blocks):
         name = _disabled(content) if key == "_" else None
         if name is not None:
             disabled[i] = name
+            continue
+        if key == "_" and (role := _offscreen_role(content)) is not None:
+            # named by the text next to it, which is then not repeated: the label right after a checkbox or radio is
+            # its own, not the next field's
+            before = None if i >= 2 and toggle(i - 2) else label(i - 1)
+            after = label(i + 1) if role in ("checkbox", "radio") else None
+            offscreen[i] = control = _offscreen(content, before, after) or role
+            for index, text in [(i + 1, after), (i - 1, before)]:
+                if text is not None and control.startswith(f"{text} ("):
+                    used.add(index)
+                    break
             continue
         action = actions.get(key or "")
         if key is None or action is None or key in names:
@@ -459,6 +518,7 @@ def _read_names(page: ObservedPage) -> _Names:
         used=frozenset(used),
         labels=frozenset(labels),
         disabled=disabled,
+        offscreen=offscreen,
     )
 
 
@@ -552,10 +612,11 @@ def _accessible_lines(page: ObservedPage, display_text: Callable[[str], str]) ->
                 lines.append((None, content.removeprefix("### ")))
         elif i in names.disabled:
             # shown, so the decider knows the control exists and can wait for it; it offers no operation
-            lines.append((None, f"{_cut(display_text(names.disabled[i]), MAX_LABEL_LENGTH)} (disabled)"))
-        elif key == "_" and (control := _offscreen(content)) is not None:
+            state = "disabled, checked" if _checked(content) else "disabled"
+            lines.append((None, f"{_cut(display_text(names.disabled[i]), MAX_LABEL_LENGTH)} ({state})"))
+        elif i in names.offscreen:
             # a link, button or field outside the viewport: what it is and where, with no operation until in view
-            lines.append((None, f"{_cut(display_text(control), MAX_LABEL_LENGTH)}, {_WHERE})"))
+            lines.append((None, f"{_cut(display_text(names.offscreen[i]), MAX_LABEL_LENGTH)}, {_WHERE})"))
         elif key == "_":
             lines.append((None, content))
         else:
