@@ -245,6 +245,10 @@
 			state.value = truncateStateValue(element.value, state);
 		} else if (propertyOf(element, "isContentEditable")) {
 			state.value = truncateStateValue(propertyOf(element, "innerText") || "", state);
+		} else if (ARIA_RANGE_ROLES.has(getRole(element))) {
+			// an ARIA slider or spin button: the value it shows ("14 Point"), else its number
+			const value = getAttribute(element, "aria-valuetext") ?? getAttribute(element, "aria-valuenow");
+			if (value !== null) state.value = truncateStateValue(value, state);
 		}
 		if (state.checked === undefined) {
 			// role="checkbox" / "switch" / "radio" / "menuitemcheckbox" widgets
@@ -272,6 +276,8 @@
 	]);
 	// Controls whose value the user edits: they add nothing to the name of the element they label.
 	const EDITABLE_CONTROL_ROLES = new Set(["textbox", "searchbox", "combobox", "listbox", "spinbutton", "slider"]);
+	// widgets whose value is in `aria-valuenow` / `aria-valuetext` (a native range or number input has its own)
+	const ARIA_RANGE_ROLES = new Set(["slider", "spinbutton"]);
 	const INPUT_ROLES = {
 		button: "button", submit: "button", reset: "button", image: "button", checkbox: "checkbox",
 		radio: "radio", range: "slider", number: "spinbutton", search: "searchbox", text: "textbox",
