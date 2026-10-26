@@ -8,6 +8,7 @@ offered at all, only its paragraphs as clickables.
 from urllib.parse import quote
 
 import pytest
+from notte_browser.dom import parsing
 from notte_browser.session import NotteSession
 
 EDITOR = """
@@ -34,6 +35,23 @@ async def test_contenteditable_root_is_one_text_field() -> None:
         result = await session.aexecute(type="fill", id="I1", value="New text")
         assert result.success, result.message
         assert await session.window.page.locator(".editor").inner_text() == "New text"
+
+
+@pytest.mark.asyncio
+async def test_nested_editor_content_does_not_regain_an_action(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The highlighted editor stays the only action through nested editable blocks with their own cursor."""
+    monkeypatch.setattr(parsing, "config", parsing.config.model_copy(update={"enable_pointer_elements": True}))
+    page = """<div class="editor" contenteditable="true">
+      <section style="cursor: auto"><p style="cursor: text">Nested text</p></section>
+    </div>"""
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+        frame = await parsing.parse_frames(session.window.page)
+        assert [node.get("tagName") for node in frame.nodes.values() if "highlightIndex" in node] == ["div"]
+        obs = await session.aobserve()
+
+        assert [(action.id, action.type) for action in obs.space.interaction_actions] == [("I1", "fill")]
+        assert "Nested text" in obs.space.description
 
 
 @pytest.mark.asyncio

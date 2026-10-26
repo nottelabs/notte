@@ -2238,7 +2238,7 @@
 			) {
 				// Process all child nodes to capture formatted text
 				for (const child of childNodesOf(node)) {
-					const domElement = buildDomTree(child, parentIframe, nodeWasHighlighted, childScope, xpath);
+					const domElement = buildDomTree(child, parentIframe, nodeWasHighlighted || isParentHighlighted, childScope, xpath);
 					if (domElement) nodeData.children.push(domElement);
 				}
 			}
