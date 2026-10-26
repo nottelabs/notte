@@ -36,7 +36,7 @@ find(id: <class 'str'>) -> DomNode | None
 ### flatten
 
 ```python
-flatten(keep_filter: typing.Optional[typing.Callable[[ForwardRef('DomNode')], bool]] = None) -> list['DomNode']
+flatten(keep_filter: typing.Callable[[ForwardRef('DomNode')], bool] | None = None) -> list['DomNode']
 ```
 
 **Returns:**
@@ -65,7 +65,7 @@ get_url() -> str | None
 
 **Returns:**
 
-`UnionType`[`str`, `None`]
+`str` | `None`
 
 ---
 

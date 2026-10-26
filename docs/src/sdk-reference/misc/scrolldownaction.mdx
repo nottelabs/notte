@@ -26,10 +26,10 @@ session.execute(type="scroll_down", selector="#results", amount=500)  # Scroll a
 <ParamField path="description" type="str" default="Scroll down by a given amount of pixels. Use `null` for scrolling down one page">
 </ParamField>
 
-<ParamField path="amount" type="UnionType[int, None]">
+<ParamField path="amount" type="int | None">
 </ParamField>
 
-<ParamField path="selector" type="UnionType[str, None]">
+<ParamField path="selector" type="str | None">
   Optional selector for the scroll container, including iframe paths.
 </ParamField>
 

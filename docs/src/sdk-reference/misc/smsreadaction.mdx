@@ -31,7 +31,7 @@ sms = persona.wait_for_sms(timedelta=dt.timedelta(minutes=5), timeout=120)
   Max number of sms to return
 </ParamField>
 
-<ParamField path="timedelta" type="UnionType[timedelta, None]" default="0:05:00">
+<ParamField path="timedelta" type="timedelta | None" default="0:05:00">
   Return only sms that are not older than `timedelta`
 </ParamField>
 

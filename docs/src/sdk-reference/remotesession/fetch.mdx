@@ -33,19 +33,19 @@ summary = session.fetch("/api/rest_v1/page/summary/Main_Page").json()
 <ParamField path="method" type="str" default="GET">
 </ParamField>
 
-<ParamField path="headers" type="UnionType[Mapping[str, str], None]" default="None">
+<ParamField path="headers" type="Mapping[str, str] | None" default="None">
 </ParamField>
 
-<ParamField path="params" type="UnionType[Mapping[str, Any], None]" default="None">
+<ParamField path="params" type="Mapping[str, Any] | None" default="None">
 </ParamField>
 
 <ParamField path="json" type="Any" default="None">
 </ParamField>
 
-<ParamField path="data" type="UnionType[str, Mapping[str, Any], None]" default="None">
+<ParamField path="data" type="str | Mapping[str, Any] | None" default="None">
 </ParamField>
 
-<ParamField path="timeout" type="UnionType[float, None]" default="None">
+<ParamField path="timeout" type="float | None" default="None">
 </ParamField>
 
 ## Returns

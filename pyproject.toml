@@ -47,7 +47,7 @@ dev = [
     "aiohttp>=3.11.13",
     "basedpyright>=1.40.2",
     # Generates SDK-owned wire models from the committed OpenAPI snapshot.
-    "datamodel-code-generator==0.83.0",
+    "datamodel-code-generator==0.86.0",
     "jupyter>=1.1.1",
     # Exercises notte_core.profiling with profiling enabled (the `notte-core[profiling]` extra).
     "opentelemetry-sdk>=1.34.1",
@@ -64,7 +64,7 @@ dev = [
     "pytest-xdist[psutil]>=3.8.0",
     "python-dotenv>=1.0.1",
     "sphinx>=8.2.3",
-    "sphinx-mintlify>=0.1.0",
+    "sphinx-mintlify>=0.1.2",
     "twine>=6.1.0",
     "ty>=0.0.69",
     "typer>=0.19.2",
@@ -115,6 +115,8 @@ extend-select = ["I"]
 "docs/src/testers/**/*.py" = ["F821", "F841"]
 
 [tool.basedpyright]
+# Check against the oldest Python in requires-python, not the newer development interpreter.
+pythonVersion = "3.11"
 exclude = [".venv", "uv-cache", "**/site-packages/**", "**/dist-packages/**", "tests", "typing_cases", "old", "notebook", "dist", ".github"]
 # Upstream-generated annotations are checked by import/schema tests; keep facade typing strict.
 ignore = ["packages/notte-sdk/src/notte_sdk/_generated/models.py"]

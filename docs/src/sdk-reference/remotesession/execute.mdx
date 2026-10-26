@@ -69,10 +69,10 @@ This syntax also supports Xpath (e.g. `xpath=/html/body/div[3]/div/button[1]`) o
 
 ## Parameters
 
-<ParamField path="action" type="UnionType[BaseAction, None]" default="None">
+<ParamField path="action" type="BaseAction | None" default="None">
 </ParamField>
 
-<ParamField path="raise_on_failure" type="UnionType[bool, None]" default="None">
+<ParamField path="raise_on_failure" type="bool | None" default="None">
   If true, will raise if we could not execute the action
 </ParamField>
 

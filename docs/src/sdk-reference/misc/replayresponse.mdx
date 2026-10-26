@@ -7,35 +7,35 @@ description: "Response containing presigned URLs for session replay"
 
 ## Fields
 
-<ParamField path="playlist_content" type="UnionType[str, None]">
+<ParamField path="playlist_content" type="str | None">
   HLS playlist content with presigned segment URLs
 </ParamField>
 
-<ParamField path="mp4_url" type="UnionType[str, None]">
+<ParamField path="mp4_url" type="str | None">
   Presigned URL for MP4 download
 </ParamField>
 
-<ParamField path="expires_at" type="UnionType[str, None]">
+<ParamField path="expires_at" type="str | None">
   Expiration time of the presigned URLs
 </ParamField>
 
-<ParamField path="mouse_manifest_url" type="UnionType[str, None]">
+<ParamField path="mouse_manifest_url" type="str | None">
   Presigned mouse replay manifest URL
 </ParamField>
 
-<ParamField path="mouse_chunk_urls" type="UnionType[list[str], None]">
+<ParamField path="mouse_chunk_urls" type="list[str] | None">
   Presigned mouse replay chunk URLs
 </ParamField>
 
-<ParamField path="mouse_next_offset" type="UnionType[int, None]">
+<ParamField path="mouse_next_offset" type="int | None">
   Next mouse replay pagination offset
 </ParamField>
 
-<ParamField path="video_start_ms" type="UnionType[int, None]">
+<ParamField path="video_start_ms" type="int | None">
   Video start offset in milliseconds
 </ParamField>
 
-<ParamField path="video_duration_ms" type="UnionType[int, None]">
+<ParamField path="video_duration_ms" type="int | None">
   Video duration in milliseconds
 </ParamField>
 

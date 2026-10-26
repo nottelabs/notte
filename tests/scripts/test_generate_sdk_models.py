@@ -45,5 +45,5 @@ def test_check_detects_missing_and_stale_files_without_writing(tmp_path: Path) -
 
 def test_unpinned_generator_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(gen, "version", lambda _: "0.0.0")
-    with pytest.raises(ValueError, match="datamodel-code-generator==0.83.0 required"):
+    with pytest.raises(ValueError, match="datamodel-code-generator==0.86.0 required"):
         gen.render()

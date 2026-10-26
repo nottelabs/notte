@@ -110,3 +110,9 @@ methods while the browser is active raises `RuntimeError`.
 Async compatibility wrappers over synchronous SDK requests use
 `notte_sdk._transport.athread`, which settles the worker before propagating
 cancellation and preserves its return value. Deletes use `athread_finally`.
+
+The development interpreter is Python 3.15. CI's offline gate covers 3.11 and
+3.15; keep `requires-python >=3.11` and basedpyright's `pythonVersion = "3.11"`
+so new code remains usable on the supported floor. Use uv 0.13.5 or newer for
+the revision-5 lockfile. SDK model generation requires datamodel-code-generator
+0.86.0, and reference docs require sphinx-mintlify 0.1.2 or newer for 3.14+ types.

@@ -671,7 +671,9 @@ async def test_tampered_builtins_cannot_inflate_the_payload(monkeypatch, tamper)
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("raise_on_failure", [False, True])
-@pytest.mark.parametrize("payload", ["jnot JSON", "j" + "[" * 5000 + "]" * 5000, {"not": "a string"}])
+# Python 3.14+ can decode deeply nested valid JSON; keep this payload malformed
+# so the test exercises unreadable input on every supported interpreter.
+@pytest.mark.parametrize("payload", ["jnot JSON", "j" + "[" * 5000 + "invalid" + "]" * 5000, {"not": "a string"}])
 async def test_an_unreadable_payload_fails_the_action(monkeypatch, raise_on_failure, payload) -> None:
     async with NotteSession(headless=True) as session:
         original_evaluate = session.window.page.evaluate

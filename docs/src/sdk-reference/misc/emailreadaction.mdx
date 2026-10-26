@@ -31,7 +31,7 @@ emails = persona.wait_for_emails(timedelta=dt.timedelta(minutes=5), timeout=120)
   Max number of emails to return
 </ParamField>
 
-<ParamField path="timedelta" type="UnionType[timedelta, None]" default="0:05:00">
+<ParamField path="timedelta" type="timedelta | None" default="0:05:00">
   Return only emails that are not older than `timedelta`
 </ParamField>
 

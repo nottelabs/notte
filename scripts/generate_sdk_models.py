@@ -22,7 +22,7 @@ from typing import cast
 ROOT = Path(__file__).resolve().parent.parent
 SNAPSHOT = ROOT / "openapi/openapi.json"
 OUTPUT = ROOT / "packages/notte-sdk/src/notte_sdk/_generated"
-VERSIONS = {"datamodel-code-generator": "0.83.0", "ruff": "0.11.10"}
+VERSIONS = {"datamodel-code-generator": "0.86.0", "ruff": "0.11.10"}
 
 
 def render(snapshot: Path = SNAPSHOT) -> dict[str, str]:
