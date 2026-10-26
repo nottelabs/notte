@@ -16,6 +16,10 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
 
 - Never add `xfail`, `skip` or an ignore to make a failing test pass. Fix the
   cause, or stop and explain why it fails.
+- CI's live LLM calls (`staging-and-live`) go through OpenRouter: the
+  `OPENROUTER_API_KEY` secret as `NOTTE_LLM_API_KEY` with `google/...` model
+  IDs. Don't point them at a provider's direct API key; the shared direct
+  Gemini key hits rate limits. Only `llm-provider-matrix` tests direct routes.
 - `make test` is the offline gate. `make test-live` runs tests marked
   `staging` or `live` and needs `NOTTE_API_KEY`; set `NOTTE_API_URL` to point
   the SDK at a different API.

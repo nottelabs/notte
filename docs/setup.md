@@ -34,8 +34,9 @@ selects a model at the configured endpoint without translating its ID.
 
 ## Live CI
 
-The staging test job uses Gemini for local structured extraction. Its existing
-`GEMINI_API_KEY` repository secret is passed as `NOTTE_LLM_API_KEY`, with the
-Gemini endpoint and model configured through `NOTTE_LLM_BASE_URL` and
-`NOTTE_LLM_MODEL`. Offline checks receive no provider key. The optional
-OpenRouter provider matrix still requires `OPENROUTER_API_KEY`.
+The staging test job uses Gemini through OpenRouter for local structured
+extraction. The `OPENROUTER_API_KEY` repository secret is passed as
+`NOTTE_LLM_API_KEY`, with `NOTTE_LLM_BASE_URL=https://openrouter.ai/api/v1` and
+OpenRouter model IDs (`google/gemini-3.5-flash-lite`). Offline checks receive no
+provider key. The optional OpenRouter provider matrix also requires
+`OPENROUTER_API_KEY`.
