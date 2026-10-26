@@ -77,9 +77,9 @@ _[:]Zip code *
 I9[:]<input type="text" value="" placeholder="" name="zipcode"></input>
 _[:]Phone (delivery contact) *
 I10[:]<input type="tel" value="" placeholder="" name="phone_number"></input>
-_[:]<button>I'd also like to receive shipping updates via text message. By signing up, you agree to our
-Privacy Policy.</button>
+_[:]<button>I'd also like to receive shipping updates via text message. By signing up, you agree to our</button>
 _[:]<input type="checkbox"></input>
+_[:]<a>Privacy Policy.</a>
 _[:]<button>Continue to delivery</button>
 B1[:]<button type="button" aria_label="Show/hide order summary" aria_expanded="true">1 item
 Winnie Outdoor Side Table
