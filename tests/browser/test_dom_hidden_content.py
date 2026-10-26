@@ -215,6 +215,48 @@ async def test_zero_size_fixed_portal_keeps_its_independently_scrollable_text(ax
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("position", "text_position", "movable"),
+    [
+        ("static", "absolute", False),
+        ("relative", "absolute", True),
+        ("static; transform: translateZ(0)", "fixed", True),
+    ],
+)
+@pytest.mark.parametrize("wrapped", [False, True])
+async def test_portal_text_only_moves_with_its_actual_scroll_container(
+    position: str, text_position: str, movable: bool, wrapped: bool
+) -> None:
+    content = "POSITIONED_PORTAL_TEXT"
+    if wrapped:
+        content = f"<span>{content}</span>"
+    markup = f"""
+    <aside style="position: fixed; top: 0; left: -330px; width: 300px; height: 500px">
+      <div style="position: fixed; top: 0; left: 0; width: 0; height: 0">
+        <div id="scroller" style="position: {position}; width: 250px; height: 100px; overflow: auto">
+          <div style="height: 1600px"></div>
+          <p id="text" style="position: {text_position}; top: 900px; left: 0; white-space: nowrap">{content}</p>
+        </div>
+      </div>
+    </aside>
+    """
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        page = session.window.page
+        _ = await page.goto(f"data:text/html,{quote(markup)}")
+        before = await page.locator("#text").evaluate("element => element.getBoundingClientRect().top")
+        description = (await session.aobserve()).space.description
+        assert ("POSITIONED_PORTAL_TEXT" in description) == movable
+        await page.locator("#scroller").evaluate("element => element.scrollTop = 850")
+        after = await page.locator("#text").evaluate("element => element.getBoundingClientRect().top")
+        if movable:
+            assert after < 100 < before
+        else:
+            assert before == after and after > 720
+        description = (await session.aobserve()).space.description
+        assert ("POSITIONED_PORTAL_TEXT" in description) == movable
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("style", ["transform: translateZ(0)", "filter: blur(0px)", "contain: layout"])
 @pytest.mark.parametrize("in_shadow", [False, True])
 async def test_fixed_text_in_scrolling_containing_block_is_kept(style: str, in_shadow: bool) -> None:

@@ -743,22 +743,40 @@
 			const rect = getCachedBoundingRect(ancestor);
 			if (rect.width > 0 && rect.height > 0) return !isOnScreen(rect);
 			const reachable = { top: textRect.top, bottom: textRect.bottom, left: textRect.left, right: textRect.right };
+			let owner = element;
 			for (let box = element; box && box !== ancestor; box = composedParent(box)) {
 				const boxRect = getCachedBoundingRect(box);
 				const style = getCachedComputedStyle(box);
 				if (!style) continue;
-				const y = visibleRange(box, boxRect, style, true);
-				const x = visibleRange(box, boxRect, style, false);
-				if (y?.scrolls && reachable.bottom > y.start && reachable.top < y.end) {
-					reachable.top = boxRect.top;
-					reachable.bottom = boxRect.bottom;
+				if (scrollMovesText(owner, box)) {
+					const y = visibleRange(box, boxRect, style, true);
+					const x = visibleRange(box, boxRect, style, false);
+					let moved = false;
+					if (y?.scrolls && reachable.bottom > y.start && reachable.top < y.end) {
+						reachable.top = boxRect.top;
+						reachable.bottom = boxRect.bottom;
+						moved = true;
+					}
+					if (x?.scrolls && reachable.right > x.start && reachable.left < x.end) {
+						reachable.left = boxRect.left;
+						reachable.right = boxRect.right;
+						moved = true;
+					}
+					if (moved) owner = box;
 				}
-				if (x?.scrolls && reachable.right > x.start && reachable.left < x.end) {
-					reachable.left = boxRect.left;
-					reachable.right = boxRect.right;
-				}
+				if (style.position === "absolute" || style.position === "fixed") owner = box;
 			}
 			return !isOnScreen(reachable);
+		}
+		return false;
+	}
+
+	/** Whether scrolling `box` moves the text positioned by `owner`, across composed ancestors. */
+	function scrollMovesText(owner, box) {
+		const position = getCachedComputedStyle(owner)?.position;
+		if (owner === box || (position !== "absolute" && position !== "fixed")) return true;
+		for (let block = propertyOf(owner, "offsetParent"); block; block = composedParent(block)) {
+			if (block === box) return true;
 		}
 		return false;
 	}
