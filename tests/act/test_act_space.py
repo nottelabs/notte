@@ -1149,6 +1149,27 @@ _[:]Locked"""
     ]
 
 
+def test_buttons_outside_the_viewport_keep_their_pressed_selected_and_expanded_state() -> None:
+    # the observation renders `pressed`, `selected` and `expanded` on a control without an id as it does `checked`
+    description = """### Content of 'WebArea' component with text 'body content'
+L1[:]<a href="#a">Contents</a>
+_[:]<button pressed>Bold</button>
+_[:]<button>Italic</button>
+_[:]<button role="tab" selected>Details</button>
+_[:]<button expanded>Menu</button>
+_[:]<button disabled pressed>Locked</button>"""
+    actions: list[InteractionAction] = [ClickAction(id="L1", text_label="Contents", accessible_name="Contents")]
+    page = _scrolled_page(description, actions, scroll_y=0, in_view=frozenset({"L1"}))
+    assert accessible_text(page).splitlines() == [
+        "[L1] Contents",
+        "Bold (button, pressed, not in view: scroll to reach it)",
+        "Italic (button, not in view: scroll to reach it)",
+        "Details (tab, selected, not in view: scroll to reach it)",
+        "Menu (button, expanded, not in view: scroll to reach it)",
+        "Locked (disabled, pressed)",
+    ]
+
+
 SAME_NAMES = """_[:]Desk lamp
 B1[:]<button>Add to cart</button>
 _[:]LED bulb
