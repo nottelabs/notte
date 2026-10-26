@@ -10,7 +10,7 @@ from urllib.parse import quote
 
 import pytest
 from notte_browser.dom import parsing
-from notte_browser.driver import ElementHandle, Page
+from notte_browser.driver import ElementHandle, Page, evaluate_in_main_world
 from notte_browser.session import NotteSession
 
 PAGE = """
@@ -46,6 +46,40 @@ async def test_headers_with_a_click_listener_are_offered() -> None:
         _ = await session.aexecute(type="click", id="M2")
         first_due = await session.window.page.inner_text("#dues tbody tr:first-child td:nth-child(2)")
         assert first_due == "$51.00"
+
+
+@pytest.mark.asyncio
+async def test_a_cloned_bridge_marker_cannot_transfer_a_click_listener() -> None:
+    """A page observer cloning marked headers cannot create false actions or leave markers behind."""
+    observer = """
+    <script>
+      new MutationObserver(records => {
+        for (const record of records) {
+          const header = record.target;
+          if (record.attributeName.startsWith('data-notte-header-') &&
+              header.hasAttribute(record.attributeName) && header.isConnected) {
+            header.replaceWith(header.cloneNode(true));
+          }
+        }
+      }).observe(document.documentElement, {subtree: true, attributes: true});
+    </script>
+    """
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(f"data:text/html,{quote(PAGE + observer)}")
+        observation = await session.aobserve()
+        actions = [(action.id, action.text_label) for action in observation.space.interaction_actions]
+        assert actions == [("M1", "Name"), ("M2", "Due")]
+        _ = await session.aexecute(type="click", id="M2")
+        assert await page.inner_text("#dues tbody tr:first-child td:nth-child(2)") == "$51.00"
+        assert await page.evaluate(
+            """() => [...document.querySelectorAll('th')].every(header =>
+                header.getAttributeNames().every(name => !name.startsWith('data-notte-header-')))"""
+        )
+        assert await evaluate_in_main_world(
+            page.main_frame,
+            "!Object.getOwnPropertyNames(globalThis).some(name => name.startsWith('__notte_headers_'))",
+        )
 
 
 @pytest.mark.asyncio

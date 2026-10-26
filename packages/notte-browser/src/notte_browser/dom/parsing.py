@@ -13,7 +13,7 @@ from notte_core.profiling import profiler
 from typing_extensions import TypedDict
 
 from notte_browser.dom.builder import RawFrame, RawNode, build_dom_tree
-from notte_browser.driver import CDPSession, ElementHandle, Frame, Page
+from notte_browser.driver import CDPSession, ElementHandle, Frame, Page, evaluate_handle_in_main_world
 from notte_browser.errors import PlaywrightError
 from notte_browser.js import script
 from notte_browser.resolution import get_selector_generator
@@ -146,7 +146,7 @@ async def headers_with_click_listeners(page: Page) -> list[ElementHandle]:
     except PlaywrightError:
         return []
     headers: _RemoteObject = {}
-    marker = f"data-notte-header-{uuid4().hex}"
+    bridge = f"__notte_headers_{uuid4().hex}"
     try:
         expression = (
             f"Array.from(Document.prototype.querySelectorAll.call(document, {selector}))"
@@ -174,20 +174,25 @@ async def headers_with_click_listeners(page: Page) -> list[ElementHandle]:
         ]
         if not indices:
             return []
-        # Bridge CDP's element identities into browser handles across both browser backends' worlds.
-        # The temporary attribute is removed before the DOM build and is never part of the observation.
+        # Keep the inspected objects themselves: cloning copies attributes, but not event listeners.
+        # The temporary main-world reference is removed before the DOM build.
         _ = await _send(
             cdp,
             "Runtime.callFunctionOn",
             {
                 "objectId": headers["objectId"],
                 "functionDeclaration": (
-                    f"function() {{ for (const i of {json.dumps(indices)}) "
-                    f"Element.prototype.setAttribute.call(this[i], '{marker}', ''); }}"
+                    f"function() {{ Object.defineProperty(globalThis, '{bridge}', {{"
+                    f"value: {json.dumps(indices)}.map(i => this[i]), configurable: true }}); }}"
                 ),
             },
         )
-        return await page.main_frame.query_selector_all(f"[{marker}]")
+        handle = await evaluate_handle_in_main_world(page.main_frame, f"globalThis['{bridge}']")
+        try:
+            values = await handle.get_properties()
+            return [element for value in values.values() if isinstance(element := value.as_element(), ElementHandle)]
+        finally:
+            await handle.dispose()
     except PlaywrightError as e:
         logger.debug(f"Could not read the click listeners of the column headers of {page.url}: {e}")
         return []
@@ -199,10 +204,7 @@ async def headers_with_click_listeners(page: Page) -> list[ElementHandle]:
                     "Runtime.callFunctionOn",
                     {
                         "objectId": headers["objectId"],
-                        "functionDeclaration": (
-                            "function() { for (const header of this) "
-                            f"Element.prototype.removeAttribute.call(header, '{marker}'); }}"
-                        ),
+                        "functionDeclaration": f"function() {{ delete globalThis['{bridge}']; }}",
                     },
                 )
         except PlaywrightError:
