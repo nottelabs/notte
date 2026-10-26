@@ -359,11 +359,14 @@ class PageSettle:
             # a navigation again (the tracker is gone) or a closed page
             _ = task.result()
 
-    async def wait(self, *, grace_ms: float = GRACE_MS, document: DocumentWait = "requests") -> None:
+    async def wait(
+        self, *, grace_ms: float = GRACE_MS, document: DocumentWait = "requests", new_document: bool = False
+    ) -> None:
         """Until the page settles, at most `CAP_MS` after the action started; after a navigation to a new document,
         until that document is ready as `document` says, at most `timeout_goto_ms` after the action started. Never
-        raises: a page that does not settle in time is left as it is."""
-        if self._tracker is not None:
+        raises: a page that does not settle in time is left as it is. A confirmed `new_document` skips the previous
+        document's settle cap and uses the remaining navigation budget."""
+        if self._tracker is not None and not new_document:
             try:
                 async with asyncio.timeout(self._left_s(CAP_MS)):
                     await self._poll(grace_ms)

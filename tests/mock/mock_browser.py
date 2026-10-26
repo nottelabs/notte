@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Any, final
 
 from loguru import logger
-from notte_browser.driver import Page, Request
+from notte_browser.driver import Page, Request, Response
 from notte_browser.settle import SINCE_LOAD_JS, _PageState
 from notte_browser.window import ScreenshotMask
 from notte_core.dom_tree import ComputedDomAttributes, DomAttributes, DomNode, NodeSelectors
@@ -134,6 +134,7 @@ class MockBrowserDriver(AsyncResource):
         )
         # Mirrors BrowserWindow.screenshot_mask (set by the session when a vault is attached).
         self.screenshot_mask: ScreenshotMask | None = None
+        self.goto_response: Response | None = None
 
         self._mock_dom_node = DomNode(
             id="mock",

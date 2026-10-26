@@ -2,7 +2,6 @@ import asyncio
 from collections.abc import Awaitable, Callable
 from contextlib import suppress
 from typing import Literal
-from urllib.parse import urldefrag
 
 from notte_core.actions import (
     BaseAction,
@@ -307,7 +306,9 @@ def _settled_goto(action: GotoAction) -> bool:
     return action.wait_until in (None, "load")
 
 
-async def _settle(settle: PageSettle, action: BaseAction, url: str, *, verbose: bool) -> None:
+async def _settle(
+    settle: PageSettle, action: BaseAction, url: str, *, verbose: bool, new_document: bool = False
+) -> None:
     """Until the page has reacted to `action`, which ran on `url`."""
     match action:
         # a new page is waited for until its requests are done (the network going idle), whatever submitted it
@@ -315,7 +316,7 @@ async def _settle(settle: PageSettle, action: BaseAction, url: str, *, verbose: 
             await settle.wait(grace_ms=LONG_GRACE_MS, document="requests")
         case GotoAction():
             # what the page fetches after its load is waited for, instead of a fixed sleep
-            await settle.wait(grace_ms=LONG_GRACE_MS, document="requests")
+            await settle.wait(grace_ms=LONG_GRACE_MS, document="requests", new_document=new_document)
         case ScrollUpAction() | ScrollDownAction():
             # the scroll has ended: what it starts loading right away (more items, lazy content) is waited for
             await settle.wait()
@@ -646,15 +647,7 @@ async def execute(
     tabs = list(context.pages)
     url = page.url
     # tracked from right before the action
-    settle: PageSettle | None = None
-    if _settles(action):
-        if isinstance(action, GotoAction) and urldefrag(action.url).url != urldefrag(url).url:
-            # Track requests before committing, then wait for the destination within the navigation budget.
-            # The old document's 3 s settle cap must not consume a slow goto's load wait.
-            settle = PageSettle(page, None, tabs=True)
-        else:
-            # Hash routes keep this document: observe their URL change before a delayed render starts.
-            settle = await PageSettle.start(page, tabs=_can_create_tab(action))
+    settle = await PageSettle.start(page, tabs=_can_create_tab(action)) if _settles(action) else None
     retval = True
     closed_during_click: Error | None = None
     try:
@@ -695,7 +688,10 @@ async def execute(
                 settle.acted()
             # a goto's budget counts from its start: its commit and the wait for its page share `timeout_goto_ms`
             if retval:
-                await _settle(settle, action, url, verbose=verbose)
+                # A navigation response confirms a new document; equivalent hash-route URLs return None.
+                # An exact-URL no-op keeps the previous response, so exclude it before consulting the response.
+                new_document = isinstance(action, GotoAction) and action.url != url and window.goto_response is not None
+                await _settle(settle, action, url, verbose=verbose, new_document=new_document)
         if closed_during_click is not None and not any(
             tab not in tabs and not tab.is_closed() for tab in context.pages
         ):

@@ -362,18 +362,32 @@ async def test_a_goto_that_commits_after_the_settle_cap_still_waits_for_its_page
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("wait_until", [None, "load"])
+@pytest.mark.parametrize(
+    "target",
+    [
+        "https://hash-route.notte.test/#details",
+        "https://hash-route.notte.test#details",
+        "hash-route.notte.test#details",
+        "https://HASH-ROUTE.NOTTE.TEST:443/path/../#details",
+    ],
+)
 async def test_a_hash_route_goto_waits_for_its_delayed_render(
-    session: NotteSession, site: str, wait_until: Literal["load"] | None
+    session: NotteSession, target: str, wait_until: Literal["load"] | None
 ) -> None:
+    # Let the browser canonicalize equivalent URLs, including the https scheme added by BrowserWindow.goto.
+    await session.window.page.route(
+        "https://hash-route.notte.test/**", lambda route: route.fulfill(body=HOME, content_type="text/html")
+    )
+    await session.window.page.goto("https://hash-route.notte.test/")
     # The existing document loaded long ago, so its load event cannot provide a new grace window.
     await session.window.page.wait_for_timeout(LONG_GRACE_MS + 100)
     await session.window.page.evaluate(
         """window.addEventListener('hashchange', () => setTimeout(() =>
             document.body.insertAdjacentHTML('beforeend', '<p>Hash route content</p>'), 800), { once: true })"""
     )
-    result = await session.aexecute(type="goto", url=f"{site}/#details", wait_until=wait_until)
+    result = await session.aexecute(type="goto", url=target, wait_until=wait_until)
     assert result.success
-    assert session.window.page.url == f"{site}/#details"
+    assert session.window.page.url == "https://hash-route.notte.test/#details"
     assert "Hash route content" in await text(session)
 
 
