@@ -102,6 +102,8 @@ class _Highlight:
     index: int
     # a link, button, input or option; else a generic clickable (`M`), e.g. a `<div>` with a pointer cursor
     control: bool
+    tag: str
+    role: NodeRole | str
     text: str
     name: str
     # it has a click handler of its own
@@ -110,6 +112,17 @@ class _Highlight:
 
     def descendants(self) -> list["_Highlight"]:
         return [node for child in self.children for node in (child, *child.descendants())]
+
+    def can_duplicate(self, child: "_Highlight") -> bool:
+        if not self.control:
+            return True
+        # Native controls and other ARIA widgets have their own actions even when their names match.
+        # Missing `clickHandler` does not prove otherwise: addEventListener handlers are not captured.
+        if self.tag in {"a", "button", "input", "select", "textarea", "option"}:
+            return False
+        return (self.role == NodeRole.MENUITEM and child.role in {NodeRole.LINK, NodeRole.BUTTON}) or (
+            self.role == NodeRole.COMBOBOX and child.role in {NodeRole.TEXTBOX, NodeRole.SEARCHBOX}
+        )
 
 
 def duplicate_clickables(root: RawNode, nodes: dict[str, RawNode]) -> set[int]:
@@ -122,7 +135,8 @@ def duplicate_clickables(root: RawNode, nodes: dict[str, RawNode]) -> set[int]:
     - around a single control, and says nothing more: its name, or else its text, is empty or, once the
       control's name and text are taken out, made of words of the control's name (a `<div>Go</div>` around a
       "Go" button, a column header "Age" around its "Age: Activate to sort" button), unless it has a click
-      handler of its own.
+      handler of its own. Real controls are only removed for the known wrapper patterns: an ARIA menuitem
+      around a link or button, or an ARIA combobox around a text input. Other controls keep their own actions.
     """
     highlights = _highlights(root, nodes)
     duplicates: set[int] = set()
@@ -140,7 +154,12 @@ def duplicate_clickables(root: RawNode, nodes: dict[str, RawNode]) -> set[int]:
         if node.handler or node.index in duplicates:
             return
         nested = [child for child in node.descendants() if child.index not in duplicates]
-        if len(nested) == 1 and nested[0].control and _says_nothing_more(node.name or node.text, nested[0]):
+        if (
+            len(nested) == 1
+            and nested[0].control
+            and node.can_duplicate(nested[0])
+            and _says_nothing_more(node.name or node.text, nested[0])
+        ):
             duplicates.add(node.index)
 
     for node in highlights:
@@ -182,7 +201,7 @@ def _highlights(raw: RawNode, nodes: dict[str, RawNode]) -> list[_Highlight]:
     control = isinstance(role, NodeRole) and role.short_id() in _CONTROL_SHORT_IDS
     name = _normalize(raw.get("accessibleName", ""))
     text = _normalize(_raw_text(raw, nodes))
-    return [_Highlight(index, control, text, name, raw.get("clickHandler", False), children)]
+    return [_Highlight(index, control, _tag(tag_name), role, text, name, raw.get("clickHandler", False), children)]
 
 
 def _raw_text(raw: RawNode, nodes: dict[str, RawNode]) -> str:

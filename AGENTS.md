@@ -108,6 +108,10 @@ CDP listener hints must retain the inspected elements' identities through main-w
 handles. DOM marker attributes are copied by `cloneNode`, while event listeners are
 not, so an attribute bridge can incorrectly offer a clone as a clickable header.
 
+Wrapper deduplication is covered by `tests/browser/test_dom_clickable_duplicates.py`.
+The payload's `clickHandler` only captures DOM handler attributes/properties, not
+`addEventListener` listeners; its absence cannot prove a real control has no independent action.
+
 ## Public API
 
 - Don't remove or rename public methods without a deprecation first: keep the

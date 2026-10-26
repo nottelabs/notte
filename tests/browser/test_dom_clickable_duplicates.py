@@ -75,3 +75,38 @@ async def test_a_wrapper_that_says_nothing_more_than_its_control_is_not_offered(
         ("M1", "Name Sort"),
         ("B3", "Sort"),
     ]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("role", ["checkbox", "switch", "radio", "menuitemcheckbox", "menuitemradio", "button", "tab"])
+async def test_an_independent_control_around_a_link_is_kept(role: str) -> None:
+    page = f"""
+    <div id="accept" role="{role}" aria-checked="false" tabindex="0"
+      style="position: relative; width: 300px; height: 100px">
+      <a id="terms" href="#terms" style="position: absolute; top: 0; left: 0">Accept terms</a>
+    </div>
+    <script>
+      const accept = document.getElementById('accept');
+      accept.addEventListener('click', () => accept.setAttribute('aria-checked', 'true'));
+      document.getElementById('terms').addEventListener('click', (event) => {{
+        event.preventDefault();
+        event.stopPropagation();
+        document.title = 'terms opened';
+      }});
+    </script>
+    """
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+        observation = await session.aobserve()
+        actions = observation.space.interaction_actions
+        assert [(action.id, action.accessible_name) for action in actions] == [
+            ("B1", "Accept terms"),
+            ("L1", "Accept terms"),
+        ]
+
+        assert (await session.aexecute(type="click", id="L1")).success
+        assert await session.window.page.title() == "terms opened"
+        assert await session.window.page.locator("#accept").get_attribute("aria-checked") == "false"
+
+        assert (await session.aexecute(type="click", id="B1")).success
+        assert await session.window.page.locator("#accept").get_attribute("aria-checked") == "true"
