@@ -7,7 +7,8 @@
 # variable / credential / clearing / field context / field part rules of the field writer, the dialog line, the
 # file upload line, the choose / check rules, the rule on page text outside the viewport, submitting a typed query
 # with no suggestion listed, the DONE line for typed text not submitted yet, the element context rule, the rule on
-# submitting after a dialog, the final-state rule of DONE, and the dialog button rule.
+# submitting after a dialog, the final-state rule of DONE, the dialog button rule, and setting a spin button by
+# typing.
 """Instructions sent with the questions of `act()` / `choose()` / `check()` and to the field writer."""
 
 NEXT_ACTION = """Advance the user's entire goal from the CURRENT page using one operation.
@@ -74,6 +75,9 @@ TYPE_TEXT_OPTION = (
     "Enter or replace text in an editable field, or set a dropdown whose list is cut (more_options) by typing the"
     + " label of any of its options, listed or not. A small LLM will supply the value from the goal."
 )
+
+# added to TYPE_TEXT when a spin button is one of its targets
+TYPE_TEXT_SPINBUTTON = "A spin button (role spinbutton) is set by typing the number it should show."
 
 # first line of the page text when an open dialog hides the page (the observation shows only the dialog)
 DIALOG_COVERS_PAGE = "A dialog covers the page: the page behind it is hidden until the dialog is closed."

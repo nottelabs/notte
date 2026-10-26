@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 from notte_core.act import ActHistory, ActResult, Answer, Answers, ObservedPage, act_until_done
 from notte_core.act.errors import InvalidDecisionError
-from notte_core.act.prompts import DIALOG_COVERS_PAGE
+from notte_core.act.prompts import DIALOG_COVERS_PAGE, TYPE_TEXT_SPINBUTTON
 from notte_core.act.space import (
     accessible_names,
     accessible_text,
@@ -313,6 +313,21 @@ def test_signature_includes_the_frame_path() -> None:
 
     # the same button in another frame is another target
     assert page(["iframe#a"]).signature("B1") != page(["iframe#b"]).signature("B1")
+
+
+def test_an_aria_spin_button_is_set_by_typing_its_value() -> None:
+    # a div with the role (the APG toolbar's font size) gets an M id and a click action; a click changes nothing
+    description = """### Content of 'WebArea' component with text 'body content'
+_[:]Font size
+M1[:]<div tabindex="0" role="spinbutton">14 Point</div>"""
+    actions: list[InteractionAction] = [ClickAction(id="M1", text_label="14 Point", accessible_name="Font size")]
+    page = _page(description=description, actions=actions, states={"M1": ElementState(value="14 Point")})
+    space = build_act_space(page, labels="accessible")
+    assert space.elements == [
+        {"index": "M1", "label": "Font size", "role": "spinbutton", "operations": ["TYPE_TEXT"], "value": "14 Point"}
+    ]
+    assert space.targets["TYPE_TEXT"]["M1"].kind == "fill"
+    assert space.operations["TYPE_TEXT"].endswith(TYPE_TEXT_SPINBUTTON)
 
 
 def test_a_cut_select_is_set_by_typing_any_of_its_options() -> None:

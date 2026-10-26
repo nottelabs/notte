@@ -1127,6 +1127,22 @@ style="width:10px;height:60px;background:#888"></div>"""
 
 
 @pytest.mark.asyncio
+async def test_an_aria_spin_button_is_offered_as_a_field(session: NotteSession) -> None:
+    # a custom spin button (a div with the role, as the APG toolbar's font size): a click on it changes nothing
+    page = """<label id="l">Font size</label>
+<div id="size" role="spinbutton" tabindex="0" aria-labelledby="l" aria-valuenow="14" aria-valuemin="8"
+aria-valuemax="40" aria-valuetext="14 Point">14 Point</div>"""
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    ids = await _ids(session)
+    decider = FakeDecider(choices=[{"operation": "DONE"}])
+    _ = await session.aact("Set the font size to 16", decider=decider)
+    element = next(e for e in decider.states[0].elements if e["index"] == ids["size"])
+    assert (element["label"], element["role"], element["operations"]) == ("Font size", "spinbutton", ["TYPE_TEXT"])
+    assert ids["size"] in decider.questions[0]["type_text_target"].criteria
+    assert prompts.TYPE_TEXT_SPINBUTTON in decider.questions[0]["operation"].criteria["TYPE_TEXT"]
+
+
+@pytest.mark.asyncio
 async def test_a_search_box_without_suggestions_shows_no_list(session: NotteSession) -> None:
     # a quick-search dialog after typing a query: the suggestion list is on screen (its padding) with no option
     page = """<div role="dialog" aria-modal="true" aria-label="Quick search"><h2>Quick search</h2>
