@@ -47,6 +47,8 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   When activating a tracked late tab, retain earlier tabs and their request trackers
   until selection succeeds. A tab closing during activation must not discard the
   surviving candidates or stop watching when none survive.
+  A closing popup can start requests on an already-existing tab. Track those
+  tabs before the click so the replacement wait retains their in-flight work.
   A help popup can also close back to an existing opener. Wait for that survivor
   and require a successful driver round trip before accepting a target-closed click;
   cached page state alone does not prove the browser is still usable.

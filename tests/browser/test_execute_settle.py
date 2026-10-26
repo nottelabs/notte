@@ -904,6 +904,41 @@ async def test_a_click_reporting_a_closed_target_requires_a_live_replacement(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("report_closed", [False, True])
+async def test_a_closing_click_waits_for_a_request_it_started_on_an_existing_tab(
+    session: NotteSession, monkeypatch: pytest.MonkeyPatch, report_closed: bool
+) -> None:
+    opener = session.window.page
+    await opener.evaluate("""() => {
+        window.fetchResult = () => fetch('/data?delay=2').then(() =>
+            document.body.insertAdjacentHTML('beforeend', '<p>Fetched on the opener</p>'));
+    }""")
+    async with opener.context.expect_page() as opened:
+        await opener.evaluate("window.open('/')")
+    popup = await opened.value
+    await popup.wait_for_load_state("load")
+    await popup.locator("#close-self").evaluate(
+        "el => el.onclick = () => { window.opener.fetchResult(); window.close(); }"
+    )
+    session.window.page = popup
+    original_click = Locator.click
+
+    async def closing_click(locator: Locator, *, timeout: float) -> None:
+        await original_click(locator, timeout=timeout)
+        if not popup.is_closed():
+            await popup.wait_for_event("close")
+        if report_closed:
+            raise Error("Locator.click: Target page, context or browser has been closed")
+
+    monkeypatch.setattr(Locator, "click", closing_click)
+    async with opener.expect_request("**/data?delay=2"):
+        _ = await click(session, "close-self")
+    assert popup.is_closed()
+    assert session.window.page is opener
+    assert "Fetched on the opener" in await text(session)
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("failure", ["page", "browser", "unclosed", "unusable"])
 async def test_a_closed_target_error_is_not_hidden_by_an_unusable_replacement(
     session: NotteSession, monkeypatch: pytest.MonkeyPatch, failure: str

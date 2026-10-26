@@ -10,7 +10,7 @@ from typing import Any, Literal, Protocol, runtime_checkable
 
 from pydantic import BaseModel, Field
 
-from notte_core.actions import BaseAction
+from notte_core.actions import ActionUnion
 from notte_core.observation import ExecutionResult
 
 
@@ -31,7 +31,7 @@ class Answer(BaseModel):
 
 
 class Answers(BaseModel):
-    """The answers of one `Decider.choose` call, by question name."""
+    """The answers of one decider `choose()` call, by question name."""
 
     answers: dict[str, Answer]
     model: str
@@ -101,7 +101,7 @@ class ActTimings(BaseModel):
 
 
 class ActResult(BaseModel):
-    """The outcome of `session.act(instruction)`.
+    """The outcome of `act(instruction)` on a session.
 
     - `executed`: `action` ran; `execution` holds its result (check `execution.success`).
     - `proposed`: `dry_run=True`; `action` was chosen but not run (`session.execute(result.action)` runs it).
@@ -113,7 +113,7 @@ class ActResult(BaseModel):
 
     instruction: str
     status: ActStatus
-    action: BaseAction | None = None
+    action: ActionUnion | None = None
     execution: ExecutionResult | None = None
     # operation chosen: CLICK, TYPE_TEXT, SELECT, a control (SCROLL_DOWN, WAIT, ...), DONE or BLOCKED
     operation: str | None = None
@@ -141,7 +141,7 @@ class ActResult(BaseModel):
 
 
 class Choice(BaseModel):
-    """The answer of `session.choose(question, options)`."""
+    """The answer of `choose(question, options)` on a session."""
 
     choice: str
     probabilities: dict[str, float]

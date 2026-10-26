@@ -5,12 +5,13 @@ import html
 import json
 from collections.abc import AsyncIterator, Mapping
 from typing import Any
+from unittest.mock import AsyncMock
 from urllib.parse import quote
 
 import pytest
 import pytest_asyncio
 from notte_browser.driver import Error, Locator
-from notte_browser.session import NotteSession
+from notte_browser.session import LocalActDriver, NotteSession
 from notte_core._sync import run_sync
 from notte_core.act import (
     Answers,
@@ -55,6 +56,20 @@ async def _ids(session: NotteSession) -> dict[str, str]:
         if node.attributes is not None and node.attributes.id_name:
             ids[node.attributes.id_name] = node.id
     return ids
+
+
+@pytest.mark.asyncio
+async def test_observation_survives_a_destroyed_context_during_optional_scroll_read(
+    session: NotteSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    observation = await session.aobserve()
+    evaluate = AsyncMock(side_effect=Error("Execution context was destroyed, most likely because of a navigation"))
+    monkeypatch.setattr(session.window.page, "evaluate", evaluate)
+    page = await LocalActDriver(session, capture_signatures=False).observe(observation)
+    assert not page.inner_scroll
+    assert page.url == observation.metadata.url
+    assert "Subscribe" in page.description
+    evaluate.assert_awaited_once()
 
 
 @pytest.mark.asyncio

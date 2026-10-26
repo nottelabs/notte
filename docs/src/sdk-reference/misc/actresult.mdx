@@ -1,9 +1,9 @@
 ---
 title: "ActResult"
-description: "The outcome of `session"
+description: "The outcome of `act(instruction)` on a session"
 ---
 
-act(instruction)`.
+
 
 - `executed`: `action` ran; `execution` holds its result (check `execution.success`).
 - `proposed`: `dry_run=True`; `action` was chosen but not run (`session.execute(result.action)` runs it).
@@ -20,22 +20,22 @@ act(instruction)`.
 <ParamField path="status" type="Literal['executed', 'proposed', 'done', 'blocked', 'stale']" required>
 </ParamField>
 
-<ParamField path="action" type="UnionType[BaseAction, None]">
+<ParamField path="action" type="ActionUnion | None">
 </ParamField>
 
-<ParamField path="execution" type="UnionType[ExecutionResult, None]">
+<ParamField path="execution" type="ExecutionResult | None">
 </ParamField>
 
-<ParamField path="operation" type="UnionType[str, None]">
+<ParamField path="operation" type="str | None">
 </ParamField>
 
-<ParamField path="target" type="UnionType[str, None]">
+<ParamField path="target" type="str | None">
 </ParamField>
 
-<ParamField path="value" type="UnionType[str, None]">
+<ParamField path="value" type="str | None">
 </ParamField>
 
-<ParamField path="confidence" type="UnionType[float, None]">
+<ParamField path="confidence" type="float | None">
 </ParamField>
 
 <ParamField path="probabilities" type="Dict[str, float]" required>
@@ -44,13 +44,13 @@ act(instruction)`.
 <ParamField path="operation_probabilities" type="Dict[str, float]" required>
 </ParamField>
 
-<ParamField path="model" type="UnionType[str, None]">
+<ParamField path="model" type="str | None">
 </ParamField>
 
-<ParamField path="message" type="UnionType[str, None]">
+<ParamField path="message" type="str | None">
 </ParamField>
 
-<ParamField path="fingerprint" type="UnionType[str, None]">
+<ParamField path="fingerprint" type="str | None">
 </ParamField>
 
 <ParamField path="timings" type="ActTimings" required>
