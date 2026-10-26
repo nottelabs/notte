@@ -100,6 +100,17 @@ async def test_fill_moves_a_spinbutton_to_the_value(
 
 
 @pytest.mark.asyncio
+async def test_fill_types_into_an_editable_spinbutton() -> None:
+    # an editable spinbutton with no value yet takes typed text, as before
+    page = '<div id="qty" role="spinbutton" contenteditable="true" aria-label="Quantity"></div>'
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+        result = await session.aexecute(FillAction(selector="#qty", value="5"), raise_on_failure=True)
+        assert result.success
+        assert (await session.window.page.locator("#qty").inner_text()).strip() == "5"
+
+
+@pytest.mark.asyncio
 async def test_fill_reaches_the_value_on_the_last_key_it_may_press(monkeypatch: pytest.MonkeyPatch) -> None:
     # 20 to 70 by 10: 5 presses, all the arrows may press
     monkeypatch.setattr(execution, "MAX_SLIDER_KEYS", 5)
