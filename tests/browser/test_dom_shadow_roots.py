@@ -134,3 +134,52 @@ async def test_a_removed_shadow_child_is_not_replaced_by_the_light_child() -> No
         result = await session.aexecute(type="click", id=shadow.id, raise_on_failure=False)
         assert not result.success
         assert await page.title() == ""
+
+
+HOST_SCRIPT = """<script>
+  for (const host of document.querySelectorAll("[data-host]")) {
+    host.attachShadow({ mode: "open" }).innerHTML = "<span>Open</span><slot></slot>";
+  }
+</script>"""
+HOST = '<x-box role="button" data-host onclick="document.title = \'host\'"></x-box>'
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "body",
+    [
+        HOST,
+        # a light sibling of the same tag
+        HOST + '<x-box role="button" onclick="document.title = \'sibling\'">Other</x-box>',
+    ],
+)
+async def test_a_shadow_host_can_be_clicked(body: str) -> None:
+    """A host is not in its own shadow root: its CSS path is what finds it."""
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(f"data:text/html,{quote(body + HOST_SCRIPT)}")
+        obs = await session.aobserve()
+        host = next(action for action in obs.space.interaction_actions if action.text_label == "Open")
+
+        result = await session.aexecute(type="click", id=host.id)
+        assert result.success, result.message
+        assert await page.title() == "host"
+
+
+@pytest.mark.asyncio
+async def test_a_shadow_host_in_a_shadow_root_can_be_clicked() -> None:
+    page_html = """<x-outer></x-outer>
+<script>
+  const root = document.querySelector("x-outer").attachShadow({ mode: "open" });
+  root.innerHTML = `<x-box role="button" onclick="document.title = 'host'"></x-box>`;
+  root.querySelector("x-box").attachShadow({ mode: "open" }).innerHTML = "<span>Open</span>";
+</script>"""
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(f"data:text/html,{quote(page_html)}")
+        obs = await session.aobserve()
+        host = next(action for action in obs.space.interaction_actions if action.text_label == "Open")
+
+        result = await session.aexecute(type="click", id=host.id)
+        assert result.success, result.message
+        assert await page.title() == "host"

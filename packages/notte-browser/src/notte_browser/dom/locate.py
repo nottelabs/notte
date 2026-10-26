@@ -59,8 +59,11 @@ async def locate_element(page: Page, selectors: NodeSelectors) -> Locator:
 
 def _shadow_steps(selectors: NodeSelectors) -> list[str]:
     """The XPaths of a chain through shadow roots (see `selectors_through_shadow_dom`): the first from the document,
-    the others from the element before, in its light tree when they start with "/", else in its shadow root."""
-    return [step.strip().removeprefix("xpath=") for step in selectors.xpath_selector.split(" >> ")]
+    the others from the element before, in its light tree when they start with "/", else in its shadow root.
+
+    The chain of a shadow host ends with an empty step (its own XPath taken out): the host is the element before."""
+    steps = [step.strip().removeprefix("xpath=") for step in selectors.xpath_selector.split(" >> ")]
+    return [step for step in steps if step]
 
 
 def selectors_through_shadow_dom(node: DomNode) -> NodeSelectors:
