@@ -569,7 +569,7 @@ export class Session {
           throw error;
         }
         const waitingForClose = error.error.replay_status === 'waiting_for_session';
-        if (error.error.retryable === false && !waitingForClose) {
+        if (error.error.replay_status === 'disabled' || (error.error.retryable === false && !waitingForClose)) {
           throw error;
         }
         // Stop can complete before the replay service observes the closure.

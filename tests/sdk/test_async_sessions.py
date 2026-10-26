@@ -447,6 +447,44 @@ def test_replay_uses_known_stop_state_when_server_waits_for_close(
         assert exchange.sleeps == []
 
 
+def test_replay_observes_stop_completed_during_request(monkeypatch: pytest.MonkeyPatch) -> None:
+    session: RemoteSession | AsyncRemoteSession | None = None
+    handle = router(SESSION_ROUTES)
+    replay_calls = 0
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        nonlocal replay_calls
+        if request.url.path.endswith("/replay"):
+            replay_calls += 1
+            if replay_calls == 1:
+                assert session is not None and session.response is not None
+                # Complete the local stop state while the replay request is in flight.
+                session.response = session.response.model_copy(update={"status": "closed"})
+                return httpx.Response(404, json={"replay_status": "waiting_for_session", "retryable": False})
+            return httpx.Response(200, json={"mp4_url": "https://cdn/r.mp4"})
+        return handle(request)
+
+    def sync_scenario(client: NotteClient):
+        nonlocal session
+        session = client.Session()
+        session.start()
+        return session.replay(poll_interval=2)
+
+    async def async_scenario(client: AsyncNotteClient):
+        nonlocal session
+        session = client.Session()
+        await session.start()
+        return await session.replay(poll_interval=2)
+
+    expected = exchange_sync(monkeypatch, respond, sync_scenario)
+    replay_calls = 0
+    actual = asyncio.run(exchange_async(monkeypatch, respond, async_scenario))
+    assert actual == expected
+    assert expected.outcome[0] == "ok"
+    assert expected.sleeps == [2]
+    assert len([call for call in expected.calls if call.url.endswith("/replay")]) == 2
+
+
 def test_replay_waits_and_fails_the_same(monkeypatch: pytest.MonkeyPatch) -> None:
     async def scenario(session: Any) -> Any:
         await session.start()
@@ -1190,7 +1228,8 @@ def test_request_file_is_the_same(
         assert (tmp_path / "async" / output).read_bytes() == (tmp_path / "sync" / output).read_bytes() == answer[1]
 
 
-def test_disabled_replay_never_polls_on_sync_or_async_client(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.parametrize("retryable", [True, False])
+def test_disabled_replay_never_polls_on_sync_or_async_client(monkeypatch: pytest.MonkeyPatch, retryable: bool) -> None:
     async def scenario(session):
         await session.start()
         await session.stop()
@@ -1203,7 +1242,7 @@ def test_disabled_replay_never_polls_on_sync_or_async_client(monkeypatch: pytest
                 404,
                 {
                     "replay_status": "disabled",
-                    "retryable": False,
+                    "retryable": retryable,
                     "message": "Session recording was disabled at creation",
                 },
             )

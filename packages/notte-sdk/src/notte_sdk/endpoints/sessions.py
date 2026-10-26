@@ -283,7 +283,7 @@ class SessionsClient(SessionsOperations):
         timeout: float = 240.0,
         poll_interval: float = 5.0,
         *,
-        _session_closed: bool = False,
+        _session_closed: Callable[[], bool] | None = None,
     ) -> ReplayResponse:
         """
         Get presigned URLs for session replay.
@@ -391,7 +391,7 @@ def _debug_tab_endpoint(session_id: str, tab_idx: int | None) -> NotteEndpoint[T
 
 
 def _replay_flow(
-    session_id: str, wait: bool, timeout: float, poll_interval: float, session_closed: bool
+    session_id: str, wait: bool, timeout: float, poll_interval: float, session_closed: Callable[[], bool] | None
 ) -> Flow[ReplayResponse]:
     """`replay`: get the replay, polling until it is ready with `wait`."""
     endpoint = api.session_replay(session_id)
@@ -409,12 +409,16 @@ def _replay_flow(
             if e.status_code != 404:
                 raise
             waiting_for_close = e.error.get("replay_status") == "waiting_for_session"
-            if e.error.get("retryable") is False and not waiting_for_close:
+            if e.error.get("replay_status") == "disabled" or (
+                e.error.get("retryable") is False and not waiting_for_close
+            ):
                 raise
             error_msg = e.error.get("message", "") or e.error.get("detail", "")
             # The replay service can lag behind a successful stop response
             # while background cleanup persists the session and video.
-            if (waiting_for_close or "still active" in error_msg) and not session_closed:
+            if (waiting_for_close or "still active" in error_msg) and not (
+                session_closed is not None and session_closed()
+            ):
                 raise ValueError(
                     f"Session {session_id} is still active — close the session first to generate the replay."
                 ) from e
@@ -1157,7 +1161,7 @@ class RemoteSession(SyncResource):
             wait=wait,
             timeout=timeout,
             poll_interval=poll_interval,
-            _session_closed=self.response is not None and self.response.status == "closed",
+            _session_closed=lambda: self.response is not None and self.response.status == "closed",
         )
 
     def viewer_browser(self) -> None:
@@ -1916,7 +1920,7 @@ class AsyncSessionsClient(AsyncSessionsOperations):
         timeout: float = 240.0,
         poll_interval: float = 5.0,
         *,
-        _session_closed: bool = False,
+        _session_closed: Callable[[], bool] | None = None,
     ) -> ReplayResponse:
         """
         Get presigned URLs for session replay.
@@ -2211,13 +2215,13 @@ class AsyncRemoteSession:
             ValueError: If the session hasn't been started yet (no session_id available).
             TimeoutError: If the replay does not become available within ``timeout`` seconds.
         """
-        response = await self._loaded()
+        _ = await self._loaded()
         return await self.client.replay(
             session_id=self.session_id,
             wait=wait,
             timeout=timeout,
             poll_interval=poll_interval,
-            _session_closed=response is not None and response.status == "closed",
+            _session_closed=lambda: self.response is not None and self.response.status == "closed",
         )
 
     async def viewer_browser(self) -> None:
