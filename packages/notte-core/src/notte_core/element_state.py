@@ -30,7 +30,8 @@ class ElementState(BaseModel):
     """What an interactive element currently holds. Fields that do not apply to the element are `None`.
 
     - `value`: the current value of an input, textarea, contenteditable element (cut to 200 characters,
-      `value_truncated` is then set) or the value of the selected option of a `<select>`. Password
+      `value_truncated` is then set), the value of the selected option of a `<select>`, or the
+      `aria-valuetext` (else `aria-valuenow`) of an ARIA slider or spin button. Password
       fields never expose their value or a digest: `filled` tells whether they hold one.
     - `value_digest`: a change marker of the full non-password value when `value` is truncated.
     - `checked`: checkbox / radio state (`.checked`, or `aria-checked` for ARIA widgets);

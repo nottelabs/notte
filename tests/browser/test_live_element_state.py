@@ -200,6 +200,28 @@ async def test_observe_preserves_mixed_pressed_state(session: NotteSession) -> N
 
 
 @pytest.mark.asyncio
+async def test_observe_reads_the_value_of_an_aria_slider_or_spin_button(session: NotteSession) -> None:
+    page = """<label id="size">Font size</label>
+<div id="size-spin" role="spinbutton" tabindex="0" aria-labelledby="size" aria-valuenow="14"
+  aria-valuetext="14 Point">14 Point</div>
+<div id="volume" role="slider" tabindex="0" aria-label="Volume" aria-valuenow="20"
+  style="width: 200px; height: 20px"></div>
+<input id="count" type="number" value="3" aria-valuenow="9">"""
+    _ = await session.window.page.goto(_data_url(page))
+    _ = await session.aobserve()
+    states = _state_by_selector(session)
+    # what it shows, else its number; a native input keeps its own value
+    assert states["size-spin"] == ElementState(value="14 Point")
+    assert states["volume"] == ElementState(value="20")
+    assert states["count"] == ElementState(value="3")
+
+    # the live value, after the widget moved
+    await session.window.page.eval_on_selector("#volume", "el => el.setAttribute('aria-valuenow', '40')")
+    _ = await session.aobserve()
+    assert _state_by_selector(session)["volume"] == ElementState(value="40")
+
+
+@pytest.mark.asyncio
 async def test_observation_carries_the_live_state_and_fingerprint(session: NotteSession) -> None:
     await session.window.page.fill("#name", "typed")
     obs = await session.aobserve()
