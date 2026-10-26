@@ -33,7 +33,9 @@ class ElementState(BaseModel):
       `value_truncated` is then set), the value of the selected option of a `<select>`, or the
       `aria-valuetext` (else `aria-valuenow`) of an ARIA slider or spin button. Password
       fields never expose their value or a digest: `filled` tells whether they hold one.
-    - `value_digest`: a change marker of the full non-password value when `value` is truncated.
+    - `value_digest`: a change marker of the non-password value when `value` is truncated. Listbox
+      button text reads stop after 1,024 nodes or 4,096 raw UTF-16 code units; beyond that cutoff,
+      the digest covers only the text read and change detection is partial.
     - `checked`: checkbox / radio state (`.checked`, or `aria-checked` for ARIA widgets);
       `mixed` for `aria-checked="mixed"`.
     - `options`: the options of a `<select>` (the first 50, plus the selected ones; `options_truncated`
