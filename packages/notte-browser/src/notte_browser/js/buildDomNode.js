@@ -1402,8 +1402,8 @@
 
 	/**
 	 * Where `isTopElement` looks for an element: the center of its middle box. A rich text editor is often
-	 * taller than the viewport, or cut by its edge with its center out of view: it is looked for at the
-	 * center of its part in the viewport.
+	 * taller than the viewport or the scrolling panel it is in, or cut by their edge with its center out of
+	 * view: it is looked for at the center of its part in view.
 	 *
 	 * @param {HTMLElement} element - The element.
 	 * @param {DOMRect[]} rects - Its client rects.
@@ -1413,7 +1413,15 @@
 		const middle = rects[Math.floor(rects.length / 2)];
 		let { left, top, right, bottom } = middle;
 		if (isEditingHost(element)) {
-			const visible = [Math.max(left, 0), Math.max(top, 0), Math.min(right, window.innerWidth), Math.min(bottom, window.innerHeight)];
+			let visible = [Math.max(left, 0), Math.max(top, 0), Math.min(right, window.innerWidth), Math.min(bottom, window.innerHeight)];
+			// the panels that clip it (`overflow` other than `visible`)
+			for (let parent = parentElementOf(element); parent !== null && parent !== BODY; parent = parentElementOf(parent)) {
+				const style = getCachedComputedStyle(parent);
+				if (!style || (style.overflowX === "visible" && style.overflowY === "visible")) continue;
+				const box = getCachedBoundingRect(parent);
+				if (!box) continue;
+				visible = [Math.max(visible[0], box.left), Math.max(visible[1], box.top), Math.min(visible[2], box.right), Math.min(visible[3], box.bottom)];
+			}
 			if (visible[0] < visible[2] && visible[1] < visible[3]) [left, top, right, bottom] = visible;
 		}
 		return [(left + right) / 2, (top + bottom) / 2];

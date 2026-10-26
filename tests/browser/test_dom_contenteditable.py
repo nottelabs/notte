@@ -46,6 +46,17 @@ async def test_contenteditable_cut_by_the_viewport_is_a_field_in_view() -> None:
 
 
 @pytest.mark.asyncio
+async def test_contenteditable_cut_by_a_scrolling_panel_is_a_field_in_view() -> None:
+    # the editor's center is in the viewport but below the panel's visible part
+    page = f'<div style="height: 150px; overflow: auto">{EDITOR.replace("height: 400px", "height: 500px")}</div>'
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+        obs = await session.aobserve()
+
+        assert [(action.id, action.type) for action in obs.space.interaction_actions] == [("I1", "fill")]
+
+
+@pytest.mark.asyncio
 async def test_contenteditable_below_the_fold_is_an_offscreen_field() -> None:
     async with NotteSession(headless=True) as session:
         _ = await session.window.page.goto(f"data:text/html,{quote(BELOW_SPACER + EDITOR)}")
