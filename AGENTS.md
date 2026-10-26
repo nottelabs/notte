@@ -14,6 +14,8 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
 
 ## Tests
 
+- Protected `main` requires the `tests` gate on an up-to-date branch. After
+  rebasing, verify CI on the new head before calling a PR ready to merge.
 - Never add `xfail`, `skip` or an ignore to make a failing test pass. Fix the
   cause, or stop and explain why it fails.
 - CI's live LLM calls (`staging-and-live`) go through OpenRouter: the
@@ -101,6 +103,8 @@ in a thread first). `tests/sdk/test_async_functions_files.py` checks this for fu
 After changing `packages/notte-sdk/src/`, run `make docs-sdk` (the
 `docs-sdk-generate` pre-commit hook runs the same target) and commit the
 generated files. `make docs-check` fails if they are out of date.
+Manual SDK pages repeat constructor parameter fields; keep their type strings
+in sync with the generated `__init__.mdx` pages. Docs tests compare both.
 
 ## OpenAPI refresh
 
@@ -123,3 +127,14 @@ methods while the browser is active raises `RuntimeError`.
 Async compatibility wrappers over synchronous SDK requests use
 `notte_sdk._transport.athread`, which settles the worker before propagating
 cancellation and preserves its return value. Deletes use `athread_finally`.
+
+The development interpreter is Python 3.15. CI runs the full offline suite on
+3.15 and `make test-compat` on 3.11 (syntax/import checks, SDK/core units and a
+browser lifecycle smoke test). Keep `requires-python >=3.11` and basedpyright's
+`pythonVersion = "3.11"`
+so new code remains usable on the supported floor. Use uv 0.13.5 or newer for
+the revision-5 lockfile. SDK model generation requires datamodel-code-generator
+0.86.0, and reference docs require sphinx-mintlify 0.1.2 or newer for 3.14+ types.
+Docs CI syncs the workspace before installing job-only dependencies, then uses
+`uv run --no-sync`; a later sync can remove those dependencies or replace an
+environment built with a Python version that differs from `.python-version`.

@@ -142,14 +142,20 @@ jobs:
           echo "A maintainer can run the full secret-backed suite after reviewing the diff via"
           echo "'Run workflow' (workflow_dispatch) with this PR number."
 
-  # The offline suite: every test not marked `staging` or `live` (see the markers in
-  # pyproject.toml). Offline - a local browser and localhost only, no secrets - so it runs on
-  # fork PRs too and cannot be failed by a third-party website or a staging deploy.
+  # Full offline coverage runs on the development Python; the supported floor runs
+  # syntax/import checks, SDK/core units and a browser lifecycle smoke test.
+  # Both gates use only localhost and run on fork PRs without secrets.
   tests:
+    name: ${{ matrix.python == '3.15' && 'tests' || 'compatibility' }} (${{ matrix.python }})
     needs: changes
     if: fromJSON(needs.changes.outputs.scope).python_unit
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        # Full suite on the newest Python; compatibility gate on the supported floor.
+        python: ["3.15", "3.11"]
     steps:
       - name: Checkout PR code (manual trigger)
         if: github.event_name == 'workflow_dispatch'
@@ -168,14 +174,21 @@ jobs:
       - uses: ./.github/actions/python-setup
         with:
           browsers: "true"
-          pre-commit: "true"
+          pre-commit: ${{ matrix.python == '3.15' && 'true' || 'false' }}
+          python-version: ${{ matrix.python }}
 
-      - name: Run unit tests
+      - name: Run full unit suite
+        if: matrix.python == '3.15'
         run: |
           set -o pipefail
           make test-cicd | tee pytest-coverage.txt
 
+      - name: Check Python 3.11 compatibility
+        if: matrix.python == '3.11'
+        run: make test-compat
+
       - name: Test compatible dependency versions
+        if: matrix.python == '3.15'
         # The locked-version suite above also exercises these contracts. Library
         # lower bounds must allow existing consumers to keep compatible versions.
         run: >-
@@ -192,8 +205,8 @@ jobs:
           echo "'Run workflow' (workflow_dispatch) with this PR number."
 
       - name: Pytest coverage comment
-        # Fork PRs get a read-only token, so they cannot post the comment.
-        if: ${{ always() && fromJSON(needs.changes.outputs.scope).python_unit && github.ref != 'refs/heads/main' && env.IS_TRUSTED == 'true' }}
+        # Fork PRs get a read-only token, so they cannot post the comment. One leg posts it.
+        if: ${{ always() && matrix.python == '3.15' && fromJSON(needs.changes.outputs.scope).python_unit && github.ref != 'refs/heads/main' && env.IS_TRUSTED == 'true' }}
         uses: MishaKav/pytest-coverage-comment@9ee59af31bd7bcada1cc496f086b407122602dbd # v1.12.3
         with:
           pytest-coverage-path: ./pytest-coverage.txt

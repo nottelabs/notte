@@ -25,10 +25,10 @@ function.run(variable1="value1", variable2="value2")
 
 ## Parameters
 
-<ParamField path="version" type="UnionType[str, None]" default="None">
+<ParamField path="version" type="str | None" default="None">
 </ParamField>
 
-<ParamField path="timeout" type="UnionType[int, None]" default="None">
+<ParamField path="timeout" type="int | None" default="None">
 </ParamField>
 
 <ParamField path="stream" type="bool" default="True">
@@ -37,13 +37,13 @@ function.run(variable1="value1", variable2="value2")
 <ParamField path="raise_on_failure" type="bool" default="True">
 </ParamField>
 
-<ParamField path="function_run_id" type="UnionType[str, None]" default="None">
+<ParamField path="function_run_id" type="str | None" default="None">
 </ParamField>
 
 <ParamField path="runtime" type="Literal['standard', 'extended'] | None" default="None">
 </ParamField>
 
-<ParamField path="input_variables" type="UnionType[Dict[str, Any], None]" default="None">
+<ParamField path="input_variables" type="Dict[str, Any] | None" default="None">
 </ParamField>
 
 <ParamField path="variables" type="Any" required>

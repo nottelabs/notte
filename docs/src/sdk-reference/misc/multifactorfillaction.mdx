@@ -24,26 +24,26 @@ session.execute(type="multi_factor_fill", id="otp-input", value="123456")
 <ParamField path="id" type="str" default="">
 </ParamField>
 
-<ParamField path="selector" type="UnionType[str, NodeSelectors, None]">
+<ParamField path="selector" type="str | NodeSelectors | None">
 </ParamField>
 
-<ParamField path="press_enter" type="UnionType[bool, None]">
+<ParamField path="press_enter" type="bool | None">
 </ParamField>
 
-<ParamField path="text_label" type="UnionType[str, None]">
+<ParamField path="text_label" type="str | None">
 </ParamField>
 
-<ParamField path="accessible_name" type="UnionType[str, None]">
+<ParamField path="accessible_name" type="str | None">
 </ParamField>
 
-<ParamField path="param" type="UnionType[ActionParameter, None]" default="name=&#x27;value&#x27; type=&#x27;str&#x27; default=None values=[]">
+<ParamField path="param" type="ActionParameter | None" default="name=&#x27;value&#x27; type=&#x27;str&#x27; default=None values=[]">
 </ParamField>
 
 <ParamField path="timeout" type="int" default="15000">
   Action timeout in milliseconds
 </ParamField>
 
-<ParamField path="value" type="UnionType[str, ValueWithPlaceholder]" required>
+<ParamField path="value" type="str | ValueWithPlaceholder" required>
 </ParamField>
 
 <ParamField path="clear_before_fill" type="bool" default="True">

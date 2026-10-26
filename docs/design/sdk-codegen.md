@@ -30,7 +30,7 @@ deprecated Python aliases. Breaking Python renames are in
 
 ## Hybrid model ownership
 
-`datamodel-code-generator==0.83.0` generates plain Pydantic models, query models and
+`datamodel-code-generator==0.86.0` generates plain Pydantic models, query models and
 inline bodies. Its enum options are `--enum-field-as-literal all`,
 `--use-specialized-enum` and `--capitalise-enum-members`; named component enums opt
 out of literal generation in temporary generator input. The committed spec is not

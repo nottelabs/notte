@@ -23,7 +23,7 @@ description: ""
   Session creation time
 </ParamField>
 
-<ParamField path="closed_at" type="UnionType[datetime, None]">
+<ParamField path="closed_at" type="datetime | None">
   Session closing time
 </ParamField>
 
@@ -47,7 +47,7 @@ description: ""
   Steps of the session
 </ParamField>
 
-<ParamField path="error" type="UnionType[str, None]">
+<ParamField path="error" type="str | None">
   Error message if the operation failed to complete
 </ParamField>
 
@@ -66,27 +66,27 @@ description: ""
   Total byte usage for network responses.
 </ParamField>
 
-<ParamField path="user_agent" type="UnionType[str, None]">
+<ParamField path="user_agent" type="str | None">
   The user agent to use for the session
 </ParamField>
 
-<ParamField path="viewport_width" type="UnionType[int, None]">
+<ParamField path="viewport_width" type="int | None">
   The width of the viewport
 </ParamField>
 
-<ParamField path="viewport_height" type="UnionType[int, None]">
+<ParamField path="viewport_height" type="int | None">
   The height of the viewport
 </ParamField>
 
-<ParamField path="solve_captchas" type="UnionType[bool, None]">
+<ParamField path="solve_captchas" type="bool | None">
   Whether to solve captchas.
 </ParamField>
 
-<ParamField path="cdp_url" type="UnionType[str, None]">
+<ParamField path="cdp_url" type="str | None">
   The URL to connect to the CDP server.
 </ParamField>
 
-<ParamField path="viewer_url" type="UnionType[str, None]">
+<ParamField path="viewer_url" type="str | None">
   The remote session viewer URL.
 </ParamField>
 

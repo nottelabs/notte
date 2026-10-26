@@ -30,7 +30,7 @@ description: ""
 <ParamField path="status" type="Literal['closed', 'active', 'failed']" required>
 </ParamField>
 
-<ParamField path="session_id" type="UnionType[str, None]">
+<ParamField path="session_id" type="str | None">
   The ID of the session
 </ParamField>
 
@@ -38,11 +38,11 @@ description: ""
   The logs of the function run
 </ParamField>
 
-<ParamField path="variables" type="UnionType[Dict[str, Any], None]" required>
+<ParamField path="variables" type="Dict[str, Any] | None" required>
   The variables of the function run
 </ParamField>
 
-<ParamField path="result" type="UnionType[str, None]">
+<ParamField path="result" type="str | None">
   The result of the function run (if any)
 </ParamField>
 

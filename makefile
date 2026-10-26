@@ -4,12 +4,17 @@ ifneq ("$(wildcard .env)","")
 endif
 
 # The test selections below are the single source of truth: .github/workflows/test-cicd.yml runs
-# `make test-cicd` (the offline unit gate) and `make test-live` (Notte API + third-party sites).
+# `make test-cicd` (full offline coverage), `make test-compat` (the oldest supported
+# Python's compatibility gate), and `make test-live` (Notte API + third-party sites).
 # Markers are declared in pyproject.toml; tests/integration/conftest.py marks that directory by path.
 # The README and examples suites run nightly (nightly-examples.yml), never in these targets.
 PYTEST_IGNORE := --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py
 PYTEST_UNIT := uv run pytest -n logical tests -m "not staging and not live" $(PYTEST_IGNORE)
 PYTEST_LIVE := uv run pytest -n logical tests -m "staging or live" $(PYTEST_IGNORE)
+PYTEST_COMPAT := uv run --no-sync pytest -n logical \
+	tests/sdk tests/config tests/test_execution_result_serialization.py \
+	tests/test_session_persona_helpers.py tests/test_sync_loop.py tests/browser/test_sync_session.py \
+	-m "not staging and not live"
 
 # Offline: needs a local browser, no secrets and no network beyond localhost.
 .PHONY: test
@@ -19,6 +24,12 @@ test:
 .PHONY: test-cicd
 test-cicd:
 	$(PYTEST_UNIT) --durations=10 --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=packages
+
+.PHONY: test-compat
+test-compat:
+	uv run --no-sync python -m compileall -q src $(wildcard packages/*/src)
+	uv run --no-sync python -c "import notte, notte_browser, notte_core, notte_llm, notte_sdk"
+	$(PYTEST_COMPAT)
 
 # Needs NOTTE_API_KEY (and NOTTE_API_URL for staging) plus internet access. Live sites are flaky by
 # nature, so failures are retried; tests with their own @pytest.mark.flaky keep their own count.

@@ -8,6 +8,9 @@ inputs:
   pre-commit:
     description: Restore or install the pre-commit hook environments.
     default: "false"
+  python-version:
+    description: Python to use instead of the one in .python-version.
+    default: ""
 
 runs:
   using: composite
@@ -21,8 +24,17 @@ runs:
     - name: Set up Python
       uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
-        python-version-file: ".python-version"
+        python-version: ${{ inputs.python-version }}
+        python-version-file: ${{ inputs.python-version == '' && '.python-version' || '' }}
         cache: pip
+
+    - name: Point uv at the requested Python
+      # uv otherwise reads .python-version.
+      if: inputs.python-version != ''
+      shell: bash
+      env:
+        PYTHON_VERSION: ${{ inputs.python-version }}
+      run: echo "UV_PYTHON=$PYTHON_VERSION" >> "$GITHUB_ENV"
 
     - name: Cache patchright
       if: inputs.browsers == 'true'
@@ -47,7 +59,7 @@ runs:
 
     - name: Install dependencies
       shell: bash
-      run: uv sync --dev --all-extras
+      run: uv sync --locked --dev --all-extras
 
     - name: Install patchright
       if: inputs.browsers == 'true' && steps.cache-patchright.outputs.cache-hit != 'true'
