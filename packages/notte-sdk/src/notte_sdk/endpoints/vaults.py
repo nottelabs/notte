@@ -16,6 +16,7 @@ from notte_core.resource import SyncResource
 from typing_extensions import override
 
 from notte_sdk._generated.resources import AsyncVaultsOperations, VaultsOperations
+from notte_sdk._transport import athread_finally
 from notte_sdk.endpoints._async_resource import AwaitableResource
 from notte_sdk.types import (
     VaultCreateRequestDict,
@@ -79,7 +80,7 @@ class NotteVault(BaseVault, SyncResource):
 
     @override
     async def delete_credentials_async(self, url: str) -> None:
-        _ = await asyncio.to_thread(self.vault_client.credentials_delete, vault_id=self.vault_id, url=url)
+        await athread_finally(self.vault_client.credentials_delete, vault_id=self.vault_id, url=url)
 
     @override
     async def set_credit_card_async(self, **kwargs: Unpack[CreditCardDict]) -> None:
@@ -95,7 +96,7 @@ class NotteVault(BaseVault, SyncResource):
 
     @override
     async def delete_credit_card_async(self) -> None:
-        _ = await asyncio.to_thread(self.vault_client.credit_card_delete, self.vault_id)
+        await athread_finally(self.vault_client.credit_card_delete, self.vault_id)
 
     def delete(self) -> None:
         _ = self.vault_client.delete(self.vault_id)

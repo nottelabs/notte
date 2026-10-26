@@ -194,3 +194,43 @@ def test_remote_vault_http_does_not_stall_unrelated_sync_calls() -> None:
         finally:
             release.set()
         assert blocked.result(5) == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("kind", ["credentials", "credit_card"])
+async def test_cancelled_vault_delete_settles_before_returning(kind: str) -> None:
+    from unittest.mock import Mock
+
+    from notte_sdk.endpoints.vaults import NotteVault, VaultsClient
+
+    client = Mock(spec=VaultsClient)
+    client.get.return_value = "vault-test"
+    vault = NotteVault("vault-test", _client=client)
+    started, release, settled = threading.Event(), threading.Event(), threading.Event()
+
+    def delete(_vault_id: str = "vault-test", *, vault_id: str = "vault-test", url: str = "") -> None:
+        started.set()
+        assert release.wait(5)
+        settled.set()
+
+    client.credentials_delete.side_effect = delete
+    client.credit_card_delete.side_effect = delete
+    operation = (
+        vault.delete_credentials_async("example.com") if kind == "credentials" else vault.delete_credit_card_async()
+    )
+    task = asyncio.create_task(operation)
+    try:
+        assert await asyncio.to_thread(started.wait, 5)
+        task.cancel()
+        await asyncio.sleep(0)
+        assert not task.done()
+        task.cancel()
+        await asyncio.sleep(0)
+        assert not task.done()
+        release.set()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+        assert settled.is_set()
+    finally:
+        release.set()
+        await asyncio.gather(task, return_exceptions=True)

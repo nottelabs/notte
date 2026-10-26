@@ -19,6 +19,7 @@ from typing import Any
 
 import httpx
 import pytest
+from notte_core._sync import run_sync
 from notte_core.logging import logger
 from notte_sdk import AsyncNotteClient, NotteClient
 from notte_sdk._transport import AsyncSharedHttpClient, async_http_client
@@ -108,12 +109,8 @@ async def _await(value: Any) -> Any:
 
 
 def _drive(coroutine: Coroutine[Any, Any, Any]) -> Any:
-    """Run a flow on the sync client: its `wait` never suspends, so it finishes in one step."""
-    try:
-        coroutine.send(None)
-    except StopIteration as stop:
-        return stop.value
-    raise AssertionError("the sync flow suspended")
+    """Run the sync client's flow, including its genuinely async storage interface."""
+    return run_sync(coroutine)
 
 
 async def same_exchange(monkeypatch: pytest.MonkeyPatch, routes: Routes, flow: Flow) -> Exchange:
