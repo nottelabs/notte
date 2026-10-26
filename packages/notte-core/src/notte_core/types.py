@@ -1344,8 +1344,10 @@ def _drop_duration_format(schema: dict[str, Any]) -> None:
 
 
 class SessionResponse(SdkResponse):
-    record_session: bool = True
-    log_session: bool = True
+    record_session: bool = Field(default=True, description="Whether saved session replay is enabled. Defaults to true.")
+    log_session: bool = Field(
+        default=True, description="Whether saved browser session logs are enabled. Defaults to true."
+    )
     # Preserve unknown response fields so legacy wire metadata such as
     # ``headless`` remains available without becoming part of current schemas.
     model_config: ClassVar[ConfigDict] = ConfigDict(extra="allow")

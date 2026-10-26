@@ -167,10 +167,14 @@ export type SessionResponse = {
     readonly timeout_minutes: number;
     /**
      * Record Session
+     *
+     * Whether saved session replay is enabled. Defaults to true.
      */
     record_session?: boolean;
     /**
      * Log Session
+     *
+     * Whether saved browser session logs are enabled. Defaults to true.
      */
     log_session?: boolean;
     [key: string]: unknown;
@@ -288,9 +292,9 @@ Whether this session is an internal system run. Internal system runs are omitted
 </ParamField>
 
 <ParamField body="record_session" type={"boolean | undefined"}>
-
+Whether saved session replay is enabled. Defaults to true.
 </ParamField>
 
 <ParamField body="log_session" type={"boolean | undefined"}>
-
+Whether saved browser session logs are enabled. Defaults to true.
 </ParamField>

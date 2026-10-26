@@ -7569,10 +7569,14 @@ export type SessionResponse = {
     readonly timeout_minutes: number;
     /**
      * Record Session
+     *
+     * Whether saved session replay is enabled. Defaults to true.
      */
     record_session?: boolean;
     /**
      * Log Session
+     *
+     * Whether saved browser session logs are enabled. Defaults to true.
      */
     log_session?: boolean;
     [key: string]: unknown;
@@ -10367,10 +10371,14 @@ export type SessionResponseWritable = {
     system_hidden?: boolean;
     /**
      * Record Session
+     *
+     * Whether saved session replay is enabled. Defaults to true.
      */
     record_session?: boolean;
     /**
      * Log Session
+     *
+     * Whether saved browser session logs are enabled. Defaults to true.
      */
     log_session?: boolean;
     [key: string]: unknown;

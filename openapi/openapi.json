@@ -31742,12 +31742,14 @@
           "record_session": {
             "type": "boolean",
             "title": "Record Session",
-            "default": true
+            "default": true,
+            "description": "Whether saved session replay is enabled. Defaults to true."
           },
           "log_session": {
             "type": "boolean",
             "title": "Log Session",
-            "default": true
+            "default": true,
+            "description": "Whether saved browser session logs are enabled. Defaults to true."
           }
         },
         "additionalProperties": true,
