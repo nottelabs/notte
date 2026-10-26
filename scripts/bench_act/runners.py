@@ -44,6 +44,20 @@ LANDING_JS = """(() => { const nav = performance.getEntriesByType('navigation')[
   text: (document.body ? document.body.innerText : '').slice(0, 2000)}) })()"""
 
 
+async def _landing(page: Any) -> dict[str, Any]:
+    """`LANDING_JS` on the first page. A site that redirects on load (booking.com) destroys the page being read:
+    read the page it lands on once it has loaded. The landing page is evidence for `rules.site_miss`, so failing to
+    read it is recorded, not an error of the run."""
+    try:
+        return json.loads(await page.evaluate(LANDING_JS))
+    except Exception:
+        try:
+            await page.wait_for_load_state("load", timeout=10000)
+            return json.loads(await page.evaluate(LANDING_JS))
+        except Exception as e:
+            return {"url": page.url, "status": None, "text": "", "error": f"{type(e).__name__}: {e}"[:500]}
+
+
 class Recorder:
     """Model calls of the current step, in order."""
 
@@ -301,7 +315,7 @@ async def run_task(task: Task, url: str, decider_kind: str, label_mode: str) -> 
                 return run
             run["nav_ms"] = ms(start)
             page = session.window.page
-            run["landing"] = json.loads(await page.evaluate(LANDING_JS))
+            run["landing"] = await _landing(page)
             if task.pre_js:
                 run["pre"] = json.loads(await page.evaluate(task.pre_js))
             results: list[Any] = []
