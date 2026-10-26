@@ -118,3 +118,19 @@ async def test_a_shadow_child_and_a_light_child_with_the_same_path_are_told_apar
             result = await session.aexecute(type="click", id=action_id)
             assert result.success, result.message
             assert await page.title() == label.lower()
+
+
+@pytest.mark.asyncio
+async def test_a_removed_shadow_child_is_not_replaced_by_the_light_child() -> None:
+    """When the observed shadow child is gone, its CSS path matches only the light child: the click fails."""
+    page_html = _same_tag_page("{host}", "<button onclick=\"document.title = '{title}'\">{label}</button>")
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(f"data:text/html,{quote(page_html)}")
+        obs = await session.aobserve()
+        shadow = next(action for action in obs.space.interaction_actions if action.text_label == "Shadow")
+
+        _ = await page.evaluate("document.querySelector('x-box').shadowRoot.querySelector('button').remove()")
+        result = await session.aexecute(type="click", id=shadow.id, raise_on_failure=False)
+        assert not result.success
+        assert await page.title() == ""

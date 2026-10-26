@@ -182,7 +182,8 @@ goes from a host to the top elements of its shadow root.
 That `>` also goes to the host's light children, so a light child and a top
 shadow child of the same tag have the same CSS path. `dom/locate.py` then picks,
 among the CSS matches, the element the XPath chain of `selectors_through_shadow_dom`
-leads to (`js/shadow_chain_index.js` walks it through each `shadowRoot`). It never
+leads to (`js/shadow_chain_index.js` walks it through each `shadowRoot`), even
+when there is one match: a match the chain does not reach is rejected. It never
 passes a chain that enters a shadow root to Playwright's XPath engine, which would
 find the host's light child instead.
 

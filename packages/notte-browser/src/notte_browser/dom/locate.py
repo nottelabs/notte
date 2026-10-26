@@ -42,12 +42,14 @@ async def locate_element(page: Page, selectors: NodeSelectors) -> Locator:
             continue
         locator = frame.locator(selector)
         count = await locator.count()
-        if count > 1 and len(steps) > 1 and selector.startswith("css="):
+        if count > 0 and len(steps) > 1 and selector.startswith("css="):
             # Playwright's CSS engine enters shadow roots, and its `>` goes from a host to both its light children and
-            # the top elements of its shadow root: the observed element is the one the XPath chain leads to
+            # the top elements of its shadow root: the observed element is the one the XPath chain leads to. A match
+            # the chain does not lead to is another element (the light child, when the shadow child is gone)
             index = await locator.evaluate_all(_SHADOW_CHAIN_INDEX, steps)
             if index >= 0:
                 return locator.nth(index)
+            continue
         if count > 1:
             logger.debug(f"Found {count} elements for '{selector}'. Check out the dom tree for more details.")
         elif count == 1:
