@@ -198,6 +198,9 @@
 		const pressed = parseAriaBoolean(element, "aria-pressed");
 		if (pressed !== undefined) state.pressed = pressed;
 		else if (element.getAttribute("aria-pressed") === "mixed") state.pressed = "mixed";
+		// a column header, or a control inside one (its sort button): the order the column is sorted in
+		const sort = element.closest('th, [role="columnheader"]')?.getAttribute("aria-sort");
+		if (sort === "ascending" || sort === "descending" || sort === "other") state.sort = sort;
 		return Object.keys(state).length > 0 ? state : undefined;
 	}
 

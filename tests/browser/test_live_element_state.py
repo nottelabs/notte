@@ -321,3 +321,30 @@ def test_masking_a_cut_value() -> None:
     assert long.masked(secrets).value == "user@example.org" and long.masked(secrets).value_digest is None
     # no secrets: unchanged, digest kept
     assert past.masked({}) is past
+
+
+SORTED_TABLE = """
+<table>
+  <thead><tr>
+    <th id="age" aria-sort="descending" tabindex="0">Age <button id="age-sort">Sort by age</button></th>
+    <th id="name" tabindex="0">Name <button id="name-sort">Sort by name</button></th>
+  </tr></thead>
+  <tbody><tr><td>36</td><td>Ada</td></tr></tbody>
+</table>
+<div role="grid"><div role="row">
+  <div role="columnheader" aria-sort="ascending"><button id="city-sort">City</button></div>
+</div></div>
+"""
+
+
+@pytest.mark.asyncio
+async def test_the_sort_order_of_a_column_is_read_on_its_header_and_sort_button() -> None:
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(_data_url(SORTED_TABLE))
+        _ = await session.aobserve()
+        states = _state_by_selector(session)
+
+    assert states["age-sort"] == ElementState(sort="descending")
+    assert states["city-sort"] == ElementState(sort="ascending")
+    # an unsorted column has no sort order
+    assert states["name-sort"] is None
