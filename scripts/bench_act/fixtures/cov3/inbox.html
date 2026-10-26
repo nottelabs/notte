@@ -1,0 +1,30 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Inbox (4) - Postbox</title>
+<style>body{font-family:sans-serif;margin:24px;max-width:760px}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+li{display:flex;gap:12px;align-items:center;border-bottom:1px solid #eee;padding:8px 0}li .from{width:110px;font-weight:bold}li .subj{flex:1}
+.icon{width:30px;height:28px;background:#fff;border:1px solid #bbb;border-radius:4px}ul{list-style:none;padding:0}
+.icon[aria-pressed=true]{color:#e8a200}</style></head><body>
+<h1>Inbox</h1>
+<form role="search"><label for="q" class="sr">Search mail</label><input id="q" placeholder="Search"></form>
+<span class="sr" id="archive-word">Archive</span>
+<ul id="inbox"></ul>
+<h2>Archived</h2><ul id="archived"></ul>
+<script>
+// each row: a star toggle named by its title only, and an archive button named by an aria-labelledby chain
+// ("Archive" + sender + subject, all ids); the visible icons have no text
+const MAIL = [['m1', 'Paula Reyes', 'Invoice 2207 for October'], ['m2', 'Sam Okafor', 'Lunch on Friday?'],
+              ['m3', 'Paula Reyes', 'Photos from the offsite'], ['m4', 'Lena Vogt', 'Invoice 2211 is overdue']];
+const state = Object.fromEntries(MAIL.map(([id]) => [id, {starred: false, archived: false}]));
+function render() {
+  for (const list of ['inbox', 'archived']) document.getElementById(list).innerHTML = MAIL
+    .filter(([id]) => state[id].archived === (list === 'archived')).map(([id, from, subj]) =>
+      `<li data-id="${id}"><span class="from" id="${id}-from">${from}</span><span class="subj" id="${id}-subj">${subj}</span>` +
+      (list === 'inbox' ? `<button type="button" class="icon" title="Star" aria-pressed="${state[id].starred}" data-star="${id}">★</button>` +
+        `<button type="button" class="icon" aria-labelledby="archive-word ${id}-from ${id}-subj" data-archive="${id}">⤓</button>` : '') +
+      `</li>`).join('');
+}
+document.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.star) state[b.dataset.star].starred = !state[b.dataset.star].starred;
+  if (b.dataset.archive) state[b.dataset.archive].archived = true;
+  render(); });
+render();
+</script></body></html>

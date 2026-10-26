@@ -1,0 +1,19 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Diario del Sur - Noticias de Andalucía</title>
+<style>body{font-family:sans-serif;margin:0}header,main{padding:12px 24px}nav a{margin-right:16px}
+#cmp{position:fixed;left:50%;top:60px;transform:translateX(-50%);width:520px;height:420px;border:0;box-shadow:0 2px 20px #0006;z-index:10;background:#fff}
+#scrim{position:fixed;inset:0;background:#0007;z-index:9}</style></head><body>
+<header><strong>Diario del Sur</strong> <nav><a href="#">Andalucía</a><a href="#">Deportes</a><a href="contacto.html?from=nav">Contacto</a></nav></header>
+<main><h1>La feria de otoño abre con récord de visitantes</h1><p>Más de 40.000 personas el primer fin de semana.</p></main>
+<div id="scrim"></div><iframe id="cmp" title="Aviso de privacidad"></iframe>
+<script>
+// the consent dialog is a frame from another origin (as consent platforms serve it); it posts the choice back
+let stored = null; try { stored = localStorage.getItem('consent'); } catch (e) {}
+const close = () => { document.getElementById('cmp').remove(); document.getElementById('scrim').remove(); };
+if (stored) close();
+else {
+  const other = location.hostname === '127.0.0.1' ? 'localhost' : '127.0.0.1';
+  document.getElementById('cmp').src = `${location.protocol}//${other}:${location.port}${location.pathname.replace('cookie.html', 'cookie-cmp.html')}`;
+  addEventListener('message', e => { if (!e.data || e.data.type !== 'consent') return;
+    try { localStorage.setItem('consent', JSON.stringify(e.data.choice)); } catch (err) {} close(); });
+}
+</script></body></html>

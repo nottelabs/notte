@@ -1,0 +1,45 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Help center - Ledgerly</title>
+<style>body{font-family:sans-serif;margin:0;display:flex}nav{width:200px;background:#f4f4f4;padding:16px;min-height:100vh}
+nav a{display:block;padding:6px 0}main{padding:24px;max-width:600px}.q button{background:none;border:0;font:inherit;font-weight:bold;
+padding:8px 0;cursor:pointer;text-align:left;width:100%}.q div{padding:0 0 8px 0}#loading{color:#888}</style></head><body>
+<nav aria-label="Help topics"><strong>Help center</strong></nav>
+<main><p id="loading" hidden>Loading…</p><div id="view"></div></main>
+<script>
+// a client-side app: links change the URL with pushState and render once the topic is fetched; Back works (popstate)
+const TOPICS = {
+  start: {title: 'Getting started', articles: {invite: 'Invite your team', import: 'Import your bank statements'}},
+  billing: {title: 'Billing', articles: {card: 'Change my payment card', invoice: 'Download an invoice', refund: 'Ask for a refund'}},
+  security: {title: 'Security', articles: {twofa: 'Turn on two-step login'}},
+};
+const QA = {
+  card: [['Is my card stored?', 'No. Your card is stored by our payment provider, never on our servers.'],
+         ['When is the new card charged?', 'On your next billing date.']],
+  invoice: [['Where are my invoices?', 'Under Settings, Billing, Invoices.']],
+  refund: [['How long does a refund take?', 'Five to ten working days.']],
+};
+const nav = document.querySelector('nav'), view = document.getElementById('view');
+for (const [k, t] of Object.entries(TOPICS)) nav.insertAdjacentHTML('beforeend', `<a href="?topic=${k}">${t.title}</a>`);
+function render() {
+  const q = new URLSearchParams(location.search), topic = TOPICS[q.get('topic')], article = q.get('article');
+  document.getElementById('loading').hidden = false; view.innerHTML = '';
+  // the static file stands for the server's answer; the topics are defined here
+  fetch('topics.json?' + q).then(r => r.json()).then(() => {
+    document.getElementById('loading').hidden = true;
+    if (!topic) { view.innerHTML = '<h1>How can we help?</h1><p>Pick a topic on the left.</p>'; return; }
+    if (!article) {
+      view.innerHTML = `<h1>${topic.title}</h1><ul>` + Object.entries(topic.articles).map(([k, t]) =>
+        `<li><a href="?topic=${q.get('topic')}&article=${k}">${t}</a></li>`).join('') + '</ul>';
+      return;
+    }
+    view.innerHTML = `<p><a href="?topic=${q.get('topic')}">← ${topic.title}</a></p><h1>${topic.articles[article]}</h1>` +
+      (QA[article] || []).map(([qq, a], i) => `<div class="q"><button type="button" aria-expanded="false" aria-controls="a${i}">${qq}</button>` +
+        `<div id="a${i}" role="region" hidden>${a}</div></div>`).join('');
+    view.querySelectorAll('.q button').forEach(b => b.onclick = () => {
+      const open = b.getAttribute('aria-expanded') !== 'true'; b.setAttribute('aria-expanded', String(open));
+      document.getElementById(b.getAttribute('aria-controls')).hidden = !open; });
+  });
+}
+document.addEventListener('click', e => { const a = e.target.closest('a'); if (!a || !a.getAttribute('href').startsWith('?')) return;
+  e.preventDefault(); history.pushState({}, '', a.getAttribute('href')); render(); });
+addEventListener('popstate', render); render();
+</script></body></html>

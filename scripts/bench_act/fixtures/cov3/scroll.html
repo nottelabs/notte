@@ -1,0 +1,20 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>New arrivals - Kettle &amp; Co</title>
+<style>body{font-family:sans-serif;margin:24px;max-width:640px}.item{border-bottom:1px solid #eee;padding:18px 0}
+#sentinel{height:40px;color:#888}</style></head><body>
+<h1>New arrivals</h1><p>More products load as you scroll down.</p>
+<div id="list"></div><p id="sentinel">Loading more…</p>
+<script>
+// infinite scroll on the page itself: when the bottom comes into view, the next 10 products are fetched
+const NAMES = ['kettle', 'teapot', 'mug', 'grinder', 'scale', 'tin', 'whisk', 'cosy', 'infuser', 'tray'];
+let next = 0, loading = false;
+async function more() {
+  if (loading || next >= 80) return; loading = true;
+  await (await fetch('items.json?offset=' + next)).json();
+  await new Promise(r => setTimeout(r, 500));
+  for (let i = next; i < next + 10; i++) document.getElementById('list').insertAdjacentHTML('beforeend',
+    `<div class="item"><a href="product.html?id=${i + 1}">Product ${i + 1}: ${NAMES[i % 10]}</a><p>€${(9 + i * 3) % 90 + 5}.00</p></div>`);
+  next += 10; loading = false;
+  if (next >= 80) document.getElementById('sentinel').textContent = 'You have seen all products.';
+}
+new IntersectionObserver(e => { if (e[0].isIntersecting) more(); }).observe(document.getElementById('sentinel'));
+</script></body></html>

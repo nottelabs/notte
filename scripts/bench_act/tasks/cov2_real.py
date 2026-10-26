@@ -32,7 +32,11 @@ SORTABLE = "JSON.stringify([...document.querySelectorAll('#example1 > *')].map(e
 SORTABLE_START = ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5", "Item 6"]
 # the texts of the page's editors: quilljs.com shows one of three (a carousel), the others are hidden slides
 QUILL_TEXTS = "JSON.stringify([...document.querySelectorAll('.ql-editor')].map(e => e.innerText.trim()))"
-CM_TEXT = "JSON.stringify((document.querySelector('.cm-content') || {}).innerText || null)"
+# the page's own script editor (the output frame has another one); hidden until its Code tab is shown at this width
+CM_SCRIPT = (
+    "JSON.stringify((e => e && {text: e.innerText, shown: e.getBoundingClientRect().width > 0})"
+    "(document.querySelector('.cm-content')))"
+)
 MONACO_THEME = (
     "JSON.stringify({selected: [...document.querySelectorAll('select')].filter(s => [...s.options].some(o => "
     "o.text === 'High Contrast Dark')).map(s => s.selectedOptions[0] && s.selectedOptions[0].text), "
@@ -60,8 +64,14 @@ def _upload_blocked(f: dict[str, Any], run: dict[str, Any]) -> bool:
 
 
 def _codemirror_ok(f: dict[str, Any], _: dict[str, Any]) -> bool:
-    code = _extra(f) or ""
-    return "console.log('notte')" in code and "'hello'" not in code and "new EditorView" in code
+    script = _extra(f) or {}
+    code = script.get("text") or ""
+    return (
+        bool(script.get("shown"))
+        and "console.log('notte')" in code
+        and "'hello'" not in code
+        and "new EditorView" in code
+    )
 
 
 def _monaco_ok(f: dict[str, Any], _: dict[str, Any]) -> bool:
@@ -144,10 +154,10 @@ TASKS = [
     Task(
         "codemirror-edit",
         "https://codemirror.net/try/",
-        "In the script editor on the left, change console.log('hello') to console.log('notte'), keeping the rest of "
+        "Show the script's code, then change console.log('hello') to console.log('notte') in it, keeping the rest of "
         "the script as it is.",
         _codemirror_ok,
-        final_js=CM_TEXT,
+        final_js=CM_SCRIPT,
         tags=("rich-editor", "codemirror", "contenteditable"),
     ),
     Task(
