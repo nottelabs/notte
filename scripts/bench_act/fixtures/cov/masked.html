@@ -1,0 +1,27 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Checkout - payment</title>
+<style>body{font-family:sans-serif;margin:24px;max-width:460px}label{display:block;margin-top:10px}input{font-size:16px}
+.row{display:flex;gap:12px}button[disabled]{opacity:.5}</style></head><body>
+<h1>Payment</h1><p>Order total: <strong>$64.00</strong></p>
+<form id="pay" action="paid.html" method="get">
+  <label for="phone">Phone number</label>
+  <input id="phone" name="phone" inputmode="tel" placeholder="(555) 555-5555" data-mask="(ddd) ddd-dddd">
+  <label for="card">Card number</label>
+  <input id="card" name="card" inputmode="numeric" placeholder="1234 1234 1234 1234" data-mask="dddd dddd dddd dddd">
+  <div class="row">
+    <div><label for="exp">Expiry</label><input id="exp" name="exp" placeholder="MM / YY" data-mask="dd / dd" size="8"></div>
+    <div><label for="cvc">CVC</label><input id="cvc" name="cvc" inputmode="numeric" placeholder="123" data-mask="ddd" size="5"></div>
+  </div>
+  <p><button type="submit" id="submit" disabled>Pay $64.00</button></p>
+</form>
+<script>
+// an input mask in the style of the common libraries: keep the digits, lay them out on the pattern
+function mask(pattern, value) {
+  const digits = value.replace(/\D/g, ''); let out = '', i = 0;
+  for (const c of pattern) { if (i >= digits.length) break; if (c === 'd') out += digits[i++]; else out += c; }
+  return out;
+}
+const fields = [...document.querySelectorAll('[data-mask]')];
+function complete() { return fields.every(f => f.value.length === f.dataset.mask.length); }
+fields.forEach(f => f.addEventListener('input', () => {
+  f.value = mask(f.dataset.mask, f.value); document.getElementById('submit').disabled = !complete(); }));
+</script></body></html>

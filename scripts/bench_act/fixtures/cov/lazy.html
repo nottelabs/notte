@@ -1,0 +1,24 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Lumi desk lamp - product details</title>
+<style>body{font-family:sans-serif;margin:24px;max-width:760px}section{margin:24px 0}.lazy{min-height:400px;border-top:1px solid #ddd}</style></head><body>
+<h1>Lumi desk lamp</h1><p>$39.00 · In stock</p><button type="button">Add to cart</button>
+<section id="specs"><h2>Specifications</h2></section>
+<section class="lazy" data-src="reviews" id="reviews"><h2>Customer reviews</h2><p class="ph">Loading reviews…</p></section>
+<section class="lazy" data-src="faq" id="faq"><h2>Questions and answers</h2><p class="ph">Loading questions…</p></section>
+<section class="lazy" data-src="warranty" id="warranty-s"><h2>Warranty</h2><p class="ph">Loading…</p></section>
+<script>
+// a long product page: the specifications are long, and the sections below load only when scrolled into view
+const specs = document.getElementById('specs');
+const parts = ['Lamp head', 'Arm', 'Base', 'Cable', 'Switch', 'LED module', 'Diffuser', 'Packaging'];
+for (let i = 0; i < 48; i++) { const p = document.createElement('p');
+  p.textContent = `${parts[i % parts.length]} detail ${i + 1}: aluminium and recycled ABS, tested for 20,000 cycles of normal use, ` +
+    `rated for indoor use between 5 and 35 °C, colour-matched to the rest of the range, weight ${(40 + i * 7) % 300} g.`;
+  specs.appendChild(p); }
+const CONTENT = {
+  reviews: '<p><b>Zoe</b>: Bright and easy to assemble. 5/5</p><p><b>Marc</b>: The arm is a bit stiff. 3/5</p><p><b>Ines</b>: Good value. 4/5</p>',
+  faq: '<p><b>Does it take a standard bulb?</b> No, the LED module is built in and lasts about 25,000 hours.</p>',
+  warranty: '<p>The lamp is covered for 5 years against manufacturing defects.</p><p><a href="warranty.html?product=lumi">Read the full warranty terms</a></p>',
+};
+const io = new IntersectionObserver(entries => entries.forEach(e => { if (!e.isIntersecting) return; io.unobserve(e.target);
+  setTimeout(() => { e.target.querySelector('.ph').outerHTML = CONTENT[e.target.dataset.src]; }, 600); }));
+document.querySelectorAll('.lazy').forEach(s => io.observe(s));
+</script></body></html>

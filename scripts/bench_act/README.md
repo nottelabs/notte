@@ -23,12 +23,13 @@ A dev benchmark of `session.act()`, `choose()` and `check()`, and of the observe
 To add a task or probe, add an entry to a module in `tasks/`, or add a new module. The fields are:
 
 ```python
-Task(name, url, goal, check, tags=(), max_steps=15, pre_js=None, suite="")
+Task(name, url, goal, check, tags=(), max_steps=15, pre_js=None, suite="", final_js=None)
 Probe(name, url, question, options, answer, suite="")
 ```
 
 `check(final, run) -> bool` gets the final page (`runners.PROBE_JS`: url, text, inputs, tables, frames, ...) and the
-run record (steps, decisions, `pre`). Names must be unique across modules.
+run record (steps, decisions, `pre`). `final_js` (a JS expression returning a JSON string) adds what the page probe
+does not read as `final["extra"]`. Names must be unique across modules.
 
 ## Running
 

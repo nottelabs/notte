@@ -5,6 +5,7 @@ import json
 import sys
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 import pytest
 
@@ -17,12 +18,26 @@ FIXTURE_URL = "{fixtures}/form.html"
 
 def test_discover_names_every_task_and_probe_once_with_its_module_as_suite() -> None:
     found = registry.discover()
-    assert len(found.tasks) == 37
-    assert len(found.probes) == 47
-    assert {t.suite for t in found.tasks.values()} == {"demo", "fixtures", "real"}
-    assert all(t.fixture == (t.suite == "fixtures") for t in found.tasks.values())
+    assert len(found.tasks) == 81
+    assert len(found.probes) == 98
+    assert {t.suite for t in found.tasks.values()} == {"cov_fixtures", "cov_real", "demo", "fixtures", "real"}
+    assert all(t.fixture == t.suite.endswith("fixtures") for t in found.tasks.values())
     assert found.tasks["gf-book"].max_steps == 25
     assert found.tasks["search"].max_steps == 15
+
+
+def test_every_fixture_url_is_a_page_in_fixtures() -> None:
+    found = registry.discover()
+    fixtures = Path(registry.__file__).with_name("fixtures")
+    urls = [t.url for t in found.tasks.values()] + [p.url for p in found.probes.values()]
+    pages = {
+        urlsplit(u.replace("{fixtures}", "http://fixtures")).path.lstrip("/")
+        for u in urls
+        if u.startswith("{fixtures}")
+    }
+    assert pages and all((fixtures / page).is_file() for page in pages), sorted(
+        p for p in pages if not (fixtures / p).is_file()
+    )
 
 
 def test_discover_rejects_a_name_defined_in_two_modules(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -74,7 +89,7 @@ def test_shards_split_every_item_once_and_spread_each_suite(count: int) -> None:
     shards = [registry.shard(items, i, count) for i in range(1, count + 1)]
     assert sorted((i.kind, i.key) for s in shards for i in s) == sorted((i.kind, i.key) for i in items)
     assert shards == [registry.shard(items, i, count) for i in range(1, count + 1)]
-    for suite in ("fixtures", "demo", "real"):
+    for suite in ("fixtures", "demo", "real", "cov_fixtures", "cov_real"):
         sizes = [sum(i.suite == suite and i.kind == "task" for i in s) for s in shards]
         assert max(sizes) - min(sizes) <= 1
 

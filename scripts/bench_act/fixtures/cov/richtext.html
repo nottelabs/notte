@@ -1,0 +1,38 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Review: Lumi desk lamp</title>
+<style>body{font-family:sans-serif;margin:24px;max-width:560px}
+.stars input{position:absolute;opacity:0;width:1px;height:1px}.stars label{font-size:28px;color:#bbb;cursor:pointer}
+.stars label.on{color:#e8a200}.toolbar button{width:32px;height:30px}
+#editor{border:1px solid #999;min-height:90px;padding:8px;margin-top:4px}
+#editor:empty::before{content:attr(data-placeholder);color:#999}</style></head><body>
+<h1>Lumi desk lamp</h1><p>Tell other shoppers what you think.</p>
+<form id="review" action="posted.html" method="get">
+  <fieldset class="stars"><legend>Your rating</legend>
+    <input type="radio" name="rating" id="r1" value="1"><label for="r1" title="1 star">&#9733;<span hidden>1 star</span></label>
+    <input type="radio" name="rating" id="r2" value="2"><label for="r2" title="2 stars">&#9733;<span hidden>2 stars</span></label>
+    <input type="radio" name="rating" id="r3" value="3"><label for="r3" title="3 stars">&#9733;<span hidden>3 stars</span></label>
+    <input type="radio" name="rating" id="r4" value="4"><label for="r4" title="4 stars">&#9733;<span hidden>4 stars</span></label>
+    <input type="radio" name="rating" id="r5" value="5"><label for="r5" title="5 stars">&#9733;<span hidden>5 stars</span></label>
+  </fieldset>
+  <span id="editor-label">Your review</span>
+  <div class="toolbar" role="toolbar" aria-label="Formatting">
+    <button type="button" aria-label="Bold" data-cmd="bold"><b>B</b></button>
+    <button type="button" aria-label="Italic" data-cmd="italic"><i>I</i></button>
+    <button type="button" aria-label="Bulleted list" data-cmd="insertUnorderedList">&#8226;</button>
+  </div>
+  <div id="editor" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="editor-label"
+       data-placeholder="Write your review…"></div>
+  <input type="hidden" name="review" id="review-text">
+  <p id="err" role="alert"></p>
+  <button type="submit">Post review</button>
+</form>
+<script>
+document.querySelectorAll('.stars input').forEach(r => r.addEventListener('change', () =>
+  document.querySelectorAll('.stars label').forEach(l => l.classList.toggle('on', Number(l.htmlFor.slice(1)) <= Number(r.value)))));
+document.querySelectorAll('[data-cmd]').forEach(b => b.addEventListener('mousedown', e => { e.preventDefault(); document.execCommand(b.dataset.cmd); }));
+document.getElementById('review').addEventListener('submit', e => {
+  const text = document.getElementById('editor').innerText.trim();
+  if (!text || !document.querySelector('.stars input:checked')) { e.preventDefault();
+    document.getElementById('err').textContent = 'Choose a rating and write a few words.'; return; }
+  document.getElementById('review-text').value = text;
+});
+</script></body></html>

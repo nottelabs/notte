@@ -31,6 +31,9 @@ class Task:
     max_steps: int = MAX_STEPS
     # JS evaluated right after the first navigation, saved as `run["pre"]` (e.g. the expected target)
     pre_js: str | None = None
+    # JS evaluated on the final page, returning a JSON string, saved as `final["extra"]`: state the page probe does not
+    # read (an ARIA attribute, a widget's value, a table column)
+    final_js: str | None = None
     # selection label (`--suites`); empty: the name of the module in `tasks/` that defines the task
     suite: str = ""
 

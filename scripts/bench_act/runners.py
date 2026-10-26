@@ -289,6 +289,8 @@ async def run_task(task: Task, url: str, decider_kind: str, label_mode: str) -> 
                     break
             run["wall_ms"] = ms(loop_start)
             run["final"] = json.loads(await session.window.page.evaluate(PROBE_JS))
+            if task.final_js:
+                run["final"]["extra"] = json.loads(await session.window.page.evaluate(task.final_js))
             run["tabs"] = [p.url for p in session.window.page.context.pages]
     finally:
         decider.close()

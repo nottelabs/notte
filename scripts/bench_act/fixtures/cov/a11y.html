@@ -1,0 +1,48 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Account - addresses</title>
+<style>body{font-family:sans-serif;margin:24px;max-width:640px}.cols{display:flex;gap:32px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.f{margin:8px 0}.icon{width:34px;height:34px;padding:4px;border:1px solid #888;background:#fff;border-radius:6px}
+.tools{display:flex;gap:6px;margin-top:12px}</style></head><body>
+<h1>Your addresses</h1>
+<form id="addr" action="address-saved.html" method="get">
+<div class="cols">
+  <section aria-labelledby="ship-h">
+    <h2 id="ship-h">Shipping</h2>
+    <div class="f"><span id="ship-street-l">Street</span><br>
+      <input name="ship_street" aria-labelledby="ship-h ship-street-l" value="12 Rue de la République"></div>
+    <div class="f"><span id="ship-zip-l">Postcode</span><br>
+      <input name="ship_zip" aria-labelledby="ship-h ship-zip-l" value="69001" inputmode="numeric"></div>
+    <div class="f"><label class="sr-only" for="ship-city">Shipping city</label>
+      <input id="ship-city" name="ship_city" value="Lyon"></div>
+    <div class="tools">
+      <button type="button" class="icon" title="Delete shipping address" id="del-ship">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 7h12l-1 14H7zM9 4h6l1 2H8z"/></svg></button>
+    </div>
+  </section>
+  <section aria-labelledby="bill-h">
+    <h2 id="bill-h">Billing</h2>
+    <div class="f"><span id="bill-street-l">Street</span><br>
+      <input name="bill_street" aria-labelledby="bill-h bill-street-l" value="3 Quai Saint-Antoine"></div>
+    <div class="f"><span id="bill-zip-l">Postcode</span><br>
+      <input name="bill_zip" aria-labelledby="bill-h bill-zip-l" value="69002" inputmode="numeric"></div>
+    <div class="f"><label class="sr-only" for="bill-city">Billing city</label>
+      <input id="bill-city" name="bill_city" value="Lyon"></div>
+    <div class="tools">
+      <button type="button" class="icon" aria-labelledby="copy-l" id="copy">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M8 8h11v13H8zM5 3h11v3H7v11H5z"/></svg></button>
+      <span id="copy-l" hidden>Copy the shipping address to billing</span>
+      <button type="button" class="icon" title="Delete billing address" id="del-bill">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 7h12l-1 14H7zM9 4h6l1 2H8z"/></svg></button>
+    </div>
+  </section>
+</div>
+<p><button type="submit" class="icon" aria-label="Save addresses">
+  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 3h13l3 3v15H4zM7 3v6h9V3M7 14h10v7H7z"/></svg></button></p>
+</form>
+<script>
+const f = document.getElementById('addr');
+document.getElementById('copy').addEventListener('click', () => ['street', 'zip', 'city'].forEach(k =>
+  f.elements['bill_' + k].value = f.elements['ship_' + k].value));
+document.getElementById('del-ship').addEventListener('click', () => ['street', 'zip', 'city'].forEach(k => f.elements['ship_' + k].value = ''));
+document.getElementById('del-bill').addEventListener('click', () => ['street', 'zip', 'city'].forEach(k => f.elements['bill_' + k].value = ''));
+</script></body></html>
