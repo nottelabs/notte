@@ -109,6 +109,9 @@ _SCROLL_TRACKER = script("scroll_tracker.js")
 # Page-side implementation: js/scroll_boundary.js
 _SCROLL_BOUNDARY = script("scroll_boundary.js")
 
+# Page-side implementation: js/largest_scroller.js
+_LARGEST_SCROLLER = script("largest_scroller.js")
+
 # A scroll that has not started `SCROLL_START_MS` after the wheel failed; one that started has ended once its
 # position is the same `SCROLL_STABLE_MS` apart (a smooth scroll, a scroll-snap), at most `SCROLL_CAP_MS` after it.
 SCROLL_START_MS = 200
@@ -165,6 +168,36 @@ _IS_TEXT_FORM_CONTROL = "(el) => el instanceof HTMLInputElement || el instanceof
 
 # Page-side implementation: js/find_dropdown_option.js
 _FIND_DROPDOWN_OPTION = script("find_dropdown_option.js")
+
+
+async def _scroll_container_point(window: BrowserWindow, delta: int) -> tuple[float, float] | None:
+    """Where to send a wheel that should scroll by `delta`: the center of the visible part of the scroll container with
+    the largest visible area that can still move that way (`js/largest_scroller.js`), in the page or one of its frames,
+    in page coordinates. None when there is none. A frame is clipped by the viewport, not by the frames around it."""
+    page = window.page
+    best: tuple[float, float, float] | None = None
+    for frame in page.frames:
+        try:
+            if frame is page.main_frame:
+                origin, clip = (0.0, 0.0), None
+            else:
+                element = await frame.frame_element()
+                box = await element.bounding_box()
+                if box is None:
+                    continue
+                border_x, border_y = await element.evaluate("e => [e.clientLeft, e.clientTop]")
+                width, height = await page.evaluate("() => [window.innerWidth, window.innerHeight]")
+                origin = (box["x"] + border_x, box["y"] + border_y)
+                # the part of the viewport over the frame, in the frame's coordinates
+                clip = {"left": -origin[0], "top": -origin[1], "right": width - origin[0], "bottom": height - origin[1]}
+            found = await frame.evaluate(_LARGEST_SCROLLER, {"delta": delta, "clip": clip})
+        except Error as error:
+            if not _scroll_context_disappeared(frame, error):
+                raise
+            continue
+        if found is not None and (best is None or found["area"] > best[2]):
+            best = (origin[0] + found["x"], origin[1] + found["y"], found["area"])
+    return None if best is None else (best[0], best[1])
 
 
 class _ActionBudget:
@@ -482,9 +515,8 @@ async def execute_browser_action(window: BrowserWindow, action: BaseAction, *, v
                 if amount is None:
                     viewport_height = await window.page.evaluate("window.innerHeight")
                     amount = int(viewport_height * 0.7)
-                await window.page.mouse.wheel(
-                    delta_x=0, delta_y=(-amount if isinstance(action, ScrollUpAction) else amount)
-                )
+                delta = -amount if isinstance(action, ScrollUpAction) else amount
+                await window.page.mouse.wheel(delta_x=0, delta_y=delta)
 
                 async def read() -> tuple[bool, list[list[float | None]]]:
                     scrolled = False
@@ -502,7 +534,16 @@ async def execute_browser_action(window: BrowserWindow, action: BaseAction, *, v
                         positions.append(position)
                     return scrolled, positions
 
-                if not await _scroll_ended(read):
+                scrolled = await _scroll_ended(read)
+                if not scrolled:
+                    # The wheel goes where the mouse is: outside the page's scroll container (when the document does
+                    # not scroll itself), it moves nothing. It is then sent over the largest one in view.
+                    point = await _scroll_container_point(window, delta)
+                    if point is not None:
+                        await window.page.mouse.move(*point)
+                        await window.page.mouse.wheel(delta_x=0, delta_y=delta)
+                        scrolled = await _scroll_ended(read)
+                if not scrolled:
                     logger.info("🪦 Scroll action did not move the page or a scroll container. Failing action...")
                     raise ScrollActionFailedError()
             finally:
