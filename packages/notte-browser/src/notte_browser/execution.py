@@ -771,12 +771,16 @@ async def _interact(
             )
             if is_disabled:
                 raise ActionExecutionError(action.id, window.page.url, reason="Element is disabled")
-            try:
-                # hold back part of the budget for the JS click fallback
-                await locator.click(timeout=budget.remaining_ms(keep_ms=action.timeout / 5))
-            except PlaywrightTimeoutError as e:
-                logger.warning(f"Failed to click on element: {e}, fallback to js click")
+            # an image-map `<area>` has no box, so Playwright never finds it visible: its own click follows its link
+            if await locator.evaluate("(el) => el.localName === 'area'", timeout=budget.remaining_ms()):
                 await locator.evaluate("(el) => el.click()", timeout=budget.remaining_ms())
+            else:
+                try:
+                    # hold back part of the budget for the JS click fallback
+                    await locator.click(timeout=budget.remaining_ms(keep_ms=action.timeout / 5))
+                except PlaywrightTimeoutError as e:
+                    logger.warning(f"Failed to click on element: {e}, fallback to js click")
+                    await locator.evaluate("(el) => el.click()", timeout=budget.remaining_ms())
 
         case FillAction(value=value):
             slider = await locator.evaluate(_SLIDER_VALUE, timeout=budget.remaining_ms())

@@ -51,8 +51,14 @@
 	const closest = (element, selector) => ELEMENT.closest.call(element, selector);
 	const contains = (node, other) => NODE.contains.call(node, other);
 	const getRootNode = (node) => NODE.getRootNode.call(node);
-	const getBoundingClientRect = (element) => ELEMENT.getBoundingClientRect.call(element);
-	const getClientRects = (element) => ELEMENT.getClientRects.call(element);
+	// an image-map `<area>` has no box of its own: its box is its region of the image (see `areaRect`)
+	const getBoundingClientRect = (element) =>
+		localNameOf(element) === "area" ? areaRect(element) : ELEMENT.getBoundingClientRect.call(element);
+	const getClientRects = (element) => {
+		if (localNameOf(element) !== "area") return ELEMENT.getClientRects.call(element);
+		const rect = areaRect(element);
+		return rect.width > 0 && rect.height > 0 ? [rect] : [];
+	};
 	const querySelectorAllOf = (element, selector) => ELEMENT.querySelectorAll.call(element, selector);
 	// `checkVisibility` is recent (Chrome 105): undefined where the browser does not have it
 	const checkVisibilityOf = ELEMENT.checkVisibility &&
@@ -91,6 +97,61 @@
 			DOM_CACHE.computedStyles = new WeakMap();
 		}
 	};
+
+	/**
+	 * The image an image-map `<area>` is a region of: the first visible `<img usemap="#name">` of its `<map>`,
+	 * in the same document or shadow root.
+	 *
+	 * @param {HTMLAreaElement} area - The `<area>` element.
+	 * @returns {HTMLImageElement | null} The image, or null when no visible image uses the map.
+	 */
+	function areaImage(area) {
+		const map = closest(area, "map");
+		const name = map === null ? null : getAttribute(map, "name");
+		if (!name) return null;
+		const root = getRootNode(area);
+		const images = (root instanceof Document ? DOCUMENT : DocumentFragment.prototype).querySelectorAll.call(root, "img[usemap]");
+		for (const image of images) {
+			if (getAttribute(image, "usemap") === `#${name}` && isElementVisible(image)) return image;
+		}
+		return null;
+	}
+
+	/**
+	 * The box of an image-map `<area>`: the bounds of its shape (`rect`, `circle`, `poly` or `default`, from its
+	 * `coords`) on its image, cut to the image. Empty when no visible image uses its map or its coords are invalid.
+	 *
+	 * @param {HTMLAreaElement} area - The `<area>` element.
+	 * @returns {DOMRect} The box, in viewport coordinates.
+	 */
+	function areaRect(area) {
+		const image = areaImage(area);
+		if (image === null) return new DOMRect();
+		const box = ELEMENT.getBoundingClientRect.call(image);
+		const style = getCachedComputedStyle(image);
+		const left = box.left + propertyOf(image, "clientLeft") + (parseFloat(style.paddingLeft) || 0);
+		const top = box.top + propertyOf(image, "clientTop") + (parseFloat(style.paddingTop) || 0);
+		const width = propertyOf(image, "clientWidth") - (parseFloat(style.paddingLeft) || 0) - (parseFloat(style.paddingRight) || 0);
+		const height = propertyOf(image, "clientHeight") - (parseFloat(style.paddingTop) || 0) - (parseFloat(style.paddingBottom) || 0);
+		const shape = (getAttribute(area, "shape") || "rect").trim().toLowerCase();
+		const coords = (getAttribute(area, "coords") || "").split(/[\s,;]+/).filter(Boolean).map(parseFloat);
+		if (coords.some(Number.isNaN)) return new DOMRect();
+		let bounds = null;
+		if (shape === "default") {
+			bounds = [0, 0, width, height];
+		} else if ((shape === "rect" || shape === "rectangle") && coords.length >= 4) {
+			bounds = [Math.min(coords[0], coords[2]), Math.min(coords[1], coords[3]), Math.max(coords[0], coords[2]), Math.max(coords[1], coords[3])];
+		} else if ((shape === "circle" || shape === "circ") && coords.length >= 3) {
+			bounds = [coords[0] - coords[2], coords[1] - coords[2], coords[0] + coords[2], coords[1] + coords[2]];
+		} else if ((shape === "poly" || shape === "polygon") && coords.length >= 6) {
+			const xs = coords.filter((_, i) => i % 2 === 0);
+			const ys = coords.filter((_, i) => i % 2 === 1);
+			bounds = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+		}
+		if (bounds === null) return new DOMRect();
+		const [x1, y1, x2, y2] = [Math.max(bounds[0], 0), Math.max(bounds[1], 0), Math.min(bounds[2], width), Math.min(bounds[3], height)];
+		return x1 < x2 && y1 < y2 ? new DOMRect(left + x1, top + y1, x2 - x1, y2 - y1) : new DOMRect();
+	}
 
 	/**
 	 * Gets the cached bounding rect for an element.
@@ -786,6 +847,8 @@
 	 * @returns {HTMLElement} The element with the box.
 	 */
 	function boxOf(element) {
+		// an image-map `<area>` is drawn by its image
+		if (localNameOf(element) === "area") return areaImage(element) ?? element;
 		while (parentElementOf(element) && getCachedComputedStyle(element)?.display === "contents") {
 			element = parentElementOf(element);
 		}
@@ -1133,6 +1196,11 @@
 	 * @returns {boolean} Whether the element is visible.
 	 */
 	function isElementVisible(element) {
+		// an image-map `<area>` (`display: none`) is visible where its image is
+		if (localNameOf(element) === "area") {
+			const rect = getCachedBoundingRect(element);
+			return rect.width > 0 && rect.height > 0;
+		}
 		const style = getCachedComputedStyle(element);
 		// SVG elements have no offset size: their size is their bounding box
 		const offsetWidth = propertyOf(element, "offsetWidth");
@@ -1494,6 +1562,9 @@
 		if (hasInteractiveRole) return true;
 
 		if (isGridCellControl(element)) return true;
+
+		// an image-map hotspot that links somewhere
+		if (tagName === "area" && hasAttribute(element, "href")) return true;
 
 
 		// check whether element has event listeners by window.getEventListeners
@@ -1982,7 +2053,7 @@
 
 		// Fast-path for common interactive elements
 		const interactiveElements = new Set([
-			"a", "button", "input", "select", "textarea", "details", "summary", "label"
+			"a", "area", "button", "input", "select", "textarea", "details", "summary", "label"
 		]);
 
 		if (interactiveElements.has(tagName)) return true;

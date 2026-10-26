@@ -90,6 +90,12 @@ Only an editing host gets the implicit `contenteditable` textbox role. Carry the
 host flag from the DOM script into both role classification and duplicate detection;
 editable descendants with their own click handlers must retain their click actions.
 
+An image-map `<area>` has `display: none` and no box. The DOM script's
+`getBoundingClientRect`/`getClientRects` helpers give it the bounds of its shape on
+the visible `<img usemap>` of its `<map>` (`areaRect`), and `boxOf` gives that image.
+Playwright never finds an `<area>` visible, so a click action uses the element's own
+`click()`, which follows its `href`.
+
 Off-screen fixed text is unreachable only when its panel is fixed to the viewport.
 In Chromium, a fixed element's non-null `offsetParent` identifies a containing block
 (for example, a transformed ancestor) that can scroll into view. Walk through shadow
