@@ -1078,7 +1078,8 @@
 	 * @returns {boolean} Whether the `<svg>` has links, text, click handlers or HTML content.
 	 */
 	function hasSvgContent(svg) {
-		for (const element of querySelectorAllOf(svg, "*")) {
+		// the `<svg>` and its descendants (`querySelectorAll` returns the descendants only)
+		for (const element of [svg, ...querySelectorAllOf(svg, "*")]) {
 			if (hasAttribute(element, "onclick") || typeof propertyOf(element, "onclick") === "function") return true;
 			const tagName = localNameOf(element);
 			if (tagName === "a") {
