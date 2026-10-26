@@ -96,7 +96,7 @@ _[:]Shipping method - Select the dropdown for White Glove Delivery
 _[:]Enter your shipping address to view available shipping methods.
 _[:]Payment
 _[:]All transactions are secure and encrypted.
-_[:]<input type="radio"></input>
+_[:]<input type="radio" checked></input>
 _[:]Credit card
 _[:]<button>+4
 Additional payment methods</button>
@@ -105,14 +105,14 @@ _[:]Expiration date (MM / YY)
 _[:]Security code
 _[:]<button aria_label="More information about Security code"></button>
 _[:]Name on card
-_[:]<input type="checkbox"></input>
+_[:]<input type="checkbox" checked></input>
 _[:]Use shipping address as billing address
 _[:]<input type="radio"></input>
 _[:]PayPal
 _[:]<input type="radio"></input>
 _[:]Check / Money Order
 _[:]Remember me
-_[:]<input type="checkbox"></input>
+_[:]<input type="checkbox" checked></input>
 _[:]Save my information for a faster checkout with a Shop account
 _[:]Mobile phone number
 _[:]<input type="tel" value="+1" placeholder="Mobile phone number"></input>

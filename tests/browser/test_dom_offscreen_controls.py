@@ -211,3 +211,41 @@ async def test_scrollable_boxes_reach_the_area_they_scroll_through() -> None:
             # `display: contents` has no box: its `overflow` clips nothing
             '_[:]<input placeholder="In a box without a box"></input>',
         ]
+
+
+CHECKED = """
+<h1>Top</h1>
+<input type="checkbox" id="in-view" checked><label for="in-view">In view</label>
+<div style="height: 2000px"></div>
+<input type="checkbox" id="first"><label for="first">Checkbox 1</label>
+<input type="checkbox" id="second" checked><label for="second">Checkbox 2</label>
+<input type="radio" id="ticked" name="color"><label for="ticked">Ticked later</label>
+<div role="switch" aria-checked="true" tabindex="0">Dark mode</div>
+<input type="checkbox" id="locked" checked disabled><label for="locked">Locked</label>
+<div style="height: 400px"></div>
+"""
+
+
+@pytest.mark.asyncio
+async def test_checkboxes_outside_the_viewport_say_whether_they_are_checked() -> None:
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(CHECKED)}")
+        # the live state, not the attribute: checked by the user after the page loaded
+        _ = await session.window.page.evaluate("document.getElementById('ticked').checked = true")
+        lines, actions = await _observe(session)
+        assert lines == [
+            "_[:]Top",
+            # in view, the checked state is the action's live state, not in the description
+            'B1[:]<input type="checkbox"></input>',
+            "_[:]In view",
+            '_[:]<input type="checkbox"></input>',
+            "_[:]Checkbox 1",
+            '_[:]<input type="checkbox" checked></input>',
+            "_[:]Checkbox 2",
+            '_[:]<input type="radio" checked></input>',
+            "_[:]Ticked later",
+            '_[:]<div role="switch" checked>Dark mode</div>',
+            '_[:]<input type="checkbox" disabled checked></input>',
+            "_[:]Locked",
+        ]
+        assert [action_id for action_id, _ in actions] == ["B1"]
