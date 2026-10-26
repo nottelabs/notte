@@ -1,5 +1,6 @@
 // The frame's visible bounds and child-to-parent coordinate transform, in parent viewport coordinates.
 element => {
+    const scrollingElement = Object.getOwnPropertyDescriptor(Document.prototype, 'scrollingElement').get.call(document);
     const box = element.getBoundingClientRect();
     if (box.width <= 0 || box.height <= 0 || element.offsetWidth <= 0 || element.offsetHeight <= 0) return null;
     const scaleX = box.width / element.offsetWidth;
@@ -10,7 +11,9 @@ element => {
     let bottom = Math.min(box.bottom, window.innerHeight);
     for (let node = element.parentElement || element.getRootNode().host; node;
         node = node.parentElement || node.getRootNode().host) {
+        if (node === scrollingElement) continue;
         const style = getComputedStyle(node);
+        if (style.display === 'inline' || style.display === 'contents') continue;
         const rect = node.getBoundingClientRect();
         if (style.overflowX !== 'visible') {
             const scale = node.offsetWidth > 0 ? rect.width / node.offsetWidth : 0;

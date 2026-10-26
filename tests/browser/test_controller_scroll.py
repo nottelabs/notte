@@ -268,6 +268,40 @@ async def test_scroll_reaches_a_list_inside_a_frame_away_from_the_mouse(page: Pa
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("overflow", ["auto", "scroll"])
+async def test_scroll_reaches_a_lower_frame_after_document_scrolling(page: Page, overflow: str) -> None:
+    await page.set_content(
+        f"<!doctype html><style>html {{overflow-y: {overflow}}} body {{margin: 0; height: 1000px}}</style>"
+        '<iframe style="position: absolute; left: 100px; top: 700px; border: 0; width: 600px; height: 250px"></iframe>'
+    )
+    frame = page.frames[1]
+    await frame.set_content(PANEL_HTML)
+    await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+    assert await page.evaluate("window.scrollY") == 400
+    await page.mouse.move(10, 10)
+
+    assert await scroll(page, ScrollDownAction(amount=200))
+    assert await frame.locator("#panel").evaluate("panel => panel.scrollTop") > 0
+    assert await page.evaluate("window.scrollY") == 400
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("display", ["inline", "contents"])
+async def test_scroll_reaches_a_frame_inside_a_non_clipping_inline_box(page: Page, display: str) -> None:
+    await page.set_content(
+        "<!doctype html><style>body {margin: 0; overflow: hidden}</style>"
+        f'<span style="display: {display}; overflow: hidden">'
+        '<iframe style="margin: 100px; border: 0; width: 600px; height: 400px"></iframe></span>'
+    )
+    frame = page.frames[1]
+    await frame.set_content(PANEL_HTML)
+    await page.mouse.move(10, 10)
+
+    assert await scroll(page, ScrollDownAction(amount=200))
+    assert await frame.locator("#panel").evaluate("panel => panel.scrollTop") > 0
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("nested", [False, True])
 async def test_scroll_reaches_a_frame_clipped_by_an_ancestor(page: Page, nested: bool) -> None:
     await page.set_content(
