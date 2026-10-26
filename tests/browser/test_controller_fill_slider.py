@@ -8,6 +8,7 @@ import json
 from urllib.parse import quote
 
 import pytest
+from notte_browser import execution
 from notte_browser.session import NotteSession
 from notte_core.actions import FillAction
 
@@ -76,6 +77,17 @@ async def test_fill_moves_a_slider_to_the_value(options: dict[str, float | bool]
         result = await session.aexecute(FillAction(selector="#slider", value=value), raise_on_failure=True)
         assert result.success
         assert await session.window.page.locator("#slider").get_attribute("aria-valuenow") == expected
+
+
+@pytest.mark.asyncio
+async def test_fill_reaches_the_value_on_the_last_key_it_may_press(monkeypatch: pytest.MonkeyPatch) -> None:
+    # 20 to 70 by 10: 5 presses, all the arrows may press
+    monkeypatch.setattr(execution, "MAX_SLIDER_KEYS", 5)
+    async with NotteSession(headless=True) as session:
+        await _slider(session, {"step": 10, "page": 0, "delay": 0, "rtl": False})
+        result = await session.aexecute(FillAction(selector="#slider", value="70"), raise_on_failure=False)
+        assert result.success, result.message
+        assert await session.window.page.locator("#slider").get_attribute("aria-valuenow") == "70"
 
 
 @pytest.mark.asyncio

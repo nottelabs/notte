@@ -303,6 +303,8 @@ async def _move_slider(
                 return
             now = after
         else:
+            if reached(now):
+                return
             raise ActionExecutionError(
                 "fill", window.page.url, reason=f"The slider did not reach {value!r} in {MAX_SLIDER_KEYS} keys"
             )
