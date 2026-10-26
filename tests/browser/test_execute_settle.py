@@ -7,7 +7,7 @@ import time
 from collections.abc import AsyncIterator
 from contextlib import ExitStack, closing
 from typing import Literal
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import notte_browser.settle as settle_module
 import notte_browser.window as window_module
@@ -865,31 +865,75 @@ async def test_a_closing_page_waits_for_its_replacement_if_it_opens_one(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("replacement", [True, False])
+@pytest.mark.parametrize("replacement", ["new", "opener", "none"])
 async def test_a_click_reporting_a_closed_target_requires_a_live_replacement(
-    session: NotteSession, site: str, monkeypatch: pytest.MonkeyPatch, replacement: bool
+    session: NotteSession, site: str, monkeypatch: pytest.MonkeyPatch, replacement: str
 ) -> None:
-    async with session.window.page.context.expect_page() as opened:
-        await session.window.page.evaluate("window.open('/')")
+    opener = session.window.page
+    async with opener.context.expect_page() as opened:
+        await opener.evaluate("window.open('/')")
     original = await opened.value
     await original.wait_for_load_state("load")
+    if replacement == "none":
+        await opener.close()
+    elif replacement == "opener":
+        await original.locator("#close-self").evaluate(
+            "el => el.onclick = () => { window.opener.location.href = '/fetching-tab'; window.close(); }"
+        )
     session.window.page = original
     original_click = Locator.click
 
     async def click_then_report_closed(locator: Locator, *, timeout: float) -> None:
         await original_click(locator, timeout=timeout)
+        if not original.is_closed():
+            await original.wait_for_event("close")
         # Patchright can report the handler's window.close() before acknowledging the click.
         raise Error("Locator.click: Target page, context or browser has been closed")
 
     monkeypatch.setattr(Locator, "click", click_then_report_closed)
-    if replacement:
-        _ = await click(session, "replace-self")
+    if replacement != "none":
+        _ = await click(session, "replace-self" if replacement == "new" else "close-self")
         assert original.is_closed()
+        if replacement == "opener":
+            assert session.window.page is opener
         assert session.window.page.url == f"{site}/fetching-tab"
         assert "Fetched in the tab" in await text(session)
     else:
         with pytest.raises(NotteBaseError, match="Target page, context or browser has been closed"):
             _ = await click(session, "close-self")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("failure", ["page", "browser", "unclosed", "unusable"])
+async def test_a_closed_target_error_is_not_hidden_by_an_unusable_replacement(
+    session: NotteSession, monkeypatch: pytest.MonkeyPatch, failure: str
+) -> None:
+    opener = session.window.page
+    async with opener.context.expect_page() as opened:
+        await opener.evaluate("window.open('/')")
+    original = await opened.value
+    await original.wait_for_load_state("load")
+    session.window.page = original
+
+    async def fail_click(locator: Locator, *, timeout: float) -> None:
+        if failure == "page":
+            await opener.close()
+            await original.close()
+        elif failure == "browser":
+            browser = original.context.browser
+            assert browser is not None
+            await browser.close()
+        elif failure == "unusable":
+            await original.close()
+        raise Error("Locator.click: Target page, context or browser has been closed")
+
+    monkeypatch.setattr(Locator, "click", fail_click)
+    if failure == "unusable":
+        monkeypatch.setattr(
+            opener, "evaluate", AsyncMock(side_effect=Error("Target page, context or browser has been closed"))
+        )
+    with pytest.raises(NotteBaseError, match="Target page, context or browser has been closed"):
+        _ = await click(session, "close-self")
 
 
 @pytest.mark.asyncio

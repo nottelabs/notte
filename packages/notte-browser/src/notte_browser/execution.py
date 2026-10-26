@@ -951,7 +951,7 @@ async def _execute(
                     )
                 except Error as error:
                     # A click handler can close its own tab before the driver acknowledges the click. Continue
-                    # only if the action produces a live replacement; otherwise preserve the original error.
+                    # only if another usable tab survives; otherwise preserve the original error.
                     if (
                         not isinstance(action, ClickAction)
                         or not page.is_closed()
@@ -985,7 +985,7 @@ async def _execute(
                 new_document = isinstance(action, GotoAction) and action.url != url and window.goto_response is not None
                 await _settle(settle, action, url, verbose=verbose, new_document=new_document)
         if closed_during_click is not None and not any(
-            tab not in tabs and not tab.is_closed() for tab in context.pages
+            tab is not page and not tab.is_closed() for tab in context.pages
         ):
             raise closed_during_click
         if isinstance(action, (GotoAction, GotoNewTabAction)) and settle is None:
@@ -999,7 +999,7 @@ async def _execute(
             last = context.pages[-1]
             # Selection can happen automatically when the opener closes. Readiness is independent of selection.
             # A goto_new_tab already loaded its own new page.
-            if last not in tabs and not isinstance(action, GotoNewTabAction):
+            if (last not in tabs or closed_during_click is not None) and not isinstance(action, GotoNewTabAction):
                 tab = settle.tab(last) if settle is not None else PageSettle(last, None, tabs=False)
                 try:
                     await tab.wait(document="requests")
@@ -1018,6 +1018,18 @@ async def _execute(
                             raise
                     else:
                         window.page = last
+        if closed_during_click is not None:
+            assert isinstance(action, ClickAction)
+            # is_closed() alone can lag a disconnect. Require a working driver round trip on the selected
+            # replacement, including an existing opener, before accepting the click that closed its tab.
+            replacement = window.page
+            try:
+                if replacement is page or replacement.is_closed():
+                    raise closed_during_click
+                async with asyncio.timeout(action.timeout / 1000):
+                    _ = await replacement.evaluate("() => document.readyState")
+            except (Error, TimeoutError):
+                raise closed_during_click
     finally:
         if settle is not None:
             await settle.close()
