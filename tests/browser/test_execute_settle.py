@@ -11,7 +11,7 @@ import pytest
 import pytest_asyncio
 from aiohttp import web
 from notte_browser.session import NotteSession
-from notte_browser.settle import CAP_MS, LONG_GRACE_MS, SETTLE_MS
+from notte_browser.settle import CAP_MS, LONG_GRACE_MS, QUIET_MS, SETTLE_MS, PageSettle
 from notte_core.actions import ClickAction, GoBackAction, GoForwardAction, PressKeyAction, ScrollDownAction
 from notte_core.config import config
 from PIL import Image
@@ -406,6 +406,23 @@ async def test_the_grace_counts_from_when_a_slow_click_lands(session: NotteSessi
     # the button is covered for 700 ms: the click waits for it, then its effect starts 300 ms later
     _ = await click(session, "covered")
     assert "Covered result" in await text(session)
+
+
+@pytest.mark.asyncio
+async def test_pre_action_activity_does_not_consume_the_grace_without_an_input_event(session: NotteSession) -> None:
+    # Scroll has no pointer/key event to reset the tracker; its grace starts when the action ends.
+    settle = await PageSettle.start(session.window.page)
+    try:
+        await session.window.page.evaluate("document.body.append(document.createElement('hr'))")
+        await session.window.page.wait_for_timeout(QUIET_MS + 50)
+        await session.window.page.evaluate(
+            """setTimeout(() => document.body.insertAdjacentHTML('beforeend', '<p>Result after action</p>'), 200)"""
+        )
+        settle.acted()
+        await settle.wait(grace_ms=LONG_GRACE_MS)
+        assert "Result after action" in await text(session)
+    finally:
+        await settle.close()
 
 
 @pytest.mark.asyncio

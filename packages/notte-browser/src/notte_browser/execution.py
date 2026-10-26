@@ -115,24 +115,34 @@ SCROLL_POLL_MS = 25
 SCROLL_CAP_MS = 1_000
 
 
-async def _scroll_ended(read: Callable[[], Awaitable[tuple[bool, list[list[float | None]]]]]) -> bool:
+async def _scroll_ended(
+    read: Callable[[], Awaitable[tuple[bool, list[list[float | None]]]]], *, deadline: float | None = None
+) -> bool:
     """Whether a scroll happened, once it has ended or failed to start. `read` returns whether the scroll started,
     and the positions it moves."""
     loop = asyncio.get_running_loop()
     start = loop.time()
     last: list[list[float | None]] | None = None
     stable_since = start
-    while True:
-        scrolled, positions = await read()
-        now = loop.time()
-        if positions != last:
-            last, stable_since = positions, now
-        elapsed_ms = (now - start) * 1000
-        if scrolled and (now - stable_since) * 1000 >= SCROLL_STABLE_MS:
-            return True
-        if (not scrolled and elapsed_ms >= SCROLL_START_MS) or elapsed_ms >= SCROLL_CAP_MS:
-            return scrolled
-        await asyncio.sleep(SCROLL_POLL_MS / 1000)
+    scrolled = False
+    scope = asyncio.timeout_at(deadline if deadline is not None else start + SCROLL_CAP_MS / 1000)
+    try:
+        async with scope:
+            while True:
+                scrolled, positions = await read()
+                now = loop.time()
+                if positions != last:
+                    last, stable_since = positions, now
+                elapsed_ms = (now - start) * 1000
+                if scrolled and (now - stable_since) * 1000 >= SCROLL_STABLE_MS:
+                    return True
+                if (not scrolled and elapsed_ms >= SCROLL_START_MS) or elapsed_ms >= SCROLL_CAP_MS:
+                    return scrolled
+                await asyncio.sleep(SCROLL_POLL_MS / 1000)
+    except TimeoutError:
+        if not scope.expired():
+            raise
+        return scrolled
 
 
 def _scroll_context_disappeared(frame: Frame, error: Error) -> bool:
@@ -237,8 +247,18 @@ async def _scroll_target(window: BrowserWindow, action: ScrollUpAction | ScrollD
             position: float = await target.evaluate("element => element.scrollTop")
             return position != before, [[position]]
 
-        if not await _scroll_ended(read) and not await target.evaluate(_SCROLL_BOUNDARY, delta):
-            raise ScrollActionFailedError()
+        deadline = asyncio.get_running_loop().time() + SCROLL_CAP_MS / 1000
+        if not await _scroll_ended(read, deadline=deadline):
+            scope = asyncio.timeout_at(deadline)
+            try:
+                async with scope:
+                    boundary = await target.evaluate(_SCROLL_BOUNDARY, delta)
+            except TimeoutError as error:
+                if not scope.expired():
+                    raise
+                raise ScrollActionFailedError() from error
+            if not boundary:
+                raise ScrollActionFailedError()
     finally:
         with suppress(Error):
             await target.dispose()

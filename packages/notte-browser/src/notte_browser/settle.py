@@ -240,19 +240,19 @@ class PageSettle:
             shift = page["inputAt"] if page["inputAt"] is not None else max((self._began - self._started) * 1000, 0)
 
             def since(t: float | None) -> float | None:
-                return None if t is None else t - shift
+                return None if t is None or t < shift else t - shift
 
             changes = [t for t in self._changes if t >= shift] if requests else []
-            firsts = [t for t in (page["first"], min(changes, default=None)) if t is not None]
-            lasts = [t for t in (page["last"], max(changes, default=None)) if t is not None]
+            firsts = [t for t in (since(page["first"]), since(min(changes, default=None))) if t is not None]
+            lasts = [t for t in (since(page["last"]), since(max(changes, default=None))) if t is not None]
             # Repeats can carry a retry's result, but overlapping periodic polls must not hold every action.
             # Give them the same window as continuous DOM changes; unique requests retain the full cap.
             repeating = page["elapsed"] - max(min(self._changes, default=shift), shift) < SETTLE_MS
             in_flight = sum(fresh or repeating for fresh in self._in_flight.values()) if requests else 0
             state = SettleState(
                 elapsed_ms=page["elapsed"] - shift,
-                first_change_ms=since(min(firsts, default=None)),
-                last_change_ms=since(max(lasts, default=None)),
+                first_change_ms=min(firsts, default=None),
+                last_change_ms=max(lasts, default=None),
                 in_flight=in_flight + (1 if self._opening else 0),
                 last_dom_change_ms=since(page["dom"]),
                 url_changed_ms=since(page["urlAt"]),
