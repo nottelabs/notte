@@ -121,6 +121,11 @@ Within budget the digest covers the entire selection. Budget exhaustion also set
 even if fewer than 200 normalized characters were read. Traverse assigned slots without native
 recursive flattening so nested slot traversal shares the same node budget.
 
+Editor hit testing and uncovered-area probes share the editor box clipped to the
+viewport and overflow ancestors, including ancestors outside its shadow root. Keep
+`tests/browser/test_dom_contenteditable.py` and `test_dom_covered_controls.py` passing
+together: probing the original editor box loses editors cut by a scroll panel or the fold.
+
 ## Public API
 
 - Don't remove or rename public methods without a deprecation first: keep the

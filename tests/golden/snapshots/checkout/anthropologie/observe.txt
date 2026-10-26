@@ -24,134 +24,134 @@ B3[:]<button tabindex="0" role="tab">Ship</button>
 B4[:]<button tabindex="-1" role="tab">Pick Up</button>
 _[:]Shipping Address
 _[:]Country/Region
-_[:]Albania
-_[:]Andorra
-_[:]Anguilla
-_[:]Antigua and Barbuda
-_[:]Argentina
-_[:]Armenia
-_[:]Aruba
-_[:]Australia
-_[:]Austria
-_[:]Azerbaijan
-_[:]Bahamas
-_[:]Bahrain
-_[:]Bangladesh
-_[:]Barbados
-_[:]Belgium
-_[:]Belize
-_[:]Bermuda
-_[:]Bolivia
-_[:]Bosnia-Herzegovina
-_[:]Brazil
-_[:]British Virgin Islands
-_[:]Brunei Darussalam
-_[:]Bulgaria
-_[:]Canada
-_[:]Cayman Islands
-_[:]Chile
-_[:]China
-_[:]Colombia
-_[:]Cook Islands
-_[:]Costa Rica
-_[:]Croatia
-_[:]Cyprus
-_[:]Czech Republic
-_[:]Denmark
-_[:]Dominica
-_[:]Dominican Republic
-_[:]Ecuador
-_[:]El Salvador
-_[:]Estonia
-_[:]Falkland Islands
-_[:]Faroe Islands
-_[:]Fiji
-_[:]Finland
-_[:]France
-_[:]French Polynesia
-_[:]Germany
-_[:]Gibraltar
-_[:]Greece
-_[:]Greenland
-_[:]Grenada
-_[:]Guernsey
-_[:]Guyana
-_[:]Honduras
-_[:]Hong Kong SAR
-_[:]Hungary
-_[:]Iceland
-_[:]India
-_[:]Indonesia
-_[:]Ireland
-_[:]Isle Of Man
-_[:]Israel
-_[:]Italy
-_[:]Jamaica
-_[:]Japan
-_[:]Jersey
-_[:]Jordan
-_[:]Kazakhstan
-_[:]Kuwait
-_[:]Latvia
-_[:]Lebanon
-_[:]Liechtenstein
-_[:]Lithuania
-_[:]Luxembourg
-_[:]Macau SAR
-_[:]Macedona
-_[:]Malaysia
-_[:]Malta
-_[:]Mexico
-_[:]Monaco
-_[:]Montenegro
-_[:]Netherlands
-_[:]New Caledonia
-_[:]New Zealand
-_[:]Nicaragua
-_[:]Niue
-_[:]Norway
-_[:]Oman
-_[:]Palau
-_[:]Panama
-_[:]Papua New Guinea
-_[:]Paraguay
-_[:]Peru
-_[:]Philippines
-_[:]Poland
-_[:]Portugal
-_[:]Qatar
-_[:]Romania
-_[:]Saint Kitts and Nevis
-_[:]Saint Lucia
-_[:]Saint Pierre and Miquelon
-_[:]Saint Vincent and the Grenadines
-_[:]Sao Tome And Principe
-_[:]Saudi Arabia
-_[:]Serbia
-_[:]Singapore
-_[:]Slovakia
-_[:]Slovenia
-_[:]Solomon Islands
-_[:]South Africa
-_[:]South Korea
-_[:]Spain
-_[:]Suriname
-_[:]Sweden
-_[:]Switzerland
-_[:]Taiwan Region
-_[:]Thailand
-_[:]Timor Leste
-_[:]Trinidad And Tobago
-_[:]Turkey
-_[:]Turks and Caicos Islands
-_[:]Ukraine
-_[:]United Arab Emirates
-_[:]United Kingdom
-_[:]United States
-_[:]Uruguay
-_[:]Vanuatu
-_[:]Vatican City
-_[:]Venezuela
+I2[:]<select name="country">Albania
+Andorra
+Anguilla
+Antigua and Barbuda
+Argentina
+Armenia
+Aruba
+Australia
+Austria
+Azerbaijan
+Bahamas
+Bahrain
+Bangladesh
+Barbados
+Belgium
+Belize
+Bermuda
+Bolivia
+Bosnia-Herzegovina
+Brazil
+British Virgin Islands
+Brunei Darussalam
+Bulgaria
+Canada
+Cayman Islands
+Chile
+China
+Colombia
+Cook Islands
+Costa Rica
+Croatia
+Cyprus
+Czech Republic
+Denmark
+Dominica
+Dominican Republic
+Ecuador
+El Salvador
+Estonia
+Falkland Islands
+Faroe Islands
+Fiji
+Finland
+France
+French Polynesia
+Germany
+Gibraltar
+Greece
+Greenland
+Grenada
+Guernsey
+Guyana
+Honduras
+Hong Kong SAR
+Hungary
+Iceland
+India
+Indonesia
+Ireland
+Isle Of Man
+Israel
+Italy
+Jamaica
+Japan
+Jersey
+Jordan
+Kazakhstan
+Kuwait
+Latvia
+Lebanon
+Liechtenstein
+Lithuania
+Luxembourg
+Macau SAR
+Macedona
+Malaysia
+Malta
+Mexico
+Monaco
+Montenegro
+Netherlands
+New Caledonia
+New Zealand
+Nicaragua
+Niue
+Norway
+Oman
+Palau
+Panama
+Papua New Guinea
+Paraguay
+Peru
+Philippines
+Poland
+Portugal
+Qatar
+Romania
+Saint Kitts and Nevis
+Saint Lucia
+Saint Pierre and Miquelon
+Saint Vincent and the Grenadines
+Sao Tome And Principe
+Saudi Arabia
+Serbia
+Singapore
+Slovakia
+Slovenia
+Solomon Islands
+South Africa
+South Korea
+Spain
+Suriname
+Sweden
+Switzerland
+Taiwan Region
+Thailand
+Timor Leste
+Trinidad And Tobago
+Turkey
+Turks and Caicos Islands
+Ukraine
+United Arab Emirates
+United Kingdom
+United States
+Uruguay
+Vanuatu
+Vatican City
+Venezuela</select>
 _[:]First Name
 _[:]<input type="text" value="" placeholder=""></input>
 _[:]Last Name
@@ -269,6 +269,7 @@ I1	fill	'emailAddress'	'Email Address'	html > body > div:nth-of-type(2) > div > 
 B2	click	'emailOptIn'	'Please send me Anthropologie offers, promotions, and other commercial messages. (You may unsubscribe at any time.)'	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(1) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div:nth-of-type(2) > div > div > label > input.o-pwa-checkbox__input[type="checkbox"][aria-labelledby="email-opt-in--text"][id="email-opt-in"][name="emailOptIn"]	html/body/div[2]/div/div[1]/div[1]/main/div[2]/div[1]/div/div[2]/div[1]/div[2]/div/form/div[2]/div/div/label/input	in_iframe=False	in_shadow_root=False
 B3	click	'Ship'	'SHIP'	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(1) > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(1).c-pwa-tabs__tab.is-selected[id="urbn-tab-ship-tab"][role="tab"]	html/body/div[2]/div/div[1]/div[1]/main/div[2]/div[1]/div/div[2]/div[2]/div[1]/button[1]	in_iframe=False	in_shadow_root=False
 B4	click	'Pick Up'	'PICK UP'	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(1) > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(2).c-pwa-tabs__tab[id="urbn-tab-pickup-tab"][role="tab"]	html/body/div[2]/div/div[1]/div[1]/main/div[2]/div[1]/div/div[2]/div[2]/div[1]/button[2]	in_iframe=False	in_shadow_root=False
+I2	select_dropdown_option	'Albania Andorra Anguilla Antigua and Barbuda Argentina Armenia Aruba Australia Austria Azerbaijan Bahamas Bahrain Bangladesh Barbados Belgium Belize Bermuda Bolivia Bosnia-Herzegovina Brazil British Virgin Islands Brunei Darussalam Bulgaria Canada Cayman Islands Chile China Colombia Cook Islands Costa Rica Croatia Cyprus Czech Republic Denmark Dominica Dominican Republic Ecuador El Salvador Estonia Falkland Islands Faroe Islands Fiji Finland France French Polynesia Germany Gibraltar Greece Greenland Grenada Guernsey Guyana Honduras Hong Kong SAR Hungary Iceland India Indonesia Ireland Isle Of Man Israel Italy Jamaica Japan Jersey Jordan Kazakhstan Kuwait Latvia Lebanon Liechtenstein Lithuania Luxembourg Macau SAR Macedona Malaysia Malta Mexico Monaco Montenegro Netherlands New Caledonia New Zealand Nicaragua Niue Norway Oman Palau Panama Papua New Guinea Paraguay Peru Philippines Poland Portugal Qatar Romania Saint Kitts and Nevis Saint Lucia Saint Pierre and Miquelon Saint Vincent and the Grenadines Sao Tome And Principe Saudi Arabia Serbia Singapore Slovakia Slovenia Solomon Islands South Africa South Korea Spain Suriname Sweden Switzerland Taiwan Region Thailand Timor Leste Trinidad And Tobago Turkey Turks and Caicos Islands Ukraine United Arab Emirates United Kingdom United States Uruguay Vanuatu Vatican City Venezuela'	'Country/Region'	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(1) > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div > form > div:nth-of-type(1) > div > div:nth-of-type(1) > select.c-pwa-select[id="country-default"][name="country"][required]	html/body/div[2]/div/div[1]/div[1]/main/div[2]/div[1]/div/div[2]/div[2]/div[2]/div/form/div[1]/div/div[1]/select	in_iframe=False	in_shadow_root=False
 L6	click	'800.309.2500'	'800.309.2500'	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > a.c-pwa-contact[href="tel:8003092500"]	html/body/div[2]/div/div[1]/div[1]/main/div[2]/div[2]/div/div[1]/div/a	in_iframe=False	in_shadow_root=False
 B5	click	'Promo Code'	'Promo Code'	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div > h3 > button.o-pwa-button-none.o-pwa-accordion__toggle[type="button"]	html/body/div[2]/div/div[1]/div[1]/main/div[2]/div[2]/div/div[2]/div/div[1]/div/div/h3/button	in_iframe=False	in_shadow_root=False
 B6	click	'Ship to this address'	'SHIP TO THIS ADDRESS'	html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > main > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > div > div:nth-of-type(3) > button.o-pwa-button-cart.s-pwa-proceed-button[type="button"]	html/body/div[2]/div/div[1]/div[1]/main/div[2]/div[2]/div/div[2]/div/div[3]/button	in_iframe=False	in_shadow_root=False
