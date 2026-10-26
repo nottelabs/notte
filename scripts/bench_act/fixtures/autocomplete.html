@@ -1,0 +1,34 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Book a flight</title>
+<style>#list{list-style:none;padding:0;border:1px solid #ccc;width:300px}#list li{padding:6px;cursor:pointer}#list:empty{display:none}</style></head><body>
+<h1>Book a flight</h1>
+<form id="f" action="flights.html" method="get">
+  <label for="city">Destination</label>
+  <input id="city" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="list" autocomplete="off" placeholder="City or airport">
+  <input type="hidden" id="code" name="code">
+  <ul id="list" role="listbox"></ul>
+  <p id="err" style="color:red"></p>
+  <button type="submit">Search flights</button>
+</form>
+<script>
+const cities = [["LIS","Lisbon, Portugal (LIS)"],["LIM","Lima, Peru (LIM)"],["LIN","Milan Linate, Italy (LIN)"],
+  ["LHR","London Heathrow, UK (LHR)"],["LGW","London Gatwick, UK (LGW)"],["BCN","Barcelona, Spain (BCN)"],["LYS","Lyon, France (LYS)"]];
+const input = document.getElementById("city"), list = document.getElementById("list"), code = document.getElementById("code");
+let timer;
+input.addEventListener("input", () => {
+  code.value = ""; clearTimeout(timer);
+  timer = setTimeout(() => {
+    const q = input.value.trim().toLowerCase().slice(0, 2);
+    list.innerHTML = "";
+    if (!q) { input.setAttribute("aria-expanded", "false"); return; }
+    for (const [c, name] of cities.filter(([c, n]) => n.toLowerCase().startsWith(q) || c.toLowerCase().startsWith(q))) {
+      const li = document.createElement("li"); li.setAttribute("role", "option"); li.textContent = name;
+      li.addEventListener("click", () => { input.value = name; code.value = c; list.innerHTML = ""; input.setAttribute("aria-expanded", "false"); });
+      list.appendChild(li);
+    }
+    input.setAttribute("aria-expanded", String(list.children.length > 0));
+  }, 300);
+});
+document.getElementById("f").addEventListener("submit", e => {
+  if (!code.value) { e.preventDefault(); document.getElementById("err").textContent = "Pick a destination from the suggestions."; }
+});
+</script></body></html>

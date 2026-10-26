@@ -71,3 +71,11 @@ add or remove entries in the same change as the spec. The scheduled
 `openapi-bump.yml` refresh opens a draft PR and fails when generation or the
 contract check fails. Fix it on `chore/bump-openapi`. Scheduled runs leave
 that PR alone once it has manual commits.
+
+## act benchmark
+
+`scripts/bench_act/` benchmarks `act()` / `choose()` / `check()` and the observe they read, on local
+fixture pages and public sites (see its README). `act-bench.yml` runs it on PRs labelled `act-bench` or
+touching `notte_browser/js`, `notte_browser/dom`, `notte_core/act` or `notte_llm/act.py`, head against the
+merge base. Fixture tasks must always pass; public sites fail only on a clear drop against base. A site
+that blocks or redirects is a site miss with evidence, never a pass. It needs `OPENROUTER_API_KEY` only.

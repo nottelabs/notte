@@ -1,0 +1,17 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Acme - Home</title>
+<style>#backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center}
+#consent{background:#fff;padding:24px;width:420px}</style></head><body>
+<header><nav><a href="landing.html">Home</a> <a href="pricing.html">Pricing</a> <a href="docs.html">Docs</a> <a href="blog.html">Blog</a></nav></header>
+<main><h1>Acme</h1><p>Build faster with Acme.</p></main>
+<div id="backdrop"><div id="consent" role="dialog" aria-modal="true" aria-labelledby="ct">
+  <h2 id="ct">We value your privacy</h2>
+  <p>We use cookies to improve your experience. Choose whether to accept them.</p>
+  <button id="accept" type="button">Accept all</button> <button id="reject" type="button">Reject all</button>
+  <button type="button">Manage preferences</button>
+</div></div>
+<script>
+const close = v => { localStorage.setItem("consent", v); document.getElementById("backdrop").remove(); };
+if (localStorage.getItem("consent")) document.getElementById("backdrop").remove();
+document.getElementById("accept").onclick = () => close("accepted");
+document.getElementById("reject").onclick = () => close("rejected");
+</script></body></html>
