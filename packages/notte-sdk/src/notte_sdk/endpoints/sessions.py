@@ -406,12 +406,15 @@ def _replay_flow(
             logger.info(f"Replay for session {session_id} is ready")
             return response
         except NotteAPIError as e:
-            if e.status_code != 404 or e.error.get("retryable") is False:
+            if e.status_code != 404:
+                raise
+            waiting_for_close = e.error.get("replay_status") == "waiting_for_session"
+            if e.error.get("retryable") is False and not waiting_for_close:
                 raise
             error_msg = e.error.get("message", "") or e.error.get("detail", "")
             # The replay service can lag behind a successful stop response
             # while background cleanup persists the session and video.
-            if "still active" in error_msg and not session_closed:
+            if (waiting_for_close or "still active" in error_msg) and not session_closed:
                 raise ValueError(
                     f"Session {session_id} is still active — close the session first to generate the replay."
                 ) from e

@@ -565,12 +565,16 @@ export class Session {
       try {
         return await request();
       } catch (error) {
-        if (!(error instanceof NotteAPIError) || error.statusCode !== 404 || error.error.retryable === false) {
+        if (!(error instanceof NotteAPIError) || error.statusCode !== 404) {
+          throw error;
+        }
+        const waitingForClose = error.error.replay_status === 'waiting_for_session';
+        if (error.error.retryable === false && !waitingForClose) {
           throw error;
         }
         // Stop can complete before the replay service observes the closure.
         // Only reject immediately while this client still considers it active.
-        if (this.isActive && (error.apiMessage ?? '').includes('still active')) {
+        if (this.isActive && (waitingForClose || (error.apiMessage ?? '').includes('still active'))) {
           throw new Error(`Session ${sessionId} is still active — close the session first to generate the replay.`, {
             cause: error,
           });

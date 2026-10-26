@@ -474,6 +474,24 @@ describe('Session Unit Tests', () => {
       expect(sessionReplay).toHaveBeenCalledTimes(1);
     });
 
+    it.each([true, false])('uses its stop state when the API waits for close (stopped=%s)', async stopped => {
+      const session = new Session(mockClient);
+      await session.start();
+      if (stopped) await session.stop();
+      vi.mocked(sessionReplay)
+        .mockRejectedValueOnce(new NotteAPIError('/replay', 404, { replay_status: 'waiting_for_session', retryable: false }))
+        .mockResolvedValueOnce({ data: replays[0] } as never);
+      if (stopped) {
+        await expect(session.replay()).resolves.toEqual(replays[0]);
+        expect(sessionReplay).toHaveBeenCalledTimes(2);
+        expect(sleep).toHaveBeenCalledTimes(1);
+      } else {
+        await expect(session.replay()).rejects.toThrow('still active');
+        expect(sessionReplay).toHaveBeenCalledTimes(1);
+        expect(sleep).not.toHaveBeenCalled();
+      }
+    });
+
     it('does not poll when recording was disabled at creation', async () => {
       const session = new Session(mockClient);
       await session.start();

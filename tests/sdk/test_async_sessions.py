@@ -421,6 +421,32 @@ def test_captcha_polling_is_the_same(monkeypatch: pytest.MonkeyPatch) -> None:
     assert exchange.outcome[0] == "ok" and len(exchange.sleeps) == 3
 
 
+@pytest.mark.parametrize("stopped", [True, False])
+def test_replay_uses_known_stop_state_when_server_waits_for_close(
+    monkeypatch: pytest.MonkeyPatch, stopped: bool
+) -> None:
+    async def scenario(session: AsyncRemoteSession):
+        await session.start()
+        if stopped:
+            await session.stop()
+        return await session.replay(poll_interval=2)
+
+    routes = {
+        **SESSION_ROUTES,
+        ("GET", "/sessions/s-1/replay"): [
+            (404, {"replay_status": "waiting_for_session", "retryable": False, "detail": "Close the session"}),
+            (200, {"mp4_url": "https://cdn/r.mp4"}),
+        ],
+    }
+    exchange = same_on_both(monkeypatch, routes, scenario)
+    if stopped:
+        assert exchange.outcome[0] == "ok"
+        assert exchange.sleeps == [2]
+    else:
+        assert exchange.outcome[1] is ValueError
+        assert exchange.sleeps == []
+
+
 def test_replay_waits_and_fails_the_same(monkeypatch: pytest.MonkeyPatch) -> None:
     async def scenario(session: Any) -> Any:
         await session.start()
