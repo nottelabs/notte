@@ -260,6 +260,13 @@ def test_all_interaction_roles_have_short_id():
         ("a", {"role": "presentation"}, NodeRole.PRESENTATION),
         ("div", {"role": ""}, NodeRole.GROUP),
         ("div", {"role": "doc-chapter"}, "doc-chapter"),
+        # a contenteditable root is a text field, unless its role says otherwise
+        ("div", {"contenteditable": "true"}, NodeRole.TEXTBOX),
+        ("p", {"contenteditable": ""}, NodeRole.TEXTBOX),
+        ("div", {"contenteditable": "plaintext-only"}, NodeRole.TEXTBOX),
+        ("div", {"contenteditable": "false"}, NodeRole.GROUP),
+        ("div", {"contenteditable": "true", "role": "combobox"}, NodeRole.COMBOBOX),
+        ("body", {"contenteditable": "true"}, NodeRole.WEBAREA),
     ],
 )
 def test_node_role_from_element(tag: str, attributes: dict[str, str], role: NodeRole | str) -> None:
