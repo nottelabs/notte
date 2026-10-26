@@ -71,7 +71,8 @@ same goes for `document.*` in the page's own world (`<img name="body">`).
 Off-screen fixed text is unreachable only when its panel is fixed to the viewport.
 In Chromium, a fixed element's non-null `offsetParent` identifies a containing block
 (for example, a transformed ancestor) that can scroll into view. Walk through shadow
-hosts when checking panels; `parentElement` alone stops inside web components.
+hosts when checking panels, following `assignedSlot` before light-DOM parents;
+`parentElement` alone stops inside web components and bypasses slotted panels.
 `tests/browser/test_dom_hidden_content.py` covers both cases.
 
 ## Public API

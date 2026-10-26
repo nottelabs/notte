@@ -144,6 +144,32 @@ async def test_closed_drawer_text_across_shadow_roots(in_shadow: bool) -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("wrapped", [False, True])
+async def test_closed_drawer_text_assigned_to_a_shadow_slot(wrapped: bool) -> None:
+    content = "<p>SLOTTED_DRAWER_TEXT</p>"
+    if wrapped:
+        content = f"<section>{content}</section>"
+    markup = f"""
+    <h1>OUTSIDE_DRAWER</h1>
+    <drawer-host>{content}</drawer-host>
+    <script>
+      document.querySelector('drawer-host').attachShadow({{mode: 'open'}}).innerHTML = `
+        <aside id="drawer" style="position: fixed; top: 0; left: 0; width: 300px;
+                                height: 500px; transform: translateX(-110%)">
+          <slot></slot>
+        </aside>`;
+    </script>
+    """
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(markup)}")
+        description = (await session.aobserve()).space.description
+        assert "OUTSIDE_DRAWER" in description
+        assert "SLOTTED_DRAWER_TEXT" not in description
+        await session.window.page.locator("#drawer").evaluate("element => element.style.transform = 'none'")
+        assert "SLOTTED_DRAWER_TEXT" in (await session.aobserve()).space.description
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("style", ["transform: translateZ(0)", "filter: blur(0px)", "contain: layout"])
 @pytest.mark.parametrize("in_shadow", [False, True])
 async def test_fixed_text_in_scrolling_containing_block_is_kept(style: str, in_shadow: bool) -> None:

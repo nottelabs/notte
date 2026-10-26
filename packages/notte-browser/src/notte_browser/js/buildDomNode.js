@@ -742,6 +742,8 @@
 	}
 
 	function composedParent(element) {
+		const slot = propertyOf(element, "assignedSlot");
+		if (slot) return slot;
 		const parent = parentElementOf(element);
 		if (parent !== null) return parent;
 		const root = getRootNode(element);
