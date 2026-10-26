@@ -1103,6 +1103,40 @@ I2[:]<input type="text" name="name"></input>"""
     assert "Bletchley Park (link, not in view: scroll to reach it)" in accessible_text(page)
 
 
+def test_checkboxes_and_fields_outside_the_viewport_keep_their_name_and_state() -> None:
+    # the observation names no field, checkbox or radio outside the viewport (their label is the text next to them),
+    # and renders `checked` and a field's `value` as it does `disabled`
+    description = """### Content of 'WebArea' component with text 'body content'
+L1[:]<a href="#a">Contents</a>
+_[:]Which checkboxes are checked?
+_[:]<input type="checkbox"></input>
+_[:]Checkbox 1
+_[:]<input type="checkbox" checked></input>
+_[:]Checkbox 2
+_[:]<input type="radio" value="blue" checked></input>
+_[:]Blue
+_[:]Contact Name
+_[:]<input value="dodo"></input>
+_[:]<input type="checkbox" disabled checked></input>
+_[:]Locked"""
+    actions: list[InteractionAction] = [ClickAction(id="L1", text_label="Contents", accessible_name="Contents")]
+    page = _scrolled_page(description, actions, scroll_y=0, in_view=frozenset({"L1"}))
+    text = accessible_text(page).splitlines()
+    assert text == [
+        "[L1] Contents",
+        "Which checkboxes are checked?",
+        # named by the label after it, which is not repeated
+        "Checkbox 1 (checkbox, not in view: scroll to reach it)",
+        "Checkbox 2 (checkbox, checked, not in view: scroll to reach it)",
+        # a radio's value is what it sends, not its name
+        "Blue (radio, checked, not in view: scroll to reach it)",
+        # a field is named by the text before it; its value is its value
+        "Contact Name (textbox, value: dodo, not in view: scroll to reach it)",
+        "checkbox (disabled, checked)",
+        "Locked",
+    ]
+
+
 SAME_NAMES = """_[:]Desk lamp
 B1[:]<button>Add to cart</button>
 _[:]LED bulb
