@@ -65,9 +65,10 @@ def select(
     probes: list[str] | None = None,
     with_tasks: bool = True,
     with_probes: bool = True,
+    tags: list[str] | None = None,
 ) -> list[Item]:
     """The items of these suites (all when empty), tasks first then probe pages, in registry order. `tasks` /
-    `probes` restrict their kind to these names."""
+    `probes` restrict their kind to these names, `tags` to the tasks and probes with one of these tags (a CI tier)."""
     known = {t.suite for t in registry.tasks.values()} | {p.suite for p in registry.probes.values()}
     for suite in suites or []:
         if suite not in known:
@@ -81,12 +82,20 @@ def select(
     items: list[Item] = []
     if with_tasks:
         for task in registry.tasks.values():
-            if (not suites or task.suite in suites) and (not tasks or task.name in tasks):
+            if (
+                (not suites or task.suite in suites)
+                and (not tasks or task.name in tasks)
+                and (not tags or set(tags) & set(task.tags))
+            ):
                 items.append(Item("task", task.name, (task.name,), task.suite, task.fixture))
     if with_probes:
         pages: dict[str, list[Probe]] = {}
         for probe in registry.probes.values():
-            if (not suites or probe.suite in suites) and (not probes or probe.name in probes):
+            if (
+                (not suites or probe.suite in suites)
+                and (not probes or probe.name in probes)
+                and (not tags or set(tags) & set(probe.tags))
+            ):
                 pages.setdefault(probe.url, []).append(probe)
         for url, group in pages.items():
             items.append(Item("probes", url, tuple(p.name for p in group), group[0].suite, group[0].fixture))

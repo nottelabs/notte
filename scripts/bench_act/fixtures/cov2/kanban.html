@@ -1,0 +1,47 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Board - Sprint 14</title>
+<style>body{font-family:sans-serif;margin:24px}.cols{display:flex;gap:32px}.col{width:300px}
+ol{list-style:none;padding:0;min-height:40px}li{border:1px solid #bbb;border-radius:6px;padding:8px;margin:6px 0;background:#fff;
+display:flex;justify-content:space-between;align-items:center;position:relative}li[draggable]{cursor:grab}
+.menu{position:absolute;right:0;top:36px;background:#fff;border:1px solid #888;z-index:3;list-style:none;padding:4px 0}
+.menu li{border:0;margin:0;padding:4px 12px;border-radius:0}</style></head><body>
+<h1>Sprint 14</h1>
+<div class="cols">
+  <section class="col"><h2 id="backlog-h">Backlog</h2><p>Drag the cards to reorder them.</p>
+    <ol id="backlog" aria-labelledby="backlog-h">
+      <li draggable="true">Update the docs</li><li draggable="true">Fix the login timeout</li>
+      <li draggable="true">Write tests</li><li draggable="true">Review the API</li></ol></section>
+  <section class="col"><h2 id="sprint-h">Sprint</h2><p>Use each card's menu to reorder it.</p>
+    <ol id="sprint" aria-labelledby="sprint-h"></ol></section>
+</div>
+<script>
+// Backlog: HTML5 drag and drop only. Sprint: a menu button per card (Move to top / up / down)
+const backlog = document.getElementById('backlog');
+let dragged = null;
+backlog.addEventListener('dragstart', e => { dragged = e.target; });
+backlog.addEventListener('dragover', e => e.preventDefault());
+backlog.addEventListener('drop', e => { e.preventDefault(); const t = e.target.closest('li'); if (t && dragged && t !== dragged)
+  backlog.insertBefore(dragged, t); });
+const sprint = document.getElementById('sprint');
+let items = ['Design the settings page', 'Migrate the database', 'Deploy', 'Retro notes'];
+function render() {
+  sprint.innerHTML = '';
+  items.forEach((name, i) => {
+    const li = document.createElement('li'); li.dataset.name = name;
+    li.innerHTML = `<span>${name}</span><button type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Actions for ${name}">⋯</button>`;
+    const b = li.querySelector('button');
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.menu').forEach(m => m.remove());
+      const menu = document.createElement('ul'); menu.className = 'menu'; menu.setAttribute('role', 'menu');
+      for (const [label, to] of [['Move to top', 0], ['Move up', i - 1], ['Move down', i + 1]]) {
+        if (to < 0 || to >= items.length || to === i) continue;
+        const m = document.createElement('li'); m.setAttribute('role', 'menuitem'); m.tabIndex = -1; m.textContent = label;
+        m.addEventListener('click', () => { items.splice(to, 0, items.splice(i, 1)[0]); render(); });
+        menu.appendChild(m);
+      }
+      li.appendChild(menu); b.setAttribute('aria-expanded', 'true');
+    });
+    sprint.appendChild(li);
+  });
+}
+render();
+</script></body></html>

@@ -1,0 +1,14 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Subscribe</title>
+<style>body{font-family:sans-serif;margin:12px}label{display:block;margin:6px 0}</style></head><body>
+<form id="sub" method="get" target="_top">
+  <fieldset><legend>Plan</legend>
+    <label><input type="radio" name="plan" value="basic" checked> Basic: €12.00 / year</label>
+    <label><input type="radio" name="plan" value="pro"> Pro: €42.00 / year, with the archive</label>
+  </fieldset>
+  <label for="email">Email address</label><input id="email" name="email" type="email" required>
+  <button type="submit">Subscribe</button>
+</form>
+<script>
+const top_ = new URLSearchParams(location.search).get('top') || '';
+document.getElementById('sub').action = top_.replace('xframe.html', 'xframe-done.html');
+</script></body></html>

@@ -1,0 +1,47 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Trailhead - all products</title>
+<style>body{font-family:sans-serif;margin:0}header{display:flex;gap:12px;align-items:center;padding:12px 24px;border-bottom:1px solid #ddd}
+.icon{width:36px;height:36px;border:1px solid #888;background:#fff;border-radius:6px}
+main{padding:12px 24px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.card{border:1px solid #ddd;padding:10px}
+#drawer{position:fixed;top:0;left:0;bottom:0;width:300px;background:#fff;box-shadow:2px 0 12px #0004;padding:16px;transform:translateX(-110%);transition:transform .2s}
+#drawer.open{transform:none}#scrim{position:fixed;inset:0;background:#0005;display:none}#scrim.open{display:block}
+#toast{position:fixed;bottom:16px;right:16px;background:#222;color:#fff;padding:10px 16px;border-radius:6px;display:none}</style></head><body>
+<header>
+  <button class="icon" id="open" aria-label="Open filters" aria-controls="drawer" aria-expanded="false">
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M3 5h18v2H3zm0 6h18v2H3zm0 6h18v2H3z"/></svg></button>
+  <strong>Trailhead</strong><span id="summary"></span>
+</header>
+<main><h1>All products</h1><div class="grid" id="grid"></div></main>
+<div id="scrim"></div>
+<aside id="drawer" role="dialog" aria-modal="true" aria-label="Filters">
+  <button class="icon" id="close" aria-label="Close filters">&times;</button>
+  <form id="filters" method="get" action="drawer.html">
+    <fieldset><legend>Category</legend>
+      <label><input type="radio" name="cat" value="all" checked> All</label><br>
+      <label><input type="radio" name="cat" value="outdoor"> Outdoor</label><br>
+      <label><input type="radio" name="cat" value="kitchen"> Kitchen</label></fieldset>
+    <p><label for="max">Maximum price</label><br>
+      <input type="range" id="max" name="max" min="0" max="200" step="10" value="200">
+      <output id="max-out" for="max">$200</output></p>
+    <button type="submit">Apply filters</button>
+  </form>
+</aside>
+<div id="toast" role="status"></div>
+<script>
+const P = [['Trail tent 2P', 'outdoor', 189], ['Camping stove', 'outdoor', 45], ['Headlamp', 'outdoor', 25], ['Water filter', 'outdoor', 39],
+  ['Sleeping bag', 'outdoor', 120], ['Cast iron pan', 'kitchen', 49], ['Chef knife', 'kitchen', 79], ['Espresso pot', 'kitchen', 35],
+  ['Cutting board', 'kitchen', 22]];
+const q = new URLSearchParams(location.search), cat = q.get('cat') || 'all', max = Number(q.get('max') || 200);
+const shown = P.filter(([, c, p]) => (cat === 'all' || c === cat) && p <= max);
+document.getElementById('grid').innerHTML = shown.map(([n, , p]) => `<div class="card"><h3>${n}</h3><p>$${p}</p></div>`).join('');
+document.getElementById('summary').textContent = shown.length + ' products' + (q.has('cat') ? ` (category: ${cat}, up to $${max})` : '');
+if (q.has('cat')) { const t = document.getElementById('toast'); t.textContent = 'Filters applied'; t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 4000); }
+const f = document.getElementById('filters'); f.elements.cat.value = cat; f.elements.max.value = max;
+const out = () => document.getElementById('max-out').textContent = '$' + f.elements.max.value; out();
+f.elements.max.addEventListener('input', out);
+const d = document.getElementById('drawer'), s = document.getElementById('scrim'), o = document.getElementById('open');
+const toggle = open => { d.classList.toggle('open', open); s.classList.toggle('open', open); o.setAttribute('aria-expanded', String(open)); d.inert = !open; };
+toggle(false);
+o.addEventListener('click', () => toggle(true)); document.getElementById('close').addEventListener('click', () => toggle(false));
+s.addEventListener('click', () => toggle(false));
+</script></body></html>

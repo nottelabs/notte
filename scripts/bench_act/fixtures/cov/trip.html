@@ -1,0 +1,118 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Staywise - find a place to stay</title>
+<style>
+body{font-family:sans-serif;margin:24px}
+.bar{display:flex;gap:12px;align-items:flex-start;border:1px solid #ccc;padding:12px;border-radius:8px}
+.field{position:relative}
+#dest-list{position:absolute;top:40px;left:0;background:#fff;border:1px solid #999;list-style:none;margin:0;padding:0;width:260px;z-index:5}
+#dest-list li{padding:6px 10px;cursor:pointer}#dest-list li[aria-selected=true]{background:#def}
+.pop{position:absolute;top:44px;left:0;background:#fff;border:1px solid #999;padding:12px;z-index:5;box-shadow:0 2px 8px #0003}
+.grid{display:grid;grid-template-columns:repeat(7,36px);gap:2px}.grid button{width:36px;height:32px}
+.grid button.in{background:#cde}.row{display:flex;align-items:center;gap:8px;margin:6px 0}.row span.n{width:20px;text-align:center}
+.icon{width:32px;height:32px;border-radius:50%;border:1px solid #888;background:#fff;font-size:18px}
+</style></head><body>
+<h1>Find your next stay</h1>
+<form id="search" action="trip-results.html" method="get" class="bar">
+  <div class="field">
+    <label for="dest">Where to?</label><br>
+    <input id="dest" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="dest-list" autocomplete="off" placeholder="Search destinations">
+    <input type="hidden" name="dest" id="dest-code">
+    <ul id="dest-list" role="listbox" aria-label="Destinations" hidden></ul>
+  </div>
+  <div class="field">
+    <span id="dates-label">Dates</span><br>
+    <button type="button" id="dates" aria-labelledby="dates-label dates" aria-haspopup="dialog">Check-in — Check-out</button>
+    <input type="hidden" name="checkin" id="checkin"><input type="hidden" name="checkout" id="checkout">
+    <div class="pop" id="cal" role="dialog" aria-label="Choose dates" hidden>
+      <div class="row"><button type="button" class="icon" id="prev" aria-label="Previous month">&#8249;</button>
+        <strong id="month" aria-live="polite"></strong>
+        <button type="button" class="icon" id="next" aria-label="Next month">&#8250;</button></div>
+      <div class="grid" id="days" role="grid"></div>
+      <p id="cal-hint">Select your check-in date.</p>
+    </div>
+  </div>
+  <div class="field">
+    <span>Guests</span><br>
+    <button type="button" id="guests" aria-haspopup="dialog" aria-expanded="false">1 adult · 0 children</button>
+    <input type="hidden" name="adults" id="adults" value="1"><input type="hidden" name="children" id="children" value="0">
+    <div class="pop" id="guest-pop" role="dialog" aria-label="Guests" hidden>
+      <div class="row"><span style="width:80px">Adults</span>
+        <button type="button" class="icon" data-k="adults" data-d="-1" aria-label="Remove an adult">&minus;</button>
+        <span class="n" id="n-adults">1</span>
+        <button type="button" class="icon" data-k="adults" data-d="1" aria-label="Add an adult">+</button></div>
+      <div class="row"><span style="width:80px">Children</span>
+        <button type="button" class="icon" data-k="children" data-d="-1" aria-label="Remove a child">&minus;</button>
+        <span class="n" id="n-children">0</span>
+        <button type="button" class="icon" data-k="children" data-d="1" aria-label="Add a child">+</button></div>
+      <button type="button" id="guests-done">Done</button>
+    </div>
+  </div>
+  <div class="field"><br><button type="submit">Search</button></div>
+</form>
+<p id="error" role="alert"></p>
+<script>
+const CITIES = [["Lisbon, Portugal","LIS"],["Lisburn, United Kingdom","LSB"],["Lyon, France","LYS"],["London, United Kingdom","LON"],
+  ["Los Angeles, United States","LAX"],["Porto, Portugal","OPO"],["Lille, France","LIL"],["Lima, Peru","LIM"],["Linz, Austria","LNZ"]];
+const dest = document.getElementById('dest'), list = document.getElementById('dest-list'), code = document.getElementById('dest-code');
+let timer;
+dest.addEventListener('input', () => {
+  code.value = '';
+  clearTimeout(timer);
+  timer = setTimeout(() => {  // suggestions arrive a moment after typing, like a remote search
+    const q = dest.value.trim().toLowerCase();
+    const hits = q ? CITIES.filter(([n]) => n.toLowerCase().startsWith(q.slice(0, 3))) : [];
+    list.innerHTML = '';
+    hits.forEach(([n, c], i) => { const li = document.createElement('li'); li.role = 'option'; li.id = 'opt-' + c;
+      li.textContent = n; li.setAttribute('aria-selected', 'false');
+      li.addEventListener('mousedown', e => { e.preventDefault(); dest.value = n; code.value = c; list.hidden = true;
+        dest.setAttribute('aria-expanded', 'false'); });
+      list.appendChild(li); });
+    list.hidden = !hits.length; dest.setAttribute('aria-expanded', String(!!hits.length));
+  }, 350);
+});
+dest.addEventListener('blur', () => setTimeout(() => { list.hidden = true; dest.setAttribute('aria-expanded', 'false'); }, 150));
+
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const WEEK = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+let view = new Date(2026, 9, 1), start = null, end = null;
+const cal = document.getElementById('cal'), days = document.getElementById('days');
+const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const nice = d => d.getDate() + ' ' + MONTHS[d.getMonth()].slice(0, 3);
+function render() {
+  document.getElementById('month').textContent = MONTHS[view.getMonth()] + ' ' + view.getFullYear();
+  days.innerHTML = '';
+  for (let i = 0; i < new Date(view.getFullYear(), view.getMonth(), 1).getDay(); i++) days.appendChild(document.createElement('span'));
+  const n = new Date(view.getFullYear(), view.getMonth() + 1, 0).getDate();
+  for (let d = 1; d <= n; d++) {
+    const date = new Date(view.getFullYear(), view.getMonth(), d), b = document.createElement('button');
+    b.type = 'button'; b.textContent = d;
+    b.setAttribute('aria-label', WEEK[date.getDay()] + ', ' + d + ' ' + MONTHS[date.getMonth()] + ' ' + date.getFullYear());
+    if ((start && iso(date) === iso(start)) || (end && iso(date) === iso(end)) || (start && end && date > start && date < end)) b.className = 'in';
+    b.addEventListener('click', () => {
+      if (!start || end || date <= start) { start = date; end = null; document.getElementById('cal-hint').textContent = 'Select your check-out date.'; }
+      else { end = date; cal.hidden = true; }
+      document.getElementById('checkin').value = start ? iso(start) : '';
+      document.getElementById('checkout').value = end ? iso(end) : '';
+      document.getElementById('dates').textContent = (start ? nice(start) : 'Check-in') + ' — ' + (end ? nice(end) : 'Check-out');
+      render();
+    });
+    days.appendChild(b);
+  }
+}
+document.getElementById('dates').addEventListener('click', () => { cal.hidden = !cal.hidden; render(); });
+document.getElementById('prev').addEventListener('click', () => { view = new Date(view.getFullYear(), view.getMonth() - 1, 1); render(); });
+document.getElementById('next').addEventListener('click', () => { view = new Date(view.getFullYear(), view.getMonth() + 1, 1); render(); });
+
+const pop = document.getElementById('guest-pop'), guests = document.getElementById('guests');
+const count = {adults: 1, children: 0};
+function label() { guests.textContent = count.adults + (count.adults === 1 ? ' adult' : ' adults') + ' · ' + count.children +
+  (count.children === 1 ? ' child' : ' children'); }
+guests.addEventListener('click', () => { pop.hidden = !pop.hidden; guests.setAttribute('aria-expanded', String(!pop.hidden)); });
+pop.querySelectorAll('button[data-k]').forEach(b => b.addEventListener('click', () => {
+  const k = b.dataset.k; count[k] = Math.max(k === 'adults' ? 1 : 0, Math.min(8, count[k] + Number(b.dataset.d)));
+  document.getElementById('n-' + k).textContent = count[k]; document.getElementById(k).value = count[k]; label(); }));
+document.getElementById('guests-done').addEventListener('click', () => { pop.hidden = true; guests.setAttribute('aria-expanded', 'false'); });
+document.getElementById('search').addEventListener('submit', e => {
+  const missing = !code.value ? 'Choose a destination from the list.' : !end ? 'Choose your check-in and check-out dates.' : '';
+  if (missing) { e.preventDefault(); document.getElementById('error').textContent = missing; }
+});
+</script></body></html>

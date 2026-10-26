@@ -225,6 +225,7 @@ def main() -> None:
     parser.add_argument("--suites", default="", help="comma-separated suites (default: all), e.g. fixtures,demo,real")
     parser.add_argument("--tasks", default="", help="only these tasks")
     parser.add_argument("--probes", default="", help="only these probes")
+    parser.add_argument("--tags", default="", help="only the tasks and probes with one of these tags, e.g. ci-core")
     parser.add_argument("--repeats", type=int, default=1)
     parser.add_argument("--shard", default="1/1", help="i/n: every n-th task or probe page, from the i-th")
     parser.add_argument("--concurrency", type=int, default=default_concurrency(), help="runs at once")
@@ -257,6 +258,7 @@ def main() -> None:
         probes=names(args.probes),
         with_tasks=any(r in TASK_RUNNERS for r in runners),
         with_probes=any(r in PROBE_RUNNERS for r in runners),
+        tags=names(args.tags),
     )
     jobs = plan(shard(items, index, count), runners, list(trees), args.repeats)
     if args.dry_run:
@@ -274,6 +276,7 @@ def main() -> None:
         "concurrency": args.concurrency,
         "runners": runners,
         "suites": names(args.suites),
+        "tags": names(args.tags),
         "repeats": args.repeats,
         "trees": shas,
         "today": today,

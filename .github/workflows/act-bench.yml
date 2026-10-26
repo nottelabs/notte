@@ -16,6 +16,9 @@ on:
       suites:
         description: Comma-separated suites (empty = all), e.g. fixtures,demo,real
         default: ''
+      tags:
+        description: CI tier, ci-core (fast, stable) or ci-extended (third-party sites), or all
+        default: ci-core
       runners:
         description: Task and probe runners (notte-local, notte-local-llm, notte-local-html, probe-local-jev, probe-local-llm; *-scripted = no model, timing only)
         default: notte-local,probe-local-jev
@@ -53,6 +56,7 @@ jobs:
       shards: ${{ steps.plan.outputs.shards }}
       shard_count: ${{ steps.plan.outputs.shard_count }}
       suites: ${{ steps.plan.outputs.suites }}
+      tags: ${{ steps.plan.outputs.tags }}
       runners: ${{ steps.plan.outputs.runners }}
       repeats: ${{ steps.plan.outputs.repeats }}
       today: ${{ steps.plan.outputs.today }}
@@ -73,6 +77,8 @@ jobs:
           HEAD_REF: ${{ inputs.head_ref }}
           BASE_REF: ${{ inputs.base_ref }}
           SUITES: ${{ inputs.suites }}
+          # PRs run the core tier; a manual run picks its tier (`all`: both)
+          TAGS: ${{ inputs.tags || 'ci-core' }}
           RUNNERS: ${{ inputs.runners || 'notte-local,probe-local-jev' }}
           REPEATS: ${{ inputs.repeats || '1' }}
           SHARDS: ${{ inputs.shards || '4' }}
@@ -105,7 +111,9 @@ jobs:
           echo "run=$run" >> "$GITHUB_OUTPUT"
           [ "$run" = true ] || exit 0
 
-          [[ "$SUITES" =~ ^[a-z0-9,_-]*$ && "$RUNNERS" =~ ^[a-z0-9,-]+$ ]] || { echo "::error::bad suites or runners"; exit 1; }
+          [[ "$SUITES" =~ ^[a-z0-9,_-]*$ && "$RUNNERS" =~ ^[a-z0-9,-]+$ && "$TAGS" =~ ^[a-z0-9,-]+$ ]] || {
+            echo "::error::bad suites, tags or runners"; exit 1; }
+          if [ "$TAGS" = all ]; then TAGS=""; fi
           [[ "$REPEATS" =~ ^[1-5]$ && "$SHARDS" =~ ^[1-8]$ ]] || { echo "::error::repeats must be 1-5 and shards 1-8"; exit 1; }
           sha() { gh api "repos/$GITHUB_REPOSITORY/commits/$1" --jq .sha; }
           if [ "$EVENT" = workflow_dispatch ]; then
@@ -122,12 +130,13 @@ jobs:
             echo "shards=$(jq -cn --argjson n "$SHARDS" '[range(1; $n + 1)]')"
             echo "shard_count=$SHARDS"
             echo "suites=$SUITES"
+            echo "tags=$TAGS"
             echo "runners=$RUNNERS"
             echo "repeats=$REPEATS"
             # one day for every shard: the travel tasks count their dates from it
             echo "today=$(date -u +%F)"
           } >> "$GITHUB_OUTPUT"
-          echo "act bench: head $head, base ${base:-none}, $SHARDS shard(s)" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "act bench: head $head, base ${base:-none}, tier ${TAGS:-all}, $SHARDS shard(s)" | tee -a "$GITHUB_STEP_SUMMARY"
 
   bench:
     needs: plan
@@ -203,6 +212,7 @@ jobs:
           HAS_BASE: ${{ needs.plan.outputs.base != '' }}
           SHARD: ${{ matrix.shard }}/${{ needs.plan.outputs.shard_count }}
           SUITES: ${{ needs.plan.outputs.suites }}
+          TAGS: ${{ needs.plan.outputs.tags }}
           RUNNERS: ${{ needs.plan.outputs.runners }}
           REPEATS: ${{ needs.plan.outputs.repeats }}
           TODAY: ${{ needs.plan.outputs.today }}
@@ -210,7 +220,7 @@ jobs:
           trees=(--tree head=head)
           if [ "$HAS_BASE" = true ]; then trees=(--tree base=base --tree head=head); fi
           python head/scripts/bench_act/bench.py "${trees[@]}" --shard "$SHARD" --concurrency 4 \
-            --runners "$RUNNERS" --suites "$SUITES" --repeats "$REPEATS" --today "$TODAY" --out runs
+            --runners "$RUNNERS" --suites "$SUITES" --tags "$TAGS" --repeats "$REPEATS" --today "$TODAY" --out runs
 
       - name: Upload shard runs
         if: always()

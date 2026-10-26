@@ -1,0 +1,25 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Orders - Packwell</title>
+<style>body{font-family:sans-serif;margin:24px;max-width:640px}
+#viewport{height:420px;overflow-y:auto;border:1px solid #ccc;position:relative}
+#spacer{position:relative}.row{position:absolute;left:0;right:0;height:36px;display:flex;align-items:center;gap:16px;
+padding:0 12px;border-bottom:1px solid #eee;box-sizing:border-box}.row span{color:#666}</style></head><body>
+<h1>Orders</h1><p>5,000 orders, newest first. Scroll the list to see more.</p>
+<div id="viewport" role="list" aria-label="Orders"><div id="spacer"></div></div>
+<script>
+// a virtualised list (as react-window renders one): only the rows in view, plus a few, are in the DOM
+const N = 5000, H = 36, BUFFER = 4, vp = document.getElementById('viewport'), spacer = document.getElementById('spacer');
+spacer.style.height = N * H + 'px';
+const CUSTOMERS = ['Ana', 'Ben', 'Chloé', 'Dmitri', 'Eun-ji', 'Farah', 'Gus', 'Hiro', 'Ines', 'Jonas'];
+function render() {
+  const first = Math.max(0, Math.floor(vp.scrollTop / H) - BUFFER);
+  const last = Math.min(N, Math.ceil((vp.scrollTop + vp.clientHeight) / H) + BUFFER);
+  spacer.innerHTML = '';
+  for (let i = first; i < last; i++) {
+    const id = 10000 + i, row = document.createElement('div');
+    row.className = 'row'; row.setAttribute('role', 'listitem'); row.style.top = i * H + 'px';
+    row.innerHTML = `<a href="order.html?id=${id}">Order #${id}</a><span>${CUSTOMERS[i % 10]}</span><span>$${(20 + (i * 37) % 480).toFixed(2)}</span>`;
+    spacer.appendChild(row);
+  }
+}
+vp.addEventListener('scroll', render); render();
+</script></body></html>
