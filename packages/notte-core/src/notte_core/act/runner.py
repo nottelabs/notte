@@ -153,6 +153,8 @@ class ActHistoryEntry:
     # The page read before this action, exposed in history only after leaving it.
     page: PageState | None = None
     left_page: bool = False
+    # raw URL used only to detect navigation; `page` is masked for model requests
+    source_url: str | None = field(default=None, repr=False)
 
 
 # clicking these does not submit what was typed in a field
@@ -178,8 +180,8 @@ class ActHistory:
         if len(self.entries) > 0 and self.entries[-1].pending:
             self.entries[-1].page_changed = page.fingerprint != self.entries[-1].fingerprint
             self.entries[-1].pending = False
-            source = self.entries[-1].page
-            self.entries[-1].left_page = source is not None and source.url != page.url
+            source_url = self.entries[-1].source_url
+            self.entries[-1].left_page = source_url is not None and source_url != page.url
         for entry in self.entries:
             if entry.typed is not None:
                 entry.typed = _still_typed(entry.typed, page)
@@ -426,6 +428,7 @@ async def run_act(
             fingerprint=page.fingerprint,
             pending=not unknown,
             page=state.page,
+            source_url=page.url,
         )
         step = time.perf_counter()
         try:

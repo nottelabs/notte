@@ -106,6 +106,8 @@ class ObservedPage:
     readonly: frozenset[str] = frozenset()
     # the titles of the sections and items around each element (`notte_core.act.context`; empty when unknown)
     contexts: Mapping[str, str] = field(default_factory=dict[str, str])
+    # directions available in visible inner scroll boxes, read by the local driver
+    inner_scroll: frozenset[Literal["up", "down"]] = frozenset()
     # what is read from the page once per step and needed several times (names, contexts, ...), by `_once`. A
     # changed page is a new `ObservedPage` (`dataclasses.replace` included), with an empty cache
     _derived: dict[str, Any] = field(default_factory=dict[str, Any], init=False, repr=False, compare=False)
@@ -1123,9 +1125,13 @@ def build_act_space(
                     element["operations"].append("CLOSE_DIALOG")
 
     viewport = page.viewport
-    if viewport is None or viewport.scroll_y + viewport.viewport_height < viewport.total_height - 2:
+    if (
+        "down" in page.inner_scroll
+        or viewport is None
+        or viewport.scroll_y + viewport.viewport_height < viewport.total_height - 2
+    ):
         space.controls["SCROLL_DOWN"] = Control("SCROLL_DOWN", "Scroll down one page", ScrollDownAction())
-    if viewport is None or viewport.scroll_y > 0:
+    if "up" in page.inner_scroll or viewport is None or viewport.scroll_y > 0:
         space.controls["SCROLL_UP"] = Control("SCROLL_UP", "Scroll up one page", ScrollUpAction())
     space.controls["PRESS_ENTER"] = Control(
         "PRESS_ENTER",
