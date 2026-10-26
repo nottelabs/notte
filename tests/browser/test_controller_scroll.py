@@ -193,6 +193,188 @@ async def test_scroll_recognizes_actual_container_movement(
         assert await page.evaluate("window.scrollY") == 0
 
 
+# The page's content is a list in a scroll container, away from the viewport's corner, beside a smaller one
+LIST_PAGE_HTML = """
+<style>
+    body { margin: 0; overflow: hidden; display: flex; }
+    #side { width: 150px; height: 200px; overflow: auto; }
+    #list { margin-top: 120px; width: 500px; height: 420px; overflow: auto; }
+</style>
+<div id="side"><div style="height: 1000px">Filters</div></div>
+<div id="list"><div style="height: 5000px">Orders</div></div>
+"""
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("up", [False, True])
+async def test_scroll_reaches_the_largest_scroll_container_away_from_the_mouse(page: Page, up: bool) -> None:
+    await page.set_content(LIST_PAGE_HTML)
+    await page.mouse.move(400, 50)
+    if up:
+        await page.evaluate("document.querySelector('#list').scrollTop = 2000")
+
+    assert await scroll(page, ScrollUpAction() if up else ScrollDownAction())
+
+    top = await page.locator("#list").evaluate("list => list.scrollTop")
+    assert top < 2000 if up else top > 0
+    assert await page.locator("#side").evaluate("side => side.scrollTop") == 0
+
+
+@pytest.mark.asyncio
+async def test_scroll_up_reaches_a_reversed_list_away_from_the_mouse(page: Page) -> None:
+    # a chat log: newest at the bottom, where it starts (scrollTop 0); older messages above (negative scrollTop)
+    await page.set_content(
+        LIST_PAGE_HTML
+        + "<style>#list { display: flex; flex-direction: column-reverse } #list > div { flex-shrink: 0 }</style>"
+    )
+    await page.mouse.move(400, 50)
+    assert await scroll(page, ScrollUpAction())
+    assert await page.locator("#list").evaluate("list => list.scrollTop") < 0
+    with pytest.raises(ScrollActionFailedError):
+        # at its bottom already, and the other container cannot reach it
+        await page.locator("#side").evaluate("side => side.scrollTop = side.scrollHeight")
+        await page.locator("#list").evaluate("list => list.scrollTop = 0")
+        await scroll(page, ScrollDownAction())
+
+
+@pytest.mark.asyncio
+async def test_scroll_skips_a_container_clipped_out_of_view(page: Page) -> None:
+    # the larger list is mostly hidden by its parent: only a 40 px strip of it shows, so the smaller one is scrolled
+    await page.set_content("""
+        <style>
+            body { margin: 0; overflow: hidden; display: flex; }
+            #clip { margin-top: 120px; width: 600px; height: 40px; overflow: hidden; }
+            #big { height: 500px; overflow: auto; }
+            #small { margin-top: 120px; width: 150px; height: 300px; overflow: auto; }
+        </style>
+        <div id="clip"><div id="big"><div style="height: 5000px">Big</div></div></div>
+        <div id="small"><div style="height: 3000px">Small</div></div>
+    """)
+    await page.mouse.move(700, 20)
+    assert await scroll(page, ScrollDownAction(amount=200))
+    assert await page.locator("#small").evaluate("small => small.scrollTop") > 0
+
+
+@pytest.mark.asyncio
+async def test_scroll_reaches_a_list_inside_a_frame_away_from_the_mouse(page: Page) -> None:
+    await page.set_content(
+        '<style>body { margin: 0; overflow: hidden }</style><iframe style="margin: 100px 0 0 150px; width: 600px; height: 450px"></iframe>'
+    )
+    frame = page.frames[1]
+    await frame.set_content(LIST_PAGE_HTML)
+    await page.mouse.move(20, 20)
+    assert await scroll(page, ScrollDownAction())
+    assert await frame.locator("#list").evaluate("list => list.scrollTop") > 0
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("overflow", ["auto", "scroll"])
+async def test_scroll_reaches_a_lower_frame_after_document_scrolling(page: Page, overflow: str) -> None:
+    await page.set_content(
+        f"<!doctype html><style>html {{overflow-y: {overflow}}} body {{margin: 0; height: 1000px}}</style>"
+        '<iframe style="position: absolute; left: 100px; top: 700px; border: 0; width: 600px; height: 250px"></iframe>'
+    )
+    frame = page.frames[1]
+    await frame.set_content(PANEL_HTML)
+    await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+    assert await page.evaluate("window.scrollY") == 400
+    await page.mouse.move(10, 10)
+
+    assert await scroll(page, ScrollDownAction(amount=200))
+    assert await frame.locator("#panel").evaluate("panel => panel.scrollTop") > 0
+    assert await page.evaluate("window.scrollY") == 400
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("display", ["inline", "contents"])
+async def test_scroll_reaches_a_frame_inside_a_non_clipping_inline_box(page: Page, display: str) -> None:
+    await page.set_content(
+        "<!doctype html><style>body {margin: 0; overflow: hidden}</style>"
+        f'<span style="display: {display}; overflow: hidden">'
+        '<iframe style="margin: 100px; border: 0; width: 600px; height: 400px"></iframe></span>'
+    )
+    frame = page.frames[1]
+    await frame.set_content(PANEL_HTML)
+    await page.mouse.move(10, 10)
+
+    assert await scroll(page, ScrollDownAction(amount=200))
+    assert await frame.locator("#panel").evaluate("panel => panel.scrollTop") > 0
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("nested", [False, True])
+async def test_scroll_reaches_a_frame_clipped_by_an_ancestor(page: Page, nested: bool) -> None:
+    await page.set_content(
+        "<style>body { margin: 0; overflow: hidden }</style>"
+        '<div style="margin: 100px; width: 600px; height: 100px; overflow: hidden">'
+        '<iframe style="border: 0; width: 600px; height: 450px"></iframe></div>'
+    )
+    frame = page.frames[1]
+    if nested:
+        await frame.set_content(
+            "<style>body { margin: 0; overflow: hidden }</style>"
+            '<iframe style="margin: 20px; border: 0; width: 550px; height: 400px"></iframe>'
+        )
+        frame = frame.child_frames[0]
+    await frame.set_content(PANEL_HTML)
+    await page.mouse.move(10, 10)
+
+    assert await scroll(page, ScrollDownAction(amount=200))
+    assert await frame.locator("#panel").evaluate("panel => panel.scrollTop") > 0
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("nested", [False, True])
+async def test_scroll_skips_a_frame_covered_in_the_parent_document(page: Page, nested: bool) -> None:
+    await page.set_content(
+        "<style>body {margin: 0; overflow: hidden}</style>"
+        '<iframe style="position: absolute; left: 100px; top: 100px; border: 0; width: 500px; height: 400px"></iframe>'
+        '<div style="position: absolute; left: 100px; top: 100px; width: 500px; height: 400px; background: white"></div>'
+        '<div id="small" style="position: absolute; right: 10px; top: 100px; width: 120px; height: 200px; overflow: auto">'
+        '<div style="height: 3000px">Reachable list</div></div>'
+    )
+    frame = page.frames[1]
+    if nested:
+        await frame.set_content(
+            "<style>body {margin: 0; overflow: hidden}</style>"
+            '<iframe style="border: 0; width: 500px; height: 400px"></iframe>'
+        )
+        frame = frame.child_frames[0]
+    await frame.set_content(PANEL_HTML)
+    await page.mouse.move(10, 10)
+
+    assert await scroll(page, ScrollDownAction(amount=200))
+    assert await page.locator("#small").evaluate("element => element.scrollTop") > 0
+    assert await frame.locator("#panel").evaluate("element => element.scrollTop") == 0
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("nested", [False, True])
+@pytest.mark.parametrize("scale", [0.5, 1.5])
+async def test_scroll_reaches_a_list_inside_a_scaled_frame(page: Page, nested: bool, scale: float) -> None:
+    await page.set_content(
+        "<style>body {margin: 0; overflow: hidden}</style>"
+        f'<iframe style="margin: 100px; border: 8px solid; width: 600px; height: 450px; '
+        f'transform: scale({scale}); transform-origin: top left"></iframe>'
+    )
+    frame = page.frames[1]
+    if nested:
+        await frame.set_content(
+            "<style>body {margin: 0; overflow: hidden}</style>"
+            '<iframe style="border: 6px solid; width: 600px; height: 450px; '
+            'transform: scale(0.75); transform-origin: top left"></iframe>'
+        )
+        frame = frame.child_frames[0]
+    left = 350 if scale < 1 else 200
+    await frame.set_content(
+        PANEL_HTML + f"<style>#panel {{margin-left: {left}px; width: 100px; height: 150px}}</style>"
+    )
+    await page.mouse.move(10, 10)
+
+    assert await scroll(page, ScrollDownAction(amount=200))
+    assert await frame.locator("#panel").evaluate("element => element.scrollTop") > 0
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("up", [False, True])
 async def test_scroll_still_fails_at_panel_boundary(page: Page, up: bool) -> None:
@@ -268,8 +450,11 @@ async def test_scroll_releases_trackers_on_success_and_failure(outcome: str) -> 
     handle.evaluate.return_value = [outcome == "moved", [0]]
     frame = MagicMock()
     frame.evaluate_handle = AsyncMock(return_value=handle)
+    # no scroll container in view to send the wheel over
+    frame.evaluate = AsyncMock(return_value=None)
     window = MagicMock()
     window.page.frames = [frame]
+    window.page.main_frame = frame
     window.page.evaluate = AsyncMock()
     window.page.wait_for_timeout = AsyncMock()
     window.page.mouse.wheel = AsyncMock()
@@ -294,6 +479,7 @@ async def test_scroll_ignores_unrelated_destroyed_frame(phase: str) -> None:
     handle.evaluate.return_value = [True, [0]]
     good_frame = MagicMock()
     good_frame.evaluate_handle = AsyncMock(return_value=handle)
+    good_frame.evaluate = AsyncMock(return_value=None)
     lost_frame = MagicMock()
     lost_frame.is_detached.return_value = False
     lost_handle = AsyncMock()

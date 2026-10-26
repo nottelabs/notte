@@ -48,7 +48,7 @@ from notte_core.storage import BaseStorage
 from notte_browser.captcha import solve_captcha
 from notte_browser.dom.locate import locate_element, selectors_through_shadow_dom
 from notte_browser.dom.parsing import parse_dom
-from notte_browser.driver import Error, Frame, JSHandle, Locator
+from notte_browser.driver import ElementHandle, Error, Frame, JSHandle, Locator
 from notte_browser.errors import (
     InvalidLocatorRuntimeError,
     NoHistoryEntryError,
@@ -110,6 +110,11 @@ _SCROLL_TRACKER = script("scroll_tracker.js")
 # Page-side implementation: js/scroll_boundary.js
 _SCROLL_BOUNDARY = script("scroll_boundary.js")
 
+# Page-side implementation: js/largest_scroller.js
+_LARGEST_SCROLLER = script("largest_scroller.js")
+_FRAME_SCROLL_CLIP = script("frame_scroll_clip.js")
+_FRAME_SCROLL_HIT = script("frame_scroll_hit.js")
+
 # A scroll that has not started `SCROLL_START_MS` after the wheel failed; one that started has ended once its
 # position is the same `SCROLL_STABLE_MS` apart (a smooth scroll, a scroll-snap), at most `SCROLL_CAP_MS` after it.
 SCROLL_START_MS = 200
@@ -166,6 +171,78 @@ _IS_TEXT_FORM_CONTROL = "(el) => el instanceof HTMLInputElement || el instanceof
 
 # Page-side implementation: js/find_dropdown_option.js
 _FIND_DROPDOWN_OPTION = script("find_dropdown_option.js")
+
+
+async def _scroll_container_point(window: BrowserWindow, delta: int) -> tuple[float, float] | None:
+    """Where to send a wheel that should scroll by `delta`: the center of the visible part of the scroll container with
+    the largest visible area that can still move that way (`js/largest_scroller.js`), in the page or one of its frames,
+    in page coordinates. None when there is none. Frames are clipped by each parent document's viewport and ancestors."""
+    page = window.page
+    best: tuple[float, float, float] | None = None
+    for frame in page.frames:
+        parents: list[tuple[ElementHandle, tuple[float, float], tuple[float, float]]] = []
+        try:
+            origin, scale = (0.0, 0.0), (1.0, 1.0)
+            if frame is page.main_frame:
+                clip = None
+            else:
+                width, height = await page.evaluate("() => [window.innerWidth, window.innerHeight]")
+                clip = {"left": 0.0, "top": 0.0, "right": float(width), "bottom": float(height)}
+                ancestors: list[Frame] = []
+                ancestor = frame
+                while ancestor.parent_frame is not None:
+                    ancestors.append(ancestor)
+                    ancestor = ancestor.parent_frame
+                for ancestor in reversed(ancestors):
+                    element = await ancestor.frame_element()
+                    parents.append((element, origin, scale))
+                    visible = await element.evaluate(_FRAME_SCROLL_CLIP)
+                    if visible is None:
+                        clip["right"] = clip["left"]
+                        break
+                    for edge in ("left", "top", "right", "bottom"):
+                        axis = 0 if edge in ("left", "right") else 1
+                        intersect = max if edge in ("left", "top") else min
+                        clip[edge] = intersect(clip[edge], origin[axis] + visible[edge] * scale[axis])
+                    origin = (origin[0] + visible["originX"] * scale[0], origin[1] + visible["originY"] * scale[1])
+                    scale = (scale[0] * visible["scaleX"], scale[1] * visible["scaleY"])
+                if clip["right"] <= clip["left"] or clip["bottom"] <= clip["top"]:
+                    continue
+                # Convert the visible intersection in page coordinates into this frame's coordinates.
+                clip = {
+                    "left": (clip["left"] - origin[0]) / scale[0],
+                    "top": (clip["top"] - origin[1]) / scale[1],
+                    "right": (clip["right"] - origin[0]) / scale[0],
+                    "bottom": (clip["bottom"] - origin[1]) / scale[1],
+                }
+            found = await frame.evaluate(_LARGEST_SCROLLER, {"delta": delta, "clip": clip})
+            if found is None:
+                continue
+            candidate = (
+                origin[0] + found["x"] * scale[0],
+                origin[1] + found["y"] * scale[1],
+                found["area"] * scale[0] * scale[1],
+            )
+            if best is not None and candidate[2] <= best[2]:
+                continue
+            for element, parent_origin, parent_scale in parents:
+                point = {
+                    "x": (candidate[0] - parent_origin[0]) / parent_scale[0],
+                    "y": (candidate[1] - parent_origin[1]) / parent_scale[1],
+                }
+                if not await element.evaluate(_FRAME_SCROLL_HIT, point):
+                    break
+            else:
+                best = candidate
+        except Error as error:
+            if not _scroll_context_disappeared(frame, error):
+                raise
+            continue
+        finally:
+            for element, _, _ in parents:
+                with suppress(Error):
+                    await element.dispose()
+    return None if best is None else (best[0], best[1])
 
 
 class _ActionBudget:
@@ -522,9 +599,8 @@ async def execute_browser_action(window: BrowserWindow, action: BaseAction, *, v
                 if amount is None:
                     viewport_height = await window.page.evaluate("window.innerHeight")
                     amount = int(viewport_height * 0.7)
-                await window.page.mouse.wheel(
-                    delta_x=0, delta_y=(-amount if isinstance(action, ScrollUpAction) else amount)
-                )
+                delta = -amount if isinstance(action, ScrollUpAction) else amount
+                await window.page.mouse.wheel(delta_x=0, delta_y=delta)
 
                 async def read() -> tuple[bool, list[list[float | None]]]:
                     scrolled = False
@@ -542,7 +618,16 @@ async def execute_browser_action(window: BrowserWindow, action: BaseAction, *, v
                         positions.append(position)
                     return scrolled, positions
 
-                if not await _scroll_ended(read):
+                scrolled = await _scroll_ended(read)
+                if not scrolled:
+                    # The wheel goes where the mouse is: outside the page's scroll container (when the document does
+                    # not scroll itself), it moves nothing. It is then sent over the largest one in view.
+                    point = await _scroll_container_point(window, delta)
+                    if point is not None:
+                        await window.page.mouse.move(*point)
+                        await window.page.mouse.wheel(delta_x=0, delta_y=delta)
+                        scrolled = await _scroll_ended(read)
+                if not scrolled:
                     logger.info("🪦 Scroll action did not move the page or a scroll container. Failing action...")
                     raise ScrollActionFailedError()
             finally:
