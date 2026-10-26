@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import datetime as dt
 import json
 import os
@@ -13,6 +12,7 @@ from pydantic import BaseModel, Field, model_serializer
 from pyotp.totp import TOTP
 from typing_extensions import TypedDict, override
 
+from notte_core._sync import run_sync
 from notte_core.actions import (
     BaseAction,
     FallbackFillAction,
@@ -339,7 +339,7 @@ class BaseVault(ABC):
         pass
 
     def add_credentials(self, url: str, **kwargs: Unpack[CredentialsDict]) -> None:
-        return asyncio.run(self.add_credentials_async(url, **kwargs))
+        return run_sync(self.add_credentials_async(url, **kwargs))
 
     @profiler.profiled()
     async def add_credentials_async(self, url: str, **kwargs: Unpack[CredentialsDict]) -> None:
@@ -362,7 +362,7 @@ class BaseVault(ABC):
         return await self._add_credentials(url=url, creds=kwargs)
 
     def set_credit_card(self, **kwargs: Unpack[CreditCardDict]) -> None:
-        return asyncio.run(self.set_credit_card_async(**kwargs))
+        return run_sync(self.set_credit_card_async(**kwargs))
 
     @profiler.profiled()
     @abstractmethod
@@ -375,7 +375,7 @@ class BaseVault(ABC):
         pass
 
     def get_credit_card(self) -> CreditCardDict:
-        return asyncio.run(self.get_credit_card_async())
+        return run_sync(self.get_credit_card_async())
 
     @profiler.profiled()
     @abstractmethod
@@ -388,7 +388,7 @@ class BaseVault(ABC):
         pass
 
     def delete_credit_card(self) -> None:
-        return asyncio.run(self.delete_credit_card_async())
+        return run_sync(self.delete_credit_card_async())
 
     @profiler.profiled()
     @abstractmethod
@@ -397,7 +397,7 @@ class BaseVault(ABC):
         pass
 
     def delete_credentials(self, url: str) -> None:
-        return asyncio.run(self.delete_credentials_async(url=url))
+        return run_sync(self.delete_credentials_async(url=url))
 
     @profiler.profiled()
     @abstractmethod
@@ -410,7 +410,7 @@ class BaseVault(ABC):
         pass
 
     def list_credentials(self) -> list[Credential]:
-        return asyncio.run(self.list_credentials_async())
+        return run_sync(self.list_credentials_async())
 
     @profiler.profiled()
     @abstractmethod
@@ -423,7 +423,7 @@ class BaseVault(ABC):
         pass
 
     def has_credential(self, url: str) -> bool:
-        return asyncio.run(self.has_credential_async(url=url))
+        return run_sync(self.has_credential_async(url=url))
 
     async def has_credential_async(self, url: str) -> bool:
         """Check whether we hold a credential for a given website.
@@ -439,7 +439,7 @@ class BaseVault(ABC):
         return url in urls
 
     def add_credentials_from_env(self, url: str) -> None:
-        return asyncio.run(self.add_credentials_from_env_async(url=url))
+        return run_sync(self.add_credentials_from_env_async(url=url))
 
     async def add_credentials_from_env_async(self, url: str) -> None:
         """Add credentials from environment variables for a given URL.
@@ -475,7 +475,7 @@ class BaseVault(ABC):
         await self.add_credentials_async(url=url, **creds)
 
     def get_credentials(self, url: str) -> CredentialsDict | None:
-        return asyncio.run(self.get_credentials_async(url=url))
+        return run_sync(self.get_credentials_async(url=url))
 
     @profiler.profiled()  # noqa: F821
     async def get_credentials_async(self, url: str) -> CredentialsDict | None:

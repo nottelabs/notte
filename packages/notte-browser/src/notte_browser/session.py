@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Unpack, overload
 
 import requests
-from notte_core import enable_nest_asyncio
+from notte_core._sync import run_sync
 from notte_core.actions import (
     BaseAction,
     EvaluateJsAction,
@@ -110,8 +110,6 @@ from notte_browser.window import BrowserWindow, BrowserWindowOptions
 if TYPE_CHECKING:
     from notte_sdk.endpoints.personas import BasePersona
 
-enable_nest_asyncio()
-
 
 # TODO: ACT callback
 class NotteSession(AsyncResource, SyncResource):
@@ -139,6 +137,12 @@ class NotteSession(AsyncResource, SyncResource):
         self._request: LocalSessionStartRequest = LocalSessionStartRequest.model_validate(data)
         if self._request.solve_captchas and not captcha_solver_available():
             raise CaptchaSolverNotAvailableError()
+        self._event_loop: asyncio.AbstractEventLoop | None = None
+        if window is not None:
+            try:
+                self._event_loop = asyncio.get_running_loop()
+            except RuntimeError:
+                pass
         self._window: BrowserWindow | None = window
         self._verbose: bool = config.verbose
         self.storage: BaseStorage | None = storage
@@ -157,6 +161,17 @@ class NotteSession(AsyncResource, SyncResource):
         self._cookie_file: Path | None = Path(cookie_file) if cookie_file is not None else None
         self._keep_alive: bool = keep_alive
         self._keep_alive_msg: str = "🌌 Keep alive mode enabled, skipping session stop... Use `session.close()` to manually stop the session. Never `keep_alive=True` is production."
+
+    def _check_event_loop(self) -> None:
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            return  # Reading properties from synchronous code does not perform I/O.
+        if self._event_loop is not None and self._event_loop is not loop:
+            raise RuntimeError(
+                "This session belongs to another event loop. Use sync methods after start(), "
+                + "or async methods on the same loop after await astart(); do not mix them."
+            )
 
     def attach_persona(self, persona: BasePersona) -> None:
         """Use the persona's vault (if any) for credential placeholders. Read its inbox with `persona.emails()`."""
@@ -205,18 +220,27 @@ class NotteSession(AsyncResource, SyncResource):
         return await self.window.get_cookies()
 
     def set_cookies(self, cookies: list[CookieDict] | None = None, cookie_file: str | Path | None = None) -> None:
-        _ = asyncio.run(self.aset_cookies(cookies=cookies, cookie_file=cookie_file))
+        _ = run_sync(self.aset_cookies(cookies=cookies, cookie_file=cookie_file))
 
     def get_cookies(self) -> list[CookieDict]:
-        return asyncio.run(self.aget_cookies())
+        return run_sync(self.aget_cookies())
 
     @override
     @track_usage("local.session.start")
     async def astart(self) -> None:
+        self._check_event_loop()
         if self._window is not None:
+            self._event_loop = asyncio.get_running_loop()
             return
         options = BrowserWindowOptions.from_request(self._request)
-        self._window = await connect(options.cdp_url, options) if options.cdp_url is not None else await launch(options)
+        self._event_loop = asyncio.get_running_loop()
+        try:
+            self._window = (
+                await connect(options.cdp_url, options) if options.cdp_url is not None else await launch(options)
+            )
+        except BaseException:
+            self._event_loop = None
+            raise
         self._sync_screenshot_mask()
         if self._cookie_file is not None:
             if Path(self._cookie_file).exists():
@@ -228,6 +252,7 @@ class NotteSession(AsyncResource, SyncResource):
     @override
     @track_usage("local.session.stop")
     async def astop(self) -> None:
+        self._check_event_loop()
         if self._cookie_file is not None:
             cookies = await self.aget_cookies()
             create_or_append_cookies_to_file(self._cookie_file, cookies)
@@ -236,20 +261,22 @@ class NotteSession(AsyncResource, SyncResource):
             return
         await self.window.close()
         self._window = None
+        self._event_loop = None
 
     @override
     def start(self) -> None:
-        _ = asyncio.run(self.astart())
+        _ = run_sync(self.astart())
 
     @override
     def stop(self) -> None:
         if self._keep_alive:
             logger.info(self._keep_alive_msg)
             return
-        _ = asyncio.run(self.astop())
+        _ = run_sync(self.astop())
 
     @property
     def window(self) -> BrowserWindow:
+        self._check_event_loop()
         if self._window is None:
             raise BrowserNotStartedError()
         return self._window
@@ -284,7 +311,7 @@ class NotteSession(AsyncResource, SyncResource):
     def screenshot(
         self,
     ) -> Screenshot:
-        return asyncio.run(self.ascreenshot())
+        return run_sync(self.ascreenshot())
 
     @timeit("observe")
     @track_usage("local.session.observe")
@@ -294,6 +321,7 @@ class NotteSession(AsyncResource, SyncResource):
         The pagination parameters are kept for parity with the SDK's `observe`, but a local session
         always lists every action: they are validated and otherwise ignored.
         """
+        self._check_event_loop()
         # Profile with URL attribute
         async with profiler.profile("aobserve", service_name="observation") as span:
             if span is not None:
@@ -344,7 +372,7 @@ class NotteSession(AsyncResource, SyncResource):
         return obs
 
     def observe(self, **pagination: Unpack[PaginationParamsDict]) -> Observation:
-        return asyncio.run(self.aobserve(**pagination))
+        return run_sync(self.aobserve(**pagination))
 
     async def locate(self, action: BaseAction) -> Locator | None:
         action_with_selector = await resolve(action, self._snapshot)
@@ -475,6 +503,7 @@ class NotteSession(AsyncResource, SyncResource):
         """
         Execute an action, either by passing a BaseAction as the first argument, or by passing action fields as kwargs.
         """
+        self._check_event_loop()
         # Profile with action type attribute
         async with profiler.profile("aexecute", service_name="execution") as span:
             result = await self._aexecute_impl(action, raise_on_failure=raise_on_failure, **kwargs)
@@ -724,7 +753,7 @@ class NotteSession(AsyncResource, SyncResource):
         Synchronous version of aexecute, supporting both BaseAction and action fields as kwargs.
         """
 
-        return asyncio.run(
+        return run_sync(
             self.aexecute(action=action, raise_on_failure=raise_on_failure, **kwargs)  # pyright: ignore [reportArgumentType]
         )
 
@@ -764,7 +793,7 @@ class NotteSession(AsyncResource, SyncResource):
         """
         Synchronous version of aevaluate_js.
         """
-        return asyncio.run(self.aevaluate_js(code, raise_on_failure=raise_on_failure))
+        return run_sync(self.aevaluate_js(code, raise_on_failure=raise_on_failure))
 
     async def afetch(
         self,
@@ -812,7 +841,7 @@ class NotteSession(AsyncResource, SyncResource):
         """
         Synchronous version of afetch.
         """
-        return asyncio.run(
+        return run_sync(
             self.afetch(url, method=method, headers=headers, params=params, json=json, data=data, timeout=timeout)
         )
 
@@ -859,6 +888,7 @@ class NotteSession(AsyncResource, SyncResource):
     async def ascrape(
         self, *, raise_on_failure: bool = True, **params: Unpack[ScrapeParamsDict]
     ) -> StructuredData[BaseModel] | BaseModel | str:
+        self._check_event_loop()
         # Extract and convert response_format for the action (store as JSON schema)
         response_format = params.get("response_format")
         instructions = params.get("instructions")
@@ -983,12 +1013,13 @@ class NotteSession(AsyncResource, SyncResource):
     def scrape(
         self, *, raise_on_failure: bool = True, **params: Unpack[ScrapeParamsDict]
     ) -> StructuredData[BaseModel] | BaseModel | dict[str, Any] | str:
-        return asyncio.run(self.ascrape(raise_on_failure=raise_on_failure, **params))
+        return run_sync(self.ascrape(raise_on_failure=raise_on_failure, **params))
 
     @timeit("reset")
     @track_usage("local.session.reset")
     @override
     async def areset(self) -> None:
+        self._check_event_loop()
         if config.verbose:
             logger.info("🌊 Resetting environment...")
         self.trajectory = Trajectory()
@@ -998,4 +1029,4 @@ class NotteSession(AsyncResource, SyncResource):
 
     @override
     def reset(self) -> None:
-        _ = asyncio.run(self.areset())
+        _ = run_sync(self.areset())

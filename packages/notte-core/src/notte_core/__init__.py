@@ -1,5 +1,5 @@
-import os
 import sys
+import warnings
 from importlib import metadata
 
 from notte_core.errors import ErrorConfig, ErrorMessageMode, ErrorMode
@@ -44,16 +44,12 @@ nest_asyncio_enabled: bool = False
 
 
 def enable_nest_asyncio() -> None:
-    """Enable nested event loops (required for Jupyter). Stores state if already enabled."""
-    RUNNING_IN_PYODIDE = "pyodide" in sys.modules
-    global nest_asyncio_enabled
-    if nest_asyncio_enabled or RUNNING_IN_PYODIDE:
-        return
-    import nest_asyncio  # pyright: ignore[reportMissingTypeStubs]
-
-    if os.environ.get("NOTTE_ENABLE_NEST_ASYNCIO", "true") == "true":
-        _ = nest_asyncio.apply()  # pyright: ignore[reportUnknownMemberType]
-        nest_asyncio_enabled = True
+    """Deprecated: Notte sync methods no longer need nested event loops."""
+    warnings.warn(
+        "enable_nest_asyncio() is deprecated and has no effect; Notte no longer patches asyncio.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
 
 from notte_core import _v1_aliases as _v1_aliases  # noqa: E402

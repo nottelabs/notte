@@ -21,7 +21,7 @@ async def test_google_flights() -> None:
 
 @pytest.mark.asyncio
 async def test_google_flights_with_agent() -> None:
-    with NotteSession(
+    async with NotteSession(
         headless=True,
         viewport_width=1280,
         viewport_height=1080,
@@ -31,9 +31,9 @@ async def test_google_flights_with_agent() -> None:
         _ = await page.aobserve()
         cookie_node = page.snapshot.dom_node.find("B2")
         if cookie_node is not None:
-            _ = page.execute(ClickAction(id="B2"))
-        _ = page.execute(FillAction(id="I3", value="Paris", press_enter=True))
-        _ = page.execute(FillAction(id="I4", value="London", press_enter=True))
-        _ = page.execute(FillAction(id="I5", value="14/06/2025"))
-        _ = page.execute(FillAction(id="I6", value="02/07/2025"))
-        _ = page.execute(ClickAction(id="B7"))
+            _ = await page.aexecute(ClickAction(id="B2"))
+        _ = await page.aexecute(FillAction(id="I3", value="Paris", press_enter=True))
+        _ = await page.aexecute(FillAction(id="I4", value="London", press_enter=True))
+        _ = await page.aexecute(FillAction(id="I5", value="14/06/2025"))
+        _ = await page.aexecute(FillAction(id="I6", value="02/07/2025"))
+        _ = await page.aexecute(ClickAction(id="B7"))

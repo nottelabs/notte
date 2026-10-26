@@ -81,3 +81,15 @@ add or remove entries in the same change as the spec. The scheduled
 `openapi-bump.yml` refresh opens a draft PR and fails when generation or the
 contract check fails. Fix it on `chore/bump-openapi`. Scheduled runs leave
 that PR alone once it has manual commits.
+
+## Sync facades
+
+Synchronous wrappers over async operations use `notte_core._sync.run_sync`, which
+keeps one event loop alive on a background thread. Do not use `asyncio.run` in
+these wrappers or patch asyncio with `nest_asyncio`: browser objects belong to
+the loop that started them, and callers may already have a running loop.
+Local sessions must use one loop from start through stop; mixing sync and async
+methods while the browser is active raises `RuntimeError`.
+Async compatibility wrappers over synchronous SDK requests use
+`notte_sdk._transport.athread`, which settles the worker before propagating
+cancellation and preserves its return value. Deletes use `athread_finally`.

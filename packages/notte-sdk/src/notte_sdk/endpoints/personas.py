@@ -6,6 +6,7 @@ from functools import cached_property
 from typing import TYPE_CHECKING, Unpack, overload
 from urllib.parse import quote
 
+from notte_core._sync import run_sync
 from notte_core.credentials.base import BaseVault
 from notte_core.logging import logger
 from notte_core.resource import SyncResource
@@ -14,6 +15,7 @@ from typing_extensions import final, override
 
 from notte_sdk._generated.resources import AsyncPersonasOperations, PersonasOperations
 from notte_sdk._requests import wire_request
+from notte_sdk._transport import athread
 from notte_sdk.endpoints._async_resource import AwaitableResource
 from notte_sdk.endpoints.base import NotteEndpoint
 from notte_sdk.endpoints.vaults import AsyncNotteVault, AsyncVaultsClient, NotteVault
@@ -189,10 +191,10 @@ class BasePersona(ABC):
 
     # Sync methods
     def emails(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]:
-        return asyncio.run(self.aemails(**data))
+        return run_sync(self.aemails(**data))
 
     def sms(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:
-        return asyncio.run(self.asms(**data))
+        return run_sync(self.asms(**data))
 
     def wait_for_emails(
         self, *, timeout: float = 60.0, poll_interval: float = 5.0, **data: Unpack[MessageReadRequestDict]
@@ -335,7 +337,7 @@ class NottePersona(SyncResource, BasePersona):
 
     @override
     async def aemails(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]:
-        return self.emails(**data)
+        return await athread(self.emails, **data)
 
     @override
     def emails(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]:
@@ -362,7 +364,7 @@ class NottePersona(SyncResource, BasePersona):
 
     @override
     async def asms(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:
-        return self.sms(**data)
+        return await athread(self.sms, **data)
 
     @override
     def sms(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:

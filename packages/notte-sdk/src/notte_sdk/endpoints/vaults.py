@@ -15,6 +15,7 @@ from notte_core.resource import SyncResource
 from typing_extensions import override
 
 from notte_sdk._generated.resources import AsyncVaultsOperations, VaultsOperations
+from notte_sdk._transport import athread, athread_finally
 from notte_sdk.endpoints._async_resource import AwaitableResource
 from notte_sdk.types import (
     VaultCreateRequestDict,
@@ -70,31 +71,31 @@ class NotteVault(BaseVault, SyncResource):
 
     @override
     async def _add_credentials(self, url: str, creds: CredentialsDict) -> None:
-        _ = self.vault_client.credentials_add(self.vault_id, url=url, **creds)
+        _ = await athread(self.vault_client.credentials_add, self.vault_id, url=url, **creds)
 
     @override
     async def _get_credentials_impl(self, url: str) -> CredentialsDict | None:
-        return self.vault_client.credentials_get(vault_id=self.vault_id, url=url).credentials
+        return (await athread(self.vault_client.credentials_get, vault_id=self.vault_id, url=url)).credentials
 
     @override
     async def delete_credentials_async(self, url: str) -> None:
-        _ = self.vault_client.credentials_delete(vault_id=self.vault_id, url=url)
+        await athread_finally(self.vault_client.credentials_delete, vault_id=self.vault_id, url=url)
 
     @override
     async def set_credit_card_async(self, **kwargs: Unpack[CreditCardDict]) -> None:
-        _ = self.vault_client.credit_card_set(self.vault_id, **kwargs)
+        _ = await athread(self.vault_client.credit_card_set, self.vault_id, **kwargs)
 
     @override
     async def get_credit_card_async(self) -> CreditCardDict:
-        return self.vault_client.credit_card_get(self.vault_id).credit_card
+        return (await athread(self.vault_client.credit_card_get, self.vault_id)).credit_card
 
     @override
     async def list_credentials_async(self) -> list[Credential]:
-        return self.vault_client.credentials_list(self.vault_id).credentials
+        return (await athread(self.vault_client.credentials_list, self.vault_id)).credentials
 
     @override
     async def delete_credit_card_async(self) -> None:
-        _ = self.vault_client.credit_card_delete(self.vault_id)
+        await athread_finally(self.vault_client.credit_card_delete, self.vault_id)
 
     def delete(self) -> None:
         _ = self.vault_client.delete(self.vault_id)

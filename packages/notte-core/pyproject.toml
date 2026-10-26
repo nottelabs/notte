@@ -19,7 +19,6 @@ dependencies = [
     "pyotp>=2.9.0",
     "requests>=2.32.3",
     "tldextract>=5.3.0",
-    "nest_asyncio>=1.6.0",
     "scarf-sdk>=0.1.2",
     "packaging>=25.0",
 ]

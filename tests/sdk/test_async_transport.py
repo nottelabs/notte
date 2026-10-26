@@ -63,6 +63,45 @@ SERVER = "https://api.example.test"
 KEY = "test-key"  # pragma: allowlist secret
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("cancel", [False, True])
+@pytest.mark.parametrize("fail", [False, True])
+async def test_thread_call_settles_and_preserves_its_outcome(cancel: bool, fail: bool) -> None:
+    from notte_sdk._transport import athread
+
+    started, release, settled = threading.Event(), threading.Event(), threading.Event()
+
+    def operation(value: int, *, increment: int) -> int:
+        started.set()
+        assert release.wait(5)
+        settled.set()
+        if fail:
+            raise ValueError("worker failed")
+        return value + increment
+
+    task = asyncio.create_task(athread(operation, 40, increment=2))
+    try:
+        assert await asyncio.to_thread(started.wait, 5)
+        if cancel:
+            for _ in range(2):
+                task.cancel()
+                await asyncio.sleep(0)
+                assert not task.done()
+        release.set()
+        if cancel:
+            with pytest.raises(asyncio.CancelledError):
+                await task
+        elif fail:
+            with pytest.raises(ValueError, match="worker failed"):
+                await task
+        else:
+            assert await task == 42
+        assert settled.is_set()
+    finally:
+        release.set()
+        await asyncio.gather(task, return_exceptions=True)
+
+
 @pytest.fixture(autouse=True)
 def isolated(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(_ClientCore, "check_and_warn_version_mismatch", lambda _: None)
@@ -1010,12 +1049,17 @@ def test_loops_in_two_threads_cannot_both_take_the_pool() -> None:
 async def test_a_closed_loops_connections_are_replaced(keep_alive_server: tuple[str, dict[str, int]]) -> None:  # noqa: F811
     url, state = keep_alive_server
     client = notte(url)
-    loop = asyncio.new_event_loop()
-    try:
-        assert loop.run_until_complete(client.sessions._request(endpoint())) == {}
-        stale = client._http._client
-    finally:
-        loop.close()
+
+    def use_then_close_loop() -> None:
+        loop = asyncio.new_event_loop()
+        try:
+            assert loop.run_until_complete(client.sessions._request(endpoint())) == {}
+        finally:
+            loop.close()
+
+    # Independent loops cannot run on the test's already-running loop thread.
+    await asyncio.to_thread(use_then_close_loop)
+    stale = client._http._client
     with warnings.catch_warnings():
         # The stale loop's sockets were never closed; collecting them may warn.
         warnings.simplefilter("ignore", ResourceWarning)
