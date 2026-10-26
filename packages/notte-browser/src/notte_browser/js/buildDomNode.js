@@ -265,7 +265,10 @@
 			const value = getAttribute(element, "aria-valuetext") ?? getAttribute(element, "aria-valuenow");
 			if (value !== null) state.value = truncateStateValue(value, state);
 		} else if (isListboxValueButton(element)) {
-			state.value = truncateStateValue((propertyOf(element, "textContent") || "").replace(/\s+/g, " ").trim(), state);
+			// Share the name reader's slot traversal and hidden-content rules. Read the full selection
+			// before truncating so edits past the display limit still change the value digest.
+			const text = contentText(element, { visited: new Set([element]), budget: Infinity }, { labelledBy: false, hidden: false });
+			state.value = truncateStateValue(text.replace(/\s+/g, " ").trim(), state);
 		}
 		if (state.checked === undefined) {
 			// role="checkbox" / "switch" / "radio" / "menuitemcheckbox" widgets

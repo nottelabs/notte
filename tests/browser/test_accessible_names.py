@@ -199,3 +199,55 @@ async def test_a_listbox_button_shows_its_selected_option_as_its_value() -> None
     # a button that does not open a listbox is named as browsers do
     assert nodes["delete"].accessible_name == "Delete section 2"
     assert nodes["delete"].state is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "hidden_content",
+    [
+        '<svg aria-hidden="true"><title>Open dropdown</title></svg>',
+        "<span hidden>Previous selection</span>",
+        '<span style="visibility: hidden">Previous selection</span>',
+    ],
+)
+async def test_listbox_button_value_excludes_hidden_content(hidden_content: str) -> None:
+    html = f"""
+    <span id="speed-label">Shipping speed</span>
+    <button id="speed" aria-haspopup="listbox" aria-labelledby="speed-label speed">
+      Standard (5-7 days){hidden_content}
+    </button>
+    """
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(_data_url(html))
+        _ = await session.aobserve()
+        speed = _nodes_by_html_id(session)["speed"]
+
+    assert speed.accessible_name == "Shipping speed"
+    assert speed.state is not None and speed.state.value == "Standard (5-7 days)"
+
+
+@pytest.mark.asyncio
+async def test_listbox_button_value_follows_slotted_selection() -> None:
+    html = """
+    <div id="host"><span slot="selected">Standard (5-7 days)</span></div>
+    <script>
+      document.getElementById("host").attachShadow({mode: "open"}).innerHTML = `
+        <style>button { width: 400px; text-align: left; }</style>
+        <span id="speed-label">Shipping speed</span>
+        <button id="speed" aria-haspopup="listbox" aria-labelledby="speed-label speed">
+          <slot name="selected">Choose a speed</slot>
+        </button>`;
+    </script>
+    """
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(_data_url(html))
+        _ = await session.aobserve()
+        speed = _nodes_by_html_id(session)["speed"]
+        assert speed.accessible_name == "Shipping speed"
+        assert speed.state is not None and speed.state.value == "Standard (5-7 days)"
+
+        _ = await session.window.page.evaluate("document.querySelector('[slot=selected]').remove()")
+        _ = await session.aobserve()
+        speed = _nodes_by_html_id(session)["speed"]
+        assert speed.accessible_name == "Shipping speed"
+        assert speed.state is not None and speed.state.value == "Choose a speed"
