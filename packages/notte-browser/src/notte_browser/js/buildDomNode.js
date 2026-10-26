@@ -1787,9 +1787,9 @@
 	}
 
 	/**
-	 * Checks if the page hits an image-map `<area>` at one of a few points of its box: its center, then the
-	 * centers of a 5 x 5 grid. Its shape need not cover the center of its box (an L-shaped polygon), and the
-	 * areas before it in its map, or other elements, can cover that center (a `default` area).
+	 * Checks if the page hits an image-map `<area>` at one of a few points of the part of its box in the viewport:
+	 * its center, then the centers of a 5 x 5 grid. Its shape need not cover the center of its box (an L-shaped
+	 * polygon), and the areas before it in its map, or other elements, can cover that center (a `default` area).
 	 *
 	 * @param {HTMLAreaElement} area - The `<area>` element.
 	 * @param {DOMRect} rect - Its box (see `areaRect`).
@@ -1797,6 +1797,12 @@
 	 * @returns {boolean} Whether a point of its box hits it.
 	 */
 	function isAreaHit(area, rect, root) {
+		// `elementFromPoint` finds nothing outside the viewport
+		const left = Math.max(rect.left, 0);
+		const top = Math.max(rect.top, 0);
+		const width = Math.min(rect.right, window.innerWidth) - left;
+		const height = Math.min(rect.bottom, window.innerHeight) - top;
+		if (width <= 0 || height <= 0) return false;
 		const points = [[0.5, 0.5]];
 		for (let i = 0; i < 5; i++) {
 			for (let j = 0; j < 5; j++) {
@@ -1805,8 +1811,8 @@
 		}
 		try {
 			return points.some(([x, y]) => {
-				const pointX = rect.left + rect.width * x;
-				const pointY = rect.top + rect.height * y;
+				const pointX = left + width * x;
+				const pointY = top + height * y;
 				const hit = root instanceof ShadowRoot
 					? root.elementFromPoint(pointX, pointY)
 					: DOCUMENT.elementFromPoint.call(document, pointX, pointY);
@@ -2509,8 +2515,9 @@
 		}
 
 		// Early viewport check - only filter out elements clearly outside viewport
-		// The getBoundingClientRect() of the Shadow DOM host element may return width/height = 0
-		if (viewportExpansion !== -1 && !shadowRootOf(node)) {
+		// The getBoundingClientRect() of the Shadow DOM host element may return width/height = 0. An image map's areas
+		// are drawn on its image, wherever the `<map>` itself is
+		if (viewportExpansion !== -1 && !shadowRootOf(node) && localNameOf(node) !== "map") {
 			const rect = getCachedBoundingRect(node); // Keep for initial quick check
 			const style = getCachedComputedStyle(node);
 

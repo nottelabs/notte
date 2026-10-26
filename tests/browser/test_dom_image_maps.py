@@ -46,6 +46,13 @@ TWO_IMAGES = f"""
 </map>
 """
 
+# only the top 20 pixels of the image are in the viewport
+EDGE_OF_VIEW = f"""
+<div style="height: calc(100vh - 20px)"></div>
+<img alt="Plan" width="200" height="400" usemap="#plan" src="{GIF}" style="display: block">
+<map name="plan"><area shape="rect" coords="0,0,200,400" href="/room" alt="Room"></map>
+"""
+
 # a polygon with 200,000 points along its bottom edge
 LONG_POLYGON = f"""
 <img alt="Plan" width="200" height="100" usemap="#plan" src="{GIF}">
@@ -112,6 +119,14 @@ async def test_the_areas_of_the_image_in_view_are_offered() -> None:
         result = await session.aexecute(type="click", id=areas["Right"])
         assert result.success, result.message
         assert session.window.page.url == f"{BASE_URL}/right"
+
+
+@pytest.mark.asyncio
+async def test_an_area_cut_by_the_edge_of_the_viewport_is_offered() -> None:
+    """The points tried are in the part of the area's box that is in view."""
+    async with NotteSession(headless=True) as session:
+        areas = await _offered_areas(session, EDGE_OF_VIEW)
+        assert list(areas) == ["Room"]
 
 
 @pytest.mark.asyncio
