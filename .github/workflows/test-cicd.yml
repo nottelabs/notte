@@ -201,8 +201,8 @@ jobs:
 
   # Everything marked `staging` (Notte API, us-staging) or `live` (third-party websites, LLM
   # providers), including marked tests outside tests/integration. These depend on
-  # services outside this repo, so failures are retried (`make test-live`) and the job is kept
-  # separate from the `tests` gate - do not make it a required check.
+  # services outside this repo, so failures are retried (`make test-live`). They
+  # run separately from offline tests but still feed the caller's CI / tests gate.
   staging-and-live:
     needs: changes
     if: ${{ fromJSON(needs.changes.outputs.scope).python_live && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
@@ -309,7 +309,9 @@ jobs:
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
         run: |
           case "$NOTTE_CI_LLM_PROVIDER" in
-            gemini) ;;
+            gemini)
+              test -n "$NOTTE_LLM_API_KEY" || { echo '::error::Set the OPENROUTER_API_KEY repository secret for staging extraction'; exit 1; }
+              ;;
             openai)
               test "$NOTTE_CI_SOURCE_SHA" = "$NOTTE_CI_EXPECTED_SHA" && test "$(git rev-parse HEAD)" = "$NOTTE_CI_SOURCE_SHA" || { echo 'Provider selection does not match the checked-out source'; exit 1; }
               test -n "$OPENAI_API_KEY" || { echo 'The selected provider requires the existing OpenAI repository secret'; exit 1; }
@@ -350,11 +352,14 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
-      - name: Note - provider matrix skipped (missing secret)
+      - name: Check provider matrix credentials
         if: env.OPENROUTER_API_KEY == ''
         run: |
-          echo "OPENROUTER_API_KEY is not set. Fork/external PRs intentionally receive no secrets."
-          echo "A maintainer can dispatch full CI with the PR number after reviewing the diff."
+          if [ "$IS_TRUSTED" = true ]; then
+            echo '::error::Set the OPENROUTER_API_KEY repository secret for the provider matrix'
+            exit 1
+          fi
+          echo "Fork/external PRs intentionally receive no secrets. A maintainer can dispatch full CI after reviewing the diff."
           echo "Provider matrix skipped: OPENROUTER_API_KEY is absent." >> "$GITHUB_STEP_SUMMARY"
       - uses: ./.github/actions/python-setup
         if: env.OPENROUTER_API_KEY != ''

@@ -2,6 +2,7 @@
 
 import gc
 import json
+import re
 import weakref
 
 import notte_browser.evaluation_result as evaluation_module
@@ -274,8 +275,6 @@ async def test_getter_values_are_measured_and_read_once(monkeypatch) -> None:
         "new Error('boom')",
         "[new Error('boom')]",
         "new URL('https://example.com/a?b=1#c')",
-        "/a+b/gi",
-        "[/x/, /y/m]",
         "new BigInt64Array([1n, -2n])",
         "new BigUint64Array([18446744073709551615n])",
         "new Float64Array([NaN, -0, 1.5, Infinity])",
@@ -298,12 +297,79 @@ async def test_getter_values_are_measured_and_read_once(monkeypatch) -> None:
     ],
 )
 async def test_guarded_results_match_playwright(monkeypatch, code) -> None:
-    # The guard returns a snapshot of the value. Whatever Playwright would
-    # have transferred for the original must come out of the snapshot too.
+    # These values follow the active driver's format. RegExp has a separate
+    # explicit contract below so driver upgrades cannot change Notte's JSON.
     monkeypatch.setattr(evaluation_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
     async with NotteSession(headless=True) as session:
         native = format_evaluation_result(await session.window.page.evaluate(code), max_bytes=16384)
         assert await session.aevaluate_js(code) == native
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "code,expected",
+    [
+        pytest.param("/a+b/gi", {"r": {"p": "a+b", "f": "gi"}}, id="scalar"),
+        pytest.param("[/x/, /y/m]", [{"r": {"p": "x", "f": ""}}, {"r": {"p": "y", "f": "m"}}], id="array"),
+        pytest.param("/a.b/dgimsuy", {"r": {"p": "a.b", "f": "dgimsuy"}}, id="flags"),
+        pytest.param("/(?<name>a)/u", {"r": {"p": "(?<name>a)", "f": "u"}}, id="named-group"),
+        pytest.param("new RegExp('é'.repeat(100))", {"r": {"p": "é" * 100, "f": ""}}, id="unicode"),
+        pytest.param(
+            r"({nested: [/a\/b/, /[a-z]+/i], lookalike: {r: {p: 'x', f: 'i'}}})",
+            {
+                "nested": [{"r": {"p": r"a\/b", "f": ""}}, {"r": {"p": "[a-z]+", "f": "i"}}],
+                "lookalike": {"r": {"p": "x", "f": "i"}},
+            },
+            id="nested-and-lookalike",
+        ),
+        pytest.param("new RegExp('a'.repeat(1000))", {"r": {"p": "a" * 1000, "f": ""}}, id="long-source"),
+        pytest.param(r"new RegExp('\"'.repeat(200))", {"r": {"p": '"' * 200, "f": ""}}, id="quotes"),
+        pytest.param(r"new RegExp('\\\\'.repeat(300))", {"r": {"p": "\\" * 600, "f": ""}}, id="backslashes"),
+        pytest.param(
+            "() => { const child = [new RegExp('a'.repeat(1000))]; return [child, child]; }",
+            [[{"r": {"p": "a" * 1000, "f": ""}}], [{"r": {"p": "a" * 1000, "f": ""}}]],
+            id="shared-array",
+        ),
+        pytest.param(
+            "() => { const child = {pattern: /x/gi}; return {a: child, b: child}; }",
+            {"a": {"pattern": {"r": {"p": "x", "f": "gi"}}}, "b": {"pattern": {"r": {"p": "x", "f": "gi"}}}},
+            id="shared-object",
+        ),
+    ],
+)
+async def test_regexp_results_keep_json_format_and_exact_output_budget(monkeypatch, code: str, expected) -> None:
+    async with NotteSession(headless=True) as session:
+        # This is Notte's format before the driver started compiling regexes.
+        # Keep the complete source as data, including patterns Python rejects.
+        text = json.dumps(expected, indent=2)
+        assert await session.aevaluate_js(code) == text
+        budget = len(text.encode("utf-8"))
+        monkeypatch.setattr(
+            evaluation_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": budget})
+        )
+        assert await session.aevaluate_js(code) == text
+        monkeypatch.setattr(
+            evaluation_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": budget - 1})
+        )
+        with pytest.raises(EvaluateJsResultLimitError):
+            await session.aevaluate_js(code)
+
+
+@pytest.mark.asyncio
+async def test_regexp_results_never_compile_page_controlled_patterns(monkeypatch) -> None:
+    source = "(a)" * 1000
+    original_compile = re.compile
+
+    def compile(pattern, flags=0):
+        if pattern == source:
+            raise AssertionError("Page-controlled regex must remain data")
+        return original_compile(pattern, flags)
+
+    async with NotteSession(headless=True) as session:
+        monkeypatch.setattr(re, "compile", compile)
+        assert await session.aevaluate_js("new RegExp('(a)'.repeat(1000))") == json.dumps(
+            {"r": {"p": source, "f": ""}}, indent=2
+        )
 
 
 @pytest.mark.asyncio

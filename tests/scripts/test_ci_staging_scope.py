@@ -236,7 +236,7 @@ def test_deleted_docs_still_run_the_global_link_check() -> None:
         ("cancelled", "success", 1),
     ],
 )
-@pytest.mark.parametrize("family", ["node", "paired"])
+@pytest.mark.parametrize("family", ["python", "node", "docs", "paired", "readme"])
 def test_required_gate_waits_for_all_families_and_fails_closed(
     changes: str, selected: str, expected: int, family: str
 ) -> None:
@@ -375,18 +375,25 @@ sys.exit(subprocess.run(["jq", args[args.index("--jq") + 1]], stdin=open(os.envi
 
 
 @pytest.mark.parametrize(
-    "provider,key,source_matches,checkout_matches,succeeds",
+    "provider,key,router_key,source_matches,checkout_matches,succeeds",
     [
-        ("gemini", "", True, True, True),
-        ("openai", "dummy-test-key", True, True, True),
-        ("openai", "", True, True, False),
-        ("unknown", "", True, True, False),
-        ("openai", "dummy-test-key", False, True, False),
-        ("openai", "dummy-test-key", True, False, False),
+        ("gemini", "", "dummy-openrouter-key", True, True, True),
+        ("gemini", "", "", True, True, False),
+        ("openai", "dummy-test-key", "", True, True, True),
+        ("openai", "", "dummy-openrouter-key", True, True, False),
+        ("unknown", "", "dummy-openrouter-key", True, True, False),
+        ("openai", "dummy-test-key", "", False, True, False),
+        ("openai", "dummy-test-key", "", True, False, False),
     ],
 )
 def test_selected_provider_runs_the_full_live_suite(
-    tmp_path: Path, provider: str, key: str, source_matches: bool, checkout_matches: bool, succeeds: bool
+    tmp_path: Path,
+    provider: str,
+    key: str,
+    router_key: str,
+    source_matches: bool,
+    checkout_matches: bool,
+    succeeds: bool,
 ) -> None:
     step = next(
         s
@@ -428,7 +435,7 @@ Path(os.environ["OUTPUT"]).write_text(json.dumps({
             "NOTTE_LLM_BASE_URL": "https://openrouter.ai/api/v1",
             "NOTTE_LLM_MODEL": "google/gemini-3.5-flash-lite",
             "NOTTE_TEST_DEFAULT_MODEL": "google/gemini-3.8-flash",
-            "NOTTE_LLM_API_KEY": "dummy-openrouter-key",  # pragma: allowlist secret
+            "NOTTE_LLM_API_KEY": router_key,
         },
         capture_output=True,
         text=True,
@@ -447,6 +454,24 @@ Path(os.environ["OUTPUT"]).write_text(json.dumps({
         else:
             assert invocation["model"] == "google/gemini-3.5-flash-lite"
             assert invocation["key_matches"] is False
+
+
+@pytest.mark.parametrize("trusted", [True, False])
+def test_missing_provider_matrix_secret_fails_trusted_runs(trusted: bool) -> None:
+    step = next(
+        s
+        for s in workflow("test-cicd.yml")["jobs"]["llm-provider-matrix"]["steps"]
+        if s.get("name") == "Check provider matrix credentials"
+    )
+    assert step["if"] == "env.OPENROUTER_API_KEY == ''"
+    result = subprocess.run(
+        ["bash", "-e", "-o", "pipefail", "-c", step["run"]],
+        env={"IS_TRUSTED": str(trusted).lower(), "GITHUB_STEP_SUMMARY": os.devnull},
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == (1 if trusted else 0)
+    assert ("::error::" in result.stdout) == trusted
 
 
 @pytest.mark.parametrize("base", ["a" * 40, "0" * 40, ""])

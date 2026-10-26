@@ -10,7 +10,7 @@ with client.Session(proxies=False) as session:
     with sync_playwright() as p:
         browser = p.chromium.connect_over_cdp(cdp_url)
         page = browser.contexts[0].pages[0]
-        _ = page.goto("https://www.google.com")
+        _ = page.goto("https://www.google.com", wait_until="domcontentloaded")
         screenshot = page.screenshot(path="screenshot.png")
         assert screenshot is not None
         assert screenshot.startswith(b"\x89PNG\r\n\x1a\n")
