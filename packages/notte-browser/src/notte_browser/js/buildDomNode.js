@@ -1705,6 +1705,11 @@
 		if (role && INTERACTIVE_ROLES.has(role)) {
 			return true;
 		}
+		// a link goes to a page of its own: the clickable card around it may not (its handler can be
+		// wired to part of the card, or not yet attached)
+		if (getRole(element) === 'link') {
+			return true;
+		}
 		// Check contenteditable
 		if (element.isContentEditable || element.getAttribute('contenteditable') === 'true') {
 			return true;
