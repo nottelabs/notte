@@ -5,7 +5,11 @@ something first, a client-side navigation fetches the next page then `pushState`
 document or opens a tab. A fixed delay is wasted on actions that change nothing and too short for slow responses.
 Instead `PageSettle` tracks, from right before the action, the DOM changes of the page, its same-origin frames and
 its open shadow roots (inline `style` changes, i.e. animations, do not count), the fetch / XHR / document requests
-the page starts, its URL changes and, if asked, the tabs it opens. The page has settled (`settled`) when:
+the page starts, its URL changes and, if asked, the tabs it opens. What the page does on its own is left out: a node
+whose text or attributes keep changing (a clock, a carousel) counts for its first two changes only, a request the
+document already sent (polling, a retry) extends the quiet window once, and the requests of a frame of another
+origin (an ad) do not count. Repeated requests are waited for up to the same `SETTLE_MS` window as repeated DOM
+changes. The page has settled (`settled`) when:
 - no request started since the action is still running, and
 - nothing changed for `QUIET_MS` (or the DOM has kept changing for `SETTLE_MS`: some pages never stop), and
 - something changed, or the action's grace passed: an action with no visible effect costs at most its grace, and
@@ -16,11 +20,10 @@ A navigation to a new document ends the tracking of the old one. The new documen
 (`DOMContentLoaded`), with `GRACE_MS` for a script that renders once it is parsed, at most `timeout_goto_ms` after the
 action, and waited
 for as the fixed waits it replaces did (`DocumentWait`):
-- `requests` (after a click, which waited for the network to go idle): until its requests are done and its DOM has
-  settled, then until it has loaded. What it renders from data it fetches after its load event is waited for;
-- `loaded` (after a back / forward, which waited for the load): until its DOM has settled and it has loaded;
-- `rendered` (after a key press, which waited 500 ms): until its DOM has settled or it has loaded, whichever comes
-  first. Analytics and polling can keep requests in flight, and images loading, while the results are rendered.
+- `requests` (after a click or a key press, which waited for the network to go idle): until its requests are done
+  and its DOM has settled, then until it has loaded. What it renders from data it fetches after its load event is
+  waited for;
+- `loaded` (after a back / forward, which waited for the load): until its DOM has settled and it has loaded.
 A tab opened while the page settles ends the settle: the tab is waited for next (`PageSettle.tab`), its requests
 tracked from when it appeared. A tab is known once its first response has arrived; from its first request, it is
 waited for like a request in flight.
@@ -38,11 +41,12 @@ wait that followed them before.
 import asyncio
 import time
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Literal, TypedDict
+from urllib.parse import urlsplit
 
 from notte_core.config import config
 
-from notte_browser.driver import Error, JSHandle, Page, Request
+from notte_browser.driver import Error, Frame, JSHandle, Page, Request
 from notte_browser.js import script
 
 QUIET_MS = 200
@@ -56,7 +60,7 @@ POLL_MS = 50
 MAX_DOCUMENTS = 3
 
 # How a new document is waited for (see the module docstring)
-DocumentWait = Literal["requests", "loaded", "rendered"]
+DocumentWait = Literal["requests", "loaded"]
 
 # Request types waited for. Images, fonts, media and beacons do not change what the page shows; websockets and event
 # streams stay open.
@@ -68,6 +72,21 @@ WATCH_URL_JS = script("watch_url.js").strip()
 SETTLE_TRACKER_JS = (
     script("settle_tracker.js").replace("NESTED_ROOTS", NESTED_ROOTS_JS).replace("WATCH_URL", WATCH_URL_JS)
 )
+
+
+def _origin(url: str) -> tuple[str, str] | None:
+    """The origin of an http(s) URL, None for the others (about:blank, srcdoc)."""
+    parts = urlsplit(url)
+    return (parts.scheme, parts.netloc) if parts.scheme in ("http", "https") else None
+
+
+class _PageState(TypedDict):
+    elapsed: float
+    inputAt: float | None
+    first: float | None
+    last: float | None
+    dom: float | None
+    urlAt: float | None
 
 
 @dataclass(frozen=True)
@@ -117,7 +136,10 @@ class PageSettle:
         # when the action ended (the grace and the caps), and when the tracking of the current document started
         self._began: float = time.perf_counter()
         self._started: float = self._began
-        self._in_flight: set[Request] = set()
+        # whether each request extends the quiet window (repeats share the continuous-change window)
+        self._in_flight: dict[Request, bool] = {}
+        # the requests the current document sent (frame, method, URL, body)
+        self._sent: set[tuple[Frame, str, str, bytes | None]] = set()
         # when requests started or ended (ms since `_started`)
         self._changes: list[float] = []
         self._tabs: bool = tabs
@@ -157,13 +179,33 @@ class PageSettle:
         self._changes.append((time.perf_counter() - self._started) * 1000)
 
     def _request_started(self, request: Request) -> None:
-        if request.resource_type in TRACKED_REQUESTS:
-            self._in_flight.add(request)
-            self._changed()
+        if request.resource_type not in TRACKED_REQUESTS or not self._same_origin(request):
+            return
+        # Repeated requests do not extend the quiet window indefinitely, but may carry the action's result.
+        url = urlsplit(request.url)._replace(fragment="").geturl()
+        key = (request.frame, request.method, url, request.post_data_buffer)
+        self._in_flight[request] = key not in self._sent
+        if key in self._sent:
+            return
+        self._sent.add(key)
+        self._changed()
+
+    def _same_origin(self, request: Request) -> bool:
+        """Whether `request` comes from the page or one of its same-origin frames (whose DOM is watched too). A frame
+        of another origin (an ad, a widget) is not watched, and its requests are not waited for."""
+        try:
+            frame = request.frame
+        except Error:
+            return False
+        if frame is self.page.main_frame:
+            return True
+        # a frame's navigation is counted by where it goes, its requests by where it is
+        origin = _origin(request.url if request.is_navigation_request() else frame.url)
+        # about:blank and srcdoc frames have the page's origin
+        return origin is None or origin == _origin(self.page.url)
 
     def _request_ended(self, request: Request) -> None:
-        if request in self._in_flight:
-            self._in_flight.discard(request)
+        if self._in_flight.pop(request, False):
             self._changed()
 
     def _page_opened(self, page: Page) -> None:
@@ -187,7 +229,7 @@ class PageSettle:
         """Until the current document settles or a tab opens. Without `requests`, on the DOM alone."""
         assert self._tracker is not None
         while not self.opened:
-            page: dict[str, Any] = await self._tracker.evaluate("t => t.state()")
+            page: _PageState = await self._tracker.evaluate("t => t.state()")
             # times since the action: its input event in the page, else its end when the document was tracked from
             # before it, else since the document was tracked
             shift = page["inputAt"] if page["inputAt"] is not None else max((self._began - self._started) * 1000, 0)
@@ -198,11 +240,15 @@ class PageSettle:
             changes = [t for t in self._changes if t >= shift] if requests else []
             firsts = [t for t in (page["first"], min(changes, default=None)) if t is not None]
             lasts = [t for t in (page["last"], max(changes, default=None)) if t is not None]
+            # Repeats can carry a retry's result, but overlapping periodic polls must not hold every action.
+            # Give them the same window as continuous DOM changes; unique requests retain the full cap.
+            repeating = page["elapsed"] - max(min(self._changes, default=shift), shift) < SETTLE_MS
+            in_flight = sum(fresh or repeating for fresh in self._in_flight.values()) if requests else 0
             state = SettleState(
                 elapsed_ms=page["elapsed"] - shift,
                 first_change_ms=since(min(firsts, default=None)),
                 last_change_ms=since(max(lasts, default=None)),
-                in_flight=(len(self._in_flight) if requests else 0) + (1 if self._opening else 0),
+                in_flight=in_flight + (1 if self._opening else 0),
                 last_dom_change_ms=since(page["dom"]),
                 url_changed_ms=since(page["urlAt"]),
                 grace_ms=grace_ms,
@@ -236,7 +282,7 @@ class PageSettle:
         if await self.page.evaluate("document.readyState") == "loading":
             await self.page.wait_for_load_state("domcontentloaded")
         self._tracker = await self.page.evaluate_handle(SETTLE_TRACKER_JS)
-        self._started, self._changes = time.perf_counter(), []
+        self._started, self._changes, self._sent = time.perf_counter(), [], set()
 
     async def _new_document(self, grace_ms: float, document: DocumentWait) -> None:
         if document == "requests":
@@ -249,9 +295,8 @@ class PageSettle:
             return
         rendered = asyncio.ensure_future(self._poll(grace_ms, requests=False))
         loaded = asyncio.ensure_future(self._loaded())
-        until = asyncio.FIRST_COMPLETED if document == "rendered" else asyncio.FIRST_EXCEPTION
         try:
-            done, _ = await asyncio.wait({rendered, loaded}, return_when=until)
+            done, _ = await asyncio.wait({rendered, loaded}, return_when=asyncio.FIRST_EXCEPTION)
         finally:
             for task in (rendered, loaded):
                 _ = task.cancel()
@@ -260,7 +305,7 @@ class PageSettle:
             # a navigation again (the tracker is gone) or a closed page
             _ = task.result()
 
-    async def wait(self, *, grace_ms: float = GRACE_MS, document: DocumentWait = "rendered") -> None:
+    async def wait(self, *, grace_ms: float = GRACE_MS, document: DocumentWait = "requests") -> None:
         """Until the page settles, at most `CAP_MS` after the action started; after a navigation to a new document,
         until that document is ready as `document` says, at most `timeout_goto_ms` after the action started. Never
         raises: a page that does not settle in time is left as it is."""

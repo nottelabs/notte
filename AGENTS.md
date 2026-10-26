@@ -23,6 +23,10 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
 - `make test` is the offline gate. `make test-live` runs tests marked
   `staging` or `live` and needs `NOTTE_API_KEY`; set `NOTTE_API_URL` to point
   the SDK at a different API.
+- Browser settle regressions are in `tests/browser/test_execute_settle.py`
+  and `tests/browser/test_settle_rules.py` and use a local server. Use the
+  lockfile's Patchright environment: an older installed version can fail the
+  tracker's `JSHandle` calls even when the locked version passes.
 - Native integration examples (`examples/*`, run by
   `scripts/ci_integration_examples.py`) install the local `node-sdk` with
   `npm install --no-save`. Don't add `--package-lock=false`: it ignores the

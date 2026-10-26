@@ -59,6 +59,11 @@ customElements.define('x-inner', class extends HTMLElement {
 <button id="frame" onclick="document.getElementById('inner').src = '/inner'">Frame</button>
 <iframe id="inner" src="about:blank"></iframe>
 <a id="fetching-tab" href="/fetching-tab" target="_blank">Open a tab that fetches</a>
+<a id="download" href="/download" target="_blank">Download</a>
+<button id="pages" onclick="fetch('/data?delay=0.1').then(() => fetch('/data?delay=0.6')).then(() =>
+    document.body.insertAdjacentHTML('beforeend', '<p>Both pages fetched</p>'))">Fetch pages</button>
+<button id="retry" onclick="fetch('/data?delay=0.4').then(() => fetch('/data?delay=0.4')).then(() =>
+    document.body.insertAdjacentHTML('beforeend', '<p>Retried result</p>'))">Retry</button>
 </body></html>"""
 PAGES = {
     "/": HOME,
@@ -156,6 +161,9 @@ async def site() -> AsyncIterator[str]:
         await release.wait()
         return web.json_response({})
 
+    async def download(_request: web.Request) -> web.Response:
+        return web.Response(body=b"downloaded", headers={"Content-Disposition": "attachment; filename=result.txt"})
+
     app = web.Application()
     for path in PAGES:
         app.router.add_get(path, page)
@@ -163,6 +171,7 @@ async def site() -> AsyncIterator[str]:
     app.router.add_get("/slow.js", slow_script)
     app.router.add_get("/slow-image", slow_image)
     app.router.add_get("/hang", hang)
+    app.router.add_get("/download", download)
     runner = web.AppRunner(app)
     await runner.setup()
     with closing(socket.socket()) as server_socket:
@@ -214,6 +223,28 @@ async def test_a_click_that_loads_a_page_waits_for_what_it_renders_after_its_loa
     _ = await click(session, "next")
     assert session.window.page.url == f"{site}/next"
     assert "Rendered after load" in await text(session)
+
+
+@pytest.mark.asyncio
+async def test_a_download_tab_closing_does_not_fail_the_click_or_replace_the_page(session: NotteSession) -> None:
+    page = session.window.page
+    async with page.expect_download() as event:
+        _ = await click(session, "download")
+    assert (await event.value).suggested_filename == "result.txt"
+    assert session.window.page is page
+    assert not page.is_closed()
+
+
+@pytest.mark.asyncio
+async def test_requests_with_different_queries_are_all_waited_for(session: NotteSession) -> None:
+    _ = await click(session, "pages")
+    assert "Both pages fetched" in await text(session)
+
+
+@pytest.mark.asyncio
+async def test_a_repeated_request_is_still_waited_for_while_it_runs(session: NotteSession) -> None:
+    _ = await click(session, "retry")
+    assert "Retried result" in await text(session)
 
 
 @pytest.mark.asyncio

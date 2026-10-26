@@ -53,9 +53,29 @@
         tracker.dom = changed();
         try { if (event.target.contentDocument) discover(event.target.contentDocument); } catch (e) {}
     };
-    // inline `style` changes (animations) do not count
+    // A node whose text or attributes keep changing (a clock, a carousel, a progress counter) is not the action's
+    // effect: its changes after the first two do not count. Elements added or removed always count.
+    const repeats = new WeakMap();
+    const counts = (mutations) => {
+        const touched = new Set();
+        let structural = false;
+        for (const m of mutations) {
+            // inline `style` changes (animations) do not count
+            if (m.type === "attributes" && m.attributeName === "style") continue;
+            const nodes = m.type === "childList" ? [...m.addedNodes, ...m.removedNodes] : [];
+            if (nodes.some((node) => node.nodeType !== Node.TEXT_NODE)) structural = true;
+            else touched.add(m.type === "characterData" ? (m.target.parentNode ?? m.target) : m.target);
+        }
+        let fresh = false;
+        for (const node of touched) {
+            const seen = (repeats.get(node) ?? 0) + 1;
+            repeats.set(node, seen);
+            if (seen <= 2) fresh = true;
+        }
+        return structural || fresh;
+    };
     const observer = new MutationObserver((mutations) => {
-        if (mutations.some((m) => m.type !== "attributes" || m.attributeName !== "style")) tracker.dom = changed();
+        if (counts(mutations)) tracker.dom = changed();
         for (const m of mutations) {
             for (const node of m.addedNodes) {
                 if (node.nodeType === Node.ELEMENT_NODE) watchWithin(node);

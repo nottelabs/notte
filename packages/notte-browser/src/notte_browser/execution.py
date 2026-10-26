@@ -115,12 +115,12 @@ SCROLL_POLL_MS = 25
 SCROLL_CAP_MS = 1_000
 
 
-async def _scroll_ended(read: Callable[[], Awaitable[tuple[bool, list[object]]]]) -> bool:
+async def _scroll_ended(read: Callable[[], Awaitable[tuple[bool, list[list[float | None]]]]]) -> bool:
     """Whether a scroll happened, once it has ended or failed to start. `read` returns whether the scroll started,
     and the positions it moves."""
     loop = asyncio.get_running_loop()
     start = loop.time()
-    last: list[object] | None = None
+    last: list[list[float | None]] | None = None
     stable_since = start
     while True:
         scrolled, positions = await read()
@@ -233,9 +233,9 @@ async def _scroll_target(window: BrowserWindow, action: ScrollUpAction | ScrollD
         # scroller, and hovering an offscreen target can move its parents.
         await target.evaluate("(element, delta) => element.scrollBy({top: delta, behavior: 'instant'})", delta)
 
-        async def read() -> tuple[bool, list[object]]:
-            position = await target.evaluate("element => element.scrollTop")
-            return position != before, [position]
+        async def read() -> tuple[bool, list[list[float | None]]]:
+            position: float = await target.evaluate("element => element.scrollTop")
+            return position != before, [[position]]
 
         if not await _scroll_ended(read) and not await target.evaluate(_SCROLL_BOUNDARY, delta):
             raise ScrollActionFailedError()
@@ -263,18 +263,30 @@ def _can_create_tab(action: BaseAction) -> bool:
 
 def _settles(action: BaseAction) -> bool:
     """Whether the page's reaction to an action is waited for (`notte_browser.settle`): the actions that can start
-    a navigation. A scroll waits for itself; a goto waits for the page's load."""
-    return isinstance(action, (InteractionAction, PressKeyAction, GoBackAction, GoForwardAction, ReloadAction))
+    a navigation, and a scroll (what it loads). A goto waits for the page's load."""
+    return isinstance(
+        action,
+        (
+            InteractionAction,
+            PressKeyAction,
+            GoBackAction,
+            GoForwardAction,
+            ReloadAction,
+            ScrollUpAction,
+            ScrollDownAction,
+        ),
+    )
 
 
 async def _settle(settle: PageSettle, action: BaseAction, url: str, *, verbose: bool) -> None:
     """Until the page has reacted to `action`, which ran on `url`."""
     match action:
-        case ClickAction():
-            # a click's new page is waited for until its requests are done (the network going idle)
+        # a new page is waited for until its requests are done (the network going idle), whatever submitted it
+        case ClickAction() | PressKeyAction() | InteractionAction(press_enter=True):
             await settle.wait(grace_ms=LONG_GRACE_MS, document="requests")
-        case PressKeyAction() | InteractionAction(press_enter=True):
-            await settle.wait(grace_ms=LONG_GRACE_MS, document="rendered")
+        case ScrollUpAction() | ScrollDownAction():
+            # the scroll has ended: what it starts loading right away (more items, lazy content) is waited for
+            await settle.wait()
         case GoBackAction() | GoForwardAction():
             await settle.wait(document="loaded")
         case ReloadAction():
@@ -345,9 +357,9 @@ async def execute_browser_action(window: BrowserWindow, action: BaseAction, *, v
                     delta_x=0, delta_y=(-amount if isinstance(action, ScrollUpAction) else amount)
                 )
 
-                async def read() -> tuple[bool, list[object]]:
+                async def read() -> tuple[bool, list[list[float | None]]]:
                     scrolled = False
-                    positions: list[object] = []
+                    positions: list[list[float | None]] = []
                     for frame, tracker in trackers:
                         try:
                             moved, position = await tracker.evaluate(
@@ -643,14 +655,21 @@ async def execute(
                 if verbose:
                     id_str = f" id={action.id}" if isinstance(action, InteractionAction) else ""
                     logger.info(f"🪦 Action {action.type}{id_str} resulted in a new tab, switched to it...")
-                await last.bring_to_front()
-                window.page = last
                 if last not in tabs:
                     tab = settle.tab(last) if settle is not None else PageSettle(last, None, tabs=False)
                     try:
                         await tab.wait(document="requests")
                     finally:
                         await tab.close()
+                # A target=_blank download can briefly create a page that closes once the download starts.
+                if not last.is_closed():
+                    try:
+                        await last.bring_to_front()
+                    except Error:
+                        if not last.is_closed():
+                            raise
+                    else:
+                        window.page = last
     finally:
         if settle is not None:
             await settle.close()
