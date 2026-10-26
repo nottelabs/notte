@@ -10,10 +10,12 @@ from contextlib import closing
 import pytest
 import pytest_asyncio
 from aiohttp import web
+from notte_browser.driver import Error, Locator
 from notte_browser.session import NotteSession
 from notte_browser.settle import CAP_MS, LONG_GRACE_MS, QUIET_MS, SETTLE_MS, PageSettle
 from notte_core.actions import ClickAction, GoBackAction, GoForwardAction, PressKeyAction, ScrollDownAction
 from notte_core.config import config
+from notte_core.errors import NotteBaseError
 from PIL import Image
 
 HOME = """<html><body>
@@ -426,6 +428,26 @@ async def test_pre_action_activity_does_not_consume_the_grace_without_an_input_e
 
 
 @pytest.mark.asyncio
+async def test_rendering_that_spans_a_scroll_action_still_needs_a_quiet_page(session: NotteSession) -> None:
+    settle = await PageSettle.start(session.window.page)
+    try:
+        await session.window.page.evaluate(
+            """() => {
+                document.body.append(document.createElement('hr'));
+                for (const delay of [100, 200, 300]) {
+                    setTimeout(() => document.body.append(document.createElement('hr')), delay);
+                }
+                setTimeout(() => document.body.insertAdjacentHTML('beforeend', '<p>Rendering finished</p>'), 400);
+            }"""
+        )
+        settle.acted()
+        await settle.wait()
+        assert "Rendering finished" in await text(session)
+    finally:
+        await settle.close()
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("link", ["late-load", "late-load-timer"])
 async def test_a_page_that_loads_after_it_settled_is_watched_from_its_load(
     session: NotteSession, site: str, link: str
@@ -476,6 +498,34 @@ async def test_a_closing_page_waits_for_its_replacement_if_it_opens_one(
     else:
         assert session.window.page.url == f"{site}/"
         assert elapsed < LONG_GRACE_MS / 1000 + 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("replacement", [True, False])
+async def test_a_click_reporting_a_closed_target_requires_a_live_replacement(
+    session: NotteSession, site: str, monkeypatch: pytest.MonkeyPatch, replacement: bool
+) -> None:
+    async with session.window.page.context.expect_page() as opened:
+        await session.window.page.evaluate("window.open('/')")
+    original = await opened.value
+    await original.wait_for_load_state("load")
+    session.window.page = original
+    original_click = Locator.click
+
+    async def click_then_report_closed(locator: Locator, *, timeout: float) -> None:
+        await original_click(locator, timeout=timeout)
+        # Patchright can report the handler's window.close() before acknowledging the click.
+        raise Error("Locator.click: Target page, context or browser has been closed")
+
+    monkeypatch.setattr(Locator, "click", click_then_report_closed)
+    if replacement:
+        _ = await click(session, "replace-self")
+        assert original.is_closed()
+        assert session.window.page.url == f"{site}/fetching-tab"
+        assert "Fetched in the tab" in await text(session)
+    else:
+        with pytest.raises(NotteBaseError, match="Target page, context or browser has been closed"):
+            _ = await click(session, "close-self")
 
 
 @pytest.mark.asyncio

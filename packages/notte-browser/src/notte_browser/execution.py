@@ -635,12 +635,24 @@ async def execute(
     # tracked from right before the action
     settle = await PageSettle.start(page, tabs=_can_create_tab(action)) if _settles(action) else None
     retval = True
+    closed_during_click: Error | None = None
     try:
         match action:
             case InteractionAction():
-                retval = await execute_interaction_action(
-                    window, action, prev_snapshot, storage=storage, verbose=verbose
-                )
+                try:
+                    retval = await execute_interaction_action(
+                        window, action, prev_snapshot, storage=storage, verbose=verbose
+                    )
+                except Error as error:
+                    # A click handler can close its own tab before the driver acknowledges the click. Continue
+                    # only if the action produces a live replacement; otherwise preserve the original error.
+                    if (
+                        not isinstance(action, ClickAction)
+                        or not page.is_closed()
+                        or "Target page, context or browser has been closed" not in str(error)
+                    ):
+                        raise
+                    closed_during_click = error
             case CompletionAction(success=success, answer=answer):
                 if verbose:
                     logger.info(
@@ -661,6 +673,10 @@ async def execute(
             settle.acted()
             if retval:
                 await _settle(settle, action, url, verbose=verbose)
+        if closed_during_click is not None and not any(
+            tab not in tabs and not tab.is_closed() for tab in context.pages
+        ):
+            raise closed_during_click
         if isinstance(action, (GotoAction, GotoNewTabAction)):
             # a goto is not settled: it keeps the fixed wait before the new-tab check, which callers that observe
             # right after it rely on (a page its scripts render after its load)

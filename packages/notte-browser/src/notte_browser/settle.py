@@ -233,6 +233,7 @@ class PageSettle:
     async def _poll(self, grace_ms: float, *, requests: bool = True) -> None:
         """Until the current document settles or a tab opens. Without `requests`, on the DOM alone."""
         assert self._tracker is not None
+        first_page_change: float | None = None
         while not self.opened:
             page: _PageState = await self._tracker.evaluate("t => t.state()")
             # times since the action: its input event in the page, else its end when the document was tracked from
@@ -242,8 +243,15 @@ class PageSettle:
             def since(t: float | None) -> float | None:
                 return None if t is None or t < shift else t - shift
 
+            # The first mutation may predate the action while later ones belong to it. Remember the first
+            # post-action mutation we observe, so both the quiet window and continuous-change limit still apply.
+            observed = since(page["first"])
+            if observed is None:
+                observed = since(page["last"])
+            if observed is not None:
+                first_page_change = observed if first_page_change is None else min(first_page_change, observed)
             changes = [t for t in self._changes if t >= shift] if requests else []
-            firsts = [t for t in (since(page["first"]), since(min(changes, default=None))) if t is not None]
+            firsts = [t for t in (first_page_change, since(min(changes, default=None))) if t is not None]
             lasts = [t for t in (since(page["last"]), since(max(changes, default=None))) if t is not None]
             # Repeats can carry a retry's result, but overlapping periodic polls must not hold every action.
             # Give them the same window as continuous DOM changes; unique requests retain the full cap.

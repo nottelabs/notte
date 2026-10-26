@@ -1,7 +1,22 @@
 """When the page counts as settled after an action (`notte_browser.settle`)."""
 
+from typing import cast
+from unittest.mock import AsyncMock, MagicMock
+
+import notte_browser.settle as settle_module
 import pytest
-from notte_browser.settle import CAP_MS, EXPECT_MS, GRACE_MS, LONG_GRACE_MS, QUIET_MS, SETTLE_MS, SettleState, settled
+from notte_browser.driver import JSHandle, Page
+from notte_browser.settle import (
+    CAP_MS,
+    EXPECT_MS,
+    GRACE_MS,
+    LONG_GRACE_MS,
+    QUIET_MS,
+    SETTLE_MS,
+    PageSettle,
+    SettleState,
+    settled,
+)
 
 
 def state(elapsed: float, *changes: float, in_flight: int = 0, **fields: float | None) -> SettleState:
@@ -46,3 +61,28 @@ def test_a_url_change_waits_for_the_new_page_to_render() -> None:
     assert settled(state(300 + EXPECT_MS, 100, 300, **pushed))
     rendered = {"url_changed_ms": 300.0, "last_dom_change_ms": 320.0}
     assert settled(state(320 + QUIET_MS, 100, 320, **rendered))
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("continuous", [False, True])
+async def test_changes_spanning_the_action_keep_the_quiet_window(
+    monkeypatch: pytest.MonkeyPatch, continuous: bool
+) -> None:
+    # The first change predates acted(), while later changes belong to the action.
+    samples = (
+        [(275, 225), (475, 425), (675, 625), (875, 825), (1075, 1025), (1275, 1225)]
+        if continuous
+        else [(275, 225), (425, 375), (550, 375), (575, 375)]
+    )
+    tracker = MagicMock(spec=JSHandle)
+    tracker.evaluate = AsyncMock(
+        side_effect=[
+            {"elapsed": elapsed, "inputAt": None, "first": 10, "last": last, "dom": last, "urlAt": None}
+            for elapsed, last in samples
+        ]
+    )
+    monkeypatch.setattr(settle_module.asyncio, "sleep", AsyncMock())
+    settle = PageSettle(cast(Page, MagicMock()), cast(JSHandle, tracker), tabs=False)
+    settle._began = settle._started + 0.125
+    await settle._poll(GRACE_MS)
+    assert tracker.evaluate.await_count == len(samples)
