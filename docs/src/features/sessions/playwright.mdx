@@ -17,6 +17,25 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 Notte sessions expose a Chrome DevTools Protocol (CDP) endpoint that you can connect to with Playwright. This allows you to use Playwright's API directly while still benefiting from Notte's cloud infrastructure, anti-detection features, and session management.
 
+## Connection URLs and recordings
+
+| URL | Purpose | Client |
+|-----|---------|--------|
+| `cdp_url` | Control the live browser over Chrome DevTools Protocol | Playwright `chromium.connect_over_cdp()` (Python), `chromium.connectOverCDP()` (Node), or Puppeteer |
+| `playwright_url` | Control the live browser over Playwright protocol, when the server supports it | Playwright `chromium.connect()` |
+| `viewer_url` | Open the live browser viewer; interaction depends on the link's permissions | Your web browser |
+| Replay `mp4_url` | Watch a recording after the session; does not control a browser | A video player |
+
+`playwright_url` is optional and defaults to `None` in Python. In a server response it can be absent or `null`.
+The field prepares the SDK contract for servers that offer Playwright-protocol access; it does not enable that endpoint.
+When your server supplies a URL, use the Playwright client version supported by that server.
+The CDP examples below and the SDK's page helper continue to use CDP.
+
+With CDP, Playwright runs the browser-action logic on your machine and exchanges CDP commands with the remote browser.
+With Playwright protocol, that logic runs beside the browser, which can reduce network round trips for actions such as clicks and fills.
+The benefit depends on your network latency and workload; website loading and data transfer still take time.
+Use the Sessions API or the SDK's session context manager to stop the session when your automation finishes.
+
 ## Prerequisites
 
 Install Playwright alongside the Notte SDK:

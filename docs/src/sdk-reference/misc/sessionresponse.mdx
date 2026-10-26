@@ -86,6 +86,10 @@ description: ""
   The URL to connect to the CDP server.
 </ParamField>
 
+<ParamField path="playwright_url" type="str | None">
+  The WebSocket URL for Playwright's chromium.connect(), when supported by the server. Requires a matching Playwright client version. This is a live browser connection, not a replay URL.
+</ParamField>
+
 <ParamField path="viewer_url" type="str | None">
   The remote session viewer URL.
 </ParamField>

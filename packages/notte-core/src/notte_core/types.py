@@ -1399,6 +1399,15 @@ class SessionResponse(SdkResponse):
 
     solve_captchas: Annotated[bool | NoneType, Field(description="Whether to solve captchas.")] = None
     cdp_url: Annotated[str | None, Field(description="The URL to connect to the CDP server.")] = None
+    playwright_url: Annotated[
+        str | None,
+        Field(
+            description=(
+                "The WebSocket URL for Playwright's chromium.connect(), when supported by the server. "
+                "Requires a matching Playwright client version. This is a live browser connection, not a replay URL."
+            )
+        ),
+    ] = None
     viewer_url: Annotated[str | None, Field(description="The remote session viewer URL.")] = None
     web_bot_auth: Annotated[bool, Field(description="Whether to use web bot authentication.")] = False
     auth_ids: Annotated[

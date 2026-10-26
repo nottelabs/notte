@@ -3,6 +3,7 @@
 import inspect
 import json
 from pathlib import Path
+from typing import Literal
 
 import pytest
 from notte_core import types as core
@@ -11,6 +12,41 @@ from notte_sdk._generated import models
 from pydantic import BaseModel, ValidationError
 
 ROOT = Path(__file__).parents[2]
+
+
+@pytest.mark.parametrize("model", [public.SessionResponse, models.SessionResponse])
+@pytest.mark.parametrize("mode", ["validation", "serialization"])
+def test_session_playwright_url_is_an_optional_nullable_string(
+    model: type[core.SessionResponse] | type[models.SessionResponse], mode: Literal["validation", "serialization"]
+) -> None:
+    schema = model.model_json_schema(mode=mode)
+    assert schema["type"] == "object"
+    assert "playwright_url" not in schema["required"]
+    assert schema["properties"]["playwright_url"]["anyOf"] == [{"type": "string"}, {"type": "null"}]
+
+
+@pytest.mark.parametrize("model", [public.SessionResponse, models.SessionResponse])
+def test_session_playwright_url_accepts_existing_responses_and_round_trips(
+    model: type[core.SessionResponse] | type[models.SessionResponse],
+) -> None:
+    payload = {
+        "session_id": "session",
+        "idle_timeout_minutes": 3,
+        "timeout_minutes": 3,
+        "created_at": "2026-01-01T00:00:00Z",
+        "last_accessed_at": "2026-01-01T00:00:00Z",
+        "status": "active",
+        "cdp_url": "wss://browser.example/cdp",
+    }
+    assert model.model_validate(payload).playwright_url is None
+    for url in (None, "wss://browser.example/playwright"):
+        response = model.model_validate({**payload, "playwright_url": url})
+        assert response.playwright_url == url
+        assert response.cdp_url == payload["cdp_url"]
+        wire = response.model_dump_json(exclude_none=True)
+        assert model.model_validate_json(wire).playwright_url == url
+        if url is None:
+            assert "playwright_url" not in json.loads(wire)
 
 
 def test_every_component_has_an_importable_generated_type() -> None:

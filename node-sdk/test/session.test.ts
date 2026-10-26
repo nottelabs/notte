@@ -62,6 +62,20 @@ describe('Session Unit Tests', () => {
     vi.mocked(sessionStop).mockResolvedValue({ data: sessionResponse({ status: 'closed' }) } as never);
   });
 
+  it.each([undefined, null, 'wss://browser.example/playwright'])(
+    'preserves an optional Playwright connection URL (%s)', async playwright_url => {
+      const response = sessionResponse({ playwright_url, cdp_url: 'wss://browser.example/cdp' });
+      vi.mocked(sessionStart).mockResolvedValueOnce({ data: response } as never);
+      const session = new Session(mockClient);
+
+      await session.start();
+
+      expectTypeOf(session.getResponse()!.playwright_url).toEqualTypeOf<string | null | undefined>();
+      expect(session.getResponse()?.playwright_url).toBe(playwright_url);
+      expect(session.getResponse()?.cdp_url).toBe('wss://browser.example/cdp');
+    },
+  );
+
   it.each(['scroll_up', 'scroll_down'] as const)('forwards the selector for %s', async type => {
     vi.mocked(pageExecute).mockResolvedValue({ data: executionResult({ success: true }) } as never);
     const session = new Session(mockClient);

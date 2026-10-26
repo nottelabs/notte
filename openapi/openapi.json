@@ -31675,6 +31675,18 @@
             "title": "Cdp Url",
             "description": "The URL to connect to the CDP server."
           },
+          "playwright_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Playwright Url",
+            "description": "The WebSocket URL for Playwright's chromium.connect(), when supported by the server. Requires a matching Playwright client version. This is a live browser connection, not a replay URL."
+          },
           "viewer_url": {
             "anyOf": [
               {
