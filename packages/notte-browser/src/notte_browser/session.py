@@ -335,6 +335,8 @@ class NotteSession(AsyncResource, SyncResource):
         # --------------------------------
 
         with TimedSpan.capture() as span:
+            # a tab the last action opened after `execute` returned
+            await self.window.switch_to_new_tab(verbose=self._verbose)
             # ensure we're on a page
             is_page_default = self.window.page.url == "about:blank"
 
@@ -548,6 +550,9 @@ class NotteSession(AsyncResource, SyncResource):
                     case ScrapeAction():
                         raise ScrapeIsNotAnActionError()
                     case EvaluateJsAction(code=code):
+                        # a tab an earlier action opened late is not switched to after this one (`execution.execute`
+                        # does the same for the other actions)
+                        await self.window.watch_new_tabs(False)
                         success, evaluation_message, scraped_data = await evaluate_page(self.window.page, code)
                         if evaluation_message is not None:
                             message = evaluation_message

@@ -247,3 +247,36 @@ async def test_checkboxes_outside_the_viewport_say_whether_they_are_checked() ->
             "_[:]Locked",
         ]
         assert [action_id for action_id, _ in actions] == ["B1"]
+
+
+TOGGLES = """
+<h1>Top</h1>
+<button aria-pressed="true">Underline</button>
+<div style="height: 2000px"></div>
+<div role="toolbar"><button aria-pressed="true">Bold</button><button aria-pressed="false">Italic</button></div>
+<div role="tablist"><button role="tab" aria-selected="true">Details</button><button role="tab">Reviews</button></div>
+<button aria-expanded="true">Menu</button>
+<button aria-expanded="false">Filters</button>
+<button aria-pressed="true" disabled>Locked</button>
+<div style="height: 400px"></div>
+"""
+
+
+@pytest.mark.asyncio
+async def test_buttons_outside_the_viewport_say_whether_they_are_pressed_selected_or_expanded() -> None:
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(TOGGLES)}")
+        lines, actions = await _observe(session)
+        assert lines == [
+            "_[:]Top",
+            # in view, the pressed state is the action's live state, not in the description
+            "B1[:]<button>Underline</button>",
+            "_[:]<button pressed>Bold</button>",
+            "_[:]<button>Italic</button>",
+            '_[:]<button role="tab" selected>Details</button>',
+            '_[:]<button role="tab">Reviews</button>',
+            "_[:]<button expanded>Menu</button>",
+            "_[:]<button>Filters</button>",
+            "_[:]<button disabled pressed>Locked</button>",
+        ]
+        assert [action_id for action_id, _ in actions] == ["B1"]

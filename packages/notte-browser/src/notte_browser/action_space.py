@@ -85,9 +85,9 @@ INCLUDE_ATTRIBUTES: frozenset[str] = frozenset(
 )
 
 # an element above or below the viewport is rendered with what says what it is (its tag and `role`, an input's
-# `type`, its text, or its name when it has no text, and `checked`), not where it goes: a long page has hundreds of them
-# (`href` and `title` would double the description of a Wikipedia article), and they offer no action until
-# scrolled to
+# `type`, its text, or its name when it has no text, and `checked`, `pressed`, `selected` or `expanded`), not where it
+# goes: a long page has hundreds of them (`href` and `title` would double the description of a Wikipedia article),
+# and they offer no action until scrolled to
 OFFSCREEN_NAME_ATTRIBUTES: frozenset[str] = frozenset(["aria_label", "title", "alt", "placeholder", "value"])
 
 
@@ -128,10 +128,12 @@ def render_node(
         attrs_str = " " + " ".join([f'{key}="{value}"' for key, value in attrs_relevant.items()])
     if node.disabled:
         attrs_str += " disabled"
-    if node.id is None and node.state is not None and node.state.checked:
-        # a checkbox or radio without an id (disabled or off-screen) has no live state in the observation: checked
-        # is said here, like `disabled`
-        attrs_str += " checked"
+    if node.id is None and node.state is not None:
+        # a control without an id (disabled or off-screen) has no live state in the observation: whether it is
+        # checked, pressed, selected or expanded is said here, like `disabled`
+        for flag in ("checked", "pressed", "selected", "expanded"):
+            if getattr(node.state, flag) is True and not (flag == "expanded" and "aria_expanded" in attrs_relevant):
+                attrs_str += f" {flag}"
     return f"<{attrs.tag_name}{attrs_str}>{children_str}</{attrs.tag_name}>"
 
 
