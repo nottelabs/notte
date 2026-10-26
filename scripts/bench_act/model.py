@@ -5,9 +5,9 @@ A task's `check` runs on the final page probe (`runners.PROBE_JS`: URL, text, in
 record (steps, decisions), never on the runner's own claim.
 """
 
-from collections.abc import Callable
-from dataclasses import dataclass, field
-from typing import Any
+from collections.abc import Callable, Collection
+from dataclasses import dataclass, field, replace
+from typing import Any, TypeVar
 from urllib.parse import parse_qs, urlsplit
 
 MAX_STEPS = 15
@@ -18,6 +18,11 @@ FIXTURES = "{fixtures}"
 NEUTRAL_OPERATIONS = ("SCROLL_DOWN", "SCROLL_UP", "WAIT")
 
 Check = Callable[[dict[str, Any], dict[str, Any]], bool]
+# CI tiers, one per task and probe (`ci_tier`): `ci-core` runs on every PR that changes observe or act (local pages and
+# very stable public demos), `ci-extended` on demand (third-party sites, ads, known flakes)
+CI_CORE = "ci-core"
+CI_EXTENDED = "ci-extended"
+TIERS = (CI_CORE, CI_EXTENDED)
 
 
 @dataclass(frozen=True)
@@ -53,6 +58,7 @@ class Probe:
     # choose(): the right option; check(): "YES" / "NO"
     answer: str
     suite: str = ""
+    tags: tuple[str, ...] = field(default=())
 
     @property
     def fixture(self) -> bool:
@@ -105,3 +111,14 @@ def frame_value(final: dict[str, Any], input_id: str) -> str | None:
             if i["id"] == input_id:
                 return i["value"]
     return None
+
+
+_Item = TypeVar("_Item", Task, Probe)
+
+
+def ci_tier(items: list[_Item], core: Collection[str]) -> list[_Item]:
+    """`items` with their CI tier tag: `ci-core` for the names in `core`, `ci-extended` for the others."""
+    unknown = set(core) - {i.name for i in items}
+    if unknown:
+        raise ValueError(f"ci-core names not defined here: {sorted(unknown)}")
+    return [replace(i, tags=(*i.tags, CI_CORE if i.name in core else CI_EXTENDED)) for i in items]

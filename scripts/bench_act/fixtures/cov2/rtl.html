@@ -1,0 +1,14 @@
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>طلب توصيل - مخبز النيل</title>
+<style>body{font-family:sans-serif;margin:24px;max-width:480px}label{display:block;margin-top:10px}</style></head><body>
+<h1>طلب توصيل</h1>
+<form action="rtl-done.html" method="get">
+  <label for="name">الاسم الكامل</label><input id="name" name="name">
+  <label for="phone">رقم الهاتف</label><input id="phone" name="phone" dir="ltr" inputmode="tel">
+  <label for="city">المدينة</label>
+  <select id="city" name="city"><option value="cairo" selected>القاهرة</option><option value="alexandria">الإسكندرية</option>
+    <option value="giza">الجيزة</option><option value="luxor">الأقصر</option></select>
+  <fieldset><legend>وقت التوصيل</legend>
+    <label><input type="radio" name="slot" value="morning" checked> صباحًا</label>
+    <label><input type="radio" name="slot" value="evening"> مساءً</label></fieldset>
+  <p><button type="submit">إرسال الطلب</button></p>
+</form></body></html>

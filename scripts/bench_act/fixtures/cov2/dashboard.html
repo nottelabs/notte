@@ -1,0 +1,38 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Growth dashboard - Lumen</title>
+<style>body{font-family:sans-serif;margin:24px;max-width:860px}.tiles{display:flex;gap:16px}.tile{border:1px solid #ddd;border-radius:8px;padding:12px 16px}
+.tile b{display:block;font-size:24px}svg text{font-size:11px;fill:#555}svg a rect{fill:#4a7bd8}svg a:hover rect{fill:#2a4ba8}</style></head><body>
+<h1>Growth dashboard</h1>
+<p><label for="year">Year</label> <select id="year"><option>2026</option><option>2025</option></select></p>
+<div class="tiles" id="tiles"></div>
+<h2>Monthly sign-ups</h2>
+<svg id="chart" width="820" height="260" role="img" aria-labelledby="chart-t"><title id="chart-t">Monthly sign-ups</title></svg>
+<script>
+// KPI tiles, and a bar chart whose values are only in each bar's tooltip (<title>) and accessible label
+const DATA = {
+  2026: {kpi: [['Revenue', '€1.24M'], ['Active users', '18,402'], ['Churn', '2.1%']],
+         months: [820, 910, 1250, 1100, 980, 1040, 1180, 990, 1010, 0, 0, 0]},
+  2025: {kpi: [['Revenue', '€0.97M'], ['Active users', '14,950'], ['Churn', '2.8%']],
+         months: [610, 640, 700, 760, 690, 720, 1320, 880, 800, 840, 900, 950]},
+};
+const M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+function render(year) {
+  const d = DATA[year];
+  document.getElementById('tiles').innerHTML = d.kpi.map(([k, v]) => `<div class="tile">${k}<b>${v}</b></div>`).join('');
+  const svg = document.getElementById('chart'), max = 1400;
+  svg.querySelectorAll('g').forEach(g => g.remove());
+  const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  let html = '';
+  for (const t of [0, 500, 1000]) html += `<text x="0" y="${230 - t / max * 200}">${t}</text>`;
+  d.months.forEach((v, i) => {
+    if (!v) return;
+    const h = v / max * 200, x = 50 + i * 62;
+    html += `<a href="month.html?year=${year}&month=${i + 1}" aria-label="${FULL[i]} ${year}: ${v.toLocaleString('en')} sign-ups">` +
+      `<rect x="${x}" y="${230 - h}" width="40" height="${h}"><title>${FULL[i]}: ${v.toLocaleString('en')} sign-ups</title></rect></a>` +
+      `<text x="${x + 8}" y="248">${M[i]}</text>`;
+  });
+  g.innerHTML = html; svg.appendChild(g);
+}
+document.getElementById('year').addEventListener('change', e => render(e.target.value));
+render('2026');
+</script></body></html>

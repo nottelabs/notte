@@ -6,7 +6,7 @@ import base64
 from dataclasses import replace
 from typing import Any
 
-from ..model import REAL_MAX_STEPS, Probe, Task, executed, frame_value, one, path, visited
+from ..model import REAL_MAX_STEPS, Probe, Task, ci_tier, executed, frame_value, one, path, visited
 
 GF_HOME = "https://www.google.com/travel/flights?hl=en"
 # one-way Paris -> Tokyo, 13 Nov 2026, as Google's own search page encodes it (captured from a manual search)
@@ -440,3 +440,8 @@ PROBES = [
         "NO",
     ),
 ]
+
+# third-party sites (Google, booking.com, IKEA, GitHub, PyPI, jQuery UI, Spiegel, demoqa, scrapingcourse): extended.
+# Core: Wikipedia and the-internet only. `upload` is extended: act has no file upload, the task fails by design.
+TASKS = ci_tier(TASKS, core={"wiki-hops", "newtab"})
+PROBES = ci_tier(PROBES, core={"turing-born", "turing-bletchley", "hn-more"})

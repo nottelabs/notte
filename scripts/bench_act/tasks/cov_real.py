@@ -11,7 +11,7 @@ from dataclasses import replace
 from typing import Any
 from urllib.parse import unquote
 
-from ..model import REAL_MAX_STEPS, Probe, Task, executed, one, path, visited
+from ..model import REAL_MAX_STEPS, Probe, Task, ci_tier, executed, one, path, visited
 
 
 def _extra(f: dict[str, Any]) -> Any:
@@ -138,7 +138,9 @@ GOAL_FR_DATA = "Cherchez des jeux de données sur la qualité de l'air, puis ouv
 GOAL_FR_RECIPE = "Cherche une recette de crêpes et ouvre une des recettes trouvées."
 
 TOOLSHOP = "https://practicesoftwaretesting.com"
-CLAW_HAMMER = f"{TOOLSHOP}/product/01M5TR4FCSSP6VR0DGWM5AQ9FA"
+# the demo resets its database and with it the product ids: start from the category page, check product names
+HAMMERS = f"{TOOLSHOP}/category/hammer"
+PRODUCT_NAME = "JSON.stringify((document.querySelector('[data-test=product-name]') || {}).innerText || null)"
 APG = "https://www.w3.org/WAI/ARIA/apg/patterns"
 UITAP = "http://uitestingplayground.com"
 DATATABLES = "https://datatables.net/examples/basic_init/zero_configuration.html"
@@ -151,13 +153,15 @@ TASKS = [
         TOOLSHOP + "/",
         "Show only the products in the Hammer category, sort them by price from low to high, then open the cheapest "
         "hammer.",
-        lambda f, _: path(f) == "/product/01M5TR4FCZ1G3VM1PNC8PCKE6Q",  # Thor Hammer, $11.14
+        # Thor Hammer, $11.14
+        lambda f, _: path(f).startswith("/product/") and f.get("extra") == "Thor Hammer",
+        final_js=PRODUCT_NAME,
         tags=("e-commerce", "filter", "select", "angular"),
     ),
     Task(
         "toolshop-qty",
-        CLAW_HAMMER,
-        "Add 3 of this hammer to the cart, then open the cart.",
+        HAMMERS,
+        "Open the Claw Hammer, add 3 of it to the cart, then open the cart.",
         _toolshop_cart_ok,
         final_js=TOOLSHOP_CART,
         tags=("e-commerce", "stepper", "cart", "angular"),
@@ -459,19 +463,13 @@ PROBES = [
     # ---- e-commerce
     Probe(
         "toolshop-price",
-        CLAW_HAMMER,
-        "What is the price of this product?",
+        HAMMERS,
+        "What is the price of the Claw Hammer?",
         ["$11.48", "$13.41", "$12.58", "$11.14"],
         "$11.48",
     ),
-    Probe(
-        "toolshop-brand",
-        CLAW_HAMMER,
-        "Which brand makes this product?",
-        ["MightyCraft Hardware", "ForgeFlex Tools", "Bosch", "Stanley"],
-        "MightyCraft Hardware",
-    ),
-    Probe("toolshop-qty1", CLAW_HAMMER, "Is the quantity set to 1?", None, "YES"),
+    Probe("toolshop-count", HAMMERS, "How many hammers are listed?", ["7", "9", "5", "12"], "7"),
+    Probe("toolshop-cheapest", HAMMERS, "Is the Thor Hammer the cheapest hammer listed?", None, "YES"),
     Probe(
         "demoblaze-price",
         "https://www.demoblaze.com/prod.html?idp_=8",
@@ -584,3 +582,45 @@ PROBES = [
     ),
 ]
 TASKS = [replace(t, max_steps=REAL_MAX_STEPS) for t in TASKS]
+
+# Core: stable demo and docs sites that passed every run. Extended, with the reason:
+# - toolshop-*, demoblaze-*: the demo resets its data; pages observed before their data requests end (bugs 4, 5)
+# - shopcart-size, mui-autocomplete, vue-search (Algolia), datagouv, lemonde, marmiton: third-party, ads, consent
+# - expand-*: ads move and cover the controls (and bug 3 for the checkboxes below the viewport)
+# - uitap-overlapped (bug 11), tables-sort (bug 12, a click handler only), js-confirm (bug 6), mdn-search (bug 2),
+#   apg-datepicker (bug 10): fail until those bugs are fixed
+# - dt-filter, apg-tabs: Jev misses (sorts once and stops; blocks instead of scrolling), the page is read right
+# - todo-angular: Jev picks the unnamed toggle-all checkbox for 'buy milk' in 3 runs of 8
+TASKS = ci_tier(
+    TASKS,
+    core={
+        "uitap-sampleapp",
+        "uitap-textinput",
+        "apg-combobox",
+        "apg-radio",
+        "bootstrap-accordion",
+        "react-select",
+        "pydocs-lang",
+        "dt-page",
+        "todo-vue",
+        "todo-svelte",
+        "ja-wiki",
+        "ar-wiki",
+        "de-wiki-hop",
+    },
+)
+PROBES = ci_tier(
+    PROBES,
+    core={p.name for p in PROBES}
+    - {
+        "toolshop-price",
+        "toolshop-count",
+        "toolshop-cheapest",
+        "demoblaze-price",
+        "shopcart-count",
+        "expand-color",
+        "expand-green",
+        "expand-checkboxes",
+        "expand-name-empty",
+    },
+)

@@ -4,7 +4,7 @@ select, radios and dates, below the fold, iframe, shadow DOM, cookie modal). No 
 
 from typing import Any
 
-from ..model import Probe, Task, one, path, qs, query_ok
+from ..model import Probe, Task, ci_tier, one, path, qs, query_ok
 
 
 def _form_ok(f: dict[str, Any], _: dict[str, Any]) -> bool:
@@ -115,3 +115,7 @@ PROBES = [
     Probe("terms-accepted", "{fixtures}/form.html", "Are the terms of service accepted?", None, "NO"),
     Probe("coupon-applied", "{fixtures}/coupon.html", "Has a coupon been applied to this order?", None, "NO"),
 ]
+
+# local pages: all in the CI core tier
+TASKS = ci_tier(TASKS, core={t.name for t in TASKS})
+PROBES = ci_tier(PROBES, core={p.name for p in PROBES})

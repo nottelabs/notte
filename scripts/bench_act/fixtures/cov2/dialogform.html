@@ -1,0 +1,36 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Team - Northwind</title>
+<style>body{font-family:sans-serif;margin:24px;max-width:600px}#scrim{position:fixed;inset:0;background:#0006}
+[role=dialog]{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:#fff;padding:20px;border-radius:8px;width:360px}
+label{display:block;margin-top:10px}.err{color:#b00020}</style></head><body>
+<h1>Team</h1>
+<ul id="members"><li>Lars Berg · Admin</li></ul>
+<button type="button" id="add">Add member</button>
+<form id="team" action="team-saved.html" method="get"><input type="hidden" name="members" id="members-v">
+  <p><button type="submit">Save team</button></p></form>
+<div id="scrim" hidden></div>
+<div role="dialog" aria-modal="true" aria-labelledby="dlg-h" id="dlg" hidden>
+  <h2 id="dlg-h">Add a team member</h2>
+  <form id="member" novalidate>
+    <label for="m-name">Full name</label><input id="m-name">
+    <label for="m-email">Email</label><input id="m-email" type="email">
+    <label for="m-role">Role</label><select id="m-role"><option value="viewer">Viewer</option><option value="editor">Editor</option>
+      <option value="admin">Admin</option></select>
+    <p class="err" id="m-err" role="alert"></p>
+    <button type="button" id="cancel">Cancel</button> <button type="submit">Add</button>
+  </form>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const members = [['Lars Berg', 'lars@northwind.test', 'admin']];
+const show = v => { $('dlg').hidden = !v; $('scrim').hidden = !v; if (v) $('m-name').focus(); };
+$('add').onclick = () => show(true); $('cancel').onclick = () => show(false);
+$('member').addEventListener('submit', e => {
+  e.preventDefault();
+  if (!$('m-name').value.trim()) { $('m-err').textContent = 'Enter a name.'; return; }
+  if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test($('m-email').value)) { $('m-err').textContent = 'Enter a valid email address.'; return; }
+  members.push([$('m-name').value.trim(), $('m-email').value.trim(), $('m-role').value]);
+  $('members').innerHTML = members.map(([n, , r]) => `<li>${n} · ${r[0].toUpperCase() + r.slice(1)}</li>`).join('');
+  $('member').reset(); $('m-err').textContent = ''; show(false);
+});
+$('team').addEventListener('submit', () => $('members-v').value = members.map(m => m.join(':')).join(';'));
+</script></body></html>

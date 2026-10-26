@@ -1,0 +1,28 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Order history - Packwell</title>
+<style>body{font-family:sans-serif;margin:24px;max-width:640px}li{padding:6px 0;border-bottom:1px solid #eee}</style></head><body>
+<h1>Order history</h1>
+<ul id="orders"></ul>
+<p id="status" aria-live="polite"></p>
+<button type="button" id="more">Load more orders</button>
+<script>
+// a "load more" list: 10 orders at a time; the first page is in the page, the next ones are fetched
+const more = document.getElementById('more'), status = document.getElementById('status');
+let next = 0;
+function render(page) {
+  for (const o of page) {
+    const li = document.createElement('li');
+    li.innerHTML = `<a href="order.html?id=${o.id}">Order #${o.id}</a> · ${o.items} items`;
+    document.getElementById('orders').appendChild(li);
+  }
+  next += page.length; status.textContent = `Showing ${next} of 60 orders`;
+  more.disabled = false; if (next >= 60) more.remove();
+}
+const page = start => Array.from({length: 10}, (_, i) => ({id: 1001 + start + i, items: 3 + ((start + i) % 5)}));
+more.addEventListener('click', async () => {
+  more.disabled = true; status.textContent = 'Loading…';
+  const response = await fetch('orders.json?offset=' + next);
+  await response.json();  // the static file stands for the server's page; its orders are generated here
+  render(page(next));
+});
+render(page(0));
+</script></body></html>

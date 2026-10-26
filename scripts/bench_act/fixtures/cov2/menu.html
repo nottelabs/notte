@@ -1,0 +1,39 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Notepad Online</title>
+<style>body{font-family:sans-serif;margin:0}nav{display:flex;gap:4px;background:#eee;padding:4px 12px}
+.top{position:relative}.top>button,.top>span{padding:6px 12px;display:inline-block;background:none;border:0;font:inherit;cursor:default}
+[role=menu]{position:absolute;top:100%;left:0;background:#fff;border:1px solid #999;min-width:180px;list-style:none;margin:0;padding:4px 0;z-index:5}
+[role=menu] [role=menu]{top:0;left:100%}[role=menuitem],[role=menuitemradio]{padding:6px 12px;position:relative;cursor:pointer;display:block}
+[role=menuitem]:hover,[role=menuitemradio]:hover{background:#def}
+.hover-only>ul{display:none}.hover-only:hover>ul{display:block}.hover-only a{display:block;padding:6px 12px;color:inherit}
+main{padding:24px}</style></head><body>
+<nav aria-label="Application">
+  <div class="top"><button type="button" aria-haspopup="menu" aria-expanded="false" data-menu="file">File</button>
+    <ul role="menu" id="file" hidden><li role="menuitem">New note</li><li role="menuitem">Open…</li></ul></div>
+  <div class="top"><button type="button" aria-haspopup="menu" aria-expanded="false" data-menu="settings">Settings</button>
+    <ul role="menu" id="settings" hidden>
+      <li role="menuitem">Account</li>
+      <li role="menuitem" aria-haspopup="menu" aria-expanded="false" data-menu="display">Display ▸
+        <ul role="menu" id="display" hidden>
+          <li role="menuitemradio" aria-checked="true" data-theme="light">Light theme</li>
+          <li role="menuitemradio" aria-checked="false" data-theme="dark">Dark theme</li>
+          <li role="menuitemradio" aria-checked="false" data-theme="contrast">High contrast</li></ul></li>
+      <li role="menuitem">Keyboard shortcuts</li></ul></div>
+  <!-- opens on mouse hover only (CSS :hover), like many site menus: there is nothing to click -->
+  <div class="top hover-only"><span>Company</span>
+    <ul class="links"><li><a href="about.html">About us</a></li><li><a href="careers.html?from=menu">Careers</a></li>
+      <li><a href="press.html">Press</a></li></ul></div>
+</nav>
+<main><h1>Untitled note</h1><p>Start typing…</p></main>
+<script>
+// click (or hover) opens a menu; a submenu opens on click or hover; a theme item applies the theme
+function open(trigger, show) { const m = document.getElementById(trigger.dataset.menu); m.hidden = !show;
+  trigger.setAttribute('aria-expanded', String(show)); }
+document.querySelectorAll('[data-menu]').forEach(t => {
+  // a click opens (the pointer's mouseenter may have opened it already); a click outside closes
+  t.addEventListener('click', e => { if (e.target !== t) return; e.stopPropagation(); open(t, true); });
+  t.addEventListener('mouseenter', () => open(t, true));
+});
+document.querySelectorAll('[data-theme]').forEach(i => i.addEventListener('click', e => { e.stopPropagation();
+  location.href = 'menu-done.html?theme=' + i.dataset.theme; }));
+document.addEventListener('click', e => { if (!e.target.closest('nav')) document.querySelectorAll('[data-menu]').forEach(t => open(t, false)); });
+</script></body></html>
