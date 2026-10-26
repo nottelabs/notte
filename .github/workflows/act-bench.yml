@@ -2,7 +2,8 @@ name: act bench
 
 # The act / choose / check benchmark (scripts/bench_act) on local fixture pages and public sites, head against
 # base. Pass/fail rules: scripts/bench_act/rules.py. Runs on PRs labelled `act-bench` or changing observe or act,
-# and on demand. Forks get no secrets: the benchmark is skipped.
+# and on demand. A PR labelled `act-bench-all` runs every tier, not only ci-core. Forks get no secrets: the
+# benchmark is skipped.
 on:
   workflow_dispatch:
     inputs:
@@ -77,7 +78,7 @@ jobs:
           HEAD_REF: ${{ inputs.head_ref }}
           BASE_REF: ${{ inputs.base_ref }}
           SUITES: ${{ inputs.suites }}
-          # PRs run the core tier; a manual run picks its tier (`all`: both)
+          # PRs run the core tier (every tier with the `act-bench-all` label); a manual run picks its tier (`all`: both)
           TAGS: ${{ inputs.tags || 'ci-core' }}
           RUNNERS: ${{ inputs.runners || 'notte-local,probe-local-jev' }}
           REPEATS: ${{ inputs.repeats || '1' }}
@@ -90,8 +91,8 @@ jobs:
           if [ "$EVENT" = workflow_dispatch ]; then
             run=true
           elif [ "$ACTION" = labeled ]; then
-            if [ "$LABEL" = act-bench ]; then run=true; fi
-          elif jq -e 'index("act-bench")' <<<"$PR_LABELS" >/dev/null; then
+            if [ "$LABEL" = act-bench ] || [ "$LABEL" = act-bench-all ]; then run=true; fi
+          elif jq -e 'index("act-bench") or index("act-bench-all")' <<<"$PR_LABELS" >/dev/null; then
             run=true
           else
             files=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --paginate --jq '.[].filename')
@@ -113,6 +114,7 @@ jobs:
 
           [[ "$SUITES" =~ ^[a-z0-9,_-]*$ && "$RUNNERS" =~ ^[a-z0-9,-]+$ && "$TAGS" =~ ^[a-z0-9,-]+$ ]] || {
             echo "::error::bad suites, tags or runners"; exit 1; }
+          if [ "$EVENT" != workflow_dispatch ] && jq -e 'index("act-bench-all")' <<<"$PR_LABELS" >/dev/null; then TAGS=all; fi
           if [ "$TAGS" = all ]; then TAGS=""; fi
           [[ "$REPEATS" =~ ^[1-5]$ && "$SHARDS" =~ ^[1-8]$ ]] || { echo "::error::repeats must be 1-5 and shards 1-8"; exit 1; }
           sha() { gh api "repos/$GITHUB_REPOSITORY/commits/$1" --jq .sha; }
