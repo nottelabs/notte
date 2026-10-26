@@ -7,6 +7,8 @@ Runners:
 - notte-local-llm: the same with the LLM decider
 - notte-local-html: notte-local with `NOTTE_ACT_LABELS=html`
 - probe-local-jev / probe-local-llm: `achoose()` / `acheck()` questions with known answers
+- notte-local-scripted / probe-local-scripted: `ScriptedDecider`, no model and no key: times the browser side
+  (session, navigation, observe, execute) and the CI setup; its outcomes mean nothing
 """
 
 import json
@@ -16,7 +18,7 @@ from typing import Any
 
 import notte_llm.act as A
 from notte_browser.session import NotteSession
-from notte_core.act import Answers, DecisionState, Question, WriteContext
+from notte_core.act import Answer, Answers, DecisionState, Question, WriteContext
 from notte_core.act.loop import _stop  # pyright: ignore[reportPrivateUsage]
 
 from .model import Probe, Task
@@ -76,8 +78,36 @@ def _top(probabilities: dict[str, float], n: int = 3) -> dict[str, float]:
     return dict(sorted(probabilities.items(), key=lambda kv: -kv[1])[:n])
 
 
+class ScriptedDecider:
+    """No model: scrolls down `SCROLLS` times (when the page scrolls), then answers DONE; every other question gets
+    its first option."""
+
+    SCROLLS = 2
+
+    def __init__(self) -> None:
+        self.operations = 0
+
+    async def choose(self, state: DecisionState, questions: dict[str, Question]) -> Answers:
+        answers = {}
+        for key, question in questions.items():
+            options = list(question.criteria)
+            choice = options[0]
+            if key == "operation":
+                self.operations += 1
+                scroll = self.operations <= self.SCROLLS and "SCROLL_DOWN" in options
+                choice = "SCROLL_DOWN" if scroll else "DONE"
+            # act checks a probability for every offered option
+            probabilities = {option: float(option == choice) for option in options}
+            answers[key] = Answer(choice=choice, probabilities=probabilities, confidence=1.0)
+        return Answers(answers=answers, model="scripted")
+
+    async def write(self, context: WriteContext) -> str | None:
+        return None
+
+
 def notte_decider(kind: str) -> Any:
-    """The decider of `default_decider()` for `kind` (jev / llm), recording every model call."""
+    """The decider of `default_decider()` for `kind` (jev / llm), or `ScriptedDecider` (scripted), recording every
+    model call."""
     if not getattr(A, "_bench_patched", False):
         complete = A._complete
 
@@ -105,8 +135,10 @@ def notte_decider(kind: str) -> Any:
         setattr(A, "_bench_patched", True)
 
     writer = A.LlmWriter(WRITER, fallback_model=LLM_MODEL)
-    if kind == "jev":
-        inner: Any = A.JevDecider(route="openrouter", writer=writer)
+    if kind == "scripted":
+        inner: Any = ScriptedDecider()
+    elif kind == "jev":
+        inner = A.JevDecider(route="openrouter", writer=writer)
     else:
         inner = A.LlmDecider(LLM_MODEL, writer=writer)
 

@@ -235,3 +235,27 @@ def test_gf_search_decodes_google_flights_urls() -> None:
     [leg] = search["legs"]
     assert leg["date"] == "2026-11-13" and "/m/05qtj" in leg["from"] and "/m/07dfk" in leg["to"]
     assert gf_search("https://www.google.com/travel/flights") is None
+
+
+def test_scripted_decider_scrolls_then_is_done_without_a_model() -> None:
+    import asyncio
+
+    from notte_core.act import DecisionState, PageState, Question
+
+    from scripts.bench_act.runners import ScriptedDecider
+
+    decider = ScriptedDecider()
+    state = DecisionState(page=PageState(url="https://a.test", title="a", text=""))
+    questions = {
+        "operation": Question(criteria={"CLICK": "click", "SCROLL_DOWN": "scroll", "DONE": "done"}),
+        "click_target": Question(criteria={"I1": "a button", "I2": "a link"}),
+    }
+    ops = [asyncio.run(decider.choose(state, questions)).answers["operation"].choice for _ in range(4)]
+    assert ops == ["SCROLL_DOWN", "SCROLL_DOWN", "DONE", "DONE"]
+    answers = asyncio.run(decider.choose(state, questions))
+    assert answers.model == "scripted" and answers.answers["click_target"].choice == "I1"
+
+
+def test_scripted_runners_are_never_judged() -> None:
+    run = {**_task_run("f1", "head", False), "runner": "notte-local-scripted"}
+    assert rules.judge([run], [], [], with_base=False).ok
