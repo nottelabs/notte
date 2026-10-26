@@ -1,4 +1,5 @@
 import ast
+import asyncio
 from collections.abc import AsyncIterator
 from pathlib import Path
 from typing import cast
@@ -37,6 +38,65 @@ async def page() -> AsyncIterator[Page]:
 async def scroll(page: Page, action: ScrollDownAction | ScrollUpAction) -> bool:
     window = BrowserWindow(page, BrowserWindowOptions.from_request(LocalSessionStartRequest()))
     return await execute_browser_action(window, action)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("moved", [False, True])
+async def test_scroll_deadline_bounds_a_blocked_read(monkeypatch: pytest.MonkeyPatch, moved: bool) -> None:
+    monkeypatch.setattr(execution_module, "SCROLL_CAP_MS", 50)
+    reads = 0
+    blocked = asyncio.Event()
+
+    async def read() -> tuple[bool, list[list[float | None]]]:
+        nonlocal reads
+        reads += 1
+        if reads == 1:
+            return moved, [[0]]
+        _ = await blocked.wait()
+        raise AssertionError("The blocked read must be cancelled")
+
+    async with asyncio.timeout(0.5):
+        assert await execution_module._scroll_ended(read) is moved
+    assert reads == 2
+
+
+@pytest.mark.asyncio
+async def test_scroll_does_not_hide_a_reader_timeout() -> None:
+    async def read() -> tuple[bool, list[list[float | None]]]:
+        raise TimeoutError("reader failed")
+
+    with pytest.raises(TimeoutError, match="reader failed"):
+        _ = await execution_module._scroll_ended(read)
+
+
+@pytest.mark.asyncio
+async def test_targeted_scroll_boundary_deadline(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(execution_module, "SCROLL_START_MS", 0)
+    monkeypatch.setattr(execution_module, "SCROLL_CAP_MS", 50)
+    blocked = asyncio.Event()
+    boundary_calls = 0
+
+    async def evaluate(expression: str, _delta: float | None = None) -> float | bool | None:
+        nonlocal boundary_calls
+        if expression == execution_module._SCROLL_BOUNDARY:
+            boundary_calls += 1
+            if boundary_calls > 1:
+                _ = await blocked.wait()
+            return False
+        if expression == "element => element.scrollTop":
+            return 0
+        return None
+
+    target = AsyncMock()
+    target.evaluate.side_effect = evaluate
+    window = MagicMock()
+    window.page.evaluate = AsyncMock()
+    window.page.locator.return_value.evaluate_handle = AsyncMock(return_value=target)
+    async with asyncio.timeout(0.5):
+        with pytest.raises(ScrollActionFailedError):
+            _ = await execute_browser_action(window, ScrollDownAction(selector="#panel", amount=100))
+    assert boundary_calls == 2
+    target.dispose.assert_awaited_once()
 
 
 @pytest.mark.asyncio
@@ -204,7 +264,8 @@ async def test_targeted_scroll_rejects_missing_selector(page: Page, monkeypatch:
 @pytest.mark.parametrize("outcome", ["moved", "no-op", "setup-error"])
 async def test_scroll_releases_trackers_on_success_and_failure(outcome: str) -> None:
     handle = AsyncMock()
-    handle.evaluate.return_value = outcome == "moved"
+    # whether the wheel scrolled, and where the scroll is
+    handle.evaluate.return_value = [outcome == "moved", [0]]
     frame = MagicMock()
     frame.evaluate_handle = AsyncMock(return_value=handle)
     window = MagicMock()
@@ -230,7 +291,7 @@ async def test_scroll_releases_trackers_on_success_and_failure(outcome: str) -> 
 @pytest.mark.parametrize("phase", ["setup", "check"])
 async def test_scroll_ignores_unrelated_destroyed_frame(phase: str) -> None:
     handle = AsyncMock()
-    handle.evaluate.return_value = True
+    handle.evaluate.return_value = [True, [0]]
     good_frame = MagicMock()
     good_frame.evaluate_handle = AsyncMock(return_value=handle)
     lost_frame = MagicMock()

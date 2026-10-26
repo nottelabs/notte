@@ -1,4 +1,5 @@
 import asyncio
+from collections.abc import Awaitable, Callable
 from contextlib import suppress
 from typing import Literal
 
@@ -56,6 +57,7 @@ from notte_browser.files import download_file, upload_file
 from notte_browser.form_filling import FormFiller
 from notte_browser.js import script
 from notte_browser.resolution import resolve_selectors
+from notte_browser.settle import LONG_GRACE_MS, PageSettle
 from notte_browser.window import BrowserWindow
 
 _BLUR_ACTIVE_ELEMENT = script("blur_active_element.js")
@@ -104,6 +106,43 @@ _SCROLL_TRACKER = script("scroll_tracker.js")
 
 # Page-side implementation: js/scroll_boundary.js
 _SCROLL_BOUNDARY = script("scroll_boundary.js")
+
+# A scroll that has not started `SCROLL_START_MS` after the wheel failed; one that started has ended once its
+# position is the same `SCROLL_STABLE_MS` apart (a smooth scroll, a scroll-snap), at most `SCROLL_CAP_MS` after it.
+SCROLL_START_MS = 200
+SCROLL_STABLE_MS = 50
+SCROLL_POLL_MS = 25
+SCROLL_CAP_MS = 1_000
+
+
+async def _scroll_ended(
+    read: Callable[[], Awaitable[tuple[bool, list[list[float | None]]]]], *, deadline: float | None = None
+) -> bool:
+    """Whether a scroll happened, once it has ended or failed to start. `read` returns whether the scroll started,
+    and the positions it moves."""
+    loop = asyncio.get_running_loop()
+    start = loop.time()
+    last: list[list[float | None]] | None = None
+    stable_since = start
+    scrolled = False
+    scope = asyncio.timeout_at(deadline if deadline is not None else start + SCROLL_CAP_MS / 1000)
+    try:
+        async with scope:
+            while True:
+                scrolled, positions = await read()
+                now = loop.time()
+                if positions != last:
+                    last, stable_since = positions, now
+                elapsed_ms = (now - start) * 1000
+                if scrolled and (now - stable_since) * 1000 >= SCROLL_STABLE_MS:
+                    return True
+                if (not scrolled and elapsed_ms >= SCROLL_START_MS) or elapsed_ms >= SCROLL_CAP_MS:
+                    return scrolled
+                await asyncio.sleep(SCROLL_POLL_MS / 1000)
+    except TimeoutError:
+        if not scope.expired():
+            raise
+        return scrolled
 
 
 def _scroll_context_disappeared(frame: Frame, error: Error) -> bool:
@@ -203,10 +242,23 @@ async def _scroll_target(window: BrowserWindow, action: ScrollUpAction | ScrollD
         # Address the container directly: a wheel at its center can hit a nested
         # scroller, and hovering an offscreen target can move its parents.
         await target.evaluate("(element, delta) => element.scrollBy({top: delta, behavior: 'instant'})", delta)
-        await window.page.wait_for_timeout(200)
-        after = await target.evaluate("element => element.scrollTop")
-        if before == after and not await target.evaluate(_SCROLL_BOUNDARY, delta):
-            raise ScrollActionFailedError()
+
+        async def read() -> tuple[bool, list[list[float | None]]]:
+            position: float = await target.evaluate("element => element.scrollTop")
+            return position != before, [[position]]
+
+        deadline = asyncio.get_running_loop().time() + SCROLL_CAP_MS / 1000
+        if not await _scroll_ended(read, deadline=deadline):
+            scope = asyncio.timeout_at(deadline)
+            try:
+                async with scope:
+                    boundary = await target.evaluate(_SCROLL_BOUNDARY, delta)
+            except TimeoutError as error:
+                if not scope.expired():
+                    raise
+                raise ScrollActionFailedError() from error
+            if not boundary:
+                raise ScrollActionFailedError()
     finally:
         with suppress(Error):
             await target.dispose()
@@ -227,6 +279,44 @@ def _can_create_tab(action: BaseAction) -> bool:
             return True
         case _:
             return False
+
+
+def _settles(action: BaseAction) -> bool:
+    """Whether the page's reaction to an action is waited for (`notte_browser.settle`): the actions that can start
+    a navigation, and a scroll (what it loads). A goto waits for the page's load."""
+    return isinstance(
+        action,
+        (
+            InteractionAction,
+            PressKeyAction,
+            GoBackAction,
+            GoForwardAction,
+            ReloadAction,
+            ScrollUpAction,
+            ScrollDownAction,
+        ),
+    )
+
+
+async def _settle(settle: PageSettle, action: BaseAction, url: str, *, verbose: bool) -> None:
+    """Until the page has reacted to `action`, which ran on `url`."""
+    match action:
+        # a new page is waited for until its requests are done (the network going idle), whatever submitted it
+        case ClickAction() | PressKeyAction() | InteractionAction(press_enter=True):
+            await settle.wait(grace_ms=LONG_GRACE_MS, document="requests")
+        case ScrollUpAction() | ScrollDownAction():
+            # the scroll has ended: what it starts loading right away (more items, lazy content) is waited for
+            await settle.wait()
+        case GoBackAction() | GoForwardAction():
+            await settle.wait(document="loaded")
+        case ReloadAction():
+            await settle.wait(document="requests")
+        case InteractionAction() if settle.page.url != url:
+            if verbose:
+                logger.info(f"🪦 Page navigation detected for action {action.id}, waiting for the page to settle")
+            await settle.wait(grace_ms=0, document="requests")
+        case _:
+            pass
 
 
 @profiler.profiled("BrowserController.execute_browser_action", service_name="execution")
@@ -256,19 +346,18 @@ async def execute_browser_action(window: BrowserWindow, action: BaseAction, *, v
             await window.page.close()
         case WaitAction(time_ms=time_ms):
             await window.page.wait_for_timeout(time_ms)
+        # the load is waited for by `execute`, which settles the page
         case GoBackAction():
-            await window.goto_and_wait(operation="back")
+            await window.goto_and_wait(operation="back", wait_until="commit")
         case GoForwardAction():
-            await window.goto_and_wait(operation="forward")
+            await window.goto_and_wait(operation="forward", wait_until="commit")
         case ReloadAction():
             _ = await window.page.reload()
-            await window.long_wait()
         case PressKeyAction(key=key):
             await window.page.keyboard.press(key)
         case ScrollUpAction(amount=amount) | ScrollDownAction(amount=amount):
             # blur the active element to prevent scroll from being blocked by the element
             await window.page.evaluate(_BLUR_ACTIVE_ELEMENT)
-            await window.page.wait_for_timeout(200)
             if action.selector is not None:
                 await _scroll_target(window, action)
                 return True
@@ -287,17 +376,24 @@ async def execute_browser_action(window: BrowserWindow, action: BaseAction, *, v
                 await window.page.mouse.wheel(
                     delta_x=0, delta_y=(-amount if isinstance(action, ScrollUpAction) else amount)
                 )
-                await window.page.wait_for_timeout(200)
-                scrolled = False
-                for frame, tracker in trackers:
-                    try:
-                        if await tracker.evaluate("tracker => tracker.hasScrolled()"):
-                            scrolled = True
-                            break
-                    except Error as error:
-                        if not _scroll_context_disappeared(frame, error):
-                            raise
-                if not scrolled:
+
+                async def read() -> tuple[bool, list[list[float | None]]]:
+                    scrolled = False
+                    positions: list[list[float | None]] = []
+                    for frame, tracker in trackers:
+                        try:
+                            moved, position = await tracker.evaluate(
+                                "tracker => [tracker.hasScrolled(), tracker.position()]"
+                            )
+                        except Error as error:
+                            if not _scroll_context_disappeared(frame, error):
+                                raise
+                            continue
+                        scrolled = scrolled or bool(moved)
+                        positions.append(position)
+                    return scrolled, positions
+
+                if not await _scroll_ended(read):
                     logger.info("🪦 Scroll action did not move the page or a scroll container. Failing action...")
                     raise ScrollActionFailedError()
             finally:
@@ -321,15 +417,13 @@ async def execute_interaction_action(
     storage: BaseStorage | None = None,
     verbose: bool = False,
 ) -> bool:
-    """Interact with an element within `action.timeout`, then let a navigation it started settle.
+    """Interact with an element within `action.timeout`.
 
-    The timeout covers locating the element and the interaction itfallbacks included.
-    Waiting for the page a successful interaction navigated to is best-effort: a slow load
-    is logged, it does not fail the action.
+    The timeout covers locating the element and the interaction itself, fallbacks included.
+    The page's reaction (a navigation it started) is waited for by `execute`, best-effort.
     """
     if action.selectors is None:
         raise ValueError(f"Selector is required for {action.name()}")
-    original_url = window.page.url
     deadline = asyncio.get_running_loop().time() + action.timeout / 1000
     scope = asyncio.timeout_at(deadline)
     try:
@@ -339,13 +433,6 @@ async def execute_interaction_action(
         if not scope.expired():
             raise
         raise NotteTimeoutError(message=f"Action timed out after {action.timeout}ms") from e
-    if original_url != window.page.url:
-        if verbose:
-            logger.info(f"🪦 Page navigation detected for action {action.id} waiting for networkidle")
-        try:
-            await window.long_wait()
-        except Error as e:
-            logger.warning(f"🪦 Page did not settle after action {action.id} navigated: {e}")
     return True
 
 
@@ -538,37 +625,89 @@ async def execute(
     storage: BaseStorage | None = None,
     verbose: bool = False,
 ) -> bool:
-    context = window.page.context
-    num_pages = len(context.pages)
+    """Execute `action`, then wait until the page has reacted to it (`notte_browser.settle`): a navigation it started
+    has rendered or loaded, a new tab it opened (after a click, a goto or a key press) is switched to and waited for.
+    """
+    page = window.page
+    context = page.context
+    tabs = list(context.pages)
+    url = page.url
+    # tracked from right before the action
+    settle = await PageSettle.start(page, tabs=_can_create_tab(action)) if _settles(action) else None
     retval = True
-    match action:
-        case InteractionAction():
-            retval = await execute_interaction_action(window, action, prev_snapshot, storage=storage, verbose=verbose)
-        case CompletionAction(success=success, answer=answer):
-            if verbose:
-                logger.info(
-                    f"Completion action: status={'success' if success else 'failure'} with success = {success}, answer = {answer}"
-                )
-        case EvaluateJsAction():
-            if verbose:
-                logger.error("EvaluateJs action should not be executed inside the controller")
-            pass
-        case HelpAction():
-            if verbose:
-                logger.error("Help action should not be executed inside the controller")
-            retval = False
-        case BrowserAction():
-            retval = await execute_browser_action(window, action, verbose=verbose)
-        case _:
-            raise ValueError(f"Unsupported action type: {type(action)}")
-    # Only check for new tabs if the action can potentially create one
-    if _can_create_tab(action):
-        # add short wait before we check for new tabs to make sure that
-        # the page has time to be created
-        await window.short_wait()
-        if len(context.pages) != num_pages:
-            if verbose:
-                id_str = f" id={action.id}" if isinstance(action, InteractionAction) else ""
-                logger.info(f"🪦 Action {action.type}{id_str} resulted in a new tab, switched to it...")
-            await window.switch_tab(-1, verbose=verbose)
+    closed_during_click: Error | None = None
+    try:
+        match action:
+            case InteractionAction():
+                try:
+                    retval = await execute_interaction_action(
+                        window, action, prev_snapshot, storage=storage, verbose=verbose
+                    )
+                except Error as error:
+                    # A click handler can close its own tab before the driver acknowledges the click. Continue
+                    # only if the action produces a live replacement; otherwise preserve the original error.
+                    if (
+                        not isinstance(action, ClickAction)
+                        or not page.is_closed()
+                        or "Target page, context or browser has been closed" not in str(error)
+                    ):
+                        raise
+                    closed_during_click = error
+            case CompletionAction(success=success, answer=answer):
+                if verbose:
+                    logger.info(
+                        f"Completion action: status={'success' if success else 'failure'} with success = {success}, answer = {answer}"
+                    )
+            case EvaluateJsAction():
+                if verbose:
+                    logger.error("EvaluateJs action should not be executed inside the controller")
+            case HelpAction():
+                if verbose:
+                    logger.error("Help action should not be executed inside the controller")
+                retval = False
+            case BrowserAction():
+                retval = await execute_browser_action(window, action, verbose=verbose)
+            case _:
+                raise ValueError(f"Unsupported action type: {type(action)}")
+        if settle is not None:
+            settle.acted()
+            if retval:
+                await _settle(settle, action, url, verbose=verbose)
+        if closed_during_click is not None and not any(
+            tab not in tabs and not tab.is_closed() for tab in context.pages
+        ):
+            raise closed_during_click
+        if isinstance(action, (GotoAction, GotoNewTabAction)):
+            # a goto is not settled: it keeps the fixed wait before the new-tab check, which callers that observe
+            # right after it rely on (a page its scripts render after its load)
+            await window.short_wait()
+        # Only check for new tabs if the action can potentially create one
+        # a tab can open while another closes: the count does not change
+        opened = any(tab not in tabs for tab in context.pages)
+        if _can_create_tab(action) and (len(context.pages) != len(tabs) or opened) and len(context.pages) > 0:
+            last = context.pages[-1]
+            # Selection can happen automatically when the opener closes. Readiness is independent of selection.
+            # A goto_new_tab already loaded its own new page.
+            if last not in tabs and not isinstance(action, GotoNewTabAction):
+                tab = settle.tab(last) if settle is not None else PageSettle(last, None, tabs=False)
+                try:
+                    await tab.wait(document="requests")
+                finally:
+                    await tab.close()
+            if last is not window.page:
+                if verbose:
+                    id_str = f" id={action.id}" if isinstance(action, InteractionAction) else ""
+                    logger.info(f"🪦 Action {action.type}{id_str} resulted in a new tab, switched to it...")
+                # A target=_blank download can briefly create a page that closes once the download starts.
+                if not last.is_closed():
+                    try:
+                        await last.bring_to_front()
+                    except Error:
+                        if not last.is_closed():
+                            raise
+                    else:
+                        window.page = last
+    finally:
+        if settle is not None:
+            await settle.close()
     return retval
