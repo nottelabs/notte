@@ -131,9 +131,10 @@ class NodeRole(Enum):
         return value
 
     @staticmethod
-    def from_element(tag_name: str, attributes: Mapping[str, str]) -> "NodeRole | str":
+    def from_element(tag_name: str, attributes: Mapping[str, str], *, is_editing_host: bool = True) -> "NodeRole | str":
         """The role of an HTML element: its `role` attribute if set, else `textbox` for a `contenteditable`
-        element, else the implicit role of its tag.
+        editing host, else the implicit role of its tag. Pass `is_editing_host=False` for an editable
+        descendant whose surrounding editor owns the fill action.
 
         A `role` attribute that is not a `NodeRole` is returned as is (a string).
         """
@@ -146,7 +147,11 @@ class NodeRole(Enum):
         if tag == "input":
             return _INPUT_TYPE_ROLES.get(attributes.get("type", "text").lower(), NodeRole.TEXTBOX)
         # a rich text editor's root (`contenteditable`) is a text field; a `<body>` in design mode stays the page
-        if tag != "body" and attributes.get("contenteditable", "false").lower() in _CONTENTEDITABLE_ON:
+        if (
+            tag != "body"
+            and is_editing_host
+            and attributes.get("contenteditable", "false").lower() in _CONTENTEDITABLE_ON
+        ):
             return NodeRole.TEXTBOX
         role = _TAG_ROLES.get(tag)
         if role is not None:

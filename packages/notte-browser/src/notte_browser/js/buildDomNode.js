@@ -2130,6 +2130,7 @@
 		const xpath = getXPathTree(node);
 		const nodeData = {
 			tagName: tagNameOf(node).toLowerCase(),
+			isEditingHost: isEditingHost(node),
 			attributes: {},
 			...payloadXPath(xpath, parentXPath),
 			children: [],

@@ -68,6 +68,10 @@ form's own (`<input name="children">` makes `form.children` that input). The
 same goes for `document.*` in the page's own world (`<img name="body">`).
 `tests/browser/test_dom_clobbered_properties.py` covers it.
 
+Only an editing host gets the implicit `contenteditable` textbox role. Carry the
+host flag from the DOM script into both role classification and duplicate detection;
+editable descendants with their own click handlers must retain their click actions.
+
 ## Public API
 
 - Don't remove or rename public methods without a deprecation first: keep the

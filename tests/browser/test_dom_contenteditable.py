@@ -55,6 +55,29 @@ async def test_nested_editor_content_does_not_regain_an_action(monkeypatch: pyte
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("editable", ["", "true", "plaintext-only"])
+async def test_nested_editable_click_handler_keeps_its_click_action(editable: str) -> None:
+    """An editable descendant with its own handler remains clickable beside the fillable editor."""
+    page = f"""<div class="editor" contenteditable="true">
+      <p>Notes</p><span contenteditable="{editable}"
+        onclick="document.body.dataset.clicked = 'yes'">Open details</span>
+    </div>"""
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+        obs = await session.aobserve()
+        assert [(action.id, action.type) for action in obs.space.interaction_actions] == [
+            ("I1", "fill"),
+            ("M1", "click"),
+        ]
+        result = await session.aexecute(type="click", id="M1")
+        assert result.success, result.message
+        assert await session.window.page.locator("body").get_attribute("data-clicked") == "yes"
+        result = await session.aexecute(type="fill", id="I1", value="Replacement notes")
+        assert result.success, result.message
+        assert await session.window.page.locator(".editor").inner_text() == "Replacement notes"
+
+
+@pytest.mark.asyncio
 async def test_contenteditable_cut_by_the_viewport_is_a_field_in_view() -> None:
     async with NotteSession(headless=True) as session:
         _ = await session.window.page.goto(f"data:text/html,{quote(CUT_SPACER + EDITOR)}")
