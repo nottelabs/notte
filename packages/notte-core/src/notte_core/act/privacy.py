@@ -12,6 +12,8 @@ from notte_core.act.space import ObservedPage
 # whitespace inside a protected value as the page may show it: spaces, line breaks, or a break onto the next line of
 # the rendered page, after that line's element prefix (`_[:]`, `I1[:]`)
 _LINE_BREAK = r"(?:\n[ \t]*(?:[A-Z]\d+|_)\[:\]|\s)+"
+# observe() renders attributes with a 60-character cap followed by an ellipsis.
+_CUT_ATTRIBUTE = re.compile(r'(\b[\w-]+=")([^"\n]*)\.\.\.(?=")')
 
 
 @dataclass(frozen=True)
@@ -57,7 +59,9 @@ class ActPrivacy:
         """`text` for a live field value the browser cut (`ElementState.value_truncated`): a protected value
         can also start at the cut, with only its first characters visible. Those are masked too (from 3
         characters: shorter starts match ordinary text too often)."""
-        value = self.text(value)
+        return self._cut_suffix(self.text(value))
+
+    def _cut_suffix(self, value: str) -> str:
         for literal in sorted(self.replacements, key=len, reverse=True):
             for length in range(min(len(literal), len(value)), min(3, len(literal)) - 1, -1):
                 if value.endswith(literal[:length]):
@@ -67,6 +71,9 @@ class ActPrivacy:
     def text(self, value: str) -> str:
         if not self.replacements:
             return value
+        # A rendered attribute can end partway through a protected literal, including when a URL prefix
+        # precedes it. Mask that suffix before models see the already-shortened HTML or labels read from it.
+        value = _CUT_ATTRIBUTE.sub(lambda match: match[1] + self._cut_suffix(match[2]) + "...", value)
         # One pass avoids replacing parts of placeholders emitted by another replacement.
         value = self._compiled().literals.sub(lambda match: self.replacements.get(match.group(), match.group()), value)
         return self._multiline(value)
