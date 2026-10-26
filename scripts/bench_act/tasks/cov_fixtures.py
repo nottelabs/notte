@@ -229,8 +229,8 @@ PROBES = [
 # several widgets per task: more steps than the one-control fixtures
 TASKS = [replace(t, max_steps=REAL_MAX_STEPS) for t in TASKS]
 
-# local pages: core. f-trip and f-webcomp (bugs 1 and 2 in the bench bug list) and the f-trip-adults and f-drawer-open
-# probes (bugs 1 and 9) fail until those fixes land: they stay in core as their regression tests. Extended:
-# f-webcomp-speed, which Jev misses with the value in the element's label (a decider miss, not an observe bug).
+# local pages: core. f-trip, f-webcomp and the f-trip-adults probe are the regression tests of bugs 1 and 2 in the
+# bench bug list (fixed). Extended: f-webcomp-speed, which Jev misses with the value in the element's label (a decider
+# miss, not an observe bug), and the f-drawer-open probe until the fix of bug 9 (a closed drawer's text) is on main.
 TASKS = ci_tier(TASKS, core={t.name for t in TASKS})
-PROBES = ci_tier(PROBES, core={p.name for p in PROBES} - {"f-webcomp-speed"})
+PROBES = ci_tier(PROBES, core={p.name for p in PROBES} - {"f-webcomp-speed", "f-drawer-open"})
