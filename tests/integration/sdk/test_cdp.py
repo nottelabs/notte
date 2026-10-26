@@ -1,7 +1,7 @@
 import tempfile
 
 from notte_sdk.client import NotteClient
-from patchright.sync_api import sync_playwright
+from patchright.sync_api import Route, sync_playwright
 
 
 def test_cdp_connection():
@@ -13,7 +13,21 @@ def test_cdp_connection():
         with sync_playwright() as p:
             browser = p.chromium.connect_over_cdp(cdp_url)
             page = browser.contexts[0].pages[0]
-            _ = page.goto("https://www.google.com")
+            fixture_url = "https://cdp-fixture.notte.test/"
+
+            def serve_fixture(route: Route) -> None:
+                route.fulfill(
+                    status=200,
+                    content_type="text/html",
+                    body="<!doctype html><title>CDP fixture</title><h1>Connected over CDP</h1>",
+                )
+
+            page.route(fixture_url, serve_fixture)
+            response = page.goto(fixture_url)
+            assert response is not None and response.status == 200
+            assert page.url == fixture_url
+            assert page.title() == "CDP fixture"
+            assert page.locator("h1").inner_text() == "Connected over CDP"
             with tempfile.TemporaryDirectory() as tmp_dir:
                 screenshot = page.screenshot(path=f"{tmp_dir}/screenshot.png")
             assert screenshot is not None

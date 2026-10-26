@@ -262,6 +262,7 @@ class BrowserWindow:
         return self._page.context.pages
 
     async def close(self) -> None:
+        await self._forget_new_tabs()
         if self.on_close is not None:
             await self.on_close()
         await self._close_all_cdp_sessions()
@@ -299,25 +300,25 @@ class BrowserWindow:
 
     async def switch_to_new_tab(self, *, verbose: bool = False) -> None:
         """Switch to the last tab opened since the last action that is still open (`watch_new_tabs`), and wait for it
-        as `execute` waits for a tab an action opens. The tabs are not watched any more."""
+        as `execute` waits for a tab an action opens. Keep watching until a tab is consumed or another action starts."""
         opened = [(tab, settle) for tab, settle in self._new_tabs.items() if not tab.is_closed()]
-        if len(opened) == 0 or opened[-1][0] is self.page:
-            await self._forget_new_tabs()
+        if len(opened) == 0:
             return
         tab, settle = opened[-1]
         del self._new_tabs[tab]
         await self._forget_new_tabs()
         try:
-            try:
-                await tab.bring_to_front()
-            except PlaywrightError:
-                # it closed meanwhile (a download popup, a tab that closes itself)
-                if tab.is_closed():
-                    return
-                raise
-            if verbose:
-                logger.info(f"🪦 A tab opened after the last action ended, switched to it: {tab.url}")
-            self.page = tab
+            if tab is not self.page:
+                try:
+                    await tab.bring_to_front()
+                except PlaywrightError:
+                    # it closed meanwhile (a download popup, a tab that closes itself)
+                    if tab.is_closed():
+                        return
+                    raise
+                if verbose:
+                    logger.info(f"🪦 A tab opened after the last action ended, switched to it: {tab.url}")
+                self.page = tab
             await settle.wait(document="requests")
         finally:
             await settle.close()

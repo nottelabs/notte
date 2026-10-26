@@ -25,6 +25,9 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
 - `make test` is the offline gate. `make test-live` runs tests marked
   `staging` or `live` and needs `NOTTE_API_KEY`; set `NOTTE_API_URL` to point
   the SDK at a different API.
+- CDP transport tests keep real staging sessions and connections but serve page
+  fixtures through Patchright routes, so navigation and screenshot coverage does
+  not depend on third-party sites loading.
 - Browser settle regressions are in `tests/browser/test_execute_settle.py`
   and `tests/browser/test_settle_rules.py` and use a local server. Use the
   lockfile's Patchright environment: an older installed version can fail the
