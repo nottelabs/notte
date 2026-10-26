@@ -336,7 +336,7 @@ class NottePersona(SyncResource, BasePersona):
 
     @override
     async def aemails(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]:
-        return self.emails(**data)
+        return await asyncio.to_thread(self.emails, **data)
 
     @override
     def emails(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]:
@@ -363,7 +363,7 @@ class NottePersona(SyncResource, BasePersona):
 
     @override
     async def asms(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:
-        return self.sms(**data)
+        return await asyncio.to_thread(self.sms, **data)
 
     @override
     def sms(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:

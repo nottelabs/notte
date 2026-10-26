@@ -221,28 +221,34 @@ class RemoteFileStorage(_SessionStorage[FileStorageClient]):
     @override
     async def get_file(self, name: str) -> str | None:
         assert self.upload_dir is not None
-        match = self._named(self.list(FileSource.USER_UPLOAD, limit=1000), name)
-        return None if match is None else self.download(match.id, self.upload_dir, force=True)
+        match = self._named(await asyncio.to_thread(self.list, FileSource.USER_UPLOAD, limit=1000), name)
+        return None if match is None else await asyncio.to_thread(self.download, match.id, self.upload_dir, force=True)
 
     @override
     async def set_file(self, path: str) -> bool:
-        _ = self.upload(path)
+        _ = await asyncio.to_thread(self.upload, path)
         return True
 
     @override
     async def alist_uploaded_files(self) -> list[FileInfo]:
-        return [self._file_info(file) for file in self.list(FileSource.USER_UPLOAD, limit=1000).files]
+        return [
+            self._file_info(file)
+            for file in (await asyncio.to_thread(self.list, FileSource.USER_UPLOAD, limit=1000)).files
+        ]
 
     @override
     async def alist_downloaded_files(self) -> list[FileInfo]:
-        return [self._file_info(file) for file in self.list(FileSource.SESSION_DOWNLOAD, limit=1000).files]
+        return [
+            self._file_info(file)
+            for file in (await asyncio.to_thread(self.list, FileSource.SESSION_DOWNLOAD, limit=1000)).files
+        ]
 
 
 class AsyncRemoteFileStorage(_SessionStorage[AsyncFileStorageClient]):
     """The async twin of `RemoteFileStorage`, from `AsyncNotteClient.FileStorage`.
 
     `upload`, `list`, `download` and `delete` are coroutines. `BaseStorage`'s sync
-    `list_uploaded_files` and `list_downloaded_files` start their own event loop, which this
+    `list_uploaded_files` and `list_downloaded_files` use a background event loop, which this
     storage's client cannot use: await `alist_uploaded_files` and `alist_downloaded_files` instead.
     """
 

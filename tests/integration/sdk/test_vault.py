@@ -120,7 +120,9 @@ async def test_session_form_fill_with_vault_without_observe_uses_live_url():
     with client.Vault() as vault:
         _ = vault.add_credentials(url=base_url, username=username, password=password)
 
-        with notte.Session(vault=vault, headless=True, idle_timeout_minutes=3, max_duration_minutes=15) as session:
+        async with notte.Session(
+            vault=vault, headless=True, idle_timeout_minutes=3, max_duration_minutes=15
+        ) as session:
 
             async def fulfill_login(route):  # pyright: ignore[reportUnknownParameterType, reportMissingParameterType]
                 await route.fulfill(
@@ -178,26 +180,27 @@ async def test_session_set_vault_enables_credential_replacement():
     PASSWORD = "testpass123"  # pragma: allowlist secret
     URL = "https://github.com/"
 
-    with client.Vault() as vault, notte.Session() as session:
-        _ = vault.add_credentials(url=URL, email=EMAIL, password=PASSWORD)
+    with client.Vault() as vault:
+        async with notte.Session() as session:
+            _ = vault.add_credentials(url=URL, email=EMAIL, password=PASSWORD)
 
-        # Set vault on session directly (not via agent)
-        session.set_vault(vault)
+            # Set vault on session directly (not via agent)
+            session.set_vault(vault)
 
-        # Load the fixture through a real URL so refreshed snapshots keep matching vault credentials.
-        await load_github_signin_fixture(session)
+            # Load the fixture through a real URL so refreshed snapshots keep matching vault credentials.
+            await load_github_signin_fixture(session)
 
-        # Test _action_with_vault replaces credentials
-        action = FormFillAction(
-            value={"email": EmailField.placeholder_value, "current_password": PasswordField.placeholder_value}
-        )
-        replaced = await session._action_with_vault(action)
+            # Test _action_with_vault replaces credentials
+            action = FormFillAction(
+                value={"email": EmailField.placeholder_value, "current_password": PasswordField.placeholder_value}
+            )
+            replaced = await session._action_with_vault(action)
 
-        assert isinstance(replaced, FormFillAction)
-        assert isinstance(replaced.value["email"], ValueWithPlaceholder)
-        assert isinstance(replaced.value["current_password"], ValueWithPlaceholder)
-        assert get_str_value(replaced.value["email"]) == EMAIL
-        assert get_str_value(replaced.value["current_password"]) == PASSWORD
+            assert isinstance(replaced, FormFillAction)
+            assert isinstance(replaced.value["email"], ValueWithPlaceholder)
+            assert isinstance(replaced.value["current_password"], ValueWithPlaceholder)
+            assert get_str_value(replaced.value["email"]) == EMAIL
+            assert get_str_value(replaced.value["current_password"]) == PASSWORD
 
 
 @pytest.mark.asyncio
@@ -213,7 +216,7 @@ async def test_session_vault_in_constructor():
         _ = vault.add_credentials(url=URL, email=EMAIL, password=PASSWORD)
 
         # Pass vault directly to session constructor
-        with notte.Session(vault=vault) as session:
+        async with notte.Session(vault=vault) as session:
             await load_github_signin_fixture(session)
 
             action = FormFillAction(value={"email": EmailField.placeholder_value})
@@ -231,14 +234,15 @@ async def test_session_fill_action_with_vault():
     EMAIL = "fill@notte.cc"
     URL = "https://github.com/"
 
-    with client.Vault() as vault, notte.Session(vault=vault) as session:
-        _ = vault.add_credentials(url=URL, email=EMAIL, password="pw")
+    with client.Vault() as vault:
+        async with notte.Session(vault=vault) as session:
+            _ = vault.add_credentials(url=URL, email=EMAIL, password="pw")
 
-        await load_github_signin_fixture(session)
+            await load_github_signin_fixture(session)
 
-        fill_action = FillAction(id="I1", value=EmailField.placeholder_value)
-        replaced = await session._action_with_vault(fill_action)
+            fill_action = FillAction(id="I1", value=EmailField.placeholder_value)
+            replaced = await session._action_with_vault(fill_action)
 
-        assert isinstance(replaced, FillAction)
-        assert isinstance(replaced.value, ValueWithPlaceholder)
-        assert get_str_value(replaced.value) == EMAIL
+            assert isinstance(replaced, FillAction)
+            assert isinstance(replaced.value, ValueWithPlaceholder)
+            assert get_str_value(replaced.value) == EMAIL

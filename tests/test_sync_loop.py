@@ -10,6 +10,8 @@ import notte_core
 import pytest
 from notte_core._sync import run_sync
 
+pytestmark = pytest.mark.timeout(30, method="thread")
+
 
 async def loop_and_context(value: contextvars.ContextVar[str]) -> tuple[asyncio.AbstractEventLoop, str]:
     await asyncio.sleep(0)
@@ -164,3 +166,31 @@ async def test_base_vault_and_persona_sync_methods_inside_running_loop() -> None
     persona = StubPersona(emails=[], sms=[])
     assert persona.emails() == []
     assert persona.sms() == []
+
+
+def test_remote_vault_http_does_not_stall_unrelated_sync_calls() -> None:
+    from unittest.mock import Mock
+
+    from notte_sdk.endpoints.vaults import NotteVault, VaultsClient
+    from notte_sdk.types import ListCredentialsResponse
+
+    client = Mock(spec=VaultsClient)
+    client.get.return_value = "vault-test"
+    vault = NotteVault("vault-test", _client=client)
+    started, release = threading.Event(), threading.Event()
+
+    def blocking_request(_vault_id: str) -> ListCredentialsResponse:
+        started.set()
+        assert release.wait(10)
+        return ListCredentialsResponse(credentials=[])
+
+    client.credentials_list.side_effect = blocking_request
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+        blocked = pool.submit(vault.list_credentials)
+        try:
+            assert started.wait(5)
+            other = pool.submit(run_sync, asyncio.sleep(0, result=42))
+            assert other.result(2) == 42
+        finally:
+            release.set()
+        assert blocked.result(5) == []

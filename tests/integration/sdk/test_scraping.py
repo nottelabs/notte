@@ -59,7 +59,7 @@ def test_scraping_markdown():
 async def test_scraping_response_format():
     _ = load_dotenv()
     async with NotteSession() as session:
-        result = session.execute(type="goto", url="https://www.notte.cc/pricing")
+        result = await session.aexecute(type="goto", url="https://www.notte.cc/pricing")
         assert result.success
         structured = await session.ascrape(
             instructions="Extract the pricing plans from the page",
@@ -77,7 +77,7 @@ async def test_scraping_response_format():
 async def test_scraping_custom_instructions():
     _ = load_dotenv()
     async with NotteSession() as session:
-        result = session.execute(type="goto", url="https://www.notte.cc/pricing")
+        result = await session.aexecute(type="goto", url="https://www.notte.cc/pricing")
         assert result.success
         structured = await session.ascrape(
             instructions="Extract the pricing plans from the page",
@@ -92,7 +92,7 @@ async def test_scraping_custom_instructions():
 async def test_scraping_custom_instructions_and_response_format():
     _ = load_dotenv()
     async with NotteSession() as session:
-        result = session.execute(type="goto", url="https://www.notte.cc/pricing")
+        result = await session.aexecute(type="goto", url="https://www.notte.cc/pricing")
         assert result.success
         structured = await session.ascrape(
             instructions="Extract the pricing plans from the page", response_format=PricingPlans, raise_on_failure=True
@@ -141,7 +141,7 @@ def test_sdk_scraping_response_format_json(pricing_plans_json: dict[str, Any]):
 async def test_readme_async_scraping_example():
     _ = load_dotenv()
     async with NotteSession() as session:
-        result = session.execute(type="goto", url="https://www.notte.cc/pricing")
+        result = await session.aexecute(type="goto", url="https://www.notte.cc/pricing")
         assert result.success
         data = await session.ascrape()
         assert isinstance(data, str)
@@ -163,7 +163,7 @@ def test_readme_sync_scraping_example():
 async def test_scraping_images_only():
     _ = load_dotenv()
     async with NotteSession() as session:
-        result = session.execute(type="goto", url="https://gymbeam.pl")
+        result = await session.aexecute(type="goto", url="https://gymbeam.pl")
         assert result.success
         images = await session.ascrape()
         assert len(images) > 0

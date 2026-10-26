@@ -110,17 +110,17 @@ async def test_special_action_validation():
         result = await page.aexecute(ClickAction(id="X1"))
         check_failure(result)
 
-        result = page.execute(type="click", id="X1")
+        result = await page.aexecute(type="click", id="X1")
         check_failure(result)
 
-        result = page.execute(ClickAction(id="X1"))
+        result = await page.aexecute(ClickAction(id="X1"))
         check_failure(result)
 
 
 @pytest.mark.asyncio
 async def test_switch_tab():
     """Test the execution of the switch tab action"""
-    with NotteSession(headless=True) as page:
+    async with NotteSession(headless=True) as page:
         _ = await page.aexecute(type="goto", url="https://github.com/")
         obs = await page.aobserve()
         assert len(obs.metadata.tabs) == 1
@@ -134,11 +134,11 @@ async def test_switch_tab():
         assert len(obs.metadata.tabs) == 2
         assert "google.com" in obs.clean_url
 
-        _ = page.execute(type="switch_tab", tab_index=0)
+        _ = await page.aexecute(type="switch_tab", tab_index=0)
         obs = await page.aobserve()
         assert obs.clean_url == "github.com"
 
-        _ = page.execute(type="switch_tab", tab_index=1)
+        _ = await page.aexecute(type="switch_tab", tab_index=1)
         obs = await page.aobserve()
         assert "google.com" in obs.clean_url
 

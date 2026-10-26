@@ -28,28 +28,29 @@ def page_url() -> Iterator[str]:
 
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(60, method="thread")
 async def test_sync_browser_lifecycle_inside_running_loop(page_url: str) -> None:
     caller_loop = asyncio.get_running_loop()
-    async with asyncio.timeout(30):
-        session = NotteSession(headless=True)
-        with session:
-            result = session.execute(type="goto", url=page_url)
-            assert result.success
-            assert "Browser works" in session.observe().space.description
-            assert session.evaluate_js("document.querySelector('h1').textContent") == "Browser works"
-            assert session.screenshot().raw
-            with pytest.raises(RuntimeError, match="do not mix"):
-                await session.aobserve()
-            with pytest.raises(RuntimeError, match="do not mix"):
-                await session.astop()
-        # The caller's loop is still usable and session restart gets a fresh browser.
-        await asyncio.sleep(0)
-        assert asyncio.get_running_loop() is caller_loop
-        with session:
-            assert session.execute(type="goto", url=page_url).success
+    session = NotteSession(headless=True)
+    with session:
+        result = session.execute(type="goto", url=page_url)
+        assert result.success
+        assert "Browser works" in session.observe().space.description
+        assert session.evaluate_js("document.querySelector('h1').textContent") == "Browser works"
+        assert session.screenshot().raw
+        with pytest.raises(RuntimeError, match="do not mix"):
+            await session.aobserve()
+        with pytest.raises(RuntimeError, match="do not mix"):
+            await session.astop()
+    # The caller's loop is still usable and session restart gets a fresh browser.
+    await asyncio.sleep(0)
+    assert asyncio.get_running_loop() is caller_loop
+    with session:
+        assert session.execute(type="goto", url=page_url).success
 
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(60, method="thread")
 async def test_async_browser_rejects_sync_methods_without_breaking_owner(page_url: str) -> None:
     async with NotteSession(headless=True) as session:
         with pytest.raises(RuntimeError, match="do not mix"):
