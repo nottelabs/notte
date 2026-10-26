@@ -212,8 +212,8 @@ class ActSpace:
         if any(target.kind == "select_text" for target in self.targets.get("TYPE_TEXT", {}).values()):
             # the option of a dropdown whose list is cut (`more_options`) is picked by typing its label
             operations["TYPE_TEXT"] = prompts.TYPE_TEXT_OPTION
-        if any(target.role == "slider" for target in self.targets.get("TYPE_TEXT", {}).values()):
-            operations["TYPE_TEXT"] += " " + prompts.TYPE_TEXT_SLIDER
+        if any(target.role in ("slider", "spinbutton") for target in self.targets.get("TYPE_TEXT", {}).values()):
+            operations["TYPE_TEXT"] += " " + prompts.TYPE_TEXT_RANGE
         operations.update({key: control.label for key, control in self.controls.items()})
         done = prompts.DONE
         if self.unsubmitted:
@@ -919,12 +919,23 @@ def _role(action: InteractionAction, line: str) -> str:
                 return "textbox"
             role = dict(_RENDERED_ATTRIBUTE.findall(match.group(2))).get("role", "").split(" ")[0].lower()
             return role if role and role not in _TEXT_ROLES else "textbox"
+        case "M", "click" if _aria_role(line) == "spinbutton":
+            # an ARIA spin button (a div with the role, not a number input) gets an M id and a click action
+            return "spinbutton"
         case "I", "check":
             return "radio" if 'type="radio"' in line else "checkbox"
         case "I", "select_dropdown_option":
             return "select" if line.startswith("<select") else "combobox"
         case _:
             return "clickable"
+
+
+def _aria_role(line: str) -> str | None:
+    """The `role` of a rendered element other than an `<input>`, or None."""
+    match = _RENDERED_ELEMENT.match(line)
+    if match is None or match.group(1).lower() == "input":
+        return None
+    return dict(_RENDERED_ATTRIBUTE.findall(match.group(2))).get("role", "").split(" ")[0].lower() or None
 
 
 def _input_type(line: str) -> str | None:
@@ -1094,9 +1105,8 @@ def build_act_space(
                 )
                 add("TYPE_TEXT", target("fill" if editable else "select_text"), element)
                 add("CLICK", target("click"), element)
-            case "slider":
-                # set by typing its value: the fill moves it with its keyboard. A click on its handle (the element
-                # with the role) moves nothing, and was chosen again and again instead
+            case "slider" | "spinbutton":
+                # set by typing its value: fill moves the widget with its keyboard; clicking it changes nothing
                 add("TYPE_TEXT", target("fill"), element)
             case "checkbox" | "radio":
                 add("CLICK", target("check"), element)

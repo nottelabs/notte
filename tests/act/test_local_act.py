@@ -1146,7 +1146,7 @@ style="width:10px;height:60px;background:#888"></div>"""
     assert elements[ids["n"]]["role"] == "listbox" and elements[ids["n"]]["operations"] == []
     # a slider is set by typing its value (the fill moves it with its keyboard), not clicked
     assert elements[ids["split"]]["role"] == "slider" and elements[ids["split"]]["operations"] == ["TYPE_TEXT"]
-    assert prompts.TYPE_TEXT_SLIDER in decider.questions[0]["operation"].criteria["TYPE_TEXT"]
+    assert prompts.TYPE_TEXT_RANGE in decider.questions[0]["operation"].criteria["TYPE_TEXT"]
     # an unnamed listbox is not named after the text of the options it hides
     assert elements[ids["n"]]["label"] == "listbox"
     assert not {ids["s"], ids["n"]} & set(decider.questions[0]["type_text_target"].criteria)
@@ -1173,6 +1173,22 @@ price.addEventListener("keydown", (event) => {
     assert result.status == "executed" and result.success
     assert decider.contexts[0].field["role"] == "slider"
     assert await session.window.page.locator("#price").get_attribute("aria-valuenow") == "40"
+
+
+@pytest.mark.asyncio
+async def test_an_aria_spin_button_is_offered_as_a_field(session: NotteSession) -> None:
+    # a custom spin button (a div with the role, as the APG toolbar's font size): a click on it changes nothing
+    page = """<label id="l">Font size</label>
+<div id="size" role="spinbutton" tabindex="0" aria-labelledby="l" aria-valuenow="14" aria-valuemin="8"
+aria-valuemax="40" aria-valuetext="14 Point">14 Point</div>"""
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    ids = await _ids(session)
+    decider = FakeDecider(choices=[{"operation": "DONE"}])
+    _ = await session.aact("Set the font size to 16", decider=decider)
+    element = next(e for e in decider.states[0].elements if e["index"] == ids["size"])
+    assert (element["label"], element["role"], element["operations"]) == ("Font size", "spinbutton", ["TYPE_TEXT"])
+    assert ids["size"] in decider.questions[0]["type_text_target"].criteria
+    assert prompts.TYPE_TEXT_RANGE in decider.questions[0]["operation"].criteria["TYPE_TEXT"]
 
 
 @pytest.mark.asyncio
