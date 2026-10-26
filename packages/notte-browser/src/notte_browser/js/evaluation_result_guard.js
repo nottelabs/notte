@@ -9,7 +9,7 @@
 // - arrays and objects become copies; each property is read once, getters
 //   included, and getters are not run again by Playwright;
 // - an Error becomes its message, which is the text the formatter prints;
-// - a RegExp becomes the {r: {p, f}} object Python receives for it;
+// - a RegExp carries its source and flags for the active driver's decoder;
 // - a Date or URL becomes a tagged object whose toJSON returns the text that
 //   was read and charged;
 // - a typed array is recognised and sized through the built-in typed-array
@@ -284,8 +284,9 @@ async ([code, maxBytes, maxValues, token, maxDepth, resultLimitMarker, allowance
       if (typeof source !== "string" || typeof flags !== "string") {
         fail("RegExp source or flags is not a string");
       }
-      chargeText(source, false);
-      chargeText(flags, false);
+      // Newer Python drivers compile this into a Python regex; older ones
+      // retain the protocol object. Raw lengths bound both text formats.
+      charge(source.length + flags.length);
       return node("r", source, flags);
     }
     // Kinds Playwright does not encode, such as Float16Array, have no entry
@@ -525,11 +526,13 @@ async ([code, maxBytes, maxValues, token, maxDepth, resultLimitMarker, allowance
       literal("{}");
     } else if (kind === "r") {
       countValue();
-      literal('{"r":{"p":');
+      literal("{");
+      writeString(token);
+      literal(':"r","v":[');
       writeText(item[1]);
-      literal(',"f":');
+      literal(",");
       writeText(item[2]);
-      literal("}}");
+      literal("]}");
     } else if (kind === "t") {
       const tagKind = item[1];
       const payload = item[2];

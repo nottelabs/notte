@@ -276,6 +276,10 @@ async def test_getter_values_are_measured_and_read_once(monkeypatch) -> None:
         "new URL('https://example.com/a?b=1#c')",
         "/a+b/gi",
         "[/x/, /y/m]",
+        "/a.b/dgimsuy",
+        "/(?<name>a)/u",
+        "new RegExp('é'.repeat(100))",
+        r"({nested: [/a\/b/, /[a-z]+/i], lookalike: {r: {p: 'x', f: 'i'}}})",
         "new BigInt64Array([1n, -2n])",
         "new BigUint64Array([18446744073709551615n])",
         "new Float64Array([NaN, -0, 1.5, Infinity])",
@@ -304,6 +308,23 @@ async def test_guarded_results_match_playwright(monkeypatch, code) -> None:
     async with NotteSession(headless=True) as session:
         native = format_evaluation_result(await session.window.page.evaluate(code), max_bytes=16384)
         assert await session.aevaluate_js(code) == native
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("code", ["new RegExp('é'.repeat(100))", "[/(?<name>a)/u, /x/gi]"])
+async def test_regexp_results_accept_exact_output_budget(monkeypatch, code: str) -> None:
+    async with NotteSession(headless=True) as session:
+        native = format_evaluation_result(await session.window.page.evaluate(code), max_bytes=16384)
+        budget = len(native.encode("utf-8"))
+        monkeypatch.setattr(
+            evaluation_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": budget})
+        )
+        assert await session.aevaluate_js(code) == native
+        monkeypatch.setattr(
+            evaluation_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": budget - 1})
+        )
+        with pytest.raises(EvaluateJsResultLimitError):
+            await session.aevaluate_js(code)
 
 
 @pytest.mark.asyncio
