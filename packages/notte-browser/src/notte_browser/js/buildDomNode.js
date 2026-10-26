@@ -694,7 +694,10 @@
 		// no box at all (the text of a `<textarea>`): nothing says it is hidden
 		if (rects.length === 0) return false;
 		if (rects.every((rect) => rect.width === 0 || rect.height === 0)) return true;
-		if (!rects.some(isOnScreen)) return isInFixedPanelOffscreen(parent);
+		if (!rects.some(isOnScreen)) {
+			const start = propertyOf(textNode, "assignedSlot") ?? parent;
+			return rects.every((rect) => isInFixedPanelOffscreen(start, rect));
+		}
 		if (scope.ariaHidden && !scope.inControl) return true;
 		return !isRendered(parent, true);
 	}
@@ -725,19 +728,37 @@
 	 * Checks if an element is inside a fixed element laid out outside the viewport, as a closed off-canvas
 	 * drawer is (`transform: translateX(-100%)`). Only viewport-fixed panels count: a fixed element
 	 * with an offset parent (for example, a transformed ancestor) can move into view when scrolling.
-	 * A fixed element without a box (a zero-size portal root whose content overflows it) says nothing
-	 * about where its content is. Cross shadow roots so a drawer also hides its web components' text.
+	 * A zero-size fixed portal still establishes an independent fixed boundary. Use the text's reachable
+	 * bounds after inner scrolling instead of testing the portal's empty box or an outer drawer.
+	 * Cross shadow roots so a drawer also hides its web components' text.
 	 *
 	 * @param {HTMLElement} element - The element to check.
+	 * @param {DOMRect} textRect - A client rect of the text.
 	 * @returns {boolean} Whether the element is in a fixed panel outside the viewport.
 	 */
-	function isInFixedPanelOffscreen(element) {
+	function isInFixedPanelOffscreen(element, textRect) {
 		for (let ancestor = element; ancestor; ancestor = composedParent(ancestor)) {
 			if (getCachedComputedStyle(ancestor)?.position !== "fixed") continue;
 			if (propertyOf(ancestor, "offsetParent") !== null) continue;
 			const rect = getCachedBoundingRect(ancestor);
-			if (rect.width <= 0 || rect.height <= 0) continue;
-			return !isOnScreen(rect);
+			if (rect.width > 0 && rect.height > 0) return !isOnScreen(rect);
+			const reachable = { top: textRect.top, bottom: textRect.bottom, left: textRect.left, right: textRect.right };
+			for (let box = element; box && box !== ancestor; box = composedParent(box)) {
+				const boxRect = getCachedBoundingRect(box);
+				const style = getCachedComputedStyle(box);
+				if (!style) continue;
+				const y = visibleRange(box, boxRect, style, true);
+				const x = visibleRange(box, boxRect, style, false);
+				if (y?.scrolls && reachable.bottom > y.start && reachable.top < y.end) {
+					reachable.top = boxRect.top;
+					reachable.bottom = boxRect.bottom;
+				}
+				if (x?.scrolls && reachable.right > x.start && reachable.left < x.end) {
+					reachable.left = boxRect.left;
+					reachable.right = boxRect.right;
+				}
+			}
+			return !isOnScreen(reachable);
 		}
 		return false;
 	}

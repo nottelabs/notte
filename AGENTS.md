@@ -73,7 +73,9 @@ In Chromium, a fixed element's non-null `offsetParent` identifies a containing b
 (for example, a transformed ancestor) that can scroll into view. Walk through shadow
 hosts when checking panels, following `assignedSlot` before light-DOM parents;
 `parentElement` alone stops inside web components and bypasses slotted panels.
-Skip fixed ancestors with empty boxes: they do not bound their overflowing text.
+Start direct slotted text at its assigned slot too. A viewport-fixed portal remains
+an independent boundary even with an empty box: check its text's reachable bounds
+after inner scrolling rather than using an outer drawer's position.
 `tests/browser/test_dom_hidden_content.py` covers both cases.
 
 ## Public API

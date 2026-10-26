@@ -144,11 +144,11 @@ async def test_closed_drawer_text_across_shadow_roots(in_shadow: bool) -> None:
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("wrapped", [False, True])
-async def test_closed_drawer_text_assigned_to_a_shadow_slot(wrapped: bool) -> None:
-    content = "<p>SLOTTED_DRAWER_TEXT</p>"
-    if wrapped:
-        content = f"<section>{content}</section>"
+@pytest.mark.parametrize(
+    "content",
+    ["SLOTTED_DRAWER_TEXT", "<p>SLOTTED_DRAWER_TEXT</p>", "<section><p>SLOTTED_DRAWER_TEXT</p></section>"],
+)
+async def test_closed_drawer_text_assigned_to_a_shadow_slot(content: str) -> None:
     markup = f"""
     <h1>OUTSIDE_DRAWER</h1>
     <drawer-host>{content}</drawer-host>
@@ -184,6 +184,34 @@ async def test_closed_drawer_text_beyond_a_zero_size_fixed_root() -> None:
         for selector in ("#drawer", "#portal"):
             await session.window.page.locator(selector).evaluate("element => element.style.left = '0'")
         assert "ZERO_ROOT_DRAWER_TEXT" in (await session.aobserve()).space.description
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("axis", ["vertical", "horizontal"])
+async def test_zero_size_fixed_portal_keeps_its_independently_scrollable_text(axis: str) -> None:
+    offset = "margin-top: 900px" if axis == "vertical" else "margin-left: 1500px"
+    markup = f"""
+    <aside style="position: fixed; top: 0; left: -330px; width: 300px; height: 500px">
+      <div style="position: fixed; top: 0; left: 0; width: 0; height: 0">
+        <div id="scroller" style="width: 250px; height: 100px; overflow: auto">
+          <p id="text" style="{offset}; white-space: nowrap">REACHABLE_PORTAL_TEXT</p>
+        </div>
+      </div>
+    </aside>
+    """
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(markup)}")
+        observation = await session.aobserve()
+        assert "REACHABLE_PORTAL_TEXT" in observation.space.description
+        texts = [node for node in session.snapshot.dom_node.flatten() if node.text == "REACHABLE_PORTAL_TEXT"]
+        assert texts and all(not node.computed_attributes.in_viewport for node in texts)
+        await session.window.page.locator("#scroller").evaluate(
+            "element => { element.scrollTop = element.scrollHeight; element.scrollLeft = element.scrollWidth; }"
+        )
+        observation = await session.aobserve()
+        assert "REACHABLE_PORTAL_TEXT" in observation.space.description
+        texts = [node for node in session.snapshot.dom_node.flatten() if node.text == "REACHABLE_PORTAL_TEXT"]
+        assert any(node.computed_attributes.in_viewport for node in texts)
 
 
 @pytest.mark.asyncio
