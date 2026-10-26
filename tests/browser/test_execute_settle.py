@@ -142,7 +142,7 @@ async def site() -> AsyncIterator[str]:
     async def page(request: web.Request) -> web.Response:
         await asyncio.sleep(SLOW_PAGE_DELAY_S if request.path.startswith("/slow") else PAGE_DELAY_S)
         # the same server on another host name is another origin
-        other_origin = f"http://localhost:{request.url.port}"
+        other_origin = f"http://localhost:{port}"
         return web.Response(text=PAGES[request.path].replace("OTHER_ORIGIN", other_origin), content_type="text/html")
 
     async def data(request: web.Request) -> web.Response:
@@ -177,9 +177,10 @@ async def site() -> AsyncIterator[str]:
     with closing(socket.socket()) as server_socket:
         server_socket.bind(("127.0.0.1", 0))
         server_socket.listen()
+        port = server_socket.getsockname()[1]
         await web.SockSite(runner, server_socket).start()
         try:
-            yield f"http://127.0.0.1:{server_socket.getsockname()[1]}"
+            yield f"http://127.0.0.1:{port}"
         finally:
             release.set()
             await runner.cleanup()
