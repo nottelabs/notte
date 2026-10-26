@@ -6,7 +6,10 @@ import socket
 import time
 from collections.abc import AsyncIterator
 from contextlib import closing
+from unittest.mock import patch
 
+import notte_browser.settle as settle_module
+import notte_browser.window as window_module
 import pytest
 import pytest_asyncio
 from aiohttp import web
@@ -122,6 +125,8 @@ fetch('/data?delay=0.8').then(() => fetch(`http://localhost:${location.port}/api
     { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }
 )).then(() => document.body.insertAdjacentHTML('beforeend', '<button>Add to cart</button>'));
 </script></body></html>""",
+    # answers late, then never loads (an image that never arrives)
+    "/slow-stalled": """<html><body><h1>Stalled</h1><img src="/hang"></body></html>""",
     # loads at once, then fetches its content from a slow API on a timer (a single-page app)
     "/app": """<html><body><h1>App</h1><script>
 window.addEventListener('load', () => setTimeout(() => fetch('/data?delay=0.9').then(() =>
@@ -300,6 +305,19 @@ async def test_a_goto_waits_for_what_the_page_fetches_after_its_load(session: No
     result = await session.aexecute(type="goto", url=f"{site}/app")
     assert result.success
     assert "App content" in await text(session)
+
+
+@pytest.mark.asyncio
+async def test_a_goto_shares_one_timeout_between_its_commit_and_its_page(session: NotteSession, site: str) -> None:
+    # the page answers after 0.8 s, then never loads: the wait for it gets what is left of the goto's timeout
+    test_config = config.model_copy(update={"timeout_goto_ms": 2_000})
+    start = time.monotonic()
+    with patch.object(window_module, "config", test_config), patch.object(settle_module, "config", test_config):
+        result = await session.aexecute(type="goto", url=f"{site}/slow-stalled")
+    elapsed = time.monotonic() - start
+    assert result.success
+    assert "Stalled" in await text(session)
+    assert elapsed < 2.4
 
 
 @pytest.mark.asyncio

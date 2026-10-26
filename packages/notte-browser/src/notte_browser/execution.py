@@ -682,7 +682,9 @@ async def execute(
             case _:
                 raise ValueError(f"Unsupported action type: {type(action)}")
         if settle is not None:
-            settle.acted()
+            if not isinstance(action, GotoAction):
+                settle.acted()
+            # a goto's budget counts from its start: its commit and the wait for its page share `timeout_goto_ms`
             if retval:
                 await _settle(settle, action, url, verbose=verbose)
         if closed_during_click is not None and not any(
