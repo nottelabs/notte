@@ -202,6 +202,32 @@ async def test_a_listbox_button_shows_its_selected_option_as_its_value() -> None
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("input_type", ["button", "submit", "reset"])
+async def test_input_listbox_button_keeps_its_live_selection(input_type: str) -> None:
+    html = f"""
+    <span id="speed-label">Shipping speed</span>
+    <input type="{input_type}" id="speed" value="Standard"
+           aria-haspopup="listbox" aria-labelledby="speed-label speed">
+    <input type="button" id="plain" value="Save">
+    """
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(_data_url(html))
+        _ = await session.aobserve()
+        nodes = _nodes_by_html_id(session)
+        speed = nodes["speed"]
+        assert speed.accessible_name == "Shipping speed"
+        assert speed.state is not None and speed.state.value == "Standard"
+        assert nodes["plain"].accessible_name == "Save"
+        assert nodes["plain"].state is None
+
+        await session.window.page.locator("#speed").evaluate("element => element.value = 'Express'")
+        _ = await session.aobserve()
+        speed = _nodes_by_html_id(session)["speed"]
+        assert speed.accessible_name == "Shipping speed"
+        assert speed.state is not None and speed.state.value == "Express"
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "hidden_content",
     [

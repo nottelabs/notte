@@ -253,6 +253,8 @@
 				state.checked = element.checked;
 			} else if (type === "password") {
 				state.filled = element.value.length > 0;
+			} else if (isListboxValueButton(element)) {
+				state.value = truncateStateValue(element.value, state);
 			} else if (type !== "submit" && type !== "button" && type !== "reset" && type !== "image" && type !== "hidden") {
 				state.value = truncateStateValue(element.value, state);
 			}
