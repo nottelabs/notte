@@ -14,6 +14,8 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
 
 ## Tests
 
+- Protected `main` requires the `tests` gate on an up-to-date branch. After
+  rebasing, verify CI on the new head before calling a PR ready to merge.
 - Never add `xfail`, `skip` or an ignore to make a failing test pass. Fix the
   cause, or stop and explain why it fails.
 - CI's live LLM calls (`staging-and-live`) go through OpenRouter: the
