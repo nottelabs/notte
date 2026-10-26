@@ -242,6 +242,28 @@ def test_lifecycle_warnings_are_debug_during_sdk_cleanup(captured_logs: list[tup
     assert [level for level, _ in captured_logs] == ["DEBUG", "INFO"]
 
 
+@pytest.mark.parametrize("use_async", [False, True])
+def test_non_cached_page_close_is_debug_during_sdk_cleanup(
+    use_async: bool, captured_logs: list[tuple[str, str]]
+) -> None:
+    session = _bare_session()
+    browser, _context, page = _browser_with_page()
+    if use_async:
+        session._async_playwright_page = page
+    else:
+        session._playwright_page = page
+    popup = MagicMock()
+    session._observe_playwright_page(browser, popup, is_async=use_async)
+    session._playwright_cleanup_in_progress = True
+
+    close_callback = next(call.args[1] for call in popup.on.call_args_list if call.args[0] == "close")
+    close_callback(popup)
+
+    [(level, message)] = captured_logs
+    assert level == "DEBUG"
+    assert "sdk_playwright_page_closed" in message
+
+
 def test_only_cached_page_close_is_a_warning(monkeypatch: pytest.MonkeyPatch) -> None:
     session = _bare_session()
     browser, context, page = _browser_with_page()

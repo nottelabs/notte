@@ -129,10 +129,16 @@ describe.runIf(runnable)('session.page() lifecycle against a real browser', () =
       ['warn', 'sdk_playwright_cached_page_unhealthy'],
     ]);
 
+    const cleanupPopup = await page.context().newPage();
+    vi.mocked(sessionStop).mockImplementationOnce(async () => {
+      await cleanupPopup.close();
+      return { data: sessionResponse({ session_id: 'local-session', status: 'closed' }) } as never;
+    });
     const beforeStop = captured.length;
     await session.stop();
     const cleanup = events().slice(beforeStop);
     expect(cleanup[0]).toEqual(['info', 'sdk_playwright_session_stop_requested']);
+    expect(cleanup.slice(1)).toContainEqual(['debug', 'sdk_playwright_page_closed']);
     expect(cleanup.slice(1)).toContainEqual(['debug', 'sdk_playwright_browser_disconnected']);
     expect(cleanup.slice(1).every(([level]) => level === 'debug')).toBe(true);
     expect(sessionStop).toHaveBeenCalledTimes(1);

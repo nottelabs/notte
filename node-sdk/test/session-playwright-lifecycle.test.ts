@@ -261,6 +261,19 @@ describe('session.page() lifecycle diagnostics', () => {
     expect(page.closed).toBe(true);
   });
 
+  it('logs non-cached page closes during SDK cleanup at debug', async () => {
+    const { session, context } = await connectedSession();
+    context.newPage();
+    captured = [];
+
+    await session.stop();
+
+    const closes = captured.filter(({ event }) => event === 'sdk_playwright_page_closed');
+    expect(closes).toHaveLength(2);
+    expect(closes.map(({ level }) => level)).toEqual(['debug', 'debug']);
+    expect(events()[0]).toEqual(['info', 'sdk_playwright_session_stop_requested']);
+  });
+
   it('keeps reporting failures as warnings when stop() fails', async () => {
     const { session, browser } = await connectedSession();
     vi.mocked(sessionStop).mockRejectedValueOnce(new Error('network down'));

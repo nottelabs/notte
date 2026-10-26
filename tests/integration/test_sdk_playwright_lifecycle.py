@@ -59,6 +59,7 @@ def test_playwright_lifecycle_is_logged_against_real_browser(
     cdp_browser: str,  # noqa: F811
     lifecycle_logs: list[tuple[str, str]],
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     html = tmp_path / "page.html"
     _ = html.write_text("<title>lifecycle</title>")
@@ -83,10 +84,21 @@ def test_playwright_lifecycle_is_logged_against_real_browser(
         ("WARNING", "sdk_playwright_cached_page_unhealthy"),
     ]
 
+    cleanup_popup = page.context.new_page()
+    browser = page.context.browser
+    assert browser is not None
+    close_browser = browser.close
+
+    def close_with_popup() -> None:
+        cleanup_popup.close()
+        close_browser()
+
+    monkeypatch.setattr(browser, "close", close_with_popup)
     before_exit = len(lifecycle_logs)
     session.__exit__(None, None, None)
     events = _events(lifecycle_logs[before_exit:])
     assert events[0] == ("INFO", "sdk_playwright_session_stop_requested")
+    assert ("DEBUG", "sdk_playwright_page_closed") in events[1:]
     assert ("DEBUG", "sdk_playwright_browser_disconnected") in events[1:]
     assert all(level == "DEBUG" for level, _ in events[1:])
     session.stop.assert_called_once_with(close_reason="manual")

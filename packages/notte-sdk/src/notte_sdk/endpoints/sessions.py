@@ -920,7 +920,7 @@ class _PlaywrightDiagnostics:
         observed_context: "BrowserContextSync | BrowserContextAsync | None" = None,
         level: Literal["debug", "info", "warning"] = "warning",
     ) -> None:
-        if level == "warning" and self._playwright_cleanup_in_progress:
+        if self._playwright_cleanup_in_progress and event != "sdk_playwright_session_stop_requested":
             # Closes and disconnects caused by the SDK's own cleanup are expected, not failures.
             level = "debug"
         details = self._playwright_state(browser, cached_page)

@@ -579,7 +579,7 @@ export class Session {
 
   private logPlaywrightEvent(event: string, options: PlaywrightEventOptions): void {
     let level: LogMethod = options.level ?? 'warn';
-    if (level === 'warn' && this.playwrightCleanupInProgress) {
+    if (this.playwrightCleanupInProgress && event !== 'sdk_playwright_session_stop_requested') {
       // Closes and disconnects caused by the SDK's own cleanup are expected, not failures.
       level = 'debug';
     }
