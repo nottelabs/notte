@@ -236,7 +236,7 @@ def test_deleted_docs_still_run_the_global_link_check() -> None:
         ("cancelled", "success", 1),
     ],
 )
-@pytest.mark.parametrize("family", ["node", "paired"])
+@pytest.mark.parametrize("family", ["python", "node", "docs", "paired", "readme"])
 def test_required_gate_waits_for_all_families_and_fails_closed(
     changes: str, selected: str, expected: int, family: str
 ) -> None:

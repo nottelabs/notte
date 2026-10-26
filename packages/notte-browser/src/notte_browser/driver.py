@@ -8,7 +8,6 @@ from notte_core.logging import logger
 
 match config.browser_backend:
     case BrowserBackend.PLAYWRIGHT:
-        from playwright._impl._js_handle import parse_value as parse_driver_value
         from playwright.async_api import (
             Browser,
             BrowserContext,
@@ -29,7 +28,6 @@ match config.browser_backend:
 
         logger.info("⚙️ Browser backend set to 'playwright'. You can change it in the config.toml file.")
     case BrowserBackend.PATCHRIGHT:
-        from patchright._impl._js_handle import parse_value as parse_driver_value
         from patchright.async_api import (
             Browser,
             BrowserContext,
@@ -122,5 +120,4 @@ __all__ = [
     "ElementHandle",
     "ConsoleMessage",
     "evaluate_in_main_world",
-    "parse_driver_value",
 ]

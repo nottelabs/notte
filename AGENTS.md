@@ -27,13 +27,12 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   `scripts/ci_integration_examples.py`) install the local `node-sdk` with
   `npm install --no-save`. Don't add `--package-lock=false`: it ignores the
   example's lockfile, so a new upstream release can break CI.
-- The `evaluate_js` result guard must decode RegExp values through the active
-  browser driver's decoder in `notte_browser.driver`. Patchright 1.64.1 and
-  Playwright 1.64.0 turn supported patterns into Python regex objects; patterns
-  Python cannot compile remain protocol dictionaries. Compare guarded and native
-  evaluation when changing this transport. Measure regex transfer size separately
-  from formatted output: Python truncates long regex reprs, while JSON escapes can
-  enlarge the source sent by the browser.
+- `evaluate_js` preserves RegExp results as JSON data (`{"r": {"p": source,
+  "f": flags}}`), including complete patterns. Patchright 1.64.1 and Playwright
+  1.64.0 compile native regex results into Python objects, so native evaluation is
+  no longer the format oracle for regexes. Never compile page-controlled patterns
+  during result conversion; test their JSON contract, output budgets, and shared
+  containers explicitly.
 
 ## Public API
 

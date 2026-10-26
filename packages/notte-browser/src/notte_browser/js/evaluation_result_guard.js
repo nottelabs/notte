@@ -9,7 +9,7 @@
 // - arrays and objects become copies; each property is read once, getters
 //   included, and getters are not run again by Playwright;
 // - an Error becomes its message, which is the text the formatter prints;
-// - a RegExp carries its source and flags for the active driver's decoder;
+// - a RegExp becomes the {r: {p, f}} object Python receives for it;
 // - a Date or URL becomes a tagged object whose toJSON returns the text that
 //   was read and charged;
 // - a typed array is recognised and sized through the built-in typed-array
@@ -118,11 +118,6 @@ async ([code, maxBytes, maxValues, token, maxDepth, resultLimitMarker, allowance
   // counts once, including repeated references, which Python also expands.
   let values = 0;
   let size = 0;
-  // Regex reprs can be truncated by Python, so their source contributes to
-  // transfer memory independently of the final text size. Use the same total
-  // transfer bound that Python checks before decoding the payload.
-  const transferLimit = maxBytes + allowancePerValue * (maxValues + 1);
-  let regexTransferSize = 0;
   const charge = (amount) => {
     if (!(amount >= 0 && amount <= maxBytes)) {
       tooLarge();
@@ -143,7 +138,7 @@ async ([code, maxBytes, maxValues, token, maxDepth, resultLimitMarker, allowance
     }
     return width;
   };
-  const escapedWidth = (text, limit, ascii = true) => {
+  const escapedWidth = (text, limit) => {
     if (text.length + 2 > limit) {
       return limit + 1;
     }
@@ -152,7 +147,7 @@ async ([code, maxBytes, maxValues, token, maxDepth, resultLimitMarker, allowance
       const c = text.charCodeAt(i);
       if (c === 0x22 || c === 0x5c) {
         width += 2;
-      } else if (c >= 0x20 && (c < 0x7f || !ascii)) {
+      } else if (c >= 0x20 && c < 0x7f) {
         width += 1;
       } else if (c === 0x08 || c === 0x09 || c === 0x0a || c === 0x0c || c === 0x0d) {
         width += 2;
@@ -289,14 +284,8 @@ async ([code, maxBytes, maxValues, token, maxDepth, resultLimitMarker, allowance
       if (typeof source !== "string" || typeof flags !== "string") {
         fail("RegExp source or flags is not a string");
       }
-      // JSON escaping belongs to the transfer budget. Python's final regex
-      // text can be much shorter than its source; the formatter checks that
-      // output separately after the active driver decodes the pattern.
-      regexTransferSize += escapedWidth(source, transferLimit - regexTransferSize, false);
-      regexTransferSize += escapedWidth(flags, transferLimit - regexTransferSize, false);
-      if (!(regexTransferSize <= transferLimit)) {
-        tooLarge();
-      }
+      chargeText(source, false);
+      chargeText(flags, false);
       return node("r", source, flags);
     }
     // Kinds Playwright does not encode, such as Float16Array, have no entry
@@ -536,13 +525,11 @@ async ([code, maxBytes, maxValues, token, maxDepth, resultLimitMarker, allowance
       literal("{}");
     } else if (kind === "r") {
       countValue();
-      literal("{");
-      writeString(token);
-      literal(':"r","v":[');
+      literal('{"r":{"p":');
       writeText(item[1]);
-      literal(",");
+      literal(',"f":');
       writeText(item[2]);
-      literal("]}");
+      literal("}}");
     } else if (kind === "t") {
       const tagKind = item[1];
       const payload = item[2];
@@ -571,7 +558,7 @@ async ([code, maxBytes, maxValues, token, maxDepth, resultLimitMarker, allowance
   if (!(out.length === expected)) {
     throw new Error("evaluate_js result could not be serialized");
   }
-  if (!(expected <= size + regexTransferSize + allowancePerValue * values + allowanceFixed && expected <= transferLimit)) {
+  if (!(expected <= size + allowancePerValue * values + allowanceFixed)) {
     tooLarge();
   }
   return "j" + out;

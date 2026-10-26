@@ -14,7 +14,7 @@ from notte_core.config import BrowserBackend, config
 from notte_core.data import DataSpace
 from notte_core.errors import EvaluateJsResultLimitError
 
-from notte_browser.driver import Page, parse_driver_value
+from notte_browser.driver import Page
 from notte_browser.errors import PlaywrightError
 from notte_browser.js import script
 
@@ -85,9 +85,6 @@ def decode_page_result(payload: object, token: str, *, max_bytes: int, max_value
             return datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=datetime.timezone.utc)
         if kind == "u":
             return urlparse(value)
-        if kind == "r":
-            source, flags = cast(list[str], value)
-            return parse_driver_value({"r": {"p": source, "f": flags}})
         if kind == "fa" and isinstance(value, list):
             elements = cast(list[float], value)
             return [float(element) for element in elements]
