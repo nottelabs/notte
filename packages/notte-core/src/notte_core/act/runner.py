@@ -59,6 +59,7 @@ from notte_core.act.types import (
     Choice,
     Decider,
     DecisionState,
+    PageState,
     Question,
     WriteContext,
 )
@@ -147,6 +148,9 @@ class ActHistoryEntry:
     error: str | None = None
     # a TYPE_TEXT whose text is not submitted yet
     typed: TypedText | None = None
+    # The page read before this action, exposed in history only after leaving it.
+    page: PageState | None = None
+    left_page: bool = False
 
 
 # clicking these does not submit what was typed in a field
@@ -172,6 +176,8 @@ class ActHistory:
         if len(self.entries) > 0 and self.entries[-1].pending:
             self.entries[-1].page_changed = page.fingerprint != self.entries[-1].fingerprint
             self.entries[-1].pending = False
+            source = self.entries[-1].page
+            self.entries[-1].left_page = source is not None and source.url != page.url
         for entry in self.entries:
             if entry.typed is not None:
                 entry.typed = _still_typed(entry.typed, page)
@@ -202,6 +208,7 @@ class ActHistory:
             {"action": e.action, "kind": e.kind, "text": e.text, "page_changed": e.page_changed}
             | ({} if e.error is None else {"error": e.error})
             | ({} if e.typed is None or e.typed.before is not None else {"submitted": False})
+            | ({} if not e.left_page or e.page is None else {"page": e.page.model_dump()})
             for e in list(self.entries)[-limit:]
         ]
 
@@ -403,7 +410,12 @@ async def run_act(
         # without live state a typed value does not change the fingerprint
         unknown = decision.operation == "TYPE_TEXT" and len(page.states) == 0
         entry = ActHistoryEntry(
-            action=label, kind=decision.operation, text=text, fingerprint=page.fingerprint, pending=not unknown
+            action=label,
+            kind=decision.operation,
+            text=text,
+            fingerprint=page.fingerprint,
+            pending=not unknown,
+            page=state.page,
         )
         step = time.perf_counter()
         try:
@@ -552,7 +564,10 @@ def _write_context(
             "next_controls": _next_controls(space, target.element_id),
         },
         recent_actions=history.privacy.payload(
-            [{"action": e["action"], "text": e["text"]} for e in history.recent(WRITER_HISTORY_SIZE)]
+            [
+                {"action": e["action"], "text": e["text"]} | ({} if "page" not in e else {"page": e["page"]})
+                for e in history.recent(WRITER_HISTORY_SIZE)
+            ]
         ),
         variables=sorted(variables),
         credentials=_credentials(driver.has_vault),

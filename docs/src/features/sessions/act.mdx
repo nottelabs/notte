@@ -71,7 +71,7 @@ Only the elements in the viewport are offered. On a page taller than the viewpor
 
 `blocked` raises `NoActionFoundError` unless `raise_on_failure=False` (the default follows the session's `raise_on_failure`). An action that fails to execute raises like `session.execute()` does.
 
-When the writer finds no value for the field the decider picked (the instruction does not mention it), nothing is typed: the decider chooses again without that field, and the skipped field is recorded in the history. File inputs offer no operation: `act()` cannot upload a file, so the decider answers `BLOCKED` and the message says so (use `session.execute(type="upload_file", ...)`).
+When neither the instruction nor the observed page context or history gives a value for the field the decider picked, nothing is typed: the decider chooses again without that field, and the skipped field is recorded in the history. File inputs offer no operation: `act()` cannot upload a file, so the decider answers `BLOCKED` and the message says so (use `session.execute(type="upload_file", ...)`).
 
 <ActOptions />
 
@@ -97,7 +97,7 @@ When the writer finds no value for the field the decider picked (the instruction
 
 <ActLoop />
 
-`act()` sends the last 10 `act()` actions of the session to the decider, with whether each changed the page and, for an action that failed, its error class (never the error message), so repeating the same instruction makes progress instead of retrying a failed action. A `WAIT` returns as soon as the page changes and settles, or after 3 seconds. Other actions return once the page has reacted to them (the requests they started have finished and the page has been quiet for a moment, at most 3 seconds), so the next call sees, for example, the suggestions a search box loads after typing, or the page a client-side link renders.
+`act()` sends the last 10 `act()` actions of the session to the decider, with whether each changed the page and, for an action that failed, its error class (never the error message), so repeating the same instruction makes progress instead of retrying a failed action. When an action leaves a page, its history entry also carries the page text observed before leaving. The decider and field writer can reuse facts from it, such as a verification code read in a help tab, after returning to a form. Protected variables and vault values stay masked in this history too. A `WAIT` returns as soon as the page changes and settles, or after 3 seconds. Other actions return once the page has reacted to them (the requests they started have finished and the page has been quiet for a moment, at most 3 seconds), so the next call sees, for example, the suggestions a search box loads after typing, or the page a client-side link renders.
 
 ## Guards
 
