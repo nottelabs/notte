@@ -381,6 +381,13 @@ def test_probe_pages_that_are_not_there_are_site_misses() -> None:
     assert rules.probe_site_miss(url, captcha) == f"block page ('CAPTCHA') on {url}"
     assert rules.probe_site_miss(url, {**ok, "probe_url": "https://consent.test/"}) == "landed on https://consent.test/"
     assert rules.probe_site_miss(FIXTURE_URL, {"nav_error": "x"}) is None
+    # the browser broke before any page was read: no site evidence, so the probes count wrong
+    crashed = {"error": "BrowserError: launch failed"}
+    assert rules.probe_site_miss(url, crashed) is None
+    page = {"runner": "probe-local-jev", "url": url, "suite": "real", "version": "head", "repeat": 1, "names": ["p1"],
+            **crashed, "site_miss": None}  # fmt: skip
+    [row] = rules.probe_rows([page])
+    assert (row.head, row.head_misses) == ([False], [])
     # a page that failed before any question: its probes are site misses, not wrong answers
     run = {"runner": "probe-local-jev", "url": url, "suite": "real", "version": "head", "repeat": 1,
            "names": ["p1", "p2"], "error": "TimeoutError: goto", "site_miss": "navigation failed: TimeoutError: goto"}  # fmt: skip
