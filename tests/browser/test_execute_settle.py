@@ -20,6 +20,7 @@ from notte_browser.settle import CAP_MS, LONG_GRACE_MS, QUIET_MS, SETTLE_MS, Pag
 from notte_core.actions import ClickAction, GoBackAction, GoForwardAction, PressKeyAction, ScrollDownAction
 from notte_core.config import config
 from notte_core.errors import NotteBaseError
+from patchright.async_api import Route
 from PIL import Image
 
 HOME = """<html><body>
@@ -404,6 +405,65 @@ async def test_a_late_tab_s_requests_are_waited_for_from_when_it_appears(
     observation = await session.aobserve()
     assert observation.metadata.url == f"{site}/fetching-tab"
     assert "Fetched in the tab" in await text(session)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("close_opener", [False, True])
+async def test_observation_waits_for_a_request_sent_before_the_tab_tracker_exists(
+    session: NotteSession, site: str, close_opener: bool
+) -> None:
+    """Context requests can arrive before the tab's page event installs its tracker."""
+    window = session.window
+    opener = window.page
+    context = opener.context
+    fetching = asyncio.Event()
+    release = asyncio.Event()
+
+    async def serve(route: Route) -> None:
+        if route.request.url.endswith("/early-data"):
+            fetching.set()
+            await release.wait()
+            await route.fulfill(body="{}", content_type="application/json")
+        else:
+            await route.fulfill(
+                body="""<h1>Fetching tab</h1><script>fetch('/early-data').then(() =>
+                    document.body.insertAdjacentHTML('beforeend', '<p>Fetched in the tab</p>'))</script>""",
+                content_type="text/html",
+            )
+
+    await context.route(f"{site}/early-*", serve)
+    await window.watch_new_tabs(False)
+    record = window._new_tab
+    pending: list[Page] = []
+
+    # Deliver the page callback only after its real request starts, reproducing the event-order race.
+    def defer(page: Page) -> None:
+        pending.append(page)
+
+    with patch.object(window, "_new_tab", new=defer):
+        await window.watch_new_tabs(True)
+        try:
+            tab = await context.new_page()
+            await tab.goto(f"{site}/early-page")
+            await fetching.wait()
+            assert pending == [tab]
+            record(tab)
+            if close_opener:
+                await opener.close()
+                assert window.page is tab
+            observation = asyncio.create_task(session.aobserve())
+            try:
+                done, _ = await asyncio.wait({observation}, timeout=SETTLE_MS / 1000)
+                assert not done, "Observation finished while the tab's content request was still blocked"
+                release.set()
+                assert (await observation).metadata.url == f"{site}/early-page"
+                assert "Fetched in the tab" in await text(session)
+            finally:
+                release.set()
+                _ = await asyncio.gather(observation, return_exceptions=True)
+        finally:
+            release.set()
+            await window.watch_new_tabs(False)
 
 
 @pytest.mark.asyncio

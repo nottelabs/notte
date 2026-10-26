@@ -42,6 +42,7 @@ wait that followed them before.
 
 import asyncio
 import time
+from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Literal, TypedDict
 from urllib.parse import urlsplit
@@ -146,7 +147,7 @@ class PageSettle:
     """What an action starts on `page`, tracked from right before it, until the page settles: on the same document,
     on the document it navigated to, or until a tab opens (with `tabs`)."""
 
-    def __init__(self, page: Page, tracker: JSHandle | None, *, tabs: bool) -> None:
+    def __init__(self, page: Page, tracker: JSHandle | None, *, tabs: bool, requests: Iterable[Request] = ()) -> None:
         self.page: Page = page
         # None: the page is between two documents, the next one is tracked
         self._tracker: JSHandle | None = tracker
@@ -171,6 +172,8 @@ class PageSettle:
         page.on("request", self._request_started)
         page.on("requestfinished", self._request_ended)
         page.on("requestfailed", self._request_ended)
+        for request in requests:
+            self._request_started(request)
         if tabs:
             page.context.on("page", self._page_opened)
             page.context.on("request", self._context_request)
@@ -209,6 +212,9 @@ class PageSettle:
         self._last_request = now
 
     def _request_started(self, request: Request) -> None:
+        # A context request seeded before the page event can also arrive on the page afterward.
+        if request in self._in_flight:
+            return
         if request.resource_type not in TRACKED_REQUESTS or not self._same_origin(request):
             return
         # Repeated requests do not extend the quiet window indefinitely, but may carry the action's result.

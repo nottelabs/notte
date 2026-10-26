@@ -48,6 +48,11 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
 - `BrowserWindow.page` can select a replacement automatically when its opener
   closes. Wait for a new tab independently of selection; its navigation request
   can also precede the context's `page` event.
+  A new tab's fetch can precede that event too. Retain active context requests
+  while watching for tabs, then seed the new page's settle tracker; page listeners
+  installed after its first script runs otherwise miss its content request.
+  Use Python functions for event handlers: Patchright attaches handler metadata,
+  so built-in callables such as `set.add` cannot be registered directly.
   The driver can report a closed target from the click that closes its opener;
   accept that click only when a live replacement appears, and wait for it.
   When activating a tracked late tab, retain earlier tabs and their request trackers
