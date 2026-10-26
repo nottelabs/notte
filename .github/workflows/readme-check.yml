@@ -100,6 +100,9 @@ jobs:
         with:
           enable-cache: false
       - run: uv sync --locked --dev --all-extras
+      - name: Use the official Ubuntu archive for browser dependencies
+        # The runner's Azure mirror can stall APT before any README example runs.
+        run: printf '%s\n' 'https://archive.ubuntu.com/ubuntu' | sudo tee /etc/apt/apt-mirrors.txt > /dev/null
       - run: uv run patchright install --with-deps chromium --no-shell
       - name: Wait for the API to be ready
         uses: ./.github/actions/wait-for-api

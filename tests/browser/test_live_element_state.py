@@ -370,3 +370,25 @@ async def test_the_sort_order_is_read_on_a_directly_clickable_header(
         states = _state_by_selector(session)
 
     assert states["sort"] == (None if sort == "none" else ElementState(sort=sort))
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("role", ["columnheader gridcell", "gridcell columnheader"])
+@pytest.mark.parametrize("target", ["header", "button"])
+async def test_sort_state_uses_the_headers_effective_role(role: str, target: str) -> None:
+    content = "Age" if target == "header" else '<span role="group"><button id="sort">Sort by age</button></span>'
+    attrs = 'id="sort" onclick="void(0)"' if target == "header" else ""
+    html = f"""<div role="grid"><div role="row">
+      <div role="{role}" aria-sort="descending" {attrs}>{content}</div>
+    </div></div>"""
+
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(_data_url(html))
+        _ = await session.aobserve()
+        node = next(
+            node
+            for node in session.snapshot.dom_node.flatten()
+            if node.attributes is not None and node.attributes.id_name == "sort"
+        )
+
+    assert node.state == (ElementState(sort="descending") if role.startswith("columnheader") else None)
