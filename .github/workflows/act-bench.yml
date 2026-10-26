@@ -55,6 +55,7 @@ jobs:
       suites: ${{ steps.plan.outputs.suites }}
       runners: ${{ steps.plan.outputs.runners }}
       repeats: ${{ steps.plan.outputs.repeats }}
+      today: ${{ steps.plan.outputs.today }}
     steps:
       - name: Decide whether to run, and on which commits
         id: plan
@@ -123,6 +124,8 @@ jobs:
             echo "suites=$SUITES"
             echo "runners=$RUNNERS"
             echo "repeats=$REPEATS"
+            # one day for every shard: the travel tasks count their dates from it
+            echo "today=$(date -u +%F)"
           } >> "$GITHUB_OUTPUT"
           echo "act bench: head $head, base ${base:-none}, $SHARDS shard(s)" | tee -a "$GITHUB_STEP_SUMMARY"
 
@@ -202,11 +205,12 @@ jobs:
           SUITES: ${{ needs.plan.outputs.suites }}
           RUNNERS: ${{ needs.plan.outputs.runners }}
           REPEATS: ${{ needs.plan.outputs.repeats }}
+          TODAY: ${{ needs.plan.outputs.today }}
         run: |
           trees=(--tree head=head)
           if [ "$HAS_BASE" = true ]; then trees=(--tree base=base --tree head=head); fi
           python head/scripts/bench_act/bench.py "${trees[@]}" --shard "$SHARD" --concurrency 4 \
-            --runners "$RUNNERS" --suites "$SUITES" --repeats "$REPEATS" --out runs
+            --runners "$RUNNERS" --suites "$SUITES" --repeats "$REPEATS" --today "$TODAY" --out runs
 
       - name: Upload shard runs
         if: always()

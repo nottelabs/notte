@@ -22,7 +22,6 @@ from notte_core.act import Answer, Answers, DecisionState, Question, WriteContex
 from notte_core.act.loop import _stop  # pyright: ignore[reportPrivateUsage]
 
 from .model import Probe, Task
-from .rules import run_landed
 
 VIEWPORT: dict[str, Any] = {"viewport_width": 1120, "viewport_height": 780}
 WRITER = "inception/mercury-3"
@@ -375,8 +374,14 @@ async def run_probes(probes: list[Probe], url: str, decider_kind: str) -> dict[s
     run: dict[str, Any] = {"probes": []}
     try:
         async with NotteSession(headless=True, **VIEWPORT) as session:
-            _ = await session.aexecute(type="goto", url=url)
+            try:
+                _ = await session.aexecute(type="goto", url=url)
+            except Exception as e:
+                run["nav_error"] = f"{type(e).__name__}: {e}"[:1000]
+                run["error"] = run["nav_error"]
+                return run
             page = session.window.page
+            run["landing"] = await _landing(page)
             if "consent.google.com" in page.url:
                 # setup, not measured: the probes ask about the page behind Google's consent wall
                 await page.get_by_role("button", name="Reject all").first.click()
@@ -400,8 +405,4 @@ async def run_probes(probes: list[Probe], url: str, decider_kind: str) -> dict[s
             run["probe_url_end"] = page.url
     finally:
         decider.close()
-    # a probe page that is not the intended one makes its probes site misses, not wrong answers
-    run["landed"] = "probe_url" in run and run_landed(run, url)
-    for record in run["probes"]:
-        record["site_miss"] = not run["landed"]
     return run
