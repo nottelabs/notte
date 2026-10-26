@@ -283,7 +283,9 @@ def _can_create_tab(action: BaseAction) -> bool:
 
 def _settles(action: BaseAction) -> bool:
     """Whether the page's reaction to an action is waited for (`notte_browser.settle`): the actions that can start
-    a navigation, and a scroll (what it loads). A goto waits for the page's load."""
+    a navigation, a goto that waits for the page's load (the default), and a scroll (what it loads)."""
+    if isinstance(action, GotoAction):
+        return _settled_goto(action)
     return isinstance(
         action,
         (
@@ -298,12 +300,21 @@ def _settles(action: BaseAction) -> bool:
     )
 
 
+def _settled_goto(action: GotoAction) -> bool:
+    """A goto that waits for the load (the default): its page is waited for like a click's new page. With another
+    `wait_until`, it waits for that event, then sleeps as before."""
+    return action.wait_until in (None, "load")
+
+
 async def _settle(settle: PageSettle, action: BaseAction, url: str, *, verbose: bool) -> None:
     """Until the page has reacted to `action`, which ran on `url`."""
     match action:
         # a new page is waited for until its requests are done (the network going idle), whatever submitted it
         case ClickAction() | PressKeyAction() | InteractionAction(press_enter=True):
             await settle.wait(grace_ms=LONG_GRACE_MS, document="requests")
+        case GotoAction():
+            # what the page fetches after its load is waited for, instead of a fixed sleep
+            await settle.wait(document="requests")
         case ScrollUpAction() | ScrollDownAction():
             # the scroll has ended: what it starts loading right away (more items, lazy content) is waited for
             await settle.wait()
@@ -335,7 +346,8 @@ async def execute_browser_action(window: BrowserWindow, action: BaseAction, *, v
         case CaptchaSolveAction(captcha_type=_):
             _ = await solve_captcha(window, action)
         case GotoAction(url=url, wait_until=wait_until):
-            await window.goto(url, wait_until=wait_until)
+            # the load is waited for by `execute`, which settles the page
+            await window.goto(url, wait_until="commit" if _settled_goto(action) else wait_until)
         case GotoNewTabAction(url=url):
             new_page = await window.page.context.new_page()
             window.page = new_page
@@ -633,7 +645,14 @@ async def execute(
     tabs = list(context.pages)
     url = page.url
     # tracked from right before the action
-    settle = await PageSettle.start(page, tabs=_can_create_tab(action)) if _settles(action) else None
+    settle: PageSettle | None = None
+    if _settles(action):
+        if isinstance(action, GotoAction):
+            # Track requests before committing, then wait for the destination within the navigation budget.
+            # The old document's 3 s settle cap must not consume a slow goto's load wait.
+            settle = PageSettle(page, None, tabs=True)
+        else:
+            settle = await PageSettle.start(page, tabs=_can_create_tab(action))
     retval = True
     closed_during_click: Error | None = None
     try:
@@ -670,15 +689,17 @@ async def execute(
             case _:
                 raise ValueError(f"Unsupported action type: {type(action)}")
         if settle is not None:
-            settle.acted()
+            if not isinstance(action, GotoAction):
+                settle.acted()
+            # a goto's budget counts from its start: its commit and the wait for its page share `timeout_goto_ms`
             if retval:
                 await _settle(settle, action, url, verbose=verbose)
         if closed_during_click is not None and not any(
             tab not in tabs and not tab.is_closed() for tab in context.pages
         ):
             raise closed_during_click
-        if isinstance(action, (GotoAction, GotoNewTabAction)):
-            # a goto is not settled: it keeps the fixed wait before the new-tab check, which callers that observe
+        if isinstance(action, (GotoAction, GotoNewTabAction)) and settle is None:
+            # a goto that is not settled keeps the fixed wait before the new-tab check, which callers that observe
             # right after it rely on (a page its scripts render after its load)
             await window.short_wait()
         # Only check for new tabs if the action can potentially create one

@@ -6,7 +6,10 @@ import socket
 import time
 from collections.abc import AsyncIterator
 from contextlib import closing
+from unittest.mock import patch
 
+import notte_browser.settle as settle_module
+import notte_browser.window as window_module
 import pytest
 import pytest_asyncio
 from aiohttp import web
@@ -68,6 +71,10 @@ customElements.define('x-inner', class extends HTMLElement {
     document.body.insertAdjacentHTML('beforeend', '<p>Both pages fetched</p>'))">Fetch pages</button>
 <button id="retry" onclick="fetch('/data?delay=0.4').then(() => fetch('/data?delay=0.4')).then(() =>
     document.body.insertAdjacentHTML('beforeend', '<p>Retried result</p>'))">Retry</button>
+<a id="product" href="/product">Product</a>
+<a id="api-product" href="/api-product">Product from an API</a>
+<button id="route" onclick="const chunk = document.createElement('script'); chunk.src = '/chunk.js';
+  document.head.append(chunk)">Contact</button>
 </body></html>"""
 PAGES = {
     "/": HOME,
@@ -105,6 +112,30 @@ window.addEventListener('load', () => {
     setTimeout(() => { document.body.innerHTML = '<p>Still loading</p>' }, 300);
     setTimeout(() => { document.body.innerHTML = '<p>Frame content</p>' }, 450);
 });
+</script></body></html>""",
+    # loads at once, then fetches what it renders on a timer (a product page's data)
+    "/product": """<html><body><h1>Shop</h1><script>
+window.addEventListener('load', () => setTimeout(() => fetch('/data?delay=0.3').then(() =>
+    document.body.insertAdjacentHTML('beforeend', '<button>Add to cart</button>')), 250));
+</script></body></html>""",
+    # loads at once, fetches its settings, then its product from an API on another origin: a JSON POST, sent after
+    # a CORS preflight, which the browser reports only once the preflight has answered
+    "/api-product": """<html><body><h1>Shop</h1><script>
+fetch('/data?delay=0.8').then(() => fetch(`http://localhost:${location.port}/api`,
+    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }
+)).then(() => document.body.insertAdjacentHTML('beforeend', '<button>Add to cart</button>'));
+</script></body></html>""",
+    # answers late, then never loads (an image that never arrives)
+    "/slow-stalled": """<html><body><h1>Stalled</h1><img src="/hang"></body></html>""",
+    # commits after the same-document settle cap, then fetches data within the navigation budget
+    "/slow-commit": """<html><body><h1>Slow response</h1><script>
+window.addEventListener('load', () => fetch('/data?delay=0.3').then(() =>
+    document.body.insertAdjacentHTML('beforeend', '<p>Slow page content</p>')));
+</script></body></html>""",
+    # loads at once, then fetches its content from a slow API on a timer (a single-page app)
+    "/app": """<html><body><h1>App</h1><script>
+window.addEventListener('load', () => setTimeout(() => fetch('/data?delay=0.9').then(() =>
+    document.body.insertAdjacentHTML('beforeend', '<p>App content</p>')), 300));
 </script></body></html>""",
     # fetches its content as soon as it is parsed
     "/fetching-tab": """<html><body><h1>Fetching tab</h1><script>fetch('/data?delay=0.6').then(() =>
@@ -144,7 +175,10 @@ async def site() -> AsyncIterator[str]:
     release = asyncio.Event()
 
     async def page(request: web.Request) -> web.Response:
-        await asyncio.sleep(SLOW_PAGE_DELAY_S if request.path.startswith("/slow") else PAGE_DELAY_S)
+        delay = SLOW_PAGE_DELAY_S if request.path.startswith("/slow") else PAGE_DELAY_S
+        if request.path == "/slow-commit":
+            delay = CAP_MS / 1000 + 0.2
+        await asyncio.sleep(delay)
         # the same server on another host name is another origin
         other_origin = f"http://localhost:{port}"
         return web.Response(text=PAGES[request.path].replace("OTHER_ORIGIN", other_origin), content_type="text/html")
@@ -156,6 +190,26 @@ async def site() -> AsyncIterator[str]:
     async def slow_script(_request: web.Request) -> web.Response:
         await asyncio.sleep(0.3)
         return web.Response(text="", content_type="text/javascript")
+
+    cors = {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST",
+        "Access-Control-Allow-Headers": "Content-Type",
+    }
+
+    async def api_preflight(_request: web.Request) -> web.Response:
+        await asyncio.sleep(0.4)
+        return web.Response(headers=cors)
+
+    async def api(_request: web.Request) -> web.Response:
+        return web.json_response({}, headers=cors)
+
+    async def chunk(_request: web.Request) -> web.Response:
+        # a route's code, loaded on demand: it changes the URL and renders once it has arrived
+        await asyncio.sleep(0.8)
+        script = """history.pushState({}, '', '/contact');
+document.body.insertAdjacentHTML('beforeend', '<h2>Contact page</h2>');"""
+        return web.Response(text=script, content_type="text/javascript")
 
     async def slow_image(_request: web.Request) -> web.Response:
         await asyncio.sleep(1)
@@ -173,6 +227,9 @@ async def site() -> AsyncIterator[str]:
         app.router.add_get(path, page)
     app.router.add_get("/data", data)
     app.router.add_get("/slow.js", slow_script)
+    app.router.add_get("/chunk.js", chunk)
+    app.router.add_route("OPTIONS", "/api", api_preflight)
+    app.router.add_post("/api", api)
     app.router.add_get("/slow-image", slow_image)
     app.router.add_get("/hang", hang)
     app.router.add_get("/download", download)
@@ -231,6 +288,47 @@ async def test_a_click_that_loads_a_page_waits_for_what_it_renders_after_its_loa
 
 
 @pytest.mark.asyncio
+async def test_a_click_that_loads_a_page_waits_for_what_it_fetches_on_a_timer_after_its_load(
+    session: NotteSession, site: str
+) -> None:
+    # the page has loaded and is quiet before its timer fetches what it renders
+    _ = await click(session, "product")
+    assert session.window.page.url == f"{site}/product"
+    assert "Add to cart" in await text(session)
+
+
+@pytest.mark.asyncio
+async def test_a_click_that_loads_a_page_waits_for_its_request_after_a_cors_preflight(
+    session: NotteSession, site: str
+) -> None:
+    # the request is reported 400 ms after the one before it ended, once its preflight has answered
+    _ = await click(session, "api-product")
+    assert session.window.page.url == f"{site}/api-product"
+    assert "Add to cart" in await text(session)
+
+
+@pytest.mark.asyncio
+async def test_a_goto_waits_for_what_the_page_fetches_after_its_load(session: NotteSession, site: str) -> None:
+    # its content arrives 1.2 s after its load: after the fixed waits that followed a goto
+    result = await session.aexecute(type="goto", url=f"{site}/app")
+    assert result.success
+    assert "App content" in await text(session)
+
+
+@pytest.mark.asyncio
+async def test_a_goto_shares_one_timeout_between_its_commit_and_its_page(session: NotteSession, site: str) -> None:
+    # the page answers after 0.8 s, then never loads: the wait for it gets what is left of the goto's timeout
+    test_config = config.model_copy(update={"timeout_goto_ms": 2_000})
+    start = time.monotonic()
+    with patch.object(window_module, "config", test_config), patch.object(settle_module, "config", test_config):
+        result = await session.aexecute(type="goto", url=f"{site}/slow-stalled")
+    elapsed = time.monotonic() - start
+    assert result.success
+    assert "Stalled" in await text(session)
+    assert elapsed < 2.4
+
+
+@pytest.mark.asyncio
 async def test_a_download_tab_closing_does_not_fail_the_click_or_replace_the_page(session: NotteSession) -> None:
     page = session.window.page
     async with page.expect_download() as event:
@@ -250,6 +348,15 @@ async def test_requests_with_different_queries_are_all_waited_for(session: Notte
 async def test_a_repeated_request_is_still_waited_for_while_it_runs(session: NotteSession) -> None:
     _ = await click(session, "retry")
     assert "Retried result" in await text(session)
+
+
+@pytest.mark.asyncio
+async def test_a_goto_that_commits_after_the_settle_cap_still_waits_for_its_page(
+    session: NotteSession, site: str
+) -> None:
+    result = await session.aexecute(type="goto", url=f"{site}/slow-commit")
+    assert result.success
+    assert "Slow page content" in await text(session)
 
 
 @pytest.mark.asyncio
@@ -322,6 +429,14 @@ async def test_a_client_side_navigation_a_timer_starts_is_waited_for_until_it_re
     _ = await click(session, "spa")
     assert session.window.page.url == f"{site}/spa"
     assert "Spa page" in await text(session)
+
+
+@pytest.mark.asyncio
+async def test_a_client_side_navigation_waits_for_the_code_it_loads(session: NotteSession, site: str) -> None:
+    # the route's code takes 800 ms: longer than the grace of a click whose only change is the script it adds
+    _ = await click(session, "route")
+    assert session.window.page.url == f"{site}/contact"
+    assert "Contact page" in await text(session)
 
 
 @pytest.mark.asyncio

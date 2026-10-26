@@ -86,3 +86,19 @@ async def test_changes_spanning_the_action_keep_the_quiet_window(
     settle._began = settle._started + 0.125
     await settle._poll(GRACE_MS)
     assert tracker.evaluate.await_count == len(samples)
+
+
+def test_a_new_page_is_watched_for_a_while_after_its_load() -> None:
+    # 500 ms after its load event, even with nothing happening
+    assert not settled(state(LONG_GRACE_MS - 1, at_least_ms=LONG_GRACE_MS))
+    assert settled(state(LONG_GRACE_MS, at_least_ms=LONG_GRACE_MS))
+
+
+def test_a_new_page_waits_for_its_requests_to_be_quiet_for_a_while() -> None:
+    # its last request ended 300 ms ago (before the page was tracked again): the next one may be waiting on a
+    # CORS preflight, which the browser does not report
+    quiet = {"last_request_ms": -300.0, "request_quiet_ms": float(LONG_GRACE_MS)}
+    assert not settled(state(GRACE_MS, **quiet))
+    assert settled(state(LONG_GRACE_MS - 300, **quiet))
+    # without a request quiet time, a request that ended long enough ago is no reason to wait
+    assert settled(state(GRACE_MS, last_request_ms=-300.0))
