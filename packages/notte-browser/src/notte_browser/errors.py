@@ -160,6 +160,20 @@ class UnexpectedBrowserError(BrowserError):
         )
 
 
+class FirstPageOfTabError(BrowserError):
+    def __init__(self) -> None:
+        message = "Cannot go back: this is the first page this tab opened."
+        super().__init__(
+            dev_message=message,
+            user_message=message,
+            agent_message=(
+                f"{message} Hint: going back would leave the page for the blank one the tab started on; use the "
+                "page's own Back button or link, or go to a URL instead."
+            ),
+            should_retry_later=False,
+        )
+
+
 # #######################################################
 # ################ Environment errors ###################
 # #######################################################
