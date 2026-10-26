@@ -39,7 +39,12 @@ from notte_core.actions import (
 from notte_core.config import config
 from notte_core.credentials.types import get_str_value
 from notte_core.dom_tree import DomNode, NodeSelectors
-from notte_core.errors import ActionExecutionError, NotteTimeoutError, SnapshotProcessingError
+from notte_core.errors import (
+    ActionExecutionError,
+    FileChooserOpenedError,
+    NotteTimeoutError,
+    SnapshotProcessingError,
+)
 from notte_core.logging import logger
 from notte_core.profiling import profiler
 from notte_core.snapshot import BrowserSnapshot
@@ -48,7 +53,7 @@ from notte_core.storage import BaseStorage
 from notte_browser.captcha import solve_captcha
 from notte_browser.dom.locate import locate_element, selectors_through_shadow_dom
 from notte_browser.dom.parsing import parse_dom
-from notte_browser.driver import ElementHandle, Error, Frame, JSHandle, Locator
+from notte_browser.driver import ElementHandle, Error, FileChooser, Frame, JSHandle, Locator
 from notte_browser.errors import (
     InvalidLocatorRuntimeError,
     NoHistoryEntryError,
@@ -66,6 +71,8 @@ from notte_browser.window import BrowserWindow
 _BLUR_ACTIVE_ELEMENT = script("blur_active_element.js")
 _IS_DISABLED = script("is_disabled.js")
 _PASTE_TEXT = script("paste_text.js")
+# Page-side implementation: js/file_input_clicks.js
+_FILE_INPUT_CLICKS = script("file_input_clicks.js")
 
 
 def text_contains_tabs(text: str) -> bool:
@@ -861,6 +868,50 @@ async def execute(
     prev_snapshot: BrowserSnapshot | None = None,
     storage: BaseStorage | None = None,
     verbose: bool = False,
+) -> bool:
+    if not isinstance(action, ClickAction):
+        return await _execute(window, action, prev_snapshot=prev_snapshot, storage=storage, verbose=verbose)
+    # A click that opens a file chooser chooses no file: it fails. The page records the clicks that reach a file input
+    # (Playwright reports the chooser after the click has returned); the chooser is intercepted, so that no native
+    # dialog stays open.
+    page = window.page
+    choosers: list[FileChooser] = []
+
+    def on_chooser(chooser: FileChooser) -> None:
+        choosers.append(chooser)
+
+    clicks: JSHandle | None = None
+    page.on("filechooser", on_chooser)
+    try:
+        try:
+            clicks = await page.evaluate_handle(_FILE_INPUT_CLICKS)
+        except Error:
+            # navigating already: only the chooser is seen
+            pass
+        retval = await _execute(window, action, prev_snapshot=prev_snapshot, storage=storage, verbose=verbose)
+        opened = len(choosers) > 0
+        if retval and not opened and clicks is not None:
+            with suppress(Error):  # the click navigated away
+                opened = bool(await clicks.evaluate("clicks => clicks.opened()"))
+    finally:
+        page.remove_listener("filechooser", on_chooser)
+        if clicks is not None:
+            with suppress(Error):
+                await clicks.evaluate("clicks => clicks.dispose()")
+            with suppress(Error):
+                await clicks.dispose()
+    if retval and opened:
+        raise FileChooserOpenedError()
+    return retval
+
+
+async def _execute(
+    window: BrowserWindow,
+    action: BaseAction,
+    *,
+    prev_snapshot: BrowserSnapshot | None,
+    storage: BaseStorage | None,
+    verbose: bool,
 ) -> bool:
     """Execute `action`, then wait until the page has reacted to it (`notte_browser.settle`): a navigation it started
     has rendered or loaded, a new tab it opened (after a click, a goto or a key press) is switched to and waited for.

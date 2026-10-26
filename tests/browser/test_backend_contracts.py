@@ -30,8 +30,7 @@ def _page() -> MagicMock:
     page.is_closed.return_value = False
     page.context.pages = [page]
     # the page does not react to actions: the settle's tracker (`notte_browser.settle`) reports no change
-    tracker = AsyncMock()
-    tracker.evaluate.return_value = {
+    state = {
         "elapsed": 1_000,
         "first": None,
         "last": None,
@@ -39,6 +38,9 @@ def _page() -> MagicMock:
         "urlAt": None,
         "inputAt": None,
     }
+    tracker = AsyncMock()
+    # and a click reaches no file input (`execution._FILE_INPUT_CLICKS`)
+    tracker.evaluate.side_effect = lambda script, *_: False if "clicks.opened()" in script else state
     page.evaluate_handle = AsyncMock(return_value=tracker)
     return page
 
