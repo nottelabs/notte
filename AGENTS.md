@@ -25,6 +25,12 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
 - `make test` is the offline gate. `make test-live` runs tests marked
   `staging` or `live` and needs `NOTTE_API_KEY`; set `NOTTE_API_URL` to point
   the SDK at a different API.
+- CDP transport tests keep real staging sessions and connections but serve page
+  fixtures through Patchright routes, so navigation and screenshot coverage does
+  not depend on third-party sites loading.
+- README live CI uses the official HTTPS Ubuntu archive in the runner's
+  `/etc/apt/apt-mirrors.txt`; the Azure mirror has stalled Chromium dependency
+  installation before the examples could run.
 - Browser settle regressions are in `tests/browser/test_execute_settle.py`
   and `tests/browser/test_settle_rules.py` and use a local server. Use the
   lockfile's Patchright environment: an older installed version can fail the
@@ -34,6 +40,9 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   can also precede the context's `page` event.
   The driver can report a closed target from the click that closes its opener;
   accept that click only when a live replacement appears, and wait for it.
+  When activating a tracked late tab, retain earlier tabs and their request trackers
+  until selection succeeds. A tab closing during activation must not discard the
+  surviving candidates or stop watching when none survive.
 - A new-document `goto` tracks requests before its commit and waits for the destination
   within one navigation budget. Do not wait on the old document's tracker first:
   a commit after the 3 s settle cap must still get its remaining load wait.
@@ -71,6 +80,24 @@ same goes for `document.*` in the page's own world (`<img name="body">`).
 Only an editing host gets the implicit `contenteditable` textbox role. Carry the
 host flag from the DOM script into both role classification and duplicate detection;
 editable descendants with their own click handlers must retain their click actions.
+
+Off-screen fixed text is unreachable only when its panel is fixed to the viewport.
+In Chromium, a fixed element's non-null `offsetParent` identifies a containing block
+(for example, a transformed ancestor) that can scroll into view. Walk through shadow
+hosts when checking panels, following `assignedSlot` before light-DOM parents;
+`parentElement` alone stops inside web components and bypasses slotted panels.
+Start direct slotted text at its assigned slot too. A viewport-fixed portal remains
+an independent boundary even with an empty box: check its text's reachable bounds
+after inner scrolling rather than using an outer drawer's position.
+Only expand those bounds for scroll boxes that move the text's positioned ancestor;
+absolute or fixed text can escape a static scroll box through its containing block.
+Boxless wrappers (`display: contents`) do not establish a positioned owner, even
+when their computed `position` is absolute or fixed.
+`tests/browser/test_dom_hidden_content.py` covers both cases.
+
+CDP listener hints must retain the inspected elements' identities through main-world
+handles. DOM marker attributes are copied by `cloneNode`, while event listeners are
+not, so an attribute bridge can incorrectly offer a clone as a clickable header.
 
 ## Public API
 

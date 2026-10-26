@@ -1,7 +1,7 @@
 import traceback
 from collections.abc import Awaitable
 from functools import wraps
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, Literal, TypeVar
 
 from notte_core.actions import ToolAction
 from notte_core.config import config
@@ -146,6 +146,21 @@ class ScrollActionFailedError(BrowserError):
         )
 
 
+class NoHistoryEntryError(BrowserError):
+    def __init__(self, direction: Literal["back", "forward"]) -> None:
+        entry = "previous" if direction == "back" else "next"
+        message = f"Cannot go {direction}: this tab has no {entry} page in its history."
+        super().__init__(
+            dev_message=message,
+            user_message=message,
+            agent_message=(
+                f"{message} Hint: a tab opened by a link starts with no previous page; switch to another tab or go "
+                "to a URL instead."
+            ),
+            should_retry_later=False,
+        )
+
+
 class UnexpectedBrowserError(BrowserError):
     def __init__(self, url: str) -> None:
         super().__init__(
@@ -157,6 +172,20 @@ class UnexpectedBrowserError(BrowserError):
             ),
             should_retry_later=True,
             should_notify_team=True,
+        )
+
+
+class FirstPageOfTabError(BrowserError):
+    def __init__(self) -> None:
+        message = "Cannot go back: this is the first page this tab opened."
+        super().__init__(
+            dev_message=message,
+            user_message=message,
+            agent_message=(
+                f"{message} Hint: going back would leave the page for the blank one the tab started on; use the "
+                "page's own Back button or link, or go to a URL instead."
+            ),
+            should_retry_later=False,
         )
 
 

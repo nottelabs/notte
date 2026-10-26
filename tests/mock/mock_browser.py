@@ -243,6 +243,13 @@ class MockBrowserDriver(AsyncResource):
     async def long_wait(self) -> None:
         pass
 
+    # the mock opens no tab (`BrowserWindow.watch_new_tabs`)
+    async def watch_new_tabs(self, watch: bool) -> None:
+        pass
+
+    async def switch_to_new_tab(self, *, verbose: bool = False) -> None:
+        pass
+
     async def close(self) -> None:
         pass
 
