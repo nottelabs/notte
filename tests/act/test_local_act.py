@@ -10,6 +10,7 @@ from urllib.parse import quote
 import pytest
 import pytest_asyncio
 from notte_browser.session import NotteSession
+from notte_core._sync import run_sync
 from notte_core.act import (
     Answers,
     DecisionState,
@@ -372,7 +373,7 @@ def test_sync_act_and_session_decider_resolution(monkeypatch: pytest.MonkeyPatch
 
     monkeypatch.setattr(session_module, "default_decider", fake_default)
     with NotteSession(headless=True) as session:
-        _ = asyncio.run(session.window.page.goto(f"data:text/html,{quote(PAGE)}"))
+        _ = run_sync(session.window.page.goto(f"data:text/html,{quote(PAGE)}"))
         assert session.act("nothing to do").status == "done"
         assert session.check("Is there a form?") == pytest.approx(0.9)
     # resolved once, then cached on the session
@@ -436,7 +437,7 @@ def test_session_closes_the_decider_it_resolved(monkeypatch: pytest.MonkeyPatch)
     passed = Closable(choices=[{"operation": "DONE"}])
     monkeypatch.setattr(session_module, "default_decider", lambda: owned)
     with NotteSession(headless=True) as session:
-        _ = asyncio.run(session.window.page.goto(f"data:text/html,{quote(PAGE)}"))
+        _ = run_sync(session.window.page.goto(f"data:text/html,{quote(PAGE)}"))
         _ = session.act("nothing to do")
         _ = session.act("nothing to do", decider=passed)
     assert owned.closed == 1 and passed.closed == 0
