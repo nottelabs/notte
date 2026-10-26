@@ -656,6 +656,25 @@ async def test_enter_is_stale_when_the_focus_moved(session: NotteSession) -> Non
 
 
 @pytest.mark.asyncio
+async def test_enter_is_fresh_while_the_page_adds_elements_before_the_focus(session: NotteSession) -> None:
+    page = session.window.page
+    # an ad or a lazy widget inserted above the focused field, again and again
+    await page.set_content(
+        """<form><input id='search' name='q'></form>
+<script>setInterval(() => document.body.prepend(document.createElement('div')), 50)</script>"""
+    )
+    await page.focus("#search")
+
+    async def slow_decision() -> None:
+        await asyncio.sleep(0.3)
+
+    decider = FakeDecider(choices=[{"operation": "PRESS_ENTER"}], on_choose=slow_decision)
+    result = await session.aact("submit the search", decider=decider, raise_on_failure=False)
+    # the focus stayed on the field: Enter goes where the decision saw it
+    assert result.status == "executed" and len(decider.states) == 1
+
+
+@pytest.mark.asyncio
 async def test_a_failed_action_is_recorded_as_failed(session: NotteSession) -> None:
     # a date input rejects a value that is not YYYY-MM-DD: the fill fails
     _ = await session.window.page.goto(f"data:text/html,{quote('<label for=d>Date</label><input id=d type=date>')}")
