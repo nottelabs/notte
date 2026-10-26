@@ -1598,40 +1598,58 @@
 
 		// For shadow DOM, we need to check within its own root context
 		const shadowRoot = getRootNode(element);
-		if (shadowRoot instanceof ShadowRoot) {
-			const [centerX, centerY] = topElementPoint(element, rects);
-
-			try {
-				const topEl = shadowRoot.elementFromPoint(centerX, centerY);
-				if (!topEl) return false;
-
-				let current = topEl;
-				while (current && current !== shadowRoot) {
-					if (current === element) return true;
-					current = parentElementOf(current);
-				}
-				return false;
-			} catch (e) {
-				return true;
-			}
-		}
-
-		// For elements in viewport, check if they're topmost
-		const [centerX, centerY] = topElementPoint(element, rects);
-
+		const root = shadowRoot instanceof ShadowRoot ? shadowRoot : document;
 		try {
-			const topEl = DOCUMENT.elementFromPoint.call(document, centerX, centerY);
-			if (!topEl) return false;
+			return isShownIn(root, element, rects[Math.floor(rects.length / 2)]);
+		} catch (e) {
+			return true;
+		}
+	}
 
+	// covering elements looked past when the center of an element is covered (see `isShownIn`)
+	const MAX_COVER_PROBES = 3;
+	// a part of an element left uncovered is looked at when it is at least this wide and tall, in pixels
+	const MIN_UNCOVERED_SIZE = 4;
+
+	/**
+	 * Checks if an element shows in a box of it: its center, or else the largest part of the box that the
+	 * element covering the center leaves in the viewport (a field half under a banner is still there to
+	 * type in). Up to `MAX_COVER_PROBES` covering elements are looked past; one covering the whole box
+	 * (a modal backdrop) ends the search at once.
+	 *
+	 * @param {Document | ShadowRoot} root - The root to hit-test in.
+	 * @param {HTMLElement} element - The element.
+	 * @param {DOMRect} rect - The box of the element to look at.
+	 * @returns {boolean} Whether the element is the topmost element at a point of the box.
+	 */
+	function isShownIn(root, element, rect) {
+		let area = { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom };
+		for (let probe = 0; probe <= MAX_COVER_PROBES; probe++) {
+			const x = (area.left + area.right) / 2, y = (area.top + area.bottom) / 2;
+			const topEl = root === document ? DOCUMENT.elementFromPoint.call(document, x, y) : root.elementFromPoint(x, y);
+			if (!topEl) return false;
 			let current = topEl;
 			while (current && current !== DOCUMENT_ELEMENT) {
 				if (current === element) return true;
 				current = parentElementOf(current);
 			}
-			return false;
-		} catch (e) {
-			return true;
+			const cover = getCachedBoundingRect(topEl);
+			const visible = {
+				left: Math.max(area.left, 0), top: Math.max(area.top, 0),
+				right: Math.min(area.right, window.innerWidth), bottom: Math.min(area.bottom, window.innerHeight),
+			};
+			// the parts of the visible area above, below, left and right of the covering element
+			const parts = [
+				{ ...visible, bottom: Math.min(visible.bottom, cover.top) },
+				{ ...visible, top: Math.max(visible.top, cover.bottom) },
+				{ ...visible, right: Math.min(visible.right, cover.left) },
+				{ ...visible, left: Math.max(visible.left, cover.right) },
+			].filter((part) => part.right - part.left >= MIN_UNCOVERED_SIZE && part.bottom - part.top >= MIN_UNCOVERED_SIZE);
+			if (parts.length === 0) return false;
+			const size = (part) => (part.right - part.left) * (part.bottom - part.top);
+			area = parts.reduce((largest, part) => (size(part) > size(largest) ? part : largest));
 		}
+		return false;
 	}
 
 	/**
