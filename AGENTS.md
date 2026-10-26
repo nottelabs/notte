@@ -34,9 +34,19 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   can also precede the context's `page` event.
   The driver can report a closed target from the click that closes its opener;
   accept that click only when a live replacement appears, and wait for it.
-- A default `goto` tracks requests before its commit and waits for the destination
+- A new-document `goto` tracks requests before its commit and waits for the destination
   within one navigation budget. Do not wait on the old document's tracker first:
   a commit after the 3 s settle cap must still get its remaining load wait.
+  Hash-only gotos retain the current document's tracker before the URL changes,
+  so delayed route rendering is still observed.
+  Use the navigation response to identify a new document, rather than comparing
+  URL spellings: the browser normalizes schemes, empty paths, hosts and ports.
+  Goto tracker startup uses the existing 500 ms grace as its deadline; an
+  unresponsive old page must not prevent navigation from starting.
+  If startup expires before a hash goto, preserve the known URL change when
+  tracking resumes so the existing render-wait rule still applies.
+  Clear that same-document expectation when navigation destroys the tracker:
+  a hash handler's redirect needs the destination's load and post-load waits.
 - Native integration examples (`examples/*`, run by
   `scripts/ci_integration_examples.py`) install the local `node-sdk` with
   `npm install --no-save`. Don't add `--package-lock=false`: it ignores the

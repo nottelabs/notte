@@ -6,6 +6,7 @@ import socket
 import time
 from collections.abc import AsyncIterator
 from contextlib import closing
+from typing import Literal
 from unittest.mock import patch
 
 import notte_browser.settle as settle_module
@@ -13,7 +14,7 @@ import notte_browser.window as window_module
 import pytest
 import pytest_asyncio
 from aiohttp import web
-from notte_browser.driver import Error, Locator
+from notte_browser.driver import Error, JSHandle, Locator, Page
 from notte_browser.session import NotteSession
 from notte_browser.settle import CAP_MS, LONG_GRACE_MS, QUIET_MS, SETTLE_MS, PageSettle
 from notte_core.actions import ClickAction, GoBackAction, GoForwardAction, PressKeyAction, ScrollDownAction
@@ -99,6 +100,11 @@ window.addEventListener('load', () => fetch('/data?delay=0.3').then(() =>
     "/late-load": """<html><body><h1>Late load</h1><img src="/slow-image"><script>
 window.addEventListener('load', () => fetch('/data?delay=0.3').then(() =>
     document.body.insertAdjacentHTML('beforeend', '<p>Rendered after a late load</p>')));
+</script></body></html>""",
+    # a hash handler redirects here: loading outlasts even the same-document URL-change expectation
+    "/redirect-load": """<html><body><h1>Redirect destination</h1><img src="/slow-image?delay=2"><script>
+window.addEventListener('load', () => fetch('/data?delay=0.3').then(() =>
+    document.body.insertAdjacentHTML('beforeend', '<p>Rendered after redirect load</p>')));
 </script></body></html>""",
     # loads after a slow image, then fetches what it renders on a short timer
     "/late-load-timer": """<html><body><h1>Late load</h1><img src="/slow-image"><script>
@@ -211,8 +217,8 @@ async def site() -> AsyncIterator[str]:
 document.body.insertAdjacentHTML('beforeend', '<h2>Contact page</h2>');"""
         return web.Response(text=script, content_type="text/javascript")
 
-    async def slow_image(_request: web.Request) -> web.Response:
-        await asyncio.sleep(1)
+    async def slow_image(request: web.Request) -> web.Response:
+        await asyncio.sleep(float(request.query.get("delay", "1")))
         return web.Response(status=404)
 
     async def hang(_request: web.Request) -> web.Response:
@@ -357,6 +363,98 @@ async def test_a_goto_that_commits_after_the_settle_cap_still_waits_for_its_page
     result = await session.aexecute(type="goto", url=f"{site}/slow-commit")
     assert result.success
     assert "Slow page content" in await text(session)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("same_document", [False, True])
+async def test_a_goto_settles_after_tracker_startup_times_out(
+    session: NotteSession, site: str, monkeypatch: pytest.MonkeyPatch, same_document: bool
+) -> None:
+    if same_document:
+        await session.window.page.wait_for_timeout(LONG_GRACE_MS + 100)
+        await session.window.page.evaluate(
+            """window.addEventListener('hashchange', () => setTimeout(() =>
+                document.body.insertAdjacentHTML('beforeend', '<p>Hash route content</p>'), 800), { once: true })"""
+        )
+    original = Page.evaluate_handle
+    blocked = asyncio.Event()
+    cancelled = asyncio.Event()
+
+    async def evaluate_handle(page: Page, expression: str) -> JSHandle:
+        if expression == settle_module.SETTLE_TRACKER_JS and not blocked.is_set():
+            blocked.set()
+            try:
+                await asyncio.Event().wait()
+            finally:
+                cancelled.set()
+        return await original(page, expression)
+
+    monkeypatch.setattr(Page, "evaluate_handle", evaluate_handle)
+    target = f"{site}#details" if same_document else f"{site}/next"
+    async with asyncio.timeout(5):
+        result = await session.aexecute(type="goto", url=target)
+    assert result.success
+    assert blocked.is_set() and cancelled.is_set()
+    assert session.window.page.url == f"{site}/{'#details' if same_document else 'next'}"
+    assert ("Hash route content" if same_document else "Rendered after load") in await text(session)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("startup_timeout", [False, True])
+async def test_a_hash_goto_redirect_waits_for_the_destination_load_and_render(
+    session: NotteSession, site: str, monkeypatch: pytest.MonkeyPatch, startup_timeout: bool
+) -> None:
+    await session.window.page.evaluate(
+        """window.addEventListener('hashchange', () => setTimeout(() =>
+            location.href = '/redirect-load', 100), { once: true })"""
+    )
+    if startup_timeout:
+        original = Page.evaluate_handle
+        blocked = False
+
+        async def evaluate_handle(page: Page, expression: str) -> JSHandle:
+            nonlocal blocked
+            if expression == settle_module.SETTLE_TRACKER_JS and not blocked:
+                blocked = True
+                await asyncio.Event().wait()
+            return await original(page, expression)
+
+        monkeypatch.setattr(Page, "evaluate_handle", evaluate_handle)
+    result = await session.aexecute(type="goto", url=f"{site}/#redirect")
+    assert result.success
+    assert session.window.page.url == f"{site}/redirect-load"
+    assert "Rendered after redirect load" in await text(session)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("wait_until", [None, "load"])
+@pytest.mark.parametrize(
+    "target",
+    [
+        "https://hash-route.notte.test/#details",
+        "https://hash-route.notte.test#details",
+        "hash-route.notte.test#details",
+        "https://HASH-ROUTE.NOTTE.TEST:443/path/../#details",
+    ],
+)
+async def test_a_hash_route_goto_waits_for_its_delayed_render(
+    session: NotteSession, target: str, wait_until: Literal["load"] | None
+) -> None:
+    # Let the browser canonicalize equivalent URLs, including the https scheme added by BrowserWindow.goto.
+    await session.window.page.route(
+        "https://hash-route.notte.test/**", lambda route: route.fulfill(body=HOME, content_type="text/html")
+    )
+    await session.window.page.goto("https://hash-route.notte.test/")
+    # The existing document loaded long ago, so its load event cannot provide a new grace window.
+    await session.window.page.wait_for_timeout(LONG_GRACE_MS + 100)
+    await session.window.page.evaluate(
+        """window.addEventListener('hashchange', () => setTimeout(() =>
+            document.body.insertAdjacentHTML('beforeend', '<p>Hash route content</p>'), 800), { once: true })"""
+    )
+    result = await session.aexecute(type="goto", url=target, wait_until=wait_until)
+    assert result.success
+    assert session.window.page.url == "https://hash-route.notte.test/#details"
+    assert "Hash route content" in await text(session)
 
 
 @pytest.mark.asyncio

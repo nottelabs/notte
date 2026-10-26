@@ -176,10 +176,18 @@ class PageSettle:
             page.context.on("request", self._context_request)
 
     @classmethod
-    async def start(cls, page: Page, *, tabs: bool = False) -> "PageSettle":
-        """Starts tracking `page`, right before an action. With `tabs`, a tab opened meanwhile ends the settle."""
+    async def start(cls, page: Page, *, tabs: bool = False, timeout_ms: float | None = None) -> "PageSettle":
+        """Starts tracking `page`, right before an action. With `tabs`, a tab opened meanwhile ends the settle.
+        With `timeout_ms`, an unresponsive document cannot prevent navigation: its requests are tracked instead.
+        """
+        startup = asyncio.timeout(None if timeout_ms is None else timeout_ms / 1000)
         try:
-            tracker = await page.evaluate_handle(SETTLE_TRACKER_JS)
+            async with startup:
+                tracker = await page.evaluate_handle(SETTLE_TRACKER_JS)
+        except TimeoutError:
+            if not startup.expired():
+                raise
+            tracker = None
         except Error:
             # navigating already: the next document is tracked
             tracker = None
@@ -359,11 +367,20 @@ class PageSettle:
             # a navigation again (the tracker is gone) or a closed page
             _ = task.result()
 
-    async def wait(self, *, grace_ms: float = GRACE_MS, document: DocumentWait = "requests") -> None:
+    async def wait(
+        self,
+        *,
+        grace_ms: float = GRACE_MS,
+        document: DocumentWait = "requests",
+        new_document: bool = False,
+        url_changed: bool = False,
+    ) -> None:
         """Until the page settles, at most `CAP_MS` after the action started; after a navigation to a new document,
         until that document is ready as `document` says, at most `timeout_goto_ms` after the action started. Never
-        raises: a page that does not settle in time is left as it is."""
-        if self._tracker is not None:
+        raises: a page that does not settle in time is left as it is. A confirmed `new_document` skips the previous
+        document's settle cap and uses the remaining navigation budget. A known same-document `url_changed` is
+        preserved if the tracker could not start before the action."""
+        if self._tracker is not None and not new_document:
             try:
                 async with asyncio.timeout(self._left_s(CAP_MS)):
                     await self._poll(grace_ms)
@@ -372,21 +389,29 @@ class PageSettle:
                 return
             except Error:
                 # a navigation to a new document destroyed the tracker
-                pass
+                url_changed = False
         for _ in range(MAX_DOCUMENTS):
             if self.opened:
                 return
             try:
                 async with asyncio.timeout(self._left_s(config.timeout_goto_ms)):
                     await self._track_document()
-                    # the new document is the action's effect: only what a script renders right after it was parsed
-                    # is waited for
-                    await self._new_document(GRACE_MS, document)
+                    if url_changed and not new_document:
+                        # Startup may have timed out before a hash navigation. Expect its render from the new
+                        # tracker's start, using the same URL-change rule as a tracker present before the action.
+                        assert self._tracker is not None
+                        await self._tracker.evaluate("t => { t.urlAt = 0; }")
+                        await self._poll(grace_ms)
+                    else:
+                        # the new document is the action's effect: only what a script renders right after it was
+                        # parsed is waited for
+                        await self._new_document(GRACE_MS, document)
                 return
             except TimeoutError:
                 return
             except Error:
                 # navigated again (a redirect by the page), or the page closed
+                url_changed = False
                 if self.page.is_closed():
                     # A script can close its opener before its new tab's first response announces the page.
                     if self._tabs and not self.opened:
