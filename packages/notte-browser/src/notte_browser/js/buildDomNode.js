@@ -1241,6 +1241,10 @@
 
 		if (hasInteractiveRole) return true;
 
+		// the focusable cells of a grid (the days of a date picker), which act on click; the empty cells
+		// before the first day of a month are fillers
+		if (hasAttribute(element, "tabindex") && isGridCell(element) && (propertyOf(element, "textContent") || "").trim() !== "") return true;
+
 
 		// check whether element has event listeners by window.getEventListeners
 		try {
@@ -1280,6 +1284,23 @@
 		return false
 	}
 
+
+	/**
+	 * Checks if an element is a cell of an interactive grid: `role="gridcell"`, or a `<td>` of a table with
+	 * `role="grid"` or `"treegrid"`. Unlike the cells of a data table, they are widgets the user picks
+	 * (https://www.w3.org/WAI/ARIA/apg/patterns/grid/).
+	 *
+	 * @param {HTMLElement} element - The element to check.
+	 * @returns {boolean} Whether the element is a grid cell.
+	 */
+	function isGridCell(element) {
+		const role = getRole(element);
+		if (role === "gridcell") return true;
+		if (role !== "cell" || localNameOf(element) !== "td") return false;
+		const table = closest(element, "table");
+		const tableRole = table === null ? undefined : getAttribute(table, "role")?.trim().toLowerCase();
+		return tableRole === "grid" || tableRole === "treegrid";
+	}
 
 	/**
 	 * Checks if an element is the topmost element at its position.
