@@ -12,6 +12,7 @@ from ..model import (
     REAL_MAX_STEPS,
     Probe,
     Task,
+    ci_tier,
     executed,
     frame_value,
     last_status,
@@ -474,3 +475,9 @@ PROBES = [
         "NO",
     ),
 ]
+
+# third-party sites (Google, booking.com, IKEA, GitHub, PyPI, jQuery UI, Spiegel, demoqa, scrapingcourse): extended.
+# Core: Wikipedia and the-internet only. `upload` (a clean BLOCKED) stays extended: a click that opens a file chooser
+# reports plain success, so some runs click on until the guard (bench bug 16).
+TASKS = ci_tier(TASKS, core={"wiki-hops", "newtab"})
+PROBES = ci_tier(PROBES, core={"turing-born", "turing-bletchley", "hn-more"})

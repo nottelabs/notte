@@ -1,0 +1,28 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Gartenwelt Müller – Pflanzen und Gartenbedarf</title>
+<style>body{font-family:sans-serif;margin:0}header,main{padding:12px 24px}nav a{margin-right:16px}
+#wall{position:fixed;inset:0;background:#000a;display:flex;align-items:center;justify-content:center;z-index:10}
+#wall .box{background:#fff;max-width:520px;padding:24px;border-radius:8px}#wall .box button{margin:6px 6px 0 0;padding:8px 14px}
+#prefs{margin-top:12px}</style></head><body>
+<header><strong>Gartenwelt Müller</strong>
+  <nav><a href="#">Pflanzen</a><a href="#">Werkzeuge</a><a href="#">Angebote</a><a href="kontakt.html?from=nav">Kontakt</a></nav></header>
+<main><h1>Herbstpflanzen jetzt 20 % günstiger</h1><p>Tulpenzwiebeln, Heidekraut und Chrysanthemen für Balkon und Garten.</p>
+  <p>Öffnungszeiten: Mo–Sa 8–19 Uhr.</p></main>
+<div id="wall" role="dialog" aria-modal="true" aria-labelledby="wall-h">
+  <div class="box"><h2 id="wall-h">Wir verwenden Cookies</h2>
+    <p>Wir nutzen Cookies und ähnliche Technologien, um unsere Website zu verbessern und Ihnen relevante Angebote zu zeigen.
+      Sie können Ihre Auswahl jederzeit ändern.</p>
+    <button type="button" id="all">Alle akzeptieren</button><button type="button" id="needed">Nur notwendige Cookies</button>
+    <button type="button" id="settings" aria-expanded="false">Einstellungen</button>
+    <div id="prefs" hidden><label><input type="checkbox" checked disabled> Notwendig</label><br>
+      <label><input type="checkbox" id="stats"> Statistik</label><br><label><input type="checkbox" id="ads"> Marketing</label><br>
+      <button type="button" id="save">Auswahl speichern</button></div>
+  </div></div>
+<script>
+const wall = document.getElementById('wall');
+const close = v => { try { localStorage.setItem('consent', v); } catch (e) {} wall.remove(); };
+if ((() => { try { return localStorage.getItem('consent'); } catch (e) { return null; } })()) wall.remove();
+document.getElementById('all').onclick = () => close('all');
+document.getElementById('needed').onclick = () => close('needed');
+document.getElementById('settings').onclick = e => { document.getElementById('prefs').hidden = false; e.target.setAttribute('aria-expanded', 'true'); };
+document.getElementById('save').onclick = () => close('custom');
+</script></body></html>

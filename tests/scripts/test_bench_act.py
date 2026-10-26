@@ -6,11 +6,12 @@ import sys
 from datetime import date
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 import pytest
 
 from scripts.bench_act import bench, registry, report, rules
-from scripts.bench_act.model import TODAY_ENV, Probe, Task, long_date, trip_dates
+from scripts.bench_act.model import CI_CORE, CI_EXTENDED, TIERS, TODAY_ENV, Probe, Task, ci_tier, long_date, trip_dates
 from scripts.bench_act.tasks.real import GF_TFS, gf_results_url, gf_search
 
 FIXTURE_URL = "{fixtures}/form.html"
@@ -18,12 +19,60 @@ FIXTURE_URL = "{fixtures}/form.html"
 
 def test_discover_names_every_task_and_probe_once_with_its_module_as_suite() -> None:
     found = registry.discover()
-    assert len(found.tasks) == 37
-    assert len(found.probes) == 47
-    assert {t.suite for t in found.tasks.values()} == {"demo", "fixtures", "real"}
-    assert all(t.fixture == (t.suite == "fixtures") for t in found.tasks.values())
+    assert len(found.tasks) == 111
+    assert len(found.probes) == 127
+    suites = {"cov_fixtures", "cov_real", "cov2_fixtures", "cov2_real", "demo", "fixtures", "real"}
+    assert {t.suite for t in found.tasks.values()} == suites
+    assert all(t.fixture == t.suite.endswith("fixtures") for t in found.tasks.values())
     assert found.tasks["gf-book"].max_steps == 25
     assert found.tasks["search"].max_steps == 15
+
+
+def test_every_fixture_url_is_a_page_in_fixtures() -> None:
+    found = registry.discover()
+    fixtures = Path(registry.__file__).with_name("fixtures")
+    urls = [t.url for t in found.tasks.values()] + [p.url for p in found.probes.values()]
+    pages = {
+        urlsplit(u.replace("{fixtures}", "http://fixtures")).path.lstrip("/")
+        for u in urls
+        if u.startswith("{fixtures}")
+    }
+    assert pages and all((fixtures / page).is_file() for page in pages), sorted(
+        p for p in pages if not (fixtures / p).is_file()
+    )
+
+
+def test_every_task_and_probe_has_one_ci_tier_and_local_pages_are_core() -> None:
+    found = registry.discover()
+    items = [*found.tasks.values(), *found.probes.values()]
+    assert all(sum(tier in i.tags for tier in TIERS) == 1 for i in items)
+    fixture_items = [i for i in items if i.fixture]
+    extended = {i.name for i in fixture_items if CI_EXTENDED in i.tags}
+    # a decider miss, and fixtures failing on a bug not fixed yet: see the modules' ci_tier calls
+    assert extended == {"f-webcomp-speed", "f2-vlist", "f2-dashboard", "f2-dashboard-max", "f2-multitab"}
+
+
+def test_ci_tier_rejects_a_core_name_it_does_not_define() -> None:
+    tasks = [Task("a", "https://a.test", "g", lambda f, r: True)]
+    assert ci_tier(tasks, core={"a"})[0].tags == (CI_CORE,)
+    with pytest.raises(ValueError, match="'b'"):
+        ci_tier(tasks, core={"b"})
+
+
+def test_select_by_tag_keeps_the_tasks_and_probe_pages_of_that_tier() -> None:
+    reg = registry.Registry(
+        {
+            "t1": Task("t1", "https://a.test", "g", lambda f, r: True, tags=(CI_CORE,)),
+            "t2": Task("t2", "https://b.test", "g", lambda f, r: True, tags=(CI_EXTENDED,)),
+        },
+        {
+            "p1": Probe("p1", "https://p.test", "q?", None, "YES", tags=(CI_CORE,)),
+            "p2": Probe("p2", "https://p.test", "q?", None, "NO", tags=(CI_EXTENDED,)),
+        },
+    )
+    core = registry.select(reg, tags=[CI_CORE])
+    assert [(i.kind, i.names) for i in core] == [("task", ("t1",)), ("probes", ("p1",))]
+    assert len(registry.select(reg)) == 3
 
 
 def test_discover_rejects_a_name_defined_in_two_modules(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -75,7 +124,7 @@ def test_shards_split_every_item_once_and_spread_each_suite(count: int) -> None:
     shards = [registry.shard(items, i, count) for i in range(1, count + 1)]
     assert sorted((i.kind, i.key) for s in shards for i in s) == sorted((i.kind, i.key) for i in items)
     assert shards == [registry.shard(items, i, count) for i in range(1, count + 1)]
-    for suite in ("fixtures", "demo", "real"):
+    for suite in ("fixtures", "demo", "real", "cov_fixtures", "cov_real", "cov2_fixtures", "cov2_real"):
         sizes = [sum(i.suite == suite and i.kind == "task" for i in s) for s in shards]
         assert max(sizes) - min(sizes) <= 1
 

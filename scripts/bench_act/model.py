@@ -6,10 +6,10 @@ record (steps, decisions), never on the runner's own claim.
 """
 
 import os
-from collections.abc import Callable
-from dataclasses import dataclass, field
+from collections.abc import Callable, Collection
+from dataclasses import dataclass, field, replace
 from datetime import date, timedelta
-from typing import Any
+from typing import Any, TypeVar
 from urllib.parse import parse_qs, urlsplit
 
 MAX_STEPS = 15
@@ -53,6 +53,13 @@ def long_date(day: date) -> str:
     return f"{day.day} {day:%B %Y}"
 
 
+# CI tiers, one per task and probe (`ci_tier`): `ci-core` runs on every PR that changes observe or act (local pages and
+# very stable public demos), `ci-extended` on demand (third-party sites, ads, known flakes)
+CI_CORE = "ci-core"
+CI_EXTENDED = "ci-extended"
+TIERS = (CI_CORE, CI_EXTENDED)
+
+
 @dataclass(frozen=True)
 class Task:
     name: str
@@ -64,6 +71,9 @@ class Task:
     max_steps: int = MAX_STEPS
     # JS evaluated right after the first navigation, saved as `run["pre"]` (e.g. the expected target)
     pre_js: str | None = None
+    # JS evaluated on the final page, returning a JSON string, saved as `final["extra"]`: state the page probe does not
+    # read (an ARIA attribute, a widget's value, a table column)
+    final_js: str | None = None
     # selection label (`--suites`); empty: the name of the module in `tasks/` that defines the task
     suite: str = ""
 
@@ -83,6 +93,7 @@ class Probe:
     # choose(): the right option; check(): "YES" / "NO"
     answer: str
     suite: str = ""
+    tags: tuple[str, ...] = field(default=())
 
     @property
     def fixture(self) -> bool:
@@ -135,3 +146,14 @@ def frame_value(final: dict[str, Any], input_id: str) -> str | None:
             if i["id"] == input_id:
                 return i["value"]
     return None
+
+
+_Item = TypeVar("_Item", Task, Probe)
+
+
+def ci_tier(items: list[_Item], core: Collection[str]) -> list[_Item]:
+    """`items` with their CI tier tag: `ci-core` for the names in `core`, `ci-extended` for the others."""
+    unknown = set(core) - {i.name for i in items}
+    if unknown:
+        raise ValueError(f"ci-core names not defined here: {sorted(unknown)}")
+    return [replace(i, tags=(*i.tags, CI_CORE if i.name in core else CI_EXTENDED)) for i in items]

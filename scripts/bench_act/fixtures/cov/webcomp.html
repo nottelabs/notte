@@ -1,0 +1,45 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Checkout - Parcel &amp; Co</title>
+<style>body{font-family:sans-serif;margin:24px;max-width:520px}</style></head><body>
+<h1>Checkout</h1><p>1 × Canvas tote bag, $24.00</p>
+<shop-checkout></shop-checkout>
+<script>
+// web components with open shadow roots, nested two levels deep (checkout > field / select)
+class ShopField extends HTMLElement {
+  connectedCallback() { const r = this.attachShadow({mode: 'open'});
+    r.innerHTML = `<style>label{display:block;margin-top:10px}</style><label for="i">${this.getAttribute('label')}</label><input id="i">`; }
+  get value() { return this.shadowRoot.querySelector('input').value; }
+}
+class ShopSelect extends HTMLElement {
+  connectedCallback() {
+    const r = this.attachShadow({mode: 'open'}), opts = this.getAttribute('options').split('|');
+    this._value = opts[0];
+    r.innerHTML = `<style>ul{list-style:none;border:1px solid #999;padding:0;margin:2px 0;width:240px}li{padding:6px}
+      li[aria-selected=true]{background:#def}p{margin:10px 0 2px}</style>
+      <p id="l">${this.getAttribute('label')}</p>
+      <button type="button" id="b" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="l b">${opts[0]}</button>
+      <ul role="listbox" id="lb" aria-labelledby="l" hidden>${opts.map(o => `<li role="option" aria-selected="${o === opts[0]}">${o}</li>`).join('')}</ul>`;
+    const b = r.getElementById('b'), lb = r.getElementById('lb');
+    b.addEventListener('click', () => { lb.hidden = !lb.hidden; b.setAttribute('aria-expanded', String(!lb.hidden)); });
+    lb.querySelectorAll('li').forEach(li => li.addEventListener('click', () => {
+      this._value = li.textContent; b.textContent = li.textContent; lb.hidden = true; b.setAttribute('aria-expanded', 'false');
+      lb.querySelectorAll('li').forEach(o => o.setAttribute('aria-selected', String(o === li))); }));
+  }
+  get value() { return this._value; }
+}
+class ShopCheckout extends HTMLElement {
+  connectedCallback() { const r = this.attachShadow({mode: 'open'});
+    r.innerHTML = `<shop-field label="Full name"></shop-field><shop-field label="Email"></shop-field>
+      <shop-select label="Shipping speed" options="Standard (5-7 days)|Express (2 days)|Overnight"></shop-select>
+      <p><button type="button" id="place">Place order</button></p><p id="err" role="alert"></p>`;
+    r.getElementById('place').addEventListener('click', () => {
+      const [name, email] = [...r.querySelectorAll('shop-field')].map(f => f.value);
+      const speed = r.querySelector('shop-select').value.split(' ')[0].toLowerCase();
+      if (!name.trim()) { r.getElementById('err').textContent = 'Enter your full name.'; return; }
+      location.href = 'order-done.html?' + new URLSearchParams({name, email, speed});
+    });
+  }
+}
+customElements.define('shop-field', ShopField);
+customElements.define('shop-select', ShopSelect);
+customElements.define('shop-checkout', ShopCheckout);
+</script></body></html>

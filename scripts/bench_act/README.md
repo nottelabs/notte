@@ -23,12 +23,29 @@ A dev benchmark of `session.act()`, `choose()` and `check()`, and of the observe
 To add a task or probe, add an entry to a module in `tasks/`, or add a new module. The fields are:
 
 ```python
-Task(name, url, goal, check, tags=(), max_steps=15, pre_js=None, suite="")
-Probe(name, url, question, options, answer, suite="")
+Task(name, url, goal, check, tags=(), max_steps=15, pre_js=None, suite="", final_js=None)
+Probe(name, url, question, options, answer, suite="", tags=())
 ```
 
 `check(final, run) -> bool` gets the final page (`runners.PROBE_JS`: url, text, inputs, tables, frames, ...) and the
-run record (steps, decisions, `pre`). Names must be unique across modules.
+run record (steps, decisions, `pre`). `final_js` (a JS expression returning a JSON string) adds what the page probe
+does not read as `final["extra"]`. Names must be unique across modules. Each module ends with `ci_tier(TASKS, core=...)`
+and `ci_tier(PROBES, core=...)`, which tags every entry with its CI tier (below); a new entry is `ci-extended` unless
+its module lists it in `core`.
+
+## CI tiers
+
+| tier | what | runs | size |
+|---|---|---|---|
+| `ci-core` | local pages, and very stable public demos and docs (the-internet, toscrape, selenium.dev, TodoMVC, UI Testing Playground, W3C APG, Wikipedia, docs.python.org, DataTables, scrapethissite.com) | every PR that changes observe or act | 61 tasks, 88 probes on 59 pages |
+| `ci-extended` | third-party sites (Google, booking.com, IKEA, GitHub, shops, news, cookie platforms, editors' sites), pages with ads, known flakes, tasks that fail until a bug is fixed | on demand (`tags: ci-extended` or `all`) | 50 tasks, 39 probes on 29 pages |
+
+Why an entry is extended is written next to its module's `ci_tier` call. `--tags ci-core` selects a tier locally.
+Measured locally (Jev, one version, concurrency 6, on a loaded shared machine): the core tier is 121 runs, 1,838
+run-seconds, 320 s wall. Base and head double the runs. On CI, at concurrency 6 in one job that is about 10 minutes plus
+about a minute of setup; with the default 4 shards at concurrency 4, about 5 minutes. The extended tier is about 1,100
+run-seconds per version: 7 to 8 minutes at concurrency 6, about 4 with 4 shards. A CI runner ran the model-free scripted
+runs about twice as fast as that machine, so these are upper bounds.
 
 ## Running
 
@@ -47,6 +64,7 @@ uv run --no-sync python scripts/bench_act/report.py /tmp/act-bench [--failures]
 uv run --no-sync python scripts/bench_act/report.py /tmp/act-bench-ab --summary summary.md --check
 ```
 
+- `--tags ci-core` (or `ci-extended`) runs one CI tier; the default is everything.
 - Runners: `notte-local` (Jev), `notte-local-llm`, `notte-local-html` (HTML labels), `probe-local-jev`,
   `probe-local-llm`. The default is `notte-local,probe-local-jev`. `notte-local-scripted` and
   `probe-local-scripted` use no model and no key (scroll, then DONE): they time the browser side and the CI
@@ -68,6 +86,8 @@ uv run --no-sync python scripts/bench_act/report.py /tmp/act-bench-ab --summary 
 - a PR gets the `act-bench` label (and on later pushes while it has the label);
 - a PR changes `notte_browser/js`, `notte_browser/dom`, `notte_core/act`, `notte_llm/act.py` or this directory;
 - someone starts it by hand (`workflow_dispatch`, from the default branch).
+
+PRs run the `ci-core` tier; a manual run picks its tier with the `tags` input (`ci-core`, `ci-extended` or `all`).
 
 Each shard job checks out head and base (on PRs, the merge base), syncs both, and runs its share of the tasks with
 both versions interleaved. A report job merges the shards, writes the job summary and applies the rules in

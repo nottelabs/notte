@@ -4,7 +4,7 @@ Wikipedia): small, stable pages, plus the `done` and `impossible` tasks that mus
 
 from typing import Any
 
-from ..model import NEUTRAL_OPERATIONS, Probe, Task, checkboxes, executed, last_status, one, path, qs
+from ..model import NEUTRAL_OPERATIONS, Probe, Task, checkboxes, ci_tier, executed, last_status, one, path, qs
 
 
 def _webform_ok(f: dict[str, Any], _: dict[str, Any]) -> bool:
@@ -185,3 +185,8 @@ PROBES = [
     Probe("five-stars", BOOK, "Is this book rated five stars?", None, "NO"),
     Probe("todos-any", "https://todomvc.com/examples/react/dist/", "Are there any todos in the list?", None, "NO"),
 ]
+
+# stable demo sites (the-internet, toscrape, selenium.dev, TodoMVC, Wikipedia): core. Extended: star-rating, only drawn
+# as stars (a CSS class), asked to see whether the decider is unsure
+TASKS = ci_tier(TASKS, core={t.name for t in TASKS})
+PROBES = ci_tier(PROBES, core={p.name for p in PROBES} - {"star-rating"})

@@ -1,0 +1,46 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Customise your hoodie</title>
+<style>body{font-family:sans-serif;margin:24px;max-width:520px}.f{margin:14px 0;position:relative}
+ul[role=listbox]{list-style:none;border:1px solid #999;margin:2px 0;padding:0;width:240px;background:#fff;position:absolute;z-index:3;max-height:180px;overflow:auto}
+li[role=option]{padding:6px 10px}li[aria-selected=true]{background:#def}</style></head><body>
+<h1>Customise your hoodie</h1>
+<form id="f" action="choice-done.html" method="get">
+  <div class="f"><label for="size">Size</label><br>
+    <select id="size" name="size"><option value="S">Small</option><option value="M" selected>Medium</option>
+      <option value="L">Large</option><option value="XL">Extra large</option></select></div>
+  <div class="f"><span id="color-l">Colour</span><br>
+    <button type="button" id="color-b" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="color-l color-b">Ocean blue</button>
+    <input type="hidden" name="color" id="color" value="ocean">
+    <ul role="listbox" id="color-lb" aria-labelledby="color-l" tabindex="-1" hidden>
+      <li role="option" data-v="ocean" aria-selected="true">Ocean blue</li><li role="option" data-v="forest" aria-selected="false">Forest green</li>
+      <li role="option" data-v="sunset" aria-selected="false">Sunset orange</li><li role="option" data-v="slate" aria-selected="false">Slate grey</li>
+    </ul></div>
+  <div class="f"><label for="city">Pick-up store city</label><br>
+    <input id="city" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="city-lb" autocomplete="off" placeholder="Start typing a city">
+    <input type="hidden" name="city" id="city-v">
+    <ul role="listbox" id="city-lb" aria-label="Cities" hidden></ul></div>
+  <p id="err" role="alert"></p>
+  <button type="submit">Continue</button>
+</form>
+<script>
+const $ = id => document.getElementById(id);
+$('color-b').addEventListener('click', () => { $('color-lb').hidden = !$('color-lb').hidden;
+  $('color-b').setAttribute('aria-expanded', String(!$('color-lb').hidden)); });
+$('color-lb').querySelectorAll('li').forEach(li => li.addEventListener('click', () => {
+  $('color').value = li.dataset.v; $('color-b').textContent = li.textContent; $('color-lb').hidden = true;
+  $('color-b').setAttribute('aria-expanded', 'false');
+  $('color-lb').querySelectorAll('li').forEach(o => o.setAttribute('aria-selected', String(o === li))); }));
+const CITIES = ['Amsterdam','Antwerp','Barcelona','Berlin','Bordeaux','Brussels','Cologne','Copenhagen','Dublin','Geneva','Ghent',
+  'Hamburg','Lausanne','Leeds','Liège','Lille','Lisbon','Liverpool','London','Luxembourg','Lyon','Madrid','Manchester','Marseille',
+  'Milan','Munich','Nantes','Naples','Nice','Paris','Porto','Rennes','Rome','Rotterdam','Seville','Strasbourg','Toulouse','Turin',
+  'Valencia','Vienna','Zurich'];
+$('city').addEventListener('input', () => {
+  $('city-v').value = ''; const q = $('city').value.trim().toLowerCase(), lb = $('city-lb');
+  const hits = q ? CITIES.filter(c => c.toLowerCase().includes(q)).slice(0, 8) : [];
+  lb.innerHTML = hits.map(c => `<li role="option" aria-selected="false">${c}</li>`).join('');
+  lb.querySelectorAll('li').forEach(li => li.addEventListener('mousedown', e => { e.preventDefault();
+    $('city').value = li.textContent; $('city-v').value = li.textContent; lb.hidden = true; $('city').setAttribute('aria-expanded', 'false'); }));
+  lb.hidden = !hits.length; $('city').setAttribute('aria-expanded', String(!!hits.length));
+});
+$('city').addEventListener('blur', () => setTimeout(() => $('city-lb').hidden = true, 150));
+$('f').addEventListener('submit', e => { if (!$('city-v').value) { e.preventDefault(); $('err').textContent = 'Choose a store city from the list.'; } });
+</script></body></html>
