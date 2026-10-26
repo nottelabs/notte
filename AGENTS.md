@@ -77,6 +77,20 @@ form's own (`<input name="children">` makes `form.children` that input). The
 same goes for `document.*` in the page's own world (`<img name="body">`).
 `tests/browser/test_dom_clobbered_properties.py` covers it.
 
+Off-screen fixed text is unreachable only when its panel is fixed to the viewport.
+In Chromium, a fixed element's non-null `offsetParent` identifies a containing block
+(for example, a transformed ancestor) that can scroll into view. Walk through shadow
+hosts when checking panels, following `assignedSlot` before light-DOM parents;
+`parentElement` alone stops inside web components and bypasses slotted panels.
+Start direct slotted text at its assigned slot too. A viewport-fixed portal remains
+an independent boundary even with an empty box: check its text's reachable bounds
+after inner scrolling rather than using an outer drawer's position.
+Only expand those bounds for scroll boxes that move the text's positioned ancestor;
+absolute or fixed text can escape a static scroll box through its containing block.
+Boxless wrappers (`display: contents`) do not establish a positioned owner, even
+when their computed `position` is absolute or fixed.
+`tests/browser/test_dom_hidden_content.py` covers both cases.
+
 CDP listener hints must retain the inspected elements' identities through main-world
 handles. DOM marker attributes are copied by `cloneNode`, while event listeners are
 not, so an attribute bridge can incorrectly offer a clone as a clickable header.

@@ -701,7 +701,8 @@
 	 * in on scroll has `opacity: 0`, and the visible text next to a control is often `aria-hidden`
 	 * (the control carries the name), while the control is offered only once it is in view. Inside a
 	 * highlighted element, `aria-hidden` text is kept: it is part of what the element shows (an icon).
-	 * Text that is rendered outside the viewport is not hidden.
+	 * Text that is rendered outside the viewport is not hidden, unless it is in a fixed panel outside the
+	 * viewport (see `isInFixedPanelOffscreen`).
 	 *
 	 * @param {Text} textNode - The text node to check.
 	 * @param {Object} scope - The scope of its parent element.
@@ -720,7 +721,10 @@
 		// no box at all (the text of a `<textarea>`): nothing says it is hidden
 		if (rects.length === 0) return false;
 		if (rects.every((rect) => rect.width === 0 || rect.height === 0)) return true;
-		if (!rects.some(isOnScreen)) return false;
+		if (!rects.some(isOnScreen)) {
+			const start = propertyOf(textNode, "assignedSlot") ?? parent;
+			return rects.every((rect) => isInFixedPanelOffscreen(start, rect));
+		}
 		if (scope.ariaHidden && !scope.inControl) return true;
 		return !isRendered(parent, true);
 	}
@@ -745,6 +749,73 @@
 
 	function isOnScreen(rect) {
 		return rect.bottom > 0 && rect.top < window.innerHeight && rect.right > 0 && rect.left < window.innerWidth;
+	}
+
+	/**
+	 * Checks if an element is inside a fixed element laid out outside the viewport, as a closed off-canvas
+	 * drawer is (`transform: translateX(-100%)`). Only viewport-fixed panels count: a fixed element
+	 * with an offset parent (for example, a transformed ancestor) can move into view when scrolling.
+	 * A zero-size fixed portal still establishes an independent fixed boundary. Use the text's reachable
+	 * bounds after inner scrolling instead of testing the portal's empty box or an outer drawer.
+	 * Cross shadow roots so a drawer also hides its web components' text.
+	 *
+	 * @param {HTMLElement} element - The element to check.
+	 * @param {DOMRect} textRect - A client rect of the text.
+	 * @returns {boolean} Whether the element is in a fixed panel outside the viewport.
+	 */
+	function isInFixedPanelOffscreen(element, textRect) {
+		for (let ancestor = element; ancestor; ancestor = composedParent(ancestor)) {
+			if (getCachedComputedStyle(ancestor)?.position !== "fixed") continue;
+			if (propertyOf(ancestor, "offsetParent") !== null) continue;
+			const rect = getCachedBoundingRect(ancestor);
+			if (rect.width > 0 && rect.height > 0) return !isOnScreen(rect);
+			const reachable = { top: textRect.top, bottom: textRect.bottom, left: textRect.left, right: textRect.right };
+			let owner = element;
+			for (let box = element; box && box !== ancestor; box = composedParent(box)) {
+				const boxRect = getCachedBoundingRect(box);
+				const style = getCachedComputedStyle(box);
+				if (!style) continue;
+				if (scrollMovesText(owner, box)) {
+					const y = visibleRange(box, boxRect, style, true);
+					const x = visibleRange(box, boxRect, style, false);
+					let moved = false;
+					if (y?.scrolls && reachable.bottom > y.start && reachable.top < y.end) {
+						reachable.top = boxRect.top;
+						reachable.bottom = boxRect.bottom;
+						moved = true;
+					}
+					if (x?.scrolls && reachable.right > x.start && reachable.left < x.end) {
+						reachable.left = boxRect.left;
+						reachable.right = boxRect.right;
+						moved = true;
+					}
+					if (moved) owner = box;
+				}
+				if ((style.position === "absolute" || style.position === "fixed") &&
+					getCachedClientRects(box)?.length) owner = box;
+			}
+			return !isOnScreen(reachable);
+		}
+		return false;
+	}
+
+	/** Whether scrolling `box` moves the text positioned by `owner`, across composed ancestors. */
+	function scrollMovesText(owner, box) {
+		const position = getCachedClientRects(owner)?.length ? getCachedComputedStyle(owner)?.position : "static";
+		if (owner === box || (position !== "absolute" && position !== "fixed")) return true;
+		for (let block = propertyOf(owner, "offsetParent"); block; block = composedParent(block)) {
+			if (block === box) return true;
+		}
+		return false;
+	}
+
+	function composedParent(element) {
+		const slot = propertyOf(element, "assignedSlot");
+		if (slot) return slot;
+		const parent = parentElementOf(element);
+		if (parent !== null) return parent;
+		const root = getRootNode(element);
+		return root instanceof ShadowRoot ? root.host : null;
 	}
 
 	/**
@@ -781,7 +852,7 @@
 				if (!parentElement) return false;
 
 				try {
-					return checkVisibilityOf(parentElement, {
+					return checkVisibilityOf(boxOf(parentElement), {
 						checkOpacity: true,
 						checkVisibilityCSS: true,
 					});
@@ -830,7 +901,7 @@
 			if (!parentElement) return false;
 
 			try {
-				return checkVisibilityOf(parentElement, {
+				return checkVisibilityOf(boxOf(parentElement), {
 					checkOpacity: true,
 					checkVisibilityCSS: true,
 				});
