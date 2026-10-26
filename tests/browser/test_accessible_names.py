@@ -310,7 +310,8 @@ async def test_listbox_button_value_excludes_hidden_content(hidden_content: str)
 
 
 @pytest.mark.asyncio
-async def test_listbox_button_value_follows_slotted_selection() -> None:
+@pytest.mark.parametrize("nested", [False, True])
+async def test_listbox_button_value_follows_slotted_selection(nested: bool) -> None:
     html = """
     <div id="host"><span slot="selected" aria-label="Selected option">Standard (5-7 days)<span hidden>Old choice</span></span></div>
     <script>
@@ -322,6 +323,10 @@ async def test_listbox_button_value_follows_slotted_selection() -> None:
         </button>`;
     </script>
     """
+    if nested:
+        html = html.replace('<slot name="selected">', '<slot><slot name="selected">').replace(
+            "</span></slot>", "</span></slot></slot>"
+        )
     async with NotteSession(headless=True) as session:
         _ = await session.window.page.goto(_data_url(html))
         _ = await session.aobserve()
@@ -337,7 +342,7 @@ async def test_listbox_button_value_follows_slotted_selection() -> None:
 
 
 def _value_digest(value: str) -> str:
-    """The state contract hashes normalized UTF-16 code units with FNV-1a."""
+    """The state contract hashes the normalized UTF-16 code units read with FNV-1a."""
     hashed = 0xCBF29CE484222325
     encoded = value.encode("utf-16-le")
     for index in range(0, len(encoded), 2):
@@ -347,7 +352,7 @@ def _value_digest(value: str) -> str:
 
 @pytest.mark.asyncio
 async def test_listbox_selection_hashes_the_full_normalized_value() -> None:
-    """Suffix edits beyond both display and name budgets change the exact full-value digest."""
+    """Within the traversal budget, suffix edits beyond display/name limits change the full digest."""
     html = '<span id="label">Shipping speed</span><button style="width: 400px; overflow-wrap: anywhere" id="choice" aria-haspopup="listbox" aria-labelledby="label choice"></button>'
     async with NotteSession(headless=True) as session:
         page = session.window.page
@@ -419,5 +424,59 @@ async def test_listbox_value_does_not_expand_aria_graphs_or_materialize_the_sele
             assert state == {
                 "value": "x" * 200,
                 "valueTruncated": True,
-                "valueDigest": _value_digest("x" * 200000 + suffix),
+                # The authorized traversal cutoff makes edits past the read prefix intentionally partial.
+                "valueDigest": _value_digest("x" * 4096),
             }
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("shape", ["wide", "deep", "whitespace", "transformed"])
+async def test_listbox_value_stops_at_fixed_node_and_text_budgets(shape: str) -> None:
+    """Large/deep selections stop deterministic work, and suffix edits past the cutoff are partial."""
+    probe = DOM_TREE_JS.replace(
+        "const rootId = buildDomTree(BODY);",
+        """
+        const choice = document.querySelector('#choice');
+        const state = {};
+        state.value = readListboxValue(choice, state);
+        return state;
+        """,
+    ).replace(
+        'const nodeTypeOf = nativeGetter(Node.prototype, "nodeType");',
+        """
+        const nativeNodeType = nativeGetter(Node.prototype, "nodeType");
+        let nodeReads = 0;
+        const nodeTypeOf = (node) => {
+            if (++nodeReads > 2048) throw new Error('selection exceeded node-work budget');
+            return nativeNodeType(node);
+        };
+        """,
+    )
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(_data_url('<button id="choice"></button>'))
+        await page.locator("#choice").evaluate(
+            """(el, shape) => {
+                let parent = el;
+                for (let i = 0; i < (shape === 'wide' || shape === 'deep' ? 5000 : 1); i++) {
+                    const node = document.createElement('span');
+                    if (shape === 'transformed') node.style.textTransform = 'uppercase';
+                    node.append(document.createTextNode(shape === 'deep' ? '' :
+                        shape === 'whitespace' ? ' '.repeat(200000) :
+                        shape === 'transformed' ? 'x'.repeat(200000) : 'x'));
+                    parent.append(node);
+                    if (shape === 'deep') parent = node;
+                }
+                parent.append(Object.assign(document.createElement('i'), {id: 'tail', textContent: 'first'}));
+            }""",
+            shape,
+        )
+        states = []
+        for suffix in ["first", "second"]:
+            await page.locator("#tail").evaluate("(el, text) => el.textContent = text", suffix)
+            states.append(await page.evaluate(probe, {}, isolated_context=False))
+        assert states[0] == states[1]
+        assert states[0]["valueTruncated"] is True
+        expected = {"wide": "x" * 512, "deep": "", "whitespace": "", "transformed": "X" * 4096}[shape]
+        assert states[0]["value"] == expected[:200]
+        assert states[0]["valueDigest"] == _value_digest(expected)

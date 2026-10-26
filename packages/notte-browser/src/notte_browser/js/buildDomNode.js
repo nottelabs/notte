@@ -191,6 +191,8 @@
 	const MAX_STATE_VALUE_LENGTH = 200;
 	const MAX_STATE_OPTIONS = 50;
 	const MAX_STATE_OPTION_LABEL_LENGTH = 100;
+	const MAX_LISTBOX_VALUE_NODES = 1024;
+	const MAX_LISTBOX_VALUE_CODE_UNITS = 4096;
 
 	function truncateStateValue(value, state) {
 		if (value.length <= MAX_STATE_VALUE_LENGTH) return value;
@@ -485,10 +487,10 @@
 		return text;
 	}
 
-	function contentChildren(element) {
+	function contentChildren(element, flatten = true) {
 		let children = childNodesOf(shadowRootOf(element) || element);
 		if (localNameOf(element) === "slot") {
-			const assigned = HTMLSlotElement.prototype.assignedNodes.call(element, { flatten: true });
+			const assigned = HTMLSlotElement.prototype.assignedNodes.call(element, { flatten });
 			if (assigned.length > 0) children = assigned;
 		}
 		return children;
@@ -498,13 +500,17 @@
 	 * Streams rendered selection text, never descendant accessible names or ARIA references.
 	 * Each composed-tree node is visited at most once, without recursive calls or a full selection
 	 * string. Whitespace is collapsed across node boundaries before the UTF-16 FNV-1a hash, matching
-	 * truncateStateValue. The hash still covers the entire selection, including beyond the prefix.
+	 * truncateStateValue. Node and raw-text budgets bound each read, including whitespace and hidden
+	 * nodes. A budget-limited digest covers only the selection prefix read before the cutoff.
 	 */
 	function readListboxValue(element, state) {
 		let value = "";
 		let length = 0;
 		let space = false;
 		let hash = 0xcbf29ce484222325n;
+		let nodesLeft = MAX_LISTBOX_VALUE_NODES;
+		let codeUnitsLeft = MAX_LISTBOX_VALUE_CODE_UNITS;
+		let limited = false;
 		function codeUnit(code) {
 			if (length < MAX_STATE_VALUE_LENGTH) value += String.fromCharCode(code);
 			length = Math.min(length + 1, MAX_STATE_VALUE_LENGTH + 1);
@@ -522,7 +528,7 @@
 			}
 		}
 		const visited = new Set([element]);
-		const stack = [{ children: contentChildren(element)[Symbol.iterator](), block: false }];
+		const stack = [{ children: contentChildren(element, false)[Symbol.iterator](), block: false }];
 		while (stack.length > 0) {
 			const frame = stack[stack.length - 1];
 			const next = frame.children.next();
@@ -531,11 +537,23 @@
 				stack.pop();
 				continue;
 			}
+			if (nodesLeft === 0) {
+				limited = true;
+				break;
+			}
+			nodesLeft--;
 			const child = next.value;
 			if (visited.has(child)) continue;
 			visited.add(child);
 			if (nodeTypeOf(child) === Node.TEXT_NODE) {
-				append(transformText(child.data, parentElementOf(child)));
+				const data = child.data;
+				const text = data.slice(0, codeUnitsLeft);
+				codeUnitsLeft -= text.length;
+				append(transformText(text, parentElementOf(child)));
+				if (text.length < data.length) {
+					limited = true;
+					break;
+				}
 			} else if (nodeTypeOf(child) === Node.ELEMENT_NODE) {
 				if (isHiddenForName(child) ||
 					matches(child, "script, style, link, meta, noscript, template, svg title, svg desc, svg defs, svg metadata")) continue;
@@ -545,10 +563,10 @@
 				}
 				const block = !isInline(child);
 				if (block) append(" ");
-				stack.push({ children: contentChildren(child)[Symbol.iterator](), block });
+				stack.push({ children: contentChildren(child, false)[Symbol.iterator](), block });
 			}
 		}
-		if (length > MAX_STATE_VALUE_LENGTH) {
+		if (length > MAX_STATE_VALUE_LENGTH || limited) {
 			state.valueTruncated = true;
 			state.valueDigest = hash.toString(16).padStart(16, "0");
 		}

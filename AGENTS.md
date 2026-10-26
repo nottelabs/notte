@@ -109,10 +109,13 @@ handles. DOM marker attributes are copied by `cloneNode`, while event listeners 
 not, so an attribute bridge can incorrectly offer a clone as a clickable header.
 
 Listbox button selection values read rendered text, including assigned slots and slot fallback,
-without following descendant accessible names or ARIA references. Their value digest covers the
-entire whitespace-normalized selection as UTF-16 FNV-1a, including edits beyond the 200-character
-display prefix and the accessible-name reader's budget. A fixed traversal cutoff would change
-that contract; do not silently substitute a prefix digest for the full-selection digest.
+without following descendant accessible names or ARIA references. Each read stops after 1,024
+descendant nodes or 4,096 raw UTF-16 code units (whitespace counts), before text transformation.
+The owner authorized this fixed cutoff and partial change detection beyond it. The UTF-16 FNV-1a
+digest covers the whitespace-normalized text read; the display retains at most 200 characters.
+Within budget the digest covers the entire selection. Budget exhaustion also sets valueTruncated,
+even if fewer than 200 normalized characters were read. Traverse assigned slots without native
+recursive flattening so nested slot traversal shares the same node budget.
 
 ## Public API
 
