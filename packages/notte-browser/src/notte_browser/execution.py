@@ -239,8 +239,9 @@ _NUMBER = re.compile(r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?")
 async def _move_slider(
     window: BrowserWindow, locator: Locator, value: str, slider: dict[str, float | None], budget: _ActionBudget
 ) -> None:
-    """Move an ARIA slider (`role="slider"`, which `fill` cannot set) to the number in `value` with its keyboard, as
-    https://www.w3.org/WAI/ARIA/apg/patterns/slider/ defines it: Home / End for its ends, Page Up / Down while they
+    """Move an ARIA slider or spinbutton (`role="slider"` / `role="spinbutton"`, which `fill` cannot set) to the number
+    in `value` with its keyboard, as https://www.w3.org/WAI/ARIA/apg/patterns/slider/ and
+    https://www.w3.org/WAI/ARIA/apg/patterns/spinbutton/ define it: Home / End for its ends, Page Up / Down while they
     do not go past the value, then the arrows, reading `aria-valuenow` after each key. A value between two steps
     ends on the closest step. `slider` is what `slider_value.js` read."""
     match = _NUMBER.search(value.replace(",", ""))
