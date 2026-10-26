@@ -168,3 +168,34 @@ async def test_formatting_whitespace_does_not_cut_names(session: NotteSession) -
     _ = await session.aobserve()
     (node,) = session.snapshot.interaction_nodes()
     assert node.accessible_name == "Save"
+
+
+LISTBOX_BUTTONS = """
+<span id="speed-label">Shipping speed</span>
+<button id="speed" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="speed-label speed">
+  Standard (5-7 days)
+</button>
+<ul role="listbox" aria-labelledby="speed-label" hidden><li role="option" aria-selected="true">Standard</li></ul>
+<button id="size" aria-haspopup="listbox" aria-labelledby="size">Medium</button>
+<span id="delete-label">section 2</span>
+<button id="delete" aria-labelledby="delete delete-label">Delete</button>
+"""
+
+
+@pytest.mark.asyncio
+async def test_a_listbox_button_shows_its_selected_option_as_its_value() -> None:
+    # the collapsible listbox pattern labels its button by the label and by the button, whose text is the
+    # selected option: "Shipping speed Standard (5-7 days)" was one name, with no value to tell them apart
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(_data_url(LISTBOX_BUTTONS))
+        _ = await session.aobserve()
+        nodes = _nodes_by_html_id(session)
+
+    speed = nodes["speed"]
+    assert speed.accessible_name == "Shipping speed"
+    assert speed.state is not None and speed.state.value == "Standard (5-7 days)"
+    # labelled by itself alone, its text is its name
+    assert nodes["size"].accessible_name == "Medium"
+    # a button that does not open a listbox is named as browsers do
+    assert nodes["delete"].accessible_name == "Delete section 2"
+    assert nodes["delete"].state is None
