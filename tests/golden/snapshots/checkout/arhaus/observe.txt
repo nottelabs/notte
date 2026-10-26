@@ -93,14 +93,14 @@ _[:]Shipping method
 _[:]Enter your shipping address to view available shipping methods.
 _[:]Payment
 _[:]All transactions are secure and encrypted.
-_[:]<input type="radio"></input>
+_[:]<input type="radio" checked></input>
 _[:]Credit card
 _[:]Card number
 _[:]Expiration date (MM / YY)
 _[:]Security code
 _[:]<button aria_label="More information about Security code"></button>
 _[:]Name on card
-_[:]<input type="checkbox"></input>
+_[:]<input type="checkbox" checked></input>
 _[:]Use shipping address as billing address
 _[:]<input type="radio"></input>
 _[:]Archarge Credit Card

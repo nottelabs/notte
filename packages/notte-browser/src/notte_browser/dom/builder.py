@@ -48,14 +48,15 @@ class RawNode(TypedDict):
     disabledReason: NotRequired[str | None]
     # a disabled control that would be highlighted if it were enabled (it has no highlight index)
     disabled: NotRequired[bool]
-    # an element above or below the viewport that would be highlighted in it (it has no highlight index or
-    # live state, and an accessible name only when it has no text)
+    # an element above or below the viewport that would be highlighted in it (it has no highlight index, of its live
+    # state only whether it is checked, and an accessible name only when it has no text)
     offscreen: NotRequired[bool]
     pointerElement: NotRequired[bool]
     highlightIndex: NotRequired[int]
     shadowRoot: NotRequired[bool]
     bbox: NotRequired[dict[str, float] | None]
-    # live value / checked state / select options of highlighted and disabled elements (`ElementState`)
+    # live value / checked state / select options of highlighted and disabled elements (`ElementState`), and the
+    # checked state of off-screen ones
     state: NotRequired[dict[str, Any]]
     # accessible name of highlighted and disabled elements, and of off-screen ones without text, when they have one
     accessibleName: NotRequired[str]

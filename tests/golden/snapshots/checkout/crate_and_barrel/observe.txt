@@ -102,7 +102,7 @@ _[:]Phone Number
 _[:]Required
 _[:]<button aria_label="help for phone number"></button>
 _[:]<input type="text" value=""></input>
-_[:]<input type="checkbox"></input>
+_[:]<input type="checkbox" checked></input>
 _[:]Use as billing address
 _[:]<button>Next</button>
 _[:]Order Summary

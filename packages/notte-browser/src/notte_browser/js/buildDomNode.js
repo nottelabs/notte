@@ -2033,6 +2033,14 @@
 						const accessibleName = getAccessibleName(node);
 						if (accessibleName !== undefined) nodeData.accessibleName = accessibleName;
 					}
+					// an off-screen checkbox, radio or switch says whether it is checked, as in view. Not its other
+					// live state: a typed value would be in the description, which secrets are not masked in
+					if (nodeData.offscreen) {
+						const checked = node.localName === "input" && (node.type === "checkbox" || node.type === "radio")
+							? node.checked
+							: parseAriaBoolean(node, "aria-checked");
+						if (checked !== undefined) nodeData.state = { checked };
+					}
 					if (nodeData.highlightIndex !== undefined || isDisabled) {
 						const state = getLiveState(node);
 						if (state !== undefined) nodeData.state = state;
