@@ -83,11 +83,12 @@ uv run --no-sync python scripts/bench_act/report.py /tmp/act-bench-ab --summary 
 
 `.github/workflows/act-bench.yml` runs the benchmark when:
 
-- a PR gets the `act-bench` label (and on later pushes while it has the label);
+- a PR gets the `act-bench` or `act-bench-all` label (and on later pushes while it has the label);
 - a PR changes `notte_browser/js`, `notte_browser/dom`, `notte_core/act`, `notte_llm/act.py` or this directory;
 - someone starts it by hand (`workflow_dispatch`, from the default branch).
 
-PRs run the `ci-core` tier; a manual run picks its tier with the `tags` input (`ci-core`, `ci-extended` or `all`).
+PRs run the `ci-core` tier, or every tier with the `act-bench-all` label; a manual run picks its tier with the
+`tags` input (`ci-core`, `ci-extended` or `all`).
 
 Each shard job checks out head and base (on PRs, the merge base), syncs both, and runs its share of the tasks with
 both versions interleaved. A report job merges the shards, writes the job summary and applies the rules in

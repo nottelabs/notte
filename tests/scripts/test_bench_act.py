@@ -50,6 +50,7 @@ def test_every_task_and_probe_has_one_ci_tier_and_local_pages_are_core() -> None
     extended = {i.name for i in fixture_items if CI_EXTENDED in i.tags}
     # a decider miss, and fixtures failing on a bug not fixed yet: see the modules' ci_tier calls
     assert extended == {
+        "f-webcomp",
         "f-webcomp-speed",
         "f-drawer-open",
         "f2-vlist",
