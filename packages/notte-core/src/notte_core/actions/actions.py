@@ -1240,7 +1240,8 @@ class CheckAction(InteractionAction):
 
     @override
     def execution_message(self) -> str:
-        return f"Checked the checkbox '{self.text_label}'" if self.text_label is not None else "Checked the checkbox"
+        verb = "Checked" if self.value else "Unchecked"
+        return f"{verb} the checkbox '{self.text_label}'" if self.text_label is not None else f"{verb} the checkbox"
 
 
 # class ListDropdownOptionsAction(InteractionAction):
