@@ -52,6 +52,10 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
 - For self-contained Node SDK integration pages, use
   `(await session.page()).setContent(...)`. The hosted `goto` action currently
   normalizes `data:` URLs to HTTPS URLs.
+- Benchmark JSON can be left truncated by an interrupted worker. Resume must
+  rerun unreadable records, and malformed worker output remains a failed run.
+  Final-page read errors must preserve landing/step evidence without accepting
+  an incomplete final snapshot as a successful task.
 - Browser settle regressions are in `tests/browser/test_execute_settle.py`
   and `tests/browser/test_settle_rules.py` and use a local server. Use the
   lockfile's Patchright environment: an older installed version can fail the

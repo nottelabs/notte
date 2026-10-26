@@ -118,8 +118,16 @@ def harness_digest() -> str:
 
 def kept(path: Path, sha: str | None, identity: str) -> bool:
     """Resume only a known commit with the same selected probes and actual run inputs."""
-    record = json.loads(path.read_text())
-    return sha is not None and record.get("sha") == sha and record.get("run_identity") == identity
+    try:
+        record = json.loads(path.read_text())
+    except (OSError, ValueError):
+        return False
+    return (
+        isinstance(record, dict)
+        and sha is not None
+        and record.get("sha") == sha
+        and record.get("run_identity") == identity
+    )
 
 
 def parse_trees(specs: list[str], default: Path) -> dict[str, Path]:
@@ -221,13 +229,15 @@ def run_job(
                 os.killpg(process.pid, signal.SIGKILL)
                 _ = process.wait()
     seconds = round(time.perf_counter() - start, 1)
-    if not path.exists():
+    try:
+        record = json.loads(path.read_text())
+    except (OSError, ValueError):
+        record = None
+    if not isinstance(record, dict):
         tail = log_path.read_text(errors="replace")[-3000:]
-        error = error or f"worker exited with code {process.returncode} without a run file"
+        error = error or f"worker exited with code {process.returncode} without a valid run file"
         record = _failed_record(job, shas[job.version], error, tail)
         record["url"] = _url(job, urls)
-        _ = path.write_text(json.dumps(record, indent=1))
-    record = json.loads(path.read_text())
     record["run_identity"] = identity
     _ = path.write_text(json.dumps(record, indent=1))
     if job.item.kind == "task":

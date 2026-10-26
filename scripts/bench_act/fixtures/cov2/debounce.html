@@ -11,9 +11,10 @@ const GUIDES = [['lisbon', 'Lisbon travel guide'], ['lisieux', 'Lisieux and the 
 const q = document.getElementById('q'), out = document.getElementById('results'), status = document.getElementById('status');
 let timer, seq = 0;
 q.addEventListener('input', () => {
+  const mine = ++seq;
   clearTimeout(timer);
   timer = setTimeout(() => {
-    const mine = ++seq, term = q.value.trim().toLowerCase();
+    const term = q.value.trim().toLowerCase();
     status.textContent = term ? 'Searching…' : '';
     setTimeout(() => {
       if (mine !== seq) return;

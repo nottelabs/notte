@@ -17,6 +17,7 @@ import time
 from typing import Any
 
 import notte_llm.act as A
+from notte_browser.errors import PlaywrightError
 from notte_browser.session import NotteSession
 from notte_core.act import Answer, Answers, DecisionState, Question, WriteContext
 from notte_core.act.loop import _stop  # pyright: ignore[reportPrivateUsage]
@@ -333,10 +334,22 @@ async def run_task(task: Task, url: str, decider_kind: str, label_mode: str) -> 
                 if _stop(results):
                     break
             run["wall_ms"] = ms(loop_start)
-            run["final"] = json.loads(await session.window.page.evaluate(PROBE_JS))
+            final_page = session.window.page
+            try:
+                payload = await final_page.evaluate(PROBE_JS)
+            except PlaywrightError as error:
+                if "Execution context was destroyed" not in str(error):
+                    raise
+                # A read interrupted by navigation is safe to repeat once after the existing load wait.
+                await final_page.wait_for_load_state("load", timeout=10000)
+                payload = await final_page.evaluate(PROBE_JS)
+            final = json.loads(payload)
             if task.final_js:
-                run["final"]["extra"] = json.loads(await session.window.page.evaluate(task.final_js))
+                final["extra"] = json.loads(await final_page.evaluate(task.final_js))
+            run["final"] = final
             run["tabs"] = [p.url for p in session.window.page.context.pages]
+    except Exception as e:
+        run["error"] = f"{type(e).__name__}: {e}"[:1000]
     finally:
         decider.close()
     return run
@@ -405,6 +418,8 @@ async def run_probes(probes: list[Probe], url: str, decider_kind: str) -> dict[s
                     error = e
                 run["probes"].append(_probe_record(probe, value, error, ms(start)))
             run["probe_url_end"] = page.url
+    except Exception as e:
+        run["error"] = f"{type(e).__name__}: {e}"[:1000]
     finally:
         decider.close()
     return run

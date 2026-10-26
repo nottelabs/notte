@@ -89,7 +89,7 @@ TASKS = [
         "cookie",
         "{fixtures}/landing.html",
         "Open the Pricing page.",
-        lambda f, _: path(f).endswith("/pricing.html"),
+        lambda f, _: path(f).endswith("/pricing.html") and f.get("consent") in {"accepted", "rejected"},
         tags=("modal",),
     ),
 ]

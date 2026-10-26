@@ -538,6 +538,57 @@ def test_resume_keeps_only_runs_of_the_same_commit_and_identity(tmp_path: Path) 
     assert not bench.kept(path, None, "inputs")
 
 
+@pytest.mark.parametrize("contents", ["{", "[]", "null", '"not a run"'])
+def test_resume_does_not_keep_corrupt_or_non_object_runs(tmp_path: Path, contents: str) -> None:
+    path = tmp_path / "run.json"
+    assert not bench.kept(path, "a" * 40, "inputs")
+    path.write_text(contents)
+    assert not bench.kept(path, "a" * 40, "inputs")
+
+
+@pytest.mark.parametrize("contents", ["{", "[]", "null"])
+def test_invalid_worker_output_is_a_failed_run(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, contents: str) -> None:
+    harness = tmp_path / "harness"
+    harness.mkdir()
+    monkeypatch.setattr(bench, "HARNESS", harness)
+    process = Mock(returncode=1)
+    start = Mock(return_value=process)
+    monkeypatch.setattr(bench.subprocess, "Popen", start)
+
+    def finish(timeout: float) -> int:
+        command = start.call_args.args[0]
+        Path(command[command.index("--out") + 1]).write_text(contents)
+        return 1
+
+    process.wait.side_effect = finish
+    found = registry.discover()
+    [item] = registry.select(found, tasks=["search"], with_probes=False)
+    job = registry.Job("head", "notte-local", item, 1)
+    result = bench.run_job(
+        job,
+        {"head": tmp_path},
+        {"head": "a" * 40},
+        {"search": found.tasks["search"].url},
+        "http://127.0.0.1:1000",
+        tmp_path / "out",
+        900,
+        "2026-10-26",
+    )
+    record = json.loads((tmp_path / "out" / job.file).read_text())
+    assert result["returncode"] == 1
+    assert record["success"] is False and record["stop_reason"] == "error"
+    assert record["site_miss"] is None and record["error"]
+    assert record["run_identity"]
+
+
+@pytest.mark.parametrize("consent", [None, "accepted", "rejected", "unknown"])
+def test_cookie_task_requires_consent_to_be_handled(consent: str | None) -> None:
+    task = registry.discover().tasks["cookie"]
+    assert task.check({"url": "http://fixture.test/pricing.html", "consent": consent}, {}) == (
+        consent in {"accepted", "rejected"}
+    )
+
+
 def test_run_job_reruns_changed_probe_selection_and_inputs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     harness = tmp_path / "harness"
     harness.mkdir()
