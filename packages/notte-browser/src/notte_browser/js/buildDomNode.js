@@ -674,7 +674,8 @@
 	 * in on scroll has `opacity: 0`, and the visible text next to a control is often `aria-hidden`
 	 * (the control carries the name), while the control is offered only once it is in view. Inside a
 	 * highlighted element, `aria-hidden` text is kept: it is part of what the element shows (an icon).
-	 * Text that is rendered outside the viewport is not hidden.
+	 * Text that is rendered outside the viewport is not hidden, unless it is in a fixed panel outside the
+	 * viewport (see `isInFixedPanelOffscreen`).
 	 *
 	 * @param {Text} textNode - The text node to check.
 	 * @param {Object} scope - The scope of its parent element.
@@ -693,7 +694,7 @@
 		// no box at all (the text of a `<textarea>`): nothing says it is hidden
 		if (rects.length === 0) return false;
 		if (rects.every((rect) => rect.width === 0 || rect.height === 0)) return true;
-		if (!rects.some(isOnScreen)) return false;
+		if (!rects.some(isOnScreen)) return isInFixedPanelOffscreen(parent);
 		if (scope.ariaHidden && !scope.inControl) return true;
 		return !isRendered(parent, true);
 	}
@@ -718,6 +719,24 @@
 
 	function isOnScreen(rect) {
 		return rect.bottom > 0 && rect.top < window.innerHeight && rect.right > 0 && rect.left < window.innerWidth;
+	}
+
+	/**
+	 * Checks if an element is inside a fixed element laid out outside the viewport, as a closed off-canvas
+	 * drawer is (`transform: translateX(-100%)`): scrolling the page does not move it, so nothing in it
+	 * can be seen until a script brings it in. A fixed element without a box (a zero-size portal root
+	 * whose content overflows it) says nothing about where its content is.
+	 *
+	 * @param {HTMLElement} element - The element to check.
+	 * @returns {boolean} Whether the element is in a fixed panel outside the viewport.
+	 */
+	function isInFixedPanelOffscreen(element) {
+		for (let ancestor = element; ancestor && ancestor !== BODY; ancestor = reachAncestor(ancestor)) {
+			if (getCachedComputedStyle(ancestor)?.position !== "fixed") continue;
+			const rect = getCachedBoundingRect(ancestor);
+			return rect.width > 0 && rect.height > 0 && !isOnScreen(rect);
+		}
+		return false;
 	}
 
 	/**

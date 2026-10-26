@@ -2,6 +2,8 @@
 
 Text hidden with `display: none`, `visibility: hidden`, a skipped `content-visibility` (a closed
 `<details>`, `hidden="until-found"`) or a zero-height `overflow: hidden` box is not rendered anywhere.
+Neither is the text of a fixed panel laid out outside the viewport (a closed off-canvas drawer): scrolling
+the page does not bring it in.
 On screen, `opacity: 0` and `aria-hidden` hide text too. Below the fold they don't: content waiting to
 fade in on scroll has `opacity: 0`, and the visible text next to a control is often `aria-hidden`.
 """
@@ -26,6 +28,9 @@ HIDDEN = """
 <div hidden="until-found">UNTIL_FOUND</div>
 <div hidden="until-found"><span style="display: contents">UNTIL_FOUND_IN_CONTENTS</span></div>
 <div style="position: relative; height: 0; overflow: hidden"><span style="position: absolute">CLIPPED_ABSOLUTE</span></div>
+<aside style="position: fixed; top: 0; bottom: 0; left: 0; width: 300px; transform: translateX(-110%)" inert>
+  <h2>CLOSED_DRAWER</h2><label>CLOSED_DRAWER_LABEL <input type="checkbox"></label>
+</aside>
 """
 
 KEPT = (
@@ -40,6 +45,9 @@ KEPT = (
 <div style="position: relative"><div style="height: 0; overflow: hidden">
   <span style="position: absolute; top: 0">ESCAPES_CLIPPING</span>
 </div></div>
+<div style="position: fixed; top: 600px; height: 100px; overflow: auto">
+  <div style="height: 300px"></div><p>SCROLLED_IN_FIXED_PANEL</p>
+</div>
 """
     + SPACER
     + """
@@ -74,6 +82,8 @@ async def test_hidden_text_is_not_in_the_description() -> None:
         "UNTIL_FOUND",
         "UNTIL_FOUND_IN_CONTENTS",
         "CLIPPED_ABSOLUTE",
+        "CLOSED_DRAWER",
+        "CLOSED_DRAWER_LABEL",
     ]:
         assert hidden not in description
         assert hidden not in texts
@@ -92,6 +102,7 @@ async def test_offscreen_and_labelling_text_is_kept() -> None:
         "ICON_TEXT",
         "VISIBLE_IN_HIDDEN",
         "ESCAPES_CLIPPING",
+        "SCROLLED_IN_FIXED_PANEL",
         "BELOW_FOLD",
         "FADES_IN_ON_SCROLL",
         "ARIA_HIDDEN_BELOW_FOLD",

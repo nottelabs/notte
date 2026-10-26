@@ -132,9 +132,7 @@ async def test_only_controls_that_scrolling_reaches_are_described() -> None:
             # an empty `title` names nothing: the button says nothing and is left out
             # an SVG icon's `<title>` is not in the description: the link is named by it
             "_[:]<a>Home</a>",
-            # page scrolling does not move fixed content: it stays text
-            "_[:]FIXED_BELOW",
-            "_[:]IN_FIXED_PANEL",
+            # page scrolling does not move fixed content: outside the viewport, it is never seen
             # sticky content scrolls with the page until it sticks
             "_[:]<a>Sticky section link</a>",
             # a fixed panel on screen scrolls to what it holds, but not to what is above where its scrolling starts
@@ -184,7 +182,7 @@ SCROLL_BOXES = """
   <div style="width: 1000px"><button>Far left</button></div>
   <button style="position: relative; left: 400px">RTL_PAST_ITS_START</button>
 </div>
-<div style="position: fixed; top: 0; left: 1300px; width: 300px; height: 300px; overflow: auto">
+<div style="position: fixed; top: 0; left: 900px; width: 300px; height: 300px; overflow: auto">
   <div style="height: 2000px"></div><button style="position: relative; left: -500px">SHIFTED_OUT_OF_ITS_PANEL</button>
 </div>
 <div style="display: contents; overflow: auto"><input placeholder="In a box without a box"></div>
