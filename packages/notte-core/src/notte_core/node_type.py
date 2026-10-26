@@ -131,8 +131,10 @@ class NodeRole(Enum):
         return value
 
     @staticmethod
-    def from_element(tag_name: str, attributes: Mapping[str, str]) -> "NodeRole | str":
-        """The role of an HTML element: its `role` attribute if set, else the implicit role of its tag.
+    def from_element(tag_name: str, attributes: Mapping[str, str], *, is_editing_host: bool = True) -> "NodeRole | str":
+        """The role of an HTML element: its `role` attribute if set, else `textbox` for a `contenteditable`
+        editing host, else the implicit role of its tag. Pass `is_editing_host=False` for an editable
+        descendant whose surrounding editor owns the fill action.
 
         A `role` attribute that is not a `NodeRole` is returned as is (a string).
         """
@@ -144,6 +146,13 @@ class NodeRole(Enum):
         tag = tag_name.lower()
         if tag == "input":
             return _INPUT_TYPE_ROLES.get(attributes.get("type", "text").lower(), NodeRole.TEXTBOX)
+        # a rich text editor's root (`contenteditable`) is a text field; a `<body>` in design mode stays the page
+        if (
+            tag != "body"
+            and is_editing_host
+            and attributes.get("contenteditable", "false").lower() in _CONTENTEDITABLE_ON
+        ):
+            return NodeRole.TEXTBOX
         role = _TAG_ROLES.get(tag)
         if role is not None:
             return role
@@ -205,6 +214,9 @@ _INPUT_TYPE_ROLES: dict[str, NodeRole] = {
     "checkbox": NodeRole.CHECKBOX,
     "search": NodeRole.SEARCHBOX,
 }
+
+# the `contenteditable` values that make an element editable
+_CONTENTEDITABLE_ON = frozenset({"", "true", "plaintext-only"})
 
 # implicit role of an element, by its (lowercase) tag name
 _TAG_ROLES: dict[str, NodeRole] = {

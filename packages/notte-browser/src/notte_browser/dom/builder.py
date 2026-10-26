@@ -47,6 +47,7 @@ class RawNode(TypedDict):
     isTopElement: NotRequired[bool]
     isInteractive: NotRequired[bool]
     isEditable: NotRequired[bool]
+    isEditingHost: NotRequired[bool]
     disabledReason: NotRequired[str | None]
     # a disabled control that would be highlighted if it were enabled (it has no highlight index)
     disabled: NotRequired[bool]
@@ -161,7 +162,9 @@ def _highlights(raw: RawNode, nodes: dict[str, RawNode]) -> list[_Highlight]:
     tag_name = raw.get("tagName")
     if index is None or tag_name is None:
         return children
-    role = NodeRole.from_element(_tag(tag_name), raw.get("attributes", {}))
+    role = NodeRole.from_element(
+        _tag(tag_name), raw.get("attributes", {}), is_editing_host=raw.get("isEditingHost", True)
+    )
     control = isinstance(role, NodeRole) and role.short_id() in _CONTROL_SHORT_IDS
     name = _normalize(raw.get("accessibleName", ""))
     text = _normalize(_raw_text(raw, nodes))
@@ -293,7 +296,7 @@ class _TreeBuilder:
         attributes = cleanup_aria_attributes(attributes)
         if len(tag_name) == 0 and not attributes.get("role") and (len(attributes) > 0 or len(child_ids) > 0):
             raise ValueError(f"No tag_name found for element with attributes: {attributes}")
-        role = NodeRole.from_element(tag_name, attributes)
+        role = NodeRole.from_element(tag_name, attributes, is_editing_host=raw.get("isEditingHost", True))
 
         node_id: str | None = None
         if highlight_index is not None:

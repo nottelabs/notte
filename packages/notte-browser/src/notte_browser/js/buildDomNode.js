@@ -328,6 +328,21 @@
 		return IMPLICIT_ROLES[tagName] ?? "";
 	}
 
+	/**
+	 * Checks if an element is the root of a `contenteditable` region (an editing host), as the editor of
+	 * a rich text field is. The elements inside it are editable too, but they are its content: the
+	 * host is the field. In an editable `<body>` (an editor's iframe), which is never highlighted, the
+	 * blocks right inside it count as the roots.
+	 *
+	 * @param {HTMLElement} element - The element to check.
+	 * @returns {boolean} Whether the element is an editing host.
+	 */
+	function isEditingHost(element) {
+		const parent = parentElementOf(element);
+		return propertyOf(element, "isContentEditable") === true &&
+			(parent === null || propertyOf(parent, "isContentEditable") !== true || parent === BODY);
+	}
+
 	function isHiddenForName(element) {
 		if (getAttribute(element, "aria-hidden") === "true") return true;
 		const style = getCachedComputedStyle(element);
@@ -1291,8 +1306,8 @@
 		const role = getAttribute(element, "role");
 		const ariaRole = getAttribute(element, "aria-role");
 
-		// Check for contenteditable attribute
-		if (getAttribute(element, "contenteditable") === "true" || propertyOf(element, "isContentEditable")) {
+		// the root of a rich text editor (not the paragraphs inside it)
+		if (isEditingHost(element)) {
 			return true;
 		}
 
@@ -1446,8 +1461,7 @@
 		// For shadow DOM, we need to check within its own root context
 		const shadowRoot = getRootNode(element);
 		if (shadowRoot instanceof ShadowRoot) {
-			const centerX = rects[Math.floor(rects.length / 2)].left + rects[Math.floor(rects.length / 2)].width / 2;
-			const centerY = rects[Math.floor(rects.length / 2)].top + rects[Math.floor(rects.length / 2)].height / 2;
+			const [centerX, centerY] = topElementPoint(element, rects);
 
 			try {
 				const topEl = shadowRoot.elementFromPoint(centerX, centerY);
@@ -1465,8 +1479,7 @@
 		}
 
 		// For elements in viewport, check if they're topmost
-		const centerX = rects[Math.floor(rects.length / 2)].left + rects[Math.floor(rects.length / 2)].width / 2;
-		const centerY = rects[Math.floor(rects.length / 2)].top + rects[Math.floor(rects.length / 2)].height / 2;
+		const [centerX, centerY] = topElementPoint(element, rects);
 
 		try {
 			const topEl = DOCUMENT.elementFromPoint.call(document, centerX, centerY);
@@ -1483,15 +1496,43 @@
 		}
 	}
 
+	/**
+	 * Where `isTopElement` looks for an element: the center of its middle box. A rich text editor is often
+	 * taller than the viewport or the scrolling panel it is in, or cut by their edge with its center out of
+	 * view: it is looked for at the center of its part in view.
+	 *
+	 * @param {HTMLElement} element - The element.
+	 * @param {DOMRect[]} rects - Its client rects.
+	 * @returns {number[]} The point, `[x, y]`.
+	 */
+	function topElementPoint(element, rects) {
+		const middle = rects[Math.floor(rects.length / 2)];
+		let { left, top, right, bottom } = middle;
+		if (isEditingHost(element)) {
+			let visible = [Math.max(left, 0), Math.max(top, 0), Math.min(right, window.innerWidth), Math.min(bottom, window.innerHeight)];
+			// the panels that clip it (`overflow` other than `visible`)
+			for (let parent = parentElementOf(element); parent !== null && parent !== BODY; parent = parentElementOf(parent)) {
+				const style = getCachedComputedStyle(parent);
+				if (!style || (style.overflowX === "visible" && style.overflowY === "visible")) continue;
+				const box = getCachedBoundingRect(parent);
+				if (!box) continue;
+				visible = [Math.max(visible[0], box.left), Math.max(visible[1], box.top), Math.min(visible[2], box.right), Math.min(visible[3], box.bottom)];
+			}
+			if (visible[0] < visible[2] && visible[1] < visible[3]) [left, top, right, bottom] = visible;
+		}
+		return [(left + right) / 2, (top + bottom) / 2];
+	}
+
 	const OFFSCREEN_CONTROL_TAGS = new Set(['a', 'button', 'input', 'select', 'textarea', 'option']);
 	// form fields, named by the label next to them rather than by their content
 	const FIELD_TAGS = new Set(['input', 'select', 'textarea']);
 
 	/**
-	 * Checks if an element is a link, button, form field or option by its tag or ARIA role: the controls
-	 * described above or below the viewport. Pointer cursors are not looked at there: the generic clickables
-	 * they find are not described off-screen, and reading every `:hover` rule of the page for each element
-	 * below the fold (`getElementCursorStates`) would make the walk several times slower.
+	 * Checks if an element is a link, button, form field or option by its tag or ARIA role, or the root of
+	 * a rich text editor: the controls described above or below the viewport. Pointer cursors are not looked
+	 * at there: the generic clickables they find are not described off-screen, and reading every `:hover`
+	 * rule of the page for each element below the fold (`getElementCursorStates`) would make the walk
+	 * several times slower.
 	 *
 	 * @param {HTMLElement} element - The element to check.
 	 * @returns {boolean} Whether the element is a control by its tag or role.
@@ -1499,7 +1540,7 @@
 	function isOffscreenCandidate(element) {
 		const role = getAttribute(element, 'role');
 		if (role !== null && role !== '') return INTERACTIVE_ROLES.has(role);
-		return OFFSCREEN_CONTROL_TAGS.has(tagNameOf(element).toLowerCase());
+		return OFFSCREEN_CONTROL_TAGS.has(tagNameOf(element).toLowerCase()) || isEditingHost(element);
 	}
 
 	/**
@@ -1786,7 +1827,7 @@
 			hasAttribute(element, "tabindex") ||
 			hasAttribute(element, "aria-") ||
 			hasAttribute(element, "data-action") ||
-			getAttribute(element, "contenteditable") === "true";
+			isEditingHost(element);
 
 		return hasQuickInteractiveAttr;
 	}
@@ -1891,8 +1932,8 @@
 		if (getRole(element) === 'link') {
 			return true;
 		}
-		// Check contenteditable
-		if (propertyOf(element, "isContentEditable") || getAttribute(element, 'contenteditable') === 'true') {
+		// Check contenteditable: the editor's root, not the paragraphs inside it
+		if (isEditingHost(element)) {
 			return true;
 		}
 		// Check for common testing/automation attributes
@@ -2185,6 +2226,7 @@
 		const xpath = getXPathTree(node);
 		const nodeData = {
 			tagName: tagNameOf(node).toLowerCase(),
+			isEditingHost: isEditingHost(node),
 			attributes: {},
 			...payloadXPath(xpath, parentXPath),
 			children: [],
@@ -2300,7 +2342,7 @@
 			) {
 				// Process all child nodes to capture formatted text
 				for (const child of childNodesOf(node)) {
-					const domElement = buildDomTree(child, parentIframe, nodeWasHighlighted, childScope, xpath);
+					const domElement = buildDomTree(child, parentIframe, nodeWasHighlighted || isParentHighlighted, childScope, xpath);
 					if (domElement) nodeData.children.push(domElement);
 				}
 			}
