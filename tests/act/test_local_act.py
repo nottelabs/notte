@@ -1617,18 +1617,15 @@ async def test_execute_outside_act_still_switches_to_a_new_tab(session: NotteSes
 
 
 @pytest.mark.asyncio
-async def test_a_page_submitted_with_enter_is_observed_once_rendered_not_once_its_requests_end(
-    session: NotteSession,
-) -> None:
+async def test_a_page_submitted_with_enter_is_observed_rendered(session: NotteSession) -> None:
     await _site(session)
     _ = await session.window.page.goto("http://site.test/search")
     await session.window.page.fill("#q", "lamp")
     await session.window.page.focus("#q")
     decider = FakeDecider(choices=[{"operation": "PRESS_ENTER"}, {"operation": "DONE"}])
     result = await session.aact("Search for lamp", decider=decider)
+    # execute() settles the submitted page (`notte_browser.settle`): its 5 s request is waited for up to the cap
     assert result.success and session.window.page.url == "http://site.test/results?q=lamp"
-    # the results page's request takes 5 s: not waited for
-    assert result.timings.execute_ms < 2_000
     _ = await session.aact("Search for lamp", decider=decider)
     assert [e["label"] for e in decider.states[-1].elements] == ["First result"]
 
