@@ -131,6 +131,12 @@ viewport and overflow ancestors, including ancestors outside its shadow root. Ke
 `tests/browser/test_dom_contenteditable.py` and `test_dom_covered_controls.py` passing
 together: probing the original editor box loses editors cut by a scroll panel or the fold.
 
+Draggable elements can also have real click behavior. Patchright's isolated
+evaluation cannot see a page-assigned `.onclick` property, so do not remove
+their cursor-based click actions to represent unsupported dragging. Carry the
+explicit HTML `draggable` state into act decisions and freshness checks instead;
+`tests/act/test_drag_cursor.py` covers click controls and drag capability disclosure.
+
 ## Public API
 
 - Don't remove or rename public methods without a deprecation first: keep the

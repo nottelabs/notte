@@ -44,6 +44,8 @@ class ElementState(BaseModel):
       `pressed` can also be `"mixed"` for toggle buttons with mixed formatting.
     - `sort`: the `aria-sort` of a column header, on the header and on the controls inside it (its sort
       button), when the column is sorted.
+    - `draggable`: the element explicitly enables HTML drag and drop. This does not imply that
+      clicking it drags it, or that its click action is unavailable.
     """
 
     model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, populate_by_name=True)
@@ -61,6 +63,7 @@ class ElementState(BaseModel):
     selected: bool | None = None
     pressed: bool | Literal["mixed"] | None = None
     sort: Literal["ascending", "descending", "other"] | None = None
+    draggable: bool | None = None
 
     @staticmethod
     def from_payload(payload: dict[str, Any] | None) -> "ElementState | None":

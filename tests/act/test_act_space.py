@@ -341,7 +341,7 @@ def test_act_until_done_does_not_count_scrolls_as_unchanged() -> None:
 
 
 def _signature(tag: str, text: str, value: Any = None, checked: Any = None, options: Any = None) -> list[Any]:
-    return [tag, text, value, checked, None, None, None, None, None, None, None, None, None, None, options, []]
+    return [tag, text, value, checked, None, None, None, None, None, None, None, None, None, None, options, [], False]
 
 
 def test_signature_baseline_must_match_the_observation() -> None:

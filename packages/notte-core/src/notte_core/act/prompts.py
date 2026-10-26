@@ -88,3 +88,7 @@ BLOCKED = "No supported operation can progress."
 # BLOCKED on a page with a file input: no operation uploads a file
 FILE_UPLOAD_UNSUPPORTED = "file upload is not supported by act()"
 BLOCKED_FILE_UPLOAD = f"{BLOCKED} Choose it when the goal needs a file uploaded: {FILE_UPLOAD_UNSUPPORTED}."
+DRAG_UNSUPPORTED = (
+    "drag and drop is not supported by act(). Clicking a draggable element does not drag it. "
+    "Choose BLOCKED when the goal requires dragging and no supported alternative can progress."
+)

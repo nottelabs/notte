@@ -49,6 +49,7 @@ ELEMENT_SIGNATURES_JS = """(xpaths) => {
                     return target ? target.textContent : null;
                 }),
             ],
+            el.getAttribute("draggable")?.toLowerCase() === "true",
         ];
     }
     // the focused element (where Enter goes), by a token kept on the element itself: elements added or removed
@@ -124,6 +125,8 @@ class Signatures:
         if label and text and label not in text and text not in label:
             return False
         state = page.states.get(element_id)
+        if fields[16] != (state is not None and state.draggable is True):
+            return False
         if state is None:
             return True
         value, checked, options = fields[2], fields[3], fields[14]
@@ -140,8 +143,8 @@ class Signatures:
         return True
 
 
-# entries of an `ELEMENT_SIGNATURES_JS` signature: tag, text, value, checked, ..., options, external label texts
-_SIGNATURE_FIELDS = 16
+# entries of an `ELEMENT_SIGNATURES_JS` signature: tag, text, value, checked, ..., options, external labels, draggable
+_SIGNATURE_FIELDS = 17
 
 
 def _normalized(text: str) -> str:

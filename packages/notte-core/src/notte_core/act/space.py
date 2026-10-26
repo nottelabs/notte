@@ -201,6 +201,8 @@ class ActSpace:
     controls: dict[str, Control] = field(default_factory=dict)
     # the page has a file input (no operation uploads a file)
     file_input: bool = False
+    # explicit HTML drag targets; clicking them is still allowed, dragging is not an act operation
+    draggable: bool = False
     # the labels of the fields holding text act() typed that is not submitted yet (`submitted: false`)
     unsubmitted: list[str] = field(default_factory=list)
 
@@ -215,7 +217,10 @@ class ActSpace:
         if self.unsubmitted:
             fields = ", ".join(repr(label) for label in self.unsubmitted)
             done += " " + prompts.DONE_UNSUBMITTED.format(fields=fields)
-        operations.update(DONE=done, BLOCKED=prompts.BLOCKED_FILE_UPLOAD if self.file_input else prompts.BLOCKED)
+        blocked = prompts.BLOCKED_FILE_UPLOAD if self.file_input else prompts.BLOCKED
+        if self.draggable:
+            blocked += " " + prompts.DRAG_UNSUPPORTED
+        operations.update(DONE=done, BLOCKED=blocked)
         return operations
 
 
@@ -942,7 +947,7 @@ def _element(
             element["filled"] = state.filled
         if state.checked is not None:
             element["checked"] = state.checked
-        for key in ("expanded", "selected", "pressed"):
+        for key in ("expanded", "selected", "pressed", "draggable"):
             value = getattr(state, key)
             if value is not None:
                 element[key] = value
@@ -1009,6 +1014,8 @@ def build_act_space(
         element = _element(
             action, label, role, state, has_live_state, display_text, labels, display_cut or display_text
         )
+        if element.get("draggable") is True:
+            space.draggable = True
         input_type = _input_type(line) if role == "textbox" else None
         value_format = None if input_type is None else INPUT_FORMATS.get(input_type)
         if input_type is not None:
@@ -1023,7 +1030,9 @@ def build_act_space(
             element["context"] = _cut(shorten(context, display_text), MAX_CONTEXT_LENGTH)
         current = element.get("value")
         base: dict[str, Any] = {
-            k: element[k] for k in ("role", "type", "format", "checked", "selected", "expanded") if k in element
+            k: element[k]
+            for k in ("role", "type", "format", "checked", "selected", "expanded", "draggable")
+            if k in element
         }
 
         def target(kind: TargetKind, key: str | None = None, option: SelectOption | None = None) -> Target:
