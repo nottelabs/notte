@@ -40,6 +40,8 @@ class ElementState(BaseModel):
       is set when some are left out). They are data on the select's node, not actions of their own.
     - `expanded` / `selected` / `pressed`: `aria-expanded` / `aria-selected` / `aria-pressed`;
       `pressed` can also be `"mixed"` for toggle buttons with mixed formatting.
+    - `sort`: the `aria-sort` of a column header, on the header and on the controls inside it (its sort
+      button), when the column is sorted.
     """
 
     model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, populate_by_name=True)
@@ -56,6 +58,7 @@ class ElementState(BaseModel):
     expanded: bool | None = None
     selected: bool | None = None
     pressed: bool | Literal["mixed"] | None = None
+    sort: Literal["ascending", "descending", "other"] | None = None
 
     @staticmethod
     def from_payload(payload: dict[str, Any] | None) -> "ElementState | None":

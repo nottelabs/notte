@@ -276,6 +276,14 @@
 		const pressed = parseAriaBoolean(element, "aria-pressed");
 		if (pressed !== undefined) state.pressed = pressed;
 		else if (getAttribute(element, "aria-pressed") === "mixed") state.pressed = "mixed";
+		// a column header, or a control inside one (its sort button): the order the column is sorted in
+		let header = closest(element, "th, [role]");
+		while (header !== null && localNameOf(header) !== "th" && getRole(header) !== "columnheader") {
+			const parent = parentElementOf(header);
+			header = parent === null ? null : closest(parent, "th, [role]");
+		}
+		const sort = header === null ? null : getAttribute(header, "aria-sort");
+		if (sort === "ascending" || sort === "descending" || sort === "other") state.sort = sort;
 		return Object.keys(state).length > 0 ? state : undefined;
 	}
 

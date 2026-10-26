@@ -25,6 +25,9 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
 - `make test` is the offline gate. `make test-live` runs tests marked
   `staging` or `live` and needs `NOTTE_API_KEY`; set `NOTTE_API_URL` to point
   the SDK at a different API.
+- README live CI uses the official HTTPS Ubuntu archive in the runner's
+  `/etc/apt/apt-mirrors.txt`; the Azure mirror has stalled Chromium dependency
+  installation before the examples could run.
 - Browser settle regressions are in `tests/browser/test_execute_settle.py`
   and `tests/browser/test_settle_rules.py` and use a local server. Use the
   lockfile's Patchright environment: an older installed version can fail the
