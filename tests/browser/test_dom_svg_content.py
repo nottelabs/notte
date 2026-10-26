@@ -57,6 +57,18 @@ async def test_svg_chart_links_and_labels_are_observed() -> None:
 
 
 @pytest.mark.asyncio
+async def test_svg_chart_below_the_fold_keeps_its_labels() -> None:
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        page = f'<div style="height: 1500px">Intro</div>{CHART}'
+        _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+        obs = await session.aobserve()
+
+        description = obs.space.description + "\n"
+        for label in ("1000", "Jan", "Feb"):
+            assert f"_[:]{label}\n" in description
+
+
+@pytest.mark.asyncio
 async def test_svg_icon_stays_out_of_the_tree() -> None:
     async with NotteSession(headless=True) as session:
         _ = await session.window.page.goto(f"data:text/html,{quote(ICON_BUTTON)}")

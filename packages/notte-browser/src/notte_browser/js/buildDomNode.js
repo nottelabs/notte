@@ -2076,8 +2076,12 @@
 			// Skip viewport check for fixed/sticky elements as they may appear anywhere
 			const isFixedOrSticky = style && (style.position === 'fixed' || style.position === 'sticky');
 
-			// Check if element has actual dimensions using offsetWidth/Height (quick check)
-			const hasSize = propertyOf(node, "offsetWidth") > 0 || propertyOf(node, "offsetHeight") > 0;
+			// Check if element has actual dimensions using offsetWidth/Height (quick check). SVG elements have no
+			// offset size: their size is their bounding box
+			const offsetWidth = propertyOf(node, "offsetWidth");
+			const hasSize = typeof offsetWidth === "number"
+				? offsetWidth > 0 || propertyOf(node, "offsetHeight") > 0
+				: !!rect && (rect.width > 0 || rect.height > 0);
 
 			// Use getBoundingClientRect for the quick OUTSIDE check.
 			// isInExpandedViewport will do the more accurate check later if needed.
