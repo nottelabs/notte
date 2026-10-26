@@ -47,10 +47,17 @@ TWO_IMAGES = f"""
 """
 
 # only the top 20 pixels of the image are in the viewport
-EDGE_OF_VIEW = f"""
+BELOW_VIEW = f"""
 <div style="height: calc(100vh - 20px)"></div>
 <img alt="Plan" width="200" height="400" usemap="#plan" src="{GIF}" style="display: block">
 <map name="plan"><area shape="rect" coords="0,0,200,400" href="/room" alt="Room"></map>
+"""
+
+# a 1,000 pixel high image, scrolled to its last 50 pixels (see the test)
+ABOVE_VIEW = f"""
+<img alt="Plan" width="200" height="1000" usemap="#plan" src="{GIF}" style="display: block">
+<div style="height: 3000px"></div>
+<map name="plan"><area shape="default" href="/room" alt="Room"></map>
 """
 
 # a polygon with 200,000 points along its bottom edge
@@ -73,11 +80,14 @@ def _serve(page: str):
     return serve
 
 
-async def _offered_areas(session: NotteSession, page: str, scroll_to_end: bool = False) -> dict[str, str]:
+async def _offered_areas(session: NotteSession, page: str, scroll_y: int | None = None) -> dict[str, str]:
+    """The links offered on the page, scrolled to `scroll_y` (the end of the page when -1)."""
     await session.window.page.route(f"{BASE_URL}/**", _serve(page))
     _ = await session.window.page.goto(f"{BASE_URL}/plan")
-    if scroll_to_end:
-        await session.window.page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+    if scroll_y is not None:
+        await session.window.page.evaluate(
+            "(y) => window.scrollTo(0, y < 0 ? document.body.scrollHeight : y)", scroll_y
+        )
     observation = await session.aobserve()
     return {
         action.text_label or action.accessible_name or "": action.id
@@ -113,7 +123,7 @@ async def test_the_areas_of_a_scaled_image_are_offered() -> None:
 async def test_the_areas_of_the_image_in_view_are_offered() -> None:
     """Two images use the map: the first is above the viewport, the second in it."""
     async with NotteSession(headless=True) as session:
-        areas = await _offered_areas(session, TWO_IMAGES, scroll_to_end=True)
+        areas = await _offered_areas(session, TWO_IMAGES, scroll_y=-1)
         assert list(areas) == ["Left", "Right"]
 
         result = await session.aexecute(type="click", id=areas["Right"])
@@ -122,10 +132,11 @@ async def test_the_areas_of_the_image_in_view_are_offered() -> None:
 
 
 @pytest.mark.asyncio
-async def test_an_area_cut_by_the_edge_of_the_viewport_is_offered() -> None:
+@pytest.mark.parametrize(("page", "scroll_y"), [(BELOW_VIEW, 0), (ABOVE_VIEW, 950)])
+async def test_an_area_cut_by_the_edge_of_the_viewport_is_offered(page: str, scroll_y: int) -> None:
     """The points tried are in the part of the area's box that is in view."""
     async with NotteSession(headless=True) as session:
-        areas = await _offered_areas(session, EDGE_OF_VIEW)
+        areas = await _offered_areas(session, page, scroll_y=scroll_y)
         assert list(areas) == ["Room"]
 
 
