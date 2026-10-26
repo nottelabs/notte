@@ -242,10 +242,10 @@ class PageSettle:
         if document == "requests":
             await self._poll(grace_ms)
             if await self._loaded():
-                # settled before its load event, which can start requests and renders of its own: a request its
-                # handlers started is in flight already, no grace is needed for it
+                # settled before its load event, which can start requests and renders of its own (right away or
+                # on a short timer)
                 await self._track_document()
-                await self._poll(0)
+                await self._poll(GRACE_MS)
             return
         rendered = asyncio.ensure_future(self._poll(grace_ms, requests=False))
         loaded = asyncio.ensure_future(self._loaded())

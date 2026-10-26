@@ -33,12 +33,27 @@ HOME = """<html><body>
 <a id="hang-page" href="/hanging">Hanging page</a>
 <form action="/results"><input id="q" name="q" value="lamp"></form>
 <a id="late-load" href="/late-load">Late load</a>
+<a id="late-load-timer" href="/late-load-timer">Late load, then a timer</a>
 <button id="widget" onclick="document.body.append(document.createElement('x-widget'))">Widget</button>
+<button id="nested" onclick="document.body.append(document.createElement('x-outer'))">Nested widget</button>
+<button id="open-helper" onclick="window.helper = window.open('/next')">Open a helper tab</button>
+<button id="swap-tab" onclick="window.helper.close(); window.open('/second')">Swap tabs</button>
 <script>customElements.define('x-widget', class extends HTMLElement {
   connectedCallback() {
     const root = this.attachShadow({ mode: 'open' });
     setTimeout(() => { root.innerHTML = '<p>Loading</p>' }, 150);
     setTimeout(() => { root.innerHTML = '<p>Widget content</p>' }, 300);
+  }
+});
+// renders an inner widget in its shadow root right away: the inner one renders in steps in its own
+customElements.define('x-outer', class extends HTMLElement {
+  connectedCallback() { this.attachShadow({ mode: 'open' }).innerHTML = '<x-inner></x-inner>'; }
+});
+customElements.define('x-inner', class extends HTMLElement {
+  connectedCallback() {
+    const root = this.attachShadow({ mode: 'open' });
+    setTimeout(() => { root.innerHTML = '<p>Loading</p>' }, 150);
+    setTimeout(() => { root.innerHTML = '<p>Inner content</p>' }, 300);
   }
 });</script>
 <button id="frame" onclick="document.getElementById('inner').src = '/inner'">Frame</button>
@@ -68,6 +83,11 @@ window.addEventListener('load', () => fetch('/data?delay=0.3').then(() =>
     "/late-load": """<html><body><h1>Late load</h1><img src="/slow-image"><script>
 window.addEventListener('load', () => fetch('/data?delay=0.3').then(() =>
     document.body.insertAdjacentHTML('beforeend', '<p>Rendered after a late load</p>')));
+</script></body></html>""",
+    # loads after a slow image, then fetches what it renders on a short timer
+    "/late-load-timer": """<html><body><h1>Late load</h1><img src="/slow-image"><script>
+window.addEventListener('load', () => setTimeout(() => fetch('/data?delay=0.3').then(() =>
+    document.body.insertAdjacentHTML('beforeend', '<p>Rendered after a late load</p>')), 50));
 </script></body></html>""",
     # renders in two steps after it loaded in a frame
     "/inner": """<html><body><script>
@@ -286,9 +306,12 @@ async def test_the_grace_counts_from_when_a_slow_click_lands(session: NotteSessi
 
 
 @pytest.mark.asyncio
-async def test_a_page_that_loads_after_it_settled_is_watched_from_its_load(session: NotteSession, site: str) -> None:
-    _ = await click(session, "late-load")
-    assert session.window.page.url == f"{site}/late-load"
+@pytest.mark.parametrize("link", ["late-load", "late-load-timer"])
+async def test_a_page_that_loads_after_it_settled_is_watched_from_its_load(
+    session: NotteSession, site: str, link: str
+) -> None:
+    _ = await click(session, link)
+    assert session.window.page.url == f"{site}/{link}"
     assert "Rendered after a late load" in await text(session)
 
 
@@ -312,3 +335,23 @@ async def test_a_new_tab_is_tracked_from_when_it_appears(session: NotteSession, 
     _ = await click(session, "fetching-tab")
     assert session.window.page.url == f"{site}/fetching-tab"
     assert "Fetched in the tab" in await text(session)
+
+
+@pytest.mark.asyncio
+async def test_the_shadow_roots_in_a_new_shadow_root_are_watched(session: NotteSession) -> None:
+    _ = await click(session, "nested")
+    inner = "document.querySelector('x-outer').shadowRoot.querySelector('x-inner').shadowRoot.textContent"
+    assert await session.window.page.evaluate(inner) == "Inner content"
+
+
+@pytest.mark.asyncio
+async def test_a_tab_that_opens_as_another_closes_is_switched_to(session: NotteSession, site: str) -> None:
+    async with session.window.page.context.expect_page() as helper:
+        # the page's own script keeps a handle on it (not through execute(), which would switch to it)
+        await session.window.page.click("#open-helper")
+    await (await helper.value).wait_for_load_state("load")
+    assert len(session.window.page.context.pages) == 2
+    _ = await click(session, "swap-tab")
+    assert len(session.window.page.context.pages) == 2
+    assert session.window.page.url == f"{site}/second"
+    assert "Second tab" in await text(session)

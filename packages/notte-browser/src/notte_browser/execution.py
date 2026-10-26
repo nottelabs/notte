@@ -629,8 +629,14 @@ async def execute(
             settle.acted()
             if retval:
                 await _settle(settle, action, url, verbose=verbose)
+        if isinstance(action, (GotoAction, GotoNewTabAction)):
+            # a goto is not settled: it keeps the fixed wait before the new-tab check, which callers that observe
+            # right after it rely on (a page its scripts render after its load)
+            await window.short_wait()
         # Only check for new tabs if the action can potentially create one
-        if _can_create_tab(action) and len(context.pages) != len(tabs) and len(context.pages) > 0:
+        # a tab can open while another closes: the count does not change
+        opened = any(tab not in tabs for tab in context.pages)
+        if _can_create_tab(action) and (len(context.pages) != len(tabs) or opened) and len(context.pages) > 0:
             last = context.pages[-1]
             # a new tab from goto_new_tab is the window's page already, and loaded
             if last is not window.page:

@@ -28,24 +28,30 @@
         watched.add(root);
         observer.observe(root, { subtree: true, childList: true, characterData: true, attributes: true });
     };
-    // the open shadow roots and same-origin frame documents in `element` (itself included) are watched too, and the
-    // next document of a frame once it has loaded
-    const watchWithin = (element) => {
-        for (const el of [element, ...element.querySelectorAll("*")]) {
+    // a root found while tracking is watched, and so are the roots already in it
+    const discover = (root) => {
+        if (watched.has(root)) return;
+        watch(root);
+        for (const el of root.querySelectorAll("*")) watchWithin(el, false);
+    };
+    // the open shadow roots and same-origin frame documents in `element` (and its descendants with `deep`) are
+    // watched too, and the next document of a frame once it has loaded
+    const watchWithin = (element, deep = true) => {
+        for (const el of deep ? [element, ...element.querySelectorAll("*")] : [element]) {
             if (watched.size >= 50) return;
-            if (el.shadowRoot) watch(el.shadowRoot);
+            if (el.shadowRoot) discover(el.shadowRoot);
             if (el.tagName === "IFRAME" || el.tagName === "FRAME") {
                 if (!frames.has(el)) {
                     frames.add(el);
                     el.addEventListener("load", onFrameLoad);
                 }
-                try { if (el.contentDocument) watch(el.contentDocument); } catch (e) {}
+                try { if (el.contentDocument) discover(el.contentDocument); } catch (e) {}
             }
         }
     };
     const onFrameLoad = (event) => {
         tracker.dom = changed();
-        try { if (event.target.contentDocument) watch(event.target.contentDocument); } catch (e) {}
+        try { if (event.target.contentDocument) discover(event.target.contentDocument); } catch (e) {}
     };
     // inline `style` changes (animations) do not count
     const observer = new MutationObserver((mutations) => {
