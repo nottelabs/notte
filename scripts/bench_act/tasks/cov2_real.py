@@ -4,7 +4,6 @@ passes), a file picker, rich editors (Quill, CodeMirror, Monaco), a virtualised 
 (python.org), AJAX tables and paginated search (scrapethissite.com), cookie walls (OneTrust, Cookiebot), search as
 you type (jsDelivr), Hebrew and Korean search, and a chart dashboard's table (Our World in Data)."""
 
-import json
 from dataclasses import replace
 from typing import Any
 from urllib.parse import unquote
@@ -138,7 +137,7 @@ TASKS = [
         "quill-replace",
         "https://quilljs.com/",
         "Replace all the text in the editor with 'Hello from notte'.",
-        lambda f, _: "Hello from notte" in json.loads(_extra(f) or "[]"),
+        lambda f, _: "Hello from notte" in (_extra(f) or []),
         final_js=QUILL_TEXTS,
         tags=("rich-editor", "quill", "contenteditable"),
     ),
