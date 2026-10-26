@@ -91,48 +91,92 @@
 		boundingRects: new WeakMap(),
 		clientRects: new WeakMap(),
 		computedStyles: new WeakMap(),
+		// image maps: the `<img usemap>` of a document or shadow root by `usemap`, the image of a `<map>`, the box of an `<area>`
+		usemapImages: new WeakMap(),
+		mapImages: new WeakMap(),
+		areaRects: new WeakMap(),
 		clearCache: () => {
 			DOM_CACHE.boundingRects = new WeakMap();
 			DOM_CACHE.clientRects = new WeakMap();
 			DOM_CACHE.computedStyles = new WeakMap();
+			DOM_CACHE.usemapImages = new WeakMap();
+			DOM_CACHE.mapImages = new WeakMap();
+			DOM_CACHE.areaRects = new WeakMap();
 		}
 	};
 
 	/**
-	 * The image an image-map `<area>` is a region of: the first visible `<img usemap="#name">` of its `<map>`,
-	 * in the same document or shadow root.
+	 * The `<img usemap>` of a document or shadow root, by their `usemap`, read once per build.
+	 *
+	 * @param {Document | ShadowRoot} root - The document or shadow root.
+	 * @returns {Map<string, HTMLImageElement[]>} The images, in document order.
+	 */
+	function usemapImagesOf(root) {
+		let images = DOM_CACHE.usemapImages.get(root);
+		if (images === undefined) {
+			images = new Map();
+			for (const image of (root instanceof Document ? DOCUMENT : DocumentFragment.prototype).querySelectorAll.call(root, "img[usemap]")) {
+				const usemap = getAttribute(image, "usemap");
+				if (!images.has(usemap)) images.set(usemap, []);
+				images.get(usemap).push(image);
+			}
+			DOM_CACHE.usemapImages.set(root, images);
+		}
+		return images;
+	}
+
+	/**
+	 * The image an image-map `<area>` is a region of: of the visible `<img usemap="#name">` of its `<map>`, in the
+	 * same document or shadow root, the first in the viewport, else the first.
 	 *
 	 * @param {HTMLAreaElement} area - The `<area>` element.
 	 * @returns {HTMLImageElement | null} The image, or null when no visible image uses the map.
 	 */
 	function areaImage(area) {
 		const map = closest(area, "map");
-		const name = map === null ? null : getAttribute(map, "name");
-		if (!name) return null;
-		const root = getRootNode(area);
-		const images = (root instanceof Document ? DOCUMENT : DocumentFragment.prototype).querySelectorAll.call(root, "img[usemap]");
-		for (const image of images) {
-			if (getAttribute(image, "usemap") === `#${name}` && isElementVisible(image)) return image;
-		}
-		return null;
+		if (map === null) return null;
+		if (DOM_CACHE.mapImages.has(map)) return DOM_CACHE.mapImages.get(map);
+		const name = getAttribute(map, "name");
+		const images = (name ? usemapImagesOf(getRootNode(map)).get(`#${name}`) : undefined) ?? [];
+		const visible = images.filter((image) => isElementVisible(image));
+		const image = visible.find((candidate) => isInExpandedViewport(candidate, viewportExpansion)) ?? visible[0] ?? null;
+		DOM_CACHE.mapImages.set(map, image);
+		return image;
 	}
 
 	/**
-	 * The box of an image-map `<area>`: the bounds of its shape (`rect`, `circle`, `poly` or `default`, from its
-	 * `coords`) on its image, cut to the image. Empty when no visible image uses its map or its coords are invalid.
+	 * The box of an image-map `<area>`, read once per build (see `computeAreaRect`).
 	 *
 	 * @param {HTMLAreaElement} area - The `<area>` element.
 	 * @returns {DOMRect} The box, in viewport coordinates.
 	 */
 	function areaRect(area) {
+		if (!DOM_CACHE.areaRects.has(area)) DOM_CACHE.areaRects.set(area, computeAreaRect(area));
+		return DOM_CACHE.areaRects.get(area);
+	}
+
+	/**
+	 * The box of an image-map `<area>`: the bounds of its shape (`rect`, `circle`, `poly` or `default`, from its
+	 * `coords`) on its image, cut to the image. The coords are in the CSS pixels of the image's box, which a
+	 * transform (`scale(2)`) scales on screen. Empty when no visible image uses its map or its coords are invalid.
+	 *
+	 * @param {HTMLAreaElement} area - The `<area>` element.
+	 * @returns {DOMRect} The box, in viewport coordinates.
+	 */
+	function computeAreaRect(area) {
 		const image = areaImage(area);
 		if (image === null) return new DOMRect();
 		const box = ELEMENT.getBoundingClientRect.call(image);
 		const style = getCachedComputedStyle(image);
-		const left = box.left + propertyOf(image, "clientLeft") + (parseFloat(style.paddingLeft) || 0);
-		const top = box.top + propertyOf(image, "clientTop") + (parseFloat(style.paddingTop) || 0);
-		const width = propertyOf(image, "clientWidth") - (parseFloat(style.paddingLeft) || 0) - (parseFloat(style.paddingRight) || 0);
-		const height = propertyOf(image, "clientHeight") - (parseFloat(style.paddingTop) || 0) - (parseFloat(style.paddingBottom) || 0);
+		// the image's size on screen against its size in CSS pixels
+		const scaleX = box.width / propertyOf(image, "offsetWidth");
+		const scaleY = box.height / propertyOf(image, "offsetHeight");
+		const paddingLeft = parseFloat(style.paddingLeft) || 0;
+		const paddingTop = parseFloat(style.paddingTop) || 0;
+		const left = box.left + (propertyOf(image, "clientLeft") + paddingLeft) * scaleX;
+		const top = box.top + (propertyOf(image, "clientTop") + paddingTop) * scaleY;
+		const width = propertyOf(image, "clientWidth") - paddingLeft - (parseFloat(style.paddingRight) || 0);
+		const height = propertyOf(image, "clientHeight") - paddingTop - (parseFloat(style.paddingBottom) || 0);
 		const shape = (getAttribute(area, "shape") || "rect").trim().toLowerCase();
 		const coords = (getAttribute(area, "coords") || "").split(/[\s,;]+/).filter(Boolean).map(parseFloat);
 		if (coords.some(Number.isNaN)) return new DOMRect();
@@ -144,13 +188,21 @@
 		} else if ((shape === "circle" || shape === "circ") && coords.length >= 3) {
 			bounds = [coords[0] - coords[2], coords[1] - coords[2], coords[0] + coords[2], coords[1] + coords[2]];
 		} else if ((shape === "poly" || shape === "polygon") && coords.length >= 6) {
-			const xs = coords.filter((_, i) => i % 2 === 0);
-			const ys = coords.filter((_, i) => i % 2 === 1);
-			bounds = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+			// a loop, not `Math.min(...coords)`: a polygon can have more points than a call has arguments
+			let [minX, minY, maxX, maxY] = [Infinity, Infinity, -Infinity, -Infinity];
+			for (let i = 0; i + 1 < coords.length; i += 2) {
+				minX = Math.min(minX, coords[i]);
+				minY = Math.min(minY, coords[i + 1]);
+				maxX = Math.max(maxX, coords[i]);
+				maxY = Math.max(maxY, coords[i + 1]);
+			}
+			bounds = [minX, minY, maxX, maxY];
 		}
-		if (bounds === null) return new DOMRect();
+		if (bounds === null || !(scaleX > 0) || !(scaleY > 0)) return new DOMRect();
 		const [x1, y1, x2, y2] = [Math.max(bounds[0], 0), Math.max(bounds[1], 0), Math.min(bounds[2], width), Math.min(bounds[3], height)];
-		return x1 < x2 && y1 < y2 ? new DOMRect(left + x1, top + y1, x2 - x1, y2 - y1) : new DOMRect();
+		return x1 < x2 && y1 < y2
+			? new DOMRect(left + x1 * scaleX, top + y1 * scaleY, (x2 - x1) * scaleX, (y2 - y1) * scaleY)
+			: new DOMRect();
 	}
 
 	/**
@@ -1680,6 +1732,7 @@
 		// For shadow DOM, we need to check within its own root context
 		const shadowRoot = getRootNode(element);
 		const root = shadowRoot instanceof ShadowRoot ? shadowRoot : document;
+		if (localNameOf(element) === "area") return isAreaHit(element, rects[0], root);
 		try {
 			return isShownIn(root, element, topElementArea(element, rects));
 		} catch (e) {
@@ -1731,6 +1784,37 @@
 			area = parts.reduce((largest, part) => (size(part) > size(largest) ? part : largest));
 		}
 		return false;
+	}
+
+	/**
+	 * Checks if the page hits an image-map `<area>` at one of a few points of its box: its center, then the
+	 * centers of a 5 x 5 grid. Its shape need not cover the center of its box (an L-shaped polygon), and the
+	 * areas before it in its map, or other elements, can cover that center (a `default` area).
+	 *
+	 * @param {HTMLAreaElement} area - The `<area>` element.
+	 * @param {DOMRect} rect - Its box (see `areaRect`).
+	 * @param {Document | ShadowRoot} root - Its document or shadow root.
+	 * @returns {boolean} Whether a point of its box hits it.
+	 */
+	function isAreaHit(area, rect, root) {
+		const points = [[0.5, 0.5]];
+		for (let i = 0; i < 5; i++) {
+			for (let j = 0; j < 5; j++) {
+				if (i !== 2 || j !== 2) points.push([(i + 0.5) / 5, (j + 0.5) / 5]);
+			}
+		}
+		try {
+			return points.some(([x, y]) => {
+				const pointX = rect.left + rect.width * x;
+				const pointY = rect.top + rect.height * y;
+				const hit = root instanceof ShadowRoot
+					? root.elementFromPoint(pointX, pointY)
+					: DOCUMENT.elementFromPoint.call(document, pointX, pointY);
+				return hit === area;
+			});
+		} catch (e) {
+			return true;
+		}
 	}
 
 	/**

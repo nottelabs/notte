@@ -92,7 +92,12 @@ editable descendants with their own click handlers must retain their click actio
 
 An image-map `<area>` has `display: none` and no box. The DOM script's
 `getBoundingClientRect`/`getClientRects` helpers give it the bounds of its shape on
-the visible `<img usemap>` of its `<map>` (`areaRect`), and `boxOf` gives that image.
+the visible `<img usemap>` of its `<map>` (`areaRect`; the one in view when several
+use the map), and `boxOf` gives that image. Its coords are in the CSS pixels of the
+image's box, not its natural size, and a transform scales them on screen.
+`isTopElement` hit-tests a grid of points of that box, because a polygon or a
+`default` area need not be hit at the center. Image maps are page content: read
+the images once per build, and never spread `coords` into a call.
 Playwright never finds an `<area>` visible, so a click action uses the element's own
 `click()`, which follows its `href`.
 
