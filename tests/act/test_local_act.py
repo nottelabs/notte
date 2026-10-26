@@ -22,6 +22,7 @@ from notte_core.act import (
 )
 from notte_core.actions import CheckAction, FillAction, SelectDropdownOptionAction, WaitAction
 from notte_core.errors import ActionExecutionError
+from patchright.async_api import Route
 
 from tests.act.fakes import FakeDecider
 
@@ -1689,3 +1690,39 @@ async def test_a_value_left_out_of_a_cut_select_is_typed_not_picked_among_the_li
     decider = _PrefersSelect(choices=[{}], texts=["1990"])
     result = await session.aact("Born in 1990", decider=decider)
     assert result.success and await session.window.page.input_value("#year") == "1990"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("private", [False, True])
+async def test_a_fact_read_in_a_closed_tab_reaches_the_decider_and_writer(session: NotteSession, private: bool) -> None:
+    pages = {
+        "/form": '<label>Verification code<input id="code"></label><a href="/help" target="_blank">Help page</a>',
+        "/help": '<p>Your verification code is 4821.</p><button onclick="window.close()">Return to form</button>',
+    }
+
+    async def serve(route: Route) -> None:
+        await route.fulfill(body=pages[route.request.url.removeprefix("http://code.test")], content_type="text/html")
+
+    await session.window.page.context.route("http://code.test/**", serve)
+    _ = await session.window.page.goto("http://code.test/form")
+    decider = FakeDecider(
+        choices=[
+            {"operation": "CLICK", "click_target": "L1"},
+            {"operation": "CLICK", "click_target": "B1"},
+            {"operation": "TYPE_TEXT", "type_text_target": "I1"},
+        ],
+        texts=["{{code}}" if private else "4821"],
+    )
+    goal = "Enter the verification code from the help page"
+    variables = {"code": "4821"} if private else None
+    for _ in range(3):
+        result = await session.aact(goal, decider=decider, variables=variables)
+        assert result.success
+    assert session.window.page.url == "http://code.test/form"
+    assert await session.window.page.input_value("#code") == "4821"
+    assert "4821" not in decider.states[-1].page.text
+    for recent in (decider.states[-1].recent_actions, decider.contexts[-1].recent_actions):
+        source = next(entry["page"] for entry in recent if entry.get("page", {}).get("url") == "http://code.test/help")
+        assert source["text"] == f"Your verification code is {'{{code}}' if private else '4821'}.\n[B1] Return to form"
+        if private:
+            assert "4821" not in json.dumps(recent)
