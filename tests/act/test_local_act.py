@@ -1813,6 +1813,45 @@ async def test_act_offers_inner_scroll_directions_without_document_scroll(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("shadow", [False, True])
+@pytest.mark.parametrize("reversed_list", [False, True])
+@pytest.mark.parametrize("direction", ["up", "down"])
+async def test_act_scrolls_the_discovered_box_instead_of_the_box_under_the_mouse(
+    session: NotteSession, shadow: bool, reversed_list: bool, direction: str
+) -> None:
+    content = """
+    <style>
+      .list { position:absolute;height:160px;width:240px;overflow-y:auto; }
+      #orders { left:500px;top:200px; }
+      #other { left:20px;top:20px; }
+    </style>
+    <div id="orders" class="list"><div style="height:1600px;flex-shrink:0">Orders</div></div>
+    <div id="other" class="list"><div style="height:1600px;flex-shrink:0">Other items</div></div>
+    """
+    if reversed_list:
+        content += "<style>.list { display:flex;flex-direction:column-reverse; }</style>"
+    await session.window.page.set_content("<style>body{margin:0;overflow:hidden}</style><main></main>")
+    await session.window.page.evaluate(
+        "([content, shadow]) => { const host = document.querySelector('main'); "
+        "(shadow ? host.attachShadow({mode:'open'}) : host).innerHTML = content; }",
+        [content, shadow],
+    )
+    initial = (0 if direction == "up" else -80) if reversed_list else (80 if direction == "up" else 0)
+    orders = session.window.page.locator("#orders")
+    other = session.window.page.locator("#other")
+    for box in (orders, other):
+        _ = await box.evaluate("(element, offset) => { element.scrollTop = offset; }", initial)
+    await session.window.page.mouse.move(80, 60)
+    decider = FakeDecider(choices=[{"operation": f"SCROLL_{direction.upper()}"}])
+    result = await session.aact("Find an order in the list", decider=decider)
+    assert result.success, result.message
+    offset = await orders.evaluate("element => element.scrollTop")
+    assert offset < initial if direction == "up" else offset > initial
+    assert await other.evaluate("element => element.scrollTop") == initial
+    assert await session.window.page.evaluate("document.scrollingElement.scrollTop") == 0
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "hidden",
     [

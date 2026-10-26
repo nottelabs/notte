@@ -1,7 +1,7 @@
 // Inner scroll boxes do not change the document's viewport dimensions. Read their
-// available directions for act(), without changing how scroll actions are executed.
+// available directions and the boxes to target when act() executes a scroll.
 () => {
-    const directions = new Set();
+    const targets = {};
     const roots = [document];
     // A form's named controls can hide its own DOM properties and methods.
     const getter = (prototype, name) => {
@@ -9,6 +9,8 @@
         return el => get.call(el);
     };
     const parentElement = getter(Node.prototype, 'parentElement');
+    const previousElement = getter(Element.prototype, 'previousElementSibling');
+    const localName = getter(Element.prototype, 'localName');
     const shadowRoot = getter(Element.prototype, 'shadowRoot');
     const scrollHeight = getter(Element.prototype, 'scrollHeight');
     const clientHeight = getter(Element.prototype, 'clientHeight');
@@ -18,6 +20,20 @@
     const parent = el => {
         const root = Node.prototype.getRootNode.call(el);
         return parentElement(el) || (root instanceof ShadowRoot ? root.host : null);
+    };
+    // A CSS path remains executable across open shadow roots: the driver's CSS engine
+    // enters them at the host. Read native properties even when a form's controls share names.
+    const selector = el => {
+        const parts = [];
+        for (let node = el; node; node = parent(node)) {
+            const tag = localName(node);
+            let index = 1;
+            for (let sibling = previousElement(node); sibling; sibling = previousElement(sibling)) {
+                if (localName(sibling) === tag) index++;
+            }
+            parts.unshift(`${CSS.escape(tag)}:nth-of-type(${index})`);
+        }
+        return parts.join(' > ');
     };
     const clips = value => /^(auto|scroll|overlay|hidden|clip)$/.test(value);
     const visible = el => {
@@ -60,9 +76,10 @@
             if (!/^(auto|scroll|overlay)$/.test(style.overflowY) || !visible(el)) continue;
             const reversed = /^(flex|inline-flex)$/.test(style.display) && style.flexDirection === 'column-reverse';
             const lower = reversed ? -max : 0, upper = reversed ? 0 : max;
-            if (scrollTop(el) > lower + 1) directions.add('up');
-            if (scrollTop(el) < upper - 1) directions.add('down');
+            const path = selector(el);
+            if (scrollTop(el) > lower + 1 && !targets.up) targets.up = path;
+            if (scrollTop(el) < upper - 1 && !targets.down) targets.down = path;
         }
     }
-    return Array.from(directions);
+    return targets;
 }

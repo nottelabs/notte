@@ -206,11 +206,11 @@ class LocalActDriver:
         else:
             page = ObservedPage.from_observation(observation)
         try:
-            inner_scroll: list[Literal["up", "down"]] = await self.session.window.page.evaluate(_INNER_SCROLL_JS)
+            inner_scroll: dict[Literal["up", "down"], str] = await self.session.window.page.evaluate(_INNER_SCROLL_JS)
         except PlaywrightError:
             # navigated meanwhile: the next observation reads the new page
-            inner_scroll = []
-        page = replace(page, inner_scroll=frozenset(inner_scroll))
+            inner_scroll = {}
+        page = replace(page, inner_scroll=inner_scroll)
         if self._capture_signatures:
             self._signatures = await self._read_signatures(signature_xpaths(page))
             page = replace(page, readonly=self._signatures.readonly())

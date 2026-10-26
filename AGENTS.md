@@ -78,6 +78,13 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
 
 ## DOM build script
 
+Act's inner-scroll discovery must retain an executable selector for each offered
+direction. Pass it to the scroll action so execution targets the discovered box,
+even when the mouse is over a different scroll box. Use native DOM accessors when
+building CSS paths across shadow hosts; form controls can clobber those properties.
+`tests/act/test_local_act.py` covers executed up/down scrolls in normal and reversed
+lists, both in the document and in open shadow roots.
+
 `packages/notte-browser/src/notte_browser/js/buildDomNode.js` reads elements through
 its helpers (`getAttribute(element, name)`, `childrenOf(element)`,
 `propertyOf(element, name)`, ...), never as `element.children`: a `<form>` exposes
