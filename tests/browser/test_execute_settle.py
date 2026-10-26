@@ -11,7 +11,7 @@ import pytest
 import pytest_asyncio
 from aiohttp import web
 from notte_browser.session import NotteSession
-from notte_browser.settle import CAP_MS, LONG_GRACE_MS
+from notte_browser.settle import CAP_MS, LONG_GRACE_MS, SETTLE_MS
 from notte_core.actions import ClickAction, GoBackAction, GoForwardAction, PressKeyAction, ScrollDownAction
 from notte_core.config import config
 from PIL import Image
@@ -100,6 +100,30 @@ window.addEventListener('load', () => {
     # fetches its content as soon as it is parsed
     "/fetching-tab": """<html><body><h1>Fetching tab</h1><script>fetch('/data?delay=0.6').then(() =>
     document.body.insertAdjacentHTML('beforeend', '<p>Fetched in the tab</p>'))</script></body></html>""",
+    # pages that change on their own, whatever the action does
+    "/clock": """<html><body><button id="nothing">Nothing</button><span id="clock"></span>
+<div id="slide" class="slide"></div><script>setInterval(() => {
+    document.getElementById('clock').textContent = Date.now();
+    document.getElementById('slide').classList.toggle('active');
+}, 100)</script></body></html>""",
+    "/polling": """<html><body><button id="nothing">Nothing</button>
+<script>setInterval(() => fetch('/data?delay=0.25'), 300)</script></body></html>""",
+    # the frame (an ad) is on another origin, and fetches when the page posts to it
+    "/ad-page": """<html><body><button id="nothing" onclick="frames[0].postMessage('click', '*')">Nothing</button>
+<iframe src="OTHER_ORIGIN/ad"></iframe></body></html>""",
+    "/ad": """<html><body>Ad<script>window.addEventListener('message', () => fetch('/data?delay=2'))</script>
+</body></html>""",
+    # renders its results from data it fetches once it is parsed
+    "/search": """<html><body><form action="/search-results"><input id="query" name="q" value="lamp">
+<button id="submit">Search</button></form></body></html>""",
+    "/search-results": """<html><body><h1>Results</h1><div id="results">Loading</div><script>
+fetch('/data?delay=0.5').then(() => { document.getElementById('results').textContent = 'Lamp results' })
+</script></body></html>""",
+    # loads more items once scrolled to the bottom
+    "/feed": """<html><body><div style="height: 3000px">Feed</div><div id="end"></div><script>
+new IntersectionObserver(([entry]) => { if (entry.isIntersecting) fetch('/data?delay=0.4').then(() =>
+    document.body.insertAdjacentHTML('beforeend', '<p>More items</p>')) }).observe(document.getElementById('end'))
+</script></body></html>""",
 }
 # each page takes this long to answer, a slow one longer
 PAGE_DELAY_S = 0.2
@@ -112,7 +136,9 @@ async def site() -> AsyncIterator[str]:
 
     async def page(request: web.Request) -> web.Response:
         await asyncio.sleep(SLOW_PAGE_DELAY_S if request.path.startswith("/slow") else PAGE_DELAY_S)
-        return web.Response(text=PAGES[request.path], content_type="text/html")
+        # the same server on another host name is another origin
+        other_origin = f"http://localhost:{request.url.port}"
+        return web.Response(text=PAGES[request.path].replace("OTHER_ORIGIN", other_origin), content_type="text/html")
 
     async def data(request: web.Request) -> web.Response:
         await asyncio.sleep(float(request.query["delay"]))
@@ -191,7 +217,7 @@ async def test_a_click_that_loads_a_page_waits_for_what_it_renders_after_its_loa
 
 
 @pytest.mark.asyncio
-async def test_enter_waits_for_the_submitted_page_not_for_its_requests(session: NotteSession, site: str) -> None:
+async def test_enter_waits_for_the_submitted_page_within_the_bound(session: NotteSession, site: str) -> None:
     await session.window.page.focus("#q")
     start = time.monotonic()
     result = await session.aexecute(PressKeyAction(key="Enter"), raise_on_failure=True)
@@ -199,8 +225,51 @@ async def test_enter_waits_for_the_submitted_page_not_for_its_requests(session: 
     assert result.success
     assert session.window.page.url == f"{site}/results?q=lamp"
     assert "First result" in await text(session)
-    # its request is not waited for
-    assert elapsed < CAP_MS / 1000
+    # the request it keeps open is waited for as a click's, at most until the cap
+    assert elapsed < PAGE_DELAY_S + CAP_MS / 1000 + 1 < config.timeout_goto_ms / 1000
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("submit", ["enter", "click"])
+async def test_a_submitted_page_is_waited_for_until_it_rendered_its_data(
+    session: NotteSession, site: str, submit: str
+) -> None:
+    await session.window.page.goto(f"{site}/search")
+    if submit == "enter":
+        await session.window.page.focus("#query")
+        assert (await session.aexecute(PressKeyAction(key="Enter"), raise_on_failure=True)).success
+    else:
+        _ = await click(session, "submit")
+    assert session.window.page.url == f"{site}/search-results?q=lamp"
+    assert "Lamp results" in await text(session)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("path", "bound_ms"),
+    [
+        # a clock and a carousel: the same nodes change every 100 ms
+        ("clock", SETTLE_MS),
+        # a request the page sends every 300 ms
+        ("polling", CAP_MS / 2),
+        # a request in a frame of another origin
+        ("ad-page", CAP_MS / 2),
+    ],
+)
+async def test_what_a_page_does_on_its_own_is_not_waited_for(
+    session: NotteSession, site: str, path: str, bound_ms: float
+) -> None:
+    await session.window.page.goto(f"{site}/{path}", wait_until="load")
+    elapsed = await click(session, "nothing")
+    assert elapsed < bound_ms / 1000
+
+
+@pytest.mark.asyncio
+async def test_a_scroll_waits_for_what_it_loads(session: NotteSession, site: str) -> None:
+    await session.window.page.goto(f"{site}/feed", wait_until="load")
+    await session.window.page.mouse.move(100, 100)
+    assert (await session.aexecute(ScrollDownAction(amount=5000), raise_on_failure=True)).success
+    assert "More items" in await text(session)
 
 
 @pytest.mark.asyncio
