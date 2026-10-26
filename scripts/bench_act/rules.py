@@ -12,7 +12,8 @@ Rules (the workflow is red when one fails):
    enough, so site noise alone does not make the run red; every task that did worse is still listed.
 5. The same for public probes, per probe runner, on the rate of right answers.
 
-Without a base, public tasks and probes are reported, not judged.
+Without a base, public tasks and probes are reported, not judged. The scripted runners (no model, timing only)
+are never judged.
 """
 
 import math
@@ -23,6 +24,9 @@ from typing import Any
 from urllib.parse import parse_qsl, urlsplit
 
 from .model import FIXTURES
+
+# no model: they time the browser side and the CI setup, and are not judged
+TIMING_RUNNERS = ("notte-local-scripted", "probe-local-scripted")
 
 RULES = (__doc__ or "").strip()
 # pages that block automated browsers, matched in the visible text of the landing or final page
@@ -205,6 +209,8 @@ def _compare(rows: list[Row], what: str, verdict: Verdict) -> None:
 
 def judge(runs: list[dict[str, Any]], probe_runs: list[dict[str, Any]], missing: list[str], with_base: bool) -> Verdict:
     verdict = Verdict()
+    runs = [r for r in runs if r["runner"] not in TIMING_RUNNERS]
+    probe_runs = [r for r in probe_runs if r["runner"] not in TIMING_RUNNERS]
     for path in missing:
         verdict.failures.append(f"no run file: {path}")
     for run in runs:

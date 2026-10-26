@@ -17,7 +17,7 @@ on:
         description: Comma-separated suites (empty = all), e.g. fixtures,demo,real
         default: ''
       runners:
-        description: Task and probe runners (notte-local, notte-local-llm, notte-local-html, probe-local-jev, probe-local-llm)
+        description: Task and probe runners (notte-local, notte-local-llm, notte-local-html, probe-local-jev, probe-local-llm; *-scripted = no model, timing only)
         default: notte-local,probe-local-jev
       repeats:
         description: Runs per task and probe page (1-5)
@@ -90,7 +90,10 @@ jobs:
             files=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --paginate --jq '.[].filename')
             if grep -qE "$paths" <<<"$files"; then run=true; fi
           fi
-          if [ "$run" = true ] && [ "$HAS_KEY" != true ]; then
+          # the scripted runners (no model) are the only ones that run without the key
+          needs_key=false
+          if tr ',' '\n' <<<"$RUNNERS" | grep -qvE '(^$|-scripted$)'; then needs_key=true; fi
+          if [ "$run" = true ] && [ "$needs_key" = true ] && [ "$HAS_KEY" != true ]; then
             if [ "$FORK" != true ]; then
               echo "::error::the OPENROUTER_API_KEY repository secret is not set"
               exit 1

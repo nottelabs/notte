@@ -14,8 +14,8 @@ from typing import Literal
 from . import tasks as tasks_package
 from .model import Probe, Task
 
-TASK_RUNNERS = ("notte-local", "notte-local-llm", "notte-local-html")
-PROBE_RUNNERS = ("probe-local-jev", "probe-local-llm")
+TASK_RUNNERS = ("notte-local", "notte-local-llm", "notte-local-html", "notte-local-scripted")
+PROBE_RUNNERS = ("probe-local-jev", "probe-local-llm", "probe-local-scripted")
 
 
 @dataclass(frozen=True)
