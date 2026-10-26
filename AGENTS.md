@@ -31,7 +31,9 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   browser driver's decoder in `notte_browser.driver`. Patchright 1.64.1 and
   Playwright 1.64.0 turn supported patterns into Python regex objects; patterns
   Python cannot compile remain protocol dictionaries. Compare guarded and native
-  evaluation when changing this transport.
+  evaluation when changing this transport. Measure regex transfer size separately
+  from formatted output: Python truncates long regex reprs, while JSON escapes can
+  enlarge the source sent by the browser.
 
 ## Public API
 

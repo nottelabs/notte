@@ -311,7 +311,16 @@ async def test_guarded_results_match_playwright(monkeypatch, code) -> None:
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("code", ["new RegExp('é'.repeat(100))", "[/(?<name>a)/u, /x/gi]"])
+@pytest.mark.parametrize(
+    "code",
+    [
+        "new RegExp('é'.repeat(100))",
+        "[/(?<name>a)/u, /x/gi]",
+        "new RegExp('a'.repeat(1000))",
+        r"new RegExp('\"'.repeat(200))",
+        r"new RegExp('\\\\'.repeat(300))",
+    ],
+)
 async def test_regexp_results_accept_exact_output_budget(monkeypatch, code: str) -> None:
     async with NotteSession(headless=True) as session:
         native = format_evaluation_result(await session.window.page.evaluate(code), max_bytes=16384)
@@ -352,7 +361,13 @@ HUGE = "4 * 1024 * 1024"
     ],
 )
 async def test_special_values_cannot_smuggle_data_past_the_guard(monkeypatch, code) -> None:
-    monkeypatch.setattr(evaluation_module, "config", config.model_copy(update={"evaluate_js_max_result_bytes": 16384}))
+    # A regex may print as a short Python repr even when its source is huge.
+    # Bound that transfer with the existing byte and value budgets as well.
+    monkeypatch.setattr(
+        evaluation_module,
+        "config",
+        config.model_copy(update={"evaluate_js_max_result_bytes": 16384, "evaluate_js_max_result_values": 1000}),
+    )
     async with NotteSession(headless=True) as session:
         transferred: list[int] = []
         original_evaluate = session.window.page.evaluate
