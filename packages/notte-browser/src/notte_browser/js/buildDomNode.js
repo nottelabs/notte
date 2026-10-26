@@ -858,8 +858,12 @@
 	 * @returns {boolean} Whether the `<svg>` has links, text or HTML content.
 	 */
 	function hasSvgContent(svg) {
-		for (const element of svg.querySelectorAll("a[href], text, foreignObject")) {
-			if (localNameOf(element) === "a" || element.textContent.trim()) return true;
+		for (const element of svg.querySelectorAll("a, text, foreignObject")) {
+			if (localNameOf(element) === "a") {
+				if (hasAttribute(element, "href") || hasAttribute(element, "xlink:href")) return true;
+				continue;
+			}
+			if (element.textContent.trim()) return true;
 			if (localNameOf(element) === "foreignObject" && element.firstElementChild !== null) return true;
 		}
 		return false;
@@ -1710,6 +1714,7 @@
 
 		// Quick attribute checks without getting full lists
 		const hasQuickInteractiveAttr = hasAttribute(element, "onclick") ||
+			typeof propertyOf(element, "onclick") === "function" ||
 			hasAttribute(element, "role") ||
 			hasAttribute(element, "tabindex") ||
 			hasAttribute(element, "aria-") ||

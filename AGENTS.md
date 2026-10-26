@@ -68,6 +68,11 @@ form's own (`<input name="children">` makes `form.children` that input). The
 same goes for `document.*` in the page's own world (`<img name="body">`).
 `tests/browser/test_dom_clobbered_properties.py` covers it.
 
+Patchright evaluates the DOM build in an isolated world, where a handler assigned
+by a page script is not readable through `element.onclick`. Regressions for those
+handler properties in the page world (the Playwright backend) evaluate
+`DOM_TREE_JS` with `isolated_context=False`, as the clobbering tests do.
+
 ## Public API
 
 - Don't remove or rename public methods without a deprecation first: keep the

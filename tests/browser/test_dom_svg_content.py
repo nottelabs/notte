@@ -5,9 +5,11 @@ The DOM build used to drop every `<svg>` with its subtree, so a bar chart whose 
 the description. SVG elements have no `offsetWidth` either, which made them count as invisible.
 """
 
+import json
 from urllib.parse import quote
 
 import pytest
+from notte_browser.dom.parsing import DOM_TREE_JS
 from notte_browser.session import NotteSession
 
 CHART = """
@@ -78,6 +80,51 @@ async def test_svg_with_html_controls_keeps_them() -> None:
 
         offered = {(action.id, action.text_label or action.accessible_name) for action in obs.space.interaction_actions}
         assert offered == {("B1", "Apply"), ("I1", "Zoom")}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("link_attribute", ["href", "xlink:href"])
+async def test_svg_link_without_text_is_observed_and_clickable(link_attribute: str) -> None:
+    """Both SVG link attributes keep a shape-only linked chart in the tree."""
+    page = f"""<svg width="200" height="100" xmlns:xlink="http://www.w3.org/1999/xlink">
+<a {link_attribute}="#month" aria-label="March: 1250 sign-ups"><rect width="100" height="80"/></a>
+</svg><script>
+document.querySelector('a').addEventListener('click', () => {{ document.title = 'March'; }});
+</script>"""
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+        obs = await session.aobserve()
+
+        actions = obs.space.interaction_actions
+        assert len(actions) == 1
+        assert actions[0].accessible_name == "March: 1250 sign-ups"
+        result = await session.aexecute(type="click", id=actions[0].id)
+        assert result.success, result.message
+        assert await session.window.page.title() == "March"
+
+
+@pytest.mark.asyncio
+async def test_svg_shape_with_assigned_click_handler_is_observed_in_the_page_world() -> None:
+    """A chart's assigned handler makes its bar actionable where the handler lives."""
+    page = """<svg width="200" height="100">
+<rect width="100" height="80" aria-label="March: 1250 sign-ups"/><text x="0" y="98">March</text>
+</svg><script>document.querySelector('rect').onclick = () => { document.title = 'March'; };</script>"""
+    async with NotteSession(headless=True) as session:
+        browser_page = session.window.page
+        _ = await browser_page.goto(f"data:text/html,{quote(page)}")
+        args = {
+            "highlight_elements": True,
+            "focus_element": -1,
+            "viewport_expansion": 0,
+            "enable_pointer_elements": True,
+        }
+        payload = json.loads(await browser_page.evaluate(DOM_TREE_JS, args, isolated_context=False))
+        shapes = [node for node in payload["map"].values() if node.get("tagName") == "rect"]
+        assert len(shapes) == 1
+        assert shapes[0].get("highlightIndex") is not None
+        assert shapes[0].get("accessibleName") == "March: 1250 sign-ups"
+        await browser_page.locator("rect").click()
+        assert await browser_page.title() == "March"
 
 
 @pytest.mark.asyncio
