@@ -1103,7 +1103,7 @@ async def test_the_settle_is_bounded_on_a_page_that_keeps_loading(session: Notte
 
 
 @pytest.mark.asyncio
-async def test_a_listbox_or_slider_is_not_a_text_field(session: NotteSession) -> None:
+async def test_a_listbox_is_not_a_text_field_and_a_slider_takes_a_value(session: NotteSession) -> None:
     # a combobox's suggestion list (some options scrolled out of its view) and a pane splitter get I ids
     page = """<label for="to">Where to?</label><input id="to" role="combobox" aria-expanded="true" aria-controls="s">
 <ul id="s" role="listbox" aria-label="Search suggestions"><li role="option">Tokyo, Japan</li></ul>
@@ -1116,14 +1116,38 @@ style="width:10px;height:60px;background:#888"></div>"""
     decider = FakeDecider(choices=[{"operation": "DONE"}])
     _ = await session.aact("Go to Tokyo", decider=decider)
     elements = {e["index"]: e for e in decider.states[0].elements}
-    # no TYPE_TEXT (a fill fails on them), and a listbox offers no CLICK either: it would land on an option
+    # no TYPE_TEXT for a listbox (a fill fails on it), and no CLICK either: it would land on an option
     assert elements[ids["s"]] == {"index": ids["s"], "label": "Search suggestions", "role": "listbox", "operations": []}
     assert elements[ids["n"]]["role"] == "listbox" and elements[ids["n"]]["operations"] == []
-    assert elements[ids["split"]]["role"] == "slider" and elements[ids["split"]]["operations"] == ["CLICK"]
+    # a slider is set by typing its value (the fill moves it with its keyboard), not clicked
+    assert elements[ids["split"]]["role"] == "slider" and elements[ids["split"]]["operations"] == ["TYPE_TEXT"]
+    assert prompts.TYPE_TEXT_SLIDER in decider.questions[0]["operation"].criteria["TYPE_TEXT"]
     # an unnamed listbox is not named after the text of the options it hides
     assert elements[ids["n"]]["label"] == "listbox"
-    assert not {ids["s"], ids["n"], ids["split"]} & set(decider.questions[0]["type_text_target"].criteria)
+    assert not {ids["s"], ids["n"]} & set(decider.questions[0]["type_text_target"].criteria)
     assert "Tokyo, Japan" in [e["label"] for e in elements.values() if e["role"] == "option"]
+
+
+@pytest.mark.asyncio
+async def test_a_slider_is_set_by_typing_its_value(session: NotteSession) -> None:
+    # a custom slider (noUiSlider, MUI): its handle moves with the keyboard, a click on it moves nothing
+    page = """<p>Minimum price</p><div id="price" role="slider" aria-label="Minimum price" tabindex="0"
+aria-valuemin="0" aria-valuemax="100" aria-valuenow="20" style="width:200px;height:20px;background:#ccc"></div>
+<script>
+const price = document.getElementById("price");
+const moves = {ArrowUp: 10, ArrowRight: 10, ArrowDown: -10, ArrowLeft: -10, PageUp: 30, PageDown: -30};
+price.addEventListener("keydown", (event) => {
+  const value = Number(price.getAttribute("aria-valuenow")) + (moves[event.key] ?? 0);
+  price.setAttribute("aria-valuenow", String(Math.min(100, Math.max(0, value))));
+});
+</script>"""
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    ids = await _ids(session)
+    decider = FakeDecider(choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["price"]}], texts=["40"])
+    result = await session.aact("Set the minimum price to 40", decider=decider)
+    assert result.status == "executed" and result.success
+    assert decider.contexts[0].field["role"] == "slider"
+    assert await session.window.page.locator("#price").get_attribute("aria-valuenow") == "40"
 
 
 @pytest.mark.asyncio

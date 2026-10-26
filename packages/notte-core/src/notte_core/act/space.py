@@ -212,6 +212,8 @@ class ActSpace:
         if any(target.kind == "select_text" for target in self.targets.get("TYPE_TEXT", {}).values()):
             # the option of a dropdown whose list is cut (`more_options`) is picked by typing its label
             operations["TYPE_TEXT"] = prompts.TYPE_TEXT_OPTION
+        if any(target.role == "slider" for target in self.targets.get("TYPE_TEXT", {}).values()):
+            operations["TYPE_TEXT"] += " " + prompts.TYPE_TEXT_SLIDER
         operations.update({key: control.label for key, control in self.controls.items()})
         done = prompts.DONE
         if self.unsubmitted:
@@ -1084,6 +1086,10 @@ def build_act_space(
                 )
                 add("TYPE_TEXT", target("fill" if editable else "select_text"), element)
                 add("CLICK", target("click"), element)
+            case "slider":
+                # set by typing its value: the fill moves it with its keyboard. A click on its handle (the element
+                # with the role) moves nothing, and was chosen again and again instead
+                add("TYPE_TEXT", target("fill"), element)
             case "checkbox" | "radio":
                 add("CLICK", target("check"), element)
             case "select":
