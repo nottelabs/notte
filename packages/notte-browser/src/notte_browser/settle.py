@@ -21,9 +21,11 @@ A navigation to a new document ends the tracking of the old one. The new documen
 action, and waited
 for as the fixed waits it replaces did (`DocumentWait`):
 - `requests` (after a click, a key press or a goto, which waited for the network to go idle or slept after the
-  load): until its requests are done and its DOM has settled, then until it has loaded, then at least
-  `LONG_GRACE_MS` after its load event and until it settles again. What it renders from data it fetches after its
-  load event, right away or on a timer, is waited for;
+  load): until its requests are done and its DOM has settled, then until it has loaded, then until `LONG_GRACE_MS`
+  have passed since its load event and since its last request, and it has settled again. What it renders from data
+  it fetches after its load event, right away or on a timer, is waited for, and so is a request it sends once another
+  one ended, which the browser reports only after its CORS preflight has answered (a JSON POST to an API on another
+  origin);
 - `loaded` (after a back / forward, which waited for the load): until its DOM has settled and it has loaded.
 A tab opened while the page settles ends the settle: the tab is waited for next (`PageSettle.tab`), its requests
 tracked from when it appeared. A tab is known once its first response has arrived; from its first request, it is
@@ -110,6 +112,12 @@ class SettleState:
     url_changed_ms: float | None = None
     # how long an action with no visible effect is waited for
     grace_ms: float = GRACE_MS
+    # not settled before this
+    at_least_ms: float = 0
+    # the last request start or end, even before the current document was tracked, and how long the requests must
+    # have been quiet since: a request sent right after another one ended is seen only once its preflight answered
+    last_request_ms: float | None = None
+    request_quiet_ms: float = 0
 
 
 def settled(state: SettleState) -> bool:
@@ -117,7 +125,9 @@ def settled(state: SettleState) -> bool:
     elapsed = state.elapsed_ms
     if elapsed >= CAP_MS:
         return True
-    if state.in_flight > 0:
+    if state.in_flight > 0 or elapsed < state.at_least_ms:
+        return False
+    if state.last_request_ms is not None and elapsed - state.last_request_ms < state.request_quiet_ms:
         return False
     first, last = state.first_change_ms, state.last_change_ms
     if first is None or last is None:
@@ -147,8 +157,9 @@ class PageSettle:
         self._in_flight: dict[Request, bool] = {}
         # the requests the current document sent (frame, method, URL, body)
         self._sent: set[tuple[Frame, str, str, bytes | None]] = set()
-        # when requests started or ended (ms since `_started`)
+        # when requests started or ended (ms since `_started`), and the last time one did (`time.perf_counter()`)
         self._changes: list[float] = []
+        self._last_request: float | None = None
         self._tabs: bool = tabs
         # the tabs opened since the action started: the page is waited for no longer. Each is tracked from then on
         self.opened: list[Page] = []
@@ -185,7 +196,9 @@ class PageSettle:
         return settle if settle is not None else PageSettle(page, None, tabs=False)
 
     def _changed(self) -> None:
-        self._changes.append((time.perf_counter() - self._started) * 1000)
+        now = time.perf_counter()
+        self._changes.append((now - self._started) * 1000)
+        self._last_request = now
 
     def _request_started(self, request: Request) -> None:
         if request.resource_type not in TRACKED_REQUESTS or not self._same_origin(request):
@@ -237,9 +250,11 @@ class PageSettle:
     def _left_s(self, cap_ms: float) -> float:
         return max(cap_ms - (time.perf_counter() - self._began) * 1000, 0) / 1000
 
-    async def _poll(self, grace_ms: float, *, requests: bool = True, at_least_ms: float = 0) -> None:
-        """Until the current document settles or a tab opens, and not before `at_least_ms`. Without `requests`, on
-        the DOM alone."""
+    async def _poll(
+        self, grace_ms: float, *, requests: bool = True, at_least_ms: float = 0, request_quiet_ms: float = 0
+    ) -> None:
+        """Until the current document settles or a tab opens (`SettleState` for `at_least_ms` and `request_quiet_ms`).
+        Without `requests`, on the DOM alone."""
         assert self._tracker is not None
         first_page_change: float | None = None
         while not self.opened:
@@ -258,6 +273,10 @@ class PageSettle:
                 observed = since(page["last"])
             if observed is not None:
                 first_page_change = observed if first_page_change is None else min(first_page_change, observed)
+            elapsed = page["elapsed"] - shift
+            last_request = None
+            if requests and self._last_request is not None:
+                last_request = elapsed - (time.perf_counter() - self._last_request) * 1000
             changes = [t for t in self._changes if t >= shift] if requests else []
             firsts = [t for t in (first_page_change, since(min(changes, default=None))) if t is not None]
             lasts = [t for t in (since(page["last"]), since(max(changes, default=None))) if t is not None]
@@ -266,15 +285,18 @@ class PageSettle:
             repeating = page["elapsed"] - max(min(self._changes, default=shift), shift) < SETTLE_MS
             in_flight = sum(fresh or repeating for fresh in self._in_flight.values()) if requests else 0
             state = SettleState(
-                elapsed_ms=page["elapsed"] - shift,
+                elapsed_ms=elapsed,
                 first_change_ms=min(firsts, default=None),
                 last_change_ms=max(lasts, default=None),
                 in_flight=in_flight + (1 if self._opening else 0),
                 last_dom_change_ms=since(page["dom"]),
                 url_changed_ms=since(page["urlAt"]),
                 grace_ms=grace_ms,
+                at_least_ms=at_least_ms,
+                last_request_ms=last_request,
+                request_quiet_ms=request_quiet_ms,
             )
-            if settled(state) and state.elapsed_ms >= at_least_ms:
+            if settled(state):
                 return
             await asyncio.sleep(POLL_MS / 1000)
 
@@ -323,7 +345,7 @@ class PageSettle:
             since_load_ms = await self._since_load_ms()
             await self._track_document()
             self._in_flight = {request: fresh for request, fresh in self._in_flight.items() if request not in kept_open}
-            await self._poll(GRACE_MS, at_least_ms=LONG_GRACE_MS - since_load_ms)
+            await self._poll(GRACE_MS, at_least_ms=LONG_GRACE_MS - since_load_ms, request_quiet_ms=LONG_GRACE_MS)
             return
         rendered = asyncio.ensure_future(self._poll(grace_ms, requests=False))
         loaded = asyncio.ensure_future(self._loaded())

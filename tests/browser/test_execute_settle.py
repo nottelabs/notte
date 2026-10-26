@@ -69,6 +69,7 @@ customElements.define('x-inner', class extends HTMLElement {
 <button id="retry" onclick="fetch('/data?delay=0.4').then(() => fetch('/data?delay=0.4')).then(() =>
     document.body.insertAdjacentHTML('beforeend', '<p>Retried result</p>'))">Retry</button>
 <a id="product" href="/product">Product</a>
+<a id="api-product" href="/api-product">Product from an API</a>
 <button id="route" onclick="const chunk = document.createElement('script'); chunk.src = '/chunk.js';
   document.head.append(chunk)">Contact</button>
 </body></html>"""
@@ -113,6 +114,13 @@ window.addEventListener('load', () => {
     "/product": """<html><body><h1>Shop</h1><script>
 window.addEventListener('load', () => setTimeout(() => fetch('/data?delay=0.3').then(() =>
     document.body.insertAdjacentHTML('beforeend', '<button>Add to cart</button>')), 250));
+</script></body></html>""",
+    # loads at once, fetches its settings, then its product from an API on another origin: a JSON POST, sent after
+    # a CORS preflight, which the browser reports only once the preflight has answered
+    "/api-product": """<html><body><h1>Shop</h1><script>
+fetch('/data?delay=0.8').then(() => fetch(`http://localhost:${location.port}/api`,
+    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }
+)).then(() => document.body.insertAdjacentHTML('beforeend', '<button>Add to cart</button>'));
 </script></body></html>""",
     # loads at once, then fetches its content from a slow API on a timer (a single-page app)
     "/app": """<html><body><h1>App</h1><script>
@@ -170,6 +178,19 @@ async def site() -> AsyncIterator[str]:
         await asyncio.sleep(0.3)
         return web.Response(text="", content_type="text/javascript")
 
+    cors = {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST",
+        "Access-Control-Allow-Headers": "Content-Type",
+    }
+
+    async def api_preflight(_request: web.Request) -> web.Response:
+        await asyncio.sleep(0.4)
+        return web.Response(headers=cors)
+
+    async def api(_request: web.Request) -> web.Response:
+        return web.json_response({}, headers=cors)
+
     async def chunk(_request: web.Request) -> web.Response:
         # a route's code, loaded on demand: it changes the URL and renders once it has arrived
         await asyncio.sleep(0.8)
@@ -194,6 +215,8 @@ document.body.insertAdjacentHTML('beforeend', '<h2>Contact page</h2>');"""
     app.router.add_get("/data", data)
     app.router.add_get("/slow.js", slow_script)
     app.router.add_get("/chunk.js", chunk)
+    app.router.add_route("OPTIONS", "/api", api_preflight)
+    app.router.add_post("/api", api)
     app.router.add_get("/slow-image", slow_image)
     app.router.add_get("/hang", hang)
     app.router.add_get("/download", download)
@@ -258,6 +281,16 @@ async def test_a_click_that_loads_a_page_waits_for_what_it_fetches_on_a_timer_af
     # the page has loaded and is quiet before its timer fetches what it renders
     _ = await click(session, "product")
     assert session.window.page.url == f"{site}/product"
+    assert "Add to cart" in await text(session)
+
+
+@pytest.mark.asyncio
+async def test_a_click_that_loads_a_page_waits_for_its_request_after_a_cors_preflight(
+    session: NotteSession, site: str
+) -> None:
+    # the request is reported 400 ms after the one before it ended, once its preflight has answered
+    _ = await click(session, "api-product")
+    assert session.window.page.url == f"{site}/api-product"
     assert "Add to cart" in await text(session)
 
 
