@@ -1,6 +1,9 @@
-// The visible part of a frame element, relative to its bounding box in its parent document.
+// The frame's visible bounds and child-to-parent coordinate transform, in parent viewport coordinates.
 element => {
     const box = element.getBoundingClientRect();
+    if (box.width <= 0 || box.height <= 0 || element.offsetWidth <= 0 || element.offsetHeight <= 0) return null;
+    const scaleX = box.width / element.offsetWidth;
+    const scaleY = box.height / element.offsetHeight;
     let left = Math.max(box.left, 0);
     let top = Math.max(box.top, 0);
     let right = Math.min(box.right, window.innerWidth);
@@ -10,13 +13,19 @@ element => {
         const style = getComputedStyle(node);
         const rect = node.getBoundingClientRect();
         if (style.overflowX !== 'visible') {
-            left = Math.max(left, rect.left + node.clientLeft);
-            right = Math.min(right, rect.left + node.clientLeft + node.clientWidth);
+            const scale = node.offsetWidth > 0 ? rect.width / node.offsetWidth : 0;
+            left = Math.max(left, rect.left + node.clientLeft * scale);
+            right = Math.min(right, rect.left + (node.clientLeft + node.clientWidth) * scale);
         }
         if (style.overflowY !== 'visible') {
-            top = Math.max(top, rect.top + node.clientTop);
-            bottom = Math.min(bottom, rect.top + node.clientTop + node.clientHeight);
+            const scale = node.offsetHeight > 0 ? rect.height / node.offsetHeight : 0;
+            top = Math.max(top, rect.top + node.clientTop * scale);
+            bottom = Math.min(bottom, rect.top + (node.clientTop + node.clientHeight) * scale);
         }
     }
-    return {left: left - box.left, top: top - box.top, right: right - box.left, bottom: bottom - box.top};
+    return {
+        left, top, right, bottom, scaleX, scaleY,
+        originX: box.left + element.clientLeft * scaleX,
+        originY: box.top + element.clientTop * scaleY,
+    };
 }

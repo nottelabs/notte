@@ -30,7 +30,7 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   lockfile's Patchright environment: an older installed version can fail the
   tracker's `JSHandle` calls even when the locked version passes.
 - Scroll fallback regressions in `tests/browser/test_controller_scroll.py` include
-  clipping by iframe ancestors, including ancestors outside nested frames.
+  clipping and overlays outside nested frames, and scaled iframe coordinates.
 - `BrowserWindow.page` can select a replacement automatically when its opener
   closes. Wait for a new tab independently of selection; its navigation request
   can also precede the context's `page` event.

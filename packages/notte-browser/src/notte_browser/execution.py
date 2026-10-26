@@ -48,7 +48,7 @@ from notte_core.storage import BaseStorage
 from notte_browser.captcha import solve_captcha
 from notte_browser.dom.locate import locate_element, selectors_through_shadow_dom
 from notte_browser.dom.parsing import parse_dom
-from notte_browser.driver import Error, Frame, JSHandle, Locator
+from notte_browser.driver import ElementHandle, Error, Frame, JSHandle, Locator
 from notte_browser.errors import (
     InvalidLocatorRuntimeError,
     PlaywrightTimeoutError,
@@ -112,6 +112,7 @@ _SCROLL_BOUNDARY = script("scroll_boundary.js")
 # Page-side implementation: js/largest_scroller.js
 _LARGEST_SCROLLER = script("largest_scroller.js")
 _FRAME_SCROLL_CLIP = script("frame_scroll_clip.js")
+_FRAME_SCROLL_HIT = script("frame_scroll_hit.js")
 
 # A scroll that has not started `SCROLL_START_MS` after the wheel failed; one that started has ended once its
 # position is the same `SCROLL_STABLE_MS` apart (a smooth scroll, a scroll-snap), at most `SCROLL_CAP_MS` after it.
@@ -178,42 +179,68 @@ async def _scroll_container_point(window: BrowserWindow, delta: int) -> tuple[fl
     page = window.page
     best: tuple[float, float, float] | None = None
     for frame in page.frames:
+        parents: list[tuple[ElementHandle, tuple[float, float], tuple[float, float]]] = []
         try:
+            origin, scale = (0.0, 0.0), (1.0, 1.0)
             if frame is page.main_frame:
-                origin, clip = (0.0, 0.0), None
+                clip = None
             else:
-                element = await frame.frame_element()
-                box = await element.bounding_box()
-                if box is None:
-                    continue
-                border_x, border_y = await element.evaluate("e => [e.clientLeft, e.clientTop]")
                 width, height = await page.evaluate("() => [window.innerWidth, window.innerHeight]")
-                origin = (box["x"] + border_x, box["y"] + border_y)
                 clip = {"left": 0.0, "top": 0.0, "right": float(width), "bottom": float(height)}
+                ancestors: list[Frame] = []
                 ancestor = frame
                 while ancestor.parent_frame is not None:
-                    ancestor_element = await ancestor.frame_element()
-                    ancestor_box = await ancestor_element.bounding_box()
-                    if ancestor_box is None:
+                    ancestors.append(ancestor)
+                    ancestor = ancestor.parent_frame
+                for ancestor in reversed(ancestors):
+                    element = await ancestor.frame_element()
+                    parents.append((element, origin, scale))
+                    visible = await element.evaluate(_FRAME_SCROLL_CLIP)
+                    if visible is None:
                         clip["right"] = clip["left"]
                         break
-                    visible = await ancestor_element.evaluate(_FRAME_SCROLL_CLIP)
                     for edge in ("left", "top", "right", "bottom"):
-                        offset = ancestor_box["x" if edge in ("left", "right") else "y"]
+                        axis = 0 if edge in ("left", "right") else 1
                         intersect = max if edge in ("left", "top") else min
-                        clip[edge] = intersect(clip[edge], offset + visible[edge])
-                    ancestor = ancestor.parent_frame
+                        clip[edge] = intersect(clip[edge], origin[axis] + visible[edge] * scale[axis])
+                    origin = (origin[0] + visible["originX"] * scale[0], origin[1] + visible["originY"] * scale[1])
+                    scale = (scale[0] * visible["scaleX"], scale[1] * visible["scaleY"])
                 if clip["right"] <= clip["left"] or clip["bottom"] <= clip["top"]:
                     continue
                 # Convert the visible intersection in page coordinates into this frame's coordinates.
-                clip = {edge: value - origin[0 if edge in ("left", "right") else 1] for edge, value in clip.items()}
+                clip = {
+                    "left": (clip["left"] - origin[0]) / scale[0],
+                    "top": (clip["top"] - origin[1]) / scale[1],
+                    "right": (clip["right"] - origin[0]) / scale[0],
+                    "bottom": (clip["bottom"] - origin[1]) / scale[1],
+                }
             found = await frame.evaluate(_LARGEST_SCROLLER, {"delta": delta, "clip": clip})
+            if found is None:
+                continue
+            candidate = (
+                origin[0] + found["x"] * scale[0],
+                origin[1] + found["y"] * scale[1],
+                found["area"] * scale[0] * scale[1],
+            )
+            if best is not None and candidate[2] <= best[2]:
+                continue
+            for element, parent_origin, parent_scale in parents:
+                point = {
+                    "x": (candidate[0] - parent_origin[0]) / parent_scale[0],
+                    "y": (candidate[1] - parent_origin[1]) / parent_scale[1],
+                }
+                if not await element.evaluate(_FRAME_SCROLL_HIT, point):
+                    break
+            else:
+                best = candidate
         except Error as error:
             if not _scroll_context_disappeared(frame, error):
                 raise
             continue
-        if found is not None and (best is None or found["area"] > best[2]):
-            best = (origin[0] + found["x"], origin[1] + found["y"], found["area"])
+        finally:
+            for element, _, _ in parents:
+                with suppress(Error):
+                    await element.dispose()
     return None if best is None else (best[0], best[1])
 
 
