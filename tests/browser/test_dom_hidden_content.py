@@ -257,6 +257,34 @@ async def test_portal_text_only_moves_with_its_actual_scroll_container(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("wrapped", [False, True])
+async def test_boxless_positioned_wrapper_keeps_reachable_portal_text(wrapped: bool) -> None:
+    content = "BOXLESS_PORTAL_TEXT"
+    if wrapped:
+        content = f"<span>{content}</span>"
+    markup = f"""
+    <aside style="position: fixed; top: 0; left: -330px; width: 300px; height: 500px">
+      <div style="position: fixed; top: 0; left: 0; width: 0; height: 0">
+        <div id="scroller" style="width: 250px; height: 100px; overflow: auto">
+          <div style="height: 900px"></div>
+          <span style="display: contents; position: absolute">{content}</span>
+        </div>
+      </div>
+    </aside>
+    """
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        page = session.window.page
+        _ = await page.goto(f"data:text/html,{quote(markup)}")
+        assert "BOXLESS_PORTAL_TEXT" in (await session.aobserve()).space.description
+        texts = [node for node in session.snapshot.dom_node.flatten() if node.text == "BOXLESS_PORTAL_TEXT"]
+        assert texts and all(not node.computed_attributes.in_viewport for node in texts)
+        await page.locator("#scroller").evaluate("element => element.scrollTop = 850")
+        assert "BOXLESS_PORTAL_TEXT" in (await session.aobserve()).space.description
+        texts = [node for node in session.snapshot.dom_node.flatten() if node.text == "BOXLESS_PORTAL_TEXT"]
+        assert any(node.computed_attributes.in_viewport for node in texts)
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("style", ["transform: translateZ(0)", "filter: blur(0px)", "contain: layout"])
 @pytest.mark.parametrize("in_shadow", [False, True])
 async def test_fixed_text_in_scrolling_containing_block_is_kept(style: str, in_shadow: bool) -> None:

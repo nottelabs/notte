@@ -764,7 +764,8 @@
 					}
 					if (moved) owner = box;
 				}
-				if (style.position === "absolute" || style.position === "fixed") owner = box;
+				if ((style.position === "absolute" || style.position === "fixed") &&
+					getCachedClientRects(box)?.length) owner = box;
 			}
 			return !isOnScreen(reachable);
 		}
@@ -773,7 +774,7 @@
 
 	/** Whether scrolling `box` moves the text positioned by `owner`, across composed ancestors. */
 	function scrollMovesText(owner, box) {
-		const position = getCachedComputedStyle(owner)?.position;
+		const position = getCachedClientRects(owner)?.length ? getCachedComputedStyle(owner)?.position : "static";
 		if (owner === box || (position !== "absolute" && position !== "fixed")) return true;
 		for (let block = propertyOf(owner, "offsetParent"); block; block = composedParent(block)) {
 			if (block === box) return true;
@@ -824,7 +825,7 @@
 				if (!parentElement) return false;
 
 				try {
-					return checkVisibilityOf(parentElement, {
+					return checkVisibilityOf(boxOf(parentElement), {
 						checkOpacity: true,
 						checkVisibilityCSS: true,
 					});
@@ -873,7 +874,7 @@
 			if (!parentElement) return false;
 
 			try {
-				return checkVisibilityOf(parentElement, {
+				return checkVisibilityOf(boxOf(parentElement), {
 					checkOpacity: true,
 					checkVisibilityCSS: true,
 				});

@@ -78,6 +78,8 @@ an independent boundary even with an empty box: check its text's reachable bound
 after inner scrolling rather than using an outer drawer's position.
 Only expand those bounds for scroll boxes that move the text's positioned ancestor;
 absolute or fixed text can escape a static scroll box through its containing block.
+Boxless wrappers (`display: contents`) do not establish a positioned owner, even
+when their computed `position` is absolute or fixed.
 `tests/browser/test_dom_hidden_content.py` covers both cases.
 
 ## Public API
