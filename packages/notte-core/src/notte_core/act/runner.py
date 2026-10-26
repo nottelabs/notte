@@ -23,7 +23,7 @@ An invalid answer (decision or field value) is asked again once; a second invali
 import time
 from collections import deque
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Protocol
 
 import notte_core.act.prompts as prompts
@@ -75,6 +75,7 @@ from notte_core.credentials.base import (
     PasswordField,
     UserNameField,
 )
+from notte_core.dom_tree import NodeSelectors
 from notte_core.errors import ContentFilterError
 from notte_core.observation import ExecutionResult, Observation
 
@@ -133,6 +134,7 @@ class TypedText:
     before: ObservedPage | None
     # the field's id on the page typed on, then on the last observed page
     element_id: str
+    selectors: NodeSelectors | None = None
 
 
 @dataclass
@@ -192,7 +194,15 @@ class ActHistory:
     def typed(self, typed: TypedText) -> None:
         """`typed` was just typed: it replaces what was typed earlier in the same field."""
         for entry in self.entries:
-            if entry.typed is not None and entry.typed.name == typed.name:
+            previous = entry.typed
+            if previous is None or previous.url != typed.url:
+                continue
+            same = (
+                previous.selectors == typed.selectors
+                if typed.selectors is not None
+                else (previous.element_id, previous.name) == (typed.element_id, typed.name)
+            )
+            if same:
                 entry.typed = None
 
     def acted_since_observed(self) -> bool:
@@ -218,7 +228,7 @@ def _still_typed(typed: TypedText, page: ObservedPage) -> TypedText | None:
     longer holds the text, or (on the first observation after typing) typing changed the page beyond the field."""
     if page.url != typed.url:
         return None
-    element_id = find_field(page, typed.name, typed.value)
+    element_id = find_field(page, typed.name, typed.value, selectors=typed.selectors)
     if element_id is None:
         return None
     if typed.before is not None:
@@ -226,7 +236,7 @@ def _still_typed(typed: TypedText, page: ObservedPage) -> TypedText | None:
         values = [typed.value, "" if before is None or before.value is None else before.value]
         if changed_beyond(typed.before, page, typed.element_id, values):
             return None
-    return TypedText(name=typed.name, value=typed.value, url=typed.url, before=None, element_id=element_id)
+    return replace(typed, before=None, element_id=element_id)
 
 
 def _ms(start: float) -> float:
@@ -453,7 +463,10 @@ def _typed(page: ObservedPage, element_id: str, value: str) -> TypedText | None:
     name = accessible_names(page).get(element_id)
     if not name:
         return None
-    return TypedText(name=name, value=value, url=page.url, before=page, element_id=element_id)
+    action = next(action for action in page.actions if action.id == element_id)
+    return TypedText(
+        name=name, value=value, url=page.url, before=page, element_id=element_id, selectors=action.selectors
+    )
 
 
 async def _decide(

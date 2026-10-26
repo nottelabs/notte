@@ -43,6 +43,7 @@ from notte_core.actions import (
     SelectDropdownOptionAction,
     WaitAction,
 )
+from notte_core.dom_tree import NodeSelectors
 from notte_core.element_state import ElementState, SelectOption, page_fingerprint
 from notte_core.observation import Observation
 from notte_core.snapshot import ViewportData
@@ -660,17 +661,20 @@ def _read_empty_listboxes(page: ObservedPage) -> frozenset[str]:
     return frozenset(empty)
 
 
-def find_field(page: ObservedPage, name: str, value: str) -> str | None:
-    """The id of the field named `name` (its accessible name) whose live value is `value`, or None (no such field,
-    or a page without live state)."""
+def find_field(page: ObservedPage, name: str, value: str, *, selectors: NodeSelectors | None = None) -> str | None:
+    """The unique field named `name` holding `value`, with the original selectors when known. An ambiguous name
+    and value never move an unsubmitted warning to a different field."""
     names = _names(page).names
+    matches: list[str] = []
     for action in page.actions:
+        if selectors is not None and action.selectors != selectors:
+            continue
         state = page.states.get(action.id)
         if names.get(action.id) != name or state is None or state.value is None:
             continue
         if state.value == value or (state.value_truncated and value.startswith(state.value)):
-            return action.id
-    return None
+            matches.append(action.id)
+    return matches[0] if len(matches) == 1 else None
 
 
 def changed_beyond(before: ObservedPage, after: ObservedPage, field: str, values: Collection[str]) -> bool:
