@@ -249,6 +249,26 @@ async def test_variables_stay_masked_in_later_model_requests(session: NotteSessi
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("labels", ["html", "accessible"])
+@pytest.mark.parametrize("prefix", ["", "https://example.test/?token="])
+async def test_cut_private_attributes_stay_masked_in_all_model_requests(
+    session: NotteSession, monkeypatch: pytest.MonkeyPatch, labels: str, prefix: str
+) -> None:
+    monkeypatch.setenv("NOTTE_ACT_LABELS", labels)
+    private = "private-token-" * 8
+    await session.window.page.set_content(
+        f'<a href="{prefix}{private}" title="{private}">Account</a><input placeholder="{private}">'
+    )
+    decider = FakeDecider(choices=[{"operation": "DONE"}, {"answer": "YES"}, {"answer": "a"}])
+    _ = await session.aact("Read the account", variables={"private": private}, decider=decider)
+    _ = await session.acheck("Is the account visible?", decider=decider)
+    _ = await session.achoose("Pick", {"a": "one", "b": "two"}, decider=decider)
+    for state in decider.states:
+        assert private[:12] not in state.model_dump_json()
+        assert "{{private}}" in state.model_dump_json()
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("private", ["id_digit", "select", "input", "checkbox", "fr"])
 async def test_private_values_do_not_change_action_choices(session: NotteSession, private: str) -> None:
     ids = await _ids(session)
