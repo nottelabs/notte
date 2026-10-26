@@ -37,13 +37,14 @@ its module lists it in `core`.
 
 | tier | what | runs | size |
 |---|---|---|---|
-| `ci-core` | local pages, and very stable public demos and docs (the-internet, toscrape, selenium.dev, TodoMVC, UI Testing Playground, W3C APG, Wikipedia, docs.python.org, DataTables, scrapethissite.com) | every PR that changes observe or act | 61 tasks, 88 probes on 59 pages |
-| `ci-extended` | third-party sites (Google, booking.com, IKEA, GitHub, shops, news, cookie platforms, editors' sites), pages with ads, known flakes, tasks that fail until a bug is fixed | on demand (`tags: ci-extended` or `all`) | 50 tasks, 39 probes on 29 pages |
+| `ci-core` | local pages, and very stable public demos and docs (the-internet, toscrape, selenium.dev, TodoMVC, UI Testing Playground, W3C APG, Wikipedia, docs.python.org, DataTables, scrapethissite.com) | every PR that changes observe or act | 75 tasks, 109 probes on 74 pages (149 runs) |
+| `ci-extended` | third-party sites (Google, booking.com, IKEA, GitHub, shops, news, cookie platforms, editors' sites), pages with ads, known flakes, tasks that fail until a bug is fixed | on demand (`tags: ci-extended` or `all`) | 66 tasks, 52 probes on 41 pages (107 runs) |
 
 Why an entry is extended is written next to its module's `ci_tier` call. `--tags ci-core` selects a tier locally.
-Measured locally (Jev, one version, concurrency 6, on a loaded shared machine): the core tier is 121 runs, 1,838
-run-seconds, 320 s wall. Base and head double the runs. On CI, at concurrency 6 in one job that is about 10 minutes plus
-about a minute of setup; with the default 4 shards at concurrency 4, about 5 minutes. The extended tier is about 1,100
+Measured locally (Jev, one version, concurrency 6, on a loaded shared machine): the core tier was 121 runs, 1,838
+run-seconds, 320 s wall; the round-3 entries add 31 runs and about 380 run-seconds, so about 2,200 run-seconds per
+version. Base and head double the runs. On CI, at concurrency 6 in one job that is about 12 minutes plus about a minute
+of setup; with the default 4 shards at concurrency 4, about 5 minutes. The extended tier is about 1,100
 run-seconds per version: 7 to 8 minutes at concurrency 6, about 4 with 4 shards. A CI runner ran the model-free scripted
 runs about twice as fast as that machine, so these are upper bounds.
 
