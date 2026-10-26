@@ -11,7 +11,7 @@ await session.use(async (session) => {
   const browser = await chromium.connectOverCDP(cdpUrl);
   try {
     const page = browser.contexts()[0].pages()[0];
-    await page.goto("https://www.google.com");
+    await page.goto("https://www.google.com", { waitUntil: "domcontentloaded" });
     const screenshot = await page.screenshot({ path: "screenshot.png" });
     if (!screenshot) throw new Error("Screenshot was not returned");
   } finally {
