@@ -51,11 +51,15 @@ ELEMENT_SIGNATURES_JS = """(xpaths) => {
             ],
         ];
     }
-    // the focused element (where Enter goes), by position in the document
+    // the focused element (where Enter goes), by a token kept on the element itself: elements added or removed
+    // elsewhere (an ad, a lazy widget) do not change it, another or a re-rendered element has another token. A
+    // property, not an attribute: it changes nothing the page or its mutation observers see
     const active = document.activeElement;
-    const focus = active && active !== document.body && active !== document.documentElement
-        ? `${active.tagName}:${Array.prototype.indexOf.call(document.querySelectorAll("*"), active)}`
-        : null;
+    let focus = null;
+    if (active && active !== document.body && active !== document.documentElement) {
+        active.__notteFocus ??= Math.random().toString(36).slice(2);
+        focus = `${active.tagName}:${active.__notteFocus}`;
+    }
     return { url: location.href, elements, focus };
 }"""
 
