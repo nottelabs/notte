@@ -176,10 +176,18 @@ class PageSettle:
             page.context.on("request", self._context_request)
 
     @classmethod
-    async def start(cls, page: Page, *, tabs: bool = False) -> "PageSettle":
-        """Starts tracking `page`, right before an action. With `tabs`, a tab opened meanwhile ends the settle."""
+    async def start(cls, page: Page, *, tabs: bool = False, timeout_ms: float | None = None) -> "PageSettle":
+        """Starts tracking `page`, right before an action. With `tabs`, a tab opened meanwhile ends the settle.
+        With `timeout_ms`, an unresponsive document cannot prevent navigation: its requests are tracked instead.
+        """
+        startup = asyncio.timeout(None if timeout_ms is None else timeout_ms / 1000)
         try:
-            tracker = await page.evaluate_handle(SETTLE_TRACKER_JS)
+            async with startup:
+                tracker = await page.evaluate_handle(SETTLE_TRACKER_JS)
+        except TimeoutError:
+            if not startup.expired():
+                raise
+            tracker = None
         except Error:
             # navigating already: the next document is tracked
             tracker = None

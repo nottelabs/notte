@@ -14,7 +14,7 @@ import notte_browser.window as window_module
 import pytest
 import pytest_asyncio
 from aiohttp import web
-from notte_browser.driver import Error, Locator
+from notte_browser.driver import Error, JSHandle, Locator, Page
 from notte_browser.session import NotteSession
 from notte_browser.settle import CAP_MS, LONG_GRACE_MS, QUIET_MS, SETTLE_MS, PageSettle
 from notte_core.actions import ClickAction, GoBackAction, GoForwardAction, PressKeyAction, ScrollDownAction
@@ -358,6 +358,32 @@ async def test_a_goto_that_commits_after_the_settle_cap_still_waits_for_its_page
     result = await session.aexecute(type="goto", url=f"{site}/slow-commit")
     assert result.success
     assert "Slow page content" in await text(session)
+
+
+@pytest.mark.asyncio
+async def test_a_goto_can_leave_a_page_whose_tracker_cannot_start(
+    session: NotteSession, site: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    original = Page.evaluate_handle
+    blocked = asyncio.Event()
+    cancelled = asyncio.Event()
+
+    async def evaluate_handle(page: Page, expression: str) -> JSHandle:
+        if expression == settle_module.SETTLE_TRACKER_JS and not blocked.is_set():
+            blocked.set()
+            try:
+                await asyncio.Event().wait()
+            finally:
+                cancelled.set()
+        return await original(page, expression)
+
+    monkeypatch.setattr(Page, "evaluate_handle", evaluate_handle)
+    async with asyncio.timeout(5):
+        result = await session.aexecute(type="goto", url=f"{site}/next")
+    assert result.success
+    assert blocked.is_set() and cancelled.is_set()
+    assert session.window.page.url == f"{site}/next"
+    assert "Rendered after load" in await text(session)
 
 
 @pytest.mark.asyncio

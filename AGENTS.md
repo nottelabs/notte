@@ -41,6 +41,8 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   so delayed route rendering is still observed.
   Use the navigation response to identify a new document, rather than comparing
   URL spellings: the browser normalizes schemes, empty paths, hosts and ports.
+  Goto tracker startup uses the existing 500 ms grace as its deadline; an
+  unresponsive old page must not prevent navigation from starting.
 - Native integration examples (`examples/*`, run by
   `scripts/ci_integration_examples.py`) install the local `node-sdk` with
   `npm install --no-save`. Don't add `--package-lock=false`: it ignores the

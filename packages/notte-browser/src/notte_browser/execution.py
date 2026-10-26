@@ -647,7 +647,15 @@ async def execute(
     tabs = list(context.pages)
     url = page.url
     # tracked from right before the action
-    settle = await PageSettle.start(page, tabs=_can_create_tab(action)) if _settles(action) else None
+    settle = (
+        await PageSettle.start(
+            page,
+            tabs=_can_create_tab(action),
+            timeout_ms=LONG_GRACE_MS if isinstance(action, GotoAction) else None,
+        )
+        if _settles(action)
+        else None
+    )
     retval = True
     closed_during_click: Error | None = None
     try:
