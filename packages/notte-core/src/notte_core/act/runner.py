@@ -74,7 +74,7 @@ from notte_core.credentials.base import (
     PasswordField,
     UserNameField,
 )
-from notte_core.errors import ContentFilterError
+from notte_core.errors import ContentFilterError, FileChooserOpenedError
 from notte_core.observation import ExecutionResult, Observation
 
 HISTORY_SIZE = 10
@@ -414,10 +414,16 @@ async def run_act(
         except Exception as e:
             entry.error = type(e).__name__
             history.entries.append(entry)
+            if isinstance(e, FileChooserOpenedError):
+                return _blocked(run, _FILE_CHOOSER_OPENED, raise_on_failure, common, e)
             raise
         run.timings.execute_ms += _ms(step)
         if not execution.success:
             entry.error = "ExecutionFailed" if execution.exception is None else type(execution.exception).__name__
+            if isinstance(execution.exception, FileChooserOpenedError):
+                # the page asks for a file, which act cannot give: clicking again would open the chooser again
+                history.entries.append(entry)
+                return _blocked(run, _FILE_CHOOSER_OPENED, raise_on_failure, common, execution.exception)
         else:
             # a submit that failed (or raised) submitted nothing: the typed text stays unsubmitted
             history.acted(decision.operation, target)
@@ -493,6 +499,9 @@ def _invalid(
         raise error
     fields = common if common is not None else {"fingerprint": fingerprint}
     return run.result(status="blocked", message=f"the decider answered invalidly twice: {error.dev_message}", **fields)
+
+
+_FILE_CHOOSER_OPENED = f"the click opened a file chooser ({prompts.FILE_UPLOAD_UNSUPPORTED})"
 
 
 def _blocked(
