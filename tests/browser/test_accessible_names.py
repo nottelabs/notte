@@ -238,6 +238,10 @@ async def test_listbox_value_rule_requires_a_button(control: str) -> None:
         '<span aria-labelledby="other">Standard</span><span hidden id="other">Selected option</span>',
         '<span>  Stan</span><span>dard</span><br><span style="text-transform: uppercase"> delivery </span>',
         "<span>Standard</span><svg><title>Open dropdown</title></svg>",
+        '<svg width="160" height="30"><text x="0" y="20">Standard</text></svg>',
+        '<svg width="160" height="30"><title>Open dropdown</title><desc>Decorative icon</desc>'
+        "<metadata>Chart metadata</metadata><defs><text>Unused template</text></defs>"
+        '<text x="0" y="20"><tspan>Standard</tspan></text></svg>',
     ],
 )
 async def test_listbox_value_reads_visible_text_instead_of_descendant_names(selection: str) -> None:

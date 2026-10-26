@@ -537,7 +537,8 @@
 			if (nodeTypeOf(child) === Node.TEXT_NODE) {
 				append(transformText(child.data, parentElementOf(child)));
 			} else if (nodeTypeOf(child) === Node.ELEMENT_NODE) {
-				if (isHiddenForName(child) || matches(child, EXCLUDED_CONTENT)) continue;
+				if (isHiddenForName(child) ||
+					matches(child, "script, style, link, meta, noscript, template, svg title, svg desc, svg defs, svg metadata")) continue;
 				if (localNameOf(child) === "br") {
 					append(" ");
 					continue;
