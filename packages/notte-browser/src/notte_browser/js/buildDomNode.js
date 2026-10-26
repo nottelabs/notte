@@ -742,20 +742,36 @@
 	}
 
 	/**
-	 * Checks if an element is laid out outside the box of a clipping ancestor: a fixed element, or an
-	 * absolutely positioned one whose containing block (its nearest positioned ancestor) is outside the
-	 * clipping element.
+	 * Checks if an element, or a positioned ancestor below the clipper, escapes its overflow: its
+	 * containing block is outside the clipper. Chromium's `offsetParent` also identifies the containing
+	 * block of a fixed element (null for the viewport, an element for transforms, containment, etc.).
+	 * Normal-flow controls inside an escaping popup escape with it.
 	 *
 	 * @param {HTMLElement} element - The element to check.
 	 * @param {HTMLElement} clipper - The clipping ancestor.
 	 * @returns {boolean} Whether the element escapes the clipping.
 	 */
 	function escapesClip(element, clipper) {
-		const position = getCachedComputedStyle(element)?.position;
-		if (position === "fixed") return true;
-		if (position !== "absolute") return false;
-		const containingBlock = propertyOf(element, "offsetParent");
-		return containingBlock === null || !contains(clipper, containingBlock);
+		for (let current = element; current && current !== clipper; current = composedParentElement(current)) {
+			const position = getCachedComputedStyle(current)?.position;
+			if (position !== "fixed" && position !== "absolute") continue;
+			let containingBlock = propertyOf(current, "offsetParent");
+			while (containingBlock && containingBlock !== clipper) containingBlock = composedParentElement(containingBlock);
+			if (containingBlock === null) return true;
+		}
+		return false;
+	}
+
+	/**
+	 * The parent element, crossing a shadow root to its host so containing blocks and clippers there count.
+	 * @param {HTMLElement} element - The element.
+	 * @returns {HTMLElement | null} Its parent or shadow host.
+	 */
+	function composedParentElement(element) {
+		const parent = parentElementOf(element);
+		if (parent !== null) return parent;
+		const root = getRootNode(element);
+		return root instanceof ShadowRoot ? root.host : null;
 	}
 
 	/**
@@ -1883,11 +1899,7 @@
 	 */
 	function reachAncestor(element) {
 		if (reachAncestors.has(element)) return reachAncestors.get(element);
-		let ancestor = parentElementOf(element);
-		if (ancestor === null) {
-			const root = getRootNode(element);
-			if (root instanceof ShadowRoot) ancestor = root.host;
-		}
+		let ancestor = composedParentElement(element);
 		if (ancestor === BODY) ancestor = null;
 		if (ancestor !== null) {
 			const style = getCachedComputedStyle(ancestor);

@@ -382,3 +382,72 @@ async def test_controls_behind_scroll_box_borders_are_described(scale: int) -> N
         _ = await session.window.page.evaluate("document.getElementById('box').scrollTop = 1000")
         _, actions = await _observe(session)
         assert actions == [("I1", "Middle"), ("I2", "Bottom")]
+
+
+@pytest.mark.asyncio
+async def test_popup_descendants_escape_only_scrollers_outside_their_containing_block() -> None:
+    boxes: list[str] = []
+    for index, (position, transform) in enumerate(
+        [("fixed", False), ("absolute", False), ("fixed", True), ("absolute", True)]
+    ):
+        left = index * 300
+        popup_left = left if position == "fixed" and not transform else 0
+        boxes.append(f"""
+        <div style="position:absolute;top:20px;left:{left}px">
+          <div class="box" style="height:100px;width:280px;overflow:auto;
+                                  transform:{"translateZ(0)" if transform else "none"}">
+            <div style="height:300px"></div><button>Clipped {index}</button>
+            <div style="position:{position};top:150px;left:{popup_left}px">
+              <div><button id="popup-{index}" onclick="this.dataset.clicked = 'true'">Popup {index}</button></div>
+              <input placeholder="Popup field {index}">
+            </div>
+          </div>
+        </div>
+        """)
+
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(''.join(boxes))}")
+        # Browser hit testing confirms the untransformed popups escape, while transforms make the
+        # scroller the containing block and clip both fixed and absolute popup descendants.
+        for index in range(4):
+            assert await session.window.page.locator(f"#popup-{index}").evaluate(
+                """element => {
+                    const rect = element.getBoundingClientRect();
+                    return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2) === element;
+                }"""
+            ) is (index < 2)
+
+        lines, actions = await _observe(session)
+        assert [label for _, label in actions] == ["Popup 0", "Popup field 0", "Popup 1", "Popup field 1"]
+        for index in range(4):
+            assert f"_[:]<button>Clipped {index}</button>" in lines
+        for index in (2, 3):
+            assert f"_[:]<button>Popup {index}</button>" in lines
+            assert f'_[:]<input placeholder="Popup field {index}"></input>' in lines
+        for index in (0, 1):
+            await session.window.page.locator(f"#popup-{index}").click()
+            assert await session.window.page.locator(f"#popup-{index}").get_attribute("data-clicked") == "true"
+
+        # Escaping the scroller does not bypass the usual hit-target check for covered controls.
+        _ = await session.window.page.evaluate("""() => {
+            const cover = document.createElement('div');
+            cover.id = 'cover';
+            cover.style.cssText = 'position:fixed;top:150px;left:0;width:280px;height:60px;z-index:1000';
+            document.body.append(cover);
+        }""")
+        _, actions = await _observe(session)
+        assert [label for _, label in actions] == ["Popup 1", "Popup field 1"]
+
+        _ = await session.window.page.evaluate(
+            """() => {
+                document.getElementById('cover').remove();
+                document.querySelectorAll('.box').forEach(box => { box.scrollTop = 120; });
+            }"""
+        )
+        _, actions = await _observe(session)
+        assert [label for _, label in actions] == [
+            label for index in range(4) for label in (f"Popup {index}", f"Popup field {index}")
+        ]
+        for index in (2, 3):
+            await session.window.page.locator(f"#popup-{index}").click()
+            assert await session.window.page.locator(f"#popup-{index}").get_attribute("data-clicked") == "true"

@@ -122,6 +122,10 @@ digest covers the whitespace-normalized text read; the display retains at most 2
 Within budget the digest covers the entire selection. Budget exhaustion also sets valueTruncated,
 even if fewer than 200 normalized characters were read. Traverse assigned slots without native
 recursive flattening so nested slot traversal shares the same node budget.
+Scroll clipping follows positioned ancestors too: normal-flow controls in an escaping popup escape
+with it. Fixed popups with a transformed containing block can still be clipped by that block;
+`tests/browser/test_dom_offscreen_controls.py` checks both against Chromium hit testing and clicks.
+
 Off-screen controls use the scroll box's scaled inner bounds, and ancestor walks
 cross shadow roots to their hosts. A transformed scroll box can hit-test a control
 behind its border as the top element, so hit-testing alone cannot establish that
