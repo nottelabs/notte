@@ -73,6 +73,10 @@ def select(
     for suite in suites or []:
         if suite not in known:
             raise ValueError(f"unknown suite {suite!r} (known: {', '.join(sorted(known))})")
+    known_tags = {tag for item in [*registry.tasks.values(), *registry.probes.values()] for tag in item.tags}
+    for tag in tags or []:
+        if tag not in known_tags:
+            raise ValueError(f"unknown tag {tag!r} (known: {', '.join(sorted(known_tags))})")
     for name in tasks or []:
         if name not in registry.tasks:
             raise ValueError(f"unknown task {name!r}")

@@ -83,6 +83,19 @@ def test_select_by_tag_keeps_the_tasks_and_probe_pages_of_that_tier() -> None:
     assert len(registry.select(reg)) == 3
 
 
+@pytest.mark.parametrize("tags", [["ci-extend"], [CI_CORE, "ci-extend"]])
+def test_select_rejects_unknown_tags_even_alongside_known_tags(tags: list[str]) -> None:
+    with pytest.raises(ValueError, match="unknown tag 'ci-extend'"):
+        registry.select(registry.discover(), tags=tags)
+
+
+def test_select_accepts_probe_only_tags_and_allows_empty_shards() -> None:
+    reg = registry.Registry({}, {"p": Probe("p", "https://p.test", "q?", None, "YES", tags=("probe-tag",))})
+    items = registry.select(reg, tags=["probe-tag"])
+    assert [item.names for item in items] == [("p",)]
+    assert registry.shard(items, 2, 2) == []
+
+
 def test_discover_rejects_a_name_defined_in_two_modules(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     package = tmp_path / "duplicated_tasks"
     package.mkdir()

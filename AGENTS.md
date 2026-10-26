@@ -381,3 +381,5 @@ touching `notte_browser/js`, `notte_browser/dom`, `notte_core/act` or `notte_llm
 merge base. With Jev, fixture tasks must always pass; public sites fail only on a clear drop against base;
 the LLM runners are report-only. A site that blocks or redirects is a site miss with evidence, never a pass;
 a decider transport error is an infra miss (red above 5% of runs). It needs `OPENROUTER_API_KEY` only.
+The `act-bench-all` label includes extended fixtures with known browser/act failures. These still fail the
+report's fixture rules, even when base also fails; do not weaken the rules to make an all-tier run green.
