@@ -13,8 +13,8 @@ from notte_browser.session import NotteSession
 
 PAGE = """
 <div style="position: relative">
-  <input id="name" placeholder="Name" style="display: block; height: 30px">
-  <input id="email" placeholder="Email" style="display: block; height: 30px; margin-top: 20px">
+  <input id="name" placeholder="Name" style="display: block; box-sizing: border-box; height: 30px">
+  <input id="email" placeholder="Email" style="display: block; box-sizing: border-box; height: 30px; margin-top: 20px">
   <div style="position: absolute; top: 13px; left: 0; width: 400px; height: 25px; background: #ccc"></div>
   <div style="position: absolute; top: 46px; left: 0; width: 400px; height: 40px; background: #ccc"></div>
 </div>
@@ -23,6 +23,7 @@ PAGE = """
 
 @pytest.mark.asyncio
 async def test_a_partly_covered_field_is_offered() -> None:
+    """Offer and fill the partly covered field while excluding the fully covered field."""
     async with NotteSession(headless=True) as session:
         _ = await session.window.page.goto(f"data:text/html,{quote(PAGE)}")
         observation = await session.aobserve()
