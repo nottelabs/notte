@@ -447,7 +447,8 @@ def test_replay_uses_known_stop_state_when_server_waits_for_close(
         assert exchange.sleeps == []
 
 
-def test_replay_observes_stop_completed_during_request(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.parametrize("state", ["closed", "resetting", "replaced"])
+def test_replay_observes_stop_or_reset_during_request(monkeypatch: pytest.MonkeyPatch, state: str) -> None:
     session: RemoteSession | AsyncRemoteSession | None = None
     handle = router(SESSION_ROUTES)
     replay_calls = 0
@@ -458,8 +459,13 @@ def test_replay_observes_stop_completed_during_request(monkeypatch: pytest.Monke
             replay_calls += 1
             if replay_calls == 1:
                 assert session is not None and session.response is not None
-                # Complete the local stop state while the replay request is in flight.
-                session.response = session.response.model_copy(update={"status": "closed"})
+                # Complete stop/reset state transitions while the old replay is in flight.
+                if state == "resetting":
+                    session.response = None
+                elif state == "replaced":
+                    session.response = session.response.model_copy(update={"session_id": "s-2", "status": "active"})
+                else:
+                    session.response = session.response.model_copy(update={"status": "closed"})
                 return httpx.Response(404, json={"replay_status": "waiting_for_session", "retryable": False})
             return httpx.Response(200, json={"mp4_url": "https://cdn/r.mp4"})
         return handle(request)
@@ -482,7 +488,9 @@ def test_replay_observes_stop_completed_during_request(monkeypatch: pytest.Monke
     assert actual == expected
     assert expected.outcome[0] == "ok"
     assert expected.sleeps == [2]
-    assert len([call for call in expected.calls if call.url.endswith("/replay")]) == 2
+    replay_calls_seen = [call for call in expected.calls if call.url.endswith("/replay")]
+    assert len(replay_calls_seen) == 2
+    assert all(call.url.endswith("/sessions/s-1/replay") for call in replay_calls_seen)
 
 
 def test_replay_waits_and_fails_the_same(monkeypatch: pytest.MonkeyPatch) -> None:

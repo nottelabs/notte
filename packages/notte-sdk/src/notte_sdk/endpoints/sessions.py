@@ -390,6 +390,11 @@ def _debug_tab_endpoint(session_id: str, tab_idx: int | None) -> NotteEndpoint[T
     return SessionsClient._session_debug_tab_endpoint(session_id=session_id, params=params)  # pyright: ignore [reportPrivateUsage]
 
 
+def _replay_session_closed(response: SessionResponse | None, session_id: str) -> bool:
+    """Read one response snapshot; reset clears or replaces it only after stopping the old session."""
+    return response is None or response.session_id != session_id or response.status == "closed"
+
+
 def _replay_flow(
     session_id: str, wait: bool, timeout: float, poll_interval: float, session_closed: Callable[[], bool] | None
 ) -> Flow[ReplayResponse]:
@@ -1156,12 +1161,13 @@ class RemoteSession(SyncResource):
             ValueError: If the session hasn't been started yet (no session_id available).
             TimeoutError: If the replay does not become available within ``timeout`` seconds.
         """
+        session_id = self.session_id
         return self.client.replay(
-            session_id=self.session_id,
+            session_id=session_id,
             wait=wait,
             timeout=timeout,
             poll_interval=poll_interval,
-            _session_closed=lambda: self.response is not None and self.response.status == "closed",
+            _session_closed=lambda: _replay_session_closed(self.response, session_id),
         )
 
     def viewer_browser(self) -> None:
@@ -2216,12 +2222,13 @@ class AsyncRemoteSession:
             TimeoutError: If the replay does not become available within ``timeout`` seconds.
         """
         _ = await self._loaded()
+        session_id = self.session_id
         return await self.client.replay(
-            session_id=self.session_id,
+            session_id=session_id,
             wait=wait,
             timeout=timeout,
             poll_interval=poll_interval,
-            _session_closed=lambda: self.response is not None and self.response.status == "closed",
+            _session_closed=lambda: _replay_session_closed(self.response, session_id),
         )
 
     async def viewer_browser(self) -> None:
