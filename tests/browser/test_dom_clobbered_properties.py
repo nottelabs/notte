@@ -14,6 +14,7 @@ from urllib.parse import quote
 import pytest
 from notte_browser.dom.parsing import DOM_TREE_JS
 from notte_browser.session import NotteSession
+from notte_core.config import BrowserBackend, config
 
 # form control names that are DOM properties or methods the DOM build reads on an element
 CLOBBERING_NAMES = [
@@ -108,7 +109,9 @@ async def test_named_images_do_not_break_the_dom_build_in_the_page_world() -> No
     async with NotteSession(headless=True) as session:
         page = session.window.page
         _ = await page.goto(f"data:text/html,{quote(DOCUMENT_CLOBBERING)}")
-        payload = json.loads(await page.evaluate(DOM_TREE_JS, args, isolated_context=False))
+        # the page's own world: Playwright evaluates there, Patchright in an isolated world unless told otherwise
+        world = {"isolated_context": False} if config.browser_backend is BrowserBackend.PATCHRIGHT else {}
+        payload = json.loads(await page.evaluate(DOM_TREE_JS, args, **world))
 
         nodes = payload["map"].values()
         assert payload["map"][payload["rootId"]]["tagName"] == "body"
