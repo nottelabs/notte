@@ -267,10 +267,7 @@
 			const value = getAttribute(element, "aria-valuetext") ?? getAttribute(element, "aria-valuenow");
 			if (value !== null) state.value = truncateStateValue(value, state);
 		} else if (isListboxValueButton(element)) {
-			// Share the name reader's slot traversal and hidden-content rules. Read the full selection
-			// before truncating so edits past the display limit still change the value digest.
-			const text = contentText(element, { visited: new Set([element]), budget: Infinity }, { labelledBy: false, hidden: false });
-			state.value = truncateStateValue(text.replace(/\s+/g, " ").trim(), state);
+			state.value = readListboxValue(element, state);
 		}
 		if (state.checked === undefined) {
 			// role="checkbox" / "switch" / "radio" / "menuitemcheckbox" widgets
@@ -373,7 +370,7 @@
 	 */
 	function isListboxValueButton(element) {
 		const id = idOf(element);
-		if (getAttribute(element, "aria-haspopup") !== "listbox" || !id) return false;
+		if (getRole(element) !== "button" || getAttribute(element, "aria-haspopup") !== "listbox" || !id) return false;
 		const ids = (getAttribute(element, "aria-labelledby") || "").trim().split(/\s+/);
 		return ids.length > 1 && ids.includes(id);
 	}
@@ -488,15 +485,79 @@
 		return text;
 	}
 
-	function contentText(element, context, step) {
-		const childStep = { root: false, labelledBy: step.labelledBy, content: true, hidden: step.hidden };
-		let children = shadowRootOf(element) ? shadowRootOf(element).childNodes : childNodesOf(element);
+	function contentChildren(element) {
+		let children = childNodesOf(shadowRootOf(element) || element);
 		if (localNameOf(element) === "slot") {
-			const assigned = element.assignedNodes({ flatten: true });
+			const assigned = HTMLSlotElement.prototype.assignedNodes.call(element, { flatten: true });
 			if (assigned.length > 0) children = assigned;
 		}
+		return children;
+	}
+
+	/**
+	 * Streams rendered selection text, never descendant accessible names or ARIA references.
+	 * Each composed-tree node is visited at most once, without recursive calls or a full selection
+	 * string. Whitespace is collapsed across node boundaries before the UTF-16 FNV-1a hash, matching
+	 * truncateStateValue. The hash still covers the entire selection, including beyond the prefix.
+	 */
+	function readListboxValue(element, state) {
+		let value = "";
+		let length = 0;
+		let space = false;
+		let hash = 0xcbf29ce484222325n;
+		function codeUnit(code) {
+			if (length < MAX_STATE_VALUE_LENGTH) value += String.fromCharCode(code);
+			length = Math.min(length + 1, MAX_STATE_VALUE_LENGTH + 1);
+			hash = BigInt.asUintN(64, (hash ^ BigInt(code)) * 0x100000001b3n);
+		}
+		function append(text) {
+			for (let i = 0; i < text.length; i++) {
+				if (/\s/.test(text[i])) {
+					space = length > 0;
+				} else {
+					if (space) codeUnit(32);
+					space = false;
+					codeUnit(text.charCodeAt(i));
+				}
+			}
+		}
+		const visited = new Set([element]);
+		const stack = [{ children: contentChildren(element)[Symbol.iterator](), block: false }];
+		while (stack.length > 0) {
+			const frame = stack[stack.length - 1];
+			const next = frame.children.next();
+			if (next.done) {
+				if (frame.block) append(" ");
+				stack.pop();
+				continue;
+			}
+			const child = next.value;
+			if (visited.has(child)) continue;
+			visited.add(child);
+			if (nodeTypeOf(child) === Node.TEXT_NODE) {
+				append(transformText(child.data, parentElementOf(child)));
+			} else if (nodeTypeOf(child) === Node.ELEMENT_NODE) {
+				if (isHiddenForName(child) || matches(child, EXCLUDED_CONTENT)) continue;
+				if (localNameOf(child) === "br") {
+					append(" ");
+					continue;
+				}
+				const block = !isInline(child);
+				if (block) append(" ");
+				stack.push({ children: contentChildren(child)[Symbol.iterator](), block });
+			}
+		}
+		if (length > MAX_STATE_VALUE_LENGTH) {
+			state.valueTruncated = true;
+			state.valueDigest = hash.toString(16).padStart(16, "0");
+		}
+		return value;
+	}
+
+	function contentText(element, context, step) {
+		const childStep = { root: false, labelledBy: step.labelledBy, content: true, hidden: step.hidden };
 		let text = "";
-		for (const child of children) {
+		for (const child of contentChildren(element)) {
 			if (context.budget <= 0) break;
 			if (nodeTypeOf(child) === Node.TEXT_NODE) {
 				text += transformText(child.data, parentElementOf(child));

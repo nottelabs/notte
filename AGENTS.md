@@ -108,6 +108,12 @@ CDP listener hints must retain the inspected elements' identities through main-w
 handles. DOM marker attributes are copied by `cloneNode`, while event listeners are
 not, so an attribute bridge can incorrectly offer a clone as a clickable header.
 
+Listbox button selection values read rendered text, including assigned slots and slot fallback,
+without following descendant accessible names or ARIA references. Their value digest covers the
+entire whitespace-normalized selection as UTF-16 FNV-1a, including edits beyond the 200-character
+display prefix and the accessible-name reader's budget. A fixed traversal cutoff would change
+that contract; do not silently substitute a prefix digest for the full-selection digest.
+
 ## Public API
 
 - Don't remove or rename public methods without a deprecation first: keep the
