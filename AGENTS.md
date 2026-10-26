@@ -25,6 +25,9 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
 - `make test` is the offline gate. `make test-live` runs tests marked
   `staging` or `live` and needs `NOTTE_API_KEY`; set `NOTTE_API_URL` to point
   the SDK at a different API.
+- CDP transport tests keep real staging sessions and connections but serve page
+  fixtures through Patchright routes, so navigation and screenshot coverage does
+  not depend on third-party sites loading.
 - README live CI uses the official HTTPS Ubuntu archive in the runner's
   `/etc/apt/apt-mirrors.txt`; the Azure mirror has stalled Chromium dependency
   installation before the examples could run.
@@ -37,6 +40,9 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   can also precede the context's `page` event.
   The driver can report a closed target from the click that closes its opener;
   accept that click only when a live replacement appears, and wait for it.
+  When activating a tracked late tab, retain earlier tabs and their request trackers
+  until selection succeeds. A tab closing during activation must not discard the
+  surviving candidates or stop watching when none survive.
 - A new-document `goto` tracks requests before its commit and waits for the destination
   within one navigation budget. Do not wait on the old document's tracker first:
   a commit after the 3 s settle cap must still get its remaining load wait.

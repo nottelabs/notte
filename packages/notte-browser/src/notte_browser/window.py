@@ -47,6 +47,7 @@ from notte_browser.errors import (
     UnexpectedBrowserError,
 )
 from notte_browser.js import script
+from notte_browser.settle import PageSettle
 
 _PAGE_METADATA = script("page_metadata.js")
 
@@ -206,6 +207,9 @@ class BrowserWindow:
         self._owned_context: BrowserContext | None = None
         self._owned_browser: Browser | None = None
         self._owned_driver: Playwright | None = None
+        # the tabs opened since the last action that can open one, while it is watched (`watch_new_tabs`)
+        self._new_tabs: dict[Page, PageSettle] = {}
+        self._tabs_context: BrowserContext | None = None
         page.set_default_timeout(config.timeout_default_ms)
         # Only final main-document responses establish navigation/raw-file state.
         self.page_callbacks["response"] = self._record_navigation_response  # pyright: ignore[reportArgumentType]
@@ -259,6 +263,7 @@ class BrowserWindow:
         return self._page.context.pages
 
     async def close(self) -> None:
+        await self._forget_new_tabs()
         if self.on_close is not None:
             await self.on_close()
         await self._close_all_cdp_sessions()
@@ -272,6 +277,52 @@ class BrowserWindow:
         _ = self._cdp_sessions.pop(id(self._page), None)
         self._page = page
         self.apply_page_callbacks()
+
+    async def watch_new_tabs(self, watch: bool) -> None:
+        """Called as an action starts: with `watch`, record the tabs opened from now on, until the next action. A page
+        can open a tab after `execute` has stopped waiting for it (a `window.open` on a timer, a slow browser): the next
+        observation switches to it (`switch_to_new_tab`). Each tab's requests are tracked from when it appears."""
+        await self._forget_new_tabs()
+        if watch:
+            self._tabs_context = self.page.context
+            self._tabs_context.on("page", self._new_tab)
+
+    async def _forget_new_tabs(self) -> None:
+        if self._tabs_context is not None:
+            _ = self._tabs_context.remove_listener("page", self._new_tab)
+            self._tabs_context = None
+        tabs, self._new_tabs = self._new_tabs, {}
+        for settle in tabs.values():
+            await settle.close()
+
+    def _new_tab(self, page: Page) -> None:
+        # its first scripts can start requests before it is switched to
+        self._new_tabs[page] = PageSettle(page, None, tabs=False)
+
+    async def switch_to_new_tab(self, *, verbose: bool = False) -> None:
+        """Switch to the last tab opened since the last action that is still open (`watch_new_tabs`), and wait for it
+        as `execute` waits for a tab an action opens. Keep watching until a tab is consumed or another action starts."""
+        for tab, settle in reversed(list(self._new_tabs.items())):
+            del self._new_tabs[tab]
+            try:
+                if tab.is_closed():
+                    continue
+                if tab is not self.page:
+                    try:
+                        await tab.bring_to_front()
+                    except PlaywrightError:
+                        # Keep the earlier candidates and their request trackers if this tab closes meanwhile.
+                        if tab.is_closed():
+                            continue
+                        raise
+                    if verbose:
+                        logger.info(f"🪦 A tab opened after the last action ended, switched to it: {tab.url}")
+                    self.page = tab
+                await self._forget_new_tabs()
+                await settle.wait(document="requests")
+                return
+            finally:
+                await settle.close()
 
     async def switch_tab(self, tab_index: int, *, verbose: bool = False) -> None:
         context = self.page.context

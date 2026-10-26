@@ -784,6 +784,8 @@ async def execute(
     context = page.context
     tabs = list(context.pages)
     url = page.url
+    # a tab opened once the settle is over is switched to by the next observation
+    await window.watch_new_tabs(_can_create_tab(action))
     # tracked from right before the action
     settle = (
         await PageSettle.start(
@@ -875,4 +877,7 @@ async def execute(
     finally:
         if settle is not None:
             await settle.close()
+        if window.page is not page:
+            # the action's tab is acted on already
+            await window.watch_new_tabs(False)
     return retval
