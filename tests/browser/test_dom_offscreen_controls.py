@@ -320,3 +320,65 @@ async def test_controls_scrolled_out_of_a_box_in_view_are_described() -> None:
             'L1[:]<a href="/terms">Terms</a>',
         ]
         assert actions == [("I1", "Subject"), ("L1", "Terms")]
+
+
+@pytest.mark.asyncio
+async def test_controls_scrolled_out_of_a_shadow_host_are_described() -> None:
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(
+            'data:text/html,<div id="box" style="height:100px;width:300px;overflow-y:scroll"></div>'
+        )
+        _ = await session.window.page.evaluate(
+            """document.getElementById('box').attachShadow({mode: 'open'}).innerHTML = `
+              <input placeholder="Id" style="display:block;height:30px">
+              <div style="height:150px"></div><input placeholder="Subject">
+            `"""
+        )
+        lines, actions = await _observe(session)
+        assert lines == [
+            'I1[:]<input placeholder="Id"></input>',
+            '_[:]<input placeholder="Subject"></input>',
+        ]
+        assert actions == [("I1", "Id")]
+
+        _ = await session.window.page.evaluate("document.getElementById('box').scrollTop = 1000")
+        lines, actions = await _observe(session)
+        assert lines == [
+            '_[:]<input placeholder="Id"></input>',
+            'I1[:]<input placeholder="Subject"></input>',
+        ]
+        assert actions == [("I1", "Subject")]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("scale", [1, 2])
+async def test_controls_behind_scroll_box_borders_are_described(scale: int) -> None:
+    page = f"""
+    <div id="box" style="height:100px;width:300px;border:20px solid;overflow-y:scroll;
+                         transform:{"none" if scale == 1 else f"scale({scale})"};transform-origin:top left">
+      <input placeholder="Top" style="display:block;height:20px;box-sizing:border-box">
+      <div style="height:40px"></div>
+      <input placeholder="Middle" style="display:block;height:20px;box-sizing:border-box">
+      <div style="height:40px"></div>
+      <input placeholder="Bottom" style="display:block;height:20px;box-sizing:border-box">
+    </div>
+    """
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+        # Both outside centers lie behind the borders, inside the box's outer bounding rect.
+        _ = await session.window.page.evaluate("document.getElementById('box').scrollTop = 20")
+        lines, actions = await _observe(session)
+        assert lines == [
+            '_[:]<input placeholder="Top"></input>',
+            'I1[:]<input placeholder="Middle"></input>',
+            '_[:]<input placeholder="Bottom"></input>',
+        ]
+        assert actions == [("I1", "Middle")]
+
+        _ = await session.window.page.evaluate("document.getElementById('box').scrollTop = 0")
+        _, actions = await _observe(session)
+        assert actions == [("I1", "Top"), ("I2", "Middle")]
+
+        _ = await session.window.page.evaluate("document.getElementById('box').scrollTop = 1000")
+        _, actions = await _observe(session)
+        assert actions == [("I1", "Middle"), ("I2", "Bottom")]

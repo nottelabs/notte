@@ -1724,7 +1724,7 @@
 	/**
 	 * Checks if an element is above or below the box of an ancestor that scrolls vertically, where scrolling
 	 * that ancestor brings it: the center of its middle box (see `isAboveOrBelowViewport`) is outside the
-	 * ancestor's box. A box that the element escapes (see `escapesClip`) does not scroll it.
+	 * ancestor's inner visible box. A box that the element escapes (see `escapesClip`) does not scroll it.
 	 *
 	 * @param {HTMLElement} element - The element to check.
 	 * @returns {boolean} Whether the element is above or below the box of a scrollable ancestor.
@@ -1738,7 +1738,12 @@
 			const box = getCachedBoundingRect(ancestor);
 			const range = visibleRange(ancestor, box, getCachedComputedStyle(ancestor), true);
 			if (range === null || !range.scrolls || escapesClip(element, ancestor)) continue;
-			if (centerY < box.top || centerY > box.bottom) return true;
+			// Borders and scrollbars are outside the visible content, scaled like the bounding rect.
+			const layoutHeight = propertyOf(ancestor, "offsetHeight");
+			const scale = layoutHeight > 0 ? box.height / layoutHeight : 1;
+			const top = box.top + propertyOf(ancestor, "clientTop") * scale;
+			const bottom = top + propertyOf(ancestor, "clientHeight") * scale;
+			if (centerY < top || centerY > bottom) return true;
 		}
 		return false;
 	}
@@ -1870,7 +1875,8 @@
 	/**
 	 * The nearest ancestor of an element that `isOutOfReach` has to look at: one that clips its overflow
 	 * (`visibleRange` is not null along an axis) or is fixed, below `<body>`. The others change nothing
-	 * there. Remembered per element: the off-screen controls of a page share most of their ancestors.
+	 * there. Cross shadow roots to their hosts, whose boxes can also clip or scroll their content.
+	 * Remembered per element: the off-screen controls of a page share most of their ancestors.
 	 *
 	 * @param {HTMLElement} element - The element.
 	 * @returns {HTMLElement | null} The ancestor, or null when there is none.
@@ -1878,6 +1884,10 @@
 	function reachAncestor(element) {
 		if (reachAncestors.has(element)) return reachAncestors.get(element);
 		let ancestor = parentElementOf(element);
+		if (ancestor === null) {
+			const root = getRootNode(element);
+			if (root instanceof ShadowRoot) ancestor = root.host;
+		}
 		if (ancestor === BODY) ancestor = null;
 		if (ancestor !== null) {
 			const style = getCachedComputedStyle(ancestor);
@@ -2438,7 +2448,9 @@
 				const isMenuContainer = role === 'menu' || role === 'menubar' || role === 'listbox';
 				// a control above or below the viewport: described, without an action (see `handleHighlighting`);
 				// a menu container cut by the edge of the viewport keeps its highlight index
-				const isOffscreen = !nodeData.isTopElement && !isMenuContainer && isOffscreenControl(node);
+				// Transformed scroll boxes can hit-test content behind their borders, so check their
+				// visible bounds even when the browser reports the control as the top element.
+				const isOffscreen = viewportExpansion !== -1 && !isMenuContainer && isOffscreenControl(node);
 
 				if ((nodeData.isTopElement || isMenuContainer || isOffscreen) && !isElementHidden(node, scope)) {
 					const interactiveResult = isOffscreen
