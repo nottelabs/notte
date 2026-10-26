@@ -351,10 +351,18 @@ def _disabled(content: str) -> str | None:
 _TEXT_INPUT_TYPES = ("text", "email", "password", "search", "tel", "url", "number")
 
 
-def _checked(content: str) -> bool:
-    """A control rendered without an id (disabled or off-screen) that the observation says is checked."""
+# the states the observation renders on a control without an id (disabled or off-screen), as it does `disabled`
+_RENDERED_STATES = ("checked", "pressed", "selected", "expanded")
+
+
+def _states(content: str) -> list[str]:
+    """What the observation says a control rendered without an id (disabled or off-screen) is: checked, pressed,
+    selected or expanded."""
     match = _RENDERED_ELEMENT.match(content)
-    return match is not None and "checked" in _RENDERED_ATTRIBUTE.sub("", match.group(2)).split()
+    if match is None:
+        return []
+    flags = _RENDERED_ATTRIBUTE.sub("", match.group(2)).split()
+    return [state for state in _RENDERED_STATES if state in flags]
 
 
 def _offscreen_role(content: str) -> str | None:
@@ -373,8 +381,8 @@ def _offscreen_role(content: str) -> str | None:
 
 
 def _offscreen(content: str, before: str | None = None, after: str | None = None) -> str | None:
-    """`<name> (<role>[, checked][, value: <value>]` for a control the observation describes outside the viewport: it
-    offers no operation until scrolled into view. None for anything else.
+    """`<name> (<role>[, checked][, pressed][, selected][, expanded][, value: <value>]` for a control the observation
+    describes outside the viewport: it offers no operation until scrolled into view. None for anything else.
 
     The observation gives no name to a field, checkbox or radio outside the viewport (its label is the text next to
     it): like an unnamed one in view, a checkbox or radio is named by the label-like text `after` it (else `before`),
@@ -402,7 +410,7 @@ def _offscreen(content: str, before: str | None = None, after: str | None = None
     else:
         candidates += [attributes.get("placeholder"), attributes.get("title"), attributes.get("value")]
     name = next((c.strip() for c in candidates if c is not None and c.strip()), role)
-    state = ", checked" if _checked(content) else ""
+    state = "".join(f", {state}" for state in _states(content))
     # a text area's or an editable element's text is its value
     value = (attributes.get("value") or text).strip() if role == "textbox" else ""
     if value:
@@ -615,7 +623,7 @@ def _accessible_lines(page: ObservedPage, display_text: Callable[[str], str]) ->
                 lines.append((None, content.removeprefix("### ")))
         elif i in names.disabled:
             # shown, so the decider knows the control exists and can wait for it; it offers no operation
-            state = "disabled, checked" if _checked(content) else "disabled"
+            state = ", ".join(["disabled", *_states(content)])
             lines.append((None, f"{_cut(display_text(names.disabled[i]), MAX_LABEL_LENGTH)} ({state})"))
         elif i in names.offscreen:
             # a link, button or field outside the viewport: what it is and where, with no operation until in view
