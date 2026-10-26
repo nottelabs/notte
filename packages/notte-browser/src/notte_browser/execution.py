@@ -1,5 +1,6 @@
 import asyncio
 import re
+import time
 from collections.abc import Awaitable, Callable
 from contextlib import suppress
 from typing import Literal
@@ -227,9 +228,12 @@ async def _append_text(window: BrowserWindow, locator: Locator, text: str, timeo
 _SLIDER_VALUE = script("slider_value.js")
 # the most keys pressed to move a slider to a value
 MAX_SLIDER_KEYS = 200
-# the keys that move a slider up and down, tried in this order: Up / Down are not swapped in a right-to-left page
+# how long the update of a key is waited for (a slider that re-renders) before the key is taken as doing nothing
+SLIDER_KEY_WAIT_MS = 500
+# the keys that move a slider up and down, tried in this order. A pair that moves the other way is swapped (a
+# reversed or right-to-left slider)
 _SLIDER_KEYS = (("PageUp", "PageDown"), ("ArrowUp", "ArrowDown"), ("ArrowRight", "ArrowLeft"))
-_NUMBER = re.compile(r"-?\d+(?:\.\d+)?")
+_NUMBER = re.compile(r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?")
 
 
 async def _move_slider(
@@ -255,50 +259,56 @@ async def _move_slider(
         return abs(current - target) <= 1e-9 * max(1.0, abs(target))
 
     async def press(key: str, before: float) -> float:
-        await window.page.keyboard.press(key)
-        # a slider that re-renders updates `aria-valuenow` a little after the key
-        for _ in range(3):
+        # the locator focuses the slider it finds now: one that re-renders can replace its element
+        await locator.press(key, timeout=budget.remaining_ms())
+        deadline = time.monotonic() + min(SLIDER_KEY_WAIT_MS, budget.remaining_ms()) / 1000
+        while True:
             state = await locator.evaluate(_SLIDER_VALUE, timeout=budget.remaining_ms())
             after = None if state is None else state["now"]
             if after is None:
                 raise ActionExecutionError("fill", window.page.url, reason="The slider lost its aria-valuenow")
-            if after != before:
+            if after != before or time.monotonic() >= deadline:
                 return after
-            await window.page.wait_for_timeout(50)
-        return before
+            await asyncio.sleep(0.05)
 
-    await locator.focus(timeout=budget.remaining_ms())
     if not reached(now) and target in (low, high):
         now = await press("Home" if target == low else "End", now)
-    keys = 0
-    while not reached(now):
-        if keys == len(_SLIDER_KEYS):
-            raise ActionExecutionError("fill", window.page.url, reason="The slider does not move with its keyboard")
-        up = target > now
-        increase, decrease = _SLIDER_KEYS[keys]
+    moved = False
+    for page_keys, (increase, decrease) in zip((True, False, False), _SLIDER_KEYS):
+        swapped = False
         for _ in range(MAX_SLIDER_KEYS):
+            if reached(now):
+                return
+            up = target > now
             after = await press(increase if up else decrease, now)
-            if after == now or (after > now) != up:
-                # this key does nothing, or moves the other way: try the next ones
-                keys += 1
+            if after == now:
+                # this pair does nothing (or no more): try the next one
                 break
+            moved = True
+            if (after > now) != up:
+                if swapped:
+                    break
+                # this pair moves the other way
+                increase, decrease, swapped = decrease, increase, True
+                now = after
+                continue
             if (after > target) == up and not reached(after):
-                if keys == 0:
+                if page_keys:
                     # Page Up / Down went past the value: the arrows come back from there
                     now = after
-                    keys += 1
                     break
                 # between two steps: the closer one
                 if abs(after - target) > abs(now - target):
                     _ = await press(decrease if up else increase, after)
                 return
             now = after
-            if reached(now):
-                return
         else:
             raise ActionExecutionError(
                 "fill", window.page.url, reason=f"The slider did not reach {value!r} in {MAX_SLIDER_KEYS} keys"
             )
+    if not reached(now):
+        reason = "The slider does not move with its keyboard" if not moved else f"The slider did not reach {value!r}"
+        raise ActionExecutionError("fill", window.page.url, reason=reason)
 
 
 async def _scroll_target(window: BrowserWindow, action: ScrollUpAction | ScrollDownAction) -> None:
