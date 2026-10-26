@@ -85,6 +85,10 @@ async def test_contenteditable_cut_by_the_viewport_is_a_field_in_view() -> None:
 
         assert [(action.id, action.type) for action in obs.space.interaction_actions] == [("I1", "fill")]
 
+        result = await session.aexecute(type="fill", id="I1", value="Clipped replacement")
+        assert result.success, result.message
+        assert await session.window.page.locator(".editor").inner_text() == "Clipped replacement"
+
 
 @pytest.mark.asyncio
 async def test_contenteditable_cut_by_a_scrolling_panel_is_a_field_in_view() -> None:
@@ -95,6 +99,10 @@ async def test_contenteditable_cut_by_a_scrolling_panel_is_a_field_in_view() -> 
         obs = await session.aobserve()
 
         assert [(action.id, action.type) for action in obs.space.interaction_actions] == [("I1", "fill")]
+
+        result = await session.aexecute(type="fill", id="I1", value="Clipped replacement")
+        assert result.success, result.message
+        assert await session.window.page.locator(".editor").inner_text() == "Clipped replacement"
 
 
 @pytest.mark.asyncio
@@ -126,3 +134,114 @@ async def test_blocks_of_an_editable_body_stay_offered() -> None:
 
         actions = [(action.id, action.text_label) for action in obs.space.interaction_actions]
         assert actions == [("M1", "Hello bold"), ("M2", "World")]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("shadow", [False, True])
+@pytest.mark.parametrize("scale", [1, 2])
+async def test_clipped_editor_uses_the_scroll_box_inner_bounds(shadow: bool, scale: int) -> None:
+    """A visible slice stays fillable across scaled borders and shadow hosts, until scrolled away."""
+    contents = """<div style="height:70px"></div>
+      <div class="editor" contenteditable="true" style="height:300px;width:220px">
+        <span onclick="this.dataset.clicked = 'yes'">Open details</span><p>Notes</p>
+      </div><div style="height:300px"></div>"""
+    page = f"""<div id="box" style="height:100px;width:260px;overflow:auto;border:20px solid;
+      transform:scale({scale});transform-origin:top left">{"" if shadow else contents}</div>"""
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+        if shadow:
+            _ = await session.window.page.locator("#box").evaluate(
+                "(box, contents) => { box.attachShadow({mode: 'open'}).innerHTML = contents; }", contents
+            )
+        editor = session.window.page.locator(".editor")
+        assert await editor.evaluate("""element => {
+            const box = document.getElementById('box');
+            const rect = box.getBoundingClientRect();
+            const scale = rect.height / box.offsetHeight;
+            const own = element.getBoundingClientRect();
+            const y = (own.top + rect.top + (box.clientTop + box.clientHeight) * scale) / 2;
+            return element.contains(element.getRootNode().elementFromPoint(own.left + 10, y));
+        }""")
+        obs = await session.aobserve()
+        assert [(action.id, action.type) for action in obs.space.interaction_actions] == [
+            ("I1", "fill"),
+            ("M1", "click"),
+        ]
+        result = await session.aexecute(type="click", id="M1")
+        assert result.success, result.message
+        assert await editor.locator("span").get_attribute("data-clicked") == "yes"
+        result = await session.aexecute(type="fill", id="I1", value="Visible notes")
+        assert result.success, result.message
+        assert await editor.inner_text() == "Visible notes"
+
+        _ = await session.window.page.locator("#box").evaluate("box => { box.scrollTop = 400; }")
+        obs = await session.aobserve()
+        assert obs.space.interaction_actions == []
+        assert "_[:]<div>Visible notes</div>" in obs.space.description
+
+        _ = await session.window.page.locator("#box").evaluate("box => { box.scrollTop = 100; }")
+        obs = await session.aobserve()
+        assert [(action.id, action.type) for action in obs.space.interaction_actions] == [("I1", "fill")]
+        result = await session.aexecute(type="fill", id="I1", value="Scrolled notes")
+        assert result.success, result.message
+        assert await editor.inner_text() == "Scrolled notes"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("position", ["fixed", "absolute"])
+@pytest.mark.parametrize("transform", [False, True])
+async def test_editor_in_a_popup_obeys_its_containing_block(position: str, transform: bool) -> None:
+    page = f"""<div style="position:relative">
+      <div id="box" style="height:100px;width:300px;overflow:auto;
+        transform:{"translateZ(0)" if transform else "none"}">
+        <div style="height:400px"></div>
+        <div style="position:{position};top:150px;left:20px">
+          <div class="editor" contenteditable="true" style="width:200px;height:80px">Popup notes</div>
+        </div>
+      </div></div>"""
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+        editor = session.window.page.locator(".editor")
+        assert await editor.evaluate("""element => {
+            const rect = element.getBoundingClientRect();
+            return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2) === element;
+        }""") is (not transform)
+        obs = await session.aobserve()
+        if transform:
+            assert obs.space.interaction_actions == []
+            assert "_[:]<div>Popup notes</div>" in obs.space.description
+            _ = await session.window.page.locator("#box").evaluate("box => { box.scrollTop = 120; }")
+            obs = await session.aobserve()
+        assert [(action.id, action.type) for action in obs.space.interaction_actions] == [("I1", "fill")]
+        result = await session.aexecute(type="fill", id="I1", value="Popup replacement")
+        assert result.success, result.message
+        assert await editor.inner_text() == "Popup replacement"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("position", ["fixed", "absolute"])
+async def test_escaping_editor_is_hit_tested_beyond_the_scroll_box(position: str) -> None:
+    page = f"""<div style="position:relative">
+      <div style="height:100px;width:300px;overflow:auto">
+        <div style="height:400px"></div>
+        <div style="position:{position};top:80px;left:20px">
+          <div class="editor" contenteditable="true" style="width:200px;height:300px">Popup notes</div>
+        </div>
+      </div></div>
+      <div id="cover" style="position:fixed;top:0;left:0;width:400px;height:120px;z-index:10"></div>"""
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+        editor = session.window.page.locator(".editor")
+        assert await editor.evaluate("""element => {
+            const rect = element.getBoundingClientRect();
+            return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2) === element;
+        }""")
+        obs = await session.aobserve()
+        assert [(action.id, action.type) for action in obs.space.interaction_actions] == [("I1", "fill")]
+        result = await session.aexecute(type="fill", id="I1", value="Escaped notes")
+        assert result.success, result.message
+        assert await editor.inner_text() == "Escaped notes"
+
+        _ = await session.window.page.locator("#cover").evaluate("cover => { cover.style.height = '500px'; }")
+        obs = await session.aobserve()
+        assert obs.space.interaction_actions == []

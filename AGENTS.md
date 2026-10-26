@@ -122,6 +122,7 @@ digest covers the whitespace-normalized text read; the display retains at most 2
 Within budget the digest covers the entire selection. Budget exhaustion also sets valueTruncated,
 even if fewer than 200 normalized characters were read. Traverse assigned slots without native
 recursive flattening so nested slot traversal shares the same node budget.
+
 Scroll clipping follows positioned ancestors too: normal-flow controls in an escaping popup escape
 with it. Fixed popups with a transformed containing block can still be clipped by that block;
 `tests/browser/test_dom_offscreen_controls.py` checks both against Chromium hit testing and clicks.
@@ -135,6 +136,11 @@ Editor hit testing and uncovered-area probes share the editor box clipped to the
 viewport and overflow ancestors, including ancestors outside its shadow root. Keep
 `tests/browser/test_dom_contenteditable.py` and `test_dom_covered_controls.py` passing
 together: probing the original editor box loses editors cut by a scroll panel or the fold.
+
+Editing hosts use the center of their visible portion for both hit testing and off-screen
+classification. Intersect only axes that clip, using the scaled inner bounds across shadow
+hosts, and respect positioned popup escapes; a full-box center can be outside while the
+editor still accepts a fill. `tests/browser/test_dom_contenteditable.py` covers this integration.
 
 ## Public API
 

@@ -1682,13 +1682,22 @@
 		let { left, top, right, bottom } = middle;
 		if (isEditingHost(element)) {
 			let visible = [Math.max(left, 0), Math.max(top, 0), Math.min(right, window.innerWidth), Math.min(bottom, window.innerHeight)];
-			// the panels that clip it (`overflow` other than `visible`)
-			for (let parent = composedParent(element); parent !== null && parent !== BODY; parent = composedParent(parent)) {
+			// Share the scroll-control clipping rules: cross shadow hosts, respect escaping popups,
+			// and intersect each clipped axis with the scaled inner box, excluding borders/scrollbars.
+			for (let parent = reachAncestor(element); parent; parent = reachAncestor(parent)) {
+				if (escapesClip(element, parent)) continue;
 				const style = getCachedComputedStyle(parent);
-				if (!style || (style.overflowX === "visible" && style.overflowY === "visible")) continue;
 				const box = getCachedBoundingRect(parent);
-				if (!box) continue;
-				visible = [Math.max(visible[0], box.left), Math.max(visible[1], box.top), Math.min(visible[2], box.right), Math.min(visible[3], box.bottom)];
+				for (const vertical of [false, true]) {
+					if (visibleRange(parent, box, style, vertical) === null) continue;
+					const layoutSize = propertyOf(parent, vertical ? "offsetHeight" : "offsetWidth");
+					const scale = layoutSize > 0 ? (vertical ? box.height : box.width) / layoutSize : 1;
+					const start = (vertical ? box.top : box.left) + propertyOf(parent, vertical ? "clientTop" : "clientLeft") * scale;
+					const end = start + propertyOf(parent, vertical ? "clientHeight" : "clientWidth") * scale;
+					const axis = vertical ? 1 : 0;
+					visible[axis] = Math.max(visible[axis], start);
+					visible[axis + 2] = Math.min(visible[axis + 2], end);
+				}
 			}
 			if (visible[0] < visible[2] && visible[1] < visible[3]) [left, top, right, bottom] = visible;
 		}
@@ -1717,7 +1726,7 @@
 
 	/**
 	 * Checks if an element is above or below the (expanded) viewport, where scrolling the page brings it:
-	 * the center of its middle box (where `isTopElement` looks for it) is outside the viewport vertically,
+	 * the center of its hit-test area (see `topElementArea`) is outside the viewport vertically,
 	 * and the element is across it horizontally. A control cut by the edge of the viewport, with its center
 	 * outside, is then off-screen rather than in view. Content left or right of the viewport is not:
 	 * scrolling does not reveal it (off-canvas menus, skip links, carousel slides).
@@ -1730,8 +1739,8 @@
 		const rects = getCachedClientRects(element);
 		const rect = getCachedBoundingRect(element);
 		if (!rects || rects.length === 0 || !rect || rect.width === 0 || rect.height === 0) return false;
-		const middle = rects[Math.floor(rects.length / 2)];
-		const centerY = middle.top + middle.height / 2;
+		const area = topElementArea(element, rects);
+		const centerY = (area.top + area.bottom) / 2;
 		const outside = centerY < -viewportExpansion || centerY > window.innerHeight + viewportExpansion;
 		const across = rect.right > -viewportExpansion && rect.left < window.innerWidth + viewportExpansion;
 		return outside && across;
@@ -1739,7 +1748,7 @@
 
 	/**
 	 * Checks if an element is above or below the box of an ancestor that scrolls vertically, where scrolling
-	 * that ancestor brings it: the center of its middle box (see `isAboveOrBelowViewport`) is outside the
+	 * that ancestor brings it: the center of its hit-test area (see `topElementArea`) is outside the
 	 * ancestor's inner visible box. A box that the element escapes (see `escapesClip`) does not scroll it.
 	 *
 	 * @param {HTMLElement} element - The element to check.
@@ -1748,8 +1757,8 @@
 	function isAboveOrBelowScrollBox(element) {
 		const rects = getCachedClientRects(element);
 		if (!rects || rects.length === 0) return false;
-		const middle = rects[Math.floor(rects.length / 2)];
-		const centerY = middle.top + middle.height / 2;
+		const area = topElementArea(element, rects);
+		const centerY = (area.top + area.bottom) / 2;
 		for (let ancestor = reachAncestor(element); ancestor; ancestor = reachAncestor(ancestor)) {
 			const box = getCachedBoundingRect(ancestor);
 			const range = visibleRange(ancestor, box, getCachedComputedStyle(ancestor), true);
