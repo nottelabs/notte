@@ -11,6 +11,7 @@ Three text algorithms read the tree, with different outputs, and are kept as the
 - `action_space.children_texts`: the text rendered in the action descriptions
 """
 
+import re
 from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass, field
@@ -112,14 +113,16 @@ class _Highlight:
 
 
 def duplicate_clickables(root: RawNode, nodes: dict[str, RawNode]) -> set[int]:
-    """The highlight indices of the generic clickables that duplicate a real control, which get no id.
+    """The highlight indices of the elements that duplicate a real control, which get no id.
 
-    A pointer cursor makes an element clickable, and pages put one on containers around their controls. Such
-    an element is a duplicate when it is:
-    - inside a control (a link, a button, ...): clicking it clicks the control, unless it has a name or a
-      click handler of its own;
-    - around a single control, and named like it: its name, or else its text, is empty or the control's text
-      or name (a `<div>Go</div>` around a "Go" button), unless it has a click handler of its own.
+    A pointer cursor makes an element clickable, and pages put one on containers around their controls; ARIA
+    widgets wrap native ones (a `role="menuitem"` item around its link). Such an element is a duplicate when it is:
+    - a generic clickable inside a control (a link, a button, ...): clicking it clicks the control, unless it
+      has a name or a click handler of its own;
+    - around a single control, and says nothing more: its name, or else its text, is empty or, once the
+      control's name and text are taken out, made of words of the control's name (a `<div>Go</div>` around a
+      "Go" button, a column header "Age" around its "Age: Activate to sort" button), unless it has a click
+      handler of its own.
     """
     highlights = _highlights(root, nodes)
     duplicates: set[int] = set()
@@ -134,17 +137,28 @@ def duplicate_clickables(root: RawNode, nodes: dict[str, RawNode]) -> set[int]:
         # nested wrappers first: a wrapper around a wrapper of the control is then around the control alone
         for child in node.children:
             around(child)
-        if node.control or node.handler or node.index in duplicates:
+        if node.handler or node.index in duplicates:
             return
         nested = [child for child in node.descendants() if child.index not in duplicates]
-        label = node.name or node.text
-        if len(nested) == 1 and nested[0].control and label in ("", nested[0].text, nested[0].name):
+        if len(nested) == 1 and nested[0].control and _says_nothing_more(node.name or node.text, nested[0]):
             duplicates.add(node.index)
 
     for node in highlights:
         inside(node, False)
         around(node)
     return duplicates
+
+
+_WORD = re.compile(r"\w+")
+
+
+def _says_nothing_more(label: str, control: _Highlight) -> bool:
+    """Whether a wrapper's label says nothing more than the control inside it: once the control's name and text
+    are taken out, what is left is empty or made of words of the control's name."""
+    for part in (control.name, control.text):
+        if len(part) > 0:
+            label = label.replace(part, " ", 1)
+    return set(_WORD.findall(label)) <= set(_WORD.findall(control.name))
 
 
 def _highlights(raw: RawNode, nodes: dict[str, RawNode]) -> list[_Highlight]:

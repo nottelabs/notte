@@ -140,44 +140,13 @@
   },
   {
     "category": "Interaction action",
-    "description": "<div role=\"combobox\" aria_expanded=\"false\"></div>",
-    "model_dump": {
-      "accessible_name": null,
-      "category": "Interaction action",
-      "description": "<div role=\"combobox\" aria_expanded=\"false\"></div>",
-      "id": "I3",
-      "press_enter": false,
-      "selector": {
-        "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div > div:nth-of-type(2).react-autosuggest__container[role=\"combobox\"]",
-        "iframe_parent_css_selectors": [],
-        "in_iframe": false,
-        "in_shadow_root": false,
-        "notte_selector": "http://golden.test/checkout/joybird.html:4527775504046182633:3609651542926669075:-61016933632334638:-6738955754570962300:8694050610755034607:-5710413671310308552:-6514852411107177483:-8445324710261790490:5808555175649166562:8249729778531121377:-1240875454276419760:5103259840852300795:8876757161602101371:786505723878342476:-7294354762090170525:5773350639740689725:-1119153515339724329:-5141126694262696053:-3019047118626234759:5152114783310978409:6800264405176807842:7135508564155365947",
-        "playwright_selector": null,
-        "python_selector": null,
-        "xpath_selector": "html/body/div[1]/div/div/div/div[1]/div[2]/div/form/div/div[2]"
-      },
-      "text_label": "Street address * Street address * address",
-      "timeout": 15000,
-      "type": "select_dropdown_option",
-      "value": "<sample_value>"
-    },
-    "param": {
-      "default": null,
-      "name": "value",
-      "type": "string",
-      "values": []
-    }
-  },
-  {
-    "category": "Interaction action",
     "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"address\"></input>",
     "model_dump": {
       "accessible_name": "Street address *",
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"address\"></input>",
-      "id": "I4",
+      "id": "I3",
       "press_enter": false,
       "selector": {
         "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div > span:nth-of-type(2) > input.text-lg.font-bold.bg-transparent.border-0.min-h-fit.w-full.outline-0[aria-describedby=\"LabeledTextInput__input-5625354-error \"][autocomplete=\"address-line1\"][id=\"LabeledTextInput__input-5625354\"][name=\"address\"][placeholder][type=\"text\"]",
@@ -209,7 +178,7 @@
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"city\"></input>",
-      "id": "I5",
+      "id": "I4",
       "press_enter": false,
       "selector": {
         "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div > div:nth-of-type(3) > div:nth-of-type(1) > div > span:nth-of-type(2) > input.text-lg.font-bold.bg-transparent.border-0.min-h-fit.w-full.outline-0[aria-describedby=\"city-error \"][autocomplete=\"address-level2\"][id=\"city\"][name=\"city\"][placeholder][type=\"text\"]",
@@ -241,7 +210,7 @@
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"apartment\"></input>",
-      "id": "I6",
+      "id": "I5",
       "press_enter": false,
       "selector": {
         "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div > div:nth-of-type(4) > div:nth-of-type(1) > div:nth-of-type(1) > div > span:nth-of-type(2) > input.text-lg.font-bold.bg-transparent.border-0.min-h-fit.w-full.outline-0[aria-describedby=\"apartment-error \"][autocomplete=\"address-line2\"][id=\"apartment\"][name=\"apartment\"][placeholder][type=\"text\"]",
@@ -273,7 +242,7 @@
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"company\"></input>",
-      "id": "I7",
+      "id": "I6",
       "press_enter": false,
       "selector": {
         "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div > div:nth-of-type(4) > div:nth-of-type(2) > div:nth-of-type(1) > div > span:nth-of-type(2) > input.text-lg.font-bold.bg-transparent.border-0.min-h-fit.w-full.outline-0[aria-describedby=\"company-error \"][autocomplete=\"organization\"][id=\"company\"][name=\"company\"][placeholder][type=\"text\"]",
@@ -304,7 +273,7 @@
       "accessible_name": "State *",
       "category": "Interaction action",
       "description": "<select></select>",
-      "id": "I8",
+      "id": "I7",
       "press_enter": false,
       "selector": {
         "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(1) > div > span:nth-of-type(2) > select.appearance-none.border-0.h-full.w-full[aria-describedby=\"state-error\"][autocomplete=\"address-level1\"][id=\"state\"]",
@@ -336,7 +305,7 @@
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"text\" value=\"\" placeholder=\"\" name=\"zipcode\"></input>",
-      "id": "I9",
+      "id": "I8",
       "press_enter": false,
       "selector": {
         "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div > div:nth-of-type(5) > div:nth-of-type(2) > div:nth-of-type(1) > div > span:nth-of-type(2) > input.text-lg.font-bold.bg-transparent.border-0.min-h-fit.w-full.outline-0[aria-describedby=\"zipcode-error \"][autocomplete=\"postal-code\"][id=\"zipcode\"][name=\"zipcode\"][placeholder][type=\"text\"]",
@@ -368,7 +337,7 @@
       "category": "Interaction action",
       "clear_before_fill": true,
       "description": "<input type=\"tel\" value=\"\" placeholder=\"\" name=\"phone_number\"></input>",
-      "id": "I10",
+      "id": "I9",
       "press_enter": false,
       "selector": {
         "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div > div:nth-of-type(6) > div:nth-of-type(1) > div > span:nth-of-type(2) > input.text-lg.font-bold.bg-transparent.border-0.min-h-fit.w-full.outline-0[type=\"tel\"][aria-describedby=\"phone_number-error \"][autocomplete=\"tel\"][id=\"phone_number\"][name=\"phone_number\"][placeholder]",

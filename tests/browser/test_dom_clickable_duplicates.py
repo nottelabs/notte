@@ -2,6 +2,8 @@
 
 `cursor` is inherited: the label and counter wrappers of a link or a button have its pointer cursor, and
 used to be offered as generic clickables (`M`), next to the link, which then had no text of its own.
+ARIA widgets wrap native controls too: a `role="menuitem"` item around its link, a sortable column header
+around its sort button. Each pair was offered twice.
 """
 
 from urllib.parse import quote
@@ -43,3 +45,33 @@ async def test_a_control_is_offered_once() -> None:
         ("B4", "Save"),
     ]
     assert 'L1[:]<a href="/fork">Fork\n17.1k</a>' in observation.space.description
+
+
+WRAPPED = """
+<style>.sort { display: inline-block; width: 12px; height: 12px }</style>
+<ul>
+  <li role="menuitem"><a href="/" data-test="nav-home">Home</a></li>
+  <li role="menuitem"><button data-test="nav-categories" aria-expanded="false">Categories</button></li>
+</ul>
+<table><thead><tr>
+  <th style="cursor: pointer">Age <span class="sort" role="button" tabindex="0" aria-label="Age: Activate to sort"></span></th>
+  <th style="cursor: pointer">Name <span class="sort" role="button" tabindex="0" aria-label="Sort"></span></th>
+</tr></thead></table>
+"""
+
+
+@pytest.mark.asyncio
+async def test_a_wrapper_that_says_nothing_more_than_its_control_is_not_offered() -> None:
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(WRAPPED)}")
+        observation = await session.aobserve()
+
+    actions = [(action.id, action.accessible_name) for action in observation.space.interaction_actions]
+    assert actions == [
+        ("L1", "Home"),
+        ("B1", "Categories"),
+        ("B2", "Age: Activate to sort"),
+        # the header says "Name", which its button's name does not: both are kept
+        ("M1", "Name Sort"),
+        ("B3", "Sort"),
+    ]
