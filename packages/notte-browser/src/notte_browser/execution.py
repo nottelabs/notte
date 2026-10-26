@@ -111,6 +111,7 @@ _SCROLL_BOUNDARY = script("scroll_boundary.js")
 
 # Page-side implementation: js/largest_scroller.js
 _LARGEST_SCROLLER = script("largest_scroller.js")
+_FRAME_SCROLL_CLIP = script("frame_scroll_clip.js")
 
 # A scroll that has not started `SCROLL_START_MS` after the wheel failed; one that started has ended once its
 # position is the same `SCROLL_STABLE_MS` apart (a smooth scroll, a scroll-snap), at most `SCROLL_CAP_MS` after it.
@@ -173,7 +174,7 @@ _FIND_DROPDOWN_OPTION = script("find_dropdown_option.js")
 async def _scroll_container_point(window: BrowserWindow, delta: int) -> tuple[float, float] | None:
     """Where to send a wheel that should scroll by `delta`: the center of the visible part of the scroll container with
     the largest visible area that can still move that way (`js/largest_scroller.js`), in the page or one of its frames,
-    in page coordinates. None when there is none. A frame is clipped by the viewport, not by the frames around it."""
+    in page coordinates. None when there is none. Frames are clipped by each parent document's viewport and ancestors."""
     page = window.page
     best: tuple[float, float, float] | None = None
     for frame in page.frames:
@@ -188,8 +189,24 @@ async def _scroll_container_point(window: BrowserWindow, delta: int) -> tuple[fl
                 border_x, border_y = await element.evaluate("e => [e.clientLeft, e.clientTop]")
                 width, height = await page.evaluate("() => [window.innerWidth, window.innerHeight]")
                 origin = (box["x"] + border_x, box["y"] + border_y)
-                # the part of the viewport over the frame, in the frame's coordinates
-                clip = {"left": -origin[0], "top": -origin[1], "right": width - origin[0], "bottom": height - origin[1]}
+                clip = {"left": 0.0, "top": 0.0, "right": float(width), "bottom": float(height)}
+                ancestor = frame
+                while ancestor.parent_frame is not None:
+                    ancestor_element = await ancestor.frame_element()
+                    ancestor_box = await ancestor_element.bounding_box()
+                    if ancestor_box is None:
+                        clip["right"] = clip["left"]
+                        break
+                    visible = await ancestor_element.evaluate(_FRAME_SCROLL_CLIP)
+                    for edge in ("left", "top", "right", "bottom"):
+                        offset = ancestor_box["x" if edge in ("left", "right") else "y"]
+                        intersect = max if edge in ("left", "top") else min
+                        clip[edge] = intersect(clip[edge], offset + visible[edge])
+                    ancestor = ancestor.parent_frame
+                if clip["right"] <= clip["left"] or clip["bottom"] <= clip["top"]:
+                    continue
+                # Convert the visible intersection in page coordinates into this frame's coordinates.
+                clip = {edge: value - origin[0 if edge in ("left", "right") else 1] for edge, value in clip.items()}
             found = await frame.evaluate(_LARGEST_SCROLLER, {"delta": delta, "clip": clip})
         except Error as error:
             if not _scroll_context_disappeared(frame, error):

@@ -268,6 +268,28 @@ async def test_scroll_reaches_a_list_inside_a_frame_away_from_the_mouse(page: Pa
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("nested", [False, True])
+async def test_scroll_reaches_a_frame_clipped_by_an_ancestor(page: Page, nested: bool) -> None:
+    await page.set_content(
+        "<style>body { margin: 0; overflow: hidden }</style>"
+        '<div style="margin: 100px; width: 600px; height: 100px; overflow: hidden">'
+        '<iframe style="border: 0; width: 600px; height: 450px"></iframe></div>'
+    )
+    frame = page.frames[1]
+    if nested:
+        await frame.set_content(
+            "<style>body { margin: 0; overflow: hidden }</style>"
+            '<iframe style="margin: 20px; border: 0; width: 550px; height: 400px"></iframe>'
+        )
+        frame = frame.child_frames[0]
+    await frame.set_content(PANEL_HTML)
+    await page.mouse.move(10, 10)
+
+    assert await scroll(page, ScrollDownAction(amount=200))
+    assert await frame.locator("#panel").evaluate("panel => panel.scrollTop") > 0
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("up", [False, True])
 async def test_scroll_still_fails_at_panel_boundary(page: Page, up: bool) -> None:
     await page.set_content(PANEL_HTML)
