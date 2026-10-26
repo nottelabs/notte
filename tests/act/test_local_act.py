@@ -1726,3 +1726,25 @@ async def test_a_fact_read_in_a_closed_tab_reaches_the_decider_and_writer(sessio
         assert source["text"] == f"Your verification code is {'{{code}}' if private else '4821'}.\n[B1] Return to form"
         if private:
             assert "4821" not in json.dumps(recent)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("second", ["Jane", "John"])
+async def test_same_named_fields_keep_their_own_unsubmitted_warnings(session: NotteSession, second: str) -> None:
+    await session.window.page.set_content(
+        '<section><h2>Billing</h2><label>Name<input id="billing"></label></section>'
+        '<section><h2>Shipping</h2><label>Name<input id="shipping"></label></section>'
+    )
+    decider = FakeDecider(choices=[])
+    _ = await _type(session, decider, "billing", "Jane")
+    _ = await _type(session, decider, "shipping", second)
+    # Action IDs may change when another field is inserted. Identity comes from selectors, not name/value or ID.
+    await session.window.page.evaluate(
+        "document.body.insertAdjacentHTML('afterbegin', '<label>Other<input id=other></label>')"
+    )
+    decider.choices.append({"operation": "DONE"})
+    _ = await session.aact("Fill the names", decider=decider)
+    ids = await _ids(session)
+    marked = {e["index"] for e in decider.states[-1].elements if e.get("submitted") is False}
+    assert marked == {ids["billing"], ids["shipping"]}
+    assert [e.get("submitted") for e in decider.states[-1].recent_actions] == [False, False]
