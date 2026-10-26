@@ -191,6 +191,8 @@
 	const MAX_STATE_VALUE_LENGTH = 200;
 	const MAX_STATE_OPTIONS = 50;
 	const MAX_STATE_OPTION_LABEL_LENGTH = 100;
+	const MAX_LISTBOX_VALUE_NODES = 1024;
+	const MAX_LISTBOX_VALUE_CODE_UNITS = 4096;
 
 	function truncateStateValue(value, state) {
 		if (value.length <= MAX_STATE_VALUE_LENGTH) return value;
@@ -253,6 +255,8 @@
 				state.checked = element.checked;
 			} else if (type === "password") {
 				state.filled = element.value.length > 0;
+			} else if (isListboxValueButton(element)) {
+				state.value = truncateStateValue(element.value, state);
 			} else if (type !== "submit" && type !== "button" && type !== "reset" && type !== "image" && type !== "hidden") {
 				state.value = truncateStateValue(element.value, state);
 			}
@@ -264,6 +268,8 @@
 			// an ARIA slider or spin button: the value it shows ("14 Point"), else its number
 			const value = getAttribute(element, "aria-valuetext") ?? getAttribute(element, "aria-valuenow");
 			if (value !== null) state.value = truncateStateValue(value, state);
+		} else if (isListboxValueButton(element)) {
+			state.value = readListboxValue(element, state);
 		}
 		if (state.checked === undefined) {
 			// role="checkbox" / "switch" / "radio" / "menuitemcheckbox" widgets
@@ -357,13 +363,29 @@
 	}
 
 	/**
+	 * Checks if an element is a button that opens a listbox and is labelled by a label and by itself
+	 * (`aria-labelledby="label button"`), as in the collapsible dropdown listbox pattern: its content is
+	 * the selected option, its value, which the accessible name would append to the label.
+	 *
+	 * @param {HTMLElement} element - The element to check.
+	 * @returns {boolean} Whether the element is a listbox button showing its value.
+	 */
+	function isListboxValueButton(element) {
+		const id = idOf(element);
+		if (getRole(element) !== "button" || getAttribute(element, "aria-haspopup") !== "listbox" || !id) return false;
+		const ids = (getAttribute(element, "aria-labelledby") || "").trim().split(/\s+/);
+		return ids.length > 1 && ids.includes(id);
+	}
+
+	/**
 	 * The accessible name of an element (https://www.w3.org/TR/accname-1.2/), as a screen reader
 	 * announces it: `aria-labelledby`, `aria-label`, `<label>` (for / wrapping), `alt`, `<legend>`,
 	 * button `value`, the text content of buttons, links and other roles named from content, then
 	 * `title` and `placeholder`. Shadow roots and slotted content are traversed.
 	 *
 	 * Unlike browsers, the value of an editable control (a text field, a select) inside a label or an
-	 * `aria-labelledby` target is never part of a name, so a name cannot contain what was typed.
+	 * `aria-labelledby` target is never part of a name, so a name cannot contain what was typed. Nor is
+	 * the selected option of a listbox button labelled by itself (see `isListboxValueButton`).
 	 * CSS generated content (`::before` / `::after`) is not read. Returns `undefined` for no name.
 	 *
 	 * @param {HTMLElement} element - A highlighted (interactive) element.
@@ -387,9 +409,11 @@
 		if (!step.labelledBy && hasAttribute(element, "aria-labelledby")) {
 			const scope = getRootNode(element);
 			const parts = [];
+			// a listbox button's own content is its value (see `getLiveState`), not part of its name
+			const valueButton = step.root && isListboxValueButton(element);
 			for (const id of getAttribute(element, "aria-labelledby").trim().split(/\s+/)) {
 				const target = id && (scope instanceof Document ? DOCUMENT.getElementById.call(scope, id) : scope.getElementById?.(id));
-				if (!target) continue;
+				if (!target || (valueButton && target === element)) continue;
 				context.visited.delete(target);
 				parts.push(textAlternative(target, context, {
 					root: false, labelledBy: true, content: true, hidden: step.hidden || isHiddenForName(target),
@@ -463,15 +487,96 @@
 		return text;
 	}
 
-	function contentText(element, context, step) {
-		const childStep = { root: false, labelledBy: step.labelledBy, content: true, hidden: step.hidden };
-		let children = shadowRootOf(element) ? shadowRootOf(element).childNodes : childNodesOf(element);
+	function contentChildren(element, flatten = true) {
+		let children = childNodesOf(shadowRootOf(element) || element);
 		if (localNameOf(element) === "slot") {
-			const assigned = element.assignedNodes({ flatten: true });
+			const assigned = HTMLSlotElement.prototype.assignedNodes.call(element, { flatten });
 			if (assigned.length > 0) children = assigned;
 		}
+		return children;
+	}
+
+	/**
+	 * Streams rendered selection text, never descendant accessible names or ARIA references.
+	 * Each composed-tree node is visited at most once, without recursive calls or a full selection
+	 * string. Whitespace is collapsed across node boundaries before the UTF-16 FNV-1a hash, matching
+	 * truncateStateValue. Node and raw-text budgets bound each read, including whitespace and hidden
+	 * nodes. A budget-limited digest covers only the selection prefix read before the cutoff.
+	 */
+	function readListboxValue(element, state) {
+		let value = "";
+		let length = 0;
+		let space = false;
+		let hash = 0xcbf29ce484222325n;
+		let nodesLeft = MAX_LISTBOX_VALUE_NODES;
+		let codeUnitsLeft = MAX_LISTBOX_VALUE_CODE_UNITS;
+		let limited = false;
+		function codeUnit(code) {
+			if (length < MAX_STATE_VALUE_LENGTH) value += String.fromCharCode(code);
+			length = Math.min(length + 1, MAX_STATE_VALUE_LENGTH + 1);
+			hash = BigInt.asUintN(64, (hash ^ BigInt(code)) * 0x100000001b3n);
+		}
+		function append(text) {
+			for (let i = 0; i < text.length; i++) {
+				if (/\s/.test(text[i])) {
+					space = length > 0;
+				} else {
+					if (space) codeUnit(32);
+					space = false;
+					codeUnit(text.charCodeAt(i));
+				}
+			}
+		}
+		const visited = new Set([element]);
+		const stack = [{ children: contentChildren(element, false)[Symbol.iterator](), block: false }];
+		while (stack.length > 0) {
+			const frame = stack[stack.length - 1];
+			const next = frame.children.next();
+			if (next.done) {
+				if (frame.block) append(" ");
+				stack.pop();
+				continue;
+			}
+			if (nodesLeft === 0) {
+				limited = true;
+				break;
+			}
+			nodesLeft--;
+			const child = next.value;
+			if (visited.has(child)) continue;
+			visited.add(child);
+			if (nodeTypeOf(child) === Node.TEXT_NODE) {
+				const data = child.data;
+				const text = data.slice(0, codeUnitsLeft);
+				codeUnitsLeft -= text.length;
+				append(transformText(text, parentElementOf(child)));
+				if (text.length < data.length) {
+					limited = true;
+					break;
+				}
+			} else if (nodeTypeOf(child) === Node.ELEMENT_NODE) {
+				if (isHiddenForName(child) ||
+					matches(child, "script, style, link, meta, noscript, template, svg title, svg desc, svg defs, svg metadata")) continue;
+				if (localNameOf(child) === "br") {
+					append(" ");
+					continue;
+				}
+				const block = !isInline(child);
+				if (block) append(" ");
+				stack.push({ children: contentChildren(child, false)[Symbol.iterator](), block });
+			}
+		}
+		if (length > MAX_STATE_VALUE_LENGTH || limited) {
+			state.valueTruncated = true;
+			state.valueDigest = hash.toString(16).padStart(16, "0");
+		}
+		return value;
+	}
+
+	function contentText(element, context, step) {
+		const childStep = { root: false, labelledBy: step.labelledBy, content: true, hidden: step.hidden };
 		let text = "";
-		for (const child of children) {
+		for (const child of contentChildren(element)) {
 			if (context.budget <= 0) break;
 			if (nodeTypeOf(child) === Node.TEXT_NODE) {
 				text += transformText(child.data, parentElementOf(child));

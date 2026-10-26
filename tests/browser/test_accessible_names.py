@@ -6,6 +6,7 @@ from urllib.parse import quote
 
 import pytest
 import pytest_asyncio
+from notte_browser.dom.parsing import DOM_TREE_JS
 from notte_browser.session import NotteSession
 from notte_core.dom_tree import DomNode
 
@@ -168,3 +169,314 @@ async def test_formatting_whitespace_does_not_cut_names(session: NotteSession) -
     _ = await session.aobserve()
     (node,) = session.snapshot.interaction_nodes()
     assert node.accessible_name == "Save"
+
+
+LISTBOX_BUTTONS = """
+<span id="speed-label">Shipping speed</span>
+<button id="speed" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="speed-label speed">
+  Standard (5-7 days)
+</button>
+<ul role="listbox" aria-labelledby="speed-label" hidden><li role="option" aria-selected="true">Standard</li></ul>
+<button id="size" aria-haspopup="listbox" aria-labelledby="size">Medium</button>
+<span id="delete-label">section 2</span>
+<button id="delete" aria-labelledby="delete delete-label">Delete</button>
+"""
+
+
+@pytest.mark.asyncio
+async def test_a_listbox_button_shows_its_selected_option_as_its_value() -> None:
+    # the collapsible listbox pattern labels its button by the label and by the button, whose text is the
+    # selected option: "Shipping speed Standard (5-7 days)" was one name, with no value to tell them apart
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(_data_url(LISTBOX_BUTTONS))
+        _ = await session.aobserve()
+        nodes = _nodes_by_html_id(session)
+
+    speed = nodes["speed"]
+    assert speed.accessible_name == "Shipping speed"
+    assert speed.state is not None and speed.state.value == "Standard (5-7 days)"
+    # labelled by itself alone, its text is its name
+    assert nodes["size"].accessible_name == "Medium"
+    # a button that does not open a listbox is named as browsers do
+    assert nodes["delete"].accessible_name == "Delete section 2"
+    assert nodes["delete"].state is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "control",
+    [
+        'a href="#next"',
+        "button",
+        'div role="button" tabindex="0"',
+        'a href="#next" role="button"',
+        'form role="button" tabindex="0"',
+    ],
+)
+async def test_listbox_value_rule_requires_a_button(control: str) -> None:
+    """Only native and semantic buttons split the label from the selected value."""
+    tag = control.split()[0]
+    fields = '<input type="hidden" name="children"><input type="hidden" name="childNodes">' if tag == "form" else ""
+    html = f'<span id="label">Shipping speed</span><{control} id="choice" aria-haspopup="listbox" aria-labelledby="label choice">Standard{fields}</{tag}>'
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(_data_url(html))
+        _ = await session.aobserve()
+        choice = _nodes_by_html_id(session)["choice"]
+    if control == 'a href="#next"':
+        assert choice.accessible_name == "Shipping speed Standard"
+        assert choice.state is None
+    else:
+        assert choice.accessible_name == "Shipping speed"
+        assert choice.state is not None and choice.state.value == "Standard"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "selection",
+    [
+        '<span aria-label="Selected option">Standard</span>',
+        '<span aria-labelledby="other">Standard</span><span hidden id="other">Selected option</span>',
+        '<span>  Stan</span><span>dard</span><br><span style="text-transform: uppercase"> delivery </span>',
+        "<span>Standard</span><svg><title>Open dropdown</title></svg>",
+        '<svg width="160" height="30"><text x="0" y="20">Standard</text></svg>',
+        '<svg width="160" height="30"><title>Open dropdown</title><desc>Decorative icon</desc>'
+        "<metadata>Chart metadata</metadata><defs><text>Unused template</text></defs>"
+        '<text x="0" y="20"><tspan>Standard</tspan></text></svg>',
+    ],
+)
+async def test_listbox_value_reads_visible_text_instead_of_descendant_names(selection: str) -> None:
+    """Selection text ignores descendant names and icon metadata without changing name semantics."""
+    html = f'<span id="label">Shipping speed</span><button id="choice" aria-haspopup="listbox" aria-labelledby="label choice">{selection}</button><button id="ordinary"><span aria-label="Selected option">Standard</span></button>'
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(_data_url(html))
+        _ = await session.aobserve()
+        nodes = _nodes_by_html_id(session)
+    assert nodes["choice"].accessible_name == "Shipping speed"
+    state = nodes["choice"].state
+    assert state is not None
+    assert state.value == ("Standard DELIVERY" if "text-transform" in selection else "Standard")
+    assert nodes["ordinary"].accessible_name == "Selected option"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("input_type", ["button", "submit", "reset"])
+async def test_input_listbox_button_keeps_its_live_selection(input_type: str) -> None:
+    html = f"""
+    <span id="speed-label">Shipping speed</span>
+    <input type="{input_type}" id="speed" value="Standard"
+           aria-haspopup="listbox" aria-labelledby="speed-label speed">
+    <input type="button" id="plain" value="Save">
+    """
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(_data_url(html))
+        _ = await session.aobserve()
+        nodes = _nodes_by_html_id(session)
+        speed = nodes["speed"]
+        assert speed.accessible_name == "Shipping speed"
+        assert speed.state is not None and speed.state.value == "Standard"
+        assert nodes["plain"].accessible_name == "Save"
+        assert nodes["plain"].state is None
+
+        await session.window.page.locator("#speed").evaluate("element => element.value = 'Express'")
+        _ = await session.aobserve()
+        speed = _nodes_by_html_id(session)["speed"]
+        assert speed.accessible_name == "Shipping speed"
+        assert speed.state is not None and speed.state.value == "Express"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "hidden_content",
+    [
+        '<svg aria-hidden="true"><title>Open dropdown</title></svg>',
+        "<span hidden>Previous selection</span>",
+        '<span style="visibility: hidden">Previous selection</span>',
+    ],
+)
+async def test_listbox_button_value_excludes_hidden_content(hidden_content: str) -> None:
+    html = f"""
+    <span id="speed-label">Shipping speed</span>
+    <button id="speed" aria-haspopup="listbox" aria-labelledby="speed-label speed">
+      Standard (5-7 days){hidden_content}
+    </button>
+    """
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(_data_url(html))
+        _ = await session.aobserve()
+        speed = _nodes_by_html_id(session)["speed"]
+
+    assert speed.accessible_name == "Shipping speed"
+    assert speed.state is not None and speed.state.value == "Standard (5-7 days)"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("nested", [False, True])
+async def test_listbox_button_value_follows_slotted_selection(nested: bool) -> None:
+    html = """
+    <div id="host"><span slot="selected" aria-label="Selected option">Standard (5-7 days)<span hidden>Old choice</span></span></div>
+    <script>
+      document.getElementById("host").attachShadow({mode: "open"}).innerHTML = `
+        <style>button { width: 400px; text-align: left; }</style>
+        <span id="speed-label">Shipping speed</span>
+        <button id="speed" aria-haspopup="listbox" aria-labelledby="speed-label speed">
+          <slot name="selected"><span aria-label="Placeholder">Choose a speed</span></slot>
+        </button>`;
+    </script>
+    """
+    if nested:
+        html = html.replace('<slot name="selected">', '<slot><slot name="selected">').replace(
+            "</span></slot>", "</span></slot></slot>"
+        )
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(_data_url(html))
+        _ = await session.aobserve()
+        speed = _nodes_by_html_id(session)["speed"]
+        assert speed.accessible_name == "Shipping speed"
+        assert speed.state is not None and speed.state.value == "Standard (5-7 days)"
+
+        _ = await session.window.page.evaluate("document.querySelector('[slot=selected]').remove()")
+        _ = await session.aobserve()
+        speed = _nodes_by_html_id(session)["speed"]
+        assert speed.accessible_name == "Shipping speed"
+        assert speed.state is not None and speed.state.value == "Choose a speed"
+
+
+def _value_digest(value: str) -> str:
+    """The state contract hashes the normalized UTF-16 code units read with FNV-1a."""
+    hashed = 0xCBF29CE484222325
+    encoded = value.encode("utf-16-le")
+    for index in range(0, len(encoded), 2):
+        hashed = ((hashed ^ int.from_bytes(encoded[index : index + 2], "little")) * 0x100000001B3) & ((1 << 64) - 1)
+    return f"{hashed:016x}"
+
+
+@pytest.mark.asyncio
+async def test_listbox_selection_hashes_the_full_normalized_value() -> None:
+    """Within the traversal budget, suffix edits beyond display/name limits change the full digest."""
+    html = '<span id="label">Shipping speed</span><button style="width: 400px; overflow-wrap: anywhere" id="choice" aria-haspopup="listbox" aria-labelledby="label choice"></button>'
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(_data_url(html))
+        digests: list[str | None] = []
+        for suffix in ["first", "second", "second"]:
+            await page.locator("#choice").evaluate(
+                "(el, suffix) => { el.replaceChildren(document.createTextNode('  ' + 'x'.repeat(1200)), Object.assign(document.createElement('span'), {textContent: '\\n 🚚 ' + suffix + '  '})); }",
+                suffix,
+            )
+            _ = await session.aobserve()
+            state = _nodes_by_html_id(session)["choice"].state
+            assert state is not None and state.value == "x" * 200 and state.value_truncated
+            assert state.value_digest == _value_digest("x" * 1200 + " 🚚 " + suffix)
+            digests.append(state.value_digest)
+        assert digests[0] != digests[1] == digests[2]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("references", [0, 5000])
+async def test_listbox_value_does_not_expand_aria_graphs_or_materialize_the_selection(references: int) -> None:
+    """Enforce deterministic work/output budgets on the value reader, apart from the DOM build."""
+    html = '<span id="label">Shipping speed</span><button id="choice" aria-haspopup="listbox" aria-labelledby="label choice"></button><span id="external" hidden>Outside selection</span>'
+    # Exercise the actual reader in its browser context, without charging the unrelated tree build.
+    probe = DOM_TREE_JS.replace(
+        "const rootId = buildDomTree(BODY);",
+        """
+        const originalReplace = String.prototype.replace;
+        const originalGetAttribute = Element.prototype.getAttribute;
+        let reads = 0;
+        String.prototype.replace = function (...args) {
+            if (this.length > 1024) throw new Error('materialized selection exceeds string-work budget');
+            return originalReplace.apply(this, args);
+        };
+        Element.prototype.getAttribute = function (...args) {
+            if (++reads > 1000) throw new Error('repeated references exceed DOM-work budget');
+            return originalGetAttribute.apply(this, args);
+        };
+        try { return getLiveState(document.querySelector('#choice')); }
+        finally {
+            String.prototype.replace = originalReplace;
+            Element.prototype.getAttribute = originalGetAttribute;
+        }
+    """,
+    )
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(_data_url(html))
+        await page.locator("#choice").evaluate(
+            """(el, references) => {
+            const span = document.createElement('span');
+            if (references) span.setAttribute('aria-labelledby', 'external '.repeat(references));
+            span.textContent = 'x'.repeat(200000) + 'tail';
+            el.append(span);
+        }""",
+            references,
+        )
+        args = {
+            "highlight_elements": False,
+            "focus_element": -1,
+            "viewport_expansion": 0,
+            "enable_pointer_elements": True,
+        }
+        for suffix in ["tail", "edit"]:
+            await page.locator("#choice span").evaluate(
+                "(el, suffix) => el.firstChild.replaceData(200000, 4, suffix)", suffix
+            )
+            state = await page.evaluate(probe, args, isolated_context=False)
+            assert state == {
+                "value": "x" * 200,
+                "valueTruncated": True,
+                # The authorized traversal cutoff makes edits past the read prefix intentionally partial.
+                "valueDigest": _value_digest("x" * 4096),
+            }
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("shape", ["wide", "deep", "whitespace", "transformed"])
+async def test_listbox_value_stops_at_fixed_node_and_text_budgets(shape: str) -> None:
+    """Large/deep selections stop deterministic work, and suffix edits past the cutoff are partial."""
+    probe = DOM_TREE_JS.replace(
+        "const rootId = buildDomTree(BODY);",
+        """
+        const choice = document.querySelector('#choice');
+        const state = {};
+        state.value = readListboxValue(choice, state);
+        return state;
+        """,
+    ).replace(
+        'const nodeTypeOf = nativeGetter(Node.prototype, "nodeType");',
+        """
+        const nativeNodeType = nativeGetter(Node.prototype, "nodeType");
+        let nodeReads = 0;
+        const nodeTypeOf = (node) => {
+            if (++nodeReads > 2048) throw new Error('selection exceeded node-work budget');
+            return nativeNodeType(node);
+        };
+        """,
+    )
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(_data_url('<button id="choice"></button>'))
+        await page.locator("#choice").evaluate(
+            """(el, shape) => {
+                let parent = el;
+                for (let i = 0; i < (shape === 'wide' || shape === 'deep' ? 5000 : 1); i++) {
+                    const node = document.createElement('span');
+                    if (shape === 'transformed') node.style.textTransform = 'uppercase';
+                    node.append(document.createTextNode(shape === 'deep' ? '' :
+                        shape === 'whitespace' ? ' '.repeat(200000) :
+                        shape === 'transformed' ? 'x'.repeat(200000) : 'x'));
+                    parent.append(node);
+                    if (shape === 'deep') parent = node;
+                }
+                parent.append(Object.assign(document.createElement('i'), {id: 'tail', textContent: 'first'}));
+            }""",
+            shape,
+        )
+        states = []
+        for suffix in ["first", "second"]:
+            await page.locator("#tail").evaluate("(el, text) => el.textContent = text", suffix)
+            states.append(await page.evaluate(probe, {}, isolated_context=False))
+        assert states[0] == states[1]
+        assert states[0]["valueTruncated"] is True
+        expected = {"wide": "x" * 512, "deep": "", "whitespace": "", "transformed": "X" * 4096}[shape]
+        assert states[0]["value"] == expected[:200]
+        assert states[0]["valueDigest"] == _value_digest(expected)
