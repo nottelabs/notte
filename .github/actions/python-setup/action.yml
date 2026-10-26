@@ -59,7 +59,7 @@ runs:
 
     - name: Install dependencies
       shell: bash
-      run: uv sync --dev --all-extras
+      run: uv sync --locked --dev --all-extras
 
     - name: Install patchright
       if: inputs.browsers == 'true' && steps.cache-patchright.outputs.cache-hit != 'true'
