@@ -5,7 +5,7 @@ import io
 import socket
 import time
 from collections.abc import AsyncIterator
-from contextlib import closing
+from contextlib import ExitStack, closing
 from typing import Literal
 from unittest.mock import patch
 
@@ -316,6 +316,63 @@ async def test_an_empty_observation_keeps_watching_for_a_late_tab(session: Notte
     observation = await session.aobserve()
     assert observation.metadata.url == f"{site}/second"
     assert "Second tab" in await text(session)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("closing_count", [1, 2])
+async def test_observation_tries_earlier_tabs_when_newest_tabs_close(
+    session: NotteSession, site: str, closing_count: int
+) -> None:
+    window = session.window
+    context = window.page.context
+    await window.watch_new_tabs(True)
+    survivor = await context.new_page()
+    _ = await survivor.goto(f"{site}/fetching-tab")
+    closing_tabs: list[Page] = []
+    for _ in range(closing_count):
+        tab = await context.new_page()
+        _ = await tab.goto(f"{site}/second")
+        closing_tabs.append(tab)
+    settles = list(window._new_tabs.values())
+    survivor_settle = window._new_tabs[survivor]
+    with ExitStack() as stack:
+        closed = [stack.enter_context(patch.object(settle, "close", wraps=settle.close)) for settle in settles]
+        wait = stack.enter_context(patch.object(survivor_settle, "wait", wraps=survivor_settle.wait))
+        for tab in closing_tabs:
+
+            async def close_on_front(tab: Page = tab) -> None:
+                await tab.close()
+                raise Error("Page closed during bring_to_front")
+
+            _ = stack.enter_context(patch.object(tab, "bring_to_front", side_effect=close_on_front))
+        observation = await session.aobserve()
+        assert observation.metadata.url == f"{site}/fetching-tab"
+        assert "Fetched in the tab" in await text(session)
+        wait.assert_awaited_once_with(document="requests")
+        for close in closed:
+            close.assert_awaited_once()
+    assert window._tabs_context is None and not window._new_tabs
+
+
+@pytest.mark.asyncio
+async def test_observation_keeps_watching_when_every_candidate_closes(session: NotteSession, site: str) -> None:
+    window = session.window
+    context = window.page.context
+    await window.watch_new_tabs(True)
+    tab = await context.new_page()
+    _ = await tab.goto(f"{site}/second")
+
+    async def close_on_front() -> None:
+        await tab.close()
+        raise Error("Page closed during bring_to_front")
+
+    with patch.object(tab, "bring_to_front", side_effect=close_on_front):
+        assert (await session.aobserve()).metadata.url == f"{site}/"
+    assert window._tabs_context is context
+    assert not window._new_tabs
+    later = await context.new_page()
+    _ = await later.goto(f"{site}/second")
+    assert (await session.aobserve()).metadata.url == f"{site}/second"
 
 
 @pytest.mark.asyncio
