@@ -43,3 +43,28 @@ async def test_the_days_of_a_date_grid_are_offered() -> None:
 
         _ = await session.aexecute(type="click", id="M2")
         assert await session.window.page.input_value("#date") == "2026-11-15"
+
+
+# the grid handles the clicks of its days on the table (a delegated handler): the table is offered, and its
+# days too
+DELEGATED_PAGE = """
+<input id="date" aria-label="Date">
+<table role="grid" onclick="const day = event.target.closest('[data-date]'); if (day) document.getElementById('date').value = day.dataset.date;">
+  <tr><th>Su</th><th>Mo</th></tr>
+  <tr><td tabindex="-1"></td><td tabindex="-1" data-date="2026-11-02">2</td></tr>
+  <tr><td tabindex="0" data-date="2026-11-15">15</td><td tabindex="-1" data-date="2026-11-16">16</td></tr>
+</table>
+"""
+
+
+@pytest.mark.asyncio
+async def test_the_days_of_a_grid_with_a_delegated_handler_are_offered() -> None:
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(DELEGATED_PAGE)}")
+        observation = await session.aobserve()
+
+        days = {action.text_label: action.id for action in observation.space.interaction_actions}
+        assert [label for label in days if label in ("2", "15", "16")] == ["2", "15", "16"]
+
+        _ = await session.aexecute(type="click", id=days["15"])
+        assert await session.window.page.input_value("#date") == "2026-11-15"

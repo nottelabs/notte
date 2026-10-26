@@ -1492,9 +1492,7 @@
 
 		if (hasInteractiveRole) return true;
 
-		// the focusable cells of a grid (the days of a date picker), which act on click; the empty cells
-		// before the first day of a month are fillers
-		if (hasAttribute(element, "tabindex") && isGridCell(element) && (propertyOf(element, "textContent") || "").trim() !== "") return true;
+		if (isGridCellControl(element)) return true;
 
 
 		// check whether element has event listeners by window.getEventListeners
@@ -1533,6 +1531,17 @@
 		return false
 	}
 
+
+	/**
+	 * Checks if an element is a focusable cell of an interactive grid (a day of a date picker), which acts on
+	 * click. The empty cells before the first day of a month are fillers.
+	 *
+	 * @param {HTMLElement} element - The element to check.
+	 * @returns {boolean} Whether the element is a grid cell the user picks.
+	 */
+	function isGridCellControl(element) {
+		return hasAttribute(element, "tabindex") && isGridCell(element) && (propertyOf(element, "textContent") || "").trim() !== "";
+	}
 
 	/**
 	 * Checks if an element is a cell of an interactive grid: `role="gridcell"`, or a `<td>` of a table with
@@ -2087,6 +2096,10 @@
 		// a link goes to a page of its own: the clickable card around it may not (its handler can be
 		// wired to part of the card, or not yet attached)
 		if (getRole(element) === 'link') {
+			return true;
+		}
+		// a day of a grid that handles its clicks on the grid (a delegated handler)
+		if (isGridCellControl(element)) {
 			return true;
 		}
 		// Check contenteditable: the editor's root, not the paragraphs inside it
