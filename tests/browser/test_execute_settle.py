@@ -68,6 +68,7 @@ customElements.define('x-inner', class extends HTMLElement {
     document.body.insertAdjacentHTML('beforeend', '<p>Both pages fetched</p>'))">Fetch pages</button>
 <button id="retry" onclick="fetch('/data?delay=0.4').then(() => fetch('/data?delay=0.4')).then(() =>
     document.body.insertAdjacentHTML('beforeend', '<p>Retried result</p>'))">Retry</button>
+<a id="product" href="/product">Product</a>
 </body></html>"""
 PAGES = {
     "/": HOME,
@@ -105,6 +106,16 @@ window.addEventListener('load', () => {
     setTimeout(() => { document.body.innerHTML = '<p>Still loading</p>' }, 300);
     setTimeout(() => { document.body.innerHTML = '<p>Frame content</p>' }, 450);
 });
+</script></body></html>""",
+    # loads at once, then fetches what it renders on a timer (a product page's data)
+    "/product": """<html><body><h1>Shop</h1><script>
+window.addEventListener('load', () => setTimeout(() => fetch('/data?delay=0.3').then(() =>
+    document.body.insertAdjacentHTML('beforeend', '<button>Add to cart</button>')), 250));
+</script></body></html>""",
+    # loads at once, then fetches its content from a slow API on a timer (a single-page app)
+    "/app": """<html><body><h1>App</h1><script>
+window.addEventListener('load', () => setTimeout(() => fetch('/data?delay=0.9').then(() =>
+    document.body.insertAdjacentHTML('beforeend', '<p>App content</p>')), 300));
 </script></body></html>""",
     # fetches its content as soon as it is parsed
     "/fetching-tab": """<html><body><h1>Fetching tab</h1><script>fetch('/data?delay=0.6').then(() =>
@@ -228,6 +239,24 @@ async def test_a_click_that_loads_a_page_waits_for_what_it_renders_after_its_loa
     _ = await click(session, "next")
     assert session.window.page.url == f"{site}/next"
     assert "Rendered after load" in await text(session)
+
+
+@pytest.mark.asyncio
+async def test_a_click_that_loads_a_page_waits_for_what_it_fetches_on_a_timer_after_its_load(
+    session: NotteSession, site: str
+) -> None:
+    # the page has loaded and is quiet before its timer fetches what it renders
+    _ = await click(session, "product")
+    assert session.window.page.url == f"{site}/product"
+    assert "Add to cart" in await text(session)
+
+
+@pytest.mark.asyncio
+async def test_a_goto_waits_for_what_the_page_fetches_after_its_load(session: NotteSession, site: str) -> None:
+    # its content arrives 1.2 s after its load: after the fixed waits that followed a goto
+    result = await session.aexecute(type="goto", url=f"{site}/app")
+    assert result.success
+    assert "App content" in await text(session)
 
 
 @pytest.mark.asyncio

@@ -67,10 +67,37 @@ class MockBrowserContext:
     def pages(self) -> list[Any]:
         return []
 
+    def on(self, event: str, handler: Any) -> None:
+        pass
+
+    def remove_listener(self, event: str, handler: Any) -> None:
+        pass
+
+
+class MockSettleTracker:
+    """The settle tracker (`notte_browser.settle`) of a page where nothing happens: settled at once."""
+
+    async def evaluate(self, expression: str) -> dict[str, Any] | None:
+        if "state" in expression:
+            return {"elapsed": 10_000, "first": None, "last": None, "dom": None, "urlAt": None, "inputAt": None}
+        return None
+
+    async def dispose(self) -> None:
+        pass
+
 
 class MockBrowserPage:
     def __init__(self, url: str = "about:blank"):
         self.url: str = url
+
+    def on(self, event: str, handler: Any) -> None:
+        pass
+
+    def remove_listener(self, event: str, handler: Any) -> None:
+        pass
+
+    async def evaluate_handle(self, expression: str) -> MockSettleTracker:
+        return MockSettleTracker()
 
     def locate(self, selector: str) -> MockLocator:
         return MockLocator(name="mock", role="mock", selector=selector)
