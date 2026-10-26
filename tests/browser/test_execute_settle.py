@@ -127,6 +127,11 @@ fetch('/data?delay=0.8').then(() => fetch(`http://localhost:${location.port}/api
 </script></body></html>""",
     # answers late, then never loads (an image that never arrives)
     "/slow-stalled": """<html><body><h1>Stalled</h1><img src="/hang"></body></html>""",
+    # commits after the same-document settle cap, then fetches data within the navigation budget
+    "/slow-commit": """<html><body><h1>Slow response</h1><script>
+window.addEventListener('load', () => fetch('/data?delay=0.3').then(() =>
+    document.body.insertAdjacentHTML('beforeend', '<p>Slow page content</p>')));
+</script></body></html>""",
     # loads at once, then fetches its content from a slow API on a timer (a single-page app)
     "/app": """<html><body><h1>App</h1><script>
 window.addEventListener('load', () => setTimeout(() => fetch('/data?delay=0.9').then(() =>
@@ -170,7 +175,10 @@ async def site() -> AsyncIterator[str]:
     release = asyncio.Event()
 
     async def page(request: web.Request) -> web.Response:
-        await asyncio.sleep(SLOW_PAGE_DELAY_S if request.path.startswith("/slow") else PAGE_DELAY_S)
+        delay = SLOW_PAGE_DELAY_S if request.path.startswith("/slow") else PAGE_DELAY_S
+        if request.path == "/slow-commit":
+            delay = CAP_MS / 1000 + 0.2
+        await asyncio.sleep(delay)
         # the same server on another host name is another origin
         other_origin = f"http://localhost:{port}"
         return web.Response(text=PAGES[request.path].replace("OTHER_ORIGIN", other_origin), content_type="text/html")
@@ -340,6 +348,15 @@ async def test_requests_with_different_queries_are_all_waited_for(session: Notte
 async def test_a_repeated_request_is_still_waited_for_while_it_runs(session: NotteSession) -> None:
     _ = await click(session, "retry")
     assert "Retried result" in await text(session)
+
+
+@pytest.mark.asyncio
+async def test_a_goto_that_commits_after_the_settle_cap_still_waits_for_its_page(
+    session: NotteSession, site: str
+) -> None:
+    result = await session.aexecute(type="goto", url=f"{site}/slow-commit")
+    assert result.success
+    assert "Slow page content" in await text(session)
 
 
 @pytest.mark.asyncio

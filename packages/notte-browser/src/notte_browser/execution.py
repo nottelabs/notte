@@ -645,7 +645,14 @@ async def execute(
     tabs = list(context.pages)
     url = page.url
     # tracked from right before the action
-    settle = await PageSettle.start(page, tabs=_can_create_tab(action)) if _settles(action) else None
+    settle: PageSettle | None = None
+    if _settles(action):
+        if isinstance(action, GotoAction):
+            # Track requests before committing, then wait for the destination within the navigation budget.
+            # The old document's 3 s settle cap must not consume a slow goto's load wait.
+            settle = PageSettle(page, None, tabs=True)
+        else:
+            settle = await PageSettle.start(page, tabs=_can_create_tab(action))
     retval = True
     closed_during_click: Error | None = None
     try:

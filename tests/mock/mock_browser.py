@@ -1,7 +1,10 @@
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, final
 
 from loguru import logger
+from notte_browser.driver import Page, Request
+from notte_browser.settle import SINCE_LOAD_JS, _PageState
 from notte_browser.window import ScreenshotMask
 from notte_core.dom_tree import ComputedDomAttributes, DomAttributes, DomNode, NodeSelectors
 from notte_core.node_type import NodeType
@@ -67,17 +70,17 @@ class MockBrowserContext:
     def pages(self) -> list[Any]:
         return []
 
-    def on(self, event: str, handler: Any) -> None:
+    def on(self, event: str, handler: Callable[[Page], None] | Callable[[Request], None]) -> None:
         pass
 
-    def remove_listener(self, event: str, handler: Any) -> None:
+    def remove_listener(self, event: str, handler: Callable[[Page], None] | Callable[[Request], None]) -> None:
         pass
 
 
 class MockSettleTracker:
     """The settle tracker (`notte_browser.settle`) of a page where nothing happens: settled at once."""
 
-    async def evaluate(self, expression: str) -> dict[str, Any] | None:
+    async def evaluate(self, expression: str) -> _PageState | None:
         if "state" in expression:
             return {"elapsed": 10_000, "first": None, "last": None, "dom": None, "urlAt": None, "inputAt": None}
         return None
@@ -90,14 +93,21 @@ class MockBrowserPage:
     def __init__(self, url: str = "about:blank"):
         self.url: str = url
 
-    def on(self, event: str, handler: Any) -> None:
+    def on(self, event: str, handler: Callable[[Request], None]) -> None:
         pass
 
-    def remove_listener(self, event: str, handler: Any) -> None:
+    def remove_listener(self, event: str, handler: Callable[[Request], None]) -> None:
         pass
 
     async def evaluate_handle(self, expression: str) -> MockSettleTracker:
         return MockSettleTracker()
+
+    async def evaluate(self, expression: str) -> str | float:
+        if expression == "document.readyState":
+            return "complete"
+        if expression == SINCE_LOAD_JS:
+            return 1_000
+        raise ValueError(f"Unexpected page evaluation: {expression}")
 
     def locate(self, selector: str) -> MockLocator:
         return MockLocator(name="mock", role="mock", selector=selector)
