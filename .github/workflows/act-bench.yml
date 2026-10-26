@@ -31,6 +31,9 @@ on:
   # SECURITY: pull_request, never pull_request_target: fork PRs run without secrets and skip.
   pull_request:
     types: [opened, synchronize, reopened, labeled]
+  # TEMPORARY (coverage timing branch, never merged)
+  push:
+    branches: [tmp/act-bench-coverage-timing]
 
 permissions:
   contents: read
@@ -78,7 +81,7 @@ jobs:
           BASE_REF: ${{ inputs.base_ref }}
           SUITES: ${{ inputs.suites }}
           # PRs run the core tier; a manual run picks its tier (`all`: both)
-          TAGS: ${{ inputs.tags || 'ci-core' }}
+          TAGS: ${{ inputs.tags || (github.event_name == 'push' && 'ci-core') || 'ci-core' }}
           RUNNERS: ${{ inputs.runners || 'notte-local,probe-local-jev' }}
           REPEATS: ${{ inputs.repeats || '1' }}
           SHARDS: ${{ inputs.shards || '4' }}
@@ -87,7 +90,7 @@ jobs:
           # Paths that change what observe shows or what act does.
           paths='^(packages/notte-browser/src/notte_browser/(js|dom)/|packages/notte-core/src/notte_core/act/|packages/notte-llm/src/notte_llm/act\.py$|scripts/bench_act/|\.github/workflows/act-bench\.yml$)'
           run=false
-          if [ "$EVENT" = workflow_dispatch ]; then
+          if [ "$EVENT" = workflow_dispatch ] || [ "$EVENT" = push ]; then
             run=true
           elif [ "$ACTION" = labeled ]; then
             if [ "$LABEL" = act-bench ]; then run=true; fi
@@ -116,7 +119,10 @@ jobs:
           if [ "$TAGS" = all ]; then TAGS=""; fi
           [[ "$REPEATS" =~ ^[1-5]$ && "$SHARDS" =~ ^[1-8]$ ]] || { echo "::error::repeats must be 1-5 and shards 1-8"; exit 1; }
           sha() { gh api "repos/$GITHUB_REPOSITORY/commits/$1" --jq .sha; }
-          if [ "$EVENT" = workflow_dispatch ]; then
+          if [ "$EVENT" = push ]; then
+            head=$GITHUB_SHA
+            base=$(sha feat-session-act)
+          elif [ "$EVENT" = workflow_dispatch ]; then
             head=$(sha "$HEAD_REF")
             base=""
             if [ -n "$BASE_REF" ]; then base=$(sha "$BASE_REF"); fi
