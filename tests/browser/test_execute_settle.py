@@ -6,6 +6,7 @@ import socket
 import time
 from collections.abc import AsyncIterator
 from contextlib import closing
+from typing import Literal
 from unittest.mock import patch
 
 import notte_browser.settle as settle_module
@@ -357,6 +358,23 @@ async def test_a_goto_that_commits_after_the_settle_cap_still_waits_for_its_page
     result = await session.aexecute(type="goto", url=f"{site}/slow-commit")
     assert result.success
     assert "Slow page content" in await text(session)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("wait_until", [None, "load"])
+async def test_a_hash_route_goto_waits_for_its_delayed_render(
+    session: NotteSession, site: str, wait_until: Literal["load"] | None
+) -> None:
+    # The existing document loaded long ago, so its load event cannot provide a new grace window.
+    await session.window.page.wait_for_timeout(LONG_GRACE_MS + 100)
+    await session.window.page.evaluate(
+        """window.addEventListener('hashchange', () => setTimeout(() =>
+            document.body.insertAdjacentHTML('beforeend', '<p>Hash route content</p>'), 800), { once: true })"""
+    )
+    result = await session.aexecute(type="goto", url=f"{site}/#details", wait_until=wait_until)
+    assert result.success
+    assert session.window.page.url == f"{site}/#details"
+    assert "Hash route content" in await text(session)
 
 
 @pytest.mark.asyncio

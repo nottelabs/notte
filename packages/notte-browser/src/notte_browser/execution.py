@@ -2,6 +2,7 @@ import asyncio
 from collections.abc import Awaitable, Callable
 from contextlib import suppress
 from typing import Literal
+from urllib.parse import urldefrag
 
 from notte_core.actions import (
     BaseAction,
@@ -314,7 +315,7 @@ async def _settle(settle: PageSettle, action: BaseAction, url: str, *, verbose: 
             await settle.wait(grace_ms=LONG_GRACE_MS, document="requests")
         case GotoAction():
             # what the page fetches after its load is waited for, instead of a fixed sleep
-            await settle.wait(document="requests")
+            await settle.wait(grace_ms=LONG_GRACE_MS, document="requests")
         case ScrollUpAction() | ScrollDownAction():
             # the scroll has ended: what it starts loading right away (more items, lazy content) is waited for
             await settle.wait()
@@ -647,11 +648,12 @@ async def execute(
     # tracked from right before the action
     settle: PageSettle | None = None
     if _settles(action):
-        if isinstance(action, GotoAction):
+        if isinstance(action, GotoAction) and urldefrag(action.url).url != urldefrag(url).url:
             # Track requests before committing, then wait for the destination within the navigation budget.
             # The old document's 3 s settle cap must not consume a slow goto's load wait.
             settle = PageSettle(page, None, tabs=True)
         else:
+            # Hash routes keep this document: observe their URL change before a delayed render starts.
             settle = await PageSettle.start(page, tabs=_can_create_tab(action))
     retval = True
     closed_during_click: Error | None = None
