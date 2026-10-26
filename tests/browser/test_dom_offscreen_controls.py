@@ -352,6 +352,45 @@ async def test_controls_scrolled_out_of_a_shadow_host_are_described() -> None:
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("scale", [1, 2])
+async def test_slotted_controls_follow_their_shadow_scroll_box(scale: int) -> None:
+    """Describe slotted controls outside their scroll box, then offer them after scrolling."""
+    page = f"""
+    <scroll-host style="display:block;transform:scale({scale});transform-origin:top left">
+      <input placeholder="Id" style="display:block;height:30px;box-sizing:border-box">
+      <div style="height:150px"></div>
+      <button style="display:block;height:30px" onclick="document.title = 'Submitted'">Submit</button>
+    </scroll-host>
+    <script>
+      document.querySelector('scroll-host').attachShadow({{mode:'open'}}).innerHTML =
+        '<div id="box" style="height:100px;width:300px;overflow-y:scroll"><slot></slot></div>';
+    </script>
+    """
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+        lines, actions = await _observe(session)
+        assert lines == ['I1[:]<input placeholder="Id"></input>', "_[:]<button>Submit</button>"]
+        assert actions == [("I1", "Id")]
+        result = await session.aexecute(type="fill", id="I1", value="Contact 42")
+        assert result.success, result.message
+
+        box = session.window.page.locator("scroll-host #box")
+        _ = await box.evaluate("element => { element.scrollTop = 1000; }")
+        lines, actions = await _observe(session)
+        assert "B1[:]<button>Submit</button>" in lines
+        assert actions == [("B1", "Submit")]
+        result = await session.aexecute(type="click", id="B1")
+        assert result.success, result.message
+        assert await session.window.page.title() == "Submitted"
+
+        _ = await box.evaluate("element => { element.scrollTop = 0; }")
+        lines, actions = await _observe(session)
+        assert "_[:]<button>Submit</button>" in lines
+        assert actions == [("I1", "Id")]
+        assert await session.window.page.locator("scroll-host input").input_value() == "Contact 42"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("scale", [1, 2])
 async def test_controls_behind_scroll_box_borders_are_described(scale: int) -> None:
     page = f"""
     <div id="box" style="height:100px;width:300px;border:20px solid;overflow-y:scroll;

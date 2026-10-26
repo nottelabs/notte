@@ -763,15 +763,13 @@
 	}
 
 	/**
-	 * The parent element, crossing a shadow root to its host so containing blocks and clippers there count.
+	 * The composed parent element, following assigned slots and crossing shadow roots to their hosts
+	 * so containing blocks and clippers in the rendered tree count.
 	 * @param {HTMLElement} element - The element.
-	 * @returns {HTMLElement | null} Its parent or shadow host.
+	 * @returns {HTMLElement | null} Its assigned slot, parent element, or shadow host.
 	 */
 	function composedParentElement(element) {
-		const parent = parentElementOf(element);
-		if (parent !== null) return parent;
-		const root = getRootNode(element);
-		return root instanceof ShadowRoot ? root.host : null;
+		return composedParent(element);
 	}
 
 	/**
