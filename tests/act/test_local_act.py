@@ -9,6 +9,7 @@ from urllib.parse import quote
 
 import pytest
 import pytest_asyncio
+from notte_browser.driver import Error, Locator
 from notte_browser.session import NotteSession
 from notte_core._sync import run_sync
 from notte_core.act import (
@@ -1694,7 +1695,10 @@ async def test_a_value_left_out_of_a_cut_select_is_typed_not_picked_among_the_li
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("private", [False, True])
-async def test_a_fact_read_in_a_closed_tab_reaches_the_decider_and_writer(session: NotteSession, private: bool) -> None:
+@pytest.mark.parametrize("reported_closed", [False, True])
+async def test_a_fact_read_in_a_closed_tab_reaches_the_decider_and_writer(
+    session: NotteSession, private: bool, reported_closed: bool, monkeypatch: pytest.MonkeyPatch
+) -> None:
     pages = {
         "/form": '<label>Verification code<input id="code"></label><a href="/help" target="_blank">Help page</a>',
         "/help": '<p>Your verification code is 4821.</p><button onclick="window.close()">Return to form</button>',
@@ -1705,6 +1709,19 @@ async def test_a_fact_read_in_a_closed_tab_reaches_the_decider_and_writer(sessio
 
     await session.window.page.context.route("http://code.test/**", serve)
     _ = await session.window.page.goto("http://code.test/form")
+    if reported_closed:
+        original_click = Locator.click
+
+        async def click_then_report_closed(locator: Locator, *, timeout: float) -> None:
+            page = locator.page
+            closing = page.url == "http://code.test/help"
+            await original_click(locator, timeout=timeout)
+            if closing:
+                if not page.is_closed():
+                    await page.wait_for_event("close")
+                raise Error("Locator.click: Target page, context or browser has been closed")
+
+        monkeypatch.setattr(Locator, "click", click_then_report_closed)
     decider = FakeDecider(
         choices=[
             {"operation": "CLICK", "click_target": "L1"},
