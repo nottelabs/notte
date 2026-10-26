@@ -65,6 +65,8 @@ jobs:
         run: python3 scripts/release_version.py validate "$RELEASE_TAG"
 
       - run: npm ci
+      - name: Install Chromium for local browser tests
+        run: npx playwright-core install --with-deps chromium
 
       - name: Set release version
         id: version
