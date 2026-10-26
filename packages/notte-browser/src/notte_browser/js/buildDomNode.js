@@ -1600,7 +1600,7 @@
 		const shadowRoot = getRootNode(element);
 		const root = shadowRoot instanceof ShadowRoot ? shadowRoot : document;
 		try {
-			return isShownIn(root, element, rects[Math.floor(rects.length / 2)]);
+			return isShownIn(root, element, topElementArea(element, rects));
 		} catch (e) {
 			return true;
 		}
@@ -1619,7 +1619,7 @@
 	 *
 	 * @param {Document | ShadowRoot} root - The root to hit-test in.
 	 * @param {HTMLElement} element - The element.
-	 * @param {DOMRect} rect - The box of the element to look at.
+	 * @param {{left: number, top: number, right: number, bottom: number}} rect - The box of the element to look at.
 	 * @returns {boolean} Whether the element is the topmost element at a point of the box.
 	 */
 	function isShownIn(root, element, rect) {
@@ -1653,21 +1653,21 @@
 	}
 
 	/**
-	 * Where `isTopElement` looks for an element: the center of its middle box. A rich text editor is often
+	 * Where `isTopElement` looks for an element: its middle box. A rich text editor is often
 	 * taller than the viewport or the scrolling panel it is in, or cut by their edge with its center out of
-	 * view: it is looked for at the center of its part in view.
+	 * view: both the first hit test and uncovered-area probes stay in its part in view.
 	 *
 	 * @param {HTMLElement} element - The element.
 	 * @param {DOMRect[]} rects - Its client rects.
-	 * @returns {number[]} The point, `[x, y]`.
+	 * @returns {{left: number, top: number, right: number, bottom: number}} The area to hit-test.
 	 */
-	function topElementPoint(element, rects) {
+	function topElementArea(element, rects) {
 		const middle = rects[Math.floor(rects.length / 2)];
 		let { left, top, right, bottom } = middle;
 		if (isEditingHost(element)) {
 			let visible = [Math.max(left, 0), Math.max(top, 0), Math.min(right, window.innerWidth), Math.min(bottom, window.innerHeight)];
 			// the panels that clip it (`overflow` other than `visible`)
-			for (let parent = parentElementOf(element); parent !== null && parent !== BODY; parent = parentElementOf(parent)) {
+			for (let parent = composedParent(element); parent !== null && parent !== BODY; parent = composedParent(parent)) {
 				const style = getCachedComputedStyle(parent);
 				if (!style || (style.overflowX === "visible" && style.overflowY === "visible")) continue;
 				const box = getCachedBoundingRect(parent);
@@ -1676,7 +1676,7 @@
 			}
 			if (visible[0] < visible[2] && visible[1] < visible[3]) [left, top, right, bottom] = visible;
 		}
-		return [(left + right) / 2, (top + bottom) / 2];
+		return { left, top, right, bottom };
 	}
 
 	const OFFSCREEN_CONTROL_TAGS = new Set(['a', 'button', 'input', 'select', 'textarea', 'option']);
