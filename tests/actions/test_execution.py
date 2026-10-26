@@ -4,7 +4,7 @@ from dataclasses import dataclass
 import pytest
 from notte_browser.session import NotteSession
 from notte_sdk.types import ExecutionRequest
-from patchright.async_api import Locator
+from patchright.async_api import Locator, expect
 
 PASSWORD_TOGGLE = 'button[analyticsid="loginPassword"]'
 EMAIL_INPUT = 'input[name="email"]'
@@ -56,7 +56,7 @@ async def _test_execution(test: ExecutionTest, headless: bool) -> None:
             selector = step.selector.playwright_selector
             assert selector
             target = page.window.page.locator(selector)
-            assert await target.count() == 1
+            await expect(target).to_have_count(1)
             result = await page.aexecute(**step.model_dump(exclude_none=True))
             assert result.success
             if selector == PASSWORD_TOGGLE:
