@@ -1871,3 +1871,30 @@ async def test_private_urls_only_retain_page_text_after_navigation(session: Nott
     recent = decider.states[-1].recent_actions
     assert ("page" in recent[-1]) is navigate
     assert "private-token" not in json.dumps(recent)
+
+
+@pytest.mark.asyncio
+async def test_go_back_is_offered_only_with_a_page_to_go_back_to() -> None:
+    async def app(route: Any) -> None:
+        body = '<h1>Shipping</h1><a href="/help" target="_blank">Help</a>'
+        await route.fulfill(body=body, content_type="text/html")
+
+    async def offered(session: NotteSession) -> bool:
+        decider = FakeDecider(choices=[{"operation": "DONE"}])
+        _ = await session.aact("Change the delivery", decider=decider)
+        return "GO_BACK" in decider.questions[0]["operation"].criteria
+
+    async with NotteSession(headless=True) as session:
+        await session.window.page.context.route("http://app.test/**", app)
+        # the first page of the session: going back would load the blank page the tab started on, and lose this one
+        _ = await session.window.page.goto("http://app.test/shipping")
+        assert not await offered(session)
+        _ = await session.window.page.goto("http://app.test/review")
+        assert await offered(session)
+
+        # a tab a link opened has no previous page
+        async with session.window.page.context.expect_page() as popup:
+            await session.window.page.click("a")
+        session.window.page = await popup.value
+        await session.window.page.wait_for_load_state()
+        assert not await offered(session)
