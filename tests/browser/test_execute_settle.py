@@ -69,6 +69,8 @@ customElements.define('x-inner', class extends HTMLElement {
 <button id="retry" onclick="fetch('/data?delay=0.4').then(() => fetch('/data?delay=0.4')).then(() =>
     document.body.insertAdjacentHTML('beforeend', '<p>Retried result</p>'))">Retry</button>
 <a id="product" href="/product">Product</a>
+<button id="route" onclick="const chunk = document.createElement('script'); chunk.src = '/chunk.js';
+  document.head.append(chunk)">Contact</button>
 </body></html>"""
 PAGES = {
     "/": HOME,
@@ -168,6 +170,13 @@ async def site() -> AsyncIterator[str]:
         await asyncio.sleep(0.3)
         return web.Response(text="", content_type="text/javascript")
 
+    async def chunk(_request: web.Request) -> web.Response:
+        # a route's code, loaded on demand: it changes the URL and renders once it has arrived
+        await asyncio.sleep(0.8)
+        script = """history.pushState({}, '', '/contact');
+document.body.insertAdjacentHTML('beforeend', '<h2>Contact page</h2>');"""
+        return web.Response(text=script, content_type="text/javascript")
+
     async def slow_image(_request: web.Request) -> web.Response:
         await asyncio.sleep(1)
         return web.Response(status=404)
@@ -184,6 +193,7 @@ async def site() -> AsyncIterator[str]:
         app.router.add_get(path, page)
     app.router.add_get("/data", data)
     app.router.add_get("/slow.js", slow_script)
+    app.router.add_get("/chunk.js", chunk)
     app.router.add_get("/slow-image", slow_image)
     app.router.add_get("/hang", hang)
     app.router.add_get("/download", download)
@@ -351,6 +361,14 @@ async def test_a_client_side_navigation_a_timer_starts_is_waited_for_until_it_re
     _ = await click(session, "spa")
     assert session.window.page.url == f"{site}/spa"
     assert "Spa page" in await text(session)
+
+
+@pytest.mark.asyncio
+async def test_a_client_side_navigation_waits_for_the_code_it_loads(session: NotteSession, site: str) -> None:
+    # the route's code takes 800 ms: longer than the grace of a click whose only change is the script it adds
+    _ = await click(session, "route")
+    assert session.window.page.url == f"{site}/contact"
+    assert "Contact page" in await text(session)
 
 
 @pytest.mark.asyncio

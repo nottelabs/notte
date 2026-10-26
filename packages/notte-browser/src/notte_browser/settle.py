@@ -4,12 +4,12 @@ An action's effect often lands after the browser call returns: a click re-render
 something first, a client-side navigation fetches the next page then `pushState`s and renders it, a link loads a new
 document or opens a tab. A fixed delay is wasted on actions that change nothing and too short for slow responses.
 Instead `PageSettle` tracks, from right before the action, the DOM changes of the page, its same-origin frames and
-its open shadow roots (inline `style` changes, i.e. animations, do not count), the fetch / XHR / document requests
-the page starts, its URL changes and, if asked, the tabs it opens. What the page does on its own is left out: a node
-whose text or attributes keep changing (a clock, a carousel) counts for its first two changes only, a request the
-document already sent (polling, a retry) extends the quiet window once, and the requests of a frame of another
-origin (an ad) do not count. Repeated requests are waited for up to the same `SETTLE_MS` window as repeated DOM
-changes. The page has settled (`settled`) when:
+its open shadow roots (inline `style` changes, i.e. animations, do not count), the fetch / XHR / script / document
+requests the page starts, its URL changes and, if asked, the tabs it opens. What the page does on its own is left
+out: a node whose text or attributes keep changing (a clock, a carousel) counts for its first two changes only, a
+request the document already sent (polling, a retry) extends the quiet window once, and the requests of a frame of
+another origin (an ad) do not count. Repeated requests are waited for up to the same `SETTLE_MS` window as repeated
+DOM changes. The page has settled (`settled`) when:
 - no request started since the action is still running, and
 - nothing changed for `QUIET_MS` (or the DOM has kept changing for `SETTLE_MS`: some pages never stop), and
 - something changed, or the action's grace passed: an action with no visible effect costs at most its grace, and
@@ -62,9 +62,9 @@ MAX_DOCUMENTS = 3
 # How a new document is waited for (see the module docstring)
 DocumentWait = Literal["requests", "loaded"]
 
-# Request types waited for. Images, fonts, media and beacons do not change what the page shows; websockets and event
-# streams stay open.
-TRACKED_REQUESTS = frozenset({"document", "fetch", "xhr"})
+# Request types waited for. A script can be what the page renders next (a route's code, loaded on demand). Images,
+# fonts, media and beacons do not change what the page shows; websockets and event streams stay open.
+TRACKED_REQUESTS = frozenset({"document", "fetch", "xhr", "script"})
 
 # how long ago the document loaded (ms), or null while it is loading. Its load handlers still running: just now
 SINCE_LOAD_JS = """() => {
