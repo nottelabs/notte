@@ -68,6 +68,10 @@ form's own (`<input name="children">` makes `form.children` that input). The
 same goes for `document.*` in the page's own world (`<img name="body">`).
 `tests/browser/test_dom_clobbered_properties.py` covers it.
 
+CDP listener hints must retain the inspected elements' identities through main-world
+handles. DOM marker attributes are copied by `cloneNode`, while event listeners are
+not, so an attribute bridge can incorrectly offer a clone as a clickable header.
+
 ## Public API
 
 - Don't remove or rename public methods without a deprecation first: keep the

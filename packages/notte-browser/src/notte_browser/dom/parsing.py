@@ -2,7 +2,8 @@ import asyncio
 import json
 from collections.abc import Collection, Iterable
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
+from uuid import uuid4
 
 from notte_core.config import config
 from notte_core.dom_tree import DomNode, flush_dom_errors
@@ -12,7 +13,7 @@ from notte_core.profiling import profiler
 from typing_extensions import TypedDict
 
 from notte_browser.dom.builder import RawFrame, RawNode, build_dom_tree
-from notte_browser.driver import ElementHandle, Frame, Page
+from notte_browser.driver import CDPSession, ElementHandle, Frame, Page, evaluate_handle_in_main_world
 from notte_browser.errors import PlaywrightError
 from notte_browser.js import script
 from notte_browser.resolution import get_selector_generator
@@ -21,6 +22,10 @@ DOM_TREE_JS = script("buildDomNode.js")
 
 # each frame's DOM is evaluated up to this many times when the evaluation raises (e.g. mid-navigation)
 FRAME_EVALUATION_ATTEMPTS: int = 3
+# the column headers looked at for a click listener of their own (see `headers_with_click_listeners`)
+COLUMN_HEADER_SELECTOR: str = 'th, [role="columnheader"]'
+MAX_LISTENED_HEADERS: int = 50
+_CLICK_EVENTS = frozenset({"click", "mousedown", "mouseup"})
 # an iframe whose DOM takes longer than this to evaluate is skipped (the main frame has no limit)
 IFRAME_EVALUATION_TIMEOUT_S: float = 10.0
 
@@ -73,7 +78,12 @@ async def parse_frames(page: Page) -> RawFrame:
             child_frames.setdefault(frame.parent_frame, []).append(frame)
 
     main_frame = page.main_frame
-    main = await evaluate_frame(main_frame, js_code, dom_config, child_frames.get(main_frame, []))
+    listened_headers = await headers_with_click_listeners(page)
+    try:
+        main_config = dict(dom_config, listened_headers=listened_headers)
+        main = await evaluate_frame(main_frame, js_code, main_config, child_frames.get(main_frame, []))
+    finally:
+        _ = await asyncio.gather(*(header.dispose() for header in listened_headers), return_exceptions=True)
 
     # graft the frames level by level, evaluating the frames of a level concurrently
     next_highlight_index = max_highlight_index(main.frame.nodes.values()) + 1
@@ -94,6 +104,119 @@ async def parse_frames(page: Page) -> RawFrame:
             next_level.extend((child, child_iframe, x, y) for child, child_iframe in frame_tree.child_frames)
         level = next_level
     return main.frame
+
+
+class _RemoteObject(TypedDict, total=False):
+    objectId: str
+    description: str
+
+
+class _Property(TypedDict, total=False):
+    name: str
+    value: _RemoteObject
+
+
+class _Listener(TypedDict):
+    type: str
+
+
+_CDPValue = _RemoteObject | list[_Property] | list[_Listener]
+
+
+async def _send(cdp: CDPSession, method: str, params: dict[str, str | bool]) -> dict[str, _CDPValue]:
+    return cast("dict[str, _CDPValue]", await cdp.send(method, params))  # pyright: ignore [reportUnknownMemberType]
+
+
+async def headers_with_click_listeners(page: Page) -> list[ElementHandle]:
+    """The first `MAX_LISTENED_HEADERS` main-frame column headers with their own click listeners.
+
+    Return handles to the checked elements so a changing table cannot transfer a listener to another header.
+
+    Tables often sort on a handler added to the header cells alone (jQuery's `.click()`), with no role, tabindex or
+    pointer cursor that `buildDomNode.js` could see: only the DevTools protocol lists an element's listeners. Empty
+    when the page has no column header, or when the protocol is not available (Firefox).
+    """
+    group = "notte-column-headers"
+    selector = json.dumps(COLUMN_HEADER_SELECTOR)
+    try:
+        # most pages have no table: no protocol session for them
+        if not await page.main_frame.evaluate(f"Document.prototype.querySelector.call(document, {selector}) !== null"):
+            return []
+        cdp = await page.context.new_cdp_session(page)
+    except PlaywrightError:
+        return []
+    headers: _RemoteObject = {}
+    bridge = f"__notte_headers_{uuid4().hex}"
+    try:
+        expression = (
+            f"Array.from(Document.prototype.querySelectorAll.call(document, {selector}))"
+            f".slice(0, {MAX_LISTENED_HEADERS})"
+        )
+        evaluated = await _send(cdp, "Runtime.evaluate", {"expression": expression, "objectGroup": group})
+        headers = cast(_RemoteObject, evaluated.get("result", {}))
+        if "objectId" not in headers or headers.get("description") == "Array(0)":
+            return []
+        properties = await _send(cdp, "Runtime.getProperties", {"objectId": headers["objectId"], "ownProperties": True})
+        elements = [
+            (int(name), value["objectId"])
+            for item in cast(list[_Property], properties.get("result", []))
+            if (name := item.get("name", "")).isdigit() and "objectId" in (value := item.get("value", {}))
+        ]
+        found = await asyncio.gather(
+            *(_send(cdp, "DOMDebugger.getEventListeners", {"objectId": object_id}) for _, object_id in elements)
+        )
+        indices = [
+            index
+            for (index, _), listeners in zip(elements, found)
+            if any(
+                listener["type"] in _CLICK_EVENTS for listener in cast(list[_Listener], listeners.get("listeners", []))
+            )
+        ]
+        if not indices:
+            return []
+        # Keep the inspected objects themselves: cloning copies attributes, but not event listeners.
+        # The temporary main-world reference is removed before the DOM build.
+        _ = await _send(
+            cdp,
+            "Runtime.callFunctionOn",
+            {
+                "objectId": headers["objectId"],
+                "functionDeclaration": (
+                    f"function() {{ Object.defineProperty(globalThis, '{bridge}', {{"
+                    f"value: {json.dumps(indices)}.map(i => this[i]), configurable: true }}); }}"
+                ),
+            },
+        )
+        handle = await evaluate_handle_in_main_world(page.main_frame, f"globalThis['{bridge}']")
+        try:
+            values = await handle.get_properties()
+            return [element for value in values.values() if isinstance(element := value.as_element(), ElementHandle)]
+        finally:
+            await handle.dispose()
+    except PlaywrightError as e:
+        logger.debug(f"Could not read the click listeners of the column headers of {page.url}: {e}")
+        return []
+    finally:
+        try:
+            if "objectId" in headers:
+                _ = await _send(
+                    cdp,
+                    "Runtime.callFunctionOn",
+                    {
+                        "objectId": headers["objectId"],
+                        "functionDeclaration": f"function() {{ delete globalThis['{bridge}']; }}",
+                    },
+                )
+        except PlaywrightError:
+            pass
+        try:
+            _ = await _send(cdp, "Runtime.releaseObjectGroup", {"objectGroup": group})
+        except PlaywrightError:
+            pass
+        try:
+            await cdp.detach()
+        except PlaywrightError:
+            pass
 
 
 async def evaluate_iframe(
@@ -171,6 +294,9 @@ async def _evaluate(
             if attempt >= FRAME_EVALUATION_ATTEMPTS:
                 raise
             logger.debug(f"DOM evaluation failed in frame {frame.url} (attempt {attempt}), retrying: {e}")
+            # Handles from a destroyed document cannot be sent into its replacement on a retry.
+            # Discard this optional listener hint; the next observation probes the new document.
+            args["listened_headers"] = []
             attempt += 1
 
 

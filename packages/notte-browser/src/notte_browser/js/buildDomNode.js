@@ -4,7 +4,10 @@
 // evaluates this script in every frame and grafts each frame's tree under its iframe element,
 // which it identifies by passing the frames' iframe element handles in `frame_elements`.
 (
-	{ highlight_elements, focus_element, viewport_expansion, enable_pointer_elements, frame_elements = [], collect_elements = false }
+	{
+		highlight_elements, focus_element, viewport_expansion, enable_pointer_elements, frame_elements = [],
+		collect_elements = false, listened_headers = [],
+	}
 ) => {
 	const { doHighlightElements, focusHighlightIndex, viewportExpansion, debugMode } = {
 		doHighlightElements: highlight_elements,
@@ -171,6 +174,16 @@
 
 	// Mouse handlers that make an element interactive, and that make a wrapper a click target of its own.
 	const CLICK_HANDLER_ATTRS = ["onclick", "onmousedown", "onmouseup", "ondblclick"];
+
+	// Actual column headers checked with the DevTools protocol, so table mutations cannot transfer a listener
+	// to a different header at the same position.
+	const LISTENED_HEADERS = new Set(listened_headers);
+
+	// whether an element has a mouse handler of its own: one of `CLICK_HANDLER_ATTRS`, or a listened column header
+	function hasClickHandler(element) {
+		return LISTENED_HEADERS.has(element) ||
+			CLICK_HANDLER_ATTRS.some((attr) => hasAttribute(element, attr) || typeof propertyOf(element, attr) === "function");
+	}
 
 	// Live state of the interactive elements (see `getLiveState`): longer values and option lists are cut.
 	const MAX_STATE_VALUE_LENGTH = 200;
@@ -1277,10 +1290,8 @@
 				}
 			}
 			// Fallback: Check common event attributes if getEventListeners is not available (getEventListeners doesn't work in page.evaluate context)
-			for (const attr of CLICK_HANDLER_ATTRS) {
-				if (hasAttribute(element, attr) || typeof propertyOf(element, attr) === 'function') {
-					return true;
-				}
+			if (hasClickHandler(element)) {
+				return true;
 			}
 		} catch (e) {
 			// console.warn(`Could not check event listeners for ${element.tagName}:`, e);
@@ -2169,7 +2180,7 @@
 						if (accessibleName !== undefined) nodeData.accessibleName = accessibleName;
 						// a mouse handler of its own (the ones `isInteractiveElement` counts): the element may do
 						// something else than the control around or inside it
-						if (CLICK_HANDLER_ATTRS.some((attr) => hasAttribute(node, attr) || typeof propertyOf(node, attr) === "function")) {
+						if (hasClickHandler(node)) {
 							nodeData.clickHandler = true;
 						}
 					}
