@@ -6,6 +6,7 @@ from functools import cached_property
 from typing import TYPE_CHECKING, Unpack, overload
 from urllib.parse import quote
 
+from notte_core._sync import run_sync
 from notte_core.credentials.base import BaseVault
 from notte_core.logging import logger
 from notte_core.resource import SyncResource
@@ -189,10 +190,10 @@ class BasePersona(ABC):
 
     # Sync methods
     def emails(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]:
-        return asyncio.run(self.aemails(**data))
+        return run_sync(self.aemails(**data))
 
     def sms(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:
-        return asyncio.run(self.asms(**data))
+        return run_sync(self.asms(**data))
 
     def wait_for_emails(
         self, *, timeout: float = 60.0, poll_interval: float = 5.0, **data: Unpack[MessageReadRequestDict]

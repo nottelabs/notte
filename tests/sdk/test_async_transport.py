@@ -1010,12 +1010,17 @@ def test_loops_in_two_threads_cannot_both_take_the_pool() -> None:
 async def test_a_closed_loops_connections_are_replaced(keep_alive_server: tuple[str, dict[str, int]]) -> None:  # noqa: F811
     url, state = keep_alive_server
     client = notte(url)
-    loop = asyncio.new_event_loop()
-    try:
-        assert loop.run_until_complete(client.sessions._request(endpoint())) == {}
-        stale = client._http._client
-    finally:
-        loop.close()
+
+    def use_then_close_loop() -> None:
+        loop = asyncio.new_event_loop()
+        try:
+            assert loop.run_until_complete(client.sessions._request(endpoint())) == {}
+        finally:
+            loop.close()
+
+    # Independent loops cannot run on the test's already-running loop thread.
+    await asyncio.to_thread(use_then_close_loop)
+    stale = client._http._client
     with warnings.catch_warnings():
         # The stale loop's sockets were never closed; collecting them may warn.
         warnings.simplefilter("ignore", ResourceWarning)

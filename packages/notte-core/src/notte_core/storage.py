@@ -1,4 +1,3 @@
-import asyncio
 import datetime as dt
 import os
 import warnings
@@ -7,6 +6,8 @@ from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel, model_validator
+
+from notte_core._sync import run_sync
 
 
 class FileInfo(BaseModel):
@@ -71,11 +72,11 @@ class BaseStorage(ABC):
 
     def list_uploaded_files(self) -> list[FileInfo]:
         """List all files from the upload_dir"""
-        return asyncio.run(self.alist_uploaded_files())
+        return run_sync(self.alist_uploaded_files())
 
     def list_downloaded_files(self) -> list[FileInfo]:
         """List all files in the download_dir"""
-        return asyncio.run(self.alist_downloaded_files())
+        return run_sync(self.alist_downloaded_files())
 
     async def instructions(self) -> str:
         """Return LLM instructions to append to the prompt."""

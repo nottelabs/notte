@@ -6,7 +6,6 @@ from functools import partial
 from types import TracebackType
 from typing import Any, Literal, Self, TypeAlias, TypeVar, Unpack, cast, overload
 
-from notte_core import enable_nest_asyncio
 from notte_core.actions import GotoAction
 from notte_core.data import StructuredData, TBaseModel
 from notte_core.logging import logger
@@ -49,8 +48,6 @@ from notte_sdk.endpoints.sessions import (
 )
 from notte_sdk.endpoints.vaults import AsyncNotteVault, AsyncVaultsClient, NotteVault, VaultsClient
 from notte_sdk.errors import AuthenticationError
-
-enable_nest_asyncio()
 
 
 def _validated_settings(
