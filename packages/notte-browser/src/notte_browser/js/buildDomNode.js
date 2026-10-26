@@ -4,7 +4,10 @@
 // evaluates this script in every frame and grafts each frame's tree under its iframe element,
 // which it identifies by passing the frames' iframe element handles in `frame_elements`.
 (
-	{ highlight_elements, focus_element, viewport_expansion, enable_pointer_elements, frame_elements = [], collect_elements = false }
+	{
+		highlight_elements, focus_element, viewport_expansion, enable_pointer_elements, frame_elements = [],
+		collect_elements = false, listened_headers = [],
+	}
 ) => {
 	const { doHighlightElements, focusHighlightIndex, viewportExpansion, debugMode } = {
 		doHighlightElements: highlight_elements,
@@ -174,6 +177,16 @@
 	// Mouse handlers that make an element interactive, and that make a wrapper a click target of its own.
 	const CLICK_HANDLER_ATTRS = ["onclick", "onmousedown", "onmouseup", "ondblclick"];
 
+	// Actual column headers checked with the DevTools protocol, so table mutations cannot transfer a listener
+	// to a different header at the same position.
+	const LISTENED_HEADERS = new Set(listened_headers);
+
+	// whether an element has a mouse handler of its own: one of `CLICK_HANDLER_ATTRS`, or a listened column header
+	function hasClickHandler(element) {
+		return LISTENED_HEADERS.has(element) ||
+			CLICK_HANDLER_ATTRS.some((attr) => hasAttribute(element, attr) || typeof propertyOf(element, attr) === "function");
+	}
+
 	// Live state of the interactive elements (see `getLiveState`): longer values and option lists are cut.
 	const MAX_STATE_VALUE_LENGTH = 200;
 	const MAX_STATE_OPTIONS = 50;
@@ -247,6 +260,10 @@
 			state.value = truncateStateValue(element.value, state);
 		} else if (propertyOf(element, "isContentEditable")) {
 			state.value = truncateStateValue(propertyOf(element, "innerText") || "", state);
+		} else if (ARIA_RANGE_ROLES.has(getRole(element))) {
+			// an ARIA slider or spin button: the value it shows ("14 Point"), else its number
+			const value = getAttribute(element, "aria-valuetext") ?? getAttribute(element, "aria-valuenow");
+			if (value !== null) state.value = truncateStateValue(value, state);
 		}
 		if (state.checked === undefined) {
 			// role="checkbox" / "switch" / "radio" / "menuitemcheckbox" widgets
@@ -261,6 +278,14 @@
 		const pressed = parseAriaBoolean(element, "aria-pressed");
 		if (pressed !== undefined) state.pressed = pressed;
 		else if (getAttribute(element, "aria-pressed") === "mixed") state.pressed = "mixed";
+		// a column header, or a control inside one (its sort button): the order the column is sorted in
+		let header = closest(element, "th, [role]");
+		while (header !== null && localNameOf(header) !== "th" && getRole(header) !== "columnheader") {
+			const parent = parentElementOf(header);
+			header = parent === null ? null : closest(parent, "th, [role]");
+		}
+		const sort = header === null ? null : getAttribute(header, "aria-sort");
+		if (sort === "ascending" || sort === "descending" || sort === "other") state.sort = sort;
 		return Object.keys(state).length > 0 ? state : undefined;
 	}
 
@@ -274,6 +299,8 @@
 	]);
 	// Controls whose value the user edits: they add nothing to the name of the element they label.
 	const EDITABLE_CONTROL_ROLES = new Set(["textbox", "searchbox", "combobox", "listbox", "spinbutton", "slider"]);
+	// widgets whose value is in `aria-valuenow` / `aria-valuetext` (a native range or number input has its own)
+	const ARIA_RANGE_ROLES = new Set(["slider", "spinbutton"]);
 	const INPUT_ROLES = {
 		button: "button", submit: "button", reset: "button", image: "button", checkbox: "checkbox",
 		radio: "radio", range: "slider", number: "spinbutton", search: "searchbox", text: "textbox",
@@ -301,6 +328,21 @@
 		}
 		if (propertyOf(element, "isContentEditable") && !(parentElementOf(element) && propertyOf(parentElementOf(element), "isContentEditable"))) return "textbox";
 		return IMPLICIT_ROLES[tagName] ?? "";
+	}
+
+	/**
+	 * Checks if an element is the root of a `contenteditable` region (an editing host), as the editor of
+	 * a rich text field is. The elements inside it are editable too, but they are its content: the
+	 * host is the field. In an editable `<body>` (an editor's iframe), which is never highlighted, the
+	 * blocks right inside it count as the roots.
+	 *
+	 * @param {HTMLElement} element - The element to check.
+	 * @returns {boolean} Whether the element is an editing host.
+	 */
+	function isEditingHost(element) {
+		const parent = parentElementOf(element);
+		return propertyOf(element, "isContentEditable") === true &&
+			(parent === null || propertyOf(parent, "isContentEditable") !== true || parent === BODY);
 	}
 
 	function isHiddenForName(element) {
@@ -676,7 +718,8 @@
 	 * in on scroll has `opacity: 0`, and the visible text next to a control is often `aria-hidden`
 	 * (the control carries the name), while the control is offered only once it is in view. Inside a
 	 * highlighted element, `aria-hidden` text is kept: it is part of what the element shows (an icon).
-	 * Text that is rendered outside the viewport is not hidden.
+	 * Text that is rendered outside the viewport is not hidden, unless it is in a fixed panel outside the
+	 * viewport (see `isInFixedPanelOffscreen`).
 	 *
 	 * @param {Text} textNode - The text node to check.
 	 * @param {Object} scope - The scope of its parent element.
@@ -695,7 +738,10 @@
 		// no box at all (the text of a `<textarea>`): nothing says it is hidden
 		if (rects.length === 0) return false;
 		if (rects.every((rect) => rect.width === 0 || rect.height === 0)) return true;
-		if (!rects.some(isOnScreen)) return false;
+		if (!rects.some(isOnScreen)) {
+			const start = propertyOf(textNode, "assignedSlot") ?? parent;
+			return rects.every((rect) => isInFixedPanelOffscreen(start, rect));
+		}
 		if (scope.ariaHidden && !scope.inControl) return true;
 		return !isRendered(parent, true);
 	}
@@ -720,6 +766,73 @@
 
 	function isOnScreen(rect) {
 		return rect.bottom > 0 && rect.top < window.innerHeight && rect.right > 0 && rect.left < window.innerWidth;
+	}
+
+	/**
+	 * Checks if an element is inside a fixed element laid out outside the viewport, as a closed off-canvas
+	 * drawer is (`transform: translateX(-100%)`). Only viewport-fixed panels count: a fixed element
+	 * with an offset parent (for example, a transformed ancestor) can move into view when scrolling.
+	 * A zero-size fixed portal still establishes an independent fixed boundary. Use the text's reachable
+	 * bounds after inner scrolling instead of testing the portal's empty box or an outer drawer.
+	 * Cross shadow roots so a drawer also hides its web components' text.
+	 *
+	 * @param {HTMLElement} element - The element to check.
+	 * @param {DOMRect} textRect - A client rect of the text.
+	 * @returns {boolean} Whether the element is in a fixed panel outside the viewport.
+	 */
+	function isInFixedPanelOffscreen(element, textRect) {
+		for (let ancestor = element; ancestor; ancestor = composedParent(ancestor)) {
+			if (getCachedComputedStyle(ancestor)?.position !== "fixed") continue;
+			if (propertyOf(ancestor, "offsetParent") !== null) continue;
+			const rect = getCachedBoundingRect(ancestor);
+			if (rect.width > 0 && rect.height > 0) return !isOnScreen(rect);
+			const reachable = { top: textRect.top, bottom: textRect.bottom, left: textRect.left, right: textRect.right };
+			let owner = element;
+			for (let box = element; box && box !== ancestor; box = composedParent(box)) {
+				const boxRect = getCachedBoundingRect(box);
+				const style = getCachedComputedStyle(box);
+				if (!style) continue;
+				if (scrollMovesText(owner, box)) {
+					const y = visibleRange(box, boxRect, style, true);
+					const x = visibleRange(box, boxRect, style, false);
+					let moved = false;
+					if (y?.scrolls && reachable.bottom > y.start && reachable.top < y.end) {
+						reachable.top = boxRect.top;
+						reachable.bottom = boxRect.bottom;
+						moved = true;
+					}
+					if (x?.scrolls && reachable.right > x.start && reachable.left < x.end) {
+						reachable.left = boxRect.left;
+						reachable.right = boxRect.right;
+						moved = true;
+					}
+					if (moved) owner = box;
+				}
+				if ((style.position === "absolute" || style.position === "fixed") &&
+					getCachedClientRects(box)?.length) owner = box;
+			}
+			return !isOnScreen(reachable);
+		}
+		return false;
+	}
+
+	/** Whether scrolling `box` moves the text positioned by `owner`, across composed ancestors. */
+	function scrollMovesText(owner, box) {
+		const position = getCachedClientRects(owner)?.length ? getCachedComputedStyle(owner)?.position : "static";
+		if (owner === box || (position !== "absolute" && position !== "fixed")) return true;
+		for (let block = propertyOf(owner, "offsetParent"); block; block = composedParent(block)) {
+			if (block === box) return true;
+		}
+		return false;
+	}
+
+	function composedParent(element) {
+		const slot = propertyOf(element, "assignedSlot");
+		if (slot) return slot;
+		const parent = parentElementOf(element);
+		if (parent !== null) return parent;
+		const root = getRootNode(element);
+		return root instanceof ShadowRoot ? root.host : null;
 	}
 
 	/**
@@ -756,7 +869,7 @@
 				if (!parentElement) return false;
 
 				try {
-					return checkVisibilityOf(parentElement, {
+					return checkVisibilityOf(boxOf(parentElement), {
 						checkOpacity: true,
 						checkVisibilityCSS: true,
 					});
@@ -805,7 +918,7 @@
 			if (!parentElement) return false;
 
 			try {
-				return checkVisibilityOf(parentElement, {
+				return checkVisibilityOf(boxOf(parentElement), {
 					checkOpacity: true,
 					checkVisibilityCSS: true,
 				});
@@ -1226,8 +1339,8 @@
 		const role = getAttribute(element, "role");
 		const ariaRole = getAttribute(element, "aria-role");
 
-		// Check for contenteditable attribute
-		if (getAttribute(element, "contenteditable") === "true" || propertyOf(element, "isContentEditable")) {
+		// the root of a rich text editor (not the paragraphs inside it)
+		if (isEditingHost(element)) {
 			return true;
 		}
 
@@ -1304,10 +1417,8 @@
 				}
 			}
 			// Fallback: Check common event attributes if getEventListeners is not available (getEventListeners doesn't work in page.evaluate context)
-			for (const attr of CLICK_HANDLER_ATTRS) {
-				if (hasAttribute(element, attr) || typeof propertyOf(element, attr) === 'function') {
-					return true;
-				}
+			if (hasClickHandler(element)) {
+				return true;
 			}
 		} catch (e) {
 			// console.warn(`Could not check event listeners for ${element.tagName}:`, e);
@@ -1383,8 +1494,7 @@
 		// For shadow DOM, we need to check within its own root context
 		const shadowRoot = getRootNode(element);
 		if (shadowRoot instanceof ShadowRoot) {
-			const centerX = rects[Math.floor(rects.length / 2)].left + rects[Math.floor(rects.length / 2)].width / 2;
-			const centerY = rects[Math.floor(rects.length / 2)].top + rects[Math.floor(rects.length / 2)].height / 2;
+			const [centerX, centerY] = topElementPoint(element, rects);
 
 			try {
 				const topEl = shadowRoot.elementFromPoint(centerX, centerY);
@@ -1402,8 +1512,7 @@
 		}
 
 		// For elements in viewport, check if they're topmost
-		const centerX = rects[Math.floor(rects.length / 2)].left + rects[Math.floor(rects.length / 2)].width / 2;
-		const centerY = rects[Math.floor(rects.length / 2)].top + rects[Math.floor(rects.length / 2)].height / 2;
+		const [centerX, centerY] = topElementPoint(element, rects);
 
 		try {
 			const topEl = DOCUMENT.elementFromPoint.call(document, centerX, centerY);
@@ -1420,15 +1529,43 @@
 		}
 	}
 
+	/**
+	 * Where `isTopElement` looks for an element: the center of its middle box. A rich text editor is often
+	 * taller than the viewport or the scrolling panel it is in, or cut by their edge with its center out of
+	 * view: it is looked for at the center of its part in view.
+	 *
+	 * @param {HTMLElement} element - The element.
+	 * @param {DOMRect[]} rects - Its client rects.
+	 * @returns {number[]} The point, `[x, y]`.
+	 */
+	function topElementPoint(element, rects) {
+		const middle = rects[Math.floor(rects.length / 2)];
+		let { left, top, right, bottom } = middle;
+		if (isEditingHost(element)) {
+			let visible = [Math.max(left, 0), Math.max(top, 0), Math.min(right, window.innerWidth), Math.min(bottom, window.innerHeight)];
+			// the panels that clip it (`overflow` other than `visible`)
+			for (let parent = parentElementOf(element); parent !== null && parent !== BODY; parent = parentElementOf(parent)) {
+				const style = getCachedComputedStyle(parent);
+				if (!style || (style.overflowX === "visible" && style.overflowY === "visible")) continue;
+				const box = getCachedBoundingRect(parent);
+				if (!box) continue;
+				visible = [Math.max(visible[0], box.left), Math.max(visible[1], box.top), Math.min(visible[2], box.right), Math.min(visible[3], box.bottom)];
+			}
+			if (visible[0] < visible[2] && visible[1] < visible[3]) [left, top, right, bottom] = visible;
+		}
+		return [(left + right) / 2, (top + bottom) / 2];
+	}
+
 	const OFFSCREEN_CONTROL_TAGS = new Set(['a', 'button', 'input', 'select', 'textarea', 'option']);
 	// form fields, named by the label next to them rather than by their content
 	const FIELD_TAGS = new Set(['input', 'select', 'textarea']);
 
 	/**
-	 * Checks if an element is a link, button, form field or option by its tag or ARIA role: the controls
-	 * described above or below the viewport. Pointer cursors are not looked at there: the generic clickables
-	 * they find are not described off-screen, and reading every `:hover` rule of the page for each element
-	 * below the fold (`getElementCursorStates`) would make the walk several times slower.
+	 * Checks if an element is a link, button, form field or option by its tag or ARIA role, or the root of
+	 * a rich text editor: the controls described above or below the viewport. Pointer cursors are not looked
+	 * at there: the generic clickables they find are not described off-screen, and reading every `:hover`
+	 * rule of the page for each element below the fold (`getElementCursorStates`) would make the walk
+	 * several times slower.
 	 *
 	 * @param {HTMLElement} element - The element to check.
 	 * @returns {boolean} Whether the element is a control by its tag or role.
@@ -1436,7 +1573,7 @@
 	function isOffscreenCandidate(element) {
 		const role = getAttribute(element, 'role');
 		if (role !== null && role !== '') return INTERACTIVE_ROLES.has(role);
-		return OFFSCREEN_CONTROL_TAGS.has(tagNameOf(element).toLowerCase());
+		return OFFSCREEN_CONTROL_TAGS.has(tagNameOf(element).toLowerCase()) || isEditingHost(element);
 	}
 
 	/**
@@ -1724,7 +1861,7 @@
 			hasAttribute(element, "tabindex") ||
 			hasAttribute(element, "aria-") ||
 			hasAttribute(element, "data-action") ||
-			getAttribute(element, "contenteditable") === "true";
+			isEditingHost(element);
 
 		return hasQuickInteractiveAttr;
 	}
@@ -1829,8 +1966,8 @@
 		if (getRole(element) === 'link') {
 			return true;
 		}
-		// Check contenteditable
-		if (propertyOf(element, "isContentEditable") || getAttribute(element, 'contenteditable') === 'true') {
+		// Check contenteditable: the editor's root, not the paragraphs inside it
+		if (isEditingHost(element)) {
 			return true;
 		}
 		// Check for common testing/automation attributes
@@ -2127,6 +2264,7 @@
 		const xpath = getXPathTree(node);
 		const nodeData = {
 			tagName: tagNameOf(node).toLowerCase(),
+			isEditingHost: isEditingHost(node),
 			attributes: {},
 			...payloadXPath(xpath, parentXPath),
 			children: [],
@@ -2179,13 +2317,20 @@
 						const accessibleName = getAccessibleName(node);
 						if (accessibleName !== undefined) nodeData.accessibleName = accessibleName;
 					}
-					// an off-screen checkbox, radio or switch says whether it is checked, as in view. Not its other
-					// live state: a typed value would be in the description, which secrets are not masked in
+					// an off-screen checkbox, radio or switch says whether it is checked, and a toggle button, tab or
+					// menu button whether it is pressed, selected or expanded, as in view. Not its other live state: a
+					// typed value would be in the description, which secrets are not masked in
 					if (nodeData.offscreen) {
+						const state = {};
 						const checked = localNameOf(node) === "input" && (node.type === "checkbox" || node.type === "radio")
 							? node.checked
 							: parseAriaBoolean(node, "aria-checked");
-						if (checked !== undefined) nodeData.state = { checked };
+						if (checked !== undefined) state.checked = checked;
+						for (const key of ["pressed", "selected", "expanded"]) {
+							const value = parseAriaBoolean(node, `aria-${key}`);
+							if (value !== undefined) state[key] = value;
+						}
+						if (Object.keys(state).length > 0) nodeData.state = state;
 					}
 					if (nodeData.highlightIndex !== undefined || isDisabled) {
 						const state = getLiveState(node);
@@ -2194,7 +2339,7 @@
 						if (accessibleName !== undefined) nodeData.accessibleName = accessibleName;
 						// a mouse handler of its own (the ones `isInteractiveElement` counts): the element may do
 						// something else than the control around or inside it
-						if (CLICK_HANDLER_ATTRS.some((attr) => hasAttribute(node, attr) || typeof propertyOf(node, attr) === "function")) {
+						if (hasClickHandler(node)) {
 							nodeData.clickHandler = true;
 						}
 					}
@@ -2235,7 +2380,7 @@
 			) {
 				// Process all child nodes to capture formatted text
 				for (const child of childNodesOf(node)) {
-					const domElement = buildDomTree(child, parentIframe, nodeWasHighlighted, childScope, xpath);
+					const domElement = buildDomTree(child, parentIframe, nodeWasHighlighted || isParentHighlighted, childScope, xpath);
 					if (domElement) nodeData.children.push(domElement);
 				}
 			}

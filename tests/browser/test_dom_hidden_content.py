@@ -2,6 +2,8 @@
 
 Text hidden with `display: none`, `visibility: hidden`, a skipped `content-visibility` (a closed
 `<details>`, `hidden="until-found"`) or a zero-height `overflow: hidden` box is not rendered anywhere.
+Neither is the text of a fixed panel laid out outside the viewport (a closed off-canvas drawer): scrolling
+the page does not bring it in.
 On screen, `opacity: 0` and `aria-hidden` hide text too. Below the fold they don't: content waiting to
 fade in on scroll has `opacity: 0`, and the visible text next to a control is often `aria-hidden`.
 """
@@ -26,6 +28,9 @@ HIDDEN = """
 <div hidden="until-found">UNTIL_FOUND</div>
 <div hidden="until-found"><span style="display: contents">UNTIL_FOUND_IN_CONTENTS</span></div>
 <div style="position: relative; height: 0; overflow: hidden"><span style="position: absolute">CLIPPED_ABSOLUTE</span></div>
+<aside style="position: fixed; top: 0; bottom: 0; left: 0; width: 300px; transform: translateX(-110%)" inert>
+  <h2>CLOSED_DRAWER</h2><label>CLOSED_DRAWER_LABEL <input type="checkbox"></label>
+</aside>
 """
 
 KEPT = (
@@ -40,6 +45,9 @@ KEPT = (
 <div style="position: relative"><div style="height: 0; overflow: hidden">
   <span style="position: absolute; top: 0">ESCAPES_CLIPPING</span>
 </div></div>
+<div style="position: fixed; top: 600px; height: 100px; overflow: auto">
+  <div style="height: 300px"></div><p>SCROLLED_IN_FIXED_PANEL</p>
+</div>
 """
     + SPACER
     + """
@@ -74,6 +82,8 @@ async def test_hidden_text_is_not_in_the_description() -> None:
         "UNTIL_FOUND",
         "UNTIL_FOUND_IN_CONTENTS",
         "CLIPPED_ABSOLUTE",
+        "CLOSED_DRAWER",
+        "CLOSED_DRAWER_LABEL",
     ]:
         assert hidden not in description
         assert hidden not in texts
@@ -92,6 +102,7 @@ async def test_offscreen_and_labelling_text_is_kept() -> None:
         "ICON_TEXT",
         "VISIBLE_IN_HIDDEN",
         "ESCAPES_CLIPPING",
+        "SCROLLED_IN_FIXED_PANEL",
         "BELOW_FOLD",
         "FADES_IN_ON_SCROLL",
         "ARIA_HIDDEN_BELOW_FOLD",
@@ -102,6 +113,201 @@ async def test_offscreen_and_labelling_text_is_kept() -> None:
     assert in_viewport["Visible heading"]
     assert not in_viewport["OFFSCREEN_LEFT"]
     assert not in_viewport["BELOW_FOLD"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("in_shadow", [False, True])
+async def test_closed_drawer_text_across_shadow_roots(in_shadow: bool) -> None:
+    markup = """
+    <aside id="drawer" style="position: fixed; top: 0; left: 0; width: 300px;
+                            height: 500px; transform: translateX(-110%)">
+      <drawer-content></drawer-content>
+    </aside>
+    <script>
+      document.querySelector('drawer-content').attachShadow({mode: 'open'}).innerHTML =
+        '<p>DRAWER_CONTENT</p>';
+    </script>
+    """
+    if in_shadow:
+        markup += """
+        <drawer-host></drawer-host>
+        <script>
+          document.querySelector('drawer-host').attachShadow({mode: 'open'})
+            .append(document.getElementById('drawer'));
+        </script>
+        """
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(markup)}")
+        assert "DRAWER_CONTENT" not in (await session.aobserve()).space.description
+        await session.window.page.locator("#drawer").evaluate("element => element.style.transform = 'none'")
+        assert "DRAWER_CONTENT" in (await session.aobserve()).space.description
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "content",
+    ["SLOTTED_DRAWER_TEXT", "<p>SLOTTED_DRAWER_TEXT</p>", "<section><p>SLOTTED_DRAWER_TEXT</p></section>"],
+)
+async def test_closed_drawer_text_assigned_to_a_shadow_slot(content: str) -> None:
+    markup = f"""
+    <h1>OUTSIDE_DRAWER</h1>
+    <drawer-host>{content}</drawer-host>
+    <script>
+      document.querySelector('drawer-host').attachShadow({{mode: 'open'}}).innerHTML = `
+        <aside id="drawer" style="position: fixed; top: 0; left: 0; width: 300px;
+                                height: 500px; transform: translateX(-110%)">
+          <slot></slot>
+        </aside>`;
+    </script>
+    """
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(markup)}")
+        description = (await session.aobserve()).space.description
+        assert "OUTSIDE_DRAWER" in description
+        assert "SLOTTED_DRAWER_TEXT" not in description
+        await session.window.page.locator("#drawer").evaluate("element => element.style.transform = 'none'")
+        assert "SLOTTED_DRAWER_TEXT" in (await session.aobserve()).space.description
+
+
+@pytest.mark.asyncio
+async def test_closed_drawer_text_beyond_a_zero_size_fixed_root() -> None:
+    markup = """
+    <aside id="drawer" style="position: fixed; top: 0; left: -330px; width: 300px; height: 500px">
+      <div id="portal" style="position: fixed; top: 0; left: -330px; width: 0; height: 0">
+        <span style="white-space: nowrap">ZERO_ROOT_DRAWER_TEXT</span>
+      </div>
+    </aside>
+    """
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(markup)}")
+        assert "ZERO_ROOT_DRAWER_TEXT" not in (await session.aobserve()).space.description
+        for selector in ("#drawer", "#portal"):
+            await session.window.page.locator(selector).evaluate("element => element.style.left = '0'")
+        assert "ZERO_ROOT_DRAWER_TEXT" in (await session.aobserve()).space.description
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("axis", ["vertical", "horizontal"])
+async def test_zero_size_fixed_portal_keeps_its_independently_scrollable_text(axis: str) -> None:
+    offset = "margin-top: 900px" if axis == "vertical" else "margin-left: 1500px"
+    markup = f"""
+    <aside style="position: fixed; top: 0; left: -330px; width: 300px; height: 500px">
+      <div style="position: fixed; top: 0; left: 0; width: 0; height: 0">
+        <div id="scroller" style="width: 250px; height: 100px; overflow: auto">
+          <p id="text" style="{offset}; white-space: nowrap">REACHABLE_PORTAL_TEXT</p>
+        </div>
+      </div>
+    </aside>
+    """
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(markup)}")
+        observation = await session.aobserve()
+        assert "REACHABLE_PORTAL_TEXT" in observation.space.description
+        texts = [node for node in session.snapshot.dom_node.flatten() if node.text == "REACHABLE_PORTAL_TEXT"]
+        assert texts and all(not node.computed_attributes.in_viewport for node in texts)
+        await session.window.page.locator("#scroller").evaluate(
+            "element => { element.scrollTop = element.scrollHeight; element.scrollLeft = element.scrollWidth; }"
+        )
+        observation = await session.aobserve()
+        assert "REACHABLE_PORTAL_TEXT" in observation.space.description
+        texts = [node for node in session.snapshot.dom_node.flatten() if node.text == "REACHABLE_PORTAL_TEXT"]
+        assert any(node.computed_attributes.in_viewport for node in texts)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("position", "text_position", "movable"),
+    [
+        ("static", "absolute", False),
+        ("relative", "absolute", True),
+        ("static; transform: translateZ(0)", "fixed", True),
+    ],
+)
+@pytest.mark.parametrize("wrapped", [False, True])
+async def test_portal_text_only_moves_with_its_actual_scroll_container(
+    position: str, text_position: str, movable: bool, wrapped: bool
+) -> None:
+    content = "POSITIONED_PORTAL_TEXT"
+    if wrapped:
+        content = f"<span>{content}</span>"
+    markup = f"""
+    <aside style="position: fixed; top: 0; left: -330px; width: 300px; height: 500px">
+      <div style="position: fixed; top: 0; left: 0; width: 0; height: 0">
+        <div id="scroller" style="position: {position}; width: 250px; height: 100px; overflow: auto">
+          <div style="height: 1600px"></div>
+          <p id="text" style="position: {text_position}; top: 900px; left: 0; white-space: nowrap">{content}</p>
+        </div>
+      </div>
+    </aside>
+    """
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        page = session.window.page
+        _ = await page.goto(f"data:text/html,{quote(markup)}")
+        before = await page.locator("#text").evaluate("element => element.getBoundingClientRect().top")
+        description = (await session.aobserve()).space.description
+        assert ("POSITIONED_PORTAL_TEXT" in description) == movable
+        await page.locator("#scroller").evaluate("element => element.scrollTop = 850")
+        after = await page.locator("#text").evaluate("element => element.getBoundingClientRect().top")
+        if movable:
+            assert after < 100 < before
+        else:
+            assert before == after and after > 720
+        description = (await session.aobserve()).space.description
+        assert ("POSITIONED_PORTAL_TEXT" in description) == movable
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("wrapped", [False, True])
+async def test_boxless_positioned_wrapper_keeps_reachable_portal_text(wrapped: bool) -> None:
+    content = "BOXLESS_PORTAL_TEXT"
+    if wrapped:
+        content = f"<span>{content}</span>"
+    markup = f"""
+    <aside style="position: fixed; top: 0; left: -330px; width: 300px; height: 500px">
+      <div style="position: fixed; top: 0; left: 0; width: 0; height: 0">
+        <div id="scroller" style="width: 250px; height: 100px; overflow: auto">
+          <div style="height: 900px"></div>
+          <span style="display: contents; position: absolute">{content}</span>
+        </div>
+      </div>
+    </aside>
+    """
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        page = session.window.page
+        _ = await page.goto(f"data:text/html,{quote(markup)}")
+        assert "BOXLESS_PORTAL_TEXT" in (await session.aobserve()).space.description
+        texts = [node for node in session.snapshot.dom_node.flatten() if node.text == "BOXLESS_PORTAL_TEXT"]
+        assert texts and all(not node.computed_attributes.in_viewport for node in texts)
+        await page.locator("#scroller").evaluate("element => element.scrollTop = 850")
+        assert "BOXLESS_PORTAL_TEXT" in (await session.aobserve()).space.description
+        texts = [node for node in session.snapshot.dom_node.flatten() if node.text == "BOXLESS_PORTAL_TEXT"]
+        assert any(node.computed_attributes.in_viewport for node in texts)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("style", ["transform: translateZ(0)", "filter: blur(0px)", "contain: layout"])
+@pytest.mark.parametrize("in_shadow", [False, True])
+async def test_fixed_text_in_scrolling_containing_block_is_kept(style: str, in_shadow: bool) -> None:
+    panel = '<p id="panel" style="position: fixed; top: 0; width: 200px; height: 50px">REACHABLE_FIXED_TEXT</p>'
+    if in_shadow:
+        panel = f"""
+        <fixed-content></fixed-content>
+        <script>
+          document.querySelector('fixed-content').attachShadow({{mode: 'open'}}).innerHTML = '{panel}';
+        </script>
+        """
+    markup = SPACER + f'<section style="{style}; height: 200px">{panel}</section>'
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(markup)}")
+        observation = await session.aobserve()
+        assert "REACHABLE_FIXED_TEXT" in observation.space.description
+        texts = [node for node in session.snapshot.dom_node.flatten() if node.text == "REACHABLE_FIXED_TEXT"]
+        assert texts and all(not node.computed_attributes.in_viewport for node in texts)
+        await session.window.page.locator("section").scroll_into_view_if_needed()
+        observation = await session.aobserve()
+        assert "REACHABLE_FIXED_TEXT" in observation.space.description
+        texts = [node for node in session.snapshot.dom_node.flatten() if node.text == "REACHABLE_FIXED_TEXT"]
+        assert any(node.computed_attributes.in_viewport for node in texts)
 
 
 @pytest.mark.asyncio

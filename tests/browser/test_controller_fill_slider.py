@@ -1,4 +1,4 @@
-"""A fill on an ARIA slider (`role="slider"`) moves it to the value with its keyboard.
+"""A fill on an ARIA slider (`role="slider"`) or spinbutton (`role="spinbutton"`) moves it to the value with its keyboard.
 
 `locator.fill` rejects such an element (it is not an input), so no action could set a custom slider
 (noUiSlider, MUI, Radix). The keys are the ones https://www.w3.org/WAI/ARIA/apg/patterns/slider/ defines.
@@ -15,7 +15,7 @@ from notte_core.actions import FillAction
 # A slider from 0 to 100 that moves by `step` with the arrows and by `page` with Page Up / Down (0: not
 # handled), `delay` ms after the key (a slider that re-renders), with Left / Right swapped when `rtl`, only
 # Left / Right handled when `horizontal`, and its element replaced by a new one on each move when `replace`.
-SLIDER = """<div id="slider" role="slider" tabindex="0" aria-label="Price" aria-valuemin="0" aria-valuemax="100"
+SLIDER = """<div id="slider" role="ROLE" tabindex="0" aria-label="Price" aria-valuemin="0" aria-valuemax="100"
 aria-valuenow="20" style="width: 200px; height: 20px; background: #ccc"></div>
 <script>
 const {step, page, delay, rtl, horizontal, replace} = Object.assign({horizontal: false, replace: false}, OPTIONS);
@@ -64,8 +64,8 @@ CASES = {
 }
 
 
-async def _slider(session: NotteSession, options: dict[str, float | bool]) -> None:
-    page = SLIDER.replace("OPTIONS", json.dumps(options))
+async def _slider(session: NotteSession, options: dict[str, float | bool], role: str = "slider") -> None:
+    page = SLIDER.replace("OPTIONS", json.dumps(options)).replace("ROLE", role)
     _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
 
 
@@ -77,6 +77,37 @@ async def test_fill_moves_a_slider_to_the_value(options: dict[str, float | bool]
         result = await session.aexecute(FillAction(selector="#slider", value=value), raise_on_failure=True)
         assert result.success
         assert await session.window.page.locator("#slider").get_attribute("aria-valuenow") == expected
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("options", "value", "expected"),
+    [
+        ({"step": 1, "page": 10, "delay": 0, "rtl": False}, "37", "37"),
+        ({"step": 2, "page": 0, "delay": 0, "rtl": False}, "8", "8"),
+    ],
+    ids=["page keys then arrows", "arrows down"],
+)
+async def test_fill_moves_a_spinbutton_to_the_value(
+    options: dict[str, float | bool], value: str, expected: str
+) -> None:
+    # a custom spinbutton (a div with the role, as the APG toolbar's font size), not a native number input
+    async with NotteSession(headless=True) as session:
+        await _slider(session, options, role="spinbutton")
+        result = await session.aexecute(FillAction(selector="#slider", value=value), raise_on_failure=True)
+        assert result.success
+        assert await session.window.page.locator("#slider").get_attribute("aria-valuenow") == expected
+
+
+@pytest.mark.asyncio
+async def test_fill_types_into_an_editable_spinbutton() -> None:
+    # an editable spinbutton with no value yet takes typed text, as before
+    page = '<div id="qty" role="spinbutton" contenteditable="true" aria-label="Quantity"></div>'
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+        result = await session.aexecute(FillAction(selector="#qty", value="5"), raise_on_failure=True)
+        assert result.success
+        assert (await session.window.page.locator("#qty").inner_text()).strip() == "5"
 
 
 @pytest.mark.asyncio

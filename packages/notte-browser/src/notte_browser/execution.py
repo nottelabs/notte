@@ -51,6 +51,7 @@ from notte_browser.dom.parsing import parse_dom
 from notte_browser.driver import Error, Frame, JSHandle, Locator
 from notte_browser.errors import (
     InvalidLocatorRuntimeError,
+    NoHistoryEntryError,
     PlaywrightTimeoutError,
     ScrollActionFailedError,
     capture_playwright_errors,
@@ -239,8 +240,9 @@ _NUMBER = re.compile(r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?")
 async def _move_slider(
     window: BrowserWindow, locator: Locator, value: str, slider: dict[str, float | None], budget: _ActionBudget
 ) -> None:
-    """Move an ARIA slider (`role="slider"`, which `fill` cannot set) to the number in `value` with its keyboard, as
-    https://www.w3.org/WAI/ARIA/apg/patterns/slider/ defines it: Home / End for its ends, Page Up / Down while they
+    """Move an ARIA slider or spinbutton (`role="slider"` / `role="spinbutton"`, which `fill` cannot set) to the number
+    in `value` with its keyboard, as https://www.w3.org/WAI/ARIA/apg/patterns/slider/ and
+    https://www.w3.org/WAI/ARIA/apg/patterns/spinbutton/ define it: Home / End for its ends, Page Up / Down while they
     do not go past the value, then the arrows, reading `aria-valuenow` after each key. A value between two steps
     ends on the closest step. `slider` is what `slider_value.js` read."""
     match = _NUMBER.search(value.replace(",", ""))
@@ -354,6 +356,44 @@ async def _scroll_target(window: BrowserWindow, action: ScrollUpAction | ScrollD
             await target.dispose()
 
 
+# Records whether the document goes through its own history (a `pushState` or hash entry) until disposed
+_WATCH_POPSTATE = """() => {
+    const watch = {moved: false};
+    const onPopstate = () => { watch.moved = true };
+    addEventListener('popstate', onPopstate, {once: true});
+    watch.dispose = () => removeEventListener('popstate', onPopstate);
+    return watch;
+}"""
+
+
+async def _traverse_history(window: BrowserWindow, operation: Literal["back", "forward"]) -> None:
+    """Go back or forward in the tab's history. Fails when the tab has no page there (a tab opened by a link has no
+    previous page): the browser then loads nothing, and the URL and the document stay the same."""
+    url = window.page.url
+    try:
+        watch = await window.page.evaluate_handle(_WATCH_POPSTATE)
+    except Error:
+        # navigating already: the traversal is not checked
+        watch = None
+    try:
+        await window.goto_and_wait(operation=operation, wait_until="commit")
+        if watch is None or window.goto_response is not None or window.page.url != url:
+            return
+        try:
+            moved = await watch.evaluate("watch => watch.moved")
+        except Error:
+            # another document replaced the watched one
+            return
+        if not moved:
+            raise NoHistoryEntryError(operation)
+    finally:
+        if watch is not None:
+            with suppress(Error):
+                await watch.evaluate("watch => watch.dispose()")
+            with suppress(Error):
+                await watch.dispose()
+
+
 def _can_create_tab(action: BaseAction) -> bool:
     """
     Check if an action can potentially create a new browser tab.
@@ -457,9 +497,9 @@ async def execute_browser_action(window: BrowserWindow, action: BaseAction, *, v
             await window.page.wait_for_timeout(time_ms)
         # the load is waited for by `execute`, which settles the page
         case GoBackAction():
-            await window.goto_and_wait(operation="back", wait_until="commit")
+            await _traverse_history(window, "back")
         case GoForwardAction():
-            await window.goto_and_wait(operation="forward", wait_until="commit")
+            await _traverse_history(window, "forward")
         case ReloadAction():
             _ = await window.page.reload()
         case PressKeyAction(key=key):
@@ -744,6 +784,8 @@ async def execute(
     context = page.context
     tabs = list(context.pages)
     url = page.url
+    # a tab opened once the settle is over is switched to by the next observation
+    await window.watch_new_tabs(_can_create_tab(action))
     # tracked from right before the action
     settle = (
         await PageSettle.start(
@@ -835,4 +877,7 @@ async def execute(
     finally:
         if settle is not None:
             await settle.close()
+        if window.page is not page:
+            # the action's tab is acted on already
+            await window.watch_new_tabs(False)
     return retval

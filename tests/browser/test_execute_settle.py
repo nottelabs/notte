@@ -5,7 +5,7 @@ import io
 import socket
 import time
 from collections.abc import AsyncIterator
-from contextlib import closing
+from contextlib import ExitStack, closing
 from typing import Literal
 from unittest.mock import patch
 
@@ -27,6 +27,8 @@ HOME = """<html><body>
 <a id="tab" href="/second" target="_blank">Open in a new tab</a>
 <button id="later-tab" onclick="setTimeout(() => window.open('/second'), 100)">Open a tab later</button>
 <button id="slow-tab" onclick="window.open('/slow-second')">Open a slow tab</button>
+<button id="late-timer-tab" onclick="setTimeout(() => window.open('/second'), 1200)">Open a tab much later</button>
+<button id="late-fetching-tab" onclick="setTimeout(() => window.open('/fetching-tab'), 1200)">Open a fetching tab later</button>
 <button id="timer-nav" onclick="setTimeout(() => { location.href = '/next' }, 300)">Go later</button>
 <button id="spa" onclick="setTimeout(() => { history.pushState({}, '', '/spa');
   setTimeout(() => document.body.insertAdjacentHTML('beforeend', '<h2>Spa page</h2>'), 100) }, 300)">Spa</button>
@@ -282,6 +284,153 @@ async def test_a_click_that_opens_a_tab_switches_to_it_once_it_has_loaded(
     assert session.window.page.url == f"{site}/{'slow-second' if opener == 'slow-tab' else 'second'}"
     assert await session.window.page.evaluate("document.readyState") == "complete"
     assert "Second tab" in await text(session)
+
+
+@pytest.mark.asyncio
+async def test_a_tab_opened_after_the_settle_is_switched_to_by_the_next_observation(
+    session: NotteSession, site: str
+) -> None:
+    async with session.window.page.context.expect_page() as opened:
+        _ = await click(session, "late-timer-tab")
+        # the click had no visible effect: its settle ended before the tab opened
+        assert len(session.window.page.context.pages) == 1
+    _ = await opened.value
+    observation = await session.aobserve()
+    assert observation.metadata.url == f"{site}/second"
+    assert session.window.page.url == f"{site}/second"
+    assert "Second tab" in await text(session)
+
+
+@pytest.mark.asyncio
+async def test_an_empty_observation_keeps_watching_for_a_late_tab(session: NotteSession, site: str) -> None:
+    # Release the deferred open explicitly so the first observation always precedes it.
+    await session.window.page.evaluate(
+        "document.getElementById('late-timer-tab').onclick = () => { window.openLater = () => window.open('/second'); }"
+    )
+    _ = await click(session, "late-timer-tab")
+    first = await session.aobserve()
+    assert first.metadata.url == f"{site}/"
+    async with session.window.page.context.expect_page() as opened:
+        await session.window.page.evaluate("window.openLater()")
+    _ = await opened.value
+    observation = await session.aobserve()
+    assert observation.metadata.url == f"{site}/second"
+    assert "Second tab" in await text(session)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("closing_count", [1, 2])
+async def test_observation_tries_earlier_tabs_when_newest_tabs_close(
+    session: NotteSession, site: str, closing_count: int
+) -> None:
+    window = session.window
+    context = window.page.context
+    await window.watch_new_tabs(True)
+    survivor = await context.new_page()
+    _ = await survivor.goto(f"{site}/fetching-tab")
+    closing_tabs: list[Page] = []
+    for _ in range(closing_count):
+        tab = await context.new_page()
+        _ = await tab.goto(f"{site}/second")
+        closing_tabs.append(tab)
+    settles = list(window._new_tabs.values())
+    survivor_settle = window._new_tabs[survivor]
+    with ExitStack() as stack:
+        closed = [stack.enter_context(patch.object(settle, "close", wraps=settle.close)) for settle in settles]
+        wait = stack.enter_context(patch.object(survivor_settle, "wait", wraps=survivor_settle.wait))
+        for tab in closing_tabs:
+
+            async def close_on_front(tab: Page = tab) -> None:
+                await tab.close()
+                raise Error("Page closed during bring_to_front")
+
+            _ = stack.enter_context(patch.object(tab, "bring_to_front", side_effect=close_on_front))
+        observation = await session.aobserve()
+        assert observation.metadata.url == f"{site}/fetching-tab"
+        assert "Fetched in the tab" in await text(session)
+        wait.assert_awaited_once_with(document="requests")
+        for close in closed:
+            close.assert_awaited_once()
+    assert window._tabs_context is None and not window._new_tabs
+
+
+@pytest.mark.asyncio
+async def test_observation_keeps_watching_when_every_candidate_closes(session: NotteSession, site: str) -> None:
+    window = session.window
+    context = window.page.context
+    await window.watch_new_tabs(True)
+    tab = await context.new_page()
+    _ = await tab.goto(f"{site}/second")
+
+    async def close_on_front() -> None:
+        await tab.close()
+        raise Error("Page closed during bring_to_front")
+
+    with patch.object(tab, "bring_to_front", side_effect=close_on_front):
+        assert (await session.aobserve()).metadata.url == f"{site}/"
+    assert window._tabs_context is context
+    assert not window._new_tabs
+    later = await context.new_page()
+    _ = await later.goto(f"{site}/second")
+    assert (await session.aobserve()).metadata.url == f"{site}/second"
+
+
+@pytest.mark.asyncio
+async def test_a_late_tab_is_not_switched_to_after_another_action(session: NotteSession, site: str) -> None:
+    async with session.window.page.context.expect_page() as opened:
+        _ = await click(session, "late-timer-tab")
+    _ = await opened.value
+    # acted on the first tab since: the late tab is the earlier action's
+    _ = await click(session, "nothing")
+    observation = await session.aobserve()
+    assert observation.metadata.url == f"{site}/"
+    assert len(session.window.page.context.pages) == 2
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("close_opener", [False, True])
+async def test_a_late_tab_s_requests_are_waited_for_from_when_it_appears(
+    session: NotteSession, site: str, close_opener: bool
+) -> None:
+    opener = session.window.page
+    async with session.window.page.context.expect_page() as opened:
+        _ = await click(session, "late-fetching-tab")
+    tab = await opened.value
+    # its fetch has started when the observation begins
+    await tab.wait_for_load_state("domcontentloaded")
+    if close_opener:
+        await opener.close()
+        assert session.window.page is tab
+    observation = await session.aobserve()
+    assert observation.metadata.url == f"{site}/fetching-tab"
+    assert "Fetched in the tab" in await text(session)
+
+
+@pytest.mark.asyncio
+async def test_closing_a_borrowed_window_stops_tracking_new_tabs(session: NotteSession) -> None:
+    page = session.window.page
+    window = window_module.BrowserWindow(page, session.window.options)
+    await window.watch_new_tabs(True)
+    tab = await page.context.new_page()
+    settle = window._new_tabs[tab]
+    with patch.object(settle, "close", wraps=settle.close) as close:
+        await window.close()
+        close.assert_awaited_once()
+    assert not page.is_closed()
+    assert window._tabs_context is None
+    assert not window._new_tabs
+    _ = await page.context.new_page()
+    assert not window._new_tabs
+
+
+@pytest.mark.asyncio
+async def test_a_late_tab_is_not_switched_to_after_a_script_action(session: NotteSession, site: str) -> None:
+    async with session.window.page.context.expect_page() as opened:
+        _ = await click(session, "late-timer-tab")
+    _ = await opened.value
+    _ = await session.aexecute(type="evaluate_js", code="document.title")
+    observation = await session.aobserve()
+    assert observation.metadata.url == f"{site}/"
 
 
 @pytest.mark.asyncio
