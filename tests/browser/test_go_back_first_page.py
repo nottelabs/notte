@@ -5,7 +5,7 @@ loaded that blank page: the page and what was typed in it were gone, and the res
 """
 
 import socket
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import closing
 
 import pytest
@@ -16,11 +16,15 @@ from notte_browser.session import NotteSession
 
 @pytest_asyncio.fixture(loop_scope="function")
 async def site() -> AsyncIterator[str]:
-    async def page(request: web.Request) -> web.Response:
-        return web.Response(text=f"<h1>{request.match_info['name']}</h1><input id='name'>", content_type="text/html")
+    def page(title: str) -> Callable[[web.Request], Awaitable[web.Response]]:
+        async def handler(_request: web.Request) -> web.Response:
+            return web.Response(text=f"<h1>{title}</h1><input id='name'>", content_type="text/html")
+
+        return handler
 
     app = web.Application()
-    app.router.add_get("/{name}", page)
+    for name, title in [("shipping", "Shipping"), ("review", "Review"), ("home", "Home"), ("help", "Help")]:
+        app.router.add_get(f"/{name}", page(title))
     runner = web.AppRunner(app)
     await runner.setup()
     with closing(socket.socket()) as server_socket:
