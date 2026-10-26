@@ -603,7 +603,8 @@ class BrowserWindow:
             raise FirstPageOfTabError()
 
         def is_default_page():
-            return self.page.url == "about:blank" and not url == "about:blank"
+            # a back / forward can land on, or stay on, a blank page: going there again would move further
+            return operation is None and self.page.url == "about:blank" and not url == "about:blank"
 
         while True:
             self.goto_response = None

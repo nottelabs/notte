@@ -1,7 +1,7 @@
 import traceback
 from collections.abc import Awaitable
 from functools import wraps
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, Literal, TypeVar
 
 from notte_core.actions import ToolAction
 from notte_core.config import config
@@ -143,6 +143,21 @@ class ScrollActionFailedError(BrowserError):
             dev_message=message,
             user_message=message,
             agent_message=f"{message} Hint: check viewport dimensions or try to close modals and/or hit escape key.",
+        )
+
+
+class NoHistoryEntryError(BrowserError):
+    def __init__(self, direction: Literal["back", "forward"]) -> None:
+        entry = "previous" if direction == "back" else "next"
+        message = f"Cannot go {direction}: this tab has no {entry} page in its history."
+        super().__init__(
+            dev_message=message,
+            user_message=message,
+            agent_message=(
+                f"{message} Hint: a tab opened by a link starts with no previous page; switch to another tab or go "
+                "to a URL instead."
+            ),
+            should_retry_later=False,
         )
 
 
