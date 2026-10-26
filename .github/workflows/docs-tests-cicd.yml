@@ -63,14 +63,16 @@ jobs:
 
       - name: Create virtual environment
         run: |
-          uv venv --python 3.11
+          uv venv
           source .venv/bin/activate
 
       - name: Install dependencies
-        run: uv pip install notte-sdk pytest-examples fastapi httpx
+        run: |
+          uv sync --locked
+          uv pip install pytest-examples fastapi httpx
 
       - name: Run syntax checks
-        run: cd docs/src && uv run pytest -v --tb=no
+        run: cd docs/src && uv run --no-sync pytest -v --tb=no
 
       - name: Test CLI reference generation
         run: python docs/src/scripts/test_generate_cli_reference.py
@@ -99,7 +101,7 @@ jobs:
 
       - name: Create virtual environment
         run: |
-          uv venv --python 3.11
+          uv venv
           source .venv/bin/activate
 
       - name: Install dependencies
@@ -145,14 +147,16 @@ jobs:
 
       - name: Create virtual environment
         run: |
-          uv venv --python 3.11
+          uv venv
           source .venv/bin/activate
 
       - name: Install dependencies
-        run: uv pip install notte-sdk pytest-examples patchright fastapi httpx
+        run: |
+          uv sync --locked
+          uv pip install pytest-examples fastapi httpx
 
       - name: Install patchright
-        run: uv run patchright install --no-shell
+        run: uv run --no-sync patchright install --no-shell
 
       - name: Verify environment variables
         env:
@@ -175,7 +179,7 @@ jobs:
           NOTTE_GITHUB_COM_EMAIL: ${{ secrets.NOTTE_GITHUB_COM_EMAIL }}
           NOTTE_GITHUB_COM_PASSWORD: ${{ secrets.NOTTE_GITHUB_COM_PASSWORD }}
           NOTTE_GITHUB_COM_MFA_SECRET: ${{ secrets.NOTTE_GITHUB_COM_MFA_SECRET }}
-        run: cd docs/src && uv run pytest -v --tb=no
+        run: cd docs/src && uv run --no-sync pytest -v --tb=no
 
       - name: Cleanup vaults created by this run
         if: always()

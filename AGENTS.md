@@ -88,6 +88,8 @@ in a thread first). `tests/sdk/test_async_functions_files.py` checks this for fu
 After changing `packages/notte-sdk/src/`, run `make docs-sdk` (the
 `docs-sdk-generate` pre-commit hook runs the same target) and commit the
 generated files. `make docs-check` fails if they are out of date.
+Manual SDK pages repeat constructor parameter fields; keep their type strings
+in sync with the generated `__init__.mdx` pages. Docs tests compare both.
 
 ## OpenAPI refresh
 
@@ -116,3 +118,6 @@ The development interpreter is Python 3.15. CI's offline gate covers 3.11 and
 so new code remains usable on the supported floor. Use uv 0.13.5 or newer for
 the revision-5 lockfile. SDK model generation requires datamodel-code-generator
 0.86.0, and reference docs require sphinx-mintlify 0.1.2 or newer for 3.14+ types.
+Docs CI syncs the workspace before installing job-only dependencies, then uses
+`uv run --no-sync`; a later sync can remove those dependencies or replace an
+environment built with a Python version that differs from `.python-version`.
