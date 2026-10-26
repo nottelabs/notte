@@ -25,7 +25,7 @@ from typing import Any  # noqa: E402
 
 from .model import FIXTURES  # noqa: E402
 from .registry import discover  # noqa: E402
-from .rules import site_miss, stop_reason  # noqa: E402
+from .rules import probe_site_miss, site_miss, stop_reason  # noqa: E402
 from .runners import WRITER, labels, run_probes, run_task  # noqa: E402
 
 
@@ -40,7 +40,7 @@ def redact(text: str) -> str:
 def run_job(job: dict[str, Any], fixtures: str) -> dict[str, Any]:
     registry = discover()
     runner = job["runner"]
-    kind = "llm" if runner.endswith("-llm") else "jev"
+    kind = runner.rsplit("-", 1)[-1] if runner.endswith(("-llm", "-scripted")) else "jev"
     record: dict[str, Any] = {
         "version": job["version"],
         "sha": job.get("sha"),
@@ -57,6 +57,10 @@ def run_job(job: dict[str, Any], fixtures: str) -> dict[str, Any]:
         except Exception as e:
             record["error"] = f"{type(e).__name__}: {e}"[:1000]
             record["traceback"] = traceback.format_exc()[-3000:]
+        # a page that was not there to be asked about makes its probes site misses, not wrong answers
+        record["site_miss"] = probe_site_miss(probes[0].url, record)
+        for p in record.get("probes", []):
+            p["site_miss"] = record["site_miss"] is not None
         return record
     task = registry.tasks[job["names"][0]]
     record.update(task=task.name, url=task.url, goal=task.goal, writer=WRITER)

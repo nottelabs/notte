@@ -8,14 +8,15 @@ an entry there (or a new module). A task or probe without a suite gets its modul
 import importlib
 import pkgutil
 from dataclasses import dataclass, replace
+from itertools import groupby
 from types import ModuleType
 from typing import Literal
 
 from . import tasks as tasks_package
 from .model import Probe, Task
 
-TASK_RUNNERS = ("notte-local", "notte-local-llm", "notte-local-html")
-PROBE_RUNNERS = ("probe-local-jev", "probe-local-llm")
+TASK_RUNNERS = ("notte-local", "notte-local-llm", "notte-local-html", "notte-local-scripted")
+PROBE_RUNNERS = ("probe-local-jev", "probe-local-llm", "probe-local-scripted")
 
 
 @dataclass(frozen=True)
@@ -68,6 +69,10 @@ def select(
 ) -> list[Item]:
     """The items of these suites (all when empty), tasks first then probe pages, in registry order. `tasks` /
     `probes` restrict their kind to these names, `tags` to the tasks and probes with one of these tags (a CI tier)."""
+    known = {t.suite for t in registry.tasks.values()} | {p.suite for p in registry.probes.values()}
+    for suite in suites or []:
+        if suite not in known:
+            raise ValueError(f"unknown suite {suite!r} (known: {', '.join(sorted(known))})")
     for name in tasks or []:
         if name not in registry.tasks:
             raise ValueError(f"unknown task {name!r}")
@@ -144,3 +149,9 @@ def plan(items: list[Item], runners: list[str], versions: list[str], repeats: in
                 if runner in kinds:
                     jobs.extend(Job(version, runner, item, repeat) for version in order)
     return jobs
+
+
+def pairs(jobs: list[Job]) -> list[list[Job]]:
+    """The versions of one item, runner and repeat, in plan order: `bench.py` runs each group one job after the
+    other, so base and head of a task never hit the site at once."""
+    return [list(group) for _, group in groupby(jobs, key=lambda job: (job.runner, job.item, job.repeat))]

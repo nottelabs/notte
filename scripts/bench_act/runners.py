@@ -7,6 +7,8 @@ Runners:
 - notte-local-llm: the same with the LLM decider
 - notte-local-html: notte-local with `NOTTE_ACT_LABELS=html`
 - probe-local-jev / probe-local-llm: `achoose()` / `acheck()` questions with known answers
+- notte-local-scripted / probe-local-scripted: `ScriptedDecider`, no model and no key: times the browser side
+  (session, navigation, observe, execute) and the CI setup; its outcomes mean nothing
 """
 
 import json
@@ -16,11 +18,10 @@ from typing import Any
 
 import notte_llm.act as A
 from notte_browser.session import NotteSession
-from notte_core.act import Answers, DecisionState, Question, WriteContext
+from notte_core.act import Answer, Answers, DecisionState, Question, WriteContext
 from notte_core.act.loop import _stop  # pyright: ignore[reportPrivateUsage]
 
 from .model import Probe, Task
-from .rules import run_landed
 
 VIEWPORT: dict[str, Any] = {"viewport_width": 1120, "viewport_height": 780}
 WRITER = "inception/mercury-3"
@@ -40,6 +41,20 @@ PROBE_JS = """(() => { let consent = null, cart = null; try { consent = localSto
 LANDING_JS = """(() => { const nav = performance.getEntriesByType('navigation')[0];
   return JSON.stringify({url: location.href, status: nav && nav.responseStatus ? nav.responseStatus : null,
   text: (document.body ? document.body.innerText : '').slice(0, 2000)}) })()"""
+
+
+async def _landing(page: Any) -> dict[str, Any]:
+    """`LANDING_JS` on the first page. A site that redirects on load (booking.com) destroys the page being read:
+    read the page it lands on once it has loaded. The landing page is evidence for `rules.site_miss`, so failing to
+    read it is recorded, not an error of the run."""
+    try:
+        return json.loads(await page.evaluate(LANDING_JS))
+    except Exception:
+        try:
+            await page.wait_for_load_state("load", timeout=10000)
+            return json.loads(await page.evaluate(LANDING_JS))
+        except Exception as e:
+            return {"url": page.url, "status": None, "text": "", "error": f"{type(e).__name__}: {e}"[:500]}
 
 
 class Recorder:
@@ -76,8 +91,36 @@ def _top(probabilities: dict[str, float], n: int = 3) -> dict[str, float]:
     return dict(sorted(probabilities.items(), key=lambda kv: -kv[1])[:n])
 
 
+class ScriptedDecider:
+    """No model: scrolls down `SCROLLS` times (when the page scrolls), then answers DONE; every other question gets
+    its first option."""
+
+    SCROLLS = 2
+
+    def __init__(self) -> None:
+        self.operations = 0
+
+    async def choose(self, state: DecisionState, questions: dict[str, Question]) -> Answers:
+        answers = {}
+        for key, question in questions.items():
+            options = list(question.criteria)
+            choice = options[0]
+            if key == "operation":
+                self.operations += 1
+                scroll = self.operations <= self.SCROLLS and "SCROLL_DOWN" in options
+                choice = "SCROLL_DOWN" if scroll else "DONE"
+            # act checks a probability for every offered option
+            probabilities = {option: float(option == choice) for option in options}
+            answers[key] = Answer(choice=choice, probabilities=probabilities, confidence=1.0)
+        return Answers(answers=answers, model="scripted")
+
+    async def write(self, context: WriteContext) -> str | None:
+        return None
+
+
 def notte_decider(kind: str) -> Any:
-    """The decider of `default_decider()` for `kind` (jev / llm), recording every model call."""
+    """The decider of `default_decider()` for `kind` (jev / llm), or `ScriptedDecider` (scripted), recording every
+    model call."""
     if not getattr(A, "_bench_patched", False):
         complete = A._complete
 
@@ -105,8 +148,10 @@ def notte_decider(kind: str) -> Any:
         setattr(A, "_bench_patched", True)
 
     writer = A.LlmWriter(WRITER, fallback_model=LLM_MODEL)
-    if kind == "jev":
-        inner: Any = A.JevDecider(route="openrouter", writer=writer)
+    if kind == "scripted":
+        inner: Any = ScriptedDecider()
+    elif kind == "jev":
+        inner = A.JevDecider(route="openrouter", writer=writer)
     else:
         inner = A.LlmDecider(LLM_MODEL, writer=writer)
 
@@ -269,7 +314,7 @@ async def run_task(task: Task, url: str, decider_kind: str, label_mode: str) -> 
                 return run
             run["nav_ms"] = ms(start)
             page = session.window.page
-            run["landing"] = json.loads(await page.evaluate(LANDING_JS))
+            run["landing"] = await _landing(page)
             if task.pre_js:
                 run["pre"] = json.loads(await page.evaluate(task.pre_js))
             results: list[Any] = []
@@ -331,8 +376,14 @@ async def run_probes(probes: list[Probe], url: str, decider_kind: str) -> dict[s
     run: dict[str, Any] = {"probes": []}
     try:
         async with NotteSession(headless=True, **VIEWPORT) as session:
-            _ = await session.aexecute(type="goto", url=url)
+            try:
+                _ = await session.aexecute(type="goto", url=url)
+            except Exception as e:
+                run["nav_error"] = f"{type(e).__name__}: {e}"[:1000]
+                run["error"] = run["nav_error"]
+                return run
             page = session.window.page
+            run["landing"] = await _landing(page)
             if "consent.google.com" in page.url:
                 # setup, not measured: the probes ask about the page behind Google's consent wall
                 await page.get_by_role("button", name="Reject all").first.click()
@@ -356,8 +407,4 @@ async def run_probes(probes: list[Probe], url: str, decider_kind: str) -> dict[s
             run["probe_url_end"] = page.url
     finally:
         decider.close()
-    # a probe page that is not the intended one makes its probes site misses, not wrong answers
-    run["landed"] = "probe_url" in run and run_landed(run, url)
-    for record in run["probes"]:
-        record["site_miss"] = not run["landed"]
     return run

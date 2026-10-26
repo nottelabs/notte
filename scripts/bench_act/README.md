@@ -66,14 +66,18 @@ uv run --no-sync python scripts/bench_act/report.py /tmp/act-bench-ab --summary 
 
 - `--tags ci-core` (or `ci-extended`) runs one CI tier; the default is everything.
 - Runners: `notte-local` (Jev), `notte-local-llm`, `notte-local-html` (HTML labels), `probe-local-jev`,
-  `probe-local-llm`. The default is `notte-local,probe-local-jev`.
+  `probe-local-llm`. The default is `notte-local,probe-local-jev`. `notte-local-scripted` and
+  `probe-local-scripted` use no model and no key (scroll, then DONE): they time the browser side and the CI
+  setup, and are not judged.
 - `--concurrency` defaults to half the CPU count.
 - Each run is its own process with its own browser and session. The fixture server is shared.
-- The versions of one task run back to back, so they see the same site and machine conditions. Which version
-  goes first alternates.
+- The versions of one task run back to back (one after the other, never at once), so they see the same site and
+  machine conditions. Which version goes first alternates. `--tree` takes `base=` and `head=` only.
+- Travel tasks count their dates from `--today` (default: today): a Friday 4 to 5 weeks ahead (`model.trip_dates`).
+  New tasks with dates should use it too, so they never ask for a past day.
 - Run files go to `OUT/<version>/<runner>__<task or first probe>__<repeat>.json`, worker logs to `OUT/_logs/`, and
   the plan and timings (wall time, load average) to `OUT/_meta/`.
-- An existing run file is not run again, so an interrupted run can be resumed.
+- An existing run file of the same commit is not run again, so an interrupted run can be resumed.
 
 ## CI
 
@@ -89,9 +93,12 @@ Each shard job checks out head and base (on PRs, the merge base), syncs both, an
 both versions interleaved. A report job merges the shards, writes the job summary and applies the rules in
 `rules.py`:
 
+- the rules judge the Jev runners; the LLM and scripted runners are reported only;
 - fixture tasks and fixture probes must always pass;
 - public sites fail only on a clear drop against base;
-- site misses (blocks, CAPTCHAs, redirects off the site) are left out.
+- site misses (blocks, CAPTCHAs, redirects off the site) are left out;
+- infra misses (the decider could not be reached, timed out or answered 5xx) are counted apart, and the run fails
+  when they exceed 5% of the runs. The harness never retries a run.
 
 It needs the `OPENROUTER_API_KEY` repository secret. Fork PRs get no secrets and skip; a same-repo run without
 the secret fails.

@@ -20,7 +20,7 @@ on:
         description: CI tier, ci-core (fast, stable) or ci-extended (third-party sites), or all
         default: ci-core
       runners:
-        description: Task and probe runners (notte-local, notte-local-llm, notte-local-html, probe-local-jev, probe-local-llm)
+        description: Task and probe runners (notte-local, notte-local-llm, notte-local-html, probe-local-jev, probe-local-llm; *-scripted = no model, timing only)
         default: notte-local,probe-local-jev
       repeats:
         description: Runs per task and probe page (1-5)
@@ -59,6 +59,7 @@ jobs:
       tags: ${{ steps.plan.outputs.tags }}
       runners: ${{ steps.plan.outputs.runners }}
       repeats: ${{ steps.plan.outputs.repeats }}
+      today: ${{ steps.plan.outputs.today }}
     steps:
       - name: Decide whether to run, and on which commits
         id: plan
@@ -96,7 +97,10 @@ jobs:
             files=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --paginate --jq '.[].filename')
             if grep -qE "$paths" <<<"$files"; then run=true; fi
           fi
-          if [ "$run" = true ] && [ "$HAS_KEY" != true ]; then
+          # the scripted runners (no model) are the only ones that run without the key
+          needs_key=false
+          if tr ',' '\n' <<<"$RUNNERS" | grep -qvE '(^$|-scripted$)'; then needs_key=true; fi
+          if [ "$run" = true ] && [ "$needs_key" = true ] && [ "$HAS_KEY" != true ]; then
             if [ "$FORK" != true ]; then
               echo "::error::the OPENROUTER_API_KEY repository secret is not set"
               exit 1
@@ -129,6 +133,8 @@ jobs:
             echo "tags=$TAGS"
             echo "runners=$RUNNERS"
             echo "repeats=$REPEATS"
+            # one day for every shard: the travel tasks count their dates from it
+            echo "today=$(date -u +%F)"
           } >> "$GITHUB_OUTPUT"
           echo "act bench: head $head, base ${base:-none}, tier ${TAGS:-all}, $SHARDS shard(s)" | tee -a "$GITHUB_STEP_SUMMARY"
 
@@ -209,11 +215,12 @@ jobs:
           TAGS: ${{ needs.plan.outputs.tags }}
           RUNNERS: ${{ needs.plan.outputs.runners }}
           REPEATS: ${{ needs.plan.outputs.repeats }}
+          TODAY: ${{ needs.plan.outputs.today }}
         run: |
           trees=(--tree head=head)
           if [ "$HAS_BASE" = true ]; then trees=(--tree base=base --tree head=head); fi
           python head/scripts/bench_act/bench.py "${trees[@]}" --shard "$SHARD" --concurrency 4 \
-            --runners "$RUNNERS" --suites "$SUITES" --tags "$TAGS" --repeats "$REPEATS" --out runs
+            --runners "$RUNNERS" --suites "$SUITES" --tags "$TAGS" --repeats "$REPEATS" --today "$TODAY" --out runs
 
       - name: Upload shard runs
         if: always()

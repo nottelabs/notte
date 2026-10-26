@@ -1,16 +1,21 @@
 # pyright: basic
 """Site misses and the pass/fail rules of a benchmark run (head alone, or head against base).
 
-Rules (the workflow is red when one fails):
+Rules (the workflow is red when one fails). Rules 1, 2, 5 and 6 judge the Jev runners only (`JUDGED_RUNNERS`);
+the LLM and scripted runners are reported, not judged.
 
-1. Fixture tasks (local pages, no site noise) pass in every head run, for every runner.
+1. Fixture tasks (local pages, no site noise) pass in every head run.
 2. Fixture probes are answered right in every head run.
 3. Every planned run produced a run file.
-4. With a base: on public sites (demo and real suites), per runner, head does not solve clearly fewer tasks than
-   base. Runs that are site misses on either side are left out. "Clearly": the sum over tasks of
+4. Infra misses stay at or under 5% of the runs (task runs and probe answers, both versions, every runner). An
+   infra miss is a run that ended on a decider transport error: the decider could not be reached, timed out or
+   answered HTTP 5xx / 408. It is counted apart, not as a failure, and the harness never retries it.
+5. With a base: on public sites (demo and real suites), per runner, head does not solve clearly fewer tasks than
+   base. The versions are compared repeat by repeat: a site or infra miss on either side leaves that repeat out
+   on both. "Clearly": the sum over tasks of
    (base success rate - head success rate) reaches `max(3, 10% of the compared tasks)`. One task flipping is not
    enough, so site noise alone does not make the run red; every task that did worse is still listed.
-5. The same for public probes, per probe runner, on the rate of right answers.
+6. The same for public probes, per probe runner, on the rate of right answers.
 
 Without a base, public tasks and probes are reported, not judged.
 """
@@ -24,6 +29,12 @@ from urllib.parse import parse_qsl, urlsplit
 
 from .model import FIXTURES
 
+# no model: they time the browser side and the CI setup
+TIMING_RUNNERS = ("notte-local-scripted", "probe-local-scripted")
+# the runners the rules judge (Jev); the others are reported only
+JUDGED_RUNNERS = ("notte-local", "notte-local-html", "probe-local-jev")
+INFRA_MISS_LIMIT = 0.05
+
 RULES = (__doc__ or "").strip()
 # pages that block automated browsers, matched in the visible text of the landing or final page
 BLOCK_MARKERS = re.compile(
@@ -31,6 +42,21 @@ BLOCK_MARKERS = re.compile(
     r"just a moment\.\.\.|attention required|client challenge|press (?:and|&) hold",
     re.IGNORECASE,
 )
+
+
+# a decider that could not be reached, timed out or failed on its side (`LLMProviderError` from notte_llm's Jev and
+# LLM paths: "request failed: ConnectError", "failed after retries (ReadTimeout)", "returned HTTP 503", "HTTP 502 from")
+TRANSPORT = re.compile(
+    r"\b(?:Connect(?:Error|Timeout)|(?:Read|Write|Pool)Timeout|TimeoutException|RemoteProtocolError|NetworkError|"
+    r"ReadError|WriteError)\b|\bHTTP (?:5\d\d|408)\b"
+)
+
+
+def infra_miss(error: str | None) -> str | None:
+    """The error when it is a decider transport error (see `TRANSPORT`), else None."""
+    if error and error.startswith("LLMProviderError") and TRANSPORT.search(error):
+        return error[:300]
+    return None
 
 
 def stop_reason(run: dict[str, Any], max_steps: int) -> str:
@@ -98,6 +124,21 @@ def run_landed(run: dict[str, Any], url: str) -> bool:
     return all(probe_landed(url, u) for u in urls)
 
 
+def probe_site_miss(url: str, run: dict[str, Any]) -> str | None:
+    """Evidence that a public probe page was not there to be asked about: the same evidence as `site_miss` on its
+    landing page (navigation failed, HTTP error, off the site, block page), or a landing on another page (with
+    `probe_landed`). The probes of such a page are site misses, not wrong answers."""
+    if url.startswith(FIXTURES):
+        return None
+    landing = run.get("landing")
+    evidence = site_miss(url, {"nav_error": run.get("nav_error"), "landing": landing, "final": landing})
+    if evidence:
+        return evidence
+    if not run_landed(run, url):
+        return f"landed on {run.get('probe_url')}"
+    return None
+
+
 @dataclass
 class Row:
     """One task (or probe) and runner: head against base."""
@@ -106,29 +147,44 @@ class Row:
     name: str
     suite: str
     fixture: bool
-    head: list[bool] = field(default_factory=list)
-    base: list[bool] = field(default_factory=list)
+    # repeat -> success, for the runs that are not site or infra misses
+    head_runs: dict[int, bool] = field(default_factory=dict)
+    base_runs: dict[int, bool] = field(default_factory=dict)
     head_misses: list[str] = field(default_factory=list)
     base_misses: list[str] = field(default_factory=list)
-
-    @staticmethod
-    def _rate(values: list[bool]) -> float | None:
-        return sum(values) / len(values) if values else None
+    head_infra: list[str] = field(default_factory=list)
+    base_infra: list[str] = field(default_factory=list)
 
     @property
-    def head_rate(self) -> float | None:
-        return self._rate(self.head)
+    def head(self) -> list[bool]:
+        return [self.head_runs[r] for r in sorted(self.head_runs)]
 
     @property
-    def base_rate(self) -> float | None:
-        return self._rate(self.base)
+    def base(self) -> list[bool]:
+        return [self.base_runs[r] for r in sorted(self.base_runs)]
+
+    @property
+    def pairs(self) -> list[tuple[bool, bool]]:
+        """(base, head) of the repeats both versions ran usably: a site or infra miss on one side leaves the other
+        side's run of that repeat out too."""
+        return [(self.base_runs[r], self.head_runs[r]) for r in sorted(self.head_runs) if r in self.base_runs]
 
     @property
     def delta(self) -> float | None:
-        """head - base success rate, over the runs that are not site misses; None if either side has none."""
-        if self.head_rate is None or self.base_rate is None:
+        """head - base success rate over `pairs`; None without a pair."""
+        pairs = self.pairs
+        if not pairs:
             return None
-        return self.head_rate - self.base_rate
+        return (sum(h for _, h in pairs) - sum(b for b, _ in pairs)) / len(pairs)
+
+    def add(self, version: str | None, repeat: int, success: bool, infra: str | None, miss: str | None) -> None:
+        side = "base" if version == "base" else "head"
+        if infra:
+            getattr(self, f"{side}_infra").append(infra)
+        elif miss:
+            getattr(self, f"{side}_misses").append(miss)
+        else:
+            getattr(self, f"{side}_runs")[repeat] = success
 
 
 def task_rows(runs: list[dict[str, Any]]) -> list[Row]:
@@ -138,32 +194,31 @@ def task_rows(runs: list[dict[str, Any]]) -> list[Row]:
         row = rows.get(key)
         if row is None:
             row = rows[key] = Row(run["runner"], run["task"], run.get("suite", ""), FIXTURES in run.get("url", ""))
-        miss = run.get("site_miss")
-        side = "base" if run.get("version") == "base" else "head"
-        if miss:
-            getattr(row, f"{side}_misses").append(miss)
-        else:
-            getattr(row, side).append(bool(run.get("success")))
+        row.add(
+            run.get("version"),
+            run["repeat"],
+            bool(run.get("success")),
+            infra_miss(run.get("error")),
+            run.get("site_miss"),
+        )
     return list(rows.values())
 
 
 def probe_rows(probe_runs: list[dict[str, Any]]) -> list[Row]:
     rows: dict[tuple[str, str], Row] = {}
     for run in probe_runs:
-        side = "base" if run.get("version") == "base" else "head"
         records = run.get("probes") or []
         if not records and run.get("error"):
-            # the page or session failed before any question: every probe of the page counts as wrong
-            records = [{"probe": name, "correct": False} for name in run.get("names", [])]
+            # the page or session failed before any question: every probe of the page counts as wrong, unless the
+            # site (`site_miss`) or the decider (`infra_miss`) is why
+            records = [{"probe": name, "correct": False, "error": run["error"]} for name in run.get("names", [])]
         for p in records:
             key = (run["runner"], p["probe"])
             row = rows.get(key)
             if row is None:
                 row = rows[key] = Row(run["runner"], p["probe"], run.get("suite", ""), FIXTURES in run.get("url", ""))
-            if p.get("site_miss"):
-                getattr(row, f"{side}_misses").append(f"landed on {run.get('probe_url')}")
-            else:
-                getattr(row, side).append(bool(p.get("correct")))
+            miss = run.get("site_miss") or (f"landed on {run.get('probe_url')}" if p.get("site_miss") else None)
+            row.add(run.get("version"), run["repeat"], bool(p.get("correct")), infra_miss(p.get("error")), miss)
     return list(rows.values())
 
 
@@ -194,8 +249,10 @@ def _compare(rows: list[Row], what: str, verdict: Verdict) -> None:
         limit = threshold(len(compared))
         for r in sorted(compared, key=lambda r: r.delta or 0):
             if r.delta is not None and r.delta < 0:
+                pairs = r.pairs
+                base, head = sum(b for b, _ in pairs), sum(h for _, h in pairs)
                 verdict.warnings.append(
-                    f"{runner} / {r.name}: {sum(r.base)}/{len(r.base)} on base, {sum(r.head)}/{len(r.head)} on head"
+                    f"{runner} / {r.name}: {base}/{len(pairs)} on base, {head}/{len(pairs)} on head"
                 )
         if drop >= limit:
             verdict.failures.append(
@@ -205,10 +262,22 @@ def _compare(rows: list[Row], what: str, verdict: Verdict) -> None:
 
 def judge(runs: list[dict[str, Any]], probe_runs: list[dict[str, Any]], missing: list[str], with_base: bool) -> Verdict:
     verdict = Verdict()
+    runs = [r for r in runs if r["runner"] not in TIMING_RUNNERS]
+    probe_runs = [r for r in probe_runs if r["runner"] not in TIMING_RUNNERS]
     for path in missing:
         verdict.failures.append(f"no run file: {path}")
+    rows = task_rows(runs) + probe_rows(probe_runs)
+    infra = sum(len(r.head_infra) + len(r.base_infra) for r in rows)
+    total = sum(len(r.head) + len(r.base) + len(r.head_misses) + len(r.base_misses) for r in rows) + infra
+    if total and infra / total > INFRA_MISS_LIMIT:
+        verdict.failures.append(
+            f"{infra} infra misses (decider transport errors) in {total} runs: over {INFRA_MISS_LIMIT:.0%}"
+        )
+    runs = [r for r in runs if r["runner"] in JUDGED_RUNNERS]
+    probe_runs = [r for r in probe_runs if r["runner"] in JUDGED_RUNNERS]
     for run in runs:
-        if run.get("version", "head") == "head" and FIXTURES in run.get("url", "") and not run.get("success"):
+        failed = not run.get("success") and not infra_miss(run.get("error"))
+        if run.get("version", "head") == "head" and FIXTURES in run.get("url", "") and failed:
             reason = run.get("error") or run.get("stop_reason")
             verdict.failures.append(f"fixture task {run['runner']} / {run['task']} #{run['repeat']} failed ({reason})")
     for row in probe_rows(probe_runs):

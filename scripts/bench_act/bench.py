@@ -8,9 +8,12 @@ runner claims. Each run is one process (`worker.py`) with its own browser and se
 
 - `--concurrency N` runs N at once.
 - `--shard i/n` keeps every n-th task or probe page, for a CI job matrix.
-- `--tree NAME=PATH` (repeatable) runs the same harness on several checkouts, each in its own environment
-  (`uv run --no-sync` there). The versions of one task run back to back, so they see the same site and machine
-  conditions. Without it, the checkout this harness is in is `head`.
+- `--tree base=PATH --tree head=PATH` runs the same harness on two checkouts, each in its own environment
+  (`uv run --no-sync` there). The versions of one task run back to back (one after the other, never at once), so
+  they see the same site and machine conditions. Without it, the checkout this harness is in is `head`.
+- `--today YYYY-MM-DD` fixes the day the travel dates of the tasks are counted from (`model.trip_dates`), so every
+  shard of a CI run asks for the same trip.
+- An existing run file of the same commit is not run again: an interrupted run can be resumed.
 
     uv run --no-sync python scripts/bench_act/bench.py --runners notte-local,probe-local-jev --out /tmp/act-bench
     python head/scripts/bench_act/bench.py --tree base=base --tree head=head --shard 2/4 --concurrency 4 --out runs
@@ -32,11 +35,13 @@ import subprocess  # noqa: E402
 import threading  # noqa: E402
 import time  # noqa: E402
 from concurrent.futures import ThreadPoolExecutor  # noqa: E402
+from datetime import date  # noqa: E402
 from functools import partial  # noqa: E402
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer  # noqa: E402
 from typing import Any  # noqa: E402
 
-from .registry import PROBE_RUNNERS, TASK_RUNNERS, Job, discover, parse_shard, plan, select, shard  # noqa: E402
+from .model import TODAY_ENV  # noqa: E402
+from .registry import PROBE_RUNNERS, TASK_RUNNERS, Job, discover, pairs, parse_shard, plan, select, shard  # noqa: E402
 
 HARNESS = Path(__file__).resolve().parent
 FIXTURES = HARNESS / "fixtures"
@@ -99,6 +104,27 @@ class LoadSampler:
         self._thread.join()
 
 
+def kept(path: Path, sha: str | None) -> bool:
+    """Resume: an existing run file is kept when it ran the same commit; one of another (or an unknown) commit is
+    run again."""
+    return sha is not None and json.loads(path.read_text()).get("sha") == sha
+
+
+def parse_trees(specs: list[str], default: Path) -> dict[str, Path]:
+    """`--tree base=PATH --tree head=PATH` -> {"base": ..., "head": ...}; no spec: this checkout is head."""
+    if not specs:
+        return {"head": default}
+    trees: dict[str, Path] = {}
+    for spec in specs:
+        name, _, tree = spec.partition("=")
+        if name not in ("base", "head") or name in trees or not tree:
+            raise ValueError(f"--tree {spec!r}: expected base=PATH or head=PATH, each at most once")
+        trees[name] = Path(tree).resolve()
+    if "head" not in trees:
+        raise ValueError("--tree: head=PATH is required (base=PATH is what head is compared against)")
+    return {name: trees[name] for name in ("base", "head") if name in trees}
+
+
 def _failed_record(job: Job, sha: str | None, error: str, log_tail: str) -> dict[str, Any]:
     """The run file of a worker that died or timed out without writing one."""
     record: dict[str, Any] = {
@@ -129,10 +155,13 @@ def run_job(
     fixtures: str,
     out: Path,
     timeout: float,
+    today: str,
 ) -> dict[str, Any]:
     path = out / job.file
     if path.exists():
-        return {"file": job.file, "skipped": True}
+        if kept(path, shas[job.version]):
+            return {"file": job.file, "skipped": True}
+        path.unlink()
     path.parent.mkdir(parents=True, exist_ok=True)
     log_path = out / "_logs" / job.file.replace("/", "__").replace(".json", ".log")
     log_path.parent.mkdir(parents=True, exist_ok=True)
@@ -147,6 +176,7 @@ def run_job(
     }
     env = {k: v for k, v in os.environ.items() if k not in CLEARED_ENV and not k.startswith(CLEARED_PREFIX)}
     env["DISABLE_TELEMETRY"] = "true"  # keep bench runs out of usage data
+    env[TODAY_ENV] = today
     command = ["uv", "run", "--no-sync", "python", str(HARNESS / "worker.py"), "--job", json.dumps(spec)]
     command += ["--fixtures", fixtures, "--out", str(path)]
     start = time.perf_counter()
@@ -201,6 +231,7 @@ def main() -> None:
     parser.add_argument("--concurrency", type=int, default=default_concurrency(), help="runs at once")
     parser.add_argument("--tree", action="append", default=[], help="NAME=PATH, a checkout to run (repeatable)")
     parser.add_argument("--job-timeout", type=float, default=900, help="seconds before a run is stopped as an error")
+    parser.add_argument("--today", default="", help="YYYY-MM-DD the travel dates are counted from (default: today)")
     parser.add_argument("--dry-run", action="store_true", help="print the runs and exit")
     parser.add_argument("--out", required=True)
     args = parser.parse_args()
@@ -212,12 +243,12 @@ def main() -> None:
     for runner in runners:
         if runner not in TASK_RUNNERS + PROBE_RUNNERS:
             parser.error(f"unknown runner {runner!r}")
-    trees = {"head": HARNESS.parents[1]}
-    if args.tree:
-        trees = {}
-        for spec in args.tree:
-            name, _, tree = spec.partition("=")
-            trees[name] = Path(tree).resolve()
+    try:
+        trees = parse_trees(args.tree, HARNESS.parents[1])
+    except ValueError as e:
+        parser.error(str(e))
+    today = args.today or date.today().isoformat()
+    os.environ[TODAY_ENV] = today
     index, count = parse_shard(args.shard)
     registry = discover()
     items = select(
@@ -248,6 +279,7 @@ def main() -> None:
         "tags": names(args.tags),
         "repeats": args.repeats,
         "trees": shas,
+        "today": today,
         "jobs": [job.file for job in jobs],
     }
     _ = (meta / f"plan-{label}.json").write_text(json.dumps(plan_record, indent=1))
@@ -255,8 +287,12 @@ def main() -> None:
     urls = {name: task.url for name, task in registry.tasks.items()}
     log(f"{len(jobs)} runs, {args.concurrency} at once, shard {index}/{count}, trees {shas}")
     started = time.time()
+
+    def run_pair(pair: list[Job]) -> list[dict[str, Any]]:
+        return [run_job(job, trees, shas, urls, fixtures, out, args.job_timeout, today) for job in pair]
+
     with LoadSampler() as load, ThreadPoolExecutor(args.concurrency) as pool:
-        results = list(pool.map(lambda job: run_job(job, trees, shas, urls, fixtures, out, args.job_timeout), jobs))
+        results = [result for pair in pool.map(run_pair, pairs(jobs)) for result in pair]
     wall = round(time.time() - started, 1)
     timing = {
         **plan_record,

@@ -4,16 +4,40 @@ Spiegel, ... These change and sometimes block or redirect a headless browser (se
 
 import base64
 from dataclasses import replace
+from datetime import date, timedelta
 from typing import Any
 
-from ..model import REAL_MAX_STEPS, Probe, Task, ci_tier, executed, frame_value, one, path, visited
-
-GF_HOME = "https://www.google.com/travel/flights?hl=en"
-# one-way Paris -> Tokyo, 13 Nov 2026, as Google's own search page encodes it (captured from a manual search)
-GF_RESULTS = (
-    "https://www.google.com/travel/flights/search?"
-    "tfs=CBwQAhooEgoyMDI2LTExLTEzagwIAxIIL20vMDVxdGpyDAgDEggvbS8wN2Rma0ABSAFwAYIBCwj___________8BmAEC&hl=en"
+from ..model import (
+    NEUTRAL_OPERATIONS,
+    REAL_MAX_STEPS,
+    Probe,
+    Task,
+    ci_tier,
+    executed,
+    frame_value,
+    last_status,
+    long_date,
+    one,
+    path,
+    trip_dates,
+    visited,
 )
+
+TRIP = trip_dates()
+DEPART, BACK, CHECKOUT = TRIP.depart.isoformat(), TRIP.back.isoformat(), TRIP.checkout.isoformat()
+GF_HOME = "https://www.google.com/travel/flights?hl=en"
+# one-way Paris -> Tokyo, as Google's own search page encodes it (captured from a manual search on 13 Nov 2026);
+# `gf_results_url` swaps in another date of the same length
+GF_TFS = "CBwQAhooEgoyMDI2LTExLTEzagwIAxIIL20vMDVxdGpyDAgDEggvbS8wN2Rma0ABSAFwAYIBCwj___________8BmAEC"  # pragma: allowlist secret
+
+
+def gf_results_url(day: date) -> str:
+    raw = base64.urlsafe_b64decode(GF_TFS).replace(b"2026-11-13", day.isoformat().encode())
+    tfs = base64.urlsafe_b64encode(raw).decode().rstrip("=")
+    return f"https://www.google.com/travel/flights/search?tfs={tfs}&hl=en"
+
+
+GF_RESULTS = gf_results_url(TRIP.depart)
 PARIS = {"/m/05qtj", "CDG", "ORY", "BVA", "PAR"}
 TOKYO = {"/m/07dfk", "HND", "NRT", "TYO"}
 # /m/059rby is New York State: Google's first suggestion for "New York" ("New York, USA")
@@ -94,8 +118,8 @@ def _gf_ok(page: str, legs: list[tuple[str, set[str], set[str]]], trip: int | No
             return False
         if trip is not None and search["trip"] != trip:
             return False
-        for leg, (date, origin, destination) in zip(search["legs"], legs, strict=True):
-            if leg["date"] != date or not leg["from"] & origin or not leg["to"] & destination:
+        for leg, (day, origin, destination) in zip(search["legs"], legs, strict=True):
+            if leg["date"] != day or not leg["from"] & origin or not leg["to"] & destination:
                 return False
             if opened and leg["segments"] < 1:
                 return False
@@ -104,13 +128,18 @@ def _gf_ok(page: str, legs: list[tuple[str, set[str], set[str]]], trip: int | No
     return check
 
 
+def _short(day: date) -> str:
+    """Fri, Nov 13: how Google Flights shows a date"""
+    return f"{day:%a, %b} {day.day}"
+
+
 def _booking_ok(f: dict[str, Any], _: dict[str, Any]) -> bool:
     u = f["url"]
     ss = (one(u, "ss") or "").lower()
     return (
         "/searchresults" in path(f)
-        and one(u, "checkin") == "2026-11-13"
-        and one(u, "checkout") == "2026-11-15"
+        and one(u, "checkin") == DEPART
+        and one(u, "checkout") == CHECKOUT
         and one(u, "group_adults") == "2"
         and one(u, "no_rooms") in (None, "1")
         and ("lisbo" in ss or one(u, "dest_id") == "-2167973")
@@ -168,8 +197,14 @@ def _demoqa_ok(f: dict[str, Any], _: dict[str, Any]) -> bool:
 UPLOAD_NAME = "notte-bench-upload.txt"
 
 
-def _upload_ok(f: dict[str, Any], _: dict[str, Any]) -> bool:
-    return path(f) == "/upload" and "File Uploaded!" in (f.get("text") or "") and UPLOAD_NAME in (f.get("text") or "")
+def _upload_blocked_ok(f: dict[str, Any], run: dict[str, Any]) -> bool:
+    # act() has no upload operation: it must answer BLOCKED, without typing the path anywhere or submitting
+    return (
+        path(f) == "/upload"
+        and "File Uploaded!" not in (f.get("text") or "")
+        and all(op in NEUTRAL_OPERATIONS for op in executed(run))
+        and last_status(run) == "blocked"
+    )
 
 
 HN_PRE = "(() => { const a = document.querySelector('tr.athing'); return JSON.stringify({top_id: a && a.id}) })()"
@@ -178,38 +213,38 @@ _TASKS = [
     Task(
         "gf-oneway",
         GF_HOME,
-        "Search for one-way flights from Paris to Tokyo on 13 November 2026.",
-        _gf_ok("search", [("2026-11-13", PARIS, TOKYO)], trip=2),
+        f"Search for one-way flights from Paris to Tokyo on {long_date(TRIP.depart)}.",
+        _gf_ok("search", [(DEPART, PARIS, TOKYO)], trip=2),
         tags=("google-flights", "combobox", "date-picker", "consent"),
     ),
     Task(
         "gf-roundtrip",
         GF_HOME,
-        "Search for round-trip flights from Paris to New York, leaving on 13 November 2026 and returning on "
-        "20 November 2026.",
-        _gf_ok("search", [("2026-11-13", PARIS, NEW_YORK), ("2026-11-20", NEW_YORK, PARIS)]),
+        f"Search for round-trip flights from Paris to New York, leaving on {long_date(TRIP.depart)} and returning "
+        f"on {long_date(TRIP.back)}.",
+        _gf_ok("search", [(DEPART, PARIS, NEW_YORK), (BACK, NEW_YORK, PARIS)]),
         tags=("google-flights", "combobox", "date-picker", "consent"),
     ),
     Task(
         "gf-open",
         GF_RESULTS,
         "Open the first flight in the results list. Do not book or pay.",
-        _gf_ok("booking", [("2026-11-13", PARIS, TOKYO)], opened=True),
+        _gf_ok("booking", [(DEPART, PARIS, TOKYO)], opened=True),
         tags=("google-flights", "consent"),
     ),
     Task(
         "gf-book",
         GF_HOME,
-        "Find one-way flights from Paris to Tokyo on 13 November 2026, then open the first flight in the results "
-        "to select it. Do not book or pay.",
-        _gf_ok("booking", [("2026-11-13", PARIS, TOKYO)], opened=True),
+        f"Find one-way flights from Paris to Tokyo on {long_date(TRIP.depart)}, then open the first flight in the "
+        "results to select it. Do not book or pay.",
+        _gf_ok("booking", [(DEPART, PARIS, TOKYO)], opened=True),
         tags=("google-flights", "end-to-end"),
     ),
     Task(
         "hotel",
         "https://www.booking.com/index.en-gb.html",
-        "Search for hotels in Lisbon for 2 adults and 1 room, check-in on 13 November 2026 and check-out on "
-        "15 November 2026.",
+        f"Search for hotels in Lisbon for 2 adults and 1 room, check-in on {long_date(TRIP.depart)} and check-out on "
+        f"{long_date(TRIP.checkout)}.",
         _booking_ok,
         tags=("travel", "date-picker", "consent"),
     ),
@@ -315,14 +350,14 @@ _TASKS = [
         "upload",
         "https://the-internet.herokuapp.com/upload",
         f"Upload the file /tmp/{UPLOAD_NAME}.",
-        _upload_ok,
-        tags=("file-upload", "capability"),
+        _upload_blocked_ok,
+        tags=("file-upload", "capability", "blocked"),
     ),
 ]
 TASKS = [replace(t, max_steps=REAL_MAX_STEPS) for t in _TASKS]
 
 BOOKING_RESULTS = (
-    "https://www.booking.com/searchresults.en-gb.html?ss=Lisbon&checkin=2026-11-13&checkout=2026-11-15"
+    f"https://www.booking.com/searchresults.en-gb.html?ss=Lisbon&checkin={DEPART}&checkout={CHECKOUT}"
     "&group_adults=2&no_rooms=1&group_children=0"
 )
 FLASK_BUGS = "https://github.com/pallets/flask/issues?q=is%3Aissue%20state%3Aopen%20label%3Abug"
@@ -339,8 +374,8 @@ PROBES = [
         "gf-date",
         GF_RESULTS,
         "What is the departure date of this search?",
-        ["Fri, Nov 13", "Sat, Nov 14", "Fri, Nov 20", "Thu, Nov 12"],
-        "Fri, Nov 13",
+        [_short(TRIP.depart + timedelta(days=d)) for d in (0, 1, 7, -1)],
+        _short(TRIP.depart),
     ),
     Probe(
         "hotel-city",
@@ -442,6 +477,7 @@ PROBES = [
 ]
 
 # third-party sites (Google, booking.com, IKEA, GitHub, PyPI, jQuery UI, Spiegel, demoqa, scrapingcourse): extended.
-# Core: Wikipedia and the-internet only. `upload` is extended: act has no file upload, the task fails by design.
+# Core: Wikipedia and the-internet only. `upload` (a clean BLOCKED) stays extended: a click that opens a file chooser
+# reports plain success, so some runs click on until the guard (bench bug 16).
 TASKS = ci_tier(TASKS, core={"wiki-hops", "newtab"})
 PROBES = ci_tier(PROBES, core={"turing-born", "turing-bletchley", "hn-more"})

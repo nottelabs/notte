@@ -5,8 +5,10 @@ A task's `check` runs on the final page probe (`runners.PROBE_JS`: URL, text, in
 record (steps, decisions), never on the runner's own claim.
 """
 
+import os
 from collections.abc import Callable, Collection
 from dataclasses import dataclass, field, replace
+from datetime import date, timedelta
 from typing import Any, TypeVar
 from urllib.parse import parse_qs, urlsplit
 
@@ -18,6 +20,39 @@ FIXTURES = "{fixtures}"
 NEUTRAL_OPERATIONS = ("SCROLL_DOWN", "SCROLL_UP", "WAIT")
 
 Check = Callable[[dict[str, Any], dict[str, Any]], bool]
+# the day travel dates are counted from: set by `bench.py --today` for every run of a plan
+TODAY_ENV = "NOTTE_BENCH_TODAY"
+
+
+@dataclass(frozen=True)
+class Trip:
+    """Travel dates for the flight and hotel tasks, always ahead: sites refuse searches in the past."""
+
+    depart: date
+
+    @property
+    def back(self) -> date:
+        return self.depart + timedelta(days=7)
+
+    @property
+    def checkout(self) -> date:
+        return self.depart + timedelta(days=2)
+
+
+def trip_dates(today: date | None = None) -> Trip:
+    """Departure on the first Friday at least 4 weeks after `today` (`TODAY_ENV`, else the current day)."""
+    if today is None:
+        value = os.environ.get(TODAY_ENV)
+        today = date.fromisoformat(value) if value else date.today()
+    first = today + timedelta(days=28)
+    return Trip(first + timedelta(days=(4 - first.weekday()) % 7))
+
+
+def long_date(day: date) -> str:
+    """13 November 2026"""
+    return f"{day.day} {day:%B %Y}"
+
+
 # CI tiers, one per task and probe (`ci_tier`): `ci-core` runs on every PR that changes observe or act (local pages and
 # very stable public demos), `ci-extended` on demand (third-party sites, ads, known flakes)
 CI_CORE = "ci-core"
