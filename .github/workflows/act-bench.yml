@@ -40,7 +40,7 @@ concurrency:
   # A new push cancels the PR's previous run; adding an unrelated label does not.
   group: >-
     act-bench-${{ github.event.pull_request.number || github.run_id }}-${{
-    github.event.action == 'labeled' && github.event.label.name != 'act-bench' && github.run_id || 'bench' }}
+    github.event.action == 'labeled' && github.event.label.name != 'act-bench' && github.event.label.name != 'act-bench-all' && github.run_id || 'bench' }}
   cancel-in-progress: true
 
 jobs:

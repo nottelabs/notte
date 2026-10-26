@@ -2,13 +2,16 @@
 site misses, pass/fail rules and the merged report. No browser, no model."""
 
 import json
+import re
 import sys
 from datetime import date
 from pathlib import Path
 from typing import Any
+from unittest.mock import Mock
 from urllib.parse import urlsplit
 
 import pytest
+import yaml
 
 from scripts.bench_act import bench, registry, report, rules
 from scripts.bench_act.model import CI_CORE, CI_EXTENDED, TIERS, TODAY_ENV, Probe, Task, ci_tier, long_date, trip_dates
@@ -299,6 +302,38 @@ def test_report_check_exits_non_zero_when_a_rule_fails(tmp_path: Path, monkeypat
     assert "fixture task notte-local / f1 #1 failed" in summary.read_text()
 
 
+def test_report_uses_only_planned_runs_but_still_fails_for_missing_results(tmp_path: Path) -> None:
+    task = "head/notte-local__f-core__1.json"
+    probe = "head/probe-local-jev__core__1.json"
+    _write(tmp_path, task, _task_run("f-core", "head", True))
+    _write(tmp_path, "head/notte-local__f-extended__1.json", _task_run("f-extended", "head", False))
+    for name, correct in (("core", True), ("extended", False)):
+        _write(
+            tmp_path,
+            f"head/probe-local-jev__{name}__1.json",
+            {
+                "runner": "probe-local-jev",
+                "url": FIXTURE_URL,
+                "suite": "fixtures",
+                "version": "head",
+                "repeat": 1,
+                "probes": [{"probe": name, "correct": correct}],
+            },
+        )
+    # The previous all-tier run fails on extended fixtures.
+    runs, probes, meta = report.load([tmp_path])
+    assert not rules.judge(runs, probes, [], with_base=False).ok
+    _write(tmp_path, "_meta/plan-shard-1-of-1.json", {"jobs": [task, probe]})
+    runs, probes, meta = report.load([tmp_path])
+    assert [r["task"] for r in runs] == ["f-core"]
+    assert [p["probe"] for r in probes for p in r["probes"]] == ["core"]
+    assert rules.judge(runs, probes, report.missing_runs([tmp_path], meta), with_base=False).ok
+    (tmp_path / probe).unlink()
+    runs, probes, meta = report.load([tmp_path])
+    verdict = rules.judge(runs, probes, report.missing_runs([tmp_path], meta), with_base=False)
+    assert verdict.failures == [f"no run file: {probe}"]
+
+
 def test_gf_search_decodes_google_flights_urls_for_any_trip_date() -> None:
     captured = gf_results_url(date(2026, 11, 13))
     assert captured.split("tfs=")[1].split("&")[0] == GF_TFS
@@ -492,12 +527,88 @@ def test_upload_is_a_blocked_capability_check() -> None:
     assert not upload.check(final, typed)
 
 
-def test_resume_keeps_only_runs_of_the_same_commit(tmp_path: Path) -> None:
+def test_resume_keeps_only_runs_of_the_same_commit_and_identity(tmp_path: Path) -> None:
     path = tmp_path / "run.json"
     path.write_text(json.dumps({"sha": "a" * 40}))
-    assert bench.kept(path, "a" * 40)
-    assert not bench.kept(path, "b" * 40)
-    assert not bench.kept(path, None)
+    assert not bench.kept(path, "a" * 40, "inputs")
+    path.write_text(json.dumps({"sha": "a" * 40, "run_identity": "inputs"}))
+    assert bench.kept(path, "a" * 40, "inputs")
+    assert not bench.kept(path, "a" * 40, "changed")
+    assert not bench.kept(path, "b" * 40, "inputs")
+    assert not bench.kept(path, None, "inputs")
+
+
+def test_run_job_reruns_changed_probe_selection_and_inputs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    harness = tmp_path / "harness"
+    harness.mkdir()
+    worker = harness / "worker.py"
+    worker.write_text("# harness version 1")
+    monkeypatch.setattr(bench, "HARNESS", harness)
+    process = Mock(returncode=0)
+    start = Mock(return_value=process)
+    monkeypatch.setattr(bench.subprocess, "Popen", start)
+
+    def finish(timeout: float) -> int:
+        command = start.call_args.args[0]
+        spec = json.loads(command[command.index("--job") + 1])
+        path = Path(command[command.index("--out") + 1])
+        path.write_text(json.dumps({**spec, "probes": [{"probe": n, "correct": True} for n in spec["names"]]}))
+        return 0
+
+    process.wait.side_effect = finish
+    found = registry.discover()
+    core = next(i for i in registry.select(found, tags=[CI_CORE]) if "price" in i.names)
+    all_tiers = next(i for i in registry.select(found) if "price" in i.names)
+    assert "star-rating" not in core.names and "star-rating" in all_tiers.names
+
+    def run(item: registry.Item, today: str = "2026-10-26", timeout: float = 900, port: int = 1000) -> bool:
+        result = bench.run_job(
+            registry.Job("head", "probe-local-jev", item, 1),
+            {"head": tmp_path},
+            {"head": "a" * 40},
+            {},
+            f"http://127.0.0.1:{port}",
+            tmp_path / "out",
+            timeout,
+            today,
+        )
+        return result.get("skipped", False)
+
+    assert not run(core)
+    assert run(core, port=2000)  # a restarted fixture server is still the same fixture input
+    assert not run(all_tiers)
+    assert start.call_count == 2
+    [path] = (tmp_path / "out/head").glob("*.json")
+    assert "star-rating" in [p["probe"] for p in json.loads(path.read_text())["probes"]]
+    assert run(all_tiers)
+    assert not run(all_tiers, today="2026-10-27")
+    assert not run(all_tiers, today="2026-10-27", timeout=30)
+    worker.write_text("# harness version 2")
+    assert not run(all_tiers, today="2026-10-27", timeout=30)
+    assert start.call_count == 5
+
+
+@pytest.mark.parametrize("action", ["opened", "synchronize", "reopened", "labeled"])
+@pytest.mark.parametrize("label", ["act-bench", "act-bench-all", "unrelated"])
+def test_benchmark_labels_share_push_concurrency_group(action: str, label: str) -> None:
+    workflow = yaml.safe_load((Path(__file__).resolve().parents[2] / ".github/workflows/act-bench.yml").read_text())
+    assert action in workflow[True]["pull_request"]["types"]  # YAML 1.1 parses `on` as True
+    context = {
+        "github.event.pull_request.number": 1324,
+        "github.run_id": 5678,
+        "github.event.action": action,
+        "github.event.label.name": label,
+    }
+
+    def evaluate(match: re.Match[str]) -> str:
+        expression = re.sub(r"github[\w.]+", lambda token: repr(context[token.group()]), match[1])
+        expression = expression.replace("&&", " and ").replace("||", " or ")
+        return str(eval(expression, {"__builtins__": {}}))
+
+    group = re.sub(r"\$\{\{(.*?)\}\}", evaluate, workflow["concurrency"]["group"])
+    suffix = "5678" if action == "labeled" and label == "unrelated" else "bench"
+    assert group == f"act-bench-1324-{suffix}"
+    assert workflow["concurrency"]["cancel-in-progress"] is True
 
 
 def test_trees_are_base_and_head_only(tmp_path: Path) -> None:

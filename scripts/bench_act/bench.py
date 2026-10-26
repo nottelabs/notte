@@ -13,7 +13,7 @@ runner claims. Each run is one process (`worker.py`) with its own browser and se
   they see the same site and machine conditions. Without it, the checkout this harness is in is `head`.
 - `--today YYYY-MM-DD` fixes the day the travel dates of the tasks are counted from (`model.trip_dates`), so every
   shard of a CI run asks for the same trip.
-- An existing run file of the same commit is not run again: an interrupted run can be resumed.
+- An existing run file with the same commit and run inputs is not run again: an interrupted run can be resumed.
 
     uv run --no-sync python scripts/bench_act/bench.py --runners notte-local,probe-local-jev --out /tmp/act-bench
     python head/scripts/bench_act/bench.py --tree base=base --tree head=head --shard 2/4 --concurrency 4 --out runs
@@ -27,6 +27,7 @@ if not __package__:  # run as a script: import the harness as the `bench_act` pa
     __package__ = "bench_act"
 
 import argparse  # noqa: E402
+import hashlib  # noqa: E402
 import json  # noqa: E402
 import os  # noqa: E402
 import signal  # noqa: E402
@@ -104,10 +105,21 @@ class LoadSampler:
         self._thread.join()
 
 
-def kept(path: Path, sha: str | None) -> bool:
-    """Resume: an existing run file is kept when it ran the same commit; one of another (or an unknown) commit is
-    run again."""
-    return sha is not None and json.loads(path.read_text()).get("sha") == sha
+def harness_digest() -> str:
+    """The worker, task definitions and fixtures are shared even when testing another checkout."""
+    digest = hashlib.sha256()
+    for path in sorted(HARNESS.rglob("*")):
+        relative = path.relative_to(HARNESS)
+        if path.is_file() and "__pycache__" not in relative.parts:
+            digest.update(str(relative).encode() + b"\0")
+            digest.update(path.read_bytes() + b"\0")
+    return digest.hexdigest()
+
+
+def kept(path: Path, sha: str | None, identity: str) -> bool:
+    """Resume only a known commit with the same selected probes and actual run inputs."""
+    record = json.loads(path.read_text())
+    return sha is not None and record.get("sha") == sha and record.get("run_identity") == identity
 
 
 def parse_trees(specs: list[str], default: Path) -> dict[str, Path]:
@@ -157,14 +169,6 @@ def run_job(
     timeout: float,
     today: str,
 ) -> dict[str, Any]:
-    path = out / job.file
-    if path.exists():
-        if kept(path, shas[job.version]):
-            return {"file": job.file, "skipped": True}
-        path.unlink()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    log_path = out / "_logs" / job.file.replace("/", "__").replace(".json", ".log")
-    log_path.parent.mkdir(parents=True, exist_ok=True)
     spec = {
         "version": job.version,
         "sha": shas[job.version],
@@ -174,6 +178,27 @@ def run_job(
         "suite": job.item.suite,
         "repeat": job.repeat,
     }
+    # Keep fixture URLs symbolic: the server gets a new port when an interrupted plan resumes.
+    identity = hashlib.sha256(
+        json.dumps(
+            {
+                **spec,
+                "url": _url(job, urls),
+                "today": today,
+                "timeout": timeout,
+                "harness": harness_digest(),
+            },
+            sort_keys=True,
+        ).encode()
+    ).hexdigest()
+    path = out / job.file
+    if path.exists():
+        if kept(path, shas[job.version], identity):
+            return {"file": job.file, "skipped": True}
+        path.unlink()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    log_path = out / "_logs" / job.file.replace("/", "__").replace(".json", ".log")
+    log_path.parent.mkdir(parents=True, exist_ok=True)
     env = {k: v for k, v in os.environ.items() if k not in CLEARED_ENV and not k.startswith(CLEARED_PREFIX)}
     env["DISABLE_TELEMETRY"] = "true"  # keep bench runs out of usage data
     env[TODAY_ENV] = today
@@ -203,6 +228,8 @@ def run_job(
         record["url"] = _url(job, urls)
         _ = path.write_text(json.dumps(record, indent=1))
     record = json.loads(path.read_text())
+    record["run_identity"] = identity
+    _ = path.write_text(json.dumps(record, indent=1))
     if job.item.kind == "task":
         result = "SITE-MISS" if record.get("site_miss") else "ok" if record.get("success") else "FAIL"
         detail = f"steps={len(record.get('steps', []))} stop={record.get('stop_reason')}"

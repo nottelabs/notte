@@ -53,15 +53,20 @@ def _rate(k: int, n: int) -> str:
 def load(directories: list[Path]) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
     """(task runs, probe runs, shard metadata), from the run files under each directory."""
     runs, probes, meta = [], [], []
-    for directory in directories:
-        for path in sorted(directory.rglob("*.json")):
-            data = json.loads(path.read_text())
-            if "_meta" in path.parts:
-                meta.append({**data, "file": path.name})
-                continue
-            data["file"] = str(path.relative_to(directory))
-            data.setdefault("version", "head")
-            (probes if data["runner"].startswith("probe-") else runs).append(data)
+    paths = [(directory, path) for directory in directories for path in sorted(directory.rglob("*.json"))]
+    for _, path in paths:
+        if "_meta" in path.parts:
+            meta.append({**json.loads(path.read_text()), "file": path.name})
+    plans = [m for m in meta if m["file"].startswith("plan-")]
+    planned = {job for m in plans for job in m["jobs"]}
+    for directory, path in paths:
+        relative = str(path.relative_to(directory))
+        if "_meta" in path.parts or (plans and relative not in planned):
+            continue
+        data = json.loads(path.read_text())
+        data["file"] = relative
+        data.setdefault("version", "head")
+        (probes if data["runner"].startswith("probe-") else runs).append(data)
     return runs, probes, meta
 
 

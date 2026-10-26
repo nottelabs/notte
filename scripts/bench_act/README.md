@@ -77,7 +77,7 @@ uv run --no-sync python scripts/bench_act/report.py /tmp/act-bench-ab --summary 
   New tasks with dates should use it too, so they never ask for a past day.
 - Run files go to `OUT/<version>/<runner>__<task or first probe>__<repeat>.json`, worker logs to `OUT/_logs/`, and
   the plan and timings (wall time, load average) to `OUT/_meta/`.
-- An existing run file of the same commit is not run again, so an interrupted run can be resumed.
+- An existing run file with the same commit, selected probes, harness, date and timeout is not run again, so an interrupted run can be resumed.
 
 ## CI
 
