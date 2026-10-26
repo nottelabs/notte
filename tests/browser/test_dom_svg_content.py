@@ -104,11 +104,12 @@ document.querySelector('a').addEventListener('click', () => {{ document.title = 
 
 
 @pytest.mark.asyncio
-async def test_svg_shape_with_assigned_click_handler_is_observed_in_the_page_world() -> None:
+@pytest.mark.parametrize("label", ['<text x="0" y="98">March</text>', ""])
+async def test_svg_shape_with_assigned_click_handler_is_observed_in_the_page_world(label: str) -> None:
     """A chart's assigned handler makes its bar actionable where the handler lives."""
-    page = """<svg width="200" height="100">
-<rect width="100" height="80" aria-label="March: 1250 sign-ups"/><text x="0" y="98">March</text>
-</svg><script>document.querySelector('rect').onclick = () => { document.title = 'March'; };</script>"""
+    page = f"""<svg width="200" height="100">
+<rect width="100" height="80" aria-label="March: 1250 sign-ups"/>{label}
+</svg><script>document.querySelector('rect').onclick = () => {{ document.title = 'March'; }};</script>"""
     async with NotteSession(headless=True) as session:
         browser_page = session.window.page
         _ = await browser_page.goto(f"data:text/html,{quote(page)}")
@@ -125,6 +126,59 @@ async def test_svg_shape_with_assigned_click_handler_is_observed_in_the_page_wor
         assert shapes[0].get("accessibleName") == "March: 1250 sign-ups"
         await browser_page.locator("rect").click()
         assert await browser_page.title() == "March"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("content", "selector", "property_name", "expected_tag", "expected_name"),
+    [
+        ('<text x="0" y="30">March</text>', "svg", "querySelectorAll", "text", "March"),
+        ('<text x="0" y="30">March</text>', "text", "textContent", "text", "March"),
+        (
+            '<foreignObject width="200" height="60"><input aria-label="Zoom"></foreignObject>',
+            "foreignObject",
+            "firstElementChild",
+            "input",
+            "Zoom",
+        ),
+    ],
+)
+async def test_svg_content_scan_uses_native_dom_reads(
+    content: str, selector: str, property_name: str, expected_tag: str, expected_name: str
+) -> None:
+    """Page-world property overrides cannot hide chart text or controls."""
+    page = f'<svg width="200" height="100">{content}</svg>'
+    async with NotteSession(headless=True) as session:
+        browser_page = session.window.page
+        _ = await browser_page.goto(f"data:text/html,{quote(page)}")
+        await browser_page.evaluate(
+            """({selector, name}) => {
+                Object.defineProperty(document.querySelector(selector), name, {
+                    get() { throw new Error('Page-owned property must not be read'); }
+                });
+            }""",
+            {"selector": selector, "name": property_name},
+            isolated_context=False,
+        )
+        payload = json.loads(
+            await browser_page.evaluate(
+                DOM_TREE_JS,
+                {
+                    "highlight_elements": True,
+                    "focus_element": -1,
+                    "viewport_expansion": 0,
+                    "enable_pointer_elements": True,
+                },
+                isolated_context=False,
+            )
+        )
+        nodes = [node for node in payload["map"].values() if node.get("tagName") == expected_tag]
+        assert len(nodes) == 1
+        if expected_tag == "input":
+            assert nodes[0].get("accessibleName") == expected_name
+            assert nodes[0].get("highlightIndex") is not None
+        else:
+            assert expected_name in [node.get("text") for node in payload["map"].values()]
 
 
 @pytest.mark.asyncio

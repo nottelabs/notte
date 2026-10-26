@@ -32,6 +32,7 @@
 	const nodeTypeOf = nativeGetter(Node.prototype, "nodeType");
 	const nodeNameOf = nativeGetter(Node.prototype, "nodeName");
 	const ownerDocumentOf = nativeGetter(Node.prototype, "ownerDocument");
+	const textContentOf = nativeGetter(Node.prototype, "textContent");
 	const childrenOf = nativeGetter(Element.prototype, "children");
 	const tagNameOf = nativeGetter(Element.prototype, "tagName");
 	const localNameOf = nativeGetter(Element.prototype, "localName");
@@ -49,6 +50,7 @@
 	const getRootNode = (node) => NODE.getRootNode.call(node);
 	const getBoundingClientRect = (element) => ELEMENT.getBoundingClientRect.call(element);
 	const getClientRects = (element) => ELEMENT.getClientRects.call(element);
+	const querySelectorAllOf = (element, selector) => ELEMENT.querySelectorAll.call(element, selector);
 	// `checkVisibility` is recent (Chrome 105): undefined where the browser does not have it
 	const checkVisibilityOf = ELEMENT.checkVisibility &&
 		((element, options) => ELEMENT.checkVisibility.call(element, options));
@@ -850,21 +852,24 @@
 	const SVG_CONTENT_TAGS = new Set(["g", "a", "text", "tspan", "textpath", "switch", "foreignobject"]);
 
 	/**
-	 * Checks if an `<svg>` has content to describe: links (`<a href>`), text (`<text>`) or HTML in a
-	 * `<foreignObject>` (a control, a label), as charts and diagrams do. An icon (shapes only) is left out
-	 * of the tree.
+	 * Checks if an `<svg>` has content to describe: links (`<a href>`), text (`<text>`), click handlers
+	 * or HTML in a `<foreignObject>` (a control, a label), as charts and diagrams do. An icon (shapes
+	 * only) is left out of the tree.
 	 *
 	 * @param {SVGSVGElement} svg - The `<svg>` element.
-	 * @returns {boolean} Whether the `<svg>` has links, text or HTML content.
+	 * @returns {boolean} Whether the `<svg>` has links, text, click handlers or HTML content.
 	 */
 	function hasSvgContent(svg) {
-		for (const element of svg.querySelectorAll("a, text, foreignObject")) {
-			if (localNameOf(element) === "a") {
+		for (const element of querySelectorAllOf(svg, "*")) {
+			if (hasAttribute(element, "onclick") || typeof propertyOf(element, "onclick") === "function") return true;
+			const tagName = localNameOf(element);
+			if (tagName === "a") {
 				if (hasAttribute(element, "href") || hasAttribute(element, "xlink:href")) return true;
 				continue;
 			}
-			if (element.textContent.trim()) return true;
-			if (localNameOf(element) === "foreignObject" && element.firstElementChild !== null) return true;
+			if (tagName !== "text" && tagName !== "foreignObject") continue;
+			if (textContentOf(element).trim()) return true;
+			if (tagName === "foreignObject" && childrenOf(element).length > 0) return true;
 		}
 		return false;
 	}
