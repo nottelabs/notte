@@ -850,15 +850,17 @@
 	const SVG_CONTENT_TAGS = new Set(["g", "a", "text", "tspan", "textpath", "switch", "foreignobject"]);
 
 	/**
-	 * Checks if an `<svg>` has content to describe: links (`<a href>`) or text (`<text>`), as charts
-	 * and diagrams do. An icon (shapes only) is left out of the tree.
+	 * Checks if an `<svg>` has content to describe: links (`<a href>`), text (`<text>`) or HTML in a
+	 * `<foreignObject>` (a control, a label), as charts and diagrams do. An icon (shapes only) is left out
+	 * of the tree.
 	 *
 	 * @param {SVGSVGElement} svg - The `<svg>` element.
-	 * @returns {boolean} Whether the `<svg>` has links or text.
+	 * @returns {boolean} Whether the `<svg>` has links, text or HTML content.
 	 */
 	function hasSvgContent(svg) {
-		for (const element of svg.querySelectorAll("a[href], text")) {
+		for (const element of svg.querySelectorAll("a[href], text, foreignObject")) {
 			if (localNameOf(element) === "a" || element.textContent.trim()) return true;
+			if (localNameOf(element) === "foreignObject" && element.firstElementChild !== null) return true;
 		}
 		return false;
 	}

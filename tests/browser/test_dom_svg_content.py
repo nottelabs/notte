@@ -69,6 +69,18 @@ async def test_svg_chart_below_the_fold_keeps_its_labels() -> None:
 
 
 @pytest.mark.asyncio
+async def test_svg_with_html_controls_keeps_them() -> None:
+    page = """<svg width="200" height="60"><foreignObject x="0" y="0" width="200" height="60">
+<button>Apply</button><input aria-label="Zoom"></foreignObject></svg>"""
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+        obs = await session.aobserve()
+
+        offered = {(action.id, action.text_label or action.accessible_name) for action in obs.space.interaction_actions}
+        assert offered == {("B1", "Apply"), ("I1", "Zoom")}
+
+
+@pytest.mark.asyncio
 async def test_svg_icon_stays_out_of_the_tree() -> None:
     async with NotteSession(headless=True) as session:
         _ = await session.window.page.goto(f"data:text/html,{quote(ICON_BUTTON)}")
