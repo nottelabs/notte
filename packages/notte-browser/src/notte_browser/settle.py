@@ -368,12 +368,18 @@ class PageSettle:
             _ = task.result()
 
     async def wait(
-        self, *, grace_ms: float = GRACE_MS, document: DocumentWait = "requests", new_document: bool = False
+        self,
+        *,
+        grace_ms: float = GRACE_MS,
+        document: DocumentWait = "requests",
+        new_document: bool = False,
+        url_changed: bool = False,
     ) -> None:
         """Until the page settles, at most `CAP_MS` after the action started; after a navigation to a new document,
         until that document is ready as `document` says, at most `timeout_goto_ms` after the action started. Never
         raises: a page that does not settle in time is left as it is. A confirmed `new_document` skips the previous
-        document's settle cap and uses the remaining navigation budget."""
+        document's settle cap and uses the remaining navigation budget. A known same-document `url_changed` is
+        preserved if the tracker could not start before the action."""
         if self._tracker is not None and not new_document:
             try:
                 async with asyncio.timeout(self._left_s(CAP_MS)):
@@ -390,9 +396,16 @@ class PageSettle:
             try:
                 async with asyncio.timeout(self._left_s(config.timeout_goto_ms)):
                     await self._track_document()
-                    # the new document is the action's effect: only what a script renders right after it was parsed
-                    # is waited for
-                    await self._new_document(GRACE_MS, document)
+                    if url_changed and not new_document:
+                        # Startup may have timed out before a hash navigation. Expect its render from the new
+                        # tracker's start, using the same URL-change rule as a tracker present before the action.
+                        assert self._tracker is not None
+                        await self._tracker.evaluate("t => { t.urlAt = 0; }")
+                        await self._poll(grace_ms)
+                    else:
+                        # the new document is the action's effect: only what a script renders right after it was
+                        # parsed is waited for
+                        await self._new_document(GRACE_MS, document)
                 return
             except TimeoutError:
                 return

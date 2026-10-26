@@ -361,9 +361,16 @@ async def test_a_goto_that_commits_after_the_settle_cap_still_waits_for_its_page
 
 
 @pytest.mark.asyncio
-async def test_a_goto_can_leave_a_page_whose_tracker_cannot_start(
-    session: NotteSession, site: str, monkeypatch: pytest.MonkeyPatch
+@pytest.mark.parametrize("same_document", [False, True])
+async def test_a_goto_settles_after_tracker_startup_times_out(
+    session: NotteSession, site: str, monkeypatch: pytest.MonkeyPatch, same_document: bool
 ) -> None:
+    if same_document:
+        await session.window.page.wait_for_timeout(LONG_GRACE_MS + 100)
+        await session.window.page.evaluate(
+            """window.addEventListener('hashchange', () => setTimeout(() =>
+                document.body.insertAdjacentHTML('beforeend', '<p>Hash route content</p>'), 800), { once: true })"""
+        )
     original = Page.evaluate_handle
     blocked = asyncio.Event()
     cancelled = asyncio.Event()
@@ -378,12 +385,13 @@ async def test_a_goto_can_leave_a_page_whose_tracker_cannot_start(
         return await original(page, expression)
 
     monkeypatch.setattr(Page, "evaluate_handle", evaluate_handle)
+    target = f"{site}#details" if same_document else f"{site}/next"
     async with asyncio.timeout(5):
-        result = await session.aexecute(type="goto", url=f"{site}/next")
+        result = await session.aexecute(type="goto", url=target)
     assert result.success
     assert blocked.is_set() and cancelled.is_set()
-    assert session.window.page.url == f"{site}/next"
-    assert "Rendered after load" in await text(session)
+    assert session.window.page.url == f"{site}/{'#details' if same_document else 'next'}"
+    assert ("Hash route content" if same_document else "Rendered after load") in await text(session)
 
 
 @pytest.mark.asyncio

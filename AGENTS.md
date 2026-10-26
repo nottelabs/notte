@@ -43,6 +43,8 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   URL spellings: the browser normalizes schemes, empty paths, hosts and ports.
   Goto tracker startup uses the existing 500 ms grace as its deadline; an
   unresponsive old page must not prevent navigation from starting.
+  If startup expires before a hash goto, preserve the known URL change when
+  tracking resumes so the existing render-wait rule still applies.
 - Native integration examples (`examples/*`, run by
   `scripts/ci_integration_examples.py`) install the local `node-sdk` with
   `npm install --no-save`. Don't add `--package-lock=false`: it ignores the

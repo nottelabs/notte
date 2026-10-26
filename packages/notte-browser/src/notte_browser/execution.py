@@ -316,7 +316,12 @@ async def _settle(
             await settle.wait(grace_ms=LONG_GRACE_MS, document="requests")
         case GotoAction():
             # what the page fetches after its load is waited for, instead of a fixed sleep
-            await settle.wait(grace_ms=LONG_GRACE_MS, document="requests", new_document=new_document)
+            await settle.wait(
+                grace_ms=LONG_GRACE_MS,
+                document="requests",
+                new_document=new_document,
+                url_changed=not new_document and settle.page.url != url,
+            )
         case ScrollUpAction() | ScrollDownAction():
             # the scroll has ended: what it starts loading right away (more items, lazy content) is waited for
             await settle.wait()
