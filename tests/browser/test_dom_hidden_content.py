@@ -170,6 +170,23 @@ async def test_closed_drawer_text_assigned_to_a_shadow_slot(wrapped: bool) -> No
 
 
 @pytest.mark.asyncio
+async def test_closed_drawer_text_beyond_a_zero_size_fixed_root() -> None:
+    markup = """
+    <aside id="drawer" style="position: fixed; top: 0; left: -330px; width: 300px; height: 500px">
+      <div id="portal" style="position: fixed; top: 0; left: -330px; width: 0; height: 0">
+        <span style="white-space: nowrap">ZERO_ROOT_DRAWER_TEXT</span>
+      </div>
+    </aside>
+    """
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(markup)}")
+        assert "ZERO_ROOT_DRAWER_TEXT" not in (await session.aobserve()).space.description
+        for selector in ("#drawer", "#portal"):
+            await session.window.page.locator(selector).evaluate("element => element.style.left = '0'")
+        assert "ZERO_ROOT_DRAWER_TEXT" in (await session.aobserve()).space.description
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("style", ["transform: translateZ(0)", "filter: blur(0px)", "contain: layout"])
 @pytest.mark.parametrize("in_shadow", [False, True])
 async def test_fixed_text_in_scrolling_containing_block_is_kept(style: str, in_shadow: bool) -> None:

@@ -736,7 +736,8 @@
 			if (getCachedComputedStyle(ancestor)?.position !== "fixed") continue;
 			if (propertyOf(ancestor, "offsetParent") !== null) continue;
 			const rect = getCachedBoundingRect(ancestor);
-			return rect.width > 0 && rect.height > 0 && !isOnScreen(rect);
+			if (rect.width <= 0 || rect.height <= 0) continue;
+			return !isOnScreen(rect);
 		}
 		return false;
 	}
