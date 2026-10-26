@@ -1280,6 +1280,24 @@ async def test_a_file_input_offers_nothing_and_blocked_says_why(session: NotteSe
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("raise_on_failure", [False, True])
+async def test_a_click_that_opens_a_file_chooser_blocks(session: NotteSession, raise_on_failure: bool) -> None:
+    # the file input is not displayed: a button opens its chooser, and nothing tells the decider it asks for a file
+    page = """<input type="file" id="photo" style="display: none">
+<button id="pick" onclick="document.getElementById('photo').click()">Browse files</button>"""
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    ids = await _ids(session)
+    decider = FakeDecider(choices=[{"operation": "CLICK", "click_target": ids["pick"]}])
+    if raise_on_failure:
+        with pytest.raises(NoActionFoundError, match="file upload is not supported by act()"):
+            _ = await session.aact("Upload a profile photo", decider=decider)
+        return
+    result = await session.aact("Upload a profile photo", decider=decider, raise_on_failure=False)
+    assert result.status == "blocked"
+    assert result.message == "the click opened a file chooser (file upload is not supported by act())"
+
+
+@pytest.mark.asyncio
 async def test_only_the_dialog_is_offered_while_it_covers_the_page(session: NotteSession) -> None:
     # the page behind the dialog is aria-hidden, not covered: still hit-testable, so observed
     page = """<main aria-hidden="true"><a href="#f">Flights</a><button aria-label="Main menu"></button></main>
