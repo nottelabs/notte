@@ -16705,6 +16705,18 @@
             "title": "Demonstrate",
             "description": "Whether to enable the Notte recorder extension for this session. The extension is installed but remains inactive when this is false.",
             "default": false
+          },
+          "record_session": {
+            "type": "boolean",
+            "title": "Record Session",
+            "description": "Save session replay. False permanently disables saved replay; Live View remains available.",
+            "default": true
+          },
+          "log_session": {
+            "type": "boolean",
+            "title": "Log Session",
+            "description": "Save browser session logs. False permanently disables saved logs, without disabling metering.",
+            "default": true
           }
         },
         "additionalProperties": false,
@@ -27332,7 +27344,7 @@
               }
             ],
             "title": "Instructions",
-            "description": "Deprecated: removed on December 1, 2026. Additional instructions to use for the observation. <<ALTERNATIVE FOR instructions: session.act() — pending>>. See https://docs.notte.cc/features/sessions/observe-migration",
+            "description": "Deprecated: removed on December 1, 2026. Additional instructions to use for the observation. <<ALTERNATIVE FOR instructions: session.act() \u2014 pending>>. See https://docs.notte.cc/features/sessions/observe-migration",
             "deprecated": true
           },
           "perception_type": {
@@ -29813,7 +29825,8 @@
               "processing",
               "unavailable",
               "failed",
-              "unknown"
+              "unknown",
+              "disabled"
             ],
             "title": "Replay Status"
           },
@@ -31725,6 +31738,16 @@
             "title": "Timeout Minutes",
             "deprecated": true,
             "readOnly": true
+          },
+          "record_session": {
+            "type": "boolean",
+            "title": "Record Session",
+            "default": true
+          },
+          "log_session": {
+            "type": "boolean",
+            "title": "Log Session",
+            "default": true
           }
         },
         "additionalProperties": true,

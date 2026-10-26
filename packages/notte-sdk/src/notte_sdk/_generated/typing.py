@@ -221,6 +221,8 @@ class SessionStartRequestDict(TypedDict):
     auth_retry: NotRequired[int]
     block_ads: NotRequired[bool]
     advanced_stealth: NotRequired[bool]
+    record_session: NotRequired[bool]
+    log_session: NotRequired[bool]
 
 
 class SessionStopRequestDict(TypedDict):

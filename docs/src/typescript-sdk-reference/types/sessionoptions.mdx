@@ -174,6 +174,14 @@ Ignored since notte 1.10: screenshots are returned without highlighting.
 Whether to enable the Notte recorder extension for this session. The extension is installed but remains inactive when this is false.
 </ParamField>
 
+<ParamField body="record_session" type={"boolean | undefined"}>
+Save session replay. False permanently disables saved replay; Live View remains available.
+</ParamField>
+
+<ParamField body="log_session" type={"boolean | undefined"}>
+Save browser session logs. False permanently disables saved logs, without disabling metering.
+</ParamField>
+
 ## Related types
 
 - [ApiSessionStartRequest](/typescript-sdk-reference/types/apisessionstartrequest)

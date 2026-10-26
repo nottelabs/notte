@@ -406,7 +406,7 @@ def _replay_flow(
             logger.info(f"Replay for session {session_id} is ready")
             return response
         except NotteAPIError as e:
-            if e.status_code != 404:
+            if e.status_code != 404 or e.error.get("retryable") is False:
                 raise
             error_msg = e.error.get("message", "") or e.error.get("detail", "")
             # The replay service can lag behind a successful stop response

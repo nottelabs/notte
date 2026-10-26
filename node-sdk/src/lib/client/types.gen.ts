@@ -351,6 +351,18 @@ export type ApiSessionStartRequest = {
      * Whether to enable the Notte recorder extension for this session. The extension is installed but remains inactive when this is false.
      */
     demonstrate?: boolean;
+    /**
+     * Record Session
+     *
+     * Save session replay. False permanently disables saved replay; Live View remains available.
+     */
+    record_session?: boolean;
+    /**
+     * Log Session
+     *
+     * Save browser session logs. False permanently disables saved logs, without disabling metering.
+     */
+    log_session?: boolean;
 };
 
 /**
@@ -6357,7 +6369,7 @@ export type ReplayMissingResponse = {
     /**
      * Replay Status
      */
-    replay_status: 'waiting_for_session' | 'processing' | 'unavailable' | 'failed' | 'unknown';
+    replay_status: 'waiting_for_session' | 'processing' | 'unavailable' | 'failed' | 'unknown' | 'disabled';
     /**
      * Retryable
      */
@@ -7555,6 +7567,14 @@ export type SessionResponse = {
      * @deprecated
      */
     readonly timeout_minutes: number;
+    /**
+     * Record Session
+     */
+    record_session?: boolean;
+    /**
+     * Log Session
+     */
+    log_session?: boolean;
     [key: string]: unknown;
 };
 
@@ -10345,6 +10365,14 @@ export type SessionResponseWritable = {
      * Whether this session is an internal system run. Internal system runs are omitted from session.list() unless include_system=True is requested.
      */
     system_hidden?: boolean;
+    /**
+     * Record Session
+     */
+    record_session?: boolean;
+    /**
+     * Log Session
+     */
+    log_session?: boolean;
     [key: string]: unknown;
 };
 

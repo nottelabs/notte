@@ -81,6 +81,7 @@ def test_session_wire_contract(client: NotteClient, monkeypatch: pytest.MonkeyPa
         ({"timeout_minutes": 5}, {"idle_timeout_minutes": 5}),
         ({"advanced_stealth": True}, {"advanced_stealth": True}),
         ({"block_ads": False}, {"block_ads": False}),
+        ({"record_session": False, "log_session": False}, {"record_session": False, "log_session": False}),
         ({"auth_ids": ["connection"], "auth_retry": 2}, {"auth_ids": ["connection"], "auth_retry": 2}),
     ],
 )

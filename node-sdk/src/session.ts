@@ -565,7 +565,7 @@ export class Session {
       try {
         return await request();
       } catch (error) {
-        if (!(error instanceof NotteAPIError) || error.statusCode !== 404) {
+        if (!(error instanceof NotteAPIError) || error.statusCode !== 404 || error.error.retryable === false) {
           throw error;
         }
         // Stop can complete before the replay service observes the closure.

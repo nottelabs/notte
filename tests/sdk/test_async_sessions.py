@@ -27,6 +27,7 @@ from notte_sdk.endpoints.base import AsyncBaseClient, BaseClient, NotteEndpoint
 from notte_sdk.endpoints.files import AsyncRemoteFileStorage, RemoteFileStorage
 from notte_sdk.endpoints.page import AsyncPageClient, PageClient
 from notte_sdk.endpoints.sessions import AsyncRemoteSession, AsyncSessionsClient, RemoteSession, SessionsClient
+from notte_sdk.errors import NotteAPIError
 from notte_sdk.types import CaptchaStatus, ExecutionResultResponse
 from pydantic import BaseModel
 
@@ -1161,3 +1162,28 @@ def test_request_file_is_the_same(
     assert expected.outcome[0] == ("ok" if answer[0] == 200 and output == "replay.mp4" else "error"), expected.outcome
     if expected.outcome[0] == "ok" and output:
         assert (tmp_path / "async" / output).read_bytes() == (tmp_path / "sync" / output).read_bytes() == answer[1]
+
+
+def test_disabled_replay_never_polls_on_sync_or_async_client(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def scenario(session):
+        await session.start()
+        await session.stop()
+        return await session.replay(poll_interval=2)
+
+    routes = {
+        **SESSION_ROUTES,
+        ("GET", "/sessions/s-1/replay"): [
+            (
+                404,
+                {
+                    "replay_status": "disabled",
+                    "retryable": False,
+                    "message": "Session recording was disabled at creation",
+                },
+            )
+        ],
+    }
+    exchange = same_on_both(monkeypatch, routes, scenario)
+    assert exchange.outcome[1] is NotteAPIError
+    assert exchange.sleeps == []
+    assert len([call for call in exchange.calls if call.url.endswith("/replay")]) == 1

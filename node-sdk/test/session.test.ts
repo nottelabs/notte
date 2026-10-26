@@ -460,6 +460,15 @@ describe('Session Unit Tests', () => {
       expect(sessionReplay).toHaveBeenCalledTimes(1);
     });
 
+    it('does not poll when recording was disabled at creation', async () => {
+      const session = new Session(mockClient);
+      await session.start();
+      const error = new NotteAPIError('/replay', 404, { replay_status: 'disabled', retryable: false });
+      vi.mocked(sessionReplay).mockRejectedValue(error);
+      await expect(session.replay()).rejects.toBe(error);
+      expect(sessionReplay).toHaveBeenCalledTimes(1);
+    });
+
     it('rethrows non-404 errors immediately', async () => {
       const error = new NotteAPIError('/replay', 500, {});
       vi.mocked(sessionReplay).mockRejectedValue(error);
