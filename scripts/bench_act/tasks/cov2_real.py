@@ -4,6 +4,7 @@ passes), a file picker, rich editors (Quill, CodeMirror, Monaco), a virtualised 
 (python.org), AJAX tables and paginated search (scrapethissite.com), cookie walls (OneTrust, Cookiebot), search as
 you type (jsDelivr), Hebrew and Korean search, and a chart dashboard's table (Our World in Data)."""
 
+import json
 from dataclasses import replace
 from typing import Any
 from urllib.parse import unquote
@@ -30,7 +31,8 @@ RANGE_VALUE = "JSON.stringify((document.querySelector('input[type=range]') || {}
 NOUI_FIRST = "JSON.stringify([...document.querySelectorAll('.noUi-handle')].slice(0, 2).map(h => h.getAttribute('aria-valuenow')))"
 SORTABLE = "JSON.stringify([...document.querySelectorAll('#example1 > *')].map(e => e.innerText.trim()))"
 SORTABLE_START = ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5", "Item 6"]
-QUILL_TEXT = "JSON.stringify((document.querySelector('.ql-editor') || {}).innerText || null)"
+# the texts of the page's editors: quilljs.com shows one of three (a carousel), the others are hidden slides
+QUILL_TEXTS = "JSON.stringify([...document.querySelectorAll('.ql-editor')].map(e => e.innerText.trim()))"
 CM_TEXT = "JSON.stringify((document.querySelector('.cm-content') || {}).innerText || null)"
 MONACO_THEME = (
     "JSON.stringify({selected: [...document.querySelectorAll('select')].filter(s => [...s.options].some(o => "
@@ -136,8 +138,8 @@ TASKS = [
         "quill-replace",
         "https://quilljs.com/",
         "Replace all the text in the editor with 'Hello from notte'.",
-        lambda f, _: (_extra(f) or "").strip() == "Hello from notte",
-        final_js=QUILL_TEXT,
+        lambda f, _: "Hello from notte" in json.loads(_extra(f) or "[]"),
+        final_js=QUILL_TEXTS,
         tags=("rich-editor", "quill", "contenteditable"),
     ),
     Task(

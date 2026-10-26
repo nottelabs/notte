@@ -49,7 +49,14 @@ def test_every_task_and_probe_has_one_ci_tier_and_local_pages_are_core() -> None
     fixture_items = [i for i in items if i.fixture]
     extended = {i.name for i in fixture_items if CI_EXTENDED in i.tags}
     # a decider miss, and fixtures failing on a bug not fixed yet: see the modules' ci_tier calls
-    assert extended == {"f-webcomp-speed", "f2-vlist", "f2-dashboard", "f2-dashboard-max", "f2-multitab"}
+    assert extended == {
+        "f-webcomp-speed",
+        "f-drawer-open",
+        "f2-vlist",
+        "f2-dashboard",
+        "f2-dashboard-max",
+        "f2-multitab",
+    }
 
 
 def test_ci_tier_rejects_a_core_name_it_does_not_define() -> None:
