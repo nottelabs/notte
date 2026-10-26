@@ -1722,7 +1722,30 @@
 	}
 
 	/**
-	 * Checks if an element is a control that scrolling the page can bring into view (see `handleHighlighting`).
+	 * Checks if an element is above or below the box of an ancestor that scrolls vertically, where scrolling
+	 * that ancestor brings it: the center of its middle box (see `isAboveOrBelowViewport`) is outside the
+	 * ancestor's box. A box that the element escapes (see `escapesClip`) does not scroll it.
+	 *
+	 * @param {HTMLElement} element - The element to check.
+	 * @returns {boolean} Whether the element is above or below the box of a scrollable ancestor.
+	 */
+	function isAboveOrBelowScrollBox(element) {
+		const rects = getCachedClientRects(element);
+		if (!rects || rects.length === 0) return false;
+		const middle = rects[Math.floor(rects.length / 2)];
+		const centerY = middle.top + middle.height / 2;
+		for (let ancestor = reachAncestor(element); ancestor; ancestor = reachAncestor(ancestor)) {
+			const box = getCachedBoundingRect(ancestor);
+			const range = visibleRange(ancestor, box, getCachedComputedStyle(ancestor), true);
+			if (range === null || !range.scrolls || escapesClip(element, ancestor)) continue;
+			if (centerY < box.top || centerY > box.bottom) return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Checks if an element is a control that scrolling the page, or a box it is in, can bring into view (see
+	 * `handleHighlighting`).
 	 *
 	 * @param {HTMLElement} element - The element to check.
 	 * @returns {boolean} Whether the element is an off-screen control.
@@ -1730,8 +1753,9 @@
 	function isOffscreenControl(element) {
 		// not rendered (in a closed `<details>`, `hidden="until-found"`), or out of reach of scrolling:
 		// `isTopElement` rules these out in view
-		return isOffscreenCandidate(element) && isAboveOrBelowViewport(element) && isRendered(element, false) &&
-			!isOutOfReach(element);
+		return isOffscreenCandidate(element) &&
+			(isAboveOrBelowViewport(element) || isAboveOrBelowScrollBox(element)) &&
+			isRendered(element, false) && !isOutOfReach(element);
 	}
 
 	/**

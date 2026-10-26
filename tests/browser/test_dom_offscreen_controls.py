@@ -280,3 +280,43 @@ async def test_buttons_outside_the_viewport_say_whether_they_are_pressed_selecte
             "_[:]<button disabled pressed>Locked</button>",
         ]
         assert [action_id for action_id, _ in actions] == ["B1"]
+
+
+SCROLLED_IN_A_BOX = """
+<h1>Contact</h1>
+<div id="box" style="height: 100px; width: 300px; overflow-y: scroll">
+  <input placeholder="Id" style="display: block; height: 30px">
+  <div style="height: 150px"></div>
+  <input placeholder="Subject">
+  <a href="/terms">Terms</a>
+</div>
+<div style="height: 60px; overflow: hidden"><div style="height: 100px"></div><button>CLIPPED_AWAY</button></div>
+"""
+
+
+@pytest.mark.asyncio
+async def test_controls_scrolled_out_of_a_box_in_view_are_described() -> None:
+    # a scroll box in view hides the controls above and below its box: they are described like the controls
+    # below the fold, which scrolling the box (not the page) brings into view
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(SCROLLED_IN_A_BOX)}")
+        lines, actions = await _observe(session)
+        assert lines == [
+            "_[:]Contact",
+            'I1[:]<input placeholder="Id"></input>',
+            '_[:]<input placeholder="Subject"></input>',
+            "_[:]<a>Terms</a>",
+            # a box that does not scroll clips for good: what it hides stays text
+            "_[:]CLIPPED_AWAY",
+        ]
+        assert actions == [("I1", "Id")]
+
+        _ = await session.window.page.evaluate("document.getElementById('box').scrollTop = 1000")
+        lines, actions = await _observe(session)
+        assert lines[:4] == [
+            "_[:]Contact",
+            '_[:]<input placeholder="Id"></input>',
+            'I1[:]<input placeholder="Subject"></input>',
+            'L1[:]<a href="/terms">Terms</a>',
+        ]
+        assert actions == [("I1", "Subject"), ("L1", "Terms")]
