@@ -138,3 +138,11 @@ the revision-5 lockfile. SDK model generation requires datamodel-code-generator
 Docs CI syncs the workspace before installing job-only dependencies, then uses
 `uv run --no-sync`; a later sync can remove those dependencies or replace an
 environment built with a Python version that differs from `.python-version`.
+
+## act benchmark
+
+`scripts/bench_act/` benchmarks `act()` / `choose()` / `check()` and the observe they read, on local
+fixture pages and public sites (see its README). `act-bench.yml` runs it on PRs labelled `act-bench` or
+touching `notte_browser/js`, `notte_browser/dom`, `notte_core/act` or `notte_llm/act.py`, head against the
+merge base. Fixture tasks must always pass; public sites fail only on a clear drop against base. A site
+that blocks or redirects is a site miss with evidence, never a pass. It needs `OPENROUTER_API_KEY` only.

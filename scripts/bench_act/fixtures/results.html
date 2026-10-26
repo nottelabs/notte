@@ -1,0 +1,21 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Search results - Acme Docs</title></head><body>
+<form action="results.html" method="get" role="search">
+  <label for="q">Search the docs</label> <input id="q" name="q" type="text"> <button type="submit">Search</button>
+</form>
+<h1 id="heading"></h1><ol id="results"></ol>
+<script>
+const items = [["billing-overview","Billing overview","How Acme bills usage each month."],
+  ["billing-faq","Billing FAQ","Answers to common billing questions."],["invoices","Invoices and receipts","Download invoices."],
+  ["quickstart","Quickstart","Run your first job in five minutes."],["api-keys","API keys","Create and rotate keys."],
+  ["webhooks","Webhooks","Receive events from Acme."],["billing-limits","Spending limits","Cap your monthly bill."]];
+const q = (new URLSearchParams(location.search).get("q") || "").trim();
+document.getElementById("q").value = q;
+const words = q.toLowerCase().split(/\s+/).filter(Boolean);
+const hits = items.filter(([id, t, d]) => words.some(w => (t + " " + d + " " + id).toLowerCase().includes(w)));
+document.getElementById("heading").textContent = q ? `${hits.length} results for "${q}"` : "Type a query";
+for (const [id, t, d] of hits) {
+  const li = document.createElement("li");
+  li.innerHTML = `<a href="item.html?id=${id}">${t}</a><p>${d}</p>`;
+  document.getElementById("results").appendChild(li);
+}
+</script></body></html>

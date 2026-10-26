@@ -1,0 +1,18 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Checkout</title></head><body>
+<h1>Checkout</h1>
+<p>Order total: $120.00</p>
+<form id="f" action="applied.html" method="get">
+  <label for="coupon">Coupon code</label> <input id="coupon" name="code" autocomplete="off">
+  <button id="go" type="button">Continue without a coupon</button>
+</form>
+<script>
+const input = document.getElementById("coupon"), go = document.getElementById("go");
+input.addEventListener("input", () => {
+  // the button changes meaning once something is typed
+  go.textContent = input.value.trim() ? "Apply coupon" : "Continue without a coupon";
+});
+go.addEventListener("click", () => {
+  if (input.value.trim()) document.getElementById("f").submit();
+  else location.href = "applied.html?skipped=1";
+});
+</script></body></html>

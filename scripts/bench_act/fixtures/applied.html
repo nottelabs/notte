@@ -1,0 +1,4 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Payment</title></head><body>
+<h1 id="h"></h1><script>const p = new URLSearchParams(location.search);
+document.getElementById("h").textContent = p.get("skipped") ? "No coupon applied. Total: $120.00" : "Coupon " + p.get("code") + " applied. Total: $96.00";</script>
+</body></html>
