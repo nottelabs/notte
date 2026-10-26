@@ -28,6 +28,9 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
 - CDP transport tests keep real staging sessions and connections but serve page
   fixtures through Patchright routes, so navigation and screenshot coverage does
   not depend on third-party sites loading.
+- README live CI uses the official HTTPS Ubuntu archive in the runner's
+  `/etc/apt/apt-mirrors.txt`; the Azure mirror has stalled Chromium dependency
+  installation before the examples could run.
 - Browser settle regressions are in `tests/browser/test_execute_settle.py`
   and `tests/browser/test_settle_rules.py` and use a local server. Use the
   lockfile's Patchright environment: an older installed version can fail the
@@ -73,6 +76,10 @@ its controls as properties named after their `name` or `id`, which hide the
 form's own (`<input name="children">` makes `form.children` that input). The
 same goes for `document.*` in the page's own world (`<img name="body">`).
 `tests/browser/test_dom_clobbered_properties.py` covers it.
+
+CDP listener hints must retain the inspected elements' identities through main-world
+handles. DOM marker attributes are copied by `cloneNode`, while event listeners are
+not, so an attribute bridge can incorrectly offer a clone as a clickable header.
 
 ## Public API
 

@@ -4,7 +4,10 @@
 // evaluates this script in every frame and grafts each frame's tree under its iframe element,
 // which it identifies by passing the frames' iframe element handles in `frame_elements`.
 (
-	{ highlight_elements, focus_element, viewport_expansion, enable_pointer_elements, frame_elements = [], collect_elements = false }
+	{
+		highlight_elements, focus_element, viewport_expansion, enable_pointer_elements, frame_elements = [],
+		collect_elements = false, listened_headers = [],
+	}
 ) => {
 	const { doHighlightElements, focusHighlightIndex, viewportExpansion, debugMode } = {
 		doHighlightElements: highlight_elements,
@@ -172,6 +175,16 @@
 	// Mouse handlers that make an element interactive, and that make a wrapper a click target of its own.
 	const CLICK_HANDLER_ATTRS = ["onclick", "onmousedown", "onmouseup", "ondblclick"];
 
+	// Actual column headers checked with the DevTools protocol, so table mutations cannot transfer a listener
+	// to a different header at the same position.
+	const LISTENED_HEADERS = new Set(listened_headers);
+
+	// whether an element has a mouse handler of its own: one of `CLICK_HANDLER_ATTRS`, or a listened column header
+	function hasClickHandler(element) {
+		return LISTENED_HEADERS.has(element) ||
+			CLICK_HANDLER_ATTRS.some((attr) => hasAttribute(element, attr) || typeof propertyOf(element, attr) === "function");
+	}
+
 	// Live state of the interactive elements (see `getLiveState`): longer values and option lists are cut.
 	const MAX_STATE_VALUE_LENGTH = 200;
 	const MAX_STATE_OPTIONS = 50;
@@ -245,6 +258,10 @@
 			state.value = truncateStateValue(element.value, state);
 		} else if (propertyOf(element, "isContentEditable")) {
 			state.value = truncateStateValue(propertyOf(element, "innerText") || "", state);
+		} else if (ARIA_RANGE_ROLES.has(getRole(element))) {
+			// an ARIA slider or spin button: the value it shows ("14 Point"), else its number
+			const value = getAttribute(element, "aria-valuetext") ?? getAttribute(element, "aria-valuenow");
+			if (value !== null) state.value = truncateStateValue(value, state);
 		}
 		if (state.checked === undefined) {
 			// role="checkbox" / "switch" / "radio" / "menuitemcheckbox" widgets
@@ -259,6 +276,14 @@
 		const pressed = parseAriaBoolean(element, "aria-pressed");
 		if (pressed !== undefined) state.pressed = pressed;
 		else if (getAttribute(element, "aria-pressed") === "mixed") state.pressed = "mixed";
+		// a column header, or a control inside one (its sort button): the order the column is sorted in
+		let header = closest(element, "th, [role]");
+		while (header !== null && localNameOf(header) !== "th" && getRole(header) !== "columnheader") {
+			const parent = parentElementOf(header);
+			header = parent === null ? null : closest(parent, "th, [role]");
+		}
+		const sort = header === null ? null : getAttribute(header, "aria-sort");
+		if (sort === "ascending" || sort === "descending" || sort === "other") state.sort = sort;
 		return Object.keys(state).length > 0 ? state : undefined;
 	}
 
@@ -272,6 +297,8 @@
 	]);
 	// Controls whose value the user edits: they add nothing to the name of the element they label.
 	const EDITABLE_CONTROL_ROLES = new Set(["textbox", "searchbox", "combobox", "listbox", "spinbutton", "slider"]);
+	// widgets whose value is in `aria-valuenow` / `aria-valuetext` (a native range or number input has its own)
+	const ARIA_RANGE_ROLES = new Set(["slider", "spinbutton"]);
 	const INPUT_ROLES = {
 		button: "button", submit: "button", reset: "button", image: "button", checkbox: "checkbox",
 		radio: "radio", range: "slider", number: "spinbutton", search: "searchbox", text: "textbox",
@@ -1271,10 +1298,8 @@
 				}
 			}
 			// Fallback: Check common event attributes if getEventListeners is not available (getEventListeners doesn't work in page.evaluate context)
-			for (const attr of CLICK_HANDLER_ATTRS) {
-				if (hasAttribute(element, attr) || typeof propertyOf(element, attr) === 'function') {
-					return true;
-				}
+			if (hasClickHandler(element)) {
+				return true;
 			}
 		} catch (e) {
 			// console.warn(`Could not check event listeners for ${element.tagName}:`, e);
@@ -2141,13 +2166,20 @@
 						const accessibleName = getAccessibleName(node);
 						if (accessibleName !== undefined) nodeData.accessibleName = accessibleName;
 					}
-					// an off-screen checkbox, radio or switch says whether it is checked, as in view. Not its other
-					// live state: a typed value would be in the description, which secrets are not masked in
+					// an off-screen checkbox, radio or switch says whether it is checked, and a toggle button, tab or
+					// menu button whether it is pressed, selected or expanded, as in view. Not its other live state: a
+					// typed value would be in the description, which secrets are not masked in
 					if (nodeData.offscreen) {
+						const state = {};
 						const checked = localNameOf(node) === "input" && (node.type === "checkbox" || node.type === "radio")
 							? node.checked
 							: parseAriaBoolean(node, "aria-checked");
-						if (checked !== undefined) nodeData.state = { checked };
+						if (checked !== undefined) state.checked = checked;
+						for (const key of ["pressed", "selected", "expanded"]) {
+							const value = parseAriaBoolean(node, `aria-${key}`);
+							if (value !== undefined) state[key] = value;
+						}
+						if (Object.keys(state).length > 0) nodeData.state = state;
 					}
 					if (nodeData.highlightIndex !== undefined || isDisabled) {
 						const state = getLiveState(node);
@@ -2156,7 +2188,7 @@
 						if (accessibleName !== undefined) nodeData.accessibleName = accessibleName;
 						// a mouse handler of its own (the ones `isInteractiveElement` counts): the element may do
 						// something else than the control around or inside it
-						if (CLICK_HANDLER_ATTRS.some((attr) => hasAttribute(node, attr) || typeof propertyOf(node, attr) === "function")) {
+						if (hasClickHandler(node)) {
 							nodeData.clickHandler = true;
 						}
 					}

@@ -2,6 +2,7 @@
 without changing the action ids or the rendered descriptions."""
 
 from collections.abc import AsyncIterator
+from typing import Literal
 from urllib.parse import quote
 
 import pytest
@@ -200,6 +201,28 @@ async def test_observe_preserves_mixed_pressed_state(session: NotteSession) -> N
 
 
 @pytest.mark.asyncio
+async def test_observe_reads_the_value_of_an_aria_slider_or_spin_button(session: NotteSession) -> None:
+    page = """<label id="size">Font size</label>
+<div id="size-spin" role="spinbutton" tabindex="0" aria-labelledby="size" aria-valuenow="14"
+  aria-valuetext="14 Point">14 Point</div>
+<div id="volume" role="slider" tabindex="0" aria-label="Volume" aria-valuenow="20"
+  style="width: 200px; height: 20px"></div>
+<input id="count" type="number" value="3" aria-valuenow="9">"""
+    _ = await session.window.page.goto(_data_url(page))
+    _ = await session.aobserve()
+    states = _state_by_selector(session)
+    # what it shows, else its number; a native input keeps its own value
+    assert states["size-spin"] == ElementState(value="14 Point")
+    assert states["volume"] == ElementState(value="20")
+    assert states["count"] == ElementState(value="3")
+
+    # the live value, after the widget moved
+    await session.window.page.eval_on_selector("#volume", "el => el.setAttribute('aria-valuenow', '40')")
+    _ = await session.aobserve()
+    assert _state_by_selector(session)["volume"] == ElementState(value="40")
+
+
+@pytest.mark.asyncio
 async def test_observation_carries_the_live_state_and_fingerprint(session: NotteSession) -> None:
     await session.window.page.fill("#name", "typed")
     obs = await session.aobserve()
@@ -321,3 +344,73 @@ def test_masking_a_cut_value() -> None:
     assert long.masked(secrets).value == "user@example.org" and long.masked(secrets).value_digest is None
     # no secrets: unchanged, digest kept
     assert past.masked({}) is past
+
+
+SORTED_TABLE = """
+<table>
+  <thead><tr>
+    <th id="age" aria-sort="descending" tabindex="0">Age <button id="age-sort">Sort by age</button></th>
+    <th id="name" tabindex="0">Name <button id="name-sort">Sort by name</button></th>
+  </tr></thead>
+  <tbody><tr><td>36</td><td>Ada</td></tr></tbody>
+</table>
+<div role="grid"><div role="row">
+  <div role="columnheader" aria-sort="ascending"><button id="city-sort">City</button></div>
+</div></div>
+"""
+
+
+@pytest.mark.asyncio
+async def test_the_sort_order_of_a_column_is_read_on_its_header_and_sort_button() -> None:
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(_data_url(SORTED_TABLE))
+        _ = await session.aobserve()
+        states = _state_by_selector(session)
+
+    assert states["age-sort"] == ElementState(sort="descending")
+    assert states["city-sort"] == ElementState(sort="ascending")
+    # an unsorted column has no sort order
+    assert states["name-sort"] is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("header", ["th", 'div role="columnheader"'])
+@pytest.mark.parametrize("sort", ["ascending", "descending", "other", "none"])
+async def test_the_sort_order_is_read_on_a_directly_clickable_header(
+    header: str, sort: Literal["ascending", "descending", "other", "none"]
+) -> None:
+    tag = header.split()[0]
+    html = f'<{header} id="sort" aria-sort="{sort}" onclick="void(0)">Age</{tag}>'
+    if tag == "th":
+        html = f"<table><thead><tr>{html}</tr></thead></table>"
+    else:
+        html = f'<div role="grid"><div role="row">{html}</div></div>'
+
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(_data_url(html))
+        _ = await session.aobserve()
+        states = _state_by_selector(session)
+
+    assert states["sort"] == (None if sort == "none" else ElementState(sort=sort))
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("role", ["columnheader gridcell", "gridcell columnheader"])
+@pytest.mark.parametrize("target", ["header", "button"])
+async def test_sort_state_uses_the_headers_effective_role(role: str, target: str) -> None:
+    content = "Age" if target == "header" else '<span role="group"><button id="sort">Sort by age</button></span>'
+    attrs = 'id="sort" onclick="void(0)"' if target == "header" else ""
+    html = f"""<div role="grid"><div role="row">
+      <div role="{role}" aria-sort="descending" {attrs}>{content}</div>
+    </div></div>"""
+
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(_data_url(html))
+        _ = await session.aobserve()
+        node = next(
+            node
+            for node in session.snapshot.dom_node.flatten()
+            if node.attributes is not None and node.attributes.id_name == "sort"
+        )
+
+    assert node.state == (ElementState(sort="descending") if role.startswith("columnheader") else None)

@@ -30,7 +30,8 @@ class ElementState(BaseModel):
     """What an interactive element currently holds. Fields that do not apply to the element are `None`.
 
     - `value`: the current value of an input, textarea, contenteditable element (cut to 200 characters,
-      `value_truncated` is then set) or the value of the selected option of a `<select>`. Password
+      `value_truncated` is then set), the value of the selected option of a `<select>`, or the
+      `aria-valuetext` (else `aria-valuenow`) of an ARIA slider or spin button. Password
       fields never expose their value or a digest: `filled` tells whether they hold one.
     - `value_digest`: a change marker of the full non-password value when `value` is truncated.
     - `checked`: checkbox / radio state (`.checked`, or `aria-checked` for ARIA widgets);
@@ -39,6 +40,8 @@ class ElementState(BaseModel):
       is set when some are left out). They are data on the select's node, not actions of their own.
     - `expanded` / `selected` / `pressed`: `aria-expanded` / `aria-selected` / `aria-pressed`;
       `pressed` can also be `"mixed"` for toggle buttons with mixed formatting.
+    - `sort`: the `aria-sort` of a column header, on the header and on the controls inside it (its sort
+      button), when the column is sorted.
     """
 
     model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, populate_by_name=True)
@@ -55,6 +58,7 @@ class ElementState(BaseModel):
     expanded: bool | None = None
     selected: bool | None = None
     pressed: bool | Literal["mixed"] | None = None
+    sort: Literal["ascending", "descending", "other"] | None = None
 
     @staticmethod
     def from_payload(payload: dict[str, Any] | None) -> "ElementState | None":

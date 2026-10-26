@@ -105,6 +105,14 @@ async def evaluate_in_main_world(frame: Frame, expression: str) -> Any:
     return await frame.evaluate(expression)
 
 
+async def evaluate_handle_in_main_world(frame: Frame, expression: str) -> JSHandle:
+    """Keep references to page-world objects when bridging DevTools inspection to DOM evaluation."""
+    if config.browser_backend == BrowserBackend.PATCHRIGHT:
+        patchright_frame = cast("PatchrightFrame", frame)
+        return await patchright_frame.evaluate_handle(expression, isolated_context=False)
+    return await frame.evaluate_handle(expression)
+
+
 __all__ = [
     "Browser",
     "BrowserContext",
@@ -123,4 +131,5 @@ __all__ = [
     "ElementHandle",
     "ConsoleMessage",
     "evaluate_in_main_world",
+    "evaluate_handle_in_main_world",
 ]
