@@ -34,14 +34,14 @@
       "id": "B2",
       "press_enter": null,
       "selector": {
-        "css_selector": "[id=\"outer-button\"]",
+        "css_selector": "html > body > div > button[id=\"outer-button\"]",
         "iframe_parent_css_selectors": [],
         "in_iframe": false,
         "in_shadow_root": true,
-        "notte_selector": "http://characterization.test/shadow:4527775504046182633:3609651542926669075:6390467218696966908:-8969389828632023514:0:-7564154198246601294",
+        "notte_selector": "http://characterization.test/shadow:4527775504046182633:3609651542926669075:6390467218696966908:-8969389828632023514:3143547411261299894:8017568200829730347",
         "playwright_selector": null,
         "python_selector": null,
-        "xpath_selector": ""
+        "xpath_selector": "button"
       },
       "text_label": "Shadow button",
       "timeout": 15000,
@@ -60,14 +60,14 @@
       "id": "I1",
       "press_enter": false,
       "selector": {
-        "css_selector": "[id=\"field\"][aria-label=\"Shadow input\"]",
+        "css_selector": "html > body > div > input[id=\"field\"][aria-label=\"Shadow input\"]",
         "iframe_parent_css_selectors": [],
         "in_iframe": false,
         "in_shadow_root": true,
-        "notte_selector": "http://characterization.test/shadow:4527775504046182633:3609651542926669075:6390467218696966908:-8969389828632023514:0:-3241718045062396739",
+        "notte_selector": "http://characterization.test/shadow:4527775504046182633:3609651542926669075:6390467218696966908:-8969389828632023514:-5196117965957372882:2774487435748522641",
         "playwright_selector": null,
         "python_selector": null,
-        "xpath_selector": ""
+        "xpath_selector": "input"
       },
       "text_label": "Shadow input",
       "timeout": 15000,
@@ -91,14 +91,14 @@
       "id": "B3",
       "press_enter": null,
       "selector": {
-        "css_selector": "[id=\"inner-button\"]",
+        "css_selector": "html > body > div > div > button[id=\"inner-button\"]",
         "iframe_parent_css_selectors": [],
         "in_iframe": false,
         "in_shadow_root": true,
-        "notte_selector": "http://characterization.test/shadow:4527775504046182633:3609651542926669075:6390467218696966908:-8969389828632023514:0:0:0:7426068787278151140",
+        "notte_selector": "http://characterization.test/shadow:4527775504046182633:3609651542926669075:6390467218696966908:-8969389828632023514:1557564413196076955:8071568300476870897:3143547411261299894:-7420483221964574669",
         "playwright_selector": null,
         "python_selector": null,
-        "xpath_selector": ""
+        "xpath_selector": "button"
       },
       "text_label": "Nested shadow button",
       "timeout": 15000,
@@ -117,14 +117,14 @@
       "id": "I2",
       "press_enter": false,
       "selector": {
-        "css_selector": "[id=\"field\"][aria-label=\"Nested shadow input\"]",
+        "css_selector": "html > body > div > div > input[id=\"field\"][aria-label=\"Nested shadow input\"]",
         "iframe_parent_css_selectors": [],
         "in_iframe": false,
         "in_shadow_root": true,
-        "notte_selector": "http://characterization.test/shadow:4527775504046182633:3609651542926669075:6390467218696966908:-8969389828632023514:0:0:0:1486573021427513209",
+        "notte_selector": "http://characterization.test/shadow:4527775504046182633:3609651542926669075:6390467218696966908:-8969389828632023514:1557564413196076955:8071568300476870897:-5196117965957372882:8296000744639506434",
         "playwright_selector": null,
         "python_selector": null,
-        "xpath_selector": ""
+        "xpath_selector": "input"
       },
       "text_label": "Nested shadow input",
       "timeout": 15000,
@@ -148,14 +148,14 @@
       "id": "B4",
       "press_enter": null,
       "selector": {
-        "css_selector": "input[id=\"check\"][type=\"checkbox\"]",
+        "css_selector": "html > body > div > div > label > input[id=\"check\"][type=\"checkbox\"]",
         "iframe_parent_css_selectors": [],
         "in_iframe": false,
         "in_shadow_root": true,
-        "notte_selector": "http://characterization.test/shadow:4527775504046182633:3609651542926669075:6390467218696966908:-8969389828632023514:0:0:0:0:-5196117965957372882:7313060465141298354",
+        "notte_selector": "http://characterization.test/shadow:4527775504046182633:3609651542926669075:6390467218696966908:-8969389828632023514:1557564413196076955:8071568300476870897:1312651466225251226:7109674779781864918:2758934059830173895:6302375266515636282",
         "playwright_selector": null,
         "python_selector": null,
-        "xpath_selector": "input"
+        "xpath_selector": "label/input"
       },
       "text_label": "",
       "timeout": 15000,

@@ -215,9 +215,14 @@ class _TreeBuilder:
         notte_selector: str,
         parent_xpath: str | None = None,
         parent_css_path: str = "",
+        parent_is_shadow_host: bool = False,
     ) -> DomNode | None:
         """`parent_xpath` and `parent_css_path`: the XPath of the parent element and its CSS path from
-        `xpath_to_css_path`, which the node's own CSS path extends."""
+        `xpath_to_css_path`, which the node's own CSS path extends.
+
+        XPaths restart at a shadow root, where Playwright's XPath engine does not enter. Its CSS engine does,
+        and its `>` goes from a shadow host to the top elements of its shadow root: the CSS path of an element
+        in a shadow root goes on from its host's."""
         if raw.get("type") == "TEXT_NODE":
             return DomNode(
                 id=None,
@@ -244,9 +249,13 @@ class _TreeBuilder:
         if highlight_index in self.duplicates:
             highlight_index = None
         # the CSS path and the iframe check read the tag and attributes as the script returned them
-        base_css_path = (
-            xpath_to_css_path(xpath) if parent_xpath is None else child_css_path(parent_xpath, parent_css_path, xpath)
-        )
+        if parent_xpath is None:
+            base_css_path = xpath_to_css_path(xpath)
+        elif parent_is_shadow_host and parent_css_path and not xpath.startswith(f"{parent_xpath}/"):
+            # a top element of the parent's shadow root (the host's light children extend its XPath)
+            base_css_path = f"{parent_css_path} > {xpath_to_css_path(xpath)}"
+        else:
+            base_css_path = child_css_path(parent_xpath, parent_css_path, xpath)
         css_path = build_csspath(
             tag_name=tag_name,
             xpath=xpath,
@@ -300,6 +309,7 @@ class _TreeBuilder:
                 notte_selector,
                 parent_xpath=xpath,
                 parent_css_path=base_css_path,
+                parent_is_shadow_host=shadow_root,
             )
             if child is not None:
                 children.append(child)
