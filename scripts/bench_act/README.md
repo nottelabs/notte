@@ -73,4 +73,5 @@ both versions interleaved. A report job merges the shards, writes the job summar
 - public sites fail only on a clear drop against base;
 - site misses (blocks, CAPTCHAs, redirects off the site) are left out.
 
-Without `OPENROUTER_API_KEY` (fork PRs), the workflow skips.
+It needs the `OPENROUTER_API_KEY` repository secret. Fork PRs get no secrets and skip; a same-repo run without
+the secret fails.
