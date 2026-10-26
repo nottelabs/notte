@@ -436,19 +436,21 @@
 	// }
 
 	/**
-	 * Gets the position of an element in its parent.
+	 * Gets the position of an element in its parent: its parent element, or the shadow root it is a direct
+	 * child of.
 	 *
 	 * @param {HTMLElement} currentElement - The element to get the position for.
 	 * @returns {number} The position of the element in its parent.
 	 */
 	function getElementPosition(currentElement) {
-		if (!currentElement.parentElement) {
+		const parent = currentElement.parentElement ?? (currentElement.parentNode instanceof ShadowRoot ? currentElement.parentNode : null);
+		if (!parent) {
 			return 0; // No parent means no siblings
 		}
 		if (positionCache.has(currentElement)) return positionCache.get(currentElement);
 
 		// the positions of all the children are computed at once: one pass over the siblings, not one per child
-		const children = currentElement.parentElement.children;
+		const children = parent.children;
 		const counts = new Map();
 		for (const child of children) {
 			const tagName = child.nodeName.toLowerCase();
@@ -465,24 +467,24 @@
 	}
 
 
-	function getXPathTree(element, stopAtBoundary = true) {
+	/**
+	 * The XPath of an element in its document, or in its shadow root: the path restarts at a shadow root,
+	 * whose direct children have their own step alone (the Python side chains the paths of the hosts).
+	 *
+	 * @param {HTMLElement} element - The element.
+	 * @returns {string} Its XPath.
+	 */
+	function getXPathTree(element) {
 		if (xpathCache.has(element)) return xpathCache.get(element);
 
-		let result = "";
-		// Stop if we hit a shadow root or iframe
-		if (
-			!stopAtBoundary ||
-			!(element.parentNode instanceof ShadowRoot || element.parentNode instanceof HTMLIFrameElement)
-		) {
-			const position = getElementPosition(element);
-			const tagName = element.nodeName.toLowerCase();
-			const xpathIndex = position > 0 ? `[${position}]` : "";
-			const segment = `${tagName}${xpathIndex}`;
-			// the parent's path is cached: the tree is built from the top, so it is usually already known
-			const parent = element.parentNode;
-			const parentPath = parent && parent.nodeType === Node.ELEMENT_NODE ? getXPathTree(parent, stopAtBoundary) : "";
-			result = parentPath ? `${parentPath}/${segment}` : segment;
-		}
+		const position = getElementPosition(element);
+		const tagName = element.nodeName.toLowerCase();
+		const xpathIndex = position > 0 ? `[${position}]` : "";
+		const segment = `${tagName}${xpathIndex}`;
+		// the parent's path is cached: the tree is built from the top, so it is usually already known
+		const parent = element.parentNode;
+		const parentPath = parent && parent.nodeType === Node.ELEMENT_NODE ? getXPathTree(parent) : "";
+		const result = parentPath ? `${parentPath}/${segment}` : segment;
 
 		xpathCache.set(element, result);
 		return result;
@@ -1982,7 +1984,7 @@
 		const nodeData = {
 			tagName: node.tagName.toLowerCase(),
 			attributes: {},
-			xpath: getXPathTree(node, true),
+			xpath: getXPathTree(node),
 			children: [],
 		};
 

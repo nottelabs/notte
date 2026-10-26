@@ -33,13 +33,21 @@ def test_child_css_path_is_the_css_path_of_the_xpath(parent_xpath: str, xpath: s
     assert child_css_path(parent_xpath, xpath_to_css_path(parent_xpath), xpath) == xpath_to_css_path(xpath)
 
 
-def test_builder_css_paths_restart_at_shadow_roots() -> None:
-    # the payload's XPaths restart below `/body` (the root) and in shadow roots (an empty XPath)
+def test_builder_css_paths_go_on_through_shadow_hosts() -> None:
+    # the payload's XPaths restart below `/body` (the root) and in shadow roots; CSS paths go on from the host,
+    # whose light children (`p`) extend its XPath, while the top elements of its shadow root (`span`) do not
     nodes: dict[str, RawNode] = {
         "0": {"tagName": "body", "xpath": "/body", "attributes": {}, "children": ["1"]},
-        "1": {"tagName": "div", "xpath": "html/body/div[2]", "attributes": {}, "children": ["2"], "shadowRoot": True},
-        "2": {"tagName": "span", "xpath": "", "attributes": {}, "children": ["3"]},
-        "3": {"tagName": "button", "xpath": "button[1]", "attributes": {"type": "button"}, "children": []},
+        "1": {
+            "tagName": "div",
+            "xpath": "html/body/div[2]",
+            "attributes": {},
+            "children": ["2", "4"],
+            "shadowRoot": True,
+        },
+        "2": {"tagName": "span", "xpath": "span", "attributes": {}, "children": ["3"]},
+        "3": {"tagName": "button", "xpath": "span/button[1]", "attributes": {"type": "button"}, "children": []},
+        "4": {"tagName": "p", "xpath": "html/body/div[2]/p", "attributes": {}, "children": []},
     }
     tree = build_dom_tree(RawFrame(root_id="0", nodes=nodes), url="https://example.test")
     assert tree is not None
@@ -48,4 +56,10 @@ def test_builder_css_paths_restart_at_shadow_roots() -> None:
         for node in tree.flatten()
         if node.computed_attributes.selectors is not None
     ]
-    assert css_paths == ["body", "html > body > div:nth-of-type(2)", "", 'button:nth-of-type(1)[type="button"]']
+    assert css_paths == [
+        "body",
+        "html > body > div:nth-of-type(2)",
+        "html > body > div:nth-of-type(2) > span",
+        'html > body > div:nth-of-type(2) > span > button:nth-of-type(1)[type="button"]',
+        "html > body > div:nth-of-type(2) > p",
+    ]

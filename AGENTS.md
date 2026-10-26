@@ -43,6 +43,14 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
 - If an SDK change needs server-side support that doesn't exist yet, ask
   before changing course. Don't drop or weaken the requirement on your own.
 
+## Locating elements in shadow roots
+
+Playwright's CSS engine enters open shadow roots, its XPath engine does not (not
+even after `>>`). The XPath of an element in a shadow root restarts there, so the
+observed CSS path is what finds it: `dom/builder.py` builds it on from the host's
+(`html > body > my-form > my-field:nth-of-type(2) > input`), as Playwright's `>`
+goes from a host to the top elements of its shadow root.
+
 ## HTTP transport
 
 The SDK sends HTTP with httpx. Only `_transport.py`, `_retry.py`, `errors.py` and
