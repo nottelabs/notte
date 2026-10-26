@@ -27,6 +27,8 @@ HOME = """<html><body>
 <a id="tab" href="/second" target="_blank">Open in a new tab</a>
 <button id="later-tab" onclick="setTimeout(() => window.open('/second'), 100)">Open a tab later</button>
 <button id="slow-tab" onclick="window.open('/slow-second')">Open a slow tab</button>
+<button id="late-timer-tab" onclick="setTimeout(() => window.open('/second'), 1200)">Open a tab much later</button>
+<button id="late-fetching-tab" onclick="setTimeout(() => window.open('/fetching-tab'), 1200)">Open a fetching tab later</button>
 <button id="timer-nav" onclick="setTimeout(() => { location.href = '/next' }, 300)">Go later</button>
 <button id="spa" onclick="setTimeout(() => { history.pushState({}, '', '/spa');
   setTimeout(() => document.body.insertAdjacentHTML('beforeend', '<h2>Spa page</h2>'), 100) }, 300)">Spa</button>
@@ -282,6 +284,55 @@ async def test_a_click_that_opens_a_tab_switches_to_it_once_it_has_loaded(
     assert session.window.page.url == f"{site}/{'slow-second' if opener == 'slow-tab' else 'second'}"
     assert await session.window.page.evaluate("document.readyState") == "complete"
     assert "Second tab" in await text(session)
+
+
+@pytest.mark.asyncio
+async def test_a_tab_opened_after_the_settle_is_switched_to_by_the_next_observation(
+    session: NotteSession, site: str
+) -> None:
+    async with session.window.page.context.expect_page() as opened:
+        _ = await click(session, "late-timer-tab")
+        # the click had no visible effect: its settle ended before the tab opened
+        assert len(session.window.page.context.pages) == 1
+    _ = await opened.value
+    observation = await session.aobserve()
+    assert observation.metadata.url == f"{site}/second"
+    assert session.window.page.url == f"{site}/second"
+    assert "Second tab" in await text(session)
+
+
+@pytest.mark.asyncio
+async def test_a_late_tab_is_not_switched_to_after_another_action(session: NotteSession, site: str) -> None:
+    async with session.window.page.context.expect_page() as opened:
+        _ = await click(session, "late-timer-tab")
+    _ = await opened.value
+    # acted on the first tab since: the late tab is the earlier action's
+    _ = await click(session, "nothing")
+    observation = await session.aobserve()
+    assert observation.metadata.url == f"{site}/"
+    assert len(session.window.page.context.pages) == 2
+
+
+@pytest.mark.asyncio
+async def test_a_late_tab_s_requests_are_waited_for_from_when_it_appears(session: NotteSession, site: str) -> None:
+    async with session.window.page.context.expect_page() as opened:
+        _ = await click(session, "late-fetching-tab")
+    tab = await opened.value
+    # its fetch has started when the observation begins
+    await tab.wait_for_load_state("domcontentloaded")
+    observation = await session.aobserve()
+    assert observation.metadata.url == f"{site}/fetching-tab"
+    assert "Fetched in the tab" in await text(session)
+
+
+@pytest.mark.asyncio
+async def test_a_late_tab_is_not_switched_to_after_a_script_action(session: NotteSession, site: str) -> None:
+    async with session.window.page.context.expect_page() as opened:
+        _ = await click(session, "late-timer-tab")
+    _ = await opened.value
+    _ = await session.aexecute(type="evaluate_js", code="document.title")
+    observation = await session.aobserve()
+    assert observation.metadata.url == f"{site}/"
 
 
 @pytest.mark.asyncio
