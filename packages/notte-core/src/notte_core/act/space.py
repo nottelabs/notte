@@ -875,7 +875,7 @@ def _element(
             element["filled"] = state.filled
         if state.checked is not None:
             element["checked"] = state.checked
-        for key in ("expanded", "selected", "pressed"):
+        for key in ("expanded", "selected", "pressed", "sort"):
             value = getattr(state, key)
             if value is not None:
                 element[key] = value
