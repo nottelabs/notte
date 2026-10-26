@@ -108,6 +108,10 @@ CDP listener hints must retain the inspected elements' identities through main-w
 handles. DOM marker attributes are copied by `cloneNode`, while event listeners are
 not, so an attribute bridge can incorrectly offer a clone as a clickable header.
 
+Wrapper deduplication is covered by `tests/browser/test_dom_clickable_duplicates.py`.
+The payload's `clickHandler` only captures DOM handler attributes/properties, not
+`addEventListener` listeners; its absence cannot prove a real control has no independent action.
+
 Listbox button selection values read rendered text, including assigned slots and slot fallback,
 without following descendant accessible names or ARIA references. Each read stops after 1,024
 descendant nodes or 4,096 raw UTF-16 code units (whitespace counts), before text transformation.

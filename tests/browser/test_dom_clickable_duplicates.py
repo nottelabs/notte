@@ -2,6 +2,8 @@
 
 `cursor` is inherited: the label and counter wrappers of a link or a button have its pointer cursor, and
 used to be offered as generic clickables (`M`), next to the link, which then had no text of its own.
+ARIA widgets wrap native controls too: a `role="menuitem"` item around its link, a sortable column header
+around its sort button. Each pair was offered twice.
 """
 
 from urllib.parse import quote
@@ -43,3 +45,68 @@ async def test_a_control_is_offered_once() -> None:
         ("B4", "Save"),
     ]
     assert 'L1[:]<a href="/fork">Fork\n17.1k</a>' in observation.space.description
+
+
+WRAPPED = """
+<style>.sort { display: inline-block; width: 12px; height: 12px }</style>
+<ul>
+  <li role="menuitem"><a href="/" data-test="nav-home">Home</a></li>
+  <li role="menuitem"><button data-test="nav-categories" aria-expanded="false">Categories</button></li>
+</ul>
+<table><thead><tr>
+  <th style="cursor: pointer">Age <span class="sort" role="button" tabindex="0" aria-label="Age: Activate to sort"></span></th>
+  <th style="cursor: pointer">Name <span class="sort" role="button" tabindex="0" aria-label="Sort"></span></th>
+</tr></thead></table>
+"""
+
+
+@pytest.mark.asyncio
+async def test_a_wrapper_that_says_nothing_more_than_its_control_is_not_offered() -> None:
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(WRAPPED)}")
+        observation = await session.aobserve()
+
+    actions = [(action.id, action.accessible_name) for action in observation.space.interaction_actions]
+    assert actions == [
+        ("L1", "Home"),
+        ("B1", "Categories"),
+        ("B2", "Age: Activate to sort"),
+        # the header says "Name", which its button's name does not: both are kept
+        ("M1", "Name Sort"),
+        ("B3", "Sort"),
+    ]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("role", ["checkbox", "switch", "radio", "menuitemcheckbox", "menuitemradio", "button", "tab"])
+async def test_an_independent_control_around_a_link_is_kept(role: str) -> None:
+    page = f"""
+    <div id="accept" role="{role}" aria-checked="false" tabindex="0"
+      style="position: relative; width: 300px; height: 100px">
+      <a id="terms" href="#terms" style="position: absolute; top: 0; left: 0">Accept terms</a>
+    </div>
+    <script>
+      const accept = document.getElementById('accept');
+      accept.addEventListener('click', () => accept.setAttribute('aria-checked', 'true'));
+      document.getElementById('terms').addEventListener('click', (event) => {{
+        event.preventDefault();
+        event.stopPropagation();
+        document.title = 'terms opened';
+      }});
+    </script>
+    """
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+        observation = await session.aobserve()
+        actions = observation.space.interaction_actions
+        assert [(action.id, action.accessible_name) for action in actions] == [
+            ("B1", "Accept terms"),
+            ("L1", "Accept terms"),
+        ]
+
+        assert (await session.aexecute(type="click", id="L1")).success
+        assert await session.window.page.title() == "terms opened"
+        assert await session.window.page.locator("#accept").get_attribute("aria-checked") == "false"
+
+        assert (await session.aexecute(type="click", id="B1")).success
+        assert await session.window.page.locator("#accept").get_attribute("aria-checked") == "true"
