@@ -650,17 +650,18 @@ async def execute(
         opened = any(tab not in tabs for tab in context.pages)
         if _can_create_tab(action) and (len(context.pages) != len(tabs) or opened) and len(context.pages) > 0:
             last = context.pages[-1]
-            # a new tab from goto_new_tab is the window's page already, and loaded
+            # Selection can happen automatically when the opener closes. Readiness is independent of selection.
+            # A goto_new_tab already loaded its own new page.
+            if last not in tabs and not isinstance(action, GotoNewTabAction):
+                tab = settle.tab(last) if settle is not None else PageSettle(last, None, tabs=False)
+                try:
+                    await tab.wait(document="requests")
+                finally:
+                    await tab.close()
             if last is not window.page:
                 if verbose:
                     id_str = f" id={action.id}" if isinstance(action, InteractionAction) else ""
                     logger.info(f"🪦 Action {action.type}{id_str} resulted in a new tab, switched to it...")
-                if last not in tabs:
-                    tab = settle.tab(last) if settle is not None else PageSettle(last, None, tabs=False)
-                    try:
-                        await tab.wait(document="requests")
-                    finally:
-                        await tab.close()
                 # A target=_blank download can briefly create a page that closes once the download starts.
                 if not last.is_closed():
                     try:

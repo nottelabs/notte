@@ -59,6 +59,8 @@ customElements.define('x-inner', class extends HTMLElement {
 <button id="frame" onclick="document.getElementById('inner').src = '/inner'">Frame</button>
 <iframe id="inner" src="about:blank"></iframe>
 <a id="fetching-tab" href="/fetching-tab" target="_blank">Open a tab that fetches</a>
+<button id="replace-self" onclick="window.open('/fetching-tab'); window.close()">Replace this tab</button>
+<button id="close-self" onclick="window.close()">Close this tab</button>
 <a id="download" href="/download" target="_blank">Download</a>
 <button id="pages" onclick="fetch('/data?delay=0.1').then(() => fetch('/data?delay=0.6')).then(() =>
     document.body.insertAdjacentHTML('beforeend', '<p>Both pages fetched</p>'))">Fetch pages</button>
@@ -436,6 +438,27 @@ async def test_a_new_tab_is_tracked_from_when_it_appears(session: NotteSession, 
     _ = await click(session, "fetching-tab")
     assert session.window.page.url == f"{site}/fetching-tab"
     assert "Fetched in the tab" in await text(session)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("replacement", [True, False])
+async def test_a_closing_page_waits_for_its_replacement_if_it_opens_one(
+    session: NotteSession, site: str, replacement: bool
+) -> None:
+    # A script-opened page can close itself, unlike the initial page of a browser context.
+    async with session.window.page.context.expect_page() as opened:
+        await session.window.page.evaluate("window.open('/')")
+    original = await opened.value
+    await original.wait_for_load_state("load")
+    session.window.page = original
+    elapsed = await click(session, "replace-self" if replacement else "close-self")
+    assert original.is_closed()
+    if replacement:
+        assert session.window.page.url == f"{site}/fetching-tab"
+        assert "Fetched in the tab" in await text(session)
+    else:
+        assert session.window.page.url == f"{site}/"
+        assert elapsed < LONG_GRACE_MS / 1000 + 1
 
 
 @pytest.mark.asyncio

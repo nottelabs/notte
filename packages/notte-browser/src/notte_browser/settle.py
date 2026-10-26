@@ -145,6 +145,8 @@ class PageSettle:
         self._tabs: bool = tabs
         # the tabs opened since the action started: the page is waited for no longer. Each is tracked from then on
         self.opened: list[Page] = []
+        self._opened_event: asyncio.Event = asyncio.Event()
+        self._opening_event: asyncio.Event = asyncio.Event()
         self._opened_settles: dict[Page, PageSettle] = {}
         # a tab is opening: its first request was sent
         self._opening: bool = False
@@ -210,6 +212,8 @@ class PageSettle:
 
     def _page_opened(self, page: Page) -> None:
         self.opened.append(page)
+        self._opened_event.set()
+        self._opening_event.set()
         # its first scripts can start requests before it is waited for
         self._opened_settles[page] = PageSettle(page, None, tabs=False)
 
@@ -221,6 +225,7 @@ class PageSettle:
         except Error:
             # a navigation issued before its frame exists: the first one of a new tab
             self._opening = True
+            self._opening_event.set()
 
     def _left_s(self, cap_ms: float) -> float:
         return max(cap_ms - (time.perf_counter() - self._began) * 1000, 0) / 1000
@@ -334,6 +339,16 @@ class PageSettle:
             except Error:
                 # navigated again (a redirect by the page), or the page closed
                 if self.page.is_closed():
+                    # A script can close its opener before its new tab's first response announces the page.
+                    if self._tabs and not self.opened:
+                        try:
+                            # The request event can arrive after the opener's close event too.
+                            async with asyncio.timeout(self._left_s(grace_ms)):
+                                _ = await self._opening_event.wait()
+                            async with asyncio.timeout(self._left_s(CAP_MS)):
+                                _ = await self._opened_event.wait()
+                        except TimeoutError:
+                            pass
                     return
 
     async def close(self) -> None:
