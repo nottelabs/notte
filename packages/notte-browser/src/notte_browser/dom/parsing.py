@@ -2,7 +2,7 @@ import asyncio
 import json
 from collections.abc import Collection, Iterable
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
 
 from notte_core.config import config
 from notte_core.dom_tree import DomNode, flush_dom_errors
@@ -12,7 +12,7 @@ from notte_core.profiling import profiler
 from typing_extensions import TypedDict
 
 from notte_browser.dom.builder import RawFrame, RawNode, build_dom_tree
-from notte_browser.driver import ElementHandle, Frame, Page
+from notte_browser.driver import CDPSession, ElementHandle, Frame, Page
 from notte_browser.errors import PlaywrightError
 from notte_browser.js import script
 from notte_browser.resolution import get_selector_generator
@@ -21,6 +21,10 @@ DOM_TREE_JS = script("buildDomNode.js")
 
 # each frame's DOM is evaluated up to this many times when the evaluation raises (e.g. mid-navigation)
 FRAME_EVALUATION_ATTEMPTS: int = 3
+# the column headers looked at for a click listener of their own (see `headers_with_click_listeners`)
+COLUMN_HEADER_SELECTOR: str = 'th, [role="columnheader"]'
+MAX_LISTENED_HEADERS: int = 50
+_CLICK_EVENTS = frozenset({"click", "mousedown", "mouseup"})
 # an iframe whose DOM takes longer than this to evaluate is skipped (the main frame has no limit)
 IFRAME_EVALUATION_TIMEOUT_S: float = 10.0
 
@@ -73,7 +77,9 @@ async def parse_frames(page: Page) -> RawFrame:
             child_frames.setdefault(frame.parent_frame, []).append(frame)
 
     main_frame = page.main_frame
-    main = await evaluate_frame(main_frame, js_code, dom_config, child_frames.get(main_frame, []))
+    main_config = dict(dom_config, column_header_selector=COLUMN_HEADER_SELECTOR)
+    main_config["listened_headers"] = await headers_with_click_listeners(page)
+    main = await evaluate_frame(main_frame, js_code, main_config, child_frames.get(main_frame, []))
 
     # graft the frames level by level, evaluating the frames of a level concurrently
     next_highlight_index = max_highlight_index(main.frame.nodes.values()) + 1
@@ -94,6 +100,74 @@ async def parse_frames(page: Page) -> RawFrame:
             next_level.extend((child, child_iframe, x, y) for child, child_iframe in frame_tree.child_frames)
         level = next_level
     return main.frame
+
+
+class _RemoteObject(TypedDict, total=False):
+    objectId: str
+    description: str
+
+
+class _Property(TypedDict, total=False):
+    name: str
+    value: _RemoteObject
+
+
+class _Listener(TypedDict):
+    type: str
+
+
+async def _send(cdp: CDPSession, method: str, params: dict[str, str | bool]) -> dict[str, object]:
+    return cast("dict[str, object]", await cdp.send(method, params))  # pyright: ignore [reportUnknownMemberType]
+
+
+async def headers_with_click_listeners(page: Page) -> list[int]:
+    """The column headers of the main frame with a click listener of their own, by their index among its first
+    `MAX_LISTENED_HEADERS` column headers (`COLUMN_HEADER_SELECTOR`, in document order).
+
+    Tables often sort on a handler added to the header cells alone (jQuery's `.click()`), with no role, tabindex or
+    pointer cursor that `buildDomNode.js` could see: only the DevTools protocol lists an element's listeners. Empty
+    when the page has no column header, or when the protocol is not available (Firefox).
+    """
+    group = "notte-column-headers"
+    selector = json.dumps(COLUMN_HEADER_SELECTOR)
+    try:
+        # most pages have no table: no protocol session for them
+        if not await page.main_frame.evaluate(f"document.querySelector({selector}) !== null"):
+            return []
+        cdp = await page.context.new_cdp_session(page)
+    except PlaywrightError:
+        return []
+    try:
+        expression = f"Array.from(document.querySelectorAll({selector})).slice(0, {MAX_LISTENED_HEADERS})"
+        evaluated = await _send(cdp, "Runtime.evaluate", {"expression": expression, "objectGroup": group})
+        headers = cast(_RemoteObject, evaluated.get("result", {}))
+        if "objectId" not in headers or headers.get("description") == "Array(0)":
+            return []
+        properties = await _send(cdp, "Runtime.getProperties", {"objectId": headers["objectId"], "ownProperties": True})
+        elements = [
+            (int(name), value["objectId"])
+            for item in cast(list[_Property], properties.get("result", []))
+            if (name := item.get("name", "")).isdigit() and "objectId" in (value := item.get("value", {}))
+        ]
+        found = await asyncio.gather(
+            *(_send(cdp, "DOMDebugger.getEventListeners", {"objectId": object_id}) for _, object_id in elements)
+        )
+        return [
+            index
+            for (index, _), listeners in zip(elements, found)
+            if any(
+                listener["type"] in _CLICK_EVENTS for listener in cast(list[_Listener], listeners.get("listeners", []))
+            )
+        ]
+    except PlaywrightError as e:
+        logger.debug(f"Could not read the click listeners of the column headers of {page.url}: {e}")
+        return []
+    finally:
+        try:
+            _ = await _send(cdp, "Runtime.releaseObjectGroup", {"objectGroup": group})
+            await cdp.detach()
+        except PlaywrightError:
+            pass
 
 
 async def evaluate_iframe(
