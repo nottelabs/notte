@@ -259,3 +259,31 @@ def test_scripted_decider_scrolls_then_is_done_without_a_model() -> None:
 def test_scripted_runners_are_never_judged() -> None:
     run = {**_task_run("f1", "head", False), "runner": "notte-local-scripted"}
     assert rules.judge([run], [], [], with_base=False).ok
+
+
+def test_landing_is_read_after_a_redirect_on_load_and_never_fails_the_run() -> None:
+    import asyncio
+
+    from scripts.bench_act.runners import _landing  # pyright: ignore[reportPrivateUsage]
+
+    class Page:
+        url = "https://www.example.com/landed"
+
+        def __init__(self, failures: int) -> None:
+            self.failures = failures
+            self.waited = False
+
+        async def evaluate(self, _: str) -> str:
+            if self.failures:
+                self.failures -= 1
+                raise RuntimeError("Execution context was destroyed, most likely because of a navigation")
+            return json.dumps({"url": self.url, "status": 200, "text": "ok"})
+
+        async def wait_for_load_state(self, state: str, timeout: float) -> None:
+            self.waited = True
+
+    page = Page(failures=1)
+    assert asyncio.run(_landing(page)) == {"url": page.url, "status": 200, "text": "ok"}
+    assert page.waited
+    landing = asyncio.run(_landing(Page(failures=2)))
+    assert landing["url"] == Page.url and landing["status"] is None and "Execution context" in landing["error"]
