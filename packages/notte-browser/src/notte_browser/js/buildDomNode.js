@@ -14,6 +14,67 @@
 	};
 	let highlightIndex = 0; // Reset highlight index
 
+	/*
+	 * DOM reads that the page cannot redirect. A `<form>` exposes its controls as properties named after
+	 * their `name` or `id`, and they win over the form's own properties and methods: with
+	 * `<input name="children">`, `form.children` is the input. The walk visits forms like any other
+	 * element, so what it reads on an element goes through the prototype that defines it. In the page's
+	 * own world (the Playwright backend), the document does the same for named images, forms and embeds
+	 * (`<img name="body">` is `document.body`).
+	 */
+	function nativeGetter(prototype, name) {
+		const get = Object.getOwnPropertyDescriptor(prototype, name).get;
+		return (node) => get.call(node);
+	}
+	const parentNodeOf = nativeGetter(Node.prototype, "parentNode");
+	const parentElementOf = nativeGetter(Node.prototype, "parentElement");
+	const childNodesOf = nativeGetter(Node.prototype, "childNodes");
+	const nodeTypeOf = nativeGetter(Node.prototype, "nodeType");
+	const nodeNameOf = nativeGetter(Node.prototype, "nodeName");
+	const ownerDocumentOf = nativeGetter(Node.prototype, "ownerDocument");
+	const childrenOf = nativeGetter(Element.prototype, "children");
+	const tagNameOf = nativeGetter(Element.prototype, "tagName");
+	const localNameOf = nativeGetter(Element.prototype, "localName");
+	const idOf = nativeGetter(Element.prototype, "id");
+	const shadowRootOf = nativeGetter(Element.prototype, "shadowRoot");
+	const classListOf = nativeGetter(Element.prototype, "classList");
+
+	const NODE = Node.prototype;
+	const ELEMENT = Element.prototype;
+	const getAttribute = (element, name) => ELEMENT.getAttribute.call(element, name);
+	const hasAttribute = (element, name) => ELEMENT.hasAttribute.call(element, name);
+	const matches = (element, selector) => ELEMENT.matches.call(element, selector);
+	const closest = (element, selector) => ELEMENT.closest.call(element, selector);
+	const contains = (node, other) => NODE.contains.call(node, other);
+	const getRootNode = (node) => NODE.getRootNode.call(node);
+	const getBoundingClientRect = (element) => ELEMENT.getBoundingClientRect.call(element);
+	const getClientRects = (element) => ELEMENT.getClientRects.call(element);
+	// `checkVisibility` is recent (Chrome 105): undefined where the browser does not have it
+	const checkVisibilityOf = ELEMENT.checkVisibility &&
+		((element, options) => ELEMENT.checkVisibility.call(element, options));
+
+	/**
+	 * Any other property of an element (`disabled`, `offsetWidth`, `onclick`, ...), read from its
+	 * prototype chain when the element is a form.
+	 *
+	 * @param {Element} element - The element.
+	 * @param {string} name - The property.
+	 * @returns {any} Its value, or undefined when the element has no such property.
+	 */
+	function propertyOf(element, name) {
+		if (!(element instanceof HTMLFormElement)) return element[name];
+		for (let prototype = Object.getPrototypeOf(element); prototype !== null; prototype = Object.getPrototypeOf(prototype)) {
+			const descriptor = Object.getOwnPropertyDescriptor(prototype, name);
+			if (descriptor !== undefined) return descriptor.get ? descriptor.get.call(element) : descriptor.value;
+		}
+		return undefined;
+	}
+
+	const DOCUMENT = Document.prototype;
+	const BODY = Object.getOwnPropertyDescriptor(DOCUMENT, "body").get.call(document);
+	const DOCUMENT_ELEMENT = Object.getOwnPropertyDescriptor(DOCUMENT, "documentElement").get.call(document);
+	const STYLE_SHEETS = Object.getOwnPropertyDescriptor(DOCUMENT, "styleSheets").get.call(document);
+
 	// Add caching mechanisms at the top level
 	const DOM_CACHE = {
 		boundingRects: new WeakMap(),
@@ -39,7 +100,7 @@
 			return DOM_CACHE.boundingRects.get(element);
 		}
 
-		const rect = element.getBoundingClientRect();
+		const rect = getBoundingClientRect(element);
 
 		if (rect) {
 			DOM_CACHE.boundingRects.set(element, rect);
@@ -81,7 +142,7 @@
 			return DOM_CACHE.clientRects.get(element);
 		}
 
-		const rects = element.getClientRects();
+		const rects = getClientRects(element);
 
 		if (rects) {
 			DOM_CACHE.clientRects.set(element, rects);
@@ -131,7 +192,7 @@
 	}
 
 	function parseAriaBoolean(element, name) {
-		const value = element.getAttribute(name);
+		const value = getAttribute(element, name);
 		if (value === "true") return true;
 		if (value === "false") return false;
 		return undefined;
@@ -151,7 +212,7 @@
 	 */
 	function getLiveState(element) {
 		const state = {};
-		const tagName = element.tagName.toLowerCase();
+		const tagName = tagNameOf(element).toLowerCase();
 		if (tagName === "select") {
 			state.value = element.value;
 			const options = element.options;
@@ -182,12 +243,12 @@
 			}
 		} else if (tagName === "textarea") {
 			state.value = truncateStateValue(element.value, state);
-		} else if (element.isContentEditable) {
-			state.value = truncateStateValue(element.innerText || "", state);
+		} else if (propertyOf(element, "isContentEditable")) {
+			state.value = truncateStateValue(propertyOf(element, "innerText") || "", state);
 		}
 		if (state.checked === undefined) {
 			// role="checkbox" / "switch" / "radio" / "menuitemcheckbox" widgets
-			const ariaChecked = element.getAttribute("aria-checked");
+			const ariaChecked = getAttribute(element, "aria-checked");
 			if (ariaChecked === "true" || ariaChecked === "false") state.checked = ariaChecked === "true";
 			else if (ariaChecked === "mixed") state.mixed = true;
 		}
@@ -197,7 +258,7 @@
 		if (selected !== undefined) state.selected = selected;
 		const pressed = parseAriaBoolean(element, "aria-pressed");
 		if (pressed !== undefined) state.pressed = pressed;
-		else if (element.getAttribute("aria-pressed") === "mixed") state.pressed = "mixed";
+		else if (getAttribute(element, "aria-pressed") === "mixed") state.pressed = "mixed";
 		return Object.keys(state).length > 0 ? state : undefined;
 	}
 
@@ -226,22 +287,22 @@
 	};
 
 	function getRole(element) {
-		const explicit = (element.getAttribute("role") || "").trim().split(/\s+/)[0].toLowerCase();
+		const explicit = (getAttribute(element, "role") || "").trim().split(/\s+/)[0].toLowerCase();
 		if (explicit) return explicit;
-		const tagName = element.localName;
-		if (tagName === "a" || tagName === "area") return element.hasAttribute("href") ? "link" : "";
+		const tagName = localNameOf(element);
+		if (tagName === "a" || tagName === "area") return hasAttribute(element, "href") ? "link" : "";
 		if (tagName === "select") return element.multiple || element.size > 1 ? "listbox" : "combobox";
 		if (tagName === "input") {
-			const type = (element.getAttribute("type") || "text").toLowerCase();
+			const type = (getAttribute(element, "type") || "text").toLowerCase();
 			const role = INPUT_ROLES[type] ?? "";
-			return element.hasAttribute("list") && (role === "textbox" || role === "searchbox") ? "combobox" : role;
+			return hasAttribute(element, "list") && (role === "textbox" || role === "searchbox") ? "combobox" : role;
 		}
-		if (element.isContentEditable && !element.parentElement?.isContentEditable) return "textbox";
+		if (propertyOf(element, "isContentEditable") && !(parentElementOf(element) && propertyOf(parentElementOf(element), "isContentEditable"))) return "textbox";
 		return IMPLICIT_ROLES[tagName] ?? "";
 	}
 
 	function isHiddenForName(element) {
-		if (element.getAttribute("aria-hidden") === "true") return true;
+		if (getAttribute(element, "aria-hidden") === "true") return true;
 		const style = getCachedComputedStyle(element);
 		return style?.display === "none" || style?.visibility === "hidden" || style?.visibility === "collapse";
 	}
@@ -275,15 +336,15 @@
 		if (context.visited.has(element) || context.budget <= 0) return "";
 		context.visited.add(element);
 		if (!step.root && !step.hidden && isHiddenForName(element)) return "";
-		const tagName = element.localName;
+		const tagName = localNameOf(element);
 		const role = getRole(element);
 
 		// aria-labelledby, not followed from a labelledby target
-		if (!step.labelledBy && element.hasAttribute("aria-labelledby")) {
-			const scope = element.getRootNode();
+		if (!step.labelledBy && hasAttribute(element, "aria-labelledby")) {
+			const scope = getRootNode(element);
 			const parts = [];
-			for (const id of element.getAttribute("aria-labelledby").trim().split(/\s+/)) {
-				const target = id && scope.getElementById?.(id);
+			for (const id of getAttribute(element, "aria-labelledby").trim().split(/\s+/)) {
+				const target = id && (scope instanceof Document ? DOCUMENT.getElementById.call(scope, id) : scope.getElementById?.(id));
 				if (!target) continue;
 				context.visited.delete(target);
 				parts.push(textAlternative(target, context, {
@@ -296,38 +357,39 @@
 		// an editable control inside the label of another element: its value is left out
 		if (!step.root && EDITABLE_CONTROL_ROLES.has(role)) return "";
 
-		const ariaLabel = element.getAttribute("aria-label");
+		const ariaLabel = getAttribute(element, "aria-label");
 		if (ariaLabel && ariaLabel.trim()) return ariaLabel;
 
 		// host language labels: `<label>` first, even for input buttons, which then fall back to their value
-		if (element.labels && element.labels.length > 0) {
-			const text = Array.from(element.labels, (label) => {
+		const labels = propertyOf(element, "labels");
+		if (labels && labels.length > 0) {
+			const text = Array.from(labels, (label) => {
 				context.visited.delete(label);
 				return textAlternative(label, context, { root: false, labelledBy: step.labelledBy, content: true, hidden: step.hidden });
 			}).join(" ");
 			if (text.trim()) return text;
 		}
 		if (tagName === "input") {
-			const type = (element.getAttribute("type") || "text").toLowerCase();
+			const type = (getAttribute(element, "type") || "text").toLowerCase();
 			if (type === "button" || type === "submit" || type === "reset") {
-				const value = element.getAttribute("value");
+				const value = getAttribute(element, "value");
 				if (value && value.trim()) return value;
 				if (type !== "button") return type === "submit" ? "Submit" : "Reset";
 			}
 			if (type === "image") {
-				const text = element.getAttribute("alt") || element.getAttribute("value") || element.getAttribute("title");
+				const text = getAttribute(element, "alt") || getAttribute(element, "value") || getAttribute(element, "title");
 				return text && text.trim() ? text : "Submit";
 			}
 		}
 		if (tagName === "img" || tagName === "area") {
-			const alt = element.getAttribute("alt");
+			const alt = getAttribute(element, "alt");
 			if (alt && alt.trim()) return alt;
 		} else if (tagName === "fieldset") {
-			const legend = Array.from(element.children).find((child) => child.localName === "legend");
+			const legend = Array.from(childrenOf(element)).find((child) => localNameOf(child) === "legend");
 			const text = legend ? textAlternative(legend, context, { ...step, root: false, content: true }) : "";
 			if (text.trim()) return text;
 		} else if (tagName === "svg") {
-			const title = Array.from(element.children).find((child) => child.localName === "title");
+			const title = Array.from(childrenOf(element)).find((child) => localNameOf(child) === "title");
 			if (title && title.textContent.trim()) return title.textContent;
 		}
 
@@ -339,9 +401,9 @@
 
 		// tooltips name the element itself only (not its ancestors), and never a generic element
 		if (!step.root || (role === "" && GENERIC_TAGS.has(tagName))) return "";
-		const title = element.getAttribute("title");
+		const title = getAttribute(element, "title");
 		if (title && title.trim()) return title;
-		const placeholder = element.getAttribute("placeholder") || element.getAttribute("aria-placeholder");
+		const placeholder = getAttribute(element, "placeholder") || getAttribute(element, "aria-placeholder");
 		if (placeholder && placeholder.trim() && (tagName === "input" || tagName === "textarea" || role === "textbox")) {
 			return placeholder;
 		}
@@ -359,21 +421,21 @@
 
 	function contentText(element, context, step) {
 		const childStep = { root: false, labelledBy: step.labelledBy, content: true, hidden: step.hidden };
-		let children = element.shadowRoot ? element.shadowRoot.childNodes : element.childNodes;
-		if (element.localName === "slot") {
+		let children = shadowRootOf(element) ? shadowRootOf(element).childNodes : childNodesOf(element);
+		if (localNameOf(element) === "slot") {
 			const assigned = element.assignedNodes({ flatten: true });
 			if (assigned.length > 0) children = assigned;
 		}
 		let text = "";
 		for (const child of children) {
 			if (context.budget <= 0) break;
-			if (child.nodeType === Node.TEXT_NODE) {
-				text += transformText(child.data, child.parentElement);
+			if (nodeTypeOf(child) === Node.TEXT_NODE) {
+				text += transformText(child.data, parentElementOf(child));
 				// formatting whitespace is collapsed away: it does not use up the budget
 				context.budget -= child.data.trim().length;
-			} else if (child.localName === "br") {
+			} else if (nodeTypeOf(child) === Node.ELEMENT_NODE && localNameOf(child) === "br") {
 				text += " ";
-			} else if (child.nodeType === Node.ELEMENT_NODE) {
+			} else if (nodeTypeOf(child) === Node.ELEMENT_NODE) {
 				const childText = textAlternative(child, context, childStep);
 				text += isInline(child) ? childText : ` ${childText} `;
 			}
@@ -407,7 +469,7 @@
 	function highlightElement(node, parentIframe = null) {
 		if (!node) return null;
 		// Create or get node container
-		const rect = node.getBoundingClientRect();
+		const rect = getBoundingClientRect(node);
 		const bbox = {
 			x: rect.left,
 			y: rect.top,
@@ -443,22 +505,24 @@
 	 * @returns {number} The position of the element in its parent.
 	 */
 	function getElementPosition(currentElement) {
-		const parent = currentElement.parentElement ?? (currentElement.parentNode instanceof ShadowRoot ? currentElement.parentNode : null);
+		const parentNode = parentNodeOf(currentElement);
+		const parent = parentElementOf(currentElement) ?? (parentNode instanceof ShadowRoot ? parentNode : null);
 		if (!parent) {
 			return 0; // No parent means no siblings
 		}
 		if (positionCache.has(currentElement)) return positionCache.get(currentElement);
 
 		// the positions of all the children are computed at once: one pass over the siblings, not one per child
-		const children = parent.children;
+		// a shadow root is not an element (and cannot be clobbered): its own `children` is safe to read
+		const children = parent instanceof ShadowRoot ? parent.children : childrenOf(parent);
 		const counts = new Map();
 		for (const child of children) {
-			const tagName = child.nodeName.toLowerCase();
+			const tagName = nodeNameOf(child).toLowerCase();
 			counts.set(tagName, (counts.get(tagName) ?? 0) + 1);
 		}
 		const seen = new Map();
 		for (const child of children) {
-			const tagName = child.nodeName.toLowerCase();
+			const tagName = nodeNameOf(child).toLowerCase();
 			const index = (seen.get(tagName) ?? 0) + 1; // 1-based index
 			seen.set(tagName, index);
 			positionCache.set(child, counts.get(tagName) === 1 ? 0 : index); // 0: only element of its type
@@ -478,12 +542,12 @@
 		if (xpathCache.has(element)) return xpathCache.get(element);
 
 		const position = getElementPosition(element);
-		const tagName = element.nodeName.toLowerCase();
+		const tagName = nodeNameOf(element).toLowerCase();
 		const xpathIndex = position > 0 ? `[${position}]` : "";
 		const segment = `${tagName}${xpathIndex}`;
 		// the parent's path is cached: the tree is built from the top, so it is usually already known
-		const parent = element.parentNode;
-		const parentPath = parent && parent.nodeType === Node.ELEMENT_NODE ? getXPathTree(parent) : "";
+		const parent = parentNodeOf(element);
+		const parentPath = parent && nodeTypeOf(parent) === Node.ELEMENT_NODE ? getXPathTree(parent) : "";
 		const result = parentPath ? `${parentPath}/${segment}` : segment;
 
 		xpathCache.set(element, result);
@@ -507,7 +571,7 @@
 	 * @returns {boolean} Whether the element is focusable.
 	 */
 	function isFocusable(element) {
-		return element.tabIndex >= 0 && !element.matches(':disabled');
+		return propertyOf(element, "tabIndex") >= 0 && !matches(element, ':disabled');
 	}
 
 	/**
@@ -541,8 +605,8 @@
 		const position = getCachedComputedStyle(element)?.position;
 		if (position === "fixed") return true;
 		if (position !== "absolute") return false;
-		const containingBlock = element.offsetParent;
-		return containingBlock === null || !clipper.contains(containingBlock);
+		const containingBlock = propertyOf(element, "offsetParent");
+		return containingBlock === null || !contains(clipper, containingBlock);
 	}
 
 	/**
@@ -555,7 +619,7 @@
 	 */
 	function contentScope(element, scope, isControl) {
 		let ariaHidden = scope.ariaHidden;
-		if (element.getAttribute("aria-hidden") === "true") ariaHidden = !isFocusable(element);
+		if (getAttribute(element, "aria-hidden") === "true") ariaHidden = !isFocusable(element);
 		else if (ariaHidden && isFocusable(element)) ariaHidden = false;
 		let clipper = scope.clipper;
 		// an element that escapes the clipping is assumed not to be clipped by an outer clipper either
@@ -573,8 +637,8 @@
 	 * @returns {HTMLElement} The element with the box.
 	 */
 	function boxOf(element) {
-		while (element.parentElement && getCachedComputedStyle(element)?.display === "contents") {
-			element = element.parentElement;
+		while (parentElementOf(element) && getCachedComputedStyle(element)?.display === "contents") {
+			element = parentElementOf(element);
 		}
 		return element;
 	}
@@ -594,13 +658,13 @@
 	 * @returns {boolean} Whether the element is rendered.
 	 */
 	function isRendered(element, checkOpacity, checkVisibility = true) {
-		if (element.localName === "option" || element.localName === "optgroup") {
-			element = element.closest("select") ?? element;
+		if (localNameOf(element) === "option" || localNameOf(element) === "optgroup") {
+			element = closest(element, "select") ?? element;
 		}
 		if (checkVisibility && getCachedComputedStyle(element)?.visibility !== "visible") return false;
 		const box = boxOf(element);
-		if (typeof box.checkVisibility !== "function") return true;
-		return box.checkVisibility({ checkOpacity, checkVisibilityCSS: false });
+		if (!checkVisibilityOf) return true;
+		return checkVisibilityOf(box, { checkOpacity, checkVisibilityCSS: false });
 	}
 
 	/**
@@ -624,7 +688,7 @@
 		// `<summary>`): its elements are not rendered, but its own text nodes have a box
 		const box = boxOf(parent);
 		if (getCachedComputedStyle(box)?.contentVisibility === "hidden") return true;
-		if (box.localName === "details" && !box.open && parent.closest("summary")?.parentElement !== box) return true;
+		if (localNameOf(box) === "details" && !box.open && closest(parent, "summary")?.parentElement !== box) return true;
 		const rects = getTextRects(textNode);
 		// no box at all (the text of a `<textarea>`): nothing says it is hidden
 		if (rects.length === 0) return false;
@@ -645,7 +709,7 @@
 	 */
 	function getTextRects(textNode) {
 		if (textRects.has(textNode)) return textRects.get(textNode);
-		const range = document.createRange();
+		const range = DOCUMENT.createRange.call(document);
 		range.selectNodeContents(textNode);
 		const rects = Array.from(range.getClientRects());
 		textRects.set(textNode, rects);
@@ -670,8 +734,8 @@
 	function isElementHidden(element, scope) {
 		if (scope.clipper !== null && !escapesClip(element, scope.clipper)) return true;
 		if (!isOnScreen(getCachedBoundingRect(element))) return false;
-		if (!DISABLEABLE_TAGS.has(element.localName)) return !isRendered(element, true);
-		const parent = element.parentElement;
+		if (!DISABLEABLE_TAGS.has(localNameOf(element))) return !isRendered(element, true);
+		const parent = parentElementOf(element);
 		return !isRendered(element, false) || (parent !== null && !isRendered(parent, true, false));
 	}
 
@@ -690,7 +754,7 @@
 				if (!parentElement) return false;
 
 				try {
-					return parentElement.checkVisibility({
+					return checkVisibilityOf(parentElement, {
 						checkOpacity: true,
 						checkVisibilityCSS: true,
 					});
@@ -739,7 +803,7 @@
 			if (!parentElement) return false;
 
 			try {
-				return parentElement.checkVisibility({
+				return checkVisibilityOf(parentElement, {
 					checkOpacity: true,
 					checkVisibilityCSS: true,
 				});
@@ -767,15 +831,15 @@
 	 * @returns {boolean} Whether a visible descendant has a width and a height.
 	 */
 	function hasVisibleSizedChild(element) {
-		for (const child of element.children) {
+		for (const child of childrenOf(element)) {
 			const rect = getCachedBoundingRect(child);
 			if (!rect) continue;
 			if (rect.width === 0 || rect.height === 0) {
 				if (hasVisibleSizedChild(child)) return true;
 				continue;
 			}
-			if (typeof child.checkVisibility !== 'function' ||
-				child.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })) {
+			if (!checkVisibilityOf ||
+				checkVisibilityOf(child, { checkOpacity: true, checkVisibilityCSS: true })) {
 				return true;
 			}
 		}
@@ -789,13 +853,13 @@
 	 * @returns {boolean} Whether the element is accepted.
 	 */
 	function isElementAccepted(element) {
-		if (!element || !element.tagName) return false;
+		if (!element || !tagNameOf(element)) return false;
 
 		// Always accept body and common container elements
 		const alwaysAccept = new Set([
 			"body", "div", "main", "article", "section", "nav", "header", "footer"
 		]);
-		const tagName = element.tagName.toLowerCase();
+		const tagName = tagNameOf(element).toLowerCase();
 
 		if (alwaysAccept.has(tagName)) return true;
 
@@ -821,8 +885,8 @@
 	function isElementVisible(element) {
 		const style = getCachedComputedStyle(element);
 		return (
-			element.offsetWidth > 0 &&
-			element.offsetHeight > 0 &&
+			propertyOf(element, "offsetWidth") > 0 &&
+			propertyOf(element, "offsetHeight") > 0 &&
 			style?.visibility !== "hidden" &&
 			style?.display !== "none"
 		);
@@ -840,7 +904,7 @@
 	function getHoverCursorRules() {
 		if (hoverCursorRules !== null) return hoverCursorRules;
 		hoverCursorRules = [];
-		for (const stylesheet of Array.from(document.styleSheets)) {
+		for (const stylesheet of Array.from(STYLE_SHEETS)) {
 			try {
 				for (const rule of Array.from(stylesheet.cssRules || [])) {
 					if (!rule.selectorText || !rule.selectorText.includes(':hover')) continue;
@@ -867,7 +931,7 @@
 	 * @returns {Object} Object containing cursor analysis results.
 	 */
 	function getElementCursorStates(element) {
-		if (!element || element.nodeType !== Node.ELEMENT_NODE) {
+		if (!element || nodeTypeOf(element) !== Node.ELEMENT_NODE) {
 			return {
 				normalCursor: null,
 				hoverCursor: null,
@@ -878,7 +942,7 @@
 		}
 
 		// Cache the tagName and style lookups
-		const tagName = element.tagName.toLowerCase();
+		const tagName = tagNameOf(element).toLowerCase();
 		const style = getCachedComputedStyle(element);
 		const normalCursor = style?.cursor;
 
@@ -936,7 +1000,7 @@
 		for (const rule of getHoverCursorRules()) {
 			try {
 				// Check if element matches the base selector
-				if (element.matches(rule.baseSelector)) {
+				if (matches(element, rule.baseSelector)) {
 					hoverCursor = rule.cursor;
 					foundHoverRule = true;
 					break;
@@ -948,7 +1012,7 @@
 		}
 
 		// Exclude HTML element
-		if (element.tagName.toLowerCase() === "html") {
+		if (tagNameOf(element).toLowerCase() === "html") {
 			return {
 				normalCursor: normalCursor,
 				hoverCursor: hoverCursor,
@@ -1004,18 +1068,18 @@
 			return 'DISABLED_CURSOR';
 		}
 		if (
-			element.hasAttribute('disabled') ||
-			element.getAttribute('disabled') === 'true' ||
-			element.getAttribute('disabled') === '' ||
-			element.getAttribute('aria-disabled') === 'true'
+			hasAttribute(element, 'disabled') ||
+			getAttribute(element, 'disabled') === 'true' ||
+			getAttribute(element, 'disabled') === '' ||
+			getAttribute(element, 'aria-disabled') === 'true'
 		) {
 			return 'DISABLED_ATTRIBUTE';
 		}
 		// `:disabled` also matches the controls of a disabled `<fieldset>`, whose `.disabled` is false
-		if (element.disabled || element.matches(':disabled')) {
+		if (propertyOf(element, "disabled") || matches(element, ':disabled')) {
 			return 'DISABLED_PROPERTY';
 		}
-		if (element.inert || element.hasAttribute('inert') || element.getAttribute('aria-inert') === 'true') {
+		if (propertyOf(element, "inert") || hasAttribute(element, 'inert') || getAttribute(element, 'aria-inert') === 'true') {
 			return 'DISABLED_INERT';
 		}
 		return null;
@@ -1034,12 +1098,12 @@
 	 * @param {boolean} usePointerCursor - Whether a pointer cursor alone makes the element interactive.
 	 */
 	function isInteractiveElement(element, usePointerCursor = enable_pointer_elements) {
-		if (!element || element.nodeType !== Node.ELEMENT_NODE) {
+		if (!element || nodeTypeOf(element) !== Node.ELEMENT_NODE) {
 			return false;
 		}
 
 		// Cache the tagName and style lookups
-		const tagName = element.tagName.toLowerCase();
+		const tagName = tagNameOf(element).toLowerCase();
 		const style = getCachedComputedStyle(element);
 
 		const disabledReason = getDisabledReason(element, style);
@@ -1106,41 +1170,41 @@
 
 			// Check for explicit disable attributes
 			for (const disableTag of explicitDisableTags) {
-				if (element.hasAttribute(disableTag) ||
-					element.getAttribute(disableTag) === 'true' ||
-					element.getAttribute(disableTag) === '') {
+				if (hasAttribute(element, disableTag) ||
+					getAttribute(element, disableTag) === 'true' ||
+					getAttribute(element, disableTag) === '') {
 					return 'DISABLED_ATTRIBUTE';
 				}
 			}
 
 			// Check for disabled property on form elements
-			if (element.disabled) {
+			if (propertyOf(element, "disabled")) {
 				return 'DISABLED_PROPERTY';
 			}
 
 			// Check for inert property
-			if (element.inert) {
+			if (propertyOf(element, "inert")) {
 				return 'DISABLED_INERT';
 			}
 
 			return true;
 		}
 
-		const role = element.getAttribute("role");
-		const ariaRole = element.getAttribute("aria-role");
+		const role = getAttribute(element, "role");
+		const ariaRole = getAttribute(element, "aria-role");
 
 		// Check for contenteditable attribute
-		if (element.getAttribute("contenteditable") === "true" || element.isContentEditable) {
+		if (getAttribute(element, "contenteditable") === "true" || propertyOf(element, "isContentEditable")) {
 			return true;
 		}
 
 		// Added enhancement to capture dropdown interactive elements
-		if (element.classList && (
-			element.classList.contains("button") ||
-			element.classList.contains('dropdown-toggle') ||
-			element.getAttribute('data-index') ||
-			element.getAttribute('data-toggle') === 'dropdown' ||
-			element.getAttribute('aria-haspopup') === 'true'
+		if (classListOf(element) && (
+			classListOf(element).contains("button") ||
+			classListOf(element).contains('dropdown-toggle') ||
+			getAttribute(element, 'data-index') ||
+			getAttribute(element, 'data-toggle') === 'dropdown' ||
+			getAttribute(element, 'aria-haspopup') === 'true'
 		)) {
 			return true;
 		}
@@ -1190,7 +1254,7 @@
 				}
 			}
 
-			const getEventListenersForNode = element?.ownerDocument?.defaultView?.getEventListenersForNode || window.getEventListenersForNode;
+			const getEventListenersForNode = ownerDocumentOf(element)?.defaultView?.getEventListenersForNode || window.getEventListenersForNode;
 			if (typeof getEventListenersForNode === 'function') {
 				const listeners = getEventListenersForNode(element);
 				const interactionEvents = ['click', 'mousedown', 'mouseup', 'keydown', 'keyup', 'submit', 'change', 'input', 'focus', 'blur'];
@@ -1204,7 +1268,7 @@
 			}
 			// Fallback: Check common event attributes if getEventListeners is not available (getEventListeners doesn't work in page.evaluate context)
 			for (const attr of CLICK_HANDLER_ATTRS) {
-				if (element.hasAttribute(attr) || typeof element[attr] === 'function') {
+				if (hasAttribute(element, attr) || typeof propertyOf(element, attr) === 'function') {
 					return true;
 				}
 			}
@@ -1255,7 +1319,7 @@
 
 
 		// Find the correct document context and root element
-		let doc = element.ownerDocument;
+		let doc = ownerDocumentOf(element);
 
 		// If we're in an iframe, elements are considered top by default
 		if (doc !== window.document) {
@@ -1263,7 +1327,7 @@
 		}
 
 		// For shadow DOM, we need to check within its own root context
-		const shadowRoot = element.getRootNode();
+		const shadowRoot = getRootNode(element);
 		if (shadowRoot instanceof ShadowRoot) {
 			const centerX = rects[Math.floor(rects.length / 2)].left + rects[Math.floor(rects.length / 2)].width / 2;
 			const centerY = rects[Math.floor(rects.length / 2)].top + rects[Math.floor(rects.length / 2)].height / 2;
@@ -1275,7 +1339,7 @@
 				let current = topEl;
 				while (current && current !== shadowRoot) {
 					if (current === element) return true;
-					current = current.parentElement;
+					current = parentElementOf(current);
 				}
 				return false;
 			} catch (e) {
@@ -1288,13 +1352,13 @@
 		const centerY = rects[Math.floor(rects.length / 2)].top + rects[Math.floor(rects.length / 2)].height / 2;
 
 		try {
-			const topEl = document.elementFromPoint(centerX, centerY);
+			const topEl = DOCUMENT.elementFromPoint.call(document, centerX, centerY);
 			if (!topEl) return false;
 
 			let current = topEl;
-			while (current && current !== document.documentElement) {
+			while (current && current !== DOCUMENT_ELEMENT) {
 				if (current === element) return true;
-				current = current.parentElement;
+				current = parentElementOf(current);
 			}
 			return false;
 		} catch (e) {
@@ -1316,9 +1380,9 @@
 	 * @returns {boolean} Whether the element is a control by its tag or role.
 	 */
 	function isOffscreenCandidate(element) {
-		const role = element.getAttribute('role');
+		const role = getAttribute(element, 'role');
 		if (role !== null && role !== '') return INTERACTIVE_ROLES.has(role);
-		return OFFSCREEN_CONTROL_TAGS.has(element.tagName.toLowerCase());
+		return OFFSCREEN_CONTROL_TAGS.has(tagNameOf(element).toLowerCase());
 	}
 
 	/**
@@ -1394,16 +1458,16 @@
 		if (overflow === "visible" || style.display === "contents" || style.display === "inline") return null;
 		if (!getCachedClientRects(box)?.length) return null;
 		const [rectStart, rectEnd] = vertical ? [rect.top, rect.bottom] : [rect.left, rect.right];
-		const scrollSize = vertical ? box.scrollHeight : box.scrollWidth;
-		const clientSize = vertical ? box.clientHeight : box.clientWidth;
+		const scrollSize = vertical ? propertyOf(box, "scrollHeight") : propertyOf(box, "scrollWidth");
+		const clientSize = vertical ? propertyOf(box, "clientHeight") : propertyOf(box, "clientWidth");
 		const scrolls = (overflow === "auto" || overflow === "scroll") && scrollSize > clientSize;
 		if (!scrolls) return { start: rectStart, end: rectEnd, scrolls };
 		const atEnd = scrollStartsAtEnd(style, vertical);
 		if (atEnd === null) return { start: -Infinity, end: Infinity, scrolls };
-		const layoutSize = vertical ? box.offsetHeight : box.offsetWidth;
+		const layoutSize = vertical ? propertyOf(box, "offsetHeight") : propertyOf(box, "offsetWidth");
 		const scale = layoutSize > 0 ? (rectEnd - rectStart) / layoutSize : 1;
-		const clientStart = (vertical ? box.clientTop : box.clientLeft) * scale;
-		const offset = (vertical ? box.scrollTop : box.scrollLeft) * scale;
+		const clientStart = (vertical ? propertyOf(box, "clientTop") : propertyOf(box, "clientLeft")) * scale;
+		const offset = (vertical ? propertyOf(box, "scrollTop") : propertyOf(box, "scrollLeft")) * scale;
 		// the edge the scrolled area starts from, where the current scroll offset has moved it
 		const origin = rectStart + clientStart - offset + (atEnd ? clientSize * scale : 0);
 		return atEnd ?
@@ -1433,7 +1497,7 @@
 		let rect = { top: elementRect.top, bottom: elementRect.bottom, left: elementRect.left, right: elementRect.right };
 		// the element whose box `rect` is: the element, or the scrollable ancestor it can be scrolled anywhere in
 		let owner = element;
-		for (let ancestor = element; ancestor && ancestor !== document.body; ancestor = reachAncestor(ancestor)) {
+		for (let ancestor = element; ancestor && ancestor !== BODY; ancestor = reachAncestor(ancestor)) {
 			const style = getCachedComputedStyle(ancestor);
 			if (!style) continue;
 			const box = ancestor === element ? null : getCachedBoundingRect(ancestor);
@@ -1475,8 +1539,8 @@
 	 */
 	function reachAncestor(element) {
 		if (reachAncestors.has(element)) return reachAncestors.get(element);
-		let ancestor = element.parentElement;
-		if (ancestor === document.body) ancestor = null;
+		let ancestor = parentElementOf(element);
+		if (ancestor === BODY) ancestor = null;
 		if (ancestor !== null) {
 			const style = getCachedComputedStyle(ancestor);
 			const rect = getCachedBoundingRect(ancestor);
@@ -1499,12 +1563,12 @@
 	 * @returns {boolean} Whether the element has text in the description.
 	 */
 	function hasDescribedText(element) {
-		const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+		const walker = DOCUMENT.createTreeWalker.call(document, element, NodeFilter.SHOW_TEXT);
 		for (let text = walker.nextNode(); text !== null; text = walker.nextNode()) {
 			const parent = text.parentElement;
 			if (!parent || !text.textContent.trim()) continue;
-			const excluded = parent.closest(EXCLUDED_CONTENT);
-			if (excluded !== null && element.contains(excluded)) continue;
+			const excluded = closest(parent, EXCLUDED_CONTENT);
+			if (excluded !== null && contains(element, excluded)) continue;
 			if (isRendered(parent, false)) return true;
 		}
 		return false;
@@ -1522,7 +1586,7 @@
 			return true;
 		}
 
-		const rects = element.getClientRects(); // Use getClientRects
+		const rects = getClientRects(element); // Use getClientRects
 
 		if (!rects || rects.length === 0) {
 			// Fallback to getBoundingClientRect if getClientRects is empty,
@@ -1588,9 +1652,9 @@
 	 * @returns {boolean} Whether the element is an interactive candidate.
 	 */
 	function isInteractiveCandidate(element) {
-		if (!element || element.nodeType !== Node.ELEMENT_NODE) return false;
+		if (!element || nodeTypeOf(element) !== Node.ELEMENT_NODE) return false;
 
-		const tagName = element.tagName.toLowerCase();
+		const tagName = tagNameOf(element).toLowerCase();
 
 		// Fast-path for common interactive elements
 		const interactiveElements = new Set([
@@ -1600,12 +1664,12 @@
 		if (interactiveElements.has(tagName)) return true;
 
 		// Quick attribute checks without getting full lists
-		const hasQuickInteractiveAttr = element.hasAttribute("onclick") ||
-			element.hasAttribute("role") ||
-			element.hasAttribute("tabindex") ||
-			element.hasAttribute("aria-") ||
-			element.hasAttribute("data-action") ||
-			element.getAttribute("contenteditable") === "true";
+		const hasQuickInteractiveAttr = hasAttribute(element, "onclick") ||
+			hasAttribute(element, "role") ||
+			hasAttribute(element, "tabindex") ||
+			hasAttribute(element, "aria-") ||
+			hasAttribute(element, "data-action") ||
+			getAttribute(element, "contenteditable") === "true";
 
 		return hasQuickInteractiveAttr;
 	}
@@ -1632,35 +1696,35 @@
 	 * @returns {boolean} Whether the element is heuristically interactive.
 	 */
 	function isHeuristicallyInteractive(element) {
-		if (!element || element.nodeType !== Node.ELEMENT_NODE) return false;
+		if (!element || nodeTypeOf(element) !== Node.ELEMENT_NODE) return false;
 
 		// Skip non-visible elements early for performance
 		if (!isElementVisible(element)) return false;
 
 		// Check for common attributes that often indicate interactivity
 		const hasInteractiveAttributes =
-			element.hasAttribute('role') ||
-			element.hasAttribute('tabindex') ||
-			element.hasAttribute('onclick') ||
-			typeof element.onclick === 'function';
+			hasAttribute(element, 'role') ||
+			hasAttribute(element, 'tabindex') ||
+			hasAttribute(element, 'onclick') ||
+			typeof propertyOf(element, "onclick") === 'function';
 
 		// Check for semantic class names suggesting interactivity
-		const hasInteractiveClass = /\b(btn|clickable|menu|item|entry|link)\b/i.test(element.className || '');
+		const hasInteractiveClass = /\b(btn|clickable|menu|item|entry|link)\b/i.test(propertyOf(element, "className") || '');
 
 		// Determine whether the element is inside a known interactive container
 		const isInKnownContainer = Boolean(
-			element.closest('button,a,[role="button"],.menu,.dropdown,.list,.toolbar')
+			closest(element, 'button,a,[role="button"],.menu,.dropdown,.list,.toolbar')
 		);
 
 		// Ensure the element has at least one visible child (to avoid marking empty wrappers)
-		const hasVisibleChildren = [...element.children].some(isElementVisible);
+		const hasVisibleChildren = [...childrenOf(element)].some(isElementVisible);
 
 		// Avoid highlighting elements whose parent is <body> (top-level wrappers)
-		const isParentBody = element.parentElement && element.parentElement.isSameNode(document.body);
+		const isParentBody = parentElementOf(element) === BODY;
 
 		// `cursor` is inherited: the text and icon wrappers inside a link or a button have its pointer
 		// cursor, which says nothing about them
-		const parentCursor = element.parentElement ? getCachedComputedStyle(element.parentElement)?.cursor : undefined;
+		const parentCursor = parentElementOf(element) ? getCachedComputedStyle(parentElementOf(element))?.cursor : undefined;
 		const hasOwnCursor = getCachedComputedStyle(element)?.cursor !== parentCursor;
 
 		return (
@@ -1681,7 +1745,7 @@
 	 * @returns {boolean} Whether the element is a distinct interaction.
 	 */
 	function isElementDistinctInteraction(element, ignoreDisabled = false) {
-		if (!element || element.nodeType !== Node.ELEMENT_NODE) {
+		if (!element || nodeTypeOf(element) !== Node.ELEMENT_NODE) {
 			return false;
 		}
 
@@ -1689,8 +1753,8 @@
 			return false;
 		}
 
-		const tagName = element.tagName.toLowerCase();
-		const role = element.getAttribute('role');
+		const tagName = tagNameOf(element).toLowerCase();
+		const role = getAttribute(element, 'role');
 
 		// Check if it's an iframe - always distinct boundary
 		if (tagName === 'iframe') {
@@ -1711,15 +1775,15 @@
 			return true;
 		}
 		// Check contenteditable
-		if (element.isContentEditable || element.getAttribute('contenteditable') === 'true') {
+		if (propertyOf(element, "isContentEditable") || getAttribute(element, 'contenteditable') === 'true') {
 			return true;
 		}
 		// Check for common testing/automation attributes
-		if (element.hasAttribute('data-testid') || element.hasAttribute('data-cy') || element.hasAttribute('data-test')) {
+		if (hasAttribute(element, 'data-testid') || hasAttribute(element, 'data-cy') || hasAttribute(element, 'data-test')) {
 			return true;
 		}
 		// Check for explicit onclick handler (attribute or property)
-		if (element.hasAttribute('onclick') || typeof element.onclick === 'function') {
+		if (hasAttribute(element, 'onclick') || typeof propertyOf(element, "onclick") === 'function') {
 			return true;
 		}
 
@@ -1727,7 +1791,7 @@
 
 		// Check for other common interaction event listeners
 		try {
-			const getEventListenersForNode = element?.ownerDocument?.defaultView?.getEventListenersForNode || window.getEventListenersForNode;
+			const getEventListenersForNode = ownerDocumentOf(element)?.defaultView?.getEventListenersForNode || window.getEventListenersForNode;
 			if (typeof getEventListenersForNode === 'function') {
 				const listeners = getEventListenersForNode(element);
 				const interactionEvents = ['click', 'mousedown', 'mouseup', 'keydown', 'keyup', 'submit', 'change', 'input', 'focus', 'blur'];
@@ -1741,7 +1805,7 @@
 			}
 			// Fallback: Check common event attributes if getEventListeners is not available (getEventListenersForNode doesn't work in page.evaluate context)
 			const commonEventAttrs = ['onmousedown', 'onmouseup', 'onkeydown', 'onkeyup', 'onsubmit', 'onchange', 'oninput', 'onfocus', 'onblur'];
-			if (commonEventAttrs.some(attr => element.hasAttribute(attr))) {
+			if (commonEventAttrs.some(attr => hasAttribute(element, attr))) {
 				return true;
 			}
 		} catch (e) {
@@ -1841,12 +1905,12 @@
 	 * @returns {boolean} Whether the element is a disabled control.
 	 */
 	function isDisabledControl(element) {
-		const tagName = element.tagName.toLowerCase();
-		if (DISABLEABLE_TAGS.has(tagName) && element.matches(':disabled')) return true;
-		if (element.getAttribute('aria-disabled') !== 'true') return false;
-		const role = element.getAttribute('role');
+		const tagName = tagNameOf(element).toLowerCase();
+		if (DISABLEABLE_TAGS.has(tagName) && matches(element, ':disabled')) return true;
+		if (getAttribute(element, 'aria-disabled') !== 'true') return false;
+		const role = getAttribute(element, 'role');
 		return DISABLEABLE_TAGS.has(tagName) ||
-			(tagName === 'a' && element.hasAttribute('href')) ||
+			(tagName === 'a' && hasAttribute(element, 'href')) ||
 			(role !== null && INTERACTIVE_ROLES.has(role));
 	}
 
@@ -1898,17 +1962,13 @@
 	 */
 	function buildDomTree(node, parentIframe = null, isParentHighlighted = false, scope = VISIBLE_SCOPE, parentXPath = null) {
 		// Fast rejection checks first
-		if (!node || node.id === HIGHLIGHT_CONTAINER_ID ||
-			(node.nodeType !== Node.ELEMENT_NODE && node.nodeType !== Node.TEXT_NODE)) {
-			return null;
-		}
-
-		if (!node || node.id === HIGHLIGHT_CONTAINER_ID) {
+		if (!node || (nodeTypeOf(node) !== Node.ELEMENT_NODE && nodeTypeOf(node) !== Node.TEXT_NODE) ||
+			(nodeTypeOf(node) === Node.ELEMENT_NODE && idOf(node) === HIGHLIGHT_CONTAINER_ID)) {
 			return null;
 		}
 
 		// Special handling for root node (body)
-		if (node === document.body) {
+		if (node === BODY) {
 			const nodeData = {
 				tagName: 'body',
 				attributes: {},
@@ -1917,7 +1977,7 @@
 			};
 
 			// Process children of body
-			for (const child of node.childNodes) {
+			for (const child of childNodesOf(node)) {
 				const domElement = buildDomTree(child, parentIframe, false, VISIBLE_SCOPE, nodeData.xpath); // Body's children have no highlighted parent initially
 				if (domElement) nodeData.children.push(domElement);
 			}
@@ -1928,20 +1988,20 @@
 		}
 
 		// Early bailout for non-element nodes except text
-		if (node.nodeType !== Node.ELEMENT_NODE && node.nodeType !== Node.TEXT_NODE) {
+		if (nodeTypeOf(node) !== Node.ELEMENT_NODE && nodeTypeOf(node) !== Node.TEXT_NODE) {
 			return null;
 		}
 
 		// Process text nodes
-		if (node.nodeType === Node.TEXT_NODE) {
+		if (nodeTypeOf(node) === Node.TEXT_NODE) {
 			const textContent = node.textContent?.trim();
 			if (!textContent) {
 				return null;
 			}
 
 			// Only check visibility for text nodes that might be visible
-			const parentElement = node.parentElement;
-			if (!parentElement || parentElement.tagName.toLowerCase() === 'script') {
+			const parentElement = parentElementOf(node);
+			if (!parentElement || tagNameOf(parentElement).toLowerCase() === 'script') {
 				return null;
 			}
 
@@ -1960,13 +2020,13 @@
 		}
 
 		// Quick checks for element nodes
-		if (node.nodeType === Node.ELEMENT_NODE && !isElementAccepted(node)) {
+		if (nodeTypeOf(node) === Node.ELEMENT_NODE && !isElementAccepted(node)) {
 			return null;
 		}
 
 		// Early viewport check - only filter out elements clearly outside viewport
 		// The getBoundingClientRect() of the Shadow DOM host element may return width/height = 0
-		if (viewportExpansion !== -1 && !node.shadowRoot) {
+		if (viewportExpansion !== -1 && !shadowRootOf(node)) {
 			const rect = getCachedBoundingRect(node); // Keep for initial quick check
 			const style = getCachedComputedStyle(node);
 
@@ -1974,7 +2034,7 @@
 			const isFixedOrSticky = style && (style.position === 'fixed' || style.position === 'sticky');
 
 			// Check if element has actual dimensions using offsetWidth/Height (quick check)
-			const hasSize = node.offsetWidth > 0 || node.offsetHeight > 0;
+			const hasSize = propertyOf(node, "offsetWidth") > 0 || propertyOf(node, "offsetHeight") > 0;
 
 			// Use getBoundingClientRect for the quick OUTSIDE check.
 			// isInExpandedViewport will do the more accurate check later if needed.
@@ -2007,30 +2067,30 @@
 		 */
 		const xpath = getXPathTree(node);
 		const nodeData = {
-			tagName: node.tagName.toLowerCase(),
+			tagName: tagNameOf(node).toLowerCase(),
 			attributes: {},
 			...payloadXPath(xpath, parentXPath),
 			children: [],
 		};
 
 		// Get attributes for interactive elements or potential text containers
-		if (isInteractiveCandidate(node) || node.tagName.toLowerCase() === 'iframe' || node.tagName.toLowerCase() === 'body') {
-			const attributeNames = node.getAttributeNames?.() || [];
+		if (isInteractiveCandidate(node) || tagNameOf(node).toLowerCase() === 'iframe' || tagNameOf(node).toLowerCase() === 'body') {
+			const attributeNames = ELEMENT.getAttributeNames.call(node) || [];
 			for (const name of attributeNames) {
-				const value = node.getAttribute(name);
+				const value = getAttribute(node, name);
 				nodeData.attributes[name] = value;
 			}
 		}
 
 		let nodeWasHighlighted = false;
 		// Perform visibility, interactivity, and highlighting checks
-		if (node.nodeType === Node.ELEMENT_NODE) {
+		if (nodeTypeOf(node) === Node.ELEMENT_NODE) {
 			nodeData.isVisible = isElementVisible(node); // isElementVisible uses offsetWidth/Height, which is fine
 			if (nodeData.isVisible) {
 				nodeData.isTopElement = isTopElement(node);
 
 				// Special handling for ARIA menu containers - check interactivity even if not top element
-				const role = node.getAttribute('role');
+				const role = getAttribute(node, 'role');
 				const isMenuContainer = role === 'menu' || role === 'menubar' || role === 'listbox';
 				// a control above or below the viewport: described, without an action (see `handleHighlighting`);
 				// a menu container cut by the edge of the viewport keeps its highlight index
@@ -2056,14 +2116,14 @@
 					nodeWasHighlighted = handleHighlighting(nodeData, node, parentIframe, isParentHighlighted, isOffscreen);
 					const isDisabled = nodeData.disabledReason && handleDisabledControl(nodeData, node, isParentHighlighted);
 					// an off-screen link or button without text is named like in view (an image link by its `alt`)
-					if (nodeData.offscreen && !FIELD_TAGS.has(node.localName) && !hasDescribedText(node)) {
+					if (nodeData.offscreen && !FIELD_TAGS.has(localNameOf(node)) && !hasDescribedText(node)) {
 						const accessibleName = getAccessibleName(node);
 						if (accessibleName !== undefined) nodeData.accessibleName = accessibleName;
 					}
 					// an off-screen checkbox, radio or switch says whether it is checked, as in view. Not its other
 					// live state: a typed value would be in the description, which secrets are not masked in
 					if (nodeData.offscreen) {
-						const checked = node.localName === "input" && (node.type === "checkbox" || node.type === "radio")
+						const checked = localNameOf(node) === "input" && (node.type === "checkbox" || node.type === "radio")
 							? node.checked
 							: parseAriaBoolean(node, "aria-checked");
 						if (checked !== undefined) nodeData.state = { checked };
@@ -2075,7 +2135,7 @@
 						if (accessibleName !== undefined) nodeData.accessibleName = accessibleName;
 						// a mouse handler of its own (the ones `isInteractiveElement` counts): the element may do
 						// something else than the control around or inside it
-						if (CLICK_HANDLER_ATTRS.some((attr) => node.hasAttribute(attr) || typeof node[attr] === "function")) {
+						if (CLICK_HANDLER_ATTRS.some((attr) => hasAttribute(node, attr) || typeof propertyOf(node, attr) === "function")) {
 							nodeData.clickHandler = true;
 						}
 					}
@@ -2087,8 +2147,8 @@
 		const childScope = contentScope(node, scope, isControl);
 
 		// Process children, with special handling for iframes and rich text editors
-		if (node.tagName) {
-			const tagName = node.tagName.toLowerCase();
+		if (tagNameOf(node)) {
+			const tagName = tagNameOf(node).toLowerCase();
 
 			// Iframes: their documents are built by separate evaluations (one per frame, which also
 			// works for cross-origin iframes). Mark the visible iframe elements the caller asked about
@@ -2101,36 +2161,36 @@
 					const style = getCachedComputedStyle(node);
 					nodeData.frameIndex = frameIndex;
 					nodeData.frameOffset = {
-						x: rect.left + node.clientLeft + (parseFloat(style.paddingLeft) || 0),
-						y: rect.top + node.clientTop + (parseFloat(style.paddingTop) || 0),
+						x: rect.left + propertyOf(node, "clientLeft") + (parseFloat(style.paddingLeft) || 0),
+						y: rect.top + propertyOf(node, "clientTop") + (parseFloat(style.paddingTop) || 0),
 					};
 				}
 			}
 			// Handle rich text editors and contenteditable elements
 			else if (
-				node.isContentEditable ||
-				node.getAttribute("contenteditable") === "true" ||
-				node.id === "tinymce" ||
-				node.classList.contains("mce-content-body") ||
-				(tagName === "body" && node.getAttribute("data-id")?.startsWith("mce_"))
+				propertyOf(node, "isContentEditable") ||
+				getAttribute(node, "contenteditable") === "true" ||
+				idOf(node) === "tinymce" ||
+				classListOf(node).contains("mce-content-body") ||
+				(tagName === "body" && getAttribute(node, "data-id")?.startsWith("mce_"))
 			) {
 				// Process all child nodes to capture formatted text
-				for (const child of node.childNodes) {
+				for (const child of childNodesOf(node)) {
 					const domElement = buildDomTree(child, parentIframe, nodeWasHighlighted, childScope, xpath);
 					if (domElement) nodeData.children.push(domElement);
 				}
 			}
 			else {
 				// Handle shadow DOM
-				if (node.shadowRoot) {
+				if (shadowRootOf(node)) {
 					nodeData.shadowRoot = true;
-					for (const child of node.shadowRoot.childNodes) {
+					for (const child of shadowRootOf(node).childNodes) {
 						const domElement = buildDomTree(child, parentIframe, nodeWasHighlighted, childScope, xpath);
 						if (domElement) nodeData.children.push(domElement);
 					}
 				}
 				// Handle regular elements
-				for (const child of node.childNodes) {
+				for (const child of childNodesOf(node)) {
 					// Pass the highlighted status of the *current* node to its children
 					const passHighlightStatusToChild = nodeWasHighlighted || isParentHighlighted;
 					const domElement = buildDomTree(child, parentIframe, passHighlightStatusToChild, childScope, xpath);
@@ -2143,7 +2203,7 @@
 		if (nodeData.tagName === 'a' && nodeData.children.length === 0 && !nodeData.attributes.href) {
 			// Check if the anchor has actual dimensions
 			const rect = getCachedBoundingRect(node);
-			const hasSize = (rect && rect.width > 0 && rect.height > 0) || (node.offsetWidth > 0 || node.offsetHeight > 0);
+			const hasSize = (rect && rect.width > 0 && rect.height > 0) || (propertyOf(node, "offsetWidth") > 0 || propertyOf(node, "offsetHeight") > 0);
 
 			if (!hasSize) {
 				return null;
@@ -2155,7 +2215,7 @@
 		return id;
 	}
 
-	const rootId = buildDomTree(document.body);
+	const rootId = buildDomTree(BODY);
 
 	// Clear the cache before starting
 	DOM_CACHE.clearCache();

@@ -43,6 +43,16 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   during result conversion; test their JSON contract, output budgets, and shared
   containers explicitly.
 
+## DOM build script
+
+`packages/notte-browser/src/notte_browser/js/buildDomNode.js` reads elements through
+its helpers (`getAttribute(element, name)`, `childrenOf(element)`,
+`propertyOf(element, name)`, ...), never as `element.children`: a `<form>` exposes
+its controls as properties named after their `name` or `id`, which hide the
+form's own (`<input name="children">` makes `form.children` that input). The
+same goes for `document.*` in the page's own world (`<img name="body">`).
+`tests/browser/test_dom_clobbered_properties.py` covers it.
+
 ## Public API
 
 - Don't remove or rename public methods without a deprecation first: keep the
