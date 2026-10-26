@@ -34,6 +34,8 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   can also precede the context's `page` event.
   The driver can report a closed target from the click that closes its opener;
   accept that click only when a live replacement appears, and wait for it.
+  A closing popup can start requests on an already-existing tab. Track those
+  tabs before the click so the replacement wait retains their in-flight work.
   A help popup can also close back to an existing opener. Wait for that survivor
   and require a successful driver round trip before accepting a target-closed click;
   cached page state alone does not prove the browser is still usable.

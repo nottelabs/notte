@@ -762,6 +762,13 @@ async def execute(
         if _settles(action)
         else None
     )
+    # A popup can start work on an existing tab and close itself during the click. Attach request listeners
+    # before dispatching it; a tracker created after the click cannot recover those in-flight requests.
+    existing_settles = (
+        {tab: PageSettle(tab, None, tabs=False) for tab in tabs if tab is not page}
+        if isinstance(action, ClickAction)
+        else {}
+    )
     retval = True
     closed_during_click: Error | None = None
     try:
@@ -800,6 +807,8 @@ async def execute(
         if settle is not None:
             if not isinstance(action, GotoAction):
                 settle.acted()
+                for existing in existing_settles.values():
+                    existing.acted()
             # a goto's budget counts from its start: its commit and the wait for its page share `timeout_goto_ms`
             if retval:
                 # A navigation response confirms a new document; equivalent hash-route URLs return None.
@@ -821,8 +830,12 @@ async def execute(
             last = context.pages[-1]
             # Selection can happen automatically when the opener closes. Readiness is independent of selection.
             # A goto_new_tab already loaded its own new page.
-            if (last not in tabs or closed_during_click is not None) and not isinstance(action, GotoNewTabAction):
-                tab = settle.tab(last) if settle is not None else PageSettle(last, None, tabs=False)
+            if (last not in tabs or (isinstance(action, ClickAction) and page.is_closed())) and not isinstance(
+                action, GotoNewTabAction
+            ):
+                tab = existing_settles.pop(last, None)
+                if tab is None:
+                    tab = settle.tab(last) if settle is not None else PageSettle(last, None, tabs=False)
                 try:
                     await tab.wait(document="requests")
                 finally:
@@ -853,6 +866,8 @@ async def execute(
             except (Error, TimeoutError):
                 raise closed_during_click
     finally:
+        for existing in existing_settles.values():
+            await existing.close()
         if settle is not None:
             await settle.close()
     return retval
