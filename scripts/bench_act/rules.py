@@ -126,15 +126,16 @@ def run_landed(run: dict[str, Any], url: str) -> bool:
 
 def probe_site_miss(url: str, run: dict[str, Any]) -> str | None:
     """Evidence that a public probe page was not there to be asked about: the same evidence as `site_miss` on its
-    landing page (navigation failed, HTTP error, off the site, block page), or a landing on another page (with
-    `probe_landed`). The probes of such a page are site misses, not wrong answers."""
+    landing page (navigation failed, HTTP error, off the site, block page), or a recorded landing on another page
+    (with `probe_landed`). The probes of such a page are site misses, not wrong answers. A run that failed without
+    such evidence (the browser or session broke before a page was read) is not a site miss: its probes count wrong."""
     if url.startswith(FIXTURES):
         return None
     landing = run.get("landing")
     evidence = site_miss(url, {"nav_error": run.get("nav_error"), "landing": landing, "final": landing})
     if evidence:
         return evidence
-    if not run_landed(run, url):
+    if run.get("probe_url") is not None and not run_landed(run, url):
         return f"landed on {run.get('probe_url')}"
     return None
 
