@@ -71,9 +71,12 @@ Each shard job checks out head and base (on PRs, the merge base), syncs both, an
 both versions interleaved. A report job merges the shards, writes the job summary and applies the rules in
 `rules.py`:
 
+- the rules judge the Jev runners; the LLM and scripted runners are reported only;
 - fixture tasks and fixture probes must always pass;
 - public sites fail only on a clear drop against base;
-- site misses (blocks, CAPTCHAs, redirects off the site) are left out.
+- site misses (blocks, CAPTCHAs, redirects off the site) are left out;
+- infra misses (the decider could not be reached, timed out or answered 5xx) are counted apart, and the run fails
+  when they exceed 5% of the runs. The harness never retries a run.
 
 It needs the `OPENROUTER_API_KEY` repository secret. Fork PRs get no secrets and skip; a same-repo run without
 the secret fails.

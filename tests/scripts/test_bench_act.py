@@ -287,3 +287,70 @@ def test_landing_is_read_after_a_redirect_on_load_and_never_fails_the_run() -> N
     assert page.waited
     landing = asyncio.run(_landing(Page(failures=2)))
     assert landing["url"] == Page.url and landing["status"] is None and "Execution context" in landing["error"]
+
+
+JEV_CONNECT = (
+    "LLMProviderError: Jev via the OpenRouter decisions endpoint (https://openrouter.ai/api/alpha/decisions) "
+    "request failed: ConnectError; no action executed."
+)
+
+
+@pytest.mark.parametrize(
+    ("error", "infra"),
+    [
+        (JEV_CONNECT, True),
+        ("LLMProviderError: Jev via the OpenRouter decisions endpoint (...) returned HTTP 503: busy; no action", True),
+        ("LLMProviderError: LLM request to google/gemini-3.1-flash-lite failed after retries (ReadTimeout)", True),
+        ("LLMProviderError: HTTP 502 from LLM model google/gemini-3.1-flash-lite: bad gateway", True),
+        ("LLMProviderError: Jev via the OpenRouter decisions endpoint (...) returned HTTP 400: bad request", False),
+        ("RateLimitError: Rate limit exceeded for provider openrouter", False),
+        ("Error: net::ERR_CONNECTION_REFUSED ConnectError at https://site.test", False),
+        ("timeout: no result after 900 s", False),
+        (None, False),
+    ],
+)
+def test_infra_misses_are_decider_transport_errors_only(error: str | None, infra: bool) -> None:
+    assert (rules.infra_miss(error) is not None) == infra
+
+
+def test_llm_runners_are_reported_not_judged() -> None:
+    llm = [{**_task_run("f1", "head", False), "runner": "notte-local-llm"}]
+    llm += [{**r, "runner": "notte-local-llm"} for r in _public([True] * 20, [False] * 20)]
+    probes = [{"runner": "probe-local-llm", "url": FIXTURE_URL, "suite": "fixtures", "version": "head", "repeat": 1,
+               "probes": [{"probe": "p4", "correct": False}]}]  # fmt: skip
+    verdict = rules.judge(llm, probes, [], with_base=True)
+    assert verdict.ok and not verdict.warnings
+
+
+def test_an_infra_miss_is_counted_apart_and_fails_only_above_five_percent() -> None:
+    # 1 infra miss in 20 runs (5%): the fixture run is not a failure, and the public pair is left out
+    runs = [_task_run("f1", "head", False, error=JEV_CONNECT)] + [
+        _task_run(f"f{i}", "head", True) for i in range(2, 20)
+    ]
+    runs.append(_task_run("r0", "head", True))
+    verdict = rules.judge(runs, [], [], with_base=False)
+    assert verdict.ok
+    [row] = [r for r in rules.task_rows(runs) if r.name == "f1"]
+    assert row.head == [] and row.head_infra == [JEV_CONNECT]
+    # 2 in 20 (10%) fail the run
+    runs[1] = _task_run("f2", "head", False, error=JEV_CONNECT)
+    assert rules.judge(runs, [], [], with_base=False).failures == [
+        "2 infra misses (decider transport errors) in 20 runs: over 5%"
+    ]
+    # an infra miss on head is not a drop against base
+    public = _public([True] * 20, [True] * 19 + [False])
+    public[-1]["error"] = JEV_CONNECT
+    rows = rules.task_rows(public)
+    assert [r.delta for r in rows if r.head_infra] == [None]
+
+
+def test_summary_shows_infra_misses_and_report_only_runners() -> None:
+    runs = [
+        _task_run("r1", "head", False, error=JEV_CONNECT),
+        {**_task_run("r2", "head", True), "runner": "notte-local-llm"},
+    ]
+    text = report.ci_summary(runs, [], [], rules.judge(runs, [], [], with_base=False))
+    assert "| runner | suite | head | site misses | infra misses |" in text
+    assert "| notte-local | real | 0/0 | 0 | 1 |" in text
+    assert "| notte-local-llm (report only) | real | 1/1 | 0 | 0 |" in text
+    assert "0/0 (+1 infra miss)" in text

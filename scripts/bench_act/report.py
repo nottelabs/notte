@@ -20,7 +20,7 @@ import statistics  # noqa: E402
 from collections import defaultdict  # noqa: E402
 from typing import Any  # noqa: E402
 
-from .rules import RULES, Row, Verdict, judge, probe_rows, task_rows  # noqa: E402
+from .rules import JUDGED_RUNNERS, RULES, Row, Verdict, judge, probe_rows, task_rows  # noqa: E402
 
 STEP_TIMINGS = ("observe", "decide", "write", "fresh", "execute")
 
@@ -385,10 +385,27 @@ def tables(runs: list[dict[str, Any]], probe_runs: list[dict[str, Any]], show_fa
 # --------------------------------------------------------------------------- base against head (CI summary)
 
 
-def _cell(values: list[bool], misses: list[str]) -> str:
-    if not values and not misses:
+def _cell(values: list[bool], misses: list[str], infra: list[str]) -> str:
+    if not values and not misses and not infra:
         return "–"
-    return f"{sum(values)}/{len(values)}" + (f" (+{len(misses)} site miss)" if misses else "")
+    return (
+        f"{sum(values)}/{len(values)}"
+        + (f" (+{len(misses)} site miss)" if misses else "")
+        + (f" (+{len(infra)} infra miss)" if infra else "")
+    )
+
+
+def _cells(row: Row, versions: list[str]) -> list[str]:
+    return [
+        _cell(row.base, row.base_misses, row.base_infra)
+        if v == "base"
+        else _cell(row.head, row.head_misses, row.head_infra)
+        for v in versions
+    ]
+
+
+def _runner_label(runner: str) -> str:
+    return runner if runner in JUDGED_RUNNERS else f"{runner} (report only)"
 
 
 def _row_note(row: Row) -> str:
@@ -397,17 +414,19 @@ def _row_note(row: Row) -> str:
         notes.append("**worse**")
     elif row.delta is not None and row.delta > 0:
         notes.append("better")
-    if row.fixture and not all(row.head):
+    if row.fixture and not all(row.head) and row.runner in JUDGED_RUNNERS:
         notes.append("**fixture failed**")
     for miss in dict.fromkeys(row.head_misses + row.base_misses):
         notes.append(f"site miss: {miss[:120]}")
+    for infra in dict.fromkeys(row.head_infra + row.base_infra):
+        notes.append(f"infra miss: {infra[:120]}")
     return "; ".join(notes).replace("|", "\\|")
 
 
 def _suite_table(rows: list[Row], versions: list[str]) -> list[str]:
     lines = [
-        "| runner | suite | " + " | ".join(versions) + " | site misses |",
-        "|---|---|" + "---|" * (len(versions) + 1),
+        "| runner | suite | " + " | ".join(versions) + " | site misses | infra misses |",
+        "|---|---|" + "---|" * (len(versions) + 2),
     ]
     groups: dict[tuple[str, str], list[Row]] = defaultdict(list)
     for row in rows:
@@ -418,7 +437,8 @@ def _suite_table(rows: list[Row], versions: list[str]) -> list[str]:
             values = [v for r in rs for v in (r.base if version == "base" else r.head)]
             cells.append(f"{sum(values)}/{len(values)}")
         misses = sum(len(r.head_misses) + len(r.base_misses) for r in rs)
-        lines.append(f"| {runner} | {suite} | " + " | ".join(cells) + f" | {misses} |")
+        infra = sum(len(r.head_infra) + len(r.base_infra) for r in rs)
+        lines.append(f"| {_runner_label(runner)} | {suite} | " + " | ".join(cells) + f" | {misses} | {infra} |")
     return lines
 
 
@@ -428,10 +448,11 @@ def _row_table(rows: list[Row], versions: list[str], label: str) -> list[str]:
         "|---|---|---|" + "---|" * (len(versions) + 1),
     ]
     for row in sorted(rows, key=lambda r: (r.suite, r.name, r.runner)):
-        cells = [
-            _cell(row.base, row.base_misses) if v == "base" else _cell(row.head, row.head_misses) for v in versions
-        ]
-        lines.append(f"| {row.name} | {row.suite} | {row.runner} | " + " | ".join(cells) + f" | {_row_note(row)} |")
+        lines.append(
+            f"| {row.name} | {row.suite} | {_runner_label(row.runner)} | "
+            + " | ".join(_cells(row, versions))
+            + f" | {_row_note(row)} |"
+        )
     return lines
 
 

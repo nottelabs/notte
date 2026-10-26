@@ -77,5 +77,6 @@ that PR alone once it has manual commits.
 `scripts/bench_act/` benchmarks `act()` / `choose()` / `check()` and the observe they read, on local
 fixture pages and public sites (see its README). `act-bench.yml` runs it on PRs labelled `act-bench` or
 touching `notte_browser/js`, `notte_browser/dom`, `notte_core/act` or `notte_llm/act.py`, head against the
-merge base. Fixture tasks must always pass; public sites fail only on a clear drop against base. A site
-that blocks or redirects is a site miss with evidence, never a pass. It needs `OPENROUTER_API_KEY` only.
+merge base. With Jev, fixture tasks must always pass; public sites fail only on a clear drop against base;
+the LLM runners are report-only. A site that blocks or redirects is a site miss with evidence, never a pass;
+a decider transport error is an infra miss (red above 5% of runs). It needs `OPENROUTER_API_KEY` only.
