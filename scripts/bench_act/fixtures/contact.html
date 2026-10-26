@@ -1,0 +1,18 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Contact us</title></head><body>
+<h1>Contact us</h1>
+<contact-form></contact-form>
+<script>
+customElements.define("contact-form", class extends HTMLElement {
+  connectedCallback() {
+    const root = this.attachShadow({mode: "open"});
+    root.innerHTML = `<style>label{display:block;margin:8px 0}</style>
+      <label for="name">Your name</label><input id="name">
+      <label for="message">Message</label><textarea id="message" rows="3"></textarea>
+      <button id="send" type="button">Send message</button>`;
+    root.getElementById("send").addEventListener("click", () => {
+      const p = new URLSearchParams({name: root.getElementById("name").value, message: root.getElementById("message").value});
+      location.href = "sent.html?" + p;
+    });
+  }
+});
+</script></body></html>

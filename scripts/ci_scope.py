@@ -330,6 +330,9 @@ def base_scopes_for_path(path: str, *, code_changed: bool = True) -> set[str]:
         return PYTHON_RUNTIME | {"llm_provider_live"}
     if path == ".github/scripts/configure_llm.py" or path == "scripts/llm_matrix_report.py":
         return {"python_static", "python_unit", "llm_provider_live"}
+    if path.startswith("scripts/bench_act/"):
+        # A dev benchmark run by act-bench.yml; its offline tests are in the unit suite.
+        return {"python_static", "python_unit"}
     if path.startswith(("packages/", "src/")):
         if path.rsplit("/", 1)[-1] in {"README.md", "CHANGELOG.md"}:
             return {"python_static"}

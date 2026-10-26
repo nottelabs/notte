@@ -1,0 +1,16 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Create your account</title>
+<style>label{display:block;margin:8px 0}</style></head><body>
+<h1>Create your account</h1>
+<form action="thanks.html" method="get">
+  <label for="fullname">Full name *</label><input id="fullname" name="fullname" required>
+  <label for="email">Email *</label><input id="email" name="email" type="email" required>
+  <label for="plan">Plan *</label>
+  <select id="plan" name="plan" required>
+    <option value="">Choose a plan</option><option value="free">Free</option>
+    <option value="pro">Pro ($20/month)</option><option value="team">Team ($50/month)</option>
+  </select>
+  <label for="company">Company (optional)</label><input id="company" name="company">
+  <label><input type="checkbox" name="newsletter" value="yes" checked> Send me the newsletter</label>
+  <label><input type="checkbox" name="terms" value="accepted" required> I accept the terms of service *</label>
+  <button type="submit">Create account</button>
+</form></body></html>

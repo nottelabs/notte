@@ -288,6 +288,15 @@ class RoutingTests(unittest.TestCase):
         self.assertNotIn("llm_provider_live", ci.scopes_for_path("packages/notte-browser/src/notte_browser/files.py"))
         self.assertTrue(ci.select("schedule", "", "")["llm_provider_live"])
 
+    def test_act_benchmark_runs_only_its_offline_tests(self) -> None:
+        for path in (
+            "scripts/bench_act/bench.py",
+            "scripts/bench_act/tasks/real.py",
+            "scripts/bench_act/fixtures/a.html",
+        ):
+            with self.subTest(path=path):
+                self.assertEqual(ci.scopes_for_path(path), {"python_static", "python_unit"})
+
     def test_periodic_and_manual_coverage(self) -> None:
         scheduled = ci.select("schedule", "", "")
         self.assertTrue(scheduled["python_live"])
