@@ -114,6 +114,17 @@ class ActionExecutionError(ActionError):
         )
 
 
+class FileChooserOpenedError(ActionError):
+    def __init__(self) -> None:
+        message = "The click opened a file chooser, which was closed with no file chosen: a click cannot choose files."
+        super().__init__(
+            dev_message=message,
+            user_message=message,
+            agent_message=f"{message} Hint: use the upload_file action on this element to upload a file.",
+            should_retry_later=False,
+        )
+
+
 class EvaluateJsNoDataError(ActionError):
     def __init__(self) -> None:
         message = "evaluate_js reported success but returned no data"
