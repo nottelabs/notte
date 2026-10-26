@@ -22,6 +22,9 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   `OPENROUTER_API_KEY` secret as `NOTTE_LLM_API_KEY` with `google/...` model
   IDs. Don't point them at a provider's direct API key; the shared direct
   Gemini key hits rate limits. Only `llm-provider-matrix` tests direct routes.
+- OpenRouter can send heartbeat frames while an LLM response is pending. HTTPX read
+  timeouts reset per chunk; keep the total per-attempt deadline in `LLMEngine` so a
+  pending response cannot run until pytest-timeout terminates an xdist worker.
 - `make test` is the offline gate. `make test-live` runs tests marked
   `staging` or `live` and needs `NOTTE_API_KEY`; set `NOTTE_API_URL` to point
   the SDK at a different API.
