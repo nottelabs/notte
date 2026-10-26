@@ -1,0 +1,32 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Tickets - Teatro Real</title>
+<style>body{font-family:sans-serif;margin:24px;max-width:480px}label{display:block;margin-top:12px}
+.stepper{display:flex;align-items:center;gap:6px}.stepper button{width:32px;height:32px}.stepper input{width:40px;text-align:center}
+button[disabled]{opacity:.5}</style></head><body>
+<h1>La Traviata · 14 December 2026</h1>
+<form id="f" action="masked-done.html" method="get">
+  <label for="name">Full name</label><input id="name" name="name">
+  <label for="birth">Date of birth</label><input id="birth" name="birth" placeholder="DD/MM/YYYY" inputmode="numeric">
+  <label for="phone">Mobile phone</label>
+  <div><select id="cc" name="cc" aria-label="Country code"><option value="+33">+33</option><option value="+34" selected>+34</option>
+    <option value="+44">+44</option><option value="+49">+49</option></select>
+    <input id="phone" name="phone" placeholder="600 000 000" inputmode="tel"></div>
+  <span id="qty-l" style="display:block;margin-top:12px">Tickets</span>
+  <div class="stepper">
+    <button type="button" id="minus" title="Fewer tickets">−</button>
+    <input id="qty" name="qty" value="1" readonly aria-labelledby="qty-l">
+    <button type="button" id="plus" title="More tickets">+</button> <small>(at most 6)</small>
+  </div>
+  <p><button type="submit" id="buy" disabled>Buy tickets</button></p>
+</form>
+<script>
+// masks: the birth date as DD/MM/YYYY, the phone as ### ### ###; the stepper only changes with its buttons
+const $ = id => document.getElementById(id);
+const mask = (pattern, value) => { const d = value.replace(/\D/g, ''); let out = '', i = 0;
+  for (const c of pattern) { if (i >= d.length) break; out += c === '#' ? d[i++] : c; } return out; };
+$('birth').addEventListener('input', () => { $('birth').value = mask('##/##/####', $('birth').value); valid(); });
+$('phone').addEventListener('input', () => { $('phone').value = mask('### ### ###', $('phone').value); valid(); });
+$('name').addEventListener('input', valid);
+const step = d => { $('qty').value = Math.min(6, Math.max(1, Number($('qty').value) + d)); valid(); };
+$('minus').onclick = () => step(-1); $('plus').onclick = () => step(1);
+function valid() { $('buy').disabled = !($('name').value.trim() && $('birth').value.length === 10 && $('phone').value.length === 11); }
+</script></body></html>

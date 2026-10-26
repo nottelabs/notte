@@ -19,9 +19,19 @@ FIXTURE_URL = "{fixtures}/form.html"
 
 def test_discover_names_every_task_and_probe_once_with_its_module_as_suite() -> None:
     found = registry.discover()
-    assert len(found.tasks) == 111
-    assert len(found.probes) == 127
-    suites = {"cov_fixtures", "cov_real", "cov2_fixtures", "cov2_real", "demo", "fixtures", "real"}
+    assert len(found.tasks) == 141
+    assert len(found.probes) == 161
+    suites = {
+        "cov_fixtures",
+        "cov_real",
+        "cov2_fixtures",
+        "cov2_real",
+        "cov3_fixtures",
+        "cov3_real",
+        "demo",
+        "fixtures",
+        "real",
+    }
     assert {t.suite for t in found.tasks.values()} == suites
     assert all(t.fixture == t.suite.endswith("fixtures") for t in found.tasks.values())
     assert found.tasks["gf-book"].max_steps == 25
@@ -57,6 +67,7 @@ def test_every_task_and_probe_has_one_ci_tier_and_local_pages_are_core() -> None
         "f2-dashboard",
         "f2-dashboard-max",
         "f2-multitab",
+        "f3-wizard",
     }
 
 
@@ -132,7 +143,17 @@ def test_shards_split_every_item_once_and_spread_each_suite(count: int) -> None:
     shards = [registry.shard(items, i, count) for i in range(1, count + 1)]
     assert sorted((i.kind, i.key) for s in shards for i in s) == sorted((i.kind, i.key) for i in items)
     assert shards == [registry.shard(items, i, count) for i in range(1, count + 1)]
-    for suite in ("fixtures", "demo", "real", "cov_fixtures", "cov_real", "cov2_fixtures", "cov2_real"):
+    for suite in (
+        "fixtures",
+        "demo",
+        "real",
+        "cov_fixtures",
+        "cov_real",
+        "cov2_fixtures",
+        "cov2_real",
+        "cov3_fixtures",
+        "cov3_real",
+    ):
         sizes = [sum(i.suite == suite and i.kind == "task" for i in s) for s in shards]
         assert max(sizes) - min(sizes) <= 1
 

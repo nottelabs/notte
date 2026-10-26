@@ -1,0 +1,28 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Store finder</title>
+<style>body{font-family:sans-serif;margin:8px}.map{position:relative;height:120px;background:#dfe9d8;border-radius:6px}
+.map .tools{position:absolute;right:6px;top:6px;display:flex;flex-direction:column;gap:4px}
+.map .tools button{width:28px;height:28px;font-size:16px}#zoom{position:absolute;left:8px;bottom:6px;font-size:12px}
+ul{list-style:none;padding:0}li{padding:4px 0}iframe{border:0;width:100%;height:140px}</style></head><body>
+<div class="map" role="img" aria-label="Map of Madrid"><span id="zoom">Zoom 12</span>
+  <div class="tools"><button type="button" title="Zoom in" id="zin">+</button><button type="button" title="Zoom out" id="zout">−</button>
+    <button type="button" title="Show my location" id="loc">◎</button></div></div>
+<p>3 stores within 5 km</p>
+<ul id="stores">
+  <li><label><input type="radio" name="store" value="sol"> Sol · Calle Mayor 12 · open until 21:00</label></li>
+  <li><label><input type="radio" name="store" value="chamberi"> Chamberí · Calle de Fuencarral 120 · open until 20:00</label></li>
+  <li><label><input type="radio" name="store" value="retiro"> Retiro · Calle de Ibiza 8 · open until 20:30</label></li>
+</ul>
+<button type="button" id="choose" disabled>Choose this store</button>
+<div id="confirm"></div>
+<script>
+let zoom = 12; const z = d => { zoom += d; document.getElementById('zoom').textContent = 'Zoom ' + zoom; };
+document.getElementById('zin').onclick = () => z(1); document.getElementById('zout').onclick = () => z(-1);
+document.querySelectorAll('[name=store]').forEach(r => r.onchange = () => document.getElementById('choose').disabled = false);
+const top_ = new URLSearchParams(location.search).get('top') || '';
+document.getElementById('choose').onclick = () => {
+  // the confirmation is a frame from the shop's own origin, inside this one
+  const store = document.querySelector('[name=store]:checked').value, back = new URL(top_);
+  document.getElementById('confirm').innerHTML = `<iframe title="Confirm pick-up"
+    src="${back.origin}${back.pathname.replace('xframe.html', 'xframe-confirm.html')}?store=${store}"></iframe>`;
+};
+</script></body></html>
