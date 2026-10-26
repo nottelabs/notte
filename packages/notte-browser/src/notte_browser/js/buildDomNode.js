@@ -6,7 +6,7 @@
 (
 	{
 		highlight_elements, focus_element, viewport_expansion, enable_pointer_elements, frame_elements = [],
-		collect_elements = false, column_header_selector = "", listened_headers = [],
+		collect_elements = false, listened_headers = [],
 	}
 ) => {
 	const { doHighlightElements, focusHighlightIndex, viewportExpansion, debugMode } = {
@@ -175,15 +175,9 @@
 	// Mouse handlers that make an element interactive, and that make a wrapper a click target of its own.
 	const CLICK_HANDLER_ATTRS = ["onclick", "onmousedown", "onmouseup", "ondblclick"];
 
-	// The column headers with a click listener of their own (a table sorted by a click handler), which the caller
-	// finds with the DevTools protocol: `listened_headers` are their indices among `column_header_selector`'s matches.
-	const LISTENED_HEADERS = new Set();
-	if (listened_headers.length > 0) {
-		const headers = DOCUMENT.querySelectorAll.call(document, column_header_selector);
-		for (const index of listened_headers) {
-			if (headers[index]) LISTENED_HEADERS.add(headers[index]);
-		}
-	}
+	// Actual column headers checked with the DevTools protocol, so table mutations cannot transfer a listener
+	// to a different header at the same position.
+	const LISTENED_HEADERS = new Set(listened_headers);
 
 	// whether an element has a mouse handler of its own: one of `CLICK_HANDLER_ATTRS`, or a listened column header
 	function hasClickHandler(element) {
