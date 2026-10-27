@@ -41,6 +41,8 @@ EXTRACTION_INSTRUCTIONS = (
     "Extract the page title and the first three distinct Markdown links (label and URL) "
     "in document order, from anywhere in the document, including body and footer links. "
     "Count repeated URLs only once, using the first label. Ignore plain text without a link target. "
+    "Copy each label exactly as written between the Markdown brackets, including punctuation and case. "
+    "Copy each URL target exactly as provided. "
     "Include a short summary. Use null for missing optional descriptions."
 )
 # Ground truth from the saved scrape.md files, independent of provider output.

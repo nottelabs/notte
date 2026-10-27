@@ -26,8 +26,9 @@ def test_matrix_link_ground_truth_matches_saved_document(case):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("case", EXPECTED_LINKS)
-@pytest.mark.parametrize("outcome", ["complete", "missing", "invented", "reordered", "refusal"])
-async def test_matrix_checks_extracted_links_offline(case, outcome, monkeypatch):
+@pytest.mark.parametrize("outcome", ["complete", "missing", "invented", "reordered", "refusal", "punctuation"])
+@pytest.mark.parametrize("response_format", ["json_schema", "json_object"])
+async def test_matrix_checks_extracted_links_offline(case, outcome, response_format, monkeypatch):
     monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
     links = [
         {"label": label, "url": f"link{index}", "description": None}
@@ -39,6 +40,9 @@ async def test_matrix_checks_extracted_links_offline(case, outcome, monkeypatch)
         links[-1]["url"] = "https://example.com/invented"
     elif outcome == "reordered":
         links.reverse()
+    elif outcome == "punctuation":
+        # Replay MiniMax's dropped period; adding punctuation is also a label change.
+        links[0]["label"] = "Learn more" if case == "checkout/article" else links[0]["label"] + "."
     payload = {"success": True, "error": None, "data": {"title": "Title", "links": links, "summary": None}}
     if outcome == "refusal":
         payload = {"success": False, "error": "Fewer than three navigation links", "data": None}
@@ -47,19 +51,29 @@ async def test_matrix_checks_extracted_links_offline(case, outcome, monkeypatch)
     async def send(client, request, **kwargs):
         body = json.loads(request.content)
         bodies.append(body)
+        if response_format == "json_object" and body["response_format"]["type"] == "json_schema":
+            return httpx.Response(400, request=request, json={"error": {"message": "invalid JSON schema"}})
         return httpx.Response(200, request=request, json={"choices": [{"message": {"content": json.dumps(payload)}}]})
 
     monkeypatch.setattr(httpx.AsyncClient, "send", send)
-    route = next(route for route in ROUTES if route.name == "kimi")
+    route = next(route for route in ROUTES if route.name == ("minimax" if response_format == "json_object" else "kimi"))
     if outcome == "complete":
         await live_matrix.test_provider_matrix(route, case, monkeypatch, lambda name, value: None)
     else:
         with pytest.raises(AssertionError):
             await live_matrix.test_provider_matrix(route, case, monkeypatch, lambda name, value: None)
-    assert len(bodies) == 1
-    prompt = json.dumps(bodies[0]["messages"])
-    assert "including body and footer links" in prompt
-    assert "Count repeated URLs only once" in prompt
+    expected_formats = ["json_schema"] if response_format == "json_schema" else ["json_schema", "json_object"]
+    assert [body["response_format"]["type"] for body in bodies] == expected_formats
+    for body in bodies:
+        prompt = json.dumps(body["messages"])
+        assert "including body and footer links" in prompt
+        assert "Count repeated URLs only once" in prompt
+        assert (
+            "Copy each label exactly as written between the Markdown brackets, including punctuation and case" in prompt
+        )
+        assert "Copy each URL target exactly as provided" in prompt
+        if case == "checkout/article":
+            assert "[Learn more.](link1)" in prompt
 
 
 @pytest.mark.parametrize("status", [400, 401, 404, 422, 500, 502])
