@@ -87,6 +87,9 @@ _PASTE_TEXT = script("paste_text.js")
 # Page-side implementation: js/file_input_clicks.js
 _FILE_INPUT_CLICKS = script("file_input_clicks.js")
 _CLICK_INPUT = script("click_input.js")
+# How long a click waits for the report of its input after the driver returned (s). A page listener that stops
+# `pointerdown` before the click's own keeps it from ever coming.
+_CLICK_INPUT_REPORT_S = 1.0
 
 
 @dataclass
@@ -695,7 +698,7 @@ async def execute_interaction_action(
     storage: BaseStorage | None = None,
     verbose: bool = False,
     before_click: Callable[[Locator], Awaitable[Callable[[ElementHandle], Awaitable[None]] | None]] | None = None,
-    after_click: Callable[[], Awaitable[None]] | None = None,
+    after_click: Callable[[bool], Awaitable[None]] | None = None,
 ) -> bool:
     """Interact with an element within `action.timeout`.
 
@@ -729,10 +732,10 @@ async def execute_interaction_action(
                     and any(not candidate.is_closed() for candidate in clicked_page.context.pages)
                 ):
                     closed_error = error
-                    await after_click()
+                    await after_click(False)
                 raise
             if after_click is not None:
-                await after_click()
+                await after_click(True)
     except TimeoutError as e:
         if not scope.expired():
             raise
@@ -1036,7 +1039,8 @@ async def _execute(
             click_input_times.append(time.perf_counter())
         click_input_received.set()
 
-    async def await_click_input() -> None:
+    async def await_click_input(returned: bool) -> None:
+        """Until the click's input is reported. When the driver `returned` from the click, its input came by then."""
         if not click_inputs:
             return
         if click_document_replaced and not click_input_received.is_set():
@@ -1046,7 +1050,12 @@ async def _execute(
             except Error:
                 # The listener went with its document, the click landed in the next one: it came at the latest now
                 record_click_input()
-        _ = await click_input_received.wait()
+        with suppress(TimeoutError):
+            async with asyncio.timeout(_CLICK_INPUT_REPORT_S):
+                _ = await click_input_received.wait()
+        if returned and not click_input_received.is_set():
+            # the page kept the input from its listener
+            record_click_input()
 
     async def track_existing_tabs(locator: Locator) -> Callable[[ElementHandle], Awaitable[None]] | None:
         # Keep requests started while click() waits, but select a replacement only from navigation after input.

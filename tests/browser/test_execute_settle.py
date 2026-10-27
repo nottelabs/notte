@@ -1513,3 +1513,18 @@ async def test_a_click_waits_for_a_request_its_tab_sent_before_the_tab_tracker_e
     finally:
         release.set()
         _ = await asyncio.gather(clicked, *deferred, return_exceptions=True)
+
+
+@pytest.mark.asyncio
+async def test_a_click_whose_input_the_page_hides_from_its_listener_still_ends(
+    session: NotteSession, site: str
+) -> None:
+    """A page listener that stops `pointerdown` first keeps the click's input from being reported."""
+    page = session.window.page
+    # with another tab open, the click reports its input
+    other = await page.context.new_page()
+    _ = await other.goto(site)
+    await page.evaluate("window.addEventListener('pointerdown', (e) => e.stopImmediatePropagation(), true)")
+    _ = await click(session, "late")
+    assert session.window.page is page
+    assert "Late result" in await text(session)
