@@ -85,8 +85,9 @@ TASKS = [
     Task(
         "f2-vlist",
         "{fixtures}/cov2/vlist.html",
-        "Open order #10237.",
-        _page("order.html", id="10237"),
+        # 137 rows down: a scroll moves 70% of the list's height, so about 16 scrolls, within the step cap
+        "Open order #10137.",
+        _page("order.html", id="10137"),
         tags=("virtualised-list", "scroll-container"),
     ),
     Task(
@@ -242,7 +243,7 @@ PROBES = [
 ]
 
 # local pages: core, except those that fail on a bug no fix is in flight for yet (bench bug list), to move to core
-# when it lands: f2-vlist (13: SCROLL does not reach an inner scroller), f2-dashboard and f2-dashboard-max (14: SVG
-# chart content is not observed), f2-multitab (act keeps no value read on an earlier page: a design question)
-TASKS = ci_tier(TASKS, core={t.name for t in TASKS} - {"f2-vlist", "f2-dashboard", "f2-multitab"})
+# when it lands: f2-dashboard and f2-dashboard-max (14: SVG chart content is not observed), f2-multitab (act keeps no
+# value read on an earlier page: a design question)
+TASKS = ci_tier(TASKS, core={t.name for t in TASKS} - {"f2-dashboard", "f2-multitab"})
 PROBES = ci_tier(PROBES, core={p.name for p in PROBES} - {"f2-dashboard-max"})

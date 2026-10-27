@@ -88,7 +88,6 @@ def test_every_task_and_probe_has_one_ci_tier_and_local_pages_are_core() -> None
         "f-webcomp",
         "f-webcomp-speed",
         "f-drawer-open",
-        "f2-vlist",
         "f2-dashboard",
         "f2-dashboard-max",
         "f2-multitab",

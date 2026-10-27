@@ -38,11 +38,11 @@ its module lists it in `core`.
 
 | tier | what | runs | size |
 |---|---|---|---|
-| `ci-core` | local pages, and very stable public demos and docs (the-internet, toscrape, selenium.dev, TodoMVC, UI Testing Playground, W3C APG, Wikipedia, docs.python.org, DataTables, scrapethissite.com) | every PR that changes observe or act | 75 tasks, 109 probes on 74 pages (149 runs) |
-| `ci-extended` | third-party sites (Google, booking.com, IKEA, GitHub, shops, news, cookie platforms, editors' sites), pages with ads, known flakes, tasks that fail until a bug is fixed | on demand (`tags: ci-extended` or `all`) | 66 tasks, 52 probes on 41 pages (107 runs) |
+| `ci-core` | local pages, and very stable public demos and docs (the-internet, toscrape, selenium.dev, TodoMVC, UI Testing Playground, W3C APG, Wikipedia, docs.python.org, DataTables, scrapethissite.com) | every PR that changes observe or act | 76 tasks, 109 probes on 74 pages (150 runs) |
+| `ci-extended` | third-party sites (Google, booking.com, IKEA, GitHub, shops, news, cookie platforms, editors' sites), pages with ads, known flakes, tasks that fail until a bug is fixed | on demand (`tags: ci-extended` or `all`) | 65 tasks, 52 probes on 41 pages (106 runs) |
 
 Why an entry is extended is written next to its module's `ci_tier` call. `--tags ci-core` selects a tier locally.
-The current core is 149 runs per version: 118 from the earlier suites and 31 from round 3.
+The current core is 150 runs per version: 119 from the earlier suites and 31 from round 3.
 An earlier 121-run selection measured locally (Jev, one version, concurrency 6, on a loaded shared machine) took
 1,838 run-seconds and 320 s wall. Round 3 adds about 380 run-seconds, so the current core is estimated at about 2,200
 run-seconds per version. Base and head double the runs. On CI, at concurrency 6 in one job that is about 12 minutes
