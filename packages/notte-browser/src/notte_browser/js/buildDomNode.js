@@ -768,7 +768,9 @@
 		for (let index = 0; index < ancestors.length; index++) {
 			const current = ancestors[index];
 			if (index < escapeUntil) escaped.add(current);
-			const position = getCachedComputedStyle(current)?.position;
+			const style = getCachedComputedStyle(current);
+			if (style?.display === "contents") continue;
+			const position = style?.position;
 			if (position !== "fixed" && position !== "absolute") continue;
 			let containingBlock = propertyOf(current, "offsetParent");
 			if (containingBlock === undefined) continue;
@@ -1769,28 +1771,33 @@
 	}
 
 	/**
-	 * Checks if an element is above or below the box of an ancestor that scrolls vertically, where scrolling
+	 * Checks if an element is outside the box of an ancestor that scrolls on either axis, where scrolling
 	 * that ancestor brings it: the center of its hit-test area (see `topElementArea`) is outside the
 	 * ancestor's inner visible box. A box that the element escapes (see `escapesClip`) does not scroll it.
 	 *
 	 * @param {HTMLElement} element - The element to check.
-	 * @returns {boolean} Whether the element is above or below the box of a scrollable ancestor.
+	 * @returns {boolean} Whether the element is outside the box of a scrollable ancestor.
 	 */
 	function isAboveOrBelowScrollBox(element) {
 		const rects = getCachedClientRects(element);
 		if (!rects || rects.length === 0) return false;
 		const area = topElementArea(element, rects);
+		const centerX = (area.left + area.right) / 2;
 		const centerY = (area.top + area.bottom) / 2;
 		for (let ancestor = reachAncestor(element); ancestor; ancestor = reachAncestor(ancestor)) {
 			const box = getCachedBoundingRect(ancestor);
-			const range = visibleRange(ancestor, box, getCachedComputedStyle(ancestor), true);
-			if (range === null || !range.scrolls || escapesClip(element, ancestor)) continue;
-			// Borders and scrollbars are outside the visible content, scaled like the bounding rect.
-			const layoutHeight = propertyOf(ancestor, "offsetHeight");
-			const scale = layoutHeight > 0 ? box.height / layoutHeight : 1;
-			const top = box.top + propertyOf(ancestor, "clientTop") * scale;
-			const bottom = top + propertyOf(ancestor, "clientHeight") * scale;
-			if (centerY < top || centerY > bottom) return true;
+			const style = getCachedComputedStyle(ancestor);
+			for (const vertical of [true, false]) {
+				const range = visibleRange(ancestor, box, style, vertical);
+				if (range === null || !range.scrolls || escapesClip(element, ancestor)) continue;
+				// Borders and scrollbars are outside the visible content, scaled like the bounding rect.
+				const layoutSize = propertyOf(ancestor, vertical ? "offsetHeight" : "offsetWidth");
+				const scale = layoutSize > 0 ? (vertical ? box.height : box.width) / layoutSize : 1;
+				const start = (vertical ? box.top : box.left) + propertyOf(ancestor, vertical ? "clientTop" : "clientLeft") * scale;
+				const end = start + propertyOf(ancestor, vertical ? "clientHeight" : "clientWidth") * scale;
+				const center = vertical ? centerY : centerX;
+				if (center < start || center > end) return true;
+			}
 		}
 		return false;
 	}

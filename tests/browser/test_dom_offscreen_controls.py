@@ -490,6 +490,76 @@ async def test_controls_behind_scroll_box_borders_are_described(scale: int) -> N
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("position", ["absolute", "fixed"])
+async def test_positioned_boxless_wrappers_do_not_escape_scroll_clipping(position: str) -> None:
+    page = f"""
+    <div style="position:relative">
+      <div id="box" style="height:100px;width:300px;overflow:auto">
+        <div style="display:contents;position:{position}">
+          <div style="height:150px"></div>
+          <button onclick="this.dataset.clicked = 'true'">Later</button>
+          <input placeholder="Later field">
+        </div>
+      </div>
+    </div>
+    """
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+        lines, actions = await _observe(session)
+        assert lines == ["_[:]<button>Later</button>", '_[:]<input placeholder="Later field"></input>']
+        assert actions == []
+
+        _ = await session.window.page.evaluate("document.getElementById('box').scrollTop = 1000")
+        _, actions = await _observe(session)
+        assert actions == [("B1", "Later"), ("I1", "Later field")]
+        await session.window.page.get_by_role("button", name="Later").click()
+        assert await session.window.page.get_by_role("button", name="Later").get_attribute("data-clicked") == "true"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("scale", [1, 2])
+@pytest.mark.parametrize("direction", ["ltr", "rtl"])
+async def test_controls_behind_horizontal_scroll_box_borders_are_described(scale: int, direction: str) -> None:
+    page = f"""
+    <div id="box" dir="{direction}" style="height:40px;width:100px;border:20px solid;overflow:auto;
+                         transform:scale({scale});transform-origin:top left">
+      <div style="display:flex;width:140px">
+        <input placeholder="Start" style="width:20px;box-sizing:border-box;flex:none">
+        <div style="width:40px;flex:none"></div>
+        <input placeholder="Middle" style="width:20px;box-sizing:border-box;flex:none">
+        <div style="width:40px;flex:none"></div>
+        <input placeholder="End" style="width:20px;box-sizing:border-box;flex:none">
+      </div>
+    </div>
+    """
+    sign = 1 if direction == "ltr" else -1
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+        _ = await session.window.page.evaluate(
+            "offset => { document.getElementById('box').scrollLeft = offset; }", sign * 20
+        )
+        lines, actions = await _observe(session)
+        assert lines == [
+            '_[:]<input placeholder="Start"></input>',
+            'I1[:]<input placeholder="Middle"></input>',
+            '_[:]<input placeholder="End"></input>',
+        ]
+        assert actions == [("I1", "Middle")]
+        await session.window.page.get_by_placeholder("Middle").fill("Visible")
+        assert await session.window.page.get_by_placeholder("Middle").input_value() == "Visible"
+
+        _ = await session.window.page.evaluate("document.getElementById('box').scrollLeft = 0")
+        _, actions = await _observe(session)
+        assert actions == [("I1", "Start"), ("I2", "Middle")]
+
+        _ = await session.window.page.evaluate(
+            "offset => { document.getElementById('box').scrollLeft = offset; }", sign * 1000
+        )
+        _, actions = await _observe(session)
+        assert actions == [("I1", "Middle"), ("I2", "End")]
+
+
+@pytest.mark.asyncio
 async def test_popup_descendants_escape_only_scrollers_outside_their_containing_block() -> None:
     boxes: list[str] = []
     for index, (position, transform) in enumerate(

@@ -133,8 +133,10 @@ Cache the escaped clippers from one composed-ancestor walk per element. Rewalkin
 the chain for every scroll box makes observation cubic when sibling controls and
 scroll depth grow together; the browser regression counts ancestor reads instead of timing it.
 
-Off-screen controls use the scroll box's scaled inner bounds, and ancestor walks
+Off-screen controls use the scroll box's scaled inner bounds on both scrollable axes, and ancestor walks
 follow assigned slots before light-DOM parents and cross shadow roots to their hosts.
+Skip `display: contents` when caching clipping escapes: a boxless positioned wrapper
+does not let its normal-flow descendants escape a scroll box.
 A transformed scroll box can hit-test a control
 behind its border as the top element, so hit-testing alone cannot establish that
 it is in view. `tests/browser/test_dom_offscreen_controls.py` covers these cases.
