@@ -11,7 +11,9 @@
         bubbles: true,
         cancelable: true
     });
-    (doc.activeElement ?? el).dispatchEvent(event);
-    // a synthetic paste event inserts nothing by itself
+    // the focused element of the element's own root: in a shadow root, the document's active element is its host
+    (el.getRootNode().activeElement ?? el).dispatchEvent(event);
+    // a synthetic paste event inserts nothing by itself. The browser keeps a tab where the editor keeps white space
+    // (`white-space: pre-wrap`, as code editors do), else inserts a non-breaking space, as when the tab is typed
     if (!event.defaultPrevented) doc.execCommand('insertText', false, text);
 }
