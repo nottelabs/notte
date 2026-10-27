@@ -159,6 +159,85 @@ class TestBitwardenVaultListCredentials:
 class TestBitwardenVaultWrites:
     @pytest.mark.asyncio
     @pytest.mark.parametrize("operation", ["add", "delete"])
+    async def test_native_write_errors_propagate(
+        self, vault: BitwardenVault, client: MagicMock, operation: str
+    ) -> None:
+        client.secrets.return_value.create.side_effect = RuntimeError("native write failed")
+        client.secrets.return_value.delete.side_effect = RuntimeError("native write failed")
+        with pytest.raises(RuntimeError, match="native write failed"):
+            if operation == "add":
+                await vault.add_credentials_async("https://example.com", password="new")  # pragma: allowlist secret
+            else:
+                await vault.delete_credentials_async("https://github.com/login")
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("operation", ["add", "delete"])
+    @pytest.mark.parametrize("cancellations", [1, 2])
+    @pytest.mark.parametrize("worker_fails", [False, True])
+    async def test_cancelled_writes_finish_and_invalidate_before_cancellation_returns(
+        self, vault: BitwardenVault, client: MagicMock, operation: str, cancellations: int, worker_fails: bool
+    ) -> None:
+        added = _secret("New", json.dumps({"url": "https://example.com", "password": "new"}))
+        stored = [GITHUB, NOTTE]
+        started, release, finished = threading.Event(), threading.Event(), threading.Event()
+        secrets_client = client.secrets.return_value
+
+        def list_secrets(_organization_id: str) -> MagicMock:
+            return MagicMock(data=MagicMock(data=[MagicMock(id=secret.id) for secret in stored]))
+
+        def get_secrets(ids: list[uuid.UUID]) -> MagicMock:
+            return MagicMock(data=MagicMock(data=[secret for secret in stored if secret.id in ids]))
+
+        def write() -> MagicMock:
+            started.set()
+            try:
+                assert release.wait(5), "write was not released"
+                if operation == "add":
+                    stored.append(added)
+                else:
+                    stored.remove(GITHUB)
+                if worker_fails:
+                    raise RuntimeError("provider failed after committing the write")
+                return MagicMock()
+            finally:
+                finished.set()
+
+        def create_secret(
+            _organization_id: uuid.UUID, _key: str, _value: str, _note: None, _project_ids: list[uuid.UUID]
+        ) -> MagicMock:
+            return write()
+
+        def delete_secret(_ids: list[str]) -> MagicMock:
+            return write()
+
+        secrets_client.list.side_effect = list_secrets
+        secrets_client.get_by_ids.side_effect = get_secrets
+        secrets_client.create.side_effect = create_secret
+        secrets_client.delete.side_effect = delete_secret
+        writing = asyncio.create_task(
+            vault.add_credentials_async("https://example.com", password="new")  # pragma: allowlist secret
+            if operation == "add"
+            else vault.delete_credentials_async("https://github.com/login")
+        )
+        try:
+            assert await asyncio.to_thread(started.wait, 2)
+            for _ in range(cancellations):
+                assert writing.cancel()
+                await asyncio.sleep(0)
+                assert not writing.done(), "cancellation returned while the native write was still running"
+        finally:
+            release.set()
+            if not writing.cancelling():
+                _ = writing.cancel()
+            with pytest.raises(asyncio.CancelledError):
+                await writing
+            assert await asyncio.to_thread(finished.wait, 2)
+        expected = {json.loads(secret.value)["url"] for secret in stored}
+        assert {credential.url for credential in await vault.list_credentials_async()} == expected
+        assert {credential.url for credential in await vault.list_credentials_async()} == expected
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("operation", ["add", "delete"])
     async def test_an_inflight_refresh_does_not_overwrite_a_write_invalidation(
         self, vault: BitwardenVault, client: MagicMock, operation: str
     ) -> None:

@@ -4,6 +4,7 @@ import asyncio
 import json
 import os
 import uuid
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Unpack
 
 from pydantic import BaseModel, ValidationError
@@ -112,6 +113,23 @@ class BitwardenVault(BaseVault, SyncResource):
         self._cache_generation += 1
         self._secrets_cache = None
 
+    async def _write(self, write: Callable[[], None]) -> None:
+        """Finish a native write and invalidate its cache before propagating cancellation."""
+        task = asyncio.create_task(asyncio.to_thread(write))
+        cancelled: asyncio.CancelledError | None = None
+        while not task.done():
+            try:
+                _ = await asyncio.wait({task})
+            except asyncio.CancelledError as error:
+                cancelled = error
+        error = None if task.cancelled() else task.exception()
+        self._invalidate_secrets()
+        if cancelled is not None:
+            raise cancelled
+        if error is not None:
+            raise error
+        task.result()
+
     def _require_client(self) -> BitwardenClient:
         if self._client is None:
             raise RuntimeError("BitwardenVault is not started. Use it as a context manager or call start() first.")
@@ -194,15 +212,13 @@ class BitwardenVault(BaseVault, SyncResource):
         assert self._organization_id is not None
         if not self._project_id:
             raise ValueError("project_id required to add credentials")
-        _ = await asyncio.to_thread(
-            client.secrets().create,
-            uuid.UUID(self._organization_id),
-            url,
-            json.dumps({"url": url, **creds}),
-            None,
-            [uuid.UUID(self._project_id)],
-        )
-        self._invalidate_secrets()
+        organization_id = uuid.UUID(self._organization_id)
+        project_id = uuid.UUID(self._project_id)
+
+        def create() -> None:
+            _ = client.secrets().create(organization_id, url, json.dumps({"url": url, **creds}), None, [project_id])
+
+        await self._write(create)
 
     @override
     async def delete_credentials_async(self, url: str) -> None:
@@ -210,8 +226,12 @@ class BitwardenVault(BaseVault, SyncResource):
         found = await self._find_secret(url, require_unique=True)
         if found is None:
             raise ValueError(f"No credentials found for {url}")
-        _ = await asyncio.to_thread(client.secrets().delete, [str(found[0].id)])
-        self._invalidate_secrets()
+        secret_id = str(found[0].id)
+
+        def delete() -> None:
+            _ = client.secrets().delete([secret_id])
+
+        await self._write(delete)
 
     @override
     async def list_credentials_async(self) -> list[Credential]:
