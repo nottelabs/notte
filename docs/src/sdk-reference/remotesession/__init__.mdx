@@ -98,6 +98,14 @@ RemoteSession instance configured with the specified parameters.
   Defaults to True. The SDK waits for authentication readiness through short API calls before returning from start or entering a context manager. When False, start returns after inline verification; call wait_for_auth() or await_for_auth() before browser actions if login is pending.
 </ParamField>
 
+<ParamField path="record_session" type="bool">
+  Defaults to true. Set to false at session creation to disable saved replay for the entire session. Live View remains available.
+</ParamField>
+
+<ParamField path="log_session" type="bool">
+  Defaults to true. Set to false at session creation to disable saved browser activity and network logs for the entire session. Usage metering remains available.
+</ParamField>
+
 <ParamField path="auth_retry" type="int">
   Number of additional retries for transient managed-auth login failures, from 0 to 2. Each retry verifies the session again before submitting credentials. A blocked connection permits one explicit login attempt.
 </ParamField>
@@ -106,14 +114,6 @@ RemoteSession instance configured with the specified parameters.
 </ParamField>
 
 <ParamField path="advanced_stealth" type="bool">
-</ParamField>
-
-<ParamField path="record_session" type="bool">
-  Defaults to true. Set to false at session creation to disable saved replay for the entire session. Live View remains available.
-</ParamField>
-
-<ParamField path="log_session" type="bool">
-  Defaults to true. Set to false at session creation to disable saved browser activity and network logs for the entire session. Usage metering remains available.
 </ParamField>
 
 ## Returns
