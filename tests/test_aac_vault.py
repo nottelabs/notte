@@ -1,8 +1,13 @@
 import asyncio
 import json
+import shutil
 import stat
 import subprocess
+import threading
+from _thread import LockType
 from pathlib import Path
+from types import TracebackType
+from typing import cast
 
 import pyotp
 import pytest
@@ -89,6 +94,13 @@ def no_env_token(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 class TestAacVaultGetCredentials:
+    @pytest.mark.parametrize("credential", [GITHUB_CREDENTIAL, None, {"username": "no-password"}])
+    def test_presence_requests_the_domain(self, tmp_path: Path, credential: Payload) -> None:
+        fake = FakeAac(tmp_path, _credential_response(credential))
+        with AacVault(aac_path=str(fake.path)) as vault:
+            assert vault.has_credential("https://gist.github.com/login") is (credential == GITHUB_CREDENTIAL)
+        assert _flag(fake.calls[0], "--domain") == "github.com"
+
     def test_fetches_credential_by_root_domain(self, vault: AacVault, fake_aac: FakeAac) -> None:
         creds = asyncio.run(vault.get_credentials_async("https://gist.github.com/login"))
         assert creds is not None
@@ -125,6 +137,25 @@ class TestAacVaultGetCredentials:
             assert creds is not None and creds["password"] == GITHUB_CREDENTIAL["password"]
             assert creds["mfa_secret"] == code
             assert vault.get_replacement_map()[code] == "999779"
+
+    @pytest.mark.parametrize("seed", ["2345672345672345", "23456723456723452345672345672345"])
+    def test_numeric_seeds_require_an_otpauth_uri(self, tmp_path: Path, seed: str) -> None:
+        fake = FakeAac(tmp_path, _credential_response({**GITHUB_CREDENTIAL, "totp": seed}))
+        with AacVault(aac_path=str(fake.path)) as vault:
+            with pytest.raises(ValueError, match="otpauth URI") as error:
+                _ = vault.get_credentials("https://github.com")
+            assert seed not in str(error.value)
+            assert vault.past_credentials() == {}
+
+    @pytest.mark.parametrize("seed", ["23456723", "2345672345672345"])
+    def test_numeric_seeds_in_uris_generate_codes(self, tmp_path: Path, seed: str) -> None:
+        uri = f"otpauth://totp/GitHub?secret={seed}"
+        fake = FakeAac(tmp_path, _credential_response({**GITHUB_CREDENTIAL, "totp": uri}))
+        with AacVault(aac_path=str(fake.path)) as vault:
+            creds = vault.get_credentials("https://github.com")
+        assert creds is not None
+        assert creds["mfa_secret"] != seed
+        assert pyotp.parse_uri(uri).verify(creds["mfa_secret"], valid_window=1)
 
     def test_tracks_credentials_for_screenshot_masking(self, vault: AacVault) -> None:
         _ = asyncio.run(vault.get_credentials_async("https://github.com"))
@@ -262,6 +293,64 @@ class TestAacVaultPairing:
 
 
 class TestAacVaultLifecycle:
+    @pytest.mark.asyncio
+    async def test_cancelled_pairing_finishes_before_stop_removes_its_home(
+        self, vault: AacVault, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        class ObservedLock:
+            def __init__(self) -> None:
+                self.native: LockType = threading.Lock()
+                self.waiting = threading.Event()
+
+            def __enter__(self) -> None:
+                if self.native.locked():
+                    self.waiting.set()
+                _ = self.native.acquire()
+
+            def __exit__(
+                self, exc_type: type[BaseException] | None, exc_val: BaseException | None, tb: TracebackType | None
+            ) -> None:
+                self.native.release()
+
+        lock = ObservedLock()
+        vault._lock = cast(LockType, lock)
+        started, release, returned = threading.Event(), threading.Event(), threading.Event()
+        homes: list[Path] = []
+
+        def pair(
+            cmd: list[str], *, capture_output: bool, text: bool, timeout: int, check: bool, env: dict[str, str]
+        ) -> subprocess.CompletedProcess[str]:
+            home = Path(env["HOME"])
+            homes.append(home)
+            started.set()
+            assert release.wait(5), "pairing was not released"
+            cache = home / ".access-protocol" / "connection_cache_remote_client.json"
+            cache.parent.mkdir(parents=True, exist_ok=True)
+            _ = cache.write_text('{"connections": [{}]}')
+            returned.set()
+            return subprocess.CompletedProcess(cmd, 0, _credential_response(GITHUB_CREDENTIAL), "")
+
+        monkeypatch.setattr(subprocess, "run", pair)
+        request = asyncio.create_task(vault.get_credentials_async("https://github.com"))
+        assert await asyncio.to_thread(started.wait, 2)
+        _ = request.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await request
+        closing = asyncio.create_task(asyncio.to_thread(vault.stop))
+        try:
+            try:
+                assert await asyncio.to_thread(lock.waiting.wait, 1), "shutdown did not join the active request"
+                assert await asyncio.to_thread(homes[0].is_dir)
+            finally:
+                release.set()
+                await closing
+                assert await asyncio.to_thread(returned.wait, 2)
+            assert not await asyncio.to_thread(homes[0].exists)
+            with pytest.raises(RuntimeError, match="stopped"):
+                _ = await vault.get_credentials_async("https://github.com")
+        finally:
+            await asyncio.to_thread(shutil.rmtree, homes[0], ignore_errors=True)
+
     def test_start_validates_aac_exists(self) -> None:
         vault = AacVault(token="test", aac_path="/nonexistent/aac")
         with pytest.raises(RuntimeError, match="CLI not found"):

@@ -2,6 +2,7 @@ import asyncio
 import datetime as dt
 import json
 import sys
+import threading
 import uuid
 from collections.abc import Iterator
 from unittest.mock import MagicMock, patch
@@ -85,6 +86,18 @@ def vault(client: MagicMock) -> Iterator[BitwardenVault]:
 
 
 class TestBitwardenVaultGetCredentials:
+    @pytest.mark.parametrize("target", ["", "https://", "http://.com"])
+    def test_domainless_targets_cannot_retrieve_or_delete_a_secret(self, client: MagicMock, target: str) -> None:
+        invalid = _secret("Malformed URL", json.dumps({"url": "https://", "password": "unrelated"}))
+        client.secrets.return_value.get_by_ids.return_value.data.data = [invalid]
+        with patch("bitwarden_sdk.BitwardenClient", return_value=client):
+            with BitwardenVault(access_token="test", organization_id=ORG_ID) as vault:
+                assert vault.get_credentials(target) is None
+                assert not vault.has_credential(target)
+                with pytest.raises(ValueError, match="No credentials found"):
+                    vault.delete_credentials(target)
+                client.secrets.return_value.delete.assert_not_called()
+
     def test_prefers_an_exact_url_to_another_secret_on_the_domain(self, client: MagicMock) -> None:
         other = _secret("Other GitHub", json.dumps({"url": "https://github.com/settings", "password": "other"}))
         client.secrets.return_value.get_by_ids.return_value.data.data = [GITHUB, other]
@@ -144,6 +157,54 @@ class TestBitwardenVaultListCredentials:
 
 
 class TestBitwardenVaultWrites:
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("operation", ["add", "delete"])
+    async def test_an_inflight_refresh_does_not_overwrite_a_write_invalidation(
+        self, vault: BitwardenVault, client: MagicMock, operation: str
+    ) -> None:
+        added = _secret("New", json.dumps({"url": "https://example.com", "password": "new"}))
+        stored = [GITHUB, NOTTE]
+        started, release = threading.Event(), threading.Event()
+        secrets_client = client.secrets.return_value
+
+        def list_secrets(_organization_id: str) -> MagicMock:
+            return MagicMock(data=MagicMock(data=[MagicMock(id=secret.id) for secret in stored]))
+
+        def get_secrets(ids: list[uuid.UUID]) -> MagicMock:
+            snapshot = [secret for secret in stored if secret.id in ids]
+            if not started.is_set():
+                started.set()
+                assert release.wait(5), "refresh was not released"
+            return MagicMock(data=MagicMock(data=snapshot))
+
+        def create_secret(
+            _organization_id: uuid.UUID, _key: str, _value: str, _note: None, _project_ids: list[uuid.UUID]
+        ) -> MagicMock:
+            stored.append(added)
+            return MagicMock()
+
+        def delete_secret(ids: list[str]) -> MagicMock:
+            stored[:] = [secret for secret in stored if str(secret.id) not in ids]
+            return MagicMock()
+
+        secrets_client.list.side_effect = list_secrets
+        secrets_client.get_by_ids.side_effect = get_secrets
+        secrets_client.create.side_effect = create_secret
+        secrets_client.delete.side_effect = delete_secret
+        vault._secrets_cache = None
+        reading = asyncio.create_task(vault.list_credentials_async())
+        try:
+            assert await asyncio.to_thread(started.wait, 2)
+            if operation == "add":
+                await vault.add_credentials_async("https://example.com", password="new")  # pragma: allowlist secret
+            else:
+                await vault.delete_credentials_async("https://github.com/login")
+        finally:
+            release.set()
+        expected = {json.loads(secret.value)["url"] for secret in stored}
+        assert {credential.url for credential in await reading} == expected
+        assert {credential.url for credential in await vault.list_credentials_async()} == expected
+
     @pytest.mark.parametrize("target", ["https://github.com/settings", "https://github.com/other"])
     def test_delete_does_not_choose_the_first_same_domain_secret(self, client: MagicMock, target: str) -> None:
         other = _secret("Other GitHub", json.dumps({"url": "https://github.com/settings", "password": "other"}))
