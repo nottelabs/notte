@@ -22,16 +22,19 @@ from __future__ import annotations
 import argparse
 import inspect
 import json
+import os
 import sys
 import types
 import typing
 import urllib.request
+from email.message import Message
 from pathlib import Path
-from typing import Any, cast
+from typing import IO, Any, cast
 
 from notte_core import types as wire_types
 from pydantic import AliasChoices, BaseModel
 from pydantic.fields import FieldInfo
+from typing_extensions import override
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
@@ -41,6 +44,15 @@ from scripts.openapi_order import comparison_json  # noqa: E402
 SNAPSHOT = REPO_ROOT / "openapi" / "openapi.json"
 BASELINE = REPO_ROOT / "openapi" / "known_drift.txt"
 DEFAULT_URL = "https://us-staging.notte.cc"
+
+
+class _NoSchemaRedirect(urllib.request.HTTPRedirectHandler):
+    @override
+    def redirect_request(
+        self, req: urllib.request.Request, fp: IO[bytes], code: int, msg: str, headers: Message, newurl: str
+    ) -> None:
+        return None
+
 
 # Model name -> schema name, where the API names the schema differently.
 SCHEMA_NAMES = {
@@ -53,11 +65,25 @@ JsonObject = dict[str, Any]
 
 
 def download(url: str) -> JsonObject:
-    endpoint = f"{url.rstrip('/')}/openapi.json"
+    url = url.rstrip("/")
+    endpoint = f"{url}/openapi.json"
     print(f"Fetching {endpoint}")
     # The API's edge rejects urllib's default User-Agent.
-    request = urllib.request.Request(endpoint, headers={"User-Agent": "notte-openapi-contract"})
-    with urllib.request.urlopen(request, timeout=120) as response:  # noqa: S310 - https endpoint from --url
+    headers = {"User-Agent": "notte-openapi-contract"}
+    # Use the existing key only at known HTTPS API origins. Custom schema
+    # hosts must not receive it, and redirects must not forward it elsewhere.
+    if url in {
+        "https://api.notte.cc",
+        "https://us-prod.notte.cc",
+        "https://us-staging.notte.cc",
+        "https://us-dev.notte.cc",
+        "https://us-dev-test.notte.cc",
+        *(f"https://preview-{slot}-dev-test.notte.cc" for slot in range(1, 21)),
+    } and (key := os.getenv("NOTTE_API_KEY")):
+        headers["Authorization"] = f"Bearer {key}"
+    request = urllib.request.Request(endpoint, headers=headers)
+    opener = urllib.request.build_opener(_NoSchemaRedirect())
+    with opener.open(request, timeout=120) as response:
         return cast(JsonObject, json.load(response))
 
 
