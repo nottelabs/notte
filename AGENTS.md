@@ -178,6 +178,10 @@ in sync with the generated `__init__.mdx` pages. Docs tests compare both.
 
 ## OpenAPI refresh
 
+`SessionResponse.playwright_url` was added in #1363 before the API rollout.
+Until staging publishes it, retain its optional nullable schema during snapshot
+refreshes so regeneration preserves the existing Python and Node SDK field.
+
 Every operation in `openapi/openapi.json` needs an entry in
 `openapi/resources.json`: a resource method, or `exclude` with a reason. Both
 SDK generators also reject entries for operations the spec no longer has, so
