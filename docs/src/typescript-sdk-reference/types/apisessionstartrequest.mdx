@@ -12,59 +12,11 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type ApiSessionStartRequest = {
     /**
-     * Solve Captchas
+     * Advanced Stealth
      *
-     * Whether to try to automatically solve captchas
+     * Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.
      */
-    solve_captchas?: boolean;
-    /**
-     * Max Duration Minutes
-     *
-     * Maximum session lifetime in minutes (absolute maximum, not affected by activity).
-     */
-    max_duration_minutes?: number;
-    /**
-     * Idle Timeout Minutes
-     *
-     * Idle timeout in minutes. Session closes after this period of inactivity (resets on each operation).
-     */
-    idle_timeout_minutes?: number;
-    /**
-     * Proxies
-     *
-     * List of custom proxies to use for the session. If True, the default proxies will be used.
-     */
-    proxies?: Array<NotteProxy | ExternalProxy | TailnetProxy> | boolean;
-    /**
-     * Browser Type
-     *
-     * The browser type to use. Supported values are chromium and chrome. chrome-nightly and chrome-turbo are legacy aliases for chrome.
-     */
-    browser_type?: 'chromium' | 'chrome' | 'chrome-nightly' | 'chrome-turbo';
-    /**
-     * User Agent
-     *
-     * The user agent to use for the session
-     */
-    user_agent?: string | null;
-    /**
-     * Chrome Args
-     *
-     * Overwrite the chrome instance arguments
-     */
-    chrome_args?: Array<string> | null;
-    /**
-     * Viewport Width
-     *
-     * Viewport width in pixels (minimum 500). Set together with viewport_height.
-     */
-    viewport_width?: number | null;
-    /**
-     * Viewport Height
-     *
-     * Viewport height in pixels (minimum 500). Set together with viewport_width.
-     */
-    viewport_height?: number | null;
+    advanced_stealth?: boolean;
     /**
      * Aspect Ratio
      *
@@ -72,47 +24,11 @@ export type ApiSessionStartRequest = {
      */
     aspect_ratio?: '5:4' | '16:9' | null;
     /**
-     * Cdp Url
-     *
-     * The CDP URL of another remote session provider.
-     */
-    cdp_url?: string | null;
-    /**
-     * Browser profile configuration for state persistence
-     */
-    profile?: SessionProfile | null;
-    /**
-     * Web Bot Auth
-     *
-     * Whether to use web bot authentication.
-     */
-    web_bot_auth?: boolean;
-    /**
-     * Extra Http Headers
-     *
-     * Extra HTTP headers to be sent with every request.
-     */
-    extra_http_headers?: {
-        [key: string]: string;
-    } | null;
-    /**
-     * Vault Id
-     *
-     * The vault to use for the session
-     */
-    vault_id?: string | null;
-    /**
      * Auth Ids
      *
      * Managed Auth connection IDs to verify and, when necessary, authenticate inside this session. Initial verification runs before returning; when login is needed, the session returns as authenticating. Poll /sessions/{id}/auth for readiness.
      */
     auth_ids?: Array<string>;
-    /**
-     * Wait For Authentication
-     *
-     * SDK waiting preference. The API always verifies inline and returns authenticating when background login is needed; SDKs implement waiting through readiness polling.
-     */
-    wait_for_authentication?: boolean;
     /**
      * Auth Retry
      */
@@ -124,23 +40,71 @@ export type ApiSessionStartRequest = {
      */
     block_ads?: boolean;
     /**
-     * Advanced Stealth
+     * Browser Type
      *
-     * Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.
+     * The browser type to use. Supported values are chromium and chrome. chrome-nightly and chrome-turbo are legacy aliases for chrome.
      */
-    advanced_stealth?: boolean;
+    browser_type?: 'chromium' | 'chrome' | 'chrome-nightly' | 'chrome-turbo';
     /**
-     * Record Session
+     * Cdp Url
      *
-     * Save session replay. False permanently disables saved replay; Live View remains available.
+     * The CDP URL of another remote session provider.
      */
-    record_session?: boolean;
+    cdp_url?: string | null;
+    /**
+     * Chrome Args
+     *
+     * Overwrite the chrome instance arguments
+     */
+    chrome_args?: Array<string> | null;
+    /**
+     * Demonstrate
+     *
+     * Whether to enable the Notte recorder extension for this session. The extension is installed but remains inactive when this is false.
+     */
+    demonstrate?: boolean;
+    /**
+     * Extra Http Headers
+     *
+     * Extra HTTP headers to be sent with every request.
+     */
+    extra_http_headers?: {
+        [key: string]: string;
+    } | null;
+    /**
+     * Idle Timeout Minutes
+     *
+     * Idle timeout in minutes. Session closes after this period of inactivity (resets on each operation).
+     */
+    idle_timeout_minutes?: number;
     /**
      * Log Session
      *
      * Save browser session logs. False permanently disables saved logs, without disabling metering.
      */
     log_session?: boolean;
+    /**
+     * Max Duration Minutes
+     *
+     * Maximum session lifetime in minutes (absolute maximum, not affected by activity).
+     */
+    max_duration_minutes?: number;
+    /**
+     * Browser profile configuration for state persistence
+     */
+    profile?: SessionProfile | null;
+    /**
+     * Proxies
+     *
+     * List of custom proxies to use for the session. If True, the default proxies will be used.
+     */
+    proxies?: Array<NotteProxy | ExternalProxy | TailnetProxy> | boolean;
+    /**
+     * Record Session
+     *
+     * Save session replay. False permanently disables saved replay; Live View remains available.
+     */
+    record_session?: boolean;
     /**
      * Screenshot Type
      *
@@ -150,82 +114,62 @@ export type ApiSessionStartRequest = {
      */
     screenshot_type?: 'raw' | 'full' | 'last_action';
     /**
-     * Demonstrate
+     * Solve Captchas
      *
-     * Whether to enable the Notte recorder extension for this session. The extension is installed but remains inactive when this is false.
+     * Whether to try to automatically solve captchas
      */
-    demonstrate?: boolean;
+    solve_captchas?: boolean;
+    /**
+     * User Agent
+     *
+     * The user agent to use for the session
+     */
+    user_agent?: string | null;
+    /**
+     * Vault Id
+     *
+     * The vault to use for the session
+     */
+    vault_id?: string | null;
+    /**
+     * Viewport Height
+     *
+     * Viewport height in pixels (minimum 500). Set together with viewport_width.
+     */
+    viewport_height?: number | null;
+    /**
+     * Viewport Width
+     *
+     * Viewport width in pixels (minimum 500). Set together with viewport_height.
+     */
+    viewport_width?: number | null;
+    /**
+     * Wait For Authentication
+     *
+     * SDK waiting preference. The API always verifies inline and returns authenticating when background login is needed; SDKs implement waiting through readiness polling.
+     */
+    wait_for_authentication?: boolean;
+    /**
+     * Web Bot Auth
+     *
+     * Whether to use web bot authentication.
+     */
+    web_bot_auth?: boolean;
 };
 ```
 
 ## Fields
 
-<ParamField body="solve_captchas" type={"boolean | undefined"}>
-Whether to try to automatically solve captchas
-</ParamField>
-
-<ParamField body="max_duration_minutes" type={"number | undefined"}>
-Maximum session lifetime in minutes (absolute maximum, not affected by activity).
-</ParamField>
-
-<ParamField body="idle_timeout_minutes" type={"number | undefined"}>
-Idle timeout in minutes. Session closes after this period of inactivity (resets on each operation).
-</ParamField>
-
-<ParamField body="proxies" type={"boolean | (NotteProxy | ExternalProxy | TailnetProxy)[] | undefined"}>
-List of custom proxies to use for the session. If True, the default proxies will be used.
-</ParamField>
-
-<ParamField body="browser_type" type={"\"chromium\" | \"chrome\" | \"chrome-nightly\" | \"chrome-turbo\" | undefined"}>
-The browser type to use. Supported values are chromium and chrome. chrome-nightly and chrome-turbo are legacy aliases for chrome.
-</ParamField>
-
-<ParamField body="user_agent" type={"string | null | undefined"}>
-The user agent to use for the session
-</ParamField>
-
-<ParamField body="chrome_args" type={"string[] | null | undefined"}>
-Overwrite the chrome instance arguments
-</ParamField>
-
-<ParamField body="viewport_width" type={"number | null | undefined"}>
-Viewport width in pixels (minimum 500). Set together with viewport_height.
-</ParamField>
-
-<ParamField body="viewport_height" type={"number | null | undefined"}>
-Viewport height in pixels (minimum 500). Set together with viewport_width.
+<ParamField body="advanced_stealth" type={"boolean | undefined"}>
+Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.
 </ParamField>
 
 <ParamField body="aspect_ratio" type={"\"5:4\" | \"16:9\" | null | undefined"}>
 Viewport shape preset. When set, the backend fits the largest rectangle of this aspect ratio inside the sampled available screen area. Cannot be combined with explicit viewport_width/viewport_height.
 </ParamField>
 
-<ParamField body="cdp_url" type={"string | null | undefined"}>
-The CDP URL of another remote session provider.
-</ParamField>
-
-<ParamField body="profile" type={"SessionProfile | null | undefined"}>
-Browser profile configuration for state persistence
-</ParamField>
-
-<ParamField body="web_bot_auth" type={"boolean | undefined"}>
-Whether to use web bot authentication.
-</ParamField>
-
-<ParamField body="extra_http_headers" type={"{ [key: string]: string; } | null | undefined"}>
-Extra HTTP headers to be sent with every request.
-</ParamField>
-
-<ParamField body="vault_id" type={"string | null | undefined"}>
-The vault to use for the session
-</ParamField>
-
 <ParamField body="auth_ids" type={"string[] | undefined"}>
 Managed Auth connection IDs to verify and, when necessary, authenticate inside this session. Initial verification runs before returning; when login is needed, the session returns as authenticating. Poll /sessions/&#123;id&#125;/auth for readiness.
-</ParamField>
-
-<ParamField body="wait_for_authentication" type={"boolean | undefined"}>
-SDK waiting preference. The API always verifies inline and returns authenticating when background login is needed; SDKs implement waiting through readiness polling.
 </ParamField>
 
 <ParamField body="auth_retry" type={"number | undefined"}>
@@ -236,16 +180,48 @@ SDK waiting preference. The API always verifies inline and returns authenticatin
 Block ads and trackers in managed browsers using Basic filtering. Set false to disable. Does not configure externally supplied CDP browsers.
 </ParamField>
 
-<ParamField body="advanced_stealth" type={"boolean | undefined"}>
-Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.
+<ParamField body="browser_type" type={"\"chromium\" | \"chrome\" | \"chrome-nightly\" | \"chrome-turbo\" | undefined"}>
+The browser type to use. Supported values are chromium and chrome. chrome-nightly and chrome-turbo are legacy aliases for chrome.
 </ParamField>
 
-<ParamField body="record_session" type={"boolean | undefined"}>
-Save session replay. False permanently disables saved replay; Live View remains available.
+<ParamField body="cdp_url" type={"string | null | undefined"}>
+The CDP URL of another remote session provider.
+</ParamField>
+
+<ParamField body="chrome_args" type={"string[] | null | undefined"}>
+Overwrite the chrome instance arguments
+</ParamField>
+
+<ParamField body="demonstrate" type={"boolean | undefined"}>
+Whether to enable the Notte recorder extension for this session. The extension is installed but remains inactive when this is false.
+</ParamField>
+
+<ParamField body="extra_http_headers" type={"{ [key: string]: string; } | null | undefined"}>
+Extra HTTP headers to be sent with every request.
+</ParamField>
+
+<ParamField body="idle_timeout_minutes" type={"number | undefined"}>
+Idle timeout in minutes. Session closes after this period of inactivity (resets on each operation).
 </ParamField>
 
 <ParamField body="log_session" type={"boolean | undefined"}>
 Save browser session logs. False permanently disables saved logs, without disabling metering.
+</ParamField>
+
+<ParamField body="max_duration_minutes" type={"number | undefined"}>
+Maximum session lifetime in minutes (absolute maximum, not affected by activity).
+</ParamField>
+
+<ParamField body="profile" type={"SessionProfile | null | undefined"}>
+Browser profile configuration for state persistence
+</ParamField>
+
+<ParamField body="proxies" type={"boolean | (NotteProxy | ExternalProxy | TailnetProxy)[] | undefined"}>
+List of custom proxies to use for the session. If True, the default proxies will be used.
+</ParamField>
+
+<ParamField body="record_session" type={"boolean | undefined"}>
+Save session replay. False permanently disables saved replay; Live View remains available.
 </ParamField>
 
 <ParamField body="screenshot_type" type={"\"raw\" | \"full\" | \"last_action\" | undefined"}>
@@ -256,8 +232,32 @@ Ignored since notte 1.10: screenshots are returned without highlighting.
 
 </ParamField>
 
-<ParamField body="demonstrate" type={"boolean | undefined"}>
-Whether to enable the Notte recorder extension for this session. The extension is installed but remains inactive when this is false.
+<ParamField body="solve_captchas" type={"boolean | undefined"}>
+Whether to try to automatically solve captchas
+</ParamField>
+
+<ParamField body="user_agent" type={"string | null | undefined"}>
+The user agent to use for the session
+</ParamField>
+
+<ParamField body="vault_id" type={"string | null | undefined"}>
+The vault to use for the session
+</ParamField>
+
+<ParamField body="viewport_height" type={"number | null | undefined"}>
+Viewport height in pixels (minimum 500). Set together with viewport_width.
+</ParamField>
+
+<ParamField body="viewport_width" type={"number | null | undefined"}>
+Viewport width in pixels (minimum 500). Set together with viewport_height.
+</ParamField>
+
+<ParamField body="wait_for_authentication" type={"boolean | undefined"}>
+SDK waiting preference. The API always verifies inline and returns authenticating when background login is needed; SDKs implement waiting through readiness polling.
+</ParamField>
+
+<ParamField body="web_bot_auth" type={"boolean | undefined"}>
+Whether to use web bot authentication.
 </ParamField>
 
 ## Related types

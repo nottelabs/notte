@@ -12,10 +12,6 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type PressKeyAction = {
     /**
-     * Type
-     */
-    type?: 'press_key';
-    /**
      * Category
      */
     category?: string;
@@ -27,14 +23,14 @@ export type PressKeyAction = {
      * Key
      */
     key: string;
+    /**
+     * Type
+     */
+    type?: 'press_key';
 };
 ```
 
 ## Fields
-
-<ParamField body="type" type={"\"press_key\" | undefined"}>
-
-</ParamField>
 
 <ParamField body="category" type={"string | undefined"}>
 
@@ -45,5 +41,9 @@ export type PressKeyAction = {
 </ParamField>
 
 <ParamField body="key" type={"string"} required>
+
+</ParamField>
+
+<ParamField body="type" type={"\"press_key\" | undefined"}>
 
 </ParamField>

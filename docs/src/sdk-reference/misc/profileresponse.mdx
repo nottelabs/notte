@@ -7,23 +7,23 @@ description: "Profile metadata with the SDK's non-null, independently allocated 
 
 ## Fields
 
-<ParamField path="profile_id" type="str" required>
-  Profile ID (format: `notte-profile-{16 hex chars}`)
+<ParamField path="created_at" type="datetime" required>
+  Profile creation timestamp
 </ParamField>
 
 <ParamField path="name" type="str | None" required>
   Profile name
 </ParamField>
 
-<ParamField path="created_at" type="datetime" required>
-  Profile creation timestamp
+<ParamField path="persisted_domains" type="list[str]" required>
+</ParamField>
+
+<ParamField path="profile_id" type="str" required>
+  Profile ID (format: `notte-profile-{16 hex chars}`)
 </ParamField>
 
 <ParamField path="updated_at" type="datetime" required>
   Profile last update timestamp
-</ParamField>
-
-<ParamField path="persisted_domains" type="list[str]" required>
 </ParamField>
 
 

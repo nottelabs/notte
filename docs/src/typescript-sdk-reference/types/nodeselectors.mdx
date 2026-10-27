@@ -16,9 +16,9 @@ export type NodeSelectors = {
      */
     css_selector: string;
     /**
-     * Xpath Selector
+     * Iframe Parent Css Selectors
      */
-    xpath_selector: string;
+    iframe_parent_css_selectors: Array<string>;
     /**
      * In Iframe
      */
@@ -32,10 +32,6 @@ export type NodeSelectors = {
      */
     notte_selector?: string | null;
     /**
-     * Iframe Parent Css Selectors
-     */
-    iframe_parent_css_selectors: Array<string>;
-    /**
      * Playwright Selector
      */
     playwright_selector?: string | null;
@@ -43,6 +39,10 @@ export type NodeSelectors = {
      * Python Selector
      */
     python_selector?: string | null;
+    /**
+     * Xpath Selector
+     */
+    xpath_selector: string;
 };
 ```
 
@@ -52,7 +52,7 @@ export type NodeSelectors = {
 
 </ParamField>
 
-<ParamField body="xpath_selector" type={"string"} required>
+<ParamField body="iframe_parent_css_selectors" type={"string[]"} required>
 
 </ParamField>
 
@@ -68,14 +68,14 @@ export type NodeSelectors = {
 
 </ParamField>
 
-<ParamField body="iframe_parent_css_selectors" type={"string[]"} required>
-
-</ParamField>
-
 <ParamField body="playwright_selector" type={"string | null | undefined"}>
 
 </ParamField>
 
 <ParamField body="python_selector" type={"string | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="xpath_selector" type={"string"} required>
 
 </ParamField>

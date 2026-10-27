@@ -13,10 +13,6 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type WaitActionOutput = {
     /**
-     * Type
-     */
-    type?: 'wait';
-    /**
      * Category
      */
     category?: string;
@@ -30,14 +26,14 @@ export type WaitActionOutput = {
      * The amount of time to wait in milliseconds (max 30 seconds)
      */
     time_ms: number;
+    /**
+     * Type
+     */
+    type?: 'wait';
 };
 ```
 
 ## Fields
-
-<ParamField body="type" type={"\"wait\" | undefined"}>
-
-</ParamField>
 
 <ParamField body="category" type={"string | undefined"}>
 
@@ -49,4 +45,8 @@ export type WaitActionOutput = {
 
 <ParamField body="time_ms" type={"number"} required>
 The amount of time to wait in milliseconds (max 30 seconds)
+</ParamField>
+
+<ParamField body="type" type={"\"wait\" | undefined"}>
+
 </ParamField>

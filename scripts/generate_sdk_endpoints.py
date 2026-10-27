@@ -36,6 +36,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
 from scripts.openapi_contract import download  # noqa: E402
+from scripts.openapi_order import order_openapi  # noqa: E402
 
 SNAPSHOT = REPO_ROOT / "openapi" / "openapi.json"
 SDK_SRC = REPO_ROOT / "packages" / "notte-sdk" / "src" / "notte_sdk"
@@ -364,6 +365,7 @@ def _segment(value: str) -> str:
 
 def render(spec: JsonObject, strict: bool = True) -> tuple[str, dict[str, str]]:
     """The generated module, and each operation's code by name."""
+    spec = cast(JsonObject, order_openapi(spec))
     bound = _bind(spec, _parse(spec), strict)
     info = cast(JsonObject, spec.get("info", {}))
     blocks: dict[str, str] = {}
@@ -930,6 +932,7 @@ def _method(bound: Bound, name: str, *, asynchronous: bool = False) -> str:
 
 
 def render_resources(spec: JsonObject) -> dict[str, str]:
+    spec = cast(JsonObject, order_openapi(spec))
     check_naming(spec)
     index = cast(dict[str, str], json.loads((SDK_SRC / "_generated/schema_index.json").read_text()))
     tree = ast.parse((SDK_SRC / "_generated/models.py").read_text())

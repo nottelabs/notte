@@ -11,11 +11,11 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 ```typescript
 export type TabSessionDebugResponse = {
-    metadata: TabsData;
     /**
      * Debug Url
      */
     debug_url: string;
+    metadata: TabsData;
     /**
      * Ws Url
      */
@@ -25,11 +25,11 @@ export type TabSessionDebugResponse = {
 
 ## Fields
 
-<ParamField body="metadata" type={"TabsData"} required>
+<ParamField body="debug_url" type={"string"} required>
 
 </ParamField>
 
-<ParamField body="debug_url" type={"string"} required>
+<ParamField body="metadata" type={"TabsData"} required>
 
 </ParamField>
 

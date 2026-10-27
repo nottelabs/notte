@@ -12,9 +12,9 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type TailnetProxy = {
     /**
-     * Type
+     * Exit Node
      */
-    type?: 'tailnet';
+    exit_node?: string | null;
     /**
      * Oauth Client Id
      */
@@ -24,15 +24,15 @@ export type TailnetProxy = {
      */
     oauth_client_secret?: string | null;
     /**
-     * Exit Node
+     * Type
      */
-    exit_node?: string | null;
+    type?: 'tailnet';
 };
 ```
 
 ## Fields
 
-<ParamField body="type" type={"\"tailnet\" | undefined"}>
+<ParamField body="exit_node" type={"string | null | undefined"}>
 
 </ParamField>
 
@@ -44,6 +44,6 @@ export type TailnetProxy = {
 
 </ParamField>
 
-<ParamField body="exit_node" type={"string | null | undefined"}>
+<ParamField body="type" type={"\"tailnet\" | undefined"}>
 
 </ParamField>

@@ -72,7 +72,7 @@ send them in cleartext before the response can be inspected, so by default
 redirects are not followed and a redirected response throws.
 </ParamField>
 
-<ParamField body="redirect" type={"\"error\" | \"manual\" | \"follow\" | undefined"}>
+<ParamField body="redirect" type={"\"manual\" | \"error\" | \"follow\" | undefined"}>
 Browser `fetch` redirect mode. Defaults to `manual` (a redirect throws)
 unless `allowInsecure` is set, in which case redirects are followed like
 the Python SDK does.

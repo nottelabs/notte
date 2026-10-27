@@ -16,10 +16,6 @@ export type SessionFilesPage = {
      */
     files: Array<SessionFile>;
     /**
-     * Total
-     */
-    total: number;
-    /**
      * Limit
      */
     limit: number;
@@ -27,6 +23,10 @@ export type SessionFilesPage = {
      * Offset
      */
     offset: number;
+    /**
+     * Total
+     */
+    total: number;
 };
 ```
 
@@ -36,15 +36,15 @@ export type SessionFilesPage = {
 
 </ParamField>
 
-<ParamField body="total" type={"number"} required>
-
-</ParamField>
-
 <ParamField body="limit" type={"number"} required>
 
 </ParamField>
 
 <ParamField body="offset" type={"number"} required>
+
+</ParamField>
+
+<ParamField body="total" type={"number"} required>
 
 </ParamField>
 

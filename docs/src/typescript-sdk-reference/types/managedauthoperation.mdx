@@ -12,13 +12,45 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type ManagedAuthOperation = {
     /**
-     * Id
+     * Attempt
      */
-    id: string;
+    attempt?: number;
+    /**
+     * Auth Retry
+     */
+    auth_retry?: number;
+    /**
+     * Authenticated
+     */
+    authenticated?: boolean | null;
     /**
      * Connection Id
      */
     connection_id: string;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Deadline
+     */
+    deadline: string;
+    /**
+     * Error
+     */
+    error?: string | null;
+    /**
+     * Failure Code
+     */
+    failure_code?: string | null;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Phase
+     */
+    phase: string;
     /**
      * Session Id
      */
@@ -32,38 +64,6 @@ export type ManagedAuthOperation = {
      */
     status: 'pending' | 'running' | 'succeeded' | 'failed' | 'cancelled';
     /**
-     * Phase
-     */
-    phase: string;
-    /**
-     * Attempt
-     */
-    attempt?: number;
-    /**
-     * Auth Retry
-     */
-    auth_retry?: number;
-    /**
-     * Authenticated
-     */
-    authenticated?: boolean | null;
-    /**
-     * Failure Code
-     */
-    failure_code?: string | null;
-    /**
-     * Error
-     */
-    error?: string | null;
-    /**
-     * Deadline
-     */
-    deadline: string;
-    /**
-     * Created At
-     */
-    created_at: string;
-    /**
      * Updated At
      */
     updated_at: string;
@@ -71,30 +71,6 @@ export type ManagedAuthOperation = {
 ```
 
 ## Fields
-
-<ParamField body="id" type={"string"} required>
-
-</ParamField>
-
-<ParamField body="connection_id" type={"string"} required>
-
-</ParamField>
-
-<ParamField body="session_id" type={"string | null | undefined"}>
-
-</ParamField>
-
-<ParamField body="source" type={"string"} required>
-
-</ParamField>
-
-<ParamField body="status" type={"\"failed\" | \"cancelled\" | \"pending\" | \"running\" | \"succeeded\""} required>
-
-</ParamField>
-
-<ParamField body="phase" type={"string"} required>
-
-</ParamField>
 
 <ParamField body="attempt" type={"number | undefined"}>
 
@@ -108,11 +84,11 @@ export type ManagedAuthOperation = {
 
 </ParamField>
 
-<ParamField body="failure_code" type={"string | null | undefined"}>
+<ParamField body="connection_id" type={"string"} required>
 
 </ParamField>
 
-<ParamField body="error" type={"string | null | undefined"}>
+<ParamField body="created_at" type={"string"} required>
 
 </ParamField>
 
@@ -120,7 +96,31 @@ export type ManagedAuthOperation = {
 
 </ParamField>
 
-<ParamField body="created_at" type={"string"} required>
+<ParamField body="error" type={"string | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="failure_code" type={"string | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="id" type={"string"} required>
+
+</ParamField>
+
+<ParamField body="phase" type={"string"} required>
+
+</ParamField>
+
+<ParamField body="session_id" type={"string | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="source" type={"string"} required>
+
+</ParamField>
+
+<ParamField body="status" type={"\"failed\" | \"cancelled\" | \"pending\" | \"running\" | \"succeeded\""} required>
 
 </ParamField>
 

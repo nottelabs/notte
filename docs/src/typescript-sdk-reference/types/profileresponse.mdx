@@ -13,11 +13,11 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type ProfileResponse = {
     /**
-     * Profile Id
+     * Created At
      *
-     * Profile ID (format: `notte-profile-{16 hex chars}`)
+     * Profile creation timestamp
      */
-    profile_id: string;
+    created_at: string;
     /**
      * Name
      *
@@ -25,42 +25,42 @@ export type ProfileResponse = {
      */
     name: string | null;
     /**
-     * Created At
-     *
-     * Profile creation timestamp
+     * Persisted Domains
      */
-    created_at: string;
+    persisted_domains?: Array<string>;
+    /**
+     * Profile Id
+     *
+     * Profile ID (format: `notte-profile-{16 hex chars}`)
+     */
+    profile_id: string;
     /**
      * Updated At
      *
      * Profile last update timestamp
      */
     updated_at: string;
-    /**
-     * Persisted Domains
-     */
-    persisted_domains?: Array<string>;
 };
 ```
 
 ## Fields
 
-<ParamField body="profile_id" type={"string"} required>
-Profile ID (format: `notte-profile-{16 hex chars}`)
+<ParamField body="created_at" type={"string"} required>
+Profile creation timestamp
 </ParamField>
 
 <ParamField body="name" type={"string | null"} required>
 Profile name
 </ParamField>
 
-<ParamField body="created_at" type={"string"} required>
-Profile creation timestamp
+<ParamField body="persisted_domains" type={"string[] | undefined"}>
+List of domains with persisted browser state (cookies, localStorage, sessionStorage).
+</ParamField>
+
+<ParamField body="profile_id" type={"string"} required>
+Profile ID (format: `notte-profile-{16 hex chars}`)
 </ParamField>
 
 <ParamField body="updated_at" type={"string"} required>
 Profile last update timestamp
-</ParamField>
-
-<ParamField body="persisted_domains" type={"string[] | undefined"}>
-List of domains with persisted browser state (cookies, localStorage, sessionStorage).
 </ParamField>

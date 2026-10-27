@@ -24,13 +24,13 @@ export type UpdateFunctionRunResponse = {
      */
     function_run_id: string;
     /**
-     * Updated At
-     */
-    updated_at: string;
-    /**
      * Status
      */
     status?: 'updated' | 'stopped';
+    /**
+     * Updated At
+     */
+    updated_at: string;
     /**
      * Workflow Id
      */
@@ -52,11 +52,11 @@ The ID of the function
 The ID of the function run
 </ParamField>
 
-<ParamField body="updated_at" type={"string"} required>
+<ParamField body="status" type={"\"updated\" | \"stopped\" | undefined"}>
 
 </ParamField>
 
-<ParamField body="status" type={"\"updated\" | \"stopped\" | undefined"}>
+<ParamField body="updated_at" type={"string"} required>
 
 </ParamField>
 

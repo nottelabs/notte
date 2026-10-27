@@ -12,10 +12,6 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type GotoAction = {
     /**
-     * Type
-     */
-    type?: 'goto';
-    /**
      * Category
      */
     category?: string;
@@ -23,6 +19,10 @@ export type GotoAction = {
      * Description
      */
     description?: string;
+    /**
+     * Type
+     */
+    type?: 'goto';
     /**
      * Url
      */
@@ -36,15 +36,15 @@ export type GotoAction = {
 
 ## Fields
 
-<ParamField body="type" type={"\"goto\" | undefined"}>
-
-</ParamField>
-
 <ParamField body="category" type={"string | undefined"}>
 
 </ParamField>
 
 <ParamField body="description" type={"string | undefined"}>
+
+</ParamField>
+
+<ParamField body="type" type={"\"goto\" | undefined"}>
 
 </ParamField>
 

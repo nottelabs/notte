@@ -12,9 +12,9 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type CheckActionInput = {
     /**
-     * Type
+     * Accessible Name
      */
-    type?: 'check';
+    accessible_name?: string | null;
     /**
      * Category
      */
@@ -27,29 +27,29 @@ export type CheckActionInput = {
      * Id
      */
     id?: string;
-    /**
-     * Selector
-     */
-    selector?: string | NodeSelectors | null;
+    param?: ActionParameter | null;
     /**
      * Press Enter
      */
     press_enter?: boolean | null;
     /**
+     * Selector
+     */
+    selector?: string | NodeSelectors | null;
+    /**
      * Text Label
      */
     text_label?: string | null;
-    /**
-     * Accessible Name
-     */
-    accessible_name?: string | null;
-    param?: ActionParameter | null;
     /**
      * Timeout
      *
      * Action timeout in milliseconds
      */
     timeout?: number;
+    /**
+     * Type
+     */
+    type?: 'check';
     /**
      * Value
      */
@@ -59,7 +59,7 @@ export type CheckActionInput = {
 
 ## Fields
 
-<ParamField body="type" type={"\"check\" | undefined"}>
+<ParamField body="accessible_name" type={"string | null | undefined"}>
 
 </ParamField>
 
@@ -75,7 +75,7 @@ export type CheckActionInput = {
 
 </ParamField>
 
-<ParamField body="selector" type={"string | NodeSelectors | null | undefined"}>
+<ParamField body="param" type={"ActionParameter | null | undefined"}>
 
 </ParamField>
 
@@ -83,20 +83,20 @@ export type CheckActionInput = {
 
 </ParamField>
 
+<ParamField body="selector" type={"string | NodeSelectors | null | undefined"}>
+
+</ParamField>
+
 <ParamField body="text_label" type={"string | null | undefined"}>
-
-</ParamField>
-
-<ParamField body="accessible_name" type={"string | null | undefined"}>
-
-</ParamField>
-
-<ParamField body="param" type={"ActionParameter | null | undefined"}>
 
 </ParamField>
 
 <ParamField body="timeout" type={"number | undefined"}>
 Action timeout in milliseconds
+</ParamField>
+
+<ParamField body="type" type={"\"check\" | undefined"}>
+
 </ParamField>
 
 <ParamField body="value" type={"boolean"} required>

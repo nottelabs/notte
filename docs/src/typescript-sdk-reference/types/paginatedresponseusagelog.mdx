@@ -12,6 +12,14 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type PaginatedResponseUsageLog = {
     /**
+     * Has Next
+     */
+    has_next: boolean;
+    /**
+     * Has Previous
+     */
+    readonly has_previous: boolean;
+    /**
      * Items
      */
     items: Array<UsageLog>;
@@ -23,18 +31,18 @@ export type PaginatedResponseUsageLog = {
      * Page Size
      */
     page_size: number;
-    /**
-     * Has Next
-     */
-    has_next: boolean;
-    /**
-     * Has Previous
-     */
-    readonly has_previous: boolean;
 };
 ```
 
 ## Fields
+
+<ParamField body="has_next" type={"boolean"} required>
+
+</ParamField>
+
+<ParamField body="has_previous" type={"boolean"} required>
+
+</ParamField>
 
 <ParamField body="items" type={"UsageLog[]"} required>
 
@@ -45,14 +53,6 @@ export type PaginatedResponseUsageLog = {
 </ParamField>
 
 <ParamField body="page_size" type={"number"} required>
-
-</ParamField>
-
-<ParamField body="has_next" type={"boolean"} required>
-
-</ParamField>
-
-<ParamField body="has_previous" type={"boolean"} required>
 
 </ParamField>
 

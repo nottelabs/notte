@@ -12,9 +12,9 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type ClickActionOutput = {
     /**
-     * Type
+     * Accessible Name
      */
-    type?: 'click';
+    accessible_name?: string | null;
     /**
      * Category
      */
@@ -28,33 +28,33 @@ export type ClickActionOutput = {
      */
     id?: string;
     /**
-     * Selector
-     */
-    selector?: string | NodeSelectors | null;
-    /**
      * Press Enter
      */
     press_enter?: boolean | null;
     /**
+     * Selector
+     */
+    selector?: string | NodeSelectors | null;
+    /**
      * Text Label
      */
     text_label?: string | null;
-    /**
-     * Accessible Name
-     */
-    accessible_name?: string | null;
     /**
      * Timeout
      *
      * Action timeout in milliseconds
      */
     timeout?: number;
+    /**
+     * Type
+     */
+    type?: 'click';
 };
 ```
 
 ## Fields
 
-<ParamField body="type" type={"\"click\" | undefined"}>
+<ParamField body="accessible_name" type={"string | null | undefined"}>
 
 </ParamField>
 
@@ -70,11 +70,11 @@ export type ClickActionOutput = {
 
 </ParamField>
 
-<ParamField body="selector" type={"string | NodeSelectors | null | undefined"}>
+<ParamField body="press_enter" type={"boolean | null | undefined"}>
 
 </ParamField>
 
-<ParamField body="press_enter" type={"boolean | null | undefined"}>
+<ParamField body="selector" type={"string | NodeSelectors | null | undefined"}>
 
 </ParamField>
 
@@ -82,12 +82,12 @@ export type ClickActionOutput = {
 
 </ParamField>
 
-<ParamField body="accessible_name" type={"string | null | undefined"}>
-
-</ParamField>
-
 <ParamField body="timeout" type={"number | undefined"}>
 Action timeout in milliseconds
+</ParamField>
+
+<ParamField body="type" type={"\"click\" | undefined"}>
+
 </ParamField>
 
 ## Related types

@@ -242,6 +242,14 @@ add or remove entries in the same change as the spec. The scheduled
 contract check fails. Fix it on `chore/bump-openapi`. Scheduled runs leave
 that PR alone once it has manual commits.
 
+OpenAPI fetch and all generators normalize JSON object keys before generation.
+`scripts/openapi_order.py` and `node-sdk/scripts/openapi-order.js` use ECMAScript
+key order (integer indices first, then UTF-16 lexical order), preserving all array
+positions. `tests/data/openapi-order` fixes the cross-language ordering policy.
+Generated model/type headers hash normalized schemas, so field constraints and
+defaults remain visible to exact drift checks. Regenerate with `make sdk-generate-all`
+when changing this policy, including its one-time artifact normalization.
+
 ## Sync facades
 
 Synchronous wrappers over async operations use `notte_core._sync.run_sync`, which

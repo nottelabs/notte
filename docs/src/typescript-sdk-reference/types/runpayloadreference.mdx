@@ -12,13 +12,13 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type RunPayloadReference = {
     /**
-     * Size Bytes
-     */
-    size_bytes: number;
-    /**
      * Sha256
      */
     sha256: string;
+    /**
+     * Size Bytes
+     */
+    size_bytes: number;
     /**
      * Upload Id
      */
@@ -28,11 +28,11 @@ export type RunPayloadReference = {
 
 ## Fields
 
-<ParamField body="size_bytes" type={"number"} required>
+<ParamField body="sha256" type={"string"} required>
 
 </ParamField>
 
-<ParamField body="sha256" type={"string"} required>
+<ParamField body="size_bytes" type={"number"} required>
 
 </ParamField>
 

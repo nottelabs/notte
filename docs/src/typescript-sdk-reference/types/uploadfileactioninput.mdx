@@ -12,9 +12,9 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type UploadFileActionInput = {
     /**
-     * Type
+     * Accessible Name
      */
-    type?: 'upload_file';
+    accessible_name?: string | null;
     /**
      * Category
      */
@@ -24,26 +24,26 @@ export type UploadFileActionInput = {
      */
     description?: string;
     /**
+     * File Path
+     */
+    file_path: string;
+    /**
      * Id
      */
     id?: string;
-    /**
-     * Selector
-     */
-    selector?: string | NodeSelectors | null;
+    param?: ActionParameter | null;
     /**
      * Press Enter
      */
     press_enter?: boolean | null;
     /**
+     * Selector
+     */
+    selector?: string | NodeSelectors | null;
+    /**
      * Text Label
      */
     text_label?: string | null;
-    /**
-     * Accessible Name
-     */
-    accessible_name?: string | null;
-    param?: ActionParameter | null;
     /**
      * Timeout
      *
@@ -51,15 +51,15 @@ export type UploadFileActionInput = {
      */
     timeout?: number;
     /**
-     * File Path
+     * Type
      */
-    file_path: string;
+    type?: 'upload_file';
 };
 ```
 
 ## Fields
 
-<ParamField body="type" type={"\"upload_file\" | undefined"}>
+<ParamField body="accessible_name" type={"string | null | undefined"}>
 
 </ParamField>
 
@@ -71,23 +71,11 @@ export type UploadFileActionInput = {
 
 </ParamField>
 
+<ParamField body="file_path" type={"string"} required>
+
+</ParamField>
+
 <ParamField body="id" type={"string | undefined"}>
-
-</ParamField>
-
-<ParamField body="selector" type={"string | NodeSelectors | null | undefined"}>
-
-</ParamField>
-
-<ParamField body="press_enter" type={"boolean | null | undefined"}>
-
-</ParamField>
-
-<ParamField body="text_label" type={"string | null | undefined"}>
-
-</ParamField>
-
-<ParamField body="accessible_name" type={"string | null | undefined"}>
 
 </ParamField>
 
@@ -95,11 +83,23 @@ export type UploadFileActionInput = {
 
 </ParamField>
 
+<ParamField body="press_enter" type={"boolean | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="selector" type={"string | NodeSelectors | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="text_label" type={"string | null | undefined"}>
+
+</ParamField>
+
 <ParamField body="timeout" type={"number | undefined"}>
 Action timeout in milliseconds
 </ParamField>
 
-<ParamField body="file_path" type={"string"} required>
+<ParamField body="type" type={"\"upload_file\" | undefined"}>
 
 </ParamField>
 

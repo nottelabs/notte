@@ -20,8 +20,24 @@ export type GlobalScrapeOptions<T = unknown> = Omit<GlobalScrapeRequest, 'url' |
 
 ## Fields
 
+<ParamField body="auth_ids" type={"string[] | undefined"}>
+Managed Auth connection IDs to verify and, when necessary, authenticate inside this session before it is returned.
+</ParamField>
+
+<ParamField body="browser_type" type={"\"chromium\" | \"chrome\" | \"chrome-nightly\" | \"chrome-turbo\" | undefined"}>
+The browser type to use. Supported values are chromium and chrome. chrome-nightly and chrome-turbo are legacy aliases for chrome.
+</ParamField>
+
+<ParamField body="cdp_url" type={"string | null | undefined"}>
+The CDP URL of another remote session provider.
+</ParamField>
+
 <ParamField body="idle_timeout_minutes" type={"number | undefined"}>
 Idle timeout in minutes. Session closes after this period of inactivity (resets on each operation).
+</ParamField>
+
+<ParamField body="log_session" type={"boolean | undefined"}>
+Save browser session logs. False permanently disables saved logs, without disabling metering.
 </ParamField>
 
 <ParamField body="max_duration_minutes" type={"number | undefined"}>
@@ -32,44 +48,28 @@ Maximum session lifetime in minutes (absolute maximum, not affected by activity)
 List of custom proxies to use for the session. If True, the default proxies will be used.
 </ParamField>
 
-<ParamField body="browser_type" type={"\"chromium\" | \"chrome\" | \"chrome-nightly\" | \"chrome-turbo\" | undefined"}>
-The browser type to use. Supported values are chromium and chrome. chrome-nightly and chrome-turbo are legacy aliases for chrome.
-</ParamField>
-
-<ParamField body="user_agent" type={"string | null | undefined"}>
-The user agent to use for the session
-</ParamField>
-
-<ParamField body="viewport_width" type={"number | null | undefined"}>
-Viewport width in pixels (minimum 500). Set together with viewport_height.
-</ParamField>
-
-<ParamField body="viewport_height" type={"number | null | undefined"}>
-Viewport height in pixels (minimum 500). Set together with viewport_width.
+<ParamField body="record_session" type={"boolean | undefined"}>
+Save session replay. False permanently disables saved replay; Live View remains available.
 </ParamField>
 
 <ParamField body="solve_captchas" type={"boolean | undefined"}>
 Whether to try to automatically solve captchas
 </ParamField>
 
-<ParamField body="cdp_url" type={"string | null | undefined"}>
-The CDP URL of another remote session provider.
+<ParamField body="user_agent" type={"string | null | undefined"}>
+The user agent to use for the session
+</ParamField>
+
+<ParamField body="viewport_height" type={"number | null | undefined"}>
+Viewport height in pixels (minimum 500). Set together with viewport_width.
+</ParamField>
+
+<ParamField body="viewport_width" type={"number | null | undefined"}>
+Viewport width in pixels (minimum 500). Set together with viewport_height.
 </ParamField>
 
 <ParamField body="web_bot_auth" type={"boolean | undefined"}>
 Whether to use web bot authentication.
-</ParamField>
-
-<ParamField body="auth_ids" type={"string[] | undefined"}>
-Managed Auth connection IDs to verify and, when necessary, authenticate inside this session before it is returned.
-</ParamField>
-
-<ParamField body="record_session" type={"boolean | undefined"}>
-Save session replay. False permanently disables saved replay; Live View remains available.
-</ParamField>
-
-<ParamField body="log_session" type={"boolean | undefined"}>
-Save browser session logs. False permanently disables saved logs, without disabling metering.
 </ParamField>
 
 <ParamField body="vault_id" type={"string | null | undefined"}>
@@ -80,20 +80,16 @@ The vault to use for the session
 
 </ParamField>
 
+<ParamField body="ignored_tags" type={"string[] | null | undefined"}>
+HTML tags to ignore from the page
+</ParamField>
+
 <ParamField body="instructions" type={"string | null | undefined"}>
 Additional instructions to use for the scrape. E.g. 'Extract only the title, date and content of the articles.'
 </ParamField>
 
 <ParamField body="only_main_content" type={"boolean | undefined"}>
 Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded.
-</ParamField>
-
-<ParamField body="selector" type={"string | null | undefined"}>
-Playwright selector to scope the scrape to. Only content inside this selector will be scraped.
-</ParamField>
-
-<ParamField body="scrape_links" type={"boolean | undefined"}>
-Whether to scrape links from the page. Links are scraped by default.
 </ParamField>
 
 <ParamField body="scrape_images" type={"boolean | undefined"}>
@@ -104,8 +100,12 @@ Image scraping was removed; true returns 422.
 
 </ParamField>
 
-<ParamField body="ignored_tags" type={"string[] | null | undefined"}>
-HTML tags to ignore from the page
+<ParamField body="scrape_links" type={"boolean | undefined"}>
+Whether to scrape links from the page. Links are scraped by default.
+</ParamField>
+
+<ParamField body="selector" type={"string | null | undefined"}>
+Playwright selector to scope the scrape to. Only content inside this selector will be scraped.
 </ParamField>
 
 <ParamField body="model" type={"string | null | undefined"}>
@@ -116,28 +116,28 @@ Model used for structured extraction. Canonical OpenRouter ids: google/gemini-3.
 Whether to use link/image placeholders to reduce the number of tokens in the prompt and hallucinations. However this is an experimental feature and might not work as expected.
 </ParamField>
 
-<ParamField body="chrome_args" type={"string[] | null | undefined"}>
-Overwrite the chrome instance arguments
+<ParamField body="advanced_stealth" type={"boolean | undefined"}>
+Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.
 </ParamField>
 
 <ParamField body="aspect_ratio" type={"\"5:4\" | \"16:9\" | null | undefined"}>
 Viewport shape preset. When set, the backend fits the largest rectangle of this aspect ratio inside the sampled available screen area. Cannot be combined with explicit viewport_width/viewport_height.
 </ParamField>
 
-<ParamField body="profile" type={"SessionProfile | null | undefined"}>
-Browser profile configuration for state persistence
+<ParamField body="block_ads" type={"boolean | undefined"}>
+Block ads and trackers in managed browsers using Basic filtering. Set false to disable. Does not configure externally supplied CDP browsers.
+</ParamField>
+
+<ParamField body="chrome_args" type={"string[] | null | undefined"}>
+Overwrite the chrome instance arguments
 </ParamField>
 
 <ParamField body="extra_http_headers" type={"{ [key: string]: string; } | null | undefined"}>
 Extra HTTP headers to be sent with every request.
 </ParamField>
 
-<ParamField body="block_ads" type={"boolean | undefined"}>
-Block ads and trackers in managed browsers using Basic filtering. Set false to disable. Does not configure externally supplied CDP browsers.
-</ParamField>
-
-<ParamField body="advanced_stealth" type={"boolean | undefined"}>
-Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.
+<ParamField body="profile" type={"SessionProfile | null | undefined"}>
+Browser profile configuration for state persistence
 </ParamField>
 
 <ParamField body="screenshot_type" type={"\"raw\" | \"full\" | \"last_action\" | undefined"}>

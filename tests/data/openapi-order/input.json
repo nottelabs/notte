@@ -1,0 +1,144 @@
+{
+  "paths": {
+    "/z": {
+      "post": {
+        "operationId": "create_zebra",
+        "responses": {
+          "200": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Zebra"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Zebra"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/a": {
+      "get": {
+        "operationId": "get_alpha",
+        "responses": {
+          "200": {
+            "description": "Read",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Alpha"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "openapi": "3.1.0",
+  "info": {
+    "version": "1",
+    "title": "Ordering fixture"
+  },
+  "components": {
+    "schemas": {
+      "Zebra": {
+        "type": "object",
+        "properties": {
+          "z": {
+            "type": "string",
+            "default": "last"
+          },
+          "a": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "z",
+          "a"
+        ]
+      },
+      "Alpha": {
+        "type": "array",
+        "prefixItems": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "integer"
+          }
+        ],
+        "examples": [
+          [
+            "second",
+            2
+          ],
+          [
+            "first",
+            1
+          ]
+        ]
+      }
+    }
+  },
+  "x-order": {
+    "z": 1,
+    "10": 10,
+    "2": 2,
+    "01": 1,
+    "4294967295": 0,
+    "__proto__": {
+      "z": 1,
+      "a": 2
+    },
+    "😀": 1,
+    "": 2
+  },
+  "servers": [
+    {
+      "url": "https://us-staging.notte.cc"
+    }
+  ],
+  "x-arrays": {
+    "enum": [
+      "z",
+      "a"
+    ],
+    "anyOf": [
+      {
+        "type": "string"
+      },
+      {
+        "type": "null"
+      }
+    ],
+    "examples": [
+      {
+        "z": [
+          2,
+          1
+        ],
+        "a": true
+      },
+      [
+        "z",
+        "a"
+      ]
+    ],
+    "default": [
+      "z",
+      "a"
+    ]
+  }
+}

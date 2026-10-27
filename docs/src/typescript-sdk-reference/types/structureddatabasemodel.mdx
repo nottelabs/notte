@@ -12,11 +12,11 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type StructuredDataBaseModel = {
     /**
-     * Success
+     * Data
      *
-     * Whether the data was extracted successfully
+     * Structured data extracted from the page in JSON format
      */
-    success?: boolean;
+    data?: BaseModel | RootModelAny | null;
     /**
      * Error
      *
@@ -24,26 +24,26 @@ export type StructuredDataBaseModel = {
      */
     error?: string | null;
     /**
-     * Data
+     * Success
      *
-     * Structured data extracted from the page in JSON format
+     * Whether the data was extracted successfully
      */
-    data?: BaseModel | RootModelAny | null;
+    success?: boolean;
 };
 ```
 
 ## Fields
 
-<ParamField body="success" type={"boolean | undefined"}>
-Whether the data was extracted successfully
+<ParamField body="data" type={"unknown"}>
+Structured data extracted from the page in JSON format
 </ParamField>
 
 <ParamField body="error" type={"string | null | undefined"}>
 Error message if the data was not extracted successfully
 </ParamField>
 
-<ParamField body="data" type={"unknown"}>
-Structured data extracted from the page in JSON format
+<ParamField body="success" type={"boolean | undefined"}>
+Whether the data was extracted successfully
 </ParamField>
 
 ## Related types

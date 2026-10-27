@@ -152,6 +152,7 @@ class RoutingTests(unittest.TestCase):
             "node-sdk/src/resources.gen.ts",
             "node-sdk/src/proxy/patterns.ts",
             "node-sdk/scripts/normalize-generated.js",
+            "node-sdk/scripts/openapi-order.js",
             "node-sdk/openapi-ts.config.ts",
             "node-sdk/package.json",
             "node-sdk/package-lock.json",

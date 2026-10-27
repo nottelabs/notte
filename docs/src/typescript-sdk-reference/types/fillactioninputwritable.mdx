@@ -14,13 +14,17 @@ FillAction
 ```typescript
 export type FillActionInputWritable = {
     /**
-     * Type
+     * Accessible Name
      */
-    type?: 'fill';
+    accessible_name?: string | null;
     /**
      * Category
      */
     category?: string;
+    /**
+     * Clear Before Fill
+     */
+    clear_before_fill?: boolean;
     /**
      * Description
      */
@@ -29,23 +33,19 @@ export type FillActionInputWritable = {
      * Id
      */
     id?: string;
-    /**
-     * Selector
-     */
-    selector?: string | NodeSelectors | null;
+    param?: ActionParameter | null;
     /**
      * Press Enter
      */
     press_enter?: boolean | null;
     /**
+     * Selector
+     */
+    selector?: string | NodeSelectors | null;
+    /**
      * Text Label
      */
     text_label?: string | null;
-    /**
-     * Accessible Name
-     */
-    accessible_name?: string | null;
-    param?: ActionParameter | null;
     /**
      * Timeout
      *
@@ -53,23 +53,27 @@ export type FillActionInputWritable = {
      */
     timeout?: number;
     /**
+     * Type
+     */
+    type?: 'fill';
+    /**
      * Value
      */
     value: string | string;
-    /**
-     * Clear Before Fill
-     */
-    clear_before_fill?: boolean;
 };
 ```
 
 ## Fields
 
-<ParamField body="type" type={"\"fill\" | undefined"}>
+<ParamField body="accessible_name" type={"string | null | undefined"}>
 
 </ParamField>
 
 <ParamField body="category" type={"string | undefined"}>
+
+</ParamField>
+
+<ParamField body="clear_before_fill" type={"boolean | undefined"}>
 
 </ParamField>
 
@@ -81,7 +85,7 @@ export type FillActionInputWritable = {
 
 </ParamField>
 
-<ParamField body="selector" type={"string | NodeSelectors | null | undefined"}>
+<ParamField body="param" type={"ActionParameter | null | undefined"}>
 
 </ParamField>
 
@@ -89,15 +93,11 @@ export type FillActionInputWritable = {
 
 </ParamField>
 
+<ParamField body="selector" type={"string | NodeSelectors | null | undefined"}>
+
+</ParamField>
+
 <ParamField body="text_label" type={"string | null | undefined"}>
-
-</ParamField>
-
-<ParamField body="accessible_name" type={"string | null | undefined"}>
-
-</ParamField>
-
-<ParamField body="param" type={"ActionParameter | null | undefined"}>
 
 </ParamField>
 
@@ -105,11 +105,11 @@ export type FillActionInputWritable = {
 Action timeout in milliseconds
 </ParamField>
 
-<ParamField body="value" type={"string"} required>
+<ParamField body="type" type={"\"fill\" | undefined"}>
 
 </ParamField>
 
-<ParamField body="clear_before_fill" type={"boolean | undefined"}>
+<ParamField body="value" type={"string"} required>
 
 </ParamField>
 

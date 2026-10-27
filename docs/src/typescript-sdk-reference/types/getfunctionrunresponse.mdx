@@ -17,15 +17,15 @@ export type GetFunctionRunResponse = Omit<ApiGetFunctionRunResponse, 'payloads' 
 
 ## Fields
 
-<ParamField body="session_id" type={"string | null | undefined"}>
-The ID of the session
-</ParamField>
-
 <ParamField body="created_at" type={"string"} required>
 
 </ParamField>
 
-<ParamField body="status" type={"\"failed\" | \"closed\" | \"active\""} required>
+<ParamField body="session_id" type={"string | null | undefined"}>
+The ID of the session
+</ParamField>
+
+<ParamField body="status" type={"\"active\" | \"closed\" | \"failed\""} required>
 
 </ParamField>
 
@@ -57,7 +57,7 @@ The ID of the function run
 
 </ParamField>
 
-<ParamField body="updated_at" type={"string"} required>
+<ParamField body="function_version" type={"string | null | undefined"}>
 
 </ParamField>
 
@@ -65,11 +65,11 @@ The ID of the function run
 Whether the function has been run locally or on the cloud
 </ParamField>
 
-<ParamField body="function_version" type={"string | null | undefined"}>
+<ParamField body="stopped_at" type={"string | null | undefined"}>
 
 </ParamField>
 
-<ParamField body="stopped_at" type={"string | null | undefined"}>
+<ParamField body="updated_at" type={"string"} required>
 
 </ParamField>
 

@@ -18,12 +18,6 @@ export type SmsResponse = {
      */
     body: string;
     /**
-     * Sms Id
-     *
-     * SMS UUID
-     */
-    sms_id: string;
-    /**
      * Created At
      *
      * Creation date
@@ -35,6 +29,12 @@ export type SmsResponse = {
      * SMS sender phone number
      */
     sender: string | null;
+    /**
+     * Sms Id
+     *
+     * SMS UUID
+     */
+    sms_id: string;
 };
 ```
 
@@ -44,14 +44,14 @@ export type SmsResponse = {
 SMS message body
 </ParamField>
 
-<ParamField body="sms_id" type={"string"} required>
-SMS UUID
-</ParamField>
-
 <ParamField body="created_at" type={"string"} required>
 Creation date
 </ParamField>
 
 <ParamField body="sender" type={"string | null"} required>
 SMS sender phone number
+</ParamField>
+
+<ParamField body="sms_id" type={"string"} required>
+SMS UUID
 </ParamField>

@@ -12,25 +12,25 @@ from notte_sdk._generated import models
 
 
 class NotteProxyDict(TypedDict):
-    type: NotRequired[Literal["notte"]]
-    id: NotRequired[str | None]
-    country: NotRequired[core.ProxyGeolocationCountry | None]
     city: NotRequired[str | None]
+    country: NotRequired[core.ProxyGeolocationCountry | None]
+    id: NotRequired[str | None]
+    type: NotRequired[Literal["notte"]]
 
 
 class ExternalProxyDict(TypedDict):
-    type: NotRequired[Literal["external"]]
-    server: Required[str]
-    username: NotRequired[str | None]
-    password: NotRequired[str | None]
     bypass: NotRequired[str | None]
+    password: NotRequired[str | None]
+    server: Required[str]
+    type: NotRequired[Literal["external"]]
+    username: NotRequired[str | None]
 
 
 class TailnetProxyDict(TypedDict):
-    type: NotRequired[Literal["tailnet"]]
+    exit_node: NotRequired[str | None]
     oauth_client_id: NotRequired[str | None]
     oauth_client_secret: NotRequired[str | None]
-    exit_node: NotRequired[str | None]
+    type: NotRequired[Literal["tailnet"]]
 
 
 class SessionProfileDict(TypedDict):
@@ -42,16 +42,16 @@ ProxySettingsDict = Annotated[NotteProxyDict | ExternalProxyDict | TailnetProxyD
 
 
 class RunPayloadUploadRequestDict(TypedDict):
-    size_bytes: Required[int]
     sha256: Required[str]
+    size_bytes: Required[int]
 
 
 class CreateFunctionRequestDict(TypedDict):
     "Request dictionary for creating a function.\n\nArgs:\n    path: The path to the function to upload."
 
+    description: NotRequired[str | None]
     path: Required[str]
     name: NotRequired[str | None]
-    description: NotRequired[str | None]
     shared: NotRequired[bool]
 
 
@@ -68,13 +68,13 @@ class GetFunctionRequestDict(TypedDict):
 
 class FunctionMetadataUpdateRequestDict(TypedDict):
     default_runtime: NotRequired[Literal["standard", "extended"] | None]
-    name: NotRequired[str | None]
     description: NotRequired[str | None]
     domain: NotRequired[str | None]
     instructions: NotRequired[str | None]
+    name: NotRequired[str | None]
+    response_format: NotRequired[dict[str, Any] | None]
     self_healing: NotRequired[bool | None]
     shared: NotRequired[bool | None]
-    response_format: NotRequired[dict[str, Any] | None]
 
 
 class FunctionRollbackRequestDict(TypedDict):
@@ -90,11 +90,11 @@ class FunctionRunGetMetadataParametersQueryDict(TypedDict):
 
 
 class FunctionRunUpdateRequestDict(TypedDict):
-    session_id: NotRequired[str | None]
     logs: NotRequired[list[str] | None]
-    variables: NotRequired[dict[str, Any] | None]
     result: NotRequired[Any | None]
+    session_id: NotRequired[str | None]
     status: NotRequired[Literal["closed", "active", "failed"]]
+    variables: NotRequired[dict[str, Any] | None]
 
 
 class FunctionRuntimeHealthParametersQueryDict(TypedDict):
@@ -123,9 +123,9 @@ class ListFunctionsRequestDict(TypedDict):
 class PaymentRequestDict(TypedDict):
     amount: Required[float | str]
     currency: Required[str]
-    merchant_url: Required[str]
-    merchant_name: Required[str]
     description: Required[str]
+    merchant_name: Required[str]
+    merchant_url: Required[str]
     mode: NotRequired[Literal["test", "live"]]
 
 
@@ -188,16 +188,26 @@ class SessionProfilePreviewParametersQueryDict(TypedDict):
 
 
 class SessionProfileSaveRequestDict(TypedDict):
-    profile_id: NotRequired[str | None]
     name: NotRequired[str | None]
+    profile_id: NotRequired[str | None]
 
 
 class SessionStartRequestDict(TypedDict):
     'Request dictionary for starting a session.\n\nArgs:\n    record_session: Defaults to true. Set to false at session creation to disable saved replay for the entire session. Live View remains available.\n    log_session: Defaults to true. Set to false at session creation to disable saved browser activity and network logs for the entire session. Usage metering remains available.\n    solve_captchas: Whether to try to automatically solve captchas\n    max_duration_minutes: Maximum session lifetime in minutes (absolute maximum).\n    idle_timeout_minutes: Idle timeout in minutes. Session closes after this period of inactivity.\n    proxies: List of custom proxies to use for the session. If True, the default proxies will be used.\n    browser_type: The browser type to use. Can be chromium or chrome.\n    user_agent: The user agent to use for the session\n    chrome_args: Overwrite the chrome instance arguments\n    viewport_width: The width of the viewport\n    viewport_height: The height of the viewport\n    aspect_ratio: Viewport shape preset ("5:4" or "16:9"). Cannot be combined with viewport_width/viewport_height.\n    cdp_url: The CDP URL of another remote session provider.\n    profile: Browser profile configuration for state persistence.\n    auth_ids: Up to 10 unique Managed Auth connection IDs. The API verifies them inline and can return an authenticating session while login continues.\n    wait_for_authentication: Defaults to True. The SDK waits for authentication readiness through short API calls before returning from start or entering a context manager. When False, start returns after inline verification; call wait_for_auth() or await_for_auth() before browser actions if login is pending.\n    auth_retry: Number of additional retries for transient managed-auth login failures, from 0 to 2. Each retry verifies the session again before submitting credentials. A blocked connection permits one explicit login attempt.'
 
-    solve_captchas: NotRequired[bool]
-    max_duration_minutes: NotRequired[int]
+    advanced_stealth: NotRequired[bool]
+    aspect_ratio: NotRequired[Literal["5:4", "16:9"] | None]
+    auth_ids: NotRequired[list[str]]
+    auth_retry: NotRequired[int]
+    block_ads: NotRequired[bool]
+    browser_type: NotRequired[config.BrowserType]
+    cdp_url: NotRequired[str | None]
+    chrome_args: NotRequired[list[str] | None]
+    extra_http_headers: NotRequired[dict[str, str] | None]
     idle_timeout_minutes: NotRequired[int]
+    log_session: NotRequired[bool]
+    max_duration_minutes: NotRequired[int]
+    profile: NotRequired[SessionProfileDict | core.SessionProfile | None]
     proxies: NotRequired[
         list[core.ProxySettings]
         | list[ProxySettingsDict]
@@ -205,24 +215,14 @@ class SessionStartRequestDict(TypedDict):
         | core.ProxyGeolocationCountry
         | core.ProxyGeolocationCountryCode
     ]
-    browser_type: NotRequired[config.BrowserType]
-    user_agent: NotRequired[str | None]
-    chrome_args: NotRequired[list[str] | None]
-    viewport_width: NotRequired[int | None]
-    viewport_height: NotRequired[int | None]
-    aspect_ratio: NotRequired[Literal["5:4", "16:9"] | None]
-    cdp_url: NotRequired[str | None]
-    profile: NotRequired[SessionProfileDict | core.SessionProfile | None]
-    web_bot_auth: NotRequired[bool]
-    extra_http_headers: NotRequired[dict[str, str] | None]
-    vault_id: NotRequired[str | None]
-    auth_ids: NotRequired[list[str]]
-    wait_for_authentication: NotRequired[bool]
-    auth_retry: NotRequired[int]
-    block_ads: NotRequired[bool]
-    advanced_stealth: NotRequired[bool]
     record_session: NotRequired[bool]
-    log_session: NotRequired[bool]
+    solve_captchas: NotRequired[bool]
+    user_agent: NotRequired[str | None]
+    vault_id: NotRequired[str | None]
+    viewport_height: NotRequired[int | None]
+    viewport_width: NotRequired[int | None]
+    wait_for_authentication: NotRequired[bool]
+    web_bot_auth: NotRequired[bool]
 
 
 class SessionStopRequestDict(TypedDict):
@@ -231,8 +231,8 @@ class SessionStopRequestDict(TypedDict):
 
 class FileExecutionRequestDict(TypedDict):
     action: Required[models.UploadFileActionInput | models.DownloadFileActionInput]
-    target_id: Required[str]
     record: NotRequired[bool]
+    target_id: Required[str]
 
 
 class ExecuteSessionFileParametersQueryDict(TypedDict):
@@ -254,8 +254,8 @@ class PersonaListRequestDict(TypedDict):
 class PersonaCreateRequestDict(TypedDict):
     "Request dictionary for creating a new persona."
 
-    create_vault: NotRequired[bool]
     create_phone_number: NotRequired[bool]
+    create_vault: NotRequired[bool]
     email_provider: NotRequired[Literal["notte", "agentmail", "resend"]]
     name: NotRequired[str | None]
 
@@ -274,8 +274,8 @@ class PersonaUpdateRequestDict(TypedDict):
 
 class ProfileCookiesImportRequestDict(TypedDict):
     cookies: Required[list[core.Cookie]]
-    source_format: NotRequired[Literal["playwright", "chrome"]]
     mode: NotRequired[Literal["replace", "append"]]
+    source_format: NotRequired[Literal["playwright", "chrome"]]
 
 
 class ProfileCreateRequestDict(TypedDict):
@@ -294,10 +294,10 @@ class ProfileListRequestDict(TypedDict):
 
 class ProfileStateImportRequestDict(TypedDict):
     cookies: NotRequired[list[core.Cookie] | None]
-    local_storage: NotRequired[dict[str, dict[str, str]] | None]
-    session_storage: NotRequired[dict[str, dict[str, str]] | None]
     domains: NotRequired[list[str] | None]
+    local_storage: NotRequired[dict[str, dict[str, str]] | None]
     mode: NotRequired[Literal["replace", "append"]]
+    session_storage: NotRequired[dict[str, dict[str, str]] | None]
     storage_scope: NotRequired[Literal["domains", "origins"]]
 
 
@@ -312,11 +312,11 @@ class VaultCreateRequestDict(TypedDict):
 
 
 class AddCredentialsRequestDict(TypedDict):
-    url: Required[str]
     email: NotRequired[str]
-    username: NotRequired[str]
-    password: Required[str]
     mfa_secret: NotRequired[str]
+    password: Required[str]
+    username: NotRequired[str]
+    url: Required[str]
 
 
 class DeleteCredentialsRequestDict(TypedDict):
@@ -328,10 +328,10 @@ class GetCredentialsRequestDict(TypedDict):
 
 
 class AddCreditCardRequestDict(TypedDict):
-    card_holder_name: Required[str]
-    card_number: Required[str]
     card_cvv: Required[str]
     card_full_expiration: Required[str]
+    card_holder_name: Required[str]
+    card_number: Required[str]
 
 
 class VaultUpdateRequestDict(TypedDict):
@@ -340,16 +340,16 @@ class VaultUpdateRequestDict(TypedDict):
 
 class CredentialsDict(TypedDict):
     email: NotRequired[str]
-    username: NotRequired[str]
-    password: Required[str]
     mfa_secret: NotRequired[str]
+    password: Required[str]
+    username: NotRequired[str]
 
 
 class CreditCardDict(TypedDict):
-    card_holder_name: Required[str]
-    card_number: Required[str]
     card_cvv: Required[str]
     card_full_expiration: Required[str]
+    card_holder_name: Required[str]
+    card_number: Required[str]
 
 
 class UpdateFunctionRequestDict(TypedDict):

@@ -14,9 +14,9 @@ This is an internal import alias for the API model `ScrollUpAction`. It is not e
 ```typescript
 type GeneratedScrollUpAction = {
     /**
-     * Type
+     * Amount
      */
-    type?: 'scroll_up';
+    amount?: number | null;
     /**
      * Category
      */
@@ -26,21 +26,21 @@ type GeneratedScrollUpAction = {
      */
     description?: string;
     /**
-     * Amount
-     */
-    amount?: number | null;
-    /**
      * Selector
      *
      * Optional selector for the scroll container, including iframe paths.
      */
     selector?: string | null;
+    /**
+     * Type
+     */
+    type?: 'scroll_up';
 };
 ```
 
 ## Fields
 
-<ParamField body="type" type={"\"scroll_up\" | undefined"}>
+<ParamField body="amount" type={"number | null | undefined"}>
 
 </ParamField>
 
@@ -52,10 +52,10 @@ type GeneratedScrollUpAction = {
 
 </ParamField>
 
-<ParamField body="amount" type={"number | null | undefined"}>
-
-</ParamField>
-
 <ParamField body="selector" type={"string | null | undefined"}>
 Optional selector for the scroll container, including iframe paths.
+</ParamField>
+
+<ParamField body="type" type={"\"scroll_up\" | undefined"}>
+
 </ParamField>

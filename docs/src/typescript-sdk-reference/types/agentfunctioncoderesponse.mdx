@@ -12,12 +12,6 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type AgentFunctionCodeResponse = {
     /**
-     * Python Script
-     *
-     * Python script to replicate agent steps
-     */
-    python_script: string;
-    /**
      * Json Actions
      *
      * Json actions to replicate agent steps
@@ -25,15 +19,21 @@ export type AgentFunctionCodeResponse = {
     json_actions: Array<{
         [key: string]: unknown;
     }>;
+    /**
+     * Python Script
+     *
+     * Python script to replicate agent steps
+     */
+    python_script: string;
 };
 ```
 
 ## Fields
 
-<ParamField body="python_script" type={"string"} required>
-Python script to replicate agent steps
-</ParamField>
-
 <ParamField body="json_actions" type={"{ [key: string]: unknown; }[]"} required>
 Json actions to replicate agent steps
+</ParamField>
+
+<ParamField body="python_script" type={"string"} required>
+Python script to replicate agent steps
 </ParamField>

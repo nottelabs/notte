@@ -16,7 +16,10 @@ GetFunctionRunResponse
 ```typescript
 type ApiGetFunctionRunResponseWritable = {
     artifact_sdk_generation?: FunctionSdkGeneration;
-    sdk_generation?: FunctionSdkGeneration;
+    /**
+     * Created At
+     */
+    created_at: string;
     /**
      * Function Id
      *
@@ -30,17 +33,40 @@ type ApiGetFunctionRunResponseWritable = {
      */
     function_run_id: string;
     /**
-     * Created At
+     * Function Version
      */
-    created_at: string;
+    function_version?: string | null;
     /**
-     * Updated At
+     * Local
+     *
+     * Whether the function has been run locally or on the cloud
      */
-    updated_at: string;
+    local?: boolean;
     /**
-     * Status
+     * Logs
+     *
+     * The logs of the function run
      */
-    status: 'closed' | 'active' | 'failed';
+    logs?: Array<string>;
+    /**
+     * Payload Urls
+     */
+    payload_urls?: {
+        [key: string]: string;
+    };
+    /**
+     * Payloads
+     */
+    payloads?: {
+        [key: string]: RunPayloadReference;
+    };
+    /**
+     * Result
+     *
+     * The result of the function run (if any)
+     */
+    result?: string | null;
+    sdk_generation?: FunctionSdkGeneration;
     /**
      * Session Id
      *
@@ -48,11 +74,17 @@ type ApiGetFunctionRunResponseWritable = {
      */
     session_id?: string | null;
     /**
-     * Logs
-     *
-     * The logs of the function run
+     * Status
      */
-    logs?: Array<string>;
+    status: 'closed' | 'active' | 'failed';
+    /**
+     * Stopped At
+     */
+    stopped_at?: string | null;
+    /**
+     * Updated At
+     */
+    updated_at: string;
     /**
      * Variables
      *
@@ -61,38 +93,6 @@ type ApiGetFunctionRunResponseWritable = {
     variables?: {
         [key: string]: unknown;
     } | null;
-    /**
-     * Result
-     *
-     * The result of the function run (if any)
-     */
-    result?: string | null;
-    /**
-     * Local
-     *
-     * Whether the function has been run locally or on the cloud
-     */
-    local?: boolean;
-    /**
-     * Function Version
-     */
-    function_version?: string | null;
-    /**
-     * Payloads
-     */
-    payloads?: {
-        [key: string]: RunPayloadReference;
-    };
-    /**
-     * Stopped At
-     */
-    stopped_at?: string | null;
-    /**
-     * Payload Urls
-     */
-    payload_urls?: {
-        [key: string]: string;
-    };
 };
 ```
 
@@ -102,7 +102,7 @@ type ApiGetFunctionRunResponseWritable = {
 
 </ParamField>
 
-<ParamField body="sdk_generation" type={"FunctionSdkGeneration | undefined"}>
+<ParamField body="created_at" type={"string"} required>
 
 </ParamField>
 
@@ -114,39 +114,19 @@ The ID of the function
 The ID of the function run
 </ParamField>
 
-<ParamField body="created_at" type={"string"} required>
+<ParamField body="function_version" type={"string | null | undefined"}>
 
-</ParamField>
-
-<ParamField body="updated_at" type={"string"} required>
-
-</ParamField>
-
-<ParamField body="status" type={"\"failed\" | \"closed\" | \"active\""} required>
-
-</ParamField>
-
-<ParamField body="session_id" type={"string | null | undefined"}>
-The ID of the session
-</ParamField>
-
-<ParamField body="logs" type={"string[] | undefined"}>
-The logs of the function run
-</ParamField>
-
-<ParamField body="variables" type={"{ [key: string]: unknown; } | null | undefined"}>
-The variables of the function run
-</ParamField>
-
-<ParamField body="result" type={"string | null | undefined"}>
-The result of the function run (if any)
 </ParamField>
 
 <ParamField body="local" type={"boolean | undefined"}>
 Whether the function has been run locally or on the cloud
 </ParamField>
 
-<ParamField body="function_version" type={"string | null | undefined"}>
+<ParamField body="logs" type={"string[] | undefined"}>
+The logs of the function run
+</ParamField>
+
+<ParamField body="payload_urls" type={"{ [key: string]: string; } | undefined"}>
 
 </ParamField>
 
@@ -154,12 +134,32 @@ Whether the function has been run locally or on the cloud
 
 </ParamField>
 
+<ParamField body="result" type={"string | null | undefined"}>
+The result of the function run (if any)
+</ParamField>
+
+<ParamField body="sdk_generation" type={"FunctionSdkGeneration | undefined"}>
+
+</ParamField>
+
+<ParamField body="session_id" type={"string | null | undefined"}>
+The ID of the session
+</ParamField>
+
+<ParamField body="status" type={"\"active\" | \"closed\" | \"failed\""} required>
+
+</ParamField>
+
 <ParamField body="stopped_at" type={"string | null | undefined"}>
 
 </ParamField>
 
-<ParamField body="payload_urls" type={"{ [key: string]: string; } | undefined"}>
+<ParamField body="updated_at" type={"string"} required>
 
+</ParamField>
+
+<ParamField body="variables" type={"{ [key: string]: unknown; } | null | undefined"}>
+The variables of the function run
 </ParamField>
 
 ## Related types

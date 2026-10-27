@@ -12,26 +12,26 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type ExecutionResponse = {
     /**
-     * Success
-     *
-     * Whether the operation was successful
-     */
-    success: boolean;
-    /**
      * Message
      *
      * A message describing the operation
      */
     message: string;
+    /**
+     * Success
+     *
+     * Whether the operation was successful
+     */
+    success: boolean;
 };
 ```
 
 ## Fields
 
-<ParamField body="success" type={"boolean"} required>
-Whether the operation was successful
-</ParamField>
-
 <ParamField body="message" type={"string"} required>
 A message describing the operation
+</ParamField>
+
+<ParamField body="success" type={"boolean"} required>
+Whether the operation was successful
 </ParamField>

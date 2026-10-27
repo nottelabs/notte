@@ -12,29 +12,9 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type BoundingBox = {
     /**
-     * X
-     */
-    x: number;
-    /**
-     * Y
-     */
-    y: number;
-    /**
-     * Width
-     */
-    width: number;
-    /**
      * Height
      */
     height: number;
-    /**
-     * Scroll X
-     */
-    scroll_x: number;
-    /**
-     * Scroll Y
-     */
-    scroll_y: number;
     /**
      * Iframe Offset X
      */
@@ -44,43 +24,43 @@ export type BoundingBox = {
      */
     iframe_offset_y?: number;
     /**
-     * Viewport Width
+     * Notte Id
      */
-    viewport_width: number;
+    notte_id?: string | null;
+    /**
+     * Scroll X
+     */
+    scroll_x: number;
+    /**
+     * Scroll Y
+     */
+    scroll_y: number;
     /**
      * Viewport Height
      */
     viewport_height: number;
     /**
-     * Notte Id
+     * Viewport Width
      */
-    notte_id?: string | null;
+    viewport_width: number;
+    /**
+     * Width
+     */
+    width: number;
+    /**
+     * X
+     */
+    x: number;
+    /**
+     * Y
+     */
+    y: number;
 };
 ```
 
 ## Fields
 
-<ParamField body="x" type={"number"} required>
-
-</ParamField>
-
-<ParamField body="y" type={"number"} required>
-
-</ParamField>
-
-<ParamField body="width" type={"number"} required>
-
-</ParamField>
-
 <ParamField body="height" type={"number"} required>
-
-</ParamField>
-
-<ParamField body="scroll_x" type={"number"} required>
-
-</ParamField>
-
-<ParamField body="scroll_y" type={"number"} required>
 
 </ParamField>
 
@@ -92,7 +72,15 @@ export type BoundingBox = {
 
 </ParamField>
 
-<ParamField body="viewport_width" type={"number"} required>
+<ParamField body="notte_id" type={"string | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="scroll_x" type={"number"} required>
+
+</ParamField>
+
+<ParamField body="scroll_y" type={"number"} required>
 
 </ParamField>
 
@@ -100,6 +88,18 @@ export type BoundingBox = {
 
 </ParamField>
 
-<ParamField body="notte_id" type={"string | null | undefined"}>
+<ParamField body="viewport_width" type={"number"} required>
+
+</ParamField>
+
+<ParamField body="width" type={"number"} required>
+
+</ParamField>
+
+<ParamField body="x" type={"number"} required>
+
+</ParamField>
+
+<ParamField body="y" type={"number"} required>
 
 </ParamField>

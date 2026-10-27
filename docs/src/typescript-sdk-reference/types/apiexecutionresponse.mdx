@@ -12,14 +12,6 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type ApiExecutionResponse = {
     /**
-     * Started At
-     */
-    started_at: string;
-    /**
-     * Ended At
-     */
-    ended_at: string;
-    /**
      * Action
      */
     action: ({
@@ -80,54 +72,62 @@ export type ApiExecutionResponse = {
         type: 'download_file';
     } & DownloadFileActionOutput);
     /**
-     * Success
+     * Action Executed
      */
-    success: boolean;
+    action_executed?: boolean | null;
+    captcha?: CaptchaStatus | null;
     /**
-     * Message
+     * Code
      */
-    message: string;
+    code?: string | null;
     data?: DataSpace | null;
+    /**
+     * Ended At
+     */
+    ended_at: string;
     /**
      * Exception
      */
     exception?: string | null;
     exception_detail?: SerializedError | null;
-    captcha?: CaptchaStatus | null;
     /**
-     * Action Executed
+     * Message
      */
-    action_executed?: boolean | null;
+    message: string;
     /**
-     * Code
+     * Started At
      */
-    code?: string | null;
+    started_at: string;
+    /**
+     * Success
+     */
+    success: boolean;
 };
 ```
 
 ## Fields
 
-<ParamField body="started_at" type={"string"} required>
-
-</ParamField>
-
-<ParamField body="ended_at" type={"string"} required>
-
-</ParamField>
-
 <ParamField body="action" type={"({ type: \"form_fill\"; } & FormFillAction) | ({ type: \"goto\"; } & GotoAction) | ({ type: \"goto_new_tab\"; } & GotoNewTabAction) | ({ type: \"close_tab\"; } & CloseTabAction) | ({ type: \"switch_tab\"; } & SwitchTabAction) | ({ type: \"go_back\"; } & GoBackAction) | ({ type: \"go_forward\"; } & GoForwardAction) | ({ type: \"reload\"; } & ReloadAction) | ({ type: \"wait\"; } & WaitActionOutput) | ({ type: \"press_key\"; } & PressKeyAction) | ({ type: \"scroll_up\"; } & ScrollUpAction) | ({ type: \"scroll_down\"; } & ScrollDownAction) | ({ type: \"captcha_solve\"; } & CaptchaSolveAction) | ({ type: \"help\"; } & HelpAction) | ({ type: \"completion\"; } & CompletionAction) | ({ type: \"scrape\"; } & ScrapeAction) | ({ type: \"email_read\"; } & EmailReadAction) | ({ type: \"email_verification_read\"; } & EmailVerificationReadAction) | ({ type: \"sms_read\"; } & SmsReadAction) | ({ type: \"evaluate_js\"; } & EvaluateJsAction) | ({ type: \"click\"; } & ClickActionOutput) | ({ type: \"fill\"; } & FillActionOutput) | ({ type: \"multi_factor_fill\"; } & MultiFactorFillActionOutput) | ({ type: \"fallback_fill\"; } & FallbackFillActionOutput) | ({ type: \"check\"; } & CheckActionOutput) | ({ type: \"select_dropdown_option\"; } & SelectDropdownOptionActionOutput) | ({ type: \"upload_file\"; } & UploadFileActionOutput) | ({ type: \"download_file\"; } & DownloadFileActionOutput)"} required>
 
 </ParamField>
 
-<ParamField body="success" type={"boolean"} required>
+<ParamField body="action_executed" type={"boolean | null | undefined"}>
 
 </ParamField>
 
-<ParamField body="message" type={"string"} required>
+<ParamField body="captcha" type={"CaptchaStatus | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="code" type={"string | null | undefined"}>
 
 </ParamField>
 
 <ParamField body="data" type={"DataSpace | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="ended_at" type={"string"} required>
 
 </ParamField>
 
@@ -139,15 +139,15 @@ export type ApiExecutionResponse = {
 
 </ParamField>
 
-<ParamField body="captcha" type={"CaptchaStatus | null | undefined"}>
+<ParamField body="message" type={"string"} required>
 
 </ParamField>
 
-<ParamField body="action_executed" type={"boolean | null | undefined"}>
+<ParamField body="started_at" type={"string"} required>
 
 </ParamField>
 
-<ParamField body="code" type={"string | null | undefined"}>
+<ParamField body="success" type={"boolean"} required>
 
 </ParamField>
 

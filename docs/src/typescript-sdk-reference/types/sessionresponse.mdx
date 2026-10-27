@@ -12,51 +12,21 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type SessionResponse = {
     /**
-     * Session Id
+     * Auth Ids
      *
-     * The ID of the session (created or existing). Use this ID to interact with the session for the next operation.
+     * Managed Auth connection IDs attached to this session.
      */
-    session_id: string;
+    auth_ids?: Array<string>;
     /**
-     * Idle Timeout Minutes
+     * Browser Type
+     */
+    browser_type?: 'chromium' | 'chrome' | 'firefox' | 'chrome-nightly' | 'chrome-turbo';
+    /**
+     * Cdp Url
      *
-     * Session idle timeout in minutes. Will timeout if now() > last access time + idle_timeout_minutes
+     * The URL to connect to the CDP server.
      */
-    idle_timeout_minutes: number;
-    /**
-     * Max Duration Minutes
-     *
-     * Session max duration in minutes. Will timeout if now() > creation time + max_duration_minutes
-     */
-    max_duration_minutes?: number;
-    /**
-     * Created At
-     *
-     * Session creation time
-     */
-    created_at: string;
-    /**
-     * Closed At
-     *
-     * Session closing time
-     */
-    closed_at?: string | null;
-    /**
-     * Last Accessed At
-     *
-     * Last access time
-     */
-    last_accessed_at: string;
-    /**
-     * Duration
-     *
-     * Session duration
-     */
-    duration?: string;
-    /**
-     * Status
-     */
-    status: 'active' | 'authenticating' | 'closed' | 'error' | 'timed_out';
+    cdp_url?: string | null;
     /**
      * Close Reason
      *
@@ -64,13 +34,23 @@ export type SessionResponse = {
      */
     close_reason?: 'manual' | 'idle_timeout' | 'max_duration' | 'error' | 'unknown' | null;
     /**
-     * Steps
+     * Closed At
      *
-     * Steps of the session
+     * Session closing time
      */
-    steps?: Array<{
-        [key: string]: unknown;
-    }>;
+    closed_at?: string | null;
+    /**
+     * Created At
+     *
+     * Session creation time
+     */
+    created_at: string;
+    /**
+     * Duration
+     *
+     * Session duration
+     */
+    duration?: string;
     /**
      * Error
      *
@@ -78,15 +58,29 @@ export type SessionResponse = {
      */
     error?: string | null;
     /**
-     * Proxies
+     * Idle Timeout Minutes
      *
-     * Whether proxies were used for the session. True if any proxy was applied during session creation.
+     * Session idle timeout in minutes. Will timeout if now() > last access time + idle_timeout_minutes
      */
-    proxies?: boolean;
+    idle_timeout_minutes: number;
     /**
-     * Browser Type
+     * Last Accessed At
+     *
+     * Last access time
      */
-    browser_type?: 'chromium' | 'chrome' | 'firefox' | 'chrome-nightly' | 'chrome-turbo';
+    last_accessed_at: string;
+    /**
+     * Log Session
+     *
+     * Whether saved browser session logs are enabled. Defaults to true.
+     */
+    log_session?: boolean;
+    /**
+     * Max Duration Minutes
+     *
+     * Session max duration in minutes. Will timeout if now() > creation time + max_duration_minutes
+     */
+    max_duration_minutes?: number;
     /**
      * Network Request Bytes
      *
@@ -100,65 +94,17 @@ export type SessionResponse = {
      */
     network_response_bytes?: number;
     /**
-     * User Agent
-     *
-     * The user agent to use for the session
-     */
-    user_agent?: string | null;
-    /**
-     * Viewport Width
-     *
-     * The width of the viewport
-     */
-    viewport_width?: number | null;
-    /**
-     * Viewport Height
-     *
-     * The height of the viewport
-     */
-    viewport_height?: number | null;
-    /**
-     * Solve Captchas
-     *
-     * Whether to solve captchas.
-     */
-    solve_captchas?: boolean | null;
-    /**
-     * Cdp Url
-     *
-     * The URL to connect to the CDP server.
-     */
-    cdp_url?: string | null;
-    /**
      * Playwright Url
      *
      * The WebSocket URL for Playwright's chromium.connect(), when supported by the server. Requires a matching Playwright client version. This is a live browser connection, not a replay URL.
      */
     playwright_url?: string | null;
     /**
-     * Viewer Url
+     * Proxies
      *
-     * The remote session viewer URL.
+     * Whether proxies were used for the session. True if any proxy was applied during session creation.
      */
-    viewer_url?: string | null;
-    /**
-     * Web Bot Auth
-     *
-     * Whether to use web bot authentication.
-     */
-    web_bot_auth?: boolean;
-    /**
-     * Auth Ids
-     *
-     * Managed Auth connection IDs attached to this session.
-     */
-    auth_ids?: Array<string>;
-    /**
-     * System Hidden
-     *
-     * Whether this session is an internal system run. Internal system runs are omitted from session.list() unless include_system=True is requested.
-     */
-    system_hidden?: boolean;
+    proxies?: boolean;
     /**
      * Record Session
      *
@@ -166,73 +112,123 @@ export type SessionResponse = {
      */
     record_session?: boolean;
     /**
-     * Log Session
+     * Session Id
      *
-     * Whether saved browser session logs are enabled. Defaults to true.
+     * The ID of the session (created or existing). Use this ID to interact with the session for the next operation.
      */
-    log_session?: boolean;
+    session_id: string;
+    /**
+     * Solve Captchas
+     *
+     * Whether to solve captchas.
+     */
+    solve_captchas?: boolean | null;
+    /**
+     * Status
+     */
+    status: 'active' | 'authenticating' | 'closed' | 'error' | 'timed_out';
+    /**
+     * Steps
+     *
+     * Steps of the session
+     */
+    steps?: Array<{
+        [key: string]: unknown;
+    }>;
+    /**
+     * System Hidden
+     *
+     * Whether this session is an internal system run. Internal system runs are omitted from session.list() unless include_system=True is requested.
+     */
+    system_hidden?: boolean;
     /**
      * Timeout Minutes
      *
      * @deprecated
      */
     readonly timeout_minutes: number;
+    /**
+     * User Agent
+     *
+     * The user agent to use for the session
+     */
+    user_agent?: string | null;
+    /**
+     * Viewer Url
+     *
+     * The remote session viewer URL.
+     */
+    viewer_url?: string | null;
+    /**
+     * Viewport Height
+     *
+     * The height of the viewport
+     */
+    viewport_height?: number | null;
+    /**
+     * Viewport Width
+     *
+     * The width of the viewport
+     */
+    viewport_width?: number | null;
+    /**
+     * Web Bot Auth
+     *
+     * Whether to use web bot authentication.
+     */
+    web_bot_auth?: boolean;
     [key: string]: unknown;
 };
 ```
 
 ## Fields
 
-<ParamField body="session_id" type={"string"} required>
-The ID of the session (created or existing). Use this ID to interact with the session for the next operation.
+<ParamField body="auth_ids" type={"string[] | undefined"}>
+Managed Auth connection IDs attached to this session.
 </ParamField>
 
-<ParamField body="idle_timeout_minutes" type={"number"} required>
-Session idle timeout in minutes. Will timeout if now() &gt; last access time + idle_timeout_minutes
+<ParamField body="browser_type" type={"\"chromium\" | \"chrome\" | \"chrome-nightly\" | \"chrome-turbo\" | \"firefox\" | undefined"}>
+
 </ParamField>
 
-<ParamField body="max_duration_minutes" type={"number | undefined"}>
-Session max duration in minutes. Will timeout if now() &gt; creation time + max_duration_minutes
+<ParamField body="cdp_url" type={"string | null | undefined"}>
+The URL to connect to the CDP server.
 </ParamField>
 
-<ParamField body="created_at" type={"string"} required>
-Session creation time
+<ParamField body="close_reason" type={"\"unknown\" | \"manual\" | \"idle_timeout\" | \"max_duration\" | \"error\" | null | undefined"}>
+Reason the session closed, if it is no longer active
 </ParamField>
 
 <ParamField body="closed_at" type={"string | null | undefined"}>
 Session closing time
 </ParamField>
 
-<ParamField body="last_accessed_at" type={"string"} required>
-Last access time
+<ParamField body="created_at" type={"string"} required>
+Session creation time
 </ParamField>
 
 <ParamField body="duration" type={"string | undefined"}>
 Session duration
 </ParamField>
 
-<ParamField body="status" type={"\"closed\" | \"active\" | \"authenticating\" | \"error\" | \"timed_out\""} required>
-
-</ParamField>
-
-<ParamField body="close_reason" type={"\"unknown\" | \"error\" | \"manual\" | \"idle_timeout\" | \"max_duration\" | null | undefined"}>
-Reason the session closed, if it is no longer active
-</ParamField>
-
-<ParamField body="steps" type={"{ [key: string]: unknown; }[] | undefined"}>
-Steps of the session
-</ParamField>
-
 <ParamField body="error" type={"string | null | undefined"}>
 Error message if the operation failed to complete
 </ParamField>
 
-<ParamField body="proxies" type={"boolean | undefined"}>
-Whether proxies were used for the session. True if any proxy was applied during session creation.
+<ParamField body="idle_timeout_minutes" type={"number"} required>
+Session idle timeout in minutes. Will timeout if now() &gt; last access time + idle_timeout_minutes
 </ParamField>
 
-<ParamField body="browser_type" type={"\"chromium\" | \"chrome\" | \"chrome-nightly\" | \"chrome-turbo\" | \"firefox\" | undefined"}>
+<ParamField body="last_accessed_at" type={"string"} required>
+Last access time
+</ParamField>
 
+<ParamField body="log_session" type={"boolean | undefined"}>
+Whether saved browser session logs are enabled. Defaults to true.
+</ParamField>
+
+<ParamField body="max_duration_minutes" type={"number | undefined"}>
+Session max duration in minutes. Will timeout if now() &gt; creation time + max_duration_minutes
 </ParamField>
 
 <ParamField body="network_request_bytes" type={"number | undefined"}>
@@ -243,52 +239,36 @@ Total byte usage for network requests.
 Total byte usage for network responses.
 </ParamField>
 
-<ParamField body="user_agent" type={"string | null | undefined"}>
-The user agent to use for the session
-</ParamField>
-
-<ParamField body="viewport_width" type={"number | null | undefined"}>
-The width of the viewport
-</ParamField>
-
-<ParamField body="viewport_height" type={"number | null | undefined"}>
-The height of the viewport
-</ParamField>
-
-<ParamField body="solve_captchas" type={"boolean | null | undefined"}>
-Whether to solve captchas.
-</ParamField>
-
-<ParamField body="cdp_url" type={"string | null | undefined"}>
-The URL to connect to the CDP server.
-</ParamField>
-
 <ParamField body="playwright_url" type={"string | null | undefined"}>
 The WebSocket URL for Playwright's chromium.connect(), when supported by the server. Requires a matching Playwright client version. This is a live browser connection, not a replay URL.
 </ParamField>
 
-<ParamField body="viewer_url" type={"string | null | undefined"}>
-The remote session viewer URL.
-</ParamField>
-
-<ParamField body="web_bot_auth" type={"boolean | undefined"}>
-Whether to use web bot authentication.
-</ParamField>
-
-<ParamField body="auth_ids" type={"string[] | undefined"}>
-Managed Auth connection IDs attached to this session.
-</ParamField>
-
-<ParamField body="system_hidden" type={"boolean | undefined"}>
-Whether this session is an internal system run. Internal system runs are omitted from session.list() unless include_system=True is requested.
+<ParamField body="proxies" type={"boolean | undefined"}>
+Whether proxies were used for the session. True if any proxy was applied during session creation.
 </ParamField>
 
 <ParamField body="record_session" type={"boolean | undefined"}>
 Whether saved session replay is enabled. Defaults to true.
 </ParamField>
 
-<ParamField body="log_session" type={"boolean | undefined"}>
-Whether saved browser session logs are enabled. Defaults to true.
+<ParamField body="session_id" type={"string"} required>
+The ID of the session (created or existing). Use this ID to interact with the session for the next operation.
+</ParamField>
+
+<ParamField body="solve_captchas" type={"boolean | null | undefined"}>
+Whether to solve captchas.
+</ParamField>
+
+<ParamField body="status" type={"\"active\" | \"closed\" | \"authenticating\" | \"error\" | \"timed_out\""} required>
+
+</ParamField>
+
+<ParamField body="steps" type={"{ [key: string]: unknown; }[] | undefined"}>
+Steps of the session
+</ParamField>
+
+<ParamField body="system_hidden" type={"boolean | undefined"}>
+Whether this session is an internal system run. Internal system runs are omitted from session.list() unless include_system=True is requested.
 </ParamField>
 
 <ParamField body="timeout_minutes" type={"number"} required>
@@ -297,4 +277,24 @@ Whether saved browser session logs are enabled. Defaults to true.
 **deprecated:**
 
 
+</ParamField>
+
+<ParamField body="user_agent" type={"string | null | undefined"}>
+The user agent to use for the session
+</ParamField>
+
+<ParamField body="viewer_url" type={"string | null | undefined"}>
+The remote session viewer URL.
+</ParamField>
+
+<ParamField body="viewport_height" type={"number | null | undefined"}>
+The height of the viewport
+</ParamField>
+
+<ParamField body="viewport_width" type={"number | null | undefined"}>
+The width of the viewport
+</ParamField>
+
+<ParamField body="web_bot_auth" type={"boolean | undefined"}>
+Whether to use web bot authentication.
 </ParamField>

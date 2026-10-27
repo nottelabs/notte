@@ -20,7 +20,7 @@ export type ScrollDownAction = GeneratedScrollDownAction & {
 
 ## Fields
 
-<ParamField body="type" type={"\"scroll_down\" | undefined"}>
+<ParamField body="amount" type={"number | null | undefined"}>
 
 </ParamField>
 
@@ -32,13 +32,13 @@ export type ScrollDownAction = GeneratedScrollDownAction & {
 
 </ParamField>
 
-<ParamField body="amount" type={"number | null | undefined"}>
-
-</ParamField>
-
 <ParamField body="selector" type={"string | null | undefined"}>
 Optional selector for the scroll container, including iframe paths.
 Optional selector for the scroll container, including iframe paths.
+</ParamField>
+
+<ParamField body="type" type={"\"scroll_down\" | undefined"}>
+
 </ParamField>
 
 ## Related types

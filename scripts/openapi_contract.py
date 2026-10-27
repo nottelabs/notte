@@ -34,6 +34,10 @@ from pydantic import AliasChoices, BaseModel
 from pydantic.fields import FieldInfo
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO_ROOT))
+
+from scripts.openapi_order import serialize_openapi  # noqa: E402
+
 SNAPSHOT = REPO_ROOT / "openapi" / "openapi.json"
 BASELINE = REPO_ROOT / "openapi" / "known_drift.txt"
 DEFAULT_URL = "https://us-staging.notte.cc"
@@ -142,7 +146,7 @@ def main() -> int:
     if args.fetch:
         spec = download(args.url)
         SNAPSHOT.parent.mkdir(parents=True, exist_ok=True)
-        _ = SNAPSHOT.write_text(json.dumps(spec, indent=2, ensure_ascii=False) + "\n")
+        _ = SNAPSHOT.write_text(serialize_openapi(spec))
         print(f"wrote {SNAPSHOT.relative_to(REPO_ROOT)}")
 
     if args.update_baseline:

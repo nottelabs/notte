@@ -12,10 +12,6 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type EmailVerificationReadAction = {
     /**
-     * Type
-     */
-    type?: 'email_verification_read';
-    /**
      * Category
      */
     category?: string;
@@ -30,25 +26,25 @@ export type EmailVerificationReadAction = {
      */
     mailbox_id: string;
     /**
+     * Max Age Seconds
+     *
+     * Maximum age of the verification email in seconds
+     */
+    max_age_seconds?: number;
+    /**
      * Sender Domain
      *
      * Sender domain to search, such as example.com
      */
     sender_domain: string;
     /**
-     * Max Age Seconds
-     *
-     * Maximum age of the verification email in seconds
+     * Type
      */
-    max_age_seconds?: number;
+    type?: 'email_verification_read';
 };
 ```
 
 ## Fields
-
-<ParamField body="type" type={"\"email_verification_read\" | undefined"}>
-
-</ParamField>
 
 <ParamField body="category" type={"string | undefined"}>
 
@@ -62,10 +58,14 @@ export type EmailVerificationReadAction = {
 Workspace mailbox connection to read the verification email from
 </ParamField>
 
+<ParamField body="max_age_seconds" type={"number | undefined"}>
+Maximum age of the verification email in seconds
+</ParamField>
+
 <ParamField body="sender_domain" type={"string"} required>
 Sender domain to search, such as example.com
 </ParamField>
 
-<ParamField body="max_age_seconds" type={"number | undefined"}>
-Maximum age of the verification email in seconds
+<ParamField body="type" type={"\"email_verification_read\" | undefined"}>
+
 </ParamField>

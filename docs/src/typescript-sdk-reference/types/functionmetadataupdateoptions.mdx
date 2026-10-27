@@ -21,10 +21,6 @@ export type FunctionMetadataUpdateOptions = FunctionMetadataUpdateRequest;
 
 </ParamField>
 
-<ParamField body="name" type={"string | null | undefined"}>
-
-</ParamField>
-
 <ParamField body="description" type={"string | null | undefined"}>
 
 </ParamField>
@@ -37,16 +33,20 @@ export type FunctionMetadataUpdateOptions = FunctionMetadataUpdateRequest;
 
 </ParamField>
 
+<ParamField body="name" type={"string | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="response_format" type={"{ [key: string]: unknown; } | null | undefined"}>
+JSON Schema of run()'s return value, computed by the caller from its pydantic model
+</ParamField>
+
 <ParamField body="self_healing" type={"boolean | null | undefined"}>
 
 </ParamField>
 
 <ParamField body="shared" type={"boolean | null | undefined"}>
 Enable or disable public code sharing and forking for this function. Source code, including embedded credentials, becomes public. Runs, results and stored runtime secrets remain private. This does not enable public execution. Omit or send null to leave sharing unchanged.
-</ParamField>
-
-<ParamField body="response_format" type={"{ [key: string]: unknown; } | null | undefined"}>
-JSON Schema of run()'s return value, computed by the caller from its pydantic model
 </ParamField>
 
 ## Related types

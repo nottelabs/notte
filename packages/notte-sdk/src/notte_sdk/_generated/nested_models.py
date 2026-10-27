@@ -7,5 +7,5 @@ from pydantic import BaseModel, Field
 
 
 class SessionProfilePreviewResponse(BaseModel):
-    profile: core.SessionProfile | None = None
     cookie_domains: Annotated[list[str] | None, Field(title="Cookie Domains")] = None
+    profile: core.SessionProfile | None = None

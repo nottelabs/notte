@@ -14,9 +14,9 @@ SelectDropdownOptionAction
 ```typescript
 export type SelectDropdownOptionActionInputWritable = {
     /**
-     * Type
+     * Accessible Name
      */
-    type?: 'select_dropdown_option';
+    accessible_name?: string | null;
     /**
      * Category
      */
@@ -29,29 +29,29 @@ export type SelectDropdownOptionActionInputWritable = {
      * Id
      */
     id?: string;
-    /**
-     * Selector
-     */
-    selector?: string | NodeSelectors | null;
+    param?: ActionParameter | null;
     /**
      * Press Enter
      */
     press_enter?: boolean | null;
     /**
+     * Selector
+     */
+    selector?: string | NodeSelectors | null;
+    /**
      * Text Label
      */
     text_label?: string | null;
-    /**
-     * Accessible Name
-     */
-    accessible_name?: string | null;
-    param?: ActionParameter | null;
     /**
      * Timeout
      *
      * Action timeout in milliseconds
      */
     timeout?: number;
+    /**
+     * Type
+     */
+    type?: 'select_dropdown_option';
     /**
      * Value
      */
@@ -61,7 +61,7 @@ export type SelectDropdownOptionActionInputWritable = {
 
 ## Fields
 
-<ParamField body="type" type={"\"select_dropdown_option\" | undefined"}>
+<ParamField body="accessible_name" type={"string | null | undefined"}>
 
 </ParamField>
 
@@ -77,7 +77,7 @@ export type SelectDropdownOptionActionInputWritable = {
 
 </ParamField>
 
-<ParamField body="selector" type={"string | NodeSelectors | null | undefined"}>
+<ParamField body="param" type={"ActionParameter | null | undefined"}>
 
 </ParamField>
 
@@ -85,20 +85,20 @@ export type SelectDropdownOptionActionInputWritable = {
 
 </ParamField>
 
+<ParamField body="selector" type={"string | NodeSelectors | null | undefined"}>
+
+</ParamField>
+
 <ParamField body="text_label" type={"string | null | undefined"}>
-
-</ParamField>
-
-<ParamField body="accessible_name" type={"string | null | undefined"}>
-
-</ParamField>
-
-<ParamField body="param" type={"ActionParameter | null | undefined"}>
 
 </ParamField>
 
 <ParamField body="timeout" type={"number | undefined"}>
 Action timeout in milliseconds
+</ParamField>
+
+<ParamField body="type" type={"\"select_dropdown_option\" | undefined"}>
+
 </ParamField>
 
 <ParamField body="value" type={"string"} required>

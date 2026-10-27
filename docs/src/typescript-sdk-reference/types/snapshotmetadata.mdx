@@ -12,15 +12,6 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type SnapshotMetadata = {
     /**
-     * Title
-     */
-    title: string;
-    /**
-     * Url
-     */
-    url: string;
-    viewport: ViewportData;
-    /**
      * Tabs
      */
     tabs: Array<TabsData>;
@@ -30,10 +21,27 @@ export type SnapshotMetadata = {
      * Timestamp of the snapshot
      */
     timestamp?: string;
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Url
+     */
+    url: string;
+    viewport: ViewportData;
 };
 ```
 
 ## Fields
+
+<ParamField body="tabs" type={"TabsData[]"} required>
+
+</ParamField>
+
+<ParamField body="timestamp" type={"string | undefined"}>
+Timestamp of the snapshot
+</ParamField>
 
 <ParamField body="title" type={"string"} required>
 
@@ -45,14 +53,6 @@ export type SnapshotMetadata = {
 
 <ParamField body="viewport" type={"ViewportData"} required>
 
-</ParamField>
-
-<ParamField body="tabs" type={"TabsData[]"} required>
-
-</ParamField>
-
-<ParamField body="timestamp" type={"string | undefined"}>
-Timestamp of the snapshot
 </ParamField>
 
 ## Related types

@@ -12,10 +12,6 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type EmailReadAction = {
     /**
-     * Type
-     */
-    type?: 'email_read';
-    /**
      * Category
      */
     category?: string;
@@ -30,25 +26,25 @@ export type EmailReadAction = {
      */
     limit?: number;
     /**
+     * Only Unread
+     *
+     * Return only previously unread emails
+     */
+    only_unread?: boolean;
+    /**
      * Timedelta
      *
      * Return only emails that are not older than `timedelta`
      */
     timedelta?: string | null;
     /**
-     * Only Unread
-     *
-     * Return only previously unread emails
+     * Type
      */
-    only_unread?: boolean;
+    type?: 'email_read';
 };
 ```
 
 ## Fields
-
-<ParamField body="type" type={"\"email_read\" | undefined"}>
-
-</ParamField>
 
 <ParamField body="category" type={"string | undefined"}>
 
@@ -62,10 +58,14 @@ export type EmailReadAction = {
 Max number of emails to return
 </ParamField>
 
+<ParamField body="only_unread" type={"boolean | undefined"}>
+Return only previously unread emails
+</ParamField>
+
 <ParamField body="timedelta" type={"string | null | undefined"}>
 Return only emails that are not older than `timedelta`
 </ParamField>
 
-<ParamField body="only_unread" type={"boolean | undefined"}>
-Return only previously unread emails
+<ParamField body="type" type={"\"email_read\" | undefined"}>
+
 </ParamField>

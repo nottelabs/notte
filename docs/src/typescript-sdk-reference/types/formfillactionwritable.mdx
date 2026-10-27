@@ -14,10 +14,6 @@ FormFillAction
 ```typescript
 export type FormFillActionWritable = {
     /**
-     * Type
-     */
-    type?: 'form_fill';
-    /**
      * Category
      */
     category?: string;
@@ -25,6 +21,10 @@ export type FormFillActionWritable = {
      * Description
      */
     description?: string;
+    /**
+     * Type
+     */
+    type?: 'form_fill';
     /**
      * Value
      */
@@ -36,15 +36,15 @@ export type FormFillActionWritable = {
 
 ## Fields
 
-<ParamField body="type" type={"\"form_fill\" | undefined"}>
-
-</ParamField>
-
 <ParamField body="category" type={"string | undefined"}>
 
 </ParamField>
 
 <ParamField body="description" type={"string | undefined"}>
+
+</ParamField>
+
+<ParamField body="type" type={"\"form_fill\" | undefined"}>
 
 </ParamField>
 

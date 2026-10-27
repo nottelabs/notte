@@ -12,10 +12,6 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type GotoNewTabAction = {
     /**
-     * Type
-     */
-    type?: 'goto_new_tab';
-    /**
      * Category
      */
     category?: string;
@@ -23,6 +19,10 @@ export type GotoNewTabAction = {
      * Description
      */
     description?: string;
+    /**
+     * Type
+     */
+    type?: 'goto_new_tab';
     /**
      * Url
      */
@@ -32,15 +32,15 @@ export type GotoNewTabAction = {
 
 ## Fields
 
-<ParamField body="type" type={"\"goto_new_tab\" | undefined"}>
-
-</ParamField>
-
 <ParamField body="category" type={"string | undefined"}>
 
 </ParamField>
 
 <ParamField body="description" type={"string | undefined"}>
+
+</ParamField>
+
+<ParamField body="type" type={"\"goto_new_tab\" | undefined"}>
 
 </ParamField>
 
