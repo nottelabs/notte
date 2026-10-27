@@ -174,6 +174,14 @@ editor still accepts a fill. `tests/browser/test_dom_contenteditable.py` covers 
 
 ## Public API
 
+- Cloud SDK resources follow their client: sync client resources have sync I/O;
+  async client resources have async I/O. Cloud vaults/personas used by a local
+  browser session must come from `AsyncNotteClient` on that session's event loop.
+- Cloud SDK sessions follow their client: `NotteClient.Session()` uses `with`,
+  sync operations, and `session.page`; `AsyncNotteClient.Session()` uses `async with`,
+  async operations, and `await session.page`. The sync session has no async context
+  manager, `apage`, or `await_for_auth`.
+
 - Don't remove or rename public methods without a deprecation first: keep the
   old name working and emit a `DeprecationWarning` (see `generate_cookies` in
   `notte_sdk/utils.py`).

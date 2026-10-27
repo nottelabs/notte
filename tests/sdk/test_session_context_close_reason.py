@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from notte_sdk._generated import operations as api
-from notte_sdk.endpoints.sessions import RemoteSession
+from notte_sdk.endpoints.sessions import AsyncRemoteSession, RemoteSession
 from notte_sdk.types import SessionStopRequest
 
 
@@ -38,11 +38,14 @@ def test_sync_context_exception_stops_session_as_error() -> None:
 
 @pytest.mark.asyncio
 async def test_async_context_exception_stops_session_as_error() -> None:
-    session = _bare_session()
+    session = object.__new__(AsyncRemoteSession)
+    session._async_playwright_context = None
+    session._async_playwright_page = None
+    session.stop = AsyncMock()
     browser = AsyncMock()
     session._async_playwright_browser = browser
 
     await session.__aexit__(RuntimeError, RuntimeError("callback failed"), None)
 
-    session.stop.assert_called_once_with(close_reason="error")
+    session.stop.assert_awaited_once_with(close_reason="error")
     browser.close.assert_awaited_once()

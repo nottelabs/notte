@@ -57,78 +57,6 @@ Notte Personas come with complete digital identities:
   </Visibility>
   <Visibility for="humans">
     <Card
-      title="aemails"
-      icon="function"
-      href="/sdk-reference/nottepersona/aemails"
-    >
-      No description available
-    </Card>
-  </Visibility>
-  <Visibility for="agents">
-    <Card
-      title="aemails"
-      icon="function"
-      href="/sdk-reference/nottepersona/aemails.md"
-    >
-      No description available
-    </Card>
-  </Visibility>
-  <Visibility for="humans">
-    <Card
-      title="asms"
-      icon="function"
-      href="/sdk-reference/nottepersona/asms"
-    >
-      No description available
-    </Card>
-  </Visibility>
-  <Visibility for="agents">
-    <Card
-      title="asms"
-      icon="function"
-      href="/sdk-reference/nottepersona/asms.md"
-    >
-      No description available
-    </Card>
-  </Visibility>
-  <Visibility for="humans">
-    <Card
-      title="await_emails"
-      icon="function"
-      href="/sdk-reference/nottepersona/await_emails"
-    >
-      Poll the inbox until at least one email matches `data` (e
-    </Card>
-  </Visibility>
-  <Visibility for="agents">
-    <Card
-      title="await_emails"
-      icon="function"
-      href="/sdk-reference/nottepersona/await_emails.md"
-    >
-      Poll the inbox until at least one email matches `data` (e
-    </Card>
-  </Visibility>
-  <Visibility for="humans">
-    <Card
-      title="await_sms"
-      icon="function"
-      href="/sdk-reference/nottepersona/await_sms"
-    >
-      Poll the inbox until at least one SMS matches `data`; see `wait_for_sms`
-    </Card>
-  </Visibility>
-  <Visibility for="agents">
-    <Card
-      title="await_sms"
-      icon="function"
-      href="/sdk-reference/nottepersona/await_sms.md"
-    >
-      Poll the inbox until at least one SMS matches `data`; see `wait_for_sms`
-    </Card>
-  </Visibility>
-  <Visibility for="humans">
-    <Card
       title="create"
       icon="function"
       href="/sdk-reference/nottepersona/create"
@@ -299,5 +227,5 @@ Notte Personas come with complete digital identities:
 
 <Info>
 **Module:** `notte_sdk.endpoints.personas`
-**Inheritance:** NottePersona → SyncResource → BasePersona → ABC
+**Inheritance:** NottePersona → SyncResource → _PersonaInfo → Generic → _SyncPersonaInbox → ABC
 </Info>

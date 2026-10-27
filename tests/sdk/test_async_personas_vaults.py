@@ -13,7 +13,12 @@ from typing import Any
 
 import httpx
 import pytest
+from notte_browser.session import NotteSession
+from notte_core.actions import FormFillAction
+from notte_core.credentials import EMAIL as EMAIL_PLACEHOLDER
+from notte_core.credentials import PASSWORD as PASSWORD_PLACEHOLDER
 from notte_core.credentials.base import BaseVault
+from notte_core.credentials.types import ValueWithPlaceholder
 from notte_sdk import AsyncNotteClient, NotteClient
 from notte_sdk._transport import AsyncSharedHttpClient, SharedHttpClient, async_http_client
 from notte_sdk.endpoints._async_resource import AwaitableResource
@@ -22,6 +27,7 @@ from notte_sdk.endpoints.managed_auth import AsyncManagedAuthClient, ManagedAuth
 from notte_sdk.endpoints.personas import AsyncNottePersona, BasePersona, NottePersona
 from notte_sdk.endpoints.vaults import AsyncNotteVault, NotteVault
 
+from tests.mock.snapshot_factory import make_snapshot
 from tests.sdk.test_async_resources import KEY, STAMP, Exchange, exchange_async, exchange_sync, normalize
 from tests.sdk.test_generated_endpoints import PERSONA, SERVER, VAULT
 
@@ -60,6 +66,21 @@ CONTEXT_MANAGER = {"__enter__": "__aenter__", "__exit__": "__aexit__"}
 # Instance attributes of the sync object that are properties of the async one: the async vault has
 # no id until it is created, so `vault_id` raises until then.
 ATTRIBUTES = {"vault_id"}
+ASYNC_ONLY = {
+    NottePersona: {"aemails", "asms", "await_emails", "await_sms"},
+    NotteVault: {
+        "add_credentials_async",
+        "get_credentials_async",
+        "delete_credentials_async",
+        "set_credit_card_async",
+        "get_credit_card_async",
+        "delete_credit_card_async",
+        "list_credentials_async",
+        "has_credential_async",
+        "add_credentials_from_env_async",
+        "replace_credentials",
+    },
+}
 
 # (sync class, async class, base whose members are compared by the resource tests)
 STATEFUL = [
@@ -82,7 +103,7 @@ def test_async_objects_have_every_sync_method_as_a_coroutine(
     sync_names = public_names(sync_cls, sync_base)
     async_names = public_names(async_cls, async_base)
     assert {CONTEXT_MANAGER.get(name, name) for name in sync_names} <= async_names | {"__aenter__", "__aexit__"}
-    assert async_names - sync_names <= ATTRIBUTES, async_names - sync_names
+    assert async_names - sync_names <= ATTRIBUTES | ASYNC_ONLY.get(sync_cls, set()), async_names - sync_names
     for name in sorted(sync_names):
         if name in CONTEXT_MANAGER:
             assert inspect.iscoroutinefunction(getattr(async_cls, CONTEXT_MANAGER[name])), name
@@ -98,6 +119,7 @@ def test_async_objects_have_every_sync_method_as_a_coroutine(
             assert not inspect.iscoroutinefunction(sync_function), name
             assert not inspect.iscoroutinefunction(async_function), name
         else:
+            assert not inspect.iscoroutinefunction(sync_function), name
             assert inspect.iscoroutinefunction(async_function), name
         sync_signature = inspect.signature(sync_function, eval_str=True)
         async_signature = inspect.signature(async_function, eval_str=True)
@@ -514,13 +536,46 @@ async def test_vault_core_interface_sends_the_same_requests(monkeypatch: pytest.
     async def async_call(c: AsyncNotteClient) -> list[Any]:
         return await run(await c.Vault("vault-1"))
 
-    # The sync vault's coroutines block on the sync transport: run them on a thread with its own loop.
-    expected = await asyncio.to_thread(
-        exchange_sync, monkeypatch, Api(VAULT_ROUTES), lambda c: asyncio.run(run(c.Vault("vault-1")))
-    )
+    def sync_call(c: NotteClient) -> list[Any]:
+        vault = c.Vault("vault-1")
+        out = [
+            vault.get_credentials("https://x.test"),
+            vault.list_credentials(),
+            vault.get_credit_card(),
+            vault.has_credential("https://x.test"),
+        ]
+        vault.add_credentials("https://x.test", **CREDENTIALS)
+        vault.set_credit_card(**CARD)
+        vault.delete_credentials("https://x.test")
+        vault.delete_credit_card()
+        return [*out, vault.get_replacement_map()]
+
+    expected = exchange_sync(monkeypatch, Api(VAULT_ROUTES), sync_call)
     actual = await run_async(monkeypatch, VAULT_ROUTES, async_call)
     assert actual == expected
     assert expected.outcome[0] == "ok", expected.outcome
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("source", ["vault", "persona"])
+async def test_async_sdk_credentials_work_with_a_local_session(monkeypatch: pytest.MonkeyPatch, source: str) -> None:
+    async def local_fill(client: AsyncNotteClient) -> list[str]:
+        if source == "persona":
+            persona = await client.Persona("persona-1")
+            session = NotteSession(persona=persona)
+            assert session.vault is persona.vault
+        else:
+            session = NotteSession(vault=await client.Vault("vault-1"))
+        session.snapshot = make_snapshot("https://x.test")
+        action = FormFillAction(value={"email": EMAIL_PLACEHOLDER, "current_password": PASSWORD_PLACEHOLDER})
+        replaced = await session._action_with_vault(action)
+        assert isinstance(replaced, FormFillAction)
+        email, password = replaced.value["email"], replaced.value["current_password"]
+        assert isinstance(email, ValueWithPlaceholder) and isinstance(password, ValueWithPlaceholder)
+        return [email.get_secret_value(), password.get_secret_value()]
+
+    result = await run_async(monkeypatch, {**VAULT_ROUTES, **PERSONA_ROUTES}, local_fill)
+    assert result.outcome == ("ok", [CREDENTIALS["email"], CREDENTIALS["password"]])
 
 
 @pytest.mark.asyncio

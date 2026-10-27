@@ -4,7 +4,7 @@ import os
 import secrets
 
 from notte_computer import BrowserActions, Screenshots
-from notte_sdk import NotteClient
+from notte_sdk import AsyncNotteClient
 from oagi import AsyncDefaultAgent
 from oagi.logging import get_logger
 from oagi.types.models import Action
@@ -15,11 +15,11 @@ async def run_demo() -> dict:
     # Lux logs raw provider responses; keep SDK diagnostics out of example output.
     os.environ["OAGI_LOG"] = "CRITICAL"
     get_logger("notte-example")
-    with NotteClient().Session(max_duration_minutes=3, viewport_width=1024, viewport_height=768) as session:
+    async with AsyncNotteClient().Session(max_duration_minutes=3, viewport_width=1024, viewport_height=768) as session:
         try:
             async with async_playwright() as driver:
                 async with asyncio.timeout(120):
-                    browser = await driver.chromium.connect_over_cdp(session.cdp_url())
+                    browser = await driver.chromium.connect_over_cdp(await session.cdp_url())
                     failed = False
                     try:
                         page = browser.contexts[0].pages[0]

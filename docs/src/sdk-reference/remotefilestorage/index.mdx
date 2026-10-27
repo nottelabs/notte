@@ -1,11 +1,11 @@
 ---
 title: "RemoteFileStorage"
-description: "Base class for storage implementations that handle upload and download file storage and retrieval"
+description: "Session-owned file storage with synchronous upload and download operations"
 ---
 
 # RemoteFileStorage
 
-Base class for storage implementations that handle upload and download file storage and retrieval.
+Session-owned file storage with synchronous upload and download operations.
 
 ## Methods
 
@@ -26,42 +26,6 @@ Base class for storage implementations that handle upload and download file stor
       href="/sdk-reference/remotefilestorage/__init__.md"
     >
       Initialize self
-    </Card>
-  </Visibility>
-  <Visibility for="humans">
-    <Card
-      title="alist_downloaded_files"
-      icon="function"
-      href="/sdk-reference/remotefilestorage/alist_downloaded_files"
-    >
-      List all files in the download_dir
-    </Card>
-  </Visibility>
-  <Visibility for="agents">
-    <Card
-      title="alist_downloaded_files"
-      icon="function"
-      href="/sdk-reference/remotefilestorage/alist_downloaded_files.md"
-    >
-      List all files in the download_dir
-    </Card>
-  </Visibility>
-  <Visibility for="humans">
-    <Card
-      title="alist_uploaded_files"
-      icon="function"
-      href="/sdk-reference/remotefilestorage/alist_uploaded_files"
-    >
-      List all files from the upload_dir
-    </Card>
-  </Visibility>
-  <Visibility for="agents">
-    <Card
-      title="alist_uploaded_files"
-      icon="function"
-      href="/sdk-reference/remotefilestorage/alist_uploaded_files.md"
-    >
-      List all files from the upload_dir
     </Card>
   </Visibility>
   <Visibility for="humans">
@@ -124,7 +88,7 @@ Base class for storage implementations that handle upload and download file stor
       icon="function"
       href="/sdk-reference/remotefilestorage/get_file"
     >
-      Returns the local path for a file
+      Return the local path for an uploaded file, or None if it is absent
     </Card>
   </Visibility>
   <Visibility for="agents">
@@ -133,7 +97,7 @@ Base class for storage implementations that handle upload and download file stor
       icon="function"
       href="/sdk-reference/remotefilestorage/get_file.md"
     >
-      Returns the local path for a file
+      Return the local path for an uploaded file, or None if it is absent
     </Card>
   </Visibility>
   <Visibility for="humans">
@@ -142,7 +106,7 @@ Base class for storage implementations that handle upload and download file stor
       icon="function"
       href="/sdk-reference/remotefilestorage/instructions"
     >
-      Return LLM instructions to append to the prompt
+      Return LLM instructions listing available uploads
     </Card>
   </Visibility>
   <Visibility for="agents">
@@ -151,7 +115,7 @@ Base class for storage implementations that handle upload and download file stor
       icon="function"
       href="/sdk-reference/remotefilestorage/instructions.md"
     >
-      Return LLM instructions to append to the prompt
+      Return LLM instructions listing available uploads
     </Card>
   </Visibility>
   <Visibility for="humans">
@@ -178,7 +142,7 @@ Base class for storage implementations that handle upload and download file stor
       icon="function"
       href="/sdk-reference/remotefilestorage/list_downloaded_files"
     >
-      List all files in the download_dir
+      List browser downloads
     </Card>
   </Visibility>
   <Visibility for="agents">
@@ -187,7 +151,7 @@ Base class for storage implementations that handle upload and download file stor
       icon="function"
       href="/sdk-reference/remotefilestorage/list_downloaded_files.md"
     >
-      List all files in the download_dir
+      List browser downloads
     </Card>
   </Visibility>
   <Visibility for="humans">
@@ -196,7 +160,7 @@ Base class for storage implementations that handle upload and download file stor
       icon="function"
       href="/sdk-reference/remotefilestorage/list_uploaded_files"
     >
-      List all files from the upload_dir
+      List uploaded files
     </Card>
   </Visibility>
   <Visibility for="agents">
@@ -205,7 +169,7 @@ Base class for storage implementations that handle upload and download file stor
       icon="function"
       href="/sdk-reference/remotefilestorage/list_uploaded_files.md"
     >
-      List all files from the upload_dir
+      List uploaded files
     </Card>
   </Visibility>
   <Visibility for="humans">
@@ -214,7 +178,7 @@ Base class for storage implementations that handle upload and download file stor
       icon="function"
       href="/sdk-reference/remotefilestorage/set_file"
     >
-      Stores a file from the local path
+      Upload a file from its local path
     </Card>
   </Visibility>
   <Visibility for="agents">
@@ -223,7 +187,7 @@ Base class for storage implementations that handle upload and download file stor
       icon="function"
       href="/sdk-reference/remotefilestorage/set_file.md"
     >
-      Stores a file from the local path
+      Upload a file from its local path
     </Card>
   </Visibility>
   <Visibility for="humans">
@@ -268,5 +232,5 @@ Base class for storage implementations that handle upload and download file stor
 
 <Info>
 **Module:** `notte_sdk.endpoints.files`
-**Inheritance:** RemoteFileStorage → _SessionStorage → BaseStorage → ABC → Generic
+**Inheritance:** RemoteFileStorage → _SessionStorage → StoragePaths → ABC → Generic
 </Info>

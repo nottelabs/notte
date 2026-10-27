@@ -51,6 +51,16 @@ The sync `Persona` and `Vault` objects call the API in their constructor. An asy
 
 <AsyncPersonaVault />
 
+## Migrating mixed sync and async code
+
+`NotteClient` and its session, vault, persona and file-storage objects expose synchronous operations only.
+Use `AsyncNotteClient` for async operations, including async Playwright. Replace `session.apage`
+with `session.page` on an async session, and await operations by their regular names:
+`await vault.get_credentials(url)`, `await persona.emails()` and `await storage.list_uploaded_files()`.
+
+When attaching a cloud vault or persona to a local browser session, create it with `AsyncNotteClient`
+and run the local session on the same event loop.
+
 ## Event loops and files
 
 - A client's connections belong to the event loop that made its first request. Using the client from another event loop while that loop is still open raises `RuntimeError`, so create one client per event loop. Once the first loop is closed, the next request opens new connections in the current loop.
@@ -60,4 +70,4 @@ The sync `Persona` and `Vault` objects call the API in their constructor. An asy
 
 - Methods that send no request stay plain methods: `client.functions.get_curl()`, `client.functions.decode_message()` and `vault.generate_password()`, for example.
 - The deprecated notte 1.9 names, such as `client.workflows`, `client.Workflow` and `client.functions.run()`, exist only on `NotteClient`. Use the current names.
-- `RemoteSession.apage` and `RemoteSession.await_for_auth()` have no async counterpart: on an async session, `session.page` and `session.wait_for_auth()` are already awaitable.
+- `NotteClient.Session()` supports synchronous operations and sync Playwright. For `async with`, async operations and async Playwright, use `AsyncNotteClient.Session()` with `await session.page` and `await session.wait_for_auth()`.

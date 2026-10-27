@@ -27,8 +27,8 @@ class FileInfo(BaseModel):
         return data
 
 
-class BaseStorage(ABC):
-    """Base class for storage implementations that handle upload and download file storage and retrieval."""
+class StoragePaths:
+    """Storage directories and capabilities, without I/O."""
 
     def __init__(self, upload_dir: str | None = None, download_dir: str | None = None):
         self.upload_dir: str | None = None
@@ -49,6 +49,10 @@ class BaseStorage(ABC):
     def captures_browser_downloads(self) -> bool:
         """Whether browser-native downloads are persisted out of band."""
         return False
+
+
+class BaseStorage(StoragePaths, ABC):
+    """Base class for storage implementations that handle upload and download file storage and retrieval."""
 
     @abstractmethod
     async def get_file(self, name: str) -> str | None:

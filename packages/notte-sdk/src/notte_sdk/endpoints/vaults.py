@@ -8,6 +8,7 @@ from notte_core.credentials.base import (
     Credential,
     CredentialsDict,
     CreditCardDict,
+    VaultState,
 )
 from notte_core.logging import logger
 from notte_core.profiling import profiler
@@ -15,7 +16,6 @@ from notte_core.resource import SyncResource
 from typing_extensions import override
 
 from notte_sdk._generated.resources import AsyncVaultsOperations, VaultsOperations
-from notte_sdk._transport import athread, athread_finally
 from notte_sdk.endpoints._async_resource import AwaitableResource
 from notte_sdk.types import (
     VaultCreateRequestDict,
@@ -25,7 +25,7 @@ from notte_sdk.types import (
 # DEFINED HERE TO SIMPLIFY CIRCULAR DEPENDENCY
 # SHOULD ONLY BE INVOKED FROM ENDPOINT ANYWAY
 @final
-class NotteVault(BaseVault, SyncResource):
+class NotteVault(VaultState, SyncResource):
     """Vault that fetches credentials stored using the sdk"""
 
     @overload
@@ -63,39 +63,44 @@ class NotteVault(BaseVault, SyncResource):
         _log_deleted(self.vault_id)
         self.delete()
 
-    @override
     @profiler.profiled(operation_name="BaseVault.add_credentials_async")
-    async def add_credentials_async(self, url: str, **kwargs: Unpack[CredentialsDict]) -> None:
+    def add_credentials(self, url: str, **kwargs: Unpack[CredentialsDict]) -> None:
         """Store credentials remotely; invalid input is reported by the API as 422."""
-        return await self._add_credentials(url, kwargs)
+        _ = self.vault_client.credentials_add(self.vault_id, url=url, **kwargs)
 
-    @override
-    async def _add_credentials(self, url: str, creds: CredentialsDict) -> None:
-        _ = await athread(self.vault_client.credentials_add, self.vault_id, url=url, **creds)
+    @profiler.profiled(operation_name="BaseVault.get_credentials_async")
+    def get_credentials(self, url: str) -> CredentialsDict | None:
+        """Retrieve credentials, resolve MFA codes and track values for redaction."""
+        credentials = self.vault_client.credentials_get(vault_id=self.vault_id, url=url).credentials
+        return self._track_credentials(url, credentials)
 
-    @override
-    async def _get_credentials_impl(self, url: str) -> CredentialsDict | None:
-        return (await athread(self.vault_client.credentials_get, vault_id=self.vault_id, url=url)).credentials
+    def delete_credentials(self, url: str) -> None:
+        """Remove credentials for a URL."""
+        _ = self.vault_client.credentials_delete(vault_id=self.vault_id, url=url)
 
-    @override
-    async def delete_credentials_async(self, url: str) -> None:
-        await athread_finally(self.vault_client.credentials_delete, vault_id=self.vault_id, url=url)
+    def set_credit_card(self, **kwargs: Unpack[CreditCardDict]) -> None:
+        """Store credit card information for this vault."""
+        _ = self.vault_client.credit_card_set(self.vault_id, **kwargs)
 
-    @override
-    async def set_credit_card_async(self, **kwargs: Unpack[CreditCardDict]) -> None:
-        _ = await athread(self.vault_client.credit_card_set, self.vault_id, **kwargs)
+    def get_credit_card(self) -> CreditCardDict:
+        """Retrieve this vault's credit card information."""
+        return self.vault_client.credit_card_get(self.vault_id).credit_card
 
-    @override
-    async def get_credit_card_async(self) -> CreditCardDict:
-        return (await athread(self.vault_client.credit_card_get, self.vault_id)).credit_card
+    def list_credentials(self) -> list[Credential]:
+        """List the URLs with stored credentials."""
+        return self.vault_client.credentials_list(self.vault_id).credentials
 
-    @override
-    async def list_credentials_async(self) -> list[Credential]:
-        return (await athread(self.vault_client.credentials_list, self.vault_id)).credentials
+    def delete_credit_card(self) -> None:
+        """Remove saved credit card information."""
+        _ = self.vault_client.credit_card_delete(self.vault_id)
 
-    @override
-    async def delete_credit_card_async(self) -> None:
-        await athread_finally(self.vault_client.credit_card_delete, self.vault_id)
+    def has_credential(self, url: str) -> bool:
+        """Check whether credentials exist for a URL."""
+        return any(credential.url == url for credential in self.list_credentials())
+
+    def add_credentials_from_env(self, url: str) -> None:
+        """Store credentials from the URL's environment variables."""
+        self.add_credentials(url, **self._credentials_from_env(url))
 
     def delete(self) -> None:
         _ = self.vault_client.delete(self.vault_id)
@@ -195,7 +200,7 @@ class AsyncNotteVault(BaseVault, AwaitableResource):
 
     `vault = await client.Vault(...)` creates the vault, or checks that `vault_id` exists, like the
     `NotteVault` constructor; `async with` also deletes it on exit. Credentials go through the same
-    `BaseVault` code as `NotteVault`, so the values it returns are tracked and masked the same way.
+    credential transformations as `NotteVault`, so the values it returns are tracked and masked the same way.
     """
 
     @overload

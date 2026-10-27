@@ -4,18 +4,18 @@ import secrets
 import sys
 
 from notte_computer import NotteComputer
-from notte_sdk import NotteClient
+from notte_sdk import AsyncNotteClient
 from openai import APIStatusError, APITimeoutError, AsyncOpenAI
 from playwright.async_api import async_playwright
 
 
 async def run_demo() -> dict:
-    with NotteClient().Session(max_duration_minutes=3, viewport_width=1024, viewport_height=768) as session:
+    async with AsyncNotteClient().Session(max_duration_minutes=3, viewport_width=1024, viewport_height=768) as session:
         stage = "browser setup"
         try:
             async with asyncio.timeout(120):
                 async with async_playwright() as driver:
-                    browser = await driver.chromium.connect_over_cdp(session.cdp_url())
+                    browser = await driver.chromium.connect_over_cdp(await session.cdp_url())
                     try:
                         page = browser.contexts[0].pages[0]
                         await page.route("**/*", lambda route: route.abort())
