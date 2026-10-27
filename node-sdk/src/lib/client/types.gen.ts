@@ -338,6 +338,18 @@ export type ApiSessionStartRequest = {
      */
     advanced_stealth?: boolean;
     /**
+     * Record Session
+     *
+     * Save session replay. False permanently disables saved replay; Live View remains available.
+     */
+    record_session?: boolean;
+    /**
+     * Log Session
+     *
+     * Save browser session logs. False permanently disables saved logs, without disabling metering.
+     */
+    log_session?: boolean;
+    /**
      * Screenshot Type
      *
      * Ignored since notte 1.10: screenshots are returned without highlighting.
@@ -351,18 +363,6 @@ export type ApiSessionStartRequest = {
      * Whether to enable the Notte recorder extension for this session. The extension is installed but remains inactive when this is false.
      */
     demonstrate?: boolean;
-    /**
-     * Record Session
-     *
-     * Save session replay. False permanently disables saved replay; Live View remains available.
-     */
-    record_session?: boolean;
-    /**
-     * Log Session
-     *
-     * Save browser session logs. False permanently disables saved logs, without disabling metering.
-     */
-    log_session?: boolean;
 };
 
 /**
@@ -3868,6 +3868,18 @@ export type GlobalScrapeRequest = {
      * Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.
      */
     advanced_stealth?: boolean;
+    /**
+     * Record Session
+     *
+     * Save session replay. False permanently disables saved replay; Live View remains available.
+     */
+    record_session?: boolean;
+    /**
+     * Log Session
+     *
+     * Save browser session logs. False permanently disables saved logs, without disabling metering.
+     */
+    log_session?: boolean;
     /**
      * Screenshot Type
      *
@@ -7532,12 +7544,6 @@ export type SessionResponse = {
      */
     cdp_url?: string | null;
     /**
-     * Playwright Url
-     *
-     * The WebSocket URL for Playwright's chromium.connect(), when supported by the server. Requires a matching Playwright client version. This is a live browser connection, not a replay URL.
-     */
-    playwright_url?: string | null;
-    /**
      * Viewer Url
      *
      * The remote session viewer URL.
@@ -7562,12 +7568,6 @@ export type SessionResponse = {
      */
     system_hidden?: boolean;
     /**
-     * Timeout Minutes
-     *
-     * @deprecated
-     */
-    readonly timeout_minutes: number;
-    /**
      * Record Session
      *
      * Whether saved session replay is enabled. Defaults to true.
@@ -7579,6 +7579,12 @@ export type SessionResponse = {
      * Whether saved browser session logs are enabled. Defaults to true.
      */
     log_session?: boolean;
+    /**
+     * Timeout Minutes
+     *
+     * @deprecated
+     */
+    readonly timeout_minutes: number;
     [key: string]: unknown;
 };
 
@@ -10339,12 +10345,6 @@ export type SessionResponseWritable = {
      * The URL to connect to the CDP server.
      */
     cdp_url?: string | null;
-    /**
-     * Playwright Url
-     *
-     * The WebSocket URL for Playwright's chromium.connect(), when supported by the server. Requires a matching Playwright client version. This is a live browser connection, not a replay URL.
-     */
-    playwright_url?: string | null;
     /**
      * Viewer Url
      *

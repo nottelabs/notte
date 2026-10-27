@@ -97,10 +97,6 @@ Whether to solve captchas.
 The URL to connect to the CDP server.
 </ParamField>
 
-<ParamField body="playwright_url" type={"string | null | undefined"}>
-The WebSocket URL for Playwright's chromium.connect(), when supported by the server. Requires a matching Playwright client version. This is a live browser connection, not a replay URL.
-</ParamField>
-
 <ParamField body="viewer_url" type={"string | null | undefined"}>
 The remote session viewer URL.
 </ParamField>
@@ -117,20 +113,20 @@ Managed Auth connection IDs attached to this session.
 Whether this session is an internal system run. Internal system runs are omitted from session.list() unless include_system=True is requested.
 </ParamField>
 
-<ParamField body="timeout_minutes" type={"number"} required>
-
-
-**deprecated:**
-
-
-</ParamField>
-
 <ParamField body="record_session" type={"boolean | undefined"}>
 Whether saved session replay is enabled. Defaults to true.
 </ParamField>
 
 <ParamField body="log_session" type={"boolean | undefined"}>
 Whether saved browser session logs are enabled. Defaults to true.
+</ParamField>
+
+<ParamField body="timeout_minutes" type={"number"} required>
+
+
+**deprecated:**
+
+
 </ParamField>
 
 ## Related types
