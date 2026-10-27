@@ -433,6 +433,8 @@ async def test_listbox_value_does_not_expand_aria_graphs_or_materialize_the_sele
 @pytest.mark.parametrize("shape", ["wide", "deep", "whitespace", "transformed"])
 async def test_listbox_value_stops_at_fixed_node_and_text_budgets(shape: str) -> None:
     """Large/deep selections stop deterministic work, and suffix edits past the cutoff are partial."""
+    node_type_anchor = 'const nodeTypeOf = nativeGetter(Node.prototype, "nodeType");'
+    assert node_type_anchor in DOM_TREE_JS, "node-work budget probe anchor not found"
     probe = DOM_TREE_JS.replace(
         "const rootId = buildDomTree(BODY);",
         """
@@ -442,7 +444,7 @@ async def test_listbox_value_stops_at_fixed_node_and_text_budgets(shape: str) ->
         return state;
         """,
     ).replace(
-        'const nodeTypeOf = nativeGetter(Node.prototype, "nodeType");',
+        node_type_anchor,
         """
         const nativeNodeType = nativeGetter(Node.prototype, "nodeType");
         let nodeReads = 0;
