@@ -461,15 +461,20 @@ def default_decider() -> Decider:
     choice = os.getenv("NOTTE_ACT_DECIDER", "auto").strip().lower()
     if choice not in ("auto", "jev", "llm"):
         raise DeciderNotAvailableError(f"NOTTE_ACT_DECIDER must be 'auto', 'jev' or 'llm', not {choice!r}.")
-    endpoint = _endpoint()
     if choice != "llm":
         route: JevRoute | None = (
             "typesafe" if os.getenv("TYPESAFE_API_KEY") else "openrouter" if _openrouter_key() else None
         )
         if route is not None:
+            try:
+                endpoint = _endpoint()
+            except DeciderNotAvailableError:
+                # Jev decisions do not require the optional field-writer endpoint.
+                endpoint = None
             return JevDecider(route=route, writer=_writer(endpoint))
         if choice == "jev":
             raise DeciderNotAvailableError("NOTTE_ACT_DECIDER=jev needs TYPESAFE_API_KEY or OPENROUTER_API_KEY.")
+    endpoint = _endpoint()
     if endpoint is None:
         raise DeciderNotAvailableError(
             "Neither TYPESAFE_API_KEY, OPENROUTER_API_KEY nor an LLM endpoint key (NOTTE_LLM_API_KEY) is set."

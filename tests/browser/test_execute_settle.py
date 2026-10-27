@@ -970,8 +970,8 @@ async def test_a_click_reporting_a_closed_target_requires_a_live_replacement(
     session.window.page = original
     original_click = Locator.click
 
-    async def click_then_report_closed(locator: Locator, *, timeout: float) -> None:
-        await original_click(locator, timeout=timeout)
+    async def click_then_report_closed(locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
+        await original_click(locator, timeout=timeout, no_wait_after=no_wait_after)
         if not original.is_closed():
             await original.wait_for_event("close")
         # Patchright can report the handler's window.close() before acknowledging the click.
@@ -1015,8 +1015,8 @@ async def test_a_closing_click_waits_for_a_request_it_started_on_an_existing_tab
     session.window.page = popup
     original_click = Locator.click
 
-    async def closing_click(locator: Locator, *, timeout: float) -> None:
-        await original_click(locator, timeout=timeout)
+    async def closing_click(locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
+        await original_click(locator, timeout=timeout, no_wait_after=no_wait_after)
         if other is not None:
             # An unrelated iframe navigation must not be mistaken for a replacement page.
             await other.locator("#inner").evaluate("el => { el.src = '/inner'; }")
@@ -1056,8 +1056,8 @@ async def test_a_closing_popup_selects_the_existing_named_tab_it_navigated(
     session.window.page = popup
     original_click = Locator.click
 
-    async def closing_click(locator: Locator, *, timeout: float) -> None:
-        await original_click(locator, timeout=timeout)
+    async def closing_click(locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
+        await original_click(locator, timeout=timeout, no_wait_after=no_wait_after)
         if not popup.is_closed():
             await popup.wait_for_event("close")
         if report_closed:
@@ -1098,8 +1098,8 @@ async def test_a_closing_popup_ignores_other_tabs_navigating_during_element_look
         await other.goto(f"{site}/second")
         return locator
 
-    async def closing_click(locator: Locator, *, timeout: float) -> None:
-        await original_click(locator, timeout=timeout)
+    async def closing_click(locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
+        await original_click(locator, timeout=timeout, no_wait_after=no_wait_after)
         if not popup.is_closed():
             await popup.wait_for_event("close")
         if report_closed:
@@ -1153,12 +1153,12 @@ async def test_a_closing_popup_ignores_navigation_during_click_actionability(
     session.window.page = popup
     original_click = Locator.click
 
-    async def covered_click(locator: Locator, *, timeout: float) -> None:
+    async def covered_click(locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
         if mode == "js":
             await other.goto(f"{site}/second")
             await cover.evaluate("el => el.remove()")
             raise PlaywrightTimeoutError("Use the JS click fallback")
-        pending = asyncio.create_task(original_click(locator, timeout=timeout))
+        pending = asyncio.create_task(original_click(locator, timeout=timeout, no_wait_after=no_wait_after))
         try:
             await other.goto(f"{site}/second")
             assert not pending.done(), "The covered button must still be waiting for input"
@@ -1219,11 +1219,13 @@ async def test_replacement_selection_waits_for_click_input_delivery(
         await release.wait()
         notify(binding, token)
 
-    async def closing_click(locator: Locator, *, timeout: float) -> None:
+    async def closing_click(locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
         try:
             if mode == "js":
                 raise PlaywrightTimeoutError("Use the JS click fallback")
-            await original_click(locator, timeout=timeout)
+            await original_click(locator, timeout=timeout, no_wait_after=no_wait_after)
+            if mode == "closed" and not popup.is_closed():
+                await popup.wait_for_event("close")
         finally:
             native_done.set()
         if mode == "closed":
@@ -1296,7 +1298,7 @@ async def test_a_closed_target_error_is_not_hidden_by_an_unusable_replacement(
     await original.wait_for_load_state("load")
     session.window.page = original
 
-    async def fail_click(locator: Locator, *, timeout: float) -> None:
+    async def fail_click(locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
         if failure == "page":
             await opener.close()
             await original.close()

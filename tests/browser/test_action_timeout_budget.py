@@ -30,6 +30,8 @@ async def slow_site() -> AsyncIterator[str]:
         return web.Response(text='<a id="next" href="/next">next</a>', content_type="text/html")
 
     async def next_page(_request: web.Request) -> web.Response:
+        # Navigation must remain outside the click budget even before the response commits.
+        await asyncio.sleep(1.5)
         return web.Response(text='<h1 id="done">next</h1><img src="/slow.png">', content_type="text/html")
 
     async def slow_image(_request: web.Request) -> web.Response:

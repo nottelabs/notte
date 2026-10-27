@@ -306,6 +306,22 @@ def test_jev_decider_without_llm_key_has_no_writer(monkeypatch: pytest.MonkeyPat
     assert isinstance(decider, JevDecider) and not isinstance(decider.writer, LlmWriter)
 
 
+@pytest.mark.parametrize("choice", ["auto", "jev"])
+@pytest.mark.parametrize("route", ["typesafe", "openrouter"])
+@pytest.mark.parametrize("writer_key", [None, "writer-test-key"])
+def test_jev_selection_does_not_require_a_configured_field_writer(
+    monkeypatch: pytest.MonkeyPatch, choice: str, route: str, writer_key: str | None
+) -> None:
+    monkeypatch.setenv("NOTTE_ACT_DECIDER", choice)
+    monkeypatch.setenv("TYPESAFE_API_KEY" if route == "typesafe" else "OPENROUTER_API_KEY", "decision-test-key")
+    monkeypatch.setenv("NOTTE_LLM_BASE_URL", "https://llm.test/v1")
+    if writer_key is not None:
+        monkeypatch.setenv("NOTTE_LLM_API_KEY", writer_key)
+    decider = default_decider()
+    assert isinstance(decider, JevDecider) and decider.route == route
+    assert not isinstance(decider.writer, LlmWriter)
+
+
 @pytest.mark.asyncio
 async def test_llm_requests_disable_reasoning_and_fallback_models(monkeypatch: pytest.MonkeyPatch) -> None:
     """`_complete` goes through `LLMEngine`: OpenRouter reasoning off, no fallback models, bounded tokens."""

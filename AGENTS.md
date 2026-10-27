@@ -55,7 +55,9 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   Existing-tab recovery retains requests before click dispatch, but qualifies
   replacement navigations against the notification of actual pointer input
   (or the JS fallback click). Actionability waits can outlast background navigation;
-  starting `Locator.click` is not the input boundary. The page binding reports
+  Native clicks use `no_wait_after=True`: the action timeout bounds input, while
+  `PageSettle` waits for navigation even if its response has not committed.
+  Starting `Locator.click` is not the input boundary. The page binding reports
   input before a handler closes the tab. Reuse one binding per page, clearing
   action callbacks and input listeners after each action; a new binding per click
   would retain callbacks in the driver's page registry.
@@ -190,6 +192,10 @@ explicit HTML `draggable` state into act decisions and freshness checks instead;
 `tests/act/test_drag_cursor.py` covers click controls and drag capability disclosure.
 
 ## Public API
+
+- Jev route selection does not require the optional LLM field writer. Incomplete
+  `NOTTE_LLM_*` settings leave Jev available without a writer; an LLM decider
+  still reports invalid endpoint configuration.
 
 - Don't remove or rename public methods without a deprecation first: keep the
   old name working and emit a `DeprecationWarning` (see `generate_cookies` in

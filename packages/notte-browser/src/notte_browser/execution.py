@@ -841,8 +841,9 @@ async def _interact(
                 raise ActionExecutionError(action.id, window.page.url, reason="Element is disabled")
             click_input = None if before_click is None else await before_click(locator)
             try:
-                # hold back part of the budget for the JS click fallback
-                await locator.click(timeout=budget.remaining_ms(keep_ms=action.timeout / 5))
+                # Hold back part of the budget for the JS fallback. Navigation belongs to PageSettle,
+                # including a response that has not committed before the interaction deadline.
+                await locator.click(timeout=budget.remaining_ms(keep_ms=action.timeout / 5), no_wait_after=True)
             except PlaywrightTimeoutError as e:
                 logger.warning(f"Failed to click on element: {e}, fallback to js click")
                 if click_input is None:

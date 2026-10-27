@@ -1843,10 +1843,10 @@ async def test_a_fact_read_in_a_closed_tab_reaches_the_decider_and_writer(
     if reported_closed:
         original_click = Locator.click
 
-        async def click_then_report_closed(locator: Locator, *, timeout: float) -> None:
+        async def click_then_report_closed(locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
             page = locator.page
             closing = page.url == "http://code.test/help"
-            await original_click(locator, timeout=timeout)
+            await original_click(locator, timeout=timeout, no_wait_after=no_wait_after)
             if closing:
                 if not page.is_closed():
                     await page.wait_for_event("close")
