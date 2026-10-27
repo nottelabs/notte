@@ -71,7 +71,8 @@ def selectors_through_shadow_dom(node: DomNode) -> NodeSelectors:
     if root_selectors is None:
         raise ValueError(f"Node id={node.id} has no selectors")
     xpaths = [f"xpath={root_selectors.xpath_selector}"]
-    target = node
+    # the element below `node` on the way to the target
+    child: DomNode | None = None
     while node.parent is not None:
         selectors = node.computed_attributes.selectors
         if selectors is None:
@@ -88,16 +89,19 @@ def selectors_through_shadow_dom(node: DomNode) -> NodeSelectors:
                 )
                 xpaths.append(node.attributes.tag_name)
             else:
-                # The XPath of an element in the host's light tree starts with the host's, taken out of its step
-                # ("/rest"), and the target, when it is the host, is left an empty step. An element of the host's
-                # shadow root has its XPath from that root, which can repeat the host's (an `x-box` in an `x-box`)
-                step = xpaths[-1].removeprefix("xpath=")
-                if node is target or step.startswith(f"{selectors.xpath_selector}/"):
+                # The step below the host is in its light tree when the host's child on the way extends the host's
+                # XPath: the host's XPath is taken out of it ("/rest"), and the target, when it is the host, is left
+                # an empty step. A top element of the host's shadow root has a one-step XPath, which can be the
+                # host's own (an `x-box` in an `x-box`), and the step below can then start with the host's XPath too
+                child_selectors = None if child is None else child.computed_attributes.selectors
+                if child_selectors is None or child_selectors.xpath_selector.startswith(f"{selectors.xpath_selector}/"):
+                    step = xpaths[-1].removeprefix("xpath=")
                     xpaths[-1] = f"xpath={step.removeprefix(selectors.xpath_selector)}"
                 if node.parent.parent is None:
                     xpaths.append(selectors.xpath_selector)
                 else:
                     xpaths.append(f"xpath={selectors.xpath_selector}")
+        child = node
         node = node.parent
 
     shadow_locator = " >> ".join(xpaths[::-1])

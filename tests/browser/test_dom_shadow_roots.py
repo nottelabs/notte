@@ -186,14 +186,25 @@ async def test_a_shadow_host_in_a_shadow_root_can_be_clicked() -> None:
 
 
 @pytest.mark.asyncio
-async def test_a_shadow_child_with_the_path_of_its_host_can_be_clicked() -> None:
-    """In nested shadow roots, the inner host and the button in its shadow root both have the XPath `x-box`."""
-    page_html = """<x-outer></x-outer>
+@pytest.mark.parametrize(
+    ("light", "shadow"),
+    [
+        # the inner host and the button in its shadow root both have the XPath `x-box`
+        ("", """<x-box role="button" onclick="document.title = 'inner'">Open</x-box>"""),
+        # the button in the inner host's shadow root has the XPath `x-box/button`, which also reads as a light child
+        # of the host, where a button is
+        (
+            """<button onclick="document.title = 'light'">Light</button>""",
+            """<x-box><button onclick="document.title = 'inner'">Open</button></x-box><slot></slot>""",
+        ),
+    ],
+)
+async def test_a_shadow_child_with_the_path_of_its_host_can_be_clicked(light: str, shadow: str) -> None:
+    page_html = f"""<x-outer></x-outer>
 <script>
-  const root = document.querySelector("x-outer").attachShadow({ mode: "open" });
-  root.innerHTML = "<x-box></x-box>";
-  root.querySelector("x-box").attachShadow({ mode: "open" }).innerHTML =
-    `<x-box role="button" onclick="document.title = 'inner'">Open</x-box>`;
+  const root = document.querySelector("x-outer").attachShadow({{ mode: "open" }});
+  root.innerHTML = `<x-box>{light}</x-box>`;
+  root.querySelector("x-box").attachShadow({{ mode: "open" }}).innerHTML = `{shadow}`;
 </script>"""
     async with NotteSession(headless=True) as session:
         page = session.window.page
