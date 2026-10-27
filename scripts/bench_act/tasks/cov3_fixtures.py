@@ -9,9 +9,7 @@ import json
 from dataclasses import replace
 from typing import TypedDict, cast
 
-from pydantic import JsonValue
-
-from ..model import REAL_MAX_STEPS, Probe, Task, ci_tier, one, path
+from ..model import REAL_MAX_STEPS, JsonValue, Probe, Task, ci_tier, one, path
 
 
 def _page(page: str, **expected: str):

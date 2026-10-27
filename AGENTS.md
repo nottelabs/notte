@@ -391,3 +391,6 @@ The `act-bench-all` label includes extended fixtures with known browser/act fail
 report's fixture rules, even when base also fails; do not weaken the rules to make an all-tier run green.
 Harness regressions are in `tests/scripts/test_bench_act.py`. Saved runs resume only for identical run inputs,
 including probe selection; reports with `_meta/plan-*.json` use only the runs listed in those plans.
+The benchmark coordinator, registry and task definitions run under CI's system Python, outside either
+version's virtualenv. Keep their imports in the standard library; worker-only code runs inside the
+selected version's environment. `test_discovery_works_without_installed_packages` checks this boundary.

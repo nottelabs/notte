@@ -3,6 +3,7 @@ site misses, pass/fail rules and the merged report. No browser, no model."""
 
 import json
 import re
+import subprocess
 import sys
 from datetime import date
 from pathlib import Path
@@ -18,6 +19,16 @@ from scripts.bench_act.model import CI_CORE, CI_EXTENDED, TIERS, TODAY_ENV, Prob
 from scripts.bench_act.tasks.real import GF_TFS, gf_results_url, gf_search
 
 FIXTURE_URL = "{fixtures}/form.html"
+
+
+def test_discovery_works_without_installed_packages() -> None:
+    subprocess.run(
+        [sys.executable, "-S", "-c", "from scripts.bench_act.registry import discover; discover()"],
+        cwd=Path(registry.__file__).resolve().parents[2],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
 
 
 def test_discover_names_every_task_and_probe_once_with_its_module_as_suite() -> None:

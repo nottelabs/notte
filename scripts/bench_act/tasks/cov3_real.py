@@ -9,9 +9,7 @@ import json
 from dataclasses import replace
 from urllib.parse import unquote
 
-from pydantic import JsonValue
-
-from ..model import REAL_MAX_STEPS, Probe, Task, ci_tier, path
+from ..model import REAL_MAX_STEPS, JsonValue, Probe, Task, ci_tier, path
 from .cov2_real import _onetrust_refused  # pyright: ignore[reportPrivateUsage]
 
 

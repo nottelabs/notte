@@ -9,7 +9,7 @@ import os
 from collections.abc import Callable, Collection
 from dataclasses import dataclass, field, replace
 from datetime import date, timedelta
-from typing import Any, TypeVar
+from typing import Any, TypeAlias, TypeVar
 from urllib.parse import parse_qs, urlsplit
 
 MAX_STEPS = 15
@@ -18,6 +18,8 @@ REAL_MAX_STEPS = 25  # real sites need more steps
 FIXTURES = "{fixtures}"
 # operations that leave the page as it is: allowed in the tasks that must not act
 NEUTRAL_OPERATIONS = ("SCROLL_DOWN", "SCROLL_UP", "WAIT")
+
+JsonValue: TypeAlias = str | int | float | bool | None | list["JsonValue"] | dict[str, "JsonValue"]
 
 Check = Callable[[dict[str, Any], dict[str, Any]], bool]
 # the day travel dates are counted from: set by `bench.py --today` for every run of a plan
