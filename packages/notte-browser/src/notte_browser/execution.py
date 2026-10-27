@@ -1007,14 +1007,16 @@ async def _execute(
         opened = any(tab not in tabs for tab in context.pages)
         if _can_create_tab(action) and (len(context.pages) != len(tabs) or opened) and len(context.pages) > 0:
             last = context.pages[-1]
-            if (
-                isinstance(action, ClickAction)
-                and page.is_closed()
-                and not opened
-                and opener is not None
-                and not opener.is_closed()
-            ):
-                last = opener
+            if isinstance(action, ClickAction) and page.is_closed() and not opened:
+                navigated = [
+                    candidate
+                    for candidate, tracking in existing_settles.items()
+                    if tracking.navigation_requested and not candidate.is_closed()
+                ]
+                if len(navigated) == 1:
+                    last = navigated[0]
+                elif opener is not None and not opener.is_closed():
+                    last = opener
             # Selection can happen automatically when the opener closes. Readiness is independent of selection.
             # A goto_new_tab already loaded its own new page.
             if (last not in tabs or (isinstance(action, ClickAction) and page.is_closed())) and not isinstance(

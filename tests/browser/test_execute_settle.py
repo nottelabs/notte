@@ -981,6 +981,7 @@ async def test_a_closing_click_waits_for_a_request_it_started_on_an_existing_tab
     await popup.locator("#close-self").evaluate(
         "el => el.onclick = () => { window.opener.fetchResult(); window.close(); }"
     )
+    other: Page | None = None
     if unrelated_tab:
         other = await opener.context.new_page()
         await other.goto(opener.url)
@@ -989,6 +990,9 @@ async def test_a_closing_click_waits_for_a_request_it_started_on_an_existing_tab
 
     async def closing_click(locator: Locator, *, timeout: float) -> None:
         await original_click(locator, timeout=timeout)
+        if other is not None:
+            # An unrelated iframe navigation must not be mistaken for a replacement page.
+            await other.locator("#inner").evaluate("el => { el.src = '/inner'; }")
         if not popup.is_closed():
             await popup.wait_for_event("close")
         if report_closed:
@@ -1000,6 +1004,47 @@ async def test_a_closing_click_waits_for_a_request_it_started_on_an_existing_tab
     assert popup.is_closed()
     assert session.window.page is opener
     assert "Fetched on the opener" in await text(session)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("destination", ["/fetching-tab", "/slow-second"])
+@pytest.mark.parametrize("report_closed", [False, True])
+async def test_a_closing_popup_selects_the_existing_named_tab_it_navigated(
+    session: NotteSession, site: str, monkeypatch: pytest.MonkeyPatch, destination: str, report_closed: bool
+) -> None:
+    opener = session.window.page
+    # The slow case reloads the same URL: the request identifies it before its URL or document changes.
+    initial = destination if destination == "/slow-second" else "/second"
+    async with opener.context.expect_page() as opened:
+        await opener.evaluate("url => window.open(url, 'results')", f"{site}{initial}")
+    results = await opened.value
+    await results.wait_for_load_state("load")
+    async with opener.context.expect_page() as opened:
+        await opener.evaluate("window.open('/', 'helper')")
+    popup = await opened.value
+    await popup.wait_for_load_state("load")
+    await popup.locator("#close-self").evaluate(
+        "(el, url) => el.onclick = () => { window.open(url, 'results'); window.close(); }", destination
+    )
+    session.window.page = popup
+    original_click = Locator.click
+
+    async def closing_click(locator: Locator, *, timeout: float) -> None:
+        await original_click(locator, timeout=timeout)
+        if not popup.is_closed():
+            await popup.wait_for_event("close")
+        if report_closed:
+            raise Error("Locator.click: Target page, context or browser has been closed")
+
+    monkeypatch.setattr(Locator, "click", closing_click)
+    async with results.expect_request(f"{site}{destination}"):
+        _ = await click(session, "close-self")
+    assert popup.is_closed()
+    assert session.window.page is results
+    assert len(opener.context.pages) == 2
+    assert results.url == f"{site}{destination}"
+    expected = "Fetched in the tab" if destination == "/fetching-tab" else "Second tab"
+    assert expected in await text(session)
 
 
 @pytest.mark.asyncio

@@ -173,6 +173,8 @@ class PageSettle:
         self._changes: list[float] = []
         self._last_request: float | None = None
         self._tabs: bool = tabs
+        # Retain main-document navigation intent even before commit, or after its request finishes.
+        self.navigation_requested: bool = False
         # the tabs opened since the action started: the page is waited for no longer. Each is tracked from then on
         self.opened: list[Page] = []
         self._opened_event: asyncio.Event = asyncio.Event()
@@ -228,6 +230,8 @@ class PageSettle:
             return
         if request.resource_type not in TRACKED_REQUESTS or not self._same_origin(request):
             return
+        if request.is_navigation_request() and request.frame is self.page.main_frame:
+            self.navigation_requested = True
         # Repeated requests do not extend the quiet window indefinitely, but may carry the action's result.
         url = urlsplit(request.url)._replace(fragment="").geturl()
         key = (request.frame, request.method, url, request.post_data_buffer)

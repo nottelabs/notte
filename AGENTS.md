@@ -65,7 +65,9 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   and require a successful driver round trip before accepting a target-closed click;
   cached page state alone does not prove the browser is still usable.
   If another unrelated tab survives too, select the popup's actual live opener
-  when no new tab was created, and await that opener's tracked requests.
+  when no new tab was created, and await that opener's tracked requests. A click
+  can instead navigate an existing named tab: prefer a single tracked main-frame
+  navigation before the opener, including reloads and navigation before commit.
 - A new-document `goto` tracks requests before its commit and waits for the destination
   within one navigation budget. Do not wait on the old document's tracker first:
   a commit after the 3 s settle cap must still get its remaining load wait.
