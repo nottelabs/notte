@@ -258,6 +258,21 @@ with client.Vault() as vault:
         _ = session.execute(type="form_fill", value={"email": EMAIL, "current_password": PASSWORD})
 ```
 
+## Bitwarden on local sessions
+
+A local session takes a vault object. `AacVault` asks your Bitwarden Password Manager for each login through [Agent Access](https://github.com/bitwarden/agent-access), and you approve every request in `aac listen`. Install `aac` v0.11.0, unlock your vault with `/unlock` in `aac listen`, then use `/pair` and set `AAC_TOKEN` to its pairing token. Install the local browser with `patchright install chromium`.
+
+```python requires-env="AAC_TOKEN"
+import notte
+from notte_core.credentials.aac import AacVault
+
+with AacVault() as vault, notte.Session(vault=vault) as session:
+    _ = session.execute(type="goto", url="https://github.com/login")
+    _ = session.execute(type="form_fill", value={"username": notte.USERNAME, "current_password": notte.PASSWORD})
+```
+
+`BitwardenVault` (in `notte_core.credentials.bitwarden`) reads Bitwarden Secrets Manager with a machine account instead; install it with `pip install "notte[bitwarden]"`. See the [Bitwarden integration](https://docs.notte.cc/integrations/bitwarden) for setup.
+
 # Personas
 
 Personas are digital identities with a unique email address (and optionally a phone number) whose inbox your automation can read, e.g. for sign-ups and email verification codes.

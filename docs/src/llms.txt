@@ -157,6 +157,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 ## Credentials
 
 - [1Password](https://docs.notte.cc/integrations/onepassword.md): Fill Notte browser forms with login fields from 1Password.
+- [Bitwarden](https://docs.notte.cc/integrations/bitwarden.md): Fill local Notte sessions with logins from Bitwarden Password Manager or Bitwarden Secrets Manager.
 
 ## Browser Drivers
 
