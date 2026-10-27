@@ -4,7 +4,7 @@ version = "0.0.0"
 requires-python = ">=3.11"
 dependencies = [
     "anthropic==1.15.0",
-    "notte-sdk==1.9.7",
+    "notte-sdk==1.10.0",
     "playwright==1.64.0",
 ]
 

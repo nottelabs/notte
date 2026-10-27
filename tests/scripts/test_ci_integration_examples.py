@@ -39,6 +39,7 @@ with open(os.environ["COMMAND_LOG"], "a") as log:
             {
                 "args": args,
                 "cwd": os.getcwd(),
+                "loop_patch": os.environ.get("NOTTE_ENABLE_NEST_ASYNCIO"),
                 "credentials": sorted(
                     (
                         k
@@ -211,9 +212,11 @@ def test_invalid_shard_cli_fails_before_credentials_or_installs(
 
 def test_live_resolves_both_sdks_and_limits_credentials(workspace: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("INTEGRATION_EXAMPLES", '["alpha"]')
+    monkeypatch.setenv("NOTTE_ENABLE_NEST_ASYNCIO", "true")
     monkeypatch.setattr("sys.argv", ["runner", "live"])
     runner.main()
     observed = calls(workspace)
+    assert all(call["loop_patch"] == "false" for call in observed)
     tests = [call for call in observed if "unittest" in call["args"] or "test:live" in call["args"]]
     assert len(tests) == 4
     assert all(call["credentials"] == ["NOTTE_API_KEY"] for call in tests)
@@ -895,7 +898,7 @@ def test_stripe_link_retains_native_driver_alias_offline_tests_and_wallet_bounda
     assert all(not call["credentials"] for call in observed if call not in native)
     assert all(call["cwd"] == str(stripe_link_project / "typescript") for call in native)
     commands = [call["args"] for call in observed]
-    assert ["python", "-c", "from link import AsyncClient; from notte_sdk import NotteClient"] in commands
+    assert ["python", "-c", "from link import AsyncClient; from notte_sdk import AsyncNotteClient"] in commands
     assert ["python", "-m", "unittest", "discover", "-s", "python"] in commands
     assert ["npm", "test"] in commands
     source = next(command for command in commands if "-e" in command)

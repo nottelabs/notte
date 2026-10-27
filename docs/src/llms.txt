@@ -457,10 +457,10 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 #### Vault
 
 - [Get started](https://docs.notte.cc/sdk-reference/manual/vault.md): Secure credential management made easy
-- [add_credentials](https://docs.notte.cc/sdk-reference/nottevault/add_credentials.md): No description available
-- [get_credentials](https://docs.notte.cc/sdk-reference/nottevault/get_credentials.md): No description available
-- [delete_credentials](https://docs.notte.cc/sdk-reference/nottevault/delete_credentials.md): No description available
-- [list_credentials](https://docs.notte.cc/sdk-reference/nottevault/list_credentials.md): No description available
+- [add_credentials](https://docs.notte.cc/sdk-reference/nottevault/add_credentials.md): Store credentials remotely; invalid input is reported by the API as 422
+- [get_credentials](https://docs.notte.cc/sdk-reference/nottevault/get_credentials.md): Retrieve credentials, resolve MFA codes and track values for redaction
+- [delete_credentials](https://docs.notte.cc/sdk-reference/nottevault/delete_credentials.md): Remove credentials for a URL
+- [list_credentials](https://docs.notte.cc/sdk-reference/nottevault/list_credentials.md): List the URLs with stored credentials
 - [generate_password](https://docs.notte.cc/sdk-reference/nottevault/generate_password.md): Generate a secure random password
 
 #### Persona
@@ -478,8 +478,8 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [FileStorage](https://docs.notte.cc/sdk-reference/manual/file_storage.md): Upload and download files for your automations
 - [download](https://docs.notte.cc/sdk-reference/remotefilestorage/download.md): No description available
 - [upload](https://docs.notte.cc/sdk-reference/remotefilestorage/upload.md): No description available
-- [list_downloaded_files](https://docs.notte.cc/sdk-reference/remotefilestorage/list_downloaded_files.md): List all files in the download_dir
-- [list_uploaded_files](https://docs.notte.cc/sdk-reference/remotefilestorage/list_uploaded_files.md): List all files from the upload_dir
+- [list_downloaded_files](https://docs.notte.cc/sdk-reference/remotefilestorage/list_downloaded_files.md): List browser downloads
+- [list_uploaded_files](https://docs.notte.cc/sdk-reference/remotefilestorage/list_uploaded_files.md): List uploaded files
 
 ### Debug
 

@@ -9,7 +9,7 @@ from notte_core.credentials import PASSWORD as PASSWORD_PLACEHOLDER
 from notte_core.credentials import USERNAME as USERNAME_PLACEHOLDER
 from notte_core.credentials.base import EmailField, PasswordField
 from notte_core.credentials.types import ValueWithPlaceholder, get_str_value
-from notte_sdk import NotteClient
+from notte_sdk import AsyncNotteClient, NotteClient
 from notte_sdk.errors import NotteAPIError
 
 import notte
@@ -111,14 +111,14 @@ def test_add_correct_otp():
 async def test_session_form_fill_with_vault_without_observe_uses_live_url():
     """Test form_fill credential replacement snapshots the live page before vault lookup."""
     _ = load_dotenv()
-    client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
+    client = AsyncNotteClient(api_key=os.getenv("NOTTE_API_KEY"))
     base_url = "https://apartment-board-demo-nine.vercel.app"
     login_url = f"{base_url}/auth/signin"
     username = "alder"
     password = "test-password"  # pragma: allowlist secret
 
-    with client.Vault() as vault:
-        _ = vault.add_credentials(url=base_url, username=username, password=password)
+    async with client, client.Vault() as vault:
+        _ = await vault.add_credentials(url=base_url, username=username, password=password)
 
         async with notte.Session(
             vault=vault, headless=True, idle_timeout_minutes=3, max_duration_minutes=15
@@ -175,14 +175,14 @@ async def test_session_form_fill_with_vault_without_observe_uses_live_url():
 async def test_session_set_vault_enables_credential_replacement():
     """Test that session.set_vault() enables credential replacement via _action_with_vault."""
     _ = load_dotenv()
-    client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
+    client = AsyncNotteClient(api_key=os.getenv("NOTTE_API_KEY"))
     EMAIL = "test@notte.cc"
     PASSWORD = "testpass123"  # pragma: allowlist secret
     URL = "https://github.com/"
 
-    with client.Vault() as vault:
+    async with client, client.Vault() as vault:
         async with notte.Session() as session:
-            _ = vault.add_credentials(url=URL, email=EMAIL, password=PASSWORD)
+            _ = await vault.add_credentials(url=URL, email=EMAIL, password=PASSWORD)
 
             # Set vault on session directly (not via agent)
             session.set_vault(vault)
@@ -207,13 +207,13 @@ async def test_session_set_vault_enables_credential_replacement():
 async def test_session_vault_in_constructor():
     """Test that passing vault to session constructor enables credential replacement."""
     _ = load_dotenv()
-    client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
+    client = AsyncNotteClient(api_key=os.getenv("NOTTE_API_KEY"))
     EMAIL = "constructor@notte.cc"
     PASSWORD = "constructorpass"  # pragma: allowlist secret
     URL = "https://github.com/"
 
-    with client.Vault() as vault:
-        _ = vault.add_credentials(url=URL, email=EMAIL, password=PASSWORD)
+    async with client, client.Vault() as vault:
+        _ = await vault.add_credentials(url=URL, email=EMAIL, password=PASSWORD)
 
         # Pass vault directly to session constructor
         async with notte.Session(vault=vault) as session:
@@ -230,13 +230,13 @@ async def test_session_vault_in_constructor():
 async def test_session_fill_action_with_vault():
     """Test that FillAction credentials are replaced via session vault."""
     _ = load_dotenv()
-    client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
+    client = AsyncNotteClient(api_key=os.getenv("NOTTE_API_KEY"))
     EMAIL = "fill@notte.cc"
     URL = "https://github.com/"
 
-    with client.Vault() as vault:
+    async with client, client.Vault() as vault:
         async with notte.Session(vault=vault) as session:
-            _ = vault.add_credentials(url=URL, email=EMAIL, password="pw")
+            _ = await vault.add_credentials(url=URL, email=EMAIL, password="pw")  # pragma: allowlist secret
 
             await load_github_signin_fixture(session)
 

@@ -12,7 +12,7 @@ import demo
 import httpx
 from demo import run_demo
 from link import AsyncClient
-from notte_sdk import NotteClient
+from notte_sdk import AsyncNotteClient
 from playwright.async_api import BrowserType
 
 
@@ -23,11 +23,11 @@ async def main() -> dict:
     closing = mode in ("reject-close", "reject-timeout")
     closes = []
     connect = BrowserType.connect_over_cdp
-    client = NotteClient()
+    client = AsyncNotteClient()
     start = client.sessions.start
 
-    def started(**kwargs):
-        response = start(**kwargs)
+    async def started(**kwargs):
+        response = await start(**kwargs)
         event = json.dumps({"session_id": response.session_id, "event": "owned"})
         print(event, flush=True)
         if path := os.environ.get("LINK_OWNERSHIP_JOURNAL"):
@@ -66,7 +66,7 @@ async def main() -> dict:
     try:
         with (
             patch.object(BrowserType, "connect_over_cdp", new=connected) if closing else nullcontext(),
-            patch.object(demo, "NotteClient", return_value=client),
+            patch.object(demo, "AsyncNotteClient", return_value=client),
             patch.object(client.sessions, "start", side_effect=started),
         ):
             async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as transport:

@@ -4,7 +4,7 @@ Run the official [OpenAGI Lux Python SDK](https://github.com/agiopen-org/oagi-py
 
 Use Python 3.11+, [uv](https://docs.astral.sh/uv/), a [Notte API key](https://console.notte.cc/apikeys), and an [OpenAGI API key](https://developer.agiopen.org/api-keys).
 
-From this directory, run `uv sync --locked`, set `NOTTE_API_KEY` and `OAGI_API_KEY` in your environment, then run `uv run --locked python demo.py`. No local browser or desktop automation package is needed.
+From this directory, run `uv sync --locked`, set `NOTTE_API_KEY`, `OAGI_API_KEY` and `NOTTE_ENABLE_NEST_ASYNCIO=false` in your environment, then run `uv run --locked python demo.py`. No local browser or desktop automation package is needed.
 
 The demo asks the native `AsyncDefaultAgent` to copy a random code into an isolated browser form. It blocks external page requests, approves only the actions that form needs, checks the result, and closes its browser on success or error. Execution is limited to eight model steps and two minutes. The demo suppresses SDK diagnostics and reports safe provider status and the session ID on failure.
 

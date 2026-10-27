@@ -1,24 +1,15 @@
 import asyncio
 
-from notte_sdk import NotteClient
-from playwright.async_api import async_playwright
+from notte_sdk import AsyncNotteClient
 
 
 async def main():
-    client = NotteClient()
-
-    with client.Session() as session:
-        cdp_url = session.cdp_url()
-
-        async with async_playwright() as p:
-            browser = await p.chromium.connect_over_cdp(cdp_url)
-            context = browser.contexts[0]
-            page = context.pages[0]
-
+    async with AsyncNotteClient() as client:
+        async with client.Session() as session:
+            page = await session.page
             await page.goto("https://example.com")
             title = await page.title()
             print(f"Title: {title}")
-
             await page.screenshot(path="screenshot.png")
 
 

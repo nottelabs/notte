@@ -54,6 +54,7 @@ jobs:
         run: uv run --locked python repair.py
         working-directory: examples/github-actions
         env:
+          NOTTE_ENABLE_NEST_ASYNCIO: 'false'
           NOTTE_API_URL: ${{ inputs.api_url }}
           NOTTE_API_KEY: ${{ (inputs.api_url == 'https://api.notte.cc' && secrets.NOTTE_API_KEY) || (inputs.api_url != 'https://api.notte.cc' && (secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY)) || '' }}
       - if: inputs.language == 'typescript'

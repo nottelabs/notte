@@ -238,53 +238,9 @@ def test_remote_vault_http_does_not_stall_unrelated_sync_calls() -> None:
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("kind", ["credentials", "credit_card"])
-async def test_cancelled_vault_delete_settles_before_returning(kind: str) -> None:
-    from unittest.mock import Mock
-
-    from notte_sdk.endpoints.vaults import NotteVault, VaultsClient
-
-    client = Mock(spec=VaultsClient)
-    client.get.return_value = "vault-test"
-    vault = NotteVault("vault-test", _client=client)
-    started, release, settled = threading.Event(), threading.Event(), threading.Event()
-
-    def delete(_vault_id: str = "vault-test", *, vault_id: str = "vault-test", url: str = "") -> None:
-        started.set()
-        assert release.wait(5)
-        settled.set()
-
-    client.credentials_delete.side_effect = delete
-    client.credit_card_delete.side_effect = delete
-    operation = (
-        vault.delete_credentials_async("example.com") if kind == "credentials" else vault.delete_credit_card_async()
-    )
-    task = asyncio.create_task(operation)
-    try:
-        assert await asyncio.to_thread(started.wait, 5)
-        task.cancel()
-        await asyncio.sleep(0)
-        assert not task.done()
-        task.cancel()
-        await asyncio.sleep(0)
-        assert not task.done()
-        release.set()
-        with pytest.raises(asyncio.CancelledError):
-            await task
-        assert settled.is_set()
-    finally:
-        release.set()
-        await asyncio.gather(task, return_exceptions=True)
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("kind", ["upload", "email", "credentials"])
-async def test_cancelled_compatibility_call_settles_before_returning(kind: str) -> None:
-    from unittest.mock import Mock
-
-    from notte_sdk.endpoints.files import RemoteFileStorage
-    from notte_sdk.endpoints.personas import NottePersona
-    from notte_sdk.endpoints.vaults import NotteVault
+@pytest.mark.parametrize("cleanup", [False, True])
+async def test_cancelled_transport_worker_settles_before_returning(cleanup: bool) -> None:
+    from notte_sdk._transport import athread, athread_finally
 
     started, release, settled = threading.Event(), threading.Event(), threading.Event()
 
@@ -293,21 +249,12 @@ async def test_cancelled_compatibility_call_settles_before_returning(kind: str) 
         assert release.wait(5)
         settled.set()
 
-    if kind == "upload":
-        storage = RemoteFileStorage("session-test", _client=Mock())
-        storage.client.upload.side_effect = lambda *args, **kwargs: worker()
-        operation = storage.set_file("test.txt")
-    elif kind == "email":
-        persona = NottePersona("persona-test", _client=Mock())
-        persona.emails = Mock(side_effect=worker)
-        operation = persona.aemails()
-    else:
-        vault = NotteVault("vault-test", _client=Mock())
-        vault.vault_client.credentials_add.side_effect = lambda *args, **kwargs: worker()
-        operation = vault.add_credentials_async("example.com", username="ada")
-    task = asyncio.create_task(operation)
+    task = asyncio.create_task(athread_finally(worker) if cleanup else athread(worker))
     try:
         assert await asyncio.to_thread(started.wait, 5)
+        task.cancel()
+        await asyncio.sleep(0)
+        assert not task.done()
         task.cancel()
         await asyncio.sleep(0)
         assert not task.done()

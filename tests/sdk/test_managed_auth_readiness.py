@@ -4,13 +4,14 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from notte_core import __version__ as notte_core_version
-from notte_sdk.endpoints.sessions import RemoteSession
+from notte_sdk.endpoints.sessions import AsyncRemoteSession, RemoteSession
 from notte_sdk.errors import NotteConnectionError
 from notte_sdk.types import SessionStartRequest
 
 
-def bare_session():
-    session = object.__new__(RemoteSession)
+def bare_session(asynchronous=False):
+    session = object.__new__(AsyncRemoteSession if asynchronous else RemoteSession)
+    session._attached_id = None
     session.response = None
     session.request = SimpleNamespace(
         auth_ids=["connection"],
@@ -27,7 +28,10 @@ def bare_session():
     session.storage = MagicMock()
     session._open_viewer = False
     session._cookie_file = None
-    session.stop = MagicMock()
+    session.stop = AsyncMock() if asynchronous else MagicMock()
+    if asynchronous:
+        for name in ("start", "auth_readiness", "status"):
+            setattr(session.client, name, AsyncMock(return_value=getattr(session.client, name).return_value))
     return session
 
 
@@ -62,24 +66,24 @@ def test_terminal_authentication_failure_closes_without_another_start():
 
 @pytest.mark.asyncio
 async def test_async_context_waits_before_yielding():
-    session = bare_session()
-    session.start = MagicMock()
-    session.await_for_auth = AsyncMock()
+    session = bare_session(asynchronous=True)
+    session.start = AsyncMock()
+    session.wait_for_auth = AsyncMock()
     assert await session.__aenter__() is session
     session.start.assert_called_once_with(wait_for_authentication=False)
-    session.await_for_auth.assert_awaited_once()
+    session.wait_for_auth.assert_awaited_once()
 
 
 @pytest.mark.asyncio
 async def test_cancelled_async_wait_closes_the_started_session():
-    session = bare_session()
+    session = bare_session(asynchronous=True)
     # The start creates the session, as the real one does; only a session the entry created is stopped.
-    session.start = MagicMock(
+    session.start = AsyncMock(
         side_effect=lambda **_: setattr(
             session, "response", SimpleNamespace(session_id="session", status="authenticating")
         )
     )
-    session.await_for_auth = AsyncMock(side_effect=asyncio.CancelledError())
+    session.wait_for_auth = AsyncMock(side_effect=asyncio.CancelledError())
     with pytest.raises(asyncio.CancelledError):
         await session.__aenter__()
     session.stop.assert_called_once_with(close_reason="error")
@@ -114,7 +118,7 @@ def test_start_retries_final_metadata_refresh(monkeypatch, failures):
 @pytest.mark.parametrize("failures", [1, 2, 3])
 async def test_async_entry_retries_final_metadata_refresh(monkeypatch, failures):
     monkeypatch.setattr("notte_sdk.endpoints.sessions.asyncio.sleep", AsyncMock())
-    session = bare_session()
+    session = bare_session(asynchronous=True)
     ready = session.client.status.return_value
     session.client.status.side_effect = [NotteConnectionError("temporary") for _ in range(failures)] + [ready]
     if failures == 3:
@@ -133,12 +137,12 @@ async def test_async_entry_retries_final_metadata_refresh(monkeypatch, failures)
 @pytest.mark.parametrize("asynchronous", [False, True])
 def test_capability_does_not_bypass_failed_readiness(monkeypatch, asynchronous):
     monkeypatch.setenv("NOTTE_AUTH_CAPABILITY", "runner-capability")
-    session = bare_session()
+    session = bare_session(asynchronous=asynchronous)
     session.response = SimpleNamespace(session_id="session", status="authenticating")
     session.client.auth_readiness.return_value = SimpleNamespace(status="failed", error="Login failed")
     with pytest.raises(RuntimeError, match="Login failed"):
         if asynchronous:
-            asyncio.run(session.await_for_auth())
+            asyncio.run(session.wait_for_auth())
         else:
             session.wait_for_auth()
     session.client.auth_readiness.assert_called_once_with("session")

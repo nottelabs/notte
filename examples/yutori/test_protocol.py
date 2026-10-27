@@ -1,18 +1,22 @@
 import asyncio
 import json
 import threading
-import time
 import unittest
-from contextlib import contextmanager
+from contextlib import asynccontextmanager, contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from types import SimpleNamespace
 from unittest.mock import patch
 
 import main as demo
 from main import DISABLED
-from notte_sdk import NotteClient
+from notte_sdk import AsyncNotteClient
 from yutori import AsyncYutoriClient
 from yutori.navigator import N1_5_MODEL, TOOL_SET_CORE
+
+
+@asynccontextmanager
+async def client_for(session):
+    yield SimpleNamespace(Session=lambda **_kwargs: session)
 
 
 def completion(name=None, arguments=None):
@@ -60,7 +64,7 @@ def model_endpoint(responses, status=200):
 
 class NativeProtocolTests(unittest.IsolatedAsyncioTestCase):
     async def test_invalid_time_budget_is_rejected_before_connection(self):
-        with patch.object(demo, "NotteClient") as client:
+        with patch.object(demo, "AsyncNotteClient") as client:
             for timeout in (0, -1, 121, float("inf"), float("nan")):
                 with self.subTest(timeout=timeout), self.assertRaisesRegex(ValueError, "timeout_seconds"):
                     await demo.run("Read the title", timeout_seconds=timeout)
@@ -69,9 +73,9 @@ class NativeProtocolTests(unittest.IsolatedAsyncioTestCase):
     async def test_caller_exception_does_not_change_owned_cleanup(self):
         for cleanup_fails in (False, True):
             with self.subTest(cleanup_fails=cleanup_fails):
-                session = NotteClient(api_key="test-only").Session(wait_for_authentication=False)
+                session = AsyncNotteClient(api_key="test-only").Session(wait_for_authentication=False)
                 with (
-                    patch.object(demo, "NotteClient", return_value=SimpleNamespace(Session=lambda **_kwargs: session)),
+                    patch.object(demo, "AsyncNotteClient", return_value=client_for(session)),
                     patch.object(session, "start"),
                     patch.object(session, "cdp_url", return_value="wss://test-only.invalid"),
                     patch.object(
@@ -88,14 +92,14 @@ class NativeProtocolTests(unittest.IsolatedAsyncioTestCase):
                         else:
                             async with demo.owned_connection():
                                 pass
-                    stop.assert_called_once_with(close_reason="manual")
+                    stop.assert_awaited_once_with(close_reason="manual")
 
     async def test_owner_cleanup_failure_is_safe_and_preserves_primary_error(self):
         for primary in (None, demo.BrowserTaskError("Yutori primary task failed")):
             with self.subTest(primary=primary is not None):
-                session = NotteClient(api_key="test-only").Session(wait_for_authentication=False)
+                session = AsyncNotteClient(api_key="test-only").Session(wait_for_authentication=False)
                 with (
-                    patch.object(demo, "NotteClient", return_value=SimpleNamespace(Session=lambda **_kwargs: session)),
+                    patch.object(demo, "AsyncNotteClient", return_value=client_for(session)),
                     patch.object(session, "start"),
                     patch.object(session, "cdp_url", return_value="wss://test-only.invalid"),
                     patch.object(session, "stop", side_effect=RuntimeError("PRIVATE_CLEANUP_FIXTURE")) as stop,
@@ -111,12 +115,12 @@ class NativeProtocolTests(unittest.IsolatedAsyncioTestCase):
                         self.assertEqual(str(caught.exception), "Yutori browser cleanup failed")
                         self.assertIsNone(caught.exception.__cause__)
                         self.assertTrue(caught.exception.__suppress_context__)
-                    stop.assert_called_once_with(close_reason="error" if primary is not None else "manual")
+                    stop.assert_awaited_once_with(close_reason="error" if primary is not None else "manual")
 
     async def test_connection_failure_is_safe_and_stops_owned_session(self):
-        session = NotteClient(api_key="test-only").Session(wait_for_authentication=False)
+        session = AsyncNotteClient(api_key="test-only").Session(wait_for_authentication=False)
         with (
-            patch.object(demo, "NotteClient", return_value=SimpleNamespace(Session=lambda **_kwargs: session)),
+            patch.object(demo, "AsyncNotteClient", return_value=client_for(session)),
             patch.object(session, "start"),
             patch.object(session, "cdp_url", side_effect=RuntimeError("PRIVATE_CONNECTION_FIXTURE")),
             patch.object(session, "stop") as stop,
@@ -126,16 +130,16 @@ class NativeProtocolTests(unittest.IsolatedAsyncioTestCase):
                     self.fail("A failed connection must not enter the browser task")
             self.assertTrue(caught.exception.__suppress_context__)
             self.assertIsNone(caught.exception.__cause__)
-            stop.assert_called_once_with(close_reason="error")
+            stop.assert_awaited_once_with(close_reason="error")
 
     async def test_repeated_startup_cancellation_joins_owned_creation_and_stops(self):
-        session = NotteClient(api_key="test-only").Session(wait_for_authentication=False)
-        started, release = threading.Event(), threading.Event()
+        session = AsyncNotteClient(api_key="test-only").Session(wait_for_authentication=False)
+        started, release = asyncio.Event(), asyncio.Event()
         calls = []
 
-        def start(*_args, **_kwargs):
+        async def start(*_args, **_kwargs):
             started.set()
-            assert release.wait(5), "Release the bounded startup fixture"
+            await asyncio.wait_for(release.wait(), timeout=5)
             calls.append("created")
 
         async def connect():
@@ -143,13 +147,13 @@ class NativeProtocolTests(unittest.IsolatedAsyncioTestCase):
                 self.fail("Cancelled startup must not enter the browser task")
 
         with (
-            patch.object(demo, "NotteClient", return_value=SimpleNamespace(Session=lambda **_kwargs: session)),
+            patch.object(demo, "AsyncNotteClient", return_value=client_for(session)),
             patch.object(session, "start", side_effect=start),
             patch.object(session, "stop", side_effect=lambda **_kwargs: calls.append("stopped")) as stop,
         ):
             task = asyncio.create_task(connect())
             try:
-                self.assertTrue(await asyncio.to_thread(started.wait, 2))
+                await asyncio.wait_for(started.wait(), timeout=2)
                 task.cancel()
                 await asyncio.sleep(0)
                 task.cancel()
@@ -157,20 +161,19 @@ class NativeProtocolTests(unittest.IsolatedAsyncioTestCase):
                 release.set()
                 with self.assertRaises(asyncio.CancelledError):
                     await task
-                await asyncio.to_thread(lambda: None)
-            stop.assert_called_once_with(close_reason="error")
+            stop.assert_awaited_once_with(close_reason="error")
         self.assertEqual(calls, ["created", "stopped"])
 
     async def test_sdk_lifecycle_and_connection_lookup_leave_loop_responsive(self):
-        session = NotteClient(api_key="test-only").Session(wait_for_authentication=False)
+        session = AsyncNotteClient(api_key="test-only").Session(wait_for_authentication=False)
         calls = []
         ticks = []
         loop_thread = threading.get_ident()
 
-        def blocking(name, result=None):
-            def operation(*_args, **_kwargs):
+        def operation_for(name, result=None):
+            async def operation(*_args, **_kwargs):
                 calls.append((name, threading.get_ident()))
-                time.sleep(0.1)
+                await asyncio.sleep(0.1)
                 return result
 
             return operation
@@ -181,10 +184,10 @@ class NativeProtocolTests(unittest.IsolatedAsyncioTestCase):
                 await asyncio.sleep(0.01)
 
         with (
-            patch.object(demo, "NotteClient", return_value=SimpleNamespace(Session=lambda **_kwargs: session)),
-            patch.object(session, "start", side_effect=blocking("start")),
-            patch.object(session, "cdp_url", side_effect=blocking("connection", "wss://test-only.invalid")),
-            patch.object(session, "stop", side_effect=blocking("stop")) as stop,
+            patch.object(demo, "AsyncNotteClient", return_value=client_for(session)),
+            patch.object(session, "start", side_effect=operation_for("start")),
+            patch.object(session, "cdp_url", side_effect=operation_for("connection", "wss://test-only.invalid")),
+            patch.object(session, "stop", side_effect=operation_for("stop")) as stop,
         ):
             pulse = asyncio.create_task(heartbeat())
             try:
@@ -194,9 +197,9 @@ class NativeProtocolTests(unittest.IsolatedAsyncioTestCase):
             finally:
                 pulse.cancel()
                 await asyncio.gather(pulse, return_exceptions=True)
-            stop.assert_called_once_with(close_reason="manual")
+            stop.assert_awaited_once_with(close_reason="manual")
         self.assertEqual([name for name, _ in calls], ["start", "connection", "stop"])
-        self.assertTrue(all(thread != loop_thread for _, thread in calls))
+        self.assertTrue(all(thread == loop_thread for _, thread in calls))
         self.assertGreater(len(ticks), 3)
 
     async def test_unmodified_sdk_serializes_native_model_contract(self):

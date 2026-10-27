@@ -53,7 +53,7 @@ CREDENTIALS = {
 DRIVER_IMPORTS = {
     "braintrust": "from braintrust import init_logger; from notte_sdk import NotteClient",
     "onepassword": 'from onepassword import Secrets; from notte_sdk import NotteClient; Secrets.validate_secret_reference("op://Test/Login/username")',
-    "stripe-link": "from link import AsyncClient; from notte_sdk import NotteClient",
+    "stripe-link": "from link import AsyncClient; from notte_sdk import AsyncNotteClient",
     "tzafon": "from tzafon import AsyncLightcone; from notte_sdk import NotteClient",
     "watsonx": "import requests; from notte_sdk import NotteClient",
 }
@@ -342,7 +342,10 @@ def project_env(name: str, env: dict[str, str]) -> dict[str, str]:
     }.get(name)
     main = env.get("GITHUB_REF") == "refs/heads/main" and env.get("GITHUB_EVENT_NAME") != "pull_request"
     allowed = {"NOTTE_API_KEY", provider} if main else {"NOTTE_API_KEY"}
-    return {key: value for key, value in env.items() if key not in CREDENTIALS or key in allowed}
+    selected = {key: value for key, value in env.items() if key not in CREDENTIALS or key in allowed}
+    # Native integrations use standard asyncio; published SDKs still opt into a loop patch.
+    selected["NOTTE_ENABLE_NEST_ASYNCIO"] = "false"
+    return selected
 
 
 def container_diagnostics(name: str, env: dict[str, str]) -> str:
@@ -683,9 +686,10 @@ def main() -> None:
             ROOT / "integrations/terraform-provider-notte" if name == "terraform-profiles" else ROOT / "examples" / name
         )
         print(f"Checking native integration: {name}", flush=True)
-        python = check(project, install_env, python_env)
+        project_install_env = project_env(name, install_env)
+        python = check(project, project_install_env, python_env)
         if args.phase == "live":
-            live(project, python, python_env, dict(os.environ), install_env)
+            live(project, python, python_env, dict(os.environ), project_install_env)
 
 
 if __name__ == "__main__":

@@ -113,6 +113,10 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   `scripts/ci_integration_examples.py`) install the local `node-sdk` with
   `npm install --no-save`. Don't add `--package-lock=false`: it ignores the
   example's lockfile, so a new upstream release can break CI.
+  Python checks install each example's locked published SDK before source validation;
+  adopting a new SDK API also requires updating its `pyproject.toml` and `uv.lock`.
+  Published SDKs 1.9.7 and 1.10.0 need `NOTTE_ENABLE_NEST_ASYNCIO=false` before import for
+  native asyncio on Python 3.15. The source SDK no longer applies that patch.
 - `evaluate_js` preserves RegExp results as JSON data (`{"r": {"p": source,
   "f": flags}}`), including complete patterns. Patchright 1.64.1 and Playwright
   1.64.0 compile native regex results into Python objects, so native evaluation is
@@ -214,6 +218,14 @@ hosts, and respect positioned popup escapes; a full-box center can be outside wh
 editor still accepts a fill. `tests/browser/test_dom_contenteditable.py` covers this integration.
 
 ## Public API
+
+- Cloud SDK resources follow their client: sync client resources have sync I/O;
+  async client resources have async I/O. Cloud vaults/personas used by a local
+  browser session must come from `AsyncNotteClient` on that session's event loop.
+- Cloud SDK sessions follow their client: `NotteClient.Session()` uses `with`,
+  sync operations, and `session.page`; `AsyncNotteClient.Session()` uses `async with`,
+  async operations, and `await session.page`. The sync session has no async context
+  manager, `apage`, or `await_for_auth`.
 
 - Don't remove or rename public methods without a deprecation first: keep the
   old name working and emit a `DeprecationWarning` (see `generate_cookies` in
