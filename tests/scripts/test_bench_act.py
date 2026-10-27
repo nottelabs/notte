@@ -181,7 +181,8 @@ def test_plan_runs_versions_back_to_back_alternating_and_longest_first() -> None
 
 def test_site_miss_needs_evidence_from_the_site() -> None:
     url = "https://www.example.com/start"
-    assert rules.site_miss(url, {"success": True, "nav_error": "x"}) is None
+    assert rules.site_miss(url, {"success": True, "nav_error": "x"}) == "navigation failed: x"
+    assert rules.site_miss("{fixtures}/a.html", {"success": True, "nav_error": "x"}) is None
     assert rules.site_miss("{fixtures}/a.html", {"success": False, "nav_error": "x"}) is None
     assert rules.site_miss(url, {"success": False}) is None
     assert rules.site_miss(url, {"nav_error": "TimeoutError: goto"}) == "navigation failed: TimeoutError: goto"
@@ -194,6 +195,31 @@ def test_site_miss_needs_evidence_from_the_site() -> None:
     assert rules.site_miss(url, {"landing": {"url": url, "status": 200}, "final": final}) == (
         "block page ('CAPTCHA') on https://www.example.com/search"
     )
+
+
+@pytest.mark.parametrize("stage", ["landing", "final"])
+@pytest.mark.parametrize("problem", ["block", "redirect"])
+def test_task_success_does_not_override_block_or_redirect_evidence(stage: str, problem: str) -> None:
+    task = registry.discover().tasks["pypi"]
+    expected_url = "https://pypi.org/project/requests/2.31.0/"
+    landing = {"url": expected_url, "status": 200, "text": "requests 2.31.0"}
+    final = {"url": expected_url, "text": "requests 2.31.0"}
+    page = landing if stage == "landing" else final
+    if problem == "block":
+        page["text"] = "Verify you are human"
+    else:
+        page["url"] = "https://other.test/project/requests/2.31.0/"
+    # The real path-only checker accepts this result, including the wrong final host.
+    assert task.check(final, {}) is True
+    run = {"runner": "notte-local", "task": task.name, "suite": "real", "version": "head",
+           "repeat": 1, "success": True, "landing": landing, "final": final}  # fmt: skip
+    miss = rules.site_miss(task.url, run)
+    assert miss is not None
+    assert ("block page" if problem == "block" else "redirected to") in miss
+    run["site_miss"] = miss
+    [row] = rules.task_rows([run])
+    assert row.head == []
+    assert row.head_misses == [miss]
 
 
 def test_probe_landed_keeps_host_and_query() -> None:

@@ -81,10 +81,10 @@ def registrable_domain(url: str) -> str:
 
 
 def site_miss(url: str, run: dict[str, Any]) -> str | None:
-    """Evidence that the site, not act or observe, made a failed public-site run fail; None when there is none:
-    the first navigation failed, answered an HTTP error, or left the site, or the landing or final page is a block
-    page (CAPTCHA, bot check)."""
-    if run.get("success") or url.startswith(FIXTURES):
+    """Evidence a public site was unavailable, even when its task checker reports success: navigation failed,
+    answered an HTTP error, or the landing or final page left the site or shows a block page (CAPTCHA, bot check).
+    None when there is no such evidence."""
+    if url.startswith(FIXTURES):
         return None
     if run.get("nav_error"):
         return f"navigation failed: {run['nav_error'][:200]}"
@@ -92,9 +92,9 @@ def site_miss(url: str, run: dict[str, Any]) -> str | None:
     status = landing.get("status")
     if isinstance(status, int) and status >= 400:
         return f"HTTP {status} on {landing.get('url')}"
-    if landing.get("url") and registrable_domain(landing["url"]) != registrable_domain(url):
-        return f"redirected to {landing['url']}"
     for page in (landing, run.get("final") or {}):
+        if page.get("url") and registrable_domain(page["url"]) != registrable_domain(url):
+            return f"redirected to {page['url']}"
         match = BLOCK_MARKERS.search(page.get("text") or "")
         if match:
             return f"block page ({match.group(0)!r}) on {page.get('url')}"

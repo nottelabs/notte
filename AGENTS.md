@@ -381,10 +381,12 @@ environment built with a Python version that differs from `.python-version`.
 
 `scripts/bench_act/` benchmarks `act()` / `choose()` / `check()` and the observe they read, on local
 fixture pages and public sites (see its README). `act-bench.yml` runs it on PRs labelled `act-bench` or
-touching `notte_browser/js`, `notte_browser/dom`, `notte_core/act` or `notte_llm/act.py`, head against the
+`act-bench-all`, changes under `notte_browser/js`, `notte_browser/dom`, `notte_core/act`, `notte_llm/act.py`,
+`scripts/bench_act/` or `.github/workflows/act-bench.yml`, and manual dispatch. PRs compare head against the
 merge base. With Jev, fixture tasks must always pass; public sites fail only on a clear drop against base;
 the LLM runners are report-only. A site that blocks or redirects is a site miss with evidence, never a pass;
-a decider transport error is an infra miss (red above 5% of runs). It needs `OPENROUTER_API_KEY` only.
+a decider transport error is an infra miss (red above 5% of runs). Landing and final-page evidence takes
+precedence over a task checker's success flag. It needs `OPENROUTER_API_KEY` only.
 The `act-bench-all` label includes extended fixtures with known browser/act failures. These still fail the
 report's fixture rules, even when base also fails; do not weaken the rules to make an all-tier run green.
 Harness regressions are in `tests/scripts/test_bench_act.py`. Saved runs resume only for identical run inputs,
