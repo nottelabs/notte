@@ -15,11 +15,11 @@
     "ai": "7.0.137",
     "notte-sdk": "1.9.7",
     "playwright-core": "1.63.0",
-    "zod": "4.5.4"
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@types/node": "24.10.0",
-    "tsx": "4.20.6",
+    "tsx": "4.23.15",
     "typescript": "5.9.3"
   }
 }
