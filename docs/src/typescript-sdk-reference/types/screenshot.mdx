@@ -12,23 +12,23 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type Screenshot = {
     /**
-     * Bboxes
-     */
-    bboxes?: Array<BoundingBox>;
-    /**
      * Raw
      */
     raw: Blob | File;
+    /**
+     * Bboxes
+     */
+    bboxes?: Array<BoundingBox>;
 };
 ```
 
 ## Fields
 
-<ParamField body="bboxes" type={"BoundingBox[] | undefined"}>
+<ParamField body="raw" type={"Blob | File"} required>
 
 </ParamField>
 
-<ParamField body="raw" type={"Blob | File"} required>
+<ParamField body="bboxes" type={"BoundingBox[] | undefined"}>
 
 </ParamField>
 

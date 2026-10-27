@@ -36,7 +36,7 @@ from pydantic.fields import FieldInfo
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from scripts.openapi_order import serialize_openapi  # noqa: E402
+from scripts.openapi_order import comparison_json  # noqa: E402
 
 SNAPSHOT = REPO_ROOT / "openapi" / "openapi.json"
 BASELINE = REPO_ROOT / "openapi" / "known_drift.txt"
@@ -146,8 +146,13 @@ def main() -> int:
     if args.fetch:
         spec = download(args.url)
         SNAPSHOT.parent.mkdir(parents=True, exist_ok=True)
-        _ = SNAPSHOT.write_text(serialize_openapi(spec))
-        print(f"wrote {SNAPSHOT.relative_to(REPO_ROOT)}")
+        previous = json.loads(SNAPSHOT.read_text()) if SNAPSHOT.exists() else None
+        if comparison_json(previous) == comparison_json(spec):
+            print(f"{SNAPSHOT.relative_to(REPO_ROOT)} is unchanged (ignoring object-key order)")
+        else:
+            # Keep the API's declared order. Sorting is only for the comparison.
+            _ = SNAPSHOT.write_text(json.dumps(spec, indent=2, ensure_ascii=False) + "\n")
+            print(f"wrote {SNAPSHOT.relative_to(REPO_ROOT)}")
 
     if args.update_baseline:
         lines = drift(cast(JsonObject, json.loads(SNAPSHOT.read_text())))

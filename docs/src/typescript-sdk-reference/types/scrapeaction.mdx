@@ -12,6 +12,10 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type ScrapeAction = {
     /**
+     * Type
+     */
+    type?: 'scrape';
+    /**
      * Category
      */
     category?: string;
@@ -19,12 +23,6 @@ export type ScrapeAction = {
      * Description
      */
     description?: string;
-    /**
-     * Ignored Tags
-     *
-     * HTML tags to ignore from the page.
-     */
-    ignored_tags?: Array<string> | null;
     /**
      * Instructions
      */
@@ -36,19 +34,11 @@ export type ScrapeAction = {
      */
     only_main_content?: boolean;
     /**
-     * Response Format
+     * Selector
      *
-     * JSON schema dict for structured output. Agent can provide a schema to extract structured data.
+     * Playwright selector to scope the scrape to. Only content inside this selector will be scraped.
      */
-    response_format?: {
-        [key: string]: unknown;
-    } | null;
-    /**
-     * Scrape Images
-     *
-     * Whether to scrape images from the page.
-     */
-    scrape_images?: boolean;
+    selector?: string | null;
     /**
      * Scrape Links
      *
@@ -56,19 +46,33 @@ export type ScrapeAction = {
      */
     scrape_links?: boolean;
     /**
-     * Selector
+     * Scrape Images
      *
-     * Playwright selector to scope the scrape to. Only content inside this selector will be scraped.
+     * Whether to scrape images from the page.
      */
-    selector?: string | null;
+    scrape_images?: boolean;
     /**
-     * Type
+     * Ignored Tags
+     *
+     * HTML tags to ignore from the page.
      */
-    type?: 'scrape';
+    ignored_tags?: Array<string> | null;
+    /**
+     * Response Format
+     *
+     * JSON schema dict for structured output. Agent can provide a schema to extract structured data.
+     */
+    response_format?: {
+        [key: string]: unknown;
+    } | null;
 };
 ```
 
 ## Fields
+
+<ParamField body="type" type={"\"scrape\" | undefined"}>
+
+</ParamField>
 
 <ParamField body="category" type={"string | undefined"}>
 
@@ -76,10 +80,6 @@ export type ScrapeAction = {
 
 <ParamField body="description" type={"string | undefined"}>
 
-</ParamField>
-
-<ParamField body="ignored_tags" type={"string[] | null | undefined"}>
-HTML tags to ignore from the page.
 </ParamField>
 
 <ParamField body="instructions" type={"string | null | undefined"}>
@@ -90,22 +90,22 @@ HTML tags to ignore from the page.
 Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded.
 </ParamField>
 
-<ParamField body="response_format" type={"{ [key: string]: unknown; } | null | undefined"}>
-JSON schema dict for structured output. Agent can provide a schema to extract structured data.
-</ParamField>
-
-<ParamField body="scrape_images" type={"boolean | undefined"}>
-Whether to scrape images from the page.
+<ParamField body="selector" type={"string | null | undefined"}>
+Playwright selector to scope the scrape to. Only content inside this selector will be scraped.
 </ParamField>
 
 <ParamField body="scrape_links" type={"boolean | undefined"}>
 Whether to scrape links from the page. Links are scraped by default.
 </ParamField>
 
-<ParamField body="selector" type={"string | null | undefined"}>
-Playwright selector to scope the scrape to. Only content inside this selector will be scraped.
+<ParamField body="scrape_images" type={"boolean | undefined"}>
+Whether to scrape images from the page.
 </ParamField>
 
-<ParamField body="type" type={"\"scrape\" | undefined"}>
+<ParamField body="ignored_tags" type={"string[] | null | undefined"}>
+HTML tags to ignore from the page.
+</ParamField>
 
+<ParamField body="response_format" type={"{ [key: string]: unknown; } | null | undefined"}>
+JSON schema dict for structured output. Agent can provide a schema to extract structured data.
 </ParamField>

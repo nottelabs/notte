@@ -12,13 +12,11 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type ObserveRequest = {
     /**
-     * Instructions
+     * Min Nb Actions
      *
-     * Deprecated: removed on December 1, 2026. Additional instructions to use for the observation. <<ALTERNATIVE FOR instructions: session.act() — pending>>. See https://docs.notte.cc/features/sessions/observe-migration
-     *
-     * @deprecated
+     * The minimum number of actions to list before stopping. If not provided, the listing will continue until the maximum number of actions is reached.
      */
-    instructions?: string | null;
+    min_nb_actions?: number | null;
     /**
      * Max Nb Actions
      *
@@ -26,11 +24,13 @@ export type ObserveRequest = {
      */
     max_nb_actions?: number;
     /**
-     * Min Nb Actions
+     * Instructions
      *
-     * The minimum number of actions to list before stopping. If not provided, the listing will continue until the maximum number of actions is reached.
+     * Deprecated: removed on December 1, 2026. Additional instructions to use for the observation. <<ALTERNATIVE FOR instructions: session.act() — pending>>. See https://docs.notte.cc/features/sessions/observe-migration
+     *
+     * @deprecated
      */
-    min_nb_actions?: number | null;
+    instructions?: string | null;
     /**
      * Perception Type
      *
@@ -42,20 +42,20 @@ export type ObserveRequest = {
 
 ## Fields
 
-<ParamField body="instructions" type={"string | null | undefined"}>
-Deprecated: removed on December 1, 2026. Additional instructions to use for the observation. &lt;&lt;ALTERNATIVE FOR instructions: session.act() — pending&gt;&gt;. See https://docs.notte.cc/features/sessions/observe-migration
-
-**deprecated:**
-
-
+<ParamField body="min_nb_actions" type={"number | null | undefined"}>
+The minimum number of actions to list before stopping. If not provided, the listing will continue until the maximum number of actions is reached.
 </ParamField>
 
 <ParamField body="max_nb_actions" type={"number | undefined"}>
 The maximum number of actions to list after which the listing will stop. Used when min_nb_actions is not provided.
 </ParamField>
 
-<ParamField body="min_nb_actions" type={"number | null | undefined"}>
-The minimum number of actions to list before stopping. If not provided, the listing will continue until the maximum number of actions is reached.
+<ParamField body="instructions" type={"string | null | undefined"}>
+Deprecated: removed on December 1, 2026. Additional instructions to use for the observation. &lt;&lt;ALTERNATIVE FOR instructions: session.act() — pending&gt;&gt;. See https://docs.notte.cc/features/sessions/observe-migration
+
+**deprecated:**
+
+
 </ParamField>
 
 <ParamField body="perception_type" type={"\"fast\" | \"deep\" | null | undefined"}>

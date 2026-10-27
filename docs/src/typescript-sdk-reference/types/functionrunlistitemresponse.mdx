@@ -12,10 +12,6 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type FunctionRunListItemResponse = {
     /**
-     * Created At
-     */
-    created_at: string;
-    /**
      * Function Id
      *
      * The ID of the function
@@ -28,21 +24,25 @@ export type FunctionRunListItemResponse = {
      */
     function_run_id: string;
     /**
-     * Local
+     * Created At
      */
-    local?: boolean;
+    created_at: string;
     /**
-     * Session Id
+     * Updated At
      */
-    session_id?: string | null;
+    updated_at: string;
     /**
      * Status
      */
     status: 'closed' | 'active' | 'failed';
     /**
-     * Updated At
+     * Session Id
      */
-    updated_at: string;
+    session_id?: string | null;
+    /**
+     * Local
+     */
+    local?: boolean;
     /**
      * Workflow Id
      */
@@ -56,10 +56,6 @@ export type FunctionRunListItemResponse = {
 
 ## Fields
 
-<ParamField body="created_at" type={"string"} required>
-
-</ParamField>
-
 <ParamField body="function_id" type={"string"} required>
 The ID of the function
 </ParamField>
@@ -68,7 +64,15 @@ The ID of the function
 The ID of the function run
 </ParamField>
 
-<ParamField body="local" type={"boolean | undefined"}>
+<ParamField body="created_at" type={"string"} required>
+
+</ParamField>
+
+<ParamField body="updated_at" type={"string"} required>
+
+</ParamField>
+
+<ParamField body="status" type={"\"failed\" | \"closed\" | \"active\""} required>
 
 </ParamField>
 
@@ -76,11 +80,7 @@ The ID of the function run
 
 </ParamField>
 
-<ParamField body="status" type={"\"active\" | \"closed\" | \"failed\""} required>
-
-</ParamField>
-
-<ParamField body="updated_at" type={"string"} required>
+<ParamField body="local" type={"boolean | undefined"}>
 
 </ParamField>
 

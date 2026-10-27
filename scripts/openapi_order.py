@@ -1,4 +1,4 @@
-"""Deterministic JSON object order at every OpenAPI generation boundary.
+"""Order-insensitive copies for schema comparison, never for generated output.
 
 Match ECMAScript's JSON key order: array indices numerically, then other keys
 lexically by UTF-16 code units. Array elements are never reordered.
@@ -21,13 +21,13 @@ def _key_order(key: str) -> tuple[int, int, bytes]:
     return (1, 0, key.encode("utf-16-be", errors="surrogatepass"))
 
 
-def order_openapi(value: JsonValue) -> JsonValue:
+def _comparison_value(value: JsonValue) -> JsonValue:
     if isinstance(value, dict):
-        return {key: order_openapi(value[key]) for key in sorted(value, key=_key_order)}
+        return {key: _comparison_value(value[key]) for key in sorted(value, key=_key_order)}
     if isinstance(value, list):
-        return [order_openapi(item) for item in value]
+        return [_comparison_value(item) for item in value]
     return value
 
 
-def serialize_openapi(value: JsonValue) -> str:
-    return json.dumps(order_openapi(value), indent=2, ensure_ascii=False) + "\n"
+def comparison_json(value: JsonValue) -> str:
+    return json.dumps(_comparison_value(value), indent=2, ensure_ascii=False) + "\n"

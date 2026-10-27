@@ -12,91 +12,71 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type UsageResponse = {
     /**
-     * Balance Amount
+     * Plan Type
      */
-    balance_amount: number;
-    /**
-     * Browser Usage Cost
-     */
-    browser_usage_cost: number;
-    /**
-     * Function Count
-     */
-    function_count: number;
-    /**
-     * Function Usage Cost
-     */
-    function_usage_cost: number;
-    /**
-     * Is Usage Limit Exceeded
-     */
-    is_usage_limit_exceeded: boolean;
-    /**
-     * Llm Usage Cost
-     */
-    llm_usage_cost: number;
+    plan_type: SubscriptionType | string;
     /**
      * Period
      */
     period: string;
     /**
-     * Plan Type
+     * Session Count
      */
-    plan_type: SubscriptionType | string;
+    session_count: number;
+    /**
+     * Function Count
+     */
+    function_count: number;
+    /**
+     * Browser Usage Cost
+     */
+    browser_usage_cost: number;
     /**
      * Proxy Usage Cost
      */
     proxy_usage_cost: number;
     /**
-     * Session Count
+     * Llm Usage Cost
      */
-    session_count: number;
+    llm_usage_cost: number;
     /**
-     * Subscription Balance Amount
+     * Function Usage Cost
      */
-    subscription_balance_amount: number;
+    function_usage_cost: number;
+    /**
+     * Total Cost
+     */
+    total_cost: number;
     /**
      * Subscription Limit Amount
      */
     subscription_limit_amount: number;
     /**
-     * Topup Balance Amount
-     */
-    topup_balance_amount: number;
-    /**
      * Topup Limit Amount
      */
     topup_limit_amount: number;
     /**
-     * Total Cost
+     * Subscription Balance Amount
      */
-    total_cost: number;
+    subscription_balance_amount: number;
+    /**
+     * Topup Balance Amount
+     */
+    topup_balance_amount: number;
+    /**
+     * Balance Amount
+     */
+    balance_amount: number;
+    /**
+     * Is Usage Limit Exceeded
+     */
+    is_usage_limit_exceeded: boolean;
 };
 ```
 
 ## Fields
 
-<ParamField body="balance_amount" type={"number"} required>
-
-</ParamField>
-
-<ParamField body="browser_usage_cost" type={"number"} required>
-
-</ParamField>
-
-<ParamField body="function_count" type={"number"} required>
-
-</ParamField>
-
-<ParamField body="function_usage_cost" type={"number"} required>
-
-</ParamField>
-
-<ParamField body="is_usage_limit_exceeded" type={"boolean"} required>
-
-</ParamField>
-
-<ParamField body="llm_usage_cost" type={"number"} required>
+<ParamField body="plan_type" type={"string"} required>
 
 </ParamField>
 
@@ -104,7 +84,15 @@ export type UsageResponse = {
 
 </ParamField>
 
-<ParamField body="plan_type" type={"string"} required>
+<ParamField body="session_count" type={"number"} required>
+
+</ParamField>
+
+<ParamField body="function_count" type={"number"} required>
+
+</ParamField>
+
+<ParamField body="browser_usage_cost" type={"number"} required>
 
 </ParamField>
 
@@ -112,11 +100,15 @@ export type UsageResponse = {
 
 </ParamField>
 
-<ParamField body="session_count" type={"number"} required>
+<ParamField body="llm_usage_cost" type={"number"} required>
 
 </ParamField>
 
-<ParamField body="subscription_balance_amount" type={"number"} required>
+<ParamField body="function_usage_cost" type={"number"} required>
+
+</ParamField>
+
+<ParamField body="total_cost" type={"number"} required>
 
 </ParamField>
 
@@ -124,15 +116,23 @@ export type UsageResponse = {
 
 </ParamField>
 
-<ParamField body="topup_balance_amount" type={"number"} required>
-
-</ParamField>
-
 <ParamField body="topup_limit_amount" type={"number"} required>
 
 </ParamField>
 
-<ParamField body="total_cost" type={"number"} required>
+<ParamField body="subscription_balance_amount" type={"number"} required>
+
+</ParamField>
+
+<ParamField body="topup_balance_amount" type={"number"} required>
+
+</ParamField>
+
+<ParamField body="balance_amount" type={"number"} required>
+
+</ParamField>
+
+<ParamField body="is_usage_limit_exceeded" type={"boolean"} required>
 
 </ParamField>
 

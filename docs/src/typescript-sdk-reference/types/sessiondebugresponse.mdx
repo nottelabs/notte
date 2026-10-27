@@ -15,11 +15,11 @@ export type SessionDebugResponse = {
      * Debug Url
      */
     debug_url: string;
+    ws: WebSocketUrls;
     /**
      * Tabs
      */
     tabs: Array<TabSessionDebugResponse>;
-    ws: WebSocketUrls;
 };
 ```
 
@@ -29,11 +29,11 @@ export type SessionDebugResponse = {
 
 </ParamField>
 
-<ParamField body="tabs" type={"TabSessionDebugResponse[]"} required>
+<ParamField body="ws" type={"WebSocketUrls"} required>
 
 </ParamField>
 
-<ParamField body="ws" type={"WebSocketUrls"} required>
+<ParamField body="tabs" type={"TabSessionDebugResponse[]"} required>
 
 </ParamField>
 

@@ -12,28 +12,24 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type NotteProxy = {
     /**
-     * City
+     * Type
      */
-    city?: string | null;
-    country?: ProxyGeolocationCountry | null;
+    type?: 'notte';
     /**
      * Id
      */
     id?: string | null;
+    country?: ProxyGeolocationCountry | null;
     /**
-     * Type
+     * City
      */
-    type?: 'notte';
+    city?: string | null;
 };
 ```
 
 ## Fields
 
-<ParamField body="city" type={"string | null | undefined"}>
-
-</ParamField>
-
-<ParamField body="country" type={"ProxyGeolocationCountry | null | undefined"}>
+<ParamField body="type" type={"\"notte\" | undefined"}>
 
 </ParamField>
 
@@ -41,7 +37,11 @@ export type NotteProxy = {
 
 </ParamField>
 
-<ParamField body="type" type={"\"notte\" | undefined"}>
+<ParamField body="country" type={"ProxyGeolocationCountry | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="city" type={"string | null | undefined"}>
 
 </ParamField>
 

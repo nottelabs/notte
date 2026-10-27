@@ -12,14 +12,6 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type PaginatedResponseFunctionRunListItemResponse = {
     /**
-     * Has Next
-     */
-    has_next: boolean;
-    /**
-     * Has Previous
-     */
-    readonly has_previous: boolean;
-    /**
      * Items
      */
     items: Array<FunctionRunListItemResponse>;
@@ -31,18 +23,18 @@ export type PaginatedResponseFunctionRunListItemResponse = {
      * Page Size
      */
     page_size: number;
+    /**
+     * Has Next
+     */
+    has_next: boolean;
+    /**
+     * Has Previous
+     */
+    readonly has_previous: boolean;
 };
 ```
 
 ## Fields
-
-<ParamField body="has_next" type={"boolean"} required>
-
-</ParamField>
-
-<ParamField body="has_previous" type={"boolean"} required>
-
-</ParamField>
 
 <ParamField body="items" type={"FunctionRunListItemResponse[]"} required>
 
@@ -53,6 +45,14 @@ export type PaginatedResponseFunctionRunListItemResponse = {
 </ParamField>
 
 <ParamField body="page_size" type={"number"} required>
+
+</ParamField>
+
+<ParamField body="has_next" type={"boolean"} required>
+
+</ParamField>
+
+<ParamField body="has_previous" type={"boolean"} required>
 
 </ParamField>
 

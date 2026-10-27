@@ -12,9 +12,9 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type DownloadFileActionOutput = {
     /**
-     * Accessible Name
+     * Type
      */
-    accessible_name?: string | null;
+    type?: 'download_file';
     /**
      * Category
      */
@@ -28,33 +28,33 @@ export type DownloadFileActionOutput = {
      */
     id?: string;
     /**
-     * Press Enter
-     */
-    press_enter?: boolean | null;
-    /**
      * Selector
      */
     selector?: string | NodeSelectors | null;
     /**
+     * Press Enter
+     */
+    press_enter?: boolean | null;
+    /**
      * Text Label
      */
     text_label?: string | null;
+    /**
+     * Accessible Name
+     */
+    accessible_name?: string | null;
     /**
      * Timeout
      *
      * Action timeout in milliseconds
      */
     timeout?: number;
-    /**
-     * Type
-     */
-    type?: 'download_file';
 };
 ```
 
 ## Fields
 
-<ParamField body="accessible_name" type={"string | null | undefined"}>
+<ParamField body="type" type={"\"download_file\" | undefined"}>
 
 </ParamField>
 
@@ -70,11 +70,11 @@ export type DownloadFileActionOutput = {
 
 </ParamField>
 
-<ParamField body="press_enter" type={"boolean | null | undefined"}>
+<ParamField body="selector" type={"string | NodeSelectors | null | undefined"}>
 
 </ParamField>
 
-<ParamField body="selector" type={"string | NodeSelectors | null | undefined"}>
+<ParamField body="press_enter" type={"boolean | null | undefined"}>
 
 </ParamField>
 
@@ -82,12 +82,12 @@ export type DownloadFileActionOutput = {
 
 </ParamField>
 
-<ParamField body="timeout" type={"number | undefined"}>
-Action timeout in milliseconds
+<ParamField body="accessible_name" type={"string | null | undefined"}>
+
 </ParamField>
 
-<ParamField body="type" type={"\"download_file\" | undefined"}>
-
+<ParamField body="timeout" type={"number | undefined"}>
+Action timeout in milliseconds
 </ParamField>
 
 ## Related types

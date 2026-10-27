@@ -12,27 +12,17 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type FunctionResponse = {
     /**
-     * Created At
-     *
-     * The creation time of the function
-     */
-    created_at: string;
-    /**
      * Default Runtime
      */
     default_runtime?: 'standard' | 'extended';
     /**
-     * Description
-     *
-     * The description of the function
+     * Sdk Generation
      */
-    description?: string | null;
+    sdk_generation?: 'v19' | 'v110';
     /**
-     * Domain
-     *
-     * The site this function drives, used to group endpoints in the console. Null when the function never named a site.
+     * Upload Sdk Version
      */
-    domain?: string | null;
+    upload_sdk_version?: string | null;
     /**
      * Function Id
      *
@@ -40,11 +30,23 @@ export type FunctionResponse = {
      */
     function_id: string;
     /**
-     * Instructions
+     * Variables
      *
-     * Builder's operating notes: typical run duration, known failure modes, which parameters matter.
+     * The variables to run the function with
      */
-    instructions?: string | null;
+    variables?: Array<ParameterInfo> | null;
+    /**
+     * Created At
+     *
+     * The creation time of the function
+     */
+    created_at: string;
+    /**
+     * Updated At
+     *
+     * The last update time of the function
+     */
+    updated_at: string;
     /**
      * Latest Version
      *
@@ -52,15 +54,35 @@ export type FunctionResponse = {
      */
     latest_version: string;
     /**
+     * Versions
+     *
+     * The versions of the function
+     */
+    versions: Array<string>;
+    /**
+     * Status
+     *
+     * The status of the function
+     */
+    status: string;
+    /**
      * Name
      *
      * The name of the function
      */
     name?: string | null;
     /**
-     * Published
+     * Description
+     *
+     * The description of the function
      */
-    published?: boolean;
+    description?: string | null;
+    /**
+     * Shared
+     *
+     * Whether the function is public and can beshared with other users
+     */
+    shared?: boolean;
     /**
      * Reference Workflow Id
      *
@@ -68,9 +90,37 @@ export type FunctionResponse = {
      */
     reference_workflow_id?: string | null;
     /**
+     * Published
+     */
+    published?: boolean;
+    /**
      * Required Secrets
      */
     required_secrets?: Array<string>;
+    /**
+     * Source
+     *
+     * Where the function was created from, stamped at creation. Read-only.
+     */
+    source?: string | null;
+    /**
+     * Self Healing
+     *
+     * Whether the build is finished and the function may be healed automatically. Can only be enabled on a function that has a thread for self-heal to resume.
+     */
+    self_healing?: boolean;
+    /**
+     * Domain
+     *
+     * The site this function drives, used to group endpoints in the console. Null when the function never named a site.
+     */
+    domain?: string | null;
+    /**
+     * Instructions
+     *
+     * Builder's operating notes: typical run duration, known failure modes, which parameters matter.
+     */
+    instructions?: string | null;
     /**
      * Response Format
      *
@@ -86,12 +136,6 @@ export type FunctionResponse = {
      */
     schedule_cron?: string | null;
     /**
-     * Schedule State
-     *
-     * 'enabled' while the schedule fires, 'paused' once the backend disabled it after a deterministic failure (exhausted credit, or an inactive function), null when there is no schedule.
-     */
-    schedule_state?: 'enabled' | 'paused' | null;
-    /**
      * Schedule Variables
      *
      * Variables passed to each scheduled run, or null if it is not scheduled.
@@ -100,55 +144,11 @@ export type FunctionResponse = {
         [key: string]: unknown;
     } | null;
     /**
-     * Sdk Generation
-     */
-    sdk_generation?: 'v19' | 'v110';
-    /**
-     * Self Healing
+     * Schedule State
      *
-     * Whether the build is finished and the function may be healed automatically. Can only be enabled on a function that has a thread for self-heal to resume.
+     * 'enabled' while the schedule fires, 'paused' once the backend disabled it after a deterministic failure (exhausted credit, or an inactive function), null when there is no schedule.
      */
-    self_healing?: boolean;
-    /**
-     * Shared
-     *
-     * Whether the function is public and can beshared with other users
-     */
-    shared?: boolean;
-    /**
-     * Source
-     *
-     * Where the function was created from, stamped at creation. Read-only.
-     */
-    source?: string | null;
-    /**
-     * Status
-     *
-     * The status of the function
-     */
-    status: string;
-    /**
-     * Updated At
-     *
-     * The last update time of the function
-     */
-    updated_at: string;
-    /**
-     * Upload Sdk Version
-     */
-    upload_sdk_version?: string | null;
-    /**
-     * Variables
-     *
-     * The variables to run the function with
-     */
-    variables?: Array<ParameterInfo> | null;
-    /**
-     * Versions
-     *
-     * The versions of the function
-     */
-    versions: Array<string>;
+    schedule_state?: 'enabled' | 'paused' | null;
     /**
      * Workflow Id
      */
@@ -158,48 +158,84 @@ export type FunctionResponse = {
 
 ## Fields
 
-<ParamField body="created_at" type={"string"} required>
-The creation time of the function
-</ParamField>
-
 <ParamField body="default_runtime" type={"\"standard\" | \"extended\" | undefined"}>
 
 </ParamField>
 
-<ParamField body="description" type={"string | null | undefined"}>
-The description of the function
+<ParamField body="sdk_generation" type={"\"v19\" | \"v110\" | undefined"}>
+
 </ParamField>
 
-<ParamField body="domain" type={"string | null | undefined"}>
-The site this function drives, used to group endpoints in the console. Null when the function never named a site.
+<ParamField body="upload_sdk_version" type={"string | null | undefined"}>
+
 </ParamField>
 
 <ParamField body="function_id" type={"string"} required>
 The ID of the function
 </ParamField>
 
-<ParamField body="instructions" type={"string | null | undefined"}>
-Builder's operating notes: typical run duration, known failure modes, which parameters matter.
+<ParamField body="variables" type={"ParameterInfo[] | null | undefined"}>
+The variables to run the function with
+</ParamField>
+
+<ParamField body="created_at" type={"string"} required>
+The creation time of the function
+</ParamField>
+
+<ParamField body="updated_at" type={"string"} required>
+The last update time of the function
 </ParamField>
 
 <ParamField body="latest_version" type={"string"} required>
 The version of the function
 </ParamField>
 
+<ParamField body="versions" type={"string[]"} required>
+The versions of the function
+</ParamField>
+
+<ParamField body="status" type={"string"} required>
+The status of the function
+</ParamField>
+
 <ParamField body="name" type={"string | null | undefined"}>
 The name of the function
 </ParamField>
 
-<ParamField body="published" type={"boolean | undefined"}>
+<ParamField body="description" type={"string | null | undefined"}>
+The description of the function
+</ParamField>
 
+<ParamField body="shared" type={"boolean | undefined"}>
+Whether the function is public and can beshared with other users
 </ParamField>
 
 <ParamField body="reference_workflow_id" type={"string | null | undefined"}>
 The ID of the reference function (i.e whether the function was forked from another function or not)
 </ParamField>
 
+<ParamField body="published" type={"boolean | undefined"}>
+
+</ParamField>
+
 <ParamField body="required_secrets" type={"string[] | undefined"}>
 
+</ParamField>
+
+<ParamField body="source" type={"string | null | undefined"}>
+Where the function was created from, stamped at creation. Read-only.
+</ParamField>
+
+<ParamField body="self_healing" type={"boolean | undefined"}>
+Whether the build is finished and the function may be healed automatically. Can only be enabled on a function that has a thread for self-heal to resume.
+</ParamField>
+
+<ParamField body="domain" type={"string | null | undefined"}>
+The site this function drives, used to group endpoints in the console. Null when the function never named a site.
+</ParamField>
+
+<ParamField body="instructions" type={"string | null | undefined"}>
+Builder's operating notes: typical run duration, known failure modes, which parameters matter.
 </ParamField>
 
 <ParamField body="response_format" type={"{ [key: string]: unknown; } | null | undefined"}>
@@ -210,48 +246,12 @@ JSON Schema of the value run() returns, or null when the author never documented
 Cron expression the function runs on, or null if it is not scheduled.
 </ParamField>
 
-<ParamField body="schedule_state" type={"\"enabled\" | \"paused\" | null | undefined"}>
-'enabled' while the schedule fires, 'paused' once the backend disabled it after a deterministic failure (exhausted credit, or an inactive function), null when there is no schedule.
-</ParamField>
-
 <ParamField body="schedule_variables" type={"{ [key: string]: unknown; } | null | undefined"}>
 Variables passed to each scheduled run, or null if it is not scheduled.
 </ParamField>
 
-<ParamField body="sdk_generation" type={"\"v19\" | \"v110\" | undefined"}>
-
-</ParamField>
-
-<ParamField body="self_healing" type={"boolean | undefined"}>
-Whether the build is finished and the function may be healed automatically. Can only be enabled on a function that has a thread for self-heal to resume.
-</ParamField>
-
-<ParamField body="shared" type={"boolean | undefined"}>
-Whether the function is public and can beshared with other users
-</ParamField>
-
-<ParamField body="source" type={"string | null | undefined"}>
-Where the function was created from, stamped at creation. Read-only.
-</ParamField>
-
-<ParamField body="status" type={"string"} required>
-The status of the function
-</ParamField>
-
-<ParamField body="updated_at" type={"string"} required>
-The last update time of the function
-</ParamField>
-
-<ParamField body="upload_sdk_version" type={"string | null | undefined"}>
-
-</ParamField>
-
-<ParamField body="variables" type={"ParameterInfo[] | null | undefined"}>
-The variables to run the function with
-</ParamField>
-
-<ParamField body="versions" type={"string[]"} required>
-The versions of the function
+<ParamField body="schedule_state" type={"\"enabled\" | \"paused\" | null | undefined"}>
+'enabled' while the schedule fires, 'paused' once the backend disabled it after a deterministic failure (exhausted credit, or an inactive function), null when there is no schedule.
 </ParamField>
 
 <ParamField body="workflow_id" type={"string"} required>

@@ -14,17 +14,13 @@ MultiFactorFillAction
 ```typescript
 export type MultiFactorFillActionInputWritable = {
     /**
-     * Accessible Name
+     * Type
      */
-    accessible_name?: string | null;
+    type?: 'multi_factor_fill';
     /**
      * Category
      */
     category?: string;
-    /**
-     * Clear Before Fill
-     */
-    clear_before_fill?: boolean;
     /**
      * Description
      */
@@ -33,19 +29,23 @@ export type MultiFactorFillActionInputWritable = {
      * Id
      */
     id?: string;
-    param?: ActionParameter | null;
-    /**
-     * Press Enter
-     */
-    press_enter?: boolean | null;
     /**
      * Selector
      */
     selector?: string | NodeSelectors | null;
     /**
+     * Press Enter
+     */
+    press_enter?: boolean | null;
+    /**
      * Text Label
      */
     text_label?: string | null;
+    /**
+     * Accessible Name
+     */
+    accessible_name?: string | null;
+    param?: ActionParameter | null;
     /**
      * Timeout
      *
@@ -53,27 +53,23 @@ export type MultiFactorFillActionInputWritable = {
      */
     timeout?: number;
     /**
-     * Type
-     */
-    type?: 'multi_factor_fill';
-    /**
      * Value
      */
     value: string | string;
+    /**
+     * Clear Before Fill
+     */
+    clear_before_fill?: boolean;
 };
 ```
 
 ## Fields
 
-<ParamField body="accessible_name" type={"string | null | undefined"}>
+<ParamField body="type" type={"\"multi_factor_fill\" | undefined"}>
 
 </ParamField>
 
 <ParamField body="category" type={"string | undefined"}>
-
-</ParamField>
-
-<ParamField body="clear_before_fill" type={"boolean | undefined"}>
 
 </ParamField>
 
@@ -85,7 +81,7 @@ export type MultiFactorFillActionInputWritable = {
 
 </ParamField>
 
-<ParamField body="param" type={"ActionParameter | null | undefined"}>
+<ParamField body="selector" type={"string | NodeSelectors | null | undefined"}>
 
 </ParamField>
 
@@ -93,11 +89,15 @@ export type MultiFactorFillActionInputWritable = {
 
 </ParamField>
 
-<ParamField body="selector" type={"string | NodeSelectors | null | undefined"}>
+<ParamField body="text_label" type={"string | null | undefined"}>
 
 </ParamField>
 
-<ParamField body="text_label" type={"string | null | undefined"}>
+<ParamField body="accessible_name" type={"string | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="param" type={"ActionParameter | null | undefined"}>
 
 </ParamField>
 
@@ -105,11 +105,11 @@ export type MultiFactorFillActionInputWritable = {
 Action timeout in milliseconds
 </ParamField>
 
-<ParamField body="type" type={"\"multi_factor_fill\" | undefined"}>
+<ParamField body="value" type={"string"} required>
 
 </ParamField>
 
-<ParamField body="value" type={"string"} required>
+<ParamField body="clear_before_fill" type={"boolean | undefined"}>
 
 </ParamField>
 

@@ -12,6 +12,10 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type GoForwardAction = {
     /**
+     * Type
+     */
+    type?: 'go_forward';
+    /**
      * Category
      */
     category?: string;
@@ -19,23 +23,19 @@ export type GoForwardAction = {
      * Description
      */
     description?: string;
-    /**
-     * Type
-     */
-    type?: 'go_forward';
 };
 ```
 
 ## Fields
+
+<ParamField body="type" type={"\"go_forward\" | undefined"}>
+
+</ParamField>
 
 <ParamField body="category" type={"string | undefined"}>
 
 </ParamField>
 
 <ParamField body="description" type={"string | undefined"}>
-
-</ParamField>
-
-<ParamField body="type" type={"\"go_forward\" | undefined"}>
 
 </ParamField>

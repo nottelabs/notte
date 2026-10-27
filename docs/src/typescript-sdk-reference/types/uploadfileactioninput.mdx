@@ -12,9 +12,9 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type UploadFileActionInput = {
     /**
-     * Accessible Name
+     * Type
      */
-    accessible_name?: string | null;
+    type?: 'upload_file';
     /**
      * Category
      */
@@ -24,26 +24,26 @@ export type UploadFileActionInput = {
      */
     description?: string;
     /**
-     * File Path
-     */
-    file_path: string;
-    /**
      * Id
      */
     id?: string;
-    param?: ActionParameter | null;
-    /**
-     * Press Enter
-     */
-    press_enter?: boolean | null;
     /**
      * Selector
      */
     selector?: string | NodeSelectors | null;
     /**
+     * Press Enter
+     */
+    press_enter?: boolean | null;
+    /**
      * Text Label
      */
     text_label?: string | null;
+    /**
+     * Accessible Name
+     */
+    accessible_name?: string | null;
+    param?: ActionParameter | null;
     /**
      * Timeout
      *
@@ -51,15 +51,15 @@ export type UploadFileActionInput = {
      */
     timeout?: number;
     /**
-     * Type
+     * File Path
      */
-    type?: 'upload_file';
+    file_path: string;
 };
 ```
 
 ## Fields
 
-<ParamField body="accessible_name" type={"string | null | undefined"}>
+<ParamField body="type" type={"\"upload_file\" | undefined"}>
 
 </ParamField>
 
@@ -71,19 +71,7 @@ export type UploadFileActionInput = {
 
 </ParamField>
 
-<ParamField body="file_path" type={"string"} required>
-
-</ParamField>
-
 <ParamField body="id" type={"string | undefined"}>
-
-</ParamField>
-
-<ParamField body="param" type={"ActionParameter | null | undefined"}>
-
-</ParamField>
-
-<ParamField body="press_enter" type={"boolean | null | undefined"}>
 
 </ParamField>
 
@@ -91,7 +79,19 @@ export type UploadFileActionInput = {
 
 </ParamField>
 
+<ParamField body="press_enter" type={"boolean | null | undefined"}>
+
+</ParamField>
+
 <ParamField body="text_label" type={"string | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="accessible_name" type={"string | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="param" type={"ActionParameter | null | undefined"}>
 
 </ParamField>
 
@@ -99,7 +99,7 @@ export type UploadFileActionInput = {
 Action timeout in milliseconds
 </ParamField>
 
-<ParamField body="type" type={"\"upload_file\" | undefined"}>
+<ParamField body="file_path" type={"string"} required>
 
 </ParamField>
 

@@ -12,35 +12,35 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type SerializedError = {
     /**
-     * Agent Message
+     * Error Type
      */
-    agent_message: string;
+    error_type: string;
     /**
      * Dev Message
      */
     dev_message: string;
     /**
-     * Error Type
+     * User Message
      */
-    error_type: string;
+    user_message: string;
     /**
-     * Should Notify Team
+     * Agent Message
      */
-    should_notify_team?: boolean;
+    agent_message: string;
     /**
      * Should Retry Later
      */
     should_retry_later?: boolean;
     /**
-     * User Message
+     * Should Notify Team
      */
-    user_message: string;
+    should_notify_team?: boolean;
 };
 ```
 
 ## Fields
 
-<ParamField body="agent_message" type={"string"} required>
+<ParamField body="error_type" type={"string"} required>
 
 </ParamField>
 
@@ -48,11 +48,11 @@ export type SerializedError = {
 
 </ParamField>
 
-<ParamField body="error_type" type={"string"} required>
+<ParamField body="user_message" type={"string"} required>
 
 </ParamField>
 
-<ParamField body="should_notify_team" type={"boolean | undefined"}>
+<ParamField body="agent_message" type={"string"} required>
 
 </ParamField>
 
@@ -60,6 +60,6 @@ export type SerializedError = {
 
 </ParamField>
 
-<ParamField body="user_message" type={"string"} required>
+<ParamField body="should_notify_team" type={"boolean | undefined"}>
 
 </ParamField>

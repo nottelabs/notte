@@ -33,15 +33,69 @@ RemoteSession instance configured with the specified parameters.
   Whether to open the live viewer when the session starts (default: False).         This controls only the viewer popup and is independent of the browser environment.
 </ParamField>
 
-<ParamField path="advanced_stealth" type="bool">
+<ParamField path="solve_captchas" type="bool">
+  Whether to try to automatically solve captchas
+</ParamField>
+
+<ParamField path="max_duration_minutes" type="int">
+  Maximum session lifetime in minutes (absolute maximum).
+</ParamField>
+
+<ParamField path="idle_timeout_minutes" type="int">
+  Idle timeout in minutes. Session closes after this period of inactivity.
+</ParamField>
+
+<ParamField path="proxies" type="list[typing.Annotated[notte_core.types.NotteProxy | notte_core.types.ExternalProxy | notte_core.types.TailnetProxy, FieldInfo(annotation=NoneType, required=True, discriminator='type')]] | list[typing.Annotated[notte_sdk._generated.typing.NotteProxyDict | notte_sdk._generated.typing.ExternalProxyDict | notte_sdk._generated.typing.TailnetProxyDict, FieldInfo(annotation=NoneType, required=True, discriminator='type')]] | bool | notte_core.types.ProxyGeolocationCountry | typing.Literal['ad', 'ae', 'af', 'ag', 'ai', 'al', 'am', 'ao', 'ar', 'at', 'au', 'aw', 'az', 'ba', 'bb', 'bd', 'be', 'bf', 'bg', 'bh', 'bi', 'bj', 'bm', 'bn', 'bo', 'bq', 'br', 'bs', 'bt', 'bw', 'by', 'bz', 'ca', 'cd', 'cg', 'ch', 'ci', 'cl', 'cm', 'cn', 'co', 'cr', 'cu', 'cv', 'cw', 'cy', 'cz', 'de', 'dj', 'dk', 'dm', 'do', 'dz', 'ec', 'ee', 'eg', 'es', 'et', 'fi', 'fj', 'fr', 'ga', 'gb', 'gd', 'ge', 'gf', 'gg', 'gh', 'gi', 'gm', 'gn', 'gp', 'gq', 'gr', 'gt', 'gu', 'gw', 'gy', 'hk', 'hn', 'hr', 'ht', 'hu', 'id', 'ie', 'il', 'im', 'in', 'iq', 'ir', 'is', 'it', 'je', 'jm', 'jo', 'jp', 'ke', 'kg', 'kh', 'kn', 'kr', 'kw', 'ky', 'kz', 'la', 'lb', 'lc', 'lk', 'lr', 'ls', 'lt', 'lu', 'lv', 'ly', 'ma', 'md', 'me', 'mf', 'mg', 'mk', 'ml', 'mm', 'mn', 'mo', 'mq', 'mr', 'mt', 'mu', 'mv', 'mw', 'mx', 'my', 'mz', 'na', 'nc', 'ne', 'ng', 'ni', 'nl', 'no', 'np', 'nz', 'om', 'pa', 'pe', 'pf', 'pg', 'ph', 'pk', 'pl', 'pr', 'ps', 'pt', 'py', 'qa', 're', 'ro', 'rs', 'ru', 'rw', 'sa', 'sc', 'sd', 'se', 'sg', 'si', 'sk', 'sl', 'sm', 'sn', 'so', 'sr', 'ss', 'st', 'sv', 'sx', 'sy', 'sz', 'tc', 'tg', 'th', 'tj', 'tm', 'tn', 'tr', 'tt', 'tw', 'tz', 'ua', 'ug', 'us', 'uy', 'uz', 'vc', 've', 'vg', 'vi', 'vn', 'ye', 'za', 'zm', 'zw']">
+  List of custom proxies to use for the session. If True, the default proxies will be used.
+</ParamField>
+
+<ParamField path="browser_type" type="typing.Literal['chromium', 'chrome', 'firefox', 'chrome-nightly', 'chrome-turbo']">
+  The browser type to use. Can be chromium or chrome.
+</ParamField>
+
+<ParamField path="user_agent" type="str | None">
+  The user agent to use for the session
+</ParamField>
+
+<ParamField path="chrome_args" type="list">
+  Overwrite the chrome instance arguments
+</ParamField>
+
+<ParamField path="viewport_width" type="int | None">
+  The width of the viewport
+</ParamField>
+
+<ParamField path="viewport_height" type="int | None">
+  The height of the viewport
 </ParamField>
 
 <ParamField path="aspect_ratio" type="typing.Literal['5:4', '16:9'] | None">
   Viewport shape preset ("5:4" or "16:9"). Cannot be combined with viewport_width/viewport_height.
 </ParamField>
 
+<ParamField path="cdp_url" type="str | None">
+  The CDP URL of another remote session provider.
+</ParamField>
+
+<ParamField path="profile" type="notte_sdk._generated.typing.SessionProfileDict | notte_core.types.SessionProfile | None">
+  Browser profile configuration for state persistence.
+</ParamField>
+
+<ParamField path="web_bot_auth" type="bool">
+</ParamField>
+
+<ParamField path="extra_http_headers" type="dict[str, str] | None">
+</ParamField>
+
+<ParamField path="vault_id" type="str | None">
+</ParamField>
+
 <ParamField path="auth_ids" type="list">
   Up to 10 unique Managed Auth connection IDs. The API verifies them inline and can return an authenticating session while login continues.
+</ParamField>
+
+<ParamField path="wait_for_authentication" type="bool">
+  Defaults to True. The SDK waits for authentication readiness through short API calls before returning from start or entering a context manager. When False, start returns after inline verification; call wait_for_auth() or await_for_auth() before browser actions if login is pending.
 </ParamField>
 
 <ParamField path="auth_retry" type="int">
@@ -51,69 +105,15 @@ RemoteSession instance configured with the specified parameters.
 <ParamField path="block_ads" type="bool">
 </ParamField>
 
-<ParamField path="browser_type" type="typing.Literal['chromium', 'chrome', 'firefox', 'chrome-nightly', 'chrome-turbo']">
-  The browser type to use. Can be chromium or chrome.
-</ParamField>
-
-<ParamField path="cdp_url" type="str | None">
-  The CDP URL of another remote session provider.
-</ParamField>
-
-<ParamField path="chrome_args" type="list">
-  Overwrite the chrome instance arguments
-</ParamField>
-
-<ParamField path="extra_http_headers" type="dict[str, str] | None">
-</ParamField>
-
-<ParamField path="idle_timeout_minutes" type="int">
-  Idle timeout in minutes. Session closes after this period of inactivity.
-</ParamField>
-
-<ParamField path="log_session" type="bool">
-  Defaults to true. Set to false at session creation to disable saved browser activity and network logs for the entire session. Usage metering remains available.
-</ParamField>
-
-<ParamField path="max_duration_minutes" type="int">
-  Maximum session lifetime in minutes (absolute maximum).
-</ParamField>
-
-<ParamField path="profile" type="notte_sdk._generated.typing.SessionProfileDict | notte_core.types.SessionProfile | None">
-  Browser profile configuration for state persistence.
-</ParamField>
-
-<ParamField path="proxies" type="list[typing.Annotated[notte_core.types.NotteProxy | notte_core.types.ExternalProxy | notte_core.types.TailnetProxy, FieldInfo(annotation=NoneType, required=True, discriminator='type')]] | list[typing.Annotated[notte_sdk._generated.typing.NotteProxyDict | notte_sdk._generated.typing.ExternalProxyDict | notte_sdk._generated.typing.TailnetProxyDict, FieldInfo(annotation=NoneType, required=True, discriminator='type')]] | bool | notte_core.types.ProxyGeolocationCountry | typing.Literal['ad', 'ae', 'af', 'ag', 'ai', 'al', 'am', 'ao', 'ar', 'at', 'au', 'aw', 'az', 'ba', 'bb', 'bd', 'be', 'bf', 'bg', 'bh', 'bi', 'bj', 'bm', 'bn', 'bo', 'bq', 'br', 'bs', 'bt', 'bw', 'by', 'bz', 'ca', 'cd', 'cg', 'ch', 'ci', 'cl', 'cm', 'cn', 'co', 'cr', 'cu', 'cv', 'cw', 'cy', 'cz', 'de', 'dj', 'dk', 'dm', 'do', 'dz', 'ec', 'ee', 'eg', 'es', 'et', 'fi', 'fj', 'fr', 'ga', 'gb', 'gd', 'ge', 'gf', 'gg', 'gh', 'gi', 'gm', 'gn', 'gp', 'gq', 'gr', 'gt', 'gu', 'gw', 'gy', 'hk', 'hn', 'hr', 'ht', 'hu', 'id', 'ie', 'il', 'im', 'in', 'iq', 'ir', 'is', 'it', 'je', 'jm', 'jo', 'jp', 'ke', 'kg', 'kh', 'kn', 'kr', 'kw', 'ky', 'kz', 'la', 'lb', 'lc', 'lk', 'lr', 'ls', 'lt', 'lu', 'lv', 'ly', 'ma', 'md', 'me', 'mf', 'mg', 'mk', 'ml', 'mm', 'mn', 'mo', 'mq', 'mr', 'mt', 'mu', 'mv', 'mw', 'mx', 'my', 'mz', 'na', 'nc', 'ne', 'ng', 'ni', 'nl', 'no', 'np', 'nz', 'om', 'pa', 'pe', 'pf', 'pg', 'ph', 'pk', 'pl', 'pr', 'ps', 'pt', 'py', 'qa', 're', 'ro', 'rs', 'ru', 'rw', 'sa', 'sc', 'sd', 'se', 'sg', 'si', 'sk', 'sl', 'sm', 'sn', 'so', 'sr', 'ss', 'st', 'sv', 'sx', 'sy', 'sz', 'tc', 'tg', 'th', 'tj', 'tm', 'tn', 'tr', 'tt', 'tw', 'tz', 'ua', 'ug', 'us', 'uy', 'uz', 'vc', 've', 'vg', 'vi', 'vn', 'ye', 'za', 'zm', 'zw']">
-  List of custom proxies to use for the session. If True, the default proxies will be used.
+<ParamField path="advanced_stealth" type="bool">
 </ParamField>
 
 <ParamField path="record_session" type="bool">
   Defaults to true. Set to false at session creation to disable saved replay for the entire session. Live View remains available.
 </ParamField>
 
-<ParamField path="solve_captchas" type="bool">
-  Whether to try to automatically solve captchas
-</ParamField>
-
-<ParamField path="user_agent" type="str | None">
-  The user agent to use for the session
-</ParamField>
-
-<ParamField path="vault_id" type="str | None">
-</ParamField>
-
-<ParamField path="viewport_height" type="int | None">
-  The height of the viewport
-</ParamField>
-
-<ParamField path="viewport_width" type="int | None">
-  The width of the viewport
-</ParamField>
-
-<ParamField path="wait_for_authentication" type="bool">
-  Defaults to True. The SDK waits for authentication readiness through short API calls before returning from start or entering a context manager. When False, start returns after inline verification; call wait_for_auth() or await_for_auth() before browser actions if login is pending.
-</ParamField>
-
-<ParamField path="web_bot_auth" type="bool">
+<ParamField path="log_session" type="bool">
+  Defaults to true. Set to false at session creation to disable saved browser activity and network logs for the entire session. Usage metering remains available.
 </ParamField>
 
 ## Returns

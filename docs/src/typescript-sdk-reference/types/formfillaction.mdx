@@ -12,6 +12,10 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type FormFillAction = {
     /**
+     * Type
+     */
+    type?: 'form_fill';
+    /**
      * Category
      */
     category?: string;
@@ -19,10 +23,6 @@ export type FormFillAction = {
      * Description
      */
     description?: string;
-    /**
-     * Type
-     */
-    type?: 'form_fill';
     /**
      * Value
      */
@@ -34,15 +34,15 @@ export type FormFillAction = {
 
 ## Fields
 
+<ParamField body="type" type={"\"form_fill\" | undefined"}>
+
+</ParamField>
+
 <ParamField body="category" type={"string | undefined"}>
 
 </ParamField>
 
 <ParamField body="description" type={"string | undefined"}>
-
-</ParamField>
-
-<ParamField body="type" type={"\"form_fill\" | undefined"}>
 
 </ParamField>
 

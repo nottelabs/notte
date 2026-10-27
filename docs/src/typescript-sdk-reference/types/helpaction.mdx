@@ -12,6 +12,10 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type HelpAction = {
     /**
+     * Type
+     */
+    type?: 'help';
+    /**
      * Category
      */
     category?: string;
@@ -23,14 +27,14 @@ export type HelpAction = {
      * Reason
      */
     reason: string;
-    /**
-     * Type
-     */
-    type?: 'help';
 };
 ```
 
 ## Fields
+
+<ParamField body="type" type={"\"help\" | undefined"}>
+
+</ParamField>
 
 <ParamField body="category" type={"string | undefined"}>
 
@@ -41,9 +45,5 @@ export type HelpAction = {
 </ParamField>
 
 <ParamField body="reason" type={"string"} required>
-
-</ParamField>
-
-<ParamField body="type" type={"\"help\" | undefined"}>
 
 </ParamField>

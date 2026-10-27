@@ -12,9 +12,9 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type DownloadFileActionInput = {
     /**
-     * Accessible Name
+     * Type
      */
-    accessible_name?: string | null;
+    type?: 'download_file';
     /**
      * Category
      */
@@ -27,35 +27,35 @@ export type DownloadFileActionInput = {
      * Id
      */
     id?: string;
-    param?: ActionParameter | null;
-    /**
-     * Press Enter
-     */
-    press_enter?: boolean | null;
     /**
      * Selector
      */
     selector?: string | NodeSelectors | null;
     /**
+     * Press Enter
+     */
+    press_enter?: boolean | null;
+    /**
      * Text Label
      */
     text_label?: string | null;
+    /**
+     * Accessible Name
+     */
+    accessible_name?: string | null;
+    param?: ActionParameter | null;
     /**
      * Timeout
      *
      * Action timeout in milliseconds
      */
     timeout?: number;
-    /**
-     * Type
-     */
-    type?: 'download_file';
 };
 ```
 
 ## Fields
 
-<ParamField body="accessible_name" type={"string | null | undefined"}>
+<ParamField body="type" type={"\"download_file\" | undefined"}>
 
 </ParamField>
 
@@ -71,7 +71,7 @@ export type DownloadFileActionInput = {
 
 </ParamField>
 
-<ParamField body="param" type={"ActionParameter | null | undefined"}>
+<ParamField body="selector" type={"string | NodeSelectors | null | undefined"}>
 
 </ParamField>
 
@@ -79,20 +79,20 @@ export type DownloadFileActionInput = {
 
 </ParamField>
 
-<ParamField body="selector" type={"string | NodeSelectors | null | undefined"}>
+<ParamField body="text_label" type={"string | null | undefined"}>
 
 </ParamField>
 
-<ParamField body="text_label" type={"string | null | undefined"}>
+<ParamField body="accessible_name" type={"string | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="param" type={"ActionParameter | null | undefined"}>
 
 </ParamField>
 
 <ParamField body="timeout" type={"number | undefined"}>
 Action timeout in milliseconds
-</ParamField>
-
-<ParamField body="type" type={"\"download_file\" | undefined"}>
-
 </ParamField>
 
 ## Related types

@@ -12,25 +12,29 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type ElementState = {
     /**
-     * Checked
+     * Value
      */
-    checked?: boolean | null;
+    value?: string | null;
     /**
-     * Expanded
+     * Valuetruncated
      */
-    expanded?: boolean | null;
+    valueTruncated?: boolean;
+    /**
+     * Valuedigest
+     */
+    valueDigest?: string | null;
     /**
      * Filled
      */
     filled?: boolean | null;
     /**
+     * Checked
+     */
+    checked?: boolean | null;
+    /**
      * Mixed
      */
     mixed?: boolean | null;
-    /**
-     * Multiple
-     */
-    multiple?: boolean | null;
     /**
      * Options
      */
@@ -40,35 +44,35 @@ export type ElementState = {
      */
     optionsTruncated?: boolean;
     /**
-     * Pressed
+     * Multiple
      */
-    pressed?: boolean | 'mixed' | null;
+    multiple?: boolean | null;
+    /**
+     * Expanded
+     */
+    expanded?: boolean | null;
     /**
      * Selected
      */
     selected?: boolean | null;
     /**
-     * Value
+     * Pressed
      */
-    value?: string | null;
-    /**
-     * Valuedigest
-     */
-    valueDigest?: string | null;
-    /**
-     * Valuetruncated
-     */
-    valueTruncated?: boolean;
+    pressed?: boolean | 'mixed' | null;
 };
 ```
 
 ## Fields
 
-<ParamField body="checked" type={"boolean | null | undefined"}>
+<ParamField body="value" type={"string | null | undefined"}>
 
 </ParamField>
 
-<ParamField body="expanded" type={"boolean | null | undefined"}>
+<ParamField body="valueTruncated" type={"boolean | undefined"}>
+
+</ParamField>
+
+<ParamField body="valueDigest" type={"string | null | undefined"}>
 
 </ParamField>
 
@@ -76,11 +80,11 @@ export type ElementState = {
 
 </ParamField>
 
-<ParamField body="mixed" type={"boolean | null | undefined"}>
+<ParamField body="checked" type={"boolean | null | undefined"}>
 
 </ParamField>
 
-<ParamField body="multiple" type={"boolean | null | undefined"}>
+<ParamField body="mixed" type={"boolean | null | undefined"}>
 
 </ParamField>
 
@@ -92,7 +96,11 @@ export type ElementState = {
 
 </ParamField>
 
-<ParamField body="pressed" type={"boolean | \"mixed\" | null | undefined"}>
+<ParamField body="multiple" type={"boolean | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="expanded" type={"boolean | null | undefined"}>
 
 </ParamField>
 
@@ -100,15 +108,7 @@ export type ElementState = {
 
 </ParamField>
 
-<ParamField body="value" type={"string | null | undefined"}>
-
-</ParamField>
-
-<ParamField body="valueDigest" type={"string | null | undefined"}>
-
-</ParamField>
-
-<ParamField body="valueTruncated" type={"boolean | undefined"}>
+<ParamField body="pressed" type={"boolean | \"mixed\" | null | undefined"}>
 
 </ParamField>
 

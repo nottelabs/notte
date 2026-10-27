@@ -12,6 +12,10 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type CloseTabAction = {
     /**
+     * Type
+     */
+    type?: 'close_tab';
+    /**
      * Category
      */
     category?: string;
@@ -19,23 +23,19 @@ export type CloseTabAction = {
      * Description
      */
     description?: string;
-    /**
-     * Type
-     */
-    type?: 'close_tab';
 };
 ```
 
 ## Fields
+
+<ParamField body="type" type={"\"close_tab\" | undefined"}>
+
+</ParamField>
 
 <ParamField body="category" type={"string | undefined"}>
 
 </ParamField>
 
 <ParamField body="description" type={"string | undefined"}>
-
-</ParamField>
-
-<ParamField body="type" type={"\"close_tab\" | undefined"}>
 
 </ParamField>

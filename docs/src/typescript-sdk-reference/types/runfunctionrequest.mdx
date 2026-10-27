@@ -12,9 +12,19 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type RunFunctionRequest = {
     /**
-     * Callback Url
+     * Workflow Id
+     *
+     * The ID of the function to run
      */
-    callback_url?: string | null;
+    workflow_id: string;
+    /**
+     * Variables
+     *
+     * The variables to run the function with
+     */
+    variables?: {
+        [key: string]: unknown;
+    };
     /**
      * Runtime
      *
@@ -28,26 +38,20 @@ export type RunFunctionRequest = {
      */
     stream?: boolean;
     /**
-     * Variables
-     *
-     * The variables to run the function with
+     * Callback Url
      */
-    variables?: {
-        [key: string]: unknown;
-    };
-    /**
-     * Workflow Id
-     *
-     * The ID of the function to run
-     */
-    workflow_id: string;
+    callback_url?: string | null;
 };
 ```
 
 ## Fields
 
-<ParamField body="callback_url" type={"string | null | undefined"}>
+<ParamField body="workflow_id" type={"string"} required>
+The ID of the function to run
+</ParamField>
 
+<ParamField body="variables" type={"{ [key: string]: unknown; } | undefined"}>
+The variables to run the function with
 </ParamField>
 
 <ParamField body="runtime" type={"\"standard\" | \"extended\" | null | undefined"}>
@@ -58,10 +62,6 @@ Override the saved function runtime; omit to inherit its default
 Whether to stream logs, or only return final response
 </ParamField>
 
-<ParamField body="variables" type={"{ [key: string]: unknown; } | undefined"}>
-The variables to run the function with
-</ParamField>
+<ParamField body="callback_url" type={"string | null | undefined"}>
 
-<ParamField body="workflow_id" type={"string"} required>
-The ID of the function to run
 </ParamField>

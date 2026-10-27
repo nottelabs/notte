@@ -242,13 +242,12 @@ add or remove entries in the same change as the spec. The scheduled
 contract check fails. Fix it on `chore/bump-openapi`. Scheduled runs leave
 that PR alone once it has manual commits.
 
-OpenAPI fetch and all generators normalize JSON object keys before generation.
-`scripts/openapi_order.py` and `node-sdk/scripts/openapi-order.js` use ECMAScript
-key order (integer indices first, then UTF-16 lexical order), preserving all array
-positions. `tests/data/openapi-order` fixes the cross-language ordering policy.
-Generated model/type headers hash normalized schemas, so field constraints and
-defaults remain visible to exact drift checks. Regenerate with `make sdk-generate-all`
-when changing this policy, including its one-time artifact normalization.
+OpenAPI refresh compares a temporary order-insensitive representation of JSON objects.
+When the incoming schema is otherwise unchanged, keep the committed snapshot byte for
+byte and still run the generators. Real schema changes retain the API's declared order.
+Never sort generator inputs, parameter lists or documentation to suppress drift.
+Intentional presentation-order changes are reviewed edits to the committed snapshot.
+`scripts/openapi_order.py` is comparison-only; all array positions remain significant.
 
 ## Sync facades
 

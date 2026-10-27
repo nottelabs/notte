@@ -12,9 +12,9 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type SelectOption = {
     /**
-     * Disabled
+     * Value
      */
-    disabled?: boolean;
+    value: string;
     /**
      * Label
      */
@@ -24,15 +24,15 @@ export type SelectOption = {
      */
     selected?: boolean;
     /**
-     * Value
+     * Disabled
      */
-    value: string;
+    disabled?: boolean;
 };
 ```
 
 ## Fields
 
-<ParamField body="disabled" type={"boolean | undefined"}>
+<ParamField body="value" type={"string"} required>
 
 </ParamField>
 
@@ -44,6 +44,6 @@ export type SelectOption = {
 
 </ParamField>
 
-<ParamField body="value" type={"string"} required>
+<ParamField body="disabled" type={"boolean | undefined"}>
 
 </ParamField>

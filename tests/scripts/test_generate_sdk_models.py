@@ -18,53 +18,6 @@ def test_regeneration_matches_committed_files() -> None:
     assert gen.check_or_write(gen.render(), gen.OUTPUT, check=True)
 
 
-def test_object_order_and_formatting_do_not_change_generated_models(tmp_path: Path) -> None:
-    spec = json.loads(gen.SNAPSHOT.read_text(), object_pairs_hook=lambda pairs: dict(reversed(pairs)))
-    snapshot = tmp_path / "reordered.json"
-    snapshot.write_text(json.dumps(spec))
-    assert gen.check_or_write(gen.render(snapshot), gen.OUTPUT, check=True)
-
-
-@pytest.mark.parametrize("change", ["add", "remove", "type", "default", "required", "constraint"])
-def test_real_contract_changes_still_change_generated_output(tmp_path: Path, change: str) -> None:
-    spec = {
-        "openapi": "3.1.0",
-        "info": {"title": "Probe", "version": "1"},
-        "paths": {},
-        "components": {
-            "schemas": {
-                "Probe": {
-                    "type": "object",
-                    "required": ["a"],
-                    "properties": {"a": {"type": "integer", "minimum": 1}, "z": {"type": "string", "default": "z"}},
-                }
-            }
-        },
-    }
-    snapshot = tmp_path / "probe.json"
-    snapshot.write_text(json.dumps(spec))
-    baseline = gen.render(snapshot)
-    model = spec["components"]["schemas"]["Probe"]
-    if change == "add":
-        model["properties"]["new_field"] = {"type": "boolean"}
-    elif change == "remove":
-        del model["properties"]["z"]
-    elif change == "type":
-        model["properties"]["a"]["type"] = "number"
-    elif change == "default":
-        model["properties"]["z"]["default"] = "changed"
-    elif change == "required":
-        model["required"] = []
-    else:
-        model["properties"]["a"]["minimum"] = 2
-    snapshot.write_text(json.dumps(spec))
-    changed = gen.render(snapshot)
-    assert changed["models.py"] != baseline["models.py"]
-    assert gen.check_or_write(baseline, tmp_path / "generated", check=False)
-    assert not gen.check_or_write(changed, tmp_path / "generated", check=True)
-    assert gen.render(snapshot) == changed
-
-
 def test_spec_change_changes_models_and_index(tmp_path: Path) -> None:
     spec = json.loads(gen.SNAPSHOT.read_text())
     spec["components"]["schemas"]["CodegenCoverageProbe"] = {

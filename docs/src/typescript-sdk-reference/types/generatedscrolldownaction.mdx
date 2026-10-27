@@ -14,9 +14,9 @@ This is an internal import alias for the API model `ScrollDownAction`. It is not
 ```typescript
 type GeneratedScrollDownAction = {
     /**
-     * Amount
+     * Type
      */
-    amount?: number | null;
+    type?: 'scroll_down';
     /**
      * Category
      */
@@ -26,21 +26,21 @@ type GeneratedScrollDownAction = {
      */
     description?: string;
     /**
+     * Amount
+     */
+    amount?: number | null;
+    /**
      * Selector
      *
      * Optional selector for the scroll container, including iframe paths.
      */
     selector?: string | null;
-    /**
-     * Type
-     */
-    type?: 'scroll_down';
 };
 ```
 
 ## Fields
 
-<ParamField body="amount" type={"number | null | undefined"}>
+<ParamField body="type" type={"\"scroll_down\" | undefined"}>
 
 </ParamField>
 
@@ -52,10 +52,10 @@ type GeneratedScrollDownAction = {
 
 </ParamField>
 
-<ParamField body="selector" type={"string | null | undefined"}>
-Optional selector for the scroll container, including iframe paths.
+<ParamField body="amount" type={"number | null | undefined"}>
+
 </ParamField>
 
-<ParamField body="type" type={"\"scroll_down\" | undefined"}>
-
+<ParamField body="selector" type={"string | null | undefined"}>
+Optional selector for the scroll container, including iframe paths.
 </ParamField>

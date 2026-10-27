@@ -19,27 +19,29 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 };
 
 /**
- * List Agents
- *
- * Retrieves a list of all agents associated with the authenticated user.
- *
- * Parameters:
- * - request: AgentListRequest containing:
- * - only_active: Whether to only return active agents
- * - limit: Maximum number of agents to return
+ * Session Auth Readiness
  */
-export const listAgents = <ThrowOnError extends boolean = false>(options?: Options<ListAgentsData, ThrowOnError>): RequestResult<ListAgentsResponses, ListAgentsErrors, ThrowOnError> => (options?.client ?? client).get<ListAgentsResponses, ListAgentsErrors, ThrowOnError>({
+export const sessionAuthReadiness = <ThrowOnError extends boolean = false>(options: Options<SessionAuthReadinessData, ThrowOnError>): RequestResult<SessionAuthReadinessResponses, SessionAuthReadinessErrors, ThrowOnError> => (options.client ?? client).get<SessionAuthReadinessResponses, SessionAuthReadinessErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/agents',
+    url: '/sessions/{session_id}/auth',
     ...options
 });
 
 /**
- * Agent Start
+ * List Sessions
  */
-export const agentStart = <ThrowOnError extends boolean = false>(options: Options<AgentStartData, ThrowOnError>): RequestResult<AgentStartResponses, AgentStartErrors, ThrowOnError> => (options.client ?? client).post<AgentStartResponses, AgentStartErrors, ThrowOnError>({
+export const listSessions = <ThrowOnError extends boolean = false>(options?: Options<ListSessionsData, ThrowOnError>): RequestResult<ListSessionsResponses, ListSessionsErrors, ThrowOnError> => (options?.client ?? client).get<ListSessionsResponses, ListSessionsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/agents/start',
+    url: '/sessions',
+    ...options
+});
+
+/**
+ * Session Start
+ */
+export const sessionStart = <ThrowOnError extends boolean = false>(options: Options<SessionStartData, ThrowOnError>): RequestResult<SessionStartResponses, SessionStartErrors, ThrowOnError> => (options.client ?? client).post<SessionStartResponses, SessionStartErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/sessions/start',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -48,54 +50,29 @@ export const agentStart = <ThrowOnError extends boolean = false>(options: Option
 });
 
 /**
- * Agent Status
- *
- * Retrieves the current status of a specific <agent_id>.
- *
- * The most important fields are:
- * - success: Whether the agent task was successful (None if still running)
- * - answer: The answer to the agent task (None if still running)
- *
- * Also you can check the `steps` field to better understand which actions where taken by the agent.
+ * Session Status
  */
-export const agentStatus = <ThrowOnError extends boolean = false>(options: Options<AgentStatusData, ThrowOnError>): RequestResult<AgentStatusResponses, AgentStatusErrors, ThrowOnError> => (options.client ?? client).get<AgentStatusResponses, AgentStatusErrors, ThrowOnError>({
+export const sessionStatus = <ThrowOnError extends boolean = false>(options: Options<SessionStatusData, ThrowOnError>): RequestResult<SessionStatusResponses, SessionStatusErrors, ThrowOnError> => (options.client ?? client).get<SessionStatusResponses, SessionStatusErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/agents/{agent_id}',
+    url: '/sessions/{session_id}',
     ...options
 });
 
 /**
- * Agent Stop
+ * Session Profile Preview
  */
-export const agentStop = <ThrowOnError extends boolean = false>(options: Options<AgentStopData, ThrowOnError>): RequestResult<AgentStopResponses, AgentStopErrors, ThrowOnError> => (options.client ?? client).delete<AgentStopResponses, AgentStopErrors, ThrowOnError>({
+export const sessionProfilePreview = <ThrowOnError extends boolean = false>(options: Options<SessionProfilePreviewData, ThrowOnError>): RequestResult<SessionProfilePreviewResponses, SessionProfilePreviewErrors, ThrowOnError> => (options.client ?? client).get<SessionProfilePreviewResponses, SessionProfilePreviewErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/agents/{agent_id}/stop',
+    url: '/sessions/{session_id}/profile-preview',
     ...options
 });
 
 /**
- * Get Script
- *
- * Retrieves the current status of a specific <agent_id>.
- *
- * The most important fields are:
- * - success: Whether the agent task was successful (None if still running)
- * - answer: The answer to the agent task (None if still running)
- *
- * Also you can check the `steps` field to better understand which actions where taken by the agent.
+ * Session Profile Save
  */
-export const getScript = <ThrowOnError extends boolean = false>(options: Options<GetScriptData, ThrowOnError>): RequestResult<GetScriptResponses, GetScriptErrors, ThrowOnError> => (options.client ?? client).get<GetScriptResponses, GetScriptErrors, ThrowOnError>({
+export const sessionProfileSave = <ThrowOnError extends boolean = false>(options: Options<SessionProfileSaveData, ThrowOnError>): RequestResult<SessionProfileSaveResponses, SessionProfileSaveErrors, ThrowOnError> => (options.client ?? client).post<SessionProfileSaveResponses, SessionProfileSaveErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/agents/{agent_id}/workflow/code',
-    ...options
-});
-
-/**
- * Anything Start
- */
-export const anythingStart = <ThrowOnError extends boolean = false>(options: Options<AnythingStartData, ThrowOnError>): RequestResult<AnythingStartResponses, AnythingStartErrors, ThrowOnError> => (options.client ?? client).post<AnythingStartResponses, AnythingStartErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/anything/start',
+    url: '/sessions/{session_id}/profile/save',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -104,56 +81,29 @@ export const anythingStart = <ThrowOnError extends boolean = false>(options: Opt
 });
 
 /**
- * List Audit Events
+ * Session Stop
  */
-export const listAuditEvents = <ThrowOnError extends boolean = false>(options?: Options<ListAuditEventsData, ThrowOnError>): RequestResult<ListAuditEventsResponses, ListAuditEventsErrors, ThrowOnError> => (options?.client ?? client).get<ListAuditEventsResponses, ListAuditEventsErrors, ThrowOnError>({
+export const sessionStop = <ThrowOnError extends boolean = false>(options: Options<SessionStopData, ThrowOnError>): RequestResult<SessionStopResponses, SessionStopErrors, ThrowOnError> => (options.client ?? client).delete<SessionStopResponses, SessionStopErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/audit-events',
+    url: '/sessions/{session_id}/stop',
     ...options
 });
 
 /**
- * List Data Apis
+ * Session Cookies Get
  */
-export const listDataApis = <ThrowOnError extends boolean = false>(options?: Options<ListDataApisData, ThrowOnError>): RequestResult<ListDataApisResponses, ListDataApisErrors, ThrowOnError> => (options?.client ?? client).get<ListDataApisResponses, ListDataApisErrors, ThrowOnError>({
+export const sessionCookiesGet = <ThrowOnError extends boolean = false>(options: Options<SessionCookiesGetData, ThrowOnError>): RequestResult<SessionCookiesGetResponses, SessionCookiesGetErrors, ThrowOnError> => (options.client ?? client).get<SessionCookiesGetResponses, SessionCookiesGetErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data',
+    url: '/sessions/{session_id}/cookies',
     ...options
 });
 
 /**
- * Summary
+ * Session Cookies Set
  */
-export const summary = <ThrowOnError extends boolean = false>(options?: Options<SummaryData, ThrowOnError>): RequestResult<SummaryResponses, SummaryErrors, ThrowOnError> => (options?.client ?? client).get<SummaryResponses, SummaryErrors, ThrowOnError>({
+export const sessionCookiesSet = <ThrowOnError extends boolean = false>(options: Options<SessionCookiesSetData, ThrowOnError>): RequestResult<SessionCookiesSetResponses, SessionCookiesSetErrors, ThrowOnError> => (options.client ?? client).post<SessionCookiesSetResponses, SessionCookiesSetErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data/analytics',
-    ...options
-});
-
-/**
- * History
- */
-export const history_ = <ThrowOnError extends boolean = false>(options?: Options<HistoryData, ThrowOnError>): RequestResult<HistoryResponses, HistoryErrors, ThrowOnError> => (options?.client ?? client).get<HistoryResponses, HistoryErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data/analytics/requests',
-    ...options
-});
-
-/**
- * Detail
- */
-export const detail = <ThrowOnError extends boolean = false>(options: Options<DetailData, ThrowOnError>): RequestResult<DetailResponses, DetailErrors, ThrowOnError> => (options.client ?? client).get<DetailResponses, DetailErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data/analytics/requests/{request_id}',
-    ...options
-});
-
-/**
- * Brand Retrieve
- */
-export const brandRetrieve = <ThrowOnError extends boolean = false>(options: Options<BrandRetrieveData, ThrowOnError>): RequestResult<BrandRetrieveResponses, BrandRetrieveErrors, ThrowOnError> => (options.client ?? client).post<BrandRetrieveResponses, BrandRetrieveErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data/brand/retrieve',
+    url: '/sessions/{session_id}/cookies',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -162,29 +112,29 @@ export const brandRetrieve = <ThrowOnError extends boolean = false>(options: Opt
 });
 
 /**
- * Invalidate
+ * Session Debug Info
  */
-export const invalidate = <ThrowOnError extends boolean = false>(options?: Options<InvalidateData, ThrowOnError>): RequestResult<InvalidateResponses, InvalidateErrors, ThrowOnError> => (options?.client ?? client).delete<InvalidateResponses, InvalidateErrors, ThrowOnError>({
+export const sessionDebugInfo = <ThrowOnError extends boolean = false>(options: Options<SessionDebugInfoData, ThrowOnError>): RequestResult<SessionDebugInfoResponses, SessionDebugInfoErrors, ThrowOnError> => (options.client ?? client).get<SessionDebugInfoResponses, SessionDebugInfoErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data/cache',
+    url: '/sessions/{session_id}/debug',
     ...options
 });
 
 /**
- * Get Policy
+ * Session Offset
  */
-export const getPolicy = <ThrowOnError extends boolean = false>(options?: Options<GetPolicyData, ThrowOnError>): RequestResult<GetPolicyResponses, GetPolicyErrors, ThrowOnError> => (options?.client ?? client).get<GetPolicyResponses, GetPolicyErrors, ThrowOnError>({
+export const sessionOffset = <ThrowOnError extends boolean = false>(options: Options<SessionOffsetData, ThrowOnError>): RequestResult<SessionOffsetResponses, SessionOffsetErrors, ThrowOnError> => (options.client ?? client).get<SessionOffsetResponses, SessionOffsetErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data/cache',
+    url: '/sessions/{session_id}/offset',
     ...options
 });
 
 /**
- * Maps Search
+ * Page Observe
  */
-export const mapsSearch = <ThrowOnError extends boolean = false>(options: Options<MapsSearchData, ThrowOnError>): RequestResult<MapsSearchResponses, MapsSearchErrors, ThrowOnError> => (options.client ?? client).post<MapsSearchResponses, MapsSearchErrors, ThrowOnError>({
+export const pageObserve = <ThrowOnError extends boolean = false>(options: Options<PageObserveData, ThrowOnError>): RequestResult<PageObserveResponses, PageObserveErrors, ThrowOnError> => (options.client ?? client).post<PageObserveResponses, PageObserveErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data/maps/search',
+    url: '/sessions/{session_id}/page/observe',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -193,20 +143,20 @@ export const mapsSearch = <ThrowOnError extends boolean = false>(options: Option
 });
 
 /**
- * List Monitors
+ * Page Screenshot
  */
-export const listMonitors = <ThrowOnError extends boolean = false>(options?: Options<ListMonitorsData, ThrowOnError>): RequestResult<ListMonitorsResponses, ListMonitorsErrors, ThrowOnError> => (options?.client ?? client).get<ListMonitorsResponses, ListMonitorsErrors, ThrowOnError>({
+export const pageScreenshot = <ThrowOnError extends boolean = false>(options: Options<PageScreenshotData, ThrowOnError>): RequestResult<PageScreenshotResponses, PageScreenshotErrors, ThrowOnError> => (options.client ?? client).post<PageScreenshotResponses, PageScreenshotErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data/monitors',
+    url: '/sessions/{session_id}/page/screenshot',
     ...options
 });
 
 /**
- * Create
+ * Page Execute
  */
-export const create = <ThrowOnError extends boolean = false>(options: Options<CreateData, ThrowOnError>): RequestResult<CreateResponses, CreateErrors, ThrowOnError> => (options.client ?? client).post<CreateResponses, CreateErrors, ThrowOnError>({
+export const pageExecute = <ThrowOnError extends boolean = false>(options: Options<PageExecuteData, ThrowOnError>): RequestResult<PageExecuteResponses, PageExecuteErrors, ThrowOnError> => (options.client ?? client).post<PageExecuteResponses, PageExecuteErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data/monitors',
+    url: '/sessions/{session_id}/page/execute',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -215,65 +165,11 @@ export const create = <ThrowOnError extends boolean = false>(options: Options<Cr
 });
 
 /**
- * Account Changes
+ * Page Scrape
  */
-export const accountChanges = <ThrowOnError extends boolean = false>(options?: Options<AccountChangesData, ThrowOnError>): RequestResult<AccountChangesResponses, AccountChangesErrors, ThrowOnError> => (options?.client ?? client).get<AccountChangesResponses, AccountChangesErrors, ThrowOnError>({
+export const pageScrape = <ThrowOnError extends boolean = false>(options: Options<PageScrapeData, ThrowOnError>): RequestResult<PageScrapeResponses, PageScrapeErrors, ThrowOnError> => (options.client ?? client).post<PageScrapeResponses, PageScrapeErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data/monitors/changes',
-    ...options
-});
-
-/**
- * Credit Usage
- */
-export const creditUsage = <ThrowOnError extends boolean = false>(options?: Options<CreditUsageData, ThrowOnError>): RequestResult<CreditUsageResponses, CreditUsageErrors, ThrowOnError> => (options?.client ?? client).get<CreditUsageResponses, CreditUsageErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data/monitors/credit-usage',
-    ...options
-});
-
-/**
- * Limits
- */
-export const limits = <ThrowOnError extends boolean = false>(options?: Options<LimitsData, ThrowOnError>): RequestResult<LimitsResponses, LimitsErrors, ThrowOnError> => (options?.client ?? client).get<LimitsResponses, LimitsErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data/monitors/limits',
-    ...options
-});
-
-/**
- * Account Runs
- */
-export const accountRuns = <ThrowOnError extends boolean = false>(options?: Options<AccountRunsData, ThrowOnError>): RequestResult<AccountRunsResponses, AccountRunsErrors, ThrowOnError> => (options?.client ?? client).get<AccountRunsResponses, AccountRunsErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data/monitors/runs',
-    ...options
-});
-
-/**
- * Delete
- */
-export const delete_ = <ThrowOnError extends boolean = false>(options: Options<DeleteData, ThrowOnError>): RequestResult<DeleteResponses, DeleteErrors, ThrowOnError> => (options.client ?? client).delete<DeleteResponses, DeleteErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data/monitors/{monitor_id}',
-    ...options
-});
-
-/**
- * Retrieve
- */
-export const retrieve = <ThrowOnError extends boolean = false>(options: Options<RetrieveData, ThrowOnError>): RequestResult<RetrieveResponses, RetrieveErrors, ThrowOnError> => (options.client ?? client).get<RetrieveResponses, RetrieveErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data/monitors/{monitor_id}',
-    ...options
-});
-
-/**
- * Update
- */
-export const update = <ThrowOnError extends boolean = false>(options: Options<UpdateData, ThrowOnError>): RequestResult<UpdateResponses, UpdateErrors, ThrowOnError> => (options.client ?? client).patch<UpdateResponses, UpdateErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data/monitors/{monitor_id}',
+    url: '/sessions/{session_id}/page/scrape',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -282,65 +178,38 @@ export const update = <ThrowOnError extends boolean = false>(options: Options<Up
 });
 
 /**
- * Changes
+ * Session Network Logs
  */
-export const changes = <ThrowOnError extends boolean = false>(options: Options<ChangesData, ThrowOnError>): RequestResult<ChangesResponses, ChangesErrors, ThrowOnError> => (options.client ?? client).get<ChangesResponses, ChangesErrors, ThrowOnError>({
+export const sessionNetworkLogs = <ThrowOnError extends boolean = false>(options: Options<SessionNetworkLogsData, ThrowOnError>): RequestResult<SessionNetworkLogsResponses, SessionNetworkLogsErrors, ThrowOnError> => (options.client ?? client).get<SessionNetworkLogsResponses, SessionNetworkLogsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data/monitors/{monitor_id}/changes',
+    url: '/sessions/{session_id}/network/logs',
     ...options
 });
 
 /**
- * Retrieve Change
+ * Session Mouse Replay
  */
-export const retrieveChange = <ThrowOnError extends boolean = false>(options: Options<RetrieveChangeData, ThrowOnError>): RequestResult<RetrieveChangeResponses, RetrieveChangeErrors, ThrowOnError> => (options.client ?? client).get<RetrieveChangeResponses, RetrieveChangeErrors, ThrowOnError>({
+export const sessionMouseReplay = <ThrowOnError extends boolean = false>(options: Options<SessionMouseReplayData, ThrowOnError>): RequestResult<SessionMouseReplayResponses, SessionMouseReplayErrors, ThrowOnError> => (options.client ?? client).get<SessionMouseReplayResponses, SessionMouseReplayErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data/monitors/{monitor_id}/changes/{change_id}',
+    url: '/sessions/{session_id}/replay/mouse',
     ...options
 });
 
 /**
- * Run Now
+ * Session Replay
  */
-export const runNow = <ThrowOnError extends boolean = false>(options: Options<RunNowData, ThrowOnError>): RequestResult<RunNowResponses, RunNowErrors, ThrowOnError> => (options.client ?? client).post<RunNowResponses, RunNowErrors, ThrowOnError>({
+export const sessionReplay = <ThrowOnError extends boolean = false>(options: Options<SessionReplayData, ThrowOnError>): RequestResult<SessionReplayResponses, SessionReplayErrors, ThrowOnError> => (options.client ?? client).get<SessionReplayResponses, SessionReplayErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data/monitors/{monitor_id}/run',
+    url: '/sessions/{session_id}/replay',
     ...options
 });
 
 /**
- * Runs
+ * Execute Session File
  */
-export const runs = <ThrowOnError extends boolean = false>(options: Options<RunsData, ThrowOnError>): RequestResult<RunsResponses, RunsErrors, ThrowOnError> => (options.client ?? client).get<RunsResponses, RunsErrors, ThrowOnError>({
+export const executeSessionFile = <ThrowOnError extends boolean = false>(options: Options<ExecuteSessionFileData, ThrowOnError>): RequestResult<ExecuteSessionFileResponses, ExecuteSessionFileErrors, ThrowOnError> => (options.client ?? client).post<ExecuteSessionFileResponses, ExecuteSessionFileErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data/monitors/{monitor_id}/runs',
-    ...options
-});
-
-/**
- * Retrieve Run
- */
-export const retrieveRun = <ThrowOnError extends boolean = false>(options: Options<RetrieveRunData, ThrowOnError>): RequestResult<RetrieveRunResponses, RetrieveRunErrors, ThrowOnError> => (options.client ?? client).get<RetrieveRunResponses, RetrieveRunErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data/monitors/{monitor_id}/runs/{run_id}',
-    ...options
-});
-
-/**
- * Rotate Secret
- */
-export const rotateSecret = <ThrowOnError extends boolean = false>(options: Options<RotateSecretData, ThrowOnError>): RequestResult<RotateSecretResponses, RotateSecretErrors, ThrowOnError> => (options.client ?? client).post<RotateSecretResponses, RotateSecretErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data/monitors/{monitor_id}/webhook/rotate-secret',
-    ...options
-});
-
-/**
- * News Search
- */
-export const newsSearch = <ThrowOnError extends boolean = false>(options: Options<NewsSearchData, ThrowOnError>): RequestResult<NewsSearchResponses, NewsSearchErrors, ThrowOnError> => (options.client ?? client).post<NewsSearchResponses, NewsSearchErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data/news/search',
+    url: '/sessions/{session_id}/page/execute/file',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -349,108 +218,53 @@ export const newsSearch = <ThrowOnError extends boolean = false>(options: Option
 });
 
 /**
- * People Enrich
+ * List Session Files
  */
-export const peopleEnrich = <ThrowOnError extends boolean = false>(options: Options<PeopleEnrichData, ThrowOnError>): RequestResult<PeopleEnrichResponses, PeopleEnrichErrors, ThrowOnError> => (options.client ?? client).post<PeopleEnrichResponses, PeopleEnrichErrors, ThrowOnError>({
+export const listSessionFiles = <ThrowOnError extends boolean = false>(options: Options<ListSessionFilesData, ThrowOnError>): RequestResult<ListSessionFilesResponses, ListSessionFilesErrors, ThrowOnError> => (options.client ?? client).get<ListSessionFilesResponses, ListSessionFilesErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data/people/enrich',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Extract Product Endpoint
- */
-export const extractProductEndpoint = <ThrowOnError extends boolean = false>(options: Options<ExtractProductEndpointData, ThrowOnError>): RequestResult<ExtractProductEndpointResponses, ExtractProductEndpointErrors, ThrowOnError> => (options.client ?? client).post<ExtractProductEndpointResponses, ExtractProductEndpointErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data/products/extract',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Fetch Specialized Data
- */
-export const fetchSpecializedData = <ThrowOnError extends boolean = false>(options: Options<FetchSpecializedDataData, ThrowOnError>): RequestResult<FetchSpecializedDataResponses, FetchSpecializedDataErrors, ThrowOnError> => (options.client ?? client).post<FetchSpecializedDataResponses, FetchSpecializedDataErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data/web/fetch',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Extract a website styleguide
- */
-export const styleguideEndpoint = <ThrowOnError extends boolean = false>(options?: Options<StyleguideEndpointData, ThrowOnError>): RequestResult<StyleguideEndpointResponses, StyleguideEndpointErrors, ThrowOnError> => (options?.client ?? client).get<StyleguideEndpointResponses, StyleguideEndpointErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data/web/styleguide',
+    url: '/sessions/{session_id}/files',
     ...options
 });
 
 /**
- * Deliveries
+ * Upload Session File
  */
-export const deliveries = <ThrowOnError extends boolean = false>(options: Options<DeliveriesData, ThrowOnError>): RequestResult<DeliveriesResponses, DeliveriesErrors, ThrowOnError> => (options.client ?? client).post<DeliveriesResponses, DeliveriesErrors, ThrowOnError>({
+export const uploadSessionFile = <ThrowOnError extends boolean = false>(options: Options<UploadSessionFileData, ThrowOnError>): RequestResult<UploadSessionFileResponses, UploadSessionFileErrors, ThrowOnError> => (options.client ?? client).post<UploadSessionFileResponses, UploadSessionFileErrors, ThrowOnError>({
+    ...formDataBodySerializer,
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data/webhooks/deliveries',
+    url: '/sessions/{session_id}/files',
     ...options,
     headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': null,
         ...options.headers
     }
 });
 
 /**
- * Retrieve Delivery
+ * Delete Session File
  */
-export const retrieveDelivery = <ThrowOnError extends boolean = false>(options: Options<RetrieveDeliveryData, ThrowOnError>): RequestResult<RetrieveDeliveryResponses, RetrieveDeliveryErrors, ThrowOnError> => (options.client ?? client).get<RetrieveDeliveryResponses, RetrieveDeliveryErrors, ThrowOnError>({
+export const deleteSessionFile = <ThrowOnError extends boolean = false>(options: Options<DeleteSessionFileData, ThrowOnError>): RequestResult<DeleteSessionFileResponses, DeleteSessionFileErrors, ThrowOnError> => (options.client ?? client).delete<DeleteSessionFileResponses, DeleteSessionFileErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data/webhooks/deliveries/{delivery_id}',
+    url: '/sessions/{session_id}/files/{file_id}',
     ...options
 });
 
 /**
- * Attempts
+ * Download Session File
  */
-export const attempts = <ThrowOnError extends boolean = false>(options: Options<AttemptsData, ThrowOnError>): RequestResult<AttemptsResponses, AttemptsErrors, ThrowOnError> => (options.client ?? client).get<AttemptsResponses, AttemptsErrors, ThrowOnError>({
+export const downloadSessionFile = <ThrowOnError extends boolean = false>(options: Options<DownloadSessionFileData, ThrowOnError>): RequestResult<DownloadSessionFileResponses, DownloadSessionFileErrors, ThrowOnError> => (options.client ?? client).get<DownloadSessionFileResponses, DownloadSessionFileErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data/webhooks/deliveries/{delivery_id}/attempts',
+    url: '/sessions/{session_id}/files/{file_id}',
     ...options
 });
 
 /**
- * Retry
+ * Function Runtime Health
  */
-export const retry = <ThrowOnError extends boolean = false>(options: Options<RetryData, ThrowOnError>): RequestResult<RetryResponses, RetryErrors, ThrowOnError> => (options.client ?? client).post<RetryResponses, RetryErrors, ThrowOnError>({
+export const functionRuntimeHealth = <ThrowOnError extends boolean = false>(options?: Options<FunctionRuntimeHealthData, ThrowOnError>): RequestResult<FunctionRuntimeHealthResponses, FunctionRuntimeHealthErrors, ThrowOnError> => (options?.client ?? client).get<FunctionRuntimeHealthResponses, FunctionRuntimeHealthErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data/webhooks/deliveries/{delivery_id}/retry',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Youtube Endpoint
- */
-export const youtubeEndpoint = <ThrowOnError extends boolean = false>(options: Options<YoutubeEndpointData, ThrowOnError>): RequestResult<YoutubeEndpointResponses, YoutubeEndpointErrors, ThrowOnError> => (options.client ?? client).post<YoutubeEndpointResponses, YoutubeEndpointErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/data/youtube/extract',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
+    url: '/functions/health',
+    ...options
 });
 
 /**
@@ -474,15 +288,6 @@ export const functionCreate = <ThrowOnError extends boolean = false>(options: Op
         'Content-Type': null,
         ...options.headers
     }
-});
-
-/**
- * Function Runtime Health
- */
-export const functionRuntimeHealth = <ThrowOnError extends boolean = false>(options?: Options<FunctionRuntimeHealthData, ThrowOnError>): RequestResult<FunctionRuntimeHealthResponses, FunctionRuntimeHealthErrors, ThrowOnError> => (options?.client ?? client).get<FunctionRuntimeHealthResponses, FunctionRuntimeHealthErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/functions/health',
-    ...options
 });
 
 /**
@@ -553,12 +358,25 @@ export const functionRollback = <ThrowOnError extends boolean = false>(options: 
 });
 
 /**
- * List Function Runs By Function Id
+ * Function Schedule Delete
  */
-export const listFunctionRunsByFunctionId = <ThrowOnError extends boolean = false>(options: Options<ListFunctionRunsByFunctionIdData, ThrowOnError>): RequestResult<ListFunctionRunsByFunctionIdResponses, ListFunctionRunsByFunctionIdErrors, ThrowOnError> => (options.client ?? client).get<ListFunctionRunsByFunctionIdResponses, ListFunctionRunsByFunctionIdErrors, ThrowOnError>({
+export const functionScheduleDelete = <ThrowOnError extends boolean = false>(options: Options<FunctionScheduleDeleteData, ThrowOnError>): RequestResult<FunctionScheduleDeleteResponses, FunctionScheduleDeleteErrors, ThrowOnError> => (options.client ?? client).delete<FunctionScheduleDeleteResponses, FunctionScheduleDeleteErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/functions/{function_id}/runs',
+    url: '/functions/{function_id}/schedule',
     ...options
+});
+
+/**
+ * Function Schedule Set
+ */
+export const functionScheduleSet = <ThrowOnError extends boolean = false>(options: Options<FunctionScheduleSetData, ThrowOnError>): RequestResult<FunctionScheduleSetResponses, FunctionScheduleSetErrors, ThrowOnError> => (options.client ?? client).post<FunctionScheduleSetResponses, FunctionScheduleSetErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/functions/{function_id}/schedule',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
 });
 
 /**
@@ -606,15 +424,6 @@ export const functionRunUpdateMetadata = <ThrowOnError extends boolean = false>(
 });
 
 /**
- * Download Run Payload
- */
-export const downloadRunPayload = <ThrowOnError extends boolean = false>(options: Options<DownloadRunPayloadData, ThrowOnError>): RequestResult<DownloadRunPayloadResponses, DownloadRunPayloadErrors, ThrowOnError> => (options.client ?? client).get<DownloadRunPayloadResponses, DownloadRunPayloadErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/functions/{function_id}/runs/{run_id}/payloads/{field}',
-    ...options
-});
-
-/**
  * Prepare Run Payload Upload
  */
 export const prepareRunPayloadUpload = <ThrowOnError extends boolean = false>(options: Options<PrepareRunPayloadUploadData, ThrowOnError>): RequestResult<PrepareRunPayloadUploadResponses, PrepareRunPayloadUploadErrors, ThrowOnError> => (options.client ?? client).post<PrepareRunPayloadUploadResponses, PrepareRunPayloadUploadErrors, ThrowOnError>({
@@ -628,20 +437,29 @@ export const prepareRunPayloadUpload = <ThrowOnError extends boolean = false>(op
 });
 
 /**
- * Function Schedule Delete
+ * Download Run Payload
  */
-export const functionScheduleDelete = <ThrowOnError extends boolean = false>(options: Options<FunctionScheduleDeleteData, ThrowOnError>): RequestResult<FunctionScheduleDeleteResponses, FunctionScheduleDeleteErrors, ThrowOnError> => (options.client ?? client).delete<FunctionScheduleDeleteResponses, FunctionScheduleDeleteErrors, ThrowOnError>({
+export const downloadRunPayload = <ThrowOnError extends boolean = false>(options: Options<DownloadRunPayloadData, ThrowOnError>): RequestResult<DownloadRunPayloadResponses, DownloadRunPayloadErrors, ThrowOnError> => (options.client ?? client).get<DownloadRunPayloadResponses, DownloadRunPayloadErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/functions/{function_id}/schedule',
+    url: '/functions/{function_id}/runs/{run_id}/payloads/{field}',
     ...options
 });
 
 /**
- * Function Schedule Set
+ * List Function Runs By Function Id
  */
-export const functionScheduleSet = <ThrowOnError extends boolean = false>(options: Options<FunctionScheduleSetData, ThrowOnError>): RequestResult<FunctionScheduleSetResponses, FunctionScheduleSetErrors, ThrowOnError> => (options.client ?? client).post<FunctionScheduleSetResponses, FunctionScheduleSetErrors, ThrowOnError>({
+export const listFunctionRunsByFunctionId = <ThrowOnError extends boolean = false>(options: Options<ListFunctionRunsByFunctionIdData, ThrowOnError>): RequestResult<ListFunctionRunsByFunctionIdResponses, ListFunctionRunsByFunctionIdErrors, ThrowOnError> => (options.client ?? client).get<ListFunctionRunsByFunctionIdResponses, ListFunctionRunsByFunctionIdErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/functions/{function_id}/schedule',
+    url: '/functions/{function_id}/runs',
+    ...options
+});
+
+/**
+ * Vault Create
+ */
+export const vaultCreate = <ThrowOnError extends boolean = false>(options: Options<VaultCreateData, ThrowOnError>): RequestResult<VaultCreateResponses, VaultCreateErrors, ThrowOnError> => (options.client ?? client).post<VaultCreateResponses, VaultCreateErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/vaults/create',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -650,16 +468,311 @@ export const functionScheduleSet = <ThrowOnError extends boolean = false>(option
 });
 
 /**
- * Health Check
+ * Vault Credentials Delete
  */
-export const healthCheck = <ThrowOnError extends boolean = false>(options?: Options<HealthCheckData, ThrowOnError>): RequestResult<HealthCheckResponses, unknown, ThrowOnError> => (options?.client ?? client).get<HealthCheckResponses, unknown, ThrowOnError>({ url: '/health', ...options });
+export const vaultCredentialsDelete = <ThrowOnError extends boolean = false>(options: Options<VaultCredentialsDeleteData, ThrowOnError>): RequestResult<VaultCredentialsDeleteResponses, VaultCredentialsDeleteErrors, ThrowOnError> => (options.client ?? client).delete<VaultCredentialsDeleteResponses, VaultCredentialsDeleteErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/vaults/{vault_id}/credentials',
+    ...options
+});
 
 /**
- * Mailbox List
+ * Vault Credentials Get
  */
-export const mailboxList = <ThrowOnError extends boolean = false>(options?: Options<MailboxListData, ThrowOnError>): RequestResult<MailboxListResponses, MailboxListErrors, ThrowOnError> => (options?.client ?? client).get<MailboxListResponses, MailboxListErrors, ThrowOnError>({
+export const vaultCredentialsGet = <ThrowOnError extends boolean = false>(options: Options<VaultCredentialsGetData, ThrowOnError>): RequestResult<VaultCredentialsGetResponses, VaultCredentialsGetErrors, ThrowOnError> => (options.client ?? client).get<VaultCredentialsGetResponses, VaultCredentialsGetErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/mailboxes',
+    url: '/vaults/{vault_id}/credentials',
+    ...options
+});
+
+/**
+ * Vault Credentials Add
+ */
+export const vaultCredentialsAdd = <ThrowOnError extends boolean = false>(options: Options<VaultCredentialsAddData, ThrowOnError>): RequestResult<VaultCredentialsAddResponses, VaultCredentialsAddErrors, ThrowOnError> => (options.client ?? client).post<VaultCredentialsAddResponses, VaultCredentialsAddErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/vaults/{vault_id}/credentials',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Vault Delete
+ */
+export const vaultDelete = <ThrowOnError extends boolean = false>(options: Options<VaultDeleteData, ThrowOnError>): RequestResult<VaultDeleteResponses, VaultDeleteErrors, ThrowOnError> => (options.client ?? client).delete<VaultDeleteResponses, VaultDeleteErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/vaults/{vault_id}',
+    ...options
+});
+
+/**
+ * Vault Credentials List
+ */
+export const vaultCredentialsList = <ThrowOnError extends boolean = false>(options: Options<VaultCredentialsListData, ThrowOnError>): RequestResult<VaultCredentialsListResponses, VaultCredentialsListErrors, ThrowOnError> => (options.client ?? client).get<VaultCredentialsListResponses, VaultCredentialsListErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/vaults/{vault_id}',
+    ...options
+});
+
+/**
+ * Vault Update
+ */
+export const vaultUpdate = <ThrowOnError extends boolean = false>(options: Options<VaultUpdateData, ThrowOnError>): RequestResult<VaultUpdateResponses, VaultUpdateErrors, ThrowOnError> => (options.client ?? client).patch<VaultUpdateResponses, VaultUpdateErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/vaults/{vault_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Vault Credit Card Delete
+ */
+export const vaultCreditCardDelete = <ThrowOnError extends boolean = false>(options: Options<VaultCreditCardDeleteData, ThrowOnError>): RequestResult<VaultCreditCardDeleteResponses, VaultCreditCardDeleteErrors, ThrowOnError> => (options.client ?? client).delete<VaultCreditCardDeleteResponses, VaultCreditCardDeleteErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/vaults/{vault_id}/card',
+    ...options
+});
+
+/**
+ * Vault Credit Card Get
+ */
+export const vaultCreditCardGet = <ThrowOnError extends boolean = false>(options: Options<VaultCreditCardGetData, ThrowOnError>): RequestResult<VaultCreditCardGetResponses, VaultCreditCardGetErrors, ThrowOnError> => (options.client ?? client).get<VaultCreditCardGetResponses, VaultCreditCardGetErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/vaults/{vault_id}/card',
+    ...options
+});
+
+/**
+ * Vault Credit Card Set
+ */
+export const vaultCreditCardSet = <ThrowOnError extends boolean = false>(options: Options<VaultCreditCardSetData, ThrowOnError>): RequestResult<VaultCreditCardSetResponses, VaultCreditCardSetErrors, ThrowOnError> => (options.client ?? client).post<VaultCreditCardSetResponses, VaultCreditCardSetErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/vaults/{vault_id}/card',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List Vaults
+ */
+export const listVaults = <ThrowOnError extends boolean = false>(options?: Options<ListVaultsData, ThrowOnError>): RequestResult<ListVaultsResponses, ListVaultsErrors, ThrowOnError> => (options?.client ?? client).get<ListVaultsResponses, ListVaultsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/vaults',
+    ...options
+});
+
+/**
+ * Connect Payment Wallet
+ */
+export const connectPaymentWallet = <ThrowOnError extends boolean = false>(options: Options<ConnectPaymentWalletData, ThrowOnError>): RequestResult<ConnectPaymentWalletResponses, ConnectPaymentWalletErrors, ThrowOnError> => (options.client ?? client).post<ConnectPaymentWalletResponses, ConnectPaymentWalletErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/payments/connect',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Disconnect Payment Wallet
+ */
+export const disconnectPaymentWallet = <ThrowOnError extends boolean = false>(options: Options<DisconnectPaymentWalletData, ThrowOnError>): RequestResult<DisconnectPaymentWalletResponses, DisconnectPaymentWalletErrors, ThrowOnError> => (options.client ?? client).post<DisconnectPaymentWalletResponses, DisconnectPaymentWalletErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/payments/disconnect',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Create Payment
+ */
+export const createPayment = <ThrowOnError extends boolean = false>(options: Options<CreatePaymentData, ThrowOnError>): RequestResult<CreatePaymentResponses, CreatePaymentErrors, ThrowOnError> => (options.client ?? client).post<CreatePaymentResponses, CreatePaymentErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/sessions/{session_id}/payments',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get Payment
+ */
+export const getPayment = <ThrowOnError extends boolean = false>(options: Options<GetPaymentData, ThrowOnError>): RequestResult<GetPaymentResponses, GetPaymentErrors, ThrowOnError> => (options.client ?? client).get<GetPaymentResponses, GetPaymentErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/payments/{payment_id}',
+    ...options
+});
+
+/**
+ * Profile Create
+ */
+export const profileCreate = <ThrowOnError extends boolean = false>(options: Options<ProfileCreateData, ThrowOnError>): RequestResult<ProfileCreateResponses, ProfileCreateErrors, ThrowOnError> => (options.client ?? client).post<ProfileCreateResponses, ProfileCreateErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/profiles/create',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Profile Delete
+ */
+export const profileDelete = <ThrowOnError extends boolean = false>(options: Options<ProfileDeleteData, ThrowOnError>): RequestResult<ProfileDeleteResponses, ProfileDeleteErrors, ThrowOnError> => (options.client ?? client).delete<ProfileDeleteResponses, ProfileDeleteErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/profiles/{profile_id}',
+    ...options
+});
+
+/**
+ * Profile Get
+ */
+export const profileGet = <ThrowOnError extends boolean = false>(options: Options<ProfileGetData, ThrowOnError>): RequestResult<ProfileGetResponses, ProfileGetErrors, ThrowOnError> => (options.client ?? client).get<ProfileGetResponses, ProfileGetErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/profiles/{profile_id}',
+    ...options
+});
+
+/**
+ * Profile Duplicate
+ */
+export const profileDuplicate = <ThrowOnError extends boolean = false>(options: Options<ProfileDuplicateData, ThrowOnError>): RequestResult<ProfileDuplicateResponses, ProfileDuplicateErrors, ThrowOnError> => (options.client ?? client).post<ProfileDuplicateResponses, ProfileDuplicateErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/profiles/{profile_id}/duplicate',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Profile Cookies Get
+ */
+export const profileCookiesGet = <ThrowOnError extends boolean = false>(options: Options<ProfileCookiesGetData, ThrowOnError>): RequestResult<ProfileCookiesGetResponses, ProfileCookiesGetErrors, ThrowOnError> => (options.client ?? client).get<ProfileCookiesGetResponses, ProfileCookiesGetErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/profiles/{profile_id}/cookies',
+    ...options
+});
+
+/**
+ * Profile Cookies Set
+ */
+export const profileCookiesSet = <ThrowOnError extends boolean = false>(options: Options<ProfileCookiesSetData, ThrowOnError>): RequestResult<ProfileCookiesSetResponses, ProfileCookiesSetErrors, ThrowOnError> => (options.client ?? client).post<ProfileCookiesSetResponses, ProfileCookiesSetErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/profiles/{profile_id}/cookies',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Profile State Set
+ */
+export const profileStateSet = <ThrowOnError extends boolean = false>(options: Options<ProfileStateSetData, ThrowOnError>): RequestResult<ProfileStateSetResponses, ProfileStateSetErrors, ThrowOnError> => (options.client ?? client).post<ProfileStateSetResponses, ProfileStateSetErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/profiles/{profile_id}/state',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Profile List
+ */
+export const profileList = <ThrowOnError extends boolean = false>(options?: Options<ProfileListData, ThrowOnError>): RequestResult<ProfileListResponses, ProfileListErrors, ThrowOnError> => (options?.client ?? client).get<ProfileListResponses, ProfileListErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/profiles',
+    ...options
+});
+
+/**
+ * Persona Create
+ */
+export const personaCreate = <ThrowOnError extends boolean = false>(options: Options<PersonaCreateData, ThrowOnError>): RequestResult<PersonaCreateResponses, PersonaCreateErrors, ThrowOnError> => (options.client ?? client).post<PersonaCreateResponses, PersonaCreateErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/personas/create',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Persona Delete
+ */
+export const personaDelete = <ThrowOnError extends boolean = false>(options: Options<PersonaDeleteData, ThrowOnError>): RequestResult<PersonaDeleteResponses, PersonaDeleteErrors, ThrowOnError> => (options.client ?? client).delete<PersonaDeleteResponses, PersonaDeleteErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/personas/{persona_id}',
+    ...options
+});
+
+/**
+ * Persona Get
+ */
+export const personaGet = <ThrowOnError extends boolean = false>(options: Options<PersonaGetData, ThrowOnError>): RequestResult<PersonaGetResponses, PersonaGetErrors, ThrowOnError> => (options.client ?? client).get<PersonaGetResponses, PersonaGetErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/personas/{persona_id}',
+    ...options
+});
+
+/**
+ * Persona Update
+ */
+export const personaUpdate = <ThrowOnError extends boolean = false>(options: Options<PersonaUpdateData, ThrowOnError>): RequestResult<PersonaUpdateResponses, PersonaUpdateErrors, ThrowOnError> => (options.client ?? client).patch<PersonaUpdateResponses, PersonaUpdateErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/personas/{persona_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Persona Emails List
+ */
+export const personaEmailsList = <ThrowOnError extends boolean = false>(options: Options<PersonaEmailsListData, ThrowOnError>): RequestResult<PersonaEmailsListResponses, PersonaEmailsListErrors, ThrowOnError> => (options.client ?? client).get<PersonaEmailsListResponses, PersonaEmailsListErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/personas/{persona_id}/emails',
+    ...options
+});
+
+/**
+ * List Personas
+ */
+export const listPersonas = <ThrowOnError extends boolean = false>(options?: Options<ListPersonasData, ThrowOnError>): RequestResult<ListPersonasResponses, ListPersonasErrors, ThrowOnError> => (options?.client ?? client).get<ListPersonasResponses, ListPersonasErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/personas',
+    ...options
+});
+
+/**
+ * Persona Sms List
+ */
+export const personaSmsList = <ThrowOnError extends boolean = false>(options: Options<PersonaSmsListData, ThrowOnError>): RequestResult<PersonaSmsListResponses, PersonaSmsListErrors, ThrowOnError> => (options.client ?? client).get<PersonaSmsListResponses, PersonaSmsListErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/personas/{persona_id}/sms',
     ...options
 });
 
@@ -687,6 +800,15 @@ export const mailboxSync = <ThrowOnError extends boolean = false>(options?: Opti
         'Content-Type': 'application/json',
         ...options?.headers
     }
+});
+
+/**
+ * Mailbox List
+ */
+export const mailboxList = <ThrowOnError extends boolean = false>(options?: Options<MailboxListData, ThrowOnError>): RequestResult<MailboxListResponses, MailboxListErrors, ThrowOnError> => (options?.client ?? client).get<MailboxListResponses, MailboxListErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/mailboxes',
+    ...options
 });
 
 /**
@@ -768,11 +890,6 @@ export const connectLinkMailboxSync = <ThrowOnError extends boolean = false>(opt
 });
 
 /**
- *  Connect Link Status
- */
-export const connectLinkStatus = <ThrowOnError extends boolean = false>(options: Options<ConnectLinkStatusData, ThrowOnError>): RequestResult<ConnectLinkStatusResponses, ConnectLinkStatusErrors, ThrowOnError> => (options.client ?? client).get<ConnectLinkStatusResponses, ConnectLinkStatusErrors, ThrowOnError>({ url: '/managed-auth/connect-links/status', ...options });
-
-/**
  *  Connect Link Submit
  */
 export const connectLinkSubmit = <ThrowOnError extends boolean = false>(options: Options<ConnectLinkSubmitData, ThrowOnError>): RequestResult<ConnectLinkSubmitResponses, ConnectLinkSubmitErrors, ThrowOnError> => (options.client ?? client).post<ConnectLinkSubmitResponses, ConnectLinkSubmitErrors, ThrowOnError>({
@@ -785,236 +902,34 @@ export const connectLinkSubmit = <ThrowOnError extends boolean = false>(options:
 });
 
 /**
- * Connect Payment Wallet
+ *  Connect Link Status
  */
-export const connectPaymentWallet = <ThrowOnError extends boolean = false>(options: Options<ConnectPaymentWalletData, ThrowOnError>): RequestResult<ConnectPaymentWalletResponses, ConnectPaymentWalletErrors, ThrowOnError> => (options.client ?? client).post<ConnectPaymentWalletResponses, ConnectPaymentWalletErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/payments/connect',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
+export const connectLinkStatus = <ThrowOnError extends boolean = false>(options: Options<ConnectLinkStatusData, ThrowOnError>): RequestResult<ConnectLinkStatusResponses, ConnectLinkStatusErrors, ThrowOnError> => (options.client ?? client).get<ConnectLinkStatusResponses, ConnectLinkStatusErrors, ThrowOnError>({ url: '/managed-auth/connect-links/status', ...options });
 
 /**
- * Disconnect Payment Wallet
+ * Get Usage
  */
-export const disconnectPaymentWallet = <ThrowOnError extends boolean = false>(options: Options<DisconnectPaymentWalletData, ThrowOnError>): RequestResult<DisconnectPaymentWalletResponses, DisconnectPaymentWalletErrors, ThrowOnError> => (options.client ?? client).post<DisconnectPaymentWalletResponses, DisconnectPaymentWalletErrors, ThrowOnError>({
+export const getUsage = <ThrowOnError extends boolean = false>(options?: Options<GetUsageData, ThrowOnError>): RequestResult<GetUsageResponses, GetUsageErrors, ThrowOnError> => (options?.client ?? client).get<GetUsageResponses, GetUsageErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/payments/disconnect',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Get Payment
- */
-export const getPayment = <ThrowOnError extends boolean = false>(options: Options<GetPaymentData, ThrowOnError>): RequestResult<GetPaymentResponses, GetPaymentErrors, ThrowOnError> => (options.client ?? client).get<GetPaymentResponses, GetPaymentErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/payments/{payment_id}',
+    url: '/usage',
     ...options
 });
 
 /**
- * List Personas
+ * Get Usage Logs
  */
-export const listPersonas = <ThrowOnError extends boolean = false>(options?: Options<ListPersonasData, ThrowOnError>): RequestResult<ListPersonasResponses, ListPersonasErrors, ThrowOnError> => (options?.client ?? client).get<ListPersonasResponses, ListPersonasErrors, ThrowOnError>({
+export const getUsageLogs = <ThrowOnError extends boolean = false>(options?: Options<GetUsageLogsData, ThrowOnError>): RequestResult<GetUsageLogsResponses, GetUsageLogsErrors, ThrowOnError> => (options?.client ?? client).get<GetUsageLogsResponses, GetUsageLogsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/personas',
+    url: '/usage/logs',
     ...options
 });
 
 /**
- * Persona Create
+ * Anything Start
  */
-export const personaCreate = <ThrowOnError extends boolean = false>(options: Options<PersonaCreateData, ThrowOnError>): RequestResult<PersonaCreateResponses, PersonaCreateErrors, ThrowOnError> => (options.client ?? client).post<PersonaCreateResponses, PersonaCreateErrors, ThrowOnError>({
+export const anythingStart = <ThrowOnError extends boolean = false>(options: Options<AnythingStartData, ThrowOnError>): RequestResult<AnythingStartResponses, AnythingStartErrors, ThrowOnError> => (options.client ?? client).post<AnythingStartResponses, AnythingStartErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/personas/create',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Persona Delete
- */
-export const personaDelete = <ThrowOnError extends boolean = false>(options: Options<PersonaDeleteData, ThrowOnError>): RequestResult<PersonaDeleteResponses, PersonaDeleteErrors, ThrowOnError> => (options.client ?? client).delete<PersonaDeleteResponses, PersonaDeleteErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/personas/{persona_id}',
-    ...options
-});
-
-/**
- * Persona Get
- */
-export const personaGet = <ThrowOnError extends boolean = false>(options: Options<PersonaGetData, ThrowOnError>): RequestResult<PersonaGetResponses, PersonaGetErrors, ThrowOnError> => (options.client ?? client).get<PersonaGetResponses, PersonaGetErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/personas/{persona_id}',
-    ...options
-});
-
-/**
- * Persona Update
- */
-export const personaUpdate = <ThrowOnError extends boolean = false>(options: Options<PersonaUpdateData, ThrowOnError>): RequestResult<PersonaUpdateResponses, PersonaUpdateErrors, ThrowOnError> => (options.client ?? client).patch<PersonaUpdateResponses, PersonaUpdateErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/personas/{persona_id}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Persona Emails List
- */
-export const personaEmailsList = <ThrowOnError extends boolean = false>(options: Options<PersonaEmailsListData, ThrowOnError>): RequestResult<PersonaEmailsListResponses, PersonaEmailsListErrors, ThrowOnError> => (options.client ?? client).get<PersonaEmailsListResponses, PersonaEmailsListErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/personas/{persona_id}/emails',
-    ...options
-});
-
-/**
- * Persona Sms List
- */
-export const personaSmsList = <ThrowOnError extends boolean = false>(options: Options<PersonaSmsListData, ThrowOnError>): RequestResult<PersonaSmsListResponses, PersonaSmsListErrors, ThrowOnError> => (options.client ?? client).get<PersonaSmsListResponses, PersonaSmsListErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/personas/{persona_id}/sms',
-    ...options
-});
-
-/**
- * Profile List
- */
-export const profileList = <ThrowOnError extends boolean = false>(options?: Options<ProfileListData, ThrowOnError>): RequestResult<ProfileListResponses, ProfileListErrors, ThrowOnError> => (options?.client ?? client).get<ProfileListResponses, ProfileListErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/profiles',
-    ...options
-});
-
-/**
- * Profile Create
- */
-export const profileCreate = <ThrowOnError extends boolean = false>(options: Options<ProfileCreateData, ThrowOnError>): RequestResult<ProfileCreateResponses, ProfileCreateErrors, ThrowOnError> => (options.client ?? client).post<ProfileCreateResponses, ProfileCreateErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/profiles/create',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Profile Delete
- */
-export const profileDelete = <ThrowOnError extends boolean = false>(options: Options<ProfileDeleteData, ThrowOnError>): RequestResult<ProfileDeleteResponses, ProfileDeleteErrors, ThrowOnError> => (options.client ?? client).delete<ProfileDeleteResponses, ProfileDeleteErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/profiles/{profile_id}',
-    ...options
-});
-
-/**
- * Profile Get
- */
-export const profileGet = <ThrowOnError extends boolean = false>(options: Options<ProfileGetData, ThrowOnError>): RequestResult<ProfileGetResponses, ProfileGetErrors, ThrowOnError> => (options.client ?? client).get<ProfileGetResponses, ProfileGetErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/profiles/{profile_id}',
-    ...options
-});
-
-/**
- * Profile Cookies Get
- */
-export const profileCookiesGet = <ThrowOnError extends boolean = false>(options: Options<ProfileCookiesGetData, ThrowOnError>): RequestResult<ProfileCookiesGetResponses, ProfileCookiesGetErrors, ThrowOnError> => (options.client ?? client).get<ProfileCookiesGetResponses, ProfileCookiesGetErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/profiles/{profile_id}/cookies',
-    ...options
-});
-
-/**
- * Profile Cookies Set
- */
-export const profileCookiesSet = <ThrowOnError extends boolean = false>(options: Options<ProfileCookiesSetData, ThrowOnError>): RequestResult<ProfileCookiesSetResponses, ProfileCookiesSetErrors, ThrowOnError> => (options.client ?? client).post<ProfileCookiesSetResponses, ProfileCookiesSetErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/profiles/{profile_id}/cookies',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Profile Duplicate
- */
-export const profileDuplicate = <ThrowOnError extends boolean = false>(options: Options<ProfileDuplicateData, ThrowOnError>): RequestResult<ProfileDuplicateResponses, ProfileDuplicateErrors, ThrowOnError> => (options.client ?? client).post<ProfileDuplicateResponses, ProfileDuplicateErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/profiles/{profile_id}/duplicate',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Profile State Set
- */
-export const profileStateSet = <ThrowOnError extends boolean = false>(options: Options<ProfileStateSetData, ThrowOnError>): RequestResult<ProfileStateSetResponses, ProfileStateSetErrors, ThrowOnError> => (options.client ?? client).post<ProfileStateSetResponses, ProfileStateSetErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/profiles/{profile_id}/state',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Ready Check
- */
-export const readyCheck = <ThrowOnError extends boolean = false>(options?: Options<ReadyCheckData, ThrowOnError>): RequestResult<ReadyCheckResponses, unknown, ThrowOnError> => (options?.client ?? client).get<ReadyCheckResponses, unknown, ThrowOnError>({ url: '/ready', ...options });
-
-/**
- * Scrape Webpage
- */
-export const scrapeWebpage = <ThrowOnError extends boolean = false>(options: Options<ScrapeWebpageData, ThrowOnError>): RequestResult<ScrapeWebpageResponses, ScrapeWebpageErrors, ThrowOnError> => (options.client ?? client).post<ScrapeWebpageResponses, ScrapeWebpageErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/scrape',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Scrape From Html
- */
-export const scrapeFromHtml = <ThrowOnError extends boolean = false>(options: Options<ScrapeFromHtmlData, ThrowOnError>): RequestResult<ScrapeFromHtmlResponses, ScrapeFromHtmlErrors, ThrowOnError> => (options.client ?? client).post<ScrapeFromHtmlResponses, ScrapeFromHtmlErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/scrape_from_html',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Search Web
- */
-export const searchWeb = <ThrowOnError extends boolean = false>(options: Options<SearchWebData, ThrowOnError>): RequestResult<SearchWebResponses, SearchWebErrors, ThrowOnError> => (options.client ?? client).post<SearchWebResponses, SearchWebErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/search',
+    url: '/anything/start',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -1063,20 +978,30 @@ export const deleteSecret = <ThrowOnError extends boolean = false>(options: Opti
 });
 
 /**
- * List Sessions
+ * List Audit Events
  */
-export const listSessions = <ThrowOnError extends boolean = false>(options?: Options<ListSessionsData, ThrowOnError>): RequestResult<ListSessionsResponses, ListSessionsErrors, ThrowOnError> => (options?.client ?? client).get<ListSessionsResponses, ListSessionsErrors, ThrowOnError>({
+export const listAuditEvents = <ThrowOnError extends boolean = false>(options?: Options<ListAuditEventsData, ThrowOnError>): RequestResult<ListAuditEventsResponses, ListAuditEventsErrors, ThrowOnError> => (options?.client ?? client).get<ListAuditEventsResponses, ListAuditEventsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/sessions',
+    url: '/audit-events',
     ...options
 });
 
 /**
- * Session Start
+ * Health Check
  */
-export const sessionStart = <ThrowOnError extends boolean = false>(options: Options<SessionStartData, ThrowOnError>): RequestResult<SessionStartResponses, SessionStartErrors, ThrowOnError> => (options.client ?? client).post<SessionStartResponses, SessionStartErrors, ThrowOnError>({
+export const healthCheck = <ThrowOnError extends boolean = false>(options?: Options<HealthCheckData, ThrowOnError>): RequestResult<HealthCheckResponses, unknown, ThrowOnError> => (options?.client ?? client).get<HealthCheckResponses, unknown, ThrowOnError>({ url: '/health', ...options });
+
+/**
+ * Ready Check
+ */
+export const readyCheck = <ThrowOnError extends boolean = false>(options?: Options<ReadyCheckData, ThrowOnError>): RequestResult<ReadyCheckResponses, unknown, ThrowOnError> => (options?.client ?? client).get<ReadyCheckResponses, unknown, ThrowOnError>({ url: '/ready', ...options });
+
+/**
+ * Scrape Webpage
+ */
+export const scrapeWebpage = <ThrowOnError extends boolean = false>(options: Options<ScrapeWebpageData, ThrowOnError>): RequestResult<ScrapeWebpageResponses, ScrapeWebpageErrors, ThrowOnError> => (options.client ?? client).post<ScrapeWebpageResponses, ScrapeWebpageErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/sessions/start',
+    url: '/scrape',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -1085,38 +1010,11 @@ export const sessionStart = <ThrowOnError extends boolean = false>(options: Opti
 });
 
 /**
- * Session Status
+ * Search Web
  */
-export const sessionStatus = <ThrowOnError extends boolean = false>(options: Options<SessionStatusData, ThrowOnError>): RequestResult<SessionStatusResponses, SessionStatusErrors, ThrowOnError> => (options.client ?? client).get<SessionStatusResponses, SessionStatusErrors, ThrowOnError>({
+export const searchWeb = <ThrowOnError extends boolean = false>(options: Options<SearchWebData, ThrowOnError>): RequestResult<SearchWebResponses, SearchWebErrors, ThrowOnError> => (options.client ?? client).post<SearchWebResponses, SearchWebErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/sessions/{session_id}',
-    ...options
-});
-
-/**
- * Session Auth Readiness
- */
-export const sessionAuthReadiness = <ThrowOnError extends boolean = false>(options: Options<SessionAuthReadinessData, ThrowOnError>): RequestResult<SessionAuthReadinessResponses, SessionAuthReadinessErrors, ThrowOnError> => (options.client ?? client).get<SessionAuthReadinessResponses, SessionAuthReadinessErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/sessions/{session_id}/auth',
-    ...options
-});
-
-/**
- * Session Cookies Get
- */
-export const sessionCookiesGet = <ThrowOnError extends boolean = false>(options: Options<SessionCookiesGetData, ThrowOnError>): RequestResult<SessionCookiesGetResponses, SessionCookiesGetErrors, ThrowOnError> => (options.client ?? client).get<SessionCookiesGetResponses, SessionCookiesGetErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/sessions/{session_id}/cookies',
-    ...options
-});
-
-/**
- * Session Cookies Set
- */
-export const sessionCookiesSet = <ThrowOnError extends boolean = false>(options: Options<SessionCookiesSetData, ThrowOnError>): RequestResult<SessionCookiesSetResponses, SessionCookiesSetErrors, ThrowOnError> => (options.client ?? client).post<SessionCookiesSetResponses, SessionCookiesSetErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/sessions/{session_id}/cookies',
+    url: '/search',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -1125,79 +1023,56 @@ export const sessionCookiesSet = <ThrowOnError extends boolean = false>(options:
 });
 
 /**
- * Session Debug Info
+ * Summary
  */
-export const sessionDebugInfo = <ThrowOnError extends boolean = false>(options: Options<SessionDebugInfoData, ThrowOnError>): RequestResult<SessionDebugInfoResponses, SessionDebugInfoErrors, ThrowOnError> => (options.client ?? client).get<SessionDebugInfoResponses, SessionDebugInfoErrors, ThrowOnError>({
+export const summary = <ThrowOnError extends boolean = false>(options?: Options<SummaryData, ThrowOnError>): RequestResult<SummaryResponses, SummaryErrors, ThrowOnError> => (options?.client ?? client).get<SummaryResponses, SummaryErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/sessions/{session_id}/debug',
+    url: '/data/analytics',
     ...options
 });
 
 /**
- * List Session Files
+ * History
  */
-export const listSessionFiles = <ThrowOnError extends boolean = false>(options: Options<ListSessionFilesData, ThrowOnError>): RequestResult<ListSessionFilesResponses, ListSessionFilesErrors, ThrowOnError> => (options.client ?? client).get<ListSessionFilesResponses, ListSessionFilesErrors, ThrowOnError>({
+export const history_ = <ThrowOnError extends boolean = false>(options?: Options<HistoryData, ThrowOnError>): RequestResult<HistoryResponses, HistoryErrors, ThrowOnError> => (options?.client ?? client).get<HistoryResponses, HistoryErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/sessions/{session_id}/files',
+    url: '/data/analytics/requests',
     ...options
 });
 
 /**
- * Upload Session File
+ * Detail
  */
-export const uploadSessionFile = <ThrowOnError extends boolean = false>(options: Options<UploadSessionFileData, ThrowOnError>): RequestResult<UploadSessionFileResponses, UploadSessionFileErrors, ThrowOnError> => (options.client ?? client).post<UploadSessionFileResponses, UploadSessionFileErrors, ThrowOnError>({
-    ...formDataBodySerializer,
+export const detail = <ThrowOnError extends boolean = false>(options: Options<DetailData, ThrowOnError>): RequestResult<DetailResponses, DetailErrors, ThrowOnError> => (options.client ?? client).get<DetailResponses, DetailErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/sessions/{session_id}/files',
-    ...options,
-    headers: {
-        'Content-Type': null,
-        ...options.headers
-    }
-});
-
-/**
- * Delete Session File
- */
-export const deleteSessionFile = <ThrowOnError extends boolean = false>(options: Options<DeleteSessionFileData, ThrowOnError>): RequestResult<DeleteSessionFileResponses, DeleteSessionFileErrors, ThrowOnError> => (options.client ?? client).delete<DeleteSessionFileResponses, DeleteSessionFileErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/sessions/{session_id}/files/{file_id}',
+    url: '/data/analytics/requests/{request_id}',
     ...options
 });
 
 /**
- * Download Session File
+ * Invalidate
  */
-export const downloadSessionFile = <ThrowOnError extends boolean = false>(options: Options<DownloadSessionFileData, ThrowOnError>): RequestResult<DownloadSessionFileResponses, DownloadSessionFileErrors, ThrowOnError> => (options.client ?? client).get<DownloadSessionFileResponses, DownloadSessionFileErrors, ThrowOnError>({
+export const invalidate = <ThrowOnError extends boolean = false>(options?: Options<InvalidateData, ThrowOnError>): RequestResult<InvalidateResponses, InvalidateErrors, ThrowOnError> => (options?.client ?? client).delete<InvalidateResponses, InvalidateErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/sessions/{session_id}/files/{file_id}',
+    url: '/data/cache',
     ...options
 });
 
 /**
- * Session Network Logs
+ * Get Policy
  */
-export const sessionNetworkLogs = <ThrowOnError extends boolean = false>(options: Options<SessionNetworkLogsData, ThrowOnError>): RequestResult<SessionNetworkLogsResponses, SessionNetworkLogsErrors, ThrowOnError> => (options.client ?? client).get<SessionNetworkLogsResponses, SessionNetworkLogsErrors, ThrowOnError>({
+export const getPolicy = <ThrowOnError extends boolean = false>(options?: Options<GetPolicyData, ThrowOnError>): RequestResult<GetPolicyResponses, GetPolicyErrors, ThrowOnError> => (options?.client ?? client).get<GetPolicyResponses, GetPolicyErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/sessions/{session_id}/network/logs',
+    url: '/data/cache',
     ...options
 });
 
 /**
- * Session Offset
+ * Brand Retrieve
  */
-export const sessionOffset = <ThrowOnError extends boolean = false>(options: Options<SessionOffsetData, ThrowOnError>): RequestResult<SessionOffsetResponses, SessionOffsetErrors, ThrowOnError> => (options.client ?? client).get<SessionOffsetResponses, SessionOffsetErrors, ThrowOnError>({
+export const brandRetrieve = <ThrowOnError extends boolean = false>(options: Options<BrandRetrieveData, ThrowOnError>): RequestResult<BrandRetrieveResponses, BrandRetrieveErrors, ThrowOnError> => (options.client ?? client).post<BrandRetrieveResponses, BrandRetrieveErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/sessions/{session_id}/offset',
-    ...options
-});
-
-/**
- * Page Execute
- */
-export const pageExecute = <ThrowOnError extends boolean = false>(options: Options<PageExecuteData, ThrowOnError>): RequestResult<PageExecuteResponses, PageExecuteErrors, ThrowOnError> => (options.client ?? client).post<PageExecuteResponses, PageExecuteErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/sessions/{session_id}/page/execute',
+    url: '/data/brand/retrieve',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -1206,11 +1081,11 @@ export const pageExecute = <ThrowOnError extends boolean = false>(options: Optio
 });
 
 /**
- * Execute Session File
+ * Extract Product Endpoint
  */
-export const executeSessionFile = <ThrowOnError extends boolean = false>(options: Options<ExecuteSessionFileData, ThrowOnError>): RequestResult<ExecuteSessionFileResponses, ExecuteSessionFileErrors, ThrowOnError> => (options.client ?? client).post<ExecuteSessionFileResponses, ExecuteSessionFileErrors, ThrowOnError>({
+export const extractProductEndpoint = <ThrowOnError extends boolean = false>(options: Options<ExtractProductEndpointData, ThrowOnError>): RequestResult<ExtractProductEndpointResponses, ExtractProductEndpointErrors, ThrowOnError> => (options.client ?? client).post<ExtractProductEndpointResponses, ExtractProductEndpointErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/sessions/{session_id}/page/execute/file',
+    url: '/data/products/extract',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -1219,46 +1094,20 @@ export const executeSessionFile = <ThrowOnError extends boolean = false>(options
 });
 
 /**
- * Page Observe
+ * Extract a website styleguide
  */
-export const pageObserve = <ThrowOnError extends boolean = false>(options: Options<PageObserveData, ThrowOnError>): RequestResult<PageObserveResponses, PageObserveErrors, ThrowOnError> => (options.client ?? client).post<PageObserveResponses, PageObserveErrors, ThrowOnError>({
+export const styleguideEndpoint = <ThrowOnError extends boolean = false>(options?: Options<StyleguideEndpointData, ThrowOnError>): RequestResult<StyleguideEndpointResponses, StyleguideEndpointErrors, ThrowOnError> => (options?.client ?? client).get<StyleguideEndpointResponses, StyleguideEndpointErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/sessions/{session_id}/page/observe',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Page Scrape
- */
-export const pageScrape = <ThrowOnError extends boolean = false>(options: Options<PageScrapeData, ThrowOnError>): RequestResult<PageScrapeResponses, PageScrapeErrors, ThrowOnError> => (options.client ?? client).post<PageScrapeResponses, PageScrapeErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/sessions/{session_id}/page/scrape',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Page Screenshot
- */
-export const pageScreenshot = <ThrowOnError extends boolean = false>(options: Options<PageScreenshotData, ThrowOnError>): RequestResult<PageScreenshotResponses, PageScreenshotErrors, ThrowOnError> => (options.client ?? client).post<PageScreenshotResponses, PageScreenshotErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/sessions/{session_id}/page/screenshot',
+    url: '/data/web/styleguide',
     ...options
 });
 
 /**
- * Create Payment
+ * Maps Search
  */
-export const createPayment = <ThrowOnError extends boolean = false>(options: Options<CreatePaymentData, ThrowOnError>): RequestResult<CreatePaymentResponses, CreatePaymentErrors, ThrowOnError> => (options.client ?? client).post<CreatePaymentResponses, CreatePaymentErrors, ThrowOnError>({
+export const mapsSearch = <ThrowOnError extends boolean = false>(options: Options<MapsSearchData, ThrowOnError>): RequestResult<MapsSearchResponses, MapsSearchErrors, ThrowOnError> => (options.client ?? client).post<MapsSearchResponses, MapsSearchErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/sessions/{session_id}/payments',
+    url: '/data/maps/search',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -1267,20 +1116,20 @@ export const createPayment = <ThrowOnError extends boolean = false>(options: Opt
 });
 
 /**
- * Session Profile Preview
+ * List Monitors
  */
-export const sessionProfilePreview = <ThrowOnError extends boolean = false>(options: Options<SessionProfilePreviewData, ThrowOnError>): RequestResult<SessionProfilePreviewResponses, SessionProfilePreviewErrors, ThrowOnError> => (options.client ?? client).get<SessionProfilePreviewResponses, SessionProfilePreviewErrors, ThrowOnError>({
+export const listMonitors = <ThrowOnError extends boolean = false>(options?: Options<ListMonitorsData, ThrowOnError>): RequestResult<ListMonitorsResponses, ListMonitorsErrors, ThrowOnError> => (options?.client ?? client).get<ListMonitorsResponses, ListMonitorsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/sessions/{session_id}/profile-preview',
+    url: '/data/monitors',
     ...options
 });
 
 /**
- * Session Profile Save
+ * Create
  */
-export const sessionProfileSave = <ThrowOnError extends boolean = false>(options: Options<SessionProfileSaveData, ThrowOnError>): RequestResult<SessionProfileSaveResponses, SessionProfileSaveErrors, ThrowOnError> => (options.client ?? client).post<SessionProfileSaveResponses, SessionProfileSaveErrors, ThrowOnError>({
+export const create = <ThrowOnError extends boolean = false>(options: Options<CreateData, ThrowOnError>): RequestResult<CreateResponses, CreateErrors, ThrowOnError> => (options.client ?? client).post<CreateResponses, CreateErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/sessions/{session_id}/profile/save',
+    url: '/data/monitors',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -1289,29 +1138,313 @@ export const sessionProfileSave = <ThrowOnError extends boolean = false>(options
 });
 
 /**
- * Session Replay
+ * Limits
  */
-export const sessionReplay = <ThrowOnError extends boolean = false>(options: Options<SessionReplayData, ThrowOnError>): RequestResult<SessionReplayResponses, SessionReplayErrors, ThrowOnError> => (options.client ?? client).get<SessionReplayResponses, SessionReplayErrors, ThrowOnError>({
+export const limits = <ThrowOnError extends boolean = false>(options?: Options<LimitsData, ThrowOnError>): RequestResult<LimitsResponses, LimitsErrors, ThrowOnError> => (options?.client ?? client).get<LimitsResponses, LimitsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/sessions/{session_id}/replay',
+    url: '/data/monitors/limits',
     ...options
 });
 
 /**
- * Session Mouse Replay
+ * Credit Usage
  */
-export const sessionMouseReplay = <ThrowOnError extends boolean = false>(options: Options<SessionMouseReplayData, ThrowOnError>): RequestResult<SessionMouseReplayResponses, SessionMouseReplayErrors, ThrowOnError> => (options.client ?? client).get<SessionMouseReplayResponses, SessionMouseReplayErrors, ThrowOnError>({
+export const creditUsage = <ThrowOnError extends boolean = false>(options?: Options<CreditUsageData, ThrowOnError>): RequestResult<CreditUsageResponses, CreditUsageErrors, ThrowOnError> => (options?.client ?? client).get<CreditUsageResponses, CreditUsageErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/sessions/{session_id}/replay/mouse',
+    url: '/data/monitors/credit-usage',
     ...options
 });
 
 /**
- * Session Stop
+ * Account Runs
  */
-export const sessionStop = <ThrowOnError extends boolean = false>(options: Options<SessionStopData, ThrowOnError>): RequestResult<SessionStopResponses, SessionStopErrors, ThrowOnError> => (options.client ?? client).delete<SessionStopResponses, SessionStopErrors, ThrowOnError>({
+export const accountRuns = <ThrowOnError extends boolean = false>(options?: Options<AccountRunsData, ThrowOnError>): RequestResult<AccountRunsResponses, AccountRunsErrors, ThrowOnError> => (options?.client ?? client).get<AccountRunsResponses, AccountRunsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/sessions/{session_id}/stop',
+    url: '/data/monitors/runs',
+    ...options
+});
+
+/**
+ * Account Changes
+ */
+export const accountChanges = <ThrowOnError extends boolean = false>(options?: Options<AccountChangesData, ThrowOnError>): RequestResult<AccountChangesResponses, AccountChangesErrors, ThrowOnError> => (options?.client ?? client).get<AccountChangesResponses, AccountChangesErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/data/monitors/changes',
+    ...options
+});
+
+/**
+ * Delete
+ */
+export const delete_ = <ThrowOnError extends boolean = false>(options: Options<DeleteData, ThrowOnError>): RequestResult<DeleteResponses, DeleteErrors, ThrowOnError> => (options.client ?? client).delete<DeleteResponses, DeleteErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/data/monitors/{monitor_id}',
+    ...options
+});
+
+/**
+ * Retrieve
+ */
+export const retrieve = <ThrowOnError extends boolean = false>(options: Options<RetrieveData, ThrowOnError>): RequestResult<RetrieveResponses, RetrieveErrors, ThrowOnError> => (options.client ?? client).get<RetrieveResponses, RetrieveErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/data/monitors/{monitor_id}',
+    ...options
+});
+
+/**
+ * Update
+ */
+export const update = <ThrowOnError extends boolean = false>(options: Options<UpdateData, ThrowOnError>): RequestResult<UpdateResponses, UpdateErrors, ThrowOnError> => (options.client ?? client).patch<UpdateResponses, UpdateErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/data/monitors/{monitor_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Run Now
+ */
+export const runNow = <ThrowOnError extends boolean = false>(options: Options<RunNowData, ThrowOnError>): RequestResult<RunNowResponses, RunNowErrors, ThrowOnError> => (options.client ?? client).post<RunNowResponses, RunNowErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/data/monitors/{monitor_id}/run',
+    ...options
+});
+
+/**
+ * Runs
+ */
+export const runs = <ThrowOnError extends boolean = false>(options: Options<RunsData, ThrowOnError>): RequestResult<RunsResponses, RunsErrors, ThrowOnError> => (options.client ?? client).get<RunsResponses, RunsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/data/monitors/{monitor_id}/runs',
+    ...options
+});
+
+/**
+ * Changes
+ */
+export const changes = <ThrowOnError extends boolean = false>(options: Options<ChangesData, ThrowOnError>): RequestResult<ChangesResponses, ChangesErrors, ThrowOnError> => (options.client ?? client).get<ChangesResponses, ChangesErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/data/monitors/{monitor_id}/changes',
+    ...options
+});
+
+/**
+ * Retrieve Run
+ */
+export const retrieveRun = <ThrowOnError extends boolean = false>(options: Options<RetrieveRunData, ThrowOnError>): RequestResult<RetrieveRunResponses, RetrieveRunErrors, ThrowOnError> => (options.client ?? client).get<RetrieveRunResponses, RetrieveRunErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/data/monitors/{monitor_id}/runs/{run_id}',
+    ...options
+});
+
+/**
+ * Retrieve Change
+ */
+export const retrieveChange = <ThrowOnError extends boolean = false>(options: Options<RetrieveChangeData, ThrowOnError>): RequestResult<RetrieveChangeResponses, RetrieveChangeErrors, ThrowOnError> => (options.client ?? client).get<RetrieveChangeResponses, RetrieveChangeErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/data/monitors/{monitor_id}/changes/{change_id}',
+    ...options
+});
+
+/**
+ * Rotate Secret
+ */
+export const rotateSecret = <ThrowOnError extends boolean = false>(options: Options<RotateSecretData, ThrowOnError>): RequestResult<RotateSecretResponses, RotateSecretErrors, ThrowOnError> => (options.client ?? client).post<RotateSecretResponses, RotateSecretErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/data/monitors/{monitor_id}/webhook/rotate-secret',
+    ...options
+});
+
+/**
+ * Deliveries
+ */
+export const deliveries = <ThrowOnError extends boolean = false>(options: Options<DeliveriesData, ThrowOnError>): RequestResult<DeliveriesResponses, DeliveriesErrors, ThrowOnError> => (options.client ?? client).post<DeliveriesResponses, DeliveriesErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/data/webhooks/deliveries',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Retrieve Delivery
+ */
+export const retrieveDelivery = <ThrowOnError extends boolean = false>(options: Options<RetrieveDeliveryData, ThrowOnError>): RequestResult<RetrieveDeliveryResponses, RetrieveDeliveryErrors, ThrowOnError> => (options.client ?? client).get<RetrieveDeliveryResponses, RetrieveDeliveryErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/data/webhooks/deliveries/{delivery_id}',
+    ...options
+});
+
+/**
+ * Attempts
+ */
+export const attempts = <ThrowOnError extends boolean = false>(options: Options<AttemptsData, ThrowOnError>): RequestResult<AttemptsResponses, AttemptsErrors, ThrowOnError> => (options.client ?? client).get<AttemptsResponses, AttemptsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/data/webhooks/deliveries/{delivery_id}/attempts',
+    ...options
+});
+
+/**
+ * Retry
+ */
+export const retry = <ThrowOnError extends boolean = false>(options: Options<RetryData, ThrowOnError>): RequestResult<RetryResponses, RetryErrors, ThrowOnError> => (options.client ?? client).post<RetryResponses, RetryErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/data/webhooks/deliveries/{delivery_id}/retry',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * People Enrich
+ */
+export const peopleEnrich = <ThrowOnError extends boolean = false>(options: Options<PeopleEnrichData, ThrowOnError>): RequestResult<PeopleEnrichResponses, PeopleEnrichErrors, ThrowOnError> => (options.client ?? client).post<PeopleEnrichResponses, PeopleEnrichErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/data/people/enrich',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * News Search
+ */
+export const newsSearch = <ThrowOnError extends boolean = false>(options: Options<NewsSearchData, ThrowOnError>): RequestResult<NewsSearchResponses, NewsSearchErrors, ThrowOnError> => (options.client ?? client).post<NewsSearchResponses, NewsSearchErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/data/news/search',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Fetch Specialized Data
+ */
+export const fetchSpecializedData = <ThrowOnError extends boolean = false>(options: Options<FetchSpecializedDataData, ThrowOnError>): RequestResult<FetchSpecializedDataResponses, FetchSpecializedDataErrors, ThrowOnError> => (options.client ?? client).post<FetchSpecializedDataResponses, FetchSpecializedDataErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/data/web/fetch',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Youtube Endpoint
+ */
+export const youtubeEndpoint = <ThrowOnError extends boolean = false>(options: Options<YoutubeEndpointData, ThrowOnError>): RequestResult<YoutubeEndpointResponses, YoutubeEndpointErrors, ThrowOnError> => (options.client ?? client).post<YoutubeEndpointResponses, YoutubeEndpointErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/data/youtube/extract',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List Data Apis
+ */
+export const listDataApis = <ThrowOnError extends boolean = false>(options?: Options<ListDataApisData, ThrowOnError>): RequestResult<ListDataApisResponses, ListDataApisErrors, ThrowOnError> => (options?.client ?? client).get<ListDataApisResponses, ListDataApisErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/data',
+    ...options
+});
+
+/**
+ * Scrape From Html
+ */
+export const scrapeFromHtml = <ThrowOnError extends boolean = false>(options: Options<ScrapeFromHtmlData, ThrowOnError>): RequestResult<ScrapeFromHtmlResponses, ScrapeFromHtmlErrors, ThrowOnError> => (options.client ?? client).post<ScrapeFromHtmlResponses, ScrapeFromHtmlErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/scrape_from_html',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Agent Start
+ */
+export const agentStart = <ThrowOnError extends boolean = false>(options: Options<AgentStartData, ThrowOnError>): RequestResult<AgentStartResponses, AgentStartErrors, ThrowOnError> => (options.client ?? client).post<AgentStartResponses, AgentStartErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/agents/start',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Agent Stop
+ */
+export const agentStop = <ThrowOnError extends boolean = false>(options: Options<AgentStopData, ThrowOnError>): RequestResult<AgentStopResponses, AgentStopErrors, ThrowOnError> => (options.client ?? client).delete<AgentStopResponses, AgentStopErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/agents/{agent_id}/stop',
+    ...options
+});
+
+/**
+ * Agent Status
+ *
+ * Retrieves the current status of a specific <agent_id>.
+ *
+ * The most important fields are:
+ * - success: Whether the agent task was successful (None if still running)
+ * - answer: The answer to the agent task (None if still running)
+ *
+ * Also you can check the `steps` field to better understand which actions where taken by the agent.
+ */
+export const agentStatus = <ThrowOnError extends boolean = false>(options: Options<AgentStatusData, ThrowOnError>): RequestResult<AgentStatusResponses, AgentStatusErrors, ThrowOnError> => (options.client ?? client).get<AgentStatusResponses, AgentStatusErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/agents/{agent_id}',
+    ...options
+});
+
+/**
+ * Get Script
+ *
+ * Retrieves the current status of a specific <agent_id>.
+ *
+ * The most important fields are:
+ * - success: Whether the agent task was successful (None if still running)
+ * - answer: The answer to the agent task (None if still running)
+ *
+ * Also you can check the `steps` field to better understand which actions where taken by the agent.
+ */
+export const getScript = <ThrowOnError extends boolean = false>(options: Options<GetScriptData, ThrowOnError>): RequestResult<GetScriptResponses, GetScriptErrors, ThrowOnError> => (options.client ?? client).get<GetScriptResponses, GetScriptErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/agents/{agent_id}/workflow/code',
+    ...options
+});
+
+/**
+ * List Agents
+ *
+ * Retrieves a list of all agents associated with the authenticated user.
+ *
+ * Parameters:
+ * - request: AgentListRequest containing:
+ * - only_active: Whether to only return active agents
+ * - limit: Maximum number of agents to return
+ */
+export const listAgents = <ThrowOnError extends boolean = false>(options?: Options<ListAgentsData, ThrowOnError>): RequestResult<ListAgentsResponses, ListAgentsErrors, ThrowOnError> => (options?.client ?? client).get<ListAgentsResponses, ListAgentsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/agents',
     ...options
 });
 
@@ -1329,137 +1462,4 @@ export const getSessionScript = <ThrowOnError extends boolean = false>(options: 
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/sessions/{session_id}/workflow/code',
     ...options
-});
-
-/**
- * Get Usage
- */
-export const getUsage = <ThrowOnError extends boolean = false>(options?: Options<GetUsageData, ThrowOnError>): RequestResult<GetUsageResponses, GetUsageErrors, ThrowOnError> => (options?.client ?? client).get<GetUsageResponses, GetUsageErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/usage',
-    ...options
-});
-
-/**
- * Get Usage Logs
- */
-export const getUsageLogs = <ThrowOnError extends boolean = false>(options?: Options<GetUsageLogsData, ThrowOnError>): RequestResult<GetUsageLogsResponses, GetUsageLogsErrors, ThrowOnError> => (options?.client ?? client).get<GetUsageLogsResponses, GetUsageLogsErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/usage/logs',
-    ...options
-});
-
-/**
- * List Vaults
- */
-export const listVaults = <ThrowOnError extends boolean = false>(options?: Options<ListVaultsData, ThrowOnError>): RequestResult<ListVaultsResponses, ListVaultsErrors, ThrowOnError> => (options?.client ?? client).get<ListVaultsResponses, ListVaultsErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/vaults',
-    ...options
-});
-
-/**
- * Vault Create
- */
-export const vaultCreate = <ThrowOnError extends boolean = false>(options: Options<VaultCreateData, ThrowOnError>): RequestResult<VaultCreateResponses, VaultCreateErrors, ThrowOnError> => (options.client ?? client).post<VaultCreateResponses, VaultCreateErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/vaults/create',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Vault Delete
- */
-export const vaultDelete = <ThrowOnError extends boolean = false>(options: Options<VaultDeleteData, ThrowOnError>): RequestResult<VaultDeleteResponses, VaultDeleteErrors, ThrowOnError> => (options.client ?? client).delete<VaultDeleteResponses, VaultDeleteErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/vaults/{vault_id}',
-    ...options
-});
-
-/**
- * Vault Credentials List
- */
-export const vaultCredentialsList = <ThrowOnError extends boolean = false>(options: Options<VaultCredentialsListData, ThrowOnError>): RequestResult<VaultCredentialsListResponses, VaultCredentialsListErrors, ThrowOnError> => (options.client ?? client).get<VaultCredentialsListResponses, VaultCredentialsListErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/vaults/{vault_id}',
-    ...options
-});
-
-/**
- * Vault Update
- */
-export const vaultUpdate = <ThrowOnError extends boolean = false>(options: Options<VaultUpdateData, ThrowOnError>): RequestResult<VaultUpdateResponses, VaultUpdateErrors, ThrowOnError> => (options.client ?? client).patch<VaultUpdateResponses, VaultUpdateErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/vaults/{vault_id}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Vault Credit Card Delete
- */
-export const vaultCreditCardDelete = <ThrowOnError extends boolean = false>(options: Options<VaultCreditCardDeleteData, ThrowOnError>): RequestResult<VaultCreditCardDeleteResponses, VaultCreditCardDeleteErrors, ThrowOnError> => (options.client ?? client).delete<VaultCreditCardDeleteResponses, VaultCreditCardDeleteErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/vaults/{vault_id}/card',
-    ...options
-});
-
-/**
- * Vault Credit Card Get
- */
-export const vaultCreditCardGet = <ThrowOnError extends boolean = false>(options: Options<VaultCreditCardGetData, ThrowOnError>): RequestResult<VaultCreditCardGetResponses, VaultCreditCardGetErrors, ThrowOnError> => (options.client ?? client).get<VaultCreditCardGetResponses, VaultCreditCardGetErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/vaults/{vault_id}/card',
-    ...options
-});
-
-/**
- * Vault Credit Card Set
- */
-export const vaultCreditCardSet = <ThrowOnError extends boolean = false>(options: Options<VaultCreditCardSetData, ThrowOnError>): RequestResult<VaultCreditCardSetResponses, VaultCreditCardSetErrors, ThrowOnError> => (options.client ?? client).post<VaultCreditCardSetResponses, VaultCreditCardSetErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/vaults/{vault_id}/card',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Vault Credentials Delete
- */
-export const vaultCredentialsDelete = <ThrowOnError extends boolean = false>(options: Options<VaultCredentialsDeleteData, ThrowOnError>): RequestResult<VaultCredentialsDeleteResponses, VaultCredentialsDeleteErrors, ThrowOnError> => (options.client ?? client).delete<VaultCredentialsDeleteResponses, VaultCredentialsDeleteErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/vaults/{vault_id}/credentials',
-    ...options
-});
-
-/**
- * Vault Credentials Get
- */
-export const vaultCredentialsGet = <ThrowOnError extends boolean = false>(options: Options<VaultCredentialsGetData, ThrowOnError>): RequestResult<VaultCredentialsGetResponses, VaultCredentialsGetErrors, ThrowOnError> => (options.client ?? client).get<VaultCredentialsGetResponses, VaultCredentialsGetErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/vaults/{vault_id}/credentials',
-    ...options
-});
-
-/**
- * Vault Credentials Add
- */
-export const vaultCredentialsAdd = <ThrowOnError extends boolean = false>(options: Options<VaultCredentialsAddData, ThrowOnError>): RequestResult<VaultCredentialsAddResponses, VaultCredentialsAddErrors, ThrowOnError> => (options.client ?? client).post<VaultCredentialsAddResponses, VaultCredentialsAddErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/vaults/{vault_id}/credentials',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
 });

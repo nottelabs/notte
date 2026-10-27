@@ -12,6 +12,26 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type SessionFile = {
     /**
+     * Id
+     */
+    id: string;
+    /**
+     * Session Id
+     */
+    session_id: string;
+    /**
+     * Filename
+     */
+    filename: string;
+    /**
+     * Mime Type
+     */
+    mime_type: string;
+    /**
+     * Size
+     */
+    size: number;
+    /**
      * Checksum
      */
     checksum: string;
@@ -23,31 +43,31 @@ export type SessionFile = {
      * Expires At
      */
     expires_at: string;
-    /**
-     * Filename
-     */
-    filename: string;
-    /**
-     * Id
-     */
-    id: string;
-    /**
-     * Mime Type
-     */
-    mime_type: string;
-    /**
-     * Session Id
-     */
-    session_id: string;
-    /**
-     * Size
-     */
-    size: number;
     source: FileSource;
 };
 ```
 
 ## Fields
+
+<ParamField body="id" type={"string"} required>
+
+</ParamField>
+
+<ParamField body="session_id" type={"string"} required>
+
+</ParamField>
+
+<ParamField body="filename" type={"string"} required>
+
+</ParamField>
+
+<ParamField body="mime_type" type={"string"} required>
+
+</ParamField>
+
+<ParamField body="size" type={"number"} required>
+
+</ParamField>
 
 <ParamField body="checksum" type={"string"} required>
 
@@ -58,26 +78,6 @@ export type SessionFile = {
 </ParamField>
 
 <ParamField body="expires_at" type={"string"} required>
-
-</ParamField>
-
-<ParamField body="filename" type={"string"} required>
-
-</ParamField>
-
-<ParamField body="id" type={"string"} required>
-
-</ParamField>
-
-<ParamField body="mime_type" type={"string"} required>
-
-</ParamField>
-
-<ParamField body="session_id" type={"string"} required>
-
-</ParamField>
-
-<ParamField body="size" type={"number"} required>
 
 </ParamField>
 

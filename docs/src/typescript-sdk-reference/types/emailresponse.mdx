@@ -12,17 +12,11 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type EmailResponse = {
     /**
-     * Attachments
+     * Subject
      *
-     * Files attached to the email, with short-lived download URLs
+     * Subject of the email
      */
-    attachments?: Array<EmailAttachment>;
-    /**
-     * Created At
-     *
-     * Creation date
-     */
-    created_at: string;
+    subject: string;
     /**
      * Email Id
      *
@@ -30,11 +24,11 @@ export type EmailResponse = {
      */
     email_id: string;
     /**
-     * Html Content
+     * Created At
      *
-     * HTML body, can be uncorrelated with raw content
+     * Creation date
      */
-    html_content?: string | null;
+    created_at: string;
     /**
      * Sender Email
      *
@@ -48,36 +42,38 @@ export type EmailResponse = {
      */
     sender_name: string | null;
     /**
-     * Subject
-     *
-     * Subject of the email
-     */
-    subject: string;
-    /**
      * Text Content
      *
      * Raw textual body, can be uncorrelated with html content
      */
     text_content?: string | null;
+    /**
+     * Html Content
+     *
+     * HTML body, can be uncorrelated with raw content
+     */
+    html_content?: string | null;
+    /**
+     * Attachments
+     *
+     * Files attached to the email, with short-lived download URLs
+     */
+    attachments?: Array<EmailAttachment>;
 };
 ```
 
 ## Fields
 
-<ParamField body="attachments" type={"EmailAttachment[] | undefined"}>
-Files attached to the email, with short-lived download URLs
-</ParamField>
-
-<ParamField body="created_at" type={"string"} required>
-Creation date
+<ParamField body="subject" type={"string"} required>
+Subject of the email
 </ParamField>
 
 <ParamField body="email_id" type={"string"} required>
 Email UUID
 </ParamField>
 
-<ParamField body="html_content" type={"string | null | undefined"}>
-HTML body, can be uncorrelated with raw content
+<ParamField body="created_at" type={"string"} required>
+Creation date
 </ParamField>
 
 <ParamField body="sender_email" type={"string | null"} required>
@@ -88,12 +84,16 @@ Email address of the sender
 Name (if available) of the sender
 </ParamField>
 
-<ParamField body="subject" type={"string"} required>
-Subject of the email
-</ParamField>
-
 <ParamField body="text_content" type={"string | null | undefined"}>
 Raw textual body, can be uncorrelated with html content
+</ParamField>
+
+<ParamField body="html_content" type={"string | null | undefined"}>
+HTML body, can be uncorrelated with raw content
+</ParamField>
+
+<ParamField body="attachments" type={"EmailAttachment[] | undefined"}>
+Files attached to the email, with short-lived download URLs
 </ParamField>
 
 ## Related types

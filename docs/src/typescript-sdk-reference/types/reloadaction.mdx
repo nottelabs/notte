@@ -12,6 +12,10 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type ReloadAction = {
     /**
+     * Type
+     */
+    type?: 'reload';
+    /**
      * Category
      */
     category?: string;
@@ -19,23 +23,19 @@ export type ReloadAction = {
      * Description
      */
     description?: string;
-    /**
-     * Type
-     */
-    type?: 'reload';
 };
 ```
 
 ## Fields
+
+<ParamField body="type" type={"\"reload\" | undefined"}>
+
+</ParamField>
 
 <ParamField body="category" type={"string | undefined"}>
 
 </ParamField>
 
 <ParamField body="description" type={"string | undefined"}>
-
-</ParamField>
-
-<ParamField body="type" type={"\"reload\" | undefined"}>
 
 </ParamField>

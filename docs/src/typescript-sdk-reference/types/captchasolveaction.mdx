@@ -12,9 +12,9 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type CaptchaSolveAction = {
     /**
-     * Captcha Type
+     * Type
      */
-    captcha_type?: 'recaptcha' | 'hcaptcha' | 'image' | 'text' | 'auth0' | 'cloudflare' | 'datadome' | 'arkose labs' | 'geetest' | 'press&hold' | 'unknown' | null;
+    type?: 'captcha_solve';
     /**
      * Category
      */
@@ -24,15 +24,15 @@ export type CaptchaSolveAction = {
      */
     description?: string;
     /**
-     * Type
+     * Captcha Type
      */
-    type?: 'captcha_solve';
+    captcha_type?: 'recaptcha' | 'hcaptcha' | 'image' | 'text' | 'auth0' | 'cloudflare' | 'datadome' | 'arkose labs' | 'geetest' | 'press&hold' | 'unknown' | null;
 };
 ```
 
 ## Fields
 
-<ParamField body="captcha_type" type={"\"recaptcha\" | \"hcaptcha\" | \"image\" | \"text\" | \"auth0\" | \"cloudflare\" | \"datadome\" | \"arkose labs\" | \"geetest\" | \"press&hold\" | \"unknown\" | null | undefined"}>
+<ParamField body="type" type={"\"captcha_solve\" | undefined"}>
 
 </ParamField>
 
@@ -44,6 +44,6 @@ export type CaptchaSolveAction = {
 
 </ParamField>
 
-<ParamField body="type" type={"\"captcha_solve\" | undefined"}>
+<ParamField body="captcha_type" type={"\"recaptcha\" | \"hcaptcha\" | \"image\" | \"text\" | \"auth0\" | \"cloudflare\" | \"datadome\" | \"arkose labs\" | \"geetest\" | \"press&hold\" | \"unknown\" | null | undefined"}>
 
 </ParamField>

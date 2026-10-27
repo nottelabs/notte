@@ -12,17 +12,13 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type FillActionOutput = {
     /**
-     * Accessible Name
+     * Type
      */
-    accessible_name?: string | null;
+    type?: 'fill';
     /**
      * Category
      */
     category?: string;
-    /**
-     * Clear Before Fill
-     */
-    clear_before_fill?: boolean;
     /**
      * Description
      */
@@ -32,17 +28,21 @@ export type FillActionOutput = {
      */
     id?: string;
     /**
-     * Press Enter
-     */
-    press_enter?: boolean | null;
-    /**
      * Selector
      */
     selector?: string | NodeSelectors | null;
     /**
+     * Press Enter
+     */
+    press_enter?: boolean | null;
+    /**
      * Text Label
      */
     text_label?: string | null;
+    /**
+     * Accessible Name
+     */
+    accessible_name?: string | null;
     /**
      * Timeout
      *
@@ -50,27 +50,23 @@ export type FillActionOutput = {
      */
     timeout?: number;
     /**
-     * Type
-     */
-    type?: 'fill';
-    /**
      * Value
      */
     value: string;
+    /**
+     * Clear Before Fill
+     */
+    clear_before_fill?: boolean;
 };
 ```
 
 ## Fields
 
-<ParamField body="accessible_name" type={"string | null | undefined"}>
+<ParamField body="type" type={"\"fill\" | undefined"}>
 
 </ParamField>
 
 <ParamField body="category" type={"string | undefined"}>
-
-</ParamField>
-
-<ParamField body="clear_before_fill" type={"boolean | undefined"}>
 
 </ParamField>
 
@@ -82,11 +78,11 @@ export type FillActionOutput = {
 
 </ParamField>
 
-<ParamField body="press_enter" type={"boolean | null | undefined"}>
+<ParamField body="selector" type={"string | NodeSelectors | null | undefined"}>
 
 </ParamField>
 
-<ParamField body="selector" type={"string | NodeSelectors | null | undefined"}>
+<ParamField body="press_enter" type={"boolean | null | undefined"}>
 
 </ParamField>
 
@@ -94,15 +90,19 @@ export type FillActionOutput = {
 
 </ParamField>
 
+<ParamField body="accessible_name" type={"string | null | undefined"}>
+
+</ParamField>
+
 <ParamField body="timeout" type={"number | undefined"}>
 Action timeout in milliseconds
 </ParamField>
 
-<ParamField body="type" type={"\"fill\" | undefined"}>
+<ParamField body="value" type={"string"} required>
 
 </ParamField>
 
-<ParamField body="value" type={"string"} required>
+<ParamField body="clear_before_fill" type={"boolean | undefined"}>
 
 </ParamField>
 

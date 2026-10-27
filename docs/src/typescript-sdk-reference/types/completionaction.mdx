@@ -12,9 +12,9 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type CompletionAction = {
     /**
-     * Answer
+     * Type
      */
-    answer: string;
+    type?: 'completion';
     /**
      * Category
      */
@@ -28,15 +28,15 @@ export type CompletionAction = {
      */
     success: boolean;
     /**
-     * Type
+     * Answer
      */
-    type?: 'completion';
+    answer: string;
 };
 ```
 
 ## Fields
 
-<ParamField body="answer" type={"string"} required>
+<ParamField body="type" type={"\"completion\" | undefined"}>
 
 </ParamField>
 
@@ -52,6 +52,6 @@ export type CompletionAction = {
 
 </ParamField>
 
-<ParamField body="type" type={"\"completion\" | undefined"}>
+<ParamField body="answer" type={"string"} required>
 
 </ParamField>

@@ -14,10 +14,7 @@ This is an internal import alias for the API model `GetFunctionRunResponse`. It 
 ```typescript
 type ApiGetFunctionRunResponse = {
     artifact_sdk_generation?: FunctionSdkGeneration;
-    /**
-     * Created At
-     */
-    created_at: string;
+    sdk_generation?: FunctionSdkGeneration;
     /**
      * Function Id
      *
@@ -31,40 +28,17 @@ type ApiGetFunctionRunResponse = {
      */
     function_run_id: string;
     /**
-     * Function Version
+     * Created At
      */
-    function_version?: string | null;
+    created_at: string;
     /**
-     * Local
-     *
-     * Whether the function has been run locally or on the cloud
+     * Updated At
      */
-    local?: boolean;
+    updated_at: string;
     /**
-     * Logs
-     *
-     * The logs of the function run
+     * Status
      */
-    logs?: Array<string>;
-    /**
-     * Payload Urls
-     */
-    payload_urls?: {
-        [key: string]: string;
-    };
-    /**
-     * Payloads
-     */
-    payloads?: {
-        [key: string]: RunPayloadReference;
-    };
-    /**
-     * Result
-     *
-     * The result of the function run (if any)
-     */
-    result?: string | null;
-    sdk_generation?: FunctionSdkGeneration;
+    status: 'closed' | 'active' | 'failed';
     /**
      * Session Id
      *
@@ -72,17 +46,11 @@ type ApiGetFunctionRunResponse = {
      */
     session_id?: string | null;
     /**
-     * Status
+     * Logs
+     *
+     * The logs of the function run
      */
-    status: 'closed' | 'active' | 'failed';
-    /**
-     * Stopped At
-     */
-    stopped_at?: string | null;
-    /**
-     * Updated At
-     */
-    updated_at: string;
+    logs?: Array<string>;
     /**
      * Variables
      *
@@ -91,6 +59,38 @@ type ApiGetFunctionRunResponse = {
     variables?: {
         [key: string]: unknown;
     } | null;
+    /**
+     * Result
+     *
+     * The result of the function run (if any)
+     */
+    result?: string | null;
+    /**
+     * Local
+     *
+     * Whether the function has been run locally or on the cloud
+     */
+    local?: boolean;
+    /**
+     * Function Version
+     */
+    function_version?: string | null;
+    /**
+     * Payloads
+     */
+    payloads?: {
+        [key: string]: RunPayloadReference;
+    };
+    /**
+     * Stopped At
+     */
+    stopped_at?: string | null;
+    /**
+     * Payload Urls
+     */
+    payload_urls?: {
+        [key: string]: string;
+    };
     /**
      * Workflow Id
      */
@@ -108,7 +108,7 @@ type ApiGetFunctionRunResponse = {
 
 </ParamField>
 
-<ParamField body="created_at" type={"string"} required>
+<ParamField body="sdk_generation" type={"FunctionSdkGeneration | undefined"}>
 
 </ParamField>
 
@@ -120,43 +120,7 @@ The ID of the function
 The ID of the function run
 </ParamField>
 
-<ParamField body="function_version" type={"string | null | undefined"}>
-
-</ParamField>
-
-<ParamField body="local" type={"boolean | undefined"}>
-Whether the function has been run locally or on the cloud
-</ParamField>
-
-<ParamField body="logs" type={"string[] | undefined"}>
-The logs of the function run
-</ParamField>
-
-<ParamField body="payload_urls" type={"{ [key: string]: string; } | undefined"}>
-
-</ParamField>
-
-<ParamField body="payloads" type={"{ [key: string]: RunPayloadReference; } | undefined"}>
-
-</ParamField>
-
-<ParamField body="result" type={"string | null | undefined"}>
-The result of the function run (if any)
-</ParamField>
-
-<ParamField body="sdk_generation" type={"FunctionSdkGeneration | undefined"}>
-
-</ParamField>
-
-<ParamField body="session_id" type={"string | null | undefined"}>
-The ID of the session
-</ParamField>
-
-<ParamField body="status" type={"\"active\" | \"closed\" | \"failed\""} required>
-
-</ParamField>
-
-<ParamField body="stopped_at" type={"string | null | undefined"}>
+<ParamField body="created_at" type={"string"} required>
 
 </ParamField>
 
@@ -164,8 +128,44 @@ The ID of the session
 
 </ParamField>
 
+<ParamField body="status" type={"\"failed\" | \"closed\" | \"active\""} required>
+
+</ParamField>
+
+<ParamField body="session_id" type={"string | null | undefined"}>
+The ID of the session
+</ParamField>
+
+<ParamField body="logs" type={"string[] | undefined"}>
+The logs of the function run
+</ParamField>
+
 <ParamField body="variables" type={"{ [key: string]: unknown; } | null | undefined"}>
 The variables of the function run
+</ParamField>
+
+<ParamField body="result" type={"string | null | undefined"}>
+The result of the function run (if any)
+</ParamField>
+
+<ParamField body="local" type={"boolean | undefined"}>
+Whether the function has been run locally or on the cloud
+</ParamField>
+
+<ParamField body="function_version" type={"string | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="payloads" type={"{ [key: string]: RunPayloadReference; } | undefined"}>
+
+</ParamField>
+
+<ParamField body="stopped_at" type={"string | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="payload_urls" type={"{ [key: string]: string; } | undefined"}>
+
 </ParamField>
 
 <ParamField body="workflow_id" type={"string"} required>

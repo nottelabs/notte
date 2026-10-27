@@ -12,17 +12,17 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type PersonaCreateRequest = {
     /**
-     * Create Phone Number
-     *
-     * Whether to create a phone number for the persona
-     */
-    create_phone_number?: boolean;
-    /**
      * Create Vault
      *
      * Whether to create a vault for the persona
      */
     create_vault?: boolean;
+    /**
+     * Create Phone Number
+     *
+     * Whether to create a phone number for the persona
+     */
+    create_phone_number?: boolean;
     email_provider?: PersonaEmailProvider;
     /**
      * Name
@@ -33,12 +33,12 @@ export type PersonaCreateRequest = {
 
 ## Fields
 
-<ParamField body="create_phone_number" type={"boolean | undefined"}>
-Whether to create a phone number for the persona
-</ParamField>
-
 <ParamField body="create_vault" type={"boolean | undefined"}>
 Whether to create a vault for the persona
+</ParamField>
+
+<ParamField body="create_phone_number" type={"boolean | undefined"}>
+Whether to create a phone number for the persona
 </ParamField>
 
 <ParamField body="email_provider" type={"PersonaEmailProvider | undefined"}>

@@ -12,9 +12,9 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type SelectDropdownOptionActionOutput = {
     /**
-     * Accessible Name
+     * Type
      */
-    accessible_name?: string | null;
+    type?: 'select_dropdown_option';
     /**
      * Category
      */
@@ -28,27 +28,27 @@ export type SelectDropdownOptionActionOutput = {
      */
     id?: string;
     /**
-     * Press Enter
-     */
-    press_enter?: boolean | null;
-    /**
      * Selector
      */
     selector?: string | NodeSelectors | null;
     /**
+     * Press Enter
+     */
+    press_enter?: boolean | null;
+    /**
      * Text Label
      */
     text_label?: string | null;
+    /**
+     * Accessible Name
+     */
+    accessible_name?: string | null;
     /**
      * Timeout
      *
      * Action timeout in milliseconds
      */
     timeout?: number;
-    /**
-     * Type
-     */
-    type?: 'select_dropdown_option';
     /**
      * Value
      */
@@ -58,7 +58,7 @@ export type SelectDropdownOptionActionOutput = {
 
 ## Fields
 
-<ParamField body="accessible_name" type={"string | null | undefined"}>
+<ParamField body="type" type={"\"select_dropdown_option\" | undefined"}>
 
 </ParamField>
 
@@ -74,11 +74,11 @@ export type SelectDropdownOptionActionOutput = {
 
 </ParamField>
 
-<ParamField body="press_enter" type={"boolean | null | undefined"}>
+<ParamField body="selector" type={"string | NodeSelectors | null | undefined"}>
 
 </ParamField>
 
-<ParamField body="selector" type={"string | NodeSelectors | null | undefined"}>
+<ParamField body="press_enter" type={"boolean | null | undefined"}>
 
 </ParamField>
 
@@ -86,12 +86,12 @@ export type SelectDropdownOptionActionOutput = {
 
 </ParamField>
 
-<ParamField body="timeout" type={"number | undefined"}>
-Action timeout in milliseconds
+<ParamField body="accessible_name" type={"string | null | undefined"}>
+
 </ParamField>
 
-<ParamField body="type" type={"\"select_dropdown_option\" | undefined"}>
-
+<ParamField body="timeout" type={"number | undefined"}>
+Action timeout in milliseconds
 </ParamField>
 
 <ParamField body="value" type={"string"} required>

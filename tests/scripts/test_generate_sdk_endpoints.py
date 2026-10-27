@@ -23,14 +23,6 @@ def _load() -> ModuleType:
 gen = _load()
 
 
-def test_object_order_does_not_change_endpoint_or_resource_output() -> None:
-    original = json.loads((ROOT / "openapi/openapi.json").read_text())
-    reordered = json.loads(json.dumps(original), object_pairs_hook=lambda pairs: dict(reversed(pairs)))
-    assert gen.render(reordered) == gen.render(original)
-    assert gen.render_resources(reordered) == gen.render_resources(original)
-    assert gen.migrated_contracts(reordered) == gen.migrated_contracts(original)
-
-
 @pytest.fixture
 def spec() -> dict[str, Any]:
     return copy.deepcopy(json.loads((ROOT / "openapi/openapi.json").read_text()))

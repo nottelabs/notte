@@ -12,10 +12,6 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type ParameterInfo = {
     /**
-     * Default
-     */
-    default?: string | null;
-    /**
      * Name
      */
     name: string;
@@ -23,19 +19,23 @@ export type ParameterInfo = {
      * Type
      */
     type?: string | null;
+    /**
+     * Default
+     */
+    default?: string | null;
 };
 ```
 
 ## Fields
-
-<ParamField body="default" type={"string | null | undefined"}>
-
-</ParamField>
 
 <ParamField body="name" type={"string"} required>
 
 </ParamField>
 
 <ParamField body="type" type={"string | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="default" type={"string | null | undefined"}>
 
 </ParamField>

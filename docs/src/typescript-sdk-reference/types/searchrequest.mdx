@@ -12,6 +12,12 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type SearchRequest = {
     /**
+     * Q
+     *
+     * The search query
+     */
+    q: string;
+    /**
      * Depth
      *
      * Search depth: 'standard', 'fast', or 'deep'
@@ -23,17 +29,15 @@ export type SearchRequest = {
      * Output type: 'searchResults', 'sourcedAnswer', or 'structured'
      */
     outputType?: string;
-    /**
-     * Q
-     *
-     * The search query
-     */
-    q: string;
     [key: string]: unknown;
 };
 ```
 
 ## Fields
+
+<ParamField body="q" type={"string"} required>
+The search query
+</ParamField>
 
 <ParamField body="depth" type={"string | undefined"}>
 Search depth: 'standard', 'fast', or 'deep'
@@ -41,8 +45,4 @@ Search depth: 'standard', 'fast', or 'deep'
 
 <ParamField body="outputType" type={"string | undefined"}>
 Output type: 'searchResults', 'sourcedAnswer', or 'structured'
-</ParamField>
-
-<ParamField body="q" type={"string"} required>
-The search query
 </ParamField>

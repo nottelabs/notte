@@ -12,6 +12,10 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type SwitchTabAction = {
     /**
+     * Type
+     */
+    type?: 'switch_tab';
+    /**
      * Category
      */
     category?: string;
@@ -23,14 +27,14 @@ export type SwitchTabAction = {
      * Tab Index
      */
     tab_index: number;
-    /**
-     * Type
-     */
-    type?: 'switch_tab';
 };
 ```
 
 ## Fields
+
+<ParamField body="type" type={"\"switch_tab\" | undefined"}>
+
+</ParamField>
 
 <ParamField body="category" type={"string | undefined"}>
 
@@ -41,9 +45,5 @@ export type SwitchTabAction = {
 </ParamField>
 
 <ParamField body="tab_index" type={"number"} required>
-
-</ParamField>
-
-<ParamField body="type" type={"\"switch_tab\" | undefined"}>
 
 </ParamField>

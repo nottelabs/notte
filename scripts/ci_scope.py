@@ -68,7 +68,6 @@ NODE_GENERATION = {
     "node-sdk/src/resources.gen.ts",
     "node-sdk/scripts/check-generated-drift.js",
     "node-sdk/scripts/normalize-generated.js",
-    "node-sdk/scripts/openapi-order.js",
     "node-sdk/scripts/generate-proxy-patterns.js",
     "node-sdk/scripts/generate-resources.mjs",
 }

@@ -18,17 +18,17 @@ export type WebSocketUrls = {
      */
     cdp: string;
     /**
-     * Logs
-     *
-     * WebSocket URL for live logs (obsveration / actions events)
-     */
-    logs: string;
-    /**
      * Recording
      *
      * WebSocket URL for live session recording (screenshot stream)
      */
     recording: string;
+    /**
+     * Logs
+     *
+     * WebSocket URL for live logs (obsveration / actions events)
+     */
+    logs: string;
 };
 ```
 
@@ -38,10 +38,10 @@ export type WebSocketUrls = {
 WebSocket URL to connect using CDP protocol
 </ParamField>
 
-<ParamField body="logs" type={"string"} required>
-WebSocket URL for live logs (obsveration / actions events)
-</ParamField>
-
 <ParamField body="recording" type={"string"} required>
 WebSocket URL for live session recording (screenshot stream)
+</ParamField>
+
+<ParamField body="logs" type={"string"} required>
+WebSocket URL for live logs (obsveration / actions events)
 </ParamField>

@@ -12,55 +12,43 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type ReplayResponse = {
     /**
-     * Expires At
+     * Playlist Content
      */
-    expires_at: string;
-    /**
-     * Mouse Chunk Urls
-     */
-    mouse_chunk_urls?: Array<string> | null;
-    /**
-     * Mouse Manifest Url
-     */
-    mouse_manifest_url?: string | null;
-    /**
-     * Mouse Next Offset
-     */
-    mouse_next_offset?: number | null;
+    playlist_content?: string | null;
     /**
      * Mp4 Url
      */
     mp4_url?: string | null;
     /**
-     * Playlist Content
+     * Expires At
      */
-    playlist_content?: string | null;
+    expires_at: string;
     /**
-     * Video Duration Ms
+     * Mouse Manifest Url
      */
-    video_duration_ms?: number | null;
+    mouse_manifest_url?: string | null;
+    /**
+     * Mouse Chunk Urls
+     */
+    mouse_chunk_urls?: Array<string> | null;
+    /**
+     * Mouse Next Offset
+     */
+    mouse_next_offset?: number | null;
     /**
      * Video Start Ms
      */
     video_start_ms?: number | null;
+    /**
+     * Video Duration Ms
+     */
+    video_duration_ms?: number | null;
 };
 ```
 
 ## Fields
 
-<ParamField body="expires_at" type={"string"} required>
-
-</ParamField>
-
-<ParamField body="mouse_chunk_urls" type={"string[] | null | undefined"}>
-
-</ParamField>
-
-<ParamField body="mouse_manifest_url" type={"string | null | undefined"}>
-
-</ParamField>
-
-<ParamField body="mouse_next_offset" type={"number | null | undefined"}>
+<ParamField body="playlist_content" type={"string | null | undefined"}>
 
 </ParamField>
 
@@ -68,14 +56,26 @@ export type ReplayResponse = {
 
 </ParamField>
 
-<ParamField body="playlist_content" type={"string | null | undefined"}>
+<ParamField body="expires_at" type={"string"} required>
 
 </ParamField>
 
-<ParamField body="video_duration_ms" type={"number | null | undefined"}>
+<ParamField body="mouse_manifest_url" type={"string | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="mouse_chunk_urls" type={"string[] | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="mouse_next_offset" type={"number | null | undefined"}>
 
 </ParamField>
 
 <ParamField body="video_start_ms" type={"number | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="video_duration_ms" type={"number | null | undefined"}>
 
 </ParamField>

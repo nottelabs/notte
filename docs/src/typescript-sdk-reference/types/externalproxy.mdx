@@ -12,35 +12,31 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type ExternalProxy = {
     /**
-     * Bypass
+     * Type
      */
-    bypass?: string | null;
-    /**
-     * Password
-     */
-    password?: string | null;
+    type?: 'external';
     /**
      * Server
      */
     server: string;
     /**
-     * Type
-     */
-    type?: 'external';
-    /**
      * Username
      */
     username?: string | null;
+    /**
+     * Password
+     */
+    password?: string | null;
+    /**
+     * Bypass
+     */
+    bypass?: string | null;
 };
 ```
 
 ## Fields
 
-<ParamField body="bypass" type={"string | null | undefined"}>
-
-</ParamField>
-
-<ParamField body="password" type={"string | null | undefined"}>
+<ParamField body="type" type={"\"external\" | undefined"}>
 
 </ParamField>
 
@@ -48,10 +44,14 @@ export type ExternalProxy = {
 
 </ParamField>
 
-<ParamField body="type" type={"\"external\" | undefined"}>
+<ParamField body="username" type={"string | null | undefined"}>
 
 </ParamField>
 
-<ParamField body="username" type={"string | null | undefined"}>
+<ParamField body="password" type={"string | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="bypass" type={"string | null | undefined"}>
 
 </ParamField>

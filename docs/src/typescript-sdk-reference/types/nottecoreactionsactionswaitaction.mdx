@@ -15,6 +15,10 @@ WaitAction
 ```typescript
 export type NotteCoreActionsActionsWaitAction = {
     /**
+     * Type
+     */
+    type?: 'wait';
+    /**
      * Category
      */
     category?: string;
@@ -28,14 +32,14 @@ export type NotteCoreActionsActionsWaitAction = {
      * The amount of time to wait in milliseconds (max 30 seconds)
      */
     time_ms: number;
-    /**
-     * Type
-     */
-    type?: 'wait';
 };
 ```
 
 ## Fields
+
+<ParamField body="type" type={"\"wait\" | undefined"}>
+
+</ParamField>
 
 <ParamField body="category" type={"string | undefined"}>
 
@@ -47,8 +51,4 @@ export type NotteCoreActionsActionsWaitAction = {
 
 <ParamField body="time_ms" type={"number"} required>
 The amount of time to wait in milliseconds (max 30 seconds)
-</ParamField>
-
-<ParamField body="type" type={"\"wait\" | undefined"}>
-
 </ParamField>

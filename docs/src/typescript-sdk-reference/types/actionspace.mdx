@@ -12,18 +12,6 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type ActionSpace = {
     /**
-     * Actions
-     */
-    readonly actions: Array<FormFillAction | GotoAction | GotoNewTabAction | CloseTabAction | SwitchTabAction | GoBackAction | GoForwardAction | ReloadAction | WaitActionOutput | PressKeyAction | ScrollUpAction | ScrollDownAction | CaptchaSolveAction | HelpAction | CompletionAction | ScrapeAction | EmailReadAction | EmailVerificationReadAction | SmsReadAction | EvaluateJsAction | ClickActionOutput | FillActionOutput | MultiFactorFillActionOutput | FallbackFillActionOutput | CheckActionOutput | SelectDropdownOptionActionOutput | UploadFileActionOutput | DownloadFileActionOutput>;
-    /**
-     * Browser Actions
-     */
-    readonly browser_actions: Array<FormFillAction | GotoAction | GotoNewTabAction | CloseTabAction | SwitchTabAction | GoBackAction | GoForwardAction | ReloadAction | WaitActionOutput | PressKeyAction | ScrollUpAction | ScrollDownAction | CaptchaSolveAction | HelpAction | CompletionAction | ScrapeAction | EmailReadAction | EmailVerificationReadAction | SmsReadAction | EvaluateJsAction>;
-    /**
-     * Category of the action space (e.g., 'homepage', 'search-results', 'item')
-     */
-    category?: SpaceCategory | null;
-    /**
      * Description
      *
      * Human-readable description of the current web page
@@ -36,6 +24,18 @@ export type ActionSpace = {
      */
     interaction_actions: Array<ClickActionOutput | FillActionOutput | MultiFactorFillActionOutput | FallbackFillActionOutput | CheckActionOutput | SelectDropdownOptionActionOutput | UploadFileActionOutput | DownloadFileActionOutput>;
     /**
+     * Category of the action space (e.g., 'homepage', 'search-results', 'item')
+     */
+    category?: SpaceCategory | null;
+    /**
+     * Actions
+     */
+    readonly actions: Array<FormFillAction | GotoAction | GotoNewTabAction | CloseTabAction | SwitchTabAction | GoBackAction | GoForwardAction | ReloadAction | WaitActionOutput | PressKeyAction | ScrollUpAction | ScrollDownAction | CaptchaSolveAction | HelpAction | CompletionAction | ScrapeAction | EmailReadAction | EmailVerificationReadAction | SmsReadAction | EvaluateJsAction | ClickActionOutput | FillActionOutput | MultiFactorFillActionOutput | FallbackFillActionOutput | CheckActionOutput | SelectDropdownOptionActionOutput | UploadFileActionOutput | DownloadFileActionOutput>;
+    /**
+     * Browser Actions
+     */
+    readonly browser_actions: Array<FormFillAction | GotoAction | GotoNewTabAction | CloseTabAction | SwitchTabAction | GoBackAction | GoForwardAction | ReloadAction | WaitActionOutput | PressKeyAction | ScrollUpAction | ScrollDownAction | CaptchaSolveAction | HelpAction | CompletionAction | ScrapeAction | EmailReadAction | EmailVerificationReadAction | SmsReadAction | EvaluateJsAction>;
+    /**
      * Markdown
      */
     readonly markdown: string;
@@ -44,24 +44,24 @@ export type ActionSpace = {
 
 ## Fields
 
-<ParamField body="actions" type={"(FormFillAction | GotoAction | GotoNewTabAction | CloseTabAction | SwitchTabAction | GoBackAction | GoForwardAction | ReloadAction | WaitActionOutput | PressKeyAction | ScrollUpAction | ScrollDownAction | CaptchaSolveAction | HelpAction | CompletionAction | ScrapeAction | EmailReadAction | EmailVerificationReadAction | SmsReadAction | EvaluateJsAction | ClickActionOutput | FillActionOutput | MultiFactorFillActionOutput | FallbackFillActionOutput | CheckActionOutput | SelectDropdownOptionActionOutput | UploadFileActionOutput | DownloadFileActionOutput)[]"} required>
-
-</ParamField>
-
-<ParamField body="browser_actions" type={"(FormFillAction | GotoAction | GotoNewTabAction | CloseTabAction | SwitchTabAction | GoBackAction | GoForwardAction | ReloadAction | WaitActionOutput | PressKeyAction | ScrollUpAction | ScrollDownAction | CaptchaSolveAction | HelpAction | CompletionAction | ScrapeAction | EmailReadAction | EmailVerificationReadAction | SmsReadAction | EvaluateJsAction)[]"} required>
-
-</ParamField>
-
-<ParamField body="category" type={"SpaceCategory | null | undefined"}>
-Category of the action space (e.g., 'homepage', 'search-results', 'item')
-</ParamField>
-
 <ParamField body="description" type={"string"} required>
 Human-readable description of the current web page
 </ParamField>
 
 <ParamField body="interaction_actions" type={"(ClickActionOutput | FillActionOutput | MultiFactorFillActionOutput | FallbackFillActionOutput | CheckActionOutput | SelectDropdownOptionActionOutput | UploadFileActionOutput | DownloadFileActionOutput)[]"} required>
 List of available interaction actions in the current state
+</ParamField>
+
+<ParamField body="category" type={"SpaceCategory | null | undefined"}>
+Category of the action space (e.g., 'homepage', 'search-results', 'item')
+</ParamField>
+
+<ParamField body="actions" type={"(ClickActionOutput | FillActionOutput | MultiFactorFillActionOutput | FallbackFillActionOutput | CheckActionOutput | SelectDropdownOptionActionOutput | UploadFileActionOutput | DownloadFileActionOutput | FormFillAction | GotoAction | GotoNewTabAction | CloseTabAction | SwitchTabAction | GoBackAction | GoForwardAction | ReloadAction | WaitActionOutput | PressKeyAction | ScrollUpAction | ScrollDownAction | CaptchaSolveAction | HelpAction | CompletionAction | ScrapeAction | EmailReadAction | EmailVerificationReadAction | SmsReadAction | EvaluateJsAction)[]"} required>
+
+</ParamField>
+
+<ParamField body="browser_actions" type={"(FormFillAction | GotoAction | GotoNewTabAction | CloseTabAction | SwitchTabAction | GoBackAction | GoForwardAction | ReloadAction | WaitActionOutput | PressKeyAction | ScrollUpAction | ScrollDownAction | CaptchaSolveAction | HelpAction | CompletionAction | ScrapeAction | EmailReadAction | EmailVerificationReadAction | SmsReadAction | EvaluateJsAction)[]"} required>
+
 </ParamField>
 
 <ParamField body="markdown" type={"string"} required>
