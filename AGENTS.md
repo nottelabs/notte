@@ -72,6 +72,8 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   `scripts/ci_integration_examples.py`) install the local `node-sdk` with
   `npm install --no-save`. Don't add `--package-lock=false`: it ignores the
   example's lockfile, so a new upstream release can break CI.
+  Python checks install each example's locked published SDK before source validation;
+  adopting a new SDK API also requires updating its `pyproject.toml` and `uv.lock`.
 - `evaluate_js` preserves RegExp results as JSON data (`{"r": {"p": source,
   "f": flags}}`), including complete patterns. Patchright 1.64.1 and Playwright
   1.64.0 compile native regex results into Python objects, so native evaluation is
