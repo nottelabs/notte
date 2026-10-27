@@ -246,3 +246,22 @@ async def test_a_shadow_child_in_an_iframe_in_a_shadow_root_can_be_clicked() -> 
         result = await session.aexecute(type="click", id=button.id)
         assert result.success, result.message
         assert await page.title() == "inner"
+
+
+@pytest.mark.asyncio
+async def test_an_svg_link_in_a_shadow_root_can_be_clicked() -> None:
+    """XPath name tests do not match SVG elements in an HTML document: the chain's `svg/a` is walked by tag."""
+    page_html = """<x-chart></x-chart>
+<script>
+  document.querySelector("x-chart").attachShadow({ mode: "open" }).innerHTML = `<svg width="200" height="50">
+    <a href="#next" onclick="document.title = 'next'"><text x="10" y="30">Open</text></a></svg>`;
+</script>"""
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(f"data:text/html,{quote(page_html)}")
+        obs = await session.aobserve()
+        link = next(action for action in obs.space.interaction_actions if action.text_label == "Open")
+
+        result = await session.aexecute(type="click", id=link.id)
+        assert result.success, result.message
+        assert await page.title() == "next"
