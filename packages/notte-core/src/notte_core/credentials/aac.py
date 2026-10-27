@@ -194,9 +194,15 @@ class AacVault(BaseVault, SyncResource):
         if cred.username:
             result["username"] = cred.username
         if cred.totp:
-            # providers return the TOTP seed (base32 or an otpauth:// URI); the base vault turns it into a code
+            # AAC can return a generated code; preserve its source when the base vault resolves MFA.
             result["mfa_secret"] = cred.totp
         return result
+
+    @override
+    def _mfa_code(self, value: str) -> str:
+        if value.isascii() and value.isdecimal():
+            return value
+        return super()._mfa_code(value)
 
     @override
     async def _add_credentials(self, url: str, creds: CredentialsDict) -> None:

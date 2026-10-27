@@ -117,6 +117,15 @@ class TestAacVaultGetCredentials:
         assert len(creds["mfa_secret"]) == 8
         assert pyotp.parse_uri(uri).verify(creds["mfa_secret"], valid_window=1)
 
+    @pytest.mark.parametrize("code", ["123456", "234567", "01234567", "23456723"])
+    def test_preserves_generated_codes_and_tracks_them_for_masking(self, tmp_path: Path, code: str) -> None:
+        fake = FakeAac(tmp_path, _credential_response({**GITHUB_CREDENTIAL, "totp": code}))
+        with AacVault(token="ABC-DEF-123", aac_path=str(fake.path)) as vault:
+            creds = vault.get_credentials("https://github.com")
+            assert creds is not None and creds["password"] == GITHUB_CREDENTIAL["password"]
+            assert creds["mfa_secret"] == code
+            assert vault.get_replacement_map()[code] == "999779"
+
     def test_tracks_credentials_for_screenshot_masking(self, vault: AacVault) -> None:
         _ = asyncio.run(vault.get_credentials_async("https://github.com"))
         assert list(vault.past_credentials()) == ["https://github.com"]
