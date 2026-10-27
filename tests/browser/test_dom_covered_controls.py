@@ -88,3 +88,56 @@ async def test_clipped_partly_covered_editor_preserves_independent_controls(clip
         result = await session.aexecute(type="fill", id="I1", value="Replacement notes")
         assert result.success, result.message
         assert await session.window.page.locator(".editor").first.inner_text() == "Replacement notes"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("scale", [1, 2])
+@pytest.mark.parametrize("tree", ["light", "shadow", "slot"])
+async def test_covered_editor_probes_share_scaled_scroll_clipping(scale: int, tree: str) -> None:
+    """Keep covered-editor fills and off-screen controls consistent across the rendered tree."""
+    content = """<div style="position:relative;height:600px">
+      <div class="editor" contenteditable="true" style="position:absolute;width:280px;height:500px">
+        Partial editor</div>
+      <div contenteditable="true" style="position:absolute;left:300px;width:280px;height:500px">
+        Covered editor</div>
+      <div style="position:absolute;top:40px;width:280px;height:80px;background:#ccc"></div>
+      <div style="position:absolute;left:300px;width:280px;height:120px;background:#ccc"></div>
+      <button style="position:absolute;top:350px;width:120px;height:30px"
+        onclick="document.title = 'Later items'">Later items</button>
+    </div>"""
+    box = 'id="box" style="position:relative;height:120px;width:620px;border:20px solid;overflow:auto"'
+    if tree == "light":
+        page = f"<div {box}>{content}</div>"
+    elif tree == "shadow":
+        page = f"""<div {box}><editor-host></editor-host></div><template>{content}</template>
+        <script>document.querySelector('editor-host').attachShadow({{mode:'open'}})
+          .append(document.querySelector('template').content.cloneNode(true));</script>"""
+    else:
+        page = f"""<scroll-host>{content}</scroll-host>
+        <script>document.querySelector('scroll-host').attachShadow({{mode:'open'}})
+          .innerHTML = '<div {box}><slot></slot></div>';</script>"""
+    page = (
+        f'<style>body {{ margin:0 }}</style><div style="transform:scale({scale});transform-origin:top left">'
+        + page
+        + "</div>"
+    )
+    async with NotteSession(headless=True, viewport_width=1500, viewport_height=900) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+        observation = await session.aobserve()
+        assert [(action.id, action.type) for action in observation.space.interaction_actions] == [("I1", "fill")]
+        assert "_[:]<button>Later items</button>" in observation.space.description
+        result = await session.aexecute(type="fill", id="I1", value="Replacement notes")
+        assert result.success, result.message
+        assert await session.window.page.locator(".editor").inner_text() == "Replacement notes"
+
+        _ = await session.window.page.locator("#box").evaluate("box => { box.scrollTop = 300; }")
+        observation = await session.aobserve()
+        action = next(action for action in observation.space.interaction_actions if action.text_label == "Later items")
+        result = await session.aexecute(type="click", id=action.id)
+        assert result.success, result.message
+        assert await session.window.page.title() == "Later items"
+
+        _ = await session.window.page.locator("#box").evaluate("box => { box.scrollTop = 0; }")
+        observation = await session.aobserve()
+        assert [(action.id, action.type) for action in observation.space.interaction_actions] == [("I1", "fill")]
+        assert "_[:]<button>Later items</button>" in observation.space.description

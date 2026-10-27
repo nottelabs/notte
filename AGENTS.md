@@ -25,6 +25,9 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
 - `make test` is the offline gate. `make test-live` runs tests marked
   `staging` or `live` and needs `NOTTE_API_KEY`; set `NOTTE_API_URL` to point
   the SDK at a different API.
+- The compatible-dependency suite uses `pytest -n logical`, like the locked
+  offline suite. Running those browser tests serially can exhaust the Python
+  job's 20-minute budget after the full unit suite has passed.
 - CDP transport tests keep real staging sessions and connections but serve page
   fixtures through Patchright routes, so navigation and screenshot coverage does
   not depend on third-party sites loading.
@@ -123,10 +126,30 @@ Within budget the digest covers the entire selection. Budget exhaustion also set
 even if fewer than 200 normalized characters were read. Traverse assigned slots without native
 recursive flattening so nested slot traversal shares the same node budget.
 
+Scroll clipping follows positioned ancestors too: normal-flow controls in an escaping popup escape
+with it. Fixed popups with a transformed containing block can still be clipped by that block;
+`tests/browser/test_dom_offscreen_controls.py` checks both against Chromium hit testing and clicks.
+Cache the escaped clippers from one composed-ancestor walk per element. Rewalking
+the chain for every scroll box makes observation cubic when sibling controls and
+scroll depth grow together; the browser regression counts ancestor reads instead of timing it.
+
+Off-screen controls use the scroll box's scaled inner bounds on both scrollable axes, and ancestor walks
+follow assigned slots before light-DOM parents and cross shadow roots to their hosts.
+Skip `display: contents` when caching clipping escapes: a boxless positioned wrapper
+does not let its normal-flow descendants escape a scroll box.
+A transformed scroll box can hit-test a control
+behind its border as the top element, so hit-testing alone cannot establish that
+it is in view. `tests/browser/test_dom_offscreen_controls.py` covers these cases.
+
 Editor hit testing and uncovered-area probes share the editor box clipped to the
 viewport and overflow ancestors, including ancestors outside its shadow root. Keep
 `tests/browser/test_dom_contenteditable.py` and `test_dom_covered_controls.py` passing
 together: probing the original editor box loses editors cut by a scroll panel or the fold.
+
+Editing hosts use the center of their visible portion for both hit testing and off-screen
+classification. Intersect only axes that clip, using the scaled inner bounds across shadow
+hosts, and respect positioned popup escapes; a full-box center can be outside while the
+editor still accepts a fill. `tests/browser/test_dom_contenteditable.py` covers this integration.
 
 ## Public API
 
