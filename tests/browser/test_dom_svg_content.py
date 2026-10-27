@@ -129,6 +129,43 @@ async def test_svg_shape_with_assigned_click_handler_is_observed_in_the_page_wor
 
 
 @pytest.mark.asyncio
+async def test_shape_only_svg_with_a_click_handler_attribute_is_observed_and_clickable() -> None:
+    """The `<svg>` itself handles the click: it is kept, though it has no text or link."""
+    page = """<svg width="100" height="100" aria-label="Close" onclick="document.title = 'closed'">
+<path d="M10 10L90 90M90 10L10 90" stroke="black" stroke-width="8"/></svg>"""
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+        obs = await session.aobserve()
+
+        actions = obs.space.interaction_actions
+        assert [action.accessible_name for action in actions] == ["Close"]
+        result = await session.aexecute(type="click", id=actions[0].id)
+        assert result.success, result.message
+        assert await session.window.page.title() == "closed"
+
+
+@pytest.mark.asyncio
+async def test_shape_only_svg_with_an_assigned_click_handler_is_observed_in_the_page_world() -> None:
+    page = """<svg width="100" height="100" aria-label="Close">
+<path d="M10 10L90 90M90 10L10 90" stroke="black" stroke-width="8"/></svg>
+<script>document.querySelector('svg').onclick = () => { document.title = 'closed'; };</script>"""
+    async with NotteSession(headless=True) as session:
+        browser_page = session.window.page
+        _ = await browser_page.goto(f"data:text/html,{quote(page)}")
+        args = {
+            "highlight_elements": True,
+            "focus_element": -1,
+            "viewport_expansion": 0,
+            "enable_pointer_elements": True,
+        }
+        payload = json.loads(await browser_page.evaluate(DOM_TREE_JS, args, isolated_context=False))
+        roots = [node for node in payload["map"].values() if node.get("tagName") == "svg"]
+        assert len(roots) == 1
+        assert roots[0].get("highlightIndex") is not None
+        assert roots[0].get("accessibleName") == "Close"
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("content", "selector", "property_name", "expected_tag", "expected_name"),
     [
