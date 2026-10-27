@@ -433,7 +433,8 @@
             "group": "Credentials",
             "icon": "key",
             "pages": [
-              "integrations/onepassword"
+              "integrations/onepassword",
+              "integrations/bitwarden"
             ]
           },
           {

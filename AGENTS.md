@@ -2,6 +2,8 @@
 
 Setup is in `docs/setup.md`; contribution rules are in `docs/CONTRIBUTING.md`.
 Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
+This is the standalone Python/Node SDK repository. The machine's monorepo
+`setup-worktree.py` helper does not apply; use `uv sync --locked --dev --all-extras`.
 
 ## Typing
 
@@ -173,6 +175,20 @@ hosts, and respect positioned popup escapes; a full-box center can be outside wh
 editor still accepts a fill. `tests/browser/test_dom_contenteditable.py` covers this integration.
 
 ## Public API
+
+- PyOTP 2.10.0 is the minimum for parsing TOTP URIs: 2.9 decodes delimiters
+  before splitting the URI and rejects valid encoded issuer/account names.
+  AAC six- or eight-digit decimal TOTP values are generated codes; numeric seeds
+  require an `otpauth` URI. Standard vault MFA values remain seeds.
+  AAC presence checks use per-domain requests, since bulk listing is unsupported.
+  Its stop must join the request lock even after async cancellation, then reject
+  queued work until restart so a worker cannot recreate the deleted connection home.
+  Bitwarden cache refreshes must retain their generation through writes; an older
+  refresh cannot replace a write's invalidation. Domainless targets match nothing.
+  Cancelled Bitwarden writes must finish their native worker and invalidate the
+  cache before cancellation propagates, including repeated cancellation and failed responses.
+  Bitwarden deletion requires a unique
+  exact URL match, or a unique root-domain match when no exact URL exists.
 
 - Don't remove or rename public methods without a deprecation first: keep the
   old name working and emit a `DeprecationWarning` (see `generate_cookies` in

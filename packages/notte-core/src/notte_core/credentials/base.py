@@ -9,6 +9,7 @@ from collections.abc import Coroutine
 from typing import Any, Callable, ClassVar, NotRequired, Unpack, cast
 
 from pydantic import BaseModel, Field, model_serializer
+from pyotp import parse_uri
 from pyotp.totp import TOTP
 from typing_extensions import TypedDict, override
 
@@ -277,6 +278,16 @@ class CreditCardDict(TypedDict, total=True):
     card_full_expiration: str
 
 
+def totp_code(secret: str) -> str:
+    """Current code of a TOTP seed: base32, or an otpauth:// URI (its digits, period and algorithm apply)."""
+    if secret.startswith("otpauth://"):
+        otp = parse_uri(secret)
+        if not isinstance(otp, TOTP):
+            raise ValueError("Only otpauth://totp URIs are supported for MFA")
+        return otp.now()
+    return TOTP(secret).now()
+
+
 class BaseVault(ABC):
     """Base class for vault implementations that handle credential storage and retrieval."""
 
@@ -355,7 +366,7 @@ class BaseVault(ABC):
         secret = kwargs.get("mfa_secret")
         if secret is not None:
             try:
-                _ = TOTP(secret).now()
+                _ = totp_code(secret)
             except Exception as e:
                 raise ValueError("Invalid MFA secret code: did you try to store an OTP instead of a secret?") from e
 
@@ -477,6 +488,10 @@ class BaseVault(ABC):
     def get_credentials(self, url: str) -> CredentialsDict | None:
         return run_sync(self.get_credentials_async(url=url))
 
+    def _mfa_code(self, value: str) -> str:
+        """Resolve the stored MFA seed to a code; sources with generated codes override this."""
+        return totp_code(value)
+
     @profiler.profiled()  # noqa: F821
     async def get_credentials_async(self, url: str) -> CredentialsDict | None:
         """Get credentials for a given URL.
@@ -496,7 +511,7 @@ class BaseVault(ABC):
         updated_creds: CredentialsDict = {}  # pyright: ignore[reportAssignmentType]
         for key, cred in credentials.items():
             if CredentialField.registry.get(key) is MFAField:
-                actual_val = TOTP(cred).now()  # pyright: ignore[reportArgumentType]
+                actual_val = self._mfa_code(cred)  # pyright: ignore[reportArgumentType]
                 updated_creds[key] = actual_val
             else:
                 updated_creds[key] = cred
