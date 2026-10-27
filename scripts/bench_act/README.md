@@ -41,10 +41,11 @@ its module lists it in `core`.
 | `ci-extended` | third-party sites (Google, booking.com, IKEA, GitHub, shops, news, cookie platforms, editors' sites), pages with ads, known flakes, tasks that fail until a bug is fixed | on demand (`tags: ci-extended` or `all`) | 66 tasks, 52 probes on 41 pages (107 runs) |
 
 Why an entry is extended is written next to its module's `ci_tier` call. `--tags ci-core` selects a tier locally.
-Measured locally (Jev, one version, concurrency 6, on a loaded shared machine): the core tier was 121 runs, 1,838
-run-seconds, 320 s wall; the round-3 entries add 31 runs and about 380 run-seconds, so about 2,200 run-seconds per
-version. Base and head double the runs. On CI, at concurrency 6 in one job that is about 12 minutes plus about a minute
-of setup; with the default 4 shards at concurrency 4, about 5 minutes. The extended tier is about 1,100
+The current core is 149 runs per version: 118 from the earlier suites and 31 from round 3.
+An earlier 121-run selection measured locally (Jev, one version, concurrency 6, on a loaded shared machine) took
+1,838 run-seconds and 320 s wall. Round 3 adds about 380 run-seconds, so the current core is estimated at about 2,200
+run-seconds per version. Base and head double the runs. On CI, at concurrency 6 in one job that is about 12 minutes
+plus about a minute of setup; with the default 4 shards at concurrency 4, about 5 minutes. The extended tier is about 1,100
 run-seconds per version: 7 to 8 minutes at concurrency 6, about 4 with 4 shards. A CI runner ran the model-free scripted
 runs about twice as fast as that machine, so these are upper bounds.
 
@@ -78,14 +79,17 @@ uv run --no-sync python scripts/bench_act/report.py /tmp/act-bench-ab --summary 
   New tasks with dates should use it too, so they never ask for a past day.
 - Run files go to `OUT/<version>/<runner>__<task or first probe>__<repeat>.json`, worker logs to `OUT/_logs/`, and
   the plan and timings (wall time, load average) to `OUT/_meta/`.
-- An existing run file with the same commit, selected probes, harness, date and timeout is not run again, so an interrupted run can be resumed.
+- Resume retains only valid run records with the same commit, selected probes, harness, date and timeout.
+  Unreadable records and records with a different run identity are rerun.
 
 ## CI
 
 `.github/workflows/act-bench.yml` runs the benchmark when:
 
 - a PR gets the `act-bench` or `act-bench-all` label (and on later pushes while it has the label);
-- a PR changes `notte_browser/js`, `notte_browser/dom`, `notte_core/act`, `notte_llm/act.py` or this directory;
+- a PR changes `packages/notte-browser/src/notte_browser/js/`, `packages/notte-browser/src/notte_browser/dom/`,
+  `packages/notte-core/src/notte_core/act/`, `packages/notte-llm/src/notte_llm/act.py`, `scripts/bench_act/`
+  or `.github/workflows/act-bench.yml`;
 - someone starts it by hand (`workflow_dispatch`, from the default branch).
 
 PRs run the `ci-core` tier, or every tier with the `act-bench-all` label; a manual run picks its tier with the

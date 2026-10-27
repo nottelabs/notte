@@ -381,7 +381,9 @@ environment built with a Python version that differs from `.python-version`.
 
 `scripts/bench_act/` benchmarks `act()` / `choose()` / `check()` and the observe they read, on local
 fixture pages and public sites (see its README). `act-bench.yml` runs it on PRs labelled `act-bench` or
-`act-bench-all`, changes under `notte_browser/js`, `notte_browser/dom`, `notte_core/act`, `notte_llm/act.py`,
+`act-bench-all`, changes under `packages/notte-browser/src/notte_browser/js/`,
+`packages/notte-browser/src/notte_browser/dom/`, `packages/notte-core/src/notte_core/act/`,
+`packages/notte-llm/src/notte_llm/act.py`,
 `scripts/bench_act/` or `.github/workflows/act-bench.yml`, and manual dispatch. PRs compare head against the
 merge base. With Jev, fixture tasks must always pass; public sites fail only on a clear drop against base;
 the LLM runners are report-only. A site that blocks or redirects is a site miss with evidence, never a pass;
