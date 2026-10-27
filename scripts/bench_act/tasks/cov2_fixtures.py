@@ -48,9 +48,15 @@ def _menu_move_ok(f: dict[str, Any], _: dict[str, Any]) -> bool:
     ]
 
 
+UPLOAD_STATE = """JSON.stringify({name: document.querySelector('#name').value,
+  files: document.querySelector('#photo').files.length,
+  chosen: document.querySelector('#chosen').textContent, error: document.querySelector('#err').textContent})"""
+
+
 def _upload_ok(f: dict[str, Any], run: dict[str, Any]) -> bool:
     # there is no file to pick and no upload operation: a clean BLOCKED, the profile not saved
-    return _blocked_on("upload.html", f, run)
+    initial = run.get("pre")
+    return _blocked_on("upload.html", f, run) and isinstance(initial, dict) and f.get("extra") == initial
 
 
 def _hover_menu_ok(f: dict[str, Any], run: dict[str, Any]) -> bool:
@@ -118,6 +124,8 @@ TASKS = [
         "{fixtures}/cov2/upload.html",
         "Upload the photo /tmp/notte-avatar.png as the profile photo and save the profile.",
         _upload_ok,
+        pre_js=UPLOAD_STATE,
+        final_js=UPLOAD_STATE,
         tags=("file-picker", "capability"),
     ),
     Task(

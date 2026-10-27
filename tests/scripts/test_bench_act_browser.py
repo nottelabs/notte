@@ -64,6 +64,34 @@ async def test_old_search_response_cannot_render_during_new_query_debounce(fixtu
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("action", ["none", "chooser", "name", "file", "submit"])
+async def test_upload_blocked_requires_the_unchanged_form(fixture_url: str, action: str) -> None:
+    task = registry.discover().tasks["f2-upload"]
+    assert task.pre_js is not None and task.final_js is not None
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(f"{fixture_url}/cov2/upload.html")
+        initial = json.loads(await page.evaluate(task.pre_js))
+        if action == "chooser":
+            async with page.expect_file_chooser():
+                await page.locator(".pick").click()
+        elif action == "name":
+            await page.locator("#name").fill("Changed name")
+        elif action == "file":
+            await page.locator("#photo").set_input_files(
+                {"name": "avatar.png", "mimeType": "image/png", "buffer": b"fixture photo"}
+            )
+        elif action == "submit":
+            # Reach the no-photo submit handler without native required-field validation stopping it first.
+            await page.locator("#f").evaluate("form => form.noValidate = true")
+            await page.get_by_role("button", name="Save profile").click()
+            assert await page.inner_text("#err") == "Choose a photo first."
+        final = {"url": page.url, "extra": json.loads(await page.evaluate(task.final_js))}
+        run = {"pre": initial, "steps": [{"status": "blocked", "operation": "BLOCKED"}]}
+        assert task.check(final, run) == (action in {"none", "chooser"})
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("back_from", [2, 3])
 @pytest.mark.parametrize("reviewed_speed", ["standard", "express"])
 @pytest.mark.parametrize("extra_review", [False, True])

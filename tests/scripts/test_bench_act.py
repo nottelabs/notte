@@ -653,6 +653,26 @@ def test_upload_is_a_blocked_capability_check() -> None:
     assert not upload.check(final, typed)
 
 
+@pytest.mark.parametrize("changed", [None, "name", "files", "chosen", "error"])
+def test_fixture_upload_requires_the_unchanged_profile(changed: str | None) -> None:
+    task = registry.discover().tasks["f2-upload"]
+    initial = {"name": "Jane Doe", "files": 0, "chosen": "No photo chosen", "error": ""}
+    final = {**initial}
+    if changed:
+        final[changed] = 1 if changed == "files" else "Changed"
+    run = {"pre": initial, "steps": [{"status": "blocked", "operation": "BLOCKED"}]}
+    assert task.check({"url": "http://fixture.test/cov2/upload.html", "extra": final}, run) == (changed is None)
+
+
+def test_fixture_upload_requires_recorded_initial_and_final_state() -> None:
+    task = registry.discover().tasks["f2-upload"]
+    blocked = {"steps": [{"status": "blocked", "operation": "BLOCKED"}]}
+    final = {"url": "http://fixture.test/cov2/upload.html"}
+    assert not task.check(final, blocked)
+    assert not task.check({**final, "extra": {}}, blocked)
+    assert not task.check(final, {**blocked, "pre": {}})
+
+
 def test_resume_keeps_only_runs_of_the_same_commit_and_identity(tmp_path: Path) -> None:
     path = tmp_path / "run.json"
     path.write_text(json.dumps({"sha": "a" * 40}))

@@ -403,6 +403,9 @@ runner error cannot become a success because a worker wrote JSON or reached the 
 Fixture destinations must describe the page the task asks to open. The dark-cookie task's Pricing
 destination must not use a form-submission acknowledgement: the decider otherwise returns to the
 source after correctly refusing cookies and following the Pricing link.
+The upload capability task accepts BLOCKED only with a recorded, unchanged profile form, including
+the name, selected files, chosen-file label and validation error. Merely staying on the upload URL
+does not prove the runner left the form untouched.
 Round-3 fixture validators require the submitted action history: Back from wizard review with standard
 delivery before the final express choice, and the completed taken-name check before the available
 workspace name. Preserve this evidence on navigation. Wizard submission requires the review step;
