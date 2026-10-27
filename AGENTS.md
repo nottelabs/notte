@@ -385,9 +385,11 @@ fixture pages and public sites (see its README). `act-bench.yml` runs it on PRs 
 `packages/notte-browser/src/notte_browser/dom/`, `packages/notte-core/src/notte_core/act/`,
 `packages/notte-llm/src/notte_llm/act.py`,
 `scripts/bench_act/` or `.github/workflows/act-bench.yml`, and manual dispatch. PRs compare head against the
-merge base. With Jev, fixture tasks must always pass; public sites fail only on a clear drop against base;
-the LLM runners are report-only. A site that blocks or redirects is a site miss with evidence, never a pass;
-a decider transport error is an infra miss (red above 5% of runs). Landing and final-page evidence takes
+merge base. For Jev runners (`notte-local`, `notte-local-html`, `probe-local-jev`), fixture tasks and probes
+must pass in every head run; public tasks and probes fail only on a clear repeat-by-repeat drop against base.
+LLM and scripted task/probe outcomes are report-only. A public site that blocks, shows a CAPTCHA, or redirects
+outside its registrable domain is a site miss with evidence, never a pass. Decider transport errors are infra
+misses (red above 5% of runs, across all runners). Landing and final-page evidence takes
 precedence over a task checker's success flag. Model-backed runners need `OPENROUTER_API_KEY`;
 `notte-local-scripted` and `probe-local-scripted` are model-free and need no API key.
 The `act-bench-all` label includes extended fixtures with known browser/act failures. These still fail the
