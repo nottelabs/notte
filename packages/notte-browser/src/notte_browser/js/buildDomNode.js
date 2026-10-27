@@ -2673,7 +2673,7 @@
 		// Preserve block actions in editable documents. An inline-only editor instead needs its actual
 		// body host to pass through normal visibility, highlighting and descendant-interaction checks.
 		const isBodyEditor = node === BODY && isEditingHost(node) &&
-			![...childrenOf(node)].some(child => isEditingHost(child) && isElementVisible(child));
+			![...childrenOf(node)].some(child => isEditingHost(child) && isElementVisible(child) && isRendered(child, true));
 		if (node === BODY && !isBodyEditor) {
 			const nodeData = {
 				tagName: 'body',

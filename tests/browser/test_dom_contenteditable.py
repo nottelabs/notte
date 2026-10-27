@@ -299,6 +299,7 @@ async def test_editable_body_offers_blocks_and_independent_inline_clicks(display
         "<span>Text</span>",
         "<span style='display:contents'><em>Text</em></span>",
         "<p hidden>Hidden</p><span>Text</span>",
+        "<p style='opacity:0'>Hidden</p><span>Text</span>",
     ],
 )
 async def test_editable_body_without_block_actions_is_one_fillable_field(content: str, in_frame: bool) -> None:
