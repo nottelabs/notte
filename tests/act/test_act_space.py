@@ -342,6 +342,20 @@ M1[:]<div tabindex="0" role="spinbutton">14 Point</div>"""
     assert space.operations["TYPE_TEXT"].endswith(TYPE_TEXT_RANGE)
 
 
+def test_slider_and_spinbutton_share_one_numeric_typing_instruction() -> None:
+    description = """I1[:]<div role="slider" aria-label="Volume">20</div>
+M1[:]<div role="spinbutton" aria-label="Font size">14</div>"""
+    actions: list[InteractionAction] = [
+        FillAction(id="I1", value="20", accessible_name="Volume"),
+        ClickAction(id="M1", accessible_name="Font size"),
+    ]
+    states = {"I1": ElementState(value="20"), "M1": ElementState(value="14")}
+    space = build_act_space(_page(description=description, actions=actions, states=states), labels="accessible")
+    assert {e["role"] for e in space.elements} == {"slider", "spinbutton"}
+    assert all(e["operations"] == ["TYPE_TEXT"] for e in space.elements)
+    assert space.operations["TYPE_TEXT"].count(TYPE_TEXT_RANGE) == 1
+
+
 def test_a_cut_select_is_set_by_typing_any_of_its_options() -> None:
     # a year select listing 1900-1949 of 1900-2100: the wanted 1990 is not among its options
     options = tuple(SelectOption(value=str(y), label=str(y), selected=y == 1900) for y in range(1900, 1950))
@@ -1183,6 +1197,13 @@ _[:]<button disabled pressed>Locked</button>"""
         "Menu (button, expanded, not in view: scroll to reach it)",
         "Locked (disabled, pressed)",
     ]
+
+
+@pytest.mark.parametrize("expanded", ["true", "false"])
+def test_disabled_expanded_state_uses_the_rendered_aria_attribute(expanded: str) -> None:
+    description = f'_[:]<button aria_expanded="{expanded}" value="pressed" disabled>Menu</button>'
+    page = _page(description=description, actions=[], states={})
+    assert accessible_text(page) == ("Menu (disabled, expanded)" if expanded == "true" else "Menu (disabled)")
 
 
 SAME_NAMES = """_[:]Desk lamp

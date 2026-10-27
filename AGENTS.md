@@ -101,6 +101,15 @@ building CSS paths across shadow hosts; form controls can clobber those properti
 `tests/act/test_local_act.py` covers executed up/down scrolls in normal and reversed
 lists, both in the document and in open shadow roots.
 
+Act offers ARIA sliders and spinbuttons through `TYPE_TEXT`, using their live values
+and one shared numeric-typing instruction. Off-screen and disabled controls retain
+pressed, selected and expanded state in the decision text. The local driver omits
+`GO_BACK` when CDP history has no earlier page beyond the tab's blank start document.
+`tests/act/test_local_act.py` checks these contracts on actual browser pages.
+Disabled expanded controls can render `aria_expanded="true"` instead of a bare
+`expanded` flag; act reads that rendered attribute without treating false values
+or state words inside unrelated attribute values as true state.
+
 `packages/notte-browser/src/notte_browser/js/buildDomNode.js` reads elements through
 its helpers (`getAttribute(element, name)`, `childrenOf(element)`,
 `propertyOf(element, name)`, ...), never as `element.children`: a `<form>` exposes

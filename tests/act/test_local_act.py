@@ -1176,19 +1176,52 @@ price.addEventListener("keydown", (event) => {
 
 
 @pytest.mark.asyncio
-async def test_an_aria_spin_button_is_offered_as_a_field(session: NotteSession) -> None:
+async def test_an_aria_spin_button_is_set_by_typing_its_value(session: NotteSession) -> None:
     # a custom spin button (a div with the role, as the APG toolbar's font size): a click on it changes nothing
     page = """<label id="l">Font size</label>
 <div id="size" role="spinbutton" tabindex="0" aria-labelledby="l" aria-valuenow="14" aria-valuemin="8"
-aria-valuemax="40" aria-valuetext="14 Point">14 Point</div>"""
+aria-valuemax="40" aria-valuetext="14 Point">14 Point</div>
+<script>
+const size = document.getElementById('size');
+const moves = {ArrowUp: 1, ArrowDown: -1, PageUp: 2, PageDown: -2};
+size.addEventListener('keydown', event => {
+  const value = Math.min(40, Math.max(8, Number(size.getAttribute('aria-valuenow')) + (moves[event.key] ?? 0)));
+  size.setAttribute('aria-valuenow', String(value));
+  size.setAttribute('aria-valuetext', `${value} Point`);
+  size.textContent = `${value} Point`;
+});
+</script>"""
     _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
     ids = await _ids(session)
-    decider = FakeDecider(choices=[{"operation": "DONE"}])
-    _ = await session.aact("Set the font size to 16", decider=decider)
+    decider = FakeDecider(choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["size"]}], texts=["16"])
+    result = await session.aact("Set the font size to 16", decider=decider)
+    assert result.status == "executed" and result.success
     element = next(e for e in decider.states[0].elements if e["index"] == ids["size"])
     assert (element["label"], element["role"], element["operations"]) == ("Font size", "spinbutton", ["TYPE_TEXT"])
     assert ids["size"] in decider.questions[0]["type_text_target"].criteria
     assert prompts.TYPE_TEXT_RANGE in decider.questions[0]["operation"].criteria["TYPE_TEXT"]
+    assert element["value"] == "14 Point"
+    assert decider.contexts[0].field["role"] == "spinbutton"
+    assert await session.window.page.locator("#size").get_attribute("aria-valuenow") == "16"
+    assert await session.window.page.locator("#size").get_attribute("aria-valuetext") == "16 Point"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("state", ["pressed", "selected", "expanded"])
+@pytest.mark.parametrize("disposition", ["offscreen", "disabled"])
+async def test_unavailable_controls_retain_their_state_on_real_pages(
+    session: NotteSession, state: str, disposition: str
+) -> None:
+    tag = "div" if state == "selected" else "button"
+    role = 'role="tab"' if state == "selected" else ""
+    placement = 'style="margin-top: 200vh"' if disposition == "offscreen" else 'aria-disabled="true" disabled'
+    page = f'<{tag} {role} aria-label="Status control" aria-{state}="true" {placement}>Status control</{tag}>'
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    decider = FakeDecider(choices=[{"operation": "DONE"}])
+    _ = await session.aact("Read the control state", decider=decider)
+    lines = decider.states[0].page.text.splitlines()
+    qualifier = "not in view: scroll to reach it" if disposition == "offscreen" else "disabled"
+    assert any("Status control" in line and state in line and qualifier in line for line in lines)
 
 
 @pytest.mark.asyncio

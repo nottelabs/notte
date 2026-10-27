@@ -371,7 +371,8 @@ def _states(content: str) -> list[str]:
     if match is None:
         return []
     flags = _RENDERED_ATTRIBUTE.sub("", match.group(2)).split()
-    return [state for state in _RENDERED_STATES if state in flags]
+    attributes = dict(_RENDERED_ATTRIBUTE.findall(match.group(2)))
+    return [state for state in _RENDERED_STATES if state in flags or attributes.get(f"aria_{state}") == "true"]
 
 
 def _offscreen_role(content: str) -> str | None:
