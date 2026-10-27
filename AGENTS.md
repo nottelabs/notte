@@ -107,6 +107,8 @@ when their computed `position` is absolute or fixed.
 CDP listener hints must retain the inspected elements' identities through main-world
 handles. DOM marker attributes are copied by `cloneNode`, while event listeners are
 not, so an attribute bridge can incorrectly offer a clone as a clickable header.
+The clone regression injects its marker after listener inspection and asserts that
+both inspected headers were cloned; an observer alone does not exercise this race.
 
 Wrapper deduplication is covered by `tests/browser/test_dom_clickable_duplicates.py`.
 The payload's `clickHandler` only captures DOM handler attributes/properties, not
