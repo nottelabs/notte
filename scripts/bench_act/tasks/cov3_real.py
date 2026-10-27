@@ -7,14 +7,15 @@ RTVE, heise in a cross-origin consent frame, Le Figaro with no reject button), a
 
 import json
 from dataclasses import replace
-from typing import Any
 from urllib.parse import unquote
+
+from pydantic import JsonValue
 
 from ..model import REAL_MAX_STEPS, Probe, Task, ci_tier, path
 from .cov2_real import _onetrust_refused  # pyright: ignore[reportPrivateUsage]
 
 
-def _extra(f: dict[str, Any]) -> Any:
+def _extra(f: dict[str, JsonValue]) -> JsonValue:
     return f.get("extra")
 
 
@@ -34,14 +35,14 @@ def _attr(selector: str, attribute: str) -> str:
 
 
 def _path_is(expected: str):
-    def check(f: dict[str, Any], _: dict[str, Any]) -> bool:
+    def check(f: dict[str, JsonValue], _: dict[str, JsonValue]) -> bool:
         return unquote(path(f)).rstrip("/") == expected.rstrip("/")
 
     return check
 
 
 def _path_starts(prefix: str):
-    def check(f: dict[str, Any], _: dict[str, Any]) -> bool:
+    def check(f: dict[str, JsonValue], _: dict[str, JsonValue]) -> bool:
         return path(f).startswith(prefix)
 
     return check

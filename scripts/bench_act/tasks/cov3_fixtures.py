@@ -7,27 +7,29 @@ async name check), and an Undo toast that disappears."""
 
 import json
 from dataclasses import replace
-from typing import Any
+from typing import TypedDict, cast
+
+from pydantic import JsonValue
 
 from ..model import REAL_MAX_STEPS, Probe, Task, ci_tier, one, path
 
 
 def _page(page: str, **expected: str):
-    def check(f: dict[str, Any], _: dict[str, Any]) -> bool:
-        return path(f).endswith("/cov3/" + page) and all(one(f["url"], k) == v for k, v in expected.items())
+    def check(f: dict[str, JsonValue], _: dict[str, JsonValue]) -> bool:
+        return path(f).endswith("/cov3/" + page) and all(one(cast(str, f["url"]), k) == v for k, v in expected.items())
 
     return check
 
 
-def _clicked(run: dict[str, Any], label: str) -> bool:
+def _clicked(run: dict[str, JsonValue], label: str) -> bool:
     return any(
         s.get("operation") == "CLICK" and (s.get("target_label") or "").strip() == label
-        for s in run.get("steps", [])
+        for s in cast(list[dict[str, str | None]], run.get("steps", []))
         if s.get("status") == "executed"
     )
 
 
-def _wizard_ok(f: dict[str, Any], run: dict[str, Any]) -> bool:
+def _wizard_ok(f: dict[str, JsonValue], run: dict[str, JsonValue]) -> bool:
     # the goal asks to switch to express from the review step: Back must have been used
     ordered = _page(
         "wizard-done.html",
@@ -47,22 +49,34 @@ SPA_VIEW = """JSON.stringify({h1: (document.querySelector('#view h1') || {}).inn
     shown: !a.hidden && a.getBoundingClientRect().height > 0}; })})"""
 
 
-def _spa_ok(f: dict[str, Any], _: dict[str, Any]) -> bool:
-    view = f.get("extra") or {}
-    stored = next((q for q in view.get("questions") or [] if q["q"] == "Is my card stored?"), {})
+class _Question(TypedDict):
+    q: str
+    open: bool
+    shown: bool
+
+
+class _SpaView(TypedDict, total=False):
+    h1: str | None
+    questions: list[_Question]
+
+
+def _spa_ok(f: dict[str, JsonValue], _: dict[str, JsonValue]) -> bool:
+    view = cast(_SpaView, f.get("extra") or {})
+    stored = next((q for q in view.get("questions") or [] if q["q"] == "Is my card stored?"), None)
     return (
         path(f).endswith("/cov3/spa.html")
-        and one(f["url"], "topic") == "billing"
-        and one(f["url"], "article") == "card"
+        and one(cast(str, f["url"]), "topic") == "billing"
+        and one(cast(str, f["url"]), "article") == "card"
         and view.get("h1") == "Change my payment card"
+        and stored is not None
         and stored.get("open") is True
         and stored.get("shown") is True
     )
 
 
-def _cookie_refused(f: dict[str, Any], _: dict[str, Any]) -> bool:
+def _cookie_refused(f: dict[str, JsonValue], _: dict[str, JsonValue]) -> bool:
     try:
-        consent = json.loads(f.get("consent") or "null")
+        consent = json.loads(cast(str, f.get("consent") or "null"))
     except ValueError:
         return False
     return path(f).endswith("/cov3/contacto.html") and consent == {"analytics": False, "ads": False, "social": False}
@@ -72,8 +86,8 @@ INBOX = """JSON.stringify([...document.querySelectorAll('#inbox li, #archived li
   list: li.parentElement.id, starred: (li.querySelector('[data-star]') || {getAttribute: () => null}).getAttribute('aria-pressed')})))"""
 
 
-def _inbox_ok(f: dict[str, Any], _: dict[str, Any]) -> bool:
-    rows = {r["id"]: r for r in f.get("extra") or []}
+def _inbox_ok(f: dict[str, JsonValue], _: dict[str, JsonValue]) -> bool:
+    rows = {r["id"]: r for r in cast(list[dict[str, str | None]], f.get("extra") or [])}
     return rows == {
         "m1": {"id": "m1", "list": "archived", "starred": None},
         "m2": {"id": "m2", "list": "inbox", "starred": "true"},
@@ -86,8 +100,8 @@ FILES = """JSON.stringify({files: [...document.querySelectorAll('#files li span'
   log: (document.body.dataset.log || '').split(' ').filter(Boolean)})"""
 
 
-def _toast_ok(f: dict[str, Any], _: dict[str, Any]) -> bool:
-    state = f.get("extra") or {}
+def _toast_ok(f: dict[str, JsonValue], _: dict[str, JsonValue]) -> bool:
+    state = cast(dict[str, list[str]], f.get("extra") or {})
     log = state.get("log") or []
     # report.pdf back in the list, restored with Undo, and no other file deleted on the way
     return (
