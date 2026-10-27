@@ -47,7 +47,7 @@ from notte_browser.errors import (
     UnexpectedBrowserError,
 )
 from notte_browser.js import script
-from notte_browser.settle import PageSettle
+from notte_browser.settle import PageSettle, requests_of
 
 _PAGE_METADATA = script("page_metadata.js")
 
@@ -209,6 +209,8 @@ class BrowserWindow:
         self._owned_driver: Playwright | None = None
         # the tabs opened since the last action that can open one, while it is watched (`watch_new_tabs`)
         self._new_tabs: dict[Page, PageSettle] = {}
+        # Context events can report a tab's fetch before its page event installs a tracker.
+        self._new_tab_requests: set[Request] = set()
         self._tabs_context: BrowserContext | None = None
         page.set_default_timeout(config.timeout_default_ms)
         # Only final main-document responses establish navigation/raw-file state.
@@ -286,26 +288,31 @@ class BrowserWindow:
         if watch:
             self._tabs_context = self.page.context
             self._tabs_context.on("page", self._new_tab)
-            self._tabs_context.on("request", self._new_tab_request)
+            self._tabs_context.on("request", self._new_tab_request_started)
+            self._tabs_context.on("requestfinished", self._new_tab_request_ended)
+            self._tabs_context.on("requestfailed", self._new_tab_request_ended)
 
     async def _forget_new_tabs(self) -> None:
         if self._tabs_context is not None:
             _ = self._tabs_context.remove_listener("page", self._new_tab)
-            _ = self._tabs_context.remove_listener("request", self._new_tab_request)
+            _ = self._tabs_context.remove_listener("request", self._new_tab_request_started)
+            _ = self._tabs_context.remove_listener("requestfinished", self._new_tab_request_ended)
+            _ = self._tabs_context.remove_listener("requestfailed", self._new_tab_request_ended)
             self._tabs_context = None
+        self._new_tab_requests.clear()
         tabs, self._new_tabs = self._new_tabs, {}
         for settle in tabs.values():
             await settle.close()
 
+    def _new_tab_request_started(self, request: Request) -> None:
+        self._new_tab_requests.add(request)
+
+    def _new_tab_request_ended(self, request: Request) -> None:
+        self._new_tab_requests.discard(request)
+
     def _new_tab(self, page: Page) -> None:
         # its first scripts can start requests before it is switched to
-        self._new_tabs[page] = PageSettle(page, None, tabs=False)
-
-    def _new_tab_request(self, _request: Request) -> None:
-        # The driver sends a page's request events only while the page or its context listens for them. A tab's
-        # listeners are added once it is known, after its first response: listening on the context keeps the requests
-        # its first scripts start before then.
-        pass
+        self._new_tabs[page] = PageSettle(page, None, tabs=False, requests=requests_of(page, self._new_tab_requests))
 
     async def switch_to_new_tab(self, *, verbose: bool = False) -> None:
         """Switch to the last tab opened since the last action that is still open (`watch_new_tabs`), and wait for it
