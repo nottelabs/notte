@@ -68,17 +68,22 @@ Show profile details
 
 ## `notte profiles sync`
 
-Read the cookies from a local Firefox, Chrome, Brave, Edge, Chromium, Arc or Helium profile and upload them into a Notte cloud profile, so remote sessions and agents start already logged in. Arc and Helium are supported on macOS only.
+Read cookies and localStorage from a local Firefox, Chrome, Brave, Edge, Chromium, Arc or Helium profile and upload them into a Notte cloud profile, so remote sessions and agents start already logged in. Arc and Helium are supported on macOS only.
 
-Cookies are read from a copy of the browser's own files on this machine and decrypted locally. Nothing leaves your computer until you confirm the upload, and with `--domain` you choose exactly which sites are included.
+Browser state is read from a private copy of the browser's files on this machine; cookies are decrypted locally. Nothing leaves your computer until you confirm the upload, and with `--domain` you choose exactly which sites are included.
 
-With `--profile-id` the cookies go into an existing profile; without it a new profile is created and its id is printed for you to reuse next time.
+With `--cdp-url`, read a running Chromium browser, including sessionStorage.
+
+IndexedDB, partitioned storage and device-bound credentials are not transferred.
+
+With `--profile-id`, state goes into an existing profile; without it a new profile is created and its id is printed for you to reuse next time.
 
 | Flag | Description |
 | - | - |
 | `--browser <string>` | Browser to read from (firefox, chrome, brave, edge, chromium, arc, helium) |
-| `--domain <strings>` | Only sync cookies for these domains and their subdomains (repeatable) |
+| `--cdp-url <string>` | Read live Chromium cookies, localStorage and sessionStorage from a debugger HTTP origin or page WebSocket URL |
+| `--domain <strings>` | Only sync state for these domains and their subdomains (repeatable) |
 | `--local-profile <string>` | Local browser profile, by name or directory (prompts if there is more than one) |
-| `--mode <string>` | How to apply the cookies: replace the profile's cookies, or append to them (default: `replace`) |
+| `--mode <string>` | Replace captured state or append/update its keys (default: `replace`) |
 | `--name <string>` | Name for the new profile when `--profile-id` is omitted |
 | `--profile-id <string>` | Existing Notte profile to sync into (creates a new one if omitted) |
