@@ -2747,7 +2747,7 @@ requires-dist = [
     { name = "pillow", specifier = ">=11.1.0" },
     { name = "posthog", specifier = ">=3.0.1,<=7.63.0" },
     { name = "pydantic", specifier = ">=2.10.6" },
-    { name = "pyotp", specifier = ">=2.9.0" },
+    { name = "pyotp", specifier = ">=2.10.0" },
     { name = "requests", specifier = ">=2.32.3" },
     { name = "scarf-sdk", specifier = ">=0.1.2" },
     { name = "tldextract", specifier = ">=5.3.0" },

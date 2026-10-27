@@ -85,6 +85,14 @@ def vault(client: MagicMock) -> Iterator[BitwardenVault]:
 
 
 class TestBitwardenVaultGetCredentials:
+    def test_prefers_an_exact_url_to_another_secret_on_the_domain(self, client: MagicMock) -> None:
+        other = _secret("Other GitHub", json.dumps({"url": "https://github.com/settings", "password": "other"}))
+        client.secrets.return_value.get_by_ids.return_value.data.data = [GITHUB, other]
+        with patch("bitwarden_sdk.BitwardenClient", return_value=client):
+            with BitwardenVault(access_token="test", organization_id=ORG_ID) as vault:
+                expected = {"password": "other"}  # pragma: allowlist secret
+                assert vault.get_credentials("https://github.com/settings") == expected
+
     def test_finds_credentials_by_domain(self, vault: BitwardenVault) -> None:
         creds = asyncio.run(vault.get_credentials_async("https://github.com/whatever"))
         assert creds == {
@@ -100,6 +108,10 @@ class TestBitwardenVaultGetCredentials:
 
     def test_returns_none_for_unknown_domain(self, vault: BitwardenVault) -> None:
         assert asyncio.run(vault.get_credentials_async("https://unknown-site.com")) is None
+
+    def test_presence_uses_the_same_domain_match_as_retrieval(self, vault: BitwardenVault) -> None:
+        assert vault.has_credential("https://gist.github.com/other")
+        assert not vault.has_credential("https://unknown-site.com")
 
     def test_turns_mfa_secret_into_a_code(self, vault: BitwardenVault) -> None:
         creds = asyncio.run(vault.get_credentials_async("https://notte.cc"))
@@ -132,6 +144,29 @@ class TestBitwardenVaultListCredentials:
 
 
 class TestBitwardenVaultWrites:
+    @pytest.mark.parametrize("target", ["https://github.com/settings", "https://github.com/other"])
+    def test_delete_does_not_choose_the_first_same_domain_secret(self, client: MagicMock, target: str) -> None:
+        other = _secret("Other GitHub", json.dumps({"url": "https://github.com/settings", "password": "other"}))
+        client.secrets.return_value.get_by_ids.return_value.data.data = [GITHUB, other]
+        with patch("bitwarden_sdk.BitwardenClient", return_value=client):
+            with BitwardenVault(access_token="test", organization_id=ORG_ID) as vault:
+                if target.endswith("settings"):
+                    vault.delete_credentials(target)
+                    client.secrets.return_value.delete.assert_called_once_with([str(other.id)])
+                else:
+                    with pytest.raises(ValueError, match="[Aa]mbiguous"):
+                        vault.delete_credentials(target)
+                    client.secrets.return_value.delete.assert_not_called()
+
+    def test_delete_rejects_duplicate_exact_urls(self, client: MagicMock) -> None:
+        duplicate = _secret("Duplicate", GITHUB.value)
+        client.secrets.return_value.get_by_ids.return_value.data.data = [GITHUB, duplicate]
+        with patch("bitwarden_sdk.BitwardenClient", return_value=client):
+            with BitwardenVault(access_token="test", organization_id=ORG_ID) as vault:
+                with pytest.raises(ValueError, match="[Aa]mbiguous"):
+                    vault.delete_credentials("https://github.com/login")
+                client.secrets.return_value.delete.assert_not_called()
+
     def test_add_credentials_creates_a_secret_and_rereads(self, vault: BitwardenVault, client: MagicMock) -> None:
         vault.add_credentials("https://example.com", username="new", password="new-pass")  # pragma: allowlist secret
 

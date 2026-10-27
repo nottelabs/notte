@@ -36,6 +36,7 @@ class BitwardenVault(BaseVault, SyncResource):
     Each secret's value must be a JSON object in the notte credential format:
     {"url": "https://...", "password": "...", "username": "...", "email": "...", "mfa_secret": "..."}
     Only `url` and `password` are required. Secrets are matched to pages by root domain.
+    Exact URL matches take precedence. Deletion rejects multiple matches rather than choosing a secret.
 
         with BitwardenVault() as vault, notte.Session(vault=vault) as session:
             session.execute(type="goto", url="https://github.com/login")
@@ -149,18 +150,32 @@ class BitwardenVault(BaseVault, SyncResource):
             creds["mfa_secret"] = value.mfa_secret
         return value.url, creds
 
-    async def _find_secret(self, url: str) -> tuple[SecretResponse, CredentialsDict] | None:
+    async def _find_secret(
+        self, url: str, *, require_unique: bool = False
+    ) -> tuple[SecretResponse, CredentialsDict] | None:
         target_domain = get_root_domain(url)
+        matches: list[tuple[SecretResponse, CredentialsDict]] = []
+        exact: list[tuple[SecretResponse, CredentialsDict]] = []
         for secret in await self._secrets():
             parsed = self._parse_secret(secret)
             if parsed is not None and get_root_domain(parsed[0]) == target_domain:
-                return secret, parsed[1]
-        return None
+                match = (secret, parsed[1])
+                matches.append(match)
+                if parsed[0] == url:
+                    exact.append(match)
+        candidates = exact or matches
+        if require_unique and len(candidates) > 1:
+            raise ValueError(f"Ambiguous credentials for {url}: multiple secrets match")
+        return candidates[0] if candidates else None
 
     @override
     async def _get_credentials_impl(self, url: str) -> CredentialsDict | None:
         found = await self._find_secret(url)
         return None if found is None else found[1]
+
+    @override
+    async def has_credential_async(self, url: str) -> bool:
+        return await self._find_secret(url) is not None
 
     @override
     async def _add_credentials(self, url: str, creds: CredentialsDict) -> None:
@@ -181,7 +196,7 @@ class BitwardenVault(BaseVault, SyncResource):
     @override
     async def delete_credentials_async(self, url: str) -> None:
         client = self._require_client()
-        found = await self._find_secret(url)
+        found = await self._find_secret(url, require_unique=True)
         if found is None:
             raise ValueError(f"No credentials found for {url}")
         _ = await asyncio.to_thread(client.secrets().delete, [str(found[0].id)])

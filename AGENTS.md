@@ -174,6 +174,12 @@ editor still accepts a fill. `tests/browser/test_dom_contenteditable.py` covers 
 
 ## Public API
 
+- PyOTP 2.10.0 is the minimum for parsing TOTP URIs: 2.9 decodes delimiters
+  before splitting the URI and rejects valid encoded issuer/account names.
+  AAC may return an already-generated decimal TOTP code; preserve it while
+  standard vault MFA values remain seeds. Bitwarden deletion requires a unique
+  exact URL match, or a unique root-domain match when no exact URL exists.
+
 - Don't remove or rename public methods without a deprecation first: keep the
   old name working and emit a `DeprecationWarning` (see `generate_cookies` in
   `notte_sdk/utils.py`).
