@@ -49,16 +49,31 @@ async def test_headers_with_a_click_listener_are_offered() -> None:
 
 
 @pytest.mark.asyncio
-async def test_a_cloned_bridge_marker_cannot_transfer_a_click_listener() -> None:
+async def test_a_cloned_bridge_marker_cannot_transfer_a_click_listener(monkeypatch: pytest.MonkeyPatch) -> None:
     """A page observer cloning marked headers cannot create false actions or leave markers behind."""
+    probe = parsing.headers_with_click_listeners
+
+    async def probe_then_mark_headers(page: Page) -> list[ElementHandle]:
+        headers = await probe(page)
+        assert len(headers) == 2
+        for header in headers:
+            # Trigger the page observer after inspection, before constructing the DOM.
+            _ = await header.evaluate("header => header.setAttribute('data-notte-header-test', '')")
+        return headers
+
+    monkeypatch.setattr(parsing, "headers_with_click_listeners", probe_then_mark_headers)
     observer = """
     <script>
+      let headerCloneCount = 0;
       new MutationObserver(records => {
         for (const record of records) {
           const header = record.target;
           if (record.attributeName.startsWith('data-notte-header-') &&
               header.hasAttribute(record.attributeName) && header.isConnected) {
-            header.replaceWith(header.cloneNode(true));
+            const clone = header.cloneNode(true);
+            clone.removeAttribute(record.attributeName);
+            header.replaceWith(clone);
+            headerCloneCount++;
           }
         }
       }).observe(document.documentElement, {subtree: true, attributes: true});
@@ -68,10 +83,11 @@ async def test_a_cloned_bridge_marker_cannot_transfer_a_click_listener() -> None
         page = session.window.page
         _ = await page.goto(f"data:text/html,{quote(PAGE + observer)}")
         observation = await session.aobserve()
+        assert await evaluate_in_main_world(page.main_frame, "headerCloneCount") == 2
         actions = [(action.id, action.text_label) for action in observation.space.interaction_actions]
-        assert actions == [("M1", "Name"), ("M2", "Due")]
-        _ = await session.aexecute(type="click", id="M2")
-        assert await page.inner_text("#dues tbody tr:first-child td:nth-child(2)") == "$51.00"
+        assert actions == []
+        await page.locator("#dues th").nth(1).click()
+        assert await page.inner_text("#dues tbody tr:first-child td:nth-child(2)") == "$50.00"
         assert await page.evaluate(
             """() => [...document.querySelectorAll('th')].every(header =>
                 header.getAttributeNames().every(name => !name.startsWith('data-notte-header-')))"""
