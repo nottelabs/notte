@@ -5,6 +5,7 @@ are editable too, and editors give them a `text` cursor. An editor whose center 
 offered at all, only its paragraphs as clickables.
 """
 
+from html import escape
 from urllib.parse import quote
 
 import pytest
@@ -245,3 +246,30 @@ async def test_escaping_editor_is_hit_tested_beyond_the_scroll_box(position: str
         _ = await session.window.page.locator("#cover").evaluate("cover => { cover.style.height = '500px'; }")
         obs = await session.aobserve()
         assert obs.space.interaction_actions == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("in_frame", [False, True])
+@pytest.mark.parametrize("display", ["inline", "inline-block", "inline-flex", "inline-grid", "contents", "block"])
+async def test_editable_body_offers_blocks_and_independent_inline_clicks(display: str, in_frame: bool) -> None:
+    """Inline editor content is not its own action; a block or independent click handler still is."""
+    editor = f"""<body contenteditable="true"><p>Paragraph</p>
+      <span style="display: {display}">Body line</span>
+      <span onclick="document.body.dataset.clicked = 'yes'">Open details</span></body>"""
+    html = (
+        f'<iframe style="width: 600px; height: 300px" srcdoc="{escape(editor, quote=True)}"></iframe>'
+        if in_frame
+        else editor
+    )
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(f"data:text/html,{quote(html)}")
+        observation = await session.aobserve()
+        actions = observation.space.interaction_actions
+        assert [action.text_label for action in actions] == (
+            ["Paragraph"] + (["Body line"] if display == "block" else []) + ["Open details"]
+        )
+        result = await session.aexecute(type="click", id=actions[-1].id)
+        assert result.success, result.message
+        body = page.frame_locator("iframe").locator("body") if in_frame else page.locator("body")
+        assert await body.get_attribute("data-clicked") == "yes"

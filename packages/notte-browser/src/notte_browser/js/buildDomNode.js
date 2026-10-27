@@ -579,8 +579,10 @@
 	 */
 	function isEditingHost(element) {
 		const parent = parentElementOf(element);
+		const bodyBlock = parent === BODY && ["block", "flow-root", "flex", "grid", "list-item", "table"]
+			.includes(getCachedComputedStyle(element)?.display);
 		return propertyOf(element, "isContentEditable") === true &&
-			(parent === null || propertyOf(parent, "isContentEditable") !== true || parent === BODY);
+			(parent === null || propertyOf(parent, "isContentEditable") !== true || bodyBlock);
 	}
 
 	function isHiddenForName(element) {
