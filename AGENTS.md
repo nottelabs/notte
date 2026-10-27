@@ -29,6 +29,9 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
 - `make test` is the offline gate. `make test-live` runs tests marked
   `staging` or `live` and needs `NOTTE_API_KEY`; set `NOTTE_API_URL` to point
   the SDK at a different API.
+- The compatible-dependency suite uses `pytest -n logical`, like the locked
+  offline suite. Running those browser tests serially can exhaust the Python
+  job's 20-minute budget after the full unit suite has passed.
 - CDP transport tests keep real staging sessions and connections but serve page
   fixtures through Patchright routes, so navigation and screenshot coverage does
   not depend on third-party sites loading.
@@ -61,6 +64,8 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   A help popup can also close back to an existing opener. Wait for that survivor
   and require a successful driver round trip before accepting a target-closed click;
   cached page state alone does not prove the browser is still usable.
+  If another unrelated tab survives too, select the popup's actual live opener
+  when no new tab was created, and await that opener's tracked requests.
 - A new-document `goto` tracks requests before its commit and waits for the destination
   within one navigation budget. Do not wait on the old document's tracker first:
   a commit after the 3 s settle cap must still get its remaining load wait.

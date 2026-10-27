@@ -965,8 +965,9 @@ async def test_a_click_reporting_a_closed_target_requires_a_live_replacement(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("report_closed", [False, True])
+@pytest.mark.parametrize("unrelated_tab", [False, True])
 async def test_a_closing_click_waits_for_a_request_it_started_on_an_existing_tab(
-    session: NotteSession, monkeypatch: pytest.MonkeyPatch, report_closed: bool
+    session: NotteSession, monkeypatch: pytest.MonkeyPatch, report_closed: bool, unrelated_tab: bool
 ) -> None:
     opener = session.window.page
     await opener.evaluate("""() => {
@@ -980,6 +981,9 @@ async def test_a_closing_click_waits_for_a_request_it_started_on_an_existing_tab
     await popup.locator("#close-self").evaluate(
         "el => el.onclick = () => { window.opener.fetchResult(); window.close(); }"
     )
+    if unrelated_tab:
+        other = await opener.context.new_page()
+        await other.goto(opener.url)
     session.window.page = popup
     original_click = Locator.click
 

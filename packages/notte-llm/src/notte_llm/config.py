@@ -41,7 +41,7 @@ class LlmSettings(BaseModel):
             if base_url != DEFAULT_BASE_URL:
                 raise ValueError("Set NOTTE_LLM_MODEL (or pass model=) when using a custom NOTTE_LLM_BASE_URL")
             model = DEFAULT_MODEL
-        key = os.getenv("NOTTE_LLM_API_KEY")
+        key = os.getenv("NOTTE_LLM_API_KEY") or None
         if key is None and base_url == DEFAULT_BASE_URL:
             key = os.getenv("OPENROUTER_API_KEY")
         return LlmSettings(

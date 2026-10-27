@@ -148,7 +148,8 @@ _INNER_SCROLL_JS = script("act_scroll_directions.js")
 class LocalActDriver:
     """How `act()` / `choose()` / `check()` read and drive a local session (`notte_core.act.ActDriver`).
 
-    The session's last snapshot gives the live element state and its fingerprint. The freshness check
+    The session's last snapshot gives the live element state; its observation supplies the masked fingerprint.
+    The freshness check
     reads element signatures by XPath (`notte_core.act.freshness`): all of them right after the
     snapshot, the target's right before acting. Targets without a signature (iframes, shadow roots)
     fall back to a new snapshot without screenshot.
@@ -201,7 +202,7 @@ class LocalActDriver:
         # the live state only applies if the observation was built from the session's last snapshot
         self._snapshot = snapshot if snapshot is not None and snapshot.metadata == observation.metadata else None
         if snapshot is not None and snapshot.metadata == observation.metadata:
-            page = ObservedPage.from_observation(observation, snapshot.element_states(), snapshot.fingerprint())
+            page = ObservedPage.from_observation(observation, snapshot.element_states(), observation.fingerprint)
             page = replace(page, contexts=element_contexts(snapshot.dom_node))
         else:
             page = ObservedPage.from_observation(observation)

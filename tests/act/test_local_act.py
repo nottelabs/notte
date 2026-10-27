@@ -27,6 +27,7 @@ from notte_core.errors import ActionExecutionError
 from patchright.async_api import Route
 
 from tests.act.fakes import FakeDecider
+from tests.mock.mock_vault import MockVault
 
 PAGE = """<html><head><title>Signup</title></head><body>
 <form onsubmit="event.preventDefault(); document.getElementById('out').textContent = 'sent';">
@@ -70,6 +71,30 @@ async def test_observation_survives_a_destroyed_context_during_optional_scroll_r
     assert page.url == observation.metadata.url
     assert "Subscribe" in page.description
     evaluate.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_act_fingerprint_only_tracks_the_masked_vault_state(
+    session: NotteSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    vault = MockVault()
+    monkeypatch.setattr(
+        vault, "get_replacement_map", lambda: {"private-first": "{{account}}", "private-second": "{{account}}"}
+    )
+    session.vault = vault
+    driver = LocalActDriver(session, capture_signatures=False)
+    raw: list[str] = []
+    observed: list[str | None] = []
+    acted: list[str] = []
+    for value in ("private-first", "private-second"):
+        await session.window.page.locator("#name").fill(value)
+        observation = await session.aobserve()
+        raw.append(session.snapshot.fingerprint())
+        observed.append(observation.fingerprint)
+        acted.append((await driver.observe(observation)).fingerprint)
+    assert raw[0] != raw[1]
+    assert observed[0] == observed[1]
+    assert acted == observed
 
 
 @pytest.mark.asyncio

@@ -927,6 +927,7 @@ async def _execute(
     page = window.page
     context = page.context
     tabs = list(context.pages)
+    opener = await page.opener() if isinstance(action, ClickAction) else None
     url = page.url
     # a tab opened once the settle is over is switched to by the next observation
     await window.watch_new_tabs(_can_create_tab(action))
@@ -1006,6 +1007,14 @@ async def _execute(
         opened = any(tab not in tabs for tab in context.pages)
         if _can_create_tab(action) and (len(context.pages) != len(tabs) or opened) and len(context.pages) > 0:
             last = context.pages[-1]
+            if (
+                isinstance(action, ClickAction)
+                and page.is_closed()
+                and not opened
+                and opener is not None
+                and not opener.is_closed()
+            ):
+                last = opener
             # Selection can happen automatically when the opener closes. Readiness is independent of selection.
             # A goto_new_tab already loaded its own new page.
             if (last not in tabs or (isinstance(action, ClickAction) and page.is_closed())) and not isinstance(

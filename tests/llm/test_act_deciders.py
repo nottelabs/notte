@@ -250,6 +250,19 @@ def test_default_decider_prefers_typesafe(monkeypatch: pytest.MonkeyPatch) -> No
     assert isinstance(decider.writer, LlmWriter) and decider.writer.model == DEFAULT_TEXT_MODEL
 
 
+@pytest.mark.asyncio
+async def test_default_jev_writes_when_the_endpoint_key_is_empty(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("NOTTE_LLM_API_KEY", "")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-openrouter-key")
+    monkeypatch.setattr(llm_act, "_complete", _fake_complete(['{"text": "Hello"}'], []))
+    decider = default_decider()
+    assert isinstance(decider, JevDecider) and decider.route == "openrouter"
+    try:
+        assert await decider.write(WriteContext(goal="Say hello", field={}, page={})) == "Hello"
+    finally:
+        decider.close()
+
+
 def test_default_decider_llm_from_openrouter_or_configured_model(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("OPENROUTER_API_KEY", "k")
     # with an OpenRouter key, the LLM decider is opt-in (Jev is the default)
