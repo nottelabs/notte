@@ -138,6 +138,37 @@ async def test_blocks_of_an_editable_body_stay_offered() -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("value", "clear", "expected"),
+    [
+        ("New text", True, "New text"),
+        ("New text", False, "Hello boldNew text"),
+        ("New\ttext", False, "Hello boldNew text"),
+    ],
+    ids=["replace", "append", "paste"],
+)
+async def test_a_block_of_an_editable_body_in_a_frame_is_filled(value: str, clear: bool, expected: str) -> None:
+    # A paragraph cannot take focus: the fill must focus its editing host, the frame's `<body>`, or the keyboard
+    # types into what has the focus in the page (here, the page's own editor) and the frame stays as it was
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(f"data:text/html,{quote(EDITOR + EDITOR_FRAME)}")
+        obs = await session.aobserve()
+        actions = [(action.id, action.type) for action in obs.space.interaction_actions]
+        assert actions == [("I1", "fill"), ("M1", "click"), ("M2", "click")]
+
+        result = await session.aexecute(type="fill", id="I1", value="Page notes")
+        assert result.success, result.message
+        result = await session.aexecute(type="fill", id="M1", value=value, clear_before_fill=clear)
+        assert result.success, result.message
+
+        frame = page.frame_locator("iframe")
+        assert (await frame.locator("p").first.inner_text()).replace("\t", " ") == expected.replace("\t", " ")
+        assert await frame.locator("p").last.inner_text() == "World"
+        assert await page.locator(".editor").inner_text() == "Page notes"
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("shadow", [False, True])
 @pytest.mark.parametrize("scale", [1, 2])
 async def test_clipped_editor_uses_the_scroll_box_inner_bounds(shadow: bool, scale: int) -> None:

@@ -174,6 +174,9 @@ def _scroll_context_disappeared(frame: Frame, error: Error) -> bool:
 # Page-side implementation: js/move_caret_to_end.js
 _MOVE_CARET_TO_END = script("move_caret_to_end.js")
 
+# Page-side implementation: js/focus_editing_host.js
+_FOCUS_EDITING_HOST = script("focus_editing_host.js")
+
 _IS_TEXT_FORM_CONTROL = "(el) => el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement"
 
 # Page-side implementation: js/find_dropdown_option.js
@@ -783,6 +786,7 @@ async def _interact(
                     await locator.evaluate("(el) => el.click()", timeout=budget.remaining_ms())
 
         case FillAction(value=value):
+            await locator.evaluate(_FOCUS_EDITING_HOST, timeout=budget.remaining_ms())
             slider = await locator.evaluate(_SLIDER_VALUE, timeout=budget.remaining_ms())
             if slider is not None:
                 await _move_slider(window, locator, get_str_value(value), slider, budget)
