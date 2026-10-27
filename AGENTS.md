@@ -176,8 +176,14 @@ editor still accepts a fill. `tests/browser/test_dom_contenteditable.py` covers 
 
 - PyOTP 2.10.0 is the minimum for parsing TOTP URIs: 2.9 decodes delimiters
   before splitting the URI and rejects valid encoded issuer/account names.
-  AAC may return an already-generated decimal TOTP code; preserve it while
-  standard vault MFA values remain seeds. Bitwarden deletion requires a unique
+  AAC six- or eight-digit decimal TOTP values are generated codes; numeric seeds
+  require an `otpauth` URI. Standard vault MFA values remain seeds.
+  AAC presence checks use per-domain requests, since bulk listing is unsupported.
+  Its stop must join the request lock even after async cancellation, then reject
+  queued work until restart so a worker cannot recreate the deleted connection home.
+  Bitwarden cache refreshes must retain their generation through writes; an older
+  refresh cannot replace a write's invalidation. Domainless targets match nothing.
+  Bitwarden deletion requires a unique
   exact URL match, or a unique root-domain match when no exact URL exists.
 
 - Don't remove or rename public methods without a deprecation first: keep the

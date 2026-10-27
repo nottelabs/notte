@@ -58,6 +58,9 @@ class AacVault(BaseVault, SyncResource):
     connection apart from the ones the user's `aac` has cached, and forgets it on `stop()`: a restarted
     vault pairs again with its token (a rendezvous code only pairs once, a PSK token can pair again).
 
+    AAC numeric TOTP values are generated six- or eight-digit codes. Numeric seeds must use an
+    `otpauth` URI to distinguish them from those codes; other Base32 seed values remain supported.
+
         with AacVault(token="ABC-DEF-GHI") as vault, notte.Session(vault=vault) as session:
             session.execute(type="goto", url="https://github.com/login")
             session.execute(type="form_fill", value={"username": notte.USERNAME, "current_password": notte.PASSWORD})
@@ -92,6 +95,7 @@ class AacVault(BaseVault, SyncResource):
         self._home: str | None = None
         # one `aac` request at a time: concurrent first requests would pair twice with a single-use token
         self._lock: threading.Lock = threading.Lock()
+        self._stopped: bool = False
 
     @override
     def start(self) -> None:
@@ -99,18 +103,26 @@ class AacVault(BaseVault, SyncResource):
             raise RuntimeError(
                 f"'{self._aac_path}' CLI not found. Install from: https://github.com/bitwarden/agent-access/releases"
             )
+        with self._lock:
+            self._stopped = False
 
     @override
     def stop(self) -> None:
-        if self._home is not None:
-            shutil.rmtree(self._home, ignore_errors=True)
-            self._home = None
-        # the paired connection is gone: a restarted vault pairs again rather than use the user's cached connections
-        self.token = self._initial_token
+        # Cancelling to_thread does not stop its worker. Join the request's critical section before
+        # removing its connection files, and reject queued requests that acquire the lock afterward.
+        with self._lock:
+            self._stopped = True
+            if self._home is not None:
+                shutil.rmtree(self._home, ignore_errors=True)
+                self._home = None
+            # the paired connection is gone: a restarted vault pairs again rather than use the user's cached connections
+            self.token = self._initial_token
 
     def _request_credential(self, domain: str) -> _AacCredential | None:
         """Request the credential for `domain` through the tunnel, pairing first if a token is pending."""
         with self._lock:
+            if self._stopped:
+                raise RuntimeError("AacVault is stopped. Call start() before requesting credentials.")
             return self._request_credential_locked(domain)
 
     def _request_credential_locked(self, domain: str) -> _AacCredential | None:
@@ -201,6 +213,8 @@ class AacVault(BaseVault, SyncResource):
     @override
     def _mfa_code(self, value: str) -> str:
         if value.isascii() and value.isdecimal():
+            if len(value) not in (6, 8):
+                raise ValueError("Numeric MFA values must be 6/8-digit codes; provide numeric seeds in an otpauth URI")
             return value
         return super()._mfa_code(value)
 
@@ -215,6 +229,11 @@ class AacVault(BaseVault, SyncResource):
     @override
     async def list_credentials_async(self) -> list[Credential]:
         return []
+
+    @override
+    async def has_credential_async(self, url: str) -> bool:
+        """Query AAC for this domain; the provider does not support listing its credentials."""
+        return await self._get_credentials_impl(url) is not None
 
     @override
     async def set_credit_card_async(self, **kwargs: Unpack[CreditCardDict]) -> None:

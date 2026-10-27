@@ -67,6 +67,7 @@ class BitwardenVault(BaseVault, SyncResource):
         self._identity_url: str = identity_url
         self._client: BitwardenClient | None = None
         self._secrets_cache: list[SecretResponse] | None = None
+        self._cache_generation: int = 0
 
     @override
     def start(self) -> None:
@@ -98,12 +99,17 @@ class BitwardenVault(BaseVault, SyncResource):
         )
         _ = client.auth().login_access_token(self._access_token)
         self._client = client
+        self._invalidate_secrets()
         self._secrets_cache = self._fetch_secrets()
         logger.info(f"[BitwardenVault] Loaded {len(self._secrets_cache)} secrets")
 
     @override
     def stop(self) -> None:
         self._client = None
+        self._invalidate_secrets()
+
+    def _invalidate_secrets(self) -> None:
+        self._cache_generation += 1
         self._secrets_cache = None
 
     def _require_client(self) -> BitwardenClient:
@@ -124,8 +130,11 @@ class BitwardenVault(BaseVault, SyncResource):
 
     async def _secrets(self) -> list[SecretResponse]:
         """The organization's secrets, refetched after this vault added or deleted one."""
-        if self._secrets_cache is None:
-            self._secrets_cache = await asyncio.to_thread(self._fetch_secrets)
+        while self._secrets_cache is None:
+            generation = self._cache_generation
+            secrets = await asyncio.to_thread(self._fetch_secrets)
+            if generation == self._cache_generation:
+                self._secrets_cache = secrets
         return self._secrets_cache
 
     @staticmethod
@@ -154,6 +163,8 @@ class BitwardenVault(BaseVault, SyncResource):
         self, url: str, *, require_unique: bool = False
     ) -> tuple[SecretResponse, CredentialsDict] | None:
         target_domain = get_root_domain(url)
+        if not target_domain:
+            return None
         matches: list[tuple[SecretResponse, CredentialsDict]] = []
         exact: list[tuple[SecretResponse, CredentialsDict]] = []
         for secret in await self._secrets():
@@ -191,7 +202,7 @@ class BitwardenVault(BaseVault, SyncResource):
             None,
             [uuid.UUID(self._project_id)],
         )
-        self._secrets_cache = None
+        self._invalidate_secrets()
 
     @override
     async def delete_credentials_async(self, url: str) -> None:
@@ -200,7 +211,7 @@ class BitwardenVault(BaseVault, SyncResource):
         if found is None:
             raise ValueError(f"No credentials found for {url}")
         _ = await asyncio.to_thread(client.secrets().delete, [str(found[0].id)])
-        self._secrets_cache = None
+        self._invalidate_secrets()
 
     @override
     async def list_credentials_async(self) -> list[Credential]:
