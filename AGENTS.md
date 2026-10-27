@@ -50,11 +50,44 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
 - `BrowserWindow.page` can select a replacement automatically when its opener
   closes. Wait for a new tab independently of selection; its navigation request
   can also precede the context's `page` event.
+  Existing-tab recovery retains requests before click dispatch, but qualifies
+  replacement navigations against the notification of actual pointer input
+  (or the JS fallback click). Actionability waits can outlast background navigation;
+  Native clicks use `no_wait_after=True`: the action timeout bounds input, while
+  `PageSettle` waits for navigation even if its response has not committed.
+  Starting `Locator.click` is not the input boundary. The page binding reports
+  input before a handler closes the tab. Reuse one binding per page, clearing
+  action callbacks and input listeners after each action; a new binding per click
+  would retain callbacks in the driver's page registry.
+  Await input delivery inside the existing action timeout before settlement or
+  replacement selection, including closed-target acknowledgements. The JS click
+  fallback must await its input notification before invoking the handler.
+  Queue navigation attribution alongside input bindings: exposed callbacks run
+  as tasks, so immediate request timestamps can invert buffered event order.
+  Listener leak checks must prime the complete click path before their baseline:
+  the driver's injected utility installs its own persistent hit-target interceptor.
+  A new tab's fetch can precede that event too. Retain active context requests
+  while watching for tabs, then seed the new page's settle tracker; page listeners
+  installed after its first script runs otherwise miss its content request.
+  Use Python functions for event handlers: Patchright attaches handler metadata,
+  so built-in callables such as `set.add` cannot be registered directly.
   The driver can report a closed target from the click that closes its opener;
   accept that click only when a live replacement appears, and wait for it.
+  Measure the post-close replacement wait from the page's close event. The click
+  can first wait for actionability or input delivery within its own action budget;
+  that work is outside the post-close grace period.
   When activating a tracked late tab, retain earlier tabs and their request trackers
   until selection succeeds. A tab closing during activation must not discard the
   surviving candidates or stop watching when none survive.
+  A closing popup can start requests on an already-existing tab. Track those
+  tabs before the click so the replacement wait retains their in-flight work.
+  A help popup can also close back to an existing opener. Wait for that survivor
+  and require a successful driver round trip before accepting a target-closed click;
+  cached page state alone does not prove the browser is still usable.
+  If another unrelated tab survives too, select the popup's actual live opener
+  when no new tab was created, and await that opener's tracked requests. A click
+  can instead navigate an existing named tab: prefer a single tracked main-frame
+  navigation before the opener, including reloads and navigation before commit.
 - A new-document `goto` tracks requests before its commit and waits for the destination
   within one navigation budget. Do not wait on the old document's tracker first:
   a commit after the 3 s settle cap must still get its remaining load wait.

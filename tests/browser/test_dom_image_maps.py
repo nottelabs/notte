@@ -152,11 +152,14 @@ async def _offered_areas(session: NotteSession, page: str, scroll_y: int | None 
 
 
 @pytest.mark.asyncio
-async def test_areas_hit_away_from_the_center_of_their_box_are_offered() -> None:
+@pytest.mark.parametrize("other_tab", [False, True])
+async def test_areas_hit_away_from_the_center_of_their_box_are_offered(other_tab: bool) -> None:
     """The hall's center is outside its L shape, and the middle covers the center of the `default` area."""
     async with NotteSession(headless=True) as session:
         areas = await _offered_areas(session, SHAPES)
         assert list(areas) == ["Hall", "Middle", "Rest"]
+        if other_tab:
+            _ = await session.window.page.context.new_page()
 
         result = await session.aexecute(type="click", id=areas["Hall"])
         assert result.success, result.message

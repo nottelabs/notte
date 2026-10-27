@@ -42,6 +42,7 @@ wait that followed them before.
 
 import asyncio
 import time
+from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Literal, TypedDict
 from urllib.parse import urlsplit
@@ -146,7 +147,7 @@ class PageSettle:
     """What an action starts on `page`, tracked from right before it, until the page settles: on the same document,
     on the document it navigated to, or until a tab opens (with `tabs`)."""
 
-    def __init__(self, page: Page, tracker: JSHandle | None, *, tabs: bool) -> None:
+    def __init__(self, page: Page, tracker: JSHandle | None, *, tabs: bool, requests: Iterable[Request] = ()) -> None:
         self.page: Page = page
         # None: the page is between two documents, the next one is tracked
         self._tracker: JSHandle | None = tracker
@@ -161,6 +162,9 @@ class PageSettle:
         self._changes: list[float] = []
         self._last_request: float | None = None
         self._tabs: bool = tabs
+        # when the main document's navigation was requested, and its request: kept after the request ends
+        self._navigation_started_at: float | None = None
+        self._navigation_request: Request | None = None
         # the tabs opened since the action started: the page is waited for no longer. Each is tracked from then on
         self.opened: list[Page] = []
         self._opened_event: asyncio.Event = asyncio.Event()
@@ -171,6 +175,8 @@ class PageSettle:
         page.on("request", self._request_started)
         page.on("requestfinished", self._request_ended)
         page.on("requestfailed", self._request_ended)
+        for request in requests:
+            self._request_started(request)
         if tabs:
             page.context.on("page", self._page_opened)
             page.context.on("request", self._context_request)
@@ -197,6 +203,12 @@ class PageSettle:
         """The action has ended: the grace and the caps count from now."""
         self._began = time.perf_counter()
 
+    def navigation_requested_after(self, input_at: float | None) -> bool:
+        """Whether a main-frame navigation was reported after the click's native input notification."""
+        return (
+            input_at is not None and self._navigation_started_at is not None and self._navigation_started_at >= input_at
+        )
+
     def tab(self, page: Page) -> "PageSettle":
         """The settle of a tab the action opened, tracking its requests since it appeared (the caller closes it).
         Wait for it as for a click's new page: `wait(document="requests")`."""
@@ -209,8 +221,15 @@ class PageSettle:
         self._last_request = now
 
     def _request_started(self, request: Request) -> None:
+        # A context request seeded before the page event can also arrive on the page afterward.
+        if request in self._in_flight:
+            return
         if request.resource_type not in TRACKED_REQUESTS or not self._same_origin(request):
             return
+        if request.is_navigation_request() and request.frame is self.page.main_frame:
+            # Exposed input bindings are queued tasks. Attribute navigation in the same queue so batched protocol
+            # messages cannot timestamp a request ahead of an earlier input callback that has not run yet.
+            _ = asyncio.get_running_loop().call_soon(self._navigation_started, request)
         # Repeated requests do not extend the quiet window indefinitely, but may carry the action's result.
         url = urlsplit(request.url)._replace(fragment="").geturl()
         key = (request.frame, request.method, url, request.post_data_buffer)
@@ -219,6 +238,14 @@ class PageSettle:
             return
         self._sent.add(key)
         self._changed()
+
+    def _navigation_started(self, request: Request) -> None:
+        if request.redirected_from is None:
+            self._navigation_started_at = time.perf_counter()
+        elif request.redirected_from is not self._navigation_request:
+            # A redirect whose initial request predates this tracker cannot establish click navigation.
+            self._navigation_started_at = None
+        self._navigation_request = request
 
     def _same_origin(self, request: Request) -> bool:
         """Whether `request` comes from the page or one of its same-origin frames (whose DOM is watched too). A frame
