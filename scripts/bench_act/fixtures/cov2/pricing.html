@@ -1,12 +1,3 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Done</title></head><body>
-<h1 id="title">Thank you</h1><p>We received your request.</p><ul id="data"></ul>
-<script>
-const names = {'trip-results': 'Search results', 'wizard-done': 'Your account is ready', 'paid': 'Payment received',
-  'posted': 'Your review is posted', 'xframe-done': 'You are subscribed', 'order-done': 'Order placed',
-  'address-saved': 'Addresses saved', 'choice-done': 'Order customised', 'warranty': 'Warranty terms', 'kontakt': 'Kontakt'};
-const page = location.pathname.split('/').pop().replace('.html', '');
-document.getElementById('title').textContent = names[page] || 'Thank you';
-document.title = names[page] || 'Thank you';
-for (const [k, v] of new URLSearchParams(location.search)) {
-  const li = document.createElement('li'); li.textContent = k + ': ' + v; document.getElementById('data').appendChild(li); }
-</script></body></html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Brightly - Pricing</title></head><body>
+<h1>Pricing</h1><p>Brightly project planning plans.</p>
+</body></html>
