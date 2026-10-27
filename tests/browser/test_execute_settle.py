@@ -9,6 +9,7 @@ from contextlib import ExitStack, closing
 from typing import Literal
 from unittest.mock import patch
 
+import notte_browser.execution as execution_module
 import notte_browser.settle as settle_module
 import notte_browser.window as window_module
 import pytest
@@ -17,7 +18,7 @@ from aiohttp import web
 from notte_browser.driver import Error, JSHandle, Locator, Page
 from notte_browser.session import NotteSession
 from notte_browser.settle import CAP_MS, LONG_GRACE_MS, QUIET_MS, SETTLE_MS, PageSettle
-from notte_core.actions import ClickAction, GoBackAction, GoForwardAction, PressKeyAction, ScrollDownAction
+from notte_core.actions import BaseAction, ClickAction, GoBackAction, GoForwardAction, PressKeyAction, ScrollDownAction
 from notte_core.config import config
 from notte_core.errors import NotteBaseError
 from PIL import Image
@@ -733,10 +734,37 @@ async def test_scrape_and_screenshot_right_after_a_navigating_click_see_the_new_
 @pytest.mark.asyncio
 @pytest.mark.timing
 @pytest.mark.parametrize("element", ["hang", "hang-page"])
+@pytest.mark.parametrize("startup_delay", [0, 1.2])
 async def test_a_request_that_never_ends_is_waited_for_within_the_bound(
-    session: NotteSession, site: str, element: str
+    session: NotteSession, site: str, element: str, startup_delay: float
 ) -> None:
-    elapsed = await click(session, element)
+    start = PageSettle.start
+    settle_action = execution_module._settle
+    durations: list[float] = []
+
+    async def delayed_start(page: Page, *, tabs: bool = False, timeout_ms: float | None = None) -> PageSettle:
+        # Tracker startup and actionability are outside the post-action settle budget.
+        await asyncio.sleep(startup_delay)
+        return await start(page, tabs=tabs, timeout_ms=timeout_ms)
+
+    async def measured_settle(
+        settle: PageSettle, action: BaseAction, url: str, *, verbose: bool, new_document: bool = False
+    ) -> None:
+        began = time.monotonic()
+        await settle_action(settle, action, url, verbose=verbose, new_document=new_document)
+        durations.append(time.monotonic() - began)
+
+    # Observe the real request, rather than accepting a quick return that never waited for it.
+    async with session.window.page.expect_request(f"{site}/hang"):
+        with (
+            patch.object(PageSettle, "start", new=delayed_start),
+            patch.object(execution_module, "_settle", new=measured_settle),
+        ):
+            total = await click(session, element)
+    assert len(durations) == 1
+    elapsed = durations[0]
+    assert elapsed >= CAP_MS / 1000
+    assert total >= startup_delay + elapsed
     if element == "hang":
         assert elapsed < CAP_MS / 1000 + 1
     else:
