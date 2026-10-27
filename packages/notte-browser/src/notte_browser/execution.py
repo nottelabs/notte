@@ -1043,7 +1043,8 @@ async def _execute(
         """Until the click's input is reported. When the driver `returned` from the click, its input came by then."""
         if not click_inputs:
             return
-        if click_document_replaced and not click_input_received.is_set():
+        # a lost document does not prove a failed click happened
+        if returned and click_document_replaced and not click_input_received.is_set():
             try:
                 # a URL change within the document keeps its listener
                 _ = await click_inputs[-1].evaluate("() => true")
@@ -1091,8 +1092,16 @@ async def _execute(
         async def js_click_with_input(element: ElementHandle) -> None:
             # The JS path emits no trusted pointer event. Mark its input in the same task as the click.
             if click_document_replaced:
+                reported = click_input_received.is_set()
                 record_click_input()
-                await element.evaluate("el => el.click()")
+                try:
+                    await element.evaluate("el => el.click()")
+                except Error:
+                    if not reported:
+                        # the click may not have happened
+                        click_input_times.clear()
+                        click_input_received.clear()
+                    raise
             else:
                 await click_input.evaluate("async (input, el) => { await input.mark(); el.click(); }", element)
 

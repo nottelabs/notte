@@ -1528,3 +1528,25 @@ async def test_a_click_whose_input_the_page_hides_from_its_listener_still_ends(
     _ = await click(session, "late")
     assert session.window.page is page
     assert "Late result" in await text(session)
+
+
+@pytest.mark.asyncio
+async def test_a_click_whose_popup_reloads_then_closes_before_its_input_fails(
+    session: NotteSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A lost document does not prove the click happened: without its input reported, the closed error stands."""
+    opener = session.window.page
+    async with opener.context.expect_page() as opened:
+        await opener.evaluate("window.open('/')")
+    popup = await opened.value
+    await popup.wait_for_load_state("load")
+    session.window.page = popup
+
+    async def reload_then_close(_locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
+        _ = await popup.reload(wait_until="load")
+        await popup.close()
+        raise Error("Locator.click: Target page, context or browser has been closed")
+
+    monkeypatch.setattr(Locator, "click", reload_then_close)
+    with pytest.raises(NotteBaseError, match="Target page, context or browser has been closed"):
+        _ = await click(session, "close-self")
