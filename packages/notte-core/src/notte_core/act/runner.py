@@ -294,8 +294,8 @@ async def run_act(
     variables = dict(variables or {})
     history.privacy.remember(variables)
     labels = label_mode()
-    # text written for a field, reused if a stale page forces a new decision on the same field
-    written: dict[tuple[str, str, str], str] = {}
+    # text written for a field, reused if a stale page forces a new decision on the same field (`_field_identity`)
+    written: dict[tuple[str, ...], str] = {}
     # the fields the writer had no value for, not offered to TYPE_TEXT when deciding again
     no_text: set[tuple[str, str]] = set()
 
@@ -352,7 +352,7 @@ async def run_act(
         target = decision.target
         text: str | None = None
         if target is not None and needs_text(target):
-            key = (target.element_id, target.label, page.url)
+            key = _field_identity(page, target)
             text = written.get(key)
             if text is None:
                 step = time.perf_counter()
@@ -505,6 +505,20 @@ async def _answer(
             if attempt == 1:
                 raise
     raise AssertionError("unreachable")  # pragma: no cover
+
+
+def _field_identity(page: ObservedPage, target: Target) -> tuple[str, ...]:
+    """Which field written text belongs to. Ids and XPaths are positions: once the page re-rendered, the same id can be
+    another field with the same label (a shipping "Name" where the billing one was), told apart by its section
+    context and selectors (with their iframe and shadow-root path)."""
+    selectors = next((action.selectors for action in page.actions if action.id == target.element_id), None)
+    return (
+        target.element_id,
+        target.label,
+        target.context or "",
+        "" if selectors is None else selectors.model_dump_json(),
+        page.url,
+    )
 
 
 async def _write(decider: Decider, context: WriteContext) -> str | None:

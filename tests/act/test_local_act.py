@@ -203,6 +203,37 @@ async def test_page_changing_under_the_decision_is_stale_and_text_is_reused(sess
 
 
 @pytest.mark.asyncio
+async def test_text_is_not_reused_for_another_field_behind_the_same_id(session: NotteSession) -> None:
+    # two fields named "Name": the page swaps their sections while the first decision is taken, so the same id
+    # (and XPath) is now the shipping field. The billing name written for the first decision must not be typed there
+    page = session.window.page
+    await page.set_content(
+        '<div id="form"><section><h2>Billing</h2><label for="billing">Name</label><input id="billing"></section>'
+        '<section><h2>Shipping</h2><label for="shipping">Name</label><input id="shipping"></section></div>'
+    )
+    ids = await _ids(session)
+    swapped = {"done": False}
+
+    async def swap_once() -> None:
+        if not swapped["done"]:
+            swapped["done"] = True
+            await page.eval_on_selector("#form", "form => form.prepend(form.lastElementChild)")
+
+    decider = FakeDecider(
+        choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["billing"]}] * 2,
+        texts=["Ada Billing", "Ada Shipping"],
+        on_choose=swap_once,
+    )
+    result = await session.aact("type the shipping name", raise_on_failure=False, decider=decider)
+
+    assert result.status == "executed", result.message
+    # the writer was asked again for the other field
+    assert len(decider.contexts) == 2
+    assert await page.input_value("#shipping") == "Ada Shipping"
+    assert await page.input_value("#billing") == ""
+
+
+@pytest.mark.asyncio
 async def test_invalid_answers_execute_nothing(session: NotteSession) -> None:
     class Broken(FakeDecider):
         async def choose(self, state, questions):  # pyright: ignore[reportMissingParameterType, reportUnknownParameterType]
