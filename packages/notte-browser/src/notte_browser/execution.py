@@ -177,6 +177,9 @@ _MOVE_CARET_TO_END = script("move_caret_to_end.js")
 # Page-side implementation: js/focus_editing_host.js
 _FOCUS_EDITING_HOST = script("focus_editing_host.js")
 
+# Page-side implementation: js/select_contents.js
+_SELECT_CONTENTS = script("select_contents.js")
+
 _IS_TEXT_FORM_CONTROL = "(el) => el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement"
 
 # Page-side implementation: js/find_dropdown_option.js
@@ -786,7 +789,7 @@ async def _interact(
                     await locator.evaluate("(el) => el.click()", timeout=budget.remaining_ms())
 
         case FillAction(value=value):
-            await locator.evaluate(_FOCUS_EDITING_HOST, timeout=budget.remaining_ms())
+            in_editing_host: bool = await locator.evaluate(_FOCUS_EDITING_HOST, timeout=budget.remaining_ms())
             slider = await locator.evaluate(_SLIDER_VALUE, timeout=budget.remaining_ms())
             if slider is not None:
                 await _move_slider(window, locator, get_str_value(value), slider, budget)
@@ -797,16 +800,16 @@ async def _interact(
                     )
                 await locator.focus(timeout=budget.remaining_ms())
 
-                if action.clear_before_fill:
+                if action.clear_before_fill and in_editing_host:
+                    # select-all would select the whole host: the other blocks of the editor too
+                    await locator.evaluate(_SELECT_CONTENTS, timeout=budget.remaining_ms())
+                elif action.clear_before_fill:
                     await _clear_focused_field(window)
                 else:
                     await locator.evaluate(_MOVE_CARET_TO_END, timeout=budget.remaining_ms())
 
                 # Use isolated clipboard variable instead of system clipboard
-                await window.page.evaluate(
-                    _PASTE_TEXT,
-                    get_str_value(value),
-                )
+                await locator.evaluate(_PASTE_TEXT, get_str_value(value), timeout=budget.remaining_ms())
 
                 await window.short_wait()
             elif action.clear_before_fill:

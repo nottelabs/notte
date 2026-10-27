@@ -143,9 +143,11 @@ async def test_blocks_of_an_editable_body_stay_offered() -> None:
     [
         ("New text", True, "New text"),
         ("New text", False, "Hello boldNew text"),
-        ("New\ttext", False, "Hello boldNew text"),
+        # indented text is pasted (`text_contains_tabs`)
+        ("\tNew text", True, " New text"),
+        ("\tNew text", False, "Hello bold New text"),
     ],
-    ids=["replace", "append", "paste"],
+    ids=["replace", "append", "paste-replace", "paste-append"],
 )
 async def test_a_block_of_an_editable_body_in_a_frame_is_filled(value: str, clear: bool, expected: str) -> None:
     # A paragraph cannot take focus: the fill must focus its editing host, the frame's `<body>`, or the keyboard
@@ -163,9 +165,25 @@ async def test_a_block_of_an_editable_body_in_a_frame_is_filled(value: str, clea
         assert result.success, result.message
 
         frame = page.frame_locator("iframe")
-        assert (await frame.locator("p").first.inner_text()).replace("\t", " ") == expected.replace("\t", " ")
+        # the browser inserts a tab into a paragraph as a non-breaking space
+        assert (await frame.locator("p").first.inner_text()).replace("\xa0", " ") == expected
         assert await frame.locator("p").last.inner_text() == "World"
         assert await page.locator(".editor").inner_text() == "Page notes"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("handled", [False, True])
+async def test_indented_text_is_pasted_once(handled: bool) -> None:
+    # an editor that handles pasting (CodeMirror, Monaco) inserts the text itself; otherwise the browser inserts it
+    handler = "event.preventDefault(); this.value = 'pasted: ' + event.clipboardData.getData('text/plain');"
+    page_html = f"""<textarea aria-label="Code" onpaste="{handler if handled else ""}">old</textarea>"""
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(page_html)}")
+        _ = await session.aobserve()
+        result = await session.aexecute(type="fill", id="I1", value="\tdef f():\n\t\treturn 1")
+        assert result.success, result.message
+        value = await session.window.page.locator("textarea").input_value()
+        assert value == ("pasted: " if handled else "") + "\tdef f():\n\t\treturn 1"
 
 
 @pytest.mark.asyncio
