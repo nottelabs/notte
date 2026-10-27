@@ -50,6 +50,10 @@ You can use the default parameters to create your session, or customize them:
   File Storage to attach to the session
 </ParamField>
 
+<ParamField path="vault" type="NotteVault | None" default="None">
+  Vault to attach to the session; the same as passing its `vault_id`.
+</ParamField>
+
 <ParamField path="perception_type" type="Literal['fast', 'deep']" default="fast">
   Default perception type for `observe()`. Defaults to `'fast'`. `'deep'` is deprecated and removed on December 1, 2026; use `'fast'`.
 </ParamField>
