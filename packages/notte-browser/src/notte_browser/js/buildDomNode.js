@@ -574,16 +574,18 @@
 	/**
 	 * Checks if an element is the root of a `contenteditable` region (an editing host), as the editor of
 	 * a rich text field is. The elements inside it are editable too, but they are its content: the
-	 * host is the field. In an editable `<body>` (an editor's iframe), which is never highlighted, the
-	 * blocks right inside it count as the roots.
+	 * host is the field. In an editable `<body>` (an editor's iframe), the blocks right inside it count
+	 * as the roots; without such blocks the body itself remains the field.
 	 *
 	 * @param {HTMLElement} element - The element to check.
 	 * @returns {boolean} Whether the element is an editing host.
 	 */
 	function isEditingHost(element) {
 		const parent = parentElementOf(element);
+		const bodyBlock = parent === BODY && ["block", "flow-root", "flex", "grid", "list-item", "table", "-webkit-box", "flow-root list-item"]
+			.includes(getCachedComputedStyle(element)?.display);
 		return propertyOf(element, "isContentEditable") === true &&
-			(parent === null || propertyOf(parent, "isContentEditable") !== true || parent === BODY);
+			(parent === null || propertyOf(parent, "isContentEditable") !== true || bodyBlock);
 	}
 
 	function isHiddenForName(element) {
@@ -2671,8 +2673,11 @@
 			return null;
 		}
 
-		// Special handling for root node (body)
-		if (node === BODY) {
+		// Preserve block actions in editable documents. An inline-only editor instead needs its actual
+		// body host to pass through normal visibility, highlighting and descendant-interaction checks.
+		const isBodyEditor = node === BODY && isEditingHost(node) &&
+			![...childrenOf(node)].some(child => isEditingHost(child) && isElementVisible(child) && isRendered(child, true));
+		if (node === BODY && !isBodyEditor) {
 			const nodeData = {
 				tagName: 'body',
 				attributes: {},
@@ -2790,6 +2795,11 @@
 				const value = getAttribute(node, name);
 				nodeData.attributes[name] = value;
 			}
+		}
+		if (isBodyEditor && !nodeData.attributes.role) {
+			// The payload normally represents body as the page. Project its implicit editing role only
+			// when it owns the field, while preserving any explicit role supplied by the page.
+			nodeData.attributes.role = getRole(node);
 		}
 
 		let nodeWasHighlighted = false;

@@ -148,6 +148,11 @@ handler properties in the page world (the Playwright backend) evaluate
 Only an editing host gets the implicit `contenteditable` textbox role. Carry the
 host flag from the DOM script into both role classification and duplicate detection;
 editable descendants with their own click handlers must retain their click actions.
+The editable-body exception applies to direct block children by computed display,
+including `-webkit-box` and `flow-root list-item`; inline variants are not hosts.
+Without visible block hosts, expose the actual body as the textbox instead of
+dropping every editing action. Its inline content is not another editing host,
+and independent click handlers must still remain actionable.
 
 An image-map `<area>` has `display: none` and no box. The DOM script's
 `getBoundingClientRect`/`getClientRects` helpers give it the bounds of its shape on
@@ -244,6 +249,14 @@ even after `>>`). The XPath of an element in a shadow root restarts there, so th
 observed CSS path is what finds it: `dom/builder.py` builds it on from the host's
 (`html > body > my-form > my-field:nth-of-type(2) > input`), as Playwright's `>`
 goes from a host to the top elements of its shadow root.
+
+That `>` also goes to the host's light children, so a light child and a top
+shadow child of the same tag have the same CSS path. `dom/locate.py` then picks,
+among the CSS matches, the element the XPath chain of `selectors_through_shadow_dom`
+leads to (`js/shadow_chain_index.js` walks it through each `shadowRoot`), even
+when there is one match: a match the chain does not reach is rejected. It never
+passes a chain that enters a shadow root to Playwright's XPath engine, which would
+find the host's light child instead.
 
 ## HTTP transport
 
