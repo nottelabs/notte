@@ -250,7 +250,20 @@ async def test_escaping_editor_is_hit_tested_beyond_the_scroll_box(position: str
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("in_frame", [False, True])
-@pytest.mark.parametrize("display", ["inline", "inline-block", "inline-flex", "inline-grid", "contents", "block"])
+@pytest.mark.parametrize(
+    "display",
+    [
+        "inline",
+        "inline-block",
+        "inline-flex",
+        "inline-grid",
+        "contents",
+        "-webkit-inline-box",
+        "block",
+        "-webkit-box",
+        "flow-root list-item",
+    ],
+)
 async def test_editable_body_offers_blocks_and_independent_inline_clicks(display: str, in_frame: bool) -> None:
     """Inline editor content is not its own action; a block or independent click handler still is."""
     editor = f"""<body contenteditable="true"><p>Paragraph</p>
@@ -267,9 +280,48 @@ async def test_editable_body_offers_blocks_and_independent_inline_clicks(display
         observation = await session.aobserve()
         actions = observation.space.interaction_actions
         assert [action.text_label for action in actions] == (
-            ["Paragraph"] + (["Body line"] if display == "block" else []) + ["Open details"]
+            ["Paragraph"]
+            + (["Body line"] if display in {"block", "-webkit-box", "flow-root list-item"} else [])
+            + ["Open details"]
         )
         result = await session.aexecute(type="click", id=actions[-1].id)
         assert result.success, result.message
         body = page.frame_locator("iframe").locator("body") if in_frame else page.locator("body")
         assert await body.get_attribute("data-clicked") == "yes"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("in_frame", [False, True])
+@pytest.mark.parametrize(
+    "content",
+    [
+        "Text",
+        "<span>Text</span>",
+        "<span style='display:contents'><em>Text</em></span>",
+        "<p hidden>Hidden</p><span>Text</span>",
+    ],
+)
+async def test_editable_body_without_block_actions_is_one_fillable_field(content: str, in_frame: bool) -> None:
+    """Inline content belongs to the body editor; independent click handlers remain actionable."""
+    editor = f"""<body contenteditable="true" aria-label="Notes">{content}
+      <span onclick="document.body.dataset.clicked = 'yes'">Open details</span></body>"""
+    html = (
+        f'<iframe style="width: 600px; height: 300px" srcdoc="{escape(editor, quote=True)}"></iframe>'
+        if in_frame
+        else editor
+    )
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(f"data:text/html,{quote(html)}")
+        observation = await session.aobserve()
+        actions = observation.space.interaction_actions
+        assert [(action.id, action.type) for action in actions] == [("I1", "fill"), ("M1", "click")]
+        assert actions[0].accessible_name == "Notes"
+
+        result = await session.aexecute(type="click", id="M1")
+        assert result.success, result.message
+        body = page.frame_locator("iframe").locator("body") if in_frame else page.locator("body")
+        assert await body.get_attribute("data-clicked") == "yes"
+        result = await session.aexecute(type="fill", id="I1", value="Replacement notes")
+        assert result.success, result.message
+        assert await body.inner_text() == "Replacement notes"

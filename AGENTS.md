@@ -92,9 +92,11 @@ handler properties in the page world (the Playwright backend) evaluate
 Only an editing host gets the implicit `contenteditable` textbox role. Carry the
 host flag from the DOM script into both role classification and duplicate detection;
 editable descendants with their own click handlers must retain their click actions.
-The editable-body exception applies to direct block children by computed display;
-inline content (including inline-block, inline-flex and inline-grid) is not another
-editing host. Its independent click handlers must still remain actionable.
+The editable-body exception applies to direct block children by computed display,
+including `-webkit-box` and `flow-root list-item`; inline variants are not hosts.
+Without visible block hosts, expose the actual body as the textbox instead of
+dropping every editing action. Its inline content is not another editing host,
+and independent click handlers must still remain actionable.
 
 An image-map `<area>` has `display: none` and no box. The DOM script's
 `getBoundingClientRect`/`getClientRects` helpers give it the bounds of its shape on
