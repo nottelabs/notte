@@ -183,6 +183,8 @@ editor still accepts a fill. `tests/browser/test_dom_contenteditable.py` covers 
   queued work until restart so a worker cannot recreate the deleted connection home.
   Bitwarden cache refreshes must retain their generation through writes; an older
   refresh cannot replace a write's invalidation. Domainless targets match nothing.
+  Cancelled Bitwarden writes must finish their native worker and invalidate the
+  cache before cancellation propagates, including repeated cancellation and failed responses.
   Bitwarden deletion requires a unique
   exact URL match, or a unique root-domain match when no exact URL exists.
 
