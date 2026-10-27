@@ -33,7 +33,7 @@ from pydantic import BaseModel
 from typing_extensions import override
 
 from notte_browser.dom.parsing import parse_dom
-from notte_browser.driver import Browser, BrowserContext, CDPSession, Locator, Page, Playwright, Response
+from notte_browser.driver import Browser, BrowserContext, CDPSession, Locator, Page, Playwright, Request, Response
 from notte_browser.errors import (
     BrowserExpiredError,
     EmptyPageContentError,
@@ -286,10 +286,12 @@ class BrowserWindow:
         if watch:
             self._tabs_context = self.page.context
             self._tabs_context.on("page", self._new_tab)
+            self._tabs_context.on("request", self._new_tab_request)
 
     async def _forget_new_tabs(self) -> None:
         if self._tabs_context is not None:
             _ = self._tabs_context.remove_listener("page", self._new_tab)
+            _ = self._tabs_context.remove_listener("request", self._new_tab_request)
             self._tabs_context = None
         tabs, self._new_tabs = self._new_tabs, {}
         for settle in tabs.values():
@@ -298,6 +300,12 @@ class BrowserWindow:
     def _new_tab(self, page: Page) -> None:
         # its first scripts can start requests before it is switched to
         self._new_tabs[page] = PageSettle(page, None, tabs=False)
+
+    def _new_tab_request(self, _request: Request) -> None:
+        # The driver sends a page's request events only while the page or its context listens for them. A tab's
+        # listeners are added once it is known, after its first response: listening on the context keeps the requests
+        # its first scripts start before then.
+        pass
 
     async def switch_to_new_tab(self, *, verbose: bool = False) -> None:
         """Switch to the last tab opened since the last action that is still open (`watch_new_tabs`), and wait for it
