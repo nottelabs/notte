@@ -1,14 +1,65 @@
 """Offline contracts that keep capacity skips from hiding client regressions."""
 
 import json
+import re
 
 import httpx
 import pytest
 from notte_core.errors import InvalidAPIKeyError, LLMParsingError, LLMProviderError
+from notte_core.pruning import LINK_PATTERN
 from notte_llm import LlmExtractor
 from pydantic import BaseModel
 
-from tests.llm.provider_matrix import ROUTES, Attempt, Route, Trace, UnavailableRoute, routing_options
+from tests.llm import test_provider_matrix as live_matrix
+from tests.llm.provider_matrix import EXPECTED_LINKS, ROUTES, Attempt, Route, Trace, UnavailableRoute, routing_options
+
+
+@pytest.mark.parametrize("case", EXPECTED_LINKS)
+def test_matrix_link_ground_truth_matches_saved_document(case):
+    document = (live_matrix.SNAPSHOTS / case / "scrape.md").read_text()
+    # The first occurrence supplies the label; repeated URLs are one link.
+    links = {}
+    for label, url in re.findall(LINK_PATTERN, document):
+        links.setdefault(url, label)
+    assert tuple((label, url) for url, label in list(links.items())[:3]) == EXPECTED_LINKS[case]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("case", EXPECTED_LINKS)
+@pytest.mark.parametrize("outcome", ["complete", "missing", "invented", "reordered", "refusal"])
+async def test_matrix_checks_extracted_links_offline(case, outcome, monkeypatch):
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+    links = [
+        {"label": label, "url": f"link{index}", "description": None}
+        for index, (label, _) in enumerate(EXPECTED_LINKS[case], start=1)
+    ]
+    if outcome == "missing":
+        links.pop()
+    elif outcome == "invented":
+        links[-1]["url"] = "https://example.com/invented"
+    elif outcome == "reordered":
+        links.reverse()
+    payload = {"success": True, "error": None, "data": {"title": "Title", "links": links, "summary": None}}
+    if outcome == "refusal":
+        payload = {"success": False, "error": "Fewer than three navigation links", "data": None}
+    bodies = []
+
+    async def send(client, request, **kwargs):
+        body = json.loads(request.content)
+        bodies.append(body)
+        return httpx.Response(200, request=request, json={"choices": [{"message": {"content": json.dumps(payload)}}]})
+
+    monkeypatch.setattr(httpx.AsyncClient, "send", send)
+    route = next(route for route in ROUTES if route.name == "kimi")
+    if outcome == "complete":
+        await live_matrix.test_provider_matrix(route, case, monkeypatch, lambda name, value: None)
+    else:
+        with pytest.raises(AssertionError):
+            await live_matrix.test_provider_matrix(route, case, monkeypatch, lambda name, value: None)
+    assert len(bodies) == 1
+    prompt = json.dumps(bodies[0]["messages"])
+    assert "including body and footer links" in prompt
+    assert "Count repeated URLs only once" in prompt
 
 
 @pytest.mark.parametrize("status", [400, 401, 404, 422, 500, 502])
