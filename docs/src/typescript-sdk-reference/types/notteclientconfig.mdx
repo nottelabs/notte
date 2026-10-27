@@ -32,6 +32,11 @@ export interface NotteClientConfig {
    * `0` disables retries.
    */
   maxRetries?: number;
+  /**
+   * Minimum level of SDK diagnostic logs, such as Playwright connection events
+   * from `session.page()`. Defaults to `NOTTE_LOG_LEVEL` or `'warn'`.
+   */
+  logLevel?: LogLevel;
 }
 ```
 
@@ -68,4 +73,9 @@ honored. POST and PATCH requests are only retried when the API cannot
 have processed them (503, 529, connection refused), so they are never
 applied twice. All attempts share the request timeout. Defaults to 3;
 `0` disables retries.
+</ParamField>
+
+<ParamField body="logLevel" type={"LogLevel | undefined"}>
+Minimum level of SDK diagnostic logs, such as Playwright connection events
+from `session.page()`. Defaults to `NOTTE_LOG_LEVEL` or `'warn'`.
 </ParamField>

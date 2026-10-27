@@ -67,6 +67,12 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   `scripts/ci_integration_examples.py`) install the local `node-sdk` with
   `npm install --no-save`. Don't add `--package-lock=false`: it ignores the
   example's lockfile, so a new upstream release can break CI.
+- Node SDK unit tests include a local Chromium lifecycle suite. Workflows running
+  `npm run test:unit` or `npm run test:coverage` must install Chromium after `npm ci`
+  with `npx playwright-core install --with-deps chromium`, including the publish job.
+- Python SDK lifecycle snapshots traverse every context and tab. Build them in a
+  Loguru patcher so disabled modules and log levels avoid that work, while enabled
+  messages retain their structured diagnostic fields.
 - `evaluate_js` preserves RegExp results as JSON data (`{"r": {"p": source,
   "f": flags}}`), including complete patterns. Patchright 1.64.1 and Playwright
   1.64.0 compile native regex results into Python objects, so native evaluation is
@@ -222,6 +228,9 @@ After changing `packages/notte-sdk/src/`, run `make docs-sdk` (the
 generated files. `make docs-check` fails if they are out of date.
 Manual SDK pages repeat constructor parameter fields; keep their type strings
 in sync with the generated `__init__.mdx` pages. Docs tests compare both.
+The reference also includes imported core models such as `ElementState`. Regenerate
+it after their fields or docstrings change, including when those changes arrive
+through a rebase onto `main`.
 
 ## OpenAPI refresh
 
@@ -259,3 +268,7 @@ the revision-5 lockfile. SDK model generation requires datamodel-code-generator
 Docs CI syncs the workspace before installing job-only dependencies, then uses
 `uv run --no-sync`; a later sync can remove those dependencies or replace an
 environment built with a Python version that differs from `.python-version`.
+
+Playwright lifecycle diagnostics for `RemoteSession` and `AsyncRemoteSession` share
+`_PlaywrightDiagnostics` in `endpoints/sessions.py`. Async page connection and cleanup
+run through `_async_page` and `_async_exit`; keep instrumentation in those shared paths.

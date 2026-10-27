@@ -194,6 +194,7 @@ const notte = new NotteClient({
   baseUrl: 'https://api.notte.cc',   // defaults to NOTTE_API_URL or https://api.notte.cc
   timeoutMs: 60_000,                 // per-request timeout, default 60 s
   verbose: false,                    // log every request
+  logLevel: 'warn',                  // SDK diagnostics, defaults to NOTTE_LOG_LEVEL or 'warn'
 });
 
 // Create sessions
@@ -328,6 +329,11 @@ await notte.Session().use(async (session) => {
   const cdpUrl = await session.cdpUrl();
 });
 ```
+
+The SDK reports unexpected page, tab and connection closes as warnings.
+Set `NOTTE_LOG_LEVEL=info` (or `debug`) or pass `logLevel` to `NotteClient`
+to also log the connection lifecycle. Network URLs are reduced to their origin;
+local paths and non-network URL payloads are omitted.
 
 #### Replays and cookie files
 
