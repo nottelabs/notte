@@ -102,6 +102,8 @@ jobs:
           done
 
       - name: Refresh the snapshot
+        env:
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
         run: make openapi-fetch OPENAPI_URL="$NOTTE_API_URL"
 
       - name: Regenerate both SDKs and the TypeScript reference

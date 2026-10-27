@@ -2,7 +2,11 @@
 
 import copy
 import importlib.util
+import io
 import json
+import threading
+import urllib.error
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -102,3 +106,56 @@ def test_unknown_names_are_still_drift() -> None:
         "RunRequest: api-only field pipeline_id (required)",
         "RunRequest: sdk-only field function_id",
     ]
+
+
+@pytest.mark.parametrize(
+    "url,authorized",
+    [
+        ("https://us-staging.notte.cc", True),
+        ("https://preview-20-dev-test.notte.cc", True),
+        ("https://api.notte.cc", True),
+        ("http://us-staging.notte.cc", False),
+        ("https://us-staging.notte.cc.evil.test", False),
+        ("https://example.com", False),
+        ("https://preview-21-dev-test.notte.cc", False),
+    ],
+)
+def test_schema_key_is_scoped_to_api_origins(monkeypatch, url: str, authorized: bool) -> None:
+    monkeypatch.setenv("NOTTE_API_KEY", "fixture-key")
+
+    class Opener:
+        def open(self, request, timeout):
+            assert request.get_header("Authorization") == ("Bearer fixture-key" if authorized else None)
+            assert timeout == 120
+            return io.StringIO('{"openapi":"3.1.0"}')
+
+    monkeypatch.setattr(contract.urllib.request, "build_opener", lambda *handlers: Opener())
+    assert contract.download(url) == {"openapi": "3.1.0"}
+
+
+def test_schema_download_refuses_redirects(monkeypatch) -> None:
+    monkeypatch.setenv("NOTTE_API_KEY", "fixture-key")
+    paths: list[str] = []
+
+    class Redirect(BaseHTTPRequestHandler):
+        def do_GET(self):
+            paths.append(self.path)
+            self.send_response(302)
+            self.send_header("Location", "/elsewhere")
+            self.end_headers()
+
+        def log_message(self, format, *args):
+            pass
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Redirect)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        with pytest.raises(urllib.error.HTTPError) as error:
+            contract.download(f"http://127.0.0.1:{server.server_port}")
+        assert error.value.code == 302
+        assert paths == ["/openapi.json"]
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join()
