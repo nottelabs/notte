@@ -28,6 +28,12 @@ SHAPES = f"""
 </map>
 """
 
+# an L of two 4-pixel strips: no point of a grid over its box is in it
+NARROW = f"""
+<img alt="Plan" width="200" height="100" usemap="#plan" src="{GIF}">
+<map name="plan"><area shape="poly" coords="0,0,200,0,200,4,4,4,4,100,0,100" href="/corridor" alt="Corridor"></map>
+"""
+
 SCALED = f"""
 <img alt="Plan" width="200" height="100" usemap="#plan" src="{GIF}" style="transform: scale(2); transform-origin: 0 0">
 <map name="plan">
@@ -106,6 +112,18 @@ async def test_areas_hit_away_from_the_center_of_their_box_are_offered() -> None
         result = await session.aexecute(type="click", id=areas["Hall"])
         assert result.success, result.message
         assert session.window.page.url == f"{BASE_URL}/hall"
+
+
+@pytest.mark.asyncio
+async def test_a_narrow_polygon_is_offered() -> None:
+    """Points near the polygon's corners are tried too."""
+    async with NotteSession(headless=True) as session:
+        areas = await _offered_areas(session, NARROW)
+        assert list(areas) == ["Corridor"]
+
+        result = await session.aexecute(type="click", id=areas["Corridor"])
+        assert result.success, result.message
+        assert session.window.page.url == f"{BASE_URL}/corridor"
 
 
 @pytest.mark.asyncio

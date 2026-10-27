@@ -156,6 +156,71 @@
 	}
 
 	/**
+	 * Where the coords of an image map land on its image: the corner of its content box in the viewport, the size
+	 * of that box in CSS pixels, and the scale a transform (`scale(2)`) gives it on screen.
+	 *
+	 * @param {HTMLImageElement} image - The image that uses the map.
+	 * @returns {{left: number, top: number, width: number, height: number, scaleX: number, scaleY: number}} The box.
+	 */
+	function mapImageBox(image) {
+		const box = ELEMENT.getBoundingClientRect.call(image);
+		const style = getCachedComputedStyle(image);
+		// the image's size on screen against its size in CSS pixels
+		const scaleX = box.width / propertyOf(image, "offsetWidth");
+		const scaleY = box.height / propertyOf(image, "offsetHeight");
+		const paddingLeft = parseFloat(style.paddingLeft) || 0;
+		const paddingTop = parseFloat(style.paddingTop) || 0;
+		return {
+			left: box.left + (propertyOf(image, "clientLeft") + paddingLeft) * scaleX,
+			top: box.top + (propertyOf(image, "clientTop") + paddingTop) * scaleY,
+			width: propertyOf(image, "clientWidth") - paddingLeft - (parseFloat(style.paddingRight) || 0),
+			height: propertyOf(image, "clientHeight") - paddingTop - (parseFloat(style.paddingBottom) || 0),
+			scaleX,
+			scaleY,
+		};
+	}
+
+	// the corners of a `poly` area tried by `isAreaHit`, and how far inside them it looks, in pixels
+	const MAX_AREA_CORNERS = 32;
+	const CORNER_STEP = 1.5;
+
+	/**
+	 * Points just inside the corners of a `poly` area, in viewport coordinates: a step from each corner along the
+	 * bisector of its two sides, both ways (one of the two is inside, at a convex or a reflex corner). A polygon
+	 * of narrow strips (an L of 4-pixel bands) has no point of a grid over its box in it, but it has these.
+	 *
+	 * @param {HTMLAreaElement} area - The `<area>` element.
+	 * @returns {number[][]} The points, empty for other shapes.
+	 */
+	function areaPolygonPoints(area) {
+		const shape = (getAttribute(area, "shape") || "rect").trim().toLowerCase();
+		if (shape !== "poly" && shape !== "polygon") return [];
+		const image = areaImage(area);
+		if (image === null) return [];
+		const { left, top, scaleX, scaleY } = mapImageBox(image);
+		const coords = (getAttribute(area, "coords") || "").split(/[\s,;]+/).filter(Boolean).map(parseFloat);
+		if (coords.some(Number.isNaN) || !(scaleX > 0) || !(scaleY > 0)) return [];
+		const corners = [];
+		for (let i = 0; i + 1 < coords.length; i += 2) corners.push([left + coords[i] * scaleX, top + coords[i + 1] * scaleY]);
+		const unit = ([x, y]) => {
+			const length = Math.hypot(x, y);
+			return length > 0 ? [x / length, y / length] : [0, 0];
+		};
+		const points = [];
+		// a few corners at most: the grid covers wide polygons
+		for (let i = 0; i < Math.min(corners.length, MAX_AREA_CORNERS); i++) {
+			const [x, y] = corners[i];
+			const [px, py] = corners[(i + corners.length - 1) % corners.length];
+			const [nx, ny] = corners[(i + 1) % corners.length];
+			const [ax, ay] = unit([px - x, py - y]);
+			const [bx, by] = unit([nx - x, ny - y]);
+			const [dx, dy] = unit([ax + bx, ay + by]);
+			points.push([x + dx * CORNER_STEP, y + dy * CORNER_STEP], [x - dx * CORNER_STEP, y - dy * CORNER_STEP]);
+		}
+		return points;
+	}
+
+	/**
 	 * The box of an image-map `<area>`: the bounds of its shape (`rect`, `circle`, `poly` or `default`, from its
 	 * `coords`) on its image, cut to the image. The coords are in the CSS pixels of the image's box, which a
 	 * transform (`scale(2)`) scales on screen. Empty when no visible image uses its map or its coords are invalid.
@@ -166,17 +231,7 @@
 	function computeAreaRect(area) {
 		const image = areaImage(area);
 		if (image === null) return new DOMRect();
-		const box = ELEMENT.getBoundingClientRect.call(image);
-		const style = getCachedComputedStyle(image);
-		// the image's size on screen against its size in CSS pixels
-		const scaleX = box.width / propertyOf(image, "offsetWidth");
-		const scaleY = box.height / propertyOf(image, "offsetHeight");
-		const paddingLeft = parseFloat(style.paddingLeft) || 0;
-		const paddingTop = parseFloat(style.paddingTop) || 0;
-		const left = box.left + (propertyOf(image, "clientLeft") + paddingLeft) * scaleX;
-		const top = box.top + (propertyOf(image, "clientTop") + paddingTop) * scaleY;
-		const width = propertyOf(image, "clientWidth") - paddingLeft - (parseFloat(style.paddingRight) || 0);
-		const height = propertyOf(image, "clientHeight") - paddingTop - (parseFloat(style.paddingBottom) || 0);
+		const { left, top, width, height, scaleX, scaleY } = mapImageBox(image);
 		const shape = (getAttribute(area, "shape") || "rect").trim().toLowerCase();
 		const coords = (getAttribute(area, "coords") || "").split(/[\s,;]+/).filter(Boolean).map(parseFloat);
 		if (coords.some(Number.isNaN)) return new DOMRect();
@@ -1788,8 +1843,8 @@
 
 	/**
 	 * Checks if the page hits an image-map `<area>` at one of a few points of the part of its box in the viewport:
-	 * its center, then the centers of a 5 x 5 grid. Its shape need not cover the center of its box (an L-shaped
-	 * polygon), and the areas before it in its map, or other elements, can cover that center (a `default` area).
+	 * its center, then the centers of a 5 x 5 grid, then points just inside the corners of a polygon (see
+	 * `areaPolygonPoints`). Its shape need not cover the center of its box (an L-shaped polygon), and the areas before it in its map, or other elements, can cover that center (a `default` area).
 	 *
 	 * @param {HTMLAreaElement} area - The `<area>` element.
 	 * @param {DOMRect} rect - Its box (see `areaRect`).
@@ -1809,10 +1864,9 @@
 				if (i !== 2 || j !== 2) points.push([(i + 0.5) / 5, (j + 0.5) / 5]);
 			}
 		}
+		const viewportPoints = points.map(([x, y]) => [left + width * x, top + height * y]).concat(areaPolygonPoints(area));
 		try {
-			return points.some(([x, y]) => {
-				const pointX = left + width * x;
-				const pointY = top + height * y;
+			return viewportPoints.some(([pointX, pointY]) => {
 				const hit = root instanceof ShadowRoot
 					? root.elementFromPoint(pointX, pointY)
 					: DOCUMENT.elementFromPoint.call(document, pointX, pointY);
