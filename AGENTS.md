@@ -242,6 +242,13 @@ add or remove entries in the same change as the spec. The scheduled
 contract check fails. Fix it on `chore/bump-openapi`. Scheduled runs leave
 that PR alone once it has manual commits.
 
+OpenAPI refresh compares a temporary order-insensitive representation of JSON objects.
+When the incoming schema is otherwise unchanged, keep the committed snapshot byte for
+byte and still run the generators. Real schema changes retain the API's declared order.
+Never sort generator inputs, parameter lists or documentation to suppress drift.
+Intentional presentation-order changes are reviewed edits to the committed snapshot.
+`scripts/openapi_order.py` is comparison-only; all array positions remain significant.
+
 ## Sync facades
 
 Synchronous wrappers over async operations use `notte_core._sync.run_sync`, which

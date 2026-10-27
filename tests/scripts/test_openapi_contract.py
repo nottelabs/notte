@@ -1,9 +1,12 @@
 """The OpenAPI contract check matches API properties to model fields through their aliases."""
 
+import copy
 import importlib.util
+import json
 from pathlib import Path
 from typing import Annotated, Any
 
+import pytest
 from pydantic import AliasChoices, BaseModel, Field
 
 ROOT = Path(__file__).parents[2]
@@ -11,6 +14,57 @@ spec = importlib.util.spec_from_file_location("openapi_contract", ROOT / "script
 assert spec and spec.loader
 contract = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(contract)
+
+
+def test_fetch_is_an_ordering_only_noop_but_keeps_real_changes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    document = json.loads((ROOT / "tests/data/openapi-order/input.json").read_text())
+    monkeypatch.setattr(contract, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(contract, "SNAPSHOT", tmp_path / "openapi.json")
+    monkeypatch.setattr(contract.sys, "argv", ["openapi_contract.py", "--fetch"])
+    monkeypatch.setattr(contract, "download", lambda _: document)
+    assert contract.main() == 0
+    before = contract.SNAPSHOT.read_bytes()
+    assert list(json.loads(before)["components"]["schemas"]["Zebra"]["properties"]) == ["z", "a"]
+    document = json.loads(json.dumps(document), object_pairs_hook=lambda pairs: dict(reversed(pairs)))
+    assert contract.main() == 0
+    assert contract.SNAPSHOT.read_bytes() == before
+    document["components"]["schemas"]["Zebra"]["properties"]["a"]["minimum"] = 2
+    assert contract.main() == 0
+    assert contract.SNAPSHOT.read_bytes() != before
+    assert list(json.loads(contract.SNAPSHOT.read_text())["components"]["schemas"]["Zebra"]["properties"]) == ["a", "z"]
+
+
+@pytest.mark.parametrize("change", ["add", "remove", "type", "default", "required", "constraint", "tuple", "examples"])
+def test_fetch_keeps_real_contract_changes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, change: str) -> None:
+    document = json.loads((ROOT / "tests/data/openapi-order/input.json").read_text())
+    snapshot = tmp_path / "openapi.json"
+    original = json.dumps(document, indent=4) + "\n"
+    snapshot.write_text(original)
+    updated = copy.deepcopy(document)
+    model = updated["components"]["schemas"]["Zebra"]
+    if change == "add":
+        model["properties"]["new_field"] = {"type": "boolean"}
+    elif change == "remove":
+        del model["properties"]["z"]
+    elif change == "type":
+        model["properties"]["a"]["type"] = "number"
+    elif change == "default":
+        model["properties"]["z"]["default"] = "changed"
+    elif change == "required":
+        model["required"].pop()
+    elif change == "constraint":
+        model["properties"]["a"]["minimum"] = 2
+    elif change == "tuple":
+        updated["components"]["schemas"]["Alpha"]["prefixItems"].reverse()
+    else:
+        updated["components"]["schemas"]["Alpha"]["examples"].reverse()
+    monkeypatch.setattr(contract, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(contract, "SNAPSHOT", snapshot)
+    monkeypatch.setattr(contract.sys, "argv", ["openapi_contract.py", "--fetch"])
+    monkeypatch.setattr(contract, "download", lambda _: updated)
+    assert contract.main() == 0
+    assert json.loads(snapshot.read_text()) == updated
+    assert snapshot.read_text() != original
 
 
 class RunRequest(BaseModel):
