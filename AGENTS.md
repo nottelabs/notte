@@ -75,6 +75,10 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   `scripts/ci_integration_examples.py`) install the local `node-sdk` with
   `npm install --no-save`. Don't add `--package-lock=false`: it ignores the
   example's lockfile, so a new upstream release can break CI.
+- Chosen-model scraping integration tests use the self-hosted
+  `test-resources-lovat.vercel.app/upload_fixture.html` page, shared with file-storage
+  tests. Assert its exact heading: an example.com rate-limit page can be scraped
+  successfully while containing the wrong content for the extraction test.
 - `evaluate_js` preserves RegExp results as JSON data (`{"r": {"p": source,
   "f": flags}}`), including complete patterns. Patchright 1.64.1 and Playwright
   1.64.0 compile native regex results into Python objects, so native evaluation is

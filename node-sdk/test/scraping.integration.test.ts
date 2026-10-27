@@ -9,6 +9,9 @@ import { z } from 'zod';
 import { config } from 'dotenv';
 config();
 
+// Self-hosted fixture also used by the Python and TypeScript file-storage integration tests.
+const EXTRACTION_MODEL_FIXTURE_URL = 'https://test-resources-lovat.vercel.app/upload_fixture.html';
+
 // Define Zod schemas for structured data testing
 const PricingPlanSchema = z.object({
   name: z.string(),
@@ -136,13 +139,14 @@ describe('Scraping Integration Tests', () => {
 
     it('should scrape structured data with a chosen extraction model', async () => {
       await client.Session({ proxies: false, idle_timeout_minutes: 1 }).use(async session => {
-        await session.execute(actions.goto({ url: 'https://example.com' }));
+        const navigation = await session.execute(actions.goto({ url: EXTRACTION_MODEL_FIXTURE_URL }));
+        expect(navigation.success).toBe(true);
         const data = await session.scrape({
           instructions: 'Extract the main heading of the page',
           response_format: z.object({ title: z.string() }),
           model: 'vertex_ai/gemini-3.5-flash',
         });
-        expect(data.title.toLowerCase()).toContain('example domain');
+        expect(data.title).toBe('File Upload Fixture');
       });
     });
   });
@@ -220,13 +224,13 @@ describe('Scraping Integration Tests', () => {
     });
 
     it('should scrape with a chosen extraction model', async () => {
-      const data = await client.scrape('https://example.com', {
+      const data = await client.scrape(EXTRACTION_MODEL_FIXTURE_URL, {
         proxies: false,
         instructions: 'Extract the main heading of the page',
         response_format: z.object({ title: z.string() }),
         model: 'vertex_ai/gemini-3.5-flash',
       });
-      expect(data.title.toLowerCase()).toContain('example domain');
+      expect(data.title).toBe('File Upload Fixture');
     });
 
     it('should scrape with scrape_links and scrape_images disabled', async () => {
