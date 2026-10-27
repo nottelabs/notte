@@ -94,6 +94,7 @@
 		// image maps: the `<img usemap>` of a document or shadow root by `usemap`, the image of a `<map>`, the box of an `<area>`
 		usemapImages: new WeakMap(),
 		mapImages: new WeakMap(),
+		areaImages: new WeakMap(),
 		areaRects: new WeakMap(),
 		clearCache: () => {
 			DOM_CACHE.boundingRects = new WeakMap();
@@ -101,6 +102,7 @@
 			DOM_CACHE.computedStyles = new WeakMap();
 			DOM_CACHE.usemapImages = new WeakMap();
 			DOM_CACHE.mapImages = new WeakMap();
+			DOM_CACHE.areaImages = new WeakMap();
 			DOM_CACHE.areaRects = new WeakMap();
 		}
 	};
@@ -126,22 +128,45 @@
 	}
 
 	/**
-	 * The image an image-map `<area>` is a region of: of the visible `<img usemap="#name">` of its `<map>`, in the
-	 * same document or shadow root, the first in the viewport, else the first.
+	 * The visible images that use an image map: the `<img usemap>` of its document or shadow root that name it by its
+	 * `name` or, as Chromium also does, its `id`, read once per build.
+	 *
+	 * @param {HTMLMapElement} map - The `<map>` element.
+	 * @returns {HTMLImageElement[]} The images, in document order.
+	 */
+	function mapImagesOf(map) {
+		if (!DOM_CACHE.mapImages.has(map)) {
+			const byUsemap = usemapImagesOf(getRootNode(map));
+			const names = [...new Set([getAttribute(map, "name"), getAttribute(map, "id")].filter(Boolean))];
+			const images = new Set(names.flatMap((name) => byUsemap.get(`#${name}`) ?? []));
+			const visible = [...byUsemap.values()].flat().filter((image) => images.has(image) && isElementVisible(image));
+			DOM_CACHE.mapImages.set(map, visible);
+		}
+		return DOM_CACHE.mapImages.get(map);
+	}
+
+	/**
+	 * The image an image-map `<area>` is a region of: of the visible images that use its `<map>` (see `mapImagesOf`),
+	 * the first that shows the area in the viewport (two images can share a map, one of them scrolled past the
+	 * area), else the first, read once per build.
 	 *
 	 * @param {HTMLAreaElement} area - The `<area>` element.
 	 * @returns {HTMLImageElement | null} The image, or null when no visible image uses the map.
 	 */
 	function areaImage(area) {
-		const map = closest(area, "map");
-		if (map === null) return null;
-		if (DOM_CACHE.mapImages.has(map)) return DOM_CACHE.mapImages.get(map);
-		const name = getAttribute(map, "name");
-		const images = (name ? usemapImagesOf(getRootNode(map)).get(`#${name}`) : undefined) ?? [];
-		const visible = images.filter((image) => isElementVisible(image));
-		const image = visible.find((candidate) => isInExpandedViewport(candidate, viewportExpansion)) ?? visible[0] ?? null;
-		DOM_CACHE.mapImages.set(map, image);
-		return image;
+		if (!DOM_CACHE.areaImages.has(area)) {
+			const map = closest(area, "map");
+			const images = map === null ? [] : mapImagesOf(map);
+			const inView = (rect) => rect.width > 0 && rect.height > 0 && (viewportExpansion === -1 || !(
+				rect.bottom < -viewportExpansion ||
+				rect.top > window.innerHeight + viewportExpansion ||
+				rect.right < -viewportExpansion ||
+				rect.left > window.innerWidth + viewportExpansion
+			));
+			const image = images.find((candidate) => inView(areaRectOn(area, candidate))) ?? images[0] ?? null;
+			DOM_CACHE.areaImages.set(area, image);
+		}
+		return DOM_CACHE.areaImages.get(area);
 	}
 
 	/**
@@ -230,7 +255,17 @@
 	 */
 	function computeAreaRect(area) {
 		const image = areaImage(area);
-		if (image === null) return new DOMRect();
+		return image === null ? new DOMRect() : areaRectOn(area, image);
+	}
+
+	/**
+	 * The box of an image-map `<area>` on one of the images that use its map (see `computeAreaRect`).
+	 *
+	 * @param {HTMLAreaElement} area - The `<area>` element.
+	 * @param {HTMLImageElement} image - The image.
+	 * @returns {DOMRect} The box, in viewport coordinates, empty when its coords are invalid.
+	 */
+	function areaRectOn(area, image) {
 		const { left, top, width, height, scaleX, scaleY } = mapImageBox(image);
 		const shape = (getAttribute(area, "shape") || "rect").trim().toLowerCase();
 		const coords = (getAttribute(area, "coords") || "").split(/[\s,;]+/).filter(Boolean).map(parseFloat);

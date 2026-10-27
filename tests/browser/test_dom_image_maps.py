@@ -52,6 +52,22 @@ TWO_IMAGES = f"""
 </map>
 """
 
+# both images are in view, but the bottom of the first, where "Bottom" is, is far below the viewport
+SHARED_IN_VIEW = f"""
+<img alt="Tall plan" width="200" height="4000" usemap="#plan" src="{GIF}" style="position: absolute; top: 50vh; left: 0">
+<img alt="Plan" width="200" height="4000" usemap="#plan" src="{GIF}" style="position: absolute; top: calc(100vh - 4000px); left: 300px">
+<map name="plan">
+  <area shape="rect" coords="0,0,200,40" href="/top" alt="Top">
+  <area shape="rect" coords="0,3960,200,4000" href="/bottom" alt="Bottom">
+</map>
+"""
+
+# a map named by its `id` only, which Chromium matches too
+BY_ID = f"""
+<img alt="Plan" width="200" height="100" usemap="#plan" src="{GIF}">
+<map id="plan"><area shape="rect" coords="0,0,200,100" href="/room" alt="Room"></map>
+"""
+
 # only the top 20 pixels of the image are in the viewport
 BELOW_VIEW = f"""
 <div style="height: calc(100vh - 20px)"></div>
@@ -147,6 +163,29 @@ async def test_the_areas_of_the_image_in_view_are_offered() -> None:
         result = await session.aexecute(type="click", id=areas["Right"])
         assert result.success, result.message
         assert session.window.page.url == f"{BASE_URL}/right"
+
+
+@pytest.mark.asyncio
+async def test_each_area_takes_the_image_that_shows_it() -> None:
+    """Two images in view use the map: "Bottom" is out of view on the first and in view on the second."""
+    async with NotteSession(headless=True) as session:
+        areas = await _offered_areas(session, SHARED_IN_VIEW)
+        assert sorted(areas) == ["Bottom", "Top"]
+
+        result = await session.aexecute(type="click", id=areas["Bottom"])
+        assert result.success, result.message
+        assert session.window.page.url == f"{BASE_URL}/bottom"
+
+
+@pytest.mark.asyncio
+async def test_the_areas_of_a_map_named_by_its_id_are_offered() -> None:
+    async with NotteSession(headless=True) as session:
+        areas = await _offered_areas(session, BY_ID)
+        assert list(areas) == ["Room"]
+
+        result = await session.aexecute(type="click", id=areas["Room"])
+        assert result.success, result.message
+        assert session.window.page.url == f"{BASE_URL}/room"
 
 
 @pytest.mark.asyncio
