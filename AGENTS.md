@@ -51,6 +51,9 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   A new tab's fetch can precede that event too. Retain active context requests
   while watching for tabs, then seed the new page's settle tracker; page listeners
   installed after its first script runs otherwise miss its content request.
+  Seed both new-tab trackers: `BrowserWindow` waits during observation, while
+  `PageSettle.tab()` waits during execution. An observation tracker alone does
+  not stop `execute()` from returning before an early tab request finishes.
   Use Python functions for event handlers: Patchright attaches handler metadata,
   so built-in callables such as `set.add` cannot be registered directly.
   The driver can report a closed target from the click that closes its opener;

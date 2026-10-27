@@ -167,6 +167,8 @@ class PageSettle:
         self._opened_event: asyncio.Event = asyncio.Event()
         self._opening_event: asyncio.Event = asyncio.Event()
         self._opened_settles: dict[Page, PageSettle] = {}
+        # Context requests can precede the page event that creates a tab's tracker.
+        self._tab_requests: set[Request] = set()
         # a tab is opening: its first request was sent
         self._opening: bool = False
         page.on("request", self._request_started)
@@ -177,6 +179,8 @@ class PageSettle:
         if tabs:
             page.context.on("page", self._page_opened)
             page.context.on("request", self._context_request)
+            page.context.on("requestfinished", self._context_request_ended)
+            page.context.on("requestfailed", self._context_request_ended)
 
     @classmethod
     async def start(cls, page: Page, *, tabs: bool = False, timeout_ms: float | None = None) -> "PageSettle":
@@ -204,7 +208,19 @@ class PageSettle:
         """The settle of a tab the action opened, tracking its requests since it appeared (the caller closes it).
         Wait for it as for a click's new page: `wait(document="requests")`."""
         settle = self._opened_settles.pop(page, None)
-        return settle if settle is not None else PageSettle(page, None, tabs=False)
+        return settle if settle is not None else self._track_tab(page)
+
+    def _track_tab(self, page: Page) -> "PageSettle":
+        """Track a new tab, including its requests sent before its page event."""
+        requests: list[Request] = []
+        for request in self._tab_requests:
+            try:
+                if request.frame.page is page:
+                    requests.append(request)
+            except Error:
+                # The first navigation can precede its frame; document readiness waits for it.
+                continue
+        return PageSettle(page, None, tabs=False, requests=requests)
 
     def _changed(self) -> None:
         now = time.perf_counter()
@@ -249,9 +265,11 @@ class PageSettle:
         self._opened_event.set()
         self._opening_event.set()
         # its first scripts can start requests before it is waited for
-        self._opened_settles[page] = PageSettle(page, None, tabs=False)
+        self._opened_settles[page] = self._track_tab(page)
 
     def _context_request(self, request: Request) -> None:
+        if request.resource_type in TRACKED_REQUESTS:
+            self._tab_requests.add(request)
         if not request.is_navigation_request():
             return
         try:
@@ -260,6 +278,9 @@ class PageSettle:
             # a navigation issued before its frame exists: the first one of a new tab
             self._opening = True
             self._opening_event.set()
+
+    def _context_request_ended(self, request: Request) -> None:
+        self._tab_requests.discard(request)
 
     def _left_s(self, cap_ms: float) -> float:
         return max(cap_ms - (time.perf_counter() - self._began) * 1000, 0) / 1000
@@ -438,6 +459,9 @@ class PageSettle:
         if self._tabs:
             _ = self.page.context.remove_listener("page", self._page_opened)
             _ = self.page.context.remove_listener("request", self._context_request)
+            _ = self.page.context.remove_listener("requestfinished", self._context_request_ended)
+            _ = self.page.context.remove_listener("requestfailed", self._context_request_ended)
+        self._tab_requests.clear()
         _ = self.page.remove_listener("request", self._request_started)
         _ = self.page.remove_listener("requestfinished", self._request_ended)
         _ = self.page.remove_listener("requestfailed", self._request_ended)

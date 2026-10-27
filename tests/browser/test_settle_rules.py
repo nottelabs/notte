@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import notte_browser.settle as settle_module
 import pytest
-from notte_browser.driver import JSHandle, Page
+from notte_browser.driver import JSHandle, Page, Request
 from notte_browser.settle import (
     CAP_MS,
     EXPECT_MS,
@@ -102,3 +102,49 @@ def test_a_new_page_waits_for_its_requests_to_be_quiet_for_a_while() -> None:
     assert settled(state(LONG_GRACE_MS - 300, **quiet))
     # without a request quiet time, a request that ended long enough ago is no reason to wait
     assert settled(state(GRACE_MS, last_request_ms=-300.0))
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("page_event", [False, True])
+async def test_action_tab_seeding_filters_completed_and_unrelated_requests_and_cleans_up(page_event: bool) -> None:
+    """Both tab creation paths retain only live matching work and detach their context listeners."""
+    source, destination, other = MagicMock(), MagicMock(), MagicMock()
+    destination.url = "https://tab.test/"
+    destination.main_frame.page = destination
+    source.main_frame.page = source
+    other.main_frame.page = other
+    foreign_frame = MagicMock(page=destination, url="https://ads.test/")
+    tracker = PageSettle(cast(Page, source), None, tabs=True)
+
+    def request(frame: MagicMock, url: str) -> Request:
+        value = MagicMock(resource_type="fetch", frame=frame, url=url, method="GET", post_data_buffer=None)
+        value.is_navigation_request.return_value = False
+        return cast(Request, value)
+
+    active = request(destination.main_frame, "https://tab.test/data")
+    completed = request(destination.main_frame, "https://tab.test/completed")
+    requests = [
+        active,
+        completed,
+        request(source.main_frame, "https://source.test/"),
+        request(other.main_frame, "https://other.test/"),
+        request(foreign_frame, "https://ads.test/data"),
+    ]
+    for value in requests:
+        tracker._context_request(value)
+    tracker._context_request_ended(completed)
+    if page_event:
+        tracker._page_opened(cast(Page, destination))
+    tab = tracker.tab(cast(Page, destination))
+    try:
+        assert tab._in_flight == {active: True}
+        assert len(tab._changes) == 1
+        tab._request_started(active)
+        assert len(tab._changes) == 1
+    finally:
+        await tab.close()
+        await tracker.close()
+    assert not tracker._tab_requests
+    source.context.remove_listener.assert_any_call("request", tracker._context_request)
+    source.context.remove_listener.assert_any_call("requestfinished", tracker._context_request_ended)
+    source.context.remove_listener.assert_any_call("requestfailed", tracker._context_request_ended)

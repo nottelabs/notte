@@ -467,6 +467,57 @@ async def test_observation_waits_for_a_request_sent_before_the_tab_tracker_exist
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("close_opener", [False, True])
+async def test_execute_waits_for_a_request_sent_before_its_tab_tracker_exists(
+    session: NotteSession, site: str, close_opener: bool
+) -> None:
+    """The action-created tracker, as well as observation's tracker, waits for early tab requests."""
+    opener = session.window.page
+    context = opener.context
+    fetching = asyncio.Event()
+    release = asyncio.Event()
+
+    async def serve(route: Route) -> None:
+        if route.request.url.endswith("/early-action-data"):
+            fetching.set()
+            await release.wait()
+            await route.fulfill(body="{}", content_type="application/json")
+        else:
+            await route.fulfill(
+                body="""<h1>Fetching tab</h1><script>fetch('/early-action-data').then(() =>
+                    document.body.insertAdjacentHTML('beforeend', '<p>Fetched in the tab</p>'))</script>""",
+                content_type="text/html",
+            )
+
+    await context.route(f"{site}/early-action-*", serve)
+    await opener.locator("#tab").evaluate("link => link.href = '/early-action-page'")
+    record = PageSettle._page_opened
+    pending: list[tuple[PageSettle, Page]] = []
+
+    def defer(settle: PageSettle, page: Page) -> None:
+        pending.append((settle, page))
+
+    with patch.object(PageSettle, "_page_opened", new=defer):
+        action = asyncio.create_task(click(session, "tab"))
+        try:
+            await fetching.wait()
+            assert len(pending) == 1
+            settle, tab = pending[0]
+            if close_opener:
+                await opener.close()
+            record(settle, tab)
+            done, _ = await asyncio.wait({action}, timeout=SETTLE_MS / 1000)
+            assert not done, "Execute finished while the new tab's content request was still blocked"
+            release.set()
+            _ = await action
+            assert session.window.page is tab
+            assert "Fetched in the tab" in await text(session)
+        finally:
+            release.set()
+            _ = await asyncio.gather(action, return_exceptions=True)
+
+
+@pytest.mark.asyncio
 async def test_closing_a_borrowed_window_stops_tracking_new_tabs(session: NotteSession) -> None:
     page = session.window.page
     window = window_module.BrowserWindow(page, session.window.options)
