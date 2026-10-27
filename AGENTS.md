@@ -149,6 +149,17 @@ Only an editing host gets the implicit `contenteditable` textbox role. Carry the
 host flag from the DOM script into both role classification and duplicate detection;
 editable descendants with their own click handlers must retain their click actions.
 
+An image-map `<area>` has `display: none` and no box. The DOM script's
+`getBoundingClientRect`/`getClientRects` helpers give it the bounds of its shape on
+the visible `<img usemap>` of its `<map>` (`areaRect`; the one in view when several
+use the map), and `boxOf` gives that image. Its coords are in the CSS pixels of the
+image's box, not its natural size, and a transform scales them on screen.
+`isTopElement` hit-tests a grid of points of that box, because a polygon or a
+`default` area need not be hit at the center. Image maps are page content: read
+the images once per build, and never spread `coords` into a call.
+Playwright never finds an `<area>` visible, so a click action uses the element's own
+`click()`, which follows its `href`.
+
 Off-screen fixed text is unreachable only when its panel is fixed to the viewport.
 In Chromium, a fixed element's non-null `offsetParent` identifies a containing block
 (for example, a transformed ancestor) that can scroll into view. Walk through shadow
@@ -166,6 +177,8 @@ when their computed `position` is absolute or fixed.
 CDP listener hints must retain the inspected elements' identities through main-world
 handles. DOM marker attributes are copied by `cloneNode`, while event listeners are
 not, so an attribute bridge can incorrectly offer a clone as a clickable header.
+The clone regression injects its marker after listener inspection and asserts that
+both inspected headers were cloned; an observer alone does not exercise this race.
 
 Wrapper deduplication is covered by `tests/browser/test_dom_clickable_duplicates.py`.
 The payload's `clickHandler` only captures DOM handler attributes/properties, not
@@ -180,6 +193,21 @@ Within budget the digest covers the entire selection. Budget exhaustion also set
 even if fewer than 200 normalized characters were read. Traverse assigned slots without native
 recursive flattening so nested slot traversal shares the same node budget.
 
+Scroll clipping follows positioned ancestors too: normal-flow controls in an escaping popup escape
+with it. Fixed popups with a transformed containing block can still be clipped by that block;
+`tests/browser/test_dom_offscreen_controls.py` checks both against Chromium hit testing and clicks.
+Cache the escaped clippers from one composed-ancestor walk per element. Rewalking
+the chain for every scroll box makes observation cubic when sibling controls and
+scroll depth grow together; the browser regression counts ancestor reads instead of timing it.
+
+Off-screen controls use the scroll box's scaled inner bounds on both scrollable axes, and ancestor walks
+follow assigned slots before light-DOM parents and cross shadow roots to their hosts.
+Skip `display: contents` when caching clipping escapes: a boxless positioned wrapper
+does not let its normal-flow descendants escape a scroll box.
+A transformed scroll box can hit-test a control
+behind its border as the top element, so hit-testing alone cannot establish that
+it is in view. `tests/browser/test_dom_offscreen_controls.py` covers these cases.
+
 Editor hit testing and uncovered-area probes share the editor box clipped to the
 viewport and overflow ancestors, including ancestors outside its shadow root. Keep
 `tests/browser/test_dom_contenteditable.py` and `test_dom_covered_controls.py` passing
@@ -190,6 +218,11 @@ evaluation cannot see a page-assigned `.onclick` property, so do not remove
 their cursor-based click actions to represent unsupported dragging. Carry the
 explicit HTML `draggable` state into act decisions and freshness checks instead;
 `tests/act/test_drag_cursor.py` covers click controls and drag capability disclosure.
+
+Editing hosts use the center of their visible portion for both hit testing and off-screen
+classification. Intersect only axes that clip, using the scaled inner bounds across shadow
+hosts, and respect positioned popup escapes; a full-box center can be outside while the
+editor still accepts a fill. `tests/browser/test_dom_contenteditable.py` covers this integration.
 
 ## Public API
 
@@ -244,6 +277,10 @@ Manual SDK pages repeat constructor parameter fields; keep their type strings
 in sync with the generated `__init__.mdx` pages. Docs tests compare both.
 
 ## OpenAPI refresh
+
+`SessionResponse.playwright_url` was added in #1363 before the API rollout.
+Until staging publishes it, retain its optional nullable schema during snapshot
+refreshes so regeneration preserves the existing Python and Node SDK field.
 
 Every operation in `openapi/openapi.json` needs an entry in
 `openapi/resources.json`: a resource method, or `exclude` with a reason. Both

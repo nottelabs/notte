@@ -7,9 +7,11 @@ like the controls in view, without an id and with fewer attributes, and their no
 `DomNode.offscreen`. Hidden controls stay out, as their text does.
 """
 
+import json
 from urllib.parse import quote
 
 import pytest
+from notte_browser.dom.parsing import DOM_TREE_JS
 from notte_browser.session import NotteSession
 
 PAGE = """
@@ -59,6 +61,70 @@ async def _observe(session: NotteSession) -> tuple[list[str], list[tuple[str, st
     obs = await session.aobserve()
     lines = obs.space.description.splitlines()[1:]
     return lines, [(action.id, action.text_label) for action in obs.space.interaction_actions]
+
+
+@pytest.mark.asyncio
+async def test_nested_scroller_observation_does_not_repeat_escape_ancestor_walks() -> None:
+    """Doubling controls and scroll depth costs quadratic work, rather than cubic work."""
+    measured_script = (
+        DOM_TREE_JS.replace("let highlightIndex = 0;", "let ancestorReads = 0; let highlightIndex = 0;")
+        .replace(
+            "function composedParentElement(element) {",
+            "function composedParentElement(element) { ancestorReads++;",
+        )
+        .replace(
+            "JSON.stringify({ rootId, map: DOM_HASH_MAP })",
+            "JSON.stringify({ rootId, map: DOM_HASH_MAP, ancestorReads })",
+        )
+    )
+    work: list[int] = []
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        for size in (40, 80):
+            await session.window.page.goto(
+                "data:text/html,<style>"
+                ".scroll{height:220px;width:400px;overflow:auto}"
+                "button{display:inline-block;width:4px;box-sizing:border-box;height:20px;padding:0;font-size:1px}"
+                "</style>"
+            )
+            await session.window.page.evaluate(
+                """size => {
+                let parent = document.body;
+                for (let i = 0; i < size; i++) {
+                    const box = document.createElement('div');
+                    box.className = 'scroll';
+                    const spacer = document.createElement('div');
+                    spacer.style.height = '240px';
+                    parent.prepend(box);
+                    box.append(spacer);
+                    parent = box;
+                }
+                for (let i = 0; i < size; i++) {
+                    const button = document.createElement('button');
+                    button.textContent = `Choice ${i}`;
+                    parent.insertBefore(button, parent.lastChild);
+                }
+                const later = document.createElement('button');
+                later.textContent = 'Later';
+                parent.append(later);
+            }""",
+                size,
+            )
+            payload = json.loads(
+                await session.window.page.evaluate(
+                    measured_script,
+                    {
+                        "highlight_elements": False,
+                        "focus_element": -1,
+                        "viewport_expansion": 0,
+                        "enable_pointer_elements": False,
+                    },
+                )
+            )
+            work.append(payload["ancestorReads"])
+            obs = await session.aobserve()
+            assert "Choice 0" in [action.text_label for action in obs.space.interaction_actions]
+            assert "_[:]<button>Later</button>" in obs.space.description
+        assert work[1] <= 5 * work[0], work
 
 
 @pytest.mark.asyncio
@@ -280,3 +346,283 @@ async def test_buttons_outside_the_viewport_say_whether_they_are_pressed_selecte
             "_[:]<button disabled pressed>Locked</button>",
         ]
         assert [action_id for action_id, _ in actions] == ["B1"]
+
+
+SCROLLED_IN_A_BOX = """
+<h1>Contact</h1>
+<div id="box" style="height: 100px; width: 300px; overflow-y: scroll">
+  <input placeholder="Id" style="display: block; height: 30px">
+  <div style="height: 150px"></div>
+  <input placeholder="Subject">
+  <a href="/terms">Terms</a>
+</div>
+<div style="height: 60px; overflow: hidden"><div style="height: 100px"></div><button>CLIPPED_AWAY</button></div>
+"""
+
+
+@pytest.mark.asyncio
+async def test_controls_scrolled_out_of_a_box_in_view_are_described() -> None:
+    # a scroll box in view hides the controls above and below its box: they are described like the controls
+    # below the fold, which scrolling the box (not the page) brings into view
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(SCROLLED_IN_A_BOX)}")
+        lines, actions = await _observe(session)
+        assert lines == [
+            "_[:]Contact",
+            'I1[:]<input placeholder="Id"></input>',
+            '_[:]<input placeholder="Subject"></input>',
+            "_[:]<a>Terms</a>",
+            # a box that does not scroll clips for good: what it hides stays text
+            "_[:]CLIPPED_AWAY",
+        ]
+        assert actions == [("I1", "Id")]
+
+        _ = await session.window.page.evaluate("document.getElementById('box').scrollTop = 1000")
+        lines, actions = await _observe(session)
+        assert lines[:4] == [
+            "_[:]Contact",
+            '_[:]<input placeholder="Id"></input>',
+            'I1[:]<input placeholder="Subject"></input>',
+            'L1[:]<a href="/terms">Terms</a>',
+        ]
+        assert actions == [("I1", "Subject"), ("L1", "Terms")]
+
+
+@pytest.mark.asyncio
+async def test_controls_scrolled_out_of_a_shadow_host_are_described() -> None:
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(
+            'data:text/html,<div id="box" style="height:100px;width:300px;overflow-y:scroll"></div>'
+        )
+        _ = await session.window.page.evaluate(
+            """document.getElementById('box').attachShadow({mode: 'open'}).innerHTML = `
+              <input placeholder="Id" style="display:block;height:30px">
+              <div style="height:150px"></div><input placeholder="Subject">
+            `"""
+        )
+        lines, actions = await _observe(session)
+        assert lines == [
+            'I1[:]<input placeholder="Id"></input>',
+            '_[:]<input placeholder="Subject"></input>',
+        ]
+        assert actions == [("I1", "Id")]
+
+        _ = await session.window.page.evaluate("document.getElementById('box').scrollTop = 1000")
+        lines, actions = await _observe(session)
+        assert lines == [
+            '_[:]<input placeholder="Id"></input>',
+            'I1[:]<input placeholder="Subject"></input>',
+        ]
+        assert actions == [("I1", "Subject")]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("scale", [1, 2])
+async def test_slotted_controls_follow_their_shadow_scroll_box(scale: int) -> None:
+    """Describe slotted controls outside their scroll box, then offer them after scrolling."""
+    page = f"""
+    <scroll-host style="display:block;transform:scale({scale});transform-origin:top left">
+      <input placeholder="Id" style="display:block;height:30px;box-sizing:border-box">
+      <div style="height:150px"></div>
+      <button style="display:block;height:30px" onclick="document.title = 'Submitted'">Submit</button>
+    </scroll-host>
+    <script>
+      document.querySelector('scroll-host').attachShadow({{mode:'open'}}).innerHTML =
+        '<div id="box" style="height:100px;width:300px;overflow-y:scroll"><slot></slot></div>';
+    </script>
+    """
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+        lines, actions = await _observe(session)
+        assert lines == ['I1[:]<input placeholder="Id"></input>', "_[:]<button>Submit</button>"]
+        assert actions == [("I1", "Id")]
+        result = await session.aexecute(type="fill", id="I1", value="Contact 42")
+        assert result.success, result.message
+
+        box = session.window.page.locator("scroll-host #box")
+        _ = await box.evaluate("element => { element.scrollTop = 1000; }")
+        lines, actions = await _observe(session)
+        assert "B1[:]<button>Submit</button>" in lines
+        assert actions == [("B1", "Submit")]
+        result = await session.aexecute(type="click", id="B1")
+        assert result.success, result.message
+        assert await session.window.page.title() == "Submitted"
+
+        _ = await box.evaluate("element => { element.scrollTop = 0; }")
+        lines, actions = await _observe(session)
+        assert "_[:]<button>Submit</button>" in lines
+        assert actions == [("I1", "Id")]
+        assert await session.window.page.locator("scroll-host input").input_value() == "Contact 42"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("scale", [1, 2])
+async def test_controls_behind_scroll_box_borders_are_described(scale: int) -> None:
+    page = f"""
+    <div id="box" style="height:100px;width:300px;border:20px solid;overflow-y:scroll;
+                         transform:{"none" if scale == 1 else f"scale({scale})"};transform-origin:top left">
+      <input placeholder="Top" style="display:block;height:20px;box-sizing:border-box">
+      <div style="height:40px"></div>
+      <input placeholder="Middle" style="display:block;height:20px;box-sizing:border-box">
+      <div style="height:40px"></div>
+      <input placeholder="Bottom" style="display:block;height:20px;box-sizing:border-box">
+    </div>
+    """
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+        # Both outside centers lie behind the borders, inside the box's outer bounding rect.
+        _ = await session.window.page.evaluate("document.getElementById('box').scrollTop = 20")
+        lines, actions = await _observe(session)
+        assert lines == [
+            '_[:]<input placeholder="Top"></input>',
+            'I1[:]<input placeholder="Middle"></input>',
+            '_[:]<input placeholder="Bottom"></input>',
+        ]
+        assert actions == [("I1", "Middle")]
+
+        _ = await session.window.page.evaluate("document.getElementById('box').scrollTop = 0")
+        _, actions = await _observe(session)
+        assert actions == [("I1", "Top"), ("I2", "Middle")]
+
+        _ = await session.window.page.evaluate("document.getElementById('box').scrollTop = 1000")
+        _, actions = await _observe(session)
+        assert actions == [("I1", "Middle"), ("I2", "Bottom")]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("position", ["absolute", "fixed"])
+async def test_positioned_boxless_wrappers_do_not_escape_scroll_clipping(position: str) -> None:
+    page = f"""
+    <div style="position:relative">
+      <div id="box" style="height:100px;width:300px;overflow:auto">
+        <div style="display:contents;position:{position}">
+          <div style="height:150px"></div>
+          <button onclick="this.dataset.clicked = 'true'">Later</button>
+          <input placeholder="Later field">
+        </div>
+      </div>
+    </div>
+    """
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+        lines, actions = await _observe(session)
+        assert lines == ["_[:]<button>Later</button>", '_[:]<input placeholder="Later field"></input>']
+        assert actions == []
+
+        _ = await session.window.page.evaluate("document.getElementById('box').scrollTop = 1000")
+        _, actions = await _observe(session)
+        assert actions == [("B1", "Later"), ("I1", "Later field")]
+        await session.window.page.get_by_role("button", name="Later").click()
+        assert await session.window.page.get_by_role("button", name="Later").get_attribute("data-clicked") == "true"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("scale", [1, 2])
+@pytest.mark.parametrize("direction", ["ltr", "rtl"])
+async def test_controls_behind_horizontal_scroll_box_borders_are_described(scale: int, direction: str) -> None:
+    page = f"""
+    <div id="box" dir="{direction}" style="height:40px;width:100px;border:20px solid;overflow:auto;
+                         transform:scale({scale});transform-origin:top left">
+      <div style="display:flex;width:140px">
+        <input placeholder="Start" style="width:20px;box-sizing:border-box;flex:none">
+        <div style="width:40px;flex:none"></div>
+        <input placeholder="Middle" style="width:20px;box-sizing:border-box;flex:none">
+        <div style="width:40px;flex:none"></div>
+        <input placeholder="End" style="width:20px;box-sizing:border-box;flex:none">
+      </div>
+    </div>
+    """
+    sign = 1 if direction == "ltr" else -1
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+        _ = await session.window.page.evaluate(
+            "offset => { document.getElementById('box').scrollLeft = offset; }", sign * 20
+        )
+        lines, actions = await _observe(session)
+        assert lines == [
+            '_[:]<input placeholder="Start"></input>',
+            'I1[:]<input placeholder="Middle"></input>',
+            '_[:]<input placeholder="End"></input>',
+        ]
+        assert actions == [("I1", "Middle")]
+        await session.window.page.get_by_placeholder("Middle").fill("Visible")
+        assert await session.window.page.get_by_placeholder("Middle").input_value() == "Visible"
+
+        _ = await session.window.page.evaluate("document.getElementById('box').scrollLeft = 0")
+        _, actions = await _observe(session)
+        assert actions == [("I1", "Start"), ("I2", "Middle")]
+
+        _ = await session.window.page.evaluate(
+            "offset => { document.getElementById('box').scrollLeft = offset; }", sign * 1000
+        )
+        _, actions = await _observe(session)
+        assert actions == [("I1", "Middle"), ("I2", "End")]
+
+
+@pytest.mark.asyncio
+async def test_popup_descendants_escape_only_scrollers_outside_their_containing_block() -> None:
+    boxes: list[str] = []
+    for index, (position, transform) in enumerate(
+        [("fixed", False), ("absolute", False), ("fixed", True), ("absolute", True)]
+    ):
+        left = index * 300
+        popup_left = left if position == "fixed" and not transform else 0
+        boxes.append(f"""
+        <div style="position:absolute;top:20px;left:{left}px">
+          <div class="box" style="height:100px;width:280px;overflow:auto;
+                                  transform:{"translateZ(0)" if transform else "none"}">
+            <div style="height:300px"></div><button>Clipped {index}</button>
+            <div style="position:{position};top:150px;left:{popup_left}px">
+              <div><button id="popup-{index}" onclick="this.dataset.clicked = 'true'">Popup {index}</button></div>
+              <input placeholder="Popup field {index}">
+            </div>
+          </div>
+        </div>
+        """)
+
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(''.join(boxes))}")
+        # Browser hit testing confirms the untransformed popups escape, while transforms make the
+        # scroller the containing block and clip both fixed and absolute popup descendants.
+        for index in range(4):
+            assert await session.window.page.locator(f"#popup-{index}").evaluate(
+                """element => {
+                    const rect = element.getBoundingClientRect();
+                    return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2) === element;
+                }"""
+            ) is (index < 2)
+
+        lines, actions = await _observe(session)
+        assert [label for _, label in actions] == ["Popup 0", "Popup field 0", "Popup 1", "Popup field 1"]
+        for index in range(4):
+            assert f"_[:]<button>Clipped {index}</button>" in lines
+        for index in (2, 3):
+            assert f"_[:]<button>Popup {index}</button>" in lines
+            assert f'_[:]<input placeholder="Popup field {index}"></input>' in lines
+        for index in (0, 1):
+            await session.window.page.locator(f"#popup-{index}").click()
+            assert await session.window.page.locator(f"#popup-{index}").get_attribute("data-clicked") == "true"
+
+        # Escaping the scroller does not bypass the usual hit-target check for covered controls.
+        _ = await session.window.page.evaluate("""() => {
+            const cover = document.createElement('div');
+            cover.id = 'cover';
+            cover.style.cssText = 'position:fixed;top:150px;left:0;width:280px;height:60px;z-index:1000';
+            document.body.append(cover);
+        }""")
+        _, actions = await _observe(session)
+        assert [label for _, label in actions] == ["Popup 1", "Popup field 1"]
+
+        _ = await session.window.page.evaluate(
+            """() => {
+                document.getElementById('cover').remove();
+                document.querySelectorAll('.box').forEach(box => { box.scrollTop = 120; });
+            }"""
+        )
+        _, actions = await _observe(session)
+        assert [label for _, label in actions] == [
+            label for index in range(4) for label in (f"Popup {index}", f"Popup field {index}")
+        ]
+        for index in (2, 3):
+            await session.window.page.locator(f"#popup-{index}").click()
+            assert await session.window.page.locator(f"#popup-{index}").get_attribute("data-clicked") == "true"

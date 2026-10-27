@@ -70,6 +70,14 @@ You can use the default parameters to create your session, or customize them:
 <ParamField path="block_ads" type="bool">
 </ParamField>
 
+<ParamField path="record_session" type="bool" default={true}>
+  Defaults to true. Set to false at session creation to disable saved replay for the entire session. Live View remains available.
+</ParamField>
+
+<ParamField path="log_session" type="bool" default={true}>
+  Defaults to true. Set to false at session creation to disable saved browser activity and network logs for the entire session. Usage metering remains available.
+</ParamField>
+
 <ParamField path="solve_captchas" type="bool">
   Whether to try to automatically solve captchas
 </ParamField>

@@ -338,6 +338,18 @@ export type ApiSessionStartRequest = {
      */
     advanced_stealth?: boolean;
     /**
+     * Record Session
+     *
+     * Save session replay. False permanently disables saved replay; Live View remains available.
+     */
+    record_session?: boolean;
+    /**
+     * Log Session
+     *
+     * Save browser session logs. False permanently disables saved logs, without disabling metering.
+     */
+    log_session?: boolean;
+    /**
      * Screenshot Type
      *
      * Ignored since notte 1.10: screenshots are returned without highlighting.
@@ -3857,6 +3869,18 @@ export type GlobalScrapeRequest = {
      */
     advanced_stealth?: boolean;
     /**
+     * Record Session
+     *
+     * Save session replay. False permanently disables saved replay; Live View remains available.
+     */
+    record_session?: boolean;
+    /**
+     * Log Session
+     *
+     * Save browser session logs. False permanently disables saved logs, without disabling metering.
+     */
+    log_session?: boolean;
+    /**
      * Screenshot Type
      *
      * Ignored since notte 1.10: screenshots are returned without highlighting.
@@ -6357,7 +6381,7 @@ export type ReplayMissingResponse = {
     /**
      * Replay Status
      */
-    replay_status: 'waiting_for_session' | 'processing' | 'unavailable' | 'failed' | 'unknown';
+    replay_status: 'waiting_for_session' | 'processing' | 'unavailable' | 'failed' | 'unknown' | 'disabled';
     /**
      * Retryable
      */
@@ -7549,6 +7573,18 @@ export type SessionResponse = {
      * Whether this session is an internal system run. Internal system runs are omitted from session.list() unless include_system=True is requested.
      */
     system_hidden?: boolean;
+    /**
+     * Record Session
+     *
+     * Whether saved session replay is enabled. Defaults to true.
+     */
+    record_session?: boolean;
+    /**
+     * Log Session
+     *
+     * Whether saved browser session logs are enabled. Defaults to true.
+     */
+    log_session?: boolean;
     /**
      * Timeout Minutes
      *
@@ -10345,6 +10381,18 @@ export type SessionResponseWritable = {
      * Whether this session is an internal system run. Internal system runs are omitted from session.list() unless include_system=True is requested.
      */
     system_hidden?: boolean;
+    /**
+     * Record Session
+     *
+     * Whether saved session replay is enabled. Defaults to true.
+     */
+    record_session?: boolean;
+    /**
+     * Log Session
+     *
+     * Whether saved browser session logs are enabled. Defaults to true.
+     */
+    log_session?: boolean;
     [key: string]: unknown;
 };
 

@@ -478,6 +478,22 @@ async def test_observation_waits_for_a_request_sent_before_the_tab_tracker_exist
 
 
 @pytest.mark.asyncio
+async def test_a_late_tab_s_first_requests_are_waited_for_when_its_listeners_come_late(
+    session: NotteSession, site: str
+) -> None:
+    context = session.window.page.context
+    # a busy client: the tab's script sends its fetch before the tab's own request listeners are added
+    context.on("page", lambda _page: time.sleep(0.3))
+    async with context.expect_page() as opened:
+        _ = await click(session, "late-fetching-tab")
+    tab = await opened.value
+    await tab.wait_for_load_state("domcontentloaded")
+    observation = await session.aobserve()
+    assert observation.metadata.url == f"{site}/fetching-tab"
+    assert "Fetched in the tab" in await text(session)
+
+
+@pytest.mark.asyncio
 async def test_closing_a_borrowed_window_stops_tracking_new_tabs(session: NotteSession) -> None:
     page = session.window.page
     window = window_module.BrowserWindow(page, session.window.options)

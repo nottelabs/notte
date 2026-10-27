@@ -840,16 +840,21 @@ async def _interact(
             if is_disabled:
                 raise ActionExecutionError(action.id, window.page.url, reason="Element is disabled")
             click_input = None if before_click is None else await before_click(locator)
-            try:
-                # Hold back part of the budget for the JS fallback. Navigation belongs to PageSettle,
-                # including a response that has not committed before the interaction deadline.
-                await locator.click(timeout=budget.remaining_ms(keep_ms=action.timeout / 5), no_wait_after=True)
-            except PlaywrightTimeoutError as e:
-                logger.warning(f"Failed to click on element: {e}, fallback to js click")
+            # An image-map area has no box: its JS click follows the link without actionability waits.
+            js_click = await locator.evaluate("(el) => el.localName === 'area'", timeout=budget.remaining_ms())
+            if not js_click:
+                try:
+                    # Hold back part of the budget for the JS fallback. Navigation belongs to PageSettle,
+                    # including a response that has not committed before the interaction deadline.
+                    await locator.click(timeout=budget.remaining_ms(keep_ms=action.timeout / 5), no_wait_after=True)
+                except PlaywrightTimeoutError as e:
+                    logger.warning(f"Failed to click on element: {e}, fallback to js click")
+                    js_click = True
+            if js_click:
                 if click_input is None:
                     await locator.evaluate("(el) => el.click()", timeout=budget.remaining_ms())
                 else:
-                    # The JS fallback emits no trusted pointer event. Mark its input in the same task as the click.
+                    # The JS path emits no trusted pointer event. Mark its input in the same task as the click.
                     element = await locator.element_handle(timeout=budget.remaining_ms())
                     assert element is not None
                     try:
