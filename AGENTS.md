@@ -67,6 +67,9 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
 - Node SDK unit tests include a local Chromium lifecycle suite. Workflows running
   `npm run test:unit` or `npm run test:coverage` must install Chromium after `npm ci`
   with `npx playwright-core install --with-deps chromium`, including the publish job.
+- Python SDK lifecycle snapshots traverse every context and tab. Build them in a
+  Loguru patcher so disabled modules and log levels avoid that work, while enabled
+  messages retain their structured diagnostic fields.
 - `evaluate_js` preserves RegExp results as JSON data (`{"r": {"p": source,
   "f": flags}}`), including complete patterns. Patchright 1.64.1 and Playwright
   1.64.0 compile native regex results into Python objects, so native evaluation is

@@ -1,3 +1,5 @@
+import subprocess
+import sys
 import weakref
 from collections.abc import Iterator
 from types import SimpleNamespace
@@ -240,6 +242,99 @@ def test_lifecycle_warnings_are_debug_during_sdk_cleanup(captured_logs: list[tup
     )
 
     assert [level for level, _ in captured_logs] == ["DEBUG", "INFO"]
+
+
+def _assert_lifecycle_snapshot_is_lazy(use_async: bool) -> None:
+    from loguru import logger
+
+    # Isolate sink levels from pytest's and the application's global handlers.
+    logger.remove()
+    records = []
+    logger.add(lambda message: records.append(message.record), level="WARNING")
+    session = _bare_session()
+    browser, context, page = _browser_with_page()
+    page.url = "https://example.com/callback?code=secret-code#access_token=secret-token"
+    page.is_closed.return_value = False
+    browser.is_connected.return_value = False
+    if use_async:
+        session._async_playwright_browser = browser
+        session._async_playwright_page = page
+    else:
+        session._playwright_browser = browser
+        session._playwright_page = page
+    snapshot = MagicMock(wraps=session._playwright_state)
+    session._playwright_state = snapshot
+    for level in ("debug", "info"):
+        session._log_playwright_event(
+            "sdk_playwright_page_opened",
+            browser=browser,
+            cached_page=page,
+            observed_page=page,
+            observed_context=context,
+            level=level,
+        )
+    session._playwright_cleanup_in_progress = True
+    session._log_playwright_event(
+        "sdk_playwright_browser_disconnected",
+        browser=browser,
+        cached_page=page,
+    )
+    session._log_playwright_stop_requested()
+    session._playwright_cleanup_in_progress = False
+    logger.disable(sessions.__name__)
+    session._log_playwright_event(
+        "sdk_playwright_browser_disconnected",
+        browser=browser,
+        cached_page=page,
+    )
+    logger.enable(sessions.__name__)
+    snapshot.assert_not_called()
+    assert records == []
+
+    session._log_playwright_event(
+        "sdk_playwright_browser_disconnected",
+        browser=browser,
+        cached_page=page,
+        observed_page=page,
+        observed_context=context,
+    )
+    snapshot.assert_called_once_with(browser, page)
+    [record] = records
+    assert record["level"].name == "WARNING"
+    extra = record["extra"]
+    assert extra["event"] == "sdk_playwright_browser_disconnected"
+    assert extra["session_id"] == "session-id"
+    assert extra["browser_connected"] is False
+    assert extra["cleanup_in_progress"] is False
+    assert extra["cached_page"]["url"] == "https://example.com"
+    assert extra["observed_page"] == extra["cached_page"]
+    assert extra["observed_context_id"] == extra["contexts"][0]["context_id"]
+    assert extra["contexts"][0]["pages"] == [extra["cached_page"]]
+    assert extra["contexts"][0]["contains_cached_page"] is True
+    assert record["message"].startswith(
+        "[Session Playwright] sdk_playwright_browser_disconnected: session=session-id state="
+    )
+    assert "callback" not in str(record)
+    assert "secret-code" not in str(record)
+    assert "secret-token" not in str(record)
+
+
+@pytest.mark.parametrize("use_async", [False, True])
+def test_lifecycle_snapshots_only_built_for_enabled_logs(use_async: bool) -> None:
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            (
+                "from tests.sdk.test_session_playwright_dialog_policy import _assert_lifecycle_snapshot_is_lazy; "
+                f"_assert_lifecycle_snapshot_is_lazy({use_async})"
+            ),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
 
 
 @pytest.mark.parametrize("use_async", [False, True])

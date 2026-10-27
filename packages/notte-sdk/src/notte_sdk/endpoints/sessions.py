@@ -87,6 +87,8 @@ from notte_sdk.websockets.base import WebsocketService
 from notte_sdk.websockets.jupyter import display_image_in_notebook
 
 if TYPE_CHECKING:
+    from loguru import Record
+
     from notte_sdk.client import AsyncNotteClient, NotteClient
 
 # Retry configuration constants
@@ -923,19 +925,23 @@ class _PlaywrightDiagnostics:
         if self._playwright_cleanup_in_progress and event != "sdk_playwright_session_stop_requested":
             # Closes and disconnects caused by the SDK's own cleanup are expected, not failures.
             level = "debug"
-        details = self._playwright_state(browser, cached_page)
-        if observed_page is not None:
-            details["observed_page"] = self._playwright_page_state(observed_page)
-        if observed_context is not None:
-            details["observed_context_id"] = _playwright_object_id(observed_context)
+        session_id = self._playwright_session_id()
+
+        def add_snapshot(record: "Record") -> None:
+            # Loguru invokes patchers only after checking module and minimum log level.
+            details = self._playwright_state(browser, cached_page)
+            if observed_page is not None:
+                details["observed_page"] = self._playwright_page_state(observed_page)
+            if observed_context is not None:
+                details["observed_context_id"] = _playwright_object_id(observed_context)
+            record["extra"].update(details)
+            record["message"] = f"[Session Playwright] {event}: session={session_id} state={details}"
+
         bound_logger = logger.bind(
             event=event,
-            session_id=self._playwright_session_id(),
-            **details,
+            session_id=session_id,
         )
-        getattr(bound_logger, level)(
-            f"[Session Playwright] {event}: session={self._playwright_session_id()} state={details}"
-        )
+        getattr(bound_logger.patch(add_snapshot), level)("")
 
     def _log_playwright_stop_requested(self) -> None:
         """Snapshot Playwright state before the SDK starts its own cleanup."""
