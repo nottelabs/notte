@@ -15,7 +15,7 @@ class LinkedInConversation(BaseModel):
 client = NotteClient()
 vault = client.Vault(vault_id="<your-vault-id>")
 
-with client.Session(vault_id=vault.vault_id) as session:
+with client.Session(vault=vault) as session:
     # Log in: the vault replaces the EMAIL / PASSWORD placeholders with your real credentials
     session.execute(type="goto", url="https://www.linkedin.com/login")
     session.execute(type="form_fill", value={"email": EMAIL, "current_password": PASSWORD})

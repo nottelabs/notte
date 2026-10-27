@@ -253,7 +253,7 @@ with client.Vault() as vault:
         email=os.environ["GITHUB_EMAIL"],
         password=os.environ["GITHUB_PASSWORD"],
     )
-    with client.Session(vault_id=vault.vault_id) as session:
+    with client.Session(vault=vault) as session:
         _ = session.execute(type="goto", url="https://github.com/login")
         _ = session.execute(type="form_fill", value={"email": EMAIL, "current_password": PASSWORD})
 ```

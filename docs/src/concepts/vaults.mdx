@@ -23,7 +23,7 @@ Notte provides a secure vault system that lets sessions authenticate using crede
 ![vault-fill-action](/images/vault-fill-action.png)
 
 The Vault acts as an intermediary between your code and the browser session.
-Attach a vault to a session with `client.Session(vault_id=...)`, then fill forms with placeholder values (`EMAIL`, `PASSWORD`, `MFA`, ... from `notte_core.credentials`).
+Attach a vault to a session with `client.Session(vault=vault)` (or its ID, `vault_id=...`), then fill forms with placeholder values (`EMAIL`, `PASSWORD`, `MFA`, ... from `notte_core.credentials`).
 When a `fill` or `form_fill` action contains a placeholder, the vault takes over the execution and replaces the dummy value with the actual
 credential for the current website, directly inside the browser.
 

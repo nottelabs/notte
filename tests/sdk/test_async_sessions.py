@@ -27,6 +27,7 @@ from notte_sdk.endpoints.base import AsyncBaseClient, BaseClient, NotteEndpoint
 from notte_sdk.endpoints.files import AsyncRemoteFileStorage, RemoteFileStorage
 from notte_sdk.endpoints.page import AsyncPageClient, PageClient
 from notte_sdk.endpoints.sessions import AsyncRemoteSession, AsyncSessionsClient, RemoteSession, SessionsClient
+from notte_sdk.endpoints.vaults import AsyncNotteVault, NotteVault
 from notte_sdk.errors import NotteAPIError
 from notte_sdk.types import CaptchaStatus, ExecutionResultResponse
 from pydantic import BaseModel
@@ -94,6 +95,8 @@ def test_async_session_constructor_takes_the_sync_arguments() -> None:
     assert [parameters(o) for o in async_overloads] == [parameters(o) for o in sync_overloads]
     assert typing.get_type_hints(AsyncRemoteSession.__init__)["storage"] == AsyncRemoteFileStorage | None
     assert typing.get_type_hints(RemoteSession.__init__)["storage"] == RemoteFileStorage | None
+    assert typing.get_type_hints(AsyncRemoteSession.__init__)["vault"] == AsyncNotteVault | None
+    assert typing.get_type_hints(RemoteSession.__init__)["vault"] == NotteVault | None
     sync_session = NotteClient(api_key=KEY, server_url=SERVER).Session()
     client = AsyncNotteClient(api_key=KEY, server_url=SERVER)
     async_session = client.Session()
@@ -829,6 +832,34 @@ def test_session_uses_the_storage_it_is_given(monkeypatch: pytest.MonkeyPatch) -
         sync = exchange_sync(monkeypatch, router(SESSION_ROUTES), lambda c: asyncio.run(run(c, storage_id)))
         assert asyncio.run(exchange_async(monkeypatch, router(SESSION_ROUTES), lambda c: run(c, storage_id))) == sync
         assert sync.outcome == ("ok", expected)
+
+
+def test_session_sends_the_id_of_the_vault_it_is_given(monkeypatch: pytest.MonkeyPatch) -> None:
+    routes = {**SESSION_ROUTES, ("GET", "/vaults/v-1"): [(200, {"credentials": []})]}
+
+    async def run(client: Any, **request: str) -> str | None:
+        vault = client.Vault("v-1")
+        if isinstance(client, AsyncNotteClient):
+            vault = await vault
+        session = client.Session(vault=vault, **request)
+        await (session if isinstance(session, AsyncRemoteSession) else Awaiting(session)).start()
+        return session.request.vault_id
+
+    for request, expected in [
+        ({}, ("ok", "v-1")),
+        ({"vault_id": "v-2"}, ("error", ValueError, "Pass either `vault` or `vault_id` to the session, not both")),
+    ]:
+        sync = exchange_sync(monkeypatch, router(routes), lambda c: asyncio.run(run(c, **request)))
+        assert asyncio.run(exchange_async(monkeypatch, router(routes), lambda c: run(c, **request))) == sync
+        assert sync.outcome == expected
+        starts = [json.loads(call.data) for call in sync.calls if call.url.endswith("/sessions/start")]
+        assert [start["vault_id"] for start in starts] == (["v-1"] if expected[0] == "ok" else [])
+
+
+def test_async_session_rejects_a_vault_that_was_not_created() -> None:
+    client = AsyncNotteClient(api_key=KEY, server_url=SERVER)
+    with pytest.raises(ValueError, match="Vault not created yet"):
+        _ = client.Session(vault=client.Vault(name="private"))
 
 
 @pytest.mark.asyncio

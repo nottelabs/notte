@@ -13,6 +13,6 @@ vault.add_credentials(
 )
 # Attach the vault to a session: EMAIL / PASSWORD placeholders are replaced
 # by the real credentials inside the browser, never in your code
-with client.Session(vault_id=vault.vault_id) as session:
+with client.Session(vault=vault) as session:
     session.execute(type="goto", url="https://github.com/login")
     session.execute(type="form_fill", value={"email": EMAIL, "current_password": PASSWORD})

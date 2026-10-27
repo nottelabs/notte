@@ -81,6 +81,7 @@ from notte_sdk._transport import TransportError
 from notte_sdk.endpoints.base import NotteEndpoint
 from notte_sdk.endpoints.files import AsyncRemoteFileStorage, RemoteFileStorage
 from notte_sdk.endpoints.page import AsyncPageClient, PageClient
+from notte_sdk.endpoints.vaults import AsyncNotteVault, NotteVault
 from notte_sdk.errors import NotteAPIError
 from notte_sdk.websockets.base import WebsocketService
 from notte_sdk.websockets.jupyter import display_image_in_notebook
@@ -775,6 +776,15 @@ def _evaluated(result: ExecutionResult, raise_on_failure: bool) -> str | Executi
     return result.data.markdown
 
 
+def _with_vault(request_data: Mapping[str, object], vault: NotteVault | AsyncNotteVault | None) -> dict[str, object]:
+    """The session request fields, with `vault_id` set to the ID of `Session(vault=...)`."""
+    if vault is None:
+        return dict(request_data)
+    if request_data.get("vault_id") is not None:
+        raise ValueError("Pass either `vault` or `vault_id` to the session, not both")
+    return {**request_data, "vault_id": vault.vault_id}
+
+
 class RemoteSession(SyncResource):
     """
     A remote session that can be managed through the Notte API.
@@ -794,6 +804,7 @@ class RemoteSession(SyncResource):
         self,
         *,
         storage: RemoteFileStorage | None = None,
+        vault: NotteVault | None = None,
         perception_type: PerceptionType = "fast",
         raise_on_failure: bool = config.raise_on_session_execution_failure,
         cookie_file: str | Path | None = None,
@@ -810,6 +821,7 @@ class RemoteSession(SyncResource):
         session_id: str | None = None,
         *,
         storage: RemoteFileStorage | None = None,
+        vault: NotteVault | None = None,
         perception_type: PerceptionType = "fast",
         cookie_file: str | Path | None = None,
         raise_on_failure: bool = config.raise_on_session_execution_failure,
@@ -825,6 +837,7 @@ class RemoteSession(SyncResource):
 
         Args:
             storage: File Storage to attach to the session
+            vault: Vault to attach to the session; the same as passing its `vault_id`.
             perception_type: Default perception type for `observe()`. Defaults to `'fast'`. `'deep'` is deprecated and removed on December 1, 2026; use `'fast'`.
             open_viewer: Whether to open the live viewer when the session starts (default: False).
                 This controls only the viewer popup and is independent of the browser environment.
@@ -841,7 +854,7 @@ class RemoteSession(SyncResource):
         # Filter out open_viewer from data before validating with SessionStartRequest
         # (open_viewer is a RemoteSession parameter, not a SessionStartRequest field)
         request_data = {k: v for k, v in data.items() if k != "open_viewer"}
-        request = SessionStartRequest.from_data(request_data)
+        request = SessionStartRequest.from_data(_with_vault(request_data, vault))
 
         response: SessionResponse | None = None
         if session_id is not None:
@@ -2029,6 +2042,7 @@ class AsyncRemoteSession:
         self,
         *,
         storage: AsyncRemoteFileStorage | None = None,
+        vault: AsyncNotteVault | None = None,
         perception_type: PerceptionType = "fast",
         raise_on_failure: bool = config.raise_on_session_execution_failure,
         cookie_file: str | Path | None = None,
@@ -2045,6 +2059,7 @@ class AsyncRemoteSession:
         session_id: str | None = None,
         *,
         storage: AsyncRemoteFileStorage | None = None,
+        vault: AsyncNotteVault | None = None,
         perception_type: PerceptionType = "fast",
         cookie_file: str | Path | None = None,
         raise_on_failure: bool = config.raise_on_session_execution_failure,
@@ -2056,7 +2071,7 @@ class AsyncRemoteSession:
         Create a new AsyncRemoteSession instance with the specified configuration.
 
         Takes the arguments of `RemoteSession`; `storage` is an `AsyncRemoteFileStorage`, by default
-        one on the client's `files`.
+        one on the client's `files`, and `vault` an `AsyncNotteVault` that has been created.
         """
         if _client is None:
             raise ValueError("AsyncSessionsClient is required")
@@ -2064,7 +2079,7 @@ class AsyncRemoteSession:
         # Filter out open_viewer from data before validating with SessionStartRequest
         # (open_viewer is a RemoteSession parameter, not a SessionStartRequest field)
         request_data = {k: v for k, v in data.items() if k != "open_viewer"}
-        self.request: SessionStartRequest = SessionStartRequest.from_data(request_data)
+        self.request: SessionStartRequest = SessionStartRequest.from_data(_with_vault(request_data, vault))
         self._open_viewer: bool = open_viewer
 
         self.client: AsyncSessionsClient = _client
