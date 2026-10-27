@@ -694,7 +694,7 @@ async def execute_interaction_action(
     *,
     storage: BaseStorage | None = None,
     verbose: bool = False,
-    before_click: Callable[[Locator], Awaitable[JSHandle | None]] | None = None,
+    before_click: Callable[[Locator], Awaitable[Callable[[ElementHandle], Awaitable[None]] | None]] | None = None,
     after_click: Callable[[], Awaitable[None]] | None = None,
 ) -> bool:
     """Interact with an element within `action.timeout`.
@@ -822,7 +822,7 @@ async def _interact(
     *,
     storage: BaseStorage | None = None,
     verbose: bool = False,
-    before_click: Callable[[Locator], Awaitable[JSHandle | None]] | None = None,
+    before_click: Callable[[Locator], Awaitable[Callable[[ElementHandle], Awaitable[None]] | None]] | None = None,
 ) -> None:
     assert action.selectors is not None
     # locate element (possibly in iframe)
@@ -837,7 +837,8 @@ async def _interact(
             )
             if is_disabled:
                 raise ActionExecutionError(action.id, window.page.url, reason="Element is disabled")
-            click_input = None if before_click is None else await before_click(locator)
+            # the JS click that reports its input, when the click's input is tracked
+            js_click_with_input = None if before_click is None else await before_click(locator)
             # An image-map area has no box: its JS click follows the link without actionability waits.
             js_click = await locator.evaluate("(el) => el.localName === 'area'", timeout=budget.remaining_ms())
             if not js_click:
@@ -849,14 +850,13 @@ async def _interact(
                     logger.warning(f"Failed to click on element: {e}, fallback to js click")
                     js_click = True
             if js_click:
-                if click_input is None:
+                if js_click_with_input is None:
                     await locator.evaluate("(el) => el.click()", timeout=budget.remaining_ms())
                 else:
-                    # The JS path emits no trusted pointer event. Mark its input in the same task as the click.
                     element = await locator.element_handle(timeout=budget.remaining_ms())
                     assert element is not None
                     try:
-                        await click_input.evaluate("async (input, el) => { await input.mark(); el.click(); }", element)
+                        await js_click_with_input(element)
                     finally:
                         with suppress(Error):
                             await element.dispose()
@@ -1022,6 +1022,14 @@ async def _execute(
     click_input_received = asyncio.Event()
     click_inputs: list[JSHandle] = []
     click_bindings: list[tuple[_ClickInputBinding, str]] = []
+    # the frame whose document reports the click's input, and whether that document was replaced since
+    click_frames: list[Frame] = []
+    click_document_replaced = False
+
+    def click_frame_navigated(frame: Frame) -> None:
+        nonlocal click_document_replaced
+        if frame in click_frames:
+            click_document_replaced = True
 
     def record_click_input() -> None:
         if not click_input_times:
@@ -1029,10 +1037,18 @@ async def _execute(
         click_input_received.set()
 
     async def await_click_input() -> None:
-        if click_inputs:
-            _ = await click_input_received.wait()
+        if not click_inputs:
+            return
+        if click_document_replaced and not click_input_received.is_set():
+            try:
+                # a URL change within the document keeps its listener
+                _ = await click_inputs[-1].evaluate("() => true")
+            except Error:
+                # The listener went with its document, the click landed in the next one: it came at the latest now
+                record_click_input()
+        _ = await click_input_received.wait()
 
-    async def track_existing_tabs(locator: Locator) -> JSHandle | None:
+    async def track_existing_tabs(locator: Locator) -> Callable[[ElementHandle], Awaitable[None]] | None:
         # Keep requests started while click() waits, but select a replacement only from navigation after input.
         existing_settles.update({tab: PageSettle(tab, None, tabs=False) for tab in tabs if tab is not page})
         if not existing_settles:
@@ -1053,6 +1069,8 @@ async def _execute(
             await element.dispose()
         if frame is None:
             raise Error("Click target is no longer attached to a frame")
+        click_frames.append(frame)
+        page.on("framenavigated", click_frame_navigated)
         click_input = cast(
             JSHandle,
             await evaluate_handle_in_main_world(
@@ -1060,7 +1078,16 @@ async def _execute(
             ),
         )
         click_inputs.append(click_input)
-        return click_input
+
+        async def js_click_with_input(element: ElementHandle) -> None:
+            # The JS path emits no trusted pointer event. Mark its input in the same task as the click.
+            if click_document_replaced:
+                record_click_input()
+                await element.evaluate("el => el.click()")
+            else:
+                await click_input.evaluate("async (input, el) => { await input.mark(); el.click(); }", element)
+
+        return js_click_with_input
 
     retval = True
     closed_during_click: Error | None = None
@@ -1184,6 +1211,8 @@ async def _execute(
                 await click_input.dispose()
         for binding, token in click_bindings:
             _ = binding.callbacks.pop(token, None)
+        if click_frames:
+            _ = page.remove_listener("framenavigated", click_frame_navigated)
         for existing in existing_settles.values():
             await existing.close()
         if settle is not None:

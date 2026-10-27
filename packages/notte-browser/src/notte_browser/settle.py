@@ -84,6 +84,23 @@ SETTLE_TRACKER_JS = (
 )
 
 
+def requests_of(page: Page, requests: Iterable[Request]) -> list[Request]:
+    """The requests among `requests` that `page` sent."""
+    sent: list[Request] = []
+    for request in requests:
+        try:
+            if request.frame.page is page:
+                sent.append(request)
+        except Error:
+            # A tab's first navigation request can precede its frame too; document readiness waits for it.
+            continue
+    return sent
+
+
+def _without_fragment(url: str) -> str:
+    return urlsplit(url)._replace(fragment="").geturl()
+
+
 def _origin(url: str) -> tuple[str, str] | None:
     """The origin of an http(s) URL, None for the others (about:blank, srcdoc)."""
     parts = urlsplit(url)
@@ -165,6 +182,7 @@ class PageSettle:
         # when the main document's navigation was requested, and its request: kept after the request ends
         self._navigation_started_at: float | None = None
         self._navigation_request: Request | None = None
+        self._url: str = page.url
         # the tabs opened since the action started: the page is waited for no longer. Each is tracked from then on
         self.opened: list[Page] = []
         self._opened_event: asyncio.Event = asyncio.Event()
@@ -175,11 +193,16 @@ class PageSettle:
         page.on("request", self._request_started)
         page.on("requestfinished", self._request_ended)
         page.on("requestfailed", self._request_ended)
+        page.on("framenavigated", self._frame_navigated)
         for request in requests:
             self._request_started(request)
+        # the context's requests in flight: a tab's first ones can come before its page event
+        self._context_requests: set[Request] = set()
         if tabs:
             page.context.on("page", self._page_opened)
             page.context.on("request", self._context_request)
+            page.context.on("requestfinished", self._context_request_ended)
+            page.context.on("requestfailed", self._context_request_ended)
 
     @classmethod
     async def start(cls, page: Page, *, tabs: bool = False, timeout_ms: float | None = None) -> "PageSettle":
@@ -213,7 +236,11 @@ class PageSettle:
         """The settle of a tab the action opened, tracking its requests since it appeared (the caller closes it).
         Wait for it as for a click's new page: `wait(document="requests")`."""
         settle = self._opened_settles.pop(page, None)
-        return settle if settle is not None else PageSettle(page, None, tabs=False)
+        return (
+            settle
+            if settle is not None
+            else PageSettle(page, None, tabs=False, requests=requests_of(page, self._context_requests))
+        )
 
     def _changed(self) -> None:
         now = time.perf_counter()
@@ -231,7 +258,7 @@ class PageSettle:
             # messages cannot timestamp a request ahead of an earlier input callback that has not run yet.
             _ = asyncio.get_running_loop().call_soon(self._navigation_started, request)
         # Repeated requests do not extend the quiet window indefinitely, but may carry the action's result.
-        url = urlsplit(request.url)._replace(fragment="").geturl()
+        url = _without_fragment(request.url)
         key = (request.frame, request.method, url, request.post_data_buffer)
         self._in_flight[request] = key not in self._sent
         if key in self._sent:
@@ -246,6 +273,18 @@ class PageSettle:
             # A redirect whose initial request predates this tracker cannot establish click navigation.
             self._navigation_started_at = None
         self._navigation_request = request
+
+    def _frame_navigated(self, frame: Frame) -> None:
+        if frame is not self.page.main_frame:
+            return
+        previous, self._url = self._url, frame.url
+        if frame.url != previous and _without_fragment(frame.url) == _without_fragment(previous):
+            # A fragment navigation sends no request: its URL changing is when it came, queued as a request is
+            _ = asyncio.get_running_loop().call_soon(self._fragment_navigated)
+
+    def _fragment_navigated(self) -> None:
+        self._navigation_started_at = time.perf_counter()
+        self._navigation_request = None
 
     def _same_origin(self, request: Request) -> bool:
         """Whether `request` comes from the page or one of its same-origin frames (whose DOM is watched too). A frame
@@ -270,9 +309,12 @@ class PageSettle:
         self._opened_event.set()
         self._opening_event.set()
         # its first scripts can start requests before it is waited for
-        self._opened_settles[page] = PageSettle(page, None, tabs=False)
+        self._opened_settles[page] = PageSettle(
+            page, None, tabs=False, requests=requests_of(page, self._context_requests)
+        )
 
     def _context_request(self, request: Request) -> None:
+        self._context_requests.add(request)
         if not request.is_navigation_request():
             return
         try:
@@ -281,6 +323,9 @@ class PageSettle:
             # a navigation issued before its frame exists: the first one of a new tab
             self._opening = True
             self._opening_event.set()
+
+    def _context_request_ended(self, request: Request) -> None:
+        self._context_requests.discard(request)
 
     def _left_s(self, cap_ms: float) -> float:
         return max(cap_ms - (time.perf_counter() - self._began) * 1000, 0) / 1000
@@ -459,7 +504,11 @@ class PageSettle:
         if self._tabs:
             _ = self.page.context.remove_listener("page", self._page_opened)
             _ = self.page.context.remove_listener("request", self._context_request)
+            _ = self.page.context.remove_listener("requestfinished", self._context_request_ended)
+            _ = self.page.context.remove_listener("requestfailed", self._context_request_ended)
+        self._context_requests.clear()
         _ = self.page.remove_listener("request", self._request_started)
         _ = self.page.remove_listener("requestfinished", self._request_ended)
         _ = self.page.remove_listener("requestfailed", self._request_ended)
+        _ = self.page.remove_listener("framenavigated", self._frame_navigated)
         await self._dispose_tracker()

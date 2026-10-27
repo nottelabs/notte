@@ -88,6 +88,10 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   when no new tab was created, and await that opener's tracked requests. A click
   can instead navigate an existing named tab: prefer a single tracked main-frame
   navigation before the opener, including reloads and navigation before commit.
+  A fragment navigation sends no request: its main-frame URL change counts as
+  the navigation. A target document replaced before the input drops its listener;
+  then the click's return is its input time. The click's own tab settle seeds a
+  new tab's tracker from the context's requests in flight, as `BrowserWindow` does.
 - A new-document `goto` tracks requests before its commit and waits for the destination
   within one navigation budget. Do not wait on the old document's tracker first:
   a commit after the 3 s settle cap must still get its remaining load wait.
