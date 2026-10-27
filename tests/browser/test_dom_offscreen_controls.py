@@ -7,9 +7,11 @@ like the controls in view, without an id and with fewer attributes, and their no
 `DomNode.offscreen`. Hidden controls stay out, as their text does.
 """
 
+import json
 from urllib.parse import quote
 
 import pytest
+from notte_browser.dom.parsing import DOM_TREE_JS
 from notte_browser.session import NotteSession
 
 PAGE = """
@@ -59,6 +61,70 @@ async def _observe(session: NotteSession) -> tuple[list[str], list[tuple[str, st
     obs = await session.aobserve()
     lines = obs.space.description.splitlines()[1:]
     return lines, [(action.id, action.text_label) for action in obs.space.interaction_actions]
+
+
+@pytest.mark.asyncio
+async def test_nested_scroller_observation_does_not_repeat_escape_ancestor_walks() -> None:
+    """Doubling controls and scroll depth costs quadratic work, rather than cubic work."""
+    measured_script = (
+        DOM_TREE_JS.replace("let highlightIndex = 0;", "let ancestorReads = 0; let highlightIndex = 0;")
+        .replace(
+            "function composedParentElement(element) {",
+            "function composedParentElement(element) { ancestorReads++;",
+        )
+        .replace(
+            "JSON.stringify({ rootId, map: DOM_HASH_MAP })",
+            "JSON.stringify({ rootId, map: DOM_HASH_MAP, ancestorReads })",
+        )
+    )
+    work: list[int] = []
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        for size in (40, 80):
+            await session.window.page.goto(
+                "data:text/html,<style>"
+                ".scroll{height:220px;width:400px;overflow:auto}"
+                "button{display:inline-block;width:4px;box-sizing:border-box;height:20px;padding:0;font-size:1px}"
+                "</style>"
+            )
+            await session.window.page.evaluate(
+                """size => {
+                let parent = document.body;
+                for (let i = 0; i < size; i++) {
+                    const box = document.createElement('div');
+                    box.className = 'scroll';
+                    const spacer = document.createElement('div');
+                    spacer.style.height = '240px';
+                    parent.prepend(box);
+                    box.append(spacer);
+                    parent = box;
+                }
+                for (let i = 0; i < size; i++) {
+                    const button = document.createElement('button');
+                    button.textContent = `Choice ${i}`;
+                    parent.insertBefore(button, parent.lastChild);
+                }
+                const later = document.createElement('button');
+                later.textContent = 'Later';
+                parent.append(later);
+            }""",
+                size,
+            )
+            payload = json.loads(
+                await session.window.page.evaluate(
+                    measured_script,
+                    {
+                        "highlight_elements": False,
+                        "focus_element": -1,
+                        "viewport_expansion": 0,
+                        "enable_pointer_elements": False,
+                    },
+                )
+            )
+            work.append(payload["ancestorReads"])
+            obs = await session.aobserve()
+            assert "Choice 0" in [action.text_label for action in obs.space.interaction_actions]
+            assert "_[:]<button>Later</button>" in obs.space.description
+        assert work[1] <= 5 * work[0], work
 
 
 @pytest.mark.asyncio

@@ -126,6 +126,9 @@ recursive flattening so nested slot traversal shares the same node budget.
 Scroll clipping follows positioned ancestors too: normal-flow controls in an escaping popup escape
 with it. Fixed popups with a transformed containing block can still be clipped by that block;
 `tests/browser/test_dom_offscreen_controls.py` checks both against Chromium hit testing and clicks.
+Cache the escaped clippers from one composed-ancestor walk per element. Rewalking
+the chain for every scroll box makes observation cubic when sibling controls and
+scroll depth grow together; the browser regression counts ancestor reads instead of timing it.
 
 Off-screen controls use the scroll box's scaled inner bounds, and ancestor walks
 follow assigned slots before light-DOM parents and cross shadow roots to their hosts.

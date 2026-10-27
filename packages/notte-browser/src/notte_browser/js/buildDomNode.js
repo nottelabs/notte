@@ -741,6 +741,8 @@
 		return (style.overflowY !== "visible" && rect.height === 0) || (style.overflowX !== "visible" && rect.width === 0);
 	}
 
+	const escapedClippers = new WeakMap();
+
 	/**
 	 * Checks if an element, or a positioned ancestor below the clipper, escapes its overflow: its
 	 * containing block is outside the clipper. Chromium's `offsetParent` also identifies the containing
@@ -752,14 +754,36 @@
 	 * @returns {boolean} Whether the element escapes the clipping.
 	 */
 	function escapesClip(element, clipper) {
-		for (let current = element; current && current !== clipper; current = composedParentElement(current)) {
+		if (escapedClippers.has(element)) return escapedClippers.get(element).has(clipper);
+		// Index the chain once, rather than walking it again for each clipping ancestor. A positioned
+		// descendant escapes until its containing block (or the first ancestor shared with that block).
+		const ancestors = [];
+		const boundaryIndices = new Map();
+		for (let current = element; current; current = composedParentElement(current)) {
+			boundaryIndices.set(current, ancestors.length);
+			ancestors.push(current);
+		}
+		const escaped = new Set();
+		let escapeUntil = 0;
+		for (let index = 0; index < ancestors.length; index++) {
+			const current = ancestors[index];
+			if (index < escapeUntil) escaped.add(current);
 			const position = getCachedComputedStyle(current)?.position;
 			if (position !== "fixed" && position !== "absolute") continue;
 			let containingBlock = propertyOf(current, "offsetParent");
-			while (containingBlock && containingBlock !== clipper) containingBlock = composedParentElement(containingBlock);
-			if (containingBlock === null) return true;
+			if (containingBlock === undefined) continue;
+			const outside = [];
+			while (containingBlock && !boundaryIndices.has(containingBlock)) {
+				outside.push(containingBlock);
+				containingBlock = composedParentElement(containingBlock);
+			}
+			const boundary = containingBlock ? boundaryIndices.get(containingBlock) : ancestors.length;
+			// Offset parents outside this composed chain can share a branch; walk that branch only once.
+			for (const node of outside) boundaryIndices.set(node, boundary);
+			escapeUntil = Math.max(escapeUntil, boundary);
 		}
-		return false;
+		escapedClippers.set(element, escaped);
+		return escaped.has(clipper);
 	}
 
 	/**
