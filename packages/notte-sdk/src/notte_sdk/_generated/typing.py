@@ -218,11 +218,11 @@ class SessionStartRequestDict(TypedDict):
     vault_id: NotRequired[str | None]
     auth_ids: NotRequired[list[str]]
     wait_for_authentication: NotRequired[bool]
+    record_session: NotRequired[bool]
+    log_session: NotRequired[bool]
     auth_retry: NotRequired[int]
     block_ads: NotRequired[bool]
     advanced_stealth: NotRequired[bool]
-    record_session: NotRequired[bool]
-    log_session: NotRequired[bool]
 
 
 class SessionStopRequestDict(TypedDict):

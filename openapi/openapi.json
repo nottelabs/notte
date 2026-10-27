@@ -16669,6 +16669,18 @@
             "description": "SDK waiting preference. The API always verifies inline and returns authenticating when background login is needed; SDKs implement waiting through readiness polling.",
             "default": true
           },
+          "record_session": {
+            "type": "boolean",
+            "title": "Record Session",
+            "description": "Save session replay. False permanently disables saved replay; Live View remains available.",
+            "default": true
+          },
+          "log_session": {
+            "type": "boolean",
+            "title": "Log Session",
+            "description": "Save browser session logs. False permanently disables saved logs, without disabling metering.",
+            "default": true
+          },
           "auth_retry": {
             "type": "integer",
             "maximum": 2.0,
@@ -16687,18 +16699,6 @@
             "title": "Advanced Stealth",
             "description": "Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.",
             "default": false
-          },
-          "record_session": {
-            "type": "boolean",
-            "title": "Record Session",
-            "description": "Save session replay. False permanently disables saved replay; Live View remains available.",
-            "default": true
-          },
-          "log_session": {
-            "type": "boolean",
-            "title": "Log Session",
-            "description": "Save browser session logs. False permanently disables saved logs, without disabling metering.",
-            "default": true
           },
           "screenshot_type": {
             "type": "string",
@@ -22129,6 +22129,22 @@
               }
             ],
             "title": "Pressed"
+          },
+          "sort": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "ascending",
+                  "descending",
+                  "other"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sort"
           }
         },
         "type": "object",
@@ -24728,6 +24744,18 @@
             "description": "Whether to wait for Managed Auth before returning the session. Defaults to true. When true, authentication failure or timeout fails session creation; when false, authentication continues in the background after the browser is ready.",
             "default": true
           },
+          "record_session": {
+            "type": "boolean",
+            "title": "Record Session",
+            "description": "Save session replay. False permanently disables saved replay; Live View remains available.",
+            "default": true
+          },
+          "log_session": {
+            "type": "boolean",
+            "title": "Log Session",
+            "description": "Save browser session logs. False permanently disables saved logs, without disabling metering.",
+            "default": true
+          },
           "auth_retry": {
             "type": "integer",
             "maximum": 2.0,
@@ -24746,18 +24774,6 @@
             "title": "Advanced Stealth",
             "description": "Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.",
             "default": false
-          },
-          "record_session": {
-            "type": "boolean",
-            "title": "Record Session",
-            "description": "Save session replay. False permanently disables saved replay; Live View remains available.",
-            "default": true
-          },
-          "log_session": {
-            "type": "boolean",
-            "title": "Log Session",
-            "description": "Save browser session logs. False permanently disables saved logs, without disabling metering.",
-            "default": true
           },
           "screenshot_type": {
             "type": "string",
@@ -31511,6 +31527,18 @@
       },
       "SessionResponse": {
         "properties": {
+          "record_session": {
+            "type": "boolean",
+            "title": "Record Session",
+            "description": "Whether saved session replay is enabled. Defaults to true.",
+            "default": true
+          },
+          "log_session": {
+            "type": "boolean",
+            "title": "Log Session",
+            "description": "Whether saved browser session logs are enabled. Defaults to true.",
+            "default": true
+          },
           "session_id": {
             "type": "string",
             "title": "Session Id",
@@ -31742,18 +31770,6 @@
             "title": "System Hidden",
             "description": "Whether this session is an internal system run. Internal system runs are omitted from session.list() unless include_system=True is requested.",
             "default": false
-          },
-          "record_session": {
-            "type": "boolean",
-            "title": "Record Session",
-            "description": "Whether saved session replay is enabled. Defaults to true.",
-            "default": true
-          },
-          "log_session": {
-            "type": "boolean",
-            "title": "Log Session",
-            "description": "Whether saved browser session logs are enabled. Defaults to true.",
-            "default": true
           },
           "timeout_minutes": {
             "type": "integer",

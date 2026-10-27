@@ -20,6 +20,14 @@ export type GlobalScrapeOptions<T = unknown> = Omit<GlobalScrapeRequest, 'url' |
 
 ## Fields
 
+<ParamField body="record_session" type={"boolean | undefined"}>
+Save session replay. False permanently disables saved replay; Live View remains available.
+</ParamField>
+
+<ParamField body="log_session" type={"boolean | undefined"}>
+Save browser session logs. False permanently disables saved logs, without disabling metering.
+</ParamField>
+
 <ParamField body="idle_timeout_minutes" type={"number | undefined"}>
 Idle timeout in minutes. Session closes after this period of inactivity (resets on each operation).
 </ParamField>
@@ -62,14 +70,6 @@ Whether to use web bot authentication.
 
 <ParamField body="auth_ids" type={"string[] | undefined"}>
 Managed Auth connection IDs to verify and, when necessary, authenticate inside this session before it is returned.
-</ParamField>
-
-<ParamField body="record_session" type={"boolean | undefined"}>
-Save session replay. False permanently disables saved replay; Live View remains available.
-</ParamField>
-
-<ParamField body="log_session" type={"boolean | undefined"}>
-Save browser session logs. False permanently disables saved logs, without disabling metering.
 </ParamField>
 
 <ParamField body="vault_id" type={"string | null | undefined"}>
