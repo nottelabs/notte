@@ -8,10 +8,11 @@ a valid XPath expression". Elements now have their own step, and the CSS path of
 root goes on from its host's (Playwright's CSS engine enters open shadow roots; its XPath engine does not).
 """
 
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 
 import pytest
 from notte_browser.session import NotteSession
+from patchright.async_api import Route
 
 PAGE = """
 <my-form></my-form>
@@ -209,6 +210,36 @@ async def test_a_shadow_child_with_the_path_of_its_host_can_be_clicked(light: st
     async with NotteSession(headless=True) as session:
         page = session.window.page
         _ = await page.goto(f"data:text/html,{quote(page_html)}")
+        obs = await session.aobserve()
+        button = next(action for action in obs.space.interaction_actions if action.text_label == "Open")
+
+        result = await session.aexecute(type="click", id=button.id)
+        assert result.success, result.message
+        assert await page.title() == "inner"
+
+
+@pytest.mark.asyncio
+async def test_a_shadow_child_in_an_iframe_in_a_shadow_root_can_be_clicked() -> None:
+    """The chain through shadow roots starts at the iframe's document, not at the page's."""
+    pages = {
+        "/": """<x-outer></x-outer>
+<script>
+  document.querySelector("x-outer").attachShadow({ mode: "open" }).innerHTML = `<iframe src="/frame"></iframe>`;
+</script>""",
+        "/frame": """<x-box></x-box>
+<script>
+  document.querySelector("x-box").attachShadow({ mode: "open" }).innerHTML =
+    `<button onclick="parent.document.title = 'inner'">Open</button>`;
+</script>""",
+    }
+
+    async def serve(route: Route) -> None:
+        await route.fulfill(body=pages[urlparse(route.request.url).path], content_type="text/html")
+
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        await page.route("https://shadow.notte.test/**", serve)
+        _ = await page.goto("https://shadow.notte.test/", wait_until="load")
         obs = await session.aobserve()
         button = next(action for action in obs.space.interaction_actions if action.text_label == "Open")
 

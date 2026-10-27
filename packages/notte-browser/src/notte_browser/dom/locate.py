@@ -66,6 +66,13 @@ def _shadow_steps(selectors: NodeSelectors) -> list[str]:
     return [step for step in steps if step]
 
 
+def _is_frame_root(node: DomNode) -> bool:
+    """Whether a node is the root of a frame's document: the child of its iframe element."""
+    return (
+        node.parent is not None and node.parent.attributes is not None and node.parent.attributes.tag_name == "iframe"
+    )
+
+
 def selectors_through_shadow_dom(node: DomNode) -> NodeSelectors:
     root_selectors = node.computed_attributes.selectors
     if root_selectors is None:
@@ -73,7 +80,8 @@ def selectors_through_shadow_dom(node: DomNode) -> NodeSelectors:
     xpaths = [f"xpath={root_selectors.xpath_selector}"]
     # the element below `node` on the way to the target
     child: DomNode | None = None
-    while node.parent is not None:
+    # the chain starts at the target's document: an element is located in the frame of its document
+    while node.parent is not None and not _is_frame_root(node):
         selectors = node.computed_attributes.selectors
         if selectors is None:
             raise ValueError("Is this a valid dom tree?")
@@ -97,7 +105,7 @@ def selectors_through_shadow_dom(node: DomNode) -> NodeSelectors:
                 if child_selectors is None or child_selectors.xpath_selector.startswith(f"{selectors.xpath_selector}/"):
                     step = xpaths[-1].removeprefix("xpath=")
                     xpaths[-1] = f"xpath={step.removeprefix(selectors.xpath_selector)}"
-                if node.parent.parent is None:
+                if node.parent.parent is None or _is_frame_root(node.parent):
                     xpaths.append(selectors.xpath_selector)
                 else:
                     xpaths.append(f"xpath={selectors.xpath_selector}")
