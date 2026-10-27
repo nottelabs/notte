@@ -60,7 +60,11 @@ class SignalTests(unittest.TestCase):
 
         server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
         threading.Thread(target=server.serve_forever, daemon=True).start()
-        env = {name: os.environ[name] for name in ("PATH", "HOME", "TMPDIR", "TEMP", "TMP") if name in os.environ}
+        env = {
+            name: os.environ[name]
+            for name in ("PATH", "HOME", "TMPDIR", "TEMP", "TMP", "NOTTE_ENABLE_NEST_ASYNCIO")
+            if name in os.environ
+        }
         env.update(dict.fromkeys(("NOTTE_API_KEY",), "fixture-local-only"))
         env["NOTTE_API_URL"] = f"http://127.0.0.1:{server.server_port}"
         child = subprocess.Popen(

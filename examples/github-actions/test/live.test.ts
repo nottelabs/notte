@@ -86,9 +86,11 @@ for (const [mode, fixtureHtml] of Object.entries(cases)) {
     if (mode === 'unchanged') document.selectors.learn_more.selector = 'a';
     if (mode === 'navigation') document.url = 'https://notte-selector-missing.invalid';
     if (mode === 'redirect') document.url = 'https://notte-selector-fixture.invalid/start';
+    const fixtureNavigationHtml = ['navigation', 'redirect', 'cancel'].includes(mode)
+      ? undefined : '<a href="https://www.iana.org/domains/example">Learn more</a>';
     const controller = new AbortController();
     if (mode === 'cancel') controller.abort(); // Claim still completes; the already-aborted callback must release it.
-    const run = repair(Buffer.from(JSON.stringify(document)), { fixtureHtml, fixtureLateRedirect: mode === 'late_redirect' ? 'https://www.iana.org' : undefined, fixtureRedirect: mode === 'redirect' ? 'https://example.com' : undefined, signal: controller.signal });
+    const run = repair(Buffer.from(JSON.stringify(document)), { fixtureHtml, fixtureNavigationHtml, fixtureLateRedirect: mode === 'late_redirect' ? 'https://www.iana.org' : undefined, fixtureRedirect: mode === 'redirect' ? 'https://example.com' : undefined, signal: controller.signal });
     let id: string;
     if (['repair', 'unchanged', 'id', 'escaped_id', 'delayed'].includes(mode)) {
       const result = await run;

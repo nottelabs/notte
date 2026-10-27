@@ -11,7 +11,8 @@ application code or use a model. Ambiguous, missing or unstable targets require
 manual review. Every owned browser closes after success, refusal or cancellation.
 
 On Linux or macOS, use Python 3.11+ or Node.js 24.8+ and a [Notte API key](https://console.notte.cc/apikeys).
-Inside this directory run `uv sync --locked` or `npm ci`, set `NOTTE_API_KEY`, then
+Inside this directory run `uv sync --locked` or `npm ci`, set `NOTTE_API_KEY` and
+`NOTTE_ENABLE_NEST_ASYNCIO=false` for the pinned Python SDK 1.10.0, then
 run `uv run --locked python repair.py` or `npm start`. Edit `selectors.json` for
 your page and semantic targets. The recipe writes `proposal.json` without changing
 the source map. `NOTTE_API_URL` optionally selects the endpoint matching your key.

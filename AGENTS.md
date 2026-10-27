@@ -74,6 +74,8 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   example's lockfile, so a new upstream release can break CI.
   Python checks install each example's locked published SDK before source validation;
   adopting a new SDK API also requires updating its `pyproject.toml` and `uv.lock`.
+  Published SDK 1.10.0 needs `NOTTE_ENABLE_NEST_ASYNCIO=false` before import for
+  native asyncio on Python 3.15. The source SDK no longer applies that patch.
 - `evaluate_js` preserves RegExp results as JSON data (`{"r": {"p": source,
   "f": flags}}`), including complete patterns. Patchright 1.64.1 and Playwright
   1.64.0 compile native regex results into Python objects, so native evaluation is
