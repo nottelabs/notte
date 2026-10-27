@@ -65,7 +65,8 @@ JsonObject = dict[str, Any]
 
 
 def download(url: str) -> JsonObject:
-    endpoint = f"{url.rstrip('/')}/openapi.json"
+    url = url.rstrip("/")
+    endpoint = f"{url}/openapi.json"
     print(f"Fetching {endpoint}")
     # The API's edge rejects urllib's default User-Agent.
     headers = {"User-Agent": "notte-openapi-contract"}

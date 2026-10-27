@@ -112,20 +112,29 @@ def test_unknown_names_are_still_drift() -> None:
     "url,authorized",
     [
         ("https://us-staging.notte.cc", True),
+        ("https://us-staging.notte.cc/", True),
+        ("https://us-staging.notte.cc///", True),
         ("https://preview-20-dev-test.notte.cc", True),
         ("https://api.notte.cc", True),
         ("http://us-staging.notte.cc", False),
         ("https://us-staging.notte.cc.evil.test", False),
         ("https://example.com", False),
+        ("https://us-staging.notte.cc@evil.test/", False),
+        ("https://us-staging.notte.cc/custom/", False),
         ("https://preview-21-dev-test.notte.cc", False),
     ],
 )
-def test_schema_key_is_scoped_to_api_origins(monkeypatch, url: str, authorized: bool) -> None:
-    monkeypatch.setenv("NOTTE_API_KEY", "fixture-key")
+@pytest.mark.parametrize("key", [None, "", "fixture-key"])
+def test_schema_key_is_scoped_to_api_origins(monkeypatch, url: str, authorized: bool, key: str | None) -> None:
+    if key is None:
+        monkeypatch.delenv("NOTTE_API_KEY", raising=False)
+    else:
+        monkeypatch.setenv("NOTTE_API_KEY", key)
 
     class Opener:
         def open(self, request, timeout):
-            assert request.get_header("Authorization") == ("Bearer fixture-key" if authorized else None)
+            assert request.full_url == f"{url.rstrip('/')}/openapi.json"
+            assert request.get_header("Authorization") == ("Bearer fixture-key" if authorized and key else None)
             assert timeout == 120
             return io.StringIO('{"openapi":"3.1.0"}')
 
