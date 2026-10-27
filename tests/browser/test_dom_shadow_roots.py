@@ -183,3 +183,24 @@ async def test_a_shadow_host_in_a_shadow_root_can_be_clicked() -> None:
         result = await session.aexecute(type="click", id=host.id)
         assert result.success, result.message
         assert await page.title() == "host"
+
+
+@pytest.mark.asyncio
+async def test_a_shadow_child_with_the_path_of_its_host_can_be_clicked() -> None:
+    """In nested shadow roots, the inner host and the button in its shadow root both have the XPath `x-box`."""
+    page_html = """<x-outer></x-outer>
+<script>
+  const root = document.querySelector("x-outer").attachShadow({ mode: "open" });
+  root.innerHTML = "<x-box></x-box>";
+  root.querySelector("x-box").attachShadow({ mode: "open" }).innerHTML =
+    `<x-box role="button" onclick="document.title = 'inner'">Open</x-box>`;
+</script>"""
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(f"data:text/html,{quote(page_html)}")
+        obs = await session.aobserve()
+        button = next(action for action in obs.space.interaction_actions if action.text_label == "Open")
+
+        result = await session.aexecute(type="click", id=button.id)
+        assert result.success, result.message
+        assert await page.title() == "inner"

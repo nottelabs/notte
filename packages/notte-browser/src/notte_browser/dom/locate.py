@@ -71,6 +71,7 @@ def selectors_through_shadow_dom(node: DomNode) -> NodeSelectors:
     if root_selectors is None:
         raise ValueError(f"Node id={node.id} has no selectors")
     xpaths = [f"xpath={root_selectors.xpath_selector}"]
+    target = node
     while node.parent is not None:
         selectors = node.computed_attributes.selectors
         if selectors is None:
@@ -87,8 +88,12 @@ def selectors_through_shadow_dom(node: DomNode) -> NodeSelectors:
                 )
                 xpaths.append(node.attributes.tag_name)
             else:
-                # xpaths of children also contain xpaths part of parent that we need to remove for shadow root handling
-                xpaths[-1] = xpaths[-1].replace(selectors.xpath_selector, "")
+                # The XPath of an element in the host's light tree starts with the host's, taken out of its step
+                # ("/rest"), and the target, when it is the host, is left an empty step. An element of the host's
+                # shadow root has its XPath from that root, which can repeat the host's (an `x-box` in an `x-box`)
+                step = xpaths[-1].removeprefix("xpath=")
+                if node is target or step.startswith(f"{selectors.xpath_selector}/"):
+                    xpaths[-1] = f"xpath={step.removeprefix(selectors.xpath_selector)}"
                 if node.parent.parent is None:
                     xpaths.append(selectors.xpath_selector)
                 else:
