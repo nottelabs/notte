@@ -232,6 +232,7 @@ _TAG_ROLES: dict[str, NodeRole] = {
     "div": NodeRole.GROUP,
     # interactive elements (<input> is handled separately)
     "a": NodeRole.LINK,
+    "area": NodeRole.LINK,
     "button": NodeRole.BUTTON,
     "select": NodeRole.COMBOBOX,
     "textarea": NodeRole.TEXTBOX,
