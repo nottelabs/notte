@@ -8,10 +8,11 @@ a valid XPath expression". Elements now have their own step, and the CSS path of
 root goes on from its host's (Playwright's CSS engine enters open shadow roots; its XPath engine does not).
 """
 
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 
 import pytest
 from notte_browser.session import NotteSession
+from patchright.async_api import Route
 
 PAGE = """
 <my-form></my-form>
@@ -80,3 +81,187 @@ async def test_selectors_of_elements_in_shadow_roots() -> None:
             ("input", 'html > body > my-form > my-field:nth-of-type(2) > input[id="i"]'),
             ("button", 'html > body > my-form > button[type="button"]'),
         ]
+
+
+def _same_tag_page(wrap: str, inner: str) -> str:
+    """A host with a light child and a shadow child of the same tag: they have the same CSS path, and Playwright's
+    XPath engine, which does not enter shadow roots, finds the light one from the host."""
+    light = inner.format(label="Light", title="light")
+    shadow = inner.format(label="Shadow", title="shadow").replace('"', '\\"')
+    return (
+        wrap.format(host=f"<x-box>{light}</x-box>")
+        + f"""
+<script>
+  document.querySelector("x-box").attachShadow({{ mode: "open" }}).innerHTML = "{shadow}<slot></slot>";
+</script>"""
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("wrap", ["{host}", "<div><p>Box</p>{host}</div>"])
+@pytest.mark.parametrize(
+    "inner",
+    [
+        "<button onclick=\"document.title = '{title}'\">{label}</button>",
+        "<div><button onclick=\"document.title = '{title}'\">{label}</button></div>",
+    ],
+)
+async def test_a_shadow_child_and_a_light_child_with_the_same_path_are_told_apart(wrap: str, inner: str) -> None:
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(f"data:text/html,{quote(_same_tag_page(wrap, inner))}")
+        obs = await session.aobserve()
+        buttons = {action.text_label: action.id for action in obs.space.interaction_actions}
+        assert sorted(buttons) == ["Light", "Shadow"]
+
+        for label, action_id in buttons.items():
+            _ = await page.evaluate("document.title = ''")
+            result = await session.aexecute(type="click", id=action_id)
+            assert result.success, result.message
+            assert await page.title() == label.lower()
+
+
+@pytest.mark.asyncio
+async def test_a_removed_shadow_child_is_not_replaced_by_the_light_child() -> None:
+    """When the observed shadow child is gone, its CSS path matches only the light child: the click fails."""
+    page_html = _same_tag_page("{host}", "<button onclick=\"document.title = '{title}'\">{label}</button>")
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(f"data:text/html,{quote(page_html)}")
+        obs = await session.aobserve()
+        shadow = next(action for action in obs.space.interaction_actions if action.text_label == "Shadow")
+
+        _ = await page.evaluate("document.querySelector('x-box').shadowRoot.querySelector('button').remove()")
+        result = await session.aexecute(type="click", id=shadow.id, raise_on_failure=False)
+        assert not result.success
+        assert await page.title() == ""
+
+
+HOST_SCRIPT = """<script>
+  for (const host of document.querySelectorAll("[data-host]")) {
+    host.attachShadow({ mode: "open" }).innerHTML = "<span>Open</span><slot></slot>";
+  }
+</script>"""
+HOST = '<x-box role="button" data-host onclick="document.title = \'host\'"></x-box>'
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "body",
+    [
+        HOST,
+        # a light sibling of the same tag
+        HOST + '<x-box role="button" onclick="document.title = \'sibling\'">Other</x-box>',
+    ],
+)
+async def test_a_shadow_host_can_be_clicked(body: str) -> None:
+    """A host is not in its own shadow root: its CSS path is what finds it."""
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(f"data:text/html,{quote(body + HOST_SCRIPT)}")
+        obs = await session.aobserve()
+        host = next(action for action in obs.space.interaction_actions if action.text_label == "Open")
+
+        result = await session.aexecute(type="click", id=host.id)
+        assert result.success, result.message
+        assert await page.title() == "host"
+
+
+@pytest.mark.asyncio
+async def test_a_shadow_host_in_a_shadow_root_can_be_clicked() -> None:
+    page_html = """<x-outer></x-outer>
+<script>
+  const root = document.querySelector("x-outer").attachShadow({ mode: "open" });
+  root.innerHTML = `<x-box role="button" onclick="document.title = 'host'"></x-box>`;
+  root.querySelector("x-box").attachShadow({ mode: "open" }).innerHTML = "<span>Open</span>";
+</script>"""
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(f"data:text/html,{quote(page_html)}")
+        obs = await session.aobserve()
+        host = next(action for action in obs.space.interaction_actions if action.text_label == "Open")
+
+        result = await session.aexecute(type="click", id=host.id)
+        assert result.success, result.message
+        assert await page.title() == "host"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("light", "shadow"),
+    [
+        # the inner host and the button in its shadow root both have the XPath `x-box`
+        ("", """<x-box role="button" onclick="document.title = 'inner'">Open</x-box>"""),
+        # the button in the inner host's shadow root has the XPath `x-box/button`, which also reads as a light child
+        # of the host, where a button is
+        (
+            """<button onclick="document.title = 'light'">Light</button>""",
+            """<x-box><button onclick="document.title = 'inner'">Open</button></x-box><slot></slot>""",
+        ),
+    ],
+)
+async def test_a_shadow_child_with_the_path_of_its_host_can_be_clicked(light: str, shadow: str) -> None:
+    page_html = f"""<x-outer></x-outer>
+<script>
+  const root = document.querySelector("x-outer").attachShadow({{ mode: "open" }});
+  root.innerHTML = `<x-box>{light}</x-box>`;
+  root.querySelector("x-box").attachShadow({{ mode: "open" }}).innerHTML = `{shadow}`;
+</script>"""
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(f"data:text/html,{quote(page_html)}")
+        obs = await session.aobserve()
+        button = next(action for action in obs.space.interaction_actions if action.text_label == "Open")
+
+        result = await session.aexecute(type="click", id=button.id)
+        assert result.success, result.message
+        assert await page.title() == "inner"
+
+
+@pytest.mark.asyncio
+async def test_a_shadow_child_in_an_iframe_in_a_shadow_root_can_be_clicked() -> None:
+    """The chain through shadow roots starts at the iframe's document, not at the page's."""
+    pages = {
+        "/": """<x-outer></x-outer>
+<script>
+  document.querySelector("x-outer").attachShadow({ mode: "open" }).innerHTML = `<iframe src="/frame"></iframe>`;
+</script>""",
+        "/frame": """<x-box></x-box>
+<script>
+  document.querySelector("x-box").attachShadow({ mode: "open" }).innerHTML =
+    `<button onclick="parent.document.title = 'inner'">Open</button>`;
+</script>""",
+    }
+
+    async def serve(route: Route) -> None:
+        await route.fulfill(body=pages[urlparse(route.request.url).path], content_type="text/html")
+
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        await page.route("https://shadow.notte.test/**", serve)
+        _ = await page.goto("https://shadow.notte.test/", wait_until="load")
+        obs = await session.aobserve()
+        button = next(action for action in obs.space.interaction_actions if action.text_label == "Open")
+
+        result = await session.aexecute(type="click", id=button.id)
+        assert result.success, result.message
+        assert await page.title() == "inner"
+
+
+@pytest.mark.asyncio
+async def test_an_svg_link_in_a_shadow_root_can_be_clicked() -> None:
+    """XPath name tests do not match SVG elements in an HTML document: the chain's `svg/a` is walked by tag."""
+    page_html = """<x-chart></x-chart>
+<script>
+  document.querySelector("x-chart").attachShadow({ mode: "open" }).innerHTML = `<svg width="200" height="50">
+    <a href="#next" onclick="document.title = 'next'"><text x="10" y="30">Open</text></a></svg>`;
+</script>"""
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(f"data:text/html,{quote(page_html)}")
+        obs = await session.aobserve()
+        link = next(action for action in obs.space.interaction_actions if action.text_label == "Open")
+
+        result = await session.aexecute(type="click", id=link.id)
+        assert result.success, result.message
+        assert await page.title() == "next"

@@ -179,6 +179,14 @@ observed CSS path is what finds it: `dom/builder.py` builds it on from the host'
 (`html > body > my-form > my-field:nth-of-type(2) > input`), as Playwright's `>`
 goes from a host to the top elements of its shadow root.
 
+That `>` also goes to the host's light children, so a light child and a top
+shadow child of the same tag have the same CSS path. `dom/locate.py` then picks,
+among the CSS matches, the element the XPath chain of `selectors_through_shadow_dom`
+leads to (`js/shadow_chain_index.js` walks it through each `shadowRoot`), even
+when there is one match: a match the chain does not reach is rejected. It never
+passes a chain that enters a shadow root to Playwright's XPath engine, which would
+find the host's light child instead.
+
 ## HTTP transport
 
 The SDK sends HTTP with httpx. Only `_transport.py`, `_retry.py`, `errors.py` and
