@@ -25,6 +25,11 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
 - `make test` is the offline gate. `make test-live` runs tests marked
   `staging` or `live` and needs `NOTTE_API_KEY`; set `NOTTE_API_URL` to point
   the SDK at a different API.
+- A test that bounds how long a browser action took (`elapsed < ...`) is marked
+  `timing`. The parallel suites leave it out; `make test-timing` runs those
+  tests one at a time, in CI on the 3.11 leg. Next to parallel browsers, a
+  stalled CPU fails such a bound whatever the code does. A lower bound
+  (`elapsed >= ...`) cannot fail that way and needs no mark.
 - The compatible-dependency suite uses `pytest -n logical`, like the locked
   offline suite. Running those browser tests serially can exhaust the Python
   job's 20-minute budget after the full unit suite has passed.

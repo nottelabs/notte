@@ -4,12 +4,16 @@ ifneq ("$(wildcard .env)","")
 endif
 
 # The test selections below are the single source of truth: .github/workflows/test-cicd.yml runs
-# `make test-cicd` (full offline coverage), `make test-compat` (the oldest supported
-# Python's compatibility gate), and `make test-live` (Notte API + third-party sites).
+# `make test-cicd` (full offline coverage), `make test-timing` (the duration bounds, one test at a time),
+# `make test-compat` (the oldest supported Python's compatibility gate), and `make test-live` (Notte API +
+# third-party sites).
 # Markers are declared in pyproject.toml; tests/integration/conftest.py marks that directory by path.
 # The README and examples suites run nightly (nightly-examples.yml), never in these targets.
 PYTEST_IGNORE := --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py
-PYTEST_UNIT := uv run pytest -n logical tests -m "not staging and not live" $(PYTEST_IGNORE)
+PYTEST_UNIT := uv run pytest -n logical tests -m "not staging and not live and not timing" $(PYTEST_IGNORE)
+# Tests that bound how long a browser action took run one at a time: next to parallel browsers, a stalled CPU fails
+# the bound whatever the code does.
+PYTEST_TIMING := uv run --no-sync pytest tests -m "timing and not staging and not live" $(PYTEST_IGNORE)
 PYTEST_LIVE := uv run pytest -n logical tests -m "staging or live" $(PYTEST_IGNORE)
 PYTEST_COMPAT := uv run --no-sync pytest -n logical \
 	tests/sdk tests/config tests/test_execution_result_serialization.py \
@@ -20,6 +24,11 @@ PYTEST_COMPAT := uv run --no-sync pytest -n logical \
 .PHONY: test
 test:
 	$(PYTEST_UNIT)
+	$(PYTEST_TIMING)
+
+.PHONY: test-timing
+test-timing:
+	$(PYTEST_TIMING)
 
 .PHONY: test-cicd
 test-cicd:
