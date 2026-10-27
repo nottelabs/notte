@@ -53,7 +53,7 @@ from notte_core.storage import BaseStorage
 from notte_browser.captcha import solve_captcha
 from notte_browser.dom.locate import locate_element, selectors_through_shadow_dom
 from notte_browser.dom.parsing import parse_dom
-from notte_browser.driver import ElementHandle, Error, FileChooser, Frame, JSHandle, Locator
+from notte_browser.driver import ElementHandle, Error, FileChooser, Frame, JSHandle, Locator, Page
 from notte_browser.errors import (
     InvalidLocatorRuntimeError,
     NoHistoryEntryError,
@@ -665,6 +665,7 @@ async def execute_interaction_action(
     *,
     storage: BaseStorage | None = None,
     verbose: bool = False,
+    before_click: Callable[[], None] | None = None,
 ) -> bool:
     """Interact with an element within `action.timeout`.
 
@@ -677,7 +678,15 @@ async def execute_interaction_action(
     scope = asyncio.timeout_at(deadline)
     try:
         async with scope:
-            await _interact(window, action, _ActionBudget(deadline), prev_snapshot, storage=storage, verbose=verbose)
+            await _interact(
+                window,
+                action,
+                _ActionBudget(deadline),
+                prev_snapshot,
+                storage=storage,
+                verbose=verbose,
+                before_click=before_click,
+            )
     except TimeoutError as e:
         if not scope.expired():
             raise
@@ -765,6 +774,7 @@ async def _interact(
     *,
     storage: BaseStorage | None = None,
     verbose: bool = False,
+    before_click: Callable[[], None] | None = None,
 ) -> None:
     assert action.selectors is not None
     # locate element (possibly in iframe)
@@ -779,6 +789,8 @@ async def _interact(
             )
             if is_disabled:
                 raise ActionExecutionError(action.id, window.page.url, reason="Element is disabled")
+            if before_click is not None:
+                before_click()
             try:
                 # hold back part of the budget for the JS click fallback
                 await locator.click(timeout=budget.remaining_ms(keep_ms=action.timeout / 5))
@@ -941,13 +953,13 @@ async def _execute(
         if _settles(action)
         else None
     )
-    # A popup can start work on an existing tab and close itself during the click. Attach request listeners
-    # before dispatching it; a tracker created after the click cannot recover those in-flight requests.
-    existing_settles = (
-        {tab: PageSettle(tab, None, tabs=False) for tab in tabs if tab is not page}
-        if isinstance(action, ClickAction)
-        else {}
-    )
+    existing_settles: dict[Page, PageSettle] = {}
+
+    def track_existing_tabs() -> None:
+        # Start after lookup and disabled checks, immediately before dispatching the click. Earlier background
+        # navigations are unrelated; requests started by the click must be tracked before a popup can close.
+        existing_settles.update({tab: PageSettle(tab, None, tabs=False) for tab in tabs if tab is not page})
+
     retval = True
     closed_during_click: Error | None = None
     try:
@@ -955,7 +967,12 @@ async def _execute(
             case InteractionAction():
                 try:
                     retval = await execute_interaction_action(
-                        window, action, prev_snapshot, storage=storage, verbose=verbose
+                        window,
+                        action,
+                        prev_snapshot,
+                        storage=storage,
+                        verbose=verbose,
+                        before_click=track_existing_tabs if isinstance(action, ClickAction) else None,
                     )
                 except Error as error:
                     # A click handler can close its own tab before the driver acknowledges the click. Continue

@@ -49,6 +49,9 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
 - `BrowserWindow.page` can select a replacement automatically when its opener
   closes. Wait for a new tab independently of selection; its navigation request
   can also precede the context's `page` event.
+  Existing-tab recovery starts tracking immediately before click dispatch, after
+  element lookup and disabled checks; background navigations during lookup must
+  not identify a replacement for a popup that closes.
   A new tab's fetch can precede that event too. Retain active context requests
   while watching for tabs, then seed the new page's settle tracker; page listeners
   installed after its first script runs otherwise miss its content request.

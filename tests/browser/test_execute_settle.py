@@ -9,6 +9,7 @@ from contextlib import ExitStack, closing
 from typing import Literal
 from unittest.mock import AsyncMock, patch
 
+import notte_browser.execution as execution_module
 import notte_browser.settle as settle_module
 import notte_browser.window as window_module
 import pytest
@@ -17,9 +18,18 @@ from aiohttp import web
 from notte_browser.driver import Error, JSHandle, Locator, Page
 from notte_browser.session import NotteSession
 from notte_browser.settle import CAP_MS, LONG_GRACE_MS, QUIET_MS, SETTLE_MS, PageSettle
-from notte_core.actions import ClickAction, GoBackAction, GoForwardAction, PressKeyAction, ScrollDownAction
+from notte_browser.window import BrowserWindow
+from notte_core.actions import (
+    ClickAction,
+    GoBackAction,
+    GoForwardAction,
+    InteractionAction,
+    PressKeyAction,
+    ScrollDownAction,
+)
 from notte_core.config import config
 from notte_core.errors import NotteBaseError
+from notte_core.snapshot import BrowserSnapshot
 from patchright.async_api import Route
 from PIL import Image
 
@@ -1045,6 +1055,45 @@ async def test_a_closing_popup_selects_the_existing_named_tab_it_navigated(
     assert results.url == f"{site}{destination}"
     expected = "Fetched in the tab" if destination == "/fetching-tab" else "Second tab"
     assert expected in await text(session)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("report_closed", [False, True])
+async def test_a_closing_popup_ignores_other_tabs_navigating_during_element_lookup(
+    session: NotteSession, site: str, monkeypatch: pytest.MonkeyPatch, report_closed: bool
+) -> None:
+    opener = session.window.page
+    async with opener.context.expect_page() as opened:
+        await opener.evaluate("window.open('/')")
+    popup = await opened.value
+    await popup.wait_for_load_state("load")
+    await popup.locator("#close-self").evaluate("el => el.onclick = () => window.close()")
+    other = await opener.context.new_page()
+    await other.goto(site)
+    session.window.page = popup
+    original_locate = execution_module._locate  # pyright: ignore[reportPrivateUsage]
+    original_click = Locator.click
+
+    async def locate_with_unrelated_navigation(
+        window: BrowserWindow, action: InteractionAction, snapshot: BrowserSnapshot | None
+    ) -> Locator:
+        locator = await original_locate(window, action, snapshot)
+        await other.goto(f"{site}/second")
+        return locator
+
+    async def closing_click(locator: Locator, *, timeout: float) -> None:
+        await original_click(locator, timeout=timeout)
+        if not popup.is_closed():
+            await popup.wait_for_event("close")
+        if report_closed:
+            raise Error("Locator.click: Target page, context or browser has been closed")
+
+    monkeypatch.setattr(execution_module, "_locate", locate_with_unrelated_navigation)
+    monkeypatch.setattr(Locator, "click", closing_click)
+    _ = await click(session, "close-self")
+    assert popup.is_closed()
+    assert other.url == f"{site}/second"
+    assert session.window.page is opener
 
 
 @pytest.mark.asyncio
