@@ -3,7 +3,7 @@ import json
 from contextlib import AsyncExitStack, asynccontextmanager
 from urllib.parse import urlsplit
 
-from notte_sdk import NotteClient
+from notte_sdk import AsyncNotteClient
 from openai import APIStatusError
 from playwright.async_api import Page, async_playwright
 from yutori import AsyncYutoriClient
@@ -98,37 +98,36 @@ async def _finish_owned(task):
 
 @asynccontextmanager
 async def owned_connection():
-    session = NotteClient().Session(max_duration_minutes=3, proxies=False, viewport_width=1280, viewport_height=800)
-    entered = False
-    primary = None
-    try:
-        _, cancelled = await _finish_owned(asyncio.create_task(session.__aenter__()))
-        entered = True
-        if cancelled:
-            raise asyncio.CancelledError
-        endpoint = await asyncio.to_thread(session.cdp_url)
-        yield session, endpoint
-    except BaseException as error:
-        primary = error
-        if isinstance(error, Exception) and not isinstance(error, BrowserTaskError):
-            primary = BrowserTaskError("Yutori browser connection failed")
-            raise primary from None
-        raise
-    finally:
-        if entered or session.response is not None:
-            try:
-                _, cancelled = await _finish_owned(
-                    asyncio.create_task(
-                        asyncio.to_thread(session.stop, close_reason="error" if primary is not None else "manual")
+    async with AsyncNotteClient() as client:
+        session = client.Session(max_duration_minutes=3, proxies=False, viewport_width=1280, viewport_height=800)
+        entered = False
+        primary = None
+        try:
+            _, cancelled = await _finish_owned(asyncio.create_task(session.__aenter__()))
+            entered = True
+            if cancelled:
+                raise asyncio.CancelledError
+            endpoint = await session.cdp_url()
+            yield session, endpoint
+        except BaseException as error:
+            primary = error
+            if isinstance(error, Exception) and not isinstance(error, BrowserTaskError):
+                primary = BrowserTaskError("Yutori browser connection failed")
+                raise primary from None
+            raise
+        finally:
+            if entered or session.response is not None:
+                try:
+                    _, cancelled = await _finish_owned(
+                        asyncio.create_task(session.stop(close_reason="error" if primary is not None else "manual"))
                     )
-                )
-            except Exception:
-                if primary is None:
-                    raise BrowserTaskError("Yutori browser cleanup failed") from None
-                primary.add_note("Yutori browser cleanup failed")
-            else:
-                if cancelled and primary is None:
-                    raise asyncio.CancelledError
+                except Exception:
+                    if primary is None:
+                        raise BrowserTaskError("Yutori browser cleanup failed") from None
+                    primary.add_note("Yutori browser cleanup failed")
+                else:
+                    if cancelled and primary is None:
+                        raise asyncio.CancelledError
 
 
 async def _run(
