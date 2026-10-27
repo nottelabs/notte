@@ -108,6 +108,14 @@ RemoteSession instance configured with the specified parameters.
 <ParamField path="advanced_stealth" type="bool">
 </ParamField>
 
+<ParamField path="record_session" type="bool">
+  Defaults to true. Set to false at session creation to disable saved replay for the entire session. Live View remains available.
+</ParamField>
+
+<ParamField path="log_session" type="bool">
+  Defaults to true. Set to false at session creation to disable saved browser activity and network logs for the entire session. Usage metering remains available.
+</ParamField>
+
 ## Returns
 
 `None`: A new RemoteSession instance configured with the specified parameters.

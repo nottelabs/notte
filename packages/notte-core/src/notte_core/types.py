@@ -17,6 +17,7 @@ from pydantic import (
     RootModel,
     SerializationInfo,
     SerializerFunctionWrapHandler,
+    StrictBool,
     ValidationInfo,
     computed_field,
     field_validator,
@@ -858,6 +859,8 @@ class _SessionStartRequestDict(TypedDict, total=False):
 
 
 class SessionStartRequestDict(_SessionStartRequestDict, total=False):
+    record_session: bool
+    log_session: bool
     auth_retry: int
     """Public request dictionary for starting a remote session."""
 
@@ -1095,6 +1098,17 @@ class _SessionStartRequest(SdkRequest):
 
 
 class SessionStartRequest(_SessionStartRequest):
+    record_session: Annotated[
+        StrictBool,
+        Field(description="Save session replay. False permanently disables saved replay; Live View remains available."),
+    ] = True
+    log_session: Annotated[
+        StrictBool,
+        Field(
+            description="Save browser session logs. False permanently disables saved logs, without disabling metering."
+        ),
+    ] = True
+
     """Public request for starting a remote Notte browser session."""
 
     _proxy_shorthand: str | None = PrivateAttr(default=None)
@@ -1330,6 +1344,10 @@ def _drop_duration_format(schema: dict[str, Any]) -> None:
 
 
 class SessionResponse(SdkResponse):
+    record_session: bool = Field(default=True, description="Whether saved session replay is enabled. Defaults to true.")
+    log_session: bool = Field(
+        default=True, description="Whether saved browser session logs are enabled. Defaults to true."
+    )
     # Preserve unknown response fields so legacy wire metadata such as
     # ``headless`` remains available without becoming part of current schemas.
     model_config: ClassVar[ConfigDict] = ConfigDict(extra="allow")

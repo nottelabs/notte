@@ -49,6 +49,8 @@ def code_defaults() -> dict[str, Any]:
         "advanced_stealth": field_default("advanced_stealth"),
         "solve_captchas": field_default("solve_captchas"),
         "block_ads": field_default("block_ads"),
+        "record_session": field_default("record_session"),
+        "log_session": field_default("log_session"),
         "proxies": field_default("proxies"),
         "idle_timeout_minutes": field_default("idle_timeout_minutes"),
         "max_duration_minutes": field_default("max_duration_minutes"),

@@ -109,6 +109,20 @@ describe('Session Unit Tests', () => {
   });
 
   describe('start', () => {
+    it.each<SessionOptions>([
+      {},
+      { record_session: false },
+      { log_session: false },
+      { record_session: false, log_session: false },
+      { record_session: true, log_session: false },
+      { record_session: false, log_session: true },
+      { record_session: true, log_session: true },
+    ])('preserves independent capture options %j on start', async options => {
+      const session = new Session(mockClient, options);
+      await session.start();
+      expect(sessionStart).toHaveBeenCalledWith(expect.objectContaining({ body: options }));
+    });
+
     it.each([true, false])('forwards block_ads=%s to the session API', async block_ads => {
       const options: SessionOptions = { block_ads };
       expectTypeOf<SessionOptions['block_ads']>().toEqualTypeOf<boolean | undefined>();
@@ -458,6 +472,57 @@ describe('Session Unit Tests', () => {
 
       await expect(session.replay({ wait: false })).rejects.toBe(error);
       expect(sessionReplay).toHaveBeenCalledTimes(1);
+    });
+
+    it.each([true, false])('uses its stop state when the API waits for close (stopped=%s)', async stopped => {
+      const session = new Session(mockClient);
+      await session.start();
+      if (stopped) await session.stop();
+      vi.mocked(sessionReplay)
+        .mockRejectedValueOnce(new NotteAPIError('/replay', 404, { replay_status: 'waiting_for_session', retryable: false }))
+        .mockResolvedValueOnce({ data: replays[0] } as never);
+      if (stopped) {
+        await expect(session.replay()).resolves.toEqual(replays[0]);
+        expect(sessionReplay).toHaveBeenCalledTimes(2);
+        expect(sleep).toHaveBeenCalledTimes(1);
+      } else {
+        await expect(session.replay()).rejects.toThrow('still active');
+        expect(sessionReplay).toHaveBeenCalledTimes(1);
+        expect(sleep).not.toHaveBeenCalled();
+      }
+    });
+
+    it('keeps polling the old replay when a new session starts on the same object', async () => {
+      vi.mocked(sessionStop).mockResolvedValue({ data: sessionResponse({ session_id: 'old-session', status: 'closed' }) } as never);
+      vi.mocked(sessionStart)
+        .mockResolvedValueOnce({ data: sessionResponse({ session_id: 'old-session' }) } as never)
+        .mockResolvedValueOnce({ data: sessionResponse({ session_id: 'new-session' }) } as never);
+      const session = new Session(mockClient);
+      await session.start();
+      await session.stop();
+      let rejectFirst!: (error: unknown) => void;
+      vi.mocked(sessionReplay)
+        .mockImplementationOnce(() => new Promise<never>((_, reject) => { rejectFirst = reject; }))
+        .mockResolvedValueOnce({ data: replays[0] } as never);
+      const pending = session.replay();
+      await session.start();
+      rejectFirst(new NotteAPIError('/replay', 404, { replay_status: 'waiting_for_session', retryable: false }));
+      await expect(pending).resolves.toEqual(replays[0]);
+      expect(session.getId()).toBe('new-session');
+      expect(sessionReplay).toHaveBeenCalledTimes(2);
+      for (const [options] of vi.mocked(sessionReplay).mock.calls) {
+        expect(options.path).toEqual({ session_id: 'old-session' });
+      }
+    });
+
+    it.each([true, false])('does not poll when recording was disabled at creation (retryable=%s)', async retryable => {
+      const session = new Session(mockClient);
+      await session.start();
+      const error = new NotteAPIError('/replay', 404, { replay_status: 'disabled', retryable });
+      vi.mocked(sessionReplay).mockRejectedValue(error);
+      await expect(session.replay()).rejects.toBe(error);
+      expect(sessionReplay).toHaveBeenCalledTimes(1);
+      expect(sleep).not.toHaveBeenCalled();
     });
 
     it('rethrows non-404 errors immediately', async () => {

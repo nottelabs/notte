@@ -48,4 +48,4 @@ def test_closed_session_replay_polling_has_a_deadline():
         patch.object(client.sessions, "request", side_effect=active_replay_error()),
         pytest.raises(TimeoutError, match="not ready"),
     ):
-        client.sessions.replay("test-session", timeout=0, _session_closed=True)
+        client.sessions.replay("test-session", timeout=0, _session_closed=lambda: True)
