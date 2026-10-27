@@ -2,6 +2,8 @@
 
 Setup is in `docs/setup.md`; contribution rules are in `docs/CONTRIBUTING.md`.
 Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
+This is the standalone Python/Node SDK repository. The machine's monorepo
+`setup-worktree.py` helper does not apply; use `uv sync --locked --dev --all-extras`.
 
 ## Typing
 

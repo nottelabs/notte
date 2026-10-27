@@ -1,0 +1,48 @@
+---
+title: Bitwarden
+description: Fill local Notte sessions with logins from Bitwarden Password Manager or Bitwarden Secrets Manager.
+---
+import AgentAccess from '/snippets/integrations/bitwarden_agent_access.mdx';
+import SecretsManager from '/snippets/integrations/bitwarden_secrets_manager.mdx';
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+Two vaults read logins from Bitwarden for a local `notte.Session`. Fill actions use the `notte.USERNAME`, `notte.PASSWORD` and `notte.MFA` placeholders; the vault looks up the login for the page's domain and puts the real value in the browser. Your fill action contains only placeholders. A stored TOTP seed fills `notte.MFA` with the current code.
+
+| Vault | Reads from | Use it when |
+|---|---|---|
+| `AacVault` | Your Bitwarden Password Manager, through [Agent Access](https://github.com/bitwarden/agent-access) | A person approves each login from their own vault |
+| `BitwardenVault` | [Bitwarden Secrets Manager](https://bitwarden.com/products/secrets-manager/) | Automations run unattended with a machine account |
+
+Both vaults work with local sessions only. Cloud sessions (`client.Session(vault_id=...)`) use a [Notte vault](/concepts/vaults).
+
+## Password Manager with Agent Access
+
+Agent Access connects your script to `aac listen`, running next to a person's Bitwarden vault, and that person approves each request. Your script asks for one domain at a time, when a fill needs it. Closing the vault removes its private paired connection.
+
+On the machine with your Bitwarden vault:
+
+1. Install the [Bitwarden CLI](https://bitwarden.com/help/cli/) (`bw`) and log in.
+2. Install `aac` v0.11.0 from the [Agent Access release](https://github.com/bitwarden/agent-access/releases/tag/v0.11.0).
+3. Run `aac listen`. Type `/unlock` to unlock your vault, then `/pair` to print a pairing token such as `ABC-DEF-GHI`.
+
+On the machine running Notte, install `notte` and the same `aac` CLI, then set `AAC_TOKEN` to the pairing token. Install Chromium for local sessions with `patchright install chromium`.
+
+<AgentAccess />
+
+The first fill pairs with the token. `aac listen` asks you to confirm the pairing, then to approve each login request. Later requests reuse the connection until the vault closes. A pairing token from `/pair` works once, so run `/pair` again for each new `AacVault`.
+
+`AacVault` only reads. It cannot add or delete logins, and `list_credentials()` returns an empty list. Set `timeout=` (default 120 seconds) to change how long a request waits for approval.
+
+## Secrets Manager
+
+Install the extra: `pip install "notte[bitwarden]"`.
+
+Create a [machine account](https://bitwarden.com/help/machine-accounts/) with access to a project, and an [access token](https://bitwarden.com/help/access-tokens/) for it. Set `BWS_ACCESS_TOKEN` to the token and `BWS_ORGANIZATION_ID` to your organization ID.
+
+Store each login as a secret whose value is JSON: `{"url": "https://github.com", "username": "...", "password": "..."}`. `url` and `password` are required; `username`, `email` and `mfa_secret` (a TOTP seed or `otpauth` URI) are optional. Include `username` for the example below. Exact URL matches take precedence over root-domain matches; if several secrets match, reads use the first and deletion raises an ambiguity error. Secrets with other values are skipped.
+
+<SecretsManager />
+
+The vault loads the organization's secrets when it starts. `add_credentials()` writes a new secret and needs `project_id=`. For a self-hosted or EU server, pass `api_url=` and `identity_url=`.
