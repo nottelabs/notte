@@ -84,6 +84,7 @@ markers = [
     "staging: talks to the Notte API (needs NOTTE_API_KEY); runs in `make test-live`, not the offline unit gate",
     "live: reaches third-party websites or LLM providers; runs in `make test-live`, not the offline unit gate",
     "use_cli_args: parametrize the test from the pytest command line options (see tests/conftest.py)",
+    "timing: asserts how long a browser action took; runs one test at a time in `make test-timing`, not in the parallel unit suite, where busy CPUs stretch every duration",
 ]
 timeout = 300
 timeout_method = "thread"
