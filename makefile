@@ -13,7 +13,7 @@ PYTEST_IGNORE := --ignore=tests/examples/test_examples.py --ignore=tests/example
 PYTEST_UNIT := uv run pytest -n logical tests -m "not staging and not live and not timing" $(PYTEST_IGNORE)
 # Tests that bound how long a browser action took run one at a time: next to parallel browsers, a stalled CPU fails
 # the bound whatever the code does.
-PYTEST_TIMING := uv run --no-sync pytest tests -m "timing and not staging and not live" $(PYTEST_IGNORE)
+PYTEST_TIMING := uv run pytest tests -m "timing and not staging and not live" $(PYTEST_IGNORE)
 PYTEST_LIVE := uv run pytest -n logical tests -m "staging or live" $(PYTEST_IGNORE)
 PYTEST_COMPAT := uv run --no-sync pytest -n logical \
 	tests/sdk tests/config tests/test_execution_result_serialization.py \
