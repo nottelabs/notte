@@ -25,6 +25,9 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
 - `make test` is the offline gate. `make test-live` runs tests marked
   `staging` or `live` and needs `NOTTE_API_KEY`; set `NOTTE_API_URL` to point
   the SDK at a different API.
+- The compatible-dependency suite uses `pytest -n logical`, like the locked
+  offline suite. Running those browser tests serially can exhaust the Python
+  job's 20-minute budget after the full unit suite has passed.
 - CDP transport tests keep real staging sessions and connections but serve page
   fixtures through Patchright routes, so navigation and screenshot coverage does
   not depend on third-party sites loading.
