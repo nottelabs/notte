@@ -146,9 +146,9 @@
 	}
 
 	/**
-	 * The image an image-map `<area>` is a region of: of the visible images that use its `<map>` (see `mapImagesOf`),
-	 * the first that shows the area in the viewport (two images can share a map, one of them scrolled past the
-	 * area), else the first, read once per build.
+	 * The image an image-map `<area>` is a region of: of the visible images that use its `<map>` (see `mapImagesOf`)
+	 * and show the area in the viewport, the first where the page hits it (two images can share a map, one of them
+	 * scrolled past the area or covered), else the first of them, else the first image, read once per build.
 	 *
 	 * @param {HTMLAreaElement} area - The `<area>` element.
 	 * @returns {HTMLImageElement | null} The image, or null when no visible image uses the map.
@@ -163,7 +163,8 @@
 				rect.right < -viewportExpansion ||
 				rect.left > window.innerWidth + viewportExpansion
 			));
-			const image = images.find((candidate) => inView(areaRectOn(area, candidate))) ?? images[0] ?? null;
+			const shown = images.filter((candidate) => inView(areaRectOn(area, candidate)));
+			const image = shown.find((candidate) => isAreaHit(area, candidate)) ?? shown[0] ?? images[0] ?? null;
 			DOM_CACHE.areaImages.set(area, image);
 		}
 		return DOM_CACHE.areaImages.get(area);
@@ -181,27 +182,51 @@
 	}
 
 	/**
-	 * Where the coords of an image map land on its image: the corner of its content box in the viewport, the size
-	 * of that box in CSS pixels, and the scale a transform (`scale(2)`) gives it on screen.
+	 * Where the coords of an image map land on its image: the size of its content box in CSS pixels, and where a
+	 * point of that box is on screen. A scale (`scale(2)`, of the image or of its parents) is read off the image's
+	 * size on screen. A turn or a flip of the image's own (`rotate(90deg)`, `scaleX(-1)`) moves the points through
+	 * its transform, around its origin.
 	 *
 	 * @param {HTMLImageElement} image - The image that uses the map.
-	 * @returns {{left: number, top: number, width: number, height: number, scaleX: number, scaleY: number}} The box.
+	 * @returns {{width: number, height: number, toScreen: (x: number, y: number) => number[]} | null} The box, or
+	 *     null when the image has no size.
 	 */
 	function mapImageBox(image) {
 		const box = ELEMENT.getBoundingClientRect.call(image);
 		const style = getCachedComputedStyle(image);
-		// the image's size on screen against its size in CSS pixels
-		const scaleX = box.width / propertyOf(image, "offsetWidth");
-		const scaleY = box.height / propertyOf(image, "offsetHeight");
+		const borderWidth = propertyOf(image, "offsetWidth");
+		const borderHeight = propertyOf(image, "offsetHeight");
+		if (!(borderWidth > 0) || !(borderHeight > 0)) return null;
 		const paddingLeft = parseFloat(style.paddingLeft) || 0;
 		const paddingTop = parseFloat(style.paddingTop) || 0;
+		// the corner of the content box in the border box, in CSS pixels
+		const x0 = propertyOf(image, "clientLeft") + paddingLeft;
+		const y0 = propertyOf(image, "clientTop") + paddingTop;
+		const width = propertyOf(image, "clientWidth") - paddingLeft - (parseFloat(style.paddingRight) || 0);
+		const height = propertyOf(image, "clientHeight") - paddingTop - (parseFloat(style.paddingBottom) || 0);
+		const matrix = style.transform && style.transform !== "none" ? new DOMMatrixReadOnly(style.transform) : null;
+		if (matrix === null || (matrix.is2D && matrix.b === 0 && matrix.c === 0 && matrix.a > 0 && matrix.d > 0)) {
+			const scaleX = box.width / borderWidth;
+			const scaleY = box.height / borderHeight;
+			if (!(scaleX > 0) || !(scaleY > 0)) return null;
+			return { width, height, toScreen: (x, y) => [box.left + (x0 + x) * scaleX, box.top + (y0 + y) * scaleY] };
+		}
+		const [originX, originY] = style.transformOrigin.split(" ").map(parseFloat);
+		const transformed = (x, y) => {
+			const point = matrix.transformPoint(new DOMPoint(x - originX, y - originY));
+			return [point.x + originX, point.y + originY];
+		};
+		// the transformed border box is where its bounds are on screen
+		const corners = [[0, 0], [borderWidth, 0], [0, borderHeight], [borderWidth, borderHeight]].map(([x, y]) => transformed(x, y));
+		const shiftX = box.left - Math.min(...corners.map(([x]) => x));
+		const shiftY = box.top - Math.min(...corners.map(([, y]) => y));
 		return {
-			left: box.left + (propertyOf(image, "clientLeft") + paddingLeft) * scaleX,
-			top: box.top + (propertyOf(image, "clientTop") + paddingTop) * scaleY,
-			width: propertyOf(image, "clientWidth") - paddingLeft - (parseFloat(style.paddingRight) || 0),
-			height: propertyOf(image, "clientHeight") - paddingTop - (parseFloat(style.paddingBottom) || 0),
-			scaleX,
-			scaleY,
+			width,
+			height,
+			toScreen: (x, y) => {
+				const [screenX, screenY] = transformed(x0 + x, y0 + y);
+				return [screenX + shiftX, screenY + shiftY];
+			},
 		};
 	}
 
@@ -210,23 +235,22 @@
 	const CORNER_STEP = 1.5;
 
 	/**
-	 * Points just inside the corners of a `poly` area, in viewport coordinates: a step from each corner along the
-	 * bisector of its two sides, both ways (one of the two is inside, at a convex or a reflex corner). A polygon
-	 * of narrow strips (an L of 4-pixel bands) has no point of a grid over its box in it, but it has these.
+	 * Points just inside the corners of a `poly` area on an image, in viewport coordinates: a step from each corner
+	 * along the bisector of its two sides, both ways (one of the two is inside, at a convex or a reflex corner). A
+	 * polygon of narrow strips (an L of 4-pixel bands) has no point of a grid over its box in it, but it has these.
 	 *
 	 * @param {HTMLAreaElement} area - The `<area>` element.
+	 * @param {HTMLImageElement} image - The image.
 	 * @returns {number[][]} The points, empty for other shapes.
 	 */
-	function areaPolygonPoints(area) {
+	function areaPolygonPoints(area, image) {
 		const shape = (getAttribute(area, "shape") || "rect").trim().toLowerCase();
 		if (shape !== "poly" && shape !== "polygon") return [];
-		const image = areaImage(area);
-		if (image === null) return [];
-		const { left, top, scaleX, scaleY } = mapImageBox(image);
+		const imageBox = mapImageBox(image);
 		const coords = (getAttribute(area, "coords") || "").split(/[\s,;]+/).filter(Boolean).map(parseFloat);
-		if (coords.some(Number.isNaN) || !(scaleX > 0) || !(scaleY > 0)) return [];
+		if (imageBox === null || coords.some(Number.isNaN)) return [];
 		const corners = [];
-		for (let i = 0; i + 1 < coords.length; i += 2) corners.push([left + coords[i] * scaleX, top + coords[i + 1] * scaleY]);
+		for (let i = 0; i + 1 < coords.length; i += 2) corners.push(imageBox.toScreen(coords[i], coords[i + 1]));
 		const unit = ([x, y]) => {
 			const length = Math.hypot(x, y);
 			return length > 0 ? [x / length, y / length] : [0, 0];
@@ -247,8 +271,8 @@
 
 	/**
 	 * The box of an image-map `<area>`: the bounds of its shape (`rect`, `circle`, `poly` or `default`, from its
-	 * `coords`) on its image, cut to the image. The coords are in the CSS pixels of the image's box, which a
-	 * transform (`scale(2)`) scales on screen. Empty when no visible image uses its map or its coords are invalid.
+	 * `coords`) on its image, cut to the image (see `mapImageBox`). Empty when no visible image uses its map or its
+	 * coords are invalid.
 	 *
 	 * @param {HTMLAreaElement} area - The `<area>` element.
 	 * @returns {DOMRect} The box, in viewport coordinates.
@@ -266,7 +290,9 @@
 	 * @returns {DOMRect} The box, in viewport coordinates, empty when its coords are invalid.
 	 */
 	function areaRectOn(area, image) {
-		const { left, top, width, height, scaleX, scaleY } = mapImageBox(image);
+		const imageBox = mapImageBox(image);
+		if (imageBox === null) return new DOMRect();
+		const { width, height } = imageBox;
 		const shape = (getAttribute(area, "shape") || "rect").trim().toLowerCase();
 		const coords = (getAttribute(area, "coords") || "").split(/[\s,;]+/).filter(Boolean).map(parseFloat);
 		if (coords.some(Number.isNaN)) return new DOMRect();
@@ -288,11 +314,14 @@
 			}
 			bounds = [minX, minY, maxX, maxY];
 		}
-		if (bounds === null || !(scaleX > 0) || !(scaleY > 0)) return new DOMRect();
+		if (bounds === null) return new DOMRect();
 		const [x1, y1, x2, y2] = [Math.max(bounds[0], 0), Math.max(bounds[1], 0), Math.min(bounds[2], width), Math.min(bounds[3], height)];
-		return x1 < x2 && y1 < y2
-			? new DOMRect(left + x1 * scaleX, top + y1 * scaleY, (x2 - x1) * scaleX, (y2 - y1) * scaleY)
-			: new DOMRect();
+		if (!(x1 < x2 && y1 < y2)) return new DOMRect();
+		// the bounds on screen of the box's corners: a turned image turns the box
+		const corners = [[x1, y1], [x2, y1], [x1, y2], [x2, y2]].map(([x, y]) => imageBox.toScreen(x, y));
+		const left = Math.min(...corners.map(([x]) => x));
+		const top = Math.min(...corners.map(([, y]) => y));
+		return new DOMRect(left, top, Math.max(...corners.map(([x]) => x)) - left, Math.max(...corners.map(([, y]) => y)) - top);
 	}
 
 	/**
@@ -1157,7 +1186,9 @@
 	 * @returns {boolean} Whether the element is hidden.
 	 */
 	function isElementHidden(element, scope) {
-		if (scope.clipper !== null && !escapesClip(element, scope.clipper)) return true;
+		// an `<area>` is shown on its image, not in its map: what clips the map's parents (a `height: 0` wrapper)
+		// leaves it, and `isTopElement` hits it only where its image shows
+		if (scope.clipper !== null && localNameOf(element) !== "area" && !escapesClip(element, scope.clipper)) return true;
 		if (!isOnScreen(getCachedBoundingRect(element))) return false;
 		if (!DISABLEABLE_TAGS.has(localNameOf(element))) return !isRendered(element, true);
 		const parent = parentElementOf(element);
@@ -1822,7 +1853,10 @@
 		// For shadow DOM, we need to check within its own root context
 		const shadowRoot = getRootNode(element);
 		const root = shadowRoot instanceof ShadowRoot ? shadowRoot : document;
-		if (localNameOf(element) === "area") return isAreaHit(element, rects[0], root);
+		if (localNameOf(element) === "area") {
+			const image = areaImage(element);
+			return image !== null && isAreaHit(element, image);
+		}
 		try {
 			return isShownIn(root, element, topElementArea(element, rects));
 		} catch (e) {
@@ -1879,14 +1913,16 @@
 	/**
 	 * Checks if the page hits an image-map `<area>` at one of a few points of the part of its box in the viewport:
 	 * its center, then the centers of a 5 x 5 grid, then points just inside the corners of a polygon (see
-	 * `areaPolygonPoints`). Its shape need not cover the center of its box (an L-shaped polygon), and the areas before it in its map, or other elements, can cover that center (a `default` area).
+	 * `areaPolygonPoints`). Its shape need not cover the center of its box (an L-shaped polygon), and the areas
+	 * before it in its map, or other elements, can cover that center (a `default` area).
 	 *
 	 * @param {HTMLAreaElement} area - The `<area>` element.
-	 * @param {DOMRect} rect - Its box (see `areaRect`).
-	 * @param {Document | ShadowRoot} root - Its document or shadow root.
-	 * @returns {boolean} Whether a point of its box hits it.
+	 * @param {HTMLImageElement} image - One of the images that use its map (see `areaRectOn`).
+	 * @returns {boolean} Whether a point of its box on that image hits it.
 	 */
-	function isAreaHit(area, rect, root) {
+	function isAreaHit(area, image) {
+		const rect = areaRectOn(area, image);
+		const root = getRootNode(area) instanceof ShadowRoot ? getRootNode(area) : document;
 		// `elementFromPoint` finds nothing outside the viewport
 		const left = Math.max(rect.left, 0);
 		const top = Math.max(rect.top, 0);
@@ -1899,7 +1935,7 @@
 				if (i !== 2 || j !== 2) points.push([(i + 0.5) / 5, (j + 0.5) / 5]);
 			}
 		}
-		const viewportPoints = points.map(([x, y]) => [left + width * x, top + height * y]).concat(areaPolygonPoints(area));
+		const viewportPoints = points.map(([x, y]) => [left + width * x, top + height * y]).concat(areaPolygonPoints(area, image));
 		try {
 			return viewportPoints.some(([pointX, pointY]) => {
 				const hit = root instanceof ShadowRoot

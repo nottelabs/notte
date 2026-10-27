@@ -62,6 +62,31 @@ SHARED_IN_VIEW = f"""
 </map>
 """
 
+# two images in view use the map, and a banner covers the first
+COVERED = f"""
+<img alt="Plan" width="200" height="100" usemap="#plan" src="{GIF}" style="display: block">
+<div style="position: absolute; top: 0; left: 0; width: 300px; height: 150px; background: white">Banner</div>
+<img alt="Plan again" width="200" height="100" usemap="#plan" src="{GIF}" style="display: block; margin-top: 100px">
+<map name="plan"><area shape="rect" coords="0,0,200,100" href="/room" alt="Room"></map>
+"""
+
+# an image turned or flipped by its own transform (see the test), whose areas move with it
+TRANSFORMED = f"""
+<img alt="Plan" width="200" height="100" usemap="#plan" src="{GIF}" style="display: block; margin: 100px; transform: {{}}">
+<map name="plan">
+  <area shape="rect" coords="0,0,100,100" href="/left" alt="Left">
+  <area shape="rect" coords="100,0,200,100" href="/right" alt="Right">
+</map>
+"""
+
+# the map is in a wrapper that clips it, the image is not
+CLIPPED_MAP = f"""
+<img alt="Plan" width="200" height="100" usemap="#plan" src="{GIF}">
+<div style="height: 0; overflow: hidden">
+  <map name="plan"><area shape="rect" coords="0,0,200,100" href="/room" alt="Room"></map>
+</div>
+"""
+
 # a map named by its `id` only, which Chromium matches too
 BY_ID = f"""
 <img alt="Plan" width="200" height="100" usemap="#plan" src="{GIF}">
@@ -175,6 +200,40 @@ async def test_each_area_takes_the_image_that_shows_it() -> None:
         result = await session.aexecute(type="click", id=areas["Bottom"])
         assert result.success, result.message
         assert session.window.page.url == f"{BASE_URL}/bottom"
+
+
+@pytest.mark.asyncio
+async def test_an_area_takes_the_image_that_is_not_covered() -> None:
+    async with NotteSession(headless=True) as session:
+        areas = await _offered_areas(session, COVERED)
+        assert list(areas) == ["Room"]
+
+        result = await session.aexecute(type="click", id=areas["Room"])
+        assert result.success, result.message
+        assert session.window.page.url == f"{BASE_URL}/room"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("transform", ["scaleX(-1)", "rotate(90deg)", "rotate(180deg) scale(1.5)"])
+async def test_the_areas_of_a_turned_or_flipped_image_are_offered(transform: str) -> None:
+    async with NotteSession(headless=True) as session:
+        areas = await _offered_areas(session, TRANSFORMED.format(transform))
+        assert sorted(areas) == ["Left", "Right"]
+
+        result = await session.aexecute(type="click", id=areas["Left"])
+        assert result.success, result.message
+        assert session.window.page.url == f"{BASE_URL}/left"
+
+
+@pytest.mark.asyncio
+async def test_the_areas_of_a_clipped_map_are_offered_on_their_image() -> None:
+    async with NotteSession(headless=True) as session:
+        areas = await _offered_areas(session, CLIPPED_MAP)
+        assert list(areas) == ["Room"]
+
+        result = await session.aexecute(type="click", id=areas["Room"])
+        assert result.success, result.message
+        assert session.window.page.url == f"{BASE_URL}/room"
 
 
 @pytest.mark.asyncio
