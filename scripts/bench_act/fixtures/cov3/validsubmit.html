@@ -3,6 +3,7 @@
 ul{font-size:14px;padding-left:18px}button[disabled]{opacity:.5}</style></head><body>
 <h1>Create a workspace</h1>
 <form id="f" action="workspace-done.html" method="get">
+  <input type="hidden" id="checked" name="checked" value="[]">
   <label for="ws">Workspace name</label><input id="ws" name="ws" autocomplete="off">
   <p id="ws-status" aria-live="polite"></p>
   <label for="pw">Password</label><input id="pw" name="pw" type="password">
@@ -17,6 +18,7 @@ $('ws').addEventListener('input', () => {
   available = false; valid(); clearTimeout(timer); $('ws-status').textContent = $('ws').value.trim() ? 'Checking…' : '';
   timer = setTimeout(() => {
     const name = $('ws').value.trim().toLowerCase(); if (!name) return;
+    const checked = JSON.parse($('checked').value); checked.push(name); $('checked').value = JSON.stringify(checked);
     available = !TAKEN.includes(name);
     $('ws-status').textContent = available ? `“${$('ws').value.trim()}” is available.` : `“${$('ws').value.trim()}” is already taken.`;
     $('ws-status').className = available ? 'ok' : 'bad'; valid();

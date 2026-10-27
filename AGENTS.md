@@ -393,6 +393,11 @@ The `act-bench-all` label includes extended fixtures with known browser/act fail
 report's fixture rules, even when base also fails; do not weaken the rules to make an all-tier run green.
 Harness regressions are in `tests/scripts/test_bench_act.py`. Saved runs resume only for identical run inputs,
 including probe selection; reports with `_meta/plan-*.json` use only the runs listed in those plans.
+Plans also store each job's expected metadata and run identity. Resume requires a complete result;
+reporting rejects mismatched or incomplete payloads as missing valid runs. A coordinator timeout or
+runner error cannot become a success because a worker wrote JSON or reached the final page.
+Round-3 fixture validators require the submitted action history: Back from wizard review, and the
+completed taken-name check before the available workspace name. Preserve this evidence on navigation.
 The benchmark coordinator, registry and task definitions run under CI's system Python, outside either
 version's virtualenv. Keep their imports in the standard library; worker-only code runs inside the
 selected version's environment. `test_discovery_works_without_installed_packages` checks this boundary.

@@ -7,7 +7,7 @@ import pytest
 from notte_browser.driver import Error
 from notte_core.act import ActResult
 
-from scripts.bench_act import runners
+from scripts.bench_act import registry, runners, worker
 from scripts.bench_act.model import Probe, Task
 
 
@@ -83,3 +83,26 @@ async def test_failed_consent_setup_keeps_probe_landing_evidence(
     assert run["landing"] == landing and run["probes"] == []
     assert "Consent button unavailable" in run["error"]
     decider.close.assert_called_once()
+
+
+@pytest.mark.parametrize("error", [None, "RuntimeError: action failed"])
+def test_worker_error_cannot_be_overridden_by_a_valid_final_page(
+    monkeypatch: pytest.MonkeyPatch, error: str | None
+) -> None:
+    task = Task("finish", "{fixtures}/finished.html", "Finish", lambda f, _: True, suite="fixtures")
+    monkeypatch.setattr(worker, "discover", lambda: registry.Registry({task.name: task}, {}))
+    run = {"final": {"url": "http://fixture.test/finished.html"}, "steps": [], "error": error}
+    monkeypatch.setattr(worker, "run_task", AsyncMock(return_value=run))
+    result = worker.run_job(
+        {
+            "version": "head",
+            "runner": "notte-local-scripted",
+            "repeat": 1,
+            "suite": "fixtures",
+            "kind": "task",
+            "names": [task.name],
+        },
+        "http://fixture.test",
+    )
+    assert result["success"] is (error is None)
+    assert result["error"] == error

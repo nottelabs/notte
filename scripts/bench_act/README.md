@@ -15,6 +15,7 @@ A dev benchmark of `session.act()`, `choose()` and `check()`, and of the observe
 | `fixtures/` | local pages, served on a free port. `{fixtures}` in a URL points to them |
 | `model.py` | `Task`, `Probe`, and the helpers success checks share |
 | `registry.py` | discovery, `--suites` selection, `--shard i/n`, run order |
+| `records.py` | completed run payloads and matching them to planned inputs |
 | `bench.py` | runs the plan, N runs at once, one process per run (`worker.py`) |
 | `runners.py` | the runners on a local `NotteSession`, recording every model call |
 | `rules.py` | site misses and the pass/fail rules |
@@ -80,7 +81,10 @@ uv run --no-sync python scripts/bench_act/report.py /tmp/act-bench-ab --summary 
 - Run files go to `OUT/<version>/<runner>__<task or first probe>__<repeat>.json`, worker logs to `OUT/_logs/`, and
   the plan and timings (wall time, load average) to `OUT/_meta/`.
 - Resume retains only valid run records with the same commit, selected probes, harness, date and timeout.
-  Unreadable records and records with a different run identity are rerun.
+  Unreadable or incomplete records and records with a different run identity are rerun. Each plan records
+  the expected version, commit, runner, task or probe names, repeat, suite, URL and run identity for every job.
+  Reporting rejects payloads that disagree with that plan and fails the missing-valid-run rule.
+  Coordinator timeouts and runner errors remain failures even if the final page satisfies the task checker.
 
 ## CI
 

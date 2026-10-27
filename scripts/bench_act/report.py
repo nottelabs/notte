@@ -20,6 +20,7 @@ import statistics  # noqa: E402
 from collections import defaultdict  # noqa: E402
 from typing import Any  # noqa: E402
 
+from .records import matches_plan, read_record  # noqa: E402
 from .rules import JUDGED_RUNNERS, RULES, Row, Verdict, judge, probe_rows, task_rows  # noqa: E402
 
 STEP_TIMINGS = ("observe", "decide", "write", "fresh", "execute")
@@ -59,21 +60,29 @@ def load(directories: list[Path]) -> tuple[list[dict[str, Any]], list[dict[str, 
             meta.append({**json.loads(path.read_text()), "file": path.name})
     plans = [m for m in meta if m["file"].startswith("plan-")]
     planned = {job for m in plans for job in m["jobs"]}
+    expected = {job: m["expected"][job] for m in plans for job in m["jobs"]}
     for directory, path in paths:
         relative = str(path.relative_to(directory))
         if "_meta" in path.parts or (plans and relative not in planned):
             continue
-        data = json.loads(path.read_text())
+        data = json.loads(path.read_text()) if not plans else read_record(path)
+        if plans and not matches_plan(data, expected[relative]):
+            continue
+        assert isinstance(data, dict)
         data["file"] = relative
         data.setdefault("version", "head")
-        (probes if data["runner"].startswith("probe-") else runs).append(data)
+        runner = data["runner"]
+        assert isinstance(runner, str)
+        (probes if runner.startswith("probe-") else runs).append(data)
     return runs, probes, meta
 
 
 def missing_runs(directories: list[Path], meta: list[dict[str, Any]]) -> list[str]:
-    """Planned run files (`_meta/plan-*.json`) that no directory has."""
-    planned = {job for m in meta if m["file"].startswith("plan-") for job in m["jobs"]}
-    return sorted(job for job in planned if not any((d / job).exists() for d in directories))
+    """Planned runs with no complete, matching result in any shard directory."""
+    expected = {job: m["expected"][job] for m in meta if m["file"].startswith("plan-") for job in m["jobs"]}
+    return sorted(
+        job for job, spec in expected.items() if not any(matches_plan(read_record(d / job), spec) for d in directories)
+    )
 
 
 def _decides(step: dict[str, Any]) -> list[dict[str, Any]]:

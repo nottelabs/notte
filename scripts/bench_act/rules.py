@@ -6,7 +6,7 @@ the LLM and scripted runners are reported, not judged.
 
 1. Fixture tasks (local pages, no site noise) pass in every head run.
 2. Fixture probes are answered right in every head run.
-3. Every planned run produced a run file.
+3. Every planned run produced a complete run file matching its planned inputs.
 4. Infra misses stay at or under 5% of the runs (task runs and probe answers, both versions, every runner). An
    infra miss is a run that ended on a decider transport error: the decider could not be reached, timed out or
    answered HTTP 5xx / 408. It is counted apart, not as a failure, and the harness never retries it.
@@ -266,7 +266,7 @@ def judge(runs: list[dict[str, Any]], probe_runs: list[dict[str, Any]], missing:
     runs = [r for r in runs if r["runner"] not in TIMING_RUNNERS]
     probe_runs = [r for r in probe_runs if r["runner"] not in TIMING_RUNNERS]
     for path in missing:
-        verdict.failures.append(f"no run file: {path}")
+        verdict.failures.append(f"no valid run file: {path}")
     rows = task_rows(runs) + probe_rows(probe_runs)
     infra = sum(len(r.head_infra) + len(r.base_infra) for r in rows)
     total = sum(len(r.head) + len(r.base) + len(r.head_misses) + len(r.base_misses) for r in rows) + infra

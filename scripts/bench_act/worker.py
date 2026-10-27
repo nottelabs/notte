@@ -71,7 +71,7 @@ def run_job(job: dict[str, Any], fixtures: str) -> dict[str, Any]:
         record["traceback"] = traceback.format_exc()[-3000:]
     final = record.get("final")
     try:
-        record["success"] = bool(final) and task.check(final, record)
+        record["success"] = not record.get("error") and bool(final) and task.check(final, record)
     except Exception as e:
         record["success"] = False
         record["check_error"] = f"{type(e).__name__}: {e}"[:1000]

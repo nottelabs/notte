@@ -1,5 +1,6 @@
 """Local benchmark fixtures obey their rules for keyboard input and overlapping searches."""
 
+import json
 import threading
 from collections.abc import Iterator
 from datetime import datetime, timedelta, timezone
@@ -10,7 +11,7 @@ from urllib.parse import parse_qs, urlsplit
 import pytest
 from notte_browser.session import NotteSession
 
-from scripts.bench_act import bench
+from scripts.bench_act import bench, registry
 
 
 @pytest.fixture(scope="module")
@@ -60,3 +61,50 @@ async def test_old_search_response_cannot_render_during_new_query_debounce(fixtu
         await page.clock.fast_forward(100)
         await page.clock.fast_forward(500)
         assert await page.inner_text("#results") == "London on a budget"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("back_from", [2, 3])
+async def test_wizard_records_the_step_that_back_left(fixture_url: str, back_from: int) -> None:
+    task = registry.discover().tasks["f3-wizard"]
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(f"{fixture_url}/cov3/wizard.html")
+        await page.locator("#name").fill("Ana Ruiz")
+        await page.locator("#email").fill("ana.ruiz@example.com")
+        await page.locator("#next").click()
+        if back_from == 2:
+            await page.locator("#back").click()
+            await page.locator("#next").click()
+        await page.locator("#zip").fill("28013")
+        await page.locator("#date").fill("05122026")
+        if back_from == 3:
+            await page.locator("#next").click()
+            await page.locator("#back").click()
+        await page.locator('[name="speed"][value="express"]').check()
+        await page.locator("#next").click()
+        await page.locator("#place").click()
+        await page.wait_for_url("**/wizard-done.html?*")
+        run = {"steps": [{"status": "executed", "operation": "CLICK", "target_label": "Back"}]}
+        assert task.check({"url": page.url}, run) == (back_from == 3)
+        assert parse_qs(urlsplit(page.url).query).get("back_from") == (["3"] if back_from == 3 else None)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("try_taken", [False, True])
+async def test_workspace_carries_completed_name_checks_through_submission(fixture_url: str, try_taken: bool) -> None:
+    task = registry.discover().tasks["f3-validsubmit"]
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(f"{fixture_url}/cov3/validsubmit.html")
+        if try_taken:
+            await page.locator("#ws").fill("Acme")
+            await page.wait_for_function("document.getElementById('ws-status').textContent.includes('already taken')")
+            assert not await page.locator("#create").is_enabled()
+        await page.locator("#ws").fill("Acme Studio")
+        await page.locator("#pw").fill("Blue-Kite-2026")
+        await page.locator("#create").click()
+        await page.wait_for_url("**/workspace-done.html?*")
+        checked = json.loads(parse_qs(urlsplit(page.url).query)["checked"][0])
+        assert checked == (["acme", "acme studio"] if try_taken else ["acme studio"])
+        assert task.check({"url": page.url}, {}) is try_taken

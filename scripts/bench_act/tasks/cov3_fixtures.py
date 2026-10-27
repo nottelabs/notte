@@ -36,6 +36,7 @@ def _wizard_ok(f: dict[str, JsonValue], run: dict[str, JsonValue]) -> bool:
         zip="28013",
         date="05/12/2026",
         speed="express",
+        back_from="3",
     )
     return ordered(f, run) and _clicked(run, "Back")
 
@@ -109,6 +110,20 @@ def _toast_ok(f: dict[str, JsonValue], _: dict[str, JsonValue]) -> bool:
     )
 
 
+def _validsubmit_ok(f: dict[str, JsonValue], run: dict[str, JsonValue]) -> bool:
+    try:
+        checked = json.loads(one(cast(str, f.get("url") or ""), "checked") or "[]")
+    except ValueError:
+        return False
+    return (
+        isinstance(checked, list)
+        and "acme" in checked
+        and "acme studio" in checked
+        and checked.index("acme") < checked.index("acme studio")
+        and _page("workspace-done.html", ws="Acme Studio", pw="Blue-Kite-2026")(f, run)
+    )
+
+
 TASKS = [
     Task(
         "f3-wizard",
@@ -175,7 +190,7 @@ TASKS = [
         "{fixtures}/cov3/validsubmit.html",
         "Create a workspace named Acme with the password Blue-Kite-2026. If the name Acme is taken, name it Acme Studio "
         "instead.",
-        _page("workspace-done.html", ws="Acme Studio", pw="Blue-Kite-2026"),
+        _validsubmit_ok,
         tags=("disabled-until-valid", "async-validation"),
     ),
     Task(

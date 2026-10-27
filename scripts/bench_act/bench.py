@@ -41,7 +41,8 @@ from functools import partial  # noqa: E402
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer  # noqa: E402
 from typing import Any  # noqa: E402
 
-from .model import TODAY_ENV  # noqa: E402
+from .model import TODAY_ENV, JsonValue  # noqa: E402
+from .records import complete_record, matches_plan, read_record  # noqa: E402
 from .registry import PROBE_RUNNERS, TASK_RUNNERS, Job, discover, pairs, parse_shard, plan, select, shard  # noqa: E402
 
 HARNESS = Path(__file__).resolve().parent
@@ -118,12 +119,10 @@ def harness_digest() -> str:
 
 def kept(path: Path, sha: str | None, identity: str) -> bool:
     """Resume only a known commit with the same selected probes and actual run inputs."""
-    try:
-        record = json.loads(path.read_text())
-    except (OSError, ValueError):
-        return False
+    record = read_record(path)
     return (
         isinstance(record, dict)
+        and complete_record(record)
         and sha is not None
         and record.get("sha") == sha
         and record.get("run_identity") == identity
@@ -167,6 +166,25 @@ def _url(job: Job, registry_urls: dict[str, str]) -> str:
     return registry_urls[job.item.key] if job.item.kind == "task" else job.item.key
 
 
+def expected_job(job: Job, sha: str | None, url: str, today: str, timeout: float, harness: str) -> dict[str, JsonValue]:
+    spec: dict[str, JsonValue] = {
+        "version": job.version,
+        "sha": sha,
+        "runner": job.runner,
+        "kind": job.item.kind,
+        "names": list(job.item.names),
+        "suite": job.item.suite,
+        "repeat": job.repeat,
+    }
+    # Keep fixture URLs symbolic: the server gets a new port when an interrupted plan resumes.
+    identity = hashlib.sha256(
+        json.dumps(
+            {**spec, "url": url, "today": today, "timeout": timeout, "harness": harness}, sort_keys=True
+        ).encode()
+    ).hexdigest()
+    return {**spec, "url": url, "run_identity": identity}
+
+
 def run_job(
     job: Job,
     trees: dict[str, Path],
@@ -177,31 +195,11 @@ def run_job(
     timeout: float,
     today: str,
 ) -> dict[str, Any]:
-    spec = {
-        "version": job.version,
-        "sha": shas[job.version],
-        "runner": job.runner,
-        "kind": job.item.kind,
-        "names": list(job.item.names),
-        "suite": job.item.suite,
-        "repeat": job.repeat,
-    }
-    # Keep fixture URLs symbolic: the server gets a new port when an interrupted plan resumes.
-    identity = hashlib.sha256(
-        json.dumps(
-            {
-                **spec,
-                "url": _url(job, urls),
-                "today": today,
-                "timeout": timeout,
-                "harness": harness_digest(),
-            },
-            sort_keys=True,
-        ).encode()
-    ).hexdigest()
+    spec = expected_job(job, shas[job.version], _url(job, urls), today, timeout, harness_digest())
+    identity = str(spec["run_identity"])
     path = out / job.file
     if path.exists():
-        if kept(path, shas[job.version], identity):
+        if kept(path, shas[job.version], identity) and matches_plan(read_record(path), spec):
             return {"file": job.file, "skipped": True}
         path.unlink()
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -233,11 +231,14 @@ def run_job(
         record = json.loads(path.read_text())
     except (OSError, ValueError):
         record = None
-    if not isinstance(record, dict):
+    if isinstance(record, dict):
+        record["run_identity"] = identity
+    if error or not matches_plan(record, spec):
         tail = log_path.read_text(errors="replace")[-3000:]
         error = error or f"worker exited with code {process.returncode} without a valid run file"
         record = _failed_record(job, shas[job.version], error, tail)
         record["url"] = _url(job, urls)
+    assert isinstance(record, dict)
     record["run_identity"] = identity
     _ = path.write_text(json.dumps(record, indent=1))
     if job.item.kind == "task":
@@ -308,6 +309,8 @@ def main() -> None:
     meta.mkdir(parents=True, exist_ok=True)
     label = f"shard-{index}-of-{count}"
     shas = {name: tree_sha(tree) for name, tree in trees.items()}
+    urls = {name: task.url for name, task in registry.tasks.items()}
+    digest = harness_digest()
     plan_record = {
         "shard": f"{index}/{count}",
         "concurrency": args.concurrency,
@@ -318,10 +321,13 @@ def main() -> None:
         "trees": shas,
         "today": today,
         "jobs": [job.file for job in jobs],
+        "expected": {
+            job.file: expected_job(job, shas[job.version], _url(job, urls), today, args.job_timeout, digest)
+            for job in jobs
+        },
     }
     _ = (meta / f"plan-{label}.json").write_text(json.dumps(plan_record, indent=1))
     fixtures = serve_fixtures()
-    urls = {name: task.url for name, task in registry.tasks.items()}
     log(f"{len(jobs)} runs, {args.concurrency} at once, shard {index}/{count}, trees {shas}")
     started = time.time()
 

@@ -9,13 +9,24 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 from unittest.mock import Mock
-from urllib.parse import urlsplit
+from urllib.parse import urlencode, urlsplit
 
 import pytest
 import yaml
 
 from scripts.bench_act import bench, registry, report, rules
-from scripts.bench_act.model import CI_CORE, CI_EXTENDED, TIERS, TODAY_ENV, Probe, Task, ci_tier, long_date, trip_dates
+from scripts.bench_act.model import (
+    CI_CORE,
+    CI_EXTENDED,
+    TIERS,
+    TODAY_ENV,
+    JsonValue,
+    Probe,
+    Task,
+    ci_tier,
+    long_date,
+    trip_dates,
+)
 from scripts.bench_act.tasks.real import GF_TFS, gf_results_url, gf_search
 
 FIXTURE_URL = "{fixtures}/form.html"
@@ -266,7 +277,8 @@ def _task_run(task: str, version: str, success: bool, **extra: Any) -> dict[str,
     url = "{fixtures}/x.html" if task.startswith("f") else f"https://{task}.test/"
     suite = "fixtures" if task.startswith("f") else "real"
     return {"runner": "notte-local", "task": task, "url": url, "suite": suite, "version": version, "repeat": 1,
-            "success": success, "stop_reason": "done", **extra}  # fmt: skip
+            "sha": ("a" if version == "base" else "b") * 40, "run_identity": "inputs", "steps": [],
+            "site_miss": None, "success": success, "stop_reason": "done", **extra}  # fmt: skip
 
 
 def _public(base: list[bool], head: list[bool], **head_extra: Any) -> list[dict[str, Any]]:
@@ -281,7 +293,7 @@ def test_a_failed_fixture_task_or_probe_or_a_missing_run_fails() -> None:
     probes = [{"runner": "probe-local-jev", "url": FIXTURE_URL, "suite": "fixtures", "version": "head", "repeat": 1,
                "probes": [{"probe": "p4", "correct": False}]}]  # fmt: skip
     assert rules.judge([], probes, [], with_base=False).failures == ["fixture probe probe-local-jev / p4: 0/1 right"]
-    assert rules.judge([], [], ["head/x.json"], with_base=False).failures == ["no run file: head/x.json"]
+    assert rules.judge([], [], ["head/x.json"], with_base=False).failures == ["no valid run file: head/x.json"]
 
 
 def test_public_sites_fail_only_on_a_clear_drop_against_base() -> None:
@@ -325,12 +337,22 @@ def _write(directory: Path, name: str, record: dict[str, Any]) -> None:
     path.write_text(json.dumps(record))
 
 
+def _planned(record: dict[str, JsonValue]) -> dict[str, JsonValue]:
+    return {
+        **{key: record[key] for key in ("version", "sha", "runner", "repeat", "suite", "url", "run_identity")},
+        "kind": "probes" if str(record["runner"]).startswith("probe-") else "task",
+        "names": record["names"] if "names" in record else [record["task"]],
+    }
+
+
 def test_report_merges_shard_directories_and_writes_the_summary(tmp_path: Path) -> None:
     shards = [tmp_path / "shard-1", tmp_path / "shard-2"]
     plans = [["base/notte-local__f1__1.json", "head/notte-local__f1__1.json"], ["head/notte-local__r1__1.json"]]
     for directory, jobs, n in zip(shards, plans, (1, 2), strict=True):
         meta = {"shard": f"{n}/2", "concurrency": 2, "runners": ["notte-local"], "suites": [], "repeats": 1,
-                "trees": {"base": "a" * 40, "head": "b" * 40}, "jobs": jobs}  # fmt: skip
+                "trees": {"base": "a" * 40, "head": "b" * 40}, "jobs": jobs,
+                "expected": {job: _planned(_task_run("r1" if n == 2 else "f1", job.split('/')[0], True))
+                             for job in jobs}}  # fmt: skip
         _write(directory, f"_meta/plan-shard-{n}-of-2.json", meta)
         _write(directory, f"_meta/timing-shard-{n}-of-2.json", {**meta, "wall_s": 90, "cpu_count": 4,
                "load_max": 3.1, "load_mean": 2.0, "runs": [{"file": jobs[0], "seconds": 40}]})  # fmt: skip
@@ -343,7 +365,7 @@ def test_report_merges_shard_directories_and_writes_the_summary(tmp_path: Path) 
     verdict = rules.judge(runs, probe_runs, missing, with_base=True)
     text = report.ci_summary(runs, probe_runs, meta, verdict)
     assert text.startswith("## act bench: FAIL")
-    assert "- no run file: head/notte-local__r1__1.json" in text
+    assert "- no valid run file: head/notte-local__r1__1.json" in text
     assert "base `aaaaaaaaaa` · head `bbbbbbbbbb`" in text
     assert "| notte-local | fixtures | 1/1 | 1/1 | 0 |" in text
     assert "| 2/2 | 1 | 2 | 1.5 min | 40 s (head/notte-local__r1__1.json) | 3.1 / 2.0 (4) |" in text
@@ -375,13 +397,17 @@ def test_report_uses_only_planned_runs_but_still_fails_for_missing_results(tmp_p
                 "suite": "fixtures",
                 "version": "head",
                 "repeat": 1,
+                "sha": "b" * 40,
+                "run_identity": "inputs",
+                "names": [name],
                 "probes": [{"probe": name, "correct": correct}],
             },
         )
     # The previous all-tier run fails on extended fixtures.
     runs, probes, meta = report.load([tmp_path])
     assert not rules.judge(runs, probes, [], with_base=False).ok
-    _write(tmp_path, "_meta/plan-shard-1-of-1.json", {"jobs": [task, probe]})
+    expected = {name: _planned(json.loads((tmp_path / name).read_text())) for name in (task, probe)}
+    _write(tmp_path, "_meta/plan-shard-1-of-1.json", {"jobs": [task, probe], "expected": expected})
     runs, probes, meta = report.load([tmp_path])
     assert [r["task"] for r in runs] == ["f-core"]
     assert [p["probe"] for r in probes for p in r["probes"]] == ["core"]
@@ -389,7 +415,50 @@ def test_report_uses_only_planned_runs_but_still_fails_for_missing_results(tmp_p
     (tmp_path / probe).unlink()
     runs, probes, meta = report.load([tmp_path])
     verdict = rules.judge(runs, probes, report.missing_runs([tmp_path], meta), with_base=False)
-    assert verdict.failures == [f"no run file: {probe}"]
+    assert verdict.failures == [f"no valid run file: {probe}"]
+
+
+@pytest.mark.parametrize("kind", ["task", "probes"])
+@pytest.mark.parametrize("field", ["version", "sha", "runner", "repeat", "suite", "url", "run_identity", "name"])
+def test_report_rejects_payloads_that_disagree_with_the_plan(tmp_path: Path, kind: str, field: str) -> None:
+    record = _task_run("f1", "head", True)
+    if kind == "probes":
+        record.update(runner="probe-local-jev", names=["p1"], probes=[{"probe": "p1", "correct": True}])
+        del record["task"]
+    job = f"head/{record['runner']}__{'p1' if kind == 'probes' else 'f1'}__1.json"
+    _write(tmp_path, "_meta/plan-shard-1-of-1.json", {"jobs": [job], "expected": {job: _planned(record)}})
+    if field == "name":
+        record.update(
+            names=["other"], probes=[{"probe": "other", "correct": True}]
+        ) if kind == "probes" else record.update(task="other")
+    else:
+        record[field] = 2 if field == "repeat" else "other"
+    _write(tmp_path, job, record)
+    runs, probes, meta = report.load([tmp_path])
+    assert runs == [] and probes == []
+    assert report.missing_runs([tmp_path], meta) == [job]
+    verdict = rules.judge(runs, probes, report.missing_runs([tmp_path], meta), with_base=False)
+    assert verdict.failures == [f"no valid run file: {job}"]
+
+
+@pytest.mark.parametrize("contents", ["{", "[]", "null", '{"sha":"a","run_identity":"inputs"}'])
+def test_invalid_planned_results_fail_the_report_with_a_summary(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, contents: str
+) -> None:
+    job = "head/notte-local__f1__1.json"
+    _write(
+        tmp_path,
+        "_meta/plan-shard-1-of-1.json",
+        {"jobs": [job], "expected": {job: _planned(_task_run("f1", "head", True))}},
+    )
+    (tmp_path / "head").mkdir()
+    (tmp_path / job).write_text(contents)
+    summary = tmp_path / "summary.md"
+    monkeypatch.setattr(sys, "argv", ["report.py", str(tmp_path), "--summary", str(summary), "--check"])
+    with pytest.raises(SystemExit) as exit_info:
+        report.main()
+    assert exit_info.value.code == 1
+    assert f"no valid run file: {job}" in summary.read_text()
 
 
 def test_gf_search_decodes_google_flights_urls_for_any_trip_date() -> None:
@@ -590,10 +659,113 @@ def test_resume_keeps_only_runs_of_the_same_commit_and_identity(tmp_path: Path) 
     path.write_text(json.dumps({"sha": "a" * 40}))
     assert not bench.kept(path, "a" * 40, "inputs")
     path.write_text(json.dumps({"sha": "a" * 40, "run_identity": "inputs"}))
+    assert not bench.kept(path, "a" * 40, "inputs")
+    path.write_text(
+        json.dumps(
+            {**_task_run("f1", "head", True), "sha": "a" * 40, "run_identity": "inputs", "steps": [], "site_miss": None}
+        )
+    )
     assert bench.kept(path, "a" * 40, "inputs")
     assert not bench.kept(path, "a" * 40, "changed")
     assert not bench.kept(path, "b" * 40, "inputs")
     assert not bench.kept(path, None, "inputs")
+
+
+@pytest.mark.parametrize("kind", ["task", "probes"])
+@pytest.mark.parametrize("field", ["version", "runner", "repeat", "suite", "url", "result"])
+def test_resume_rejects_incomplete_result_records(tmp_path: Path, kind: str, field: str) -> None:
+    record = {**_task_run("f1", "head", True), "sha": "a" * 40}
+    if kind == "probes":
+        record.update(runner="probe-local-jev", names=["p1"], probes=[{"probe": "p1", "correct": True}])
+        del record["task"]
+    path = tmp_path / "run.json"
+    path.write_text(json.dumps(record))
+    assert bench.kept(path, "a" * 40, "inputs")
+    del record[("success" if kind == "task" else "probes") if field == "result" else field]
+    path.write_text(json.dumps(record))
+    assert not bench.kept(path, "a" * 40, "inputs")
+
+
+@pytest.mark.parametrize(
+    "steps", [["invalid"], [{}], [{"status": "executed"}], [{"status": "executed", "timings": {"step_ms": "slow"}}]]
+)
+def test_resume_rejects_incomplete_step_payloads(tmp_path: Path, steps: list[JsonValue]) -> None:
+    path = tmp_path / "run.json"
+    path.write_text(json.dumps({**_task_run("f1", "head", True), "sha": "a" * 40, "steps": steps}))
+    assert not bench.kept(path, "a" * 40, "inputs")
+
+
+@pytest.mark.parametrize("timed_out", [False, True])
+def test_coordinator_timeout_cannot_keep_a_successful_worker_record(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, timed_out: bool
+) -> None:
+    process = Mock(pid=123, returncode=-15 if timed_out else 0)
+    start = Mock(return_value=process)
+    monkeypatch.setattr(bench.subprocess, "Popen", start)
+    kill = Mock()
+    monkeypatch.setattr(bench.os, "killpg", kill)
+
+    def finish(timeout: float) -> int:
+        if timeout != 900:
+            return -15
+        command = start.call_args.args[0]
+        spec = json.loads(command[command.index("--job") + 1])
+        output = Path(command[command.index("--out") + 1])
+        output.write_text(
+            json.dumps(
+                {**spec, "task": "search", "success": True, "stop_reason": "done", "site_miss": None, "steps": []}
+            )
+        )
+        if timed_out:
+            raise subprocess.TimeoutExpired("worker", timeout)
+        return 0
+
+    process.wait.side_effect = finish
+    found = registry.discover()
+    [item] = registry.select(found, tasks=["search"], with_probes=False)
+    job = registry.Job("head", "notte-local", item, 1)
+    bench.run_job(
+        job,
+        {"head": tmp_path},
+        {"head": "a" * 40},
+        {"search": found.tasks["search"].url},
+        "http://127.0.0.1:1000",
+        tmp_path / "out",
+        900,
+        "2026-10-26",
+    )
+    record = json.loads((tmp_path / "out" / job.file).read_text())
+    assert record["success"] is not timed_out
+    assert record["stop_reason"] == ("error" if timed_out else "done")
+    if timed_out:
+        assert record["error"].startswith("timeout:")
+        kill.assert_called_once()
+    else:
+        assert not record.get("error")
+        kill.assert_not_called()
+
+
+@pytest.mark.parametrize("review_back", [None, "2", "3"])
+def test_wizard_requires_back_from_review(review_back: str | None) -> None:
+    task = registry.discover().tasks["f3-wizard"]
+    url = (
+        "http://fixture.test/cov3/wizard-done.html?name=Ana+Ruiz&email=ana.ruiz%40example.com"
+        "&zip=28013&date=05%2F12%2F2026&speed=express"
+    )
+    if review_back:
+        url += "&back_from=" + review_back
+    run = {"steps": [{"status": "executed", "operation": "CLICK", "target_label": "Back"}]}
+    assert task.check({"url": url}, run) == (review_back == "3")
+
+
+@pytest.mark.parametrize("checked", [[], ["acme studio"], ["acme studio", "acme"], ["acme", "acme studio"]])
+def test_workspace_requires_taken_name_before_available_name(checked: list[str]) -> None:
+    task = registry.discover().tasks["f3-validsubmit"]
+    final = {
+        "url": "http://fixture.test/cov3/workspace-done.html?"
+        + urlencode({"ws": "Acme Studio", "pw": "Blue-Kite-2026", "checked": json.dumps(checked)})
+    }
+    assert task.check(final, {}) == (checked == ["acme", "acme studio"])
 
 
 @pytest.mark.parametrize("contents", ["{", "[]", "null", '"not a run"'])
