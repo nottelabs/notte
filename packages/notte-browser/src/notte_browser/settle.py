@@ -175,6 +175,8 @@ class PageSettle:
         self._tabs: bool = tabs
         # Retain main-document navigation intent even before commit, or after its request finishes.
         self.navigation_requested: bool = False
+        self._navigation_started_at: float | None = None
+        self._navigation_request: Request | None = None
         # the tabs opened since the action started: the page is waited for no longer. Each is tracked from then on
         self.opened: list[Page] = []
         self._opened_event: asyncio.Event = asyncio.Event()
@@ -213,6 +215,12 @@ class PageSettle:
         """The action has ended: the grace and the caps count from now."""
         self._began = time.perf_counter()
 
+    def navigation_requested_after(self, input_at: float | None) -> bool:
+        """Whether a main-frame navigation was reported after the click's native input notification."""
+        return (
+            input_at is not None and self._navigation_started_at is not None and self._navigation_started_at >= input_at
+        )
+
     def tab(self, page: Page) -> "PageSettle":
         """The settle of a tab the action opened, tracking its requests since it appeared (the caller closes it).
         Wait for it as for a click's new page: `wait(document="requests")`."""
@@ -232,6 +240,12 @@ class PageSettle:
             return
         if request.is_navigation_request() and request.frame is self.page.main_frame:
             self.navigation_requested = True
+            if request.redirected_from is None:
+                self._navigation_started_at = time.perf_counter()
+            elif request.redirected_from is not self._navigation_request:
+                # A redirect whose initial request predates this tracker cannot establish click navigation.
+                self._navigation_started_at = None
+            self._navigation_request = request
         # Repeated requests do not extend the quiet window indefinitely, but may carry the action's result.
         url = urlsplit(request.url)._replace(fragment="").geturl()
         key = (request.frame, request.method, url, request.post_data_buffer)

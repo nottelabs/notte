@@ -5,7 +5,7 @@ import io
 import socket
 import time
 from collections.abc import AsyncIterator
-from contextlib import ExitStack, closing
+from contextlib import ExitStack, closing, suppress
 from typing import Literal
 from unittest.mock import AsyncMock, patch
 
@@ -15,7 +15,8 @@ import notte_browser.window as window_module
 import pytest
 import pytest_asyncio
 from aiohttp import web
-from notte_browser.driver import Error, JSHandle, Locator, Page
+from notte_browser.driver import Error, JSHandle, Locator, Page, evaluate_in_main_world
+from notte_browser.driver import TimeoutError as PlaywrightTimeoutError
 from notte_browser.session import NotteSession
 from notte_browser.settle import CAP_MS, LONG_GRACE_MS, QUIET_MS, SETTLE_MS, PageSettle
 from notte_browser.window import BrowserWindow
@@ -1094,6 +1095,117 @@ async def test_a_closing_popup_ignores_other_tabs_navigating_during_element_look
     assert popup.is_closed()
     assert other.url == f"{site}/second"
     assert session.window.page is opener
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("mode", ["native", "closed", "js"])
+@pytest.mark.parametrize("replacement", ["opener", "named"])
+@pytest.mark.parametrize("framed", [False, True])
+async def test_a_closing_popup_ignores_navigation_during_click_actionability(
+    session: NotteSession, site: str, monkeypatch: pytest.MonkeyPatch, mode: str, replacement: str, framed: bool
+) -> None:
+    opener = session.window.page
+    results: Page | None = None
+    if replacement == "named":
+        async with opener.context.expect_page() as opened:
+            await opener.evaluate("window.open('/second', 'results')")
+        results = await opened.value
+        await results.wait_for_load_state("load")
+    async with opener.context.expect_page() as opened:
+        await opener.evaluate("window.open('/')")
+    popup = await opened.value
+    await popup.wait_for_load_state("load")
+    if framed:
+        await popup.set_content('<iframe id="click-frame" src="/"></iframe>')
+        target = popup.frame_locator("#click-frame").locator("#close-self")
+        cover = popup.frame_locator("#click-frame").locator("#cover")
+    else:
+        target = popup.locator("#close-self")
+        cover = popup.locator("#cover")
+    await target.evaluate(
+        """(el, named) => {
+            el.onclick = () => { if (named) top.open('/slow-second', 'results'); top.close(); };
+            const cover = document.createElement('div');
+            cover.id = 'cover';
+            cover.style = 'position: fixed; inset: 0; background: white; z-index: 9999';
+            document.body.append(cover);
+        }""",
+        replacement == "named",
+    )
+    other = await opener.context.new_page()
+    await other.goto(site)
+    session.window.page = popup
+    original_click = Locator.click
+
+    async def covered_click(locator: Locator, *, timeout: float) -> None:
+        if mode == "js":
+            await other.goto(f"{site}/second")
+            await cover.evaluate("el => el.remove()")
+            raise PlaywrightTimeoutError("Use the JS click fallback")
+        pending = asyncio.create_task(original_click(locator, timeout=timeout))
+        try:
+            await other.goto(f"{site}/second")
+            assert not pending.done(), "The covered button must still be waiting for input"
+            await cover.evaluate("el => el.remove()")
+            await pending
+        finally:
+            if not pending.done():
+                pending.cancel()
+                with suppress(asyncio.CancelledError):
+                    await pending
+        if not popup.is_closed():
+            await popup.wait_for_event("close")
+        if mode == "closed":
+            raise Error("Locator.click: Target page, context or browser has been closed")
+
+    monkeypatch.setattr(Locator, "click", covered_click)
+    result = await session.aexecute(
+        type="click",
+        id="click",
+        selector={
+            "css_selector": "#close-self",
+            "in_iframe": framed,
+            "iframe_parent_css_selectors": ["#click-frame"] if framed else [],
+        },
+    )
+    assert result.success, result.message
+    assert popup.is_closed()
+    assert session.window.page is (results if results is not None else opener)
+    if results is not None:
+        assert results.url == f"{site}/slow-second"
+        assert "Second tab" in await text(session)
+
+
+@pytest.mark.asyncio
+async def test_click_input_resources_do_not_accumulate_between_actions(session: NotteSession) -> None:
+    page = session.window.page
+    other = await page.context.new_page()
+    await other.goto(page.url)
+    # Prime the full click path: the driver lazily installs a persistent hit-target interceptor.
+    _ = await click(session, "nothing")
+    cdp = await page.context.new_cdp_session(page)
+
+    async def pointer_listeners() -> int:
+        result = await cdp.send("Runtime.evaluate", {"expression": "window"})
+        listeners = await cdp.send("DOMDebugger.getEventListeners", {"objectId": result["result"]["objectId"]})
+        return sum(listener["type"] == "pointerdown" for listener in listeners["listeners"])
+
+    try:
+        before = await pointer_listeners()
+        names: list[str] | None = None
+        for _ in range(2):
+            _ = await click(session, "nothing")
+            assert await pointer_listeners() == before
+            current = await evaluate_in_main_world(
+                page.main_frame,
+                "() => Object.getOwnPropertyNames(window).filter(name => name.startsWith('__notte_click_'))",
+            )
+            assert len(current) == 1
+            if names is not None:
+                assert current == names
+            names = current
+    finally:
+        await cdp.detach()
 
 
 @pytest.mark.asyncio

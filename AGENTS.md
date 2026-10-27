@@ -49,9 +49,15 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
 - `BrowserWindow.page` can select a replacement automatically when its opener
   closes. Wait for a new tab independently of selection; its navigation request
   can also precede the context's `page` event.
-  Existing-tab recovery starts tracking immediately before click dispatch, after
-  element lookup and disabled checks; background navigations during lookup must
-  not identify a replacement for a popup that closes.
+  Existing-tab recovery retains requests before click dispatch, but qualifies
+  replacement navigations against the notification of actual pointer input
+  (or the JS fallback click). Actionability waits can outlast background navigation;
+  starting `Locator.click` is not the input boundary. The page binding reports
+  input before a handler closes the tab. Reuse one binding per page, clearing
+  action callbacks and input listeners after each action; a new binding per click
+  would retain callbacks in the driver's page registry.
+  Listener leak checks must prime the complete click path before their baseline:
+  the driver's injected utility installs its own persistent hit-target interceptor.
   A new tab's fetch can precede that event too. Retain active context requests
   while watching for tabs, then seed the new page's settle tracker; page listeners
   installed after its first script runs otherwise miss its content request.

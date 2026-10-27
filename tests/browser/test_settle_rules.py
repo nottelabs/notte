@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import notte_browser.settle as settle_module
 import pytest
-from notte_browser.driver import JSHandle, Page
+from notte_browser.driver import JSHandle, Page, Request
 from notte_browser.settle import (
     CAP_MS,
     EXPECT_MS,
@@ -48,6 +48,32 @@ def test_a_page_that_keeps_changing_is_left_after_a_while() -> None:
 @pytest.mark.parametrize("elapsed", [GRACE_MS, 1_000, CAP_MS - 1])
 def test_a_request_the_action_started_is_waited_for(elapsed: float) -> None:
     assert not settled(state(elapsed, 5, in_flight=1))
+
+
+@pytest.mark.parametrize("root_at", [None, 1.0, 3.0])
+def test_replacement_navigation_keeps_the_initial_request_boundary(
+    monkeypatch: pytest.MonkeyPatch, root_at: float | None
+) -> None:
+    page = MagicMock(spec=Page)
+    root = MagicMock(spec=Request)
+    redirect = MagicMock(spec=Request)
+    for request in (root, redirect):
+        request.frame = page.main_frame
+        request.resource_type = "document"
+        request.is_navigation_request.return_value = True
+        request.url = "https://example.com/"
+        request.method = "GET"
+        request.post_data_buffer = None
+    root.redirected_from = None
+    redirect.redirected_from = root
+    tracker = PageSettle(page, None, tabs=False)
+    if root_at is not None:
+        monkeypatch.setattr(settle_module.time, "perf_counter", lambda: root_at)
+        tracker._request_started(root)  # pyright: ignore[reportPrivateUsage]
+    monkeypatch.setattr(settle_module.time, "perf_counter", lambda: 4.0)
+    tracker._request_started(redirect)  # pyright: ignore[reportPrivateUsage]
+    assert tracker.navigation_requested_after(2.0) is (root_at == 3.0)
+    assert not tracker.navigation_requested_after(None)
 
 
 def test_everything_ends_at_the_cap() -> None:
