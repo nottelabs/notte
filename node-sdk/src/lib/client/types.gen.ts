@@ -322,6 +322,18 @@ export type ApiSessionStartRequest = {
      */
     wait_for_authentication?: boolean;
     /**
+     * Record Session
+     *
+     * Save session replay. False permanently disables saved replay; Live View remains available.
+     */
+    record_session?: boolean;
+    /**
+     * Log Session
+     *
+     * Save browser session logs. False permanently disables saved logs, without disabling metering.
+     */
+    log_session?: boolean;
+    /**
      * Auth Retry
      */
     auth_retry?: number;
@@ -337,18 +349,6 @@ export type ApiSessionStartRequest = {
      * Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.
      */
     advanced_stealth?: boolean;
-    /**
-     * Record Session
-     *
-     * Save session replay. False permanently disables saved replay; Live View remains available.
-     */
-    record_session?: boolean;
-    /**
-     * Log Session
-     *
-     * Save browser session logs. False permanently disables saved logs, without disabling metering.
-     */
-    log_session?: boolean;
     /**
      * Screenshot Type
      *
@@ -2375,6 +2375,10 @@ export type ElementState = {
      * Pressed
      */
     pressed?: boolean | 'mixed' | null;
+    /**
+     * Sort
+     */
+    sort?: 'ascending' | 'descending' | 'other' | null;
 };
 
 /**
@@ -3853,6 +3857,18 @@ export type GlobalScrapeRequest = {
      */
     wait_for_authentication?: boolean;
     /**
+     * Record Session
+     *
+     * Save session replay. False permanently disables saved replay; Live View remains available.
+     */
+    record_session?: boolean;
+    /**
+     * Log Session
+     *
+     * Save browser session logs. False permanently disables saved logs, without disabling metering.
+     */
+    log_session?: boolean;
+    /**
      * Auth Retry
      */
     auth_retry?: number;
@@ -3868,18 +3884,6 @@ export type GlobalScrapeRequest = {
      * Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.
      */
     advanced_stealth?: boolean;
-    /**
-     * Record Session
-     *
-     * Save session replay. False permanently disables saved replay; Live View remains available.
-     */
-    record_session?: boolean;
-    /**
-     * Log Session
-     *
-     * Save browser session logs. False permanently disables saved logs, without disabling metering.
-     */
-    log_session?: boolean;
     /**
      * Screenshot Type
      *
@@ -7426,6 +7430,18 @@ export type SessionProfileSaveRequest = {
  */
 export type SessionResponse = {
     /**
+     * Record Session
+     *
+     * Whether saved session replay is enabled. Defaults to true.
+     */
+    record_session?: boolean;
+    /**
+     * Log Session
+     *
+     * Whether saved browser session logs are enabled. Defaults to true.
+     */
+    log_session?: boolean;
+    /**
      * Session Id
      *
      * The ID of the session (created or existing). Use this ID to interact with the session for the next operation.
@@ -7573,18 +7589,6 @@ export type SessionResponse = {
      * Whether this session is an internal system run. Internal system runs are omitted from session.list() unless include_system=True is requested.
      */
     system_hidden?: boolean;
-    /**
-     * Record Session
-     *
-     * Whether saved session replay is enabled. Defaults to true.
-     */
-    record_session?: boolean;
-    /**
-     * Log Session
-     *
-     * Whether saved browser session logs are enabled. Defaults to true.
-     */
-    log_session?: boolean;
     /**
      * Timeout Minutes
      *
@@ -10234,6 +10238,18 @@ export type SelectDropdownOptionActionOutputWritable = {
  */
 export type SessionResponseWritable = {
     /**
+     * Record Session
+     *
+     * Whether saved session replay is enabled. Defaults to true.
+     */
+    record_session?: boolean;
+    /**
+     * Log Session
+     *
+     * Whether saved browser session logs are enabled. Defaults to true.
+     */
+    log_session?: boolean;
+    /**
      * Session Id
      *
      * The ID of the session (created or existing). Use this ID to interact with the session for the next operation.
@@ -10381,18 +10397,6 @@ export type SessionResponseWritable = {
      * Whether this session is an internal system run. Internal system runs are omitted from session.list() unless include_system=True is requested.
      */
     system_hidden?: boolean;
-    /**
-     * Record Session
-     *
-     * Whether saved session replay is enabled. Defaults to true.
-     */
-    record_session?: boolean;
-    /**
-     * Log Session
-     *
-     * Whether saved browser session logs are enabled. Defaults to true.
-     */
-    log_session?: boolean;
     [key: string]: unknown;
 };
 

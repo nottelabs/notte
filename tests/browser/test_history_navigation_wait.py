@@ -62,6 +62,7 @@ async def timed_history_navigation(session: NotteSession, action_type: str) -> f
 
 
 @pytest.mark.asyncio
+@pytest.mark.timing
 async def test_back_and_forward_from_the_back_forward_cache_skip_the_load_wait(two_page_site: str) -> None:
     async with NotteSession(headless=True) as session:
         _ = await session.aexecute(type="goto", url=f"{two_page_site}/a")
@@ -80,6 +81,7 @@ async def test_back_and_forward_from_the_back_forward_cache_skip_the_load_wait(t
 
 
 @pytest.mark.asyncio
+@pytest.mark.timing
 async def test_back_that_loads_the_page_again_waits_for_load(two_page_site: str) -> None:
     async with NotteSession(headless=True, chrome_args=["--disable-back-forward-cache"]) as session:
         _ = await session.aexecute(type="goto", url=f"{two_page_site}/slow")

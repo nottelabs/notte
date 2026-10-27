@@ -138,6 +138,77 @@ async def test_blocks_of_an_editable_body_stay_offered() -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("value", "clear", "expected"),
+    [
+        ("New text", True, "New text"),
+        ("New text", False, "Hello boldNew text"),
+        # indented text is pasted (`text_contains_tabs`)
+        # the browser inserts a tab into a paragraph whose white space collapses as a non-breaking space
+        ("\tNew text", True, "\xa0New text"),
+        # after text, a regular space
+        ("\tNew text", False, "Hello bold New text"),
+    ],
+    ids=["replace", "append", "paste-replace", "paste-append"],
+)
+async def test_a_block_of_an_editable_body_in_a_frame_is_filled(value: str, clear: bool, expected: str) -> None:
+    # A paragraph cannot take focus: the fill must focus its editing host, the frame's `<body>`, or the keyboard
+    # types into what has the focus in the page (here, the page's own editor) and the frame stays as it was
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(f"data:text/html,{quote(EDITOR + EDITOR_FRAME)}")
+        obs = await session.aobserve()
+        actions = [(action.id, action.type) for action in obs.space.interaction_actions]
+        assert actions == [("I1", "fill"), ("M1", "click"), ("M2", "click")]
+
+        result = await session.aexecute(type="fill", id="I1", value="Page notes")
+        assert result.success, result.message
+        result = await session.aexecute(type="fill", id="M1", value=value, clear_before_fill=clear)
+        assert result.success, result.message
+
+        frame = page.frame_locator("iframe")
+        assert await frame.locator("p").first.inner_text() == expected
+        assert await frame.locator("p").last.inner_text() == "World"
+        assert await page.locator(".editor").inner_text() == "Page notes"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("field", "target", "read"),
+    [
+        ('<textarea aria-label="Code">old</textarea>', "I1", "el => el.value"),
+        # a code editor keeps white space: the tabs stay tabs
+        (
+            '<div contenteditable="true" aria-label="Code" style="white-space: pre-wrap">old</div>',
+            "I1",
+            "el => el.innerText",
+        ),
+        # a text field inside an editable region is cleared as a field, not as part of the region
+        ('<div contenteditable="true"><textarea aria-label="Code">old</textarea></div>', "I2", "el => el.value"),
+    ],
+    ids=["textarea", "pre-wrap-editor", "textarea-in-editable"],
+)
+@pytest.mark.parametrize("handled", [False, True])
+async def test_indented_text_is_pasted_once(field: str, target: str, read: str, handled: bool) -> None:
+    # an editor that handles pasting (CodeMirror, Monaco) inserts the text itself; otherwise the browser inserts it
+    handler = "event.preventDefault(); document.body.dataset.pasted = event.clipboardData.getData('text/plain');"
+    page_html = f'<body onpaste="{handler if handled else ""}">{field}</body>'
+    code = "\tdef f():\n\t\treturn 1"
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(f"data:text/html,{quote(page_html)}")
+        _ = await session.aobserve()
+        result = await session.aexecute(type="fill", id=target, value=code)
+        assert result.success, result.message
+        field_value = (await page.locator("[aria-label=Code]").evaluate(read)).strip("\n")
+        if handled:
+            assert await page.locator("body").get_attribute("data-pasted") == code
+            assert field_value == ""
+        else:
+            assert field_value == code
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("shadow", [False, True])
 @pytest.mark.parametrize("scale", [1, 2])
 async def test_clipped_editor_uses_the_scroll_box_inner_bounds(shadow: bool, scale: int) -> None:
@@ -326,3 +397,21 @@ async def test_editable_body_without_block_actions_is_one_fillable_field(content
         result = await session.aexecute(type="fill", id="I1", value="Replacement notes")
         assert result.success, result.message
         assert await body.inner_text() == "Replacement notes"
+
+
+@pytest.mark.asyncio
+async def test_indented_text_is_pasted_to_the_handler_of_a_field_in_a_shadow_root() -> None:
+    # the document's active element is the shadow host: the paste goes to the focused field in the shadow root
+    field = '<textarea aria-label="Code" onpaste="event.preventDefault(); this.dataset.pasted = event.clipboardData.getData(`text/plain`);">old</textarea>'
+    page_html = f"""<div id="host"></div><script>
+      document.getElementById("host").attachShadow({{mode: "open"}}).innerHTML = {field!r};</script>"""
+    code = "\tdef f():\n\t\treturn 1"
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(f"data:text/html,{quote(page_html)}")
+        _ = await session.aobserve()
+        result = await session.aexecute(type="fill", id="I1", value=code)
+        assert result.success, result.message
+        textarea = page.locator("[aria-label=Code]")
+        assert await textarea.get_attribute("data-pasted") == code
+        assert await textarea.input_value() == ""

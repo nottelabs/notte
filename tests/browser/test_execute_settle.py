@@ -558,6 +558,7 @@ async def test_a_goto_waits_for_what_the_page_fetches_after_its_load(session: No
 
 
 @pytest.mark.asyncio
+@pytest.mark.timing
 async def test_a_goto_shares_one_timeout_between_its_commit_and_its_page(session: NotteSession, site: str) -> None:
     # the page answers after 0.8 s, then never loads: the wait for it gets what is left of the goto's timeout
     test_config = config.model_copy(update={"timeout_goto_ms": 2_000})
@@ -694,6 +695,7 @@ async def test_a_hash_route_goto_waits_for_its_delayed_render(
 
 
 @pytest.mark.asyncio
+@pytest.mark.timing
 async def test_enter_waits_for_the_submitted_page_within_the_bound(session: NotteSession, site: str) -> None:
     await session.window.page.focus("#q")
     start = time.monotonic()
@@ -722,6 +724,7 @@ async def test_a_submitted_page_is_waited_for_until_it_rendered_its_data(
 
 
 @pytest.mark.asyncio
+@pytest.mark.timing
 @pytest.mark.parametrize(
     ("path", "bound_ms"),
     [
@@ -799,6 +802,7 @@ async def test_scrape_and_screenshot_right_after_a_navigating_click_see_the_new_
 
 
 @pytest.mark.asyncio
+@pytest.mark.timing
 @pytest.mark.parametrize("element", ["hang", "hang-page"])
 async def test_a_request_that_never_ends_is_waited_for_within_the_bound(
     session: NotteSession, site: str, element: str
@@ -827,6 +831,7 @@ async def test_back_and_forward_wait_for_the_page_they_load(site: str) -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.timing
 async def test_a_scroll_ends_once_its_position_is_stable(session: NotteSession) -> None:
     # the page keeps scrolling for 300 ms after the wheel (a smooth-scroll script)
     await session.window.page.set_content('<div style="height:6000px">Long page</div>')
@@ -929,6 +934,7 @@ async def test_a_new_tab_is_tracked_from_when_it_appears(session: NotteSession, 
 
 
 @pytest.mark.asyncio
+@pytest.mark.timing
 @pytest.mark.parametrize("replacement", [True, False])
 async def test_a_closing_page_waits_for_its_replacement_if_it_opens_one(
     session: NotteSession, site: str, replacement: bool

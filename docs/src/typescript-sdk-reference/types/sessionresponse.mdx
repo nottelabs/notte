@@ -12,6 +12,18 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type SessionResponse = {
     /**
+     * Record Session
+     *
+     * Whether saved session replay is enabled. Defaults to true.
+     */
+    record_session?: boolean;
+    /**
+     * Log Session
+     *
+     * Whether saved browser session logs are enabled. Defaults to true.
+     */
+    log_session?: boolean;
+    /**
      * Session Id
      *
      * The ID of the session (created or existing). Use this ID to interact with the session for the next operation.
@@ -160,18 +172,6 @@ export type SessionResponse = {
      */
     system_hidden?: boolean;
     /**
-     * Record Session
-     *
-     * Whether saved session replay is enabled. Defaults to true.
-     */
-    record_session?: boolean;
-    /**
-     * Log Session
-     *
-     * Whether saved browser session logs are enabled. Defaults to true.
-     */
-    log_session?: boolean;
-    /**
      * Timeout Minutes
      *
      * @deprecated
@@ -182,6 +182,14 @@ export type SessionResponse = {
 ```
 
 ## Fields
+
+<ParamField body="record_session" type={"boolean | undefined"}>
+Whether saved session replay is enabled. Defaults to true.
+</ParamField>
+
+<ParamField body="log_session" type={"boolean | undefined"}>
+Whether saved browser session logs are enabled. Defaults to true.
+</ParamField>
 
 <ParamField body="session_id" type={"string"} required>
 The ID of the session (created or existing). Use this ID to interact with the session for the next operation.
@@ -281,14 +289,6 @@ Managed Auth connection IDs attached to this session.
 
 <ParamField body="system_hidden" type={"boolean | undefined"}>
 Whether this session is an internal system run. Internal system runs are omitted from session.list() unless include_system=True is requested.
-</ParamField>
-
-<ParamField body="record_session" type={"boolean | undefined"}>
-Whether saved session replay is enabled. Defaults to true.
-</ParamField>
-
-<ParamField body="log_session" type={"boolean | undefined"}>
-Whether saved browser session logs are enabled. Defaults to true.
 </ParamField>
 
 <ParamField body="timeout_minutes" type={"number"} required>

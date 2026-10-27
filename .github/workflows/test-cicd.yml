@@ -187,13 +187,19 @@ jobs:
         if: matrix.python == '3.11'
         run: make test-compat
 
+      # Next to the full suite's parallel browsers, a stalled CPU stretches every duration. This leg's other steps are
+      # short, so the duration bounds run here, one test at a time, without adding to the job's wall time.
+      - name: Run duration bounds one at a time
+        if: matrix.python == '3.11'
+        run: make test-timing
+
       - name: Test compatible dependency versions
         if: matrix.python == '3.15'
         # The locked-version suite above also exercises these contracts. Library
         # lower bounds must allow existing consumers to keep compatible versions.
         run: >-
           uv run --with websockets==15.0.1 --with beautifulsoup4==4.14.3 --with posthog==7.0.1
-          pytest -n logical tests/sdk tests/browser tests/llm tests/data tests/test_telemetry.py tests/test_telemetry_delivery.py -m "not staging and not live" -q
+          pytest -n logical tests/sdk tests/browser tests/llm tests/data tests/test_telemetry.py tests/test_telemetry_delivery.py -m "not staging and not live and not timing" -q
 
       - name: Note - staging-and-live skipped (fork PR)
         if: ${{ env.IS_TRUSTED != 'true' }}

@@ -59,6 +59,10 @@ export type ElementState = {
      * Pressed
      */
     pressed?: boolean | 'mixed' | null;
+    /**
+     * Sort
+     */
+    sort?: 'ascending' | 'descending' | 'other' | null;
 };
 ```
 
@@ -109,6 +113,10 @@ export type ElementState = {
 </ParamField>
 
 <ParamField body="pressed" type={"boolean | \"mixed\" | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="sort" type={"\"other\" | \"ascending\" | \"descending\" | null | undefined"}>
 
 </ParamField>
 
