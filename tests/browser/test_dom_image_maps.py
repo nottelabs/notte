@@ -87,6 +87,14 @@ CLIPPED_MAP = f"""
 </div>
 """
 
+# the map is in a zero-size wrapper far off screen, the image is in view
+OFF_SCREEN_MAP = f"""
+<img alt="Plan" width="200" height="100" usemap="#plan" src="{GIF}">
+<div style="position: absolute; left: -10000px; width: 0; height: 0">
+  <map name="plan"><area shape="rect" coords="0,0,200,100" href="/room" alt="Room"></map>
+</div>
+"""
+
 # a map named by its `id` only, which Chromium matches too
 BY_ID = f"""
 <img alt="Plan" width="200" height="100" usemap="#plan" src="{GIF}">
@@ -226,9 +234,10 @@ async def test_the_areas_of_a_turned_or_flipped_image_are_offered(transform: str
 
 
 @pytest.mark.asyncio
-async def test_the_areas_of_a_clipped_map_are_offered_on_their_image() -> None:
+@pytest.mark.parametrize("page", [CLIPPED_MAP, OFF_SCREEN_MAP])
+async def test_the_areas_of_a_map_away_from_its_image_are_offered(page: str) -> None:
     async with NotteSession(headless=True) as session:
-        areas = await _offered_areas(session, CLIPPED_MAP)
+        areas = await _offered_areas(session, page)
         assert list(areas) == ["Room"]
 
         result = await session.aexecute(type="click", id=areas["Room"])

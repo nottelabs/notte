@@ -1294,6 +1294,8 @@
 				if (hasVisibleSizedChild(child)) return true;
 				continue;
 			}
+			// an `<area>` has no box of its own: its box is on a visible image that uses its map (see `areaRect`)
+			if (localNameOf(child) === "area") return true;
 			if (!checkVisibilityOf ||
 				checkVisibilityOf(child, { checkOpacity: true, checkVisibilityCSS: true })) {
 				return true;
