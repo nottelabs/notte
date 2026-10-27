@@ -15,7 +15,16 @@ from notte_core.data import StructuredData
 from notte_llm import LlmExtractor
 from pydantic import BaseModel
 
-from tests.llm.provider_matrix import CASES, ROUTES, Route, Trace, UnavailableRoute, routing_options
+from tests.llm.provider_matrix import (
+    CASES,
+    EXPECTED_LINKS,
+    EXTRACTION_INSTRUCTIONS,
+    ROUTES,
+    Route,
+    Trace,
+    UnavailableRoute,
+    routing_options,
+)
 
 pytestmark = [pytest.mark.live, pytest.mark.asyncio]
 SNAPSHOTS = Path(__file__).parents[1] / "golden" / "snapshots"
@@ -85,10 +94,7 @@ async def test_provider_matrix(route: Route, case: str, monkeypatch: pytest.Monk
             url="https://example.com",
             document=(SNAPSHOTS / document_case / "scrape.md").read_text(),
             response_format=None if case == "instructions" else Page,
-            instructions=(
-                "Extract the page title and the first three navigation links (label and URL). "
-                "Include a short summary. Use null for missing optional descriptions."
-            ),
+            instructions=EXTRACTION_INSTRUCTIONS,
             extra_body=options,
         )
         assert result.success, result.error
@@ -99,7 +105,8 @@ async def test_provider_matrix(route: Route, case: str, monkeypatch: pytest.Monk
             assert isinstance(result.data.model_dump(), dict) and result.data.model_dump()
         else:
             page = Page.model_validate(result.data.model_dump(), strict=True)
-            assert page.title and page.links
+            assert page.title
+            assert tuple((link.label, link.url) for link in page.links) == EXPECTED_LINKS[document_case]
     except Exception as error:
         reason = trace.capacity_reason(error)
         if reason:

@@ -1,0 +1,144 @@
+{
+  "components": {
+    "schemas": {
+      "Alpha": {
+        "examples": [
+          [
+            "second",
+            2
+          ],
+          [
+            "first",
+            1
+          ]
+        ],
+        "prefixItems": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "integer"
+          }
+        ],
+        "type": "array"
+      },
+      "Zebra": {
+        "properties": {
+          "a": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "z": {
+            "default": "last",
+            "type": "string"
+          }
+        },
+        "required": [
+          "z",
+          "a"
+        ],
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "Ordering fixture",
+    "version": "1"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/a": {
+      "get": {
+        "operationId": "get_alpha",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Alpha"
+                }
+              }
+            },
+            "description": "Read"
+          }
+        }
+      }
+    },
+    "/z": {
+      "post": {
+        "operationId": "create_zebra",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Zebra"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Zebra"
+                }
+              }
+            },
+            "description": "Created"
+          }
+        }
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "https://us-staging.notte.cc"
+    }
+  ],
+  "x-arrays": {
+    "anyOf": [
+      {
+        "type": "string"
+      },
+      {
+        "type": "null"
+      }
+    ],
+    "default": [
+      "z",
+      "a"
+    ],
+    "enum": [
+      "z",
+      "a"
+    ],
+    "examples": [
+      {
+        "a": true,
+        "z": [
+          2,
+          1
+        ]
+      },
+      [
+        "z",
+        "a"
+      ]
+    ]
+  },
+  "x-order": {
+    "2": 2,
+    "10": 10,
+    "01": 1,
+    "4294967295": 0,
+    "__proto__": {
+      "a": 2,
+      "z": 1
+    },
+    "z": 1,
+    "😀": 1,
+    "": 2
+  }
+}

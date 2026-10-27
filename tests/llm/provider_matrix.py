@@ -37,6 +37,35 @@ ROUTES = (
     Route("vertex", "google/gemini-3.5-flash-lite"),
 )
 CASES = ("github_signin", "duckduckgo", "checkout/article", "instructions")
+EXTRACTION_INSTRUCTIONS = (
+    "Extract the page title and the first three distinct Markdown links (label and URL) "
+    "in document order, from anywhere in the document, including body and footer links. "
+    "Count repeated URLs only once, using the first label. Ignore plain text without a link target. "
+    "Copy each label exactly as written between the Markdown brackets, including punctuation and case. "
+    "Copy each URL target exactly as provided. "
+    "Include a short summary. Use null for missing optional descriptions."
+)
+# Ground truth from the saved scrape.md files, independent of provider output.
+EXPECTED_LINKS = {
+    "github_signin": (
+        ("Skip to content", "https://github.com/login#start-of-content"),
+        ("Reload", "https://github.com/login"),
+        ("Forgot password?", "https://github.com/password_reset"),
+    ),
+    "duckduckgo": (
+        ("Chat", "https://duck.ai/"),
+        (
+            "Add Extension",
+            "https://addons.mozilla.org/firefox/downloads/latest/duckduckgo-for-firefox/addon-385621-latest.xpi",
+        ),
+        ("Mac", "https://duckduckgo.com/mac?origin=funnel_home___details"),
+    ),
+    "checkout/article": (
+        ("Learn more.", "https://article.com/financing"),
+        ("Article", "https://www.article.com/"),
+        ("Terms of Use", "https://www.article.com/tou"),
+    ),
+}
 
 
 class UnavailableRoute(Exception):
