@@ -733,14 +733,26 @@ async def test_scrape_and_screenshot_right_after_a_navigating_click_see_the_new_
 
 @pytest.mark.asyncio
 @pytest.mark.timing
-@pytest.mark.parametrize("element", ["hang", "hang-page"])
+@pytest.mark.parametrize("element,input_delay_ms", [("hang", 0), ("hang", 600), ("hang-page", 0)])
 @pytest.mark.parametrize("startup_delay", [0, 1.2])
 async def test_a_request_that_never_ends_is_waited_for_within_the_bound(
-    session: NotteSession, site: str, element: str, startup_delay: float
+    session: NotteSession, site: str, element: str, input_delay_ms: int, startup_delay: float
 ) -> None:
     start = PageSettle.start
     settle_action = execution_module._settle
     durations: list[float] = []
+    input_durations_ms: list[float] = []
+
+    if input_delay_ms:
+        # The tracker's window capture listener sees pointerdown before this target handler.
+        await session.window.page.locator("#hang").evaluate(
+            """(button, delay) => button.addEventListener('pointerdown', () => {
+                const began = performance.now();
+                while (performance.now() - began < delay) {}
+                window.inputProcessingMs = performance.now() - began;
+            })""",
+            input_delay_ms,
+        )
 
     async def delayed_start(page: Page, *, tabs: bool = False, timeout_ms: float | None = None) -> PageSettle:
         # Tracker startup and actionability are outside the post-action settle budget.
@@ -753,6 +765,15 @@ async def test_a_request_that_never_ends_is_waited_for_within_the_bound(
         began = time.monotonic()
         await settle_action(settle, action, url, verbose=verbose, new_document=new_document)
         durations.append(time.monotonic() - began)
+        if element == "hang":
+            # Keep both endpoints on the tracker's browser clock, including input processing before _settle.
+            assert settle._tracker is not None
+            since_input: float | None = await settle._tracker.evaluate("""t => {
+                const state = t.state();
+                return state.inputAt === null ? null : state.elapsed - state.inputAt;
+            }""")
+            assert since_input is not None
+            input_durations_ms.append(since_input)
 
     # Observe the real request, rather than accepting a quick return that never waited for it.
     async with session.window.page.expect_request(f"{site}/hang"):
@@ -763,11 +784,16 @@ async def test_a_request_that_never_ends_is_waited_for_within_the_bound(
             total = await click(session, element)
     assert len(durations) == 1
     elapsed = durations[0]
-    assert elapsed >= CAP_MS / 1000
     assert total >= startup_delay + elapsed
     if element == "hang":
+        assert input_durations_ms[0] >= CAP_MS
         assert elapsed < CAP_MS / 1000 + 1
+        if input_delay_ms:
+            assert await session.window.page.evaluate("window.inputProcessingMs") >= input_delay_ms
+            # The time spent processing input has already consumed part of the cap.
+            assert elapsed < CAP_MS / 1000
     else:
+        assert elapsed >= CAP_MS / 1000
         assert session.window.page.url == f"{site}/hanging"
         assert "Hanging" in await text(session)
         assert elapsed < PAGE_DELAY_S + CAP_MS / 1000 + 1 < config.timeout_goto_ms / 1000
