@@ -7,7 +7,8 @@ decider picks one operation and its target from typed multiple-choice questions 
 `choose(question, options)` and `check(question)` ask the same decider about the current page. Async
 versions are `aact`, `achoose` and `acheck`. Deciders live in `notte-llm` and load only when one of these
 methods runs: `JevDecider` (TypeSafe's Jev, through OpenRouter with `OPENROUTER_API_KEY` or on TypeSafe with
-`TYPESAFE_API_KEY`) by default, or `LlmDecider` on the `NOTTE_LLM_*` endpoint (`NOTTE_ACT_DECIDER=llm`).
+`TYPESAFE_API_KEY`) by default. Without a Jev key, a configured `NOTTE_LLM_*` endpoint selects
+`LlmDecider` automatically; `NOTTE_ACT_DECIDER=llm` forces that route.
 Deciders see elements by their accessible names and the page as visible text (`NOTTE_ACT_LABELS=html` sends
 the rendered HTML instead). The default field writer is `inception/mercury-3` on OpenRouter
 (`NOTTE_ACT_TEXT_MODEL` overrides it), falling back to the decision model when the writer's provider refuses

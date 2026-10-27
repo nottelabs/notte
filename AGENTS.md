@@ -270,6 +270,9 @@ in a thread first). `tests/sdk/test_async_functions_files.py` checks this for fu
 
 ## Generated docs
 
+The Sphinx build-finished hook corrects `Answers.usage`: sphinx-mintlify currently marks its
+`default_factory` field required. Keep the generated reference aligned with the optional model field.
+
 After changing `packages/notte-sdk/src/`, run `make docs-sdk` (the
 `docs-sdk-generate` pre-commit hook runs the same target) and commit the
 generated files. `make docs-check` fails if they are out of date.

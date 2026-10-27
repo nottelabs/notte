@@ -110,6 +110,12 @@ def curate_reference(app: Sphinx, exception: Exception | None) -> None:
             page.unlink()
             continue
         text = page.read_text()
+        # sphinx-mintlify marks this default_factory field required, although callers can omit usage.
+        if page == reference / "misc/answers.mdx":
+            text = text.replace(
+                '<ParamField path="usage" type="Dict[str, Any]" required>',
+                '<ParamField path="usage" type="Dict[str, Any]">',
+            )
         # Inherited lifecycle no-ops are not useful cards in the public overview.
         text = re.sub(
             r'(?:<Visibility[^>]*>\s*)?<Card\b[^>]*href="/sdk-reference/(?:nottepersona|nottevault)/(?:start|stop)(?:\.md)?"[^>]*>.*?</Card>(?:\s*</Visibility>)?',
