@@ -777,6 +777,21 @@ def test_wizard_requires_standard_delivery_before_the_review_back_step(reviewed_
     )
 
 
+@pytest.mark.parametrize("status", ["executed", "error"])
+@pytest.mark.parametrize(
+    "label",
+    ["Back", "<button>Back</button>", '<button title="step > next"><span>Ba&#99;k</span></button>', "Back to cart"],
+)
+def test_wizard_back_click_supports_both_label_modes(status: str, label: str) -> None:
+    task = registry.discover().tasks["f3-wizard"]
+    url = (
+        "http://fixture.test/cov3/wizard-done.html?name=Ana+Ruiz&email=ana.ruiz%40example.com"
+        "&zip=28013&date=05%2F12%2F2026&speed=express&reviewed_speed=standard&back_from=3"
+    )
+    run = {"steps": [{"status": status, "operation": "CLICK", "target_label": label}]}
+    assert task.check({"url": url}, run) == (status == "executed" and label != "Back to cart")
+
+
 @pytest.mark.parametrize("checked", [[], ["acme studio"], ["acme studio", "acme"], ["acme", "acme studio"]])
 def test_workspace_requires_taken_name_before_available_name(checked: list[str]) -> None:
     task = registry.discover().tasks["f3-validsubmit"]

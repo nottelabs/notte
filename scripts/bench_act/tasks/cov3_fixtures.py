@@ -7,6 +7,7 @@ async name check), and an Undo toast that disappears."""
 
 import json
 from dataclasses import replace
+from html.parser import HTMLParser
 from typing import TypedDict, cast
 
 from ..model import REAL_MAX_STEPS, JsonValue, Probe, Task, ci_tier, one, path
@@ -19,9 +20,25 @@ def _page(page: str, **expected: str):
     return check
 
 
+class _LabelText(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self.parts: list[str] = []
+
+    def handle_data(self, data: str) -> None:
+        self.parts.append(data)
+
+
+def _label_text(label: str | None) -> str:
+    parser = _LabelText()
+    parser.feed(label or "")
+    parser.close()
+    return " ".join("".join(parser.parts).split())
+
+
 def _clicked(run: dict[str, JsonValue], label: str) -> bool:
     return any(
-        s.get("operation") == "CLICK" and (s.get("target_label") or "").strip() == label
+        s.get("operation") == "CLICK" and _label_text(s.get("target_label")) == label
         for s in cast(list[dict[str, str | None]], run.get("steps", []))
         if s.get("status") == "executed"
     )

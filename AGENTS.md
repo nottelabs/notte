@@ -400,6 +400,8 @@ Round-3 fixture validators require the submitted action history: Back from wizar
 delivery before the final express choice, and the completed taken-name check before the available
 workspace name. Preserve this evidence on navigation. Wizard submission requires the review step;
 Enter in a valid delivery field must not bypass it through a hidden submit button.
+Retain the standard-delivery review evidence through later Back visits. Executed
+Back clicks are recognized in both accessible-text and rendered-HTML label modes.
 The benchmark coordinator, registry and task definitions run under CI's system Python, outside either
 version's virtualenv. Keep their imports in the standard library; worker-only code runs inside the
 selected version's environment. `test_discovery_works_without_installed_packages` checks this boundary.

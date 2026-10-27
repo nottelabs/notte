@@ -66,8 +66,9 @@ async def test_old_search_response_cannot_render_during_new_query_debounce(fixtu
 @pytest.mark.asyncio
 @pytest.mark.parametrize("back_from", [2, 3])
 @pytest.mark.parametrize("reviewed_speed", ["standard", "express"])
+@pytest.mark.parametrize("extra_review", [False, True])
 async def test_wizard_records_the_step_and_delivery_speed_that_back_left(
-    fixture_url: str, back_from: int, reviewed_speed: str
+    fixture_url: str, back_from: int, reviewed_speed: str, extra_review: bool
 ) -> None:
     task = registry.discover().tasks["f3-wizard"]
     async with NotteSession(headless=True) as session:
@@ -87,13 +88,19 @@ async def test_wizard_records_the_step_and_delivery_speed_that_back_left(
             await page.locator("#back").click()
         await page.locator('[name="speed"][value="express"]').check()
         await page.locator("#next").click()
+        if extra_review:
+            await page.locator("#back").click()
+            await page.locator("#next").click()
         await page.locator("#place").click()
         await page.wait_for_url("**/wizard-done.html?*")
         run = {"steps": [{"status": "executed", "operation": "CLICK", "target_label": "Back"}]}
         assert task.check({"url": page.url}, run) == (back_from == 3 and reviewed_speed == "standard")
-        assert parse_qs(urlsplit(page.url).query).get("back_from") == (["3"] if back_from == 3 else None)
+        assert parse_qs(urlsplit(page.url).query).get("back_from") == (
+            ["3"] if back_from == 3 or extra_review else None
+        )
+        recorded_speed = reviewed_speed if back_from == 3 else "express"
         assert parse_qs(urlsplit(page.url).query).get("reviewed_speed") == (
-            [reviewed_speed] if back_from == 3 else None
+            [recorded_speed] if back_from == 3 or extra_review else None
         )
 
 

@@ -66,7 +66,8 @@ $('next').onclick = () => { const e = errors(step); if (e) $('err').textContent 
 $('back').onclick = () => {
   if (step === 3) {
     $('back-from').value = '3';
-    $('reviewed-speed').value = document.querySelector('[name=speed]:checked').value;
+    if ($('reviewed-speed').value !== 'standard')
+      $('reviewed-speed').value = document.querySelector('[name=speed]:checked').value;
   }
   show(step - 1);
 };
