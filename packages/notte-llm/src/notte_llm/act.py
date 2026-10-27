@@ -53,6 +53,7 @@ from notte_core.errors import (
     UnsupportedResponseSchemaError,
 )
 from notte_core.logging import logger
+from pydantic import JsonValue
 
 from notte_llm.config import LlmSettings
 from notte_llm.engine import LLMEngine
@@ -302,14 +303,22 @@ class JevDecider:
             "questions": {name: question.model_dump() for name, question in questions.items()},
         }
         data = await asyncio.to_thread(self._post, body)
+        raw_answers = data.get("answers", {})
+        if not isinstance(raw_answers, dict):
+            raise self._error("returned 'answers' that is not a JSON object", retry_later=True)
         answers: dict[str, Answer] = {}
-        for name, raw in cast(dict[str, Any], data.get("answers") or {}).items():
+        for name, raw in cast(dict[str, JsonValue], raw_answers).items():
             try:
                 answers[name] = Answer.model_validate(raw)
             except ValueError:
                 # left out: `act()` validates strictly the answers it uses and fails on a missing one
                 logger.debug(f"Jev answer {name!r} ({self.provider}) has an unexpected shape")
-        return Answers(answers=answers, model=str(data.get("model") or self.model), usage=data.get("usage") or {})
+        usage = data.get("usage")
+        return Answers(
+            answers=answers,
+            model=str(data.get("model") or self.model),
+            usage=cast(dict[str, JsonValue], usage) if isinstance(usage, dict) else {},
+        )
 
     async def write(self, context: WriteContext) -> str | None:
         return await self.writer.write(context)

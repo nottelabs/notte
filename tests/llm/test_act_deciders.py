@@ -11,6 +11,7 @@ from notte_core.act.errors import InvalidDecisionError
 from notte_core.errors import ContentFilterError, InvalidAPIKeyError, LLMProviderError, UnsupportedResponseSchemaError
 from notte_llm import act as llm_act
 from notte_llm.act import DEFAULT_ACT_MODEL, DEFAULT_TEXT_MODEL, JevDecider, LlmDecider, LlmWriter, default_decider
+from pydantic import JsonValue
 
 STATE = DecisionState(page=PageState(url="https://a.test", title="A", text="I1[:]<input name='q'></input>"))
 QUESTIONS = {
@@ -87,6 +88,54 @@ async def test_jev_decider_http_error_executes_nothing(monkeypatch: pytest.Monke
     monkeypatch.setattr(decider._http, "post", MagicMock(return_value=_response(401)))  # pyright: ignore[reportPrivateUsage]
     with pytest.raises(LLMProviderError, match="HTTP 401"):
         _ = await decider.choose(STATE, QUESTIONS)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("route", ["typesafe", "openrouter"])
+@pytest.mark.parametrize("malformed", [None, [], ["operation"], "", "not-an-object", 1, False])
+async def test_jev_rejects_non_object_answers_with_provider_error(
+    monkeypatch: pytest.MonkeyPatch, route: llm_act.JevRoute, malformed: JsonValue
+) -> None:
+    decider = JevDecider(route=route, api_key="test-key")
+    post = MagicMock(return_value=_response(200, {"answers": malformed}))
+    monkeypatch.setattr(decider._http, "post", post)  # pyright: ignore[reportPrivateUsage]
+    try:
+        with pytest.raises(LLMProviderError, match="'answers' that is not a JSON object") as exc:
+            await decider.choose(STATE, QUESTIONS)
+        assert exc.value.should_retry_later is True
+        assert decider.provider in exc.value.dev_message
+        assert "test-key" not in exc.value.dev_message
+        assert post.call_count == 1
+    finally:
+        decider.close()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("route", ["typesafe", "openrouter"])
+@pytest.mark.parametrize("malformed", [None, [], ["tokens"], "", "not-an-object", 1, False])
+async def test_jev_keeps_valid_answers_when_usage_is_not_an_object(
+    monkeypatch: pytest.MonkeyPatch, route: llm_act.JevRoute, malformed: JsonValue
+) -> None:
+    decider = JevDecider(route=route, api_key="test-key")
+    post = MagicMock(
+        return_value=_response(
+            200,
+            {
+                "answers": {"operation": {"choice": "DONE", "probabilities": {"DONE": 1.0}, "confidence": 1.0}},
+                "model": "selected-model",
+                "usage": malformed,
+            },
+        )
+    )
+    monkeypatch.setattr(decider._http, "post", post)  # pyright: ignore[reportPrivateUsage]
+    try:
+        result = await decider.choose(STATE, QUESTIONS)
+        assert result.answers["operation"].choice == "DONE"
+        assert result.model == "selected-model"
+        assert result.usage == {}
+        assert post.call_count == 1
+    finally:
+        decider.close()
 
 
 def test_jev_decider_closes_its_http_client() -> None:
