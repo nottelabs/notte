@@ -1550,3 +1550,39 @@ async def test_a_click_whose_popup_reloads_then_closes_before_its_input_fails(
     monkeypatch.setattr(Locator, "click", reload_then_close)
     with pytest.raises(NotteBaseError, match="Target page, context or browser has been closed"):
         _ = await click(session, "close-self")
+
+
+@pytest.mark.asyncio
+async def test_a_js_click_that_closes_its_reloaded_popup_selects_the_opener(
+    session: NotteSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The JS click's input is reported from the reloaded document before its handler closes the tab."""
+    opener = session.window.page
+    async with opener.context.expect_page() as opened:
+        await opener.evaluate("window.open('/')")
+    popup = await opened.value
+    await popup.wait_for_load_state("load")
+    session.window.page = popup
+
+    async def reload_then_fall_back(_locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
+        _ = await popup.reload(wait_until="load")
+        # closes the tab within the JS click, before the driver answers it
+        await popup.locator("#close-self").evaluate("el => el.onclick = () => window.close()")
+        raise PlaywrightTimeoutError("Use the JS click fallback")
+
+    original_evaluate = JSHandle.evaluate
+
+    async def evaluate_until_closed(handle: JSHandle, expression: str, arg: object = None) -> object:
+        result = await original_evaluate(handle, expression, arg)
+        if "el.click()" not in expression:
+            return result
+        # the driver can report the closed target instead of the click's answer
+        if not popup.is_closed():
+            await popup.wait_for_event("close")
+        raise Error("JSHandle.evaluate: Target page, context or browser has been closed")
+
+    monkeypatch.setattr(Locator, "click", reload_then_fall_back)
+    monkeypatch.setattr(JSHandle, "evaluate", evaluate_until_closed)
+    _ = await click(session, "close-self")
+    assert popup.is_closed()
+    assert session.window.page is opener

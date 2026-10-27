@@ -1081,29 +1081,30 @@ async def _execute(
             raise Error("Click target is no longer attached to a frame")
         click_frames.append(frame)
         page.on("framenavigated", click_frame_navigated)
-        click_input = cast(
-            JSHandle,
-            await evaluate_handle_in_main_world(
-                frame, f"() => ({_CLICK_INPUT})({json.dumps(binding.name)}, {json.dumps(token)})"
-            ),
-        )
-        click_inputs.append(click_input)
+
+        async def report_input(frame: Frame) -> JSHandle:
+            # the binding outlives the documents of its page, the listener stays in the document of `frame`
+            click_input = cast(
+                JSHandle,
+                await evaluate_handle_in_main_world(
+                    frame, f"() => ({_CLICK_INPUT})({json.dumps(binding.name)}, {json.dumps(token)})"
+                ),
+            )
+            click_inputs.append(click_input)
+            return click_input
+
+        click_input = await report_input(frame)
 
         async def js_click_with_input(element: ElementHandle) -> None:
-            # The JS path emits no trusted pointer event. Mark its input in the same task as the click.
+            reporter = click_input
             if click_document_replaced:
-                reported = click_input_received.is_set()
-                record_click_input()
-                try:
-                    await element.evaluate("el => el.click()")
-                except Error:
-                    if not reported:
-                        # the click may not have happened
-                        click_input_times.clear()
-                        click_input_received.clear()
-                    raise
-            else:
-                await click_input.evaluate("async (input, el) => { await input.mark(); el.click(); }", element)
+                # the listener went with its document: report from the element's current one
+                current = await element.owner_frame()
+                if current is None:
+                    raise Error("Click target is no longer attached to a frame")
+                reporter = await report_input(current)
+            # The JS path emits no trusted pointer event. Mark its input in the same task as the click.
+            await reporter.evaluate("async (input, el) => { await input.mark(); el.click(); }", element)
 
         return js_click_with_input
 
