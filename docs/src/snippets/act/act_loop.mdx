@@ -31,5 +31,6 @@ with notte.Session() as session:
     steps = act_until_done(session, "Search Wikipedia for Ada Lovelace and open her article")
     print([(r.status, r.operation) for r in steps])
 
-    # the same helper ships with notte: `from notte_core.act import act_until_done`
+    # notte ships a fuller version that also stops on actions alternating on one element:
+    # `from notte_core.act import act_until_done`
 ```
