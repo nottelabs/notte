@@ -750,12 +750,31 @@ def test_wizard_requires_back_from_review(review_back: str | None) -> None:
     task = registry.discover().tasks["f3-wizard"]
     url = (
         "http://fixture.test/cov3/wizard-done.html?name=Ana+Ruiz&email=ana.ruiz%40example.com"
-        "&zip=28013&date=05%2F12%2F2026&speed=express"
+        "&zip=28013&date=05%2F12%2F2026&speed=express&reviewed_speed=standard"
     )
     if review_back:
         url += "&back_from=" + review_back
     run = {"steps": [{"status": "executed", "operation": "CLICK", "target_label": "Back"}]}
     assert task.check({"url": url}, run) == (review_back == "3")
+
+
+@pytest.mark.parametrize("reviewed_speed", [None, "express", "standard"])
+def test_wizard_requires_standard_delivery_before_the_review_back_step(reviewed_speed: str | None) -> None:
+    task = registry.discover().tasks["f3-wizard"]
+    query = {
+        "name": "Ana Ruiz",
+        "email": "ana.ruiz@example.com",
+        "zip": "28013",
+        "date": "05/12/2026",
+        "speed": "express",
+        "back_from": "3",
+    }
+    if reviewed_speed:
+        query["reviewed_speed"] = reviewed_speed
+    run = {"steps": [{"status": "executed", "operation": "CLICK", "target_label": "Back"}]}
+    assert task.check({"url": "http://fixture.test/cov3/wizard-done.html?" + urlencode(query)}, run) == (
+        reviewed_speed == "standard"
+    )
 
 
 @pytest.mark.parametrize("checked", [[], ["acme studio"], ["acme studio", "acme"], ["acme", "acme studio"]])

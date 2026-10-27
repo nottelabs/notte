@@ -396,8 +396,10 @@ including probe selection; reports with `_meta/plan-*.json` use only the runs li
 Plans also store each job's expected metadata and run identity. Resume requires a complete result;
 reporting rejects mismatched or incomplete payloads as missing valid runs. A coordinator timeout or
 runner error cannot become a success because a worker wrote JSON or reached the final page.
-Round-3 fixture validators require the submitted action history: Back from wizard review, and the
-completed taken-name check before the available workspace name. Preserve this evidence on navigation.
+Round-3 fixture validators require the submitted action history: Back from wizard review with standard
+delivery before the final express choice, and the completed taken-name check before the available
+workspace name. Preserve this evidence on navigation. Wizard submission requires the review step;
+Enter in a valid delivery field must not bypass it through a hidden submit button.
 The benchmark coordinator, registry and task definitions run under CI's system Python, outside either
 version's virtualenv. Keep their imports in the standard library; worker-only code runs inside the
 selected version's environment. `test_discovery_works_without_installed_packages` checks this boundary.

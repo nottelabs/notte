@@ -37,6 +37,7 @@ def _wizard_ok(f: dict[str, JsonValue], run: dict[str, JsonValue]) -> bool:
         date="05/12/2026",
         speed="express",
         back_from="3",
+        reviewed_speed="standard",
     )
     return ordered(f, run) and _clicked(run, "Back")
 

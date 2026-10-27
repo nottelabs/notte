@@ -24,6 +24,7 @@ fieldset{margin-top:12px}.steps{color:#555}dl{display:grid;grid-template-columns
   </section>
   <p class="err" id="err" role="alert"></p>
   <input type="hidden" id="back-from" name="back_from" value="">
+  <input type="hidden" id="reviewed-speed" name="reviewed_speed" value="">
   <button type="button" id="back" hidden>Back</button>
   <button type="button" id="next">Continue</button>
   <button type="submit" id="place" hidden>Place order</button>
@@ -62,7 +63,13 @@ function show(n) {
   }
 }
 $('next').onclick = () => { const e = errors(step); if (e) $('err').textContent = e; else show(step + 1); };
-$('back').onclick = () => { if (step === 3) $('back-from').value = '3'; show(step - 1); };
-$('f').addEventListener('submit', e => { if (errors(1) || errors(2)) e.preventDefault(); });
+$('back').onclick = () => {
+  if (step === 3) {
+    $('back-from').value = '3';
+    $('reviewed-speed').value = document.querySelector('[name=speed]:checked').value;
+  }
+  show(step - 1);
+};
+$('f').addEventListener('submit', e => { if (step !== 3 || errors(1) || errors(2)) e.preventDefault(); });
 show(1);
 </script></body></html>

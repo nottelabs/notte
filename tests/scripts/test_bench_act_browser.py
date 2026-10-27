@@ -65,7 +65,10 @@ async def test_old_search_response_cannot_render_during_new_query_debounce(fixtu
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("back_from", [2, 3])
-async def test_wizard_records_the_step_that_back_left(fixture_url: str, back_from: int) -> None:
+@pytest.mark.parametrize("reviewed_speed", ["standard", "express"])
+async def test_wizard_records_the_step_and_delivery_speed_that_back_left(
+    fixture_url: str, back_from: int, reviewed_speed: str
+) -> None:
     task = registry.discover().tasks["f3-wizard"]
     async with NotteSession(headless=True) as session:
         page = session.window.page
@@ -78,6 +81,7 @@ async def test_wizard_records_the_step_that_back_left(fixture_url: str, back_fro
             await page.locator("#next").click()
         await page.locator("#zip").fill("28013")
         await page.locator("#date").fill("05122026")
+        await page.locator(f'[name="speed"][value="{reviewed_speed}"]').check()
         if back_from == 3:
             await page.locator("#next").click()
             await page.locator("#back").click()
@@ -86,8 +90,31 @@ async def test_wizard_records_the_step_that_back_left(fixture_url: str, back_fro
         await page.locator("#place").click()
         await page.wait_for_url("**/wizard-done.html?*")
         run = {"steps": [{"status": "executed", "operation": "CLICK", "target_label": "Back"}]}
-        assert task.check({"url": page.url}, run) == (back_from == 3)
+        assert task.check({"url": page.url}, run) == (back_from == 3 and reviewed_speed == "standard")
         assert parse_qs(urlsplit(page.url).query).get("back_from") == (["3"] if back_from == 3 else None)
+        assert parse_qs(urlsplit(page.url).query).get("reviewed_speed") == (
+            [reviewed_speed] if back_from == 3 else None
+        )
+
+
+@pytest.mark.asyncio
+async def test_wizard_enter_cannot_submit_before_review(fixture_url: str) -> None:
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(f"{fixture_url}/cov3/wizard.html")
+        await page.locator("#name").fill("Ana Ruiz")
+        await page.locator("#email").fill("ana.ruiz@example.com")
+        await page.locator("#email").press("Enter")
+        assert await page.inner_text("#progress") == "Step 1 of 3: Your details"
+        await page.locator("#next").click()
+        await page.locator("#zip").fill("28013")
+        await page.locator("#date").fill("05122026")
+        await page.locator("#date").press("Enter")
+        assert urlsplit(page.url).path == "/cov3/wizard.html"
+        assert await page.inner_text("#progress") == "Step 2 of 3: Delivery"
+        await page.locator("#next").click()
+        await page.locator("#place").press("Enter")
+        await page.wait_for_url("**/wizard-done.html?*")
 
 
 @pytest.mark.asyncio
