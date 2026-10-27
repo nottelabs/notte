@@ -117,6 +117,9 @@ export function createResources(client: Client, getApiKey: () => string) {
     },
     /** sessionStart: /sessions/start. Returns the API response body. */
     start: async (body: Types.SessionStartData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.SessionStartData['headers']>, 'x-notte-api-key'> } = {}) => {
+      body = { ...body };
+      if (body.record_session === true) delete body.record_session;
+      if (body.log_session === true) delete body.log_session;
       const response = await operations.sessionStart({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, body });
       return response.data;
     },

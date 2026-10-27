@@ -117,10 +117,10 @@ describe('Session Unit Tests', () => {
       { record_session: true, log_session: false },
       { record_session: false, log_session: true },
       { record_session: true, log_session: true },
-    ])('preserves independent capture options %j on start', async options => {
+    ])('omits enabled capture defaults and preserves opt-outs %j on start', async options => {
       const session = new Session(mockClient, options);
       await session.start();
-      expect(sessionStart).toHaveBeenCalledWith(expect.objectContaining({ body: options }));
+      expect(sessionStart).toHaveBeenCalledWith(expect.objectContaining({ body: Object.fromEntries(Object.entries(options).filter(([, value]) => value !== true)) }));
     });
 
     it.each([true, false])('forwards block_ads=%s to the session API', async block_ads => {

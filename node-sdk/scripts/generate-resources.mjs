@@ -92,7 +92,10 @@ export function generateResources(sdkSource, typesSource, registry = byOperation
       args.push(`requestOptions: ${requestOptions}${requiredHeaders ? '' : ' = {}'}`);
       if (trailingQuery) args.push(trailingQuery);
       const comment = `    /** ${operation}: ${url.literal.text.replaceAll('*/', '* /')}. Returns the API response body. */`;
-      output.get(group).set(method, `${comment}\n    ${method}: async (${args.join(', ')}) => {\n      const response = await operations.${operation}({ ${request.join(', ')} });\n      return response.data;\n    },`);
+      const normalize = operation === 'sessionStart'
+        ? '\n      body = { ...body };\n      if (body.record_session === true) delete body.record_session;\n      if (body.log_session === true) delete body.log_session;'
+        : '';
+      output.get(group).set(method, `${comment}\n    ${method}: async (${args.join(', ')}) => {${normalize}\n      const response = await operations.${operation}({ ${request.join(', ')} });\n      return response.data;\n    },`);
       for (const alias of entry.aliases ?? []) {
         if (!/^[a-zA-Z_$][\w$]*$/.test(alias.method)) throw new Error(`Invalid resource alias: ${operation}`);
         if (!output.has(alias.resource)) throw new Error(`Unknown alias resource: ${alias.resource}`);

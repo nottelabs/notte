@@ -245,6 +245,9 @@ export class Session {
       ...(auth_retry !== undefined ? { auth_retry } : {}),
       ...(request.auth_ids?.length ? { wait_for_authentication: false } : {}),
     };
+    // Both API generations enable capture by default. Keep opt-outs explicit.
+    if (body.record_session === true) delete body.record_session;
+    if (body.log_session === true) delete body.log_session;
     const shouldWait = options.wait_for_authentication ?? wait_for_authentication ?? true;
     // The client's retry policy (503, 529, refused connections) is applied
     // here instead of in the transport, so the caller's signal interrupts the
