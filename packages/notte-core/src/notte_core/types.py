@@ -1220,9 +1220,14 @@ class SessionStartRequest(_SessionStartRequest):
     def omit_disabled_advanced_stealth(
         self, handler: SerializerFunctionWrapHandler, info: SerializationInfo
     ) -> dict[str, Any]:
+        data = self._caller_fields(info) if self._raw_input else cast(dict[str, Any], handler(self))
+        # Enabled capture is the default in both API generations. Sending it
+        # explicitly would make an otherwise ordinary start fail on older APIs.
+        for name in ("record_session", "log_session"):
+            if data.get(name) is True:
+                data.pop(name)
         if self._raw_input:
-            return self._caller_fields(info)
-        data = cast(dict[str, Any], handler(self))
+            return data
         if not self.advanced_stealth:
             data.pop("advanced_stealth", None)
         if not self.auth_ids:

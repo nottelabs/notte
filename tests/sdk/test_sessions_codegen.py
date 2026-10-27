@@ -84,9 +84,9 @@ def test_session_wire_contract(client: NotteClient, monkeypatch: pytest.MonkeyPa
         ({"record_session": False}, {"record_session": False}),
         ({"log_session": False}, {"log_session": False}),
         ({"record_session": False, "log_session": False}, {"record_session": False, "log_session": False}),
-        ({"record_session": True, "log_session": False}, {"record_session": True, "log_session": False}),
-        ({"record_session": False, "log_session": True}, {"record_session": False, "log_session": True}),
-        ({"record_session": True, "log_session": True}, {"record_session": True, "log_session": True}),
+        ({"record_session": True, "log_session": False}, {"log_session": False}),
+        ({"record_session": False, "log_session": True}, {"record_session": False}),
+        ({"record_session": True, "log_session": True}, {}),
         ({"auth_ids": ["connection"], "auth_retry": 2}, {"auth_ids": ["connection"], "auth_retry": 2}),
     ],
 )
