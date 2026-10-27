@@ -2753,6 +2753,7 @@ name = "notte-sdk"
 version = "1.10.1.dev0"
 source = { editable = "packages/notte-sdk" }
 dependencies = [
+    { name = "anyio" },
     { name = "cryptography" },
     { name = "httpcore" },
     { name = "httpx" },
@@ -2770,6 +2771,7 @@ playwright = [
 
 [package.metadata]
 requires-dist = [
+    { name = "anyio", specifier = ">=4.0,<5" },
     { name = "cryptography", specifier = ">=43.0.3" },
     { name = "httpcore", specifier = ">=1.0.0,<2" },
     { name = "httpx", specifier = ">=0.28.1,<1" },
