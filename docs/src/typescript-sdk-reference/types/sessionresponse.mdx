@@ -130,6 +130,12 @@ export type SessionResponse = {
      */
     cdp_url?: string | null;
     /**
+     * Playwright Url
+     *
+     * The WebSocket URL for Playwright's chromium.connect(), when supported by the server. Requires a matching Playwright client version. This is a live browser connection, not a replay URL.
+     */
+    playwright_url?: string | null;
+    /**
      * Viewer Url
      *
      * The remote session viewer URL.
@@ -255,6 +261,10 @@ Whether to solve captchas.
 
 <ParamField body="cdp_url" type={"string | null | undefined"}>
 The URL to connect to the CDP server.
+</ParamField>
+
+<ParamField body="playwright_url" type={"string | null | undefined"}>
+The WebSocket URL for Playwright's chromium.connect(), when supported by the server. Requires a matching Playwright client version. This is a live browser connection, not a replay URL.
 </ParamField>
 
 <ParamField body="viewer_url" type={"string | null | undefined"}>

@@ -97,6 +97,10 @@ Whether to solve captchas.
 The URL to connect to the CDP server.
 </ParamField>
 
+<ParamField body="playwright_url" type={"string | null | undefined"}>
+The WebSocket URL for Playwright's chromium.connect(), when supported by the server. Requires a matching Playwright client version. This is a live browser connection, not a replay URL.
+</ParamField>
+
 <ParamField body="viewer_url" type={"string | null | undefined"}>
 The remote session viewer URL.
 </ParamField>
