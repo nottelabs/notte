@@ -1177,6 +1177,66 @@ async def test_a_closing_popup_ignores_navigation_during_click_actionability(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("mode", ["native", "closed", "js"])
+async def test_replacement_selection_waits_for_click_input_delivery(
+    session: NotteSession, monkeypatch: pytest.MonkeyPatch, mode: str
+) -> None:
+    opener = session.window.page
+    async with opener.context.expect_page() as opened:
+        await opener.evaluate("window.open('/')")
+    popup = await opened.value
+    await popup.wait_for_load_state("load")
+    await popup.locator("#close-self").evaluate(
+        "el => el.onclick = () => { window.opener.document.body.dataset.clicked = 'yes'; window.close(); }"
+    )
+    session.window.page = popup
+    notification_started, release, native_done = asyncio.Event(), asyncio.Event(), asyncio.Event()
+    notify = execution_module._ClickInputBinding.notify  # pyright: ignore[reportPrivateUsage]
+    original_click = Locator.click
+    settlement = AsyncMock()
+
+    async def delayed_notify(
+        binding: execution_module._ClickInputBinding,
+        token: str,  # pyright: ignore[reportPrivateUsage]
+    ) -> None:
+        notification_started.set()
+        await release.wait()
+        notify(binding, token)
+
+    async def closing_click(locator: Locator, *, timeout: float) -> None:
+        try:
+            if mode == "js":
+                raise PlaywrightTimeoutError("Use the JS click fallback")
+            await original_click(locator, timeout=timeout)
+        finally:
+            native_done.set()
+        if mode == "closed":
+            raise Error("Locator.click: Target page, context or browser has been closed")
+
+    monkeypatch.setattr(execution_module._ClickInputBinding, "notify", delayed_notify)  # pyright: ignore[reportPrivateUsage]
+    monkeypatch.setattr(Locator, "click", closing_click)
+    monkeypatch.setattr(execution_module, "_settle", settlement)
+    pending = asyncio.create_task(click(session, "close-self"))
+    try:
+        await notification_started.wait()
+        await native_done.wait()
+        clicked = await opener.locator("body").get_attribute("data-clicked")
+        assert clicked == (None if mode == "js" else "yes")
+        settlement.assert_not_awaited()
+        assert popup.is_closed() is (mode != "js")
+        release.set()
+        _ = await pending
+        assert popup.is_closed()
+        assert session.window.page is opener
+    finally:
+        release.set()
+        if not pending.done():
+            pending.cancel()
+        with suppress(asyncio.CancelledError):
+            await pending
+
+
+@pytest.mark.asyncio
 async def test_click_input_resources_do_not_accumulate_between_actions(session: NotteSession) -> None:
     page = session.window.page
     other = await page.context.new_page()
@@ -1209,7 +1269,7 @@ async def test_click_input_resources_do_not_accumulate_between_actions(session: 
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("failure", ["page", "browser", "unclosed", "unusable"])
+@pytest.mark.parametrize("failure", ["page", "browser", "unclosed", "unusable", "missing-input"])
 async def test_a_closed_target_error_is_not_hidden_by_an_unusable_replacement(
     session: NotteSession, monkeypatch: pytest.MonkeyPatch, failure: str
 ) -> None:
@@ -1228,7 +1288,7 @@ async def test_a_closed_target_error_is_not_hidden_by_an_unusable_replacement(
             browser = original.context.browser
             assert browser is not None
             await browser.close()
-        elif failure == "unusable":
+        elif failure in ("unusable", "missing-input"):
             await original.close()
         raise Error("Locator.click: Target page, context or browser has been closed")
 

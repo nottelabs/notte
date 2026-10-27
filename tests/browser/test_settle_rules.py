@@ -1,5 +1,7 @@
 """When the page counts as settled after an action (`notte_browser.settle`)."""
 
+import asyncio
+import time
 from typing import cast
 from unittest.mock import AsyncMock, MagicMock
 
@@ -51,7 +53,8 @@ def test_a_request_the_action_started_is_waited_for(elapsed: float) -> None:
 
 
 @pytest.mark.parametrize("root_at", [None, 1.0, 3.0])
-def test_replacement_navigation_keeps_the_initial_request_boundary(
+@pytest.mark.asyncio
+async def test_replacement_navigation_keeps_the_initial_request_boundary(
     monkeypatch: pytest.MonkeyPatch, root_at: float | None
 ) -> None:
     page = MagicMock(spec=Page)
@@ -70,10 +73,47 @@ def test_replacement_navigation_keeps_the_initial_request_boundary(
     if root_at is not None:
         monkeypatch.setattr(settle_module.time, "perf_counter", lambda: root_at)
         tracker._request_started(root)  # pyright: ignore[reportPrivateUsage]
+        await _drain_event_queue()
     monkeypatch.setattr(settle_module.time, "perf_counter", lambda: 4.0)
     tracker._request_started(redirect)  # pyright: ignore[reportPrivateUsage]
+    await _drain_event_queue()
     assert tracker.navigation_requested_after(2.0) is (root_at == 3.0)
     assert not tracker.navigation_requested_after(None)
+
+
+async def _drain_event_queue() -> None:
+    drained = asyncio.Event()
+    _ = asyncio.get_running_loop().call_soon(drained.set)
+    _ = await drained.wait()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("navigation_first", [False, True])
+async def test_replacement_attribution_preserves_queued_input_and_request_order(navigation_first: bool) -> None:
+    page = MagicMock(spec=Page)
+    request = MagicMock(spec=Request)
+    request.frame = page.main_frame
+    request.resource_type = "document"
+    request.is_navigation_request.return_value = True
+    request.url = "https://example.com/"
+    request.method = "GET"
+    request.post_data_buffer = None
+    request.redirected_from = None
+    tracker = PageSettle(page, None, tabs=False)
+    input_times: list[float] = []
+
+    async def input_binding() -> None:
+        input_times.append(time.perf_counter())
+
+    # Exposed bindings are scheduled tasks; request callbacks may run while their task is still queued.
+    if navigation_first:
+        tracker._request_started(request)  # pyright: ignore[reportPrivateUsage]
+    delivered = asyncio.create_task(input_binding())
+    if not navigation_first:
+        tracker._request_started(request)  # pyright: ignore[reportPrivateUsage]
+    await _drain_event_queue()
+    await delivered
+    assert tracker.navigation_requested_after(input_times[0]) is (not navigation_first)
 
 
 def test_everything_ends_at_the_cap() -> None:

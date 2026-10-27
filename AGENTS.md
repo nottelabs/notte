@@ -56,6 +56,11 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   input before a handler closes the tab. Reuse one binding per page, clearing
   action callbacks and input listeners after each action; a new binding per click
   would retain callbacks in the driver's page registry.
+  Await input delivery inside the existing action timeout before settlement or
+  replacement selection, including closed-target acknowledgements. The JS click
+  fallback must await its input notification before invoking the handler.
+  Queue navigation attribution alongside input bindings: exposed callbacks run
+  as tasks, so immediate request timestamps can invert buffered event order.
   Listener leak checks must prime the complete click path before their baseline:
   the driver's injected utility installs its own persistent hit-target interceptor.
   A new tab's fetch can precede that event too. Retain active context requests

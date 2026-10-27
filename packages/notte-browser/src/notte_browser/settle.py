@@ -240,12 +240,9 @@ class PageSettle:
             return
         if request.is_navigation_request() and request.frame is self.page.main_frame:
             self.navigation_requested = True
-            if request.redirected_from is None:
-                self._navigation_started_at = time.perf_counter()
-            elif request.redirected_from is not self._navigation_request:
-                # A redirect whose initial request predates this tracker cannot establish click navigation.
-                self._navigation_started_at = None
-            self._navigation_request = request
+            # Exposed input bindings are queued tasks. Attribute navigation in the same queue so batched protocol
+            # messages cannot timestamp a request ahead of an earlier input callback that has not run yet.
+            _ = asyncio.get_running_loop().call_soon(self._navigation_started, request)
         # Repeated requests do not extend the quiet window indefinitely, but may carry the action's result.
         url = urlsplit(request.url)._replace(fragment="").geturl()
         key = (request.frame, request.method, url, request.post_data_buffer)
@@ -254,6 +251,14 @@ class PageSettle:
             return
         self._sent.add(key)
         self._changed()
+
+    def _navigation_started(self, request: Request) -> None:
+        if request.redirected_from is None:
+            self._navigation_started_at = time.perf_counter()
+        elif request.redirected_from is not self._navigation_request:
+            # A redirect whose initial request predates this tracker cannot establish click navigation.
+            self._navigation_started_at = None
+        self._navigation_request = request
 
     def _same_origin(self, request: Request) -> bool:
         """Whether `request` comes from the page or one of its same-origin frames (whose DOM is watched too). A frame

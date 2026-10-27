@@ -697,6 +697,7 @@ async def execute_interaction_action(
     storage: BaseStorage | None = None,
     verbose: bool = False,
     before_click: Callable[[Locator], Awaitable[JSHandle | None]] | None = None,
+    after_click: Callable[[], Awaitable[None]] | None = None,
 ) -> bool:
     """Interact with an element within `action.timeout`.
 
@@ -707,20 +708,38 @@ async def execute_interaction_action(
         raise ValueError(f"Selector is required for {action.name()}")
     deadline = asyncio.get_running_loop().time() + action.timeout / 1000
     scope = asyncio.timeout_at(deadline)
+    clicked_page = window.page if after_click is not None else None
+    closed_error: Error | None = None
     try:
         async with scope:
-            await _interact(
-                window,
-                action,
-                _ActionBudget(deadline),
-                prev_snapshot,
-                storage=storage,
-                verbose=verbose,
-                before_click=before_click,
-            )
+            try:
+                await _interact(
+                    window,
+                    action,
+                    _ActionBudget(deadline),
+                    prev_snapshot,
+                    storage=storage,
+                    verbose=verbose,
+                    before_click=before_click,
+                )
+            except Error as error:
+                if (
+                    after_click is not None
+                    and clicked_page is not None
+                    and clicked_page.is_closed()
+                    and "Target page, context or browser has been closed" in str(error)
+                    and any(not candidate.is_closed() for candidate in clicked_page.context.pages)
+                ):
+                    closed_error = error
+                    await after_click()
+                raise
+            if after_click is not None:
+                await after_click()
     except TimeoutError as e:
         if not scope.expired():
             raise
+        if closed_error is not None:
+            raise closed_error from e
         raise NotteTimeoutError(message=f"Action timed out after {action.timeout}ms") from e
     return True
 
@@ -833,7 +852,7 @@ async def _interact(
                     element = await locator.element_handle(timeout=budget.remaining_ms())
                     assert element is not None
                     try:
-                        await click_input.evaluate("(input, el) => { input.mark(); el.click(); }", element)
+                        await click_input.evaluate("async (input, el) => { await input.mark(); el.click(); }", element)
                     finally:
                         with suppress(Error):
                             await element.dispose()
@@ -995,12 +1014,18 @@ async def _execute(
     )
     existing_settles: dict[Page, PageSettle] = {}
     click_input_times: list[float] = []
+    click_input_received = asyncio.Event()
     click_inputs: list[JSHandle] = []
     click_bindings: list[tuple[_ClickInputBinding, str]] = []
 
     def record_click_input() -> None:
         if not click_input_times:
             click_input_times.append(time.perf_counter())
+        click_input_received.set()
+
+    async def await_click_input() -> None:
+        if click_inputs:
+            _ = await click_input_received.wait()
 
     async def track_existing_tabs(locator: Locator) -> JSHandle | None:
         # Keep requests started while click() waits, but select a replacement only from navigation after input.
@@ -1045,6 +1070,7 @@ async def _execute(
                         storage=storage,
                         verbose=verbose,
                         before_click=track_existing_tabs if isinstance(action, ClickAction) else None,
+                        after_click=await_click_input if isinstance(action, ClickAction) else None,
                     )
                 except Error as error:
                     # A click handler can close its own tab before the driver acknowledges the click. Continue
@@ -1053,6 +1079,7 @@ async def _execute(
                         not isinstance(action, ClickAction)
                         or not page.is_closed()
                         or "Target page, context or browser has been closed" not in str(error)
+                        or (click_inputs and not click_input_received.is_set())
                     ):
                         raise
                     closed_during_click = error

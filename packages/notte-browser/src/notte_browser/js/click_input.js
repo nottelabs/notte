@@ -1,9 +1,9 @@
 // Report input before a handler can close its tab. The driver timestamps input and requests on one host clock.
 (name, token) => {
     const notify = globalThis[name];
-    const mark = () => { void notify(token); };
+    const mark = () => notify(token);
     const onInput = (event) => {
-        if (event.isTrusted) mark();
+        if (event.isTrusted) void mark();
     };
     window.addEventListener("pointerdown", onInput, true);
     return {
