@@ -12,6 +12,7 @@ From this directory:
 
 ```sh
 # Python 3.11+, uv
+export NOTTE_ENABLE_NEST_ASYNCIO=false
 uv sync --locked
 uv run python python/demo.py
 

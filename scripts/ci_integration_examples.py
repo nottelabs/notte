@@ -53,7 +53,7 @@ CREDENTIALS = {
 DRIVER_IMPORTS = {
     "braintrust": "from braintrust import init_logger; from notte_sdk import NotteClient",
     "onepassword": 'from onepassword import Secrets; from notte_sdk import NotteClient; Secrets.validate_secret_reference("op://Test/Login/username")',
-    "stripe-link": "from link import AsyncClient; from notte_sdk import NotteClient",
+    "stripe-link": "from link import AsyncClient; from notte_sdk import AsyncNotteClient",
     "tzafon": "from tzafon import AsyncLightcone; from notte_sdk import NotteClient",
     "watsonx": "import requests; from notte_sdk import NotteClient",
 }
@@ -343,9 +343,8 @@ def project_env(name: str, env: dict[str, str]) -> dict[str, str]:
     main = env.get("GITHUB_REF") == "refs/heads/main" and env.get("GITHUB_EVENT_NAME") != "pull_request"
     allowed = {"NOTTE_API_KEY", provider} if main else {"NOTTE_API_KEY"}
     selected = {key: value for key, value in env.items() if key not in CREDENTIALS or key in allowed}
-    if name in {"anthropic-computer-use", "github-actions", "openagi", "openai-computer-use"}:
-        # Published SDK 1.10.0 still patches asyncio unless explicitly disabled.
-        selected["NOTTE_ENABLE_NEST_ASYNCIO"] = "false"
+    # Native integrations use standard asyncio; published SDKs still opt into a loop patch.
+    selected["NOTTE_ENABLE_NEST_ASYNCIO"] = "false"
     return selected
 
 
