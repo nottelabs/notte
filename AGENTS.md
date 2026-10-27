@@ -70,6 +70,9 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   so built-in callables such as `set.add` cannot be registered directly.
   The driver can report a closed target from the click that closes its opener;
   accept that click only when a live replacement appears, and wait for it.
+  Measure the post-close replacement wait from the page's close event. The click
+  can first wait for actionability or input delivery within its own action budget;
+  that work is outside the post-close grace period.
   When activating a tracked late tab, retain earlier tabs and their request trackers
   until selection succeeds. A tab closing during activation must not discard the
   surviving candidates or stop watching when none survive.

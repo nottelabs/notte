@@ -925,14 +925,30 @@ async def test_a_closing_page_waits_for_its_replacement_if_it_opens_one(
     original = await opened.value
     await original.wait_for_load_state("load")
     session.window.page = original
-    elapsed = await click(session, "replace-self" if replacement else "close-self")
+    closed_at: float | None = None
+
+    def record_close(_page: Page) -> None:
+        nonlocal closed_at
+        closed_at = time.monotonic()
+
+    original.once("close", record_close)
+    if not replacement:
+        # Waiting for click actionability is separate from waiting for a tab after the original closes.
+        await original.evaluate("""() => {
+            const cover = document.createElement('div');
+            cover.style.cssText = 'position:fixed;inset:0;z-index:1000';
+            document.body.append(cover);
+            setTimeout(() => cover.remove(), 1800);
+        }""")
+    _ = await click(session, "replace-self" if replacement else "close-self")
     assert original.is_closed()
+    assert closed_at is not None
     if replacement:
         assert session.window.page.url == f"{site}/fetching-tab"
         assert "Fetched in the tab" in await text(session)
     else:
         assert session.window.page.url == f"{site}/"
-        assert elapsed < LONG_GRACE_MS / 1000 + 1
+        assert time.monotonic() - closed_at < LONG_GRACE_MS / 1000 + 1
 
 
 @pytest.mark.asyncio
