@@ -16,7 +16,7 @@ def test_dependency_suites_start_independently_without_credentials() -> None:
     for name in ("tests", "compatible-dependencies"):
         job = jobs[name]
         assert job["needs"] == "changes"
-        assert job["if"] == "fromJSON(needs.changes.outputs.scope).python_unit"
+        assert "fromJSON(needs.changes.outputs.scope).python_unit" in job["if"]
         assert job["runs-on"] == "blacksmith-4vcpu-ubuntu-2404"
         assert job["timeout-minutes"] == 20
         assert "concurrency" not in job
@@ -29,8 +29,10 @@ def test_dependency_suites_start_independently_without_credentials() -> None:
     setup = next(step for step in compatible["steps"] if step.get("uses") == "./.github/actions/python-setup")
     assert setup["with"] == {"browsers": "true", "python-version": "3.15"}
     checkouts = [step for step in compatible["steps"] if "checkout@" in step.get("uses", "")]
-    locked_checkouts = [step for step in jobs["tests"]["steps"] if "checkout@" in step.get("uses", "")]
-    assert checkouts == locked_checkouts
+    assert len(checkouts) == 1
+    assert checkouts[0]["with"]["ref"] == "${{ github.event.pull_request.head.sha || github.sha }}"
+    assert "pr_number" not in str(compatible)
+    assert "github.event.inputs" not in str(compatible)
 
     # The caller requires the entire reusable workflow, including both jobs.
     caller = workflow("ci.yml")["jobs"]
@@ -58,6 +60,7 @@ def test_suite_selection_and_coverage_ownership_are_preserved() -> None:
 
     compatible = jobs["compatible-dependencies"]
     command = next(step["run"] for step in compatible["steps"] if "run" in step)
+    assert steps["Test compatible dependency versions (manual trigger)"]["run"] == command
     assert shlex.split(command) == [
         "uv",
         "run",
@@ -94,10 +97,57 @@ def test_suite_selection_and_coverage_ownership_are_preserved() -> None:
     assert comment["with"] == {"pytest-coverage-path": "./pytest-coverage.txt", "junitxml-path": "./pytest.xml"}
 
 
+@pytest.mark.parametrize("event", ["pull_request", "push", "schedule", "workflow_dispatch"])
+@pytest.mark.parametrize("python_version", ["3.15", "3.11"])
+@pytest.mark.parametrize("selected", [True, False])
+def test_event_boundary_keeps_exactly_one_compatible_suite(event: str, python_version: str, selected: bool) -> None:
+    jobs = workflow("test-cicd.yml")["jobs"]
+    manual = next(
+        step
+        for step in jobs["tests"]["steps"]
+        if step.get("name") == "Test compatible dependency versions (manual trigger)"
+    )
+    # These conditions use only string equality and conjunction, shared by Bash
+    # and Actions. Exercise the actual YAML conditions against each event/scope.
+    expressions = {
+        "independent": jobs["compatible-dependencies"]["if"],
+        "manual": f"{jobs['tests']['if']} && {manual['if']}",
+    }
+    decisions = {}
+    for name, expression in expressions.items():
+        expression = (
+            expression.replace("fromJSON(needs.changes.outputs.scope).python_unit", '"$SELECTED" == true')
+            .replace("github.event_name", '"$EVENT_NAME"')
+            .replace("matrix.python", '"$PYTHON_VERSION"')
+        )
+        result = subprocess.run(
+            ["bash", "-c", f"[[ {expression} ]]"],
+            env={
+                **os.environ,
+                "EVENT_NAME": event,
+                "PYTHON_VERSION": python_version,
+                "SELECTED": str(selected).lower(),
+            },
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        assert result.returncode in (0, 1), result.stderr
+        decisions[name] = result.returncode == 0
+    assert decisions == {
+        "independent": selected and event != "workflow_dispatch",
+        "manual": selected and event == "workflow_dispatch" and python_version == "3.15",
+    }
+    # Both fork and same-repository PRs keep the automatic, credential-free gate.
+    assert "head.repo" not in expressions["independent"]
+    assert "IS_TRUSTED" not in expressions["independent"]
+
+
 @pytest.mark.parametrize(
     "job_id,step_name",
     [
         ("tests", "Run full unit suite"),
+        ("tests", "Test compatible dependency versions (manual trigger)"),
         ("compatible-dependencies", "Test compatible dependency versions"),
     ],
 )
