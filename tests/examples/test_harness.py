@@ -1,3 +1,4 @@
+import json
 import runpy
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -6,6 +7,40 @@ import pytest
 from pytest_examples import CodeExample
 
 from tests.examples import test_examples, test_readme
+
+
+def test_legacy_discovery_leaves_registered_projects_to_the_shared_runner() -> None:
+    registered: dict[str, str] = json.loads(test_examples.REGISTRY.read_text())
+    legacy = test_examples.get_use_cases_dirs()
+
+    assert {path.name for path in legacy} == {"scrape-nike-products", "session-solve-captcha"}
+    assert not set(registered).intersection(path.name for path in legacy)
+    assert [path.name for path in test_examples.get_python_files()] == ["quickstart.py"]
+
+
+def test_new_unregistered_directory_is_not_silently_dropped(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    examples = tmp_path / "examples"
+    examples.mkdir()
+    unregistered = examples / "new-example"
+    unregistered.mkdir()
+    registered = examples / "registered-example"
+    registered.mkdir()
+    registry = tmp_path / "registry.json"
+    registry.write_text(json.dumps({registered.name: "root-unittest"}))
+    monkeypatch.setattr(test_examples, "REGISTRY", registry)
+    monkeypatch.setattr(test_examples, "__file__", str(tmp_path / "tests/examples/test_examples.py"))
+
+    assert test_examples.get_use_cases_dirs() == [unregistered]
+    with pytest.raises(AssertionError, match="No example script found"):
+        test_examples.test_use_case_script(unregistered)
+
+
+def test_legacy_entrypoint_failure_preserves_exit_code_and_output(tmp_path: Path) -> None:
+    (tmp_path / "agent.py").write_text("import sys\nprint('original example failure')\nsys.exit(23)\n")
+
+    with pytest.raises(AssertionError, match="exit code 23") as failure:
+        test_examples.test_use_case_script(tmp_path)
+    assert "original example failure" in str(failure.value)
 
 
 @pytest.mark.parametrize(

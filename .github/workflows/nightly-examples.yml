@@ -6,10 +6,13 @@ on:
   workflow_dispatch:  # Allow manual triggering
     inputs:
       test_filter:
-        description: "Optional pytest -k expression for focused example runs"
+        description: "Optional pytest -k expression for legacy and README examples; registered integrations always run"
         required: false
         default: ""
         type: string
+
+permissions:
+  contents: read
 
 env:
   CACHE_TYPE: "pip"
@@ -21,9 +24,20 @@ env:
   NOTTE_CI_VAULT_PREFIX: ci-${{ github.run_id }}-${{ github.job }}
 
 jobs:
+  registered-examples:
+    # Scheduled/manual selection runs the complete registry with its existing
+    # dependencies, entrypoints, SDK legs, shards, and staging credentials.
+    uses: ./.github/workflows/paired-sdk-examples.yml
+    secrets: inherit # pragma: allowlist secret
+
   example-tests:
+    needs: registered-examples
+    # Keep legacy coverage and report both results even if an integration fails.
+    if: ${{ always() && github.ref == 'refs/heads/main' }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 75
+    env:
+      NOTTE_API_URL: https://us-staging.notte.cc
     steps:
       - name: Generate timestamp
         id: timestamp
@@ -45,7 +59,7 @@ jobs:
           cache: ${{ env.CACHE_TYPE }}
 
       - name: Install dependencies
-        run: uv sync --dev --all-extras
+        run: uv sync --locked --dev --all-extras
 
       - name: Use HTTPS Ubuntu mirrors on Blacksmith
         run: |
@@ -86,7 +100,7 @@ jobs:
 
       - name: Verify environment variables
         env:
-          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
         run: |
           if [ -z "$NOTTE_API_KEY" ]; then
             echo "NOTTE_API_KEY is not set"
@@ -94,23 +108,25 @@ jobs:
           fi
           echo "Environment variables are set"
 
-      - name: Run example tests
+      - name: Run legacy and README example tests
         env:
           EXAMPLE_TEST_FILTER: ${{ inputs.test_filter || '' }}
-          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
         run: xvfb-run --auto-servernum bash tests/run_examples.sh -k "$EXAMPLE_TEST_FILTER"
 
       - name: Cleanup vaults created by this run
         if: always()
         env:
-          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
-        run: uv run python scripts/cleanup_ci_vaults.py --allow-production
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
+        run: uv run python scripts/cleanup_ci_vaults.py
 
       - name: Build Slack notification
         if: always()
         env:
           RUN_TIMESTAMP: ${{ steps.timestamp.outputs.timestamp }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          REGISTERED_RESULT: ${{ needs.registered-examples.result }}
+          LEGACY_RESULT: ${{ job.status }}
         run: |
           python - <<'PY'
           import json
@@ -123,7 +139,12 @@ jobs:
           summary = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", summary)
           payload = {
               "username": f"GitHub Nightly Pipeline ({os.environ['RUN_TIMESTAMP']})",
-              "text": f"Pipeline results: {os.environ['RUN_URL']}\n```\n{summary[:12000]}\n```",
+              "text": (
+                  f"Pipeline results: {os.environ['RUN_URL']}\n"
+                  f"Registered integrations (staging): {os.environ['REGISTERED_RESULT']}\n"
+                  f"Legacy and README examples (staging): {os.environ['LEGACY_RESULT']}\n"
+                  f"```\n{summary[:12000]}\n```"
+              ),
           }
           Path("slack-payload.json").write_text(json.dumps(payload))
           PY
