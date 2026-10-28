@@ -33,7 +33,10 @@ def test_one_freshness_check_per_reference_input(path: str) -> None:
     steps = job["steps"]
     assert next(step for step in steps if step.get("run") == "npm run docs:test").get("if") is None
     check = next(step for step in steps if step.get("run") == "npm run docs:check")
-    assert check["if"] == "matrix.node == 22 && !fromJSON(steps.scope.outputs.scope).node_generated"
+    assert check["if"] == (
+        "matrix.node == 22 && (github.event_name == 'workflow_dispatch' || "
+        "!fromJSON(steps.scope.outputs.scope).node_generated)"
+    )
     assert next(step for step in steps if "checkout@" in step.get("uses", ""))["with"]["fetch-depth"] == 0
     assert next(step for step in steps if step.get("id") == "scope")["uses"] == "./.github/actions/ci-scope"
     events = reference[True]
@@ -56,3 +59,21 @@ def test_generation_freshness_keeps_required_gate_owner() -> None:
     # CLI committed-output comparisons remain separate from generator tests.
     cli = (ROOT / ".github/workflows/cli-reference.yml").read_text()
     assert "--check" in cli
+
+
+@pytest.mark.parametrize("event", ["pull_request", "push", "workflow_dispatch"])
+@pytest.mark.parametrize("generated", [False, True])
+def test_freshness_owner_depends_on_whether_node_ci_is_invoked(event: str, generated: bool) -> None:
+    reference = yaml.safe_load((ROOT / ".github/workflows/typescript-sdk-reference.yml").read_text())
+    job = reference["jobs"]["generated-reference"]
+    condition = next(step["if"] for step in job["steps"] if step.get("run") == "npm run docs:check")
+    # Evaluate the shipped expression for each runtime and event. Manual runs
+    # select all suites but do not invoke the separate coordinating CI workflow.
+    reference_checks = 0
+    for node in job["strategy"]["matrix"]["node"]:
+        expression = condition.replace("matrix.node", str(node)).replace("github.event_name", repr(event))
+        expression = expression.replace("!fromJSON(steps.scope.outputs.scope).node_generated", str(not generated))
+        reference_checks += int(eval(expression.replace("&&", "and").replace("||", "or")))
+    node_checks = int(event != "workflow_dispatch" and generated)
+    assert reference_checks + node_checks == 1
+    assert reference_checks == int(event == "workflow_dispatch" or not generated)

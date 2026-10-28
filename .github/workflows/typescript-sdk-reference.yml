@@ -36,5 +36,6 @@ jobs:
       # Generation inputs are already checked by node-sdk-ci's generated job,
       # which feeds the required tests gate. Other reference changes still need
       # a committed-output comparison, once, alongside both generator test runtimes.
+      # Manual reference runs have no coordinating Node CI, so always check once.
       - run: npm run docs:check
-        if: matrix.node == 22 && !fromJSON(steps.scope.outputs.scope).node_generated
+        if: matrix.node == 22 && (github.event_name == 'workflow_dispatch' || !fromJSON(steps.scope.outputs.scope).node_generated)
