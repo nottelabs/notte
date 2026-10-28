@@ -38,27 +38,77 @@ def test_nightly_keeps_registered_and_legacy_execution_on_staging() -> None:
     assert legacy["env"]["NOTTE_API_URL"] == paired["jobs"]["live"]["env"]["NOTTE_API_URL"]
     assert legacy["env"]["NOTTE_API_URL"] == "https://us-staging.notte.cc"
     assert legacy["needs"] == "registered-examples"
-    assert "always()" in legacy["if"]
-    assert "github.ref == 'refs/heads/main'" in legacy["if"]
+    # A failed dependency must not suppress legacy tests on any dispatch ref.
+    # A cancelled run must not start another 75-minute job creating live resources.
+    assert legacy["if"] == "${{ !cancelled() }}"
     steps = {step.get("name"): step for step in legacy["steps"]}
     execute = steps["Run legacy and README example tests"]
     assert "tests/run_examples.sh" in execute["run"]
     assert execute["env"]["NOTTE_API_KEY"] == "${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}"
     assert steps["Cleanup vaults created by this run"]["run"] == "uv run python scripts/cleanup_ci_vaults.py"
+    assert steps["Cleanup vaults created by this run"]["if"] == "always()"
     assert not any(step.get("continue-on-error") for step in legacy["steps"])
 
 
-@pytest.mark.parametrize("registered_result,legacy_result", [("failure", "success"), ("success", "failure")])
-def test_nightly_notification_reports_either_suite_failure(
-    tmp_path: Path, registered_result: str, legacy_result: str
+def test_nightly_reports_outside_execution_gates_on_every_ref() -> None:
+    nightly = yaml.safe_load((ROOT / ".github/workflows/nightly-examples.yml").read_text())
+    report = nightly["jobs"]["report"]
+    assert set(report["needs"]) == {"registered-examples", "example-tests"}
+    assert report["if"] == "${{ always() }}"
+    assert all(step["if"] == "always()" for step in report["steps"])
+    assert "NOTTE_API_KEY" not in str(report)
+    triggers = nightly[True]  # PyYAML reads the bare on: key as True.
+    assert "legacy/README tests on any ref" in triggers["workflow_dispatch"]["inputs"]["test_filter"]["description"]
+    assert "registered live checks on main" in triggers["workflow_dispatch"]["inputs"]["test_filter"]["description"]
+
+
+@pytest.mark.parametrize("has_summary", [True, False])
+def test_nightly_passes_a_bounded_json_summary_to_reporting(tmp_path: Path, has_summary: bool) -> None:
+    nightly = yaml.safe_load((ROOT / ".github/workflows/nightly-examples.yml").read_text())
+    legacy = nightly["jobs"]["example-tests"]
+    capture = next(step for step in legacy["steps"] if step.get("name") == "Capture legacy example summary")
+    assert capture["if"] == "always()"
+    assert legacy["outputs"]["summary"] == "${{ steps.summary.outputs.summary }}"
+    original = '\x1b[31moriginal failure\x1b[0m\n"quotes" and $literal\n' + "x" * 12000
+    if has_summary:
+        (tmp_path / "pytest_summary.log").write_text(original)
+    output = tmp_path / "output"
+    subprocess.run(
+        ["bash", "-e", "-c", capture["run"]],
+        cwd=tmp_path,
+        env={**os.environ, "GITHUB_OUTPUT": str(output)},
+        check=True,
+    )
+    lines = output.read_text().splitlines()
+    assert len(lines) == 1
+    assert lines[0].startswith("summary=")
+    summary = json.loads(lines[0].removeprefix("summary="))
+    if has_summary:
+        assert summary == original.replace("\x1b[31m", "").replace("\x1b[0m", "")[:12000]
+    else:
+        assert "summary unavailable" in summary
+
+
+@pytest.mark.parametrize("ref", ["refs/heads/main", "refs/heads/fix/example"])
+@pytest.mark.parametrize(
+    "registered_result,legacy_result,summary",
+    [
+        ("failure", "success", "original pytest failure\n"),
+        ("success", "failure", "original pytest failure\n"),
+        ("failure", "failure", None),
+        ("cancelled", "skipped", None),
+        ("success", "cancelled", None),
+    ],
+)
+def test_nightly_notification_reports_failures_and_cancellation_on_any_ref(
+    tmp_path: Path, registered_result: str, legacy_result: str, summary: str | None, ref: str
 ) -> None:
     nightly = yaml.safe_load((ROOT / ".github/workflows/nightly-examples.yml").read_text())
-    step = next(
-        step for step in nightly["jobs"]["example-tests"]["steps"] if step.get("name") == "Build Slack notification"
-    )
+    step = next(step for step in nightly["jobs"]["report"]["steps"] if step.get("name") == "Build Slack notification")
     assert step["env"]["REGISTERED_RESULT"] == "${{ needs.registered-examples.result }}"
-    assert step["env"]["LEGACY_RESULT"] == "${{ job.status }}"
-    (tmp_path / "pytest_summary.log").write_text("original pytest failure\n")
+    assert step["env"]["LEGACY_RESULT"] == "${{ needs.example-tests.result }}"
+    assert step["env"]["SUMMARY_JSON"] == "${{ needs.example-tests.outputs.summary }}"
+    assert step["env"]["REGISTERED_LIVE_ENABLED"] == "${{ github.ref == 'refs/heads/main' }}"
     subprocess.run(
         ["bash", "-e", "-c", step["run"]],
         cwd=tmp_path,
@@ -68,13 +118,19 @@ def test_nightly_notification_reports_either_suite_failure(
             "RUN_URL": "https://example.test/run",
             "REGISTERED_RESULT": registered_result,
             "LEGACY_RESULT": legacy_result,
+            "SUMMARY_JSON": json.dumps(summary) if summary is not None else "",
+            "REGISTERED_LIVE_ENABLED": "true" if ref == "refs/heads/main" else "false",
         },
         check=True,
     )
     payload = json.loads((tmp_path / "slack-payload.json").read_text())
-    assert f"Registered integrations (staging): {registered_result}" in payload["text"]
+    assert f"Registered integrations: {registered_result}" in payload["text"]
     assert f"Legacy and README examples (staging): {legacy_result}" in payload["text"]
-    assert "original pytest failure" in payload["text"]
+    assert ("main only; not run on this ref" in payload["text"]) is (ref != "refs/heads/main")
+    if summary is not None:
+        assert summary in payload["text"]
+    else:
+        assert "summary unavailable" in payload["text"]
 
 
 def test_production_smoke_keeps_its_separate_published_sdk_environment() -> None:

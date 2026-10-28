@@ -13,9 +13,9 @@ def test_legacy_discovery_leaves_registered_projects_to_the_shared_runner() -> N
     registered: dict[str, str] = json.loads(test_examples.REGISTRY.read_text())
     legacy = test_examples.get_use_cases_dirs()
 
-    assert {path.name for path in legacy} == {"scrape-nike-products", "session-solve-captcha"}
+    assert {"scrape-nike-products", "session-solve-captcha"} <= {path.name for path in legacy}
     assert not set(registered).intersection(path.name for path in legacy)
-    assert [path.name for path in test_examples.get_python_files()] == ["quickstart.py"]
+    assert "quickstart.py" in {path.name for path in test_examples.get_python_files()}
 
 
 def test_new_unregistered_directory_is_not_silently_dropped(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

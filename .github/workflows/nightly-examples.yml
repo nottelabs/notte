@@ -6,7 +6,7 @@ on:
   workflow_dispatch:  # Allow manual triggering
     inputs:
       test_filter:
-        description: "Optional pytest -k expression for legacy and README examples; registered integrations always run"
+        description: "Filter legacy/README tests on any ref; registered static checks run on all refs, registered live checks on main"
         required: false
         default: ""
         type: string
@@ -32,17 +32,15 @@ jobs:
 
   example-tests:
     needs: registered-examples
-    # Keep legacy coverage and report both results even if an integration fails.
-    if: ${{ always() && github.ref == 'refs/heads/main' }}
+    # Run after integration failures on any dispatch ref, but do not start work after cancellation.
+    if: ${{ !cancelled() }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 75
+    outputs:
+      summary: ${{ steps.summary.outputs.summary }}
     env:
       NOTTE_API_URL: https://us-staging.notte.cc
     steps:
-      - name: Generate timestamp
-        id: timestamp
-        run: echo "timestamp=$(date +%s)" >> $GITHUB_OUTPUT
-
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -120,28 +118,57 @@ jobs:
           NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
         run: uv run python scripts/cleanup_ci_vaults.py
 
-      - name: Build Slack notification
+      - name: Capture legacy example summary
+        id: summary
         if: always()
-        env:
-          RUN_TIMESTAMP: ${{ steps.timestamp.outputs.timestamp }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          REGISTERED_RESULT: ${{ needs.registered-examples.result }}
-          LEGACY_RESULT: ${{ job.status }}
         run: |
-          python - <<'PY'
+          python3 - <<'PY'
           import json
           import os
           import re
           from pathlib import Path
 
           summary_path = Path("pytest_summary.log")
-          summary = summary_path.read_text() if summary_path.exists() else "Example tests did not run. See the workflow logs."
+          summary = summary_path.read_text() if summary_path.exists() else "Example summary unavailable. See the workflow logs."
           summary = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", summary)
+          with Path(os.environ['GITHUB_OUTPUT']).open('a') as output:
+              output.write(f"summary={json.dumps(summary[:12000])}\n")
+          PY
+
+  report:
+    needs: [registered-examples, example-tests]
+    if: ${{ always() }}
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 5
+    steps:
+      - name: Generate timestamp
+        id: timestamp
+        if: always()
+        run: echo "timestamp=$(date +%s)" >> $GITHUB_OUTPUT
+
+      - name: Build Slack notification
+        if: always()
+        env:
+          RUN_TIMESTAMP: ${{ steps.timestamp.outputs.timestamp }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          REGISTERED_RESULT: ${{ needs.registered-examples.result }}
+          LEGACY_RESULT: ${{ needs.example-tests.result }}
+          SUMMARY_JSON: ${{ needs.example-tests.outputs.summary }}
+          REGISTERED_LIVE_ENABLED: ${{ github.ref == 'refs/heads/main' }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          encoded_summary = os.environ['SUMMARY_JSON']
+          summary = json.loads(encoded_summary) if encoded_summary else "Example summary unavailable. See the workflow logs."
+          live = "enabled" if os.environ['REGISTERED_LIVE_ENABLED'] == 'true' else "main only; not run on this ref"
           payload = {
               "username": f"GitHub Nightly Pipeline ({os.environ['RUN_TIMESTAMP']})",
               "text": (
                   f"Pipeline results: {os.environ['RUN_URL']}\n"
-                  f"Registered integrations (staging): {os.environ['REGISTERED_RESULT']}\n"
+                  f"Registered integrations: {os.environ['REGISTERED_RESULT']} (live staging checks: {live})\n"
                   f"Legacy and README examples (staging): {os.environ['LEGACY_RESULT']}\n"
                   f"```\n{summary[:12000]}\n```"
               ),
