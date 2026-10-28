@@ -1,4 +1,4 @@
-name: Full baseline coverage
+name: Scheduled examples coverage
 
 on:
   schedule:
@@ -24,7 +24,7 @@ jobs:
       - run: python3 -m unittest discover -s tests/scripts -p test_ci_baseline.py
 
   freshness:
-    name: Full baseline freshness
+    name: Scheduled examples baseline freshness
     if: github.event_name != 'pull_request'
     needs: policy
     permissions:

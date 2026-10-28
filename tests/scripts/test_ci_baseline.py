@@ -1,9 +1,14 @@
 """Missing, stale and partially rerun baselines cannot look complete."""
 
+import json
+import os
 import unittest
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
-from scripts.ci_baseline import Job, Run, assess
+from scripts.ci_baseline import Job, Run, assess, main
 
 
 class BaselineTests(unittest.TestCase):
@@ -65,3 +70,30 @@ class BaselineTests(unittest.TestCase):
         self.assertFalse(assess(self.run, self.jobs, 2, True, self.now)[1])
         self.run.update(event="schedule", head_branch="feature")
         self.assertFalse(assess(self.run, self.jobs, 2, True, self.now)[1])
+
+    def test_changed_selection_rules_invalidate_the_baseline(self) -> None:
+        self.run["updated_at"] = datetime.now(timezone.utc).isoformat()
+        for changed in (None, "scripts/ci_scope.py", ".github/actions/ci-scope/action.yml"):
+            with self.subTest(changed=changed), TemporaryDirectory() as directory:
+
+                def response(path: str) -> str:
+                    if "/runs?" in path:
+                        return json.dumps({"workflow_runs": [self.run]})
+                    stale = changed is not None and f"/contents/{changed}?ref=" in path and "?ref=main" not in path
+                    return json.dumps({"sha": "old" if stale else "current"})
+
+                with (
+                    patch.dict(
+                        os.environ, GITHUB_REPOSITORY="fixture/repo", GITHUB_STEP_SUMMARY=f"{directory}/summary"
+                    ),
+                    patch("scripts.ci_baseline.api", side_effect=response),
+                    patch(
+                        "scripts.ci_baseline.subprocess.check_output", return_value=json.dumps([{"jobs": self.jobs}])
+                    ),
+                    patch.object(Path, "read_text", return_value="[{}, {}]"),
+                ):
+                    if changed:
+                        with self.assertRaises(SystemExit):
+                            main()
+                    else:
+                        main()

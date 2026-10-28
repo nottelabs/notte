@@ -29,7 +29,7 @@ class Job(TypedDict):
 def assess(run: Run | None, jobs: list[Job], shards: int, same_harness: bool, now: datetime) -> tuple[str, bool]:
     if run is None:
         return "No scheduled full examples run exists.", False
-    lines = [f"Full baseline: {run['html_url']}", f"SDK revision: `{run['head_sha']}`"]
+    lines = [f"Scheduled examples baseline: {run['html_url']}", f"SDK revision: `{run['head_sha']}`"]
     if run["head_branch"] != "main" or run["event"] != "schedule":
         return "The candidate is not a scheduled main run.", False
     age = (now - datetime.fromisoformat(run["updated_at"].replace("Z", "+00:00"))).total_seconds()
@@ -50,13 +50,14 @@ def assess(run: Run | None, jobs: list[Job], shards: int, same_harness: bool, no
         f"Age: {age / 3600:.1f} hours (maximum 24 hours)",
         f"Current harness: {'yes' if same_harness else 'no'}",
         f"Expected integration shards: {shards}",
-        f"Coverage: {'complete' if complete else 'incomplete, failed or stale'}",
+        f"Expected example jobs: {'complete' if complete else 'incomplete, failed or stale'}",
     ]
     if missing:
         lines += ["", "Expected jobs without success:", *[f"- {name}" for name in sorted(missing)]]
     lines += [
         "",
-        "This records full workflow coverage at the SDK revision above, not proof that every later main commit was fully tested.",
+        "This records scheduled example jobs at the SDK revision above. It does not assess individual test skips, "
+        + "the Python/Node correctness suites, the provider matrix, or coverage of later main commits.",
     ]
     return "\n\n".join(lines) + "\n", complete
 
@@ -96,6 +97,8 @@ def main() -> None:
             ".github/workflows/paired-sdk-examples.yml",
             "scripts/ci_integration_examples.py",
             "scripts/integration_examples.json",
+            "scripts/ci_scope.py",
+            ".github/actions/ci-scope/action.yml",
             "tests/run_examples.sh",
         ):
             current = json.loads(api(f"repos/{repository}/contents/{path}?ref=main"))["sha"]
@@ -104,7 +107,7 @@ def main() -> None:
     registry = json.loads(Path("scripts/integration_examples.json").read_text())
     summary, complete = assess(run, jobs, max(2, (len(registry) + 1) // 2), same_harness, datetime.now(timezone.utc))
     with Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a") as output:
-        _ = output.write("## Full baseline freshness\n\n" + summary)
+        _ = output.write("## Scheduled examples baseline freshness\n\n" + summary)
     print(summary)
     if not complete:
         raise SystemExit(1)
