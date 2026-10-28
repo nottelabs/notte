@@ -21,7 +21,6 @@ function recipe(language: typeof languages[number], overrides: NodeJS.ProcessEnv
   const runner = fileURLToPath(new URL(`../../docs/src/sniptest/run_${language}.${language === 'python' ? 'py' : 'mjs'}`, import.meta.url));
   const env = { ...process.env, ...overrides };
   delete env.CLAUDECODE;
-  delete env.ANTHROPIC_AUTH_TOKEN;
   return execute(language === 'python' ? python! : process.execPath,
     language === 'python' ? [runner, example] : ['--experimental-strip-types', runner, example],
     { env, timeout: 180_000, maxBuffer: 2 * 1024 * 1024 });
