@@ -34,8 +34,9 @@ def test_one_freshness_check_per_reference_input(path: str) -> None:
     assert next(step for step in steps if step.get("run") == "npm run docs:test").get("if") is None
     check = next(step for step in steps if step.get("run") == "npm run docs:check")
     assert check["if"] == (
-        "matrix.node == 22 && (github.event_name == 'workflow_dispatch' || "
-        "!fromJSON(steps.scope.outputs.scope).node_generated)"
+        "matrix.node == 22 && !(fromJSON(steps.scope.outputs.scope).node_generated && "
+        "((github.event_name == 'push' && github.ref == 'refs/heads/main') || "
+        "(github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main')))"
     )
     assert next(step for step in steps if "checkout@" in step.get("uses", ""))["with"]["fetch-depth"] == 0
     assert next(step for step in steps if step.get("id") == "scope")["uses"] == "./.github/actions/ci-scope"
@@ -62,18 +63,22 @@ def test_generation_freshness_keeps_required_gate_owner() -> None:
 
 
 @pytest.mark.parametrize("event", ["pull_request", "push", "workflow_dispatch"])
+@pytest.mark.parametrize("target", ["main", "release", "feature"])
 @pytest.mark.parametrize("generated", [False, True])
-def test_freshness_owner_depends_on_whether_node_ci_is_invoked(event: str, generated: bool) -> None:
+def test_freshness_owner_depends_on_ci_event_and_target(event: str, target: str, generated: bool) -> None:
     reference = yaml.safe_load((ROOT / ".github/workflows/typescript-sdk-reference.yml").read_text())
     job = reference["jobs"]["generated-reference"]
     condition = next(step["if"] for step in job["steps"] if step.get("run") == "npm run docs:check")
-    # Evaluate the shipped expression for each runtime and event. Manual runs
-    # select all suites but do not invoke the separate coordinating CI workflow.
     reference_checks = 0
     for node in job["strategy"]["matrix"]["node"]:
         expression = condition.replace("matrix.node", str(node)).replace("github.event_name", repr(event))
-        expression = expression.replace("!fromJSON(steps.scope.outputs.scope).node_generated", str(not generated))
-        reference_checks += int(eval(expression.replace("&&", "and").replace("||", "or")))
-    node_checks = int(event != "workflow_dispatch" and generated)
+        expression = expression.replace("github.event.pull_request.base.ref", repr(target))
+        expression = expression.replace("github.ref", repr(f"refs/heads/{target}"))
+        expression = expression.replace("fromJSON(steps.scope.outputs.scope).node_generated", str(generated))
+        expression = expression.replace("&&", "and").replace("||", "or").replace("!", "not ")
+        reference_checks += int(eval(expression, {"__builtins__": {}}))
+    # The coordinating CI workflow runs only for main pushes and main-targeted PRs.
+    coordinating_ci = event in {"pull_request", "push"} and target == "main"
+    node_checks = int(coordinating_ci and generated)
     assert reference_checks + node_checks == 1
-    assert reference_checks == int(event == "workflow_dispatch" or not generated)
+    assert reference_checks == int(not (coordinating_ci and generated))
