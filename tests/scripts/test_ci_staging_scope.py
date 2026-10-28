@@ -27,6 +27,7 @@ def test_shared_queue_only_contains_staging_test_jobs() -> None:
         ("test-cicd.yml", "staging-and-live"),
         ("docs-tests-cicd.yml", "execution"),
         ("readme-check.yml", "live"),
+        ("nightly-examples.yml", "example-tests"),
     }
     queued = set()
     for path in WORKFLOWS.glob("*.yml"):

@@ -36,6 +36,10 @@ jobs:
     if: ${{ !cancelled() }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 75
+    concurrency:
+      group: notte-live-api-staging
+      queue: max
+      cancel-in-progress: false
     outputs:
       summary: ${{ steps.summary.outputs.summary }}
     env:
