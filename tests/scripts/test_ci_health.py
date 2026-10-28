@@ -2,6 +2,9 @@
 
 import io
 import json
+import signal
+from http.client import IncompleteRead
+from pathlib import Path
 from urllib.error import HTTPError, URLError
 
 import pytest
@@ -30,7 +33,9 @@ def test_http_failure_is_classified_without_retry_or_secret(
     assert "private" not in json.dumps(result)
 
 
-@pytest.mark.parametrize("error", [TimeoutError("private"), URLError("private"), ValueError("private")])
+@pytest.mark.parametrize(
+    "error", [TimeoutError("private"), URLError("private"), ValueError("private"), IncompleteRead(b"private", 100)]
+)
 def test_transport_and_malformed_responses_fail(monkeypatch: pytest.MonkeyPatch, error: Exception) -> None:
     def fail(*args, **kwargs):
         raise error
@@ -72,3 +77,62 @@ def test_provider_success_requires_a_completion(monkeypatch: pytest.MonkeyPatch,
 
     monkeypatch.setattr(ci_health, "urlopen", respond)
     assert (ci_health.probe("openrouter", "fixture-private-key")["status"] == "passed") == passed
+
+
+def test_body_deadline_restores_the_previous_signal_handler(monkeypatch: pytest.MonkeyPatch) -> None:
+    previous = signal.getsignal(signal.SIGALRM)
+
+    class Heartbeat(io.BytesIO):
+        def read(self, size: int = -1) -> bytes:
+            signal.raise_signal(signal.SIGALRM)
+            raise AssertionError("The body must be interrupted")
+
+    monkeypatch.setattr(ci_health, "urlopen", lambda *args, **kwargs: Heartbeat())
+    assert ci_health.probe("openrouter", "fixture-private-key")["status"] == "transport"
+    assert signal.getsignal(signal.SIGALRM) == previous
+    assert signal.getitimer(signal.ITIMER_REAL) == (0.0, 0.0)
+
+
+@pytest.mark.parametrize("code,status", [(402, "credits"), (429, "capacity"), (503, "service_error")])
+def test_embedded_errors_preserve_transport_and_provider_status(
+    monkeypatch: pytest.MonkeyPatch, code: int, status: str
+) -> None:
+    monkeypatch.setattr(
+        ci_health,
+        "urlopen",
+        lambda *args, **kwargs: io.BytesIO(
+            json.dumps({"error": {"code": code, "message": "private-provider-body"}}).encode()
+        ),
+    )
+    result = ci_health.probe("openrouter", "fixture-private-key")
+    assert result["status"] == status
+    assert result["http_status"] == 200
+    assert result["provider_status"] == code
+    assert "private" not in json.dumps(result)
+
+
+@pytest.mark.parametrize("status", ["passed", "transport"])
+def test_cli_saves_evidence_and_fails_the_check_when_unhealthy(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, status: str
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr("sys.argv", ["ci_health", "openrouter"])
+    summary = tmp_path / "summary.md"
+    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(summary))
+    result: ci_health.Result = {
+        "service": "openrouter",
+        "status": status,
+        "http_status": None,
+        "provider_status": None,
+        "elapsed_seconds": 1,
+        "version": None,
+    }
+    monkeypatch.setattr(ci_health, "probe", lambda *args: result)
+    if status == "passed":
+        ci_health.main()
+    else:
+        with pytest.raises(SystemExit) as error:
+            ci_health.main()
+        assert error.value.code == 1
+    assert json.loads((tmp_path / ".test-artifacts/ci-health/openrouter.json").read_text()) == result
+    assert status in summary.read_text()
