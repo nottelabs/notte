@@ -1061,5 +1061,25 @@
         "live_tested": true
       }
     ]
+  },
+  "integrations/runanywhere/env.mdx": {
+    "group": false,
+    "blocks": [
+      {
+        "source": "integrations/runanywhere/env.sh",
+        "language": "bash",
+        "title": ""
+      }
+    ]
+  },
+  "integrations/runanywhere/models.mdx": {
+    "group": false,
+    "blocks": [
+      {
+        "source": "integrations/runanywhere/models.sh",
+        "language": "bash",
+        "title": ""
+      }
+    ]
   }
 }

@@ -375,6 +375,13 @@
             ]
           },
           {
+            "group": "Model Providers",
+            "icon": "microchip",
+            "pages": [
+              "integrations/runanywhere"
+            ]
+          },
+          {
             "group": "Workflow Automation",
             "icon": "diagram-project",
             "pages": [
