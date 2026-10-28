@@ -24,7 +24,8 @@ action, and waited
 for as the fixed waits it replaces did (`DocumentWait`):
 - `requests` (after a click, a key press or a goto, which waited for the network to go idle or slept after the
   load): until its requests are done and its DOM has settled, then until it has loaded, then until `LONG_GRACE_MS`
-  have passed since its load event and since its last request, and it has settled again. What it renders from data
+  have passed since its load event (or since the action, for a document that loaded before the action's input landed
+  in it: a page that reloads while a click waits) and since its last request, and it has settled again. What it renders from data
   it fetches after its load event, right away or on a timer, is waited for, and so is a request it sends once another
   one ended, which the browser reports only after its CORS preflight has answered (a JSON POST to an API on another
   origin);
@@ -441,7 +442,9 @@ class PageSettle:
             kept_open = set(self._in_flight)
             # its load handlers start requests and renders of their own, right away or on a timer (a page's data,
             # fetched once it has loaded): watched from the load, whether it came before or after it settled
-            since_load_ms = await self._since_load_ms()
+            # A document that loaded before the action ended replaced the tracked one before the action's input
+            # landed in it (a page that reloads while a click waits): its grace counts from the action instead.
+            since_load_ms = min(await self._since_load_ms(), (time.perf_counter() - self._began) * 1000)
             await self._track_document()
             self._in_flight = {request: fresh for request, fresh in self._in_flight.items() if request not in kept_open}
             await self._poll(GRACE_MS, at_least_ms=LONG_GRACE_MS - since_load_ms, request_quiet_ms=LONG_GRACE_MS)

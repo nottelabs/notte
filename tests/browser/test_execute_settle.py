@@ -1416,19 +1416,24 @@ async def test_a_tab_that_opens_as_another_closes_is_switched_to(session: NotteS
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("other_tab", [True, False])
 @pytest.mark.parametrize("mode", ["native", "js"])
 async def test_a_click_whose_document_reloads_before_its_input_still_ends(
-    session: NotteSession, site: str, monkeypatch: pytest.MonkeyPatch, mode: str
+    session: NotteSession, site: str, monkeypatch: pytest.MonkeyPatch, mode: str, other_tab: bool
 ) -> None:
-    """The listener that reports the click's input goes with its document; the click lands in the new one."""
+    """The listener that reports the click's input goes with its document; the click lands in the new one, and what
+    it starts there is waited for as after any click."""
     page = session.window.page
-    # with another tab open, the click reports its input
-    other = await page.context.new_page()
-    _ = await other.goto(site)
+    if other_tab:
+        # with another tab open, the click reports its input
+        other = await page.context.new_page()
+        _ = await other.goto(site)
     original_click = Locator.click
 
     async def click_after_reload(locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
         _ = await page.reload(wait_until="load")
+        # a busy machine: the input lands well after the new document loaded, its grace counts from the input
+        await asyncio.sleep(0.3)
         if mode == "js":
             raise PlaywrightTimeoutError("Use the JS click fallback")
         await original_click(locator, timeout=timeout, no_wait_after=no_wait_after)
