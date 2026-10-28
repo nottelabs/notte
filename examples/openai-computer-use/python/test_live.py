@@ -1,4 +1,4 @@
-"""Real Notte browser tests; only the optional model case incurs OpenAI charges."""
+"""Real Notte browser tests; only the optional model case incurs OpenRouter charges."""
 
 import asyncio
 import base64
@@ -250,7 +250,7 @@ class ComputerLiveTests(unittest.IsolatedAsyncioTestCase):
                 patch.dict(
                     os.environ,
                     {
-                        "OPENAI_API_KEY": "test-invalid-key",  # pragma: allowlist secret
+                        "OPENROUTER_API_KEY": "test-invalid-key",  # pragma: allowlist secret
                         "OPENAI_BASE_URL": f"http://127.0.0.1:{server.server_port}",
                     },
                 ),
@@ -288,12 +288,18 @@ class ComputerLiveTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(Unauthorized.requests - before, 2)
         first, second = Unauthorized.payloads
         self.assertEqual(first["tools"], [{"type": "computer"}])
-        self.assertEqual(second["previous_response_id"], "resp_protocol")
-        self.assertEqual(second["input"][0]["call_id"], "call_test")
-        self.assertEqual(second["input"][0]["output"]["detail"], "original")
-        self.assertTrue(second["input"][0]["output"]["image_url"].startswith("data:image/png;base64,"))
+        self.assertEqual(first["model"], "openai/gpt-6.1-sol")
+        for payload in (first, second):
+            self.assertNotIn("previous_response_id", payload)
+            self.assertFalse(payload["store"])
+            self.assertEqual(payload["provider"], {"allow_fallbacks": False})
+        self.assertEqual(second["input"][0], first["input"][0])
+        self.assertEqual(second["input"][1]["type"], "computer_call")
+        self.assertEqual(second["input"][2]["call_id"], "call_test")
+        self.assertEqual(second["input"][2]["output"]["detail"], "original")
+        self.assertTrue(second["input"][2]["output"]["image_url"].startswith("data:image/png;base64,"))
 
-    @unittest.skipUnless(os.getenv("OPENAI_API_KEY"), "Set OPENAI_API_KEY for the real model test")
+    @unittest.skipUnless(os.getenv("OPENROUTER_API_KEY"), "Set OPENROUTER_API_KEY for the real model test")
     async def test_original_demo_real_model(self):
         session_id = None
         try:

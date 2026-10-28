@@ -1520,7 +1520,6 @@ OWN_PROVIDER = {
     "inngest": "ANTHROPIC_API_KEY",
     "laminar": "LMNR_PROJECT_API_KEY",
     "openai-agents": "OPENAI_API_KEY",
-    "openai-computer-use": "OPENAI_API_KEY",
 }
 
 

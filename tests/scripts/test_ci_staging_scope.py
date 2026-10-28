@@ -27,6 +27,7 @@ def test_shared_queue_only_contains_staging_test_jobs() -> None:
         ("test-cicd.yml", "staging-and-live"),
         ("docs-tests-cicd.yml", "execution"),
         ("readme-check.yml", "live"),
+        ("paired-sdk-examples.yml", "computer-use"),
     }
     queued = set()
     for path in WORKFLOWS.glob("*.yml"):
@@ -298,7 +299,10 @@ def test_native_examples_have_one_existing_required_owner() -> None:
     assert not (WORKFLOWS / "gemini-computer-use-integration.yml").exists()
     assert not (WORKFLOWS / "selenium-integration.yml").exists()
     jobs = workflow("paired-sdk-examples.yml")["jobs"]
-    assert set(jobs) == {"changes", "checks", "live"}
+    assert set(jobs) == {"changes", "checks", "live", "computer-use"}
+    assert set(jobs["computer-use"]["needs"]) == {"changes", "checks"}
+    assert jobs["computer-use"]["timeout-minutes"] == 20
+    assert not jobs["computer-use"].get("continue-on-error")
     assert jobs["live"]["env"]["NOTTE_DOCS_SHARD"] == "${{ matrix.shard }}"
     assert jobs["live"]["timeout-minutes"] == 20
     assert set(jobs["live"]["needs"]) == {"changes", "checks"}
