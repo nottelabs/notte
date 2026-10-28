@@ -427,6 +427,9 @@ class GitHistoryTests(unittest.TestCase):
         self.directory = tempfile.TemporaryDirectory()
         self.addCleanup(self.directory.cleanup)
         self.repo = Path(self.directory.name)
+        self.git_local_vars = set(
+            subprocess.check_output(["git", "rev-parse", "--local-env-vars"]).decode().splitlines()
+        )
         self.git("init", "-q")
         self.git("config", "commit.gpgsign", "false")
         self.git("config", "core.hooksPath", "/dev/null")
@@ -467,7 +470,34 @@ class GitHistoryTests(unittest.TestCase):
         self.assertTrue(commands[1], "The control must exercise automatic Git maintenance")
 
     def git(self, *args: str) -> str:
-        return subprocess.check_output(["git", "-C", str(self.repo), *args], stderr=subprocess.PIPE).decode().strip()
+        environment = {name: value for name, value in os.environ.items() if name not in self.git_local_vars}
+        return (
+            subprocess.check_output(["git", "-C", str(self.repo), *args], stderr=subprocess.PIPE, env=environment)
+            .decode()
+            .strip()
+        )
+
+    def test_temporary_history_ignores_callers_repository_variables(self) -> None:
+        before = (self.repo / ".git/config").read_bytes()
+        with patch.dict(
+            os.environ,
+            {
+                "GIT_DIR": str(self.repo / ".git"),
+                "GIT_WORK_TREE": str(self.repo),
+                "GIT_COMMON_DIR": str(self.repo / ".git"),
+                "GIT_INDEX_FILE": str(self.repo / ".git/index"),
+                "GIT_OBJECT_DIRECTORY": str(self.repo / ".git/objects"),
+            },
+        ):
+            fixture = type(self)("test_temporary_history_ignores_callers_repository_variables")
+            try:
+                fixture.setUp()
+                self.assertEqual(Path(fixture.git("rev-parse", "--show-toplevel")).resolve(), fixture.repo.resolve())
+                self.assertEqual(fixture.git("config", "--local", "maintenance.auto"), "false")
+                self.assertFalse(fixture.scope("push", fixture.base, fixture.base)["full"])
+            finally:
+                fixture.doCleanups()
+        self.assertEqual((self.repo / ".git/config").read_bytes(), before)
 
     def commit(self, files: dict[str, str]) -> str:
         for name, content in files.items():
@@ -480,7 +510,11 @@ class GitHistoryTests(unittest.TestCase):
 
     def scope(self, event: str, base: str, head: str) -> dict[str, bool | str | list[str] | list[dict[str, str]]]:
         original_git = ci.git
-        with patch.object(ci, "git", side_effect=lambda *args: original_git("-C", str(self.repo), *args)):
+        environment = {name: value for name, value in os.environ.items() if name not in self.git_local_vars}
+        with (
+            patch.dict(os.environ, environment, clear=True),
+            patch.object(ci, "git", side_effect=lambda *args: original_git("-C", str(self.repo), *args)),
+        ):
             return ci.select(event, base, head)
 
     def workspace_files(self, version: str) -> dict[str, str]:
