@@ -1901,7 +1901,11 @@ async def test_a_fact_read_in_a_closed_tab_reaches_the_decider_and_writer(
     assert await session.window.page.input_value("#code") == "4821"
     assert "4821" not in decider.states[-1].page.text
     for recent in (decider.states[-1].recent_actions, decider.contexts[-1].recent_actions):
-        source = next(entry["page"] for entry in recent if entry.get("page", {}).get("url") == "http://code.test/help")
+        source = next(
+            entry["previous_page"]
+            for entry in recent
+            if entry.get("previous_page", {}).get("url") == "http://code.test/help"
+        )
         assert source["text"] == f"Your verification code is {'{{code}}' if private else '4821'}.\n[B1] Return to form"
         if private:
             assert "4821" not in json.dumps(recent)
@@ -2086,7 +2090,7 @@ async def test_private_urls_only_retain_page_text_after_navigation(session: Nott
         result = await session.aact("Continue {{token}}", variables={"token": "private-token"}, decider=decider)
         assert result.success
     recent = decider.states[-1].recent_actions
-    assert ("page" in recent[-1]) is navigate
+    assert ("previous_page" in recent[-1]) is navigate
     assert "private-token" not in json.dumps(recent)
 
 
