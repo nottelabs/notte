@@ -292,7 +292,9 @@ class LocalActDriver:
             return False
         # without a baseline (the signature script failed after observing), compare a new snapshot. So does a target
         # shown with its section's titles: the element signature does not cover what is around it
-        fast = element_id is None or (before.consistent(page, element_id) and element_id not in shown_contexts(page))
+        fast = (element_id is None and (not focus or before.focus_consistent(page))) or (
+            element_id is not None and before.consistent(page, element_id) and element_id not in shown_contexts(page)
+        )
         if before.url is not None and fast:
             xpaths = {} if element_id is None else signature_xpaths(page, element_id)
             return before.matches(await self._read_signatures(xpaths), element_id, focus=focus)

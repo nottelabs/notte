@@ -75,12 +75,14 @@ ELEMENT_SIGNATURES_JS = """(xpaths) => {
     // elsewhere (an ad, a lazy widget) do not change it, another or a re-rendered element has another token. A
     // property, not an attribute: it changes nothing the page or its mutation observers see
     const active = document.activeElement;
-    let focus = null;
+    let focus = null, focusCovered = null;
     if (active && active !== document.body && active !== document.documentElement) {
         active.__notteFocus ??= Math.random().toString(36).slice(2);
         focus = `${active.tagName}:${active.__notteFocus}`;
+        // where Enter goes: a dialog over it hides what Enter would submit
+        focusCovered = isCovered(active);
     }
-    return { url: location.href, elements, focus, covered };
+    return { url: location.href, elements, focus, covered, focus_covered: focusCovered };
 }"""
 
 
@@ -107,6 +109,8 @@ class Signatures:
         self.focus: str | None = None if result is None else result.get("focus")
         # whether something else is on top of each element where a click lands (None: out of the viewport)
         self.covered: dict[str, bool | None] = {} if result is None else dict(result.get("covered") or {})
+        # the same for the focused element
+        self.focus_covered: bool | None = None if result is None else result.get("focus_covered")
 
     def has(self, element_id: str) -> bool:
         return self.elements.get(element_id) is not None
@@ -124,12 +128,19 @@ class Signatures:
             return False
         if focus and current.focus != self.focus:
             return False
+        if focus and current.focus_covered is True and self.focus_covered is False:
+            return False
         if element_id is None:
             return True
         # covered since the observation (a consent wall that came late): the decider did not see what is on top
         if current.covered.get(element_id) is True and self.covered.get(element_id) is False:
             return False
         return current.elements.get(element_id) == self.elements.get(element_id)
+
+    def focus_consistent(self, page: ObservedPage) -> bool:
+        """The recorded focus is the one of `page`, as far as coverage tells: a focused element covered when the
+        signatures were read while the page the decider saw had no dialog may have been covered since."""
+        return not (self.focus_covered is True and not covered_by_dialog(page.description))
 
     def consistent(self, page: ObservedPage, element_id: str) -> bool:
         """The recorded signature of `element_id` describes the element of `page` (same tag, label text and,

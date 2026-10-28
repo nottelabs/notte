@@ -1337,3 +1337,15 @@ def test_a_target_covered_when_the_baseline_was_read_needs_a_new_observation() -
         {"url": page.url, "elements": {"B1": _signature("BUTTON", "SIGN IN")}, "covered": {"B1": False}}
     )
     assert uncovered.consistent(page, "B1")
+
+
+def test_enter_is_not_fresh_once_a_dialog_covers_the_focus() -> None:
+    from notte_core.act.freshness import Signatures
+
+    def read(covered: bool | None) -> Signatures:
+        return Signatures({"url": "https://a.test/", "elements": {}, "focus": "INPUT:f1", "focus_covered": covered})
+
+    assert not read(False).matches(read(True), None, focus=True)
+    assert read(True).matches(read(True), None, focus=True) and read(None).matches(read(True), None, focus=True)
+    # covered when read, while the page the decider saw had no dialog: a new observation tells
+    assert not read(True).focus_consistent(_page()) and read(False).focus_consistent(_page())

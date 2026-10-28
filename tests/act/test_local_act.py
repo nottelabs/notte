@@ -2324,3 +2324,27 @@ async def test_a_target_a_dialog_covers_while_deciding_is_decided_again(session:
     assert result.operation == "CLOSE_DIALOG"
     assert not page.url.endswith("#economy")
     assert await page.locator("[role=dialog]").count() == 0
+
+
+@pytest.mark.asyncio
+async def test_enter_is_decided_again_when_a_dialog_covers_the_focus(session: NotteSession) -> None:
+    page = session.window.page
+    await page.set_content('<form action="#searched"><input id="q" name="q" value="lamp"></form><p>Search the shop</p>')
+    await page.focus("#q")
+    wall = (
+        '<div role="dialog" aria-modal="true" aria-label="Cookies" style="position:fixed;inset:0;background:#0009">'
+        '<button onclick="this.parentElement.remove()">Accept all</button></div>'
+    )
+    calls = 0
+
+    async def cover_once() -> None:
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            await page.evaluate("html => document.body.insertAdjacentHTML('beforeend', html)", wall)
+
+    decider = FakeDecider(choices=[{"operation": "PRESS_ENTER"}, {"operation": "CLOSE_DIALOG"}], on_choose=cover_once)
+    result = await session.aact("Search for lamp", decider=decider)
+    # decided again on the page with the wall: Enter never submitted the search behind it
+    assert len(decider.states) == 2 and result.operation == "CLOSE_DIALOG"
+    assert not page.url.endswith("#searched")
