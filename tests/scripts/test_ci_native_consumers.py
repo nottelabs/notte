@@ -295,10 +295,13 @@ def test_recipe_source_selection_keeps_cross_language_driver(
     native = [call for call in observed if call["credentials"]]
     assert any(call["args"][-1] == f"test/{name}.integration.test.ts" for call in native)
     assert all(call["docs_python"] == str(workspace / ".venv/bin/python") for call in native)
-    assert all(
-        set(call["credentials"]) == ({"NOTTE_API_KEY", "MONGODB_URI"} if name == "mongodb" else {"NOTTE_API_KEY"})
-        for call in native
-    )
+    expected_credentials = {
+        "openai-agents": {"NOTTE_API_KEY", "OPENROUTER_API_KEY", "OPENAI_API_KEY"},
+        "claude-agents": {"NOTTE_API_KEY", "OPENROUTER_API_KEY", "ANTHROPIC_AUTH_TOKEN"},
+        "mongodb": {"NOTTE_API_KEY", "MONGODB_URI"},
+        "agent-browser": {"NOTTE_API_KEY"},
+    }[name]
+    assert all(set(call["credentials"]) == expected_credentials for call in native)
 
 
 def test_source_failure_keeps_original_exit_and_stops(workspace: Path, monkeypatch: pytest.MonkeyPatch) -> None:
