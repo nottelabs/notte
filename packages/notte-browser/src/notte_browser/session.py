@@ -34,7 +34,7 @@ from notte_core.act.context import element_contexts
 from notte_core.act.freshness import ELEMENT_SIGNATURES_JS, Signatures, signature_xpaths
 from notte_core.act.runner import DialogAnswer, JsDialog
 from notte_core.act.settle import SUGGESTIONS_JS
-from notte_core.act.space import shown_contexts
+from notte_core.act.space import covered_by_dialog, shown_contexts
 from notte_core.act.wait import (
     EMPTY_PAGE_WAIT_MS,
     WAIT_FOR_CHANGE_JS,
@@ -311,6 +311,9 @@ class LocalActDriver:
             fingerprint=snapshot.fingerprint(),
             contexts=element_contexts(snapshot.dom_node),
         )
+        # a dialog that opened over the page since the observation: the decider did not see it
+        if covered_by_dialog(current.description) and not covered_by_dialog(page.description):
+            return False
         return same_target(page, current, element_id)
 
     async def execute(

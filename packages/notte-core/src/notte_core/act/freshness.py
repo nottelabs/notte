@@ -15,12 +15,31 @@ from notte_core.act.space import ObservedPage, description_lines
 
 ELEMENT_SIGNATURES_JS = """(xpaths) => {
     const elements = {};
+    // whether something else is on top of the element where a click would land (the center of its part in the
+    // viewport): a dialog that opened over the page since. null: out of the viewport, or no element there
+    const covered = {};
+    const isCovered = el => {
+        const rect = el.getBoundingClientRect();
+        const left = Math.max(rect.left, 0), right = Math.min(rect.right, innerWidth);
+        const top = Math.max(rect.top, 0), bottom = Math.min(rect.bottom, innerHeight);
+        if (right <= left || bottom <= top) return null;
+        let hit = document.elementFromPoint((left + right) / 2, (top + bottom) / 2);
+        while (hit && hit.shadowRoot) {
+            const inner = hit.shadowRoot.elementFromPoint((left + right) / 2, (top + bottom) / 2);
+            if (!inner || inner === hit) break;
+            hit = inner;
+        }
+        if (!hit) return null;
+        const labels = el.labels ? Array.from(el.labels) : [];
+        return !(el.contains(hit) || hit.contains(el) || labels.some(label => label.contains(hit)));
+    };
     for (const [id, xpath] of Object.entries(xpaths)) {
         let el = null;
         try {
             el = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
         } catch (e) {}
         if (!el || !el.isConnected) { elements[id] = null; continue; }
+        covered[id] = isCovered(el);
         elements[id] = [
             el.tagName,
             el.innerText ?? el.textContent ?? "",
@@ -61,7 +80,7 @@ ELEMENT_SIGNATURES_JS = """(xpaths) => {
         active.__notteFocus ??= Math.random().toString(36).slice(2);
         focus = `${active.tagName}:${active.__notteFocus}`;
     }
-    return { url: location.href, elements, focus };
+    return { url: location.href, elements, focus, covered };
 }"""
 
 
@@ -86,6 +105,8 @@ class Signatures:
         self.elements: dict[str, Any] = {} if result is None else dict(result.get("elements") or {})
         # the focused element, where a pressed key goes (None: the page body)
         self.focus: str | None = None if result is None else result.get("focus")
+        # whether something else is on top of each element where a click lands (None: out of the viewport)
+        self.covered: dict[str, bool | None] = {} if result is None else dict(result.get("covered") or {})
 
     def has(self, element_id: str) -> bool:
         return self.elements.get(element_id) is not None
@@ -103,7 +124,12 @@ class Signatures:
             return False
         if focus and current.focus != self.focus:
             return False
-        return element_id is None or current.elements.get(element_id) == self.elements.get(element_id)
+        if element_id is None:
+            return True
+        # covered since the observation (a consent wall that came late): the decider did not see what is on top
+        if current.covered.get(element_id) is True and self.covered.get(element_id) is False:
+            return False
+        return current.elements.get(element_id) == self.elements.get(element_id)
 
     def consistent(self, page: ObservedPage, element_id: str) -> bool:
         """The recorded signature of `element_id` describes the element of `page` (same tag, label text and,

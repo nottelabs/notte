@@ -1306,3 +1306,19 @@ def test_a_page_with_nothing_to_mask_is_read_as_it_is() -> None:
     assert masked is not page and "{{action}}" in masked.description
     assert "Sign in" not in accessible_text(masked)
     assert "[B1] Sign in" in accessible_text(page)
+
+
+def test_a_target_covered_since_the_observation_is_not_fresh() -> None:
+    from notte_core.act.freshness import Signatures
+
+    def read(covered: bool | None) -> Signatures:
+        return Signatures({"url": "https://a.test/", "elements": {"L1": ["A", "Economy"]}, "covered": {"L1": covered}})
+
+    # a dialog came over the link since the observation
+    assert not read(False).matches(read(True), "L1")
+    # always under something (a hidden file input under its label), or out of the viewport: unchanged
+    assert read(True).matches(read(True), "L1")
+    assert read(None).matches(read(True), "L1")
+    assert read(False).matches(read(None), "L1")
+    # uncovered since: the decider saw the page as it is now
+    assert read(True).matches(read(False), "L1")

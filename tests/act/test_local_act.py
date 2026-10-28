@@ -2293,3 +2293,34 @@ async def test_a_credential_typed_before_the_dialog_is_masked_in_its_question(
     _ = await session.aact("Log in", decider=decider)
     asked = decider.questions[1]["dialog"].instructions["dialog"]["message"]
     assert "s3cret-pw" not in asked and "{{vault_password}}" in asked
+
+
+@pytest.mark.asyncio
+async def test_a_target_a_dialog_covers_while_deciding_is_decided_again(session: NotteSession) -> None:
+    # a consent wall that comes after the observation, while the decider thinks
+    page = session.window.page
+    await page.set_content('<a id="economy" href="#economy">Economy</a><p>Top stories</p>')
+    ids = await _ids(session)
+    wall = (
+        '<div role="dialog" aria-modal="true" aria-label="Cookies" style="position:fixed;inset:0;background:#0009">'
+        '<button onclick="this.parentElement.remove()">Accept all</button></div>'
+    )
+    calls = 0
+
+    async def cover_once() -> None:
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            await page.evaluate("html => document.body.insertAdjacentHTML('beforeend', html)", wall)
+
+    decider = FakeDecider(
+        choices=[{"operation": "CLICK", "click_target": ids["economy"]}, {"operation": "CLOSE_DIALOG"}],
+        on_choose=cover_once,
+    )
+    result = await session.aact("Open the Economy section", decider=decider)
+    # decided again on the page with the wall, which the second decision closes: never clicked under it
+    assert len(decider.states) == 2
+    assert "CLOSE_DIALOG" in decider.questions[-1]["operation"].criteria
+    assert result.operation == "CLOSE_DIALOG"
+    assert not page.url.endswith("#economy")
+    assert await page.locator("[role=dialog]").count() == 0
