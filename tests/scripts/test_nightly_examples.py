@@ -42,6 +42,7 @@ def test_nightly_keeps_registered_and_legacy_execution_on_staging() -> None:
     # A cancelled run must not start another 75-minute job creating live resources.
     assert legacy["if"] == "${{ !cancelled() }}"
     steps = {step.get("name"): step for step in legacy["steps"]}
+    assert steps["Checkout code"]["with"]["persist-credentials"] is False
     execute = steps["Run legacy and README example tests"]
     assert "tests/run_examples.sh" in execute["run"]
     assert execute["env"]["NOTTE_API_KEY"] == "${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}"
