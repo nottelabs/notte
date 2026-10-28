@@ -10,7 +10,7 @@ import httpx2
 from mcp import ClientSession
 from mcp.client.streamable_http import streamable_http_client
 from mcp.types import CallToolResult, PaginatedRequestParams
-from notte_sdk import NotteClient
+from notte_sdk import AsyncNotteClient
 
 
 @dataclass(frozen=True)
@@ -168,26 +168,27 @@ async def run_demo(
     mcp_url: str = "https://remote.mcp.pipedream.net/v3",
     page_url: str = "https://example.com",
     approved_action: dict[str, Any] | None = None,
-    client: NotteClient | None = None,
+    client: AsyncNotteClient | None = None,
 ) -> dict[str, Any]:
-    client = client or NotteClient()
-    browser = client.Session(max_duration_minutes=3)
-    try:
-        async with browser:
-            session_id = browser.session_id
-            try:
-                return await discover(config, session_id, oauth_url, mcp_url, page_url, approved_action)
-            except asyncio.CancelledError:
-                raise asyncio.CancelledError(f"Pipedream discovery cancelled (session {session_id})") from None
-            except Exception:
-                # Sanitize before the SDK context logs the exception during cleanup.
-                raise RuntimeError(f"Pipedream discovery failed (session {session_id})") from None
-    except asyncio.CancelledError:
-        session_id = browser.session_id if browser.response is not None else "unallocated"
-        raise asyncio.CancelledError(f"Pipedream discovery cancelled (session {session_id})") from None
-    except Exception:
-        session_id = browser.session_id if browser.response is not None else "unallocated"
-        raise RuntimeError(f"Pipedream discovery failed (session {session_id})") from None
+    async with AsyncExitStack() as stack:
+        client = client or await stack.enter_async_context(AsyncNotteClient())
+        browser = client.Session(max_duration_minutes=3)
+        try:
+            async with browser:
+                session_id = browser.session_id
+                try:
+                    return await discover(config, session_id, oauth_url, mcp_url, page_url, approved_action)
+                except asyncio.CancelledError:
+                    raise asyncio.CancelledError(f"Pipedream discovery cancelled (session {session_id})") from None
+                except Exception:
+                    # Sanitize before the SDK context logs the exception during cleanup.
+                    raise RuntimeError(f"Pipedream discovery failed (session {session_id})") from None
+        except asyncio.CancelledError:
+            session_id = browser.session_id if browser.response is not None else "unallocated"
+            raise asyncio.CancelledError(f"Pipedream discovery cancelled (session {session_id})") from None
+        except Exception:
+            session_id = browser.session_id if browser.response is not None else "unallocated"
+            raise RuntimeError(f"Pipedream discovery failed (session {session_id})") from None
 
 
 if __name__ == "__main__":

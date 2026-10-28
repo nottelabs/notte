@@ -14,6 +14,8 @@ DOM changes. The page has settled (`settled`) when:
 - nothing changed for `QUIET_MS` (or the DOM has kept changing for `SETTLE_MS`: some pages never stop), and
 - something changed, or the action's grace passed: an action with no visible effect costs at most its grace, and
 - after a URL change within the document, the DOM changed since (the new page rendered), or `EXPECT_MS` passed;
+- the change the caller expects came (`PageSettle.wait`'s `expect`, as `act()`'s suggestions after typing), or
+  `EXPECT_MS` passed;
 and in any case `CAP_MS` after the action: a page that keeps a request open is left as it is.
 
 A navigation to a new document ends the tracking of the old one. The new document is tracked from its first render
@@ -42,7 +44,7 @@ wait that followed them before.
 
 import asyncio
 import time
-from collections.abc import Iterable
+from collections.abc import Awaitable, Callable, Iterable
 from dataclasses import dataclass
 from typing import Literal, TypedDict
 from urllib.parse import urlsplit
@@ -76,12 +78,34 @@ SINCE_LOAD_JS = """() => {
     return navigation && navigation.loadEventEnd > 0 ? performance.now() - navigation.loadEventEnd : 0;
 }"""
 
-# Page-side implementation: js/settle_tracker.js, watching the roots of js/nested_roots.js with js/watch_url.js
 NESTED_ROOTS_JS = script("nested_roots.js").strip()
 WATCH_URL_JS = script("watch_url.js").strip()
-SETTLE_TRACKER_JS = (
-    script("settle_tracker.js").replace("NESTED_ROOTS", NESTED_ROOTS_JS).replace("WATCH_URL", WATCH_URL_JS)
-)
+
+
+def page_script(js: str) -> str:
+    """A page script that watches the page: `NESTED_ROOTS` in it is js/nested_roots.js, `WATCH_URL` js/watch_url.js."""
+    return js.replace("NESTED_ROOTS", NESTED_ROOTS_JS).replace("WATCH_URL", WATCH_URL_JS)
+
+
+# Page-side implementation: js/settle_tracker.js
+SETTLE_TRACKER_JS = page_script(script("settle_tracker.js"))
+
+
+def requests_of(page: Page, requests: Iterable[Request]) -> list[Request]:
+    """The requests among `requests` that `page` sent."""
+    sent: list[Request] = []
+    for request in requests:
+        try:
+            if request.frame.page is page:
+                sent.append(request)
+        except Error:
+            # A tab's first navigation request can precede its frame too; document readiness waits for it.
+            continue
+    return sent
+
+
+def _without_fragment(url: str) -> str:
+    return urlsplit(url)._replace(fragment="").geturl()
 
 
 def _origin(url: str) -> tuple[str, str] | None:
@@ -119,6 +143,8 @@ class SettleState:
     # have been quiet since: a request sent right after another one ended is seen only once its preflight answered
     last_request_ms: float | None = None
     request_quiet_ms: float = 0
+    # whether the change the caller expects came; None: none expected
+    expected: bool | None = None
 
 
 def settled(state: SettleState) -> bool:
@@ -135,6 +161,8 @@ def settled(state: SettleState) -> bool:
         if elapsed < state.grace_ms:
             return False
     elif elapsed - last < QUIET_MS and elapsed - first < SETTLE_MS:
+        return False
+    if state.expected is False and elapsed < EXPECT_MS:
         return False
     url, dom = state.url_changed_ms, state.last_dom_change_ms
     if url is None or (dom is not None and dom >= url):
@@ -162,20 +190,25 @@ class PageSettle:
         self._changes: list[float] = []
         self._last_request: float | None = None
         self._tabs: bool = tabs
+        # when the main document's navigation was requested, and its request: kept after the request ends
+        self._navigation_started_at: float | None = None
+        self._navigation_request: Request | None = None
+        self._url: str = page.url
         # the tabs opened since the action started: the page is waited for no longer. Each is tracked from then on
         self.opened: list[Page] = []
         self._opened_event: asyncio.Event = asyncio.Event()
         self._opening_event: asyncio.Event = asyncio.Event()
         self._opened_settles: dict[Page, PageSettle] = {}
-        # Context requests can precede the page event that creates a tab's tracker.
-        self._tab_requests: set[Request] = set()
         # a tab is opening: its first request was sent
         self._opening: bool = False
         page.on("request", self._request_started)
         page.on("requestfinished", self._request_ended)
         page.on("requestfailed", self._request_ended)
+        page.on("framenavigated", self._frame_navigated)
         for request in requests:
             self._request_started(request)
+        # the context's requests in flight: a tab's first ones can come before its page event
+        self._context_requests: set[Request] = set()
         if tabs:
             page.context.on("page", self._page_opened)
             page.context.on("request", self._context_request)
@@ -204,23 +237,21 @@ class PageSettle:
         """The action has ended: the grace and the caps count from now."""
         self._began = time.perf_counter()
 
+    def navigation_requested_after(self, input_at: float | None) -> bool:
+        """Whether a main-frame navigation was reported after the click's native input notification."""
+        return (
+            input_at is not None and self._navigation_started_at is not None and self._navigation_started_at >= input_at
+        )
+
     def tab(self, page: Page) -> "PageSettle":
         """The settle of a tab the action opened, tracking its requests since it appeared (the caller closes it).
         Wait for it as for a click's new page: `wait(document="requests")`."""
         settle = self._opened_settles.pop(page, None)
-        return settle if settle is not None else self._track_tab(page)
-
-    def _track_tab(self, page: Page) -> "PageSettle":
-        """Track a new tab, including its requests sent before its page event."""
-        requests: list[Request] = []
-        for request in self._tab_requests:
-            try:
-                if request.frame.page is page:
-                    requests.append(request)
-            except Error:
-                # The first navigation can precede its frame; document readiness waits for it.
-                continue
-        return PageSettle(page, None, tabs=False, requests=requests)
+        return (
+            settle
+            if settle is not None
+            else PageSettle(page, None, tabs=False, requests=requests_of(page, self._context_requests))
+        )
 
     def _changed(self) -> None:
         now = time.perf_counter()
@@ -233,14 +264,38 @@ class PageSettle:
             return
         if request.resource_type not in TRACKED_REQUESTS or not self._same_origin(request):
             return
+        if request.is_navigation_request() and request.frame is self.page.main_frame:
+            # Exposed input bindings are queued tasks. Attribute navigation in the same queue so batched protocol
+            # messages cannot timestamp a request ahead of an earlier input callback that has not run yet.
+            _ = asyncio.get_running_loop().call_soon(self._navigation_started, request)
         # Repeated requests do not extend the quiet window indefinitely, but may carry the action's result.
-        url = urlsplit(request.url)._replace(fragment="").geturl()
+        url = _without_fragment(request.url)
         key = (request.frame, request.method, url, request.post_data_buffer)
         self._in_flight[request] = key not in self._sent
         if key in self._sent:
             return
         self._sent.add(key)
         self._changed()
+
+    def _navigation_started(self, request: Request) -> None:
+        if request.redirected_from is None:
+            self._navigation_started_at = time.perf_counter()
+        elif request.redirected_from is not self._navigation_request:
+            # A redirect whose initial request predates this tracker cannot establish click navigation.
+            self._navigation_started_at = None
+        self._navigation_request = request
+
+    def _frame_navigated(self, frame: Frame) -> None:
+        if frame is not self.page.main_frame:
+            return
+        previous, self._url = self._url, frame.url
+        if frame.url != previous and _without_fragment(frame.url) == _without_fragment(previous):
+            # A fragment navigation sends no request: its URL changing is when it came, queued as a request is
+            _ = asyncio.get_running_loop().call_soon(self._fragment_navigated)
+
+    def _fragment_navigated(self) -> None:
+        self._navigation_started_at = time.perf_counter()
+        self._navigation_request = None
 
     def _same_origin(self, request: Request) -> bool:
         """Whether `request` comes from the page or one of its same-origin frames (whose DOM is watched too). A frame
@@ -265,11 +320,12 @@ class PageSettle:
         self._opened_event.set()
         self._opening_event.set()
         # its first scripts can start requests before it is waited for
-        self._opened_settles[page] = self._track_tab(page)
+        self._opened_settles[page] = PageSettle(
+            page, None, tabs=False, requests=requests_of(page, self._context_requests)
+        )
 
     def _context_request(self, request: Request) -> None:
-        if request.resource_type in TRACKED_REQUESTS:
-            self._tab_requests.add(request)
+        self._context_requests.add(request)
         if not request.is_navigation_request():
             return
         try:
@@ -280,20 +336,27 @@ class PageSettle:
             self._opening_event.set()
 
     def _context_request_ended(self, request: Request) -> None:
-        self._tab_requests.discard(request)
+        self._context_requests.discard(request)
 
     def _left_s(self, cap_ms: float) -> float:
         return max(cap_ms - (time.perf_counter() - self._began) * 1000, 0) / 1000
 
     async def _poll(
-        self, grace_ms: float, *, requests: bool = True, at_least_ms: float = 0, request_quiet_ms: float = 0
+        self,
+        grace_ms: float,
+        *,
+        requests: bool = True,
+        at_least_ms: float = 0,
+        request_quiet_ms: float = 0,
+        expect: Callable[[], Awaitable[bool | None]] | None = None,
     ) -> None:
-        """Until the current document settles or a tab opens (`SettleState` for `at_least_ms` and `request_quiet_ms`).
-        Without `requests`, on the DOM alone."""
+        """Until the current document settles or a tab opens (`SettleState` for `at_least_ms`, `request_quiet_ms` and
+        `expect`). Without `requests`, on the DOM alone."""
         assert self._tracker is not None
         first_page_change: float | None = None
         while not self.opened:
             page: _PageState = await self._tracker.evaluate("t => t.state()")
+            expected = None if expect is None else await expect()
             # times since the action: its input event in the page, else its end when the document was tracked from
             # before it, else since the document was tracked
             shift = page["inputAt"] if page["inputAt"] is not None else max((self._began - self._started) * 1000, 0)
@@ -330,6 +393,7 @@ class PageSettle:
                 at_least_ms=at_least_ms,
                 last_request_ms=last_request,
                 request_quiet_ms=request_quiet_ms,
+                expected=expected,
             )
             if settled(state):
                 return
@@ -401,16 +465,18 @@ class PageSettle:
         document: DocumentWait = "requests",
         new_document: bool = False,
         url_changed: bool = False,
+        expect: Callable[[], Awaitable[bool | None]] | None = None,
     ) -> None:
         """Until the page settles, at most `CAP_MS` after the action started; after a navigation to a new document,
         until that document is ready as `document` says, at most `timeout_goto_ms` after the action started. Never
         raises: a page that does not settle in time is left as it is. A confirmed `new_document` skips the previous
         document's settle cap and uses the remaining navigation budget. A known same-document `url_changed` is
-        preserved if the tracker could not start before the action."""
+        preserved if the tracker could not start before the action. On the same document, `expect` tells whether
+        the change the caller expects came (None: none expected)."""
         if self._tracker is not None and not new_document:
             try:
                 async with asyncio.timeout(self._left_s(CAP_MS)):
-                    await self._poll(grace_ms)
+                    await self._poll(grace_ms, expect=expect)
                 return
             except TimeoutError:
                 return
@@ -461,8 +527,9 @@ class PageSettle:
             _ = self.page.context.remove_listener("request", self._context_request)
             _ = self.page.context.remove_listener("requestfinished", self._context_request_ended)
             _ = self.page.context.remove_listener("requestfailed", self._context_request_ended)
-        self._tab_requests.clear()
+        self._context_requests.clear()
         _ = self.page.remove_listener("request", self._request_started)
         _ = self.page.remove_listener("requestfinished", self._request_ended)
         _ = self.page.remove_listener("requestfailed", self._request_ended)
+        _ = self.page.remove_listener("framenavigated", self._frame_navigated)
         await self._dispose_tracker()

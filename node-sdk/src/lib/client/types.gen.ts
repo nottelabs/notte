@@ -322,6 +322,18 @@ export type ApiSessionStartRequest = {
      */
     wait_for_authentication?: boolean;
     /**
+     * Record Session
+     *
+     * Save session replay. False permanently disables saved replay; Live View remains available.
+     */
+    record_session?: boolean;
+    /**
+     * Log Session
+     *
+     * Save browser session logs. False permanently disables saved logs, without disabling metering.
+     */
+    log_session?: boolean;
+    /**
      * Auth Retry
      */
     auth_retry?: number;
@@ -2363,6 +2375,10 @@ export type ElementState = {
      * Pressed
      */
     pressed?: boolean | 'mixed' | null;
+    /**
+     * Sort
+     */
+    sort?: 'ascending' | 'descending' | 'other' | null;
 };
 
 /**
@@ -3840,6 +3856,18 @@ export type GlobalScrapeRequest = {
      * Whether to wait for Managed Auth before returning the session. Defaults to true. When true, authentication failure or timeout fails session creation; when false, authentication continues in the background after the browser is ready.
      */
     wait_for_authentication?: boolean;
+    /**
+     * Record Session
+     *
+     * Save session replay. False permanently disables saved replay; Live View remains available.
+     */
+    record_session?: boolean;
+    /**
+     * Log Session
+     *
+     * Save browser session logs. False permanently disables saved logs, without disabling metering.
+     */
+    log_session?: boolean;
     /**
      * Auth Retry
      */
@@ -6357,7 +6385,7 @@ export type ReplayMissingResponse = {
     /**
      * Replay Status
      */
-    replay_status: 'waiting_for_session' | 'processing' | 'unavailable' | 'failed' | 'unknown';
+    replay_status: 'waiting_for_session' | 'processing' | 'unavailable' | 'failed' | 'unknown' | 'disabled';
     /**
      * Retryable
      */
@@ -7401,6 +7429,18 @@ export type SessionProfileSaveRequest = {
  * SessionResponse
  */
 export type SessionResponse = {
+    /**
+     * Record Session
+     *
+     * Whether saved session replay is enabled. Defaults to true.
+     */
+    record_session?: boolean;
+    /**
+     * Log Session
+     *
+     * Whether saved browser session logs are enabled. Defaults to true.
+     */
+    log_session?: boolean;
     /**
      * Session Id
      *
@@ -10197,6 +10237,18 @@ export type SelectDropdownOptionActionOutputWritable = {
  * SessionResponse
  */
 export type SessionResponseWritable = {
+    /**
+     * Record Session
+     *
+     * Whether saved session replay is enabled. Defaults to true.
+     */
+    record_session?: boolean;
+    /**
+     * Log Session
+     *
+     * Whether saved browser session logs are enabled. Defaults to true.
+     */
+    log_session?: boolean;
     /**
      * Session Id
      *

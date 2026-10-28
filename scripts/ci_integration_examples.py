@@ -15,8 +15,11 @@ import zipfile
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import cast
+from typing import TYPE_CHECKING, cast
 from uuid import uuid4
+
+if TYPE_CHECKING:
+    from scripts.openapi_order import JsonValue
 
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "scripts/integration_examples.json"
@@ -53,7 +56,7 @@ CREDENTIALS = {
 DRIVER_IMPORTS = {
     "braintrust": "from braintrust import init_logger; from notte_sdk import NotteClient",
     "onepassword": 'from onepassword import Secrets; from notte_sdk import NotteClient; Secrets.validate_secret_reference("op://Test/Login/username")',
-    "stripe-link": "from link import AsyncClient; from notte_sdk import NotteClient",
+    "stripe-link": "from link import AsyncClient; from notte_sdk import AsyncNotteClient",
     "tzafon": "from tzafon import AsyncLightcone; from notte_sdk import NotteClient",
     "watsonx": "import requests; from notte_sdk import NotteClient",
 }
@@ -117,6 +120,17 @@ def projects(shard: str) -> list[tuple[str, str]]:
 
 def run(command: list[str], directory: Path, env: dict[str, str]) -> None:
     _ = subprocess.run(command, cwd=directory, env=env, check=True)
+
+
+def sdk_modes(name: str) -> tuple[str, ...]:
+    """SDK inputs exercise source; project and periodic runs also check published pins."""
+    source_only: JsonValue = json.loads(os.environ.get("INTEGRATION_SOURCE_ONLY", "[]"))
+    selected: list[str] = json.loads(os.environ["INTEGRATION_EXAMPLES"])
+    if not isinstance(source_only, list) or any(
+        not isinstance(item, str) or item not in selected for item in source_only
+    ):
+        raise ValueError("INTEGRATION_SOURCE_ONLY must list selected integration examples")
+    return ("source",) if name in source_only else ("published", "source")
 
 
 def root_tests(project: Path) -> list[str]:
@@ -342,7 +356,10 @@ def project_env(name: str, env: dict[str, str]) -> dict[str, str]:
     }.get(name)
     main = env.get("GITHUB_REF") == "refs/heads/main" and env.get("GITHUB_EVENT_NAME") != "pull_request"
     allowed = {"NOTTE_API_KEY", provider} if main else {"NOTTE_API_KEY"}
-    return {key: value for key, value in env.items() if key not in CREDENTIALS or key in allowed}
+    selected = {key: value for key, value in env.items() if key not in CREDENTIALS or key in allowed}
+    # Native integrations use standard asyncio; published SDKs still opt into a loop patch.
+    selected["NOTTE_ENABLE_NEST_ASYNCIO"] = "false"
+    return selected
 
 
 def container_diagnostics(name: str, env: dict[str, str]) -> str:
@@ -504,7 +521,7 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
         env = {**project_env(project.name, env), "DISABLE_TELEMETRY": "true"}
         if flag := flags.get(project.name):
             env[flag] = "1"
-        for sdk in ("published", "source"):
+        for sdk in sdk_modes(project.name):
             if sdk == "source":
                 run(
                     [
@@ -557,7 +574,7 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
         if project.name == "inngest":
             env["NOTTE_INNGEST_MODEL_LIVE"] = "1" if env.get("ANTHROPIC_API_KEY") else "0"
         for sdk in (
-            ("published", "source") if project.name in {"trigger", "agentcard", "e2e", "eve", "fx"} else ("published",)
+            sdk_modes(project.name) if project.name in {"trigger", "agentcard", "e2e", "eve", "fx"} else ("published",)
         ):
             if sdk == "source":
                 run(
@@ -575,7 +592,7 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
         return
     if project.name == "github-actions":
         env = project_env(project.name, env)
-        for sdk in ("published", "source"):
+        for sdk in sdk_modes(project.name):
             if sdk == "source":
                 python = ROOT / ".venv/bin/python"
                 run(["uv", "sync", "--locked", "--package", "notte-sdk", "--no-dev"], ROOT, install_env)
@@ -617,7 +634,7 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
     else:
         env = {**env, python_env: str(python)}
     typescript = project if root_layout else project / "typescript"
-    for sdk in ("published", "source"):
+    for sdk in sdk_modes(project.name):
         if sdk == "source":
             run(
                 [
@@ -668,6 +685,8 @@ def main() -> None:
     _ = parser.add_argument("--shard", default="1/1")
     args = parser.parse_args()
     selected = projects(args.shard)
+    # Validate even recipes and hosted consumers before installs or credential use.
+    _ = sdk_modes("")
     if args.phase == "live" and os.environ.get("GITHUB_ACTOR") == "dependabot[bot]":
         selected = [(name, convention) for name, convention in selected if name in {"inngest", "temporal"}]
     if args.phase == "live" and selected and not os.environ.get("NOTTE_API_KEY"):
@@ -683,9 +702,10 @@ def main() -> None:
             ROOT / "integrations/terraform-provider-notte" if name == "terraform-profiles" else ROOT / "examples" / name
         )
         print(f"Checking native integration: {name}", flush=True)
-        python = check(project, install_env, python_env)
+        project_install_env = project_env(name, install_env)
+        python = check(project, project_install_env, python_env)
         if args.phase == "live":
-            live(project, python, python_env, dict(os.environ), install_env)
+            live(project, python, python_env, dict(os.environ), project_install_env)
 
 
 if __name__ == "__main__":

@@ -20,7 +20,7 @@ import requests
 from demo import run_demo
 from notte_computer import NotteComputer
 from notte_core.common.logging import logger
-from notte_sdk import NotteClient
+from notte_sdk import AsyncNotteClient
 from openai import AsyncOpenAI
 from openai.types.responses import ResponseComputerToolCall
 from playwright.async_api import Browser
@@ -131,10 +131,10 @@ class TurnBoundary(BaseHTTPRequestHandler):
 @unittest.skipUnless(os.getenv("NOTTE_API_KEY"), "Set NOTTE_API_KEY for live browser tests")
 class ComputerLiveTests(unittest.IsolatedAsyncioTestCase):
     async def test_batched_actions_screenshot_and_permission(self):
-        session = NotteClient().Session(max_duration_minutes=3)
+        session = AsyncNotteClient().Session(max_duration_minutes=3)
         try:
             async with session:
-                page = await session.apage
+                page = await session.page
                 await page.goto("about:blank")
                 await page.set_viewport_size({"width": 1024, "height": 768})
                 await page.set_content(
@@ -232,7 +232,7 @@ class ComputerLiveTests(unittest.IsolatedAsyncioTestCase):
         worker.start()
         before = Unauthorized.requests
         Unauthorized.payloads = []
-        client, owned, messages = NotteClient(), [], []
+        client, owned, messages = AsyncNotteClient(), [], []
         failure = None
 
         def create_session(**kwargs):
@@ -254,7 +254,7 @@ class ComputerLiveTests(unittest.IsolatedAsyncioTestCase):
                         "OPENAI_BASE_URL": f"http://127.0.0.1:{server.server_port}",
                     },
                 ),
-                patch.object(demo, "NotteClient", return_value=SimpleNamespace(Session=create_session)),
+                patch.object(demo, "AsyncNotteClient", return_value=SimpleNamespace(Session=create_session)),
                 patch.object(logger, "warning", side_effect=lambda message: messages.append(str(message))),
                 patch.object(Browser, "close", fail_close) if close_mode != "normal" else nullcontext(),
             ):
@@ -272,7 +272,7 @@ class ComputerLiveTests(unittest.IsolatedAsyncioTestCase):
                         closed = True
                     finally:
                         if not closed:
-                            await asyncio.to_thread(session.stop)
+                            await session.stop()
                             await assert_closed(session.session_id)
             finally:
                 await asyncio.to_thread(server.shutdown)

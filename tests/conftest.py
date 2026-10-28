@@ -6,6 +6,8 @@ from typing import Any
 
 import notte_core
 
+pytest_plugins = ["tests.flake_diagnostics"]
+
 CONFIG_PATH = Path(__file__).parent / "test_notte_config.toml"
 notte_core.set_error_mode("developer")
 

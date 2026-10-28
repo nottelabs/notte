@@ -14,7 +14,7 @@ import requests
 from anthropic.types.beta import BetaToolUseBlock
 from demo import run_demo
 from notte_computer import NotteComputer
-from notte_sdk import NotteClient
+from notte_sdk import AsyncNotteClient
 
 
 async def assert_closed(session_id: str) -> None:
@@ -67,11 +67,11 @@ class Unauthorized(BaseHTTPRequestHandler):
 @unittest.skipUnless(os.getenv("NOTTE_API_KEY"), "Set NOTTE_API_KEY for live browser tests")
 class ComputerLiveTests(unittest.IsolatedAsyncioTestCase):
     async def test_native_tool_protocol_and_permission(self):
-        client = NotteClient()
+        client = AsyncNotteClient()
         session = client.Session(max_duration_minutes=3)
         try:
             async with session:
-                page = await session.apage
+                page = await session.page
                 await page.goto("about:blank")
                 await page.set_viewport_size({"width": 1024, "height": 768})
                 await page.set_content(

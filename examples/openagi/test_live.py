@@ -14,7 +14,7 @@ from unittest.mock import patch
 import httpx
 from demo import run_demo
 from notte_computer import BrowserActions, Screenshots
-from notte_sdk import NotteClient
+from notte_sdk import AsyncNotteClient
 from oagi import AsyncDefaultAgent
 from oagi.logging import get_logger
 from oagi.types.models import Action
@@ -172,12 +172,12 @@ class LiveTests(unittest.IsolatedAsyncioTestCase):
     async def test_mouse_actions_and_repeated_keys_reach_the_browser(self):
         session_id = None
         try:
-            async with NotteClient().Session(
+            async with AsyncNotteClient().Session(
                 max_duration_minutes=3, viewport_width=1024, viewport_height=768
             ) as session:
                 session_id = session.session_id
                 journal("allocated", session_id)
-                page = await session.apage
+                page = await session.page
                 await fixture(page)
                 await page.set_content(
                     '<body style="height:2200px"><input><input><script>window.events=[];'
@@ -212,12 +212,12 @@ class LiveTests(unittest.IsolatedAsyncioTestCase):
     async def test_native_agent_uploads_screenshots_and_completes_form(self):
         session_id = None
         try:
-            async with NotteClient().Session(
+            async with AsyncNotteClient().Session(
                 max_duration_minutes=3, viewport_width=1024, viewport_height=768
             ) as session:
                 session_id = session.session_id
                 journal("allocated", session_id)
-                page = await session.apage
+                page = await session.page
                 await fixture(page)
                 with provider() as (url, state):
                     agent = AsyncDefaultAgent(api_key="fixture-token", base_url=url, max_steps=3, step_delay=0)
@@ -244,7 +244,7 @@ class LiveTests(unittest.IsolatedAsyncioTestCase):
     async def test_real_sdk_http_401_closes_demo_browser(self):
         for mode in ("normal", "reject", "timeout"):
             with self.subTest(close=mode):
-                client = NotteClient()
+                client = AsyncNotteClient()
                 start = client.sessions.start
                 connect = BrowserType.connect_over_cdp
                 ids, closes = [], []
@@ -252,8 +252,8 @@ class LiveTests(unittest.IsolatedAsyncioTestCase):
                 messages = io.StringIO()
                 logger = logging.getLogger("oagi")
 
-                def tracked(*args, **kwargs):
-                    response = start(*args, **kwargs)
+                async def tracked(*args, **kwargs):
+                    response = await start(*args, **kwargs)
                     ids.append(response.session_id)
                     journal("allocated", response.session_id)
                     return response
@@ -282,7 +282,7 @@ class LiveTests(unittest.IsolatedAsyncioTestCase):
                             "OAGI_LOG": "INFO",
                         },
                     ),
-                    patch("demo.NotteClient", return_value=client),
+                    patch("demo.AsyncNotteClient", return_value=client),
                     patch.object(client.sessions, "start", side_effect=tracked),
                     patch.object(BrowserType, "connect_over_cdp", new=connected) if mode != "normal" else nullcontext(),
                 ):
@@ -324,12 +324,12 @@ class LiveTests(unittest.IsolatedAsyncioTestCase):
     async def test_native_agent_failure_is_not_reported_as_success(self):
         session_id = None
         try:
-            async with NotteClient().Session(
+            async with AsyncNotteClient().Session(
                 max_duration_minutes=3, viewport_width=1024, viewport_height=768
             ) as session:
                 session_id = session.session_id
                 journal("allocated", session_id)
-                page = await session.apage
+                page = await session.page
                 await fixture(page)
                 with provider(refusal=True) as (url, state):
                     agent = AsyncDefaultAgent(api_key="fixture-token", base_url=url, max_steps=2, step_delay=0)
@@ -342,13 +342,13 @@ class LiveTests(unittest.IsolatedAsyncioTestCase):
                 await assert_closed(self, session_id)
 
     async def test_demo_reports_disconnect_failure_inside_caller_except(self):
-        client = NotteClient()
+        client = AsyncNotteClient()
         start = client.sessions.start
         connect = BrowserType.connect_over_cdp
         ids, completed, closes = [], [], []
 
-        def tracked(*args, **kwargs):
-            response = start(*args, **kwargs)
+        async def tracked(*args, **kwargs):
+            response = await start(*args, **kwargs)
             ids.append(response.session_id)
             journal("allocated", response.session_id)
             return response
@@ -378,7 +378,7 @@ class LiveTests(unittest.IsolatedAsyncioTestCase):
         try:
             with (
                 patch.dict(os.environ, {"OAGI_API_KEY": "fixture-token"}),  # pragma: allowlist secret
-                patch("demo.NotteClient", return_value=client),
+                patch("demo.AsyncNotteClient", return_value=client),
                 patch.object(client.sessions, "start", side_effect=tracked),
                 patch.object(BrowserType, "connect_over_cdp", new=connected),
                 patch.object(AsyncDefaultAgent, "execute", new=execute),
@@ -403,12 +403,12 @@ class LiveTests(unittest.IsolatedAsyncioTestCase):
     async def test_actions_reject_invalid_geometry_counts_and_permissions(self):
         session_id = None
         try:
-            async with NotteClient().Session(
+            async with AsyncNotteClient().Session(
                 max_duration_minutes=3, viewport_width=1024, viewport_height=768
             ) as session:
                 session_id = session.session_id
                 journal("allocated", session_id)
-                page = await session.apage
+                page = await session.page
                 await fixture(page)
                 actions = BrowserActions(page, confirm=allow)
                 with self.assertRaises(ValueError):

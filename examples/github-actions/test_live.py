@@ -106,6 +106,11 @@ class LiveTests(unittest.TestCase):
                         repair(
                             raw,
                             fixture_html=html,
+                            fixture_navigation_html=(
+                                '<a href="https://www.iana.org/domains/example">Learn more</a>'
+                                if mode not in {"navigation", "redirect", "cancel"}
+                                else None
+                            ),
                             fixture_redirect="https://example.com" if mode == "redirect" else None,
                             fixture_late_redirect="https://www.iana.org" if mode == "late_redirect" else None,
                         )

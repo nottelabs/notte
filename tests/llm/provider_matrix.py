@@ -11,6 +11,8 @@ from typing import Any
 import httpx
 from notte_core.errors import LLMProviderError, RateLimitError
 
+from tests.flake_diagnostics import redact
+
 
 @dataclass(frozen=True)
 class Route:
@@ -37,6 +39,35 @@ ROUTES = (
     Route("vertex", "google/gemini-3.5-flash-lite"),
 )
 CASES = ("github_signin", "duckduckgo", "checkout/article", "instructions")
+EXTRACTION_INSTRUCTIONS = (
+    "Extract the page title and the first three distinct Markdown links (label and URL) "
+    "in document order, from anywhere in the document, including body and footer links. "
+    "Count repeated URLs only once, using the first label. Ignore plain text without a link target. "
+    "Copy each label exactly as written between the Markdown brackets, including punctuation and case. "
+    "Copy each URL target exactly as provided. "
+    "Include a short summary. Use null for missing optional descriptions."
+)
+# Ground truth from the saved scrape.md files, independent of provider output.
+EXPECTED_LINKS = {
+    "github_signin": (
+        ("Skip to content", "https://github.com/login#start-of-content"),
+        ("Reload", "https://github.com/login"),
+        ("Forgot password?", "https://github.com/password_reset"),
+    ),
+    "duckduckgo": (
+        ("Chat", "https://duck.ai/"),
+        (
+            "Add Extension",
+            "https://addons.mozilla.org/firefox/downloads/latest/duckduckgo-for-firefox/addon-385621-latest.xpi",
+        ),
+        ("Mac", "https://duckduckgo.com/mac?origin=funnel_home___details"),
+    ),
+    "checkout/article": (
+        ("Learn more.", "https://article.com/financing"),
+        ("Article", "https://www.article.com/"),
+        ("Terms of Use", "https://www.article.com/tou"),
+    ),
+}
 
 
 class UnavailableRoute(Exception):
@@ -87,6 +118,7 @@ class Attempt:
     status: int | None = None
     error: str = ""
     provider: str = ""
+    completion: str = field(default="", repr=False)
 
 
 @dataclass
@@ -103,6 +135,12 @@ class Trace:
     @staticmethod
     def response(attempt: Attempt, response: httpx.Response, key: str) -> None:
         attempt.status = response.status_code
+        try:
+            _ = response.content
+        except httpx.ResponseNotRead:
+            # Observations must never consume a response stream for the caller.
+            attempt.completion = "Response body was not cached"
+            return
         if response.status_code >= 400:
             attempt.error = response.text.replace(key, "[REDACTED]")
         try:
@@ -110,6 +148,30 @@ class Trace:
         except ValueError:
             return
         if isinstance(payload, dict):
+            # Keep only completion fields, never echoed requests, headers or prompts.
+            choices = payload.get("choices")
+            if isinstance(choices, list):
+                completions: list[dict[str, str | None]] = []
+                for choice in choices:
+                    if not isinstance(choice, dict) or not isinstance(choice.get("message"), dict):
+                        continue
+                    message = choice["message"]
+                    completions.append(
+                        {
+                            name: redact(value.replace(key, "[REDACTED]") if key else value)
+                            if isinstance(value, str)
+                            else None
+                            for name, value in (
+                                ("content", message.get("content")),
+                                ("refusal", message.get("refusal")),
+                                ("finish_reason", choice.get("finish_reason")),
+                            )
+                            if value is None or isinstance(value, str)
+                        }
+                    )
+                text = json.dumps(completions)
+                # Redact complete values before a cutoff could expose a secret prefix.
+                attempt.completion = redact(text)[:64_000]
             attempt.provider = payload.get("provider", "")
             error = payload.get("error")
             if error is not None:

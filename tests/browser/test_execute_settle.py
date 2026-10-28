@@ -5,21 +5,33 @@ import io
 import socket
 import time
 from collections.abc import AsyncIterator
-from contextlib import ExitStack, closing
+from contextlib import ExitStack, closing, suppress
 from typing import Literal
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
+import notte_browser.execution as execution_module
 import notte_browser.settle as settle_module
 import notte_browser.window as window_module
 import pytest
 import pytest_asyncio
 from aiohttp import web
-from notte_browser.driver import Error, JSHandle, Locator, Page
+from notte_browser.driver import Error, JSHandle, Locator, Page, evaluate_in_main_world
+from notte_browser.driver import TimeoutError as PlaywrightTimeoutError
 from notte_browser.session import NotteSession
 from notte_browser.settle import CAP_MS, LONG_GRACE_MS, QUIET_MS, SETTLE_MS, PageSettle
-from notte_core.actions import ClickAction, GoBackAction, GoForwardAction, PressKeyAction, ScrollDownAction
+from notte_browser.window import BrowserWindow
+from notte_core.actions import (
+    BaseAction,
+    ClickAction,
+    GoBackAction,
+    GoForwardAction,
+    InteractionAction,
+    PressKeyAction,
+    ScrollDownAction,
+)
 from notte_core.config import config
 from notte_core.errors import NotteBaseError
+from notte_core.snapshot import BrowserSnapshot
 from patchright.async_api import Route
 from PIL import Image
 
@@ -467,54 +479,19 @@ async def test_observation_waits_for_a_request_sent_before_the_tab_tracker_exist
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("close_opener", [False, True])
-async def test_execute_waits_for_a_request_sent_before_its_tab_tracker_exists(
-    session: NotteSession, site: str, close_opener: bool
+async def test_a_late_tab_s_first_requests_are_waited_for_when_its_listeners_come_late(
+    session: NotteSession, site: str
 ) -> None:
-    """The action-created tracker, as well as observation's tracker, waits for early tab requests."""
-    opener = session.window.page
-    context = opener.context
-    fetching = asyncio.Event()
-    release = asyncio.Event()
-
-    async def serve(route: Route) -> None:
-        if route.request.url.endswith("/early-action-data"):
-            fetching.set()
-            await release.wait()
-            await route.fulfill(body="{}", content_type="application/json")
-        else:
-            await route.fulfill(
-                body="""<h1>Fetching tab</h1><script>fetch('/early-action-data').then(() =>
-                    document.body.insertAdjacentHTML('beforeend', '<p>Fetched in the tab</p>'))</script>""",
-                content_type="text/html",
-            )
-
-    await context.route(f"{site}/early-action-*", serve)
-    await opener.locator("#tab").evaluate("link => link.href = '/early-action-page'")
-    record = PageSettle._page_opened
-    pending: list[tuple[PageSettle, Page]] = []
-
-    def defer(settle: PageSettle, page: Page) -> None:
-        pending.append((settle, page))
-
-    with patch.object(PageSettle, "_page_opened", new=defer):
-        action = asyncio.create_task(click(session, "tab"))
-        try:
-            await fetching.wait()
-            assert len(pending) == 1
-            settle, tab = pending[0]
-            if close_opener:
-                await opener.close()
-            record(settle, tab)
-            done, _ = await asyncio.wait({action}, timeout=SETTLE_MS / 1000)
-            assert not done, "Execute finished while the new tab's content request was still blocked"
-            release.set()
-            _ = await action
-            assert session.window.page is tab
-            assert "Fetched in the tab" in await text(session)
-        finally:
-            release.set()
-            _ = await asyncio.gather(action, return_exceptions=True)
+    context = session.window.page.context
+    # a busy client: the tab's script sends its fetch before the tab's own request listeners are added
+    context.on("page", lambda _page: time.sleep(0.3))
+    async with context.expect_page() as opened:
+        _ = await click(session, "late-fetching-tab")
+    tab = await opened.value
+    await tab.wait_for_load_state("domcontentloaded")
+    observation = await session.aobserve()
+    assert observation.metadata.url == f"{site}/fetching-tab"
+    assert "Fetched in the tab" in await text(session)
 
 
 @pytest.mark.asyncio
@@ -582,6 +559,7 @@ async def test_a_goto_waits_for_what_the_page_fetches_after_its_load(session: No
 
 
 @pytest.mark.asyncio
+@pytest.mark.timing
 async def test_a_goto_shares_one_timeout_between_its_commit_and_its_page(session: NotteSession, site: str) -> None:
     # the page answers after 0.8 s, then never loads: the wait for it gets what is left of the goto's timeout
     test_config = config.model_copy(update={"timeout_goto_ms": 2_000})
@@ -718,6 +696,7 @@ async def test_a_hash_route_goto_waits_for_its_delayed_render(
 
 
 @pytest.mark.asyncio
+@pytest.mark.timing
 async def test_enter_waits_for_the_submitted_page_within_the_bound(session: NotteSession, site: str) -> None:
     await session.window.page.focus("#q")
     start = time.monotonic()
@@ -746,6 +725,7 @@ async def test_a_submitted_page_is_waited_for_until_it_rendered_its_data(
 
 
 @pytest.mark.asyncio
+@pytest.mark.timing
 @pytest.mark.parametrize(
     ("path", "bound_ms"),
     [
@@ -823,14 +803,68 @@ async def test_scrape_and_screenshot_right_after_a_navigating_click_see_the_new_
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("element", ["hang", "hang-page"])
+@pytest.mark.timing
+@pytest.mark.parametrize("element,input_delay_ms", [("hang", 0), ("hang", 600), ("hang-page", 0)])
+@pytest.mark.parametrize("startup_delay", [0, 1.2])
 async def test_a_request_that_never_ends_is_waited_for_within_the_bound(
-    session: NotteSession, site: str, element: str
+    session: NotteSession, site: str, element: str, input_delay_ms: int, startup_delay: float
 ) -> None:
-    elapsed = await click(session, element)
+    start = PageSettle.start
+    settle_action = execution_module._settle
+    durations: list[float] = []
+    input_durations_ms: list[float] = []
+
+    if input_delay_ms:
+        # The tracker's window capture listener sees pointerdown before this target handler.
+        await session.window.page.locator("#hang").evaluate(
+            """(button, delay) => button.addEventListener('pointerdown', () => {
+                const began = performance.now();
+                while (performance.now() - began < delay) {}
+                window.inputProcessingMs = performance.now() - began;
+            })""",
+            input_delay_ms,
+        )
+
+    async def delayed_start(page: Page, *, tabs: bool = False, timeout_ms: float | None = None) -> PageSettle:
+        # Tracker startup and actionability are outside the post-action settle budget.
+        await asyncio.sleep(startup_delay)
+        return await start(page, tabs=tabs, timeout_ms=timeout_ms)
+
+    async def measured_settle(
+        settle: PageSettle, action: BaseAction, url: str, *, verbose: bool, new_document: bool = False
+    ) -> None:
+        began = time.monotonic()
+        await settle_action(settle, action, url, verbose=verbose, new_document=new_document)
+        durations.append(time.monotonic() - began)
+        if element == "hang":
+            # Keep both endpoints on the tracker's browser clock, including input processing before _settle.
+            assert settle._tracker is not None
+            since_input: float | None = await settle._tracker.evaluate("""t => {
+                const state = t.state();
+                return state.inputAt === null ? null : state.elapsed - state.inputAt;
+            }""")
+            assert since_input is not None
+            input_durations_ms.append(since_input)
+
+    # Observe the real request, rather than accepting a quick return that never waited for it.
+    async with session.window.page.expect_request(f"{site}/hang"):
+        with (
+            patch.object(PageSettle, "start", new=delayed_start),
+            patch.object(execution_module, "_settle", new=measured_settle),
+        ):
+            total = await click(session, element)
+    assert len(durations) == 1
+    elapsed = durations[0]
+    assert total >= startup_delay + elapsed
     if element == "hang":
+        assert input_durations_ms[0] >= CAP_MS
         assert elapsed < CAP_MS / 1000 + 1
+        if input_delay_ms:
+            assert await session.window.page.evaluate("window.inputProcessingMs") >= input_delay_ms
+            # The time spent processing input has already consumed part of the cap.
+            assert elapsed < CAP_MS / 1000
     else:
+        assert elapsed >= CAP_MS / 1000
         assert session.window.page.url == f"{site}/hanging"
         assert "Hanging" in await text(session)
         assert elapsed < PAGE_DELAY_S + CAP_MS / 1000 + 1 < config.timeout_goto_ms / 1000
@@ -851,6 +885,7 @@ async def test_back_and_forward_wait_for_the_page_they_load(site: str) -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.timing
 async def test_a_scroll_ends_once_its_position_is_stable(session: NotteSession) -> None:
     # the page keeps scrolling for 300 ms after the wheel (a smooth-scroll script)
     await session.window.page.set_content('<div style="height:6000px">Long page</div>')
@@ -953,6 +988,7 @@ async def test_a_new_tab_is_tracked_from_when_it_appears(session: NotteSession, 
 
 
 @pytest.mark.asyncio
+@pytest.mark.timing
 @pytest.mark.parametrize("replacement", [True, False])
 async def test_a_closing_page_waits_for_its_replacement_if_it_opens_one(
     session: NotteSession, site: str, replacement: bool
@@ -965,42 +1001,398 @@ async def test_a_closing_page_waits_for_its_replacement_if_it_opens_one(
     original = await opened.value
     await original.wait_for_load_state("load")
     session.window.page = original
-    elapsed = await click(session, "replace-self" if replacement else "close-self")
+    closed_at: float | None = None
+
+    def record_close(_page: Page) -> None:
+        nonlocal closed_at
+        closed_at = time.monotonic()
+
+    original.once("close", record_close)
+    if not replacement:
+        # Waiting for click actionability is separate from waiting for a tab after the original closes.
+        await original.evaluate("""() => {
+            const cover = document.createElement('div');
+            cover.style.cssText = 'position:fixed;inset:0;z-index:1000';
+            document.body.append(cover);
+            setTimeout(() => cover.remove(), 1800);
+        }""")
+    _ = await click(session, "replace-self" if replacement else "close-self")
     assert original.is_closed()
+    assert closed_at is not None
     if replacement:
         assert session.window.page.url == f"{site}/fetching-tab"
         assert "Fetched in the tab" in await text(session)
     else:
         assert session.window.page.url == f"{site}/"
-        assert elapsed < LONG_GRACE_MS / 1000 + 1
+        assert time.monotonic() - closed_at < LONG_GRACE_MS / 1000 + 1
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("replacement", [True, False])
+@pytest.mark.parametrize("replacement", ["new", "opener", "none"])
 async def test_a_click_reporting_a_closed_target_requires_a_live_replacement(
-    session: NotteSession, site: str, monkeypatch: pytest.MonkeyPatch, replacement: bool
+    session: NotteSession, site: str, monkeypatch: pytest.MonkeyPatch, replacement: str
 ) -> None:
-    async with session.window.page.context.expect_page() as opened:
-        await session.window.page.evaluate("window.open('/')")
+    opener = session.window.page
+    async with opener.context.expect_page() as opened:
+        await opener.evaluate("window.open('/')")
     original = await opened.value
     await original.wait_for_load_state("load")
+    if replacement == "none":
+        await opener.close()
+    elif replacement == "opener":
+        await original.locator("#close-self").evaluate(
+            "el => el.onclick = () => { window.opener.location.href = '/fetching-tab'; window.close(); }"
+        )
     session.window.page = original
     original_click = Locator.click
 
-    async def click_then_report_closed(locator: Locator, *, timeout: float) -> None:
-        await original_click(locator, timeout=timeout)
+    async def click_then_report_closed(locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
+        await original_click(locator, timeout=timeout, no_wait_after=no_wait_after)
+        if not original.is_closed():
+            await original.wait_for_event("close")
         # Patchright can report the handler's window.close() before acknowledging the click.
         raise Error("Locator.click: Target page, context or browser has been closed")
 
     monkeypatch.setattr(Locator, "click", click_then_report_closed)
-    if replacement:
-        _ = await click(session, "replace-self")
+    if replacement != "none":
+        _ = await click(session, "replace-self" if replacement == "new" else "close-self")
         assert original.is_closed()
+        if replacement == "opener":
+            assert session.window.page is opener
         assert session.window.page.url == f"{site}/fetching-tab"
         assert "Fetched in the tab" in await text(session)
     else:
         with pytest.raises(NotteBaseError, match="Target page, context or browser has been closed"):
             _ = await click(session, "close-self")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("report_closed", [False, True])
+@pytest.mark.parametrize("unrelated_tab", [False, True])
+async def test_a_closing_click_waits_for_a_request_it_started_on_an_existing_tab(
+    session: NotteSession, monkeypatch: pytest.MonkeyPatch, report_closed: bool, unrelated_tab: bool
+) -> None:
+    opener = session.window.page
+    await opener.evaluate("""() => {
+        window.fetchResult = () => fetch('/data?delay=2').then(() =>
+            document.body.insertAdjacentHTML('beforeend', '<p>Fetched on the opener</p>'));
+    }""")
+    async with opener.context.expect_page() as opened:
+        await opener.evaluate("window.open('/')")
+    popup = await opened.value
+    await popup.wait_for_load_state("load")
+    await popup.locator("#close-self").evaluate(
+        "el => el.onclick = () => { window.opener.fetchResult(); window.close(); }"
+    )
+    other: Page | None = None
+    if unrelated_tab:
+        other = await opener.context.new_page()
+        await other.goto(opener.url)
+    session.window.page = popup
+    original_click = Locator.click
+
+    async def closing_click(locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
+        await original_click(locator, timeout=timeout, no_wait_after=no_wait_after)
+        if other is not None:
+            # An unrelated iframe navigation must not be mistaken for a replacement page.
+            await other.locator("#inner").evaluate("el => { el.src = '/inner'; }")
+        if not popup.is_closed():
+            await popup.wait_for_event("close")
+        if report_closed:
+            raise Error("Locator.click: Target page, context or browser has been closed")
+
+    monkeypatch.setattr(Locator, "click", closing_click)
+    async with opener.expect_request("**/data?delay=2"):
+        _ = await click(session, "close-self")
+    assert popup.is_closed()
+    assert session.window.page is opener
+    assert "Fetched on the opener" in await text(session)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("destination", ["/fetching-tab", "/slow-second"])
+@pytest.mark.parametrize("report_closed", [False, True])
+async def test_a_closing_popup_selects_the_existing_named_tab_it_navigated(
+    session: NotteSession, site: str, monkeypatch: pytest.MonkeyPatch, destination: str, report_closed: bool
+) -> None:
+    opener = session.window.page
+    # The slow case reloads the same URL: the request identifies it before its URL or document changes.
+    initial = destination if destination == "/slow-second" else "/second"
+    async with opener.context.expect_page() as opened:
+        await opener.evaluate("url => window.open(url, 'results')", f"{site}{initial}")
+    results = await opened.value
+    await results.wait_for_load_state("load")
+    async with opener.context.expect_page() as opened:
+        await opener.evaluate("window.open('/', 'helper')")
+    popup = await opened.value
+    await popup.wait_for_load_state("load")
+    await popup.locator("#close-self").evaluate(
+        "(el, url) => el.onclick = () => { window.open(url, 'results'); window.close(); }", destination
+    )
+    session.window.page = popup
+    original_click = Locator.click
+
+    async def closing_click(locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
+        await original_click(locator, timeout=timeout, no_wait_after=no_wait_after)
+        if not popup.is_closed():
+            await popup.wait_for_event("close")
+        if report_closed:
+            raise Error("Locator.click: Target page, context or browser has been closed")
+
+    monkeypatch.setattr(Locator, "click", closing_click)
+    async with results.expect_request(f"{site}{destination}"):
+        _ = await click(session, "close-self")
+    assert popup.is_closed()
+    assert session.window.page is results
+    assert len(opener.context.pages) == 2
+    assert results.url == f"{site}{destination}"
+    expected = "Fetched in the tab" if destination == "/fetching-tab" else "Second tab"
+    assert expected in await text(session)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("report_closed", [False, True])
+async def test_a_closing_popup_ignores_other_tabs_navigating_during_element_lookup(
+    session: NotteSession, site: str, monkeypatch: pytest.MonkeyPatch, report_closed: bool
+) -> None:
+    opener = session.window.page
+    async with opener.context.expect_page() as opened:
+        await opener.evaluate("window.open('/')")
+    popup = await opened.value
+    await popup.wait_for_load_state("load")
+    await popup.locator("#close-self").evaluate("el => el.onclick = () => window.close()")
+    other = await opener.context.new_page()
+    await other.goto(site)
+    session.window.page = popup
+    original_locate = execution_module._locate  # pyright: ignore[reportPrivateUsage]
+    original_click = Locator.click
+
+    async def locate_with_unrelated_navigation(
+        window: BrowserWindow, action: InteractionAction, snapshot: BrowserSnapshot | None
+    ) -> Locator:
+        locator = await original_locate(window, action, snapshot)
+        await other.goto(f"{site}/second")
+        return locator
+
+    async def closing_click(locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
+        await original_click(locator, timeout=timeout, no_wait_after=no_wait_after)
+        if not popup.is_closed():
+            await popup.wait_for_event("close")
+        if report_closed:
+            raise Error("Locator.click: Target page, context or browser has been closed")
+
+    monkeypatch.setattr(execution_module, "_locate", locate_with_unrelated_navigation)
+    monkeypatch.setattr(Locator, "click", closing_click)
+    _ = await click(session, "close-self")
+    assert popup.is_closed()
+    assert other.url == f"{site}/second"
+    assert session.window.page is opener
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("mode", ["native", "closed", "js"])
+@pytest.mark.parametrize("replacement", ["opener", "named"])
+@pytest.mark.parametrize("framed", [False, True])
+async def test_a_closing_popup_ignores_navigation_during_click_actionability(
+    session: NotteSession, site: str, monkeypatch: pytest.MonkeyPatch, mode: str, replacement: str, framed: bool
+) -> None:
+    opener = session.window.page
+    results: Page | None = None
+    if replacement == "named":
+        async with opener.context.expect_page() as opened:
+            await opener.evaluate("window.open('/second', 'results')")
+        results = await opened.value
+        await results.wait_for_load_state("load")
+    async with opener.context.expect_page() as opened:
+        await opener.evaluate("window.open('/')")
+    popup = await opened.value
+    await popup.wait_for_load_state("load")
+    if framed:
+        await popup.set_content('<iframe id="click-frame" src="/"></iframe>')
+        target = popup.frame_locator("#click-frame").locator("#close-self")
+        cover = popup.frame_locator("#click-frame").locator("#cover")
+    else:
+        target = popup.locator("#close-self")
+        cover = popup.locator("#cover")
+    await target.evaluate(
+        """(el, named) => {
+            el.onclick = () => { if (named) top.open('/slow-second', 'results'); top.close(); };
+            const cover = document.createElement('div');
+            cover.id = 'cover';
+            cover.style = 'position: fixed; inset: 0; background: white; z-index: 9999';
+            document.body.append(cover);
+        }""",
+        replacement == "named",
+    )
+    other = await opener.context.new_page()
+    await other.goto(site)
+    session.window.page = popup
+    original_click = Locator.click
+
+    async def covered_click(locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
+        if mode == "js":
+            await other.goto(f"{site}/second")
+            await cover.evaluate("el => el.remove()")
+            raise PlaywrightTimeoutError("Use the JS click fallback")
+        pending = asyncio.create_task(original_click(locator, timeout=timeout, no_wait_after=no_wait_after))
+        try:
+            await other.goto(f"{site}/second")
+            assert not pending.done(), "The covered button must still be waiting for input"
+            await cover.evaluate("el => el.remove()")
+            await pending
+        finally:
+            if not pending.done():
+                pending.cancel()
+                with suppress(asyncio.CancelledError):
+                    await pending
+        if not popup.is_closed():
+            await popup.wait_for_event("close")
+        if mode == "closed":
+            raise Error("Locator.click: Target page, context or browser has been closed")
+
+    monkeypatch.setattr(Locator, "click", covered_click)
+    result = await session.aexecute(
+        type="click",
+        id="click",
+        selector={
+            "css_selector": "#close-self",
+            "in_iframe": framed,
+            "iframe_parent_css_selectors": ["#click-frame"] if framed else [],
+        },
+    )
+    assert result.success, result.message
+    assert popup.is_closed()
+    assert session.window.page is (results if results is not None else opener)
+    if results is not None:
+        assert results.url == f"{site}/slow-second"
+        assert "Second tab" in await text(session)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("mode", ["native", "closed", "js"])
+async def test_replacement_selection_waits_for_click_input_delivery(
+    session: NotteSession, monkeypatch: pytest.MonkeyPatch, mode: str
+) -> None:
+    opener = session.window.page
+    async with opener.context.expect_page() as opened:
+        await opener.evaluate("window.open('/')")
+    popup = await opened.value
+    await popup.wait_for_load_state("load")
+    await popup.locator("#close-self").evaluate(
+        "el => el.onclick = () => { window.opener.document.body.dataset.clicked = 'yes'; window.close(); }"
+    )
+    session.window.page = popup
+    notification_started, release, native_done = asyncio.Event(), asyncio.Event(), asyncio.Event()
+    notify = execution_module._ClickInputBinding.notify  # pyright: ignore[reportPrivateUsage]
+    original_click = Locator.click
+    settlement = AsyncMock()
+
+    async def delayed_notify(
+        binding: execution_module._ClickInputBinding,
+        token: str,  # pyright: ignore[reportPrivateUsage]
+    ) -> None:
+        notification_started.set()
+        await release.wait()
+        notify(binding, token)
+
+    async def closing_click(locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
+        try:
+            if mode == "js":
+                raise PlaywrightTimeoutError("Use the JS click fallback")
+            await original_click(locator, timeout=timeout, no_wait_after=no_wait_after)
+            if mode == "closed" and not popup.is_closed():
+                await popup.wait_for_event("close")
+        finally:
+            native_done.set()
+        if mode == "closed":
+            raise Error("Locator.click: Target page, context or browser has been closed")
+
+    monkeypatch.setattr(execution_module._ClickInputBinding, "notify", delayed_notify)  # pyright: ignore[reportPrivateUsage]
+    monkeypatch.setattr(Locator, "click", closing_click)
+    monkeypatch.setattr(execution_module, "_settle", settlement)
+    pending = asyncio.create_task(click(session, "close-self"))
+    try:
+        await notification_started.wait()
+        await native_done.wait()
+        clicked = await opener.locator("body").get_attribute("data-clicked")
+        assert clicked == (None if mode == "js" else "yes")
+        settlement.assert_not_awaited()
+        assert popup.is_closed() is (mode != "js")
+        release.set()
+        _ = await pending
+        assert popup.is_closed()
+        assert session.window.page is opener
+    finally:
+        release.set()
+        if not pending.done():
+            pending.cancel()
+        with suppress(asyncio.CancelledError):
+            await pending
+
+
+@pytest.mark.asyncio
+async def test_click_input_resources_do_not_accumulate_between_actions(session: NotteSession) -> None:
+    page = session.window.page
+    other = await page.context.new_page()
+    await other.goto(page.url)
+    # Prime the full click path: the driver lazily installs a persistent hit-target interceptor.
+    _ = await click(session, "nothing")
+    cdp = await page.context.new_cdp_session(page)
+
+    async def pointer_listeners() -> int:
+        result = await cdp.send("Runtime.evaluate", {"expression": "window"})
+        listeners = await cdp.send("DOMDebugger.getEventListeners", {"objectId": result["result"]["objectId"]})
+        return sum(listener["type"] == "pointerdown" for listener in listeners["listeners"])
+
+    try:
+        before = await pointer_listeners()
+        names: list[str] | None = None
+        for _ in range(2):
+            _ = await click(session, "nothing")
+            assert await pointer_listeners() == before
+            current = await evaluate_in_main_world(
+                page.main_frame,
+                "() => Object.getOwnPropertyNames(window).filter(name => name.startsWith('__notte_click_'))",
+            )
+            assert len(current) == 1
+            if names is not None:
+                assert current == names
+            names = current
+    finally:
+        await cdp.detach()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("failure", ["page", "browser", "unclosed", "unusable", "missing-input"])
+async def test_a_closed_target_error_is_not_hidden_by_an_unusable_replacement(
+    session: NotteSession, monkeypatch: pytest.MonkeyPatch, failure: str
+) -> None:
+    opener = session.window.page
+    async with opener.context.expect_page() as opened:
+        await opener.evaluate("window.open('/')")
+    original = await opened.value
+    await original.wait_for_load_state("load")
+    session.window.page = original
+
+    async def fail_click(locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
+        if failure == "page":
+            await opener.close()
+            await original.close()
+        elif failure == "browser":
+            browser = original.context.browser
+            assert browser is not None
+            await browser.close()
+        elif failure in ("unusable", "missing-input"):
+            await original.close()
+        raise Error("Locator.click: Target page, context or browser has been closed")
+
+    monkeypatch.setattr(Locator, "click", fail_click)
+    if failure == "unusable":
+        monkeypatch.setattr(
+            opener, "evaluate", AsyncMock(side_effect=Error("Target page, context or browser has been closed"))
+        )
+    with pytest.raises(NotteBaseError, match="Target page, context or browser has been closed"):
+        _ = await click(session, "close-self")
 
 
 @pytest.mark.asyncio
@@ -1021,3 +1413,176 @@ async def test_a_tab_that_opens_as_another_closes_is_switched_to(session: NotteS
     assert len(session.window.page.context.pages) == 2
     assert session.window.page.url == f"{site}/second"
     assert "Second tab" in await text(session)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("mode", ["native", "js"])
+async def test_a_click_whose_document_reloads_before_its_input_still_ends(
+    session: NotteSession, site: str, monkeypatch: pytest.MonkeyPatch, mode: str
+) -> None:
+    """The listener that reports the click's input goes with its document; the click lands in the new one."""
+    page = session.window.page
+    # with another tab open, the click reports its input
+    other = await page.context.new_page()
+    _ = await other.goto(site)
+    original_click = Locator.click
+
+    async def click_after_reload(locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
+        _ = await page.reload(wait_until="load")
+        if mode == "js":
+            raise PlaywrightTimeoutError("Use the JS click fallback")
+        await original_click(locator, timeout=timeout, no_wait_after=no_wait_after)
+
+    monkeypatch.setattr(Locator, "click", click_after_reload)
+    _ = await click(session, "late")
+    assert session.window.page is page
+    assert "Late result" in await text(session)
+
+
+@pytest.mark.asyncio
+async def test_a_closing_popup_selects_the_existing_named_tab_it_moved_to_a_fragment(
+    session: NotteSession, site: str
+) -> None:
+    """A fragment navigation sends no request: the tab is told by its URL changing after the click."""
+    opener = session.window.page
+    async with opener.context.expect_page() as opened:
+        await opener.evaluate("url => window.open(url, 'results')", f"{site}/second")
+    results = await opened.value
+    await results.wait_for_load_state("load")
+    async with opener.context.expect_page() as opened:
+        await opener.evaluate("window.open('/', 'helper')")
+    popup = await opened.value
+    await popup.wait_for_load_state("load")
+    await popup.locator("#close-self").evaluate(
+        "el => el.onclick = () => { window.open('/second#done', 'results'); window.close(); }"
+    )
+    session.window.page = popup
+    _ = await click(session, "close-self")
+    assert popup.is_closed()
+    assert results.url == f"{site}/second#done"
+    assert session.window.page is results
+
+
+@pytest.mark.asyncio
+async def test_a_click_waits_for_a_request_its_tab_sent_before_the_tab_tracker_exists(
+    session: NotteSession, site: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Context requests can arrive before the page event that starts the new tab's tracker."""
+    page = session.window.page
+    fetching = asyncio.Event()
+    release = asyncio.Event()
+
+    async def serve(route: Route) -> None:
+        if route.request.url.endswith("/early-data"):
+            fetching.set()
+            await release.wait()
+            await route.fulfill(body="{}", content_type="application/json")
+        else:
+            await route.fulfill(
+                body="""<h1>Fetching tab</h1><script>fetch('/early-data').then(() =>
+                    document.body.insertAdjacentHTML('beforeend', '<p>Fetched in the tab</p>'))</script>""",
+                content_type="text/html",
+            )
+
+    await page.context.route(f"{site}/early-*", serve)
+    await page.evaluate(
+        """() => document.body.insertAdjacentHTML('beforeend',
+            '<a id="early" href="/early-page" target="_blank">Early tab</a>')"""
+    )
+    page_opened = PageSettle._page_opened  # pyright: ignore[reportPrivateUsage]
+    deferred: list[asyncio.Task[None]] = []
+
+    # Deliver the page event only after the tab's request started, reproducing the event-order race.
+    def defer(settle: PageSettle, tab: Page) -> None:
+        async def later() -> None:
+            _ = await fetching.wait()
+            page_opened(settle, tab)
+
+        deferred.append(asyncio.ensure_future(later()))
+
+    monkeypatch.setattr(PageSettle, "_page_opened", defer)
+    clicked = asyncio.create_task(click(session, "early"))
+    try:
+        _ = await fetching.wait()
+        done, _ = await asyncio.wait({clicked}, timeout=SETTLE_MS / 1000)
+        assert not done, "The click finished while its tab's content request was still blocked"
+        release.set()
+        _ = await clicked
+        assert session.window.page.url == f"{site}/early-page"
+        assert "Fetched in the tab" in await text(session)
+    finally:
+        release.set()
+        _ = await asyncio.gather(clicked, *deferred, return_exceptions=True)
+
+
+@pytest.mark.asyncio
+async def test_a_click_whose_input_the_page_hides_from_its_listener_still_ends(
+    session: NotteSession, site: str
+) -> None:
+    """A page listener that stops `pointerdown` first keeps the click's input from being reported."""
+    page = session.window.page
+    # with another tab open, the click reports its input
+    other = await page.context.new_page()
+    _ = await other.goto(site)
+    await page.evaluate("window.addEventListener('pointerdown', (e) => e.stopImmediatePropagation(), true)")
+    _ = await click(session, "late")
+    assert session.window.page is page
+    assert "Late result" in await text(session)
+
+
+@pytest.mark.asyncio
+async def test_a_click_whose_popup_reloads_then_closes_before_its_input_fails(
+    session: NotteSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A lost document does not prove the click happened: without its input reported, the closed error stands."""
+    opener = session.window.page
+    async with opener.context.expect_page() as opened:
+        await opener.evaluate("window.open('/')")
+    popup = await opened.value
+    await popup.wait_for_load_state("load")
+    session.window.page = popup
+
+    async def reload_then_close(_locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
+        _ = await popup.reload(wait_until="load")
+        await popup.close()
+        raise Error("Locator.click: Target page, context or browser has been closed")
+
+    monkeypatch.setattr(Locator, "click", reload_then_close)
+    with pytest.raises(NotteBaseError, match="Target page, context or browser has been closed"):
+        _ = await click(session, "close-self")
+
+
+@pytest.mark.asyncio
+async def test_a_js_click_that_closes_its_reloaded_popup_selects_the_opener(
+    session: NotteSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The JS click's input is reported from the reloaded document before its handler closes the tab."""
+    opener = session.window.page
+    async with opener.context.expect_page() as opened:
+        await opener.evaluate("window.open('/')")
+    popup = await opened.value
+    await popup.wait_for_load_state("load")
+    session.window.page = popup
+
+    async def reload_then_fall_back(_locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
+        _ = await popup.reload(wait_until="load")
+        # closes the tab within the JS click, before the driver answers it
+        await popup.locator("#close-self").evaluate("el => el.onclick = () => window.close()")
+        raise PlaywrightTimeoutError("Use the JS click fallback")
+
+    original_evaluate = JSHandle.evaluate
+
+    async def evaluate_until_closed(handle: JSHandle, expression: str, arg: object = None) -> object:
+        result = await original_evaluate(handle, expression, arg)
+        if "el.click()" not in expression:
+            return result
+        # the driver can report the closed target instead of the click's answer
+        if not popup.is_closed():
+            await popup.wait_for_event("close")
+        raise Error("JSHandle.evaluate: Target page, context or browser has been closed")
+
+    monkeypatch.setattr(Locator, "click", reload_then_fall_back)
+    monkeypatch.setattr(JSHandle, "evaluate", evaluate_until_closed)
+    _ = await click(session, "close-self")
+    assert popup.is_closed()
+    assert session.window.page is opener

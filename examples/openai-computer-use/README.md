@@ -8,6 +8,7 @@ From this directory:
 
 ```sh
 # Python 3.11+, uv
+export NOTTE_ENABLE_NEST_ASYNCIO=false
 uv sync --locked
 uv run python python/demo.py
 
@@ -16,6 +17,8 @@ cd typescript
 npm ci
 npm start
 ```
+
+The pinned Python SDK 1.10.0 needs `NOTTE_ENABLE_NEST_ASYNCIO=false` to use an unmodified asyncio event loop.
 
 The model reads a random code from a screenshot and submits it through a form. Each demo verifies the actual input and page result, returns `output`, `session_id`, and `actions`, and closes its browser on success or error.
 

@@ -3,7 +3,9 @@
 import json
 import os
 import re
+import shlex
 import subprocess
+import unittest
 from pathlib import Path
 from typing import Any, cast
 
@@ -117,6 +119,38 @@ def test_automatic_selection_runs_once_with_complete_history() -> None:
     assert checkout["with"]["ref"] == "${{ github.event.pull_request.head.sha || github.sha }}"
     assert sum(step.get("uses") == "./.github/actions/ci-scope" for step in changes["steps"]) == 1
     assert "secrets." not in str(changes)
+
+
+def test_preselection_discovers_every_routing_test_family() -> None:
+    action = yaml.safe_load((WORKFLOWS.parent / "actions/ci-scope/action.yml").read_text())
+    steps = action["runs"]["steps"]
+    test_step = next(step for step in steps if step["name"] == "Test suite selection")
+    selection_step = next(step for step in steps if step["name"] == "Select relevant suites")
+    assert steps.index(test_step) < steps.index(selection_step)
+    command = shlex.split(test_step["run"])
+    assert command[:4] == ["python3", "-m", "unittest", "discover"]
+    start = command[command.index("-s") + 1]
+    pattern = command[command.index("-p") + 1]
+    loader = unittest.TestLoader()
+    suite = loader.discover(str(WORKFLOWS.parents[1] / start), pattern=pattern)
+    assert not loader.errors
+
+    def families(tests: unittest.TestSuite) -> set[str]:
+        found: set[str] = set()
+        for test in tests:
+            if isinstance(test, unittest.TestSuite):
+                found |= families(test)
+            else:
+                found.add(type(test).__name__)
+        return found
+
+    assert {
+        "RoutingTests",
+        "GitHistoryTests",
+        "RegistrationRoutingTests",
+        "OfflinePathRoutingTests",
+        "OfflineGitHistoryTests",
+    } <= families(suite)
 
 
 def test_only_selected_families_receive_the_shared_scope() -> None:

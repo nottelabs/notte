@@ -8,6 +8,7 @@ From this directory:
 
 ```sh
 # Python 3.11+, uv
+export NOTTE_ENABLE_NEST_ASYNCIO=false
 uv sync --locked
 uv run python python/demo.py
 
@@ -16,6 +17,8 @@ cd typescript
 npm ci
 npm start
 ```
+
+The pinned Python SDK 1.10.0 needs `NOTTE_ENABLE_NEST_ASYNCIO=false` to use an unmodified asyncio event loop.
 
 Both examples use Claude Haiku 5.5 to read a random code from a screenshot, enter it into a form, and submit. They check the actual page result before returning `output`, `session_id`, and `calls`. The outer Notte session owner stops the browser on success and failure.
 

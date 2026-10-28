@@ -256,21 +256,23 @@ def test_vault_credential_helper_preserves_profiling() -> None:
     # test runner's imports or global profiler.
     script = """
 import asyncio
-from unittest.mock import Mock
+from unittest.mock import AsyncMock, Mock
 from notte_core.profiling import profiler
 profiler.enable = True
-from notte_sdk.endpoints.vaults import NotteVault
+from notte_sdk.endpoints.vaults import NotteVault, AsyncNotteVault
 
 client = Mock()
 client.get.return_value = "fake-vault"
-vault = NotteVault(vault_id="fake-vault", _client=client)
 for asynchronous in (False, True):
+    client = AsyncMock() if asynchronous else Mock()
+    client.get.return_value = "fake-vault"
+    vault = (AsyncNotteVault if asynchronous else NotteVault)(vault_id="fake-vault", _client=client)
     for fails in (False, True):
         profiler.memory_exporter.clear()
         client.credentials_add.side_effect = ValueError("API failure") if fails else None
         try:
             if asynchronous:
-                asyncio.run(vault.add_credentials_async("example.com", username="ada"))
+                asyncio.run(vault.add_credentials("example.com", username="ada"))
             else:
                 vault.add_credentials("example.com", username="ada")
         except ValueError:

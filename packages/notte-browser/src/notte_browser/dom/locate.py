@@ -3,6 +3,9 @@ from notte_core.logging import logger
 
 from notte_browser.driver import FrameLocator, Locator, Page
 from notte_browser.errors import InvalidLocatorRuntimeError
+from notte_browser.js import script
+
+_SHADOW_CHAIN_INDEX = script("shadow_chain_index.js")
 
 
 async def locale_element_in_iframes(page: Page, selectors: NodeSelectors) -> FrameLocator | Page:
@@ -32,9 +35,21 @@ async def locate_element(page: Page, selectors: NodeSelectors) -> Locator:
     if len(candidate_selectors) == 0:
         raise InvalidLocatorRuntimeError("No valid selector available", selector="")
 
+    steps = _shadow_steps(selectors) if selectors.in_shadow_root else []
     for selector in candidate_selectors:
+        if selector.startswith("xpath=") and any(not step.startswith("/") for step in steps[1:]):
+            # Playwright's XPath engine does not enter shadow roots: the chain would find a light child of the host
+            continue
         locator = frame.locator(selector)
         count = await locator.count()
+        if count > 0 and len(steps) > 1 and selector.startswith("css="):
+            # Playwright's CSS engine enters shadow roots, and its `>` goes from a host to both its light children and
+            # the top elements of its shadow root: the observed element is the one the XPath chain leads to. A match
+            # the chain does not lead to is another element (the light child, when the shadow child is gone)
+            index = await locator.evaluate_all(_SHADOW_CHAIN_INDEX, steps)
+            if index >= 0:
+                return locator.nth(index)
+            continue
         if count > 1:
             logger.debug(f"Found {count} elements for '{selector}'. Check out the dom tree for more details.")
         elif count == 1:
@@ -42,12 +57,31 @@ async def locate_element(page: Page, selectors: NodeSelectors) -> Locator:
     raise InvalidLocatorRuntimeError("count=0 for selector", selector=candidate_selectors[0])
 
 
+def _shadow_steps(selectors: NodeSelectors) -> list[str]:
+    """The XPaths of a chain through shadow roots (see `selectors_through_shadow_dom`): the first from the document,
+    the others from the element before, in its light tree when they start with "/", else in its shadow root.
+
+    The chain of a shadow host ends with an empty step (its own XPath taken out): the host is the element before."""
+    steps = [step.strip().removeprefix("xpath=") for step in selectors.xpath_selector.split(" >> ")]
+    return [step for step in steps if step]
+
+
+def _is_frame_root(node: DomNode) -> bool:
+    """Whether a node is the root of a frame's document: the child of its iframe element."""
+    return (
+        node.parent is not None and node.parent.attributes is not None and node.parent.attributes.tag_name == "iframe"
+    )
+
+
 def selectors_through_shadow_dom(node: DomNode) -> NodeSelectors:
     root_selectors = node.computed_attributes.selectors
     if root_selectors is None:
         raise ValueError(f"Node id={node.id} has no selectors")
     xpaths = [f"xpath={root_selectors.xpath_selector}"]
-    while node.parent is not None:
+    # the element below `node` on the way to the target
+    child: DomNode | None = None
+    # the chain starts at the target's document: an element is located in the frame of its document
+    while node.parent is not None and not _is_frame_root(node):
         selectors = node.computed_attributes.selectors
         if selectors is None:
             raise ValueError("Is this a valid dom tree?")
@@ -63,12 +97,19 @@ def selectors_through_shadow_dom(node: DomNode) -> NodeSelectors:
                 )
                 xpaths.append(node.attributes.tag_name)
             else:
-                # xpaths of children also contain xpaths part of parent that we need to remove for shadow root handling
-                xpaths[-1] = xpaths[-1].replace(selectors.xpath_selector, "")
-                if node.parent.parent is None:
+                # The step below the host is in its light tree when the host's child on the way extends the host's
+                # XPath: the host's XPath is taken out of it ("/rest"), and the target, when it is the host, is left
+                # an empty step. A top element of the host's shadow root has a one-step XPath, which can be the
+                # host's own (an `x-box` in an `x-box`), and the step below can then start with the host's XPath too
+                child_selectors = None if child is None else child.computed_attributes.selectors
+                if child_selectors is None or child_selectors.xpath_selector.startswith(f"{selectors.xpath_selector}/"):
+                    step = xpaths[-1].removeprefix("xpath=")
+                    xpaths[-1] = f"xpath={step.removeprefix(selectors.xpath_selector)}"
+                if node.parent.parent is None or _is_frame_root(node.parent):
                     xpaths.append(selectors.xpath_selector)
                 else:
                     xpaths.append(f"xpath={selectors.xpath_selector}")
+        child = node
         node = node.parent
 
     shadow_locator = " >> ".join(xpaths[::-1])

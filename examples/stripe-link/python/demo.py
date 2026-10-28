@@ -4,7 +4,7 @@ import os
 import sys
 
 from link import AsyncClient
-from notte_sdk import NotteClient
+from notte_sdk import AsyncNotteClient
 from playwright.async_api import Page, async_playwright
 
 
@@ -40,16 +40,16 @@ async def run_demo(wallet: AsyncClient | None = None) -> dict:
     for name in ["LINK_ACCESS_TOKEN", "LINK_SPEND_REQUEST_ID"]:
         if not os.environ.get(name):
             raise RuntimeError(f"Set {name}")
-    client = NotteClient()
+    client = AsyncNotteClient()
     session_id = "not-created"
     stage = "create browser"
     try:
-        with client.Session(max_duration_minutes=3) as session:
+        async with client, client.Session(max_duration_minutes=3) as session:
             session_id = session.session_id
             try:
                 stage = "open test form"
                 async with async_playwright() as driver:
-                    browser = await driver.chromium.connect_over_cdp(session.cdp_url())
+                    browser = await driver.chromium.connect_over_cdp(await session.cdp_url())
                     try:
                         page = browser.contexts[0].pages[0]
                         await page.goto("about:blank")

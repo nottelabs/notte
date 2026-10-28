@@ -5,7 +5,7 @@ import signal
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from notte_sdk import NotteClient
+from notte_sdk import AsyncNotteClient
 from proposal import read_map
 
 # Fixed DOM inspection code. Proposed selectors are always data, never executable code.
@@ -28,13 +28,13 @@ async def repair(
     fixture_late_redirect: str | None = None,
 ) -> dict:
     document = read_map(source)
-    browser = NotteClient().Session(max_duration_minutes=3)
+    browser = AsyncNotteClient().Session(max_duration_minutes=3)
     stage = "claim"
     try:
         async with browser:
             try:
                 async with asyncio.timeout(90):
-                    page = await (await browser.apage).context.new_page()
+                    page = await (await browser.page).context.new_page()
                     if page.url != "about:blank":
                         raise ValueError("Expected a fresh blank page")
                     navigation_url = await page.evaluate("url => new URL(url).href", document["url"])

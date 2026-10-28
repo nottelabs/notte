@@ -44,6 +44,9 @@ async def scroll(page: Page, action: ScrollDownAction | ScrollUpAction) -> bool:
 @pytest.mark.parametrize("moved", [False, True])
 async def test_scroll_deadline_bounds_a_blocked_read(monkeypatch: pytest.MonkeyPatch, moved: bool) -> None:
     monkeypatch.setattr(execution_module, "SCROLL_CAP_MS", 50)
+    # Without a poll timer, the second read starts at once: a loop woken late on a busy runner must not let the
+    # deadline expire during the poll sleep, before the blocked read it bounds.
+    monkeypatch.setattr(execution_module, "SCROLL_POLL_MS", 0)
     reads = 0
     blocked = asyncio.Event()
 

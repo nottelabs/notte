@@ -5,6 +5,7 @@ are editable too, and editors give them a `text` cursor. An editor whose center 
 offered at all, only its paragraphs as clickables.
 """
 
+from html import escape
 from urllib.parse import quote
 
 import pytest
@@ -85,6 +86,10 @@ async def test_contenteditable_cut_by_the_viewport_is_a_field_in_view() -> None:
 
         assert [(action.id, action.type) for action in obs.space.interaction_actions] == [("I1", "fill")]
 
+        result = await session.aexecute(type="fill", id="I1", value="Clipped replacement")
+        assert result.success, result.message
+        assert await session.window.page.locator(".editor").inner_text() == "Clipped replacement"
+
 
 @pytest.mark.asyncio
 async def test_contenteditable_cut_by_a_scrolling_panel_is_a_field_in_view() -> None:
@@ -95,6 +100,10 @@ async def test_contenteditable_cut_by_a_scrolling_panel_is_a_field_in_view() -> 
         obs = await session.aobserve()
 
         assert [(action.id, action.type) for action in obs.space.interaction_actions] == [("I1", "fill")]
+
+        result = await session.aexecute(type="fill", id="I1", value="Clipped replacement")
+        assert result.success, result.message
+        assert await session.window.page.locator(".editor").inner_text() == "Clipped replacement"
 
 
 @pytest.mark.asyncio
@@ -126,3 +135,283 @@ async def test_blocks_of_an_editable_body_stay_offered() -> None:
 
         actions = [(action.id, action.text_label) for action in obs.space.interaction_actions]
         assert actions == [("M1", "Hello bold"), ("M2", "World")]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("value", "clear", "expected"),
+    [
+        ("New text", True, "New text"),
+        ("New text", False, "Hello boldNew text"),
+        # indented text is pasted (`text_contains_tabs`)
+        # the browser inserts a tab into a paragraph whose white space collapses as a non-breaking space
+        ("\tNew text", True, "\xa0New text"),
+        # after text, a regular space
+        ("\tNew text", False, "Hello bold New text"),
+    ],
+    ids=["replace", "append", "paste-replace", "paste-append"],
+)
+async def test_a_block_of_an_editable_body_in_a_frame_is_filled(value: str, clear: bool, expected: str) -> None:
+    # A paragraph cannot take focus: the fill must focus its editing host, the frame's `<body>`, or the keyboard
+    # types into what has the focus in the page (here, the page's own editor) and the frame stays as it was
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(f"data:text/html,{quote(EDITOR + EDITOR_FRAME)}")
+        obs = await session.aobserve()
+        actions = [(action.id, action.type) for action in obs.space.interaction_actions]
+        assert actions == [("I1", "fill"), ("M1", "click"), ("M2", "click")]
+
+        result = await session.aexecute(type="fill", id="I1", value="Page notes")
+        assert result.success, result.message
+        result = await session.aexecute(type="fill", id="M1", value=value, clear_before_fill=clear)
+        assert result.success, result.message
+
+        frame = page.frame_locator("iframe")
+        assert await frame.locator("p").first.inner_text() == expected
+        assert await frame.locator("p").last.inner_text() == "World"
+        assert await page.locator(".editor").inner_text() == "Page notes"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("field", "target", "read"),
+    [
+        ('<textarea aria-label="Code">old</textarea>', "I1", "el => el.value"),
+        # a code editor keeps white space: the tabs stay tabs
+        (
+            '<div contenteditable="true" aria-label="Code" style="white-space: pre-wrap">old</div>',
+            "I1",
+            "el => el.innerText",
+        ),
+        # a text field inside an editable region is cleared as a field, not as part of the region
+        ('<div contenteditable="true"><textarea aria-label="Code">old</textarea></div>', "I2", "el => el.value"),
+    ],
+    ids=["textarea", "pre-wrap-editor", "textarea-in-editable"],
+)
+@pytest.mark.parametrize("handled", [False, True])
+async def test_indented_text_is_pasted_once(field: str, target: str, read: str, handled: bool) -> None:
+    # an editor that handles pasting (CodeMirror, Monaco) inserts the text itself; otherwise the browser inserts it
+    handler = "event.preventDefault(); document.body.dataset.pasted = event.clipboardData.getData('text/plain');"
+    page_html = f'<body onpaste="{handler if handled else ""}">{field}</body>'
+    code = "\tdef f():\n\t\treturn 1"
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(f"data:text/html,{quote(page_html)}")
+        _ = await session.aobserve()
+        result = await session.aexecute(type="fill", id=target, value=code)
+        assert result.success, result.message
+        field_value = (await page.locator("[aria-label=Code]").evaluate(read)).strip("\n")
+        if handled:
+            assert await page.locator("body").get_attribute("data-pasted") == code
+            assert field_value == ""
+        else:
+            assert field_value == code
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("shadow", [False, True])
+@pytest.mark.parametrize("scale", [1, 2])
+async def test_clipped_editor_uses_the_scroll_box_inner_bounds(shadow: bool, scale: int) -> None:
+    """A visible slice stays fillable across scaled borders and shadow hosts, until scrolled away."""
+    contents = """<div style="height:70px"></div>
+      <div class="editor" contenteditable="true" style="height:300px;width:220px">
+        <span onclick="this.dataset.clicked = 'yes'">Open details</span><p>Notes</p>
+      </div><div style="height:300px"></div>"""
+    page = f"""<div id="box" style="height:100px;width:260px;overflow:auto;border:20px solid;
+      transform:scale({scale});transform-origin:top left">{"" if shadow else contents}</div>"""
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+        if shadow:
+            _ = await session.window.page.locator("#box").evaluate(
+                "(box, contents) => { box.attachShadow({mode: 'open'}).innerHTML = contents; }", contents
+            )
+        editor = session.window.page.locator(".editor")
+        assert await editor.evaluate("""element => {
+            const box = document.getElementById('box');
+            const rect = box.getBoundingClientRect();
+            const scale = rect.height / box.offsetHeight;
+            const own = element.getBoundingClientRect();
+            const y = (own.top + rect.top + (box.clientTop + box.clientHeight) * scale) / 2;
+            return element.contains(element.getRootNode().elementFromPoint(own.left + 10, y));
+        }""")
+        obs = await session.aobserve()
+        assert [(action.id, action.type) for action in obs.space.interaction_actions] == [
+            ("I1", "fill"),
+            ("M1", "click"),
+        ]
+        result = await session.aexecute(type="click", id="M1")
+        assert result.success, result.message
+        assert await editor.locator("span").get_attribute("data-clicked") == "yes"
+        result = await session.aexecute(type="fill", id="I1", value="Visible notes")
+        assert result.success, result.message
+        assert await editor.inner_text() == "Visible notes"
+
+        _ = await session.window.page.locator("#box").evaluate("box => { box.scrollTop = 400; }")
+        obs = await session.aobserve()
+        assert obs.space.interaction_actions == []
+        assert "_[:]<div>Visible notes</div>" in obs.space.description
+
+        _ = await session.window.page.locator("#box").evaluate("box => { box.scrollTop = 100; }")
+        obs = await session.aobserve()
+        assert [(action.id, action.type) for action in obs.space.interaction_actions] == [("I1", "fill")]
+        result = await session.aexecute(type="fill", id="I1", value="Scrolled notes")
+        assert result.success, result.message
+        assert await editor.inner_text() == "Scrolled notes"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("position", ["fixed", "absolute"])
+@pytest.mark.parametrize("transform", [False, True])
+async def test_editor_in_a_popup_obeys_its_containing_block(position: str, transform: bool) -> None:
+    page = f"""<div style="position:relative">
+      <div id="box" style="height:100px;width:300px;overflow:auto;
+        transform:{"translateZ(0)" if transform else "none"}">
+        <div style="height:400px"></div>
+        <div style="position:{position};top:150px;left:20px">
+          <div class="editor" contenteditable="true" style="width:200px;height:80px">Popup notes</div>
+        </div>
+      </div></div>"""
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+        editor = session.window.page.locator(".editor")
+        assert await editor.evaluate("""element => {
+            const rect = element.getBoundingClientRect();
+            return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2) === element;
+        }""") is (not transform)
+        obs = await session.aobserve()
+        if transform:
+            assert obs.space.interaction_actions == []
+            assert "_[:]<div>Popup notes</div>" in obs.space.description
+            _ = await session.window.page.locator("#box").evaluate("box => { box.scrollTop = 120; }")
+            obs = await session.aobserve()
+        assert [(action.id, action.type) for action in obs.space.interaction_actions] == [("I1", "fill")]
+        result = await session.aexecute(type="fill", id="I1", value="Popup replacement")
+        assert result.success, result.message
+        assert await editor.inner_text() == "Popup replacement"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("position", ["fixed", "absolute"])
+async def test_escaping_editor_is_hit_tested_beyond_the_scroll_box(position: str) -> None:
+    page = f"""<div style="position:relative">
+      <div style="height:100px;width:300px;overflow:auto">
+        <div style="height:400px"></div>
+        <div style="position:{position};top:80px;left:20px">
+          <div class="editor" contenteditable="true" style="width:200px;height:300px">Popup notes</div>
+        </div>
+      </div></div>
+      <div id="cover" style="position:fixed;top:0;left:0;width:400px;height:120px;z-index:10"></div>"""
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=720) as session:
+        _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+        editor = session.window.page.locator(".editor")
+        assert await editor.evaluate("""element => {
+            const rect = element.getBoundingClientRect();
+            return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2) === element;
+        }""")
+        obs = await session.aobserve()
+        assert [(action.id, action.type) for action in obs.space.interaction_actions] == [("I1", "fill")]
+        result = await session.aexecute(type="fill", id="I1", value="Escaped notes")
+        assert result.success, result.message
+        assert await editor.inner_text() == "Escaped notes"
+
+        _ = await session.window.page.locator("#cover").evaluate("cover => { cover.style.height = '500px'; }")
+        obs = await session.aobserve()
+        assert obs.space.interaction_actions == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("in_frame", [False, True])
+@pytest.mark.parametrize(
+    "display",
+    [
+        "inline",
+        "inline-block",
+        "inline-flex",
+        "inline-grid",
+        "contents",
+        "-webkit-inline-box",
+        "block",
+        "-webkit-box",
+        "flow-root list-item",
+    ],
+)
+async def test_editable_body_offers_blocks_and_independent_inline_clicks(display: str, in_frame: bool) -> None:
+    """Inline editor content is not its own action; a block or independent click handler still is."""
+    editor = f"""<body contenteditable="true"><p>Paragraph</p>
+      <span style="display: {display}">Body line</span>
+      <span onclick="document.body.dataset.clicked = 'yes'">Open details</span></body>"""
+    html = (
+        f'<iframe style="width: 600px; height: 300px" srcdoc="{escape(editor, quote=True)}"></iframe>'
+        if in_frame
+        else editor
+    )
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(f"data:text/html,{quote(html)}")
+        observation = await session.aobserve()
+        actions = observation.space.interaction_actions
+        assert [action.text_label for action in actions] == (
+            ["Paragraph"]
+            + (["Body line"] if display in {"block", "-webkit-box", "flow-root list-item"} else [])
+            + ["Open details"]
+        )
+        result = await session.aexecute(type="click", id=actions[-1].id)
+        assert result.success, result.message
+        body = page.frame_locator("iframe").locator("body") if in_frame else page.locator("body")
+        assert await body.get_attribute("data-clicked") == "yes"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("in_frame", [False, True])
+@pytest.mark.parametrize(
+    "content",
+    [
+        "Text",
+        "<span>Text</span>",
+        "<span style='display:contents'><em>Text</em></span>",
+        "<p hidden>Hidden</p><span>Text</span>",
+        "<p style='opacity:0'>Hidden</p><span>Text</span>",
+    ],
+)
+async def test_editable_body_without_block_actions_is_one_fillable_field(content: str, in_frame: bool) -> None:
+    """Inline content belongs to the body editor; independent click handlers remain actionable."""
+    editor = f"""<body contenteditable="true" aria-label="Notes">{content}
+      <span onclick="document.body.dataset.clicked = 'yes'">Open details</span></body>"""
+    html = (
+        f'<iframe style="width: 600px; height: 300px" srcdoc="{escape(editor, quote=True)}"></iframe>'
+        if in_frame
+        else editor
+    )
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(f"data:text/html,{quote(html)}")
+        observation = await session.aobserve()
+        actions = observation.space.interaction_actions
+        assert [(action.id, action.type) for action in actions] == [("I1", "fill"), ("M1", "click")]
+        assert actions[0].accessible_name == "Notes"
+
+        result = await session.aexecute(type="click", id="M1")
+        assert result.success, result.message
+        body = page.frame_locator("iframe").locator("body") if in_frame else page.locator("body")
+        assert await body.get_attribute("data-clicked") == "yes"
+        result = await session.aexecute(type="fill", id="I1", value="Replacement notes")
+        assert result.success, result.message
+        assert await body.inner_text() == "Replacement notes"
+
+
+@pytest.mark.asyncio
+async def test_indented_text_is_pasted_to_the_handler_of_a_field_in_a_shadow_root() -> None:
+    # the document's active element is the shadow host: the paste goes to the focused field in the shadow root
+    field = '<textarea aria-label="Code" onpaste="event.preventDefault(); this.dataset.pasted = event.clipboardData.getData(`text/plain`);">old</textarea>'
+    page_html = f"""<div id="host"></div><script>
+      document.getElementById("host").attachShadow({{mode: "open"}}).innerHTML = {field!r};</script>"""
+    code = "\tdef f():\n\t\treturn 1"
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(f"data:text/html,{quote(page_html)}")
+        _ = await session.aobserve()
+        result = await session.aexecute(type="fill", id="I1", value=code)
+        assert result.success, result.message
+        textarea = page.locator("[aria-label=Code]")
+        assert await textarea.get_attribute("data-pasted") == code
+        assert await textarea.input_value() == ""

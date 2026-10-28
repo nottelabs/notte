@@ -1,9 +1,13 @@
 import asyncio
+import json
 import re
 import time
 from collections.abc import Awaitable, Callable
 from contextlib import suppress
-from typing import Literal
+from dataclasses import dataclass, field
+from typing import Literal, cast
+from uuid import uuid4
+from weakref import WeakKeyDictionary
 
 from notte_core.actions import (
     BaseAction,
@@ -53,7 +57,16 @@ from notte_core.storage import BaseStorage
 from notte_browser.captcha import solve_captcha
 from notte_browser.dom.locate import locate_element, selectors_through_shadow_dom
 from notte_browser.dom.parsing import parse_dom
-from notte_browser.driver import ElementHandle, Error, FileChooser, Frame, JSHandle, Locator
+from notte_browser.driver import (
+    ElementHandle,
+    Error,
+    FileChooser,
+    Frame,
+    JSHandle,
+    Locator,
+    Page,
+    evaluate_handle_in_main_world,
+)
 from notte_browser.errors import (
     InvalidLocatorRuntimeError,
     NoHistoryEntryError,
@@ -73,6 +86,27 @@ _IS_DISABLED = script("is_disabled.js")
 _PASTE_TEXT = script("paste_text.js")
 # Page-side implementation: js/file_input_clicks.js
 _FILE_INPUT_CLICKS = script("file_input_clicks.js")
+_CLICK_INPUT = script("click_input.js")
+# How long a click waits for the report of its input after the driver returned (s). A page listener that stops
+# `pointerdown` before the click's own keeps it from ever coming.
+_CLICK_INPUT_REPORT_S = 1.0
+
+
+@dataclass
+class _ClickInputBinding:
+    name: str = field(default_factory=lambda: f"__notte_click_{uuid4().hex}")
+    callbacks: dict[str, Callable[[], None]] = field(default_factory=dict)
+
+    def notify(self, token: str) -> None:
+        if type(token) is not str:
+            return
+        callback = self.callbacks.get(token)
+        if callback is not None:
+            callback()
+
+
+# A binding lasts as long as its page; only the active action callbacks and input listeners are temporary.
+_CLICK_INPUT_BINDINGS: WeakKeyDictionary[Page, _ClickInputBinding] = WeakKeyDictionary()
 
 
 def text_contains_tabs(text: str) -> bool:
@@ -173,6 +207,12 @@ def _scroll_context_disappeared(frame: Frame, error: Error) -> bool:
 
 # Page-side implementation: js/move_caret_to_end.js
 _MOVE_CARET_TO_END = script("move_caret_to_end.js")
+
+# Page-side implementation: js/focus_editing_host.js
+_FOCUS_EDITING_HOST = script("focus_editing_host.js")
+
+# Page-side implementation: js/select_contents.js
+_SELECT_CONTENTS = script("select_contents.js")
 
 _IS_TEXT_FORM_CONTROL = "(el) => el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement"
 
@@ -520,6 +560,14 @@ def _settled_goto(action: GotoAction) -> bool:
     return action.wait_until in (None, "load")
 
 
+def waits_for_reaction(action: BaseAction) -> bool:
+    """Whether `execute` waits for the page's reaction to `action` whatever it is (`_settle`). After the other
+    actions, it waits only for a navigation they started."""
+    return isinstance(action, (ClickAction, PressKeyAction, GoBackAction, GoForwardAction, ReloadAction)) or (
+        isinstance(action, InteractionAction) and action.press_enter is True
+    )
+
+
 async def _settle(
     settle: PageSettle, action: BaseAction, url: str, *, verbose: bool, new_document: bool = False
 ) -> None:
@@ -657,6 +705,8 @@ async def execute_interaction_action(
     *,
     storage: BaseStorage | None = None,
     verbose: bool = False,
+    before_click: Callable[[Locator], Awaitable[Callable[[ElementHandle], Awaitable[None]] | None]] | None = None,
+    after_click: Callable[[bool], Awaitable[None]] | None = None,
 ) -> bool:
     """Interact with an element within `action.timeout`.
 
@@ -667,12 +717,38 @@ async def execute_interaction_action(
         raise ValueError(f"Selector is required for {action.name()}")
     deadline = asyncio.get_running_loop().time() + action.timeout / 1000
     scope = asyncio.timeout_at(deadline)
+    clicked_page = window.page if after_click is not None else None
+    closed_error: Error | None = None
     try:
         async with scope:
-            await _interact(window, action, _ActionBudget(deadline), prev_snapshot, storage=storage, verbose=verbose)
+            try:
+                await _interact(
+                    window,
+                    action,
+                    _ActionBudget(deadline),
+                    prev_snapshot,
+                    storage=storage,
+                    verbose=verbose,
+                    before_click=before_click,
+                )
+            except Error as error:
+                if (
+                    after_click is not None
+                    and clicked_page is not None
+                    and clicked_page.is_closed()
+                    and "Target page, context or browser has been closed" in str(error)
+                    and any(not candidate.is_closed() for candidate in clicked_page.context.pages)
+                ):
+                    closed_error = error
+                    await after_click(False)
+                raise
+            if after_click is not None:
+                await after_click(True)
     except TimeoutError as e:
         if not scope.expired():
             raise
+        if closed_error is not None:
+            raise closed_error from e
         raise NotteTimeoutError(message=f"Action timed out after {action.timeout}ms") from e
     return True
 
@@ -757,6 +833,7 @@ async def _interact(
     *,
     storage: BaseStorage | None = None,
     verbose: bool = False,
+    before_click: Callable[[Locator], Awaitable[Callable[[ElementHandle], Awaitable[None]] | None]] | None = None,
 ) -> None:
     assert action.selectors is not None
     # locate element (possibly in iframe)
@@ -771,14 +848,32 @@ async def _interact(
             )
             if is_disabled:
                 raise ActionExecutionError(action.id, window.page.url, reason="Element is disabled")
-            try:
-                # hold back part of the budget for the JS click fallback
-                await locator.click(timeout=budget.remaining_ms(keep_ms=action.timeout / 5))
-            except PlaywrightTimeoutError as e:
-                logger.warning(f"Failed to click on element: {e}, fallback to js click")
-                await locator.evaluate("(el) => el.click()", timeout=budget.remaining_ms())
+            # the JS click that reports its input, when the click's input is tracked
+            js_click_with_input = None if before_click is None else await before_click(locator)
+            # An image-map area has no box: its JS click follows the link without actionability waits.
+            js_click = await locator.evaluate("(el) => el.localName === 'area'", timeout=budget.remaining_ms())
+            if not js_click:
+                try:
+                    # Hold back part of the budget for the JS fallback. Navigation belongs to PageSettle,
+                    # including a response that has not committed before the interaction deadline.
+                    await locator.click(timeout=budget.remaining_ms(keep_ms=action.timeout / 5), no_wait_after=True)
+                except PlaywrightTimeoutError as e:
+                    logger.warning(f"Failed to click on element: {e}, fallback to js click")
+                    js_click = True
+            if js_click:
+                if js_click_with_input is None:
+                    await locator.evaluate("(el) => el.click()", timeout=budget.remaining_ms())
+                else:
+                    element = await locator.element_handle(timeout=budget.remaining_ms())
+                    assert element is not None
+                    try:
+                        await js_click_with_input(element)
+                    finally:
+                        with suppress(Error):
+                            await element.dispose()
 
         case FillAction(value=value):
+            in_editing_host: bool = await locator.evaluate(_FOCUS_EDITING_HOST, timeout=budget.remaining_ms())
             slider = await locator.evaluate(_SLIDER_VALUE, timeout=budget.remaining_ms())
             if slider is not None:
                 await _move_slider(window, locator, get_str_value(value), slider, budget)
@@ -789,16 +884,16 @@ async def _interact(
                     )
                 await locator.focus(timeout=budget.remaining_ms())
 
-                if action.clear_before_fill:
+                if action.clear_before_fill and in_editing_host:
+                    # select-all would select the whole host: the other blocks of the editor too
+                    await locator.evaluate(_SELECT_CONTENTS, timeout=budget.remaining_ms())
+                elif action.clear_before_fill:
                     await _clear_focused_field(window)
                 else:
                     await locator.evaluate(_MOVE_CARET_TO_END, timeout=budget.remaining_ms())
 
                 # Use isolated clipboard variable instead of system clipboard
-                await window.page.evaluate(
-                    _PASTE_TEXT,
-                    get_str_value(value),
-                )
+                await locator.evaluate(_PASTE_TEXT, get_str_value(value), timeout=budget.remaining_ms())
 
                 await window.short_wait()
             elif action.clear_before_fill:
@@ -919,6 +1014,7 @@ async def _execute(
     page = window.page
     context = page.context
     tabs = list(context.pages)
+    opener = await page.opener() if isinstance(action, ClickAction) else None
     url = page.url
     # a tab opened once the settle is over is switched to by the next observation
     await window.watch_new_tabs(_can_create_tab(action))
@@ -932,6 +1028,94 @@ async def _execute(
         if _settles(action)
         else None
     )
+    existing_settles: dict[Page, PageSettle] = {}
+    click_input_times: list[float] = []
+    click_input_received = asyncio.Event()
+    click_inputs: list[JSHandle] = []
+    click_bindings: list[tuple[_ClickInputBinding, str]] = []
+    # the frame whose document reports the click's input, and whether that document was replaced since
+    click_frames: list[Frame] = []
+    click_document_replaced = False
+
+    def click_frame_navigated(frame: Frame) -> None:
+        nonlocal click_document_replaced
+        if frame in click_frames:
+            click_document_replaced = True
+
+    def record_click_input() -> None:
+        if not click_input_times:
+            click_input_times.append(time.perf_counter())
+        click_input_received.set()
+
+    async def await_click_input(returned: bool) -> None:
+        """Until the click's input is reported. When the driver `returned` from the click, its input came by then."""
+        if not click_inputs:
+            return
+        # a lost document does not prove a failed click happened
+        if returned and click_document_replaced and not click_input_received.is_set():
+            try:
+                # a URL change within the document keeps its listener
+                _ = await click_inputs[-1].evaluate("() => true")
+            except Error:
+                # The listener went with its document, the click landed in the next one: it came at the latest now
+                record_click_input()
+        with suppress(TimeoutError):
+            async with asyncio.timeout(_CLICK_INPUT_REPORT_S):
+                _ = await click_input_received.wait()
+        if returned and not click_input_received.is_set():
+            # the page kept the input from its listener
+            record_click_input()
+
+    async def track_existing_tabs(locator: Locator) -> Callable[[ElementHandle], Awaitable[None]] | None:
+        # Keep requests started while click() waits, but select a replacement only from navigation after input.
+        existing_settles.update({tab: PageSettle(tab, None, tabs=False) for tab in tabs if tab is not page})
+        if not existing_settles:
+            return None
+        binding = _CLICK_INPUT_BINDINGS.get(page)
+        if binding is None:
+            binding = _ClickInputBinding()
+            _ = await page.expose_function(binding.name, binding.notify)  # pyright: ignore[reportUnknownMemberType]
+            _CLICK_INPUT_BINDINGS[page] = binding
+        token = uuid4().hex
+        binding.callbacks[token] = record_click_input
+        click_bindings.append((binding, token))
+        element = await locator.element_handle()
+        assert element is not None
+        try:
+            frame = await element.owner_frame()
+        finally:
+            await element.dispose()
+        if frame is None:
+            raise Error("Click target is no longer attached to a frame")
+        click_frames.append(frame)
+        page.on("framenavigated", click_frame_navigated)
+
+        async def report_input(frame: Frame) -> JSHandle:
+            # the binding outlives the documents of its page, the listener stays in the document of `frame`
+            click_input = cast(
+                JSHandle,
+                await evaluate_handle_in_main_world(
+                    frame, f"() => ({_CLICK_INPUT})({json.dumps(binding.name)}, {json.dumps(token)})"
+                ),
+            )
+            click_inputs.append(click_input)
+            return click_input
+
+        click_input = await report_input(frame)
+
+        async def js_click_with_input(element: ElementHandle) -> None:
+            reporter = click_input
+            if click_document_replaced:
+                # the listener went with its document: report from the element's current one
+                current = await element.owner_frame()
+                if current is None:
+                    raise Error("Click target is no longer attached to a frame")
+                reporter = await report_input(current)
+            # The JS path emits no trusted pointer event. Mark its input in the same task as the click.
+            await reporter.evaluate("async (input, el) => { await input.mark(); el.click(); }", element)
+
+        return js_click_with_input
+
     retval = True
     closed_during_click: Error | None = None
     try:
@@ -939,15 +1123,22 @@ async def _execute(
             case InteractionAction():
                 try:
                     retval = await execute_interaction_action(
-                        window, action, prev_snapshot, storage=storage, verbose=verbose
+                        window,
+                        action,
+                        prev_snapshot,
+                        storage=storage,
+                        verbose=verbose,
+                        before_click=track_existing_tabs if isinstance(action, ClickAction) else None,
+                        after_click=await_click_input if isinstance(action, ClickAction) else None,
                     )
                 except Error as error:
                     # A click handler can close its own tab before the driver acknowledges the click. Continue
-                    # only if the action produces a live replacement; otherwise preserve the original error.
+                    # only if another usable tab survives; otherwise preserve the original error.
                     if (
                         not isinstance(action, ClickAction)
                         or not page.is_closed()
                         or "Target page, context or browser has been closed" not in str(error)
+                        or (click_inputs and not click_input_received.is_set())
                     ):
                         raise
                     closed_during_click = error
@@ -970,6 +1161,8 @@ async def _execute(
         if settle is not None:
             if not isinstance(action, GotoAction):
                 settle.acted()
+                for existing in existing_settles.values():
+                    existing.acted()
             # a goto's budget counts from its start: its commit and the wait for its page share `timeout_goto_ms`
             if retval:
                 # A navigation response confirms a new document; equivalent hash-route URLs return None.
@@ -977,7 +1170,7 @@ async def _execute(
                 new_document = isinstance(action, GotoAction) and action.url != url and window.goto_response is not None
                 await _settle(settle, action, url, verbose=verbose, new_document=new_document)
         if closed_during_click is not None and not any(
-            tab not in tabs and not tab.is_closed() for tab in context.pages
+            tab is not page and not tab.is_closed() for tab in context.pages
         ):
             raise closed_during_click
         if isinstance(action, (GotoAction, GotoNewTabAction)) and settle is None:
@@ -989,10 +1182,25 @@ async def _execute(
         opened = any(tab not in tabs for tab in context.pages)
         if _can_create_tab(action) and (len(context.pages) != len(tabs) or opened) and len(context.pages) > 0:
             last = context.pages[-1]
+            if isinstance(action, ClickAction) and page.is_closed() and not opened:
+                navigated = [
+                    candidate
+                    for candidate, tracking in existing_settles.items()
+                    if tracking.navigation_requested_after(click_input_times[0] if click_input_times else None)
+                    and not candidate.is_closed()
+                ]
+                if len(navigated) == 1:
+                    last = navigated[0]
+                elif opener is not None and not opener.is_closed():
+                    last = opener
             # Selection can happen automatically when the opener closes. Readiness is independent of selection.
             # A goto_new_tab already loaded its own new page.
-            if last not in tabs and not isinstance(action, GotoNewTabAction):
-                tab = settle.tab(last) if settle is not None else PageSettle(last, None, tabs=False)
+            if (last not in tabs or (isinstance(action, ClickAction) and page.is_closed())) and not isinstance(
+                action, GotoNewTabAction
+            ):
+                tab = existing_settles.pop(last, None)
+                if tab is None:
+                    tab = settle.tab(last) if settle is not None else PageSettle(last, None, tabs=False)
                 try:
                     await tab.wait(document="requests")
                 finally:
@@ -1010,7 +1218,30 @@ async def _execute(
                             raise
                     else:
                         window.page = last
+        if closed_during_click is not None:
+            assert isinstance(action, ClickAction)
+            # is_closed() alone can lag a disconnect. Require a working driver round trip on the selected
+            # replacement, including an existing opener, before accepting the click that closed its tab.
+            replacement = window.page
+            try:
+                if replacement is page or replacement.is_closed():
+                    raise closed_during_click
+                async with asyncio.timeout(action.timeout / 1000):
+                    _ = await replacement.evaluate("() => document.readyState")
+            except (Error, TimeoutError):
+                raise closed_during_click
     finally:
+        for click_input in click_inputs:
+            with suppress(Error):
+                await click_input.evaluate("input => input.dispose()")
+            with suppress(Error):
+                await click_input.dispose()
+        for binding, token in click_bindings:
+            _ = binding.callbacks.pop(token, None)
+        if click_frames:
+            _ = page.remove_listener("framenavigated", click_frame_navigated)
+        for existing in existing_settles.values():
+            await existing.close()
         if settle is not None:
             await settle.close()
         if window.page is not page:

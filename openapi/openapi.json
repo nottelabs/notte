@@ -3,7 +3,7 @@
   "info": {
     "title": "Notte API",
     "description": "Notte API is a REST API that allows you to interact with Notte. It is used to create cloud browser sessions, scrape webpages, and run web ai agents to act on your behalf on the internet.",
-    "version": "1.10.1",
+    "version": "1.10.2",
     "x-logo": {
       "url": "https://www.notte.cc/images/logo/logo-white.png"
     }
@@ -9273,7 +9273,7 @@
           },
           {
             "lang": "Curl",
-            "source": "curl -X POST \"https://api.notte.cc/scrape\" \\\n  -H \"Authorization: Bearer $NOTTE_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"url\": \"https://www.google.com\", \"only_main_content\": true}'",
+            "source": "curl -X POST \"https://api.notte.cc/scrape\" \\\n  -H \"Authorization: Bearer $NOTTE_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"url\": \"https://shop.notte.cc/\", \"only_main_content\": true}'",
             "label": "curl"
           }
         ]
@@ -16669,6 +16669,18 @@
             "description": "SDK waiting preference. The API always verifies inline and returns authenticating when background login is needed; SDKs implement waiting through readiness polling.",
             "default": true
           },
+          "record_session": {
+            "type": "boolean",
+            "title": "Record Session",
+            "description": "Save session replay. False permanently disables saved replay; Live View remains available.",
+            "default": true
+          },
+          "log_session": {
+            "type": "boolean",
+            "title": "Log Session",
+            "description": "Save browser session logs. False permanently disables saved logs, without disabling metering.",
+            "default": true
+          },
           "auth_retry": {
             "type": "integer",
             "maximum": 2.0,
@@ -22117,6 +22129,22 @@
               }
             ],
             "title": "Pressed"
+          },
+          "sort": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "ascending",
+                  "descending",
+                  "other"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sort"
           }
         },
         "type": "object",
@@ -24716,6 +24744,18 @@
             "description": "Whether to wait for Managed Auth before returning the session. Defaults to true. When true, authentication failure or timeout fails session creation; when false, authentication continues in the background after the browser is ready.",
             "default": true
           },
+          "record_session": {
+            "type": "boolean",
+            "title": "Record Session",
+            "description": "Save session replay. False permanently disables saved replay; Live View remains available.",
+            "default": true
+          },
+          "log_session": {
+            "type": "boolean",
+            "title": "Log Session",
+            "description": "Save browser session logs. False permanently disables saved logs, without disabling metering.",
+            "default": true
+          },
           "auth_retry": {
             "type": "integer",
             "maximum": 2.0,
@@ -25042,7 +25082,7 @@
           "version": {
             "type": "string",
             "title": "Version",
-            "default": "1.10.1"
+            "default": "1.10.2"
           },
           "description": {
             "type": "string",
@@ -27965,8 +28005,7 @@
                 "exclusiveMinimum": 0.0
               },
               {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,10}|(?=[\\d.]{1,19}0*$)\\d{0,10}\\.\\d{0,8}0*$)"
+                "type": "string"
               }
             ],
             "title": "Amount",
@@ -28035,7 +28074,6 @@
           },
           "amount": {
             "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Amount",
             "description": "Amount in currency units, serialized as an exact decimal string."
           },
@@ -29813,7 +29851,8 @@
               "processing",
               "unavailable",
               "failed",
-              "unknown"
+              "unknown",
+              "disabled"
             ],
             "title": "Replay Status"
           },
@@ -31488,6 +31527,18 @@
       },
       "SessionResponse": {
         "properties": {
+          "record_session": {
+            "type": "boolean",
+            "title": "Record Session",
+            "description": "Whether saved session replay is enabled. Defaults to true.",
+            "default": true
+          },
+          "log_session": {
+            "type": "boolean",
+            "title": "Log Session",
+            "description": "Whether saved browser session logs are enabled. Defaults to true.",
+            "default": true
+          },
           "session_id": {
             "type": "string",
             "title": "Session Id",

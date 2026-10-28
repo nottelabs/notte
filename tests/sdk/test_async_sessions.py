@@ -27,6 +27,7 @@ from notte_sdk.endpoints.base import AsyncBaseClient, BaseClient, NotteEndpoint
 from notte_sdk.endpoints.files import AsyncRemoteFileStorage, RemoteFileStorage
 from notte_sdk.endpoints.page import AsyncPageClient, PageClient
 from notte_sdk.endpoints.sessions import AsyncRemoteSession, AsyncSessionsClient, RemoteSession, SessionsClient
+from notte_sdk.errors import NotteAPIError
 from notte_sdk.types import CaptchaStatus, ExecutionResultResponse
 from pydantic import BaseModel
 
@@ -36,12 +37,6 @@ from tests.sdk.test_generated_endpoints import PROFILE, SERVER
 
 # ---------------------------------------------------------------------------
 # Same methods, same signatures
-
-# `RemoteSession` members the async session does not have, and why.
-SYNC_ONLY = {
-    "apage": "the async session's `page` is the async Playwright page",
-    "await_for_auth": "the async session's `wait_for_auth` is a coroutine",
-}
 
 
 def public_members(cls: type) -> dict[str, Any]:
@@ -67,7 +62,7 @@ def same_signature(sync: Callable[..., Any], async_: Callable[..., Any]) -> None
 def test_async_session_has_the_sync_session_methods() -> None:
     sync_members = public_members(RemoteSession)
     async_members = public_members(AsyncRemoteSession)
-    assert set(async_members) == set(sync_members) - set(SYNC_ONLY)
+    assert set(async_members) == set(sync_members)
     for name, async_member in async_members.items():
         sync_member = sync_members[name]
         if name == "page":
@@ -78,9 +73,12 @@ def test_async_session_has_the_sync_session_methods() -> None:
             assert inspect.signature(async_member.fget) == inspect.signature(sync_member.fget), name
             continue
         same_signature(sync_member, async_member)
-    # The pinned exceptions are what the sync session offers to async code.
-    assert inspect.iscoroutinefunction(RemoteSession.await_for_auth)
-    assert inspect.iscoroutinefunction(RemoteSession.apage.fget)
+    assert not hasattr(RemoteSession, "apage")
+    assert not hasattr(RemoteSession, "await_for_auth")
+    assert not hasattr(RemoteSession, "__aenter__")
+    assert not hasattr(RemoteSession, "__aexit__")
+    assert not hasattr(AsyncRemoteSession, "__enter__")
+    assert not hasattr(AsyncRemoteSession, "__exit__")
 
 
 def test_async_session_constructor_takes_the_sync_arguments() -> None:
@@ -420,6 +418,78 @@ def test_captcha_polling_is_the_same(monkeypatch: pytest.MonkeyPatch) -> None:
     assert exchange.outcome[0] == "ok" and len(exchange.sleeps) == 3
 
 
+@pytest.mark.parametrize("stopped", [True, False])
+def test_replay_uses_known_stop_state_when_server_waits_for_close(
+    monkeypatch: pytest.MonkeyPatch, stopped: bool
+) -> None:
+    async def scenario(session: AsyncRemoteSession):
+        await session.start()
+        if stopped:
+            await session.stop()
+        return await session.replay(poll_interval=2)
+
+    routes = {
+        **SESSION_ROUTES,
+        ("GET", "/sessions/s-1/replay"): [
+            (404, {"replay_status": "waiting_for_session", "retryable": False, "detail": "Close the session"}),
+            (200, {"mp4_url": "https://cdn/r.mp4"}),
+        ],
+    }
+    exchange = same_on_both(monkeypatch, routes, scenario)
+    if stopped:
+        assert exchange.outcome[0] == "ok"
+        assert exchange.sleeps == [2]
+    else:
+        assert exchange.outcome[1] is ValueError
+        assert exchange.sleeps == []
+
+
+@pytest.mark.parametrize("state", ["closed", "resetting", "replaced"])
+def test_replay_observes_stop_or_reset_during_request(monkeypatch: pytest.MonkeyPatch, state: str) -> None:
+    session: RemoteSession | AsyncRemoteSession | None = None
+    handle = router(SESSION_ROUTES)
+    replay_calls = 0
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        nonlocal replay_calls
+        if request.url.path.endswith("/replay"):
+            replay_calls += 1
+            if replay_calls == 1:
+                assert session is not None and session.response is not None
+                # Complete stop/reset state transitions while the old replay is in flight.
+                if state == "resetting":
+                    session.response = None
+                elif state == "replaced":
+                    session.response = session.response.model_copy(update={"session_id": "s-2", "status": "active"})
+                else:
+                    session.response = session.response.model_copy(update={"status": "closed"})
+                return httpx.Response(404, json={"replay_status": "waiting_for_session", "retryable": False})
+            return httpx.Response(200, json={"mp4_url": "https://cdn/r.mp4"})
+        return handle(request)
+
+    def sync_scenario(client: NotteClient):
+        nonlocal session
+        session = client.Session()
+        session.start()
+        return session.replay(poll_interval=2)
+
+    async def async_scenario(client: AsyncNotteClient):
+        nonlocal session
+        session = client.Session()
+        await session.start()
+        return await session.replay(poll_interval=2)
+
+    expected = exchange_sync(monkeypatch, respond, sync_scenario)
+    replay_calls = 0
+    actual = asyncio.run(exchange_async(monkeypatch, respond, async_scenario))
+    assert actual == expected
+    assert expected.outcome[0] == "ok"
+    assert expected.sleeps == [2]
+    replay_calls_seen = [call for call in expected.calls if call.url.endswith("/replay")]
+    assert len(replay_calls_seen) == 2
+    assert all(call.url.endswith("/sessions/s-1/replay") for call in replay_calls_seen)
+
+
 def test_replay_waits_and_fails_the_same(monkeypatch: pytest.MonkeyPatch) -> None:
     async def scenario(session: Any) -> Any:
         await session.start()
@@ -449,9 +519,11 @@ def test_entry_that_fails_after_creating_the_session_stops_it(
         async with session:
             pytest.fail("the body must not run")
 
-    expected = exchange_sync(
-        monkeypatch, router(routes), lambda client: asyncio.run(enter(client.Session(cookie_file=next(cookie_files))))
-    )
+    def sync_enter(client: NotteClient) -> None:
+        with client.Session(cookie_file=next(cookie_files)):
+            pytest.fail("the body must not run")
+
+    expected = exchange_sync(monkeypatch, router(routes), sync_enter)
     actual = asyncio.run(
         exchange_async(
             monkeypatch, router(routes), lambda client: enter(client.Session(cookie_file=next(cookie_files)))
@@ -466,7 +538,7 @@ def test_entry_that_fails_after_creating_the_session_stops_it(
     assert expected.calls[-1].params == {"close_reason": "error"}
 
 
-@pytest.mark.parametrize("entry", ["sync with", "sync async with", "async with"])
+@pytest.mark.parametrize("entry", ["sync with", "async with"])
 def test_a_failed_browser_close_still_stops_the_playwright_driver(monkeypatch: pytest.MonkeyPatch, entry: str) -> None:
     # The browser fails to close: the local driver process is stopped anyway, then the session.
     asynchronous = entry != "sync with"
@@ -492,10 +564,6 @@ def test_a_failed_browser_close_still_stops_the_playwright_driver(monkeypatch: p
         exchange = asyncio.run(
             exchange_async(monkeypatch, router(SESSION_ROUTES), lambda client: async_with(client.Session()))
         )
-    elif entry == "sync async with":
-        exchange = exchange_sync(
-            monkeypatch, router(SESSION_ROUTES), lambda client: asyncio.run(async_with(client.Session()))
-        )
     else:
         exchange = exchange_sync(monkeypatch, router(SESSION_ROUTES), sync_with)
     assert exchange.outcome[0] == "ok"
@@ -503,22 +571,7 @@ def test_a_failed_browser_close_still_stops_the_playwright_driver(monkeypatch: p
     assert (exchange.calls[-1].method, exchange.calls[-1].url.removeprefix(SERVER)) == STOP
 
 
-@pytest.mark.asyncio
-async def test_sync_session_async_exit_stops_off_the_event_loop() -> None:
-    # `RemoteSession.stop` blocks (cookie saving, the stop request): `__aexit__` runs it in a thread.
-    loop_thread = threading.get_ident()
-    stopped_in: list[int] = []
-    session = object.__new__(RemoteSession)
-    session._async_playwright_browser = None
-    session._async_playwright_context = None
-    session._async_playwright_page = None
-    session.stop = MagicMock(side_effect=lambda **_: stopped_in.append(threading.get_ident()))
-    await session.__aexit__(None, None, None)
-    session.stop.assert_called_once_with(close_reason="manual")
-    assert stopped_in != [loop_thread]
-
-
-@pytest.mark.parametrize("entry", ["sync with", "sync async with", "async with"])
+@pytest.mark.parametrize("entry", ["sync with", "async with"])
 def test_a_dead_playwright_driver_does_not_skip_the_stop(monkeypatch: pytest.MonkeyPatch, entry: str) -> None:
     # Closing the local Playwright connection fails: the remote session is stopped anyway, and the
     # block's own exception is the one raised.
@@ -548,10 +601,6 @@ def test_a_dead_playwright_driver_does_not_skip_the_stop(monkeypatch: pytest.Mon
         exchange = asyncio.run(
             exchange_async(monkeypatch, router(SESSION_ROUTES), lambda client: async_with(client.Session()))
         )
-    elif entry == "sync async with":
-        exchange = exchange_sync(
-            monkeypatch, router(SESSION_ROUTES), lambda client: asyncio.run(async_with(client.Session()))
-        )
     else:
         exchange = exchange_sync(monkeypatch, router(SESSION_ROUTES), sync_with)
     assert exchange.outcome[:2] == ("error", ValueError)
@@ -572,10 +621,10 @@ def test_rejected_entry_does_not_stop_an_existing_session(monkeypatch: pytest.Mo
     def sync_call(client: NotteClient) -> None:
         session = client.Session("s-1") if existing == "attached" else client.Session()
 
-        async def start() -> None:
+        if existing == "started":
             session.start()
-
-        asyncio.run(enter(session, start))
+        with session:
+            pytest.fail("the body must not run")
 
     async def async_call(client: AsyncNotteClient) -> None:
         session = client.Session("s-1") if existing == "attached" else client.Session()
@@ -589,9 +638,8 @@ def test_rejected_entry_does_not_stop_an_existing_session(monkeypatch: pytest.Mo
     assert sent == [("GET", "/sessions/s-1") if existing == "attached" else ("POST", "/sessions/start")]
 
 
-@pytest.mark.parametrize("asynchronous", [False, True])
 def test_cancelled_exit_still_closes_playwright_and_stops_the_session(
-    monkeypatch: pytest.MonkeyPatch, asynchronous: bool
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     # Cancelling while `__aexit__` closes the Playwright browser must not cut the cleanup short:
     # the driver is still stopped and the remote session too, then the cancellation is raised.
@@ -625,14 +673,9 @@ def test_cancelled_exit_still_closes_playwright_and_stops_the_session(
             ending = "cancelled"
         return [done_early, ending]
 
-    if asynchronous:
-        exchange = asyncio.run(
-            exchange_async(monkeypatch, router(SESSION_ROUTES), lambda client: scenario(client.Session()))
-        )
-    else:
-        exchange = exchange_sync(
-            monkeypatch, router(SESSION_ROUTES), lambda client: asyncio.run(scenario(client.Session()))
-        )
+    exchange = asyncio.run(
+        exchange_async(monkeypatch, router(SESSION_ROUTES), lambda client: scenario(client.Session()))
+    )
     assert exchange.outcome == ("ok", [False, "cancelled"])
     driver.stop.assert_awaited_once_with()
     assert (exchange.calls[-1].method, exchange.calls[-1].url.removeprefix(SERVER)) == STOP
@@ -650,7 +693,11 @@ def test_failed_authentication_in_async_with_sends_exactly_one_stop(monkeypatch:
         async with session:
             pytest.fail("the body must not run")
 
-    expected = exchange_sync(monkeypatch, router(routes), lambda client: asyncio.run(enter(client.Session())))
+    def sync_enter(client: NotteClient) -> None:
+        with client.Session():
+            pytest.fail("the body must not run")
+
+    expected = exchange_sync(monkeypatch, router(routes), sync_enter)
     actual = asyncio.run(exchange_async(monkeypatch, router(routes), lambda client: enter(client.Session())))
     assert actual == expected
     assert expected.outcome == ("error", RuntimeError, "Login failed")
@@ -679,8 +726,12 @@ def test_entry_does_not_stop_a_session_its_start_already_closed(asynchronous: bo
             pytest.fail("the body must not run")
 
     with pytest.raises(RuntimeError, match="Login failed"):
-        asyncio.run(enter())
-    session.start.assert_called_once_with(wait_for_authentication=False)
+        if asynchronous:
+            asyncio.run(enter())
+        else:
+            with session:
+                pytest.fail("the body must not run")
+    session.start.assert_called_once_with(**({"wait_for_authentication": False} if asynchronous else {}))
     session.stop.assert_not_called()
 
 
@@ -1161,3 +1212,29 @@ def test_request_file_is_the_same(
     assert expected.outcome[0] == ("ok" if answer[0] == 200 and output == "replay.mp4" else "error"), expected.outcome
     if expected.outcome[0] == "ok" and output:
         assert (tmp_path / "async" / output).read_bytes() == (tmp_path / "sync" / output).read_bytes() == answer[1]
+
+
+@pytest.mark.parametrize("retryable", [True, False])
+def test_disabled_replay_never_polls_on_sync_or_async_client(monkeypatch: pytest.MonkeyPatch, retryable: bool) -> None:
+    async def scenario(session):
+        await session.start()
+        await session.stop()
+        return await session.replay(poll_interval=2)
+
+    routes = {
+        **SESSION_ROUTES,
+        ("GET", "/sessions/s-1/replay"): [
+            (
+                404,
+                {
+                    "replay_status": "disabled",
+                    "retryable": retryable,
+                    "message": "Session recording was disabled at creation",
+                },
+            )
+        ],
+    }
+    exchange = same_on_both(monkeypatch, routes, scenario)
+    assert exchange.outcome[1] is NotteAPIError
+    assert exchange.sleeps == []
+    assert len([call for call in exchange.calls if call.url.endswith("/replay")]) == 1

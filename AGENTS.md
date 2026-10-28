@@ -25,9 +25,24 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
 - OpenRouter can send heartbeat frames while an LLM response is pending. HTTPX read
   timeouts reset per chunk; keep the total per-attempt deadline in `LLMEngine` so a
   pending response cannot run until pytest-timeout terminates an xdist worker.
+- Live CI prefers `NOTTE_API_KEY_CI_PY` over the legacy `NOTTE_API_KEY` secret.
+  Staging persona 403s naming the `CI/CD` workspace indicate a token/workspace
+  mismatch. Lucas must supply the workspace-matched `NOTTE_API_KEY_CI_PY`;
+  preserve the runtime checks rather than changing code to bypass those 403s.
 - `make test` is the offline gate. `make test-live` runs tests marked
   `staging` or `live` and needs `NOTTE_API_KEY`; set `NOTTE_API_URL` to point
   the SDK at a different API.
+- A click that opens a file chooser fails with `FileChooserOpenedError`.
+  Local `act()` maps either the raised error or failed execution result to
+  BLOCKED because it cannot supply a file; `tests/act/test_local_act.py` covers both modes.
+- A test that bounds how long a browser action took (`elapsed < ...`) is marked
+  `timing`. The parallel suites leave it out; `make test-timing` runs those
+  tests one at a time, in CI on the 3.11 leg. Next to parallel browsers, a
+  stalled CPU fails such a bound whatever the code does. A lower bound
+  (`elapsed >= ...`) cannot fail that way and needs no mark.
+- The compatible-dependency suite uses `pytest -n logical`, like the locked
+  offline suite. Running those browser tests serially can exhaust the Python
+  job's 20-minute budget after the full unit suite has passed.
 - CDP transport tests keep real staging sessions and connections but serve page
   fixtures through Patchright routes, so navigation and screenshot coverage does
   not depend on third-party sites loading.
@@ -48,19 +63,52 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
 - `BrowserWindow.page` can select a replacement automatically when its opener
   closes. Wait for a new tab independently of selection; its navigation request
   can also precede the context's `page` event.
+  Existing-tab recovery retains requests before click dispatch, but qualifies
+  replacement navigations against the notification of actual pointer input
+  (or the JS fallback click). Actionability waits can outlast background navigation;
+  Native clicks use `no_wait_after=True`: the action timeout bounds input, while
+  `PageSettle` waits for navigation even if its response has not committed.
+  Starting `Locator.click` is not the input boundary. The page binding reports
+  input before a handler closes the tab. Reuse one binding per page, clearing
+  action callbacks and input listeners after each action; a new binding per click
+  would retain callbacks in the driver's page registry.
+  Await input delivery inside the existing action timeout before settlement or
+  replacement selection, including closed-target acknowledgements. The JS click
+  fallback must await its input notification before invoking the handler.
+  Queue navigation attribution alongside input bindings: exposed callbacks run
+  as tasks, so immediate request timestamps can invert buffered event order.
+  Listener leak checks must prime the complete click path before their baseline:
+  the driver's injected utility installs its own persistent hit-target interceptor.
   A new tab's fetch can precede that event too. Retain active context requests
   while watching for tabs, then seed the new page's settle tracker; page listeners
   installed after its first script runs otherwise miss its content request.
-  Seed both new-tab trackers: `BrowserWindow` waits during observation, while
-  `PageSettle.tab()` waits during execution. An observation tracker alone does
-  not stop `execute()` from returning before an early tab request finishes.
   Use Python functions for event handlers: Patchright attaches handler metadata,
   so built-in callables such as `set.add` cannot be registered directly.
   The driver can report a closed target from the click that closes its opener;
   accept that click only when a live replacement appears, and wait for it.
+  Measure the post-close replacement wait from the page's close event. The click
+  can first wait for actionability or input delivery within its own action budget;
+  that work is outside the post-close grace period.
   When activating a tracked late tab, retain earlier tabs and their request trackers
   until selection succeeds. A tab closing during activation must not discard the
   surviving candidates or stop watching when none survive.
+  A closing popup can start requests on an already-existing tab. Track those
+  tabs before the click so the replacement wait retains their in-flight work.
+  A help popup can also close back to an existing opener. Wait for that survivor
+  and require a successful driver round trip before accepting a target-closed click;
+  cached page state alone does not prove the browser is still usable.
+  If another unrelated tab survives too, select the popup's actual live opener
+  when no new tab was created, and await that opener's tracked requests. A click
+  can instead navigate an existing named tab: prefer a single tracked main-frame
+  navigation before the opener, including reloads and navigation before commit.
+  A fragment navigation sends no request: its main-frame URL change counts as
+  the navigation. A target document replaced before the input drops its listener;
+  then the click's return is its input time, as when no report comes within
+  `_CLICK_INPUT_REPORT_S` (a page listener can stop `pointerdown` first). A
+  click that failed counts only a reported input; the JS fallback reports its
+  input from the element's current document before clicking. The click's own
+  tab settle seeds a new tab's tracker from the context's requests in flight,
+  as `BrowserWindow` does.
 - A new-document `goto` tracks requests before its commit and waits for the destination
   within one navigation budget. Do not wait on the old document's tracker first:
   a commit after the 3 s settle cap must still get its remaining load wait.
@@ -82,6 +130,10 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   `test-resources-lovat.vercel.app/upload_fixture.html` page, shared with file-storage
   tests. Assert its exact heading: an example.com rate-limit page can be scraped
   successfully while containing the wrong content for the extraction test.
+  Python checks install each example's locked published SDK before source validation;
+  adopting a new SDK API also requires updating its `pyproject.toml` and `uv.lock`.
+  Published SDKs 1.9.7 and 1.10.0 need `NOTTE_ENABLE_NEST_ASYNCIO=false` before import for
+  native asyncio on Python 3.15. The source SDK no longer applies that patch.
 - `evaluate_js` preserves RegExp results as JSON data (`{"r": {"p": source,
   "f": flags}}`), including complete patterns. Patchright 1.64.1 and Playwright
   1.64.0 compile native regex results into Python objects, so native evaluation is
@@ -90,6 +142,22 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   containers explicitly.
 
 ## DOM build script
+
+Act's inner-scroll discovery must retain an executable selector for each offered
+direction. Pass it to the scroll action so execution targets the discovered box,
+even when the mouse is over a different scroll box. Use native DOM accessors when
+building CSS paths across shadow hosts; form controls can clobber those properties.
+`tests/act/test_local_act.py` covers executed up/down scrolls in normal and reversed
+lists, both in the document and in open shadow roots.
+
+Act offers ARIA sliders and spinbuttons through `TYPE_TEXT`, using their live values
+and one shared numeric-typing instruction. Off-screen and disabled controls retain
+pressed, selected and expanded state in the decision text. The local driver omits
+`GO_BACK` when CDP history has no earlier page beyond the tab's blank start document.
+`tests/act/test_local_act.py` checks these contracts on actual browser pages.
+Disabled expanded controls can render `aria_expanded="true"` instead of a bare
+`expanded` flag; act reads that rendered attribute without treating false values
+or state words inside unrelated attribute values as true state.
 
 `packages/notte-browser/src/notte_browser/js/buildDomNode.js` reads elements through
 its helpers (`getAttribute(element, name)`, `childrenOf(element)`,
@@ -107,6 +175,22 @@ handler properties in the page world (the Playwright backend) evaluate
 Only an editing host gets the implicit `contenteditable` textbox role. Carry the
 host flag from the DOM script into both role classification and duplicate detection;
 editable descendants with their own click handlers must retain their click actions.
+The editable-body exception applies to direct block children by computed display,
+including `-webkit-box` and `flow-root list-item`; inline variants are not hosts.
+Without visible block hosts, expose the actual body as the textbox instead of
+dropping every editing action. Its inline content is not another editing host,
+and independent click handlers must still remain actionable.
+
+An image-map `<area>` has `display: none` and no box. The DOM script's
+`getBoundingClientRect`/`getClientRects` helpers give it the bounds of its shape on
+the visible `<img usemap>` of its `<map>` (`areaRect`; the one in view when several
+use the map), and `boxOf` gives that image. Its coords are in the CSS pixels of the
+image's box, not its natural size, and a transform scales them on screen.
+`isTopElement` hit-tests a grid of points of that box, because a polygon or a
+`default` area need not be hit at the center. Image maps are page content: read
+the images once per build, and never spread `coords` into a call.
+Playwright never finds an `<area>` visible, so a click action uses the element's own
+`click()`, which follows its `href`.
 
 Off-screen fixed text is unreachable only when its panel is fixed to the viewport.
 In Chromium, a fixed element's non-null `offsetParent` identifies a containing block
@@ -125,6 +209,8 @@ when their computed `position` is absolute or fixed.
 CDP listener hints must retain the inspected elements' identities through main-world
 handles. DOM marker attributes are copied by `cloneNode`, while event listeners are
 not, so an attribute bridge can incorrectly offer a clone as a clickable header.
+The clone regression injects its marker after listener inspection and asserts that
+both inspected headers were cloned; an observer alone does not exercise this race.
 
 Wrapper deduplication is covered by `tests/browser/test_dom_clickable_duplicates.py`.
 The payload's `clickHandler` only captures DOM handler attributes/properties, not
@@ -139,12 +225,49 @@ Within budget the digest covers the entire selection. Budget exhaustion also set
 even if fewer than 200 normalized characters were read. Traverse assigned slots without native
 recursive flattening so nested slot traversal shares the same node budget.
 
+Scroll clipping follows positioned ancestors too: normal-flow controls in an escaping popup escape
+with it. Fixed popups with a transformed containing block can still be clipped by that block;
+`tests/browser/test_dom_offscreen_controls.py` checks both against Chromium hit testing and clicks.
+Cache the escaped clippers from one composed-ancestor walk per element. Rewalking
+the chain for every scroll box makes observation cubic when sibling controls and
+scroll depth grow together; the browser regression counts ancestor reads instead of timing it.
+
+Off-screen controls use the scroll box's scaled inner bounds on both scrollable axes, and ancestor walks
+follow assigned slots before light-DOM parents and cross shadow roots to their hosts.
+Skip `display: contents` when caching clipping escapes: a boxless positioned wrapper
+does not let its normal-flow descendants escape a scroll box.
+A transformed scroll box can hit-test a control
+behind its border as the top element, so hit-testing alone cannot establish that
+it is in view. `tests/browser/test_dom_offscreen_controls.py` covers these cases.
+
 Editor hit testing and uncovered-area probes share the editor box clipped to the
 viewport and overflow ancestors, including ancestors outside its shadow root. Keep
 `tests/browser/test_dom_contenteditable.py` and `test_dom_covered_controls.py` passing
 together: probing the original editor box loses editors cut by a scroll panel or the fold.
 
+Draggable elements can also have real click behavior. Patchright's isolated
+evaluation cannot see a page-assigned `.onclick` property, so do not remove
+their cursor-based click actions to represent unsupported dragging. Carry the
+explicit HTML `draggable` state into act decisions and freshness checks instead;
+`tests/act/test_drag_cursor.py` covers click controls and drag capability disclosure.
+
+Editing hosts use the center of their visible portion for both hit testing and off-screen
+classification. Intersect only axes that clip, using the scaled inner bounds across shadow
+hosts, and respect positioned popup escapes; a full-box center can be outside while the
+editor still accepts a fill. `tests/browser/test_dom_contenteditable.py` covers this integration.
+
 ## Public API
+
+- Jev route selection does not require the optional LLM field writer. Incomplete
+  `NOTTE_LLM_*` settings leave Jev available without a writer; an LLM decider
+  still reports invalid endpoint configuration.
+- Cloud SDK resources follow their client: sync client resources have sync I/O;
+  async client resources have async I/O. Cloud vaults/personas used by a local
+  browser session must come from `AsyncNotteClient` on that session's event loop.
+- Cloud SDK sessions follow their client: `NotteClient.Session()` uses `with`,
+  sync operations, and `session.page`; `AsyncNotteClient.Session()` uses `async with`,
+  async operations, and `await session.page`. The sync session has no async context
+  manager, `apage`, or `await_for_auth`.
 
 - Don't remove or rename public methods without a deprecation first: keep the
   old name working and emit a `DeprecationWarning` (see `generate_cookies` in
@@ -160,6 +283,14 @@ even after `>>`). The XPath of an element in a shadow root restarts there, so th
 observed CSS path is what finds it: `dom/builder.py` builds it on from the host's
 (`html > body > my-form > my-field:nth-of-type(2) > input`), as Playwright's `>`
 goes from a host to the top elements of its shadow root.
+
+That `>` also goes to the host's light children, so a light child and a top
+shadow child of the same tag have the same CSS path. `dom/locate.py` then picks,
+among the CSS matches, the element the XPath chain of `selectors_through_shadow_dom`
+leads to (`js/shadow_chain_index.js` walks it through each `shadowRoot`), even
+when there is one match: a match the chain does not reach is rejected. It never
+passes a chain that enters a shadow root to Playwright's XPath engine, which would
+find the host's light child instead.
 
 ## HTTP transport
 
@@ -186,13 +317,23 @@ in a thread first). `tests/sdk/test_async_functions_files.py` checks this for fu
 
 ## Generated docs
 
+The Sphinx build-finished hook corrects `Answers.usage`: sphinx-mintlify currently marks its
+`default_factory` field required. Keep the generated reference aligned with the optional model field.
+
 After changing `packages/notte-sdk/src/`, run `make docs-sdk` (the
 `docs-sdk-generate` pre-commit hook runs the same target) and commit the
 generated files. `make docs-check` fails if they are out of date.
 Manual SDK pages repeat constructor parameter fields; keep their type strings
 in sync with the generated `__init__.mdx` pages. Docs tests compare both.
+The `docs/package.json` override gives `@browserbasehq/stagehand` the docs' own
+`zod`. Stagehand pins an exact `zod`; two copies make `check_typescript.mjs`
+compare their schema types and run out of memory.
 
 ## OpenAPI refresh
+
+`SessionResponse.playwright_url` was added in #1363 before the API rollout.
+Until staging publishes it, retain its optional nullable schema during snapshot
+refreshes so regeneration preserves the existing Python and Node SDK field.
 
 Every operation in `openapi/openapi.json` needs an entry in
 `openapi/resources.json`: a resource method, or `exclude` with a reason. Both
@@ -201,6 +342,13 @@ add or remove entries in the same change as the spec. The scheduled
 `openapi-bump.yml` refresh opens a draft PR and fails when generation or the
 contract check fails. Fix it on `chore/bump-openapi`. Scheduled runs leave
 that PR alone once it has manual commits.
+
+OpenAPI refresh compares a temporary order-insensitive representation of JSON objects.
+When the incoming schema is otherwise unchanged, keep the committed snapshot byte for
+byte and still run the generators. Real schema changes retain the API's declared order.
+Never sort generator inputs, parameter lists or documentation to suppress drift.
+Intentional presentation-order changes are reviewed edits to the committed snapshot.
+`scripts/openapi_order.py` is comparison-only; all array positions remain significant.
 
 ## Sync facades
 

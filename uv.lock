@@ -2579,7 +2579,7 @@ wheels = [
 
 [[package]]
 name = "notte"
-version = "1.10.1.dev0"
+version = "1.10.2.dev0"
 source = { editable = "." }
 dependencies = [
     { name = "notte-browser" },
@@ -2668,7 +2668,7 @@ lint = [{ name = "ruff", specifier = "==0.11.10" }]
 
 [[package]]
 name = "notte-browser"
-version = "1.10.1.dev0"
+version = "1.10.2.dev0"
 source = { editable = "packages/notte-browser" }
 dependencies = [
     { name = "beautifulsoup4" },
@@ -2695,7 +2695,7 @@ requires-dist = [
 
 [[package]]
 name = "notte-core"
-version = "1.10.1.dev0"
+version = "1.10.2.dev0"
 source = { editable = "packages/notte-core" }
 dependencies = [
     { name = "loguru" },
@@ -2731,7 +2731,7 @@ provides-extras = ["profiling"]
 
 [[package]]
 name = "notte-llm"
-version = "1.10.1.dev0"
+version = "1.10.2.dev0"
 source = { editable = "packages/notte-llm" }
 dependencies = [
     { name = "chevron" },
@@ -2750,9 +2750,10 @@ requires-dist = [
 
 [[package]]
 name = "notte-sdk"
-version = "1.10.1.dev0"
+version = "1.10.2.dev0"
 source = { editable = "packages/notte-sdk" }
 dependencies = [
+    { name = "anyio" },
     { name = "cryptography" },
     { name = "httpcore" },
     { name = "httpx" },
@@ -2770,6 +2771,7 @@ playwright = [
 
 [package.metadata]
 requires-dist = [
+    { name = "anyio", specifier = ">=4.0,<5" },
     { name = "cryptography", specifier = ">=43.0.3" },
     { name = "httpcore", specifier = ">=1.0.0,<2" },
     { name = "httpx", specifier = ">=0.28.1,<1" },

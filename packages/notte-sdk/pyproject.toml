@@ -1,6 +1,6 @@
 [project]
 name = "notte-sdk"
-version = "1.10.1.dev0"
+version = "1.10.2.dev0"
 description = "Python SDK for the Notte API: cloud browser sessions, functions, vaults and personas"
 readme = "README.md"
 authors = [
@@ -15,12 +15,14 @@ dependencies = [
     "httpx>=0.28.1,<1",
     # The transport retries dropped TLS handshakes with an httpcore network backend.
     "httpcore>=1.0.0,<2",
+    # Imported directly for transport errors; httpcore's AnyIO backend needs 4.x.
+    "anyio>=4.0,<5",
     # Transitional: SDK transport errors also subclass the requests exceptions.
     "requests>=2.32.3,<3",
     # Generated Data API models validate email addresses.
     "pydantic[email]>=2.10.6,<3",
     "secretstorage>=3.3; sys_platform == 'linux'",
-    "notte-core==1.10.1.dev0",
+    "notte-core==1.10.2.dev0",
     "websockets>=13.1",
     # Only needed to decrypt encrypted function download URLs (imported lazily).
     "cryptography>=43.0.3",

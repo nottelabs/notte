@@ -12,6 +12,18 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type SessionResponse = {
     /**
+     * Record Session
+     *
+     * Whether saved session replay is enabled. Defaults to true.
+     */
+    record_session?: boolean;
+    /**
+     * Log Session
+     *
+     * Whether saved browser session logs are enabled. Defaults to true.
+     */
+    log_session?: boolean;
+    /**
      * Session Id
      *
      * The ID of the session (created or existing). Use this ID to interact with the session for the next operation.
@@ -170,6 +182,14 @@ export type SessionResponse = {
 ```
 
 ## Fields
+
+<ParamField body="record_session" type={"boolean | undefined"}>
+Whether saved session replay is enabled. Defaults to true.
+</ParamField>
+
+<ParamField body="log_session" type={"boolean | undefined"}>
+Whether saved browser session logs are enabled. Defaults to true.
+</ParamField>
 
 <ParamField body="session_id" type={"string"} required>
 The ID of the session (created or existing). Use this ID to interact with the session for the next operation.

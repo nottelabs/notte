@@ -47,7 +47,7 @@ from notte_browser.errors import (
     UnexpectedBrowserError,
 )
 from notte_browser.js import script
-from notte_browser.settle import PageSettle
+from notte_browser.settle import PageSettle, requests_of
 
 _PAGE_METADATA = script("page_metadata.js")
 
@@ -312,15 +312,7 @@ class BrowserWindow:
 
     def _new_tab(self, page: Page) -> None:
         # its first scripts can start requests before it is switched to
-        requests: list[Request] = []
-        for request in self._new_tab_requests:
-            try:
-                if request.frame.page is page:
-                    requests.append(request)
-            except PlaywrightError:
-                # A tab's first navigation request can precede its frame too; document readiness waits for it.
-                continue
-        self._new_tabs[page] = PageSettle(page, None, tabs=False, requests=requests)
+        self._new_tabs[page] = PageSettle(page, None, tabs=False, requests=requests_of(page, self._new_tab_requests))
 
     async def switch_to_new_tab(self, *, verbose: bool = False) -> None:
         """Switch to the last tab opened since the last action that is still open (`watch_new_tabs`), and wait for it

@@ -8,14 +8,14 @@ from pathlib import Path, PureWindowsPath
 from typing import IO, ClassVar, Generic, TypeVar, final
 
 from notte_core.cache import CacheDirectory, ensure_cache_directory
-from notte_core.storage import BaseStorage, FileInfo
+from notte_core.storage import FileInfo, StoragePaths
 from notte_core.telemetry import track_usage
 from typing_extensions import override
 
 from notte_sdk._generated import operations as api
 from notte_sdk._generated.resources import AsyncFilesOperations, FilesOperations
 from notte_sdk._requests import wire_request
-from notte_sdk._transport import athread, athread_finally, athread_owned, awrite_chunks
+from notte_sdk._transport import athread_finally, athread_owned, awrite_chunks
 from notte_sdk.endpoints.base import NotteEndpoint, UploadFile
 from notte_sdk.types import FileSource, SessionFile, SessionFilesPage
 
@@ -158,8 +158,7 @@ TFiles = TypeVar("TFiles", FileStorageClient, AsyncFileStorageClient)
 
 
 # What `RemoteFileStorage` and `AsyncRemoteFileStorage` share: the session binding, without I/O.
-# No docstring, so the public classes keep `BaseStorage`'s in the SDK reference.
-class _SessionStorage(BaseStorage, ABC, Generic[TFiles]):
+class _SessionStorage(StoragePaths, ABC, Generic[TFiles]):
     _CLIENT: ClassVar[str] = "FileStorageClient"
 
     def __init__(self, session_id: str | None = None, *, _client: TFiles | None = None):
@@ -202,6 +201,8 @@ class _SessionStorage(BaseStorage, ABC, Generic[TFiles]):
 
 
 class RemoteFileStorage(_SessionStorage[FileStorageClient]):
+    """Session-owned file storage with synchronous upload and download operations."""
+
     def for_session(self, session_id: str) -> RemoteFileStorage:
         """Bind this storage once, cloning it when another session already owns it."""
         return self if self._bind(session_id) else RemoteFileStorage(session_id, _client=self.client)
@@ -218,34 +219,36 @@ class RemoteFileStorage(_SessionStorage[FileStorageClient]):
     def delete(self, file_id: str) -> None:
         self.client.delete(self.session_id, file_id)
 
-    @override
-    async def get_file(self, name: str) -> str | None:
+    def get_file(self, name: str) -> str | None:
+        """Return the local path for an uploaded file, or None if it is absent."""
         assert self.upload_dir is not None
-        match = self._named(await athread(self.list, FileSource.USER_UPLOAD, limit=1000), name)
-        return None if match is None else await athread(self.download, match.id, self.upload_dir, force=True)
+        match = self._named(self.list(FileSource.USER_UPLOAD, limit=1000), name)
+        return None if match is None else self.download(match.id, self.upload_dir, force=True)
 
-    @override
-    async def set_file(self, path: str) -> bool:
-        _ = await athread(self.upload, path)
+    def set_file(self, path: str) -> bool:
+        """Upload a file from its local path."""
+        _ = self.upload(path)
         return True
 
-    @override
-    async def alist_uploaded_files(self) -> list[FileInfo]:
-        return [self._file_info(file) for file in (await athread(self.list, FileSource.USER_UPLOAD, limit=1000)).files]
+    def list_uploaded_files(self) -> list[FileInfo]:
+        """List uploaded files."""
+        return [self._file_info(file) for file in self.list(FileSource.USER_UPLOAD, limit=1000).files]
 
-    @override
-    async def alist_downloaded_files(self) -> list[FileInfo]:
-        return [
-            self._file_info(file) for file in (await athread(self.list, FileSource.SESSION_DOWNLOAD, limit=1000)).files
-        ]
+    def list_downloaded_files(self) -> list[FileInfo]:
+        """List browser downloads."""
+        return [self._file_info(file) for file in self.list(FileSource.SESSION_DOWNLOAD, limit=1000).files]
+
+    def instructions(self) -> str:
+        """Return LLM instructions listing available uploads."""
+        files = ", ".join(file.name for file in self.list_uploaded_files())
+        return f"(the following files are available at these paths: {files})" if files else ""
 
 
 class AsyncRemoteFileStorage(_SessionStorage[AsyncFileStorageClient]):
     """The async twin of `RemoteFileStorage`, from `AsyncNotteClient.FileStorage`.
 
-    `upload`, `list`, `download` and `delete` are coroutines. `BaseStorage`'s sync
-    `list_uploaded_files` and `list_downloaded_files` use a background event loop, which this
-    storage's client cannot use: await `alist_uploaded_files` and `alist_downloaded_files` instead.
+    All file operations are coroutines, including `list_uploaded_files` and
+    `list_downloaded_files`.
     """
 
     _CLIENT: ClassVar[str] = "AsyncFileStorageClient"
@@ -268,21 +271,30 @@ class AsyncRemoteFileStorage(_SessionStorage[AsyncFileStorageClient]):
     async def delete(self, file_id: str) -> None:
         await self.client.delete(self.session_id, file_id)
 
-    @override
     async def get_file(self, name: str) -> str | None:
         assert self.upload_dir is not None
         match = self._named(await self.list(FileSource.USER_UPLOAD, limit=1000), name)
         return None if match is None else await self.download(match.id, self.upload_dir, force=True)
 
-    @override
     async def set_file(self, path: str) -> bool:
         _ = await self.upload(path)
         return True
 
-    @override
     async def alist_uploaded_files(self) -> list[FileInfo]:
         return [self._file_info(file) for file in (await self.list(FileSource.USER_UPLOAD, limit=1000)).files]
 
-    @override
     async def alist_downloaded_files(self) -> list[FileInfo]:
         return [self._file_info(file) for file in (await self.list(FileSource.SESSION_DOWNLOAD, limit=1000)).files]
+
+    async def list_uploaded_files(self) -> list[FileInfo]:
+        """List uploaded files."""
+        return await self.alist_uploaded_files()
+
+    async def list_downloaded_files(self) -> list[FileInfo]:
+        """List browser downloads."""
+        return await self.alist_downloaded_files()
+
+    async def instructions(self) -> str:
+        """Return LLM instructions listing available uploads."""
+        files = ", ".join(file.name for file in await self.list_uploaded_files())
+        return f"(the following files are available at these paths: {files})" if files else ""

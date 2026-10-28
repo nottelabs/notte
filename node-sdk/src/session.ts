@@ -245,6 +245,9 @@ export class Session {
       ...(auth_retry !== undefined ? { auth_retry } : {}),
       ...(request.auth_ids?.length ? { wait_for_authentication: false } : {}),
     };
+    // Both API generations enable capture by default. Keep opt-outs explicit.
+    if (body.record_session === true) delete body.record_session;
+    if (body.log_session === true) delete body.log_session;
     const shouldWait = options.wait_for_authentication ?? wait_for_authentication ?? true;
     // The client's retry policy (503, 529, refused connections) is applied
     // here instead of in the transport, so the caller's signal interrupts the
@@ -568,9 +571,13 @@ export class Session {
         if (!(error instanceof NotteAPIError) || error.statusCode !== 404) {
           throw error;
         }
+        const waitingForClose = error.error.replay_status === 'waiting_for_session';
+        if (error.error.replay_status === 'disabled' || (error.error.retryable === false && !waitingForClose)) {
+          throw error;
+        }
         // Stop can complete before the replay service observes the closure.
         // Only reject immediately while this client still considers it active.
-        if (this.isActive && (error.apiMessage ?? '').includes('still active')) {
+        if (this.isActive && this.sessionId === sessionId && (waitingForClose || (error.apiMessage ?? '').includes('still active'))) {
           throw new Error(`Session ${sessionId} is still active — close the session first to generate the replay.`, {
             cause: error,
           });

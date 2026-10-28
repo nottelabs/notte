@@ -47,6 +47,26 @@ Customize your session with these options:
   The retired global `solve_captchas` TOML key is ignored with a warning.
 </ParamField>
 
+<ParamField path="record_session" type="boolean" default={true}>
+  Save the session replay. Set to `false` at creation to disable saved recordings,
+  including the cursor track. Live View and browser controls remain available.
+  This setting cannot be changed after creation.
+</ParamField>
+
+<ParamField path="log_session" type="boolean" default={true}>
+  Save browser session steps, raw CDP messages, network logs and session API
+  request/response content. Set to `false` at creation to disable these saved logs.
+  Usage and billing counters still apply. This setting cannot be changed after creation.
+  It does not disable separately requested files, profiles, screenshots, or agent
+  and function histories.
+</ParamField>
+
+<Note>
+  These options require an API that supports session capture controls. The options
+  are independent: disabling recording does not disable logs, and disabling logs
+  does not disable recording. Omitted options keep the server defaults.
+</Note>
+
 <ParamField path="block_ads" type="boolean" default={true}>
   Block ads and trackers in managed browsers using Basic filtering, without cosmetic filtering or injected scriptlets.
   To opt out, use `client.Session(block_ads=False)` in Python or `client.Session({ block_ads: false })` in TypeScript.

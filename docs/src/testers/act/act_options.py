@@ -1,0 +1,26 @@
+# @sniptest filename=act_options.py
+# @sniptest typecheck_only=true
+from notte_core.act import NoActionFoundError
+
+import notte
+
+with notte.Session() as session:
+    _ = session.execute(type="goto", url="https://www.saucedemo.com/")
+
+    # values in `variables` replace {{name}} in the typed text after the model call:
+    # the model never sees them
+    typed = session.act("type {{user}} in the username field", variables={"user": "standard_user"})
+    print(typed.value)  # "{{user}}": the template, as the model wrote it
+
+    # choose without executing, then run the proposed action yourself
+    proposal = session.act("click the login button", dry_run=True)
+    if proposal.action is not None and (proposal.confidence or 0) > 0.8:
+        _ = session.execute(proposal.action)
+
+    # refuse uncertain decisions; return instead of raising when nothing fits
+    try:
+        cart = session.act("open the shopping cart", min_confidence=0.7)
+    except NoActionFoundError as error:
+        print("blocked:", error.result)
+    result = session.act("open the shopping cart", min_confidence=0.7, raise_on_failure=False)
+    print(result.status)  # executed, done, blocked or stale

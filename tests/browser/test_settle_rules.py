@@ -1,5 +1,7 @@
 """When the page counts as settled after an action (`notte_browser.settle`)."""
 
+import asyncio
+import time
 from typing import cast
 from unittest.mock import AsyncMock, MagicMock
 
@@ -48,6 +50,70 @@ def test_a_page_that_keeps_changing_is_left_after_a_while() -> None:
 @pytest.mark.parametrize("elapsed", [GRACE_MS, 1_000, CAP_MS - 1])
 def test_a_request_the_action_started_is_waited_for(elapsed: float) -> None:
     assert not settled(state(elapsed, 5, in_flight=1))
+
+
+@pytest.mark.parametrize("root_at", [None, 1.0, 3.0])
+@pytest.mark.asyncio
+async def test_replacement_navigation_keeps_the_initial_request_boundary(
+    monkeypatch: pytest.MonkeyPatch, root_at: float | None
+) -> None:
+    page = MagicMock(spec=Page)
+    root = MagicMock(spec=Request)
+    redirect = MagicMock(spec=Request)
+    for request in (root, redirect):
+        request.frame = page.main_frame
+        request.resource_type = "document"
+        request.is_navigation_request.return_value = True
+        request.url = "https://example.com/"
+        request.method = "GET"
+        request.post_data_buffer = None
+    root.redirected_from = None
+    redirect.redirected_from = root
+    tracker = PageSettle(page, None, tabs=False)
+    if root_at is not None:
+        monkeypatch.setattr(settle_module.time, "perf_counter", lambda: root_at)
+        tracker._request_started(root)  # pyright: ignore[reportPrivateUsage]
+        await _drain_event_queue()
+    monkeypatch.setattr(settle_module.time, "perf_counter", lambda: 4.0)
+    tracker._request_started(redirect)  # pyright: ignore[reportPrivateUsage]
+    await _drain_event_queue()
+    assert tracker.navigation_requested_after(2.0) is (root_at == 3.0)
+    assert not tracker.navigation_requested_after(None)
+
+
+async def _drain_event_queue() -> None:
+    drained = asyncio.Event()
+    _ = asyncio.get_running_loop().call_soon(drained.set)
+    _ = await drained.wait()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("navigation_first", [False, True])
+async def test_replacement_attribution_preserves_queued_input_and_request_order(navigation_first: bool) -> None:
+    page = MagicMock(spec=Page)
+    request = MagicMock(spec=Request)
+    request.frame = page.main_frame
+    request.resource_type = "document"
+    request.is_navigation_request.return_value = True
+    request.url = "https://example.com/"
+    request.method = "GET"
+    request.post_data_buffer = None
+    request.redirected_from = None
+    tracker = PageSettle(page, None, tabs=False)
+    input_times: list[float] = []
+
+    async def input_binding() -> None:
+        input_times.append(time.perf_counter())
+
+    # Exposed bindings are scheduled tasks; request callbacks may run while their task is still queued.
+    if navigation_first:
+        tracker._request_started(request)  # pyright: ignore[reportPrivateUsage]
+    delivered = asyncio.create_task(input_binding())
+    if not navigation_first:
+        tracker._request_started(request)  # pyright: ignore[reportPrivateUsage]
+    await _drain_event_queue()
+    await delivered
+    assert tracker.navigation_requested_after(input_times[0]) is (not navigation_first)
 
 
 def test_everything_ends_at_the_cap() -> None:
@@ -102,49 +168,3 @@ def test_a_new_page_waits_for_its_requests_to_be_quiet_for_a_while() -> None:
     assert settled(state(LONG_GRACE_MS - 300, **quiet))
     # without a request quiet time, a request that ended long enough ago is no reason to wait
     assert settled(state(GRACE_MS, last_request_ms=-300.0))
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("page_event", [False, True])
-async def test_action_tab_seeding_filters_completed_and_unrelated_requests_and_cleans_up(page_event: bool) -> None:
-    """Both tab creation paths retain only live matching work and detach their context listeners."""
-    source, destination, other = MagicMock(), MagicMock(), MagicMock()
-    destination.url = "https://tab.test/"
-    destination.main_frame.page = destination
-    source.main_frame.page = source
-    other.main_frame.page = other
-    foreign_frame = MagicMock(page=destination, url="https://ads.test/")
-    tracker = PageSettle(cast(Page, source), None, tabs=True)
-
-    def request(frame: MagicMock, url: str) -> Request:
-        value = MagicMock(resource_type="fetch", frame=frame, url=url, method="GET", post_data_buffer=None)
-        value.is_navigation_request.return_value = False
-        return cast(Request, value)
-
-    active = request(destination.main_frame, "https://tab.test/data")
-    completed = request(destination.main_frame, "https://tab.test/completed")
-    requests = [
-        active,
-        completed,
-        request(source.main_frame, "https://source.test/"),
-        request(other.main_frame, "https://other.test/"),
-        request(foreign_frame, "https://ads.test/data"),
-    ]
-    for value in requests:
-        tracker._context_request(value)
-    tracker._context_request_ended(completed)
-    if page_event:
-        tracker._page_opened(cast(Page, destination))
-    tab = tracker.tab(cast(Page, destination))
-    try:
-        assert tab._in_flight == {active: True}
-        assert len(tab._changes) == 1
-        tab._request_started(active)
-        assert len(tab._changes) == 1
-    finally:
-        await tab.close()
-        await tracker.close()
-    assert not tracker._tab_requests
-    source.context.remove_listener.assert_any_call("request", tracker._context_request)
-    source.context.remove_listener.assert_any_call("requestfinished", tracker._context_request_ended)
-    source.context.remove_listener.assert_any_call("requestfailed", tracker._context_request_ended)

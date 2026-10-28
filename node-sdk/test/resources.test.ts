@@ -4,6 +4,29 @@ import { NotteClient, NotteAPIError, sessionStop, type GetFunctionRunResponseWri
 afterEach(() => vi.unstubAllGlobals());
 const client = () => new NotteClient({ baseUrl: 'https://api.example.test', apiKey: 'test-key' }); // pragma: allowlist secret
 
+it.each([{}, { record_session: true, log_session: true }])('starts against a legacy API with enabled capture: %j', async body => {
+  const fetch = vi.fn(async (request: Request) => {
+    const payload = await request.json();
+    if ('record_session' in payload || 'log_session' in payload) {
+      return Response.json({ detail: 'Extra inputs are not permitted' }, { status: 422 });
+    }
+    return Response.json({ session_id: 'legacy-session', status: 'active' });
+  });
+  vi.stubGlobal('fetch', fetch);
+  expect((await client().sessions.start(body)).session_id).toBe('legacy-session');
+  expect(fetch).toHaveBeenCalledTimes(1);
+});
+
+it('surfaces an unsupported opt-out without starting a second session with capture enabled', async () => {
+  const fetch = vi.fn(async (request: Request) => {
+    expect(await request.json()).toEqual({ record_session: false });
+    return Response.json({ detail: 'Extra inputs are not permitted' }, { status: 422 });
+  });
+  vi.stubGlobal('fetch', fetch);
+  await expect(client().sessions.start({ record_session: false, log_session: true })).rejects.toBeInstanceOf(NotteAPIError);
+  expect(fetch).toHaveBeenCalledTimes(1);
+});
+
 it.each(['files', 'sessions'] as const)('executes a file action through %s with a pinned target', async resource => {
   const requests: Request[] = [];
   const action = { type: 'upload_file' as const, file_path: 'input.txt', selector: 'input[type=file]' };

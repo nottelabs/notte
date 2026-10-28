@@ -23,7 +23,7 @@ jobs:
   # happens here, in a job that holds no write token; the bump job pins
   # notte-cli to the commit generated from and commits the result.
   cli-reference:
-    if: github.repository == 'nottelabs/notte'
+    if: github.repository == 'nottelabs/notte' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     outputs:
@@ -59,7 +59,7 @@ jobs:
           if-no-files-found: error
 
   bump:
-    if: github.repository == 'nottelabs/notte'
+    if: github.repository == 'nottelabs/notte' && github.ref == 'refs/heads/main'
     needs: cli-reference
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 45
@@ -165,39 +165,34 @@ jobs:
           git commit -m "$TITLE"
           git push --force origin "$BRANCH"
 
+          BODY_FILE="$RUNNER_TEMP/bot-pr-body.md"
+          printf '%s\n\n<!-- bot-pr-run: %s -->\n' "$BODY" "$GITHUB_RUN_ID" > "$BODY_FILE"
           PR_NUMBER=$(gh pr list --head "$BRANCH" --base main --state open --json number --jq '.[0].number // empty')
           if [ -n "$PR_NUMBER" ]; then
             echo "Updating existing PR #$PR_NUMBER"
-            gh pr edit "$PR_NUMBER" --title "$TITLE" --body "$BODY"
+            gh pr edit "$PR_NUMBER" --title "$TITLE" --body-file "$BODY_FILE"
           else
-            PR_NUMBER=$(gh pr create --base main --head "$BRANCH" --title "$TITLE" --body "$BODY" \
+            PR_NUMBER=$(gh pr create --base main --head "$BRANCH" --title "$TITLE" --body-file "$BODY_FILE" \
               | sed -n 's|.*pull/\([0-9]*\).*|\1|p' | head -1)
             echo "Created PR #$PR_NUMBER"
           fi
 
           echo "PR: https://github.com/${{ github.repository }}/pull/$PR_NUMBER"
 
-          # main requires one approving review, so the pull request sits at
-          # mergeStateStatus BLOCKED and --auto would park there forever. This
-          # token's account is exempt server side, but `gh pr merge` refuses a
-          # BLOCKED pull request client side, before it ever calls the API.
-          # --admin skips only that local guard; the merge itself is ordinary.
-          #
-          # Merging the pull request this job just created, by number, is also
-          # what keeps the merge safe: nothing is looked up by branch name, so a
-          # fork branch cannot impersonate this automation.
-          for _ in $(seq 1 10); do
-            if gh pr checks "$PR_NUMBER" >/dev/null 2>&1; then
-              break
-            fi
-            echo "Waiting for checks to be reported on PR #$PR_NUMBER."
-            sleep 30
-          done
+          # Bind completion to the exact PR and commit produced by this run.
+          PR_NUMBER="$PR_NUMBER" HEAD_SHA="$(git rev-parse HEAD)" python3 - <<'PYCODE'
+          import json
+          import os
+          from pathlib import Path
 
-          if gh pr checks "$PR_NUMBER" --watch --fail-fast --interval 30; then
-            gh pr merge "$PR_NUMBER" --squash --delete-branch --admin
-            echo "Merged PR #$PR_NUMBER."
-          else
-            echo "::error::Checks did not pass on PR #$PR_NUMBER, so it was left open. The next scheduled run rebuilds the branch from main and retries."
-            exit 1
-          fi
+          manifest = {key: os.environ[key] for key in ("GITHUB_REPOSITORY", "GITHUB_RUN_ID", "BRANCH", "PR_NUMBER", "HEAD_SHA")}
+          Path(os.environ["RUNNER_TEMP"], "bot-pr.json").write_text(json.dumps(manifest))
+          PYCODE
+
+      - name: Record bot PR ownership
+        if: steps.bump.outputs.changes == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: bot-pr
+          path: ${{ runner.temp }}/bot-pr.json
+          if-no-files-found: error

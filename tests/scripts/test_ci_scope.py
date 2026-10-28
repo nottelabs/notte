@@ -224,27 +224,11 @@ class RoutingTests(unittest.TestCase):
                     self.assertEqual(ci.integration_examples_for_path(path), {"selenium"})
             self.assertFalse(ci.integration_examples_for_path("examples/selenium/README.md"))
 
-    def test_shared_native_inputs_cover_every_registered_project(self) -> None:
-        for path in (
-            *ci.INTEGRATION_INPUTS,
-            "uv.lock",
-            "packages/notte-sdk/src/notte_sdk/client.py",
-            "packages/notte-core/pyproject.toml",
-            "node-sdk/src/session.ts",
-            "node-sdk/package-lock.json",
-            "node-sdk/tsconfig.json",
-            "node-sdk/tsup.config.ts",
-            "node-sdk/new-build.config.json",
-            ".github/workflows/paired-sdk-examples.yml",
-        ):
+    def test_shared_native_harness_inputs_cover_every_registered_project(self) -> None:
+        for path in (*ci.INTEGRATION_INPUTS, ".github/workflows/paired-sdk-examples.yml"):
             with self.subTest(path=path):
                 self.assertEqual(ci.integration_examples_for_path(path), set(ci.INTEGRATION_EXAMPLES))
                 self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
-                harness = path in ci.INTEGRATION_INPUTS or path == ".github/workflows/paired-sdk-examples.yml"
-                self.assertEqual(
-                    ci.integration_examples_for_path(path, shared_inputs=False),
-                    set(ci.INTEGRATION_EXAMPLES) if harness else set(),
-                )
 
     def test_offline_generator_and_its_tests_use_the_lightweight_suite(self) -> None:
         for path in ("docs/src/scripts/generate_llms.py", "tests/test_generate_llms_offline.py"):
@@ -267,6 +251,7 @@ class RoutingTests(unittest.TestCase):
         for path in (
             "scripts/ci_scope.py",
             "tests/scripts/test_ci_scope.py",
+            "tests/scripts/test_ci_scope_offline.py",
             ".github/actions/ci-scope/action.yml",
             ".github/actions/wait-for-api/wait-for-api.sh",
             "new-runtime/config.json",
@@ -426,15 +411,77 @@ class GitHistoryTests(unittest.TestCase):
         self.directory = tempfile.TemporaryDirectory()
         self.addCleanup(self.directory.cleanup)
         self.repo = Path(self.directory.name)
+        self.git_local_vars = set(
+            subprocess.check_output(["git", "rev-parse", "--local-env-vars"]).decode().splitlines()
+        )
         self.git("init", "-q")
         self.git("config", "commit.gpgsign", "false")
         self.git("config", "core.hooksPath", "/dev/null")
+        # Detached housekeeping must not race strict temporary-directory cleanup.
+        self.git("config", "maintenance.auto", "false")
+        self.git("config", "gc.auto", "0")
         self.git("config", "user.name", "CI test")
         self.git("config", "user.email", "ci@example.invalid")
         self.base = self.commit({"README.md": "Original prose\n```python\nx = 1\n```\n"})
 
+    def test_temporary_history_does_not_launch_automatic_git_maintenance(self) -> None:
+        config = self.repo / ".git" / "inherited.config"
+        config.write_text(
+            "[maintenance]\n\tauto = true\n\tautoDetach = false\n[gc]\n\tauto = 1\n\tautoDetach = false\n"
+        )
+        commands: list[list[list[str]]] = []
+        for index in range(2):
+            if index:
+                # A foreground positive control proves Git would otherwise
+                # launch maintenance, without leaving another background task.
+                self.git("config", "maintenance.auto", "true")
+            trace = self.repo / ".git" / f"maintenance-{index}.jsonl"
+            with patch.dict(
+                os.environ,
+                {"GIT_CONFIG_GLOBAL": str(config), "GIT_CONFIG_NOSYSTEM": "1", "GIT_TRACE2_EVENT": str(trace)},
+            ):
+                self.commit({"fixture.txt": str(index)})
+            events = [json.loads(line) for line in trace.read_text().splitlines()]
+            commands.append(
+                [
+                    event["argv"]
+                    for event in events
+                    if event.get("event") == "child_start"
+                    and any(name in event.get("argv", []) for name in ("maintenance", "gc"))
+                ]
+            )
+        self.assertEqual(commands[0], [])
+        self.assertTrue(commands[1], "The control must exercise automatic Git maintenance")
+
     def git(self, *args: str) -> str:
-        return subprocess.check_output(["git", "-C", str(self.repo), *args], stderr=subprocess.PIPE).decode().strip()
+        environment = {name: value for name, value in os.environ.items() if name not in self.git_local_vars}
+        return (
+            subprocess.check_output(["git", "-C", str(self.repo), *args], stderr=subprocess.PIPE, env=environment)
+            .decode()
+            .strip()
+        )
+
+    def test_temporary_history_ignores_callers_repository_variables(self) -> None:
+        before = (self.repo / ".git/config").read_bytes()
+        with patch.dict(
+            os.environ,
+            {
+                "GIT_DIR": str(self.repo / ".git"),
+                "GIT_WORK_TREE": str(self.repo),
+                "GIT_COMMON_DIR": str(self.repo / ".git"),
+                "GIT_INDEX_FILE": str(self.repo / ".git/index"),
+                "GIT_OBJECT_DIRECTORY": str(self.repo / ".git/objects"),
+            },
+        ):
+            fixture = type(self)("test_temporary_history_ignores_callers_repository_variables")
+            try:
+                fixture.setUp()
+                self.assertEqual(Path(fixture.git("rev-parse", "--show-toplevel")).resolve(), fixture.repo.resolve())
+                self.assertEqual(fixture.git("config", "--local", "maintenance.auto"), "false")
+                self.assertFalse(fixture.scope("push", fixture.base, fixture.base)["full"])
+            finally:
+                fixture.doCleanups()
+        self.assertEqual((self.repo / ".git/config").read_bytes(), before)
 
     def commit(self, files: dict[str, str]) -> str:
         for name, content in files.items():
@@ -447,8 +494,154 @@ class GitHistoryTests(unittest.TestCase):
 
     def scope(self, event: str, base: str, head: str) -> dict[str, bool | str | list[str] | list[dict[str, str]]]:
         original_git = ci.git
-        with patch.object(ci, "git", side_effect=lambda *args: original_git("-C", str(self.repo), *args)):
+        environment = {name: value for name, value in os.environ.items() if name not in self.git_local_vars}
+        with (
+            patch.dict(os.environ, environment, clear=True),
+            patch.object(ci, "git", side_effect=lambda *args: original_git("-C", str(self.repo), *args)),
+        ):
             return ci.select(event, base, head)
+
+    def workspace_files(self, version: str) -> dict[str, str]:
+        files: dict[str, str] = {}
+        lock = 'version = 1\nrevision = 5\nrequires-python = ">=3.11"\n'
+        for name, directory in (
+            ("notte", "."),
+            ("notte-browser", "packages/notte-browser"),
+            ("notte-core", "packages/notte-core"),
+            ("notte-llm", "packages/notte-llm"),
+            ("notte-sdk", "packages/notte-sdk"),
+        ):
+            dependency = f'"notte-core=={version}", ' if name != "notte-core" else ""
+            files[str(Path(directory) / "pyproject.toml")] = (
+                f'[project]\nname = "{name}"\nversion = "{version}"\n'
+                f'dependencies = [{dependency}"external==1.0.0.dev0"]\n'
+                'requires-python = ">=3.11"\n'
+                "[project.optional-dependencies]\n"
+                f'playwright = ["notte_sdk[playwright]=={version}"]\n'
+                '[build-system]\nrequires = ["hatchling"]\n'
+                "[tool.ruff]\nline-length = 120\n"
+            )
+            lock += f'\n[[package]]\nname = "{name}"\nversion = "{version}"\nsource = {{ editable = "{directory}" }}\n'
+        files["pyproject.toml"] += '[tool.uv.workspace]\nmembers = ["packages/*", "."]\n'
+        lock += (
+            '\n[[package]]\nname = "external"\nversion = "1.0.0.dev0"\n'
+            'source = { registry = "https://pypi.org/simple" }\n'
+            'sdist = { url = "https://example.invalid/external.tar.gz", hash = "sha256:original" }\n'
+        )
+        files["uv.lock"] = lock
+        return files
+
+    def test_verified_workspace_version_bumps_keep_only_offline_checks(self) -> None:
+        before = self.commit(self.workspace_files("1.0.0.dev0"))
+        head = self.commit(self.workspace_files("1.0.1.dev0"))
+        for event in ("push", "pull_request"):
+            with self.subTest(event=event):
+                scope = self.scope(event, before, head)
+                self.assertEqual({name for name in ci.ALL if scope[name]}, {"python_static", "python_unit"})
+                self.assertTrue(scope["file_checks"])
+                self.assertTrue(scope["lint_all"])
+                self.assertFalse(scope["full"])
+                self.assertFalse(scope["paired_snippets_live"])
+                self.assertEqual(scope["integration_examples"], [])
+
+    def test_manifest_changes_beyond_workspace_versions_retain_live_coverage(self) -> None:
+        mutations = (
+            ("pyproject.toml", "external==1.0.0.dev0", "external==1.0.1.dev0"),
+            ("pyproject.toml", 'requires-python = ">=3.11"', 'requires-python = ">=3.12"'),
+            ("pyproject.toml", 'requires = ["hatchling"]', 'requires = ["setuptools"]'),
+            ("pyproject.toml", "line-length = 120", "line-length = 100"),
+            ("pyproject.toml", "line-length = 120", "line-length = 120.0"),
+            ("pyproject.toml", 'members = ["packages/*", "."]', 'members = ["packages/*", ".", "new"]'),
+            ("pyproject.toml", "notte-core==1.0.1.dev0", "notte-core>=1.0.1.dev0"),
+            ("pyproject.toml", "notte-core==1.0.1.dev0", "notte-core==1.0.0.dev0"),
+            ("pyproject.toml", "notte_sdk[playwright]", "notte_sdk[other]"),
+            ("pyproject.toml", "notte_sdk[playwright]==1.0.1.dev0", "notte_sdk[playwright]==1.0.1.dev0; extra == 'x'"),
+            ("packages/notte-sdk/pyproject.toml", 'name = "notte-sdk"', 'name = "renamed-sdk"'),
+            ("packages/notte-sdk/pyproject.toml", 'version = "1.0.1.dev0"', 'version = "1.0.0.dev0"'),
+        )
+        for path, original, replacement in mutations:
+            with self.subTest(path=path, replacement=replacement):
+                before = self.commit(self.workspace_files("1.0.0.dev0"))
+                changed = self.workspace_files("1.0.1.dev0")
+                self.assertIn(original, changed[path])
+                changed[path] = changed[path].replace(original, replacement)
+                head = self.commit(changed)
+                scope = self.scope("push", before, head)
+                self.assertTrue(scope["python_live"])
+                self.assertTrue(scope["llm_provider_live"])
+                self.assertTrue(scope["paired_live"])
+                self.assertEqual(scope["integration_examples"], sorted(ci.integration_examples_for_path("uv.lock")))
+
+    def test_lock_changes_beyond_workspace_versions_retain_live_coverage(self) -> None:
+        mutations = (
+            ("revision = 5", "revision = 6"),
+            ("version = 1\nrevision", "version = true\nrevision"),
+            ('requires-python = ">=3.11"', 'requires-python = ">=3.12"'),
+            ('name = "external"\nversion = "1.0.0.dev0"', 'name = "external"\nversion = "1.0.1.dev0"'),
+            ("sha256:original", "sha256:changed"),
+            ("https://pypi.org/simple", "https://other.invalid/simple"),
+            ('editable = "packages/notte-sdk"', 'editable = "other/sdk"'),
+            ('name = "notte-sdk"\nversion = "1.0.1.dev0"', 'name = "notte-sdk"\nversion = "1.0.0.dev0"'),
+            ('name = "notte-sdk"', 'name = "missing-sdk"'),
+            ('name = "notte-sdk"', 'name = "notte-core"'),
+        )
+        for original, replacement in mutations:
+            with self.subTest(replacement=replacement):
+                before = self.commit(self.workspace_files("1.0.0.dev0"))
+                changed = self.workspace_files("1.0.1.dev0")
+                self.assertIn(original, changed["uv.lock"])
+                changed["uv.lock"] = changed["uv.lock"].replace(original, replacement)
+                head = self.commit(changed)
+                self.assertTrue(self.scope("push", before, head)["python_live"])
+
+    def test_unreadable_version_inputs_retain_normal_coverage(self) -> None:
+        for path in ("pyproject.toml", "packages/notte-sdk/pyproject.toml", "uv.lock"):
+            with self.subTest(path=path):
+                before = self.commit(self.workspace_files("1.0.0.dev0"))
+                changed = self.workspace_files("1.0.1.dev0")
+                changed[path] = "[broken TOML\n"
+                head = self.commit(changed)
+                self.assertTrue(self.scope("push", before, head)["python_live"])
+
+    def test_deleted_symlinked_or_executable_version_inputs_are_not_exempt(self) -> None:
+        path = "packages/notte-sdk/pyproject.toml"
+        for mode in ("deleted", "symlink", "executable"):
+            with self.subTest(mode=mode):
+                target = self.repo / path
+                if target.is_symlink():
+                    target.unlink()
+                before = self.commit(self.workspace_files("1.0.0.dev0"))
+                changed = self.workspace_files("1.0.1.dev0")
+                if mode in {"deleted", "symlink"}:
+                    del changed[path]
+                    target.unlink()
+                    if mode == "symlink":
+                        target.symlink_to("../../pyproject.toml")
+                else:
+                    target.chmod(0o755)
+                head = self.commit(changed)
+                self.assertTrue(self.scope("push", before, head)["python_live"])
+
+    def test_version_bumps_do_not_suppress_other_changes_or_earlier_commits(self) -> None:
+        for path in ("packages/notte-sdk/src/notte_sdk/client.py", "scripts/new_tool.py", "docs/src/images/logo.svg"):
+            with self.subTest(path=path):
+                before = self.commit(self.workspace_files("1.0.0.dev0"))
+                self.commit({path: "original content\n"})
+                head = self.commit(self.workspace_files("1.0.1.dev0"))
+                self.assertTrue(self.scope("push", before, head)["python_live"])
+                self.assertTrue(self.scope("pull_request", before, head)["python_live"])
+
+    def test_version_only_pr_uses_its_merge_base(self) -> None:
+        before = self.commit(self.workspace_files("1.0.0.dev0"))
+        branch = self.git("branch", "--show-current")
+        self.git("checkout", "-qb", "version")
+        feature = self.commit(self.workspace_files("1.0.1.dev0"))
+        self.git("checkout", branch)
+        main = self.commit({"packages/notte-sdk/src/notte_sdk/client.py": "runtime = True\n"})
+        scope = self.scope("pull_request", main, feature)
+        self.assertEqual(scope["base"], before)
+        self.assertFalse(scope["python_live"])
+        self.assertTrue(scope["python_unit"])
 
     def test_complete_diff_unions_native_projects_and_skips_prose(self) -> None:
         prose = self.commit({"examples/openai-computer-use/README.md": "New instructions\n"})
@@ -469,7 +662,7 @@ class GitHistoryTests(unittest.TestCase):
         self.assertFalse(scope["paired_snippets_live"])
         shared = self.commit({"packages/notte-sdk/src/notte_sdk/client.py": "client = True\n"})
         scope = self.scope("push", head, shared)
-        self.assertEqual(scope["integration_examples"], sorted(ci.INTEGRATION_EXAMPLES))
+        self.assertEqual(scope["integration_examples"], sorted(ci.integration_examples_for_path("uv.lock")))
         self.assertTrue(scope["paired_snippets_live"])
         recipe = self.commit({".github/workflows/selector-repair.yml": "recipe = True\n"})
         scope = self.scope("push", shared, recipe)
@@ -478,16 +671,15 @@ class GitHistoryTests(unittest.TestCase):
         self.assertFalse(scope["paired_snippets_live"])
         self.assertEqual(scope["paired_shards"], ["1/1"])
 
-    def test_pull_requests_run_native_projects_only_for_their_own_inputs(self) -> None:
+    def test_pull_requests_and_pushes_select_the_same_native_consumers(self) -> None:
         sdk = self.commit({"packages/notte-sdk/src/notte_sdk/client.py": "client = True\n", "uv.lock": "lock = 1\n"})
-        scope = self.scope("pull_request", self.base, sdk)
-        self.assertEqual(scope["integration_examples"], [])
-        self.assertTrue(scope["paired_live"] and scope["paired_snippets_live"])
-        self.assertEqual(scope["paired_shards"], ["1/2", "2/2"])
-        self.assertEqual(self.scope("push", self.base, sdk)["integration_examples"], sorted(ci.INTEGRATION_EXAMPLES))
+        for event in ("push", "pull_request"):
+            scope = self.scope(event, self.base, sdk)
+            self.assertEqual(scope["integration_examples"], sorted(ci.integration_examples_for_path("uv.lock")))
+            self.assertTrue(scope["paired_live"] and scope["paired_snippets_live"])
         unknown = self.commit({"scripts/new_tool.py": "tool = True\n"})
-        self.assertEqual(self.scope("pull_request", sdk, unknown)["integration_examples"], [])
-        self.assertEqual(self.scope("push", sdk, unknown)["integration_examples"], sorted(ci.INTEGRATION_EXAMPLES))
+        for event in ("push", "pull_request"):
+            self.assertEqual(self.scope(event, sdk, unknown)["integration_examples"], sorted(ci.INTEGRATION_EXAMPLES))
         project = self.commit({"examples/temporal/src/workflow.ts": "workflow = True\n"})
         self.assertEqual(self.scope("pull_request", unknown, project)["integration_examples"], ["temporal"])
         runner = self.commit({"scripts/ci_integration_examples.py": "runner = True\n"})

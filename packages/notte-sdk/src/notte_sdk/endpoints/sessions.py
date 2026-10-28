@@ -283,7 +283,7 @@ class SessionsClient(SessionsOperations):
         timeout: float = 240.0,
         poll_interval: float = 5.0,
         *,
-        _session_closed: bool = False,
+        _session_closed: Callable[[], bool] | None = None,
     ) -> ReplayResponse:
         """
         Get presigned URLs for session replay.
@@ -390,8 +390,13 @@ def _debug_tab_endpoint(session_id: str, tab_idx: int | None) -> NotteEndpoint[T
     return SessionsClient._session_debug_tab_endpoint(session_id=session_id, params=params)  # pyright: ignore [reportPrivateUsage]
 
 
+def _replay_session_closed(response: SessionResponse | None, session_id: str) -> bool:
+    """Read one response snapshot; reset clears or replaces it only after stopping the old session."""
+    return response is None or response.session_id != session_id or response.status == "closed"
+
+
 def _replay_flow(
-    session_id: str, wait: bool, timeout: float, poll_interval: float, session_closed: bool
+    session_id: str, wait: bool, timeout: float, poll_interval: float, session_closed: Callable[[], bool] | None
 ) -> Flow[ReplayResponse]:
     """`replay`: get the replay, polling until it is ready with `wait`."""
     endpoint = api.session_replay(session_id)
@@ -408,10 +413,17 @@ def _replay_flow(
         except NotteAPIError as e:
             if e.status_code != 404:
                 raise
+            waiting_for_close = e.error.get("replay_status") == "waiting_for_session"
+            if e.error.get("replay_status") == "disabled" or (
+                e.error.get("retryable") is False and not waiting_for_close
+            ):
+                raise
             error_msg = e.error.get("message", "") or e.error.get("detail", "")
             # The replay service can lag behind a successful stop response
             # while background cleanup persists the session and video.
-            if "still active" in error_msg and not session_closed:
+            if (waiting_for_close or "still active" in error_msg) and not (
+                session_closed is not None and session_closed()
+            ):
                 raise ValueError(
                     f"Session {session_id} is still active — close the session first to generate the replay."
                 ) from e
@@ -513,7 +525,7 @@ def _has_session(session: "RemoteSession | AsyncRemoteSession") -> bool:
 
 
 async def _guarded_entry(
-    session: "RemoteSession | AsyncRemoteSession",
+    session: "AsyncRemoteSession",
     *,
     start: Callable[[], Coroutine[Any, Any, None]],
     wait_for_auth: Callable[[], Awaitable[None]],
@@ -545,7 +557,7 @@ async def _guarded_entry(
         raise
 
 
-async def _close_async_playwright(session: "RemoteSession | AsyncRemoteSession") -> None:
+async def _close_async_playwright(session: "AsyncRemoteSession") -> None:
     """Close the async Playwright browser, then stop its driver. A failure is logged, not raised,
     and does not skip the other step: a failed browser close must not leak the driver process.
     Each handle is dropped only once its close was attempted."""
@@ -565,7 +577,7 @@ async def _close_async_playwright(session: "RemoteSession | AsyncRemoteSession")
 
 
 async def _async_exit(
-    session: "RemoteSession | AsyncRemoteSession",
+    session: "AsyncRemoteSession",
     exc_val: BaseException | None,
     stop: Callable[[Literal["manual", "error"]], Awaitable[None]],
 ) -> None:
@@ -601,8 +613,9 @@ def _forget_stopped_session(session: "RemoteSession | AsyncRemoteSession") -> No
     belonged to the stopped session.
     """
     session.response = None
-    session._async_playwright_browser = None  # pyright: ignore [reportPrivateUsage]
-    session._async_playwright_page = None  # pyright: ignore [reportPrivateUsage]
+    if isinstance(session, AsyncRemoteSession):
+        session._async_playwright_browser = None  # pyright: ignore [reportPrivateUsage]
+        session._async_playwright_page = None  # pyright: ignore [reportPrivateUsage]
 
 
 def _already_stopped(error: Exception) -> bool:
@@ -672,9 +685,7 @@ def _cdp_headers(
     return headers
 
 
-async def _async_page(
-    session: "RemoteSession | AsyncRemoteSession", cdp_url: Callable[[], Awaitable[str]]
-) -> "PageAsync":
+async def _async_page(session: "AsyncRemoteSession", cdp_url: Callable[[], Awaitable[str]]) -> "PageAsync":
     """The async Playwright page connected to the session over CDP, connecting on first use."""
     if not _async_playwright_available:
         raise ImportError("Playwright not installed. Use `pip install notte-sdk[playwright]` to install it.")
@@ -817,7 +828,7 @@ class RemoteSession(SyncResource):
             open_viewer: Whether to open the live viewer when the session starts (default: False).
                 This controls only the viewer popup and is independent of the browser environment.
             advanced_stealth: Enable Notte's highest-fidelity browser environment. Available to approved workspaces.
-            wait_for_authentication: Defaults to True. The SDK waits for authentication readiness through short API calls before returning from start or entering a context manager. When False, start returns after inline verification; call wait_for_auth() or await_for_auth() before browser actions if login is pending.
+            wait_for_authentication: Defaults to True. The SDK waits for authentication readiness through short API calls before returning from start or entering a context manager. When False, start returns after inline verification; call wait_for_auth() before browser actions if login is pending.
             **data: Keyword arguments for the session creation request.
 
         Returns:
@@ -849,11 +860,7 @@ class RemoteSession(SyncResource):
         # Sync playwright instances
         self._playwright_context: "PlaywrightSync | None" = None
         self._playwright_browser: "BrowserSync | None" = None
-        self._playwright_page: Any | None = None
-        # Async playwright instances
-        self._async_playwright_context: "PlaywrightAsync | None" = None
-        self._async_playwright_browser: "BrowserAsync | None" = None
-        self._async_playwright_page: "PageAsync | None" = None
+        self._playwright_page: "PageSync | None" = None
 
     @override
     def __enter__(self) -> Self:  # pyright: ignore [reportMissingSuperCall]
@@ -913,34 +920,6 @@ class RemoteSession(SyncResource):
 
         if isinstance(exc_val, KeyboardInterrupt):
             raise KeyboardInterrupt() from None
-
-    async def __aenter__(self) -> "RemoteSession":
-        """
-        Async context manager entry point.
-
-        Returns:
-            RemoteSession: The session instance.
-        """
-        await _guarded_entry(
-            self,
-            start=lambda: asyncio.to_thread(self.start, wait_for_authentication=False),
-            wait_for_auth=lambda: self.await_for_auth(),
-            stop=lambda: asyncio.to_thread(self.stop, close_reason="error"),
-        )
-        return self
-
-    async def __aexit__(
-        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
-    ) -> None:
-        """
-        Async context manager exit point with cleanup of async playwright resources.
-        """
-
-        async def stop(close_reason: Literal["manual", "error"]) -> None:
-            # A blocking stop (cookie saving, the stop request) runs off the event loop.
-            await asyncio.to_thread(self.stop, close_reason=close_reason)
-
-        await _async_exit(self, exc_val, stop)
 
     # #######################################################################
     # ############################# Session #################################
@@ -1012,14 +991,6 @@ class RemoteSession(SyncResource):
         if self.response.status == "active":
             return
         self.response = run(self.client, _auth_flow(self.response.session_id, timeout))
-
-    async def await_for_auth(self, timeout: float = 615) -> None:
-        """Async readiness wait; blocking HTTP calls run outside the event loop."""
-        if self.response is None:
-            raise ValueError("Session has not started")
-        if self.response.status == "active":
-            return
-        self.response = await arun(self.client, _auth_flow(self.response.session_id, timeout), in_thread=True)
 
     @override
     def stop(self, close_reason: Literal["manual", "error"] = "manual") -> None:
@@ -1149,12 +1120,13 @@ class RemoteSession(SyncResource):
             ValueError: If the session hasn't been started yet (no session_id available).
             TimeoutError: If the replay does not become available within ``timeout`` seconds.
         """
+        session_id = self.session_id
         return self.client.replay(
-            session_id=self.session_id,
+            session_id=session_id,
             wait=wait,
             timeout=timeout,
             poll_interval=poll_interval,
-            _session_closed=self.response is not None and self.response.status == "closed",
+            _session_closed=lambda: _replay_session_closed(self.response, session_id),
         )
 
     def viewer_browser(self) -> None:
@@ -1370,10 +1342,6 @@ class RemoteSession(SyncResource):
         if self._playwright_page is not None:
             return self._playwright_page
 
-        if self._async_playwright_page is not None:
-            raise RuntimeError(
-                "Session Page has been initialized with async playwright. Use `await session.apage()` instead."
-            )
         try:
             # Initialize playwright context
             if self._playwright_context is None:
@@ -1394,41 +1362,6 @@ class RemoteSession(SyncResource):
             return self._playwright_page
         except Exception as e:
             raise RuntimeError("Failed to access the playwright page from CDP") from e
-
-    @property
-    async def apage(self) -> "PageAsync":
-        """
-        Get an async Playwright page connected to the session via CDP.
-
-        This method provides direct access to the browser page using Playwright's async API.
-        The connection is established lazily on first access and cached for subsequent calls.
-
-        **Example:**
-        ```python
-        from notte_sdk import NotteClient
-
-        client = NotteClient()
-        async with client.Session() as session:
-            # Access the async playwright page
-            page = await session.apage()
-            await page.goto("https://www.google.com")
-            screenshot = await page.screenshot(path="screenshot.png")
-        ```
-
-        Returns:
-            PlaywrightPage: An async Playwright page instance connected to the session.
-
-        Raises:
-            ImportError: If playwright is not installed. Install with `pip install notte-sdk[playwright]`
-            ValueError: If the session hasn't been started yet (no session_id available).
-        """
-        if _async_playwright_available and self._async_playwright_page is None and self._playwright_browser is not None:
-            raise RuntimeError("Session Page has been initialized with sync playwright. Use `session.page` instead.")
-
-        async def cdp_url() -> str:
-            return self.cdp_url()
-
-        return await _async_page(self, cdp_url)
 
     # #######################################################################
     # ############################# PAGE ####################################
@@ -1913,7 +1846,7 @@ class AsyncSessionsClient(AsyncSessionsOperations):
         timeout: float = 240.0,
         poll_interval: float = 5.0,
         *,
-        _session_closed: bool = False,
+        _session_closed: Callable[[], bool] | None = None,
     ) -> ReplayResponse:
         """
         Get presigned URLs for session replay.
@@ -2002,9 +1935,8 @@ class AsyncRemoteSession:
 
     Differences from `RemoteSession`:
 
-    - `page` is the async Playwright page (`await session.page`); there is no sync Playwright page,
-      so `apage` is not needed.
-    - `wait_for_auth` is a coroutine, so `await_for_auth` is not needed.
+    - `page` is the async Playwright page (`await session.page`).
+    - `wait_for_auth` is a coroutine.
     - `storage` is an `AsyncRemoteFileStorage`.
     - `client.Session(session_id)` does no I/O: it attaches to the session, and the first method
       that needs its state reads it.
@@ -2208,13 +2140,14 @@ class AsyncRemoteSession:
             ValueError: If the session hasn't been started yet (no session_id available).
             TimeoutError: If the replay does not become available within ``timeout`` seconds.
         """
-        response = await self._loaded()
+        _ = await self._loaded()
+        session_id = self.session_id
         return await self.client.replay(
-            session_id=self.session_id,
+            session_id=session_id,
             wait=wait,
             timeout=timeout,
             poll_interval=poll_interval,
-            _session_closed=response is not None and response.status == "closed",
+            _session_closed=lambda: _replay_session_closed(self.response, session_id),
         )
 
     async def viewer_browser(self) -> None:

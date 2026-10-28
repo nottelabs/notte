@@ -17,6 +17,7 @@ from pydantic import (
     RootModel,
     SerializationInfo,
     SerializerFunctionWrapHandler,
+    StrictBool,
     ValidationInfo,
     computed_field,
     field_validator,
@@ -832,7 +833,7 @@ class _SessionStartRequestDict(TypedDict, total=False):
         cdp_url: The CDP URL of another remote session provider.
         profile: Browser profile configuration for state persistence.
         auth_ids: Up to 10 unique Managed Auth connection IDs. The API verifies them inline and can return an authenticating session while login continues.
-        wait_for_authentication: Defaults to True. The SDK waits for authentication readiness through short API calls before returning from start or entering a context manager. When False, start returns after inline verification; call wait_for_auth() or await_for_auth() before browser actions if login is pending.
+        wait_for_authentication: Defaults to True. The SDK waits for authentication readiness through short API calls before returning from start or entering a context manager. When False, start returns after inline verification; call wait_for_auth() before browser actions if login is pending.
         auth_retry: Number of additional retries for transient managed-auth login failures, from 0 to 2. Each retry verifies the session again before submitting credentials. A blocked connection permits one explicit login attempt.
     """
 
@@ -858,6 +859,8 @@ class _SessionStartRequestDict(TypedDict, total=False):
 
 
 class SessionStartRequestDict(_SessionStartRequestDict, total=False):
+    record_session: bool
+    log_session: bool
     auth_retry: int
     """Public request dictionary for starting a remote session."""
 
@@ -1095,6 +1098,17 @@ class _SessionStartRequest(SdkRequest):
 
 
 class SessionStartRequest(_SessionStartRequest):
+    record_session: Annotated[
+        StrictBool,
+        Field(description="Save session replay. False permanently disables saved replay; Live View remains available."),
+    ] = True
+    log_session: Annotated[
+        StrictBool,
+        Field(
+            description="Save browser session logs. False permanently disables saved logs, without disabling metering."
+        ),
+    ] = True
+
     """Public request for starting a remote Notte browser session."""
 
     _proxy_shorthand: str | None = PrivateAttr(default=None)
@@ -1206,9 +1220,14 @@ class SessionStartRequest(_SessionStartRequest):
     def omit_disabled_advanced_stealth(
         self, handler: SerializerFunctionWrapHandler, info: SerializationInfo
     ) -> dict[str, Any]:
+        data = self._caller_fields(info) if self._raw_input else cast(dict[str, Any], handler(self))
+        # Enabled capture is the default in both API generations. Sending it
+        # explicitly would make an otherwise ordinary start fail on older APIs.
+        for name in ("record_session", "log_session"):
+            if data.get(name) is True:
+                data.pop(name)
         if self._raw_input:
-            return self._caller_fields(info)
-        data = cast(dict[str, Any], handler(self))
+            return data
         if not self.advanced_stealth:
             data.pop("advanced_stealth", None)
         if not self.auth_ids:
@@ -1330,6 +1349,10 @@ def _drop_duration_format(schema: dict[str, Any]) -> None:
 
 
 class SessionResponse(SdkResponse):
+    record_session: bool = Field(default=True, description="Whether saved session replay is enabled. Defaults to true.")
+    log_session: bool = Field(
+        default=True, description="Whether saved browser session logs are enabled. Defaults to true."
+    )
     # Preserve unknown response fields so legacy wire metadata such as
     # ``headless`` remains available without becoming part of current schemas.
     model_config: ClassVar[ConfigDict] = ConfigDict(extra="allow")

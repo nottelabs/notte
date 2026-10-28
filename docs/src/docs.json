@@ -243,6 +243,7 @@
               "features/sessions/lifecycle",
               "features/sessions/configuration",
               "features/sessions/browser-controls",
+              "features/sessions/act",
               "features/sessions/observe-migration",
               "features/sessions/playwright-vs-notte",
               "concepts/file-storage",
