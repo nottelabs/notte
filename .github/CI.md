@@ -60,7 +60,7 @@ Node workflows; the entry workflow does not cancel other example suites.
 Run the selector's offline regression tests with:
 
 ```sh
-python3 -m unittest discover -s tests/scripts -p test_ci_scope.py
+python3 -m unittest discover -s tests/scripts -p 'test_ci_scope*.py'
 ```
 
 ## V2 suite adaptation
