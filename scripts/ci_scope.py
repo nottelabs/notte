@@ -234,7 +234,7 @@ def base_scopes_for_path(path: str, *, code_changed: bool = True) -> set[str]:
         return ALL.copy()
     if native_example_input(path) and integration_examples_for_path(path):
         return {"python_static", "python_unit"} | GROUPS["paired"]
-    if path.startswith(".github/actions/wait-for-api/"):
+    if path.startswith((".github/actions/wait-for-api/", ".github/actions/current-head/")):
         return ALL.copy()
     if path.startswith(".github/actions/python-setup/"):
         return GROUPS["python"] | SDK_EXAMPLES

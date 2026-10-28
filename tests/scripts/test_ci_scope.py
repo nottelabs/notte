@@ -21,6 +21,11 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class RoutingTests(unittest.TestCase):
+    def test_current_head_action_and_helpers_select_every_suite(self) -> None:
+        for path in (".github/actions/current-head/action.yml", ".github/actions/current-head/helper.py"):
+            with self.subTest(path=path):
+                self.assertEqual(ci.scopes_for_path(path), ci.ALL)
+
     # Fixed expectations describe the historical seven-owner migration.
     @patch.object(
         ci,

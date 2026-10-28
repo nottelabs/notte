@@ -10,6 +10,8 @@ from pathlib import Path
 import pytest
 import yaml
 
+from scripts import ci_integration_examples as runner
+from scripts import ci_scope
 from scripts.ci_scope import ALL, GROUPS, select
 from scripts.ci_validation import LIVE, Need, Scope, assess, plan
 from tests.scripts.test_ci_staging_scope import workflow
@@ -190,7 +192,7 @@ def test_parallel_preparation_covers_the_same_selected_shards_without_live_barri
     native = jobs["native-checks"]
     assert native["strategy"]["fail-fast"] is False
     assert native["strategy"]["max-parallel"] == 6
-    assert native["strategy"]["matrix"] == jobs["live"]["strategy"]["matrix"]
+    assert native["strategy"]["matrix"] == {"shard": [f"{index}/6" for index in range(1, 7)]}
     assert 'checks --shard "${{ matrix.shard }}"' in str(native["steps"])
     assert "secrets." not in str(native)
     assert native["needs"] == jobs["checks"]["needs"] == "changes"
@@ -198,6 +200,29 @@ def test_parallel_preparation_covers_the_same_selected_shards_without_live_barri
         assert jobs[name]["needs"] == "changes"
     scope = select("workflow_dispatch", "", "")
     assert len(scope["paired_matrix"]) > 1
+
+
+@pytest.mark.parametrize("count", [1, 36, 2000])
+def test_fork_registry_growth_cannot_expand_preparation_jobs_or_lose_coverage(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, count: int
+) -> None:
+    registry = {f"project-{index}": "root-unittest" for index in range(count)}
+    path = tmp_path / "registry.json"
+    path.write_text(json.dumps(registry))
+    monkeypatch.setattr(runner, "REGISTRY", path)
+    monkeypatch.setattr(ci_scope, "INTEGRATION_EXAMPLES", registry)
+    monkeypatch.setenv("INTEGRATION_EXAMPLES", json.dumps(list(registry)))
+    # Even a selector output containing 1,000 live matrix entries cannot change
+    # the literal offline matrix. Every selected project still runs exactly once.
+    scope = select("workflow_dispatch", "", "")
+    if count == 2000:
+        assert len(scope["paired_matrix"]) == 1000
+    native = workflow("paired-sdk-examples.yml")["jobs"]["native-checks"]
+    shards = native["strategy"]["matrix"]["shard"]
+    assert len(shards) == ci_scope.PAIRED_SLOTS == 6
+    assert native["strategy"]["max-parallel"] == len(shards)
+    discovered = [name for shard in shards for name, _ in runner.projects(shard)]
+    assert sorted(discovered) == sorted(registry)
 
 
 def test_live_jobs_check_freshness_before_setup_and_never_cancel_running_cleanup() -> None:
