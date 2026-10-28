@@ -51,7 +51,6 @@ jobs:
       pull-requests: read
     outputs:
       run: ${{ steps.plan.outputs.run }}
-      head: ${{ steps.plan.outputs.head }}
       base: ${{ steps.plan.outputs.base }}
       shards: ${{ steps.plan.outputs.shards }}
       shard_count: ${{ steps.plan.outputs.shard_count }}
@@ -158,7 +157,8 @@ jobs:
       - name: Check out head
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ needs.plan.outputs.head }}
+          # the plan's head: the PR's head, or (empty) the commit a manual run was started on
+          ref: ${{ github.event.pull_request.head.sha }}
           path: head
           persist-credentials: false
 
@@ -243,7 +243,7 @@ jobs:
       - name: Check out the harness
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ needs.plan.outputs.head }}
+          ref: ${{ github.event.pull_request.head.sha }}
           path: head
           sparse-checkout: scripts/bench_act
           persist-credentials: false
