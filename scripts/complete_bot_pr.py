@@ -8,10 +8,12 @@ import os
 import re
 import subprocess
 import zipfile
-from typing import TypedDict, cast
+from typing import NotRequired, TypedDict, cast
 
 REPOSITORY = "nottelabs/notte"
 BOT = "andreakiro"
+GREPTILE_APP_ID = 867647
+GREPTILE_BOT_ID = 165735046
 PRODUCERS = {
     "chore/bump-submodules": ".github/workflows/bump-submodules.yml",
     "chore/refresh-llms": ".github/workflows/refresh-llms.yml",
@@ -24,6 +26,8 @@ class Repository(TypedDict):
 
 class User(TypedDict):
     login: str
+    id: NotRequired[int]
+    type: NotRequired[str]
 
 
 class Base(TypedDict):
@@ -124,9 +128,17 @@ def reviewed(pr: Pull) -> bool:
     for login, review in latest.items():
         if login in {pr["user"]["login"], BOT}:
             continue
-        permission = api(f"repos/{REPOSITORY}/collaborators/{login}/permission")
-        if permission["permission"] in {"write", "maintain", "admin"}:
-            authorized.append(review)
+        user = review["user"]
+        if login == "greptile-apps[bot]" and user.get("id") == GREPTILE_BOT_ID and user.get("type") == "Bot":
+            # These immutable GitHub identities bind the review to the trusted app,
+            # even when GitHub reports its author association as NONE.
+            app = api("apps/greptile-apps")
+            if app["id"] == GREPTILE_APP_ID and app["slug"] == "greptile-apps":
+                authorized.append(review)
+        else:
+            permission = api(f"repos/{REPOSITORY}/collaborators/{login}/permission")
+            if permission["permission"] in {"write", "maintain", "admin"}:
+                authorized.append(review)
     # A public read-only approval cannot update an older authorized approval.
     return not any(review["state"] == "CHANGES_REQUESTED" for review in authorized) and any(
         review["state"] == "APPROVED" and review["commit_id"] == pr["head"]["sha"] for review in authorized

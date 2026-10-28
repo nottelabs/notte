@@ -299,3 +299,67 @@ def test_latest_review_and_current_permission_both_apply(fixture):
             patch.object(bot, "api", return_value={"permission": permission}),
         ):
             assert bot.reviewed(fixture[0]) is expected
+
+
+@pytest.mark.parametrize("head,expected", [(HEAD, True), (OTHER, False)])
+def test_authenticated_trusted_app_approval_counts_with_no_author_association(fixture, head, expected):
+    review = {
+        "user": {"login": "greptile-apps[bot]", "id": bot.GREPTILE_BOT_ID, "type": "Bot"},
+        "author_association": "NONE",
+        "state": "APPROVED",
+        "commit_id": head,
+    }
+    with (
+        patch.object(bot, "gh", return_value=json.dumps([[review]]).encode()),
+        patch.object(bot, "api", return_value={"id": bot.GREPTILE_APP_ID, "slug": "greptile-apps"}) as api,
+    ):
+        assert bot.reviewed(fixture[0]) is expected
+        api.assert_called_once_with("apps/greptile-apps")
+
+
+@pytest.mark.parametrize(
+    "identity",
+    [
+        {"login": "greptile-apps[bot]", "id": 1, "type": "Bot"},
+        {"login": "greptile-apps[bot]", "id": bot.GREPTILE_BOT_ID, "type": "User"},
+        {"login": "another[bot]", "id": bot.GREPTILE_BOT_ID, "type": "Bot"},
+    ],
+)
+def test_login_only_or_other_app_impersonation_cannot_authorize(fixture, identity):
+    review = {"user": identity, "state": "APPROVED", "commit_id": HEAD}
+    with (
+        patch.object(bot, "gh", return_value=json.dumps([[review]]).encode()),
+        patch.object(bot, "api", return_value={"permission": "none"}),
+    ):
+        assert not bot.reviewed(fixture[0])
+
+
+def test_app_identity_must_still_match_pinned_github_application(fixture):
+    review = {
+        "user": {"login": "greptile-apps[bot]", "id": bot.GREPTILE_BOT_ID, "type": "Bot"},
+        "state": "APPROVED",
+        "commit_id": HEAD,
+    }
+    with (
+        patch.object(bot, "gh", return_value=json.dumps([[review]]).encode()),
+        patch.object(bot, "api", return_value={"id": 1, "slug": "greptile-apps"}),
+    ):
+        assert not bot.reviewed(fixture[0])
+
+
+def test_unauthorized_change_request_does_not_block_trusted_app_approval(fixture):
+    reviews = [
+        {
+            "user": {"login": "greptile-apps[bot]", "id": bot.GREPTILE_BOT_ID, "type": "Bot"},
+            "state": "APPROVED",
+            "commit_id": HEAD,
+        },
+        {"user": {"login": "outsider"}, "state": "CHANGES_REQUESTED", "commit_id": HEAD},
+    ]
+    with (
+        patch.object(bot, "gh", return_value=json.dumps([reviews]).encode()),
+        patch.object(
+            bot, "api", side_effect=[{"id": bot.GREPTILE_APP_ID, "slug": "greptile-apps"}, {"permission": "read"}]
+        ),
+    ):
+        assert bot.reviewed(fixture[0])
