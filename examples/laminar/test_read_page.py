@@ -179,6 +179,7 @@ class LaminarTests(unittest.IsolatedAsyncioTestCase):
     async def test_stalled_disconnect_cannot_skip_owner_cleanup(self):
         disconnected = []
         cleanup_deadline = asyncio.timeout(None)
+        fault_started = None
 
         @asynccontextmanager
         async def driver():
@@ -190,7 +191,9 @@ class LaminarTests(unittest.IsolatedAsyncioTestCase):
                     close = browser.close
 
                     async def fail():
+                        nonlocal fault_started
                         # Bound cleanup from the injected fault, after provisioning.
+                        fault_started = time.monotonic()
                         cleanup_deadline.reschedule(asyncio.get_running_loop().time() + 20)
                         await close()
                         disconnected.append(True)
@@ -203,19 +206,23 @@ class LaminarTests(unittest.IsolatedAsyncioTestCase):
                     yield native
 
         offset = len(self.payloads)
-        async with owned() as ids:
-            original = read_page.async_playwright
-            with patch.object(read_page, "async_playwright", driver):
-                # Also bound setup and title reads before the cleanup fault starts.
-                async with asyncio.timeout(45), cleanup_deadline:
-                    with self.assertRaisesRegex(RuntimeError, "failed during reading the title") as failure:
-                        await read_page.read_page()
-        self.assertEqual(disconnected, [True])
-        self.assertNotIn(FAKE_CREDENTIAL, str(failure.exception))
-        span, payload = await self.emitted(offset)
-        self.assertEqual(span.status.code, 2)
-        self.assertIn(ids[0].encode(), payload)
-        self.assertIn(b"failed during reading the title", payload)
+        async with asyncio.timeout(45):
+            async with owned() as ids:
+                original = read_page.async_playwright
+                with patch.object(read_page, "async_playwright", driver):
+                    async with cleanup_deadline:
+                        with self.assertRaisesRegex(RuntimeError, "failed during reading the title") as failure:
+                            await read_page.read_page()
+                    # A synchronous session stop can block the event loop past its timer.
+                    if fault_started is None:
+                        self.fail("The disconnect fault was never reached")
+                    self.assertLess(time.monotonic() - fault_started, 20, "Owner cleanup exceeded its deadline")
+            self.assertEqual(disconnected, [True])
+            self.assertNotIn(FAKE_CREDENTIAL, str(failure.exception))
+            span, payload = await self.emitted(offset)
+            self.assertEqual(span.status.code, 2)
+            self.assertIn(ids[0].encode(), payload)
+            self.assertIn(b"failed during reading the title", payload)
 
     @unittest.skipUnless(
         LIVE and os.getenv("NOTTE_LAMINAR_EXPORT_LIVE") == "1", "Opt-in actual Laminar export and readback"
