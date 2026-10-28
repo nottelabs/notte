@@ -87,7 +87,7 @@ jobs:
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       DISABLE_TELEMETRY: 'true'
     concurrency:
-      group: notte-live-api-${{ github.ref }}
+      group: notte-live-api-staging
       queue: max
       cancel-in-progress: false
     steps:

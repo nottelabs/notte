@@ -108,10 +108,10 @@ jobs:
       NOTTE_DOCS_SHARD: ${{ matrix.shard }}
       VITEST_INTEGRATION: '1'
     # Shards own disjoint examples and resources. Each takes one of six slot queues
-    # shared by every run of this ref, so at most six run against staging at once,
+    # shared by all refs, so at most six run against staging at once,
     # and they no longer wait for the other live suites.
     concurrency:
-      group: notte-paired-live-${{ github.ref }}-${{ matrix.slot }}
+      group: notte-paired-live-staging-${{ matrix.slot }}
       queue: max
       cancel-in-progress: false
     steps:

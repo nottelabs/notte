@@ -130,7 +130,7 @@ jobs:
       # Scope vault creates to this job only; cleanup deletes only this prefix.
       NOTTE_CI_VAULT_PREFIX: ci-${{ github.run_id }}-${{ github.job }}
     concurrency:
-      group: notte-live-api-${{ github.ref }}
+      group: notte-live-api-staging
       queue: max
       cancel-in-progress: false
     steps:

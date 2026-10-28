@@ -34,6 +34,9 @@ def test_shared_queue_only_contains_staging_test_jobs() -> None:
         assert "notte-live-api" not in str(config.get("concurrency", {})), path.name
         for job_id, job in config.get("jobs", {}).items():
             if "notte-live-api" in str(job.get("concurrency", {})):
+                assert job["concurrency"]["group"] == "notte-live-api-staging"
+                assert job["concurrency"]["queue"] == "max"
+                assert job["concurrency"]["cancel-in-progress"] is False
                 queued.add((path.name, job_id))
     assert queued == expected
 
@@ -43,12 +46,12 @@ def test_paired_shards_share_six_slots_across_overlapping_runs(monkeypatch: pyte
     assert live["strategy"]["matrix"] == {"include": "${{ fromJSON(needs.changes.outputs.scope).paired_matrix }}"}
     assert "max-parallel" not in live["strategy"]
     assert live["concurrency"] == {
-        "group": "notte-paired-live-${{ github.ref }}-${{ matrix.slot }}",
+        "group": "notte-paired-live-staging-${{ matrix.slot }}",
         "queue": "max",
         "cancel-in-progress": False,
     }
     # The group omits the shard count, so a full run (18 shards) overlapping a
-    # scoped run (2 shards) on the same ref still shares the same six queues.
+    # scoped run (2 shards) on another ref still shares the same six queues.
     slots: set[str] = set()
     for paired_count in (18, 2):
         monkeypatch.setattr(ci_scope, "INTEGRATION_EXAMPLES", {f"p{i}": "x" for i in range(paired_count * 2)})

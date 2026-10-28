@@ -266,7 +266,7 @@ jobs:
       NOTTE_TEST_SHARD: ${{ matrix.shard }}/2
       NOTTE_CI_VAULT_PREFIX: ci-${{ github.run_id }}-${{ github.job }}-${{ matrix.shard }}
     concurrency:
-      group: notte-live-api-${{ github.ref }}
+      group: notte-live-api-staging
       queue: max
       cancel-in-progress: false
     steps:

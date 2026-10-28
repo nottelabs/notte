@@ -92,7 +92,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     concurrency:
-      group: notte-live-api-${{ github.ref }}
+      group: notte-live-api-staging
       queue: max
       cancel-in-progress: false
     steps:
