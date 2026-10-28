@@ -7,5 +7,5 @@
 // the store finder comes from another origin; it opens a confirmation frame from a third (this page's origin again)
 const other = location.hostname === '127.0.0.1' ? 'localhost' : '127.0.0.1';
 document.getElementById('finder').src = `${location.protocol}//${other}:${location.port}` +
-  location.pathname.replace('xframe.html', 'xframe-finder.html') + '?top=' + encodeURIComponent(location.origin + location.pathname);
+  location.pathname.replace('xframe.html', 'xframe-finder.html');
 </script></body></html>

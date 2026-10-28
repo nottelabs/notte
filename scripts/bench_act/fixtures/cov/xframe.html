@@ -7,5 +7,5 @@
 // the widget comes from another origin (127.0.0.1 and localhost are different origins), like a payment or newsletter partner
 const other = location.hostname === '127.0.0.1' ? 'localhost' : '127.0.0.1';
 document.getElementById('widget').src = location.protocol + '//' + other + ':' + location.port +
-  location.pathname.replace('xframe.html', 'xframe-widget.html') + '?top=' + encodeURIComponent(location.origin + location.pathname);
+  location.pathname.replace('xframe.html', 'xframe-widget.html');
 </script></body></html>

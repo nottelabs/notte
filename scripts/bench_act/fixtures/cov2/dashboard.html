@@ -16,8 +16,10 @@ const DATA = {
 };
 const M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-function render(year) {
-  const d = DATA[year];
+function render(value) {
+  // the year comes from the select: only one of DATA's own keys reaches the markup
+  const year = Number(value), d = DATA[year];
+  if (!d) return;
   document.getElementById('tiles').innerHTML = d.kpi.map(([k, v]) => `<div class="tile">${k}<b>${v}</b></div>`).join('');
   const svg = document.getElementById('chart'), max = 1400;
   svg.querySelectorAll('g').forEach(g => g.remove());

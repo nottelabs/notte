@@ -385,7 +385,8 @@ fixture pages and public sites (see its README). `act-bench.yml` runs it on PRs 
 `packages/notte-browser/src/notte_browser/dom/`, `packages/notte-core/src/notte_core/act/`,
 `packages/notte-llm/src/notte_llm/act.py`,
 `scripts/bench_act/` or `.github/workflows/act-bench.yml`, and manual dispatch. PRs compare head against the
-merge base. For Jev runners (`notte-local`, `notte-local-html`, `probe-local-jev`), fixture tasks and probes
+merge base; a manual run benches the commit it was started on against its merge base with the default branch,
+and never checks out another ref (from the default branch, that code could write its caches). For Jev runners (`notte-local`, `notte-local-html`, `probe-local-jev`), fixture tasks and probes
 must pass in every head run except for decider transport errors, which use the separate infra-miss threshold;
 public tasks and probes fail only on a clear repeat-by-repeat drop against base.
 LLM and scripted task/probe outcomes are report-only. A public site that blocks, shows a CAPTCHA, or redirects

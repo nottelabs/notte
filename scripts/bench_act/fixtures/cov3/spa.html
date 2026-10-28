@@ -20,7 +20,9 @@ const QA = {
 const nav = document.querySelector('nav'), view = document.getElementById('view');
 for (const [k, t] of Object.entries(TOPICS)) nav.insertAdjacentHTML('beforeend', `<a href="?topic=${k}">${t.title}</a>`);
 function render() {
-  const q = new URLSearchParams(location.search), topic = TOPICS[q.get('topic')], article = q.get('article');
+  // the topic and article come from the URL: only TOPICS' own keys reach the markup
+  const q = new URLSearchParams(location.search), key = Object.keys(TOPICS).find(k => k === q.get('topic'));
+  const topic = key && TOPICS[key], article = topic && Object.keys(topic.articles).find(k => k === q.get('article'));
   document.getElementById('loading').hidden = false; view.innerHTML = '';
   // the static file stands for the server's answer; the topics are defined here
   fetch('topics.json?' + q).then(r => r.json()).then(() => {
@@ -28,10 +30,10 @@ function render() {
     if (!topic) { view.innerHTML = '<h1>How can we help?</h1><p>Pick a topic on the left.</p>'; return; }
     if (!article) {
       view.innerHTML = `<h1>${topic.title}</h1><ul>` + Object.entries(topic.articles).map(([k, t]) =>
-        `<li><a href="?topic=${q.get('topic')}&article=${k}">${t}</a></li>`).join('') + '</ul>';
+        `<li><a href="?topic=${key}&article=${k}">${t}</a></li>`).join('') + '</ul>';
       return;
     }
-    view.innerHTML = `<p><a href="?topic=${q.get('topic')}">← ${topic.title}</a></p><h1>${topic.articles[article]}</h1>` +
+    view.innerHTML = `<p><a href="?topic=${key}">← ${topic.title}</a></p><h1>${topic.articles[article]}</h1>` +
       (QA[article] || []).map(([qq, a], i) => `<div class="q"><button type="button" aria-expanded="false" aria-controls="a${i}">${qq}</button>` +
         `<div id="a${i}" role="region" hidden>${a}</div></div>`).join('');
     view.querySelectorAll('.q button').forEach(b => b.onclick = () => {

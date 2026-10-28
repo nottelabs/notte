@@ -15,6 +15,7 @@ import json
 import os
 import time
 from typing import Any
+from urllib.parse import urlsplit
 
 import notte_llm.act as A
 from notte_browser.errors import PlaywrightError
@@ -397,7 +398,7 @@ async def run_probes(probes: list[Probe], url: str, decider_kind: str) -> dict[s
                 return run
             page = session.window.page
             run["landing"] = await _landing(page)
-            if "consent.google.com" in page.url:
+            if urlsplit(page.url).hostname == "consent.google.com":
                 # setup, not measured: the probes ask about the page behind Google's consent wall
                 await page.get_by_role("button", name="Reject all").first.click()
                 await page.wait_for_url("**/travel/flights/**", timeout=15000)

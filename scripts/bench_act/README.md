@@ -94,7 +94,8 @@ uv run --no-sync python scripts/bench_act/report.py /tmp/act-bench-ab --summary 
 - a PR changes `packages/notte-browser/src/notte_browser/js/`, `packages/notte-browser/src/notte_browser/dom/`,
   `packages/notte-core/src/notte_core/act/`, `packages/notte-llm/src/notte_llm/act.py`, `scripts/bench_act/`
   or `.github/workflows/act-bench.yml`;
-- someone starts it by hand (`workflow_dispatch`, from the default branch).
+- someone starts it by hand (`workflow_dispatch`) on a branch: it benches that branch's commit against its merge
+  base with the default branch (`compare`, on by default), never another ref.
 
 PRs run the `ci-core` tier, or every tier with the `act-bench-all` label; a manual run picks its tier with the
 `tags` input (`ci-core`, `ci-extended` or `all`).

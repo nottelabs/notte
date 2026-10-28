@@ -9,6 +9,7 @@
   <button type="submit">Subscribe</button>
 </form>
 <script>
-const top_ = new URLSearchParams(location.search).get('top') || '';
-document.getElementById('sub').action = top_.replace('xframe.html', 'xframe-done.html');
+// the newsletter page that embeds the widget: the other one of 127.0.0.1 and localhost, on the same port (xframe.html)
+const top_ = location.protocol + '//' + (location.hostname === '127.0.0.1' ? 'localhost' : '127.0.0.1') + ':' + location.port;
+document.getElementById('sub').action = top_ + location.pathname.replace('xframe-widget.html', 'xframe-done.html');
 </script></body></html>

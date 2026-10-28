@@ -30,12 +30,13 @@
 </form>
 <script>
 const form = document.getElementById('wizard'), $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[c]);
 const TITLES = {1: 'Account', 2: 'Profile', 3: 'Review'};
 let step = 1;
 function show(n) { step = n; form.querySelectorAll('section').forEach(s => s.hidden = Number(s.dataset.step) !== n);
   $('progress').textContent = 'Step ' + n + ' of 3: ' + TITLES[n];
-  if (n === 3) $('review').innerHTML = '<dt>Email</dt><dd>' + $('email').value + '</dd><dt>Name</dt><dd>' + $('first').value + ' ' +
-    $('last').value + '</dd><dt>Country</dt><dd>' + $('country').selectedOptions[0].text + '</dd>'; }
+  if (n === 3) $('review').innerHTML = '<dt>Email</dt><dd>' + esc($('email').value) + '</dd><dt>Name</dt><dd>' + esc($('first').value) + ' ' +
+    esc($('last').value) + '</dd><dt>Country</dt><dd>' + esc($('country').selectedOptions[0].text) + '</dd>'; }
 function errors(n) {
   if (n === 1) {
     if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test($('email').value)) return 'Enter a valid email address.';

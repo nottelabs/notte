@@ -30,6 +30,7 @@ fieldset{margin-top:12px}.steps{color:#555}dl{display:grid;grid-template-columns
   <button type="submit" id="place" hidden>Place order</button>
 </form>
 <script>
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[c]);
 // three steps; each is checked before the next; Back keeps what was entered. The date field is masked as DD/MM/YYYY
 const $ = id => document.getElementById(id), TITLES = ['Your details', 'Delivery', 'Review'];
 let step = 1;
@@ -57,8 +58,8 @@ function show(n) {
   $('back').hidden = n === 1; $('next').hidden = n === 3; $('place').hidden = n !== 3; $('err').textContent = '';
   if (n === 3) {
     const speed = document.querySelector('[name=speed]:checked').value;
-    $('review').innerHTML = `<dt>Name</dt><dd>${$('name').value}</dd><dt>Email</dt><dd>${$('email').value}</dd>` +
-      `<dt>Postcode</dt><dd>${$('zip').value}</dd><dt>Date</dt><dd>${$('date').value}</dd>` +
+    $('review').innerHTML = `<dt>Name</dt><dd>${esc($('name').value)}</dd><dt>Email</dt><dd>${esc($('email').value)}</dd>` +
+      `<dt>Postcode</dt><dd>${esc($('zip').value)}</dd><dt>Date</dt><dd>${esc($('date').value)}</dd>` +
       `<dt>Delivery</dt><dd>${speed === 'express' ? 'Express (+€6.00)' : 'Standard (free)'}</dd>`;
   }
 }

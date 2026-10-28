@@ -5,15 +5,14 @@ name: act bench
 # and on demand. A PR labelled `act-bench-all` runs every tier, not only ci-core. Forks get no secrets: the
 # benchmark is skipped.
 on:
+  # SECURITY: a manual run benches the commit it was started on, against that commit's merge base with the default
+  # branch. It never checks out another ref: run on the default branch, code from any ref could write its caches.
   workflow_dispatch:
     inputs:
-      head_ref:
-        description: Branch, tag or SHA to bench
-        required: true
-        default: main
-      base_ref:
-        description: Branch, tag or SHA to compare against (empty = head alone)
-        default: ''
+      compare:
+        description: Compare against the merge base with the default branch (off = head alone)
+        type: boolean
+        default: true
       suites:
         description: Comma-separated suites (empty = all), e.g. fixtures,demo,real
         default: ''
@@ -75,8 +74,8 @@ jobs:
           PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
           PR_HEAD: ${{ github.event.pull_request.head.sha }}
           PR_BASE: ${{ github.event.pull_request.base.sha }}
-          HEAD_REF: ${{ inputs.head_ref }}
-          BASE_REF: ${{ inputs.base_ref }}
+          COMPARE: ${{ inputs.compare }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
           SUITES: ${{ inputs.suites }}
           # PRs run the core tier (every tier with the `act-bench-all` label); a manual run picks its tier (`all`: both)
           TAGS: ${{ inputs.tags || 'ci-core' }}
@@ -117,11 +116,14 @@ jobs:
           if [ "$EVENT" != workflow_dispatch ] && jq -e 'index("act-bench-all")' <<<"$PR_LABELS" >/dev/null; then TAGS=all; fi
           if [ "$TAGS" = all ]; then TAGS=""; fi
           [[ "$REPEATS" =~ ^[1-5]$ && "$SHARDS" =~ ^[1-8]$ ]] || { echo "::error::repeats must be 1-5 and shards 1-8"; exit 1; }
-          sha() { gh api "repos/$GITHUB_REPOSITORY/commits/$1" --jq .sha; }
           if [ "$EVENT" = workflow_dispatch ]; then
-            head=$(sha "$HEAD_REF")
+            head=$GITHUB_SHA
             base=""
-            if [ -n "$BASE_REF" ]; then base=$(sha "$BASE_REF"); fi
+            if [ "$COMPARE" = true ]; then
+              base=$(gh api "repos/$GITHUB_REPOSITORY/compare/$DEFAULT_BRANCH...$head" --jq .merge_base_commit.sha)
+              # started on the default branch (or on a commit it contains): nothing to compare against
+              if [ "$base" = "$head" ]; then base=""; fi
+            fi
           else
             head=$PR_HEAD
             base=$(gh api "repos/$GITHUB_REPOSITORY/compare/$PR_BASE...$PR_HEAD" --jq .merge_base_commit.sha)

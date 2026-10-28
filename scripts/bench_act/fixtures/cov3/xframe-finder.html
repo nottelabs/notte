@@ -18,11 +18,13 @@ ul{list-style:none;padding:0}li{padding:4px 0}iframe{border:0;width:100%;height:
 let zoom = 12; const z = d => { zoom += d; document.getElementById('zoom').textContent = 'Zoom ' + zoom; };
 document.getElementById('zin').onclick = () => z(1); document.getElementById('zout').onclick = () => z(-1);
 document.querySelectorAll('[name=store]').forEach(r => r.onchange = () => document.getElementById('choose').disabled = false);
-const top_ = new URLSearchParams(location.search).get('top') || '';
+// the shop's page that embeds the finder: the other one of 127.0.0.1 and localhost, on the same port (xframe.html)
+const top_ = location.protocol + '//' + (location.hostname === '127.0.0.1' ? 'localhost' : '127.0.0.1') + ':' + location.port;
 document.getElementById('choose').onclick = () => {
   // the confirmation is a frame from the shop's own origin, inside this one
-  const store = document.querySelector('[name=store]:checked').value, back = new URL(top_);
-  document.getElementById('confirm').innerHTML = `<iframe title="Confirm pick-up"
-    src="${back.origin}${back.pathname.replace('xframe.html', 'xframe-confirm.html')}?store=${store}"></iframe>`;
+  const store = document.querySelector('[name=store]:checked').value, frame = document.createElement('iframe');
+  frame.title = 'Confirm pick-up';
+  frame.src = top_ + location.pathname.replace('xframe-finder.html', 'xframe-confirm.html') + '?store=' + encodeURIComponent(store);
+  document.getElementById('confirm').replaceChildren(frame);
 };
 </script></body></html>
