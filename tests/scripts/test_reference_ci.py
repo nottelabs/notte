@@ -94,3 +94,37 @@ def test_reference_and_coordinating_ci_select_from_same_immutable_revision() -> 
     jobs = [configurations[0]["jobs"]["generated-reference"], configurations[1]["jobs"]["changes"]]
     refs = [next(step for step in job["steps"] if "checkout@" in step.get("uses", ""))["with"]["ref"] for job in jobs]
     assert refs == ["${{ github.event.pull_request.head.sha || github.sha }}"] * 2
+
+
+@pytest.mark.parametrize("event", ["pull_request", "push", "workflow_dispatch"])
+@pytest.mark.parametrize("target", ["main", "release"])
+def test_reference_selects_head_before_validating_the_merge_or_non_pr_revision(event: str, target: str) -> None:
+    reference = yaml.safe_load((ROOT / ".github/workflows/typescript-sdk-reference.yml").read_text())
+    steps = reference["jobs"]["generated-reference"]["steps"]
+    checkouts = [index for index, step in enumerate(steps) if "checkout@" in step.get("uses", "")]
+    assert len(checkouts) == 2
+    source, validation = checkouts
+    scope = next(index for index, step in enumerate(steps) if step.get("id") == "scope")
+    setup = next(index for index, step in enumerate(steps) if "setup-node@" in step.get("uses", ""))
+    commands = [
+        index
+        for index, step in enumerate(steps)
+        if step.get("run") in {"npm ci", "npm run docs:test", "npm run docs:check"}
+    ]
+    assert source < scope < validation < setup < min(commands)
+    assert steps[source]["with"]["ref"] == "${{ github.event.pull_request.head.sha || github.sha }}"
+    assert steps[validation]["with"]["ref"] == "${{ github.sha }}"
+    assert steps[validation]["if"] == "github.event_name == 'pull_request'"
+    assert all(steps[index]["with"]["persist-credentials"] is False for index in checkouts)
+    # The selector implementation must come from the same HEAD as coordinating
+    # CI. Validation then uses the event SHA, including non-main PR merge results.
+    event_revision = f"{event}-{target}-event-sha"
+    head_revision = "pr-head-sha" if event == "pull_request" else event_revision
+    current_revision = head_revision
+    for index, step in enumerate(steps):
+        if index == scope:
+            assert current_revision == head_revision
+        if index == validation and event == "pull_request":
+            current_revision = event_revision
+        if index in commands:
+            assert current_revision == event_revision
