@@ -31,3 +31,6 @@
 [submodule "notte-langchain"]
 	path = integrations/notte-langchain
 	url = https://github.com/nottelabs/notte-langchain.git
+[submodule "notte-account-login"]
+	path = example-apps/notte-account-login
+	url = https://github.com/nottelabs/notte-account-login.git
