@@ -193,14 +193,6 @@ jobs:
         if: matrix.python == '3.11'
         run: make test-timing
 
-      - name: Test compatible dependency versions
-        if: matrix.python == '3.15'
-        # The locked-version suite above also exercises these contracts. Library
-        # lower bounds must allow existing consumers to keep compatible versions.
-        run: >-
-          uv run --with websockets==15.0.1 --with beautifulsoup4==4.14.3 --with posthog==7.0.1
-          pytest -n logical tests/sdk tests/browser tests/llm tests/data tests/test_telemetry.py tests/test_telemetry_delivery.py -m "not staging and not live and not timing" -q
-
       - name: Note - staging-and-live skipped (fork PR)
         if: ${{ env.IS_TRUSTED != 'true' }}
         run: |
@@ -217,6 +209,40 @@ jobs:
         with:
           pytest-coverage-path: ./pytest-coverage.txt
           junitxml-path: ./pytest.xml
+
+  # Run the lower-bound dependency contracts alongside the locked-version suite.
+  # Both remain required through the reusable workflow's result in CI / tests.
+  compatible-dependencies:
+    needs: changes
+    if: fromJSON(needs.changes.outputs.scope).python_unit
+    permissions:
+      contents: read
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 20
+    steps:
+      - name: Checkout PR code (manual trigger)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/pull/${{ github.event.inputs.pr_number }}/head
+
+      - name: Checkout code (PR or push)
+        if: github.event_name != 'workflow_dispatch'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - uses: ./.github/actions/python-setup
+        with:
+          browsers: "true"
+          python-version: "3.15"
+
+      - name: Test compatible dependency versions
+        # The locked-version suite also exercises these contracts. Library
+        # lower bounds must allow existing consumers to keep compatible versions.
+        run: >-
+          uv run --with websockets==15.0.1 --with beautifulsoup4==4.14.3 --with posthog==7.0.1
+          pytest -n logical tests/sdk tests/browser tests/llm tests/data tests/test_telemetry.py tests/test_telemetry_delivery.py -m "not staging and not live and not timing" -q
 
   # Everything marked `staging` (Notte API, us-staging) or `live` (third-party websites, LLM
   # providers), including marked tests outside tests/integration. These depend on
