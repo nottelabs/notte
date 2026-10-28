@@ -462,6 +462,9 @@
 	function getLiveState(element) {
 		const state = {};
 		const tagName = tagNameOf(element).toLowerCase();
+		// Explicit HTML drag targets, not the browser's automatic dragging of links and images.
+		// Keep their click actions: a draggable card can also open on click or contain controls.
+		if (getAttribute(element, "draggable")?.toLowerCase() === "true") state.draggable = true;
 		if (tagName === "select") {
 			state.value = element.value;
 			const options = element.options;

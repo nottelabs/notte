@@ -19,7 +19,9 @@ Fields that do not apply to the element are `None`.
 - `expanded` / `selected` / `pressed`: `aria-expanded` / `aria-selected` / `aria-pressed`;
   `pressed` can also be `"mixed"` for toggle buttons with mixed formatting.
 - `sort`: the `aria-sort` of a column header, on the header and on the controls inside it (its sort
-  button), when the column is sorted
+  button), when the column is sorted.
+- `draggable`: the element explicitly enables HTML drag and drop. This does not imply that
+  clicking it drags it, or that its click action is unavailable
 
 ## Fields
 
@@ -60,6 +62,9 @@ Fields that do not apply to the element are `None`.
 </ParamField>
 
 <ParamField path="sort" type="Literal['ascending', 'descending', 'other'] | None">
+</ParamField>
+
+<ParamField path="draggable" type="bool | None">
 </ParamField>
 
 

@@ -22,9 +22,16 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   `OPENROUTER_API_KEY` secret as `NOTTE_LLM_API_KEY` with `google/...` model
   IDs. Don't point them at a provider's direct API key; the shared direct
   Gemini key hits rate limits. Only `llm-provider-matrix` tests direct routes.
+- Live CI prefers `NOTTE_API_KEY_CI_PY` over the legacy `NOTTE_API_KEY` secret.
+  Staging persona 403s naming the `CI/CD` workspace indicate a token/workspace
+  mismatch. Lucas must supply the workspace-matched `NOTTE_API_KEY_CI_PY`;
+  preserve the runtime checks rather than changing code to bypass those 403s.
 - `make test` is the offline gate. `make test-live` runs tests marked
   `staging` or `live` and needs `NOTTE_API_KEY`; set `NOTTE_API_URL` to point
   the SDK at a different API.
+- A click that opens a file chooser fails with `FileChooserOpenedError`.
+  Local `act()` maps either the raised error or failed execution result to
+  BLOCKED because it cannot supply a file; `tests/act/test_local_act.py` covers both modes.
 - A test that bounds how long a browser action took (`elapsed < ...`) is marked
   `timing`. The parallel suites leave it out; `make test-timing` runs those
   tests one at a time, in CI on the 3.11 leg. Next to parallel browsers, a
@@ -126,6 +133,22 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
 
 ## DOM build script
 
+Act's inner-scroll discovery must retain an executable selector for each offered
+direction. Pass it to the scroll action so execution targets the discovered box,
+even when the mouse is over a different scroll box. Use native DOM accessors when
+building CSS paths across shadow hosts; form controls can clobber those properties.
+`tests/act/test_local_act.py` covers executed up/down scrolls in normal and reversed
+lists, both in the document and in open shadow roots.
+
+Act offers ARIA sliders and spinbuttons through `TYPE_TEXT`, using their live values
+and one shared numeric-typing instruction. Off-screen and disabled controls retain
+pressed, selected and expanded state in the decision text. The local driver omits
+`GO_BACK` when CDP history has no earlier page beyond the tab's blank start document.
+`tests/act/test_local_act.py` checks these contracts on actual browser pages.
+Disabled expanded controls can render `aria_expanded="true"` instead of a bare
+`expanded` flag; act reads that rendered attribute without treating false values
+or state words inside unrelated attribute values as true state.
+
 `packages/notte-browser/src/notte_browser/js/buildDomNode.js` reads elements through
 its helpers (`getAttribute(element, name)`, `childrenOf(element)`,
 `propertyOf(element, name)`, ...), never as `element.children`: a `<form>` exposes
@@ -212,6 +235,12 @@ viewport and overflow ancestors, including ancestors outside its shadow root. Ke
 `tests/browser/test_dom_contenteditable.py` and `test_dom_covered_controls.py` passing
 together: probing the original editor box loses editors cut by a scroll panel or the fold.
 
+Draggable elements can also have real click behavior. Patchright's isolated
+evaluation cannot see a page-assigned `.onclick` property, so do not remove
+their cursor-based click actions to represent unsupported dragging. Carry the
+explicit HTML `draggable` state into act decisions and freshness checks instead;
+`tests/act/test_drag_cursor.py` covers click controls and drag capability disclosure.
+
 Editing hosts use the center of their visible portion for both hit testing and off-screen
 classification. Intersect only axes that clip, using the scaled inner bounds across shadow
 hosts, and respect positioned popup escapes; a full-box center can be outside while the
@@ -219,6 +248,9 @@ editor still accepts a fill. `tests/browser/test_dom_contenteditable.py` covers 
 
 ## Public API
 
+- Jev route selection does not require the optional LLM field writer. Incomplete
+  `NOTTE_LLM_*` settings leave Jev available without a writer; an LLM decider
+  still reports invalid endpoint configuration.
 - Cloud SDK resources follow their client: sync client resources have sync I/O;
   async client resources have async I/O. Cloud vaults/personas used by a local
   browser session must come from `AsyncNotteClient` on that session's event loop.
@@ -274,6 +306,9 @@ Async code never reads or writes local files on the event loop: use `asyncio.to_
 in a thread first). `tests/sdk/test_async_functions_files.py` checks this for functions and files.
 
 ## Generated docs
+
+The Sphinx build-finished hook corrects `Answers.usage`: sphinx-mintlify currently marks its
+`default_factory` field required. Keep the generated reference aligned with the optional model field.
 
 After changing `packages/notte-sdk/src/`, run `make docs-sdk` (the
 `docs-sdk-generate` pre-commit hook runs the same target) and commit the

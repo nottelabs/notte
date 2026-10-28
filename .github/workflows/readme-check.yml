@@ -83,6 +83,8 @@ jobs:
     env:
       NOTTE_API_URL: https://us-staging.notte.cc
       NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_README || secrets.NOTTE_API_KEY }}
+      # the local act() example
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       DISABLE_TELEMETRY: 'true'
     concurrency:
       group: notte-live-api-${{ github.ref }}
