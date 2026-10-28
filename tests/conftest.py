@@ -6,7 +6,9 @@ from typing import Any
 
 import notte_core
 
-pytest_plugins = ["tests.flake_diagnostics"]
+# The flake diagnostics instrument local browser sessions. SDK-only environments (the websocket compatibility check
+# of the paired live examples) have no notte_browser to import.
+pytest_plugins = ["tests.flake_diagnostics"] if importlib.util.find_spec("notte_browser") is not None else []
 
 CONFIG_PATH = Path(__file__).parent / "test_notte_config.toml"
 notte_core.set_error_mode("developer")
