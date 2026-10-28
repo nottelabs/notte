@@ -1,0 +1,42 @@
+name: complete-bot-pr
+
+on:
+  workflow_run:
+    workflows: ['*']
+    types: [completed]
+  check_run:
+    types: [completed]
+  status:
+  # Reconcile reviews submitted after the last check event, without a waiting runner.
+  schedule:
+    - cron: '17,47 * * * *'
+
+permissions:
+  actions: read
+  checks: read
+  contents: read
+  pull-requests: read
+  statuses: read
+
+concurrency:
+  group: complete-bot-pr
+  cancel-in-progress: false
+
+jobs:
+  complete:
+    if: >-
+      github.repository == 'nottelabs/notte' &&
+      (github.event_name != 'workflow_run' || github.event.workflow_run.name != 'complete-bot-pr')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # These events use the default branch. Never check out or execute PR code.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.workflow_sha }}
+          persist-credentials: false
+      - name: Complete owned bot PRs whose checks and reviews passed
+        env:
+          # Reuse the existing bot authorization; grant no additional token rights.
+          GH_TOKEN: ${{ secrets.SUBMODULE_BUMP_PAT }}
+        run: python3 scripts/complete_bot_pr.py
