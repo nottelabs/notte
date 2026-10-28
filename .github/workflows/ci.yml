@@ -34,9 +34,8 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      # ci:openai selects a provider, not an approval. A full PR rerun requires
-      # repository write access and rechecks live metadata for the same head.
-      - name: Select live extraction provider
+      # Validate immutable source metadata. Labels never select another model route.
+      - name: Validate live extraction source
         id: provider
         env:
           EVENT_NAME: ${{ github.event_name }}

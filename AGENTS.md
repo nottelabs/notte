@@ -21,7 +21,8 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
 - CI's live LLM calls (`staging-and-live`) go through OpenRouter: the
   `OPENROUTER_API_KEY` secret as `NOTTE_LLM_API_KEY` with `google/...` model
   IDs. Don't point them at a provider's direct API key; the shared direct
-  Gemini key hits rate limits. Only `llm-provider-matrix` tests direct routes.
+  Gemini key hits rate limits. Extraction and the provider matrix use only
+  OpenRouter credentials; the Vertex matrix leg also routes through OpenRouter.
 - OpenRouter can send heartbeat frames while an LLM response is pending. HTTPX read
   timeouts reset per chunk; keep the total per-attempt deadline in `LLMEngine` so a
   pending response cannot run until pytest-timeout terminates an xdist worker.

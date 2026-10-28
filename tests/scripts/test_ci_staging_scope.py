@@ -360,13 +360,13 @@ def test_scoped_checks_fetch_history_only_during_authenticated_checkout() -> Non
 @pytest.mark.parametrize(
     "event,attempt,label,fork,moved,expected",
     [
-        ("pull_request", 1, True, False, False, "gemini"),
-        ("pull_request", 2, True, False, False, "openai"),
-        ("pull_request", 2, False, False, False, "gemini"),
-        ("pull_request", 2, True, True, False, "gemini"),
+        ("pull_request", 1, True, False, False, "openrouter"),
+        ("pull_request", 2, True, False, False, "openrouter"),
+        ("pull_request", 2, False, False, False, "openrouter"),
+        ("pull_request", 2, True, True, False, "openrouter"),
         ("pull_request", 2, True, False, True, None),
-        ("push", 1, True, False, False, "openai"),
-        ("push", 1, False, False, False, "gemini"),
+        ("push", 1, True, False, False, "openrouter"),
+        ("push", 1, False, False, False, "openrouter"),
     ],
 )
 def test_provider_selection_executes_the_normal_workflow(
@@ -424,67 +424,36 @@ sys.exit(subprocess.run(["jq", args[args.index("--jq") + 1]], stdin=open(os.envi
 
 
 @pytest.mark.parametrize(
-    "provider,key,router_key,source_matches,checkout_matches,succeeds",
+    "route,key,succeeds",
     [
-        ("gemini", "", "dummy-openrouter-key", True, True, True),
-        ("gemini", "", "", True, True, False),
-        ("openai", "dummy-test-key", "", True, True, True),
-        ("openai", "", "dummy-openrouter-key", True, True, False),
-        ("unknown", "", "dummy-openrouter-key", True, True, False),
-        ("openai", "dummy-test-key", "", False, True, False),
-        ("openai", "dummy-test-key", "", True, False, False),
+        ("openrouter", "fixture-router-key", True),
+        ("openrouter", "", False),
+        ("openai", "fixture-router-key", False),
+        ("gemini", "fixture-router-key", False),
     ],
 )
-def test_selected_provider_runs_the_full_live_suite(
-    tmp_path: Path,
-    provider: str,
-    key: str,
-    router_key: str,
-    source_matches: bool,
-    checkout_matches: bool,
-    succeeds: bool,
-) -> None:
+def test_live_extraction_only_accepts_openrouter(tmp_path: Path, route: str, key: str, succeeds: bool) -> None:
     step = next(
         s
         for s in workflow("test-cicd.yml")["jobs"]["staging-and-live"]["steps"]
         if s.get("name") == "Run staging and live tests"
     )
-    paid_key = step["env"]["OPENAI_API_KEY"]
-    assert "github.event.pull_request.head.repo.full_name == github.repository && inputs.live_authorized" in paid_key
-    assert "inputs.source_sha == (github.event.pull_request.head.sha || github.sha)" in paid_key
-    assert "github.event_name == 'push' && github.ref == 'refs/heads/main' && !github.event.deleted" in paid_key
+    assert "OPENAI_API_KEY" not in step["env"]
     assert step["env"]["NOTTE_LLM_BASE_URL"] == "https://openrouter.ai/api/v1"
     assert step["env"]["NOTTE_LLM_API_KEY"] == "${{ secrets.OPENROUTER_API_KEY }}"
-    output = tmp_path / "invocation.json"
+    output = tmp_path / "invoked"
     stub = tmp_path / "make"
-    stub.write_text("""#!/usr/bin/env python3
-import json, os, sys
-from pathlib import Path
-Path(os.environ["OUTPUT"]).write_text(json.dumps({
-    "args": sys.argv[1:], "url": os.environ["NOTTE_LLM_BASE_URL"],
-    "model": os.environ["NOTTE_LLM_MODEL"], "default": os.environ["NOTTE_TEST_DEFAULT_MODEL"],
-    "key_matches": os.environ["NOTTE_LLM_API_KEY"] == os.environ["OPENAI_API_KEY"]}))
-""")
+    stub.write_text('#!/bin/sh\nprintf "%s" "$NOTTE_LLM_BASE_URL" > "$OUTPUT"\n')
     stub.chmod(0o755)
-    git = tmp_path / "git"
-    git.write_text('#!/bin/sh\ntest "$*" = "rev-parse HEAD" || exit 1\nprintf "%s\\n" "$CHECKED_OUT_SHA"\n')
-    git.chmod(0o755)
     result = subprocess.run(
         ["bash", "-e", "-o", "pipefail", "-c", step["run"]],
         env={
             **os.environ,
             "PATH": f"{tmp_path}:{os.environ['PATH']}",
             "OUTPUT": str(output),
-            "NOTTE_CI_LLM_PROVIDER": provider,
-            "NOTTE_CI_SOURCE_SHA": "a" * 40 if source_matches else "",
-            "NOTTE_CI_EXPECTED_SHA": "a" * 40,
-            "CHECKED_OUT_SHA": ("a" if checkout_matches else "c") * 40,
-            "GITHUB_SHA": "b" * 40,  # The PR's synthetic merge SHA differs from its actual source.
-            "OPENAI_API_KEY": key,
+            "NOTTE_CI_LLM_PROVIDER": route,
+            "NOTTE_LLM_API_KEY": key,
             "NOTTE_LLM_BASE_URL": "https://openrouter.ai/api/v1",
-            "NOTTE_LLM_MODEL": "google/gemini-3.5-flash-lite",
-            "NOTTE_TEST_DEFAULT_MODEL": "google/gemini-3.8-flash",
-            "NOTTE_LLM_API_KEY": router_key,
         },
         capture_output=True,
         text=True,
@@ -492,17 +461,7 @@ Path(os.environ["OUTPUT"]).write_text(json.dumps({
     assert (result.returncode == 0) == succeeds, result.stdout + result.stderr
     assert output.exists() == succeeds
     if succeeds:
-        invocation = json.loads(output.read_text())
-        assert invocation["args"][0] == "test-live"
-        assert '-m "staging or live"' in invocation["args"][1]
-        if provider == "openai":
-            assert invocation["url"] == "https://api.openai.com/v1"
-            assert invocation["model"] == "gpt-4.1-mini"
-            assert invocation["default"] == "gpt-4.1-nano"
-            assert invocation["key_matches"] is True
-        else:
-            assert invocation["model"] == "google/gemini-3.5-flash-lite"
-            assert invocation["key_matches"] is False
+        assert output.read_text() == "https://openrouter.ai/api/v1"
 
 
 @pytest.mark.parametrize("trusted", [True, False])
