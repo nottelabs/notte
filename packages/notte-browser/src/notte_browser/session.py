@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import datetime as dt
-from collections.abc import Mapping, Sequence
+from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import replace
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, TypedDict, Unpack, cast, overload
@@ -32,6 +32,7 @@ from notte_core.act import (
 )
 from notte_core.act.context import element_contexts
 from notte_core.act.freshness import ELEMENT_SIGNATURES_JS, Signatures, signature_xpaths
+from notte_core.act.runner import DialogAnswer, JsDialog
 from notte_core.act.settle import SUGGESTIONS_JS
 from notte_core.act.space import shown_contexts
 from notte_core.act.wait import (
@@ -116,7 +117,7 @@ from notte_browser import execution
 from notte_browser.action_space import build_action_space
 from notte_browser.captcha import captcha_solver_available
 from notte_browser.dom.locate import locate_element
-from notte_browser.driver import Frame, JSHandle, Locator, Page
+from notte_browser.driver import Dialog, Frame, JSHandle, Locator, Page
 from notte_browser.errors import (
     BrowserNotStartedError,
     CaptchaSolverNotAvailableError,
@@ -312,7 +313,52 @@ class LocalActDriver:
         )
         return same_target(page, current, element_id)
 
-    async def execute(self, action: BaseAction, raise_on_failure: bool) -> ExecutionResult:
+    async def execute(
+        self,
+        action: BaseAction,
+        raise_on_failure: bool,
+        *,
+        dialogs: Callable[[JsDialog], Awaitable[DialogAnswer]] | None = None,
+    ) -> ExecutionResult:
+        if dialogs is None:
+            return await self._execute(action, raise_on_failure)
+        page = self.session.window.page
+        context = page.context
+        # the action's page and the tabs it opens: another tab's dialog is not the action's to answer
+        others = {tab for tab in context.pages if tab is not page}
+        pending: set[asyncio.Task[None]] = set()
+
+        async def on_dialog(dialog: Dialog) -> None:
+            # A listener answers every dialog itself (without one, the driver dismisses them): one that is not the
+            # action's, or that gets no answer, is dismissed, as it was before.
+            accept, text = False, None
+            if dialog.page not in others:
+                try:
+                    accept, text = await dialogs(JsDialog(dialog.type, dialog.message, dialog.default_value))
+                except Exception as e:
+                    logger.warning(f"act: dismissed a {dialog.type} dialog without an answer: {type(e).__name__}")
+            try:
+                if accept:
+                    await dialog.accept(text if text is not None else dialog.default_value)
+                else:
+                    await dialog.dismiss()
+            except PlaywrightError:
+                # the page or its dialog is gone
+                pass
+
+        def on_dialog_event(dialog: Dialog) -> None:
+            pending.add(asyncio.ensure_future(on_dialog(dialog)))
+
+        context.on("dialog", on_dialog_event)
+        try:
+            return await self._execute(action, raise_on_failure)
+        finally:
+            _ = context.remove_listener("dialog", on_dialog_event)
+            # a dialog still being answered changes the page: the action ends once it is answered
+            if pending:
+                _ = await asyncio.gather(*pending, return_exceptions=True)
+
+    async def _execute(self, action: BaseAction, raise_on_failure: bool) -> ExecutionResult:
         if isinstance(action, InteractionAction) and action.selector is None and self._snapshot is not None:
             # pin the element with the selectors of the checked snapshot, not by an id that another
             # observation of the session may have given to another element

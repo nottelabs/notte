@@ -13,6 +13,7 @@ match config.browser_backend:
             BrowserContext,
             CDPSession,
             ConsoleMessage,
+            Dialog,
             ElementHandle,
             Error,
             FileChooser,
@@ -35,6 +36,7 @@ match config.browser_backend:
             BrowserContext,
             CDPSession,
             ConsoleMessage,
+            Dialog,
             ElementHandle,
             Error,
             FileChooser,
@@ -133,6 +135,7 @@ __all__ = [
     "JSHandle",
     "ElementHandle",
     "ConsoleMessage",
+    "Dialog",
     "evaluate_in_main_world",
     "evaluate_handle_in_main_world",
 ]

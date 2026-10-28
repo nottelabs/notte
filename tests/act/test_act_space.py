@@ -448,7 +448,7 @@ async def test_vault_secrets_typed_earlier_are_masked() -> None:
         async def is_fresh(self, page: ObservedPage, element_id: str | None, *, focus: bool = False) -> bool:  # pyright: ignore[reportUnusedParameter]
             return True
 
-        async def execute(self, action: Any, raise_on_failure: bool) -> ExecutionResult:  # pyright: ignore[reportUnusedParameter]
+        async def execute(self, action: Any, raise_on_failure: bool, **_: Any) -> ExecutionResult:  # pyright: ignore[reportUnusedParameter]
             raise AssertionError("not executed")
 
     decider = FakeDecider(choices=[{"operation": "DONE"}])
