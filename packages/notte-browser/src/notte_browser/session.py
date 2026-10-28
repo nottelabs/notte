@@ -143,8 +143,6 @@ if TYPE_CHECKING:
 # act()'s page scripts, watching the page as the session's settle does
 _WAIT_FOR_CHANGE_JS = page_script(WAIT_FOR_CHANGE_JS)
 _SUGGESTIONS_JS = page_script(SUGGESTIONS_JS)
-# how long act() takes to answer a dialog its action opened (one decision, and a prompt's text): the page waits
-_DIALOG_ANSWER_S = 30
 _INNER_SCROLL_JS = script("act_scroll_directions.js")
 
 
@@ -324,17 +322,21 @@ class LocalActDriver:
     ) -> ExecutionResult:
         if dialogs is None:
             return await self._execute(action, raise_on_failure)
-        context = self.session.window.page.context
+        page = self.session.window.page
+        context = page.context
+        # the action's page and the tabs it opens: another tab's dialog is not the action's to answer
+        others = {tab for tab in context.pages if tab is not page}
+        pending: set[asyncio.Task[None]] = set()
 
         async def on_dialog(dialog: Dialog) -> None:
-            # A listener answers every dialog itself (without one, the driver dismisses them): it is dismissed when
-            # no answer comes, as it was before.
+            # A listener answers every dialog itself (without one, the driver dismisses them): one that is not the
+            # action's, or that gets no answer, is dismissed, as it was before.
             accept, text = False, None
-            try:
-                async with asyncio.timeout(_DIALOG_ANSWER_S):
+            if dialog.page not in others:
+                try:
                     accept, text = await dialogs(JsDialog(dialog.type, dialog.message, dialog.default_value))
-            except Exception as e:
-                logger.warning(f"act: dismissed a {dialog.type} dialog without an answer: {type(e).__name__}")
+                except Exception as e:
+                    logger.warning(f"act: dismissed a {dialog.type} dialog without an answer: {type(e).__name__}")
             try:
                 if accept:
                     await dialog.accept(text if text is not None else dialog.default_value)
@@ -344,11 +346,17 @@ class LocalActDriver:
                 # the page or its dialog is gone
                 pass
 
-        context.on("dialog", on_dialog)
+        def on_dialog_event(dialog: Dialog) -> None:
+            pending.add(asyncio.ensure_future(on_dialog(dialog)))
+
+        context.on("dialog", on_dialog_event)
         try:
             return await self._execute(action, raise_on_failure)
         finally:
-            _ = context.remove_listener("dialog", on_dialog)
+            _ = context.remove_listener("dialog", on_dialog_event)
+            # a dialog still being answered changes the page: the action ends once it is answered
+            if pending:
+                _ = await asyncio.gather(*pending, return_exceptions=True)
 
     async def _execute(self, action: BaseAction, raise_on_failure: bool) -> ExecutionResult:
         if isinstance(action, InteractionAction) and action.selector is None and self._snapshot is not None:

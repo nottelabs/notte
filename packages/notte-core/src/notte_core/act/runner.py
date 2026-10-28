@@ -20,6 +20,7 @@ A session plugs in through an `ActDriver` (observe, re-check, execute); the deci
 An invalid answer (decision or field value) is asked again once; a second invalid answer blocks.
 """
 
+import asyncio
 import time
 from collections import deque
 from collections.abc import Awaitable, Callable, Mapping, Sequence
@@ -80,6 +81,8 @@ from notte_core.errors import ContentFilterError, FileChooserOpenedError
 from notte_core.observation import ExecutionResult, Observation
 
 HISTORY_SIZE = 10
+# how long act() takes to answer a dialog its action opened (one decision, and a prompt's text): the page waits
+DIALOG_ANSWER_S = 30
 WRITER_HISTORY_SIZE = 6
 WRITER_PAGE_TEXT_LENGTH = 6_000
 # the other fields with a value sent to the writer (`page.fields`), the closest to the target
@@ -460,7 +463,18 @@ async def run_act(
         )
 
         async def answer_dialog(dialog: JsDialog, entry: ActHistoryEntry = entry) -> DialogAnswer:
-            return await _answer_dialog(decider, state, instruction, dialog, history, variables, entry)
+            # a credential the action typed before the dialog opened is masked in what the decider reads of it
+            history.privacy.remember_secrets(driver.secret_replacements())
+            try:
+                async with asyncio.timeout(DIALOG_ANSWER_S):
+                    return await _answer_dialog(decider, state, instruction, dialog, history, variables, entry)
+            except Exception as e:
+                # no answer: dismissed, as `execute()` does, and the next decision is told
+                entry.dialogs.append(
+                    {"kind": dialog.kind, "message": _dialog_message(dialog, history), "answer": "dismissed"}
+                    | {"error": type(e).__name__}
+                )
+                return False, None
 
         step = time.perf_counter()
         try:
@@ -564,9 +578,7 @@ async def _answer_dialog(
 ) -> DialogAnswer:
     """How to answer a dialog the action opened: the decider accepts or dismisses it, the writer writes what a
     prompt is accepted with. An alert has only OK. An invalid answer dismisses it, as `execute()` does."""
-    message = history.privacy.text(dialog.message) or (
-        "Leave this page? Changes you made may not be saved." if dialog.kind == "beforeunload" else ""
-    )
+    message = _dialog_message(dialog, history)
     accept, text = True, None
     if dialog.kind != "alert":
         criteria = {"ACCEPT": "OK: accept the dialog", "DISMISS": "Cancel: dismiss the dialog"}
@@ -598,13 +610,22 @@ async def _answer_dialog(
             written = await _write(decider, context)
         except (InvalidDecisionError, ContentFilterError):
             written = None
-        if written is not None:
+        if written is None:
+            # no text from the goal: dismissed rather than accepted with whatever the page put in the field
+            accept = False
+        else:
             text = substitute_variables(written, variables)
     entry.dialogs.append(
         {"kind": dialog.kind, "message": message, "answer": "accepted" if accept else "dismissed"}
         | ({} if text is None else {"text": history.privacy.text(text)})
     )
     return accept, text
+
+
+def _dialog_message(dialog: JsDialog, history: ActHistory) -> str:
+    return history.privacy.text(dialog.message) or (
+        "Leave this page? Changes you made may not be saved." if dialog.kind == "beforeunload" else ""
+    )
 
 
 async def _write(decider: Decider, context: WriteContext) -> str | None:

@@ -2209,3 +2209,87 @@ async def test_a_dialog_outside_act_is_still_dismissed(session: NotteSession) ->
     ids = await _ids(session)
     _ = await session.aexecute(type="click", id=ids["confirm"])
     assert await page.evaluate("document.body.dataset.r") == "cancel"
+
+
+@pytest.mark.asyncio
+async def test_a_dialog_of_another_tab_is_dismissed_without_a_question(session: NotteSession) -> None:
+    pages = {
+        "/action": "<button id='go' onclick=\"new BroadcastChannel('x').postMessage('ask')\">Go</button>",
+        "/other": "<script>new BroadcastChannel('x').onmessage = () =>"
+        " localStorage.setItem('other', confirm('Delete everything?') ? 'ok' : 'cancel')</script>",
+    }
+
+    async def serve(route: Route) -> None:
+        await route.fulfill(body=pages[route.request.url.removeprefix("http://tabs.test")], content_type="text/html")
+
+    context = session.window.page.context
+    await context.route("http://tabs.test/**", serve)
+    other = await context.new_page()
+    _ = await other.goto("http://tabs.test/other")
+    page = session.window.page
+    await page.bring_to_front()
+    _ = await page.goto("http://tabs.test/action")
+    ids = await _ids(session)
+    decider = FakeDecider(choices=[{"operation": "CLICK", "click_target": ids["go"]}])
+    assert (await session.aact("Go", decider=decider)).success
+    await other.wait_for_function("localStorage.getItem('other') !== null")
+    assert await other.evaluate("localStorage.getItem('other')") == "cancel"
+    assert all("dialog" not in questions for questions in decider.questions)
+
+
+@pytest.mark.asyncio
+async def test_a_prompt_without_text_from_the_goal_is_dismissed(session: NotteSession) -> None:
+    page = session.window.page
+    await page.set_content(_DIALOG_PAGE)
+    ids = await _ids(session)
+    decider = FakeDecider(
+        choices=[{"operation": "CLICK", "click_target": ids["prompt"]}, {"dialog": "ACCEPT"}], texts=[None]
+    )
+    _ = await session.aact("Rename yourself", decider=decider)
+    # not accepted with the page's own default ('guest')
+    assert await page.evaluate("document.body.dataset.r") == "null"
+
+
+@pytest.mark.asyncio
+async def test_a_dialog_the_decider_fails_to_answer_is_dismissed_and_told(session: NotteSession) -> None:
+    page = session.window.page
+    await page.set_content(_DIALOG_PAGE)
+    ids = await _ids(session)
+
+    class Failing(FakeDecider):
+        async def choose(self, state: DecisionState, questions: Mapping[str, Question]) -> Answers:
+            if "dialog" in questions:
+                raise RuntimeError("decider down")
+            return await super().choose(state, questions)
+
+    decider = Failing(choices=[{"operation": "CLICK", "click_target": ids["confirm"]}, {"operation": "DONE"}])
+    _ = await session.aact("Delete the draft", decider=decider)
+    assert await page.evaluate("document.body.dataset.r") == "cancel"
+    _ = await session.aact("Delete the draft", decider=decider)
+    assert decider.states[-1].recent_actions[-1]["dialogs"] == [
+        {"kind": "confirm", "message": "Delete the draft?", "answer": "dismissed", "error": "RuntimeError"}
+    ]
+
+
+@pytest.mark.asyncio
+async def test_a_credential_typed_before_the_dialog_is_masked_in_its_question(
+    session: NotteSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    page = session.window.page
+    await page.set_content(
+        "<button id='b' onclick=\"confirm('Log in as s3cret-pw?') && (document.body.dataset.r = 'ok')\">Go</button>"
+    )
+    ids = await _ids(session)
+    calls = 0
+
+    def replacements(_driver: LocalActDriver) -> dict[str, str]:
+        # the vault typed the password during the action: known only from then on
+        nonlocal calls
+        calls += 1
+        return {} if calls == 1 else {"s3cret-pw": "{{vault_password}}"}
+
+    monkeypatch.setattr(LocalActDriver, "secret_replacements", replacements)
+    decider = FakeDecider(choices=[{"operation": "CLICK", "click_target": ids["b"]}, {"dialog": "ACCEPT"}])
+    _ = await session.aact("Log in", decider=decider)
+    asked = decider.questions[1]["dialog"].instructions["dialog"]["message"]
+    assert "s3cret-pw" not in asked and "{{vault_password}}" in asked
