@@ -363,3 +363,65 @@ def test_unauthorized_change_request_does_not_block_trusted_app_approval(fixture
         ),
     ):
         assert bot.reviewed(fixture[0])
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        subprocess.CalledProcessError(1, ["gh", "api", "producer-run"], stderr=b"404 Not Found"),
+        zipfile.BadZipFile("Corrupt producer artifact"),
+        ValueError("Malformed check metadata"),
+        RuntimeError("Unexpected check API error"),
+    ],
+)
+def test_first_producer_error_does_not_block_second_and_returns_failure(monkeypatch, capsys, error):
+    monkeypatch.setenv("GITHUB_REPOSITORY", bot.REPOSITORY)
+    with (
+        patch.object(bot, "api", side_effect=[{"login": bot.BOT}, [{"number": 42}], [{"number": 43}]]),
+        patch.object(bot, "complete", side_effect=[error, True]) as complete,
+    ):
+        assert bot.main() == 1
+        assert [call.args for call in complete.call_args_list] == [(42,), (43,)]
+        output = capsys.readouterr()
+        assert "PR #43: merged" in output.out
+        assert "chore/bump-submodules" in output.err
+        assert type(error).__name__ in output.err
+        assert str(error) in output.err
+
+
+def test_branch_lookup_error_is_reported_after_other_branch_processed(monkeypatch, capsys):
+    monkeypatch.setenv("GITHUB_REPOSITORY", bot.REPOSITORY)
+    with (
+        patch.object(
+            bot, "api", side_effect=[{"login": bot.BOT}, RuntimeError("First lookup failed"), [{"number": 43}]]
+        ),
+        patch.object(bot, "complete", return_value=False) as complete,
+    ):
+        assert bot.main() == 1
+        complete.assert_called_once_with(43)
+        output = capsys.readouterr()
+        assert "First lookup failed" in output.err
+        assert "PR #43: left open" in output.out
+
+
+def test_pending_results_are_not_errors_and_both_raised_errors_are_reported(monkeypatch, capsys):
+    monkeypatch.setenv("GITHUB_REPOSITORY", bot.REPOSITORY)
+    for results, expected in (([False, False], 0), ([RuntimeError("First failure"), ValueError("Second failure")], 1)):
+        with (
+            patch.object(bot, "api", side_effect=[{"login": bot.BOT}, [{"number": 42}], [{"number": 43}]]),
+            patch.object(bot, "complete", side_effect=results) as complete,
+        ):
+            assert bot.main() == expected
+            assert complete.call_count == 2
+            output = capsys.readouterr()
+            if expected:
+                assert "First failure" in output.err and "Second failure" in output.err
+            else:
+                assert output.err == ""
+                assert output.out.count("left open") == 2
+
+
+@pytest.mark.parametrize("suffix", ["@feature", "@prod", "@refs/heads/feature"])
+def test_other_workflow_reference_suffixes_cannot_authorize(fixture, suffix):
+    fixture[1]["path"] += suffix
+    assert not attest(fixture)

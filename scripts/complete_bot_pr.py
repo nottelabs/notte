@@ -7,6 +7,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 import zipfile
 from typing import NotRequired, TypedDict, cast
 
@@ -193,15 +194,21 @@ def complete(number: int) -> bool:
     return True
 
 
-def main() -> None:
+def main() -> int:
     if os.environ["GITHUB_REPOSITORY"] != REPOSITORY or api("user")["login"] != BOT:
         raise RuntimeError("Unexpected bot repository or authorization")
+    failed = False
     for branch in PRODUCERS:
-        pulls = api(f"repos/{REPOSITORY}/pulls?state=open&base=main&head=nottelabs:{branch}&per_page=100")
-        if len(pulls) == 1:
-            number = pulls[0]["number"]
-            print(f"PR #{number}: {'merged' if complete(number) else 'left open'}")
+        try:
+            pulls = api(f"repos/{REPOSITORY}/pulls?state=open&base=main&head=nottelabs:{branch}&per_page=100")
+            if len(pulls) == 1:
+                number = pulls[0]["number"]
+                print(f"PR #{number}: {'merged' if complete(number) else 'left open'}")
+        except Exception as error:
+            failed = True
+            print(f"{branch}: {type(error).__name__}: {error}", file=sys.stderr)
+    return int(failed)
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
