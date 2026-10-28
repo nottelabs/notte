@@ -192,7 +192,7 @@ test('batched native actions, exact screenshot size, and permission refusal', { 
 for (const closeMode of ['normal', 'reject', 'timeout'] as const) for (const cancelScreenshot of [false, true]) {
   const failureMode = cancelScreenshot ? 'cancels a stalled screenshot' : 'preserves private HTTP 401';
   test(`unchanged demo ${failureMode} and closes ownership (${closeMode})`, { skip: !live, timeout: 90_000 }, async () => {
-    const payloads: { tools: unknown; previous_response_id?: string; input: { call_id: string; output: { detail: string; image_url: string } }[] }[] = [];
+    const payloads: { model: string; store: boolean; provider: { allow_fallbacks: boolean }; tools: unknown; previous_response_id?: string; input: { type: string; call_id: string; output: { detail: string; image_url: string } }[] }[] = [];
     const server = createServer(async (request, response) => {
       const chunks = [];
       for await (const chunk of request) chunks.push(chunk);
@@ -204,10 +204,10 @@ for (const closeMode of ['normal', 'reject', 'timeout'] as const) for (const can
     });
     server.listen(0, '127.0.0.1');
     await once(server, 'listening');
-    const previous = { key: process.env.OPENAI_API_KEY, url: process.env.OPENAI_BASE_URL };
+    const previous = { key: process.env.OPENROUTER_API_KEY, url: process.env.OPENAI_BASE_URL };
     const address = server.address();
     assert.ok(address && typeof address !== 'string');
-    process.env.OPENAI_API_KEY = 'test-invalid-key'; // pragma: allowlist secret
+    process.env.OPENROUTER_API_KEY = 'test-invalid-key'; // pragma: allowlist secret
     process.env.OPENAI_BASE_URL = `http://127.0.0.1:${address.port}`;
     let id: string | undefined;
     let restoreStart: (() => void) | undefined;
@@ -294,7 +294,7 @@ for (const closeMode of ['normal', 'reject', 'timeout'] as const) for (const can
             sleep(5000, undefined, { ref: false }).then(() => { throw new Error('Test transport cleanup timed out'); }),
           ]);
         } finally {
-          for (const [name, value] of [['OPENAI_API_KEY', previous.key], ['OPENAI_BASE_URL', previous.url]]) {
+          for (const [name, value] of [['OPENROUTER_API_KEY', previous.key], ['OPENAI_BASE_URL', previous.url]]) {
             if (value === undefined) delete process.env[name!]; else process.env[name!] = value;
           }
           await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
@@ -316,14 +316,21 @@ for (const closeMode of ['normal', 'reject', 'timeout'] as const) for (const can
       assert.ok(screenshotStarted, 'Cancellation must follow an actual native browser screenshot');
       return;
     }
-    assert.equal(payloads[1].previous_response_id, 'resp_protocol');
-    assert.equal(payloads[1].input[0].call_id, 'call_test');
-    assert.equal(payloads[1].input[0].output.detail, 'original');
-    assert.ok(payloads[1].input[0].output.image_url.startsWith('data:image/png;base64,'));
+    assert.equal(payloads[0].model, 'openai/gpt-6.1-sol');
+    for (const payload of payloads) {
+      assert.equal('previous_response_id' in payload, false);
+      assert.equal(payload.store, false);
+      assert.deepEqual(payload.provider, { allow_fallbacks: false });
+    }
+    assert.deepEqual(payloads[1].input[0], payloads[0].input[0]);
+    assert.equal(payloads[1].input[1].type, 'computer_call');
+    assert.equal(payloads[1].input[2].call_id, 'call_test');
+    assert.equal(payloads[1].input[2].output.detail, 'original');
+    assert.ok(payloads[1].input[2].output.image_url.startsWith('data:image/png;base64,'));
   });
 }
 
-test('unchanged demo completes a real model visual form task', { skip: !live || !process.env.OPENAI_API_KEY, timeout: 180_000 }, async () => {
+test('unchanged demo completes a real model visual form task', { skip: !live || !process.env.OPENROUTER_API_KEY, timeout: 180_000 }, async () => {
   let id: string | undefined;
   try {
     const result = await runDemo();

@@ -33,9 +33,12 @@ def assess(run: Run | None, jobs: list[Job], shards: int, same_harness: bool, no
     if run["head_branch"] != "main" or run["event"] != "schedule":
         return "The candidate is not a scheduled main run.", False
     age = (now - datetime.fromisoformat(run["updated_at"].replace("Z", "+00:00"))).total_seconds()
-    expected = {"registered-examples / checks", "example-tests"} | {
-        f"registered-examples / live ({index}/{shards})" for index in range(1, shards + 1)
-    }
+    expected = {
+        "registered-examples / checks",
+        "example-tests",
+        "registered-examples / computer-use (published)",
+        "registered-examples / computer-use (source)",
+    } | {f"registered-examples / live ({index}/{shards})" for index in range(1, shards + 1)}
     succeeded = {job["name"] for job in jobs if job["conclusion"] == "success"}
     missing = expected - succeeded
     complete = (

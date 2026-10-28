@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 import secrets
 import sys
 
@@ -38,7 +39,11 @@ async def run_demo() -> dict:
                             )
 
                         computer = NotteComputer(page, confirm=confirm)
-                        async with AsyncOpenAI(max_retries=0) as provider:
+                        async with AsyncOpenAI(
+                            api_key=os.environ["OPENROUTER_API_KEY"],
+                            base_url=os.getenv("OPENAI_BASE_URL", "https://openrouter.ai/api/v1"),
+                            max_retries=0,
+                        ) as provider:
                             stage = "model request"
                             await computer.run(
                                 provider,

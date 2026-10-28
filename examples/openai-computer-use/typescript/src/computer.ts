@@ -46,8 +46,10 @@ export class NotteComputer {
   }
 
   async run(provider: OpenAI, task: string) {
+    const history: ResponseInputItem[] = [{ role: 'user', content: task }];
     let response = await provider.responses.create({
-      model: 'gpt-6.1-sol', tools: [{ type: 'computer' }], max_output_tokens: 2048, input: task,
+      model: 'openai/gpt-6.1-sol', tools: [{ type: 'computer' }], max_output_tokens: 2048,
+      store: false, include: ['reasoning.encrypted_content'], input: history, ...{ provider: { allow_fallbacks: false } },
     }, { signal: this.signal });
     for (let turn = 0; ; turn++) {
       const calls = response.output.filter(item => item.type === 'computer_call');
@@ -55,9 +57,10 @@ export class NotteComputer {
       if (turn >= 8) throw new Error('Computer turn limit exceeded');
       const outputs = [];
       for (const call of calls) outputs.push(await this.handle(call));
+      history.push(...response.output as ResponseInputItem[], ...outputs);
       response = await provider.responses.create({
-        model: 'gpt-6.1-sol', tools: [{ type: 'computer' }], max_output_tokens: 2048,
-        previous_response_id: response.id, input: outputs,
+        model: 'openai/gpt-6.1-sol', tools: [{ type: 'computer' }], max_output_tokens: 2048,
+        store: false, include: ['reasoning.encrypted_content'], input: history, ...{ provider: { allow_fallbacks: false } },
       }, { signal: this.signal });
     }
   }

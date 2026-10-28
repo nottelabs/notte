@@ -2,7 +2,7 @@
 
 Connect the Responses API's native `computer` tool to a Notte browser through Playwright over CDP. Original Python and TypeScript adapters execute ordered action batches and return PNG screenshots at the viewport's original resolution. No local browser installation is required.
 
-Set `NOTTE_API_KEY` ([Notte](https://console.notte.cc/apikeys)) and `OPENAI_API_KEY` ([OpenAI](https://platform.openai.com/api-keys)). The demo uses `gpt-6.1-sol`; real model requests incur OpenAI API charges.
+Set `NOTTE_API_KEY` ([Notte](https://console.notte.cc/apikeys)) and `OPENROUTER_API_KEY` ([OpenRouter](https://openrouter.ai/keys)). The demo uses `openai/gpt-6.1-sol` through OpenRouter’s Responses API; real model requests incur OpenRouter charges. Direct OpenAI credentials are not used.
 
 From this directory:
 
@@ -33,8 +33,12 @@ npm run typecheck
 npm run test:live
 ```
 
-Browser tests require `NOTTE_API_KEY`. The optional model case also requires `OPENAI_API_KEY`; other cases make no paid requests. Set `NOTTE_API_URL` to select another Notte environment.
+Browser tests require `NOTTE_API_KEY`. The optional model case also requires `OPENROUTER_API_KEY`; other cases make no paid requests. Set `NOTTE_API_URL` to select another Notte environment.
 
-Browser actions, screenshot exchange, permission checks, turn limits, and HTTP401 cleanup have been tested with published and source Notte SDKs. Real OpenAI visual-task validation remains pending.
+Browser actions, screenshot exchange, permission checks, turn limits, and HTTP401 cleanup have been tested with published and source Notte SDKs. Real OpenRouter visual-task validation remains pending.
 
 API reference: [OpenAI Computer Use](https://developers.openai.com/api/docs/guides/tools-computer-use).
+
+OpenRouter is stateless: every turn resends the original task, model output (including reasoning), and native computer screenshots with `store: false`. Provider fallbacks and SDK retries are disabled. See [OpenRouter Responses API](https://openrouter.ai/docs/api_reference/responses/overview).
+
+CI installs dependencies before supplying credentials. Dedicated Computer Use jobs run both languages with published and source SDKs, require the Notte and OpenRouter keys, and reject skipped tests. The shared integration shards retain browser/protocol checks without paid model credentials.

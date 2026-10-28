@@ -176,3 +176,87 @@ jobs:
           name: agent-browser-ownership
           path: ${{ runner.temp }}/agent-browser-owned.jsonl
           if-no-files-found: ignore
+
+  computer-use:
+    needs: [changes, checks]
+    if: >-
+      fromJSON(needs.changes.outputs.scope).paired_live &&
+      contains(fromJSON(needs.changes.outputs.scope).integration_examples, 'openai-computer-use') &&
+      github.actor != 'dependabot[bot]' &&
+      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
+      (github.event_name != 'pull_request' && github.ref == 'refs/heads/main'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    name: computer-use (${{ matrix.sdk }})
+    strategy:
+      fail-fast: false
+      matrix:
+        sdk: ${{ fromJSON(contains(fromJSON(needs.changes.outputs.scope).integration_source_only || fromJSON('[]'), 'openai-computer-use') && '["source"]' || '["published","source"]') }}
+    concurrency:
+      group: notte-live-api-staging
+      queue: max
+      cancel-in-progress: false
+    env:
+      NOTTE_API_URL: https://us-staging.notte.cc
+      NOTTE_ENABLE_NEST_ASYNCIO: 'false'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          enable-cache: false
+      - name: Install published dependencies without credentials
+        env:
+          INTEGRATION_EXAMPLES: '["openai-computer-use"]'
+        run: python3 scripts/ci_integration_examples.py checks
+      - name: Install source SDKs without credentials
+        if: matrix.sdk == 'source'
+        run: |
+          npm ci --prefix node-sdk
+          npm run build --prefix node-sdk
+          uv pip install --python examples/openai-computer-use/.venv/bin/python -e packages/notte-core -e packages/notte-sdk
+          uv pip check --python examples/openai-computer-use/.venv/bin/python
+          cd examples/openai-computer-use/typescript
+          npm install --no-save "$GITHUB_WORKSPACE/node-sdk"
+          npm run typecheck
+      - name: Run Python Computer Use with OpenRouter
+        working-directory: examples/openai-computer-use
+        env:
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          test -n "$NOTTE_API_KEY"
+          test -n "$OPENROUTER_API_KEY"
+          .venv/bin/python - <<'PY'
+          import unittest
+          suite = unittest.defaultTestLoader.discover('python', pattern='test_*.py')
+          result = unittest.TextTestRunner(verbosity=2).run(suite)
+          if result.skipped:
+              raise AssertionError('Computer Use coverage must run without skips')
+          raise SystemExit(not result.wasSuccessful())
+          PY
+      - name: Run TypeScript Computer Use with OpenRouter
+        working-directory: examples/openai-computer-use/typescript
+        env:
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          test -n "$NOTTE_API_KEY"
+          test -n "$OPENROUTER_API_KEY"
+          node --test --test-reporter=spec --test-reporter=junit --test-reporter-destination=stdout --test-reporter-destination=computer-use.xml test/*.test.ts
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          report = ET.parse('computer-use.xml')
+          if report.findall('.//skipped'):
+              raise AssertionError('Computer Use coverage must run without skips')
+          PY
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: computer-use-${{ matrix.sdk }}
+          path: examples/openai-computer-use/typescript/computer-use.xml
+          if-no-files-found: ignore

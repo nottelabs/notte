@@ -263,9 +263,7 @@ def test_sdk_diff_drives_source_install_before_native_execution(
     observed = calls(workspace)
     native = [call for call in observed if call["credentials"]]
     assert native
-    expected_credentials = (
-        ["NOTTE_API_KEY", "OPENAI_API_KEY"] if event == "push" and name == "openai-computer-use" else ["NOTTE_API_KEY"]
-    )
+    expected_credentials = ["NOTTE_API_KEY"]
     assert all(call["credentials"] == expected_credentials for call in native)
     source = next(
         index
@@ -370,3 +368,58 @@ def test_workflow_transmits_source_selection_without_changing_secret_guards() ->
     assert "github.event.pull_request.head.repo.full_name == github.repository" in live["if"]
     for key in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY"):
         assert "github.ref == 'refs/heads/main' && github.event_name != 'pull_request'" in native["env"][key]
+
+
+def test_computer_use_model_jobs_install_before_loading_credentials() -> None:
+    import yaml
+
+    workflow = yaml.safe_load((ROOT / ".github/workflows/paired-sdk-examples.yml").read_text())
+    job = workflow["jobs"]["computer-use"]
+    assert "github.event.pull_request.head.repo.full_name == github.repository" in job["if"]
+    assert "github.ref == 'refs/heads/main'" in job["if"]
+    assert "openai-computer-use" in job["if"]
+    assert "published" in job["strategy"]["matrix"]["sdk"]
+    assert "source" in job["strategy"]["matrix"]["sdk"]
+    assert "integration_source_only" in job["strategy"]["matrix"]["sdk"]
+    assert job["concurrency"] == {
+        "group": "notte-live-api-staging",
+        "queue": "max",
+        "cancel-in-progress": False,
+    }
+    assert not any("secrets." in str(value) for value in job["env"].values())
+    credentialed = [step for step in job["steps"] if "OPENROUTER_API_KEY" in step.get("env", {})]
+    assert len(credentialed) == 2
+    first = job["steps"].index(credentialed[0])
+    installs = [
+        step
+        for step in job["steps"]
+        if any(
+            command in step.get("run", "")
+            for command in ("ci_integration_examples.py checks", "npm install", "uv pip install")
+        )
+    ]
+    assert len(installs) == 2
+    assert all(job["steps"].index(step) < first for step in installs)
+    for step in credentialed:
+        assert set(step["env"]) == {"NOTTE_API_KEY", "OPENROUTER_API_KEY"}
+        assert 'test -n "$OPENROUTER_API_KEY"' in step["run"]
+        assert not any(command in step["run"] for command in ("npm ci", "npm install", "uv sync", "uv pip install"))
+        assert "without skips" in step["run"]
+    assert "test_*.py" in credentialed[0]["run"]
+    assert "test/*.test.ts" in credentialed[1]["run"]
+
+
+def test_shared_computer_use_shards_do_not_receive_model_credentials() -> None:
+    env = runner.project_env(
+        "openai-computer-use",
+        {
+            "GITHUB_REF": "refs/heads/main",
+            "GITHUB_EVENT_NAME": "push",
+            "NOTTE_API_KEY": "fixture-notte",  # pragma: allowlist secret
+            "OPENAI_API_KEY": "wrong-direct-key",  # pragma: allowlist secret
+            "OPENROUTER_API_KEY": "fixture-router",  # pragma: allowlist secret
+        },
+    )
+    assert env["NOTTE_API_KEY"] == "fixture-notte"  # pragma: allowlist secret
+    assert "OPENAI_API_KEY" not in env
+    assert "OPENROUTER_API_KEY" not in env

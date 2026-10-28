@@ -29,6 +29,8 @@ class BaselineTests(unittest.TestCase):
             for name in (
                 "registered-examples / checks",
                 "example-tests",
+                "registered-examples / computer-use (published)",
+                "registered-examples / computer-use (source)",
                 "registered-examples / live (1/2)",
                 "registered-examples / live (2/2)",
             )

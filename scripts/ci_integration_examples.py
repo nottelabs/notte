@@ -39,6 +39,7 @@ CREDENTIALS = {
     "NOTTE_VALTOWN_TOKEN",
     "OAGI_API_KEY",
     "OPENAI_API_KEY",
+    "OPENROUTER_API_KEY",
     "OP_SERVICE_ACCOUNT_TOKEN",
     "PIPEDREAM_ACTION_FILE",
     "PIPEDREAM_APP",
@@ -345,7 +346,6 @@ def selenium_driver(project: Path, python: Path, env: dict[str, str]) -> str:
 def project_env(name: str, env: dict[str, str]) -> dict[str, str]:
     provider = {
         "openai-agents": "OPENAI_API_KEY",
-        "openai-computer-use": "OPENAI_API_KEY",
         "claude-agents": "ANTHROPIC_API_KEY",
         "anthropic-computer-use": "ANTHROPIC_API_KEY",
         "deepagents": "ANTHROPIC_API_KEY",

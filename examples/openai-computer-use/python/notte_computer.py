@@ -38,8 +38,15 @@ class NotteComputer:
         self.actions: list[str] = []
 
     async def run(self, provider: AsyncOpenAI, task: str) -> None:
+        history = [{"role": "user", "content": task}]
         response = await provider.responses.create(
-            model="gpt-6.1-sol", tools=[{"type": "computer"}], max_output_tokens=2048, input=task
+            model="openai/gpt-6.1-sol",
+            tools=[{"type": "computer"}],
+            max_output_tokens=2048,
+            store=False,
+            include=["reasoning.encrypted_content"],
+            input=history,
+            extra_body={"provider": {"allow_fallbacks": False}},
         )
         for turn in range(9):
             calls = [item for item in response.output if item.type == "computer_call"]
@@ -48,12 +55,16 @@ class NotteComputer:
             if turn >= 8:
                 raise RuntimeError("Computer turn limit exceeded")
             outputs = [await self.handle(call) for call in calls]
+            history.extend(item.model_dump(exclude_none=True) for item in response.output)
+            history.extend(outputs)
             response = await provider.responses.create(
-                model="gpt-6.1-sol",
+                model="openai/gpt-6.1-sol",
                 tools=[{"type": "computer"}],
                 max_output_tokens=2048,
-                previous_response_id=response.id,
-                input=outputs,
+                store=False,
+                include=["reasoning.encrypted_content"],
+                input=history,
+                extra_body={"provider": {"allow_fallbacks": False}},
             )
 
     def point(self, x: float, y: float) -> None:
