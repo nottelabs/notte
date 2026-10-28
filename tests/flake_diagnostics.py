@@ -285,7 +285,7 @@ def retain_flake_diagnostics(request: pytest.FixtureRequest) -> Iterator[None]:
             # its session. Preserve its exact result and capture before cleanup.
             try:
                 state.scrape_result_invalid = not isinstance(result, str) or len(result) == 0
-            except BaseException:
+            except Exception:
                 state.files["scrape-result.capture-error.txt"] = traceback.format_exc()
             return result
 
@@ -297,8 +297,12 @@ def retain_flake_diagnostics(request: pytest.FixtureRequest) -> Iterator[None]:
             session.page.on("pageerror", lambda error: state.event(f"pageerror {error}"))
             session.page.on("requestfailed", state.request_failed)
             session.page.on("response", state.response)
-        except BaseException:
+        except Exception:
             state.files["listeners.capture-error.txt"] = traceback.format_exc()
+        except BaseException as error:
+            # Context entry has not completed, so its caller cannot run __aexit__.
+            await local_exit(session, type(error), error, error.__traceback__)
+            raise
 
     async def exit_local(
         session: NotteSession,
@@ -309,8 +313,7 @@ def retain_flake_diagnostics(request: pytest.FixtureRequest) -> Iterator[None]:
         try:
             state.before_exit(exc_val, request.node)
             await state.local(session, capture_live=exc_val is not None)
-        except BaseException:
-            # Diagnostic interrupts must not bypass the session's real exit.
+        except Exception:
             state.files["local.capture-error.txt"] = traceback.format_exc()
         finally:
             await local_exit(session, exc_type, exc_val, exc_tb)
@@ -324,7 +327,7 @@ def retain_flake_diagnostics(request: pytest.FixtureRequest) -> Iterator[None]:
         try:
             state.before_exit(exc_val, request.node)
             state.remote(session, capture_observation=exc_val is not None or state.scrape_result_invalid)
-        except BaseException:
+        except Exception:
             state.files["remote.capture-error.txt"] = traceback.format_exc()
         finally:
             remote_exit(session, exc_type, exc_val, exc_tb)

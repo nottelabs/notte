@@ -63,12 +63,12 @@ def test_successful_scrape_uses_cached_metadata_without_diagnostic_request(retai
     assert "observation.txt" not in diagnostics.files
 
 
-def test_result_inspection_interrupt_does_not_change_scrape_result(retained_remote) -> None:
+def test_ordinary_result_inspection_failure_does_not_change_scrape_result(retained_remote) -> None:
     diagnostics, session, original_exit, original_scrape = retained_remote
 
     class UnreadableText(str):
         def __len__(self) -> int:
-            raise KeyboardInterrupt("diagnostic length interrupted")
+            raise ValueError("diagnostic length unavailable")
 
     result = UnreadableText("public page")
     original_scrape.return_value = result
@@ -76,7 +76,25 @@ def test_result_inspection_interrupt_does_not_change_scrape_result(retained_remo
     RemoteSession.__exit__(session, None, None, None)
     original_exit.assert_called_once_with(session, None, None, None)
     session.client.page.request.assert_not_called()
-    assert "diagnostic length interrupted" in diagnostics.files["scrape-result.capture-error.txt"]
+    assert "diagnostic length unavailable" in diagnostics.files["scrape-result.capture-error.txt"]
+
+
+@pytest.mark.parametrize("capture_error", [KeyboardInterrupt, SystemExit, asyncio.CancelledError])
+def test_result_inspection_interrupt_propagates(retained_remote, capture_error) -> None:
+    diagnostics, session, _, original_scrape = retained_remote
+    diagnostic_interrupt = capture_error("diagnostic length interrupted")
+
+    class InterruptedText(str):
+        def __len__(self) -> int:
+            raise diagnostic_interrupt
+
+    result = InterruptedText("public page")
+    original_scrape.return_value = result
+    with pytest.raises(capture_error) as interrupted:
+        RemoteSession.scrape(session)
+    assert interrupted.value is diagnostic_interrupt
+    original_scrape.assert_called_once_with(session)
+    assert "scrape-result.capture-error.txt" not in diagnostics.files
 
 
 @pytest.mark.parametrize("result", ["", {"unexpected": "structured response"}])
@@ -106,12 +124,15 @@ def test_invalid_scrape_result_is_unchanged_and_captured_before_cleanup(retained
 def test_diagnostic_interrupt_preserves_original_error_and_guarantees_cleanup(retained_remote, capture_error) -> None:
     diagnostics, session, original_exit, _ = retained_remote
     original_error = ValueError("original scrape failure")
-    session.client.page.request.side_effect = capture_error("diagnostic interrupted")
-    RemoteSession.__exit__(session, ValueError, original_error, None)
+    diagnostic_interrupt = capture_error("diagnostic interrupted")
+    session.client.page.request.side_effect = diagnostic_interrupt
+    with pytest.raises(capture_error) as interrupted:
+        RemoteSession.__exit__(session, ValueError, original_error, None)
+    assert interrupted.value is diagnostic_interrupt
     assert session.client.root_client.max_retries == 3
     original_exit.assert_called_once_with(session, ValueError, original_error, None)
     assert "ValueError: original scrape failure" in diagnostics.files["before-cleanup-error.txt"]
-    assert "diagnostic interrupted" in diagnostics.files["remote.capture-error.txt"]
+    assert "remote.capture-error.txt" not in diagnostics.files
     retained = diagnostics.directories["call"] / "before-cleanup-error.txt"
     assert "ValueError: original scrape failure" in retained.read_text()
 
@@ -120,11 +141,15 @@ def test_error_persistence_interrupt_still_runs_original_cleanup(
     retained_remote, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     diagnostics, session, original_exit, _ = retained_remote
-    monkeypatch.setattr(diagnostics, "before_exit", MagicMock(side_effect=KeyboardInterrupt("capture interrupted")))
-    RemoteSession.__exit__(session, None, None, None)
+    diagnostic_interrupt = KeyboardInterrupt("capture interrupted")
+    monkeypatch.setattr(diagnostics, "before_exit", MagicMock(side_effect=diagnostic_interrupt))
+    with pytest.raises(KeyboardInterrupt) as interrupted:
+        RemoteSession.__exit__(session, None, None, None)
+    assert interrupted.value is diagnostic_interrupt
     original_exit.assert_called_once_with(session, None, None, None)
     session.client.page.request.assert_not_called()
-    assert "capture interrupted" in diagnostics.files["remote.capture-error.txt"]
+    assert session.client.root_client.max_retries == 3
+    assert "remote.capture-error.txt" not in diagnostics.files
 
 
 def test_diagnostic_transport_deadline_keeps_original_failure_and_cleanup(retained_remote) -> None:
@@ -153,6 +178,21 @@ def test_original_session_interrupt_keeps_its_original_behavior(retained_remote)
     assert interrupted.value is original_error
     assert session.client.root_client.max_retries == 3
     original_exit.assert_called_once_with(session, KeyboardInterrupt, original_error, None)
+
+
+def test_original_cleanup_error_keeps_finally_exception_precedence(retained_remote) -> None:
+    diagnostics, session, original_exit, _ = retained_remote
+    diagnostics.scrape_result_invalid = True
+    diagnostic_interrupt = KeyboardInterrupt("diagnostic interrupted")
+    session.client.page.request.side_effect = diagnostic_interrupt
+    cleanup_error = RuntimeError("original cleanup failure")
+    original_exit.side_effect = cleanup_error
+    with pytest.raises(RuntimeError) as failed:
+        RemoteSession.__exit__(session, None, None, None)
+    assert failed.value is cleanup_error
+    assert cleanup_error.__context__ is diagnostic_interrupt
+    assert session.client.root_client.max_retries == 3
+    original_exit.assert_called_once_with(session, None, None, None)
 
 
 def test_remote_capture_request_has_short_budget_and_does_not_retry(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -1,6 +1,10 @@
 """Action-only sessions retain bounded diagnostic reads without changing actions."""
 
+import asyncio
 import json
+from collections.abc import Iterator
+from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from notte_browser.session import NotteSession
@@ -10,6 +14,104 @@ from tests import flake_diagnostics
 from tests.test_flake_diagnostics import attempts, run_case
 
 pytest_plugins = ["pytester"]
+
+
+@pytest.fixture
+def retained_local(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> Iterator[tuple[flake_diagnostics.Diagnostics, NotteSession, AsyncMock]]:
+    original_exit = AsyncMock()
+    monkeypatch.setattr(NotteSession, "__aexit__", original_exit)
+    monkeypatch.setattr(NotteSession, "astart", AsyncMock())
+    item = MagicMock(spec=pytest.Item)
+    item.nodeid = "tests/integration/test_special_actions.py::test_evaluate_js_action"
+    item.stash = pytest.Stash()
+    item.config = MagicMock()
+    item.config.rootpath = tmp_path
+    item.execution_count = 1
+    request = MagicMock(spec=pytest.FixtureRequest)
+    request.node = item
+    request.getfixturevalue.return_value = monkeypatch
+    fixture = flake_diagnostics.retain_flake_diagnostics.__wrapped__(request)
+    next(fixture)
+    session = MagicMock(spec=NotteSession)
+    yield item.stash[flake_diagnostics._STATE], session, original_exit
+    fixture.close()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("capture_error", [KeyboardInterrupt, asyncio.CancelledError, SystemExit])
+async def test_new_capture_interrupt_propagates_after_local_cleanup(retained_local, capture_error) -> None:
+    state, session, original_exit = retained_local
+    original_error = ValueError("original action failure")
+    interrupt = capture_error("new diagnostic interrupt")
+    state.local = AsyncMock(side_effect=interrupt)
+    with pytest.raises(capture_error) as observed:
+        await NotteSession.__aexit__(session, ValueError, original_error, None)
+    assert observed.value is interrupt
+    original_exit.assert_awaited_once_with(session, ValueError, original_error, None)
+    assert "ValueError: original action failure" in state.files["before-cleanup-error.txt"]
+
+
+@pytest.mark.asyncio
+async def test_task_cancellation_during_local_capture_propagates_after_cleanup(retained_local) -> None:
+    state, session, original_exit = retained_local
+    original_error = ValueError("original action failure")
+    started = asyncio.Event()
+
+    async def capture(session: NotteSession, *, capture_live: bool) -> None:
+        started.set()
+        await asyncio.Event().wait()
+
+    state.local = AsyncMock(side_effect=capture)
+    task = asyncio.create_task(NotteSession.__aexit__(session, ValueError, original_error, None))
+    await started.wait()
+    _ = task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    assert task.cancelled()
+    original_exit.assert_awaited_once_with(session, ValueError, original_error, None)
+    assert "ValueError: original action failure" in state.files["before-cleanup-error.txt"]
+
+
+@pytest.mark.asyncio
+async def test_ordinary_local_capture_error_preserves_original_exit_arguments(retained_local) -> None:
+    state, session, original_exit = retained_local
+    original_error = ValueError("original action failure")
+    state.local = AsyncMock(side_effect=RuntimeError("diagnostic unavailable"))
+    await NotteSession.__aexit__(session, ValueError, original_error, None)
+    original_exit.assert_awaited_once_with(session, ValueError, original_error, None)
+    assert "ValueError: original action failure" in state.files["before-cleanup-error.txt"]
+    assert "diagnostic unavailable" in state.files["local.capture-error.txt"]
+
+
+@pytest.mark.asyncio
+async def test_original_local_cleanup_error_keeps_finally_precedence(retained_local) -> None:
+    state, session, original_exit = retained_local
+    original_error = ValueError("original action failure")
+    interrupt = asyncio.CancelledError("new diagnostic cancellation")
+    cleanup_error = RuntimeError("original cleanup failed")
+    state.local = AsyncMock(side_effect=interrupt)
+    original_exit.side_effect = cleanup_error
+    with pytest.raises(RuntimeError) as observed:
+        await NotteSession.__aexit__(session, ValueError, original_error, None)
+    assert observed.value is cleanup_error
+    assert cleanup_error.__context__ is interrupt
+    original_exit.assert_awaited_once_with(session, ValueError, original_error, None)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("capture_error", [KeyboardInterrupt, asyncio.CancelledError, SystemExit])
+async def test_listener_interrupt_cleans_up_before_context_entry_propagates(retained_local, capture_error) -> None:
+    _, session, original_exit = retained_local
+    interrupt = capture_error("new listener interrupt")
+    session.page.on.side_effect = interrupt
+    with pytest.raises(capture_error) as observed:
+        await NotteSession.astart(session)
+    assert observed.value is interrupt
+    original_exit.assert_awaited_once()
+    assert original_exit.await_args.args[:3] == (session, capture_error, interrupt)
+    assert original_exit.await_args.args[3] is not None
 
 
 @pytest.mark.asyncio
@@ -101,7 +203,7 @@ def test_action_only_failure_captures_structure_before_cleanup(
     assert not list(directory.glob("*.capture-error.txt"))
 
 
-@pytest.mark.parametrize("mode", ["error", "timeout", "cancel", "interrupt"])
+@pytest.mark.parametrize("mode", ["error", "timeout"])
 def test_action_only_capture_failure_preserves_original_and_cleanup(
     pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch, mode: str
 ) -> None:
@@ -130,10 +232,6 @@ def test_action_only_capture_failure_preserves_original_and_cleanup(
                         try:
                             if {mode!r} == "timeout":
                                 await asyncio.Event().wait()
-                            elif {mode!r} == "cancel":
-                                raise asyncio.CancelledError("diagnostic cancellation")
-                            elif {mode!r} == "interrupt":
-                                raise KeyboardInterrupt("diagnostic interruption")
                             else:
                                 raise RuntimeError("diagnostic read failed")
                         finally:
@@ -161,6 +259,4 @@ def test_action_only_capture_failure_preserves_original_and_cleanup(
         assert {
             "error": "diagnostic read failed",
             "timeout": "TimeoutError",
-            "cancel": "CancelledError",
-            "interrupt": "KeyboardInterrupt",
         }[mode] in text
