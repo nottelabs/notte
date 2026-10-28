@@ -267,6 +267,7 @@ class RoutingTests(unittest.TestCase):
         for path in (
             "scripts/ci_scope.py",
             "tests/scripts/test_ci_scope.py",
+            "tests/scripts/test_ci_scope_offline.py",
             ".github/actions/ci-scope/action.yml",
             ".github/actions/wait-for-api/wait-for-api.sh",
             "new-runtime/config.json",
@@ -449,6 +450,148 @@ class GitHistoryTests(unittest.TestCase):
         original_git = ci.git
         with patch.object(ci, "git", side_effect=lambda *args: original_git("-C", str(self.repo), *args)):
             return ci.select(event, base, head)
+
+    def workspace_files(self, version: str) -> dict[str, str]:
+        files: dict[str, str] = {}
+        lock = 'version = 1\nrevision = 5\nrequires-python = ">=3.11"\n'
+        for name, directory in (
+            ("notte", "."),
+            ("notte-browser", "packages/notte-browser"),
+            ("notte-core", "packages/notte-core"),
+            ("notte-llm", "packages/notte-llm"),
+            ("notte-sdk", "packages/notte-sdk"),
+        ):
+            dependency = f'"notte-core=={version}", ' if name != "notte-core" else ""
+            files[str(Path(directory) / "pyproject.toml")] = (
+                f'[project]\nname = "{name}"\nversion = "{version}"\n'
+                f'dependencies = [{dependency}"external==1.0.0.dev0"]\n'
+                'requires-python = ">=3.11"\n'
+                "[project.optional-dependencies]\n"
+                f'playwright = ["notte_sdk[playwright]=={version}"]\n'
+                '[build-system]\nrequires = ["hatchling"]\n'
+                "[tool.ruff]\nline-length = 120\n"
+            )
+            lock += f'\n[[package]]\nname = "{name}"\nversion = "{version}"\nsource = {{ editable = "{directory}" }}\n'
+        files["pyproject.toml"] += '[tool.uv.workspace]\nmembers = ["packages/*", "."]\n'
+        lock += (
+            '\n[[package]]\nname = "external"\nversion = "1.0.0.dev0"\n'
+            'source = { registry = "https://pypi.org/simple" }\n'
+            'sdist = { url = "https://example.invalid/external.tar.gz", hash = "sha256:original" }\n'
+        )
+        files["uv.lock"] = lock
+        return files
+
+    def test_verified_workspace_version_bumps_keep_only_offline_checks(self) -> None:
+        before = self.commit(self.workspace_files("1.0.0.dev0"))
+        head = self.commit(self.workspace_files("1.0.1.dev0"))
+        for event in ("push", "pull_request"):
+            with self.subTest(event=event):
+                scope = self.scope(event, before, head)
+                self.assertEqual({name for name in ci.ALL if scope[name]}, {"python_static", "python_unit"})
+                self.assertTrue(scope["file_checks"])
+                self.assertTrue(scope["lint_all"])
+                self.assertFalse(scope["full"])
+                self.assertFalse(scope["paired_snippets_live"])
+                self.assertEqual(scope["integration_examples"], [])
+
+    def test_manifest_changes_beyond_workspace_versions_retain_live_coverage(self) -> None:
+        mutations = (
+            ("pyproject.toml", "external==1.0.0.dev0", "external==1.0.1.dev0"),
+            ("pyproject.toml", 'requires-python = ">=3.11"', 'requires-python = ">=3.12"'),
+            ("pyproject.toml", 'requires = ["hatchling"]', 'requires = ["setuptools"]'),
+            ("pyproject.toml", "line-length = 120", "line-length = 100"),
+            ("pyproject.toml", "line-length = 120", "line-length = 120.0"),
+            ("pyproject.toml", 'members = ["packages/*", "."]', 'members = ["packages/*", ".", "new"]'),
+            ("pyproject.toml", "notte-core==1.0.1.dev0", "notte-core>=1.0.1.dev0"),
+            ("pyproject.toml", "notte-core==1.0.1.dev0", "notte-core==1.0.0.dev0"),
+            ("pyproject.toml", "notte_sdk[playwright]", "notte_sdk[other]"),
+            ("pyproject.toml", "notte_sdk[playwright]==1.0.1.dev0", "notte_sdk[playwright]==1.0.1.dev0; extra == 'x'"),
+            ("packages/notte-sdk/pyproject.toml", 'name = "notte-sdk"', 'name = "renamed-sdk"'),
+            ("packages/notte-sdk/pyproject.toml", 'version = "1.0.1.dev0"', 'version = "1.0.0.dev0"'),
+        )
+        for path, original, replacement in mutations:
+            with self.subTest(path=path, replacement=replacement):
+                before = self.commit(self.workspace_files("1.0.0.dev0"))
+                changed = self.workspace_files("1.0.1.dev0")
+                self.assertIn(original, changed[path])
+                changed[path] = changed[path].replace(original, replacement)
+                head = self.commit(changed)
+                scope = self.scope("push", before, head)
+                self.assertTrue(scope["python_live"])
+                self.assertTrue(scope["llm_provider_live"])
+                self.assertTrue(scope["paired_live"])
+                self.assertEqual(scope["integration_examples"], sorted(ci.INTEGRATION_EXAMPLES))
+
+    def test_lock_changes_beyond_workspace_versions_retain_live_coverage(self) -> None:
+        mutations = (
+            ("revision = 5", "revision = 6"),
+            ("version = 1\nrevision", "version = true\nrevision"),
+            ('requires-python = ">=3.11"', 'requires-python = ">=3.12"'),
+            ('name = "external"\nversion = "1.0.0.dev0"', 'name = "external"\nversion = "1.0.1.dev0"'),
+            ("sha256:original", "sha256:changed"),
+            ("https://pypi.org/simple", "https://other.invalid/simple"),
+            ('editable = "packages/notte-sdk"', 'editable = "other/sdk"'),
+            ('name = "notte-sdk"\nversion = "1.0.1.dev0"', 'name = "notte-sdk"\nversion = "1.0.0.dev0"'),
+            ('name = "notte-sdk"', 'name = "missing-sdk"'),
+            ('name = "notte-sdk"', 'name = "notte-core"'),
+        )
+        for original, replacement in mutations:
+            with self.subTest(replacement=replacement):
+                before = self.commit(self.workspace_files("1.0.0.dev0"))
+                changed = self.workspace_files("1.0.1.dev0")
+                self.assertIn(original, changed["uv.lock"])
+                changed["uv.lock"] = changed["uv.lock"].replace(original, replacement)
+                head = self.commit(changed)
+                self.assertTrue(self.scope("push", before, head)["python_live"])
+
+    def test_unreadable_version_inputs_retain_normal_coverage(self) -> None:
+        for path in ("pyproject.toml", "packages/notte-sdk/pyproject.toml", "uv.lock"):
+            with self.subTest(path=path):
+                before = self.commit(self.workspace_files("1.0.0.dev0"))
+                changed = self.workspace_files("1.0.1.dev0")
+                changed[path] = "[broken TOML\n"
+                head = self.commit(changed)
+                self.assertTrue(self.scope("push", before, head)["python_live"])
+
+    def test_deleted_symlinked_or_executable_version_inputs_are_not_exempt(self) -> None:
+        path = "packages/notte-sdk/pyproject.toml"
+        for mode in ("deleted", "symlink", "executable"):
+            with self.subTest(mode=mode):
+                target = self.repo / path
+                if target.is_symlink():
+                    target.unlink()
+                before = self.commit(self.workspace_files("1.0.0.dev0"))
+                changed = self.workspace_files("1.0.1.dev0")
+                if mode in {"deleted", "symlink"}:
+                    del changed[path]
+                    target.unlink()
+                    if mode == "symlink":
+                        target.symlink_to("../../pyproject.toml")
+                else:
+                    target.chmod(0o755)
+                head = self.commit(changed)
+                self.assertTrue(self.scope("push", before, head)["python_live"])
+
+    def test_version_bumps_do_not_suppress_other_changes_or_earlier_commits(self) -> None:
+        for path in ("packages/notte-sdk/src/notte_sdk/client.py", "scripts/new_tool.py", "docs/src/images/logo.svg"):
+            with self.subTest(path=path):
+                before = self.commit(self.workspace_files("1.0.0.dev0"))
+                self.commit({path: "original content\n"})
+                head = self.commit(self.workspace_files("1.0.1.dev0"))
+                self.assertTrue(self.scope("push", before, head)["python_live"])
+                self.assertTrue(self.scope("pull_request", before, head)["python_live"])
+
+    def test_version_only_pr_uses_its_merge_base(self) -> None:
+        before = self.commit(self.workspace_files("1.0.0.dev0"))
+        branch = self.git("branch", "--show-current")
+        self.git("checkout", "-qb", "version")
+        feature = self.commit(self.workspace_files("1.0.1.dev0"))
+        self.git("checkout", branch)
+        main = self.commit({"packages/notte-sdk/src/notte_sdk/client.py": "runtime = True\n"})
+        scope = self.scope("pull_request", main, feature)
+        self.assertEqual(scope["base"], before)
+        self.assertFalse(scope["python_live"])
+        self.assertTrue(scope["python_unit"])
 
     def test_complete_diff_unions_native_projects_and_skips_prose(self) -> None:
         prose = self.commit({"examples/openai-computer-use/README.md": "New instructions\n"})
