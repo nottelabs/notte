@@ -45,7 +45,8 @@ class KeepaliveEndpoint:
 async def keepalive_endpoint(
     request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch
 ) -> AsyncIterator[KeepaliveEndpoint]:
-    endpoint = KeepaliveEndpoint(request.param)
+    slow_attempts, idle_connection = request.param
+    endpoint = KeepaliveEndpoint(slow_attempts)
     app = web.Application()
     app.router.add_post("/v1/chat/completions", endpoint.handle)
     runner = web.AppRunner(app)
@@ -55,16 +56,29 @@ async def keepalive_endpoint(
     monkeypatch.setenv("NOTTE_LLM_BASE_URL", f"http://127.0.0.1:{port}/v1")
     monkeypatch.setenv("NOTTE_LLM_API_KEY", "test-key")
     monkeypatch.setattr("notte_llm.engine._TRANSIENT_RETRY_DELAYS_SECONDS", (0.0, 0.0))
+    idle_reader: asyncio.StreamReader | None = None
+    idle_writer: asyncio.StreamWriter | None = None
+    if idle_connection:
+        idle_reader, idle_writer = await asyncio.open_connection("127.0.0.1", port)
     try:
         yield endpoint
     finally:
         server.close()
-        await server.wait_closed()
-        await runner.cleanup()
+        try:
+            # Close aiohttp's accepted connections before awaiting server shutdown
+            # so idle keepalives cannot deadlock teardown on runtimes that wait for them.
+            await runner.cleanup()
+            await server.wait_closed()
+            if idle_reader is not None:
+                assert await idle_reader.read() == b""
+        finally:
+            if idle_writer is not None:
+                idle_writer.close()
+                await idle_writer.wait_closed()
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("keepalive_endpoint", [1, 3], indirect=True)
+@pytest.mark.parametrize("keepalive_endpoint", [(1, False), (3, False), (1, True), (3, True)], indirect=True)
 async def test_keepalive_responses_obey_each_attempt_deadline(keepalive_endpoint: KeepaliveEndpoint) -> None:
     engine = LLMEngine(model="test-model", timeout=0.1)
     if keepalive_endpoint.slow_attempts == 3:
@@ -80,7 +94,7 @@ async def test_keepalive_responses_obey_each_attempt_deadline(keepalive_endpoint
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("keepalive_endpoint", [1], indirect=True)
+@pytest.mark.parametrize("keepalive_endpoint", [(1, False), (1, True)], indirect=True)
 async def test_caller_cancellation_closes_response_without_retry(keepalive_endpoint: KeepaliveEndpoint) -> None:
     task = asyncio.create_task(LLMEngine(model="test-model").completion([]))
     await asyncio.wait_for(keepalive_endpoint.started.wait(), timeout=1)
