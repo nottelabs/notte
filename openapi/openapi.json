@@ -3398,6 +3398,108 @@
         "x-hidden": true
       }
     },
+    "/functions/{function_id}/rollback/conditional": {
+      "post": {
+        "tags": [
+          "functions"
+        ],
+        "summary": "Function Conditional Rollback",
+        "operationId": "function_conditional_rollback",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "function_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Function Id"
+            }
+          },
+          {
+            "name": "restricted",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Whether to restrict the function code",
+              "default": true,
+              "title": "Restricted"
+            },
+            "description": "Whether to restrict the function code"
+          },
+          {
+            "name": "x-notte-request-origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Request-Origin"
+            }
+          },
+          {
+            "name": "x-notte-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Sdk-Version"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConditionalFunctionRollbackRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FunctionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-hidden": true
+      }
+    },
     "/functions/{function_id}/schedule": {
       "post": {
         "tags": [
@@ -20604,6 +20706,27 @@
           "button"
         ],
         "title": "Components"
+      },
+      "ConditionalFunctionRollbackRequest": {
+        "properties": {
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "description": "A version from the function's `versions` history to restore"
+          },
+          "expected_current_version": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Expected Current Version",
+            "description": "Restore only if the function still serves this version at the final atomic update"
+          }
+        },
+        "type": "object",
+        "required": [
+          "version",
+          "expected_current_version"
+        ],
+        "title": "ConditionalFunctionRollbackRequest"
       },
       "ConnectLinkContext": {
         "properties": {

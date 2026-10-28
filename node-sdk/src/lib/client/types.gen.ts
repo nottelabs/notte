@@ -1573,6 +1573,24 @@ export type Components = {
 };
 
 /**
+ * ConditionalFunctionRollbackRequest
+ */
+export type ConditionalFunctionRollbackRequest = {
+    /**
+     * Version
+     *
+     * A version from the function's `versions` history to restore
+     */
+    version: string;
+    /**
+     * Expected Current Version
+     *
+     * Restore only if the function still serves this version at the final atomic update
+     */
+    expected_current_version: string;
+};
+
+/**
  * ConnectLinkContext
  */
 export type ConnectLinkContext = {
@@ -11979,6 +11997,53 @@ export type FunctionRollbackResponses = {
 };
 
 export type FunctionRollbackResponse = FunctionRollbackResponses[keyof FunctionRollbackResponses];
+
+export type FunctionConditionalRollbackData = {
+    body: ConditionalFunctionRollbackRequest;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Function Id
+         */
+        function_id: string;
+    };
+    query?: {
+        /**
+         * Restricted
+         *
+         * Whether to restrict the function code
+         */
+        restricted?: boolean;
+    };
+    url: '/functions/{function_id}/rollback/conditional';
+};
+
+export type FunctionConditionalRollbackErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type FunctionConditionalRollbackError = FunctionConditionalRollbackErrors[keyof FunctionConditionalRollbackErrors];
+
+export type FunctionConditionalRollbackResponses = {
+    /**
+     * Successful Response
+     */
+    200: FunctionResponse;
+};
+
+export type FunctionConditionalRollbackResponse = FunctionConditionalRollbackResponses[keyof FunctionConditionalRollbackResponses];
 
 export type FunctionScheduleDeleteData = {
     body?: never;

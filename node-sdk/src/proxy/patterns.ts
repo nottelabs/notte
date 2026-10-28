@@ -55,6 +55,7 @@ export const DEFAULT_ALLOWED_PATTERNS: RegExp[] = [
   /^functions\/[^\/]+$/, // /functions/{function_id}
   /^functions\/[^\/]+\/fork$/, // /functions/{function_id}/fork
   /^functions\/[^\/]+\/rollback$/, // /functions/{function_id}/rollback
+  /^functions\/[^\/]+\/rollback\/conditional$/, // /functions/{function_id}/rollback/conditional
   /^functions\/[^\/]+\/runs$/, // /functions/{function_id}/runs
   /^functions\/[^\/]+\/runs\/[^\/]+$/, // /functions/{function_id}/runs/{run_id}
   /^functions\/[^\/]+\/runs\/[^\/]+\/payloads\/[^\/]+$/, // /functions/{function_id}/runs/{run_id}/payloads/{field}
