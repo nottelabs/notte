@@ -209,10 +209,16 @@ def probe_rows(probe_runs: list[dict[str, Any]]) -> list[Row]:
     rows: dict[tuple[str, str], Row] = {}
     for run in probe_runs:
         records = run.get("probes") or []
-        if not records and run.get("error"):
-            # the page or session failed before any question: every probe of the page counts as wrong, unless the
-            # site (`site_miss`) or the decider (`infra_miss`) is why
-            records = [{"probe": name, "correct": False, "error": run["error"]} for name in run.get("names", [])]
+        if run.get("error"):
+            # The page or session failed, before a question or after some answers (a session that did not close):
+            # every probe of the page counts as wrong, answered or not, unless the site (`site_miss`) or the decider
+            # (`infra_miss`) is why.
+            answered = {p["probe"] for p in records}
+            records = [{**p, "correct": False, "error": p.get("error") or run["error"]} for p in records] + [
+                {"probe": name, "correct": False, "error": run["error"]}
+                for name in run.get("names", [])
+                if name not in answered
+            ]
         for p in records:
             key = (run["runner"], p["probe"])
             row = rows.get(key)

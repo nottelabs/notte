@@ -960,3 +960,22 @@ def test_each_version_pair_is_one_sequential_group() -> None:
     groups = registry.pairs(jobs)
     assert [job for group in groups for job in group] == jobs
     assert all(len(g) == 2 and len({(j.runner, j.item, j.repeat) for j in g}) == 1 for g in groups)
+
+
+def test_a_probe_run_that_failed_after_answering_fails_its_probes() -> None:
+    base = {"runner": "probe-local-jev", "url": FIXTURE_URL, "suite": "fixtures", "version": "head",
+            "repeat": 1, "names": ["p1", "p2"], "site_miss": None}  # fmt: skip
+    # the session failed to close after both right answers
+    closed = {**base, "probes": [{"probe": "p1", "correct": True}, {"probe": "p2", "correct": True}],
+              "error": "BrowserError: close failed"}  # fmt: skip
+    assert [row.head for row in rules.probe_rows([closed])] == [[False], [False]]
+    # the run stopped after one answer: the probe it never asked counts too
+    partial = {**base, "probes": [{"probe": "p1", "correct": True}], "error": "RuntimeError: worker stopped"}
+    assert {row.name: row.head for row in rules.probe_rows([partial])} == {"p1": [False], "p2": [False]}
+    assert not rules.judge([], [partial], [], with_base=False).ok
+    # a decider outage is an infra miss, not a wrong answer
+    outage = {**partial, "error": "LLMProviderError: Jev request failed: ConnectError"}
+    assert {row.name: (row.head, len(row.head_infra)) for row in rules.probe_rows([outage])} == {
+        "p1": ([], 1),
+        "p2": ([], 1),
+    }
