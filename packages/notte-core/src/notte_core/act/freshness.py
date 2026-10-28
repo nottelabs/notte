@@ -11,7 +11,7 @@ have no usable XPath: sessions fall back to comparing a new observation (`same_t
 
 from typing import Any, cast
 
-from notte_core.act.space import ObservedPage, description_lines
+from notte_core.act.space import ObservedPage, covered_by_dialog, description_lines
 
 ELEMENT_SIGNATURES_JS = """(xpaths) => {
     const elements = {};
@@ -141,6 +141,10 @@ class Signatures:
             return False
         fields = cast(list[Any], raw)
         if len(fields) != _SIGNATURE_FIELDS:
+            return False
+        # Covered when the signatures were read, but no dialog over the page the decider saw: something can have
+        # come over it since the observation (a late consent wall). Checking a new observation tells.
+        if self.covered.get(element_id) is True and not covered_by_dialog(page.description):
             return False
         tag = str(fields[0]).lower()
         line = description_lines(page.description).get(element_id, "")

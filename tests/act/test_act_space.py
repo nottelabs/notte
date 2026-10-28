@@ -1322,3 +1322,18 @@ def test_a_target_covered_since_the_observation_is_not_fresh() -> None:
     assert read(False).matches(read(None), "L1")
     # uncovered since: the decider saw the page as it is now
     assert read(True).matches(read(False), "L1")
+
+
+def test_a_target_covered_when_the_baseline_was_read_needs_a_new_observation() -> None:
+    from notte_core.act.freshness import Signatures
+
+    # a wall that came between the observation and the baseline read: the page the decider saw has no dialog
+    page = _page()
+    covered = Signatures(
+        {"url": page.url, "elements": {"B1": _signature("BUTTON", "SIGN IN")}, "covered": {"B1": True}}
+    )
+    assert not covered.consistent(page, "B1")
+    uncovered = Signatures(
+        {"url": page.url, "elements": {"B1": _signature("BUTTON", "SIGN IN")}, "covered": {"B1": False}}
+    )
+    assert uncovered.consistent(page, "B1")
