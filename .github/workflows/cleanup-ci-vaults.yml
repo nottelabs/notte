@@ -124,6 +124,18 @@ jobs:
           fi
           ARGS=()
           if [ "$ALLOW_PRODUCTION" = true ] && [ "$NOTTE_API_URL" = https://api.notte.cc ]; then
+            if [ "$MODE" = prefix ]; then
+              python3 - <<'PYCODE'
+          import os
+          import re
+
+          from scripts.ci_vault_scope import sanitize_prefix
+
+          prefix = os.environ["PREFIX"]
+          if re.fullmatch(r"ci-[1-9][0-9]*-[A-Za-z0-9_][A-Za-z0-9_-]*", prefix) is None or sanitize_prefix(prefix) != prefix:
+              raise SystemExit("Production prefix cleanup requires a complete ci-<run_id>-<job> prefix without normalization")
+          PYCODE
+            fi
             ARGS+=(--allow-production)
           fi
           case "$DRY_RUN" in true|false) ;; *) echo 'Invalid dry_run input'; exit 1 ;; esac

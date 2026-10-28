@@ -71,6 +71,7 @@ def fake_python(tmp_path: Path):
 def cleanup(directory: Path, **overrides: str):
     env = {
         "PATH": str(directory) + os.pathsep + os.environ["PATH"],
+        "PYTHONPATH": str(ROOT),
         "NOTTE_API_URL": STAGING,
         "API_KEY_SECRET": INPUTS["api_key_secret"]["options"][1],
         "NOTTE_API_KEY": FIXTURE_VALUE,
@@ -226,3 +227,92 @@ def test_static_secret_selection_uses_only_requested_credential_without_fallback
         assert json.loads(invocation.read_text())["key"] == expected
     else:
         assert not invocation.exists()
+
+
+@pytest.mark.parametrize(
+    "prefix,allowed",
+    [
+        ("ci-32862931541-execution", True),
+        ("ci-40619044502-staging-and-live-1-4", True),
+        ("ci-40619044502-_custom_job", True),
+        (scope.sanitize_prefix("ci-40619044502-" + "x" * 50), True),
+        ("default", False),
+        ("ci-", False),
+        ("ci-4061", False),
+        ("ci-40619044502-", False),
+        ("arbitrary", False),
+        ("ci-0-execution", False),
+        ("ci-123-execution-", False),
+        ("ci-123-execution/1", False),
+        ("ci-40619044502-" + "x" * 50, False),
+        ("ci-" + "1" * 38 + "-job", False),
+    ],
+)
+def test_production_prefix_must_name_a_complete_ci_run_without_sanitization(
+    fake_python: Path, prefix: str, allowed: bool
+) -> None:
+    result = cleanup(
+        fake_python,
+        NOTTE_API_URL=PROD,
+        API_KEY_SECRET=INPUTS["api_key_secret"]["default"],
+        ALLOW_PRODUCTION="true",
+        PREFIX=prefix,
+    )
+    assert (result.returncode == 0) is allowed, result.stdout + result.stderr
+    invocation = fake_python / "invocation.json"
+    if allowed:
+        args = json.loads(invocation.read_text())["args"]
+        assert args == ["scripts/cleanup_ci_vaults.py", "--allow-production", "--prefix", prefix]
+    else:
+        assert "Production prefix cleanup requires" in result.stderr
+        assert not invocation.exists()
+
+
+@pytest.mark.parametrize("url", [STAGING, DEV])
+@pytest.mark.parametrize("prefix", ["default", "ci-", "ci-123"])
+def test_nonproduction_prefix_behavior_is_preserved(fake_python: Path, url: str, prefix: str) -> None:
+    assert (
+        cleanup(
+            fake_python, NOTTE_API_URL=url, API_KEY_SECRET=INPUTS["api_key_secret"]["default"], PREFIX=prefix
+        ).returncode
+        == 0
+    )
+    args = json.loads((fake_python / "invocation.json").read_text())["args"]
+    assert args == ["scripts/cleanup_ci_vaults.py", "--prefix", prefix]
+
+
+@pytest.mark.parametrize("dry_run", ["false", "true"])
+def test_production_orphan_mode_preserves_explicit_age_and_dry_run(fake_python: Path, dry_run: str) -> None:
+    assert (
+        cleanup(
+            fake_python,
+            NOTTE_API_URL=PROD,
+            API_KEY_SECRET=INPUTS["api_key_secret"]["default"],
+            ALLOW_PRODUCTION="true",
+            MODE="orphan-defaults",
+            PREFIX="default",
+            MIN_AGE_HOURS="6",
+            DRY_RUN=dry_run,
+        ).returncode
+        == 0
+    )
+    args = json.loads((fake_python / "invocation.json").read_text())["args"]
+    expected = ["scripts/cleanup_ci_vaults.py", "--allow-production"]
+    if dry_run == "true":
+        expected.append("--dry-run")
+    assert args == expected + ["--orphan-defaults", "--min-age-hours", "6"]
+
+
+def test_production_default_prefix_is_refused_even_for_dry_run(fake_python: Path) -> None:
+    assert (
+        cleanup(
+            fake_python,
+            NOTTE_API_URL=PROD,
+            API_KEY_SECRET=INPUTS["api_key_secret"]["default"],
+            ALLOW_PRODUCTION="true",
+            PREFIX="default",
+            DRY_RUN="true",
+        ).returncode
+        != 0
+    )
+    assert not (fake_python / "invocation.json").exists()
