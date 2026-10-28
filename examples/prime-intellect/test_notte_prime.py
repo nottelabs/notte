@@ -99,7 +99,9 @@ async def release_session(client, session_id: str) -> None:
     try:
         await asyncio.to_thread(client.sessions.stop, session_id)
     except NotteAPIError as error:
-        if "already stopped" not in str(error).lower():
+        # the API's answers for a session that stopped meanwhile (as `RemoteSession.stop` accepts them)
+        message = str(error).lower()
+        if "already stopped" not in message and "already closed" not in message:
             raise
 
 
@@ -640,9 +642,11 @@ class ReleaseSessionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(client.stopped, ["s1"])
 
     async def test_a_session_that_stopped_since_its_status_is_released(self):
-        client = self.client("active", "Session s1 is already stopped.")
-        await release_session(client, "s1")
-        self.assertEqual(client.stopped, ["s1"])
+        for answer in ("Session s1 is already stopped.", "Session s1 is already closed."):
+            with self.subTest(answer=answer):
+                client = self.client("active", answer)
+                await release_session(client, "s1")
+                self.assertEqual(client.stopped, ["s1"])
 
     async def test_another_stop_error_fails(self):
         client = self.client("active", "Session s1 not found.")
