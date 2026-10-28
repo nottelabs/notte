@@ -21,6 +21,7 @@ import verifiers.v1 as vf
 from mcp import ClientSession
 from mcp.client.streamable_http import streamable_http_client
 from mcp.server.mcpserver import MCPServer
+from notte_sdk.errors import NotteAPIError
 from playwright.async_api import BrowserType
 
 LIVE = os.getenv("NOTTE_PRIME_LIVE") == "1"
@@ -89,6 +90,17 @@ async def native_tools(task, trace):
             state_server.shutdown()
             state_server.server_close()
             thread.join(timeout=2)
+
+
+async def release(client, session_id: str) -> None:
+    """Stop a test-owned session unless it is closed. It can stop between the status read and the stop."""
+    if (await asyncio.to_thread(client.sessions.status, session_id)).status == "closed":
+        return
+    try:
+        await asyncio.to_thread(client.sessions.stop, session_id)
+    except NotteAPIError as error:
+        if "already stopped" not in str(error).lower():
+            raise
 
 
 async def wait_until_closed(client, session_id: str) -> None:
@@ -225,9 +237,7 @@ class BrowserTests(unittest.IsolatedAsyncioTestCase):
             if LIVE:
                 for session in owned:
                     if session.response is not None:
-                        status = await asyncio.to_thread(client.sessions.status, session.session_id)
-                        if status.status != "closed":
-                            await asyncio.to_thread(client.sessions.stop, session.session_id)
+                        await release(client, session.session_id)
                         await wait_until_closed(client, session.session_id)
 
     async def test_native_mcp_browser_and_reward(self):
@@ -480,9 +490,7 @@ class BrowserTests(unittest.IsolatedAsyncioTestCase):
                     if LIVE:
                         for session in sessions:
                             if session.response is not None:
-                                status = await asyncio.to_thread(client.sessions.status, session.session_id)
-                                if status.status != "closed":
-                                    await asyncio.to_thread(client.sessions.stop, session.session_id)
+                                await release(client, session.session_id)
                                 await wait_until_closed(client, session.session_id)
 
     async def test_failed_creation_preserves_safe_error_and_clears_owner(self):
@@ -597,9 +605,7 @@ class BrowserTests(unittest.IsolatedAsyncioTestCase):
         finally:
             # Keep a failing assertion from leaking its test-owned resource.
             for session_id in ids:
-                status = await asyncio.to_thread(client.sessions.status, session_id)
-                if status.status != "closed":
-                    await asyncio.to_thread(client.sessions.stop, session_id)
+                await release(client, session_id)
             server.shutdown()
             server.server_close()
             thread.join(timeout=2)
