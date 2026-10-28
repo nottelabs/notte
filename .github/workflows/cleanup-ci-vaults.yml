@@ -4,6 +4,31 @@ name: cleanup-ci-vaults
 on:
   workflow_dispatch:
     inputs:
+      api_url:
+        description: "API environment containing the vaults"
+        required: true
+        default: "https://us-staging.notte.cc"
+        type: choice
+        options:
+          - "https://us-staging.notte.cc"
+          - "https://us-dev.notte.cc"
+          - "https://api.notte.cc"
+      api_key_secret:
+        description: "Existing credential that owns the vaults (job-specific keys are staging only)"
+        required: true
+        default: "NOTTE_API_KEY"
+        type: choice
+        options:
+          - "NOTTE_API_KEY"
+          - "NOTTE_API_KEY_CI_PY"
+          - "NOTTE_API_KEY_CI_NODE"
+          - "NOTTE_API_KEY_CI_DOCS"
+          - "NOTTE_API_KEY_CI_README"
+          - "NOTTE_API_KEY_CI_EXAMPLES"
+      allow_production:
+        description: "Explicitly allow cleanup against the production API"
+        type: boolean
+        default: false
       mode:
         description: "prefix = one workflow run; orphan-defaults = drain leaked name=default vaults"
         required: true
@@ -30,15 +55,42 @@ on:
           - "false"
           - "true"
 
+permissions:
+  contents: read
+
 jobs:
   cleanup:
+    if: github.repository == 'nottelabs/notte' && github.ref == 'refs/heads/main'
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 30
     env:
       DISABLE_TELEMETRY: "true"
+      NOTTE_API_URL: ${{ inputs.api_url }}
+      API_KEY_SECRET: ${{ inputs.api_key_secret }}
+      ALLOW_PRODUCTION: ${{ inputs.allow_production }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Validate environment and credential selection
+        run: |
+          set -euo pipefail
+          case "$NOTTE_API_URL:$API_KEY_SECRET" in
+            https://us-staging.notte.cc:NOTTE_API_KEY|https://us-dev.notte.cc:NOTTE_API_KEY|https://api.notte.cc:NOTTE_API_KEY) ;;
+            https://us-staging.notte.cc:NOTTE_API_KEY_CI_PY|https://us-staging.notte.cc:NOTTE_API_KEY_CI_NODE|https://us-staging.notte.cc:NOTTE_API_KEY_CI_DOCS|https://us-staging.notte.cc:NOTTE_API_KEY_CI_README|https://us-staging.notte.cc:NOTTE_API_KEY_CI_EXAMPLES) ;;
+            *) echo 'Unsupported API environment or credential combination'; exit 1 ;;
+          esac
+          case "$ALLOW_PRODUCTION" in true|false) ;; *) echo 'Invalid production override'; exit 1 ;; esac
+          if [ "$NOTTE_API_URL" = https://api.notte.cc ]; then
+            if [ "$ALLOW_PRODUCTION" != true ]; then
+              echo 'Production cleanup requires the explicit allow_production input'
+              exit 1
+            fi
+          elif [ "$ALLOW_PRODUCTION" = true ]; then
+            echo 'The production override requires the production API environment'
+            exit 1
+          fi
+          echo "Cleanup target: $NOTTE_API_URL; credential: $API_KEY_SECRET"
 
       - name: Install uv
         uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
@@ -53,13 +105,23 @@ jobs:
 
       - name: Cleanup vaults
         env:
-          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+          NOTTE_API_KEY: ${{ secrets[inputs.api_key_secret] }}
           MODE: ${{ inputs.mode }}
           PREFIX: ${{ inputs.prefix }}
           MIN_AGE_HOURS: ${{ inputs.min_age_hours }}
           DRY_RUN: ${{ inputs.dry_run }}
         run: |
+          set -euo pipefail
+          if [ -z "$NOTTE_API_KEY" ]; then
+            echo "Selected credential $API_KEY_SECRET is not configured"
+            exit 1
+          fi
           ARGS=()
+          if [ "$ALLOW_PRODUCTION" = true ] && [ "$NOTTE_API_URL" = https://api.notte.cc ]; then
+            ARGS+=(--allow-production)
+          fi
+          case "$DRY_RUN" in true|false) ;; *) echo 'Invalid dry_run input'; exit 1 ;; esac
+          case "$MODE" in prefix|orphan-defaults) ;; *) echo 'Invalid cleanup mode'; exit 1 ;; esac
           if [ "$DRY_RUN" = "true" ]; then
             ARGS+=(--dry-run)
           fi
