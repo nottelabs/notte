@@ -120,6 +120,10 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [OpenAGI Lux](https://docs.notte.cc/integrations/openagi.md): Connect OpenAGI's native Lux agent to a Notte cloud browser.
 - [Tzafon Lightcone](https://docs.notte.cc/integrations/tzafon.md): Run a Northstar computer-use loop on a Notte browser.
 
+## Model Providers
+
+- [RunAnywhere](https://docs.notte.cc/integrations/runanywhere.md): Run the open-source Notte framework on open models served by RunAnywhere Wally.
+
 ## Workflow Automation
 
 - [n8n](https://docs.notte.cc/integrations/n8n.md): Use Notte browser agents inside n8n workflows

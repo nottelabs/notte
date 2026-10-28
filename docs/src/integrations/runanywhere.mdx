@@ -1,0 +1,44 @@
+---
+title: RunAnywhere
+description: Run the open-source Notte framework on open models served by RunAnywhere Wally.
+---
+import RunAnywhereEnv from '/snippets/integrations/runanywhere/env.mdx';
+import RunAnywhereExample from '/snippets/integrations/runanywhere/example.mdx';
+import RunAnywhereModels from '/snippets/integrations/runanywhere/models.mdx';
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+[RunAnywhere](https://www.runanywhere.ai) serves open models (DeepSeek, GLM, Kimi, MiniMax) through Wally Cloud, an [OpenAI-compatible API](https://docs.runanywhere.ai/wally-cloud/api). Point the open-source Notte framework at it to run [`act()`](/features/sessions/act) and [structured extraction](/concepts/scraping#local-python-extraction-configuration) in local sessions on those models, with no OpenRouter key.
+
+This applies to local sessions (`notte.Session()`). Cloud sessions use the platform's server-side model configuration.
+
+## Prerequisites
+
+- Python 3.11+ and `pip install "notte[llm]"`
+- Chromium for local sessions: `patchright install --with-deps chromium`
+- A Wally Cloud key (`sk-runa-...`) from the [RunAnywhere console](https://console.runanywhere.ai)
+
+<Note>
+`session.act()` and `session.check()` are not in notte 1.10.1, the latest release; they ship in the next one. With 1.10.1, these settings apply to structured extraction.
+</Note>
+
+## Configure the endpoint
+
+<RunAnywhereEnv />
+
+With no `TYPESAFE_API_KEY` or `OPENROUTER_API_KEY` set, `act()` uses this endpoint for both decisions and the text it types. If one of those keys is set, add `NOTTE_ACT_DECIDER=llm` to keep `act()` on RunAnywhere.
+
+## Example
+
+<RunAnywhereExample />
+
+## Choose a model
+
+List the models your key can call:
+
+<RunAnywhereModels />
+
+Use the `id` of a model whose `mode` is `chat`. The example above was tested with `deepseek-v4.1-flash-fast`, `deepseek-v4-flash-0731` and `glm-5.3-flash`. To use different models in `act()`, set `NOTTE_ACT_MODEL` for decisions and `NOTTE_ACT_TEXT_MODEL` for typed text. The text model defaults to the decision model, which defaults to `NOTTE_LLM_MODEL`.
+
+`NOTTE_ACT_REASONING` only applies to OpenRouter. On RunAnywhere, each model thinks at its own default level, which `/v1/models` reports under `reasoning`. Models that think by default take longer per step.

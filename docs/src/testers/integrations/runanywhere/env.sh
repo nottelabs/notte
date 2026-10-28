@@ -1,0 +1,3 @@
+export NOTTE_LLM_BASE_URL=https://inference.runanywhere.ai/v1
+export NOTTE_LLM_API_KEY=sk-runa-...
+export NOTTE_LLM_MODEL=deepseek-v4.1-flash-fast

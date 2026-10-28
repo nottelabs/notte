@@ -321,6 +321,9 @@ in a thread first). `tests/sdk/test_async_functions_files.py` checks this for fu
 
 ## Generated docs
 
+`docs/src/tests/test_snippets.py` runs mypy on testers only with `DOCS_TEST_TYPE_CHECK=true`, as
+the docs `type-check` CI job sets it. Without it, `typecheck_only` testers pass unchecked locally.
+
 The Sphinx build-finished hook corrects `Answers.usage`: sphinx-mintlify currently marks its
 `default_factory` field required. Keep the generated reference aligned with the optional model field.
 
