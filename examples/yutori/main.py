@@ -1,5 +1,6 @@
 import asyncio
 import json
+from asyncio import timeout
 from contextlib import AsyncExitStack, asynccontextmanager
 from urllib.parse import urlsplit
 
@@ -203,7 +204,7 @@ async def run(
     if not 0 < timeout_seconds <= 120:
         raise ValueError("Choose timeout_seconds above zero and at most 120")
     try:
-        async with asyncio.timeout(timeout_seconds):
+        async with timeout(timeout_seconds):
             return await _run(task, start_url, max_steps=max_steps, client=client)
     except TimeoutError:
         raise BrowserTaskError("Yutori time limit reached") from None

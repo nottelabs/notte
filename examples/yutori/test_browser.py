@@ -22,18 +22,26 @@ from yutori.navigator import aplaywright_screenshot_to_data_url
 class BrowserTests(unittest.IsolatedAsyncioTestCase):
     async def test_time_budget_cancels_model_work_and_stops_owned_session(self):
         requesting = asyncio.Event()
+        deadline = asyncio.timeout(None)
 
         async def stalled_model(*_args, **_kwargs):
             requesting.set()
+            deadline.reschedule(asyncio.get_running_loop().time())
             await asyncio.Future()
 
-        with self.owned(), patch.object(demo, "acreate_trimmed", new=stalled_model):
+        # Expire during the model call regardless of cloud provisioning latency.
+        with (
+            self.owned(),
+            patch.object(demo, "timeout", return_value=deadline) as budget,
+            patch.object(demo, "acreate_trimmed", new=stalled_model),
+        ):
             async with AsyncYutoriClient(api_key="test-only") as client:  # pragma: allowlist secret
                 with self.assertRaisesRegex(demo.BrowserTaskError, "Yutori time limit reached") as caught:
                     await asyncio.wait_for(
                         demo.run("Read the title", max_steps=30, timeout_seconds=10, client=client), timeout=30
                     )
             self.assertTrue(requesting.is_set(), "The deadline must interrupt the model request")
+            budget.assert_called_once_with(10)
             self.assertIsNone(caught.exception.__cause__)
             self.assertTrue(caught.exception.__suppress_context__)
 
