@@ -430,9 +430,41 @@ class GitHistoryTests(unittest.TestCase):
         self.git("init", "-q")
         self.git("config", "commit.gpgsign", "false")
         self.git("config", "core.hooksPath", "/dev/null")
+        # Detached housekeeping must not race strict temporary-directory cleanup.
+        self.git("config", "maintenance.auto", "false")
+        self.git("config", "gc.auto", "0")
         self.git("config", "user.name", "CI test")
         self.git("config", "user.email", "ci@example.invalid")
         self.base = self.commit({"README.md": "Original prose\n```python\nx = 1\n```\n"})
+
+    def test_temporary_history_does_not_launch_automatic_git_maintenance(self) -> None:
+        config = self.repo / ".git" / "inherited.config"
+        config.write_text(
+            "[maintenance]\n\tauto = true\n\tautoDetach = false\n[gc]\n\tauto = 1\n\tautoDetach = false\n"
+        )
+        commands: list[list[list[str]]] = []
+        for index in range(2):
+            if index:
+                # A foreground positive control proves Git would otherwise
+                # launch maintenance, without leaving another background task.
+                self.git("config", "maintenance.auto", "true")
+            trace = self.repo / ".git" / f"maintenance-{index}.jsonl"
+            with patch.dict(
+                os.environ,
+                {"GIT_CONFIG_GLOBAL": str(config), "GIT_CONFIG_NOSYSTEM": "1", "GIT_TRACE2_EVENT": str(trace)},
+            ):
+                self.commit({"fixture.txt": str(index)})
+            events = [json.loads(line) for line in trace.read_text().splitlines()]
+            commands.append(
+                [
+                    event["argv"]
+                    for event in events
+                    if event.get("event") == "child_start"
+                    and any(name in event.get("argv", []) for name in ("maintenance", "gc"))
+                ]
+            )
+        self.assertEqual(commands[0], [])
+        self.assertTrue(commands[1], "The control must exercise automatic Git maintenance")
 
     def git(self, *args: str) -> str:
         return subprocess.check_output(["git", "-C", str(self.repo), *args], stderr=subprocess.PIPE).decode().strip()
