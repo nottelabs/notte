@@ -1,4 +1,4 @@
-"""Report selected CI coverage and individual job outcomes for one run attempt."""
+"""Report selected CI coverage and latest individual job outcomes across a workflow run."""
 
 from __future__ import annotations
 

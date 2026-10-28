@@ -153,13 +153,13 @@ jobs:
           # Fork PRs get no secrets, so their selected live suites skip and cannot pass.
           TRUSTED_LIVE: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
         run: python3 -m scripts.ci_validation gate
-      - name: Read this attempt's job results
+      - name: Read latest job results for this run
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
         run: >-
           gh api --paginate --slurp
-          "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs?per_page=100"
+          "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs?filter=latest&per_page=100"
           --jq '[.[].jobs[]]' > "$RUNNER_TEMP/ci-jobs.json"
       - name: Report correctness, integration results and coverage
         if: always()

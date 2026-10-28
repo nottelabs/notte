@@ -74,3 +74,20 @@ def test_successful_family_does_not_hide_a_missing_selected_job() -> None:
 
 def test_fork_still_requires_selected_offline_jobs() -> None:
     assert not report(needs({"node_static": True}), [], False)[1]
+
+
+def test_partial_reruns_keep_successful_siblings_without_using_old_failures() -> None:
+    from tests.scripts.test_ci_staging_scope import workflow
+
+    job = workflow("ci.yml")["jobs"]["tests"]
+    read = next(step for step in job["steps"] if step.get("name") == "Read latest job results for this run")
+    assert "jobs?filter=latest&per_page=100" in read["run"]
+    assert "/attempts/" not in read["run"]
+    results = needs({"paired_live": True, "paired_shards": ["1/2", "2/2"]})
+    jobs: list[Job] = [
+        {"name": "paired / live (1/2)", "conclusion": "success"},
+        {"name": "paired / live (2/2)", "conclusion": "success"},
+    ]
+    assert report(results, jobs, True)[1]
+    jobs[1]["conclusion"] = "failure"
+    assert not report(results, jobs, True)[1]
