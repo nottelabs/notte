@@ -170,7 +170,9 @@ async def test_local_act_steps_fill_and_submit_a_form(kind: str) -> None:
 @pytest.mark.parametrize("kind", DECIDERS)
 async def test_local_select_picks_the_option(kind: str) -> None:
     async with notte.Session(headless=True) as session:
-        _ = await session.window.page.goto(f"data:text/html,{quote(DROPDOWN)}")
+        url = "https://act-fixture.notte.test/dropdown"
+        await session.window.page.route(url, lambda route: route.fulfill(content_type="text/html", body=DROPDOWN))
+        _ = await session.window.page.goto(url)
         observation = await session.aobserve()
         result = await session.aact(
             'Select "Option 2" in the dropdown', observation=observation, decider=_decider(kind)
@@ -198,8 +200,15 @@ async def test_local_choose_a_fact_from_the_page(kind: str) -> None:
 @pytest.mark.parametrize("kind", DECIDERS)
 async def test_local_choose_from_the_live_state(kind: str) -> None:
     async with notte.Session(headless=True) as session:
-        _ = await session.window.page.goto(f"data:text/html,{quote(CHECKBOXES)}")
+        # A data URL would expose the stale initial checked attribute to the
+        # model alongside the live DOM state after the checkboxes are flipped.
+        url = "https://act-fixture.notte.test/checkboxes"
+        await session.window.page.route(url, lambda route: route.fulfill(content_type="text/html", body=CHECKBOXES))
+        _ = await session.window.page.goto(url)
         await session.window.page.evaluate(FLIP_CHECKBOXES_JS)
+        assert await session.window.page.locator("#checkboxes input").evaluate_all(
+            "elements => elements.map(element => element.checked)"
+        ) == [True, False]
         choice = await session.achoose("Which checkboxes are checked?", CHECKBOX_OPTIONS, decider=_decider(kind))
         print(f"\nlocal choose state ({kind}): {choice}")
         assert choice.choice == "first"
