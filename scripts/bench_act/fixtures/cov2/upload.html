@@ -1,0 +1,21 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Profile - photo</title>
+<style>body{font-family:sans-serif;margin:24px;max-width:520px}label{display:block;margin-top:12px}
+#photo{position:absolute;width:1px;height:1px;opacity:0}.pick{display:inline-block;border:1px solid #888;padding:8px 14px;border-radius:6px;cursor:pointer}</style></head><body>
+<h1>Your profile</h1>
+<form id="f" action="upload-done.html" method="get">
+  <label for="name">Display name</label><input id="name" name="name" value="Jane Doe">
+  <p>Profile photo</p>
+  <label class="pick" for="photo">Choose a photo…</label>
+  <input type="file" id="photo" name="photo" accept="image/*" required>
+  <span id="chosen">No photo chosen</span>
+  <p id="err" role="alert"></p>
+  <button type="submit">Save profile</button>
+</form>
+<script>
+const photo = document.getElementById('photo');
+photo.addEventListener('change', () => document.getElementById('chosen').textContent = photo.files[0] ? photo.files[0].name : 'No photo chosen');
+const noPhoto = () => document.getElementById('err').textContent = 'Choose a photo first.';
+// a save without a photo shows the error, whether the browser's own validation stops it (invalid) or the page does
+photo.addEventListener('invalid', noPhoto);
+document.getElementById('f').addEventListener('submit', e => { if (!photo.files.length) { e.preventDefault(); noPhoto(); } });
+</script></body></html>

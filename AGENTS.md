@@ -52,6 +52,10 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
 - For self-contained Node SDK integration pages, use
   `(await session.page()).setContent(...)`. The hosted `goto` action currently
   normalizes `data:` URLs to HTTPS URLs.
+- Benchmark JSON can be left truncated by an interrupted worker. Resume must
+  rerun unreadable records, and malformed worker output remains a failed run.
+  Final-page read errors must preserve landing/step evidence without accepting
+  an incomplete final snapshot as a successful task.
 - Browser settle regressions are in `tests/browser/test_execute_settle.py`
   and `tests/browser/test_settle_rules.py` and use a local server. Use the
   lockfile's Patchright environment: an older installed version can fail the
@@ -372,3 +376,43 @@ the revision-5 lockfile. SDK model generation requires datamodel-code-generator
 Docs CI syncs the workspace before installing job-only dependencies, then uses
 `uv run --no-sync`; a later sync can remove those dependencies or replace an
 environment built with a Python version that differs from `.python-version`.
+
+## act benchmark
+
+`scripts/bench_act/` benchmarks `act()` / `choose()` / `check()` and the observe they read, on local
+fixture pages and public sites (see its README). `act-bench.yml` runs it on PRs labelled `act-bench` or
+`act-bench-all`, changes under `packages/notte-browser/src/notte_browser/js/`,
+`packages/notte-browser/src/notte_browser/dom/`, `packages/notte-core/src/notte_core/act/`,
+`packages/notte-llm/src/notte_llm/act.py`,
+`scripts/bench_act/` or `.github/workflows/act-bench.yml`, and manual dispatch. PRs compare head against the
+merge base; a manual run benches the commit it was started on against its merge base with the default branch,
+and never checks out another ref (from the default branch, that code could write its caches). For Jev runners (`notte-local`, `notte-local-html`, `probe-local-jev`), fixture tasks and probes
+must pass in every head run except for decider transport errors, which use the separate infra-miss threshold;
+public tasks and probes fail only on a clear repeat-by-repeat drop against base.
+LLM and scripted task/probe outcomes are report-only. A public site that blocks, shows a CAPTCHA, or redirects
+outside its registrable domain is a site miss with evidence, never a pass. Decider transport errors are infra
+misses (red above 5% of runs, across non-scripted runners). Landing and final-page evidence takes
+precedence over a task checker's success flag. Model-backed runners need `OPENROUTER_API_KEY`;
+`notte-local-scripted` and `probe-local-scripted` are model-free and need no API key.
+The `act-bench-all` label includes extended fixtures with known browser/act failures. These still fail the
+report's fixture rules, even when base also fails; do not weaken the rules to make an all-tier run green.
+Harness regressions are in `tests/scripts/test_bench_act.py`. Saved runs resume only for identical run inputs,
+including probe selection; reports with `_meta/plan-*.json` use only the runs listed in those plans.
+Plans also store each job's expected metadata and run identity. Resume requires a complete result;
+reporting rejects mismatched or incomplete payloads as missing valid runs. A coordinator timeout or
+runner error cannot become a success because a worker wrote JSON or reached the final page.
+Fixture destinations must describe the page the task asks to open. The dark-cookie task's Pricing
+destination must not use a form-submission acknowledgement: the decider otherwise returns to the
+source after correctly refusing cookies and following the Pricing link.
+The upload capability task accepts BLOCKED only with a recorded, unchanged profile form, including
+the name, selected files, chosen-file label and validation error. Merely staying on the upload URL
+does not prove the runner left the form untouched.
+Round-3 fixture validators require the submitted action history: Back from wizard review with standard
+delivery before the final express choice, and the completed taken-name check before the available
+workspace name. Preserve this evidence on navigation. Wizard submission requires the review step;
+Enter in a valid delivery field must not bypass it through a hidden submit button.
+Retain the standard-delivery review evidence through later Back visits. Executed
+Back clicks are recognized in both accessible-text and rendered-HTML label modes.
+The benchmark coordinator, registry and task definitions run under CI's system Python, outside either
+version's virtualenv. Keep their imports in the standard library; worker-only code runs inside the
+selected version's environment. `test_discovery_works_without_installed_packages` checks this boundary.

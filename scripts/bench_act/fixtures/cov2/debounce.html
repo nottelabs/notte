@@ -1,0 +1,27 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Wayfarer - travel guides</title>
+<style>body{font-family:sans-serif;margin:24px;max-width:560px}#results li{padding:6px 0}</style></head><body>
+<h1>Travel guides</h1>
+<label for="q">Search guides</label> <input id="q" type="search" autocomplete="off" placeholder="City or country">
+<p id="status" aria-live="polite"></p>
+<ul id="results"></ul>
+<script>
+// search as you type: 600 ms after the last key, a "request" that takes 500 ms; a slower answer to an older query is dropped
+const GUIDES = [['lisbon', 'Lisbon travel guide'], ['lisieux', 'Lisieux and the Normandy coast'], ['lille', 'Lille in a weekend'],
+  ['lima', 'Lima food guide'], ['london', 'London on a budget'], ['lyon', 'Lyon travel guide'], ['porto', 'Porto travel guide']];
+const q = document.getElementById('q'), out = document.getElementById('results'), status = document.getElementById('status');
+let timer, seq = 0;
+q.addEventListener('input', () => {
+  const mine = ++seq;
+  clearTimeout(timer);
+  timer = setTimeout(() => {
+    const term = q.value.trim().toLowerCase();
+    status.textContent = term ? 'Searching…' : '';
+    setTimeout(() => {
+      if (mine !== seq) return;
+      const hits = term ? GUIDES.filter(([, t]) => t.toLowerCase().includes(term)) : [];
+      out.innerHTML = hits.map(([id, t]) => `<li><a href="guide.html?id=${id}">${t}</a></li>`).join('');
+      status.textContent = term ? `${hits.length} guide${hits.length === 1 ? '' : 's'} found` : '';
+    }, 500);
+  }, 600);
+});
+</script></body></html>

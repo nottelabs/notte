@@ -1,0 +1,12 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>会員登録 - さくら書店</title>
+<style>body{font-family:sans-serif;margin:24px;max-width:480px}label{display:block;margin-top:10px}</style></head><body>
+<h1>会員登録</h1>
+<form action="cjk-done.html" method="get">
+  <label for="name">氏名</label><input id="name" name="name" placeholder="例：山田花子">
+  <label for="kana">フリガナ</label><input id="kana" name="kana" placeholder="例：ヤマダハナコ">
+  <label for="zip">郵便番号</label><input id="zip" name="zip" placeholder="123-4567" pattern="\d{3}-\d{4}" required>
+  <label for="pref">都道府県</label>
+  <select id="pref" name="pref"><option value="hokkaido">北海道</option><option value="tokyo" selected>東京都</option>
+    <option value="kyoto">京都府</option><option value="osaka">大阪府</option><option value="fukuoka">福岡県</option></select>
+  <p><button type="submit">登録する</button></p>
+</form></body></html>

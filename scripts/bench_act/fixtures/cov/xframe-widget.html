@@ -1,0 +1,15 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Subscribe</title>
+<style>body{font-family:sans-serif;margin:12px}label{display:block;margin:6px 0}</style></head><body>
+<form id="sub" method="get" target="_top">
+  <fieldset><legend>Plan</legend>
+    <label><input type="radio" name="plan" value="basic" checked> Basic: €12.00 / year</label>
+    <label><input type="radio" name="plan" value="pro"> Pro: €42.00 / year, with the archive</label>
+  </fieldset>
+  <label for="email">Email address</label><input id="email" name="email" type="email" required>
+  <button type="submit">Subscribe</button>
+</form>
+<script>
+// the newsletter page that embeds the widget: the other one of 127.0.0.1 and localhost, on the same port (xframe.html)
+const top_ = location.protocol + '//' + (location.hostname === '127.0.0.1' ? 'localhost' : '127.0.0.1') + ':' + location.port;
+document.getElementById('sub').action = top_ + location.pathname.replace('xframe-widget.html', 'xframe-done.html');
+</script></body></html>

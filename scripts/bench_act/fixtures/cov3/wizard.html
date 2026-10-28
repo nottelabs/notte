@@ -1,0 +1,77 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Checkout - Florería Sol</title>
+<style>body{font-family:sans-serif;margin:24px;max-width:520px}label{display:block;margin-top:10px}.err{color:#b00020}
+fieldset{margin-top:12px}.steps{color:#555}dl{display:grid;grid-template-columns:120px 1fr}</style></head><body>
+<h1>Checkout</h1><p>1 × Autumn bouquet, €39.00</p>
+<p class="steps" id="progress" aria-live="polite"></p>
+<form id="f" action="wizard-done.html" method="get" novalidate>
+  <section data-step="1">
+    <h2>Your details</h2>
+    <label for="name">Full name</label><input id="name" name="name" autocomplete="off">
+    <label for="email">Email</label><input id="email" name="email" type="email" autocomplete="off">
+  </section>
+  <section data-step="2" hidden>
+    <h2>Delivery</h2>
+    <label for="zip">Postcode</label><input id="zip" name="zip" inputmode="numeric" maxlength="5">
+    <label for="date">Delivery date</label>
+    <input id="date" name="date" placeholder="DD/MM/YYYY" inputmode="numeric" aria-describedby="date-help">
+    <small id="date-help">Deliveries from 1 November to 31 December 2026.</small>
+    <fieldset><legend>Delivery speed</legend>
+      <label><input type="radio" name="speed" value="standard" checked> Standard (free)</label>
+      <label><input type="radio" name="speed" value="express"> Express (+€6.00)</label></fieldset>
+  </section>
+  <section data-step="3" hidden>
+    <h2>Review your order</h2><dl id="review"></dl>
+  </section>
+  <p class="err" id="err" role="alert"></p>
+  <input type="hidden" id="back-from" name="back_from" value="">
+  <input type="hidden" id="reviewed-speed" name="reviewed_speed" value="">
+  <button type="button" id="back" hidden>Back</button>
+  <button type="button" id="next">Continue</button>
+  <button type="submit" id="place" hidden>Place order</button>
+</form>
+<script>
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[c]);
+// three steps; each is checked before the next; Back keeps what was entered. The date field is masked as DD/MM/YYYY
+const $ = id => document.getElementById(id), TITLES = ['Your details', 'Delivery', 'Review'];
+let step = 1;
+$('date').addEventListener('input', () => {
+  const d = $('date').value.replace(/\D/g, '').slice(0, 8);
+  $('date').value = [d.slice(0, 2), d.slice(2, 4), d.slice(4)].filter(Boolean).join('/');
+});
+function errors(n) {
+  if (n === 1) {
+    if (!$('name').value.trim()) return 'Enter your full name.';
+    if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test($('email').value)) return 'Enter a valid email address.';
+  }
+  if (n === 2) {
+    if (!/^\d{5}$/.test($('zip').value)) return 'The postcode has 5 digits.';
+    const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec($('date').value);
+    const day = m && new Date(+m[3], +m[2] - 1, +m[1]);
+    if (!day || day.getDate() !== +m[1] || day < new Date(2026, 10, 1) || day > new Date(2026, 11, 31))
+      return 'Choose a delivery date between 01/11/2026 and 31/12/2026.';
+  }
+  return '';
+}
+function show(n) {
+  step = n; document.querySelectorAll('section').forEach(s => s.hidden = Number(s.dataset.step) !== n);
+  $('progress').textContent = `Step ${n} of 3: ${TITLES[n - 1]}`;
+  $('back').hidden = n === 1; $('next').hidden = n === 3; $('place').hidden = n !== 3; $('err').textContent = '';
+  if (n === 3) {
+    const speed = document.querySelector('[name=speed]:checked').value;
+    $('review').innerHTML = `<dt>Name</dt><dd>${esc($('name').value)}</dd><dt>Email</dt><dd>${esc($('email').value)}</dd>` +
+      `<dt>Postcode</dt><dd>${esc($('zip').value)}</dd><dt>Date</dt><dd>${esc($('date').value)}</dd>` +
+      `<dt>Delivery</dt><dd>${speed === 'express' ? 'Express (+€6.00)' : 'Standard (free)'}</dd>`;
+  }
+}
+$('next').onclick = () => { const e = errors(step); if (e) $('err').textContent = e; else show(step + 1); };
+$('back').onclick = () => {
+  if (step === 3) {
+    $('back-from').value = '3';
+    if ($('reviewed-speed').value !== 'standard')
+      $('reviewed-speed').value = document.querySelector('[name=speed]:checked').value;
+  }
+  show(step - 1);
+};
+$('f').addEventListener('submit', e => { if (step !== 3 || errors(1) || errors(2)) e.preventDefault(); });
+show(1);
+</script></body></html>

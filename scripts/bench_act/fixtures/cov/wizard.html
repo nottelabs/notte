@@ -1,0 +1,56 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Create your Ledgerly account</title>
+<style>body{font-family:sans-serif;margin:24px;max-width:520px}label{display:block;margin-top:10px}
+.err{color:#b00020;font-size:14px}.steps{color:#555}</style></head><body>
+<h1>Create your Ledgerly account</h1>
+<p class="steps" id="progress" aria-live="polite">Step 1 of 3: Account</p>
+<form id="wizard" action="wizard-done.html" method="get" novalidate>
+  <section data-step="1">
+    <label for="email">Email</label><input id="email" name="email" type="email" autocomplete="off">
+    <label for="pw">Password</label><input id="pw" name="pw" type="password" aria-describedby="pw-help">
+    <small id="pw-help">At least 8 characters, with a number.</small>
+    <label for="pw2">Confirm password</label><input id="pw2" type="password">
+    <p class="err" id="err-1" role="alert"></p>
+    <button type="button" data-next>Next</button>
+  </section>
+  <section data-step="2" hidden>
+    <label for="first">First name</label><input id="first" name="first">
+    <label for="last">Last name</label><input id="last" name="last">
+    <label for="country">Country</label>
+    <select id="country" name="country"><option value="">Choose a country</option><option value="BE">Belgium</option>
+      <option value="CA">Canada</option><option value="FR">France</option><option value="DE">Germany</option>
+      <option value="US">United States</option></select>
+    <label><input type="checkbox" id="terms" name="terms"> I accept the terms of service</label>
+    <p class="err" id="err-2" role="alert"></p>
+    <button type="button" data-back>Back</button> <button type="button" data-next>Next</button>
+  </section>
+  <section data-step="3" hidden>
+    <h2>Review</h2><dl id="review"></dl>
+    <button type="button" data-back>Back</button> <button type="submit">Create account</button>
+  </section>
+</form>
+<script>
+const form = document.getElementById('wizard'), $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[c]);
+const TITLES = {1: 'Account', 2: 'Profile', 3: 'Review'};
+let step = 1;
+function show(n) { step = n; form.querySelectorAll('section').forEach(s => s.hidden = Number(s.dataset.step) !== n);
+  $('progress').textContent = 'Step ' + n + ' of 3: ' + TITLES[n];
+  if (n === 3) $('review').innerHTML = '<dt>Email</dt><dd>' + esc($('email').value) + '</dd><dt>Name</dt><dd>' + esc($('first').value) + ' ' +
+    esc($('last').value) + '</dd><dt>Country</dt><dd>' + esc($('country').selectedOptions[0].text) + '</dd>'; }
+function errors(n) {
+  if (n === 1) {
+    if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test($('email').value)) return 'Enter a valid email address.';
+    if ($('pw').value.length < 8 || !/\d/.test($('pw').value)) return 'Your password needs at least 8 characters, with a number.';
+    if ($('pw2').value !== $('pw').value) return 'The passwords do not match.';
+  } else if (n === 2) {
+    if (!$('first').value.trim() || !$('last').value.trim()) return 'Enter your first and last name.';
+    if (!$('country').value) return 'Choose your country.';
+    if (!$('terms').checked) return 'You must accept the terms of service to continue.';
+  }
+  return '';
+}
+form.querySelectorAll('[data-next]').forEach(b => b.addEventListener('click', () => {
+  const e = errors(step); $('err-' + step).textContent = e; if (!e) show(step + 1); }));
+form.querySelectorAll('[data-back]').forEach(b => b.addEventListener('click', () => show(step - 1)));
+form.addEventListener('submit', e => { if (errors(1) || errors(2)) { e.preventDefault(); show(errors(1) ? 1 : 2); } });
+</script></body></html>

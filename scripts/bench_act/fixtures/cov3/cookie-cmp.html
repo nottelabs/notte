@@ -1,0 +1,21 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Aviso de privacidad</title>
+<style>body{font-family:sans-serif;margin:16px;font-size:14px}.primary{background:#0a58ca;color:#fff;border:0;padding:10px 18px;border-radius:4px}
+.link{background:none;border:0;color:#0a58ca;text-decoration:underline;padding:0}.row{display:flex;justify-content:space-between;border-bottom:1px solid #eee;padding:8px 0}</style></head><body>
+<div id="l1"><h2>Tu privacidad es importante</h2>
+  <p>Nosotros y nuestros 214 socios usamos cookies para personalizar el contenido y la publicidad y analizar el tráfico.</p>
+  <p><button type="button" class="primary" id="all">Aceptar y continuar</button></p>
+  <p><button type="button" class="link" id="more">Configurar opciones</button></p></div>
+<div id="l2" hidden><h2>Configurar opciones</h2>
+  <div class="row"><span>Necesarias</span><span>Siempre activas</span></div>
+  <div class="row"><label for="c-ana">Medición de audiencia</label><input type="checkbox" role="switch" id="c-ana" checked></div>
+  <div class="row"><label for="c-pub">Publicidad personalizada</label><input type="checkbox" role="switch" id="c-pub" checked></div>
+  <div class="row"><label for="c-soc">Redes sociales</label><input type="checkbox" role="switch" id="c-soc" checked></div>
+  <p><button type="button" class="link" id="none">Rechazar todo</button> · <button type="button" class="primary" id="save">Guardar y salir</button></p></div>
+<script>
+const send = choice => parent.postMessage({type: 'consent', choice}, '*');
+const $ = id => document.getElementById(id);
+$('all').onclick = () => send({analytics: true, ads: true, social: true});
+$('more').onclick = () => { $('l1').hidden = true; $('l2').hidden = false; };
+$('none').onclick = () => send({analytics: false, ads: false, social: false});
+$('save').onclick = () => send({analytics: $('c-ana').checked, ads: $('c-pub').checked, social: $('c-soc').checked});
+</script></body></html>

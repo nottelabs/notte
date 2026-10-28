@@ -1,0 +1,4 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Account created</title></head><body>
+<h1>Thanks, your account is created.</h1><pre id="p"></pre>
+<script>document.getElementById("p").textContent = [...new URLSearchParams(location.search)].map(([k,v]) => k + ": " + v).join("\n");</script>
+</body></html>

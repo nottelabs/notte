@@ -1,0 +1,33 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Invoices - Ledgerly</title>
+<style>body{font-family:sans-serif;margin:24px;max-width:720px}table{border-collapse:collapse;width:100%}td,th{padding:6px;border-bottom:1px solid #eee;text-align:left}
+.icon{width:30px;height:28px}.pager{display:flex;gap:4px;align-items:center;margin-top:10px}.pager [aria-current]{font-weight:bold}</style></head><body>
+<h1>Invoices</h1>
+<label for="per">Rows per page</label> <select id="per"><option>8</option><option>16</option></select>
+<table><thead><tr><th>Invoice</th><th>Client</th><th>Amount</th><th>Status</th><th><span hidden>Actions</span></th></tr></thead>
+<tbody id="rows"></tbody></table>
+<nav class="pager" aria-label="Pages" id="pager"></nav>
+<script>
+// 48 invoices, 8 (or 16) per page; the pager and the download buttons are icons with only a title or an aria-label
+const CLIENTS = ['Acme', 'Globex', 'Initech', 'Umbrella', 'Hooli', 'Vandelay'];
+const ROWS = Array.from({length: 48}, (_, i) => ({id: `INV-${1001 + i}`, client: CLIENTS[i % 6], amount: 120 + (i * 37) % 900,
+  status: i % 5 === 0 ? 'Overdue' : i % 3 === 0 ? 'Draft' : 'Paid'}));
+let page = 1;
+function render() {
+  const per = Number(document.getElementById('per').value), pages = Math.ceil(ROWS.length / per);
+  page = Math.min(page, pages);
+  document.getElementById('rows').innerHTML = ROWS.slice((page - 1) * per, page * per).map(r =>
+    `<tr><td>${r.id}</td><td>${r.client}</td><td>€${r.amount}.00</td><td>${r.status}</td>` +
+    `<td><button type="button" class="icon" title="Download" data-id="${r.id}">⤓</button></td></tr>`).join('');
+  document.getElementById('pager').innerHTML =
+    `<button type="button" class="icon" aria-label="Previous page" ${page === 1 ? 'disabled' : ''} data-go="${page - 1}">‹</button>` +
+    Array.from({length: pages}, (_, i) => `<button type="button" data-go="${i + 1}" ${i + 1 === page ? 'aria-current="page"' : ''}>${i + 1}</button>`).join('') +
+    `<button type="button" class="icon" aria-label="Next page" ${page === pages ? 'disabled' : ''} data-go="${page + 1}">›</button>` +
+    `<span>Page ${page} of ${pages}</span>`;
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.go) { page = Number(b.dataset.go); render(); }
+  if (b.dataset.id) location.href = 'download.html?id=' + b.dataset.id;
+});
+document.getElementById('per').onchange = render; render();
+</script></body></html>

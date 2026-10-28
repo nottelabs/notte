@@ -1,0 +1,42 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Brightly - project planning</title>
+<style>body{font-family:sans-serif;margin:0}header,main{padding:12px 24px}nav a{margin-right:16px}
+#banner{position:fixed;left:0;right:0;bottom:0;background:#fff;box-shadow:0 -2px 12px #0004;padding:20px 24px;z-index:10}
+#accept{background:#2a6df4;color:#fff;border:0;padding:14px 28px;font-size:18px;border-radius:6px}
+#manage{background:none;border:0;color:#888;font-size:12px;text-decoration:underline}
+#prefs{position:fixed;inset:40px 25%;background:#fff;box-shadow:0 2px 20px #0006;z-index:11;display:flex;flex-direction:column}
+#prefs[hidden]{display:none}#prefs .body{overflow-y:auto;padding:20px;flex:1}#prefs .foot{padding:12px 20px;border-top:1px solid #ddd}
+.cat{border-bottom:1px solid #eee;padding:16px 0}.long{color:#555;font-size:14px;line-height:1.6}
+#reject{background:none;border:0;color:#aaa;font-size:11px;text-decoration:underline}</style></head><body>
+<header><strong>Brightly</strong> <nav><a href="#">Features</a><a href="pricing.html?from=nav">Pricing</a><a href="#">Blog</a></nav></header>
+<main><h1>Plan projects without the busywork</h1><p>Boards, timelines and docs in one place.</p></main>
+<div id="banner" role="dialog" aria-label="Cookies">
+  <p>We and our 312 partners use cookies to give you the best experience.</p>
+  <button type="button" id="accept">Accept all and continue</button>
+  <button type="button" id="manage">Manage preferences</button>
+</div>
+<div id="prefs" role="dialog" aria-modal="true" aria-labelledby="prefs-h" hidden>
+  <div class="body"><h2 id="prefs-h">Privacy preferences</h2>
+    <div class="cat"><label><input type="checkbox" checked disabled> Strictly necessary (always on)</label></div>
+    <div class="cat"><label><input type="checkbox" id="c-analytics" checked> Analytics</label>
+      <p class="long">Helps us understand how the product is used so that we can improve it. Data may be shared with our analytics partners in and outside the European Economic Area. Retention up to 26 months.</p></div>
+    <div class="cat"><label><input type="checkbox" id="c-ads" checked> Advertising</label>
+      <p class="long">Lets our advertising partners show you relevant offers on other websites, build a profile of your interests and measure the performance of campaigns. Some partners rely on legitimate interest.</p></div>
+    <div class="cat"><label><input type="checkbox" id="c-personal" checked> Personalisation</label>
+      <p class="long">Remembers your choices and adapts content to you. Without it, some features may be less useful.</p></div>
+    <p class="long">You can change your mind at any time from the footer of any page. Read our cookie policy for the full list of partners and purposes, including the 312 vendors of the framework.</p>
+    <button type="button" id="reject">Reject all</button>
+  </div>
+  <div class="foot"><button type="button" id="save">Confirm my choices</button></div>
+</div>
+<script>
+// a dark pattern: no reject on the first layer, options pre-checked, "Reject all" small at the bottom of the settings
+const save = v => { try { localStorage.setItem('consent', JSON.stringify(v)); } catch (e) {} document.getElementById('banner').remove();
+  document.getElementById('prefs').hidden = true; };
+const $ = id => document.getElementById(id);
+let stored = null; try { stored = localStorage.getItem('consent'); } catch (e) {}
+if (stored) $('banner').remove();
+$('accept').onclick = () => save({analytics: true, ads: true, personal: true});
+$('manage').onclick = () => { $('prefs').hidden = false; };
+$('save').onclick = () => save({analytics: $('c-analytics').checked, ads: $('c-ads').checked, personal: $('c-personal').checked});
+$('reject').onclick = () => save({analytics: false, ads: false, personal: false});
+</script></body></html>

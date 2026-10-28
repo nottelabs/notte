@@ -1,0 +1,29 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Files - Driftbox</title>
+<style>body{font-family:sans-serif;margin:24px;max-width:600px}li{display:flex;justify-content:space-between;border-bottom:1px solid #eee;padding:8px 0}
+ul{list-style:none;padding:0}.icon{width:30px;height:28px}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:10px 16px;border-radius:6px;display:flex;gap:16px;align-items:center}
+#toast button{background:none;border:0;color:#8ab4f8;font-weight:bold;cursor:pointer}</style></head><body>
+<h1>My files</h1>
+<ul id="files"></ul>
+<div id="toast" role="status" hidden><span id="toast-text"></span><button type="button" id="undo">Undo</button></div>
+<script>
+// deleting a file shows a toast with Undo for 8 seconds; after that, the deletion is final. When the page opens,
+// report.pdf has just been deleted
+let files = ['budget-2026.xlsx', 'draft.txt', 'old-notes.txt', 'photo.jpg'], last = null, timer;
+const log = [], note = e => { log.push(e); document.body.dataset.log = log.join(' '); };
+function render() {
+  document.getElementById('files').innerHTML = files.map(f =>
+    `<li><span>${f}</span><button type="button" class="icon" title="Delete ${f}" data-del="${f}">🗑</button></li>`).join('');
+}
+function toast(file) {
+  last = file; document.getElementById('toast-text').textContent = `${file} deleted.`; document.getElementById('toast').hidden = false;
+  clearTimeout(timer); timer = setTimeout(() => { document.getElementById('toast').hidden = true; note('final:' + last); last = null; }, 8000);
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.del) { files = files.filter(f => f !== b.dataset.del); note('deleted:' + b.dataset.del); render(); toast(b.dataset.del); }
+  if (b.id === 'undo' && last) { files.push(last); files.sort(); note('restored:' + last); last = null;
+    clearTimeout(timer); document.getElementById('toast').hidden = true; render(); }
+});
+render(); note('deleted:report.pdf'); toast('report.pdf');
+</script></body></html>

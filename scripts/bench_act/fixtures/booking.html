@@ -1,0 +1,13 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Book tickets - Riverside Jazz Night</title>
+<style>fieldset,label{display:block;margin:8px 0}</style></head><body>
+<h1>Riverside Jazz Night: book tickets</h1>
+<form action="booked.html" method="get">
+  <fieldset><legend>Ticket type</legend>
+    <label><input type="radio" name="type" value="standard" checked> Standard ($25)</label>
+    <label><input type="radio" name="type" value="vip"> VIP ($60)</label>
+    <label><input type="radio" name="type" value="student"> Student ($15)</label>
+  </fieldset>
+  <label for="qty">Number of tickets</label> <input id="qty" name="qty" type="number" min="1" max="10" value="1">
+  <label for="date">Date</label> <input id="date" name="date" type="date" min="2026-11-01" max="2026-12-31" required>
+  <button type="submit">Book now</button>
+</form></body></html>

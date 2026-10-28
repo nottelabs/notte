@@ -1,0 +1,11 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Click &amp; collect - Libreria Aurora</title>
+<style>body{font-family:sans-serif;margin:24px;max-width:700px}iframe{border:1px solid #ccc;width:100%;height:430px}</style></head><body>
+<h1>Pick up your order in a store</h1>
+<p>Order #A-2207 · 2 books. Choose a store with our partner's store finder, then confirm.</p>
+<iframe id="finder" title="Store finder"></iframe>
+<script>
+// the store finder comes from another origin; it opens a confirmation frame from a third (this page's origin again)
+const other = location.hostname === '127.0.0.1' ? 'localhost' : '127.0.0.1';
+document.getElementById('finder').src = `${location.protocol}//${other}:${location.port}` +
+  location.pathname.replace('xframe.html', 'xframe-finder.html');
+</script></body></html>
