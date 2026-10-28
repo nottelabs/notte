@@ -9,7 +9,7 @@ export const result = await new NotteClient().Session({ max_duration_minutes: 3 
     for await (const message of query({
       prompt: `Use Notte tools with browser_id ${session.getId()!}. Visit https://example.com and read its page title.`,
       options: {
-        model: 'claude-haiku-5-5',
+        model: process.env.ANTHROPIC_MODEL ?? 'claude-haiku-5-5',
         tools: [],
         settingSources: [],
         strictMcpConfig: true,

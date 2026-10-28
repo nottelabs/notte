@@ -28,6 +28,7 @@ CREDENTIALS = {
     "AGENTCARD_CLIENT_SECRET",
     "AI_GATEWAY_API_KEY",
     "ANTHROPIC_API_KEY",
+    "ANTHROPIC_AUTH_TOKEN",
     "BOX_ACCESS_TOKEN",
     "BRAINTRUST_API_KEY",
     "GEMINI_API_KEY",
@@ -39,6 +40,7 @@ CREDENTIALS = {
     "NOTTE_VALTOWN_TOKEN",
     "OAGI_API_KEY",
     "OPENAI_API_KEY",
+    "OPENROUTER_API_KEY",
     "OP_SERVICE_ACCOUNT_TOKEN",
     "PIPEDREAM_ACTION_FILE",
     "PIPEDREAM_APP",
@@ -61,6 +63,7 @@ DRIVER_IMPORTS = {
     "watsonx": "import requests; from notte_sdk import NotteClient",
 }
 RECIPES = {"agent-browser", "claude-agents", "mongodb", "openai-agents"}
+AGENT_RECIPES = {"openai-agents", "claude-agents"}
 NODE_PROJECTS = {"agentcard", "docker-sandboxes", "e2e", "eve", "fx", "inngest", "replit", "temporal", "trigger"}
 # MongoDB 8.0+ refuses to start on Linux 6.19+ unless it recognizes the kernel fix (SERVER-121912),
 # and reads Ubuntu's 7.0.14-based kernels as 7.0.0. 7.0 uses the legacy TCMalloc, which does not use rseq.
@@ -359,6 +362,26 @@ def project_env(name: str, env: dict[str, str]) -> dict[str, str]:
     selected = {key: value for key, value in env.items() if key not in CREDENTIALS or key in allowed}
     # Native integrations use standard asyncio; published SDKs still opt into a loop patch.
     selected["NOTTE_ENABLE_NEST_ASYNCIO"] = "false"
+    if name in {"openai-agents", "claude-agents"}:
+        # Vendor SDK variable names are aliases of the one OpenRouter credential.
+        selected = {key: value for key, value in env.items() if key not in CREDENTIALS or key == "NOTTE_API_KEY"}
+        selected["NOTTE_ENABLE_NEST_ASYNCIO"] = "false"
+        router_key = env.get("OPENROUTER_API_KEY", "")
+        if router_key:
+            selected["OPENROUTER_API_KEY"] = router_key
+            if name == "openai-agents":
+                selected.update(
+                    OPENAI_API_KEY=router_key,
+                    OPENAI_BASE_URL="https://openrouter.ai/api/v1",
+                    OPENAI_MODEL="openai/gpt-4.1-mini",
+                )
+            else:
+                selected.update(
+                    ANTHROPIC_API_KEY="",
+                    ANTHROPIC_AUTH_TOKEN=router_key,
+                    ANTHROPIC_BASE_URL="https://openrouter.ai/api",
+                    ANTHROPIC_MODEL="anthropic/claude-haiku-5.5",
+                )
     return selected
 
 
@@ -442,15 +465,57 @@ def mongodb_fixture(env: dict[str, str]) -> Iterator[str]:
             primary.add_note(message)
 
 
+def agent_recipe(name: str, phase: str, env: dict[str, str]) -> None:
+    if name not in AGENT_RECIPES:
+        raise ValueError("Agent phases require one registered agent recipe")
+    if phase == "prepare-agent":
+        if any(os.environ.get(key) or env.get(key) for key in CREDENTIALS):
+            raise ValueError("Agent dependency preparation must not receive credentials")
+        run(["uv", "sync", "--locked", "--package", "notte-sdk", "--no-dev"], ROOT, env)
+        if name == "openai-agents":
+            run(["uv", "pip", "install", "openai-agents==0.24.0", "pytest", "pytest-timeout"], ROOT, env)
+            run(["uv", "run", "--no-sync", "pytest", "tests/sdk/test_websocket_compatibility.py", "-q"], ROOT, env)
+        else:
+            run(["uv", "pip", "install", "claude-agent-sdk==0.2.168"], ROOT, env)
+        run(["uv", "pip", "check"], ROOT, env)
+        run(["npm", "ci", "--prefix", "node-sdk"], ROOT, env)
+        run(["npm", "run", "build", "--prefix", "node-sdk"], ROOT, env)
+        run(["npm", "ci", "--prefix", "docs"], ROOT, env)
+        return
+    if phase != "test-agent":
+        raise ValueError("Unknown agent phase")
+    if not env.get("NOTTE_API_KEY") or not env.get("OPENROUTER_API_KEY"):
+        raise ValueError("Agent tests require NOTTE_API_KEY and OPENROUTER_API_KEY")
+    selected = {
+        **project_env(name, env),
+        "NOTTE_DOCS_PYTHON": str(ROOT / ".venv/bin/python"),
+        "VITEST_INTEGRATION": "1",
+        f"NOTTE_{name.replace('-', '_').upper()}_LIVE": "1",
+    }
+    report = ROOT / "node-sdk" / f"{name}-model-tests.json"
+    report.unlink(missing_ok=True)
+    run(
+        [
+            str(ROOT / "node-sdk/node_modules/.bin/vitest"),
+            "run",
+            f"test/{name}.integration.test.ts",
+            "--reporter=default",
+            "--reporter=json",
+            f"--outputFile={report}",
+        ],
+        ROOT / "node-sdk",
+        selected,
+    )
+    result = json.loads(report.read_text())
+    if not result["numTotalTests"] or result["numPendingTests"] or result.get("numTodoTests", 0):
+        raise RuntimeError("Agent model coverage must execute tests without skips")
+
+
 def recipe_live(name: str, python: Path, env: dict[str, str], install_env: dict[str, str]) -> None:
+    if name in AGENT_RECIPES:
+        raise ValueError("Agent models require separate prepare-agent and test-agent phases")
     run(["uv", "sync", "--locked", "--package", "notte-sdk", "--no-dev"], ROOT, install_env)
-    if name == "openai-agents":
-        run(["uv", "pip", "install", "openai-agents==0.24.0", "pytest", "pytest-timeout"], ROOT, install_env)
-        run(["uv", "run", "--no-sync", "pytest", "tests/sdk/test_websocket_compatibility.py", "-q"], ROOT, install_env)
-    elif name == "claude-agents":
-        run(["uv", "pip", "install", "claude-agent-sdk==0.2.168"], ROOT, install_env)
-        run(["uv", "pip", "check"], ROOT, install_env)
-    elif name == "mongodb":
+    if name == "mongodb":
         run(["uv", "pip", "install", "pymongo==4.19.0"], ROOT, install_env)
         run(["uv", "pip", "check"], ROOT, install_env)
     if name != "agent-browser":
@@ -681,12 +746,23 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    _ = parser.add_argument("phase", choices=("checks", "live"))
+    _ = parser.add_argument("phase", choices=("checks", "live", "prepare-agent", "test-agent"))
     _ = parser.add_argument("--shard", default="1/1")
     args = parser.parse_args()
     selected = projects(args.shard)
     # Validate even recipes and hosted consumers before installs or credential use.
     _ = sdk_modes("")
+    if args.phase in {"prepare-agent", "test-agent"}:
+        if len(selected) != 1 or selected[0][0] not in AGENT_RECIPES:
+            raise ValueError("Agent phases require one registered agent recipe")
+        agent_recipe(selected[0][0], args.phase, dict(os.environ))
+        return
+    if args.phase == "live":
+        # These model recipes are required jobs in the same reusable workflow.
+        deferred = sorted(name for name, _ in selected if name in AGENT_RECIPES)
+        if deferred:
+            print(f"Agent model tests run in required agent-models jobs: {', '.join(deferred)}", flush=True)
+        selected = [(name, convention) for name, convention in selected if name not in AGENT_RECIPES]
     if args.phase == "live" and os.environ.get("GITHUB_ACTOR") == "dependabot[bot]":
         selected = [(name, convention) for name, convention in selected if name in {"inngest", "temporal"}]
     if args.phase == "live" and selected and not os.environ.get("NOTTE_API_KEY"):

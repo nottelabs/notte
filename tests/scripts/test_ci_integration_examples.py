@@ -24,6 +24,7 @@ def workspace(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.setenv("COMMAND_LOG", str(tmp_path / "calls.jsonl"))
     monkeypatch.setenv("NOTTE_API_KEY", "fixture-ci-key")
     monkeypatch.setenv("OPENAI_API_KEY", "fixture-provider-key")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "fixture-router-key")
     monkeypatch.delenv("BRAINTRUST_API_KEY", raising=False)
     # CI sets this to dependabot[bot] on Dependabot PRs, which narrows the live phase to inngest and temporal.
     monkeypatch.delenv("GITHUB_ACTOR", raising=False)
@@ -48,6 +49,7 @@ with open(os.environ["COMMAND_LOG"], "a") as log:
                             "AGENTCARD_CLIENT_SECRET",
                             "AI_GATEWAY_API_KEY",
                             "ANTHROPIC_API_KEY",
+                            "ANTHROPIC_AUTH_TOKEN",
                             "BOX_ACCESS_TOKEN",
                             "BRAINTRUST_API_KEY",
                             "GEMINI_API_KEY",
@@ -59,6 +61,7 @@ with open(os.environ["COMMAND_LOG"], "a") as log:
                             "NOTTE_VALTOWN_TOKEN",
                             "OAGI_API_KEY",
                             "OPENAI_API_KEY",
+                            "OPENROUTER_API_KEY",
                             "OP_SERVICE_ACCOUNT_TOKEN",
                             "PIPEDREAM_ACTION_FILE",
                             "PIPEDREAM_APP",
@@ -157,6 +160,12 @@ if args[0] == "docker":
         sys.exit(31)
     if args[1] == "inspect":
         print(os.environ.get("MONGO_HEALTH", "healthy"))
+if args[0] == "vitest":
+    report = next(arg.split("=", 1)[1] for arg in args if arg.startswith("--outputFile="))
+    Path(report).write_text(json.dumps({
+        "numTotalTests": int(os.environ.get("AGENT_TOTAL", "6")), "numPendingTests": int(os.environ.get("AGENT_PENDING", "0")),
+        "numTodoTests": 0, "numFailedTests": 0,
+    }))
 """
     assert stub.startswith("#!/usr/bin/env python3\n")
     for path in (
@@ -169,6 +178,7 @@ if args[0] == "docker":
         tmp_path / "bin/node",
         tmp_path / "bin/go",
         tmp_path / "bin/docker",
+        tmp_path / "node-sdk/node_modules/.bin/vitest",
     ):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(stub)
@@ -183,6 +193,17 @@ if args[0] == "docker":
     monkeypatch.setenv("PATH", f"{tmp_path / 'bin'}:{Path(sys.executable).parent}")
     monkeypatch.setenv("RUNNER_TEMP", str(tmp_path / "runner-temp"))
     return tmp_path
+
+
+def agent_phases(monkeypatch: pytest.MonkeyPatch) -> None:
+    with monkeypatch.context() as prepare:
+        for key in runner.CREDENTIALS:
+            prepare.delenv(key, raising=False)
+        prepare.setattr("sys.argv", ["runner", "prepare-agent"])
+        runner.main()
+    with monkeypatch.context() as execute:
+        execute.setattr("sys.argv", ["runner", "test-agent"])
+        runner.main()
 
 
 def calls(workspace: Path) -> list[dict]:
@@ -485,10 +506,17 @@ def test_framework_commands_restrict_credentials_and_preserve_special_checks(
     monkeypatch.setenv("GITHUB_EVENT_NAME", "push")
     monkeypatch.setenv("ANTHROPIC_API_KEY", "fixture-other-provider")
     monkeypatch.setenv("GEMINI_API_KEY", "fixture-unused-provider")
-    runner.main()
+    if name in runner.AGENT_RECIPES:
+        agent_phases(monkeypatch)
+    else:
+        runner.main()
     observed = calls(workspace)
     native = [call for call in observed if call["credentials"]]
     expected = sorted(["NOTTE_API_KEY", provider]) if provider else ["NOTTE_API_KEY"]
+    if name == "openai-agents":
+        expected = ["NOTTE_API_KEY", "OPENAI_API_KEY", "OPENROUTER_API_KEY"]
+    elif name == "claude-agents":
+        expected = ["ANTHROPIC_AUTH_TOKEN", "NOTTE_API_KEY", "OPENROUTER_API_KEY"]
     assert native and all(call["credentials"] == expected for call in native)
     assert all("vitest" in call["args"] or "unittest" in call["args"] or "test:live" in call["args"] for call in native)
     commands = [call["args"] for call in observed]
@@ -546,7 +574,10 @@ def test_consolidated_native_failure_stops_before_other_sdk_or_project(
     shipped_project(workspace, monkeypatch, name, convention)
     monkeypatch.setenv("FAIL_NATIVE", "1")
     with pytest.raises(subprocess.CalledProcessError) as failure:
-        runner.main()
+        if name in runner.AGENT_RECIPES:
+            agent_phases(monkeypatch)
+        else:
+            runner.main()
     assert failure.value.returncode == 23
     observed = calls(workspace)
     assert (
@@ -1555,7 +1586,7 @@ def test_reviewed_twelve_keep_command_order_in_synthetic_projects(
         }
         for call in calls(workspace)
     ]
-    assert normalized == CURRENT_COMMANDS[name]["commands"]
+    assert normalized == ([] if name in runner.AGENT_RECIPES else CURRENT_COMMANDS[name]["commands"])
 
 
 @pytest.mark.parametrize("name", sorted(FUTURE_PROFILES))
@@ -1600,6 +1631,10 @@ def test_all_selected_profiles_receive_only_their_own_reviewed_main_provider(
         native = [call for call in calls(workspace)[start:] if call["credentials"]]
         key = OWN_PROVIDER.get(project.name) if ref == "refs/heads/main" and event != "pull_request" else None
         expected = sorted(["NOTTE_API_KEY", *([key] if key else [])])
+        if project.name == "openai-agents":
+            expected = ["NOTTE_API_KEY", "OPENAI_API_KEY", "OPENROUTER_API_KEY"]
+        elif project.name == "claude-agents":
+            expected = ["ANTHROPIC_AUTH_TOKEN", "NOTTE_API_KEY", "OPENROUTER_API_KEY"]
         assert native and all(call["credentials"] == expected for call in native), project.name
         if project.name != "laminar" or not key:
             assert all(call["live_flags"]["NOTTE_LAMINAR_EXPORT_LIVE"] == "0" for call in native)
@@ -1608,7 +1643,7 @@ def test_all_selected_profiles_receive_only_their_own_reviewed_main_provider(
 
     monkeypatch.setattr(runner, "live", observe)
     runner.main()
-    assert observed_names == sorted(selected)
+    assert observed_names == sorted(set(selected) - runner.AGENT_RECIPES)
     assert all(
         not call["credentials"]
         for call in calls(workspace)
@@ -1627,4 +1662,96 @@ def test_fixed_future_conventions_reject_unknown_projects_before_tools(
     monkeypatch.setattr("sys.argv", ["runner", "live"])
     with pytest.raises(ValueError, match="Unknown"):
         runner.main()
+    assert calls(workspace) == []
+
+
+@pytest.mark.parametrize("name", ["openai-agents", "claude-agents"])
+def test_native_agent_credentials_only_come_from_openrouter(name: str) -> None:
+    key = "fixture-openrouter"
+    env = runner.project_env(
+        name,
+        {
+            "GITHUB_REF": "refs/pull/1/merge",
+            "GITHUB_EVENT_NAME": "pull_request",
+            "NOTTE_API_KEY": "fixture-api",  # pragma: allowlist secret
+            "OPENROUTER_API_KEY": key,
+            "OPENAI_API_KEY": "wrong-direct-key",  # pragma: allowlist secret
+            "ANTHROPIC_API_KEY": "wrong-direct-key",  # pragma: allowlist secret
+            "GEMINI_API_KEY": "wrong-direct-key",  # pragma: allowlist secret
+        },
+    )
+    assert env["OPENROUTER_API_KEY"] == key
+    assert "wrong-direct-key" not in env.values()
+    if name == "openai-agents":
+        assert env["OPENAI_API_KEY"] == key
+        assert env["OPENAI_BASE_URL"] == "https://openrouter.ai/api/v1"
+    else:
+        assert env["ANTHROPIC_API_KEY"] == ""
+        assert env["ANTHROPIC_AUTH_TOKEN"] == key
+        assert env["ANTHROPIC_BASE_URL"] == "https://openrouter.ai/api"
+
+
+@pytest.mark.parametrize("name", sorted(runner.AGENT_RECIPES))
+@pytest.mark.parametrize("credential", sorted(runner.CREDENTIALS))
+def test_agent_preparation_rejects_credentials_in_the_parent(
+    workspace: Path, monkeypatch: pytest.MonkeyPatch, name: str, credential: str
+) -> None:
+    shipped_project(workspace, monkeypatch, name, "NOTTE_DOCS_PYTHON")
+    for key in runner.CREDENTIALS:
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.setenv(credential, "fixture-private-value")
+    monkeypatch.setattr("sys.argv", ["runner", "prepare-agent"])
+    with pytest.raises(ValueError, match="must not receive credentials"):
+        runner.main()
+    assert calls(workspace) == []
+
+
+@pytest.mark.parametrize("name", sorted(runner.AGENT_RECIPES))
+def test_agent_preparation_rejects_credentials_passed_to_the_helper(
+    workspace: Path, monkeypatch: pytest.MonkeyPatch, name: str
+) -> None:
+    for key in runner.CREDENTIALS:
+        monkeypatch.delenv(key, raising=False)
+    credentialed_env = {"OPENROUTER_API_KEY": "fixture-private-value"}  # pragma: allowlist secret
+    with pytest.raises(ValueError, match="must not receive credentials"):
+        runner.agent_recipe(name, "prepare-agent", credentialed_env)
+    assert calls(workspace) == []
+
+
+@pytest.mark.parametrize("name", sorted(runner.AGENT_RECIPES))
+@pytest.mark.parametrize("credential", ["NOTTE_API_KEY", "OPENROUTER_API_KEY"])
+def test_agent_tests_require_both_existing_keys_before_execution(
+    workspace: Path, monkeypatch: pytest.MonkeyPatch, name: str, credential: str
+) -> None:
+    shipped_project(workspace, monkeypatch, name, "NOTTE_DOCS_PYTHON")
+    monkeypatch.delenv(credential, raising=False)
+    monkeypatch.setattr("sys.argv", ["runner", "test-agent"])
+    with pytest.raises(ValueError, match="require NOTTE_API_KEY and OPENROUTER_API_KEY"):
+        runner.main()
+    assert calls(workspace) == []
+
+
+@pytest.mark.parametrize("name", sorted(runner.AGENT_RECIPES))
+@pytest.mark.parametrize("field,value", [("AGENT_PENDING", "1"), ("AGENT_TOTAL", "0")])
+def test_agent_model_report_cannot_accept_skipped_cases(
+    workspace: Path, monkeypatch: pytest.MonkeyPatch, name: str, field: str, value: str
+) -> None:
+    shipped_project(workspace, monkeypatch, name, "NOTTE_DOCS_PYTHON")
+    monkeypatch.setenv(field, value)
+    with pytest.raises(RuntimeError, match="without skips"):
+        agent_phases(monkeypatch)
+    native = [call for call in calls(workspace) if call["credentials"]]
+    assert len(native) == 1
+    assert native[0]["args"][0] == "vitest"
+
+
+@pytest.mark.parametrize("name", sorted(runner.AGENT_RECIPES))
+def test_shared_shards_defer_agent_models_to_the_required_jobs(
+    workspace: Path, monkeypatch: pytest.MonkeyPatch, name: str
+) -> None:
+    shipped_project(workspace, monkeypatch, name, "NOTTE_DOCS_PYTHON")
+    runner.main()
+    assert calls(workspace) == []
+    with pytest.raises(ValueError, match="separate prepare-agent and test-agent"):
+        runner.recipe_live(name, workspace / ".venv/bin/python", dict(os.environ), {})
     assert calls(workspace) == []

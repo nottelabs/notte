@@ -33,7 +33,9 @@ async def main() -> dict[str, str]:
             ):
                 agent = Agent(
                     name="Browser reader",
-                    model=OpenAIResponsesModel(model="gpt-4.1-mini", openai_client=model_client),
+                    model=OpenAIResponsesModel(
+                        model=os.getenv("OPENAI_MODEL", "gpt-4.1-mini"), openai_client=model_client
+                    ),
                     instructions=f"Use only browser_id {session.session_id}. Read the page with Notte tools.",
                     mcp_servers=[server],
                     output_type=PageTitle,

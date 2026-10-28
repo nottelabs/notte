@@ -116,12 +116,17 @@ test('A stalled disconnect cannot skip owner cleanup', { skip: !live, timeout: 4
   const original = chromium.connectOverCDP.bind(chromium);
   let closeStarted = 0, nativeCloseFinished = false, release!: () => void;
   let closeAttempt: Promise<void> | undefined;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let rejectCleanup!: (error: Error) => void;
+  const cleanupDeadline = new Promise<never>((_, reject) => { rejectCleanup = reject; });
   const gate = new Promise<void>(resolve => { release = resolve; });
   t.mock.method(chromium, 'connectOverCDP', async (endpoint: string) => {
     const browser = await original(endpoint);
     const close = browser.close.bind(browser);
     t.mock.method(browser, 'close', () => {
       closeStarted++;
+      // This budget measures owner cleanup after the disconnect fault starts.
+      timer = setTimeout(() => rejectCleanup(new Error('Owned cleanup exceeded its deadline')), 20_000);
       closeAttempt = (async () => {
         await gate;
         await close();
@@ -133,12 +138,8 @@ test('A stalled disconnect cannot skip owner cleanup', { skip: !live, timeout: 4
   });
   const offset = exporter.getFinishedSpans().length;
   const operation = owned(() => readPage()).then(() => undefined, error => error as Error);
-  let timer: ReturnType<typeof setTimeout> | undefined;
   try {
-    const failure = await Promise.race([
-      operation,
-      new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error('Owned cleanup exceeded its deadline')), 20_000); }),
-    ]);
+    const failure = await Promise.race([operation, cleanupDeadline]);
     assert.ok(failure instanceof Error);
     assert.match(failure.message, /failed during reading the title \(session [0-9a-f-]{36}, trace [0-9a-f]{32}\)/);
     assert.equal(closeStarted, 1);

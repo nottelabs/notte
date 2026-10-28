@@ -35,7 +35,8 @@ async def offline_owned():
             raise RuntimeError(f"Browser error containing {FAKE_CREDENTIAL}")
 
     page.goto = goto
-    browser = SimpleNamespace(contexts=[SimpleNamespace(new_page=AsyncMock(return_value=page))], close=AsyncMock())
+    disconnect = AsyncMock()
+    browser = SimpleNamespace(contexts=[SimpleNamespace(new_page=AsyncMock(return_value=page))], close=disconnect)
 
     class Session:
         def __enter__(self):
@@ -58,7 +59,7 @@ async def offline_owned():
             yield [session_id]
         finally:
             assert stopped == [session_id], "The owned session was not stopped"
-            browser.close.assert_awaited_once()
+            disconnect.assert_awaited_once()
 
 
 async def closed(client, session_id):
@@ -175,10 +176,10 @@ class LaminarTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn(b"failed during navigation", payload)
         self.assertIn(ids[0].encode(), payload)
 
-    @unittest.skipUnless(LIVE, "Requires an actual browser disconnect")
     async def test_stalled_disconnect_cannot_skip_owner_cleanup(self):
-        original = read_page.async_playwright
         disconnected = []
+        cleanup_deadline = asyncio.timeout(None)
+        fault_started = None
 
         @asynccontextmanager
         async def driver():
@@ -190,6 +191,10 @@ class LaminarTests(unittest.IsolatedAsyncioTestCase):
                     close = browser.close
 
                     async def fail():
+                        nonlocal fault_started
+                        # Bound cleanup from the injected fault, after provisioning.
+                        fault_started = time.monotonic()
+                        cleanup_deadline.reschedule(asyncio.get_running_loop().time() + 20)
                         await close()
                         disconnected.append(True)
                         await asyncio.Future()
@@ -201,17 +206,23 @@ class LaminarTests(unittest.IsolatedAsyncioTestCase):
                     yield native
 
         offset = len(self.payloads)
-        async with owned() as ids:
-            with patch.object(read_page, "async_playwright", driver):
-                async with asyncio.timeout(20):
-                    with self.assertRaisesRegex(RuntimeError, "failed during reading the title") as failure:
-                        await read_page.read_page()
-        self.assertEqual(disconnected, [True])
-        self.assertNotIn(FAKE_CREDENTIAL, str(failure.exception))
-        span, payload = await self.emitted(offset)
-        self.assertEqual(span.status.code, 2)
-        self.assertIn(ids[0].encode(), payload)
-        self.assertIn(b"failed during reading the title", payload)
+        async with asyncio.timeout(45):
+            async with owned() as ids:
+                original = read_page.async_playwright
+                with patch.object(read_page, "async_playwright", driver):
+                    async with cleanup_deadline:
+                        with self.assertRaisesRegex(RuntimeError, "failed during reading the title") as failure:
+                            await read_page.read_page()
+                    # A synchronous session stop can block the event loop past its timer.
+                    if fault_started is None:
+                        self.fail("The disconnect fault was never reached")
+                    self.assertLess(time.monotonic() - fault_started, 20, "Owner cleanup exceeded its deadline")
+            self.assertEqual(disconnected, [True])
+            self.assertNotIn(FAKE_CREDENTIAL, str(failure.exception))
+            span, payload = await self.emitted(offset)
+            self.assertEqual(span.status.code, 2)
+            self.assertIn(ids[0].encode(), payload)
+            self.assertIn(b"failed during reading the title", payload)
 
     @unittest.skipUnless(
         LIVE and os.getenv("NOTTE_LAMINAR_EXPORT_LIVE") == "1", "Opt-in actual Laminar export and readback"
