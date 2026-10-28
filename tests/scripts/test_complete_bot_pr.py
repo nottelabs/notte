@@ -158,7 +158,10 @@ def test_approval_must_be_current_and_not_blocked_or_dismissed(fixture):
         ([approved, {**approved, "state": "DISMISSED"}], False),
         ([blocked, {**blocked, "state": "APPROVED"}], True),
     ):
-        with patch.object(bot, "gh", return_value=json.dumps([reviews]).encode()):
+        with (
+            patch.object(bot, "gh", return_value=json.dumps([reviews]).encode()),
+            patch.object(bot, "api", return_value={"permission": "write"}),
+        ):
             assert bot.reviewed(fixture[0]) is expected
 
 
@@ -260,3 +263,39 @@ def test_server_freshness_review_and_conversation_rules_are_not_bypassed(fixture
     ):
         assert not bot.complete(42)
         assert all(call.args[1] != "merge" for call in gh.call_args_list)
+
+
+@pytest.mark.parametrize("permission", ["none", "read", "triage", "write", "maintain", "admin"])
+def test_stale_authorized_review_plus_current_outsider_review_cannot_authorize(fixture, permission):
+    stale = {"user": {"login": "maintainer"}, "state": "APPROVED", "commit_id": OTHER}
+    current = {"user": {"login": "contributor"}, "state": "APPROVED", "commit_id": HEAD}
+    with (
+        patch.object(bot, "gh", return_value=json.dumps([[stale, current]]).encode()),
+        patch.object(bot, "api", side_effect=[{"permission": "write"}, {"permission": permission}]),
+    ):
+        assert bot.reviewed(fixture[0]) is (permission in {"write", "maintain", "admin"})
+
+
+def test_author_approval_never_authorizes_or_queries_permissions(fixture):
+    review = {"user": {"login": bot.BOT}, "state": "APPROVED", "commit_id": HEAD}
+    with (
+        patch.object(bot, "gh", return_value=json.dumps([[review]]).encode()),
+        patch.object(bot, "api") as api,
+    ):
+        assert not bot.reviewed(fixture[0])
+        api.assert_not_called()
+
+
+def test_latest_review_and_current_permission_both_apply(fixture):
+    old = {"user": {"login": "maintainer"}, "state": "APPROVED", "commit_id": OTHER}
+    for latest, permission, expected in (
+        ({**old, "commit_id": HEAD}, "write", True),
+        ({**old, "commit_id": HEAD}, "read", False),
+        ({**old, "commit_id": HEAD, "state": "DISMISSED"}, "write", False),
+        ({**old, "commit_id": HEAD, "state": "CHANGES_REQUESTED"}, "write", False),
+    ):
+        with (
+            patch.object(bot, "gh", return_value=json.dumps([[old], [latest]]).encode()),
+            patch.object(bot, "api", return_value={"permission": permission}),
+        ):
+            assert bot.reviewed(fixture[0]) is expected

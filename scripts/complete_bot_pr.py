@@ -120,9 +120,16 @@ def reviewed(pr: Pull) -> bool:
         for review in page:
             if review["state"] in {"APPROVED", "CHANGES_REQUESTED", "DISMISSED"}:
                 latest[review["user"]["login"]] = review
-    # Even an exempt account must not merge unreviewed or stale-reviewed content.
-    return not any(review["state"] == "CHANGES_REQUESTED" for review in latest.values()) and any(
-        review["state"] == "APPROVED" and review["commit_id"] == pr["head"]["sha"] for review in latest.values()
+    authorized: list[Review] = []
+    for login, review in latest.items():
+        if login in {pr["user"]["login"], BOT}:
+            continue
+        permission = api(f"repos/{REPOSITORY}/collaborators/{login}/permission")
+        if permission["permission"] in {"write", "maintain", "admin"}:
+            authorized.append(review)
+    # A public read-only approval cannot update an older authorized approval.
+    return not any(review["state"] == "CHANGES_REQUESTED" for review in authorized) and any(
+        review["state"] == "APPROVED" and review["commit_id"] == pr["head"]["sha"] for review in authorized
     )
 
 
