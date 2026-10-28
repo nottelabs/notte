@@ -2119,3 +2119,29 @@ async def test_go_back_is_offered_only_with_a_page_to_go_back_to() -> None:
         session.window.page = await popup.value
         await session.window.page.wait_for_load_state()
         assert not await offered(session)
+
+
+@pytest.mark.asyncio
+async def test_the_page_an_action_left_is_sent_as_previous_page(session: NotteSession) -> None:
+    pages = {
+        "/start": '<p>Order 7731</p><a href="/form">Continue</a>',
+        "/form": '<label>Order number<input id="order"></label>',
+    }
+
+    async def serve(route: Route) -> None:
+        await route.fulfill(body=pages[route.request.url.removeprefix("http://order.test")], content_type="text/html")
+
+    await session.window.page.context.route("http://order.test/**", serve)
+    _ = await session.window.page.goto("http://order.test/start")
+    decider = FakeDecider(
+        choices=[{"operation": "CLICK", "click_target": "L1"}, {"operation": "TYPE_TEXT", "type_text_target": "I1"}],
+        texts=["7731"],
+    )
+    for _ in range(2):
+        assert (await session.aact("Enter the order number from the first page", decider=decider)).success
+    # under `page`, deciders read the page left as the page the action led to
+    for recent in (decider.states[-1].recent_actions, decider.contexts[-1].recent_actions):
+        assert all("page" not in entry for entry in recent)
+        left = [entry["previous_page"] for entry in recent if "previous_page" in entry]
+        assert [page["url"] for page in left] == ["http://order.test/start"]
+        assert "Order 7731" in left[0]["text"]
