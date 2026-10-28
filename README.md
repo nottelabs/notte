@@ -86,6 +86,32 @@ selects a model at the configured endpoint without translating its ID.
 
 See [notte-llm configuration](packages/notte-llm/README.md) for all settings.
 
+## Natural-language actions
+
+On a local session, `act()` runs one observe, decide and execute step from an instruction. `choose()` picks one
+option about the current page and `check()` gives the probability that a statement about it holds. They need
+`pip install 'notte[llm]'` and `OPENROUTER_API_KEY`:
+
+```python requires-env="OPENROUTER_API_KEY"
+import notte
+
+with notte.Session(headless=True) as session:
+    _ = session.execute(type="goto", url="https://en.wikipedia.org/wiki/Main_Page")
+
+    # one step per call; raises when no action fits the instruction
+    result = session.act("type Ada Lovelace in the search box")
+    print(result.status, result.operation, result.confidence)
+    _ = session.act("open the Ada Lovelace article")
+
+    choice = session.choose("What kind of page is this?", ["encyclopedia article", "online shop", "login page"])
+    print(choice.choice, choice.probabilities)
+    print(session.check("Is this page about a mathematician?"))
+```
+
+Values in `variables` replace `{{name}}` in typed text after the model call, so the model never sees them:
+`session.act("type {{user}} in the username field", variables={"user": "standard_user"})`. See the
+[act docs](https://docs.notte.cc/features/sessions/act) for dry runs, confidence thresholds and deciders.
+
 ## Cloud sessions
 
 The API hosts the browser sessions for you and adds stealth, CAPTCHA solving, proxies, live view and recordings. Sign up on the [Notte Console](https://console.notte.cc) and create a free Notte API key 🔑
