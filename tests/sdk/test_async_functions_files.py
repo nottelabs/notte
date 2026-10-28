@@ -152,15 +152,6 @@ STORAGE_EXCEPTIONS = {
     "set_session_id",
     "for_session",
     "session_id",
-    # `BaseStorage`'s sync wrappers start their own event loop; await `alist_*_files` instead.
-    "list_uploaded_files",
-    "list_downloaded_files",
-    # The storage interface: coroutines on both.
-    "instructions",
-    "get_file",
-    "set_file",
-    "alist_uploaded_files",
-    "alist_downloaded_files",
 }
 
 
@@ -172,8 +163,10 @@ STORAGE_EXCEPTIONS = {
     ],
 )
 def test_stateful_classes_have_the_sync_methods_as_coroutines(sync: type, async_: type, exceptions: set[str]) -> None:
-    assert public(sync) - PENDING[sync] == public(async_)
-    for name in public(async_) - exceptions:
+    # Async storage also implements the local browser's async storage interface.
+    async_only = {"alist_uploaded_files", "alist_downloaded_files"} if sync is RemoteFileStorage else set()
+    assert public(sync) - PENDING[sync] == public(async_) - async_only
+    for name in public(async_) - exceptions - async_only:
         sync_method, async_method = getattr(sync, name), getattr(async_, name)
         assert not inspect.iscoroutinefunction(sync_method), name
         assert inspect.iscoroutinefunction(async_method), name
@@ -674,13 +667,13 @@ def file_flows(tmp_path: Path, upload: str) -> dict[str, Flow]:
         store = c.FileStorage("s-1")
         uploaded = await wait(store.upload(upload))
         listed = await wait(store.list())
-        # The storage interface is async on both storages.
-        local = await store.get_file("input.txt")
-        missing = await store.get_file("nothing.txt")
-        stored = await store.set_file(upload)
-        infos = [await store.alist_uploaded_files(), await store.alist_downloaded_files()]
+        local = await wait(store.get_file("input.txt"))
+        missing = await wait(store.get_file("nothing.txt"))
+        stored = await wait(store.set_file(upload))
+        infos = [await wait(store.list_uploaded_files()), await wait(store.list_downloaded_files())]
+        instructions = await wait(store.instructions())
         await wait(store.delete("file-1"))
-        return [uploaded, listed, Path(local).read_text(), missing, stored, infos]
+        return [uploaded, listed, Path(local).read_text(), missing, stored, infos, instructions]
 
     return {name: flow for name, flow in locals().items() if name not in ("tmp_path", "upload")}
 

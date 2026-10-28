@@ -3,11 +3,11 @@ import time
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from functools import cached_property
-from typing import TYPE_CHECKING, Unpack, overload
+from typing import TYPE_CHECKING, Generic, TypeVar, Unpack, overload
 from urllib.parse import quote
 
 from notte_core._sync import run_sync
-from notte_core.credentials.base import BaseVault
+from notte_core.credentials.base import BaseVault, VaultState
 from notte_core.logging import logger
 from notte_core.resource import SyncResource
 from notte_core.telemetry import track_usage
@@ -15,7 +15,6 @@ from typing_extensions import final, override
 
 from notte_sdk._generated.resources import AsyncPersonasOperations, PersonasOperations
 from notte_sdk._requests import wire_request
-from notte_sdk._transport import athread
 from notte_sdk.endpoints._async_resource import AwaitableResource
 from notte_sdk.endpoints.base import NotteEndpoint
 from notte_sdk.endpoints.vaults import AsyncNotteVault, AsyncVaultsClient, NotteVault
@@ -125,43 +124,16 @@ class AsyncPersonasClient(AsyncPersonasOperations):
         return await self.request(_delete_number_endpoint(persona_id))
 
 
-class BasePersona(ABC):
-    @abstractmethod
-    async def aemails(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]:
-        raise NotImplementedError("Subclasses must implement this method")
+TVault = TypeVar("TVault", bound=VaultState)
 
-    @abstractmethod
-    async def asms(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:
-        raise NotImplementedError("Subclasses must implement this method")
 
-    async def await_emails(
-        self, *, timeout: float = 60.0, poll_interval: float = 5.0, **data: Unpack[MessageReadRequestDict]
-    ) -> Sequence[EmailResponse]:
-        """Poll the inbox until at least one email matches `data` (e.g. `only_unread=True`); see `wait_for_emails`."""
-        deadline = time.monotonic() + timeout
-        while not (emails := await self.aemails(**data)):
-            if time.monotonic() + poll_interval > deadline:
-                raise TimeoutError(f"No email received within {timeout}s")
-            await asyncio.sleep(poll_interval)
-        return emails
-
-    async def await_sms(
-        self, *, timeout: float = 60.0, poll_interval: float = 5.0, **data: Unpack[MessageReadRequestDict]
-    ) -> Sequence[SMSResponse]:
-        """Poll the inbox until at least one SMS matches `data`; see `wait_for_sms`."""
-        deadline = time.monotonic() + timeout
-        while not (sms := await self.asms(**data)):
-            if time.monotonic() + poll_interval > deadline:
-                raise TimeoutError(f"No SMS received within {timeout}s")
-            await asyncio.sleep(poll_interval)
-        return sms
-
+class _PersonaInfo(Generic[TVault], ABC):
     @abstractmethod
     def _get_info(self) -> PersonaResponse:
         raise NotImplementedError("Subclasses must implement this method")
 
     @abstractmethod
-    def _get_vault(self) -> BaseVault | None:
+    def _get_vault(self) -> TVault | None:
         raise NotImplementedError("Subclasses must implement this method")
 
     @property
@@ -179,7 +151,7 @@ class BasePersona(ABC):
         return self.info.internal_email
 
     @cached_property
-    def vault(self) -> BaseVault:
+    def vault(self) -> TVault:
         vault = self._get_vault()
         if vault is None:
             raise ValueError(_NO_VAULT)
@@ -189,12 +161,13 @@ class BasePersona(ABC):
     def has_vault(self) -> bool:
         return self.info.vault_id is not None
 
-    # Sync methods
-    def emails(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]:
-        return run_sync(self.aemails(**data))
 
-    def sms(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:
-        return run_sync(self.asms(**data))
+class _SyncPersonaInbox(ABC):
+    @abstractmethod
+    def emails(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]: ...
+
+    @abstractmethod
+    def sms(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]: ...
 
     def wait_for_emails(
         self, *, timeout: float = 60.0, poll_interval: float = 5.0, **data: Unpack[MessageReadRequestDict]
@@ -235,8 +208,49 @@ class BasePersona(ABC):
         return sms
 
 
+class BasePersona(_PersonaInfo[BaseVault], _SyncPersonaInbox, ABC):
+    @abstractmethod
+    async def aemails(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]:
+        raise NotImplementedError("Subclasses must implement this method")
+
+    @abstractmethod
+    async def asms(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:
+        raise NotImplementedError("Subclasses must implement this method")
+
+    async def await_emails(
+        self, *, timeout: float = 60.0, poll_interval: float = 5.0, **data: Unpack[MessageReadRequestDict]
+    ) -> Sequence[EmailResponse]:
+        """Poll the inbox until at least one email matches `data` (e.g. `only_unread=True`); see `wait_for_emails`."""
+        deadline = time.monotonic() + timeout
+        while not (emails := await self.aemails(**data)):
+            if time.monotonic() + poll_interval > deadline:
+                raise TimeoutError(f"No email received within {timeout}s")
+            await asyncio.sleep(poll_interval)
+        return emails
+
+    async def await_sms(
+        self, *, timeout: float = 60.0, poll_interval: float = 5.0, **data: Unpack[MessageReadRequestDict]
+    ) -> Sequence[SMSResponse]:
+        """Poll the inbox until at least one SMS matches `data`; see `wait_for_sms`."""
+        deadline = time.monotonic() + timeout
+        while not (sms := await self.asms(**data)):
+            if time.monotonic() + poll_interval > deadline:
+                raise TimeoutError(f"No SMS received within {timeout}s")
+            await asyncio.sleep(poll_interval)
+        return sms
+
+    # Sync methods
+    @override
+    def emails(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]:
+        return run_sync(self.aemails(**data))
+
+    @override
+    def sms(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:
+        return run_sync(self.asms(**data))
+
+
 @final
-class NottePersona(SyncResource, BasePersona):
+class NottePersona(SyncResource, _PersonaInfo[NotteVault], _SyncPersonaInbox):
     """
     Self-service identities for web automation (account creation, 2FA,etc.).
 
@@ -336,10 +350,6 @@ class NottePersona(SyncResource, BasePersona):
         vault.add_credentials(url, email=self.info.email, password=password)
 
     @override
-    async def aemails(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]:
-        return await athread(self.emails, **data)
-
-    @override
     def emails(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]:
         """
         Read recent emails sent to the persona.
@@ -361,10 +371,6 @@ class NottePersona(SyncResource, BasePersona):
         Use the `limit` and/or `timedelta` parameters to limit the number of emails returned.
         """
         return self.client.emails_list(self.persona_id, **data)
-
-    @override
-    async def asms(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:
-        return await athread(self.sms, **data)
 
     @override
     def sms(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:

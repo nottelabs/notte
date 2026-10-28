@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 import main as demo
 import requests
-from notte_sdk import NotteClient
+from notte_sdk import AsyncNotteClient
 from PIL import Image
 from playwright.async_api import BrowserType, async_playwright
 from test_protocol import completion, model_endpoint
@@ -93,19 +93,19 @@ class BrowserTests(unittest.IsolatedAsyncioTestCase):
     def owned(self):
         self.assertTrue(os.environ.get("NOTTE_API_KEY"), "Set the Notte test key")
         self.assertTrue(os.environ.get("NOTTE_API_URL"), "Choose the test API explicitly")
-        client = NotteClient()
+        client = AsyncNotteClient()
         start = client.sessions.start
         ids = []
 
-        def tracked(*args, **kwargs):
-            result = start(*args, **kwargs)
+        async def tracked(*args, **kwargs):
+            result = await start(*args, **kwargs)
             ids.append(result.session_id)
             self.journal("allocated", result.session_id)
             return result
 
         with (
             patch.object(client.sessions, "start", side_effect=tracked),
-            patch.object(demo, "NotteClient", return_value=client),
+            patch.object(demo, "AsyncNotteClient", return_value=client),
         ):
             try:
                 yield client
@@ -165,13 +165,12 @@ class BrowserTests(unittest.IsolatedAsyncioTestCase):
     async def test_repeated_native_start_cancellation_stops_late_owned_browser(self):
         with self.owned() as client:
             allocated, release = asyncio.Event(), asyncio.Event()
-            loop = asyncio.get_running_loop()
             start = client.sessions.start
 
-            def delayed(*args, **kwargs):
-                response = start(*args, **kwargs)
-                loop.call_soon_threadsafe(allocated.set)
-                asyncio.run_coroutine_threadsafe(release.wait(), loop).result(timeout=30)
+            async def delayed(*args, **kwargs):
+                response = await start(*args, **kwargs)
+                allocated.set()
+                await asyncio.wait_for(release.wait(), timeout=30)
                 return response
 
             async def enter():
@@ -251,11 +250,11 @@ class BrowserTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_native_screenshot_coordinates_keyboard_and_scroll(self):
         with self.owned() as client:
-            with client.Session(
+            async with client.Session(
                 max_duration_minutes=3, proxies=False, viewport_width=1280, viewport_height=800
             ) as session:
                 async with async_playwright() as playwright:
-                    browser = await playwright.chromium.connect_over_cdp(session.cdp_url())
+                    browser = await playwright.chromium.connect_over_cdp(await session.cdp_url())
                     try:
                         page = await browser.contexts[0].new_page()
                         await page.goto("https://example.com")

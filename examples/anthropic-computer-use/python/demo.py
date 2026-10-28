@@ -4,16 +4,16 @@ import secrets
 
 from anthropic import APIStatusError, APITimeoutError, AsyncAnthropic
 from notte_computer import NotteComputer
-from notte_sdk import NotteClient
+from notte_sdk import AsyncNotteClient
 
 
 async def run_demo() -> dict:
-    client = NotteClient()
+    client = AsyncNotteClient()
     async with client.Session(max_duration_minutes=3, viewport_width=1024, viewport_height=768) as session:
         stage = "browser setup"
         try:
             async with asyncio.timeout(120):
-                page = await session.apage
+                page = await session.page
                 await page.goto("about:blank")
                 await page.set_viewport_size({"width": 1024, "height": 768})
                 code = "orbit-" + secrets.token_hex(3)

@@ -1,39 +1,11 @@
 ---
 title: "RemoteFileStorage"
-description: "Base class for storage implementations that handle upload and download file storage and retrieval"
+description: "Session-owned file storage with synchronous upload and download operations"
 ---
 
 
 
 ## Methods
-
-### alist_downloaded_files
-
-```python
-alist_downloaded_files() -> list[FileInfo]
-```
-
-List all files in the download_dir
-
-**Returns:**
-
-`list`
-
----
-
-### alist_uploaded_files
-
-```python
-alist_uploaded_files() -> list[FileInfo]
-```
-
-List all files from the upload_dir
-
-**Returns:**
-
-`list`
-
----
 
 ### delete
 
@@ -75,7 +47,7 @@ Bind this storage once, cloning it when another session already owns it
 get_file(name: str) -> str | None
 ```
 
-Returns the local path for a file
+Return the local path for an uploaded file, or None if it is absent
 
 **Returns:**
 
@@ -86,10 +58,10 @@ Returns the local path for a file
 ### instructions
 
 ```python
-instructions() -> <class 'str'>
+instructions() -> str
 ```
 
-Return LLM instructions to append to the prompt
+Return LLM instructions listing available uploads
 
 **Returns:**
 
@@ -112,28 +84,28 @@ list(source: FileSource | str | None = None, limit: int = 100, offset: int = 0) 
 ### list_downloaded_files
 
 ```python
-list_downloaded_files() -> list[notte_core.storage.FileInfo]
+list_downloaded_files() -> list[FileInfo]
 ```
 
-List all files in the download_dir
+List browser downloads
 
 **Returns:**
 
-`list`[<Visibility for="humans">[`FileInfo`](/sdk-reference/misc/fileinfo)</Visibility><Visibility for="agents">[`FileInfo`](/sdk-reference/misc/fileinfo.md)</Visibility>]
+`list`
 
 ---
 
 ### list_uploaded_files
 
 ```python
-list_uploaded_files() -> list[notte_core.storage.FileInfo]
+list_uploaded_files() -> list[FileInfo]
 ```
 
-List all files from the upload_dir
+List uploaded files
 
 **Returns:**
 
-`list`[<Visibility for="humans">[`FileInfo`](/sdk-reference/misc/fileinfo)</Visibility><Visibility for="agents">[`FileInfo`](/sdk-reference/misc/fileinfo.md)</Visibility>]
+`list`
 
 ---
 
@@ -143,7 +115,7 @@ List all files from the upload_dir
 set_file(path: str) -> bool
 ```
 
-Stores a file from the local path
+Upload a file from its local path
 
 **Returns:**
 

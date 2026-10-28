@@ -95,6 +95,14 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   when no new tab was created, and await that opener's tracked requests. A click
   can instead navigate an existing named tab: prefer a single tracked main-frame
   navigation before the opener, including reloads and navigation before commit.
+  A fragment navigation sends no request: its main-frame URL change counts as
+  the navigation. A target document replaced before the input drops its listener;
+  then the click's return is its input time, as when no report comes within
+  `_CLICK_INPUT_REPORT_S` (a page listener can stop `pointerdown` first). A
+  click that failed counts only a reported input; the JS fallback reports its
+  input from the element's current document before clicking. The click's own
+  tab settle seeds a new tab's tracker from the context's requests in flight,
+  as `BrowserWindow` does.
 - A new-document `goto` tracks requests before its commit and waits for the destination
   within one navigation budget. Do not wait on the old document's tracker first:
   a commit after the 3 s settle cap must still get its remaining load wait.
@@ -112,6 +120,10 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   `scripts/ci_integration_examples.py`) install the local `node-sdk` with
   `npm install --no-save`. Don't add `--package-lock=false`: it ignores the
   example's lockfile, so a new upstream release can break CI.
+  Python checks install each example's locked published SDK before source validation;
+  adopting a new SDK API also requires updating its `pyproject.toml` and `uv.lock`.
+  Published SDKs 1.9.7 and 1.10.0 need `NOTTE_ENABLE_NEST_ASYNCIO=false` before import for
+  native asyncio on Python 3.15. The source SDK no longer applies that patch.
 - `evaluate_js` preserves RegExp results as JSON data (`{"r": {"p": source,
   "f": flags}}`), including complete patterns. Patchright 1.64.1 and Playwright
   1.64.0 compile native regex results into Python objects, so native evaluation is
@@ -239,6 +251,13 @@ editor still accepts a fill. `tests/browser/test_dom_contenteditable.py` covers 
 - Jev route selection does not require the optional LLM field writer. Incomplete
   `NOTTE_LLM_*` settings leave Jev available without a writer; an LLM decider
   still reports invalid endpoint configuration.
+- Cloud SDK resources follow their client: sync client resources have sync I/O;
+  async client resources have async I/O. Cloud vaults/personas used by a local
+  browser session must come from `AsyncNotteClient` on that session's event loop.
+- Cloud SDK sessions follow their client: `NotteClient.Session()` uses `with`,
+  sync operations, and `session.page`; `AsyncNotteClient.Session()` uses `async with`,
+  async operations, and `await session.page`. The sync session has no async context
+  manager, `apage`, or `await_for_auth`.
 
 - Don't remove or rename public methods without a deprecation first: keep the
   old name working and emit a `DeprecationWarning` (see `generate_cookies` in

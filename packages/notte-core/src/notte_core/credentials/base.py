@@ -277,8 +277,8 @@ class CreditCardDict(TypedDict, total=True):
     card_full_expiration: str
 
 
-class BaseVault(ABC):
-    """Base class for vault implementations that handle credential storage and retrieval."""
+class VaultState:
+    """Credential tracking and transformations shared by local and remote vaults."""
 
     def __init__(self):
         """Initialize the vault with an empty dictionary to track retrieved credentials."""
@@ -327,6 +327,172 @@ class BaseVault(ABC):
             dic[CredentialField.inverse_registry[cred.__class__]] = cred.value
 
         return dic
+
+    def past_credentials(self) -> dict[str, CredentialsDict]:
+        """Get a copy of all previously retrieved credentials.
+
+        Returns:
+            Dictionary mapping URLs to their retrieved credentials
+        """
+        return self._retrieved_credentials.copy()
+
+    @staticmethod
+    def patch_structured_completion(
+        arg_index: int,
+        replacement_map_fn: Callable[..., dict[str, str]],
+    ):
+        def _patch_structured(
+            func: Callable[..., Coroutine[Any, Any, TResponseFormat]],
+        ) -> Callable[..., Coroutine[Any, Any, TResponseFormat]]:  # Return an async function
+            async def patcher(
+                *args: tuple[Any], **kwargs: dict[str, Any]
+            ) -> TResponseFormat:  # Make this an async function
+                arglist = list(args)
+                replacement_map = replacement_map_fn()
+                try:
+                    original_string = json.dumps(arglist[arg_index], indent=2)
+                except Exception as e:
+                    raise ValueError(
+                        f"Invalid JSON object at index {arg_index} (type={type(arglist[arg_index]).__name__})"
+                    ) from e
+                og_dict = json.loads(original_string)
+
+                arglist[arg_index] = BaseVault.recursive_replace_mapping(og_dict, replacement_map)  # type: ignore
+
+                retval = await func(*arglist, **kwargs)
+
+                return retval
+
+            return patcher
+
+        return _patch_structured
+
+    @staticmethod
+    def recursive_replace_mapping(data: recursive_data, replacement_map: dict[str, str]) -> recursive_data:
+        """Recursively replace strings using a mapping dictionary.
+
+        Args:
+            data: The input data to process (dict, list, str, or any other type)
+            replacement_map: A dictionary mapping strings to their replacements
+
+        Returns:
+            The modified data structure with replacements
+        """
+        if isinstance(data, dict):
+            # don't replace in base64
+            if "type" in data and data["type"] == "image_url":
+                return data  # type: ignore
+
+            # For dictionaries, replace strings in keys and values
+            return {
+                key: BaseVault.recursive_replace_mapping(value, replacement_map)  # type: ignore
+                for key, value in data.items()  # type: ignore
+            }
+        elif isinstance(data, list):
+            # For lists, recursively replace in each element
+            return [BaseVault.recursive_replace_mapping(item, replacement_map) for item in data]  # type: ignore
+        elif isinstance(data, str):
+            # For strings, perform replacements using the mapping
+            for old_string, new_string in replacement_map.items():
+                data = data.replace(old_string, new_string)
+
+            return data
+        else:
+            # For other types (int, float, etc.), return as-is
+            return data
+
+    def get_replacement_map(self) -> dict[str, str]:
+        """Get the current map to replace text from previously used credentials back to their placeholder value.
+
+        Returns:
+            Dictionary mapping credential values to their placeholder values
+        """
+        return {  # pyright: ignore[reportReturnType]
+            cred_value: CredentialField.registry[cred_key].placeholder_value
+            for creds_dict in self.past_credentials().values()
+            for cred_key, cred_value in creds_dict.items()
+        }
+
+    @staticmethod
+    def _fill_values(action: BaseAction) -> list[str | ValueWithPlaceholder]:
+        """Values of a fill-type action that may hold credential placeholders (empty for other actions)."""
+        if isinstance(action, FormFillAction):
+            return list(action.value.values())
+        if isinstance(action, (MultiFactorFillAction, FillAction, FallbackFillAction, SelectDropdownOptionAction)):
+            return [action.value]
+        return []
+
+    def contains_credentials(self, action: BaseAction) -> bool:
+        """Check if the action contains credentials.
+
+        A value holds a credential only if it is exactly a placeholder (ignoring surrounding whitespace), or a
+        value already replaced by the vault. Only fill-type actions carry credentials.
+
+        Args:
+            action: The action to check for credentials
+
+        Returns:
+            True if the action contains credential placeholders, False otherwise
+        """
+        return any(
+            isinstance(value, ValueWithPlaceholder) or CredentialField.from_placeholder(value) is not None
+            for value in self._fill_values(action)
+        )
+
+    def has_unresolved_placeholders(self, action: BaseAction) -> bool:
+        """Check if the action still holds credential placeholders that have not been replaced yet.
+
+        Values already replaced by the vault (`ValueWithPlaceholder`) serialize back to their placeholder,
+        so `contains_credentials` is still true for them: they must not be replaced a second time.
+        A value is a placeholder only if it is exactly one (ignoring surrounding whitespace): a value that merely
+        contains a placeholder (e.g. 'John Doe Corp') is a regular value.
+        Only fill-type actions support credential replacement: other actions always return False.
+        """
+        return any(
+            isinstance(value, str) and CredentialField.from_placeholder(value) is not None
+            for value in self._fill_values(action)
+        )
+
+    @staticmethod
+    def _credentials_from_env(url: str) -> CredentialsDict:
+        root_domain = get_root_domain(url)
+        url_env = root_domain.replace(".", "_").upper()
+        creds: CredentialsDict = {}  # pyright: ignore[reportAssignmentType]
+        env_var_names: list[str] = []
+        for key in CredentialField.registry.keys():
+            env_var = f"{url_env}_{key.upper()}"
+            env_var_names.append(env_var)
+            env_var = os.getenv(env_var)
+            if env_var is not None:
+                creds[key] = env_var
+        if len(creds) == 0:
+            raise ValueError(
+                f"No credentials found in the environment for {url}. Please set the following variables: {', '.join(env_var_names)}"
+            )
+        logger.trace(f"[Vault] add creds from env for {url_env}: {creds.keys()}")
+        return creds
+
+    def _track_credentials(self, url: str, credentials: CredentialsDict | None) -> CredentialsDict | None:
+        if credentials is None:
+            return credentials
+
+        # replace the one time passwords by their actual value
+        updated_creds: CredentialsDict = {}  # pyright: ignore[reportAssignmentType]
+        for key, cred in credentials.items():
+            if CredentialField.registry.get(key) is MFAField:
+                actual_val = TOTP(cred).now()  # pyright: ignore[reportArgumentType]
+                updated_creds[key] = actual_val
+            else:
+                updated_creds[key] = cred
+
+        # If credentials are found, track them
+        self._retrieved_credentials[url] = updated_creds
+
+        return updated_creds
+
+
+class BaseVault(VaultState, ABC):
+    """Base class for vault implementations that handle credential storage and retrieval."""
 
     @abstractmethod
     async def _add_credentials(self, url: str, creds: CredentialsDict) -> None:
@@ -457,22 +623,7 @@ class BaseVault(ABC):
         Raises:
             ValueError: If no credentials are found in the environment variables
         """
-        root_domain = get_root_domain(url)
-        url_env = root_domain.replace(".", "_").upper()
-        creds: CredentialsDict = {}  # pyright: ignore[reportAssignmentType]
-        env_var_names: list[str] = []
-        for key in CredentialField.registry.keys():
-            env_var = f"{url_env}_{key.upper()}"
-            env_var_names.append(env_var)
-            env_var = os.getenv(env_var)
-            if env_var is not None:
-                creds[key] = env_var
-        if len(creds) == 0:
-            raise ValueError(
-                f"No credentials found in the environment for {url}. Please set the following variables: {', '.join(env_var_names)}"
-            )
-        logger.trace(f"[Vault] add creds from env for {url_env}: {creds.keys()}")
-        await self.add_credentials_async(url=url, **creds)
+        await self.add_credentials_async(url=url, **self._credentials_from_env(url))
 
     def get_credentials(self, url: str) -> CredentialsDict | None:
         return run_sync(self.get_credentials_async(url=url))
@@ -489,22 +640,7 @@ class BaseVault(ABC):
         """
         credentials = await self._get_credentials_impl(url)
 
-        if credentials is None:
-            return credentials
-
-        # replace the one time passwords by their actual value
-        updated_creds: CredentialsDict = {}  # pyright: ignore[reportAssignmentType]
-        for key, cred in credentials.items():
-            if CredentialField.registry.get(key) is MFAField:
-                actual_val = TOTP(cred).now()  # pyright: ignore[reportArgumentType]
-                updated_creds[key] = actual_val
-            else:
-                updated_creds[key] = cred
-
-        # If credentials are found, track them
-        self._retrieved_credentials[url] = updated_creds
-
-        return updated_creds
+        return self._track_credentials(url, credentials)
 
     @abstractmethod
     async def _get_credentials_impl(self, url: str) -> CredentialsDict | None:
@@ -517,131 +653,6 @@ class BaseVault(ABC):
             Dictionary containing the credentials for the given URL, or None if no credentials exist
         """
         pass
-
-    def past_credentials(self) -> dict[str, CredentialsDict]:
-        """Get a copy of all previously retrieved credentials.
-
-        Returns:
-            Dictionary mapping URLs to their retrieved credentials
-        """
-        return self._retrieved_credentials.copy()
-
-    @staticmethod
-    def patch_structured_completion(
-        arg_index: int,
-        replacement_map_fn: Callable[..., dict[str, str]],
-    ):
-        def _patch_structured(
-            func: Callable[..., Coroutine[Any, Any, TResponseFormat]],
-        ) -> Callable[..., Coroutine[Any, Any, TResponseFormat]]:  # Return an async function
-            async def patcher(
-                *args: tuple[Any], **kwargs: dict[str, Any]
-            ) -> TResponseFormat:  # Make this an async function
-                arglist = list(args)
-                replacement_map = replacement_map_fn()
-                try:
-                    original_string = json.dumps(arglist[arg_index], indent=2)
-                except Exception as e:
-                    raise ValueError(
-                        f"Invalid JSON object at index {arg_index} (type={type(arglist[arg_index]).__name__})"
-                    ) from e
-                og_dict = json.loads(original_string)
-
-                arglist[arg_index] = BaseVault.recursive_replace_mapping(og_dict, replacement_map)  # type: ignore
-
-                retval = await func(*arglist, **kwargs)
-
-                return retval
-
-            return patcher
-
-        return _patch_structured
-
-    @staticmethod
-    def recursive_replace_mapping(data: recursive_data, replacement_map: dict[str, str]) -> recursive_data:
-        """Recursively replace strings using a mapping dictionary.
-
-        Args:
-            data: The input data to process (dict, list, str, or any other type)
-            replacement_map: A dictionary mapping strings to their replacements
-
-        Returns:
-            The modified data structure with replacements
-        """
-        if isinstance(data, dict):
-            # don't replace in base64
-            if "type" in data and data["type"] == "image_url":
-                return data  # type: ignore
-
-            # For dictionaries, replace strings in keys and values
-            return {
-                key: BaseVault.recursive_replace_mapping(value, replacement_map)  # type: ignore
-                for key, value in data.items()  # type: ignore
-            }
-        elif isinstance(data, list):
-            # For lists, recursively replace in each element
-            return [BaseVault.recursive_replace_mapping(item, replacement_map) for item in data]  # type: ignore
-        elif isinstance(data, str):
-            # For strings, perform replacements using the mapping
-            for old_string, new_string in replacement_map.items():
-                data = data.replace(old_string, new_string)
-
-            return data
-        else:
-            # For other types (int, float, etc.), return as-is
-            return data
-
-    def get_replacement_map(self) -> dict[str, str]:
-        """Get the current map to replace text from previously used credentials back to their placeholder value.
-
-        Returns:
-            Dictionary mapping credential values to their placeholder values
-        """
-        return {  # pyright: ignore[reportReturnType]
-            cred_value: CredentialField.registry[cred_key].placeholder_value
-            for creds_dict in self.past_credentials().values()
-            for cred_key, cred_value in creds_dict.items()
-        }
-
-    @staticmethod
-    def _fill_values(action: BaseAction) -> list[str | ValueWithPlaceholder]:
-        """Values of a fill-type action that may hold credential placeholders (empty for other actions)."""
-        if isinstance(action, FormFillAction):
-            return list(action.value.values())
-        if isinstance(action, (MultiFactorFillAction, FillAction, FallbackFillAction, SelectDropdownOptionAction)):
-            return [action.value]
-        return []
-
-    def contains_credentials(self, action: BaseAction) -> bool:
-        """Check if the action contains credentials.
-
-        A value holds a credential only if it is exactly a placeholder (ignoring surrounding whitespace), or a
-        value already replaced by the vault. Only fill-type actions carry credentials.
-
-        Args:
-            action: The action to check for credentials
-
-        Returns:
-            True if the action contains credential placeholders, False otherwise
-        """
-        return any(
-            isinstance(value, ValueWithPlaceholder) or CredentialField.from_placeholder(value) is not None
-            for value in self._fill_values(action)
-        )
-
-    def has_unresolved_placeholders(self, action: BaseAction) -> bool:
-        """Check if the action still holds credential placeholders that have not been replaced yet.
-
-        Values already replaced by the vault (`ValueWithPlaceholder`) serialize back to their placeholder,
-        so `contains_credentials` is still true for them: they must not be replaced a second time.
-        A value is a placeholder only if it is exactly one (ignoring surrounding whitespace): a value that merely
-        contains a placeholder (e.g. 'John Doe Corp') is a regular value.
-        Only fill-type actions support credential replacement: other actions always return False.
-        """
-        return any(
-            isinstance(value, str) and CredentialField.from_placeholder(value) is not None
-            for value in self._fill_values(action)
-        )
 
     async def _get_credit_card_for_replacement(self, cred_key: str) -> CreditCardDict:
         try:

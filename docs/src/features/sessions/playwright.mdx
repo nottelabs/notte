@@ -62,7 +62,7 @@ You can use both the Notte session API and Playwright simultaneously:
 
 ## Async Playwright Support
 
-Notte works with both sync and async Playwright:
+`NotteClient` provides sync operations and a sync Playwright page through `session.page`. For async operations and async Playwright, use `AsyncNotteClient` with `async with client.Session()` and `await session.page`:
 
 <PlaywrightAsync />
 

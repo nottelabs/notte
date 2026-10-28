@@ -17,7 +17,8 @@ Set `NOTTE_API_KEY`, `PIPEDREAM_CLIENT_ID`, `PIPEDREAM_CLIENT_SECRET`,
 application's stable end-user identifier. Run `uv run --locked python demo.py`
 or `npm start`. Output contains the stopped browser's ID and discovered tool
 count, and whether an optional tool call completed. `PIPEDREAM_APP` defaults to `github`; requests use Pipedream's development
-environment.
+environment. Set `NOTTE_ENABLE_NEST_ASYNCIO=false` before starting Python so the
+published SDK keeps the native asyncio loop used by MCP.
 
 The code exchanges client credentials at Pipedream's documented OAuth endpoint,
 then sends its access token and project/user/app headers to the hosted v3 MCP

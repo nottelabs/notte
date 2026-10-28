@@ -87,6 +87,9 @@ _PASTE_TEXT = script("paste_text.js")
 # Page-side implementation: js/file_input_clicks.js
 _FILE_INPUT_CLICKS = script("file_input_clicks.js")
 _CLICK_INPUT = script("click_input.js")
+# How long a click waits for the report of its input after the driver returned (s). A page listener that stops
+# `pointerdown` before the click's own keeps it from ever coming.
+_CLICK_INPUT_REPORT_S = 1.0
 
 
 @dataclass
@@ -702,8 +705,8 @@ async def execute_interaction_action(
     *,
     storage: BaseStorage | None = None,
     verbose: bool = False,
-    before_click: Callable[[Locator], Awaitable[JSHandle | None]] | None = None,
-    after_click: Callable[[], Awaitable[None]] | None = None,
+    before_click: Callable[[Locator], Awaitable[Callable[[ElementHandle], Awaitable[None]] | None]] | None = None,
+    after_click: Callable[[bool], Awaitable[None]] | None = None,
 ) -> bool:
     """Interact with an element within `action.timeout`.
 
@@ -737,10 +740,10 @@ async def execute_interaction_action(
                     and any(not candidate.is_closed() for candidate in clicked_page.context.pages)
                 ):
                     closed_error = error
-                    await after_click()
+                    await after_click(False)
                 raise
             if after_click is not None:
-                await after_click()
+                await after_click(True)
     except TimeoutError as e:
         if not scope.expired():
             raise
@@ -830,7 +833,7 @@ async def _interact(
     *,
     storage: BaseStorage | None = None,
     verbose: bool = False,
-    before_click: Callable[[Locator], Awaitable[JSHandle | None]] | None = None,
+    before_click: Callable[[Locator], Awaitable[Callable[[ElementHandle], Awaitable[None]] | None]] | None = None,
 ) -> None:
     assert action.selectors is not None
     # locate element (possibly in iframe)
@@ -845,7 +848,8 @@ async def _interact(
             )
             if is_disabled:
                 raise ActionExecutionError(action.id, window.page.url, reason="Element is disabled")
-            click_input = None if before_click is None else await before_click(locator)
+            # the JS click that reports its input, when the click's input is tracked
+            js_click_with_input = None if before_click is None else await before_click(locator)
             # An image-map area has no box: its JS click follows the link without actionability waits.
             js_click = await locator.evaluate("(el) => el.localName === 'area'", timeout=budget.remaining_ms())
             if not js_click:
@@ -857,14 +861,13 @@ async def _interact(
                     logger.warning(f"Failed to click on element: {e}, fallback to js click")
                     js_click = True
             if js_click:
-                if click_input is None:
+                if js_click_with_input is None:
                     await locator.evaluate("(el) => el.click()", timeout=budget.remaining_ms())
                 else:
-                    # The JS path emits no trusted pointer event. Mark its input in the same task as the click.
                     element = await locator.element_handle(timeout=budget.remaining_ms())
                     assert element is not None
                     try:
-                        await click_input.evaluate("async (input, el) => { await input.mark(); el.click(); }", element)
+                        await js_click_with_input(element)
                     finally:
                         with suppress(Error):
                             await element.dispose()
@@ -1030,17 +1033,40 @@ async def _execute(
     click_input_received = asyncio.Event()
     click_inputs: list[JSHandle] = []
     click_bindings: list[tuple[_ClickInputBinding, str]] = []
+    # the frame whose document reports the click's input, and whether that document was replaced since
+    click_frames: list[Frame] = []
+    click_document_replaced = False
+
+    def click_frame_navigated(frame: Frame) -> None:
+        nonlocal click_document_replaced
+        if frame in click_frames:
+            click_document_replaced = True
 
     def record_click_input() -> None:
         if not click_input_times:
             click_input_times.append(time.perf_counter())
         click_input_received.set()
 
-    async def await_click_input() -> None:
-        if click_inputs:
-            _ = await click_input_received.wait()
+    async def await_click_input(returned: bool) -> None:
+        """Until the click's input is reported. When the driver `returned` from the click, its input came by then."""
+        if not click_inputs:
+            return
+        # a lost document does not prove a failed click happened
+        if returned and click_document_replaced and not click_input_received.is_set():
+            try:
+                # a URL change within the document keeps its listener
+                _ = await click_inputs[-1].evaluate("() => true")
+            except Error:
+                # The listener went with its document, the click landed in the next one: it came at the latest now
+                record_click_input()
+        with suppress(TimeoutError):
+            async with asyncio.timeout(_CLICK_INPUT_REPORT_S):
+                _ = await click_input_received.wait()
+        if returned and not click_input_received.is_set():
+            # the page kept the input from its listener
+            record_click_input()
 
-    async def track_existing_tabs(locator: Locator) -> JSHandle | None:
+    async def track_existing_tabs(locator: Locator) -> Callable[[ElementHandle], Awaitable[None]] | None:
         # Keep requests started while click() waits, but select a replacement only from navigation after input.
         existing_settles.update({tab: PageSettle(tab, None, tabs=False) for tab in tabs if tab is not page})
         if not existing_settles:
@@ -1061,14 +1087,34 @@ async def _execute(
             await element.dispose()
         if frame is None:
             raise Error("Click target is no longer attached to a frame")
-        click_input = cast(
-            JSHandle,
-            await evaluate_handle_in_main_world(
-                frame, f"() => ({_CLICK_INPUT})({json.dumps(binding.name)}, {json.dumps(token)})"
-            ),
-        )
-        click_inputs.append(click_input)
-        return click_input
+        click_frames.append(frame)
+        page.on("framenavigated", click_frame_navigated)
+
+        async def report_input(frame: Frame) -> JSHandle:
+            # the binding outlives the documents of its page, the listener stays in the document of `frame`
+            click_input = cast(
+                JSHandle,
+                await evaluate_handle_in_main_world(
+                    frame, f"() => ({_CLICK_INPUT})({json.dumps(binding.name)}, {json.dumps(token)})"
+                ),
+            )
+            click_inputs.append(click_input)
+            return click_input
+
+        click_input = await report_input(frame)
+
+        async def js_click_with_input(element: ElementHandle) -> None:
+            reporter = click_input
+            if click_document_replaced:
+                # the listener went with its document: report from the element's current one
+                current = await element.owner_frame()
+                if current is None:
+                    raise Error("Click target is no longer attached to a frame")
+                reporter = await report_input(current)
+            # The JS path emits no trusted pointer event. Mark its input in the same task as the click.
+            await reporter.evaluate("async (input, el) => { await input.mark(); el.click(); }", element)
+
+        return js_click_with_input
 
     retval = True
     closed_during_click: Error | None = None
@@ -1192,6 +1238,8 @@ async def _execute(
                 await click_input.dispose()
         for binding, token in click_bindings:
             _ = binding.callbacks.pop(token, None)
+        if click_frames:
+            _ = page.remove_listener("framenavigated", click_frame_navigated)
         for existing in existing_settles.values():
             await existing.close()
         if settle is not None:

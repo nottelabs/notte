@@ -14,7 +14,7 @@ from unittest.mock import patch
 
 import httpx2
 from demo import PipedreamConfig, cli_output, discover, load_action, run_demo
-from notte_sdk import NotteClient
+from notte_sdk import AsyncNotteClient
 
 CONFIG = PipedreamConfig("fixture-client", "fixture-secret", "proj_fixture", "user-fixture")
 
@@ -226,31 +226,31 @@ class LiveTests(unittest.TestCase):
         self.assertIsNone(load_action(None))
 
     def test_cancellation_during_claim_reaps_owned_browser(self):
-        client = NotteClient()
+        client = AsyncNotteClient()
         original_start = client.sessions.start
         owned = []
-        claimed, release = threading.Event(), threading.Event()
+        claimed, release = asyncio.Event(), asyncio.Event()
 
-        def start(*args, **kwargs):
-            response = original_start(*args, **kwargs)
+        async def start(*args, **kwargs):
+            response = await original_start(*args, **kwargs)
             owned.append(response.session_id)
             claimed.set()
-            if not release.wait(15):
-                raise TimeoutError("Claim fixture was not released")
+            await asyncio.wait_for(release.wait(), timeout=15)
             return response
 
         async def execute():
-            with patch.object(client.sessions, "start", start):
-                task = asyncio.create_task(run_demo(CONFIG, client=client))
-                async with asyncio.timeout(70):
-                    while not claimed.is_set() and not task.done():
-                        await asyncio.sleep(0.05)
-                self.assertTrue(claimed.is_set(), "Native asynchronous claim did not complete")
-                task.cancel()
-                release.set()
-                with self.assertRaises(asyncio.CancelledError) as error:
-                    await task
-                self.assertIn(owned[0], str(error.exception))
+            async with client:
+                with patch.object(client.sessions, "start", start):
+                    task = asyncio.create_task(run_demo(CONFIG, client=client))
+                    async with asyncio.timeout(70):
+                        while not claimed.is_set() and not task.done():
+                            await asyncio.sleep(0.05)
+                    self.assertTrue(claimed.is_set(), "Native asynchronous claim did not complete")
+                    task.cancel()
+                    release.set()
+                    with self.assertRaises(asyncio.CancelledError) as error:
+                        await task
+                    self.assertIn(owned[0], str(error.exception))
 
         try:
             with asyncio.Runner() as runner:

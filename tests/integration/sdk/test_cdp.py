@@ -1,7 +1,9 @@
 import tempfile
 
-from notte_sdk.client import NotteClient
+import pytest
+from notte_sdk.client import AsyncNotteClient, NotteClient
 from patchright.sync_api import Route, sync_playwright
+from playwright.async_api import Route as AsyncRoute
 
 
 def test_cdp_connection():
@@ -45,3 +47,27 @@ def test_session_page_leaves_native_dialogs_to_backend():
         page.wait_for_url("https://example.org/**")
         assert result.success
         assert page.title() == "Example Domain"
+
+
+@pytest.mark.asyncio
+async def test_async_session_page_and_operations():
+    async with AsyncNotteClient() as client, client.Session(proxies=False) as session:
+        page = await session.page
+        assert await session.page is page
+        fixture_url = "https://cdp-fixture.notte.test/async"
+
+        async def serve_fixture(route: AsyncRoute) -> None:
+            await route.fulfill(
+                status=200,
+                content_type="text/html",
+                body='<!doctype html><title>Async CDP fixture</title><a href="#new">new</a>',
+            )
+
+        await page.route(fixture_url, serve_fixture)
+        response = await page.goto(fixture_url)
+        assert response is not None and response.status == 200
+        await page.get_by_role("link", name="new", exact=True).click()
+        assert page.url == f"{fixture_url}#new"
+        assert await page.title() == "Async CDP fixture"
+        assert (await session.status()).status == "active"
+        assert await page.screenshot()
