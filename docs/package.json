@@ -8,5 +8,10 @@
     "mongodb": "7.7.0",
     "openai": "7.34.0",
     "zod": "4.6.6"
+  },
+  "overrides": {
+    "@browserbasehq/stagehand": {
+      "zod": "$zod"
+    }
   }
 }
