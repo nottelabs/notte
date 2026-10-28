@@ -38,7 +38,9 @@ def test_one_freshness_check_per_reference_input(path: str) -> None:
         "((github.event_name == 'push' && github.ref == 'refs/heads/main') || "
         "(github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main')))"
     )
-    assert next(step for step in steps if "checkout@" in step.get("uses", ""))["with"]["fetch-depth"] == 0
+    checkout = next(step for step in steps if "checkout@" in step.get("uses", ""))["with"]
+    assert checkout["fetch-depth"] == 0
+    assert checkout["ref"] == "${{ github.event.pull_request.head.sha || github.sha }}"
     assert next(step for step in steps if step.get("id") == "scope")["uses"] == "./.github/actions/ci-scope"
     events = reference[True]
     assert events["push"]["paths"] == events["pull_request"]["paths"]
@@ -82,3 +84,13 @@ def test_freshness_owner_depends_on_ci_event_and_target(event: str, target: str,
     node_checks = int(coordinating_ci and generated)
     assert reference_checks + node_checks == 1
     assert reference_checks == int(not (coordinating_ci and generated))
+
+
+def test_reference_and_coordinating_ci_select_from_same_immutable_revision() -> None:
+    configurations = [
+        yaml.safe_load((ROOT / ".github/workflows" / name).read_text())
+        for name in ("typescript-sdk-reference.yml", "ci.yml")
+    ]
+    jobs = [configurations[0]["jobs"]["generated-reference"], configurations[1]["jobs"]["changes"]]
+    refs = [next(step for step in job["steps"] if "checkout@" in step.get("uses", ""))["with"]["ref"] for job in jobs]
+    assert refs == ["${{ github.event.pull_request.head.sha || github.sha }}"] * 2
