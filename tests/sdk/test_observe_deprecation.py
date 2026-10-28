@@ -42,7 +42,7 @@ def test_instructions_warn_with_the_removal_date(client: NotteClient, sent: Magi
 
     message = str(warning.message)
     assert "`observe(instructions=...)` is deprecated and will be removed on December 1, 2026" in message
-    assert "pick from the returned actions yourself" in message
+    assert "session.act(instruction)" in message
     assert "https://docs.notte.cc/features/sessions/observe-migration" in message
     # The default filters show a DeprecationWarning only when it is attributed to the caller's code.
     assert warning.filename == __file__
