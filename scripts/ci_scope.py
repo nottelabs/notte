@@ -7,8 +7,12 @@ import json
 import re
 import subprocess
 import sys
+import tomllib
+from datetime import date, datetime, time
 from pathlib import Path
-from typing import cast
+from typing import TypeAlias, cast
+
+TomlValue: TypeAlias = str | bool | int | float | date | datetime | time | list["TomlValue"] | dict[str, "TomlValue"]
 
 GROUPS = {
     "python": {"python_static", "python_unit", "python_live", "llm_provider_live", "python_docs", "cli_contract"},
@@ -32,9 +36,23 @@ PYTHON_LIVE_TESTS = {
     "tests/test_trajectory.py",
 }
 SDK_EXAMPLES = {"docs_static"} | GROUPS["paired"] | GROUPS["readme"]
-POLICY = {"scripts/ci_scope.py", "tests/scripts/test_ci_scope.py"}
+POLICY = {"scripts/ci_scope.py", "tests/scripts/test_ci_scope.py", "tests/scripts/test_ci_scope_offline.py"}
 PYTHON_CONFIG = {"pyproject.toml", "uv.lock", ".python-version"}
 NODE_CONFIG = {"node-sdk/package.json", "node-sdk/package-lock.json"}
+WORKSPACE_PACKAGES = {
+    "notte": ".",
+    "notte-browser": "packages/notte-browser",
+    "notte-core": "packages/notte-core",
+    "notte-llm": "packages/notte-llm",
+    "notte-sdk": "packages/notte-sdk",
+}
+OFFLINE_SCRIPTS = {"scripts/release_version.py", "scripts/build_release.py"}
+OPENAPI_TOOLS = {
+    "scripts/openapi_order.py",
+    "scripts/openapi_contract.py",
+    "scripts/generate_sdk_models.py",
+    "scripts/generate_sdk_endpoints.py",
+}
 # Paired live shards that may run against staging at once for one ref, across runs.
 PAIRED_SLOTS = 6
 INTEGRATION_INPUTS = {
@@ -184,6 +202,17 @@ def base_scopes_for_path(path: str, *, code_changed: bool = True) -> set[str]:
         return {"cli_contract"}
     if path == "README.md":
         return {"python_static", "readme_static"} | ({"readme_live"} if code_changed else set())
+    if path in OPENAPI_TOOLS or path.startswith("tests/data/openapi-order/"):
+        return {"python_static", "python_unit", "node_static", "node_generated"}
+    if path in OFFLINE_SCRIPTS:
+        return {"python_static", "python_unit"}
+    if path == "docs/src/favicon.ico" or (
+        path.startswith(("docs/src/images/", "docs/src/logo/", "docs/src/fonts/"))
+        and path.endswith(
+            (".png", ".jpg", ".jpeg", ".svg", ".ico", ".webp", ".gif", ".woff", ".woff2", ".ttf", ".otf", ".pdf")
+        )
+    ):
+        return {"python_static", "python_docs"}
     if path.startswith("docs/"):
         selected = {"python_static", "python_docs", "docs_static", "paired_static"}
         if path in {"docs/src/docs.json", "docs/src/scripts/generate_llms.py"}:
@@ -398,6 +427,109 @@ def changed_registry_examples(base: str, head: str) -> set[str]:
         return set(INTEGRATION_EXAMPLES)
 
 
+def workspace_version_only(base: str, head: str, paths: set[str]) -> bool:
+    """Recognize synchronized release bumps without exempting dependency or tooling changes."""
+    manifests = {name: str(Path(directory) / "pyproject.toml") for name, directory in WORKSPACE_PACKAGES.items()}
+    if not paths or not paths <= {*manifests.values(), "uv.lock"}:
+        return False
+
+    def document(sha: str, path: str) -> dict[str, TomlValue]:
+        entry = git("--literal-pathspecs", "ls-tree", "-z", sha, "--", path)
+        if not entry.startswith(b"100644 blob "):
+            raise ValueError("version input is not a regular non-executable file")
+        return cast(dict[str, TomlValue], tomllib.loads(git("show", f"{sha}:{path}").decode("utf-8")))
+
+    def requirements(values: TomlValue, version: str) -> list[TomlValue]:
+        if not isinstance(values, list):
+            raise ValueError("dependencies must be a list")
+        normalized: list[TomlValue] = []
+        for value in values:
+            if not isinstance(value, str):
+                raise ValueError("dependency must be a string")
+            name = re.match(r"[A-Za-z0-9][A-Za-z0-9._-]*", value)
+            if name and re.sub(r"[-_.]+", "-", name[0]).lower() in WORKSPACE_PACKAGES:
+                pin = re.fullmatch(r"([A-Za-z0-9._-]+(?:\[[A-Za-z0-9_,-]+\])?==)(.+)", value)
+                if pin is None or pin[2] != version:
+                    raise ValueError("internal dependency does not match the workspace version")
+                value = pin[1] + "<workspace-version>"
+            normalized.append(value)
+        return normalized
+
+    def snapshot(sha: str) -> tuple[str, list[TomlValue]]:
+        package_manifests = {
+            path
+            for path in git("ls-tree", "-r", "--name-only", sha, "--", "packages").decode("utf-8").splitlines()
+            if re.fullmatch(r"packages/[^/]+/pyproject\.toml", path)
+        }
+        if package_manifests != set(manifests.values()) - {"pyproject.toml"}:
+            raise ValueError("unknown workspace package")
+        documents: list[TomlValue] = []
+        version = ""
+        for name, path in manifests.items():
+            manifest = document(sha, path)
+            project = manifest.get("project")
+            if not isinstance(project, dict) or project.get("name") != name:
+                raise ValueError("unexpected workspace project")
+            current = project.get("version")
+            if not isinstance(current, str) or not re.fullmatch(
+                r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)(?:\.dev0?)?", current
+            ):
+                raise ValueError("unsupported workspace version")
+            if version and current != version:
+                raise ValueError("workspace versions disagree")
+            version = current
+            project["version"] = "<workspace-version>"
+            if "dependencies" in project:
+                project["dependencies"] = requirements(project["dependencies"], version)
+            extras = project.get("optional-dependencies", {})
+            if not isinstance(extras, dict):
+                raise ValueError("optional dependencies must be a table")
+            for extra, values in extras.items():
+                extras[extra] = requirements(values, version)
+            documents.append(manifest)
+
+        lock = document(sha, "uv.lock")
+        packages = lock.get("package")
+        if not isinstance(packages, list):
+            raise ValueError("lockfile has no package list")
+        found: set[str] = set()
+        for package in packages:
+            if not isinstance(package, dict):
+                raise ValueError("invalid lockfile package")
+            name = package.get("name")
+            if not isinstance(name, str) or name not in WORKSPACE_PACKAGES:
+                continue
+            if (
+                name in found
+                or package.get("source") != {"editable": WORKSPACE_PACKAGES[name]}
+                or package.get("version") != version
+            ):
+                raise ValueError("lockfile does not match the workspace")
+            found.add(name)
+            package["version"] = "<workspace-version>"
+        if found != WORKSPACE_PACKAGES.keys():
+            raise ValueError("missing locked workspace package")
+        documents.append(lock)
+        return version, documents
+
+    def identical(before: TomlValue, after: TomlValue) -> bool:
+        # TOML types matter too: Python otherwise treats true, 1 and 1.0 as equal.
+        if type(before) is not type(after):
+            return False
+        if isinstance(before, dict) and isinstance(after, dict):
+            return before.keys() == after.keys() and all(identical(value, after[key]) for key, value in before.items())
+        if isinstance(before, list) and isinstance(after, list):
+            return len(before) == len(after) and all(identical(left, right) for left, right in zip(before, after))
+        return before == after
+
+    try:
+        before, normalized_before = snapshot(base)
+        after, normalized_after = snapshot(head)
+        return before != after and identical(normalized_before, normalized_after)
+    except (ValueError, subprocess.SubprocessError, UnicodeError):
+        return False
+
+
 def select(event: str, base: str, head: str) -> dict[str, bool | str | list[str] | list[dict[str, str]]]:
     selected: set[str] = ALL.copy()
     integration_examples: set[str] = set(INTEGRATION_EXAMPLES)
@@ -415,6 +547,7 @@ def select(event: str, base: str, head: str) -> dict[str, bool | str | list[str]
             # No rename detection: both the old and new paths must contribute coverage.
             paths = git("diff", "--name-only", "--no-renames", "-z", base, head, "--").decode("utf-8").split("\0")
             file_checks = any(paths)
+            version_only = workspace_version_only(base, head, set(filter(None, paths)))
             docs_paths = {path for path in paths if path.startswith("docs/src/")}
             if docs_paths:
                 deleted = set(
@@ -432,18 +565,28 @@ def select(event: str, base: str, head: str) -> dict[str, bool | str | list[str]
                 lint_all |= path in {".pre-commit-config.yaml", "pyproject.toml"} or path.endswith("/pyproject.toml")
                 markdown = path == "README.md" or (path.startswith("docs/") and path.endswith((".md", ".mdx")))
                 code_changed = changed_code(base, head, path) if markdown else True
-                path_scopes = scopes_for_path(path, code_changed=code_changed)
-                native_examples = (
-                    changed_registry_examples(base, head)
-                    if path == "scripts/integration_examples.json"
-                    else integration_examples_for_path(path, shared_inputs=event != "pull_request")
+                path_scopes = (
+                    {"python_static", "python_unit"}
+                    if version_only
+                    else scopes_for_path(path, code_changed=code_changed)
+                )
+                native_examples: set[str] = (
+                    set()
+                    if version_only
+                    else (
+                        changed_registry_examples(base, head)
+                        if path == "scripts/integration_examples.json"
+                        else integration_examples_for_path(path, shared_inputs=event != "pull_request")
+                    )
                 )
                 if path == "scripts/integration_examples.json" and not native_examples:
                     path_scopes.discard("paired_live")
                 selected |= path_scopes
-                paired_snippets_live |= "paired_live" in base_scopes_for_path(
-                    path, code_changed=code_changed
-                ) and not native_example_input(path)
+                paired_snippets_live |= (
+                    not version_only
+                    and "paired_live" in base_scopes_for_path(path, code_changed=code_changed)
+                    and not native_example_input(path)
+                )
                 integration_examples |= native_examples
                 if path_scopes == ALL and event != "pull_request":
                     integration_examples |= set(INTEGRATION_EXAMPLES)
