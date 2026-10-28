@@ -20,7 +20,7 @@ export const result = await new NotteClient().Session({ max_duration_minutes: 3 
     await server.connect();
     const agent = new Agent({
       name: 'Browser reader',
-      model: new OpenAIResponsesModel(new OpenAI({ timeout: 120_000 }), 'gpt-4.1-mini'),
+      model: new OpenAIResponsesModel(new OpenAI({ timeout: 120_000 }), process.env.OPENAI_MODEL ?? 'gpt-4.1-mini'),
       instructions: `Use only browser_id ${session.getId()!}. Read the page with Notte tools.`,
       mcpServers: [server],
       outputType: z.object({ title: z.string() }),

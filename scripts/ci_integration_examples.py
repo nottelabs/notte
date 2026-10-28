@@ -28,6 +28,7 @@ CREDENTIALS = {
     "AGENTCARD_CLIENT_SECRET",
     "AI_GATEWAY_API_KEY",
     "ANTHROPIC_API_KEY",
+    "ANTHROPIC_AUTH_TOKEN",
     "BOX_ACCESS_TOKEN",
     "BRAINTRUST_API_KEY",
     "GEMINI_API_KEY",
@@ -39,6 +40,7 @@ CREDENTIALS = {
     "NOTTE_VALTOWN_TOKEN",
     "OAGI_API_KEY",
     "OPENAI_API_KEY",
+    "OPENROUTER_API_KEY",
     "OP_SERVICE_ACCOUNT_TOKEN",
     "PIPEDREAM_ACTION_FILE",
     "PIPEDREAM_APP",
@@ -359,6 +361,26 @@ def project_env(name: str, env: dict[str, str]) -> dict[str, str]:
     selected = {key: value for key, value in env.items() if key not in CREDENTIALS or key in allowed}
     # Native integrations use standard asyncio; published SDKs still opt into a loop patch.
     selected["NOTTE_ENABLE_NEST_ASYNCIO"] = "false"
+    if name in {"openai-agents", "claude-agents"}:
+        # Vendor SDK variable names are aliases of the one OpenRouter credential.
+        selected = {key: value for key, value in env.items() if key not in CREDENTIALS or key == "NOTTE_API_KEY"}
+        selected["NOTTE_ENABLE_NEST_ASYNCIO"] = "false"
+        router_key = env.get("OPENROUTER_API_KEY", "")
+        if router_key:
+            selected["OPENROUTER_API_KEY"] = router_key
+            if name == "openai-agents":
+                selected.update(
+                    OPENAI_API_KEY=router_key,
+                    OPENAI_BASE_URL="https://openrouter.ai/api/v1",
+                    OPENAI_MODEL="openai/gpt-4.1-mini",
+                )
+            else:
+                selected.update(
+                    ANTHROPIC_API_KEY="",
+                    ANTHROPIC_AUTH_TOKEN=router_key,
+                    ANTHROPIC_BASE_URL="https://openrouter.ai/api",
+                    ANTHROPIC_MODEL="anthropic/claude-haiku-5.5",
+                )
     return selected
 
 
@@ -443,6 +465,8 @@ def mongodb_fixture(env: dict[str, str]) -> Iterator[str]:
 
 
 def recipe_live(name: str, python: Path, env: dict[str, str], install_env: dict[str, str]) -> None:
+    if name in {"openai-agents", "claude-agents"} and not env.get("OPENROUTER_API_KEY"):
+        raise ValueError(f"{name} requires OPENROUTER_API_KEY for model coverage")
     run(["uv", "sync", "--locked", "--package", "notte-sdk", "--no-dev"], ROOT, install_env)
     if name == "openai-agents":
         run(["uv", "pip", "install", "openai-agents==0.24.0", "pytest", "pytest-timeout"], ROOT, install_env)

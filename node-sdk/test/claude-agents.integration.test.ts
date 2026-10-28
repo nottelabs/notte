@@ -28,7 +28,7 @@ function recipe(language: typeof languages[number], overrides: NodeJS.ProcessEnv
 }
 
 describe.skipIf(process.env.NOTTE_CLAUDE_AGENTS_LIVE !== '1')('Claude Agent SDK documentation', () => {
-  it.skipIf(!process.env.ANTHROPIC_API_KEY).each(languages)('uses the browser and closes the %s session', async language => {
+  it.skipIf(!process.env.ANTHROPIC_API_KEY && !process.env.ANTHROPIC_AUTH_TOKEN).each(languages)('uses the browser and closes the %s session', async language => {
     let stdout: string;
     try {
       ({ stdout } = await recipe(language));
@@ -61,6 +61,7 @@ describe.skipIf(process.env.NOTTE_CLAUDE_AGENTS_LIVE !== '1')('Claude Agent SDK 
       try {
         await recipe(language, {
           ANTHROPIC_BASE_URL: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
+          ANTHROPIC_AUTH_TOKEN: '',
           ANTHROPIC_API_KEY: 'not-a-real-key', // pragma: allowlist secret
           CLAUDE_CODE_MAX_RETRIES: '0',
         });

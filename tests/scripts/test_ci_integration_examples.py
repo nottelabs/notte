@@ -24,6 +24,7 @@ def workspace(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.setenv("COMMAND_LOG", str(tmp_path / "calls.jsonl"))
     monkeypatch.setenv("NOTTE_API_KEY", "fixture-ci-key")
     monkeypatch.setenv("OPENAI_API_KEY", "fixture-provider-key")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "fixture-router-key")
     monkeypatch.delenv("BRAINTRUST_API_KEY", raising=False)
     # CI sets this to dependabot[bot] on Dependabot PRs, which narrows the live phase to inngest and temporal.
     monkeypatch.delenv("GITHUB_ACTOR", raising=False)
@@ -48,6 +49,7 @@ with open(os.environ["COMMAND_LOG"], "a") as log:
                             "AGENTCARD_CLIENT_SECRET",
                             "AI_GATEWAY_API_KEY",
                             "ANTHROPIC_API_KEY",
+                            "ANTHROPIC_AUTH_TOKEN",
                             "BOX_ACCESS_TOKEN",
                             "BRAINTRUST_API_KEY",
                             "GEMINI_API_KEY",
@@ -59,6 +61,7 @@ with open(os.environ["COMMAND_LOG"], "a") as log:
                             "NOTTE_VALTOWN_TOKEN",
                             "OAGI_API_KEY",
                             "OPENAI_API_KEY",
+                            "OPENROUTER_API_KEY",
                             "OP_SERVICE_ACCOUNT_TOKEN",
                             "PIPEDREAM_ACTION_FILE",
                             "PIPEDREAM_APP",
@@ -489,6 +492,10 @@ def test_framework_commands_restrict_credentials_and_preserve_special_checks(
     observed = calls(workspace)
     native = [call for call in observed if call["credentials"]]
     expected = sorted(["NOTTE_API_KEY", provider]) if provider else ["NOTTE_API_KEY"]
+    if name == "openai-agents":
+        expected = ["NOTTE_API_KEY", "OPENAI_API_KEY", "OPENROUTER_API_KEY"]
+    elif name == "claude-agents":
+        expected = ["ANTHROPIC_AUTH_TOKEN", "NOTTE_API_KEY", "OPENROUTER_API_KEY"]
     assert native and all(call["credentials"] == expected for call in native)
     assert all("vitest" in call["args"] or "unittest" in call["args"] or "test:live" in call["args"] for call in native)
     commands = [call["args"] for call in observed]
@@ -1600,6 +1607,10 @@ def test_all_selected_profiles_receive_only_their_own_reviewed_main_provider(
         native = [call for call in calls(workspace)[start:] if call["credentials"]]
         key = OWN_PROVIDER.get(project.name) if ref == "refs/heads/main" and event != "pull_request" else None
         expected = sorted(["NOTTE_API_KEY", *([key] if key else [])])
+        if project.name == "openai-agents":
+            expected = ["NOTTE_API_KEY", "OPENAI_API_KEY", "OPENROUTER_API_KEY"]
+        elif project.name == "claude-agents":
+            expected = ["ANTHROPIC_AUTH_TOKEN", "NOTTE_API_KEY", "OPENROUTER_API_KEY"]
         assert native and all(call["credentials"] == expected for call in native), project.name
         if project.name != "laminar" or not key:
             assert all(call["live_flags"]["NOTTE_LAMINAR_EXPORT_LIVE"] == "0" for call in native)
@@ -1628,3 +1639,29 @@ def test_fixed_future_conventions_reject_unknown_projects_before_tools(
     with pytest.raises(ValueError, match="Unknown"):
         runner.main()
     assert calls(workspace) == []
+
+
+@pytest.mark.parametrize("name", ["openai-agents", "claude-agents"])
+def test_native_agent_credentials_only_come_from_openrouter(name: str) -> None:
+    key = "fixture-openrouter"
+    env = runner.project_env(
+        name,
+        {
+            "GITHUB_REF": "refs/pull/1/merge",
+            "GITHUB_EVENT_NAME": "pull_request",
+            "NOTTE_API_KEY": "fixture-api",  # pragma: allowlist secret
+            "OPENROUTER_API_KEY": key,
+            "OPENAI_API_KEY": "wrong-direct-key",  # pragma: allowlist secret
+            "ANTHROPIC_API_KEY": "wrong-direct-key",  # pragma: allowlist secret
+            "GEMINI_API_KEY": "wrong-direct-key",  # pragma: allowlist secret
+        },
+    )
+    assert env["OPENROUTER_API_KEY"] == key
+    assert "wrong-direct-key" not in env.values()
+    if name == "openai-agents":
+        assert env["OPENAI_API_KEY"] == key
+        assert env["OPENAI_BASE_URL"] == "https://openrouter.ai/api/v1"
+    else:
+        assert env["ANTHROPIC_API_KEY"] == ""
+        assert env["ANTHROPIC_AUTH_TOKEN"] == key
+        assert env["ANTHROPIC_BASE_URL"] == "https://openrouter.ai/api"
