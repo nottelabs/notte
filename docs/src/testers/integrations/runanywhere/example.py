@@ -19,7 +19,8 @@ with notte.Session() as session:
     result = session.act("type Ada Lovelace in the search box")
     result = session.act("open the Ada Lovelace article")
     # a successful step is not proof of the destination: ask about the page itself
-    assert result.success and session.check("Is this the Ada Lovelace article?") >= 0.5
+    if not result.success or session.check("Is this the Ada Lovelace article?") < 0.5:
+        raise RuntimeError("the Ada Lovelace article did not open")
 
     # structured extraction uses the same endpoint
     article = session.scrape(instructions="Extract the article title and birth date", response_format=Article)
