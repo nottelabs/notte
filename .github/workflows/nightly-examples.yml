@@ -6,10 +6,13 @@ on:
   workflow_dispatch:  # Allow manual triggering
     inputs:
       test_filter:
-        description: "Optional pytest -k expression for focused example runs"
+        description: "Filter legacy/README tests on any ref; registered static checks run on all refs, registered live checks on main"
         required: false
         default: ""
         type: string
+
+permissions:
+  contents: read
 
 env:
   CACHE_TYPE: "pip"
@@ -21,16 +24,27 @@ env:
   NOTTE_CI_VAULT_PREFIX: ci-${{ github.run_id }}-${{ github.job }}
 
 jobs:
+  registered-examples:
+    # Scheduled/manual selection runs the complete registry with its existing
+    # dependencies, entrypoints, SDK legs, shards, and staging credentials.
+    uses: ./.github/workflows/paired-sdk-examples.yml
+    secrets: inherit # pragma: allowlist secret
+
   example-tests:
+    needs: registered-examples
+    # Run after integration failures on any dispatch ref, but do not start work after cancellation.
+    if: ${{ !cancelled() }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 75
+    outputs:
+      summary: ${{ steps.summary.outputs.summary }}
+    env:
+      NOTTE_API_URL: https://us-staging.notte.cc
     steps:
-      - name: Generate timestamp
-        id: timestamp
-        run: echo "timestamp=$(date +%s)" >> $GITHUB_OUTPUT
-
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Install uv
         uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
@@ -45,7 +59,7 @@ jobs:
           cache: ${{ env.CACHE_TYPE }}
 
       - name: Install dependencies
-        run: uv sync --dev --all-extras
+        run: uv sync --locked --dev --all-extras
 
       - name: Use HTTPS Ubuntu mirrors on Blacksmith
         run: |
@@ -86,7 +100,7 @@ jobs:
 
       - name: Verify environment variables
         env:
-          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
         run: |
           if [ -z "$NOTTE_API_KEY" ]; then
             echo "NOTTE_API_KEY is not set"
@@ -94,36 +108,72 @@ jobs:
           fi
           echo "Environment variables are set"
 
-      - name: Run example tests
+      - name: Run legacy and README example tests
         env:
           EXAMPLE_TEST_FILTER: ${{ inputs.test_filter || '' }}
-          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
         run: xvfb-run --auto-servernum bash tests/run_examples.sh -k "$EXAMPLE_TEST_FILTER"
 
       - name: Cleanup vaults created by this run
         if: always()
         env:
-          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
-        run: uv run python scripts/cleanup_ci_vaults.py --allow-production
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
+        run: uv run python scripts/cleanup_ci_vaults.py
 
-      - name: Build Slack notification
+      - name: Capture legacy example summary
+        id: summary
         if: always()
-        env:
-          RUN_TIMESTAMP: ${{ steps.timestamp.outputs.timestamp }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          python - <<'PY'
+          python3 - <<'PY'
           import json
           import os
           import re
           from pathlib import Path
 
           summary_path = Path("pytest_summary.log")
-          summary = summary_path.read_text() if summary_path.exists() else "Example tests did not run. See the workflow logs."
+          summary = summary_path.read_text() if summary_path.exists() else "Example summary unavailable. See the workflow logs."
           summary = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", summary)
+          with Path(os.environ['GITHUB_OUTPUT']).open('a') as output:
+              output.write(f"summary={json.dumps(summary[:12000])}\n")
+          PY
+
+  report:
+    needs: [registered-examples, example-tests]
+    if: ${{ always() }}
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 5
+    steps:
+      - name: Generate timestamp
+        id: timestamp
+        if: always()
+        run: echo "timestamp=$(date +%s)" >> $GITHUB_OUTPUT
+
+      - name: Build Slack notification
+        if: always()
+        env:
+          RUN_TIMESTAMP: ${{ steps.timestamp.outputs.timestamp }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          REGISTERED_RESULT: ${{ needs.registered-examples.result }}
+          LEGACY_RESULT: ${{ needs.example-tests.result }}
+          SUMMARY_JSON: ${{ needs.example-tests.outputs.summary }}
+          REGISTERED_LIVE_ENABLED: ${{ github.ref == 'refs/heads/main' }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          encoded_summary = os.environ['SUMMARY_JSON']
+          summary = json.loads(encoded_summary) if encoded_summary else "Example summary unavailable. See the workflow logs."
+          live = "enabled" if os.environ['REGISTERED_LIVE_ENABLED'] == 'true' else "main only; not run on this ref"
           payload = {
               "username": f"GitHub Nightly Pipeline ({os.environ['RUN_TIMESTAMP']})",
-              "text": f"Pipeline results: {os.environ['RUN_URL']}\n```\n{summary[:12000]}\n```",
+              "text": (
+                  f"Pipeline results: {os.environ['RUN_URL']}\n"
+                  f"Registered integrations: {os.environ['REGISTERED_RESULT']} (live staging checks: {live})\n"
+                  f"Legacy and README examples (staging): {os.environ['LEGACY_RESULT']}\n"
+                  f"```\n{summary[:12000]}\n```"
+              ),
           }
           Path("slack-payload.json").write_text(json.dumps(payload))
           PY

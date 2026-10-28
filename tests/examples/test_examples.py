@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import signal
@@ -8,6 +9,8 @@ import time
 from pathlib import Path
 
 import pytest
+
+from scripts.ci_integration_examples import REGISTRY
 
 
 def find_python_files(directory: Path) -> list[Path]:
@@ -139,13 +142,18 @@ def get_use_cases_dirs(
     ignore_list: tuple[str, ...] = ("__pycache__",),
 ) -> list[Path]:
     """
-    Get all use cases directories in the examples directory.
+    Get legacy use cases not owned by the registered integration runner.
 
     Returns:
         A list of Path objects for example files
     """
     examples_dir = Path(__file__).parent.parent.parent / "examples"
-    return [dir for dir in examples_dir.glob("*") if dir.is_dir() and dir.name not in ignore_list]
+    registered: dict[str, str] = json.loads(REGISTRY.read_text())
+    return sorted(
+        directory
+        for directory in examples_dir.glob("*")
+        if directory.is_dir() and directory.name not in ignore_list and directory.name not in registered
+    )
 
 
 @pytest.mark.parametrize("python_file", get_python_files(), ids=lambda p: p.name)
