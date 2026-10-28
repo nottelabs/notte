@@ -351,7 +351,8 @@ def test_full_scope_executes_published_source_or_hosted_legs(
     ]
     if name in {"agentcard", "openai-computer-use"}:
         assert len(installs) == 1
-        assert observed.index(native[0]) < observed.index(installs[0]) < observed.index(native[-1])
+        native_positions = [index for index, call in enumerate(observed) if call["credentials"]]
+        assert native_positions[0] < observed.index(installs[0]) < native_positions[-1]
     else:
         assert installs == []
 
