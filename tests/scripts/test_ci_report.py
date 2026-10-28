@@ -1,6 +1,9 @@
 """Exercise missing coverage and separate CI failure reporting."""
 
 import json
+import os
+import subprocess
+from pathlib import Path
 
 import pytest
 
@@ -102,3 +105,38 @@ def test_partial_reruns_keep_successful_siblings_without_using_old_failures() ->
     assert report(results, jobs, True)[1]
     jobs[1]["conclusion"] = "failure"
     assert not report(results, jobs, True)[1]
+
+
+@pytest.mark.parametrize("api_status", [0, 7])
+def test_workflow_collects_all_job_pages_and_propagates_api_errors(tmp_path: Path, api_status: int) -> None:
+    from tests.scripts.test_ci_staging_scope import workflow
+
+    step = next(
+        step
+        for step in workflow("ci.yml")["jobs"]["tests"]["steps"]
+        if step.get("name") == "Read latest job results for this run"
+    )
+    assert step["shell"] == "bash"
+    jobs = [
+        {"name": "node / tests (22)", "conclusion": "success"},
+        {"name": "node / integration-tests", "conclusion": "failure"},
+    ]
+    (tmp_path / "pages.json").write_text(json.dumps([{"jobs": [job]} for job in jobs]))
+    stub = tmp_path / "gh"
+    stub.write_text('#!/bin/sh\ncat "$RUNNER_TEMP/pages.json"\nexit "$API_STATUS"\n')
+    stub.chmod(0o755)
+    result = subprocess.run(
+        ["bash", "-e", "-o", "pipefail", "-c", step["run"]],
+        env={
+            **os.environ,
+            "PATH": f"{tmp_path}:{os.environ['PATH']}",
+            "RUNNER_TEMP": str(tmp_path),
+            "GITHUB_REPOSITORY": "fixture/repo",
+            "GITHUB_RUN_ID": "123",
+            "API_STATUS": str(api_status),
+        },
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == api_status, result.stdout + result.stderr
+    assert json.loads((tmp_path / "ci-jobs.json").read_text()) == jobs

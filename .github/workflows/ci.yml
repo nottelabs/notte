@@ -155,12 +155,13 @@ jobs:
         run: python3 -m scripts.ci_validation gate
       - name: Read latest job results for this run
         if: always()
+        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: >-
           gh api --paginate --slurp
           "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs?filter=latest&per_page=100"
-          --jq '[.[].jobs[]]' > "$RUNNER_TEMP/ci-jobs.json"
+          | jq '[.[].jobs[]]' > "$RUNNER_TEMP/ci-jobs.json"
       - name: Report correctness, integration results and coverage
         if: always()
         env:
