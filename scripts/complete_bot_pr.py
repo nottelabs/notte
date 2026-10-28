@@ -66,6 +66,26 @@ def api(path: str):
     return json.loads(gh("api", path))
 
 
+def reviewer_permission(login: str) -> str:
+    try:
+        response = gh("api", "--include", f"repos/{REPOSITORY}/collaborators/{login}/permission")
+    except subprocess.CalledProcessError as error:
+        # Only this permission lookup may treat an HTTP 404 as unauthorized.
+        # Other request failures and unparseable status output remain errors.
+        if isinstance(error.output, bytes):
+            status = error.output.splitlines()[0] if error.output else b""
+            if re.fullmatch(rb"HTTP/[0-9.]+ 404(?: [^\r\n]*)?", status):
+                return "none"
+        raise
+    headers, body = response.replace(b"\r\n", b"\n").split(b"\n\n", 1)
+    if not re.fullmatch(rb"HTTP/[0-9.]+ 200(?: [^\r\n]*)?", headers.splitlines()[0]):
+        raise ValueError("Invalid reviewer permission response status")
+    permission = json.loads(body)["permission"]
+    if not isinstance(permission, str) or permission not in {"none", "read", "triage", "write", "maintain", "admin"}:
+        raise ValueError("Invalid reviewer permission response")
+    return permission
+
+
 def owned(pr: Pull) -> bool:
     return (
         pr["state"] == "open"
@@ -137,8 +157,7 @@ def reviewed(pr: Pull) -> bool:
             if app["id"] == GREPTILE_APP_ID and app["slug"] == "greptile-apps":
                 authorized.append(review)
         else:
-            permission = api(f"repos/{REPOSITORY}/collaborators/{login}/permission")
-            if permission["permission"] in {"write", "maintain", "admin"}:
+            if reviewer_permission(login) in {"write", "maintain", "admin"}:
                 authorized.append(review)
     # A public read-only approval cannot update an older authorized approval.
     return not any(review["state"] == "CHANGES_REQUESTED" for review in authorized) and any(

@@ -160,7 +160,7 @@ def test_approval_must_be_current_and_not_blocked_or_dismissed(fixture):
     ):
         with (
             patch.object(bot, "gh", return_value=json.dumps([reviews]).encode()),
-            patch.object(bot, "api", return_value={"permission": "write"}),
+            patch.object(bot, "reviewer_permission", return_value="write"),
         ):
             assert bot.reviewed(fixture[0]) is expected
 
@@ -271,7 +271,7 @@ def test_stale_authorized_review_plus_current_outsider_review_cannot_authorize(f
     current = {"user": {"login": "contributor"}, "state": "APPROVED", "commit_id": HEAD}
     with (
         patch.object(bot, "gh", return_value=json.dumps([[stale, current]]).encode()),
-        patch.object(bot, "api", side_effect=[{"permission": "write"}, {"permission": permission}]),
+        patch.object(bot, "reviewer_permission", side_effect=["write", permission]),
     ):
         assert bot.reviewed(fixture[0]) is (permission in {"write", "maintain", "admin"})
 
@@ -296,7 +296,7 @@ def test_latest_review_and_current_permission_both_apply(fixture):
     ):
         with (
             patch.object(bot, "gh", return_value=json.dumps([[old], [latest]]).encode()),
-            patch.object(bot, "api", return_value={"permission": permission}),
+            patch.object(bot, "reviewer_permission", return_value=permission),
         ):
             assert bot.reviewed(fixture[0]) is expected
 
@@ -329,7 +329,7 @@ def test_login_only_or_other_app_impersonation_cannot_authorize(fixture, identit
     review = {"user": identity, "state": "APPROVED", "commit_id": HEAD}
     with (
         patch.object(bot, "gh", return_value=json.dumps([[review]]).encode()),
-        patch.object(bot, "api", return_value={"permission": "none"}),
+        patch.object(bot, "reviewer_permission", return_value="none"),
     ):
         assert not bot.reviewed(fixture[0])
 
@@ -358,9 +358,8 @@ def test_unauthorized_change_request_does_not_block_trusted_app_approval(fixture
     ]
     with (
         patch.object(bot, "gh", return_value=json.dumps([reviews]).encode()),
-        patch.object(
-            bot, "api", side_effect=[{"id": bot.GREPTILE_APP_ID, "slug": "greptile-apps"}, {"permission": "read"}]
-        ),
+        patch.object(bot, "api", return_value={"id": bot.GREPTILE_APP_ID, "slug": "greptile-apps"}),
+        patch.object(bot, "reviewer_permission", return_value="read"),
     ):
         assert bot.reviewed(fixture[0])
 
@@ -425,3 +424,76 @@ def test_pending_results_are_not_errors_and_both_raised_errors_are_reported(monk
 def test_other_workflow_reference_suffixes_cannot_authorize(fixture, suffix):
     fixture[1]["path"] += suffix
     assert not attest(fixture)
+
+
+@pytest.mark.parametrize("newline", [b"\n", b"\r\n"])
+def test_ordinary_outsider_permission_is_200_read(newline):
+    path = f"repos/{bot.REPOSITORY}/collaborators/octocat/permission"
+    response = newline.join(
+        [b"HTTP/2.0 200 OK", b"Content-Type: application/json", b"", b'{"permission":"read","role_name":"read"}']
+    )
+    with patch.object(bot, "gh", return_value=response) as gh:
+        assert bot.reviewer_permission("octocat") == "read"
+        gh.assert_called_once_with("api", "--include", path)
+
+
+@pytest.mark.parametrize("state", ["APPROVED", "CHANGES_REQUESTED"])
+@pytest.mark.parametrize("valid_review", [False, True])
+def test_unavailable_reviewer_404_is_unauthorized_without_blocking_valid_approval(fixture, state, valid_review):
+    reviews = [{"user": {"login": "unavailable"}, "state": state, "commit_id": HEAD}]
+    if valid_review:
+        reviews.append({"user": {"login": "maintainer"}, "state": "APPROVED", "commit_id": HEAD})
+    missing = subprocess.CalledProcessError(
+        1, ["gh", "api"], output=b'HTTP/2.0 404 Not Found\r\n\r\n{"message":"Not Found"}'
+    )
+    responses = [json.dumps([reviews]).encode(), missing]
+    if valid_review:
+        responses.append(b'HTTP/2.0 200 OK\n\n{"permission":"write"}')
+    with patch.object(bot, "gh", side_effect=responses):
+        assert bot.reviewed(fixture[0]) is valid_review
+
+
+@pytest.mark.parametrize("status", [403, 429, 500, 503])
+def test_other_permission_http_errors_propagate_even_with_a_valid_approval(fixture, status):
+    reviews = [
+        {"user": {"login": "unavailable"}, "state": "APPROVED", "commit_id": HEAD},
+        {"user": {"login": "maintainer"}, "state": "APPROVED", "commit_id": HEAD},
+    ]
+    error = subprocess.CalledProcessError(1, ["gh", "api"], output=f"HTTP/2.0 {status} Error\n\n{{}}".encode())
+    with patch.object(bot, "gh", side_effect=[json.dumps([reviews]).encode(), error]):
+        with pytest.raises(subprocess.CalledProcessError) as raised:
+            bot.reviewed(fixture[0])
+        assert raised.value is error
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        b"HTTP/2.0 200 OK\n\nnot-json",
+        b"HTTP/2.0 200 OK\n\n{}",
+        b"HTTP/2.0 200 OK\n\n[]",
+        b'HTTP/2.0 200 OK\n\n{"permission":null}',
+        b'HTTP/2.0 200 OK\n\n{"permission":true}',
+        b'HTTP/2.0 200 OK\n\n{"permission":"unexpected"}',
+        b'HTTP/2.0 201 Created\n\n{"permission":"write"}',
+        b'{"permission":"write"}',
+    ],
+)
+def test_malformed_permission_success_responses_remain_errors(response):
+    with patch.object(bot, "gh", return_value=response):
+        with pytest.raises((ValueError, KeyError, TypeError)):
+            bot.reviewer_permission("reviewer")
+
+
+def test_permission_404_handling_does_not_swallow_other_api_404s_or_missing_status():
+    error = subprocess.CalledProcessError(1, ["gh", "api"], output=b"HTTP/2.0 404 Not Found\n\n{}")
+    with patch.object(bot, "gh", side_effect=error):
+        with pytest.raises(subprocess.CalledProcessError) as raised:
+            bot.api("repos/nottelabs/notte/resource")
+        assert raised.value is error
+    for response in (b"", b"404 Not Found"):
+        error = subprocess.CalledProcessError(1, ["gh", "api"], output=response, stderr=b"HTTP 404")
+        with patch.object(bot, "gh", side_effect=error):
+            with pytest.raises(subprocess.CalledProcessError) as raised:
+                bot.reviewer_permission("reviewer")
+            assert raised.value is error
