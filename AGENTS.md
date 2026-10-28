@@ -280,6 +280,9 @@ After changing `packages/notte-sdk/src/`, run `make docs-sdk` (the
 generated files. `make docs-check` fails if they are out of date.
 Manual SDK pages repeat constructor parameter fields; keep their type strings
 in sync with the generated `__init__.mdx` pages. Docs tests compare both.
+The `docs/package.json` override gives `@browserbasehq/stagehand` the docs' own
+`zod`. Stagehand pins an exact `zod`; two copies make `check_typescript.mjs`
+compare their schema types and run out of memory.
 
 ## OpenAPI refresh
 
