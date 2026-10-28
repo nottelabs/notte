@@ -330,7 +330,7 @@ class Posts(BaseModel):
     posts: list[Post]
 
 response = client.scrape(
-    url="https://news.ycombinator.com",
+    url="https://www.notte.cc/blog",
     response_format=Posts,
     instructions="Extract the title and link of the first 5 posts"
 )
