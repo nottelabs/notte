@@ -114,6 +114,9 @@
   "fetch_specialized_data": {
     "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
   },
+  "function_conditional_rollback": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
   "function_create": {
     "method": "create",
     "resource": "functions",
