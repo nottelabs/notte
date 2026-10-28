@@ -45,11 +45,23 @@ jobs:
 
       - name: Prepare error message
         if: steps.test_release.outcome == 'failure' && env.SLACK_NIGHTLY_WEBHOOK_URL != ''
-        id: error_msg
+        env:
+          RUN_TIMESTAMP: ${{ steps.timestamp.outputs.timestamp }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          # Escape quotes and backslashes for JSON
-          ERROR_MSG=$(echo "$TEST_OUTPUT" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | tr '\n' ' ')
-          echo "escaped_error=$ERROR_MSG" >> $GITHUB_OUTPUT
+          python - <<'PYCODE'
+          import json
+          import os
+          import re
+          from pathlib import Path
+
+          summary = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", os.environ.get("TEST_OUTPUT", ""))
+          payload = {
+              "username": f"GitHub Nightly Release Pipeline ({os.environ['RUN_TIMESTAMP']})",
+              "text": f"❌ Nightly Release Pipeline FAILED: <{os.environ['RUN_URL']}|View Pipeline Run>\n```\n{summary[:12000]}\n```",
+          }
+          Path("slack-payload.json").write_text(json.dumps(payload))
+          PYCODE
 
       - name: Send Slack Notification on Failure
         if: steps.test_release.outcome == 'failure' && env.SLACK_NIGHTLY_WEBHOOK_URL != ''
@@ -57,11 +69,7 @@ jobs:
         with:
           webhook: ${{ env.SLACK_NIGHTLY_WEBHOOK_URL }}
           webhook-type: incoming-webhook
-          payload: |
-            {
-              "username": "GitHub Nightly Release Pipeline (${{ steps.timestamp.outputs.timestamp }})",
-              "text": "❌ Nightly Release Pipeline FAILED: <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Pipeline Run>\n```\n${{ steps.error_msg.outputs.escaped_error }}\n```"
-            }
+          payload-file-path: slack-payload.json
 
       - name: Propagate release test failure
         if: steps.test_release.outcome == 'failure'
