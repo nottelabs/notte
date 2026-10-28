@@ -443,7 +443,10 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: llm-provider-matrix
-          path: llm-provider-matrix.xml
+          path: |
+            llm-provider-matrix.xml
+            .test-artifacts/flake-diagnostics
+          include-hidden-files: true
           if-no-files-found: error
 
   cli-contract:
