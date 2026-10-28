@@ -3,6 +3,7 @@
 import datetime as dt
 import json
 import os
+import re
 import subprocess
 from pathlib import Path
 from types import SimpleNamespace
@@ -192,5 +193,36 @@ def test_dispatch_uses_exact_named_secret_and_explicit_environment_on_reviewed_m
     job = CONFIG["jobs"]["cleanup"]
     assert "github.ref == 'refs/heads/main'" in job["if"]
     assert job["env"]["NOTTE_API_URL"] == "${{ inputs.api_url }}"
-    assert STEPS["Cleanup vaults"]["env"]["NOTTE_API_KEY"] == "${{ secrets[inputs.api_key_secret] }}"
+    expression = STEPS["Cleanup vaults"]["env"]["NOTTE_API_KEY"]
+    assert re.search(r"\bsecrets\s*\[", WORKFLOW.read_text()) is None
+    assert set(re.findall(r"\bsecrets\.(\w+)", expression)) == set(INPUTS["api_key_secret"]["options"])
+    assert len(INPUTS["api_key_secret"]["options"]) == 6
+    clauses = [
+        f"(inputs.api_key_secret == ('{name}') && secrets.{name})" for name in INPUTS["api_key_secret"]["options"]
+    ]
+    assert expression == "${{ " + " || ".join(clauses) + " || '' }}"
     assert CONFIG["permissions"] == {"contents": "read"}
+
+
+@pytest.mark.parametrize("requested", INPUTS["api_key_secret"]["options"] + ["UNRELATED_SECRET", ""])
+@pytest.mark.parametrize("available", [False, True])
+def test_static_secret_selection_uses_only_requested_credential_without_fallback(
+    fake_python: Path, requested: str, available: bool
+) -> None:
+    values = {name: f"fixture-{index}" for index, name in enumerate(INPUTS["api_key_secret"]["options"])}
+    if not available:
+        values[requested] = ""
+    expression = STEPS["Cleanup vaults"]["env"]["NOTTE_API_KEY"][3:-2]
+    expression = expression.replace("inputs.api_key_secret", repr(requested))
+    expression = re.sub(r"\bsecrets\.(\w+)", lambda match: repr(values.get(match[1], "")), expression)
+    expression = expression.replace("&&", "and").replace("||", "or")
+    selected = eval(expression, {"__builtins__": {}})
+    expected = values[requested] if requested in INPUTS["api_key_secret"]["options"] else ""
+    assert selected == expected
+    result = cleanup(fake_python, API_KEY_SECRET=requested, NOTTE_API_KEY=selected)
+    assert (result.returncode == 0) is bool(expected)
+    invocation = fake_python / "invocation.json"
+    if expected:
+        assert json.loads(invocation.read_text())["key"] == expected
+    else:
+        assert not invocation.exists()

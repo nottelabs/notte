@@ -105,7 +105,13 @@ jobs:
 
       - name: Cleanup vaults
         env:
-          NOTTE_API_KEY: ${{ secrets[inputs.api_key_secret] }}
+          # Grouped names distinguish selectors from secret assignments for scanning.
+          NOTTE_API_KEY: ${{ (inputs.api_key_secret == ('NOTTE_API_KEY') && secrets.NOTTE_API_KEY) ||
+            (inputs.api_key_secret == ('NOTTE_API_KEY_CI_PY') && secrets.NOTTE_API_KEY_CI_PY) ||
+            (inputs.api_key_secret == ('NOTTE_API_KEY_CI_NODE') && secrets.NOTTE_API_KEY_CI_NODE) ||
+            (inputs.api_key_secret == ('NOTTE_API_KEY_CI_DOCS') && secrets.NOTTE_API_KEY_CI_DOCS) ||
+            (inputs.api_key_secret == ('NOTTE_API_KEY_CI_README') && secrets.NOTTE_API_KEY_CI_README) ||
+            (inputs.api_key_secret == ('NOTTE_API_KEY_CI_EXAMPLES') && secrets.NOTTE_API_KEY_CI_EXAMPLES) || '' }}
           MODE: ${{ inputs.mode }}
           PREFIX: ${{ inputs.prefix }}
           MIN_AGE_HOURS: ${{ inputs.min_age_hours }}
