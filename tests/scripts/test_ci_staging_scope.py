@@ -443,7 +443,18 @@ def test_live_extraction_only_accepts_openrouter(tmp_path: Path, route: str, key
     assert step["env"]["NOTTE_LLM_API_KEY"] == "${{ secrets.OPENROUTER_API_KEY }}"
     output = tmp_path / "invoked"
     stub = tmp_path / "make"
-    stub.write_text('#!/bin/sh\nprintf "%s" "$NOTTE_LLM_BASE_URL" > "$OUTPUT"\n')
+    stub.write_text(
+        """#!/usr/bin/env python3
+import json, os, sys
+from pathlib import Path
+Path(os.environ['OUTPUT']).write_text(json.dumps({
+    'args': sys.argv[1:],
+    'base_url': os.environ['NOTTE_LLM_BASE_URL'],
+    'model': os.environ['NOTTE_LLM_MODEL'],
+    'default_model': os.environ['NOTTE_TEST_DEFAULT_MODEL'],
+}))
+"""
+    )
     stub.chmod(0o755)
     result = subprocess.run(
         ["bash", "-e", "-o", "pipefail", "-c", step["run"]],
@@ -454,6 +465,8 @@ def test_live_extraction_only_accepts_openrouter(tmp_path: Path, route: str, key
             "NOTTE_CI_LLM_PROVIDER": route,
             "NOTTE_LLM_API_KEY": key,
             "NOTTE_LLM_BASE_URL": "https://openrouter.ai/api/v1",
+            "NOTTE_LLM_MODEL": step["env"]["NOTTE_LLM_MODEL"],
+            "NOTTE_TEST_DEFAULT_MODEL": step["env"]["NOTTE_TEST_DEFAULT_MODEL"],
         },
         capture_output=True,
         text=True,
@@ -461,7 +474,17 @@ def test_live_extraction_only_accepts_openrouter(tmp_path: Path, route: str, key
     assert (result.returncode == 0) == succeeds, result.stdout + result.stderr
     assert output.exists() == succeeds
     if succeeds:
-        assert output.read_text() == "https://openrouter.ai/api/v1"
+        assert json.loads(output.read_text()) == {
+            "args": [
+                "test-live",
+                'PYTEST_LIVE=uv run pytest -n 2 tests -m "staging or live" '
+                "--ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py "
+                "--ignore=tests/llm/test_provider_matrix.py --rerun-show-tracebacks",
+            ],
+            "base_url": "https://openrouter.ai/api/v1",
+            "model": "google/gemini-3.5-flash-lite",
+            "default_model": "google/gemini-3.8-flash",
+        }
 
 
 @pytest.mark.parametrize("trusted", [True, False])
