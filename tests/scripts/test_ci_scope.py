@@ -224,27 +224,11 @@ class RoutingTests(unittest.TestCase):
                     self.assertEqual(ci.integration_examples_for_path(path), {"selenium"})
             self.assertFalse(ci.integration_examples_for_path("examples/selenium/README.md"))
 
-    def test_shared_native_inputs_cover_every_registered_project(self) -> None:
-        for path in (
-            *ci.INTEGRATION_INPUTS,
-            "uv.lock",
-            "packages/notte-sdk/src/notte_sdk/client.py",
-            "packages/notte-core/pyproject.toml",
-            "node-sdk/src/session.ts",
-            "node-sdk/package-lock.json",
-            "node-sdk/tsconfig.json",
-            "node-sdk/tsup.config.ts",
-            "node-sdk/new-build.config.json",
-            ".github/workflows/paired-sdk-examples.yml",
-        ):
+    def test_shared_native_harness_inputs_cover_every_registered_project(self) -> None:
+        for path in (*ci.INTEGRATION_INPUTS, ".github/workflows/paired-sdk-examples.yml"):
             with self.subTest(path=path):
                 self.assertEqual(ci.integration_examples_for_path(path), set(ci.INTEGRATION_EXAMPLES))
                 self.assertTrue(ci.GROUPS["paired"] <= ci.scopes_for_path(path))
-                harness = path in ci.INTEGRATION_INPUTS or path == ".github/workflows/paired-sdk-examples.yml"
-                self.assertEqual(
-                    ci.integration_examples_for_path(path, shared_inputs=False),
-                    set(ci.INTEGRATION_EXAMPLES) if harness else set(),
-                )
 
     def test_offline_generator_and_its_tests_use_the_lightweight_suite(self) -> None:
         for path in ("docs/src/scripts/generate_llms.py", "tests/test_generate_llms_offline.py"):
@@ -586,7 +570,7 @@ class GitHistoryTests(unittest.TestCase):
                 self.assertTrue(scope["python_live"])
                 self.assertTrue(scope["llm_provider_live"])
                 self.assertTrue(scope["paired_live"])
-                self.assertEqual(scope["integration_examples"], sorted(ci.INTEGRATION_EXAMPLES))
+                self.assertEqual(scope["integration_examples"], sorted(ci.integration_examples_for_path("uv.lock")))
 
     def test_lock_changes_beyond_workspace_versions_retain_live_coverage(self) -> None:
         mutations = (
@@ -678,7 +662,7 @@ class GitHistoryTests(unittest.TestCase):
         self.assertFalse(scope["paired_snippets_live"])
         shared = self.commit({"packages/notte-sdk/src/notte_sdk/client.py": "client = True\n"})
         scope = self.scope("push", head, shared)
-        self.assertEqual(scope["integration_examples"], sorted(ci.INTEGRATION_EXAMPLES))
+        self.assertEqual(scope["integration_examples"], sorted(ci.integration_examples_for_path("uv.lock")))
         self.assertTrue(scope["paired_snippets_live"])
         recipe = self.commit({".github/workflows/selector-repair.yml": "recipe = True\n"})
         scope = self.scope("push", shared, recipe)
@@ -687,16 +671,15 @@ class GitHistoryTests(unittest.TestCase):
         self.assertFalse(scope["paired_snippets_live"])
         self.assertEqual(scope["paired_shards"], ["1/1"])
 
-    def test_pull_requests_run_native_projects_only_for_their_own_inputs(self) -> None:
+    def test_pull_requests_and_pushes_select_the_same_native_consumers(self) -> None:
         sdk = self.commit({"packages/notte-sdk/src/notte_sdk/client.py": "client = True\n", "uv.lock": "lock = 1\n"})
-        scope = self.scope("pull_request", self.base, sdk)
-        self.assertEqual(scope["integration_examples"], [])
-        self.assertTrue(scope["paired_live"] and scope["paired_snippets_live"])
-        self.assertEqual(scope["paired_shards"], ["1/2", "2/2"])
-        self.assertEqual(self.scope("push", self.base, sdk)["integration_examples"], sorted(ci.INTEGRATION_EXAMPLES))
+        for event in ("push", "pull_request"):
+            scope = self.scope(event, self.base, sdk)
+            self.assertEqual(scope["integration_examples"], sorted(ci.integration_examples_for_path("uv.lock")))
+            self.assertTrue(scope["paired_live"] and scope["paired_snippets_live"])
         unknown = self.commit({"scripts/new_tool.py": "tool = True\n"})
-        self.assertEqual(self.scope("pull_request", sdk, unknown)["integration_examples"], [])
-        self.assertEqual(self.scope("push", sdk, unknown)["integration_examples"], sorted(ci.INTEGRATION_EXAMPLES))
+        for event in ("push", "pull_request"):
+            self.assertEqual(self.scope(event, sdk, unknown)["integration_examples"], sorted(ci.INTEGRATION_EXAMPLES))
         project = self.commit({"examples/temporal/src/workflow.ts": "workflow = True\n"})
         self.assertEqual(self.scope("pull_request", unknown, project)["integration_examples"], ["temporal"])
         runner = self.commit({"scripts/ci_integration_examples.py": "runner = True\n"})

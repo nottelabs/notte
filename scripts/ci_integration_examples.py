@@ -15,8 +15,11 @@ import zipfile
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import cast
+from typing import TYPE_CHECKING, cast
 from uuid import uuid4
+
+if TYPE_CHECKING:
+    from scripts.openapi_order import JsonValue
 
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "scripts/integration_examples.json"
@@ -117,6 +120,17 @@ def projects(shard: str) -> list[tuple[str, str]]:
 
 def run(command: list[str], directory: Path, env: dict[str, str]) -> None:
     _ = subprocess.run(command, cwd=directory, env=env, check=True)
+
+
+def sdk_modes(name: str) -> tuple[str, ...]:
+    """SDK inputs exercise source; project and periodic runs also check published pins."""
+    source_only: JsonValue = json.loads(os.environ.get("INTEGRATION_SOURCE_ONLY", "[]"))
+    selected: list[str] = json.loads(os.environ["INTEGRATION_EXAMPLES"])
+    if not isinstance(source_only, list) or any(
+        not isinstance(item, str) or item not in selected for item in source_only
+    ):
+        raise ValueError("INTEGRATION_SOURCE_ONLY must list selected integration examples")
+    return ("source",) if name in source_only else ("published", "source")
 
 
 def root_tests(project: Path) -> list[str]:
@@ -507,7 +521,7 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
         env = {**project_env(project.name, env), "DISABLE_TELEMETRY": "true"}
         if flag := flags.get(project.name):
             env[flag] = "1"
-        for sdk in ("published", "source"):
+        for sdk in sdk_modes(project.name):
             if sdk == "source":
                 run(
                     [
@@ -560,7 +574,7 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
         if project.name == "inngest":
             env["NOTTE_INNGEST_MODEL_LIVE"] = "1" if env.get("ANTHROPIC_API_KEY") else "0"
         for sdk in (
-            ("published", "source") if project.name in {"trigger", "agentcard", "e2e", "eve", "fx"} else ("published",)
+            sdk_modes(project.name) if project.name in {"trigger", "agentcard", "e2e", "eve", "fx"} else ("published",)
         ):
             if sdk == "source":
                 run(
@@ -578,7 +592,7 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
         return
     if project.name == "github-actions":
         env = project_env(project.name, env)
-        for sdk in ("published", "source"):
+        for sdk in sdk_modes(project.name):
             if sdk == "source":
                 python = ROOT / ".venv/bin/python"
                 run(["uv", "sync", "--locked", "--package", "notte-sdk", "--no-dev"], ROOT, install_env)
@@ -620,7 +634,7 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
     else:
         env = {**env, python_env: str(python)}
     typescript = project if root_layout else project / "typescript"
-    for sdk in ("published", "source"):
+    for sdk in sdk_modes(project.name):
         if sdk == "source":
             run(
                 [
@@ -671,6 +685,8 @@ def main() -> None:
     _ = parser.add_argument("--shard", default="1/1")
     args = parser.parse_args()
     selected = projects(args.shard)
+    # Validate even recipes and hosted consumers before installs or credential use.
+    _ = sdk_modes("")
     if args.phase == "live" and os.environ.get("GITHUB_ACTOR") == "dependabot[bot]":
         selected = [(name, convention) for name, convention in selected if name in {"inngest", "temporal"}]
     if args.phase == "live" and selected and not os.environ.get("NOTTE_API_KEY"):
