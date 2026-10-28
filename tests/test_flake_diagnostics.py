@@ -40,6 +40,7 @@ def run_case(
         from notte_browser.session import NotteSession
         from notte_core.snapshot import SnapshotMetadata
         from notte_sdk.endpoints.sessions import RemoteSession
+        from notte_sdk.endpoints.page import PageClient
         from notte_sdk.types import SessionResponse
 
         pytest_plugins = ["tests.flake_diagnostics"]
@@ -61,10 +62,11 @@ def run_case(
             LIFECYCLE.append("remote-stop")
             session.response.status = "closed"
 
-        def observe(session):
+        def observe(page, endpoint, *, timeout):
             LIFECYCLE.append("remote-observe")
-            assert session.response.status == "active"
-            assert session.client.root_client.max_retries == 0
+            assert endpoint.path == "/sessions/fixture-session/page/observe"
+            assert timeout == diagnostics._REMOTE_CAPTURE_TIMEOUT_SECONDS
+            assert page.root_client.max_retries == 0
             if {capture_fails!r}:
                 assert list(diagnostics.ARTIFACT_PATH.glob("*/attempt-*/before-cleanup-error.txt"))
                 raise RuntimeError("observation capture unavailable")
@@ -94,7 +96,7 @@ def run_case(
 
         RemoteSession.start = start
         RemoteSession.stop = stop
-        RemoteSession.observe = observe
+        PageClient.request = observe
         RemoteSession.execute = MagicMock(return_value=MagicMock(success=True))
         NotteSession.astart = local_start
         NotteSession.astop = local_stop
@@ -131,10 +133,14 @@ def test_successful_rerun_keeps_failure_after_sdk_context_closed(
 
         def test_target(request, monkeypatch):
             attempt = request.node.execution_count
-            monkeypatch.setattr(RemoteSession, "scrape", lambda self, **kwargs: "" if attempt == 1 else "page")
             with NotteClient(api_key="fixture-diagnostic-key-value") as client:  # pragma: allowlist secret
+                monkeypatch.setattr(client.sessions.page, "scrape", lambda *args, **kwargs: "" if attempt == 1 else "page")
                 data = client.scrape(url="https://www.notte.cc")
-            assert LIFECYCLE[-2:] == ["remote-observe", "remote-stop"]
+            if attempt == 1:
+                assert LIFECYCLE[-2:] == ["remote-observe", "remote-stop"]
+            else:
+                assert LIFECYCLE[-1:] == ["remote-stop"]
+                assert LIFECYCLE.count("remote-observe") == 1
             assert data, "first attempt scrape was empty"
         """,
         extra_args=("-p", "xdist.plugin", "-n", "2"),
@@ -348,7 +354,7 @@ def test_remote_diagnostics_exclude_response_secrets_and_unrelated_observations(
     session.client.root_client.max_retries = 3
     session.response.cdp_url = "wss://private-browser.example.test/?token=private-cdp-token"
     session.response.steps = ["private-session-history"]
-    observed = session.observe.return_value
+    observed = session.client.page.request.return_value
     observed.metadata = SnapshotMetadata.model_validate(
         {
             "url": "https://www.notte.cc",
@@ -377,7 +383,7 @@ def test_remote_diagnostics_exclude_response_secrets_and_unrelated_observations(
     assert session.client.root_client.max_retries == 3
     session.status.assert_not_called()
 
-    session.observe.return_value.metadata.url = "https://unrelated.example.test/customer"
+    session.client.page.request.return_value.metadata.url = "https://unrelated.example.test/customer"
     diagnostics = flake_diagnostics.Diagnostics()
     diagnostics.remote(session)
     assert json.loads(diagnostics.files["session.json"]) == {
@@ -391,7 +397,7 @@ def test_remote_diagnostics_exclude_response_secrets_and_unrelated_observations(
     assert "outside the public test hosts" in diagnostics.files["observation.txt"]
     assert "private-" not in "\n".join(diagnostics.files.values())
 
-    session.observe.side_effect = RuntimeError("capture unavailable")
+    session.client.page.request.side_effect = RuntimeError("capture unavailable")
     diagnostics.remote(session)
     assert session.client.root_client.max_retries == 3
     assert "capture unavailable" in diagnostics.files["observation.txt.capture-error.txt"]
@@ -462,7 +468,54 @@ def test_redaction_covers_auth_headers_secrets_and_url_components(monkeypatch: p
         "api_key=private-inline-value\n"
         "https://private-user:private-password@example.com/private-path?token=private-query#private-fragment"  # pragma: allowlist secret
     )
-    assert "original browser error" in value
-    assert "https://example.com" in value
+    assert value.splitlines() == [
+        "original browser error [REDACTED]",
+        "[REDACTED]",
+        "[REDACTED]",
+        "Bearer [REDACTED]",
+        "[REDACTED]",
+        "https://example.com",
+    ]
     assert "fixture-key-value" not in value
     assert "private-" not in value
+
+
+@pytest.mark.parametrize(
+    "url, expected",
+    [
+        (
+            "https://example.com.attacker.invalid/private-path?token=private-query#private-fragment",
+            "https://example.com.attacker.invalid",
+        ),
+        (
+            "https://example.com@attacker.invalid/private-path?token=private-query",
+            "https://attacker.invalid",
+        ),
+        (
+            "https://attacker.invalid/private-path/https://example.com?next=private-query",
+            "https://attacker.invalid",
+        ),
+        (
+            "HTTPS://private-user:private-password@EXAMPLE.COM/private-path?token=private-query",  # pragma: allowlist secret
+            "https://example.com",
+        ),
+        (
+            "WsS://private-user:private-password@EXAMPLE.COM/private-path?token=private-query",  # pragma: allowlist secret
+            "wss://example.com",
+        ),
+        (
+            "https://private%40user:private%3Apassword@example.com/private-path",  # pragma: allowlist secret
+            "https://example.com",
+        ),
+        (
+            "https://example.com:8443/private-path?token=private-query",
+            "https://example.com",
+        ),
+        (
+            "https://[private-authority/private-path?token=private-query",
+            "[REDACTED URL]",
+        ),
+    ],
+)
+def test_url_redaction_retains_only_parsed_scheme_and_hostname(url: str, expected: str) -> None:
+    assert flake_diagnostics.redact(url) == expected
