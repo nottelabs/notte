@@ -57,6 +57,49 @@ _P = ParamSpec("_P")
 _R = TypeVar("_R")
 
 
+def _secret_key(key: str) -> bool:
+    normalized = key.casefold().replace("_", "").replace("-", "")
+    return any(
+        name in normalized for name in ("apikey", "token", "passwd", "password", "secret", "authorization", "cookie")
+    )
+
+
+def _quoted_value_end(text: str, start: int) -> int | None:
+    # Traceback source can retain Python string/bytes literal prefixes.
+    if text[start : start + 2].casefold() in ("br", "rb", "fr", "rf"):
+        start += 2
+    elif text[start : start + 1].casefold() in ("b", "r", "u", "f"):
+        start += 1
+    end = start
+    while end < len(text) and text[end] == "\\":
+        end += 1
+    if end == len(text) or text[end] not in ("'", '"'):
+        return None
+    escaped = end - start
+    quote = text[end]
+    atom = text[start : end + 1]
+    delimiter = atom * 3 if text.startswith(atom * 3, start) else atom
+    end = start + len(delimiter)
+    while end < len(text):
+        run_start = end
+        while end < len(text) and text[end] == "\\":
+            end += 1
+        slashes = end - run_start
+        # At each source/JSON escaping level, a closing quote has the opening
+        # escape width plus an even number of encoded backslashes. An escaped
+        # inner quote has an odd number and must remain inside the value.
+        if (
+            end < len(text)
+            and text[end] == quote
+            and slashes >= escaped
+            and (slashes - escaped) % (2 * (escaped + 1)) == 0
+            and text.startswith(delimiter, end - escaped)
+        ):
+            return end - escaped + len(delimiter)
+        end += 1
+    return len(text)
+
+
 def redact(text: str) -> str:
     # Resolve at write time: the selected tests load dotenv after fixture setup.
     for name, value in sorted(os.environ.items(), key=lambda pair: len(pair[1]), reverse=True):
@@ -64,11 +107,44 @@ def redact(text: str) -> str:
             text = text.replace(value, "[REDACTED]")
     text = re.sub(r"(?im)\b(?:authorization|proxy-authorization|cookie|set-cookie)\s*[:=][^\n]*", "[REDACTED]", text)
     text = re.sub(r"(?i)\bBearer\s+[^\s'\"<>]+", "Bearer [REDACTED]", text)
-    text = re.sub(
-        r"(?i)\b(?:api[_-]?key|access[_-]?token|refresh[_-]?token|password|secret)\b[\"']?\s*[:=]\s*[^\s,;<>]+",
-        "[REDACTED]",
-        text,
-    )
+    pieces: list[str] = []
+    cursor = 0
+    # Tokenize whole keys once. Searching for a keyword after a greedy key
+    # prefix can backtrack quadratically on long base64/opaque strings.
+    for key in re.finditer(r"[\w-]+", text):
+        if key.start() < cursor or not _secret_key(key[0]):
+            continue
+        start, end = key.span()
+        quoted_end = end
+        while quoted_end < len(text) and text[quoted_end] == "\\":
+            quoted_end += 1
+        if quoted_end < len(text) and text[quoted_end] in ("'", '"'):
+            delimiter = text[end : quoted_end + 1]
+            if start - len(delimiter) >= cursor and text.startswith(delimiter, start - len(delimiter)):
+                start -= len(delimiter)
+            end = quoted_end + 1
+        while end < len(text) and text[end].isspace():
+            end += 1
+        if end == len(text) or text[end] not in ":=":
+            continue
+        end += 1
+        while end < len(text) and text[end].isspace():
+            end += 1
+        quoted_end = _quoted_value_end(text, end)
+        if quoted_end is not None:
+            end = quoted_end
+        else:
+            while end < len(text):
+                if text[end] == "\\" and end + 1 < len(text):
+                    end += 2
+                elif text[end].isspace() or text[end] in ",;<>":
+                    break
+                else:
+                    end += 1
+        pieces.extend((text[cursor:start], "[REDACTED]"))
+        cursor = end
+    pieces.append(text[cursor:])
+    text = "".join(pieces)
 
     def origin(match: re.Match[str]) -> str:
         try:
@@ -99,7 +175,7 @@ def redact_json(value: JsonValue) -> JsonValue:
     if isinstance(value, list):
         return [redact_json(entry) for entry in value]
     if isinstance(value, dict):
-        return {redact(key): redact_json(entry) for key, entry in value.items()}
+        return {redact(key): "[REDACTED]" if _secret_key(key) else redact_json(entry) for key, entry in value.items()}
     return value
 
 
