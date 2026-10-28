@@ -24,10 +24,17 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: 0
           persist-credentials: false
+      - uses: ./.github/actions/ci-scope
+        id: scope
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ matrix.node }}
       - run: npm ci
       - run: npm run docs:test
+      # Generation inputs are already checked by node-sdk-ci's generated job,
+      # which feeds the required tests gate. Other reference changes still need
+      # a committed-output comparison, once, alongside both generator test runtimes.
       - run: npm run docs:check
+        if: matrix.node == 22 && !fromJSON(steps.scope.outputs.scope).node_generated
