@@ -65,8 +65,8 @@ async def keepalive_endpoint(
     finally:
         server.close()
         try:
-            # wait_closed() also waits for accepted connections. Drain aiohttp
-            # first so an idle keepalive cannot deadlock fixture teardown.
+            # Close aiohttp's accepted connections before awaiting server shutdown
+            # so idle keepalives cannot deadlock teardown on runtimes that wait for them.
             await runner.cleanup()
             await server.wait_closed()
             if idle_reader is not None:
