@@ -1,0 +1,42 @@
+name: Full baseline coverage
+
+on:
+  schedule:
+    - cron: '43 * * * *'
+  push:
+    branches: [main]
+    paths: ['scripts/ci_baseline.py', '.github/workflows/coverage-baseline.yml']
+  pull_request:
+    branches: [main]
+    paths: ['scripts/ci_baseline.py', 'tests/scripts/test_ci_baseline.py', '.github/workflows/coverage-baseline.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  policy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: python3 -m unittest discover -s tests/scripts -p test_ci_baseline.py
+
+  freshness:
+    name: Full baseline freshness
+    if: github.event_name != 'pull_request'
+    needs: policy
+    permissions:
+      contents: read
+      actions: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Require a complete, recent full scheduled run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -m scripts.ci_baseline
