@@ -276,7 +276,7 @@ class LLMEngine:
         self.provider_order: list[str] | None = provider_order
         self.reasoning: dict[str, Any] | None = reasoning
         self.extra_body: dict[str, Any] = dict(extra_body or {})
-        # seconds per HTTP attempt (transient failures are retried)
+        # Total seconds per HTTP attempt, including gateways that send keepalive bytes.
         self.timeout: float = timeout
         self.sc: StructuredContent = StructuredContent(inner_tag="json", fail_if_inner_tag=False)
 
@@ -515,12 +515,15 @@ class LLMEngine:
         async with httpx.AsyncClient(transport=self.transport) as client:
             for attempt, retry_delay in enumerate((*_TRANSIENT_RETRY_DELAYS_SECONDS, None), start=1):
                 try:
-                    response = await client.post(
-                        f"{self.settings.base_url}/chat/completions",
-                        headers={"Authorization": f"Bearer {key}"},
-                        json=body,
-                        timeout=self.timeout,
-                    )
+                    # HTTPX's read timeout resets for every chunk. OpenRouter can keep
+                    # an unfinished response alive with heartbeat frames indefinitely.
+                    async with asyncio.timeout(self.timeout):
+                        response = await client.post(
+                            f"{self.settings.base_url}/chat/completions",
+                            headers={"Authorization": f"Bearer {key}"},
+                            json=body,
+                            timeout=self.timeout,
+                        )
                     status = response.status_code
                     try:
                         payload: Any = response.json()
@@ -572,7 +575,7 @@ class LLMEngine:
                     ):
                         raise ContentFilterError(model, "finish_reason=content_filter")
                     return cast(dict[str, Any], payload)
-                except (httpx.TimeoutException, httpx.TransportError) as e:
+                except (TimeoutError, httpx.TimeoutException, httpx.TransportError) as e:
                     if retry_delay is not None:
                         logger.warning(f"Transient {type(e).__name__} from {model} (attempt {attempt}); retrying")
                         await asyncio.sleep(retry_delay)

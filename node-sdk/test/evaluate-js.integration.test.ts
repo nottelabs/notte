@@ -21,10 +21,11 @@ describe('evaluateJs and fetch Integration Tests', () => {
 
   it('evaluates JavaScript and returns the stringified value', async () => {
     await client.Session({ proxies: false, open_viewer: false }).use(async session => {
-      await session.execute(actions.goto({ url: 'https://example.com' }));
+      const page = await session.page();
+      await page.setContent('<!doctype html><title>Evaluate JavaScript fixture</title><p>Controlled test page</p>');
 
       expect(await session.evaluateJs('1 + 1')).toBe('2');
-      expect(await session.evaluateJs('document.title')).toBe('Example Domain');
+      expect(await session.evaluateJs('document.title')).toBe('Evaluate JavaScript fixture');
       expect(JSON.parse(await session.evaluateJs('({ a: [1, 2] })'))).toEqual({ a: [1, 2] });
       expect(await session.evaluateJs('(async () => { await new Promise(r => setTimeout(r, 10)); return "done"; })()')).toBe('done');
 

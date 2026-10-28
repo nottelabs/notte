@@ -21,7 +21,9 @@ Fast perception lists the page's actions with their IDs and selectors. It does n
 
 ## Observe instructions
 
-`<<ALTERNATIVE FOR instructions: session.act() — pending>>`
+Use [`session.act(instruction)`](/features/sessions/act) instead. It observes the page, picks the action that carries out the instruction and runs it, so `session.observe(instructions="...")` followed by `session.execute(...)` becomes `session.act("...")`. `act()` runs on local sessions of the Python SDK (`notte.Session`, with `pip install "notte[llm]"`); `session.choose()` and `session.check()` answer typed questions about the page.
+
+Cloud sessions (`client.Session`) and the TypeScript SDK do not run `act()` yet. There, call `observe()` without `instructions` and pick the next action from the actions it returns, for example by passing them to your own LLM: in Python, choose among `observation.space.actions` and pass the chosen action to `session.execute(action)`; in TypeScript, execute it by its type and ID, for example `session.execute({ type: 'click', id: 'B1' })`, or build it with the typed action helpers (`actions.fill({ ... })`).
 
 ## Response headers
 

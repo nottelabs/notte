@@ -46,7 +46,9 @@ string argument is accepted as the perception type.
 Deprecated: `perception_type: 'deep'` and `instructions` are removed on
 December 1, 2026, and each warns once per session. Use `perception_type:
 'fast'` (the default) instead of `'deep'`. For `instructions`:
-`<<ALTERNATIVE FOR instructions: session.act() — pending>>`. See https://docs.notte.cc/features/sessions/observe-migration
+the Python SDK's local sessions replace it with `session.act()`; here, call
+`observe()` without it and pick from the returned actions. See
+https://docs.notte.cc/features/sessions/observe-migration
 </Card>
 
 <Card title="Execute" icon="shoe-prints" href="/typescript-sdk-reference/session/execute">

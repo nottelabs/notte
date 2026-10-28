@@ -22,6 +22,9 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   `OPENROUTER_API_KEY` secret as `NOTTE_LLM_API_KEY` with `google/...` model
   IDs. Don't point them at a provider's direct API key; the shared direct
   Gemini key hits rate limits. Only `llm-provider-matrix` tests direct routes.
+- OpenRouter can send heartbeat frames while an LLM response is pending. HTTPX read
+  timeouts reset per chunk; keep the total per-attempt deadline in `LLMEngine` so a
+  pending response cannot run until pytest-timeout terminates an xdist worker.
 - Live CI prefers `NOTTE_API_KEY_CI_PY` over the legacy `NOTTE_API_KEY` secret.
   Staging persona 403s naming the `CI/CD` workspace indicate a token/workspace
   mismatch. Lucas must supply the workspace-matched `NOTTE_API_KEY_CI_PY`;
@@ -46,6 +49,9 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
 - README live CI uses the official HTTPS Ubuntu archive in the runner's
   `/etc/apt/apt-mirrors.txt`; the Azure mirror has stalled Chromium dependency
   installation before the examples could run.
+- For self-contained Node SDK integration pages, use
+  `(await session.page()).setContent(...)`. The hosted `goto` action currently
+  normalizes `data:` URLs to HTTPS URLs.
 - Browser settle regressions are in `tests/browser/test_execute_settle.py`
   and `tests/browser/test_settle_rules.py` and use a local server. Use the
   lockfile's Patchright environment: an older installed version can fail the
@@ -120,6 +126,10 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   `scripts/ci_integration_examples.py`) install the local `node-sdk` with
   `npm install --no-save`. Don't add `--package-lock=false`: it ignores the
   example's lockfile, so a new upstream release can break CI.
+- Chosen-model scraping integration tests use the self-hosted
+  `test-resources-lovat.vercel.app/upload_fixture.html` page, shared with file-storage
+  tests. Assert its exact heading: an example.com rate-limit page can be scraped
+  successfully while containing the wrong content for the extraction test.
   Python checks install each example's locked published SDK before source validation;
   adopting a new SDK API also requires updating its `pyproject.toml` and `uv.lock`.
   Published SDKs 1.9.7 and 1.10.0 need `NOTTE_ENABLE_NEST_ASYNCIO=false` before import for
