@@ -10,7 +10,7 @@ runs:
     - name: Test suite selection
       shell: bash
       working-directory: ${{ github.workspace }}
-      run: python3 -m unittest discover -s tests/scripts -p test_ci_scope.py
+      run: python3 -m unittest discover -s tests/scripts -p 'test_ci_scope*.py'
     - name: Select relevant suites
       id: scope
       shell: bash
