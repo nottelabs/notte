@@ -216,11 +216,13 @@ class ActHistory:
         return {e.typed.element_id for e in self.entries if e.typed is not None and e.typed.before is None}
 
     def recent(self, limit: int = HISTORY_SIZE) -> list[dict[str, Any]]:
+        # The page an action left is `previous_page`: under `page`, deciders read it as the page the action led to
+        # and doubt the current one (a goal page opened by a click looked unopened).
         return [
             {"action": e.action, "kind": e.kind, "text": e.text, "page_changed": e.page_changed}
             | ({} if e.error is None else {"error": e.error})
             | ({} if e.typed is None or e.typed.before is not None else {"submitted": False})
-            | ({} if not e.left_page or e.page is None else {"page": e.page.model_dump()})
+            | ({} if not e.left_page or e.page is None else {"previous_page": e.page.model_dump()})
             for e in list(self.entries)[-limit:]
         ]
 
@@ -604,7 +606,8 @@ def _write_context(
         },
         recent_actions=history.privacy.payload(
             [
-                {"action": e["action"], "text": e["text"]} | ({} if "page" not in e else {"page": e["page"]})
+                {"action": e["action"], "text": e["text"]}
+                | ({} if "previous_page" not in e else {"previous_page": e["previous_page"]})
                 for e in history.recent(WRITER_HISTORY_SIZE)
             ]
         ),
