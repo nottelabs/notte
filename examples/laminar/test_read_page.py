@@ -206,7 +206,8 @@ class LaminarTests(unittest.IsolatedAsyncioTestCase):
         async with owned() as ids:
             original = read_page.async_playwright
             with patch.object(read_page, "async_playwright", driver):
-                async with cleanup_deadline:
+                # Also bound setup and title reads before the cleanup fault starts.
+                async with asyncio.timeout(45), cleanup_deadline:
                     with self.assertRaisesRegex(RuntimeError, "failed during reading the title") as failure:
                         await read_page.read_page()
         self.assertEqual(disconnected, [True])
