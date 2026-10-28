@@ -31,6 +31,7 @@ def test_dependency_suites_start_independently_without_credentials() -> None:
     checkouts = [step for step in compatible["steps"] if "checkout@" in step.get("uses", "")]
     assert len(checkouts) == 1
     assert checkouts[0]["with"]["ref"] == "${{ github.event.pull_request.head.sha || github.sha }}"
+    assert checkouts[0]["with"]["persist-credentials"] is False
     assert "pr_number" not in str(compatible)
     assert "github.event.inputs" not in str(compatible)
 
