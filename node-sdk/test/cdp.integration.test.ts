@@ -35,7 +35,17 @@ describe('CDP Integration Tests', () => {
       const browser = await chromium.connectOverCDP(cdpUrl);
       try {
         const page = browser.contexts()[0].pages()[0];
-        await page.goto('https://www.google.com');
+        const fixtureUrl = 'https://cdp-fixture.notte.test/';
+        await page.route(fixtureUrl, route => route.fulfill({
+          status: 200,
+          contentType: 'text/html',
+          body: '<!doctype html><title>CDP fixture</title><h1>Connected over CDP</h1>',
+        }));
+        const response = await page.goto(fixtureUrl);
+        expect(response?.status()).toBe(200);
+        expect(page.url()).toBe(fixtureUrl);
+        expect(await page.title()).toBe('CDP fixture');
+        expect(await page.locator('h1').innerText()).toBe('Connected over CDP');
         const path = join(tempDir, 'screenshot.png');
         await page.screenshot({ path });
         const png = await readFile(path);
@@ -50,14 +60,21 @@ describe('CDP Integration Tests', () => {
     await client.Session({ proxies: false }).use(async session => {
       const page = await session.page();
       expect(await session.page()).toBe(page);
-      await page.goto('https://example.com');
+      const firstUrl = 'https://cdp-fixture.notte.test/first';
+      const nextUrl = 'https://cdp-fixture.notte.test/next';
+      await page.route('https://cdp-fixture.notte.test/**', route => route.fulfill({
+        status: 200,
+        contentType: 'text/html',
+        body: '<!doctype html><title>Dialog fixture</title><h1>Navigation completed</h1>',
+      }));
+      await page.goto(firstUrl);
       await page.evaluate("window.onbeforeunload = () => 'leave?'");
 
-      const result = await session.execute(actions.goto({ url: 'https://example.org' }), { raiseOnFailure: true });
+      const result = await session.execute(actions.goto({ url: nextUrl }), { raiseOnFailure: true });
 
-      await page.waitForURL('https://example.org/**');
+      await page.waitForURL(nextUrl);
       expect(result.success).toBe(true);
-      expect(await page.title()).toBe('Example Domain');
+      expect(await page.title()).toBe('Dialog fixture');
     });
   });
 });
