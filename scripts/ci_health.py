@@ -32,7 +32,7 @@ def expired(_number: int, _frame: FrameType | None) -> None:
 
 
 def read(url: str, key: str = "", payload: dict[str, Json] | None = None) -> dict[str, Json]:
-    headers = {"Accept": "application/json"}
+    headers = {"Accept": "application/json", "User-Agent": "notte-ci-health/1.0"}
     if key:
         headers["Authorization"] = f"Bearer {key}"
     if payload is not None:

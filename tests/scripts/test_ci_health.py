@@ -55,6 +55,10 @@ def test_staging_health_requires_the_usage_read_to_succeed(monkeypatch: pytest.M
     def respond(request, **kwargs):
         urls.append(request.full_url)
         assert kwargs == {"timeout": 10}
+        assert request.get_header("User-agent") == "notte-ci-health/1.0"
+        assert request.get_header("Authorization") == (
+            None if request.full_url.endswith("/health") else "Bearer fixture-private-key"
+        )
         payload = {"version": "fixture-version"} if request.full_url.endswith("/health") else {"items": []}
         return io.BytesIO(json.dumps(payload).encode())
 
