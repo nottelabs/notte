@@ -30,10 +30,19 @@ def report(needs: dict[str, Need], jobs: list[Job], trusted: bool) -> tuple[str,
         if family == "python":
             selected |= scope.get("file_checks") is True
         result = needs[family]["result"]
-        # A selected family can be entirely credentialed (for example a live-only
-        # test change in a fork). Such a run is explicitly incomplete, not verified.
-        excluded = selected and result == "skipped" and not trusted
-        selection = "credentials withheld" if excluded else "selected" if selected else "outside this diff"
+        live_flags = flags & {
+            "python_live",
+            "node_live",
+            "docs_live",
+            "paired_live",
+            "readme_live",
+            "llm_provider_live",
+        }
+        withheld = not trusted and any(scope.get(flag) is True for flag in live_flags)
+        excluded = selected and result == "skipped" and withheld
+        selection = (
+            "selected; live credentials withheld" if withheld else "selected" if selected else "outside this diff"
+        )
         lines.append(f"| {family} | {selection} | {result} |")
         complete &= result not in {"failure", "cancelled"} and (not selected or result == "success" or excluded)
 

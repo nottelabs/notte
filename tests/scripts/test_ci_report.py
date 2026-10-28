@@ -76,6 +76,17 @@ def test_fork_still_requires_selected_offline_jobs() -> None:
     assert not report(needs({"node_static": True}), [], False)[1]
 
 
+def test_mixed_fork_suite_reports_withheld_live_coverage_after_offline_success() -> None:
+    jobs: list[Job] = [
+        {"name": "node / tests (22)", "conclusion": "success"},
+        {"name": "node / tests (24)", "conclusion": "success"},
+        {"name": "node / integration-tests", "conclusion": "skipped"},
+    ]
+    summary, accepted = report(needs({"node_static": True, "node_live": True}), jobs, False)
+    assert accepted
+    assert "| node | selected; live credentials withheld | success |" in summary
+
+
 def test_partial_reruns_keep_successful_siblings_without_using_old_failures() -> None:
     from tests.scripts.test_ci_staging_scope import workflow
 
