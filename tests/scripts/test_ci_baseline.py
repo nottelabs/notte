@@ -29,6 +29,8 @@ class BaselineTests(unittest.TestCase):
             for name in (
                 "registered-examples / checks",
                 "example-tests",
+                "registered-examples / agent-models (openai-agents)",
+                "registered-examples / agent-models (claude-agents)",
                 "registered-examples / live (1/2)",
                 "registered-examples / live (2/2)",
             )

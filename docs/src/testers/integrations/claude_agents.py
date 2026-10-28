@@ -10,7 +10,7 @@ from notte_sdk import NotteClient
 async def main() -> dict[str, str]:
     with NotteClient().Session(max_duration_minutes=3) as session:
         options = ClaudeAgentOptions(
-            model="claude-haiku-5-5",
+            model=os.getenv("ANTHROPIC_MODEL", "claude-haiku-5-5"),
             tools=[],
             setting_sources=[],
             strict_mcp_config=True,

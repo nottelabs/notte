@@ -63,6 +63,22 @@ def model_endpoint(responses, status=200):
 
 
 class NativeProtocolTests(unittest.IsolatedAsyncioTestCase):
+    async def test_time_budget_covers_connection_setup(self):
+        started = asyncio.Event()
+
+        @asynccontextmanager
+        async def stalled_connection():
+            started.set()
+            await asyncio.Future()
+            yield
+
+        with patch.object(demo, "owned_connection", new=stalled_connection):
+            with self.assertRaisesRegex(demo.BrowserTaskError, "Yutori time limit reached") as caught:
+                await demo.run("Read the title", timeout_seconds=0.01, client=object())
+        self.assertTrue(started.is_set())
+        self.assertIsNone(caught.exception.__cause__)
+        self.assertTrue(caught.exception.__suppress_context__)
+
     async def test_invalid_time_budget_is_rejected_before_connection(self):
         with patch.object(demo, "AsyncNotteClient") as client:
             for timeout in (0, -1, 121, float("inf"), float("nan")):

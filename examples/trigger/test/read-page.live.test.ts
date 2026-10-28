@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { setTimeout } from 'node:timers/promises';
 import { NotteClient, sessionStatus } from 'notte-sdk';
+import { chromium } from 'playwright-core';
 import { readPage } from '../src/trigger/read-page.ts';
 
 const live = process.env.NOTTE_TRIGGER_LIVE === '1';
@@ -44,10 +45,26 @@ async function trackSessions(run: () => Promise<void>) {
 test('Trigger task browser handler', { skip: !live, timeout: 120_000 }, async (t) => {
   assert.ok(process.env.NOTTE_API_KEY);
   assert.ok(process.env.NOTTE_API_URL, 'Choose the test API explicitly');
+  const fixtureUrl = 'https://trigger-fixture.notte.test/read';
+  const connect = chromium.connectOverCDP.bind(chromium);
+  let fixtureRequests = 0;
+  t.mock.method(chromium, 'connectOverCDP', async (...args: Parameters<typeof chromium.connectOverCDP>) => {
+    const browser = await connect(...args);
+    await browser.contexts()[0].route(fixtureUrl, route => {
+      fixtureRequests++;
+      return route.fulfill({
+        status: 200,
+        contentType: 'text/html',
+        body: '<!doctype html><title>Trigger fixture</title><h1>Owned browser fixture</h1>',
+      });
+    });
+    return browser;
+  });
   await t.test('reads the page and closes its browser', () => trackSessions(async () => {
-    const result = await readPage({ url: 'https://example.com' });
-    assert.equal(result.title, 'Example Domain');
+    const result = await readPage({ url: fixtureUrl });
+    assert.equal(result.title, 'Trigger fixture');
     assert.ok(result.session_id);
+    assert.equal(fixtureRequests, 1, 'The real browser must read the intercepted fixture');
   }));
   await t.test('closes its browser when navigation fails', () => trackSessions(async () => {
     await assert.rejects(readPage({ url: 'https://missing.notte.invalid' }), /Notte browser task failed during navigation/);
