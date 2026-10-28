@@ -20,7 +20,8 @@ with notte.Session() as session:
     # act() decides each step and writes field values with the RunAnywhere model
     result = session.act("type Ada Lovelace in the search box")
     result = session.act("open the Ada Lovelace article")
-    assert result.success
+    # a successful step is not proof of the destination: ask about the page itself
+    assert result.success and session.check("Is this the Ada Lovelace article?") >= 0.5
 
     # structured extraction uses the same endpoint
     article = session.scrape(instructions="Extract the article title and birth date", response_format=Article)
