@@ -21,6 +21,7 @@ import verifiers.v1 as vf
 from mcp import ClientSession
 from mcp.client.streamable_http import streamable_http_client
 from mcp.server.mcpserver import MCPServer
+from notte_sdk.errors import NotteAPIError
 from playwright.async_api import BrowserType
 
 LIVE = os.getenv("NOTTE_PRIME_LIVE") == "1"
@@ -89,6 +90,19 @@ async def native_tools(task, trace):
             state_server.shutdown()
             state_server.server_close()
             thread.join(timeout=2)
+
+
+async def release_session(client, session_id: str) -> None:
+    """Stop a test-owned session unless it is closed. It can stop between the status read and the stop."""
+    if (await asyncio.to_thread(client.sessions.status, session_id)).status == "closed":
+        return
+    try:
+        await asyncio.to_thread(client.sessions.stop, session_id)
+    except NotteAPIError as error:
+        # the API's answers for a session that stopped meanwhile (as `RemoteSession.stop` accepts them)
+        message = str(error).lower()
+        if "already stopped" not in message and "already closed" not in message:
+            raise
 
 
 async def wait_until_closed(client, session_id: str) -> None:
@@ -225,9 +239,7 @@ class BrowserTests(unittest.IsolatedAsyncioTestCase):
             if LIVE:
                 for session in owned:
                     if session.response is not None:
-                        status = await asyncio.to_thread(client.sessions.status, session.session_id)
-                        if status.status != "closed":
-                            await asyncio.to_thread(client.sessions.stop, session.session_id)
+                        await release_session(client, session.session_id)
                         await wait_until_closed(client, session.session_id)
 
     async def test_native_mcp_browser_and_reward(self):
@@ -480,9 +492,7 @@ class BrowserTests(unittest.IsolatedAsyncioTestCase):
                     if LIVE:
                         for session in sessions:
                             if session.response is not None:
-                                status = await asyncio.to_thread(client.sessions.status, session.session_id)
-                                if status.status != "closed":
-                                    await asyncio.to_thread(client.sessions.stop, session.session_id)
+                                await release_session(client, session.session_id)
                                 await wait_until_closed(client, session.session_id)
 
     async def test_failed_creation_preserves_safe_error_and_clears_owner(self):
@@ -597,9 +607,48 @@ class BrowserTests(unittest.IsolatedAsyncioTestCase):
         finally:
             # Keep a failing assertion from leaking its test-owned resource.
             for session_id in ids:
-                status = await asyncio.to_thread(client.sessions.status, session_id)
-                if status.status != "closed":
-                    await asyncio.to_thread(client.sessions.stop, session_id)
+                await release_session(client, session_id)
             server.shutdown()
             server.server_close()
             thread.join(timeout=2)
+
+
+class ReleaseSessionTests(unittest.IsolatedAsyncioTestCase):
+    """The live cleanup helper, against a scripted sessions API."""
+
+    @staticmethod
+    def client(status: str, stop_error: str | None = None) -> SimpleNamespace:
+        stopped: list[str] = []
+
+        def stop(session_id: str) -> None:
+            stopped.append(session_id)
+            if stop_error is not None:
+                response = SimpleNamespace(status_code=400, json=lambda: {"detail": stop_error})
+                raise NotteAPIError(path=f"sessions/{session_id}/stop", response=response)
+
+        return SimpleNamespace(
+            sessions=SimpleNamespace(status=lambda _session_id: SimpleNamespace(status=status), stop=stop),
+            stopped=stopped,
+        )
+
+    async def test_a_closed_session_is_not_stopped(self):
+        client = self.client("closed")
+        await release_session(client, "s1")
+        self.assertEqual(client.stopped, [])
+
+    async def test_an_active_session_is_stopped(self):
+        client = self.client("active")
+        await release_session(client, "s1")
+        self.assertEqual(client.stopped, ["s1"])
+
+    async def test_a_session_that_stopped_since_its_status_is_released(self):
+        for answer in ("Session s1 is already stopped.", "Session s1 is already closed."):
+            with self.subTest(answer=answer):
+                client = self.client("active", answer)
+                await release_session(client, "s1")
+                self.assertEqual(client.stopped, ["s1"])
+
+    async def test_another_stop_error_fails(self):
+        client = self.client("active", "Session s1 not found.")
+        with self.assertRaises(NotteAPIError):
+            await release_session(client, "s1")
