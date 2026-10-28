@@ -1112,6 +1112,17 @@ I1[:]<input type="text" name="q"></input>"""
     assert privacy.payload({"recent": ["private-first\nprivate-second"]}) == {"recent": ["{{note}}"]}
 
 
+def test_a_protected_value_with_repeated_spaces_is_masked_as_the_page_collapses_it() -> None:
+    from notte_core.act.privacy import ActPrivacy
+
+    privacy = ActPrivacy()
+    privacy.remember({"note": "private-first  private-second", "code": "\tprivate-code "})
+    # accessible names collapse and trim whitespace
+    assert privacy.text("Send private-first private-second") == "Send {{note}}"
+    assert privacy.text("Code: private-code.") == "Code: {{code}}."
+    assert privacy.text("private-first  private-second") == "{{note}}"
+
+
 def test_controls_outside_the_viewport_read_as_what_they_are_and_where() -> None:
     # long enough to scroll, short enough not to be cut (`MAX_PAGE_TEXT_LENGTH`)
     filler = "\n".join(f"_[:]Paragraph {i}: " + "lorem ipsum dolor sit amet " * 8 for i in range(30))

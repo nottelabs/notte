@@ -1,7 +1,10 @@
 // Inner scroll boxes do not change the document's viewport dimensions. Read their
-// available directions and the boxes to target when act() executes a scroll.
-() => {
+// available directions and the boxes to target when act() executes a scroll. In a
+// frame, its document scrolls as such a box. With `frameElement` (an iframe of this
+// document), its CSS path instead, or null when it is out of sight.
+(frameElement) => {
     const targets = {};
+    const inFrame = window !== window.top;
     const roots = [document];
     // A form's named controls can hide its own DOM properties and methods.
     const getter = (prototype, name) => {
@@ -66,14 +69,19 @@
         for (; hit; hit = parent(hit)) if (hit === el) return true;
         return false;
     };
+    if (frameElement) return visible(frameElement) ? selector(frameElement) : null;
     for (const root of roots) {
         for (const el of root.querySelectorAll('*')) {
             if (shadowRoot(el)) roots.push(shadowRoot(el));
-            if (el === scrollingElement) continue;
+            // the top document scrolls with the page's viewport, a frame's document as an inner box
+            if (el === scrollingElement && !inFrame) continue;
             const max = scrollHeight(el) - clientHeight(el);
             if (max <= 1) continue;
             const style = getComputedStyle(el);
-            if (!/^(auto|scroll|overlay)$/.test(style.overflowY) || !visible(el)) continue;
+            const scrolls = el === scrollingElement
+                ? !/^(hidden|clip)$/.test(style.overflowY)
+                : /^(auto|scroll|overlay)$/.test(style.overflowY);
+            if (!scrolls || !visible(el)) continue;
             const reversed = /^(flex|inline-flex)$/.test(style.display) && style.flexDirection === 'column-reverse';
             const lower = reversed ? -max : 0, upper = reversed ? 0 : max;
             const path = selector(el);

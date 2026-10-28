@@ -24,7 +24,8 @@ class _Patterns:
     source: tuple[tuple[str, str], ...]
     # every protected literal, and the `{{name}}` placeholders, in one pattern
     literals: re.Pattern[str]
-    # a protected value with line breaks as the page may show it, and its placeholder
+    # a protected value with other whitespace than single spaces (line breaks, repeated spaces, tabs, at its ends) as
+    # the page may show it, and its placeholder
     multiline: tuple[tuple[re.Pattern[str], str], ...]
 
 
@@ -85,18 +86,20 @@ class ActPrivacy:
             pattern = r"\{\{[A-Za-z_][A-Za-z0-9_]*\}\}|" + "|".join(re.escape(key) for key in literals)
             multiline: list[tuple[re.Pattern[str], str]] = []
             for literal in literals:
-                if "\n" not in literal and "\r" not in literal:
+                # accessible names and rendered text collapse and trim whitespace
+                if " ".join(literal.split()) == literal:
                     continue
-                parts = [re.escape(part) for part in re.split(r"\s+", literal.strip()) if part]
-                if len(parts) < 2:
+                parts = [re.escape(part) for part in literal.split()]
+                if not parts:
                     continue
                 multiline.append((re.compile(_LINE_BREAK.join(parts)), self.replacements[literal]))
             self._patterns = _Patterns(source, re.compile(pattern), tuple(multiline))
         return self._patterns
 
     def _multiline(self, value: str) -> str:
-        """Mask the protected values that span lines wherever the page shows them: with other whitespace between
-        their lines, or as consecutive lines of the rendered page (each with its `_[:]` / `I1[:]` prefix)."""
+        """Mask the protected values with other whitespace than single spaces wherever the page shows them: with
+        their whitespace collapsed or trimmed, or as consecutive lines of the rendered page (each with its `_[:]` /
+        `I1[:]` prefix)."""
         if not self.replacements:
             return value
         for pattern, placeholder in self._compiled().multiline:

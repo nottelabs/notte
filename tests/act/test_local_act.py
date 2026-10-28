@@ -1999,6 +1999,37 @@ async def test_act_scrolls_the_discovered_box_instead_of_the_box_under_the_mouse
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("scroller", ["document", "box"])
+async def test_act_scrolls_an_embedded_form_the_page_does_not_scroll(session: NotteSession, scroller: str) -> None:
+    long = '<div style="height:1600px">Form</div><button>Submit</button>'
+    inner = long if scroller == "document" else f'<div id="list" style="height:160px;overflow-y:auto">{long}</div>'
+    await session.window.page.set_content(
+        "<style>body{margin:0;overflow:hidden}</style><p>Apply</p>"
+        + '<iframe style="height:200px;width:300px" srcdoc="'
+        + html.escape(f"<style>body{{margin:0}}</style>{inner}")
+        + '"></iframe>'
+    )
+    frame = session.window.page.frames[1]
+    await frame.wait_for_selector("button", state="attached")
+    target = "document.scrollingElement" if scroller == "document" else "document.querySelector('#list')"
+    decider = FakeDecider(choices=[{"operation": "DONE"}])
+    _ = await session.aact("Submit the form", decider=decider, dry_run=True)
+    assert set(decider.questions[-1]["operation"].criteria) & {"SCROLL_UP", "SCROLL_DOWN"} == {"SCROLL_DOWN"}
+    decider = FakeDecider(choices=[{"operation": "SCROLL_DOWN"}])
+    result = await session.aact("Submit the form", decider=decider)
+    assert result.success, result.message
+    assert await frame.evaluate(f"{target}.scrollTop") > 0
+    assert await session.window.page.evaluate("document.scrollingElement.scrollTop") == 0
+    # an embedded form out of sight offers no scroll
+    _ = await session.window.page.evaluate(
+        "document.querySelector('iframe').style.cssText += 'position:fixed;top:-2000px'"
+    )
+    decider = FakeDecider(choices=[{"operation": "DONE"}])
+    _ = await session.aact("Submit the form", decider=decider, dry_run=True)
+    assert not set(decider.questions[-1]["operation"].criteria) & {"SCROLL_UP", "SCROLL_DOWN"}
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "hidden",
     [

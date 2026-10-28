@@ -116,7 +116,7 @@ from notte_browser import execution
 from notte_browser.action_space import build_action_space
 from notte_browser.captcha import captcha_solver_available
 from notte_browser.dom.locate import locate_element
-from notte_browser.driver import JSHandle, Locator, Page
+from notte_browser.driver import Frame, JSHandle, Locator, Page
 from notte_browser.errors import (
     BrowserNotStartedError,
     CaptchaSolverNotAvailableError,
@@ -211,7 +211,7 @@ class LocalActDriver:
         else:
             page = ObservedPage.from_observation(observation)
         try:
-            inner_scroll: dict[Literal["up", "down"], str] = await self.session.window.page.evaluate(_INNER_SCROLL_JS)
+            inner_scroll = await self._inner_scroll()
         except PlaywrightError:
             # navigated meanwhile: the next observation reads the new page
             inner_scroll = {}
@@ -220,6 +220,44 @@ class LocalActDriver:
             self._signatures = await self._read_signatures(signature_xpaths(page))
             page = replace(page, readonly=self._signatures.readonly())
         return page
+
+    async def _inner_scroll(self) -> dict[Literal["up", "down"], str]:
+        """The inner scroll boxes a scroll targets (`js/act_scroll_directions.js`): the page's first, then those of its
+        frames in sight, each with a selector that enters its frames."""
+        page = self.session.window.page
+        targets: dict[Literal["up", "down"], str] = await page.evaluate(_INNER_SCROLL_JS)
+        # the selector prefix that enters each frame, None for a frame out of sight
+        prefixes: dict[Frame, str | None] = {page.main_frame: ""}
+
+        async def prefix(frame: Frame) -> str | None:
+            if frame not in prefixes:
+                parent = frame.parent_frame
+                outer = None if parent is None else await prefix(parent)
+                prefixes[frame] = None
+                if outer is not None:
+                    element = await frame.frame_element()
+                    try:
+                        path: str | None = await element.evaluate(f"element => ({_INNER_SCROLL_JS})(element)")
+                    finally:
+                        await element.dispose()
+                    if path is not None:
+                        prefixes[frame] = f"{outer}css={path} >> internal:control=enter-frame >> "
+            return prefixes[frame]
+
+        for frame in page.frames:
+            if frame is page.main_frame or ("up" in targets and "down" in targets):
+                continue
+            try:
+                outer = await prefix(frame)
+                if outer is None:
+                    continue
+                inner: dict[Literal["up", "down"], str] = await frame.evaluate(_INNER_SCROLL_JS)
+            except PlaywrightError:
+                # detached meanwhile
+                continue
+            for direction, path in inner.items():
+                _ = targets.setdefault(direction, f"{outer}css={path}")
+        return targets
 
     async def _can_go_back(self) -> bool:
         """Whether the tab has a page of its own to go back to: not when a link opened it (no previous entry), nor on
