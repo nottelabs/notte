@@ -13,6 +13,7 @@ import pytest
 import yaml
 
 from scripts import ci_scope
+from scripts.ci_validation import Need, assess
 
 WORKFLOWS = Path(__file__).resolve().parents[2] / ".github/workflows"
 
@@ -75,7 +76,7 @@ def test_unit_suite_never_waits_for_or_cleans_up_staging() -> None:
     jobs = workflow("test-cicd.yml")["jobs"]
     offline = jobs["tests"]
     live = jobs["staging-and-live"]
-    assert "concurrency" not in offline
+    assert offline["concurrency"]["group"].startswith("notte-offline-")
     assert "${{ secrets." not in str(offline)
     assert "Wait for the API to be ready" not in str(offline)
     assert "Cleanup vaults created by this run" not in str(offline)
@@ -217,11 +218,10 @@ def test_periodic_coverage_and_cancellation_boundaries_are_preserved() -> None:
     assert "concurrency" not in workflow("ci.yml")
     for name in ci_scope.WORKFLOWS:
         config = workflow(name)
+        assert "concurrency" not in config
         if name in {"test-cicd.yml", "node-sdk-ci.yml"}:
             assert triggers(config)["schedule"] == [{"cron": "0 */4 * * 1-5"}]
-            assert config["concurrency"]["cancel-in-progress"] == "${{ github.event_name == 'pull_request' }}"
         else:
-            assert "concurrency" not in config
             assert "schedule" not in triggers(config)
     inputs = triggers(workflow("test-cicd.yml"))["workflow_dispatch"]["inputs"]
     assert inputs["pr_number"]["required"] is True
@@ -282,16 +282,14 @@ def test_required_gate_waits_for_all_families_and_fails_closed(
     job = workflow("ci.yml")["jobs"]["tests"]
     assert job["if"] == "always()"
     assert set(job["needs"]) == {"changes", *ci_scope.GROUPS}
-    results = {name: {"result": "skipped"} for name in job["needs"]}
+    results: dict[str, Need] = {name: {"result": "skipped", "outputs": {}} for name in job["needs"]}
+    scope = json.dumps({flag: False for flag in ci_scope.ALL})
+    results["changes"]["outputs"] = {"scope": scope, "selected_scope": scope, "live_deferred": "false"}
     results["changes"]["result"] = changes
     results[family]["result"] = selected
-    result = subprocess.run(
-        ["bash", "-e", "-o", "pipefail", "-c", job["steps"][0]["run"]],
-        env={**os.environ, "RESULTS": json.dumps(results)},
-        capture_output=True,
-        text=True,
-    )
-    assert result.returncode == expected, result.stdout + result.stderr
+    gate = next(step for step in job["steps"] if "RESULTS" in step.get("env", {}))
+    assert gate["run"] == "python3 -m scripts.ci_validation gate"
+    assert assess(results)[1] is (expected == 0)
 
 
 def test_native_examples_have_one_existing_required_owner() -> None:
@@ -303,16 +301,16 @@ def test_native_examples_have_one_existing_required_owner() -> None:
     assert not (WORKFLOWS / "gemini-computer-use-integration.yml").exists()
     assert not (WORKFLOWS / "selenium-integration.yml").exists()
     jobs = workflow("paired-sdk-examples.yml")["jobs"]
-    assert set(jobs) == {"changes", "checks", "live", "agent-models"}
-    assert set(jobs["agent-models"]["needs"]) == {"changes", "checks"}
+    assert set(jobs) == {"changes", "checks", "native-checks", "live", "agent-models"}
+    assert jobs["agent-models"]["needs"] == "changes"
     assert jobs["agent-models"]["timeout-minutes"] == 20
     assert not jobs["agent-models"].get("continue-on-error")
     assert jobs["live"]["env"]["NOTTE_DOCS_SHARD"] == "${{ matrix.shard }}"
     assert jobs["live"]["timeout-minutes"] == 20
-    assert set(jobs["live"]["needs"]) == {"changes", "checks"}
+    assert jobs["live"]["needs"] == "changes"
     snippet = next(s for s in jobs["live"]["steps"] if "test/docs-snippets.integration.test.ts" in s.get("run", ""))
     assert snippet["if"] == "fromJSON(needs.changes.outputs.scope).paired_snippets_live"
-    for name, phase in (("checks", "checks"), ("live", "live")):
+    for name, phase in (("native-checks", "checks"), ("live", "live")):
         job = jobs[name]
         assert all(s["with"]["node-version"] == "24" for s in job["steps"] if "setup-node@" in s.get("uses", ""))
         steps = [s for s in job["steps"] if "scripts/ci_integration_examples.py" in s.get("run", "")]
@@ -589,7 +587,9 @@ with open(os.environ['COMMAND_LOG'], 'a') as log:
 
 def test_future_trace_secrets_require_reviewed_main_and_selected_project() -> None:
     jobs = workflow("paired-sdk-examples.yml")["jobs"]
-    static = next(step for step in jobs["checks"]["steps"] if "ci_integration_examples.py" in step.get("run", ""))
+    static = next(
+        step for step in jobs["native-checks"]["steps"] if "ci_integration_examples.py" in step.get("run", "")
+    )
     native = next(step for step in jobs["live"]["steps"] if "ci_integration_examples.py" in step.get("run", ""))
     assert "secrets." not in str(static)
     for project, key in (("braintrust", "BRAINTRUST_API_KEY"), ("laminar", "LMNR_PROJECT_API_KEY")):
@@ -610,7 +610,7 @@ def test_future_go_setup_is_selected_only_and_preserves_existing_job_limits() ->
     jobs = workflow("paired-sdk-examples.yml")["jobs"]
     assert jobs["checks"]["timeout-minutes"] == 15
     assert jobs["live"]["timeout-minutes"] == 20
-    for name in ("checks", "live"):
+    for name in ("native-checks", "live"):
         steps = [step for step in jobs[name]["steps"] if "setup-go@" in step.get("uses", "")]
         assert len(steps) == 1
         step = steps[0]

@@ -26,11 +26,6 @@ on:
         description: 'PR number to run the FULL secret-backed CI on. For external (fork) PRs, only dispatch after reviewing the diff - this runs the contributor''s code with our secrets.'
         required: true
 
-concurrency:
-  # PR runs share a group so a new push cancels the superseded run. Every other run (main
-  # pushes, manual runs) gets its own group so none is cancelled or replaced while queued.
-  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   CACHE_TYPE: "pip"
@@ -77,6 +72,9 @@ jobs:
   checks:
     needs: changes
     if: fromJSON(needs.changes.outputs.scope).file_checks
+    concurrency:
+      group: notte-offline-test-cicd-checks-${{ github.event.pull_request.number || github.run_id }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-4vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
     timeout-minutes: 15
     steps:
@@ -149,6 +147,9 @@ jobs:
     name: ${{ matrix.python == '3.15' && 'tests' || 'compatibility' }} (${{ matrix.python }})
     needs: changes
     if: fromJSON(needs.changes.outputs.scope).python_unit
+    concurrency:
+      group: notte-offline-test-cicd-tests-${{ github.event.pull_request.number || github.run_id }}-${{ matrix.python }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 20
     strategy:
@@ -227,6 +228,9 @@ jobs:
     if: github.event_name != 'workflow_dispatch' && fromJSON(needs.changes.outputs.scope).python_unit
     permissions:
       contents: read
+    concurrency:
+      group: notte-offline-test-cicd-compatible-dependencies-${{ github.event.pull_request.number || github.run_id }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 20
     steps:
@@ -283,6 +287,8 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
             ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - uses: ./.github/actions/current-head
 
       - name: Install uv
         uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
@@ -411,6 +417,8 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
+      - uses: ./.github/actions/current-head
+
       - name: Check provider matrix credentials
         if: env.OPENROUTER_API_KEY == ''
         run: |
@@ -461,6 +469,9 @@ jobs:
           - { os: macos-15, store: "" }
           - { os: windows-2025, store: "" }
     name: cli-contract (${{ matrix.os }}${{ matrix.store && format(', {0}', matrix.store) || '' }})
+    concurrency:
+      group: notte-offline-test-cicd-cli-contract-${{ github.event.pull_request.number || github.run_id }}-${{ format('{0}-{1}', matrix.os, matrix.store) }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     permissions:
@@ -537,6 +548,9 @@ jobs:
     if: >-
       (github.event_name == 'push' || github.event_name == 'pull_request') &&
       fromJSON(needs.changes.outputs.scope).python_docs
+    concurrency:
+      group: notte-offline-test-cicd-docs-${{ github.event.pull_request.number || github.run_id }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-2vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
     timeout-minutes: 5
     steps:

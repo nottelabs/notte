@@ -13,6 +13,28 @@ Changes to Pydantic models used by the API must follow the
 [backward-compatibility guide](backward-compatibility.md), including checks for
 both validation and serialization schemas.
 
+## CI validation before merging
+
+Each PR push runs the selected offline checks. Selected staging and model tests
+are deferred until a maintainer chooses **Re-run all jobs** on that head's **CI**
+run, or runs `gh run rerun RUN_ID --repo nottelabs/notte`.
+
+Until then the required `tests` gate reports that live validation is needed,
+even when offline checks pass. This is an explicit merge requirement. Re-running
+only the gate or only failed jobs cannot authorize the deferred tests. A new push
+starts a new offline run and requires another deliberate full validation.
+PRs whose selected scope needs no live tests can pass on their first run.
+
+All selected checks must pass on the current head before merging. Queued live
+jobs check the live PR head before dependency installation; obsolete jobs fail
+without starting tests. Already-running tests finish and perform their cleanup.
+Superseded offline jobs are cancelled independently, without cancelling live jobs.
+Native preparation runs in up to six parallel shards, independently of documentation
+checks and the live jobs, and remains part of the required result.
+
+Fork PRs receive no secrets. Their live coverage requires a reviewed branch in
+this repository. Main pushes and scheduled/manual coverage retain live testing.
+
 ## Reporting an Issue
 
 1. Check if the issue already exists

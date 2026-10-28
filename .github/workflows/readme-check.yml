@@ -11,6 +11,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
   changes:
@@ -38,6 +39,9 @@ jobs:
   static:
     needs: changes
     if: fromJSON(needs.changes.outputs.scope).readme_static
+    concurrency:
+      group: notte-offline-readme-check-static-${{ github.event.pull_request.number || github.run_id }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -95,6 +99,8 @@ jobs:
         with:
           persist-credentials: false
       # Do not restore dependency caches into the credentialed job.
+      - uses: ./.github/actions/current-head
+
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'

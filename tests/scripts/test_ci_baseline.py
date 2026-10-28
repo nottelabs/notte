@@ -31,6 +31,8 @@ class BaselineTests(unittest.TestCase):
                 "example-tests",
                 "registered-examples / agent-models (openai-agents)",
                 "registered-examples / agent-models (claude-agents)",
+                "registered-examples / native-checks (1/2)",
+                "registered-examples / native-checks (2/2)",
                 "registered-examples / live (1/2)",
                 "registered-examples / live (2/2)",
             )

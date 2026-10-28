@@ -38,6 +38,8 @@ PYTHON_LIVE_TESTS = {
 SDK_EXAMPLES = {"docs_static"} | GROUPS["paired"] | GROUPS["readme"]
 POLICY = {
     "scripts/ci_scope.py",
+    "scripts/ci_validation.py",
+    "tests/scripts/test_ci_validation.py",
     "tests/scripts/test_ci_scope.py",
     "tests/scripts/test_ci_scope_offline.py",
     "tests/scripts/test_ci_native_consumers.py",
@@ -58,7 +60,7 @@ OPENAPI_TOOLS = {
     "scripts/generate_sdk_models.py",
     "scripts/generate_sdk_endpoints.py",
 }
-# Paired live shards that may run against staging at once for one ref, across runs.
+# Paired live shards that may run against staging at once across refs and runs.
 PAIRED_SLOTS = 6
 INTEGRATION_INPUTS = {
     "scripts/integration_examples.json",

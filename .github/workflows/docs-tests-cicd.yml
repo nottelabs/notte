@@ -11,6 +11,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 # Set explicitly, workflow-wide. The SDK falls back to its production base URL
 # when this is unset, so a job that only exports NOTTE_API_KEY runs against
@@ -45,6 +46,9 @@ jobs:
   syntax-check:
     needs: changes
     if: fromJSON(needs.changes.outputs.scope).docs_static
+    concurrency:
+      group: notte-offline-docs-tests-cicd-syntax-check-${{ github.event.pull_request.number || github.run_id }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 20
     env:
@@ -83,6 +87,9 @@ jobs:
   type-check:
     needs: changes
     if: fromJSON(needs.changes.outputs.scope).docs_static
+    concurrency:
+      group: notte-offline-docs-tests-cicd-type-check-${{ github.event.pull_request.number || github.run_id }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 20
     env:
@@ -136,6 +143,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ./.github/actions/current-head
 
       - name: Install uv
         uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0

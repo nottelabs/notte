@@ -11,8 +11,8 @@ on:
 permissions:
   contents: read
 
-# Keep cancellation within the existing Python and Node workflows. Cancelling the
-# entire caller would also interrupt example suites and their cleanup steps.
+# Never cancel a running workflow on a new push: live jobs must finish cleanup.
+# Queued live jobs reject obsolete PR heads before dependency installation.
 jobs:
   changes:
     permissions:
@@ -21,7 +21,9 @@ jobs:
     runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-2vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
     timeout-minutes: 5
     outputs:
-      scope: ${{ steps.scope.outputs.scope }}
+      scope: ${{ steps.validation.outputs.scope }}
+      selected_scope: ${{ steps.scope.outputs.scope }}
+      live_deferred: ${{ steps.validation.outputs.live_deferred }}
       llm_provider: ${{ steps.provider.outputs.provider }}
       source_sha: ${{ steps.provider.outputs.source_sha }}
     steps:
@@ -58,6 +60,14 @@ jobs:
           printf '%s\n' "$RESULT" | jq -r '"provider=\(.provider)\nsource_sha=\(.source_sha)"' >> "$GITHUB_OUTPUT"
       - uses: ./.github/actions/ci-scope
         id: scope
+      - name: Plan offline feedback or final live validation
+        id: validation
+        env:
+          SCOPE: ${{ steps.scope.outputs.scope }}
+          EVENT_NAME: ${{ github.event_name }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          TRUSTED_LIVE: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+        run: python3 -m scripts.ci_validation plan
 
   python:
     needs: changes
@@ -80,6 +90,9 @@ jobs:
     secrets: inherit # pragma: allowlist secret
 
   node:
+    permissions:
+      contents: read
+      pull-requests: read
     needs: changes
     if: >-
       fromJSON(needs.changes.outputs.scope).node_static ||
@@ -91,6 +104,9 @@ jobs:
     secrets: inherit # pragma: allowlist secret
 
   docs:
+    permissions:
+      contents: read
+      pull-requests: read
     needs: changes
     if: >-
       fromJSON(needs.changes.outputs.scope).docs_static ||
@@ -101,6 +117,9 @@ jobs:
     secrets: inherit # pragma: allowlist secret
 
   paired:
+    permissions:
+      contents: read
+      pull-requests: read
     needs: changes
     if: >-
       fromJSON(needs.changes.outputs.scope).paired_static ||
@@ -111,6 +130,9 @@ jobs:
     secrets: inherit # pragma: allowlist secret
 
   readme:
+    permissions:
+      contents: read
+      pull-requests: read
     needs: changes
     if: >-
       fromJSON(needs.changes.outputs.scope).readme_static ||
@@ -126,14 +148,16 @@ jobs:
     if: always()
     runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-2vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
     timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
     steps:
-      - name: Check suite results
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: ./.github/actions/current-head
+      - name: Check suite results and required live validation
         env:
           RESULTS: ${{ toJSON(needs) }}
-        run: |
-          echo "$RESULTS" | python3 -c '
-          import json, sys
-          results = {name: job["result"] for name, job in json.load(sys.stdin).items()}
-          print(results)
-          sys.exit(results["changes"] != "success" or any(result in ("failure", "cancelled") for result in results.values()))
-          '
+        run: python3 -m scripts.ci_validation gate

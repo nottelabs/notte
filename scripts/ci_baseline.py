@@ -38,7 +38,11 @@ def assess(run: Run | None, jobs: list[Job], shards: int, same_harness: bool, no
         "example-tests",
         "registered-examples / agent-models (openai-agents)",
         "registered-examples / agent-models (claude-agents)",
-    } | {f"registered-examples / live ({index}/{shards})" for index in range(1, shards + 1)}
+    } | {
+        f"registered-examples / {phase} ({index}/{shards})"
+        for phase in ("native-checks", "live")
+        for index in range(1, shards + 1)
+    }
     succeeded = {job["name"] for job in jobs if job["conclusion"] == "success"}
     missing = expected - succeeded
     complete = (
@@ -102,6 +106,7 @@ def main() -> None:
             "scripts/integration_examples.json",
             "scripts/ci_scope.py",
             ".github/actions/ci-scope/action.yml",
+            ".github/actions/current-head/action.yml",
             "tests/run_examples.sh",
         ):
             current = json.loads(api(f"repos/{repository}/contents/{path}?ref=main"))["sha"]

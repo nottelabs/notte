@@ -14,12 +14,8 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
-concurrency:
-  # PR runs share a group so a new push cancels the superseded run. Every other run (main
-  # pushes, manual runs) gets its own group so none is cancelled or replaced while queued.
-  group: node-sdk-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 defaults:
   run:
@@ -51,6 +47,9 @@ jobs:
   tests:
     needs: changes
     if: fromJSON(needs.changes.outputs.scope).node_static
+    concurrency:
+      group: notte-offline-node-sdk-ci-tests-${{ github.event.pull_request.number || github.run_id }}-${{ matrix.node }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
@@ -99,6 +98,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - uses: ./.github/actions/current-head
+
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
@@ -119,6 +120,9 @@ jobs:
   generated:
     needs: changes
     if: fromJSON(needs.changes.outputs.scope).node_generated
+    concurrency:
+      group: notte-offline-node-sdk-ci-generated-${{ github.event.pull_request.number || github.run_id }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

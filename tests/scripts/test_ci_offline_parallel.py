@@ -19,7 +19,8 @@ def test_dependency_suites_start_independently_without_credentials() -> None:
         assert "fromJSON(needs.changes.outputs.scope).python_unit" in job["if"]
         assert job["runs-on"] == "blacksmith-4vcpu-ubuntu-2404"
         assert job["timeout-minutes"] == 20
-        assert "concurrency" not in job
+        assert job["concurrency"]["group"].startswith("notte-offline-")
+        assert job["concurrency"]["cancel-in-progress"] == "${{ github.event_name == 'pull_request' }}"
         assert re.search(r"\bsecrets\.\w+", str(job)) is None
         assert not job.get("continue-on-error")
         assert all(not step.get("continue-on-error") for step in job["steps"])
