@@ -191,7 +191,9 @@ def test_method_alias_transport(
         assert getattr(obj, old)(*args, **kwargs) == expected
     assert canonical.call_count == 2
     canonical.assert_called_with(*args, **kwargs)
-    assert len(caught) == 1
+    assert len(caught) == 1, [
+        (warning.category.__name__, str(warning.message), warning.filename, warning.lineno) for warning in caught
+    ]
     assert caught[0].category is DeprecationWarning
     assert f"{cls.__name__}.{new}" in str(caught[0].message)
     assert "removed in notte 2.0" in str(caught[0].message)

@@ -427,15 +427,77 @@ class GitHistoryTests(unittest.TestCase):
         self.directory = tempfile.TemporaryDirectory()
         self.addCleanup(self.directory.cleanup)
         self.repo = Path(self.directory.name)
+        self.git_local_vars = set(
+            subprocess.check_output(["git", "rev-parse", "--local-env-vars"]).decode().splitlines()
+        )
         self.git("init", "-q")
         self.git("config", "commit.gpgsign", "false")
         self.git("config", "core.hooksPath", "/dev/null")
+        # Detached housekeeping must not race strict temporary-directory cleanup.
+        self.git("config", "maintenance.auto", "false")
+        self.git("config", "gc.auto", "0")
         self.git("config", "user.name", "CI test")
         self.git("config", "user.email", "ci@example.invalid")
         self.base = self.commit({"README.md": "Original prose\n```python\nx = 1\n```\n"})
 
+    def test_temporary_history_does_not_launch_automatic_git_maintenance(self) -> None:
+        config = self.repo / ".git" / "inherited.config"
+        config.write_text(
+            "[maintenance]\n\tauto = true\n\tautoDetach = false\n[gc]\n\tauto = 1\n\tautoDetach = false\n"
+        )
+        commands: list[list[list[str]]] = []
+        for index in range(2):
+            if index:
+                # A foreground positive control proves Git would otherwise
+                # launch maintenance, without leaving another background task.
+                self.git("config", "maintenance.auto", "true")
+            trace = self.repo / ".git" / f"maintenance-{index}.jsonl"
+            with patch.dict(
+                os.environ,
+                {"GIT_CONFIG_GLOBAL": str(config), "GIT_CONFIG_NOSYSTEM": "1", "GIT_TRACE2_EVENT": str(trace)},
+            ):
+                self.commit({"fixture.txt": str(index)})
+            events = [json.loads(line) for line in trace.read_text().splitlines()]
+            commands.append(
+                [
+                    event["argv"]
+                    for event in events
+                    if event.get("event") == "child_start"
+                    and any(name in event.get("argv", []) for name in ("maintenance", "gc"))
+                ]
+            )
+        self.assertEqual(commands[0], [])
+        self.assertTrue(commands[1], "The control must exercise automatic Git maintenance")
+
     def git(self, *args: str) -> str:
-        return subprocess.check_output(["git", "-C", str(self.repo), *args], stderr=subprocess.PIPE).decode().strip()
+        environment = {name: value for name, value in os.environ.items() if name not in self.git_local_vars}
+        return (
+            subprocess.check_output(["git", "-C", str(self.repo), *args], stderr=subprocess.PIPE, env=environment)
+            .decode()
+            .strip()
+        )
+
+    def test_temporary_history_ignores_callers_repository_variables(self) -> None:
+        before = (self.repo / ".git/config").read_bytes()
+        with patch.dict(
+            os.environ,
+            {
+                "GIT_DIR": str(self.repo / ".git"),
+                "GIT_WORK_TREE": str(self.repo),
+                "GIT_COMMON_DIR": str(self.repo / ".git"),
+                "GIT_INDEX_FILE": str(self.repo / ".git/index"),
+                "GIT_OBJECT_DIRECTORY": str(self.repo / ".git/objects"),
+            },
+        ):
+            fixture = type(self)("test_temporary_history_ignores_callers_repository_variables")
+            try:
+                fixture.setUp()
+                self.assertEqual(Path(fixture.git("rev-parse", "--show-toplevel")).resolve(), fixture.repo.resolve())
+                self.assertEqual(fixture.git("config", "--local", "maintenance.auto"), "false")
+                self.assertFalse(fixture.scope("push", fixture.base, fixture.base)["full"])
+            finally:
+                fixture.doCleanups()
+        self.assertEqual((self.repo / ".git/config").read_bytes(), before)
 
     def commit(self, files: dict[str, str]) -> str:
         for name, content in files.items():
@@ -448,7 +510,11 @@ class GitHistoryTests(unittest.TestCase):
 
     def scope(self, event: str, base: str, head: str) -> dict[str, bool | str | list[str] | list[dict[str, str]]]:
         original_git = ci.git
-        with patch.object(ci, "git", side_effect=lambda *args: original_git("-C", str(self.repo), *args)):
+        environment = {name: value for name, value in os.environ.items() if name not in self.git_local_vars}
+        with (
+            patch.dict(os.environ, environment, clear=True),
+            patch.object(ci, "git", side_effect=lambda *args: original_git("-C", str(self.repo), *args)),
+        ):
             return ci.select(event, base, head)
 
     def workspace_files(self, version: str) -> dict[str, str]:
