@@ -22,7 +22,7 @@ An invalid answer (decision or field value) is asked again once; a second invali
 
 import time
 from collections import deque
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from typing import Any, Protocol
 
@@ -90,6 +90,20 @@ WRITER_NEXT_CONTROLS = 4
 NO_VALUE = "NoValueFromInstruction"
 
 
+@dataclass(frozen=True)
+class JsDialog:
+    """A JavaScript dialog an action opened: `alert`, `confirm`, `prompt` or `beforeunload` (leaving the page)."""
+
+    kind: str
+    message: str
+    # the text a prompt shows in its field
+    default: str = ""
+
+
+# accept the dialog or dismiss it, and the text a prompt is accepted with (None: its default)
+DialogAnswer = tuple[bool, str | None]
+
+
 class ActDriver(Protocol):
     """How `run_act` reads and drives one session."""
 
@@ -114,7 +128,16 @@ class ActDriver(Protocol):
         session allows."""
         ...
 
-    async def execute(self, action: BaseAction, raise_on_failure: bool) -> ExecutionResult: ...
+    async def execute(
+        self,
+        action: BaseAction,
+        raise_on_failure: bool,
+        *,
+        dialogs: Callable[[JsDialog], Awaitable[DialogAnswer]] | None = None,
+    ) -> ExecutionResult:
+        """Execute `action`. A JavaScript dialog it opens is answered by `dialogs` (dismissed without, as by
+        `execute()`)."""
+        ...
 
     async def wait_for_change(self, timeout_ms: int, raise_on_failure: bool) -> ExecutionResult:
         """Wait until the page changes (DOM change or navigation), at most `timeout_ms` (`notte_core.act.wait`).
@@ -155,6 +178,8 @@ class ActHistoryEntry:
     left_page: bool = False
     # raw URL used only to detect navigation; `page` is masked for model requests
     source_url: str | None = field(default=None, repr=False)
+    # the JavaScript dialogs the action opened, and how act() answered them (masked)
+    dialogs: list[dict[str, str]] = field(default_factory=list[dict[str, str]])
 
 
 # clicking these does not submit what was typed in a field
@@ -223,6 +248,7 @@ class ActHistory:
             | ({} if e.error is None else {"error": e.error})
             | ({} if e.typed is None or e.typed.before is not None else {"submitted": False})
             | ({} if not e.left_page or e.page is None else {"previous_page": e.page.model_dump()})
+            | ({} if not e.dialogs else {"dialogs": list(e.dialogs)})
             for e in list(self.entries)[-limit:]
         ]
 
@@ -432,12 +458,16 @@ async def run_act(
             page=state.page,
             source_url=page.url,
         )
+
+        async def answer_dialog(dialog: JsDialog, entry: ActHistoryEntry = entry) -> DialogAnswer:
+            return await _answer_dialog(decider, state, instruction, dialog, history, variables, entry)
+
         step = time.perf_counter()
         try:
             if decision.operation == "WAIT":
                 execution = await driver.wait_for_change(WAIT_MS, raise_on_failure)
             else:
-                execution = await driver.execute(action, raise_on_failure)
+                execution = await driver.execute(action, raise_on_failure, dialogs=answer_dialog)
         except Exception as e:
             entry.error = type(e).__name__
             history.entries.append(entry)
@@ -521,6 +551,60 @@ def _field_identity(page: ObservedPage, target: Target) -> tuple[str, ...]:
         "" if selectors is None else selectors.model_dump_json(),
         page.url,
     )
+
+
+async def _answer_dialog(
+    decider: Decider,
+    state: DecisionState,
+    instruction: str,
+    dialog: JsDialog,
+    history: ActHistory,
+    variables: Mapping[str, str],
+    entry: ActHistoryEntry,
+) -> DialogAnswer:
+    """How to answer a dialog the action opened: the decider accepts or dismisses it, the writer writes what a
+    prompt is accepted with. An alert has only OK. An invalid answer dismisses it, as `execute()` does."""
+    message = history.privacy.text(dialog.message) or (
+        "Leave this page? Changes you made may not be saved." if dialog.kind == "beforeunload" else ""
+    )
+    accept, text = True, None
+    if dialog.kind != "alert":
+        criteria = {"ACCEPT": "OK: accept the dialog", "DISMISS": "Cancel: dismiss the dialog"}
+        questions = {
+            "dialog": Question(
+                criteria=criteria,
+                instructions={
+                    "goal": history.privacy.text(instruction),
+                    "dialog": {"kind": dialog.kind, "message": message},
+                    "rules": prompts.JS_DIALOG,
+                },
+            )
+        }
+        try:
+            answer = validate_answer(await decider.choose(state, questions), "dialog", criteria)
+        except InvalidDecisionError:
+            accept = False
+        else:
+            accept = answer.choice == "ACCEPT"
+    if accept and dialog.kind == "prompt":
+        context = WriteContext(
+            goal=history.privacy.text(instruction),
+            field={"label": message, "kind": "dialog prompt", "value": history.privacy.text(dialog.default)},
+            page=state.page.model_dump(),
+            recent_actions=state.recent_actions,
+            variables=sorted(variables),
+        )
+        try:
+            written = await _write(decider, context)
+        except (InvalidDecisionError, ContentFilterError):
+            written = None
+        if written is not None:
+            text = substitute_variables(written, variables)
+    entry.dialogs.append(
+        {"kind": dialog.kind, "message": message, "answer": "accepted" if accept else "dismissed"}
+        | ({} if text is None else {"text": history.privacy.text(text)})
+    )
+    return accept, text
 
 
 async def _write(decider: Decider, context: WriteContext) -> str | None:

@@ -2145,3 +2145,67 @@ async def test_the_page_an_action_left_is_sent_as_previous_page(session: NotteSe
         left = [entry["previous_page"] for entry in recent if "previous_page" in entry]
         assert [page["url"] for page in left] == ["http://order.test/start"]
         assert "Order 7731" in left[0]["text"]
+
+
+_DIALOG_PAGE = (
+    "<button id=\"confirm\" onclick=\"document.body.dataset.r = confirm('Delete the draft?') ? 'ok' : 'cancel'\">"
+    "Delete</button>"
+    "<button id=\"prompt\" onclick=\"document.body.dataset.r = prompt('Your name?', 'guest')\">Rename</button>"
+    "<button id=\"alert\" onclick=\"alert('Saved'); document.body.dataset.r = 'alerted'\">Save</button>"
+)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(("answer", "result"), [("ACCEPT", "ok"), ("DISMISS", "cancel")])
+async def test_a_confirm_the_action_opens_is_answered_by_the_decider(
+    session: NotteSession, answer: str, result: str
+) -> None:
+    page = session.window.page
+    await page.set_content(_DIALOG_PAGE)
+    ids = await _ids(session)
+    decider = FakeDecider(
+        choices=[{"operation": "CLICK", "click_target": ids["confirm"]}, {"dialog": answer}, {"operation": "DONE"}]
+    )
+    assert (await session.aact("Delete the draft", decider=decider)).success
+    assert await page.evaluate("document.body.dataset.r") == result
+    question = decider.questions[1]["dialog"]
+    assert question.instructions["dialog"] == {"kind": "confirm", "message": "Delete the draft?"}
+    # the next decision knows what the page asked and how act() answered
+    _ = await session.aact("Delete the draft", decider=decider)
+    answered = "accepted" if answer == "ACCEPT" else "dismissed"
+    assert decider.states[-1].recent_actions[-1]["dialogs"] == [
+        {"kind": "confirm", "message": "Delete the draft?", "answer": answered}
+    ]
+
+
+@pytest.mark.asyncio
+async def test_a_prompt_is_accepted_with_the_writers_text(session: NotteSession) -> None:
+    page = session.window.page
+    await page.set_content(_DIALOG_PAGE)
+    ids = await _ids(session)
+    decider = FakeDecider(
+        choices=[{"operation": "CLICK", "click_target": ids["prompt"]}, {"dialog": "ACCEPT"}], texts=["Ada"]
+    )
+    assert (await session.aact("Rename yourself to Ada", decider=decider)).success
+    assert await page.evaluate("document.body.dataset.r") == "Ada"
+    assert decider.contexts[-1].field == {"label": "Your name?", "kind": "dialog prompt", "value": "guest"}
+
+
+@pytest.mark.asyncio
+async def test_an_alert_is_accepted_without_a_question(session: NotteSession) -> None:
+    page = session.window.page
+    await page.set_content(_DIALOG_PAGE)
+    ids = await _ids(session)
+    decider = FakeDecider(choices=[{"operation": "CLICK", "click_target": ids["alert"]}])
+    assert (await session.aact("Save", decider=decider)).success
+    assert await page.evaluate("document.body.dataset.r") == "alerted"
+    assert len(decider.questions) == 1
+
+
+@pytest.mark.asyncio
+async def test_a_dialog_outside_act_is_still_dismissed(session: NotteSession) -> None:
+    page = session.window.page
+    await page.set_content(_DIALOG_PAGE)
+    ids = await _ids(session)
+    _ = await session.aexecute(type="click", id=ids["confirm"])
+    assert await page.evaluate("document.body.dataset.r") == "cancel"
