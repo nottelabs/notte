@@ -2348,3 +2348,22 @@ async def test_enter_is_decided_again_when_a_dialog_covers_the_focus(session: No
     # decided again on the page with the wall: Enter never submitted the search behind it
     assert len(decider.states) == 2 and result.operation == "CLOSE_DIALOG"
     assert not page.url.endswith("#searched")
+
+
+@pytest.mark.asyncio
+async def test_enter_under_a_banner_is_stale_when_the_focus_moved(session: NotteSession) -> None:
+    # a fixed banner (not a dialog) over the focused field: freshness re-observes, and still compares the focus
+    page = session.window.page
+    await page.set_content(
+        "<input id='search'><form><input id='other'></form>"
+        "<div style='position:fixed;top:0;left:0;width:100%;height:120px;background:#ffd'>Free shipping</div>"
+    )
+    await page.focus("#search")
+    fields = iter(["#other", "#search"])
+
+    async def move_focus() -> None:
+        await page.focus(next(fields))
+
+    decider = FakeDecider(choices=[{"operation": "PRESS_ENTER"}] * 2, on_choose=move_focus)
+    result = await session.aact("submit the search", decider=decider, raise_on_failure=False)
+    assert result.status == "stale" and len(decider.states) == 2

@@ -316,6 +316,11 @@ class LocalActDriver:
         # a dialog that opened over the page since the observation: the decider did not see it
         if covered_by_dialog(current.description) and not covered_by_dialog(page.description):
             return False
+        if focus and before.url is not None:
+            # Enter goes to the focused element: a new observation does not tell that it moved
+            now = await self._read_signatures({})
+            if now.url != before.url or now.focus != before.focus:
+                return False
         return same_target(page, current, element_id)
 
     async def execute(
