@@ -14,6 +14,8 @@
 <script>
 const photo = document.getElementById('photo');
 photo.addEventListener('change', () => document.getElementById('chosen').textContent = photo.files[0] ? photo.files[0].name : 'No photo chosen');
-document.getElementById('f').addEventListener('submit', e => { if (!photo.files.length) { e.preventDefault();
-  document.getElementById('err').textContent = 'Choose a photo first.'; } });
+const noPhoto = () => document.getElementById('err').textContent = 'Choose a photo first.';
+// a save without a photo shows the error, whether the browser's own validation stops it (invalid) or the page does
+photo.addEventListener('invalid', noPhoto);
+document.getElementById('f').addEventListener('submit', e => { if (!photo.files.length) { e.preventDefault(); noPhoto(); } });
 </script></body></html>

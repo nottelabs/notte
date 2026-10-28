@@ -64,7 +64,7 @@ async def test_old_search_response_cannot_render_during_new_query_debounce(fixtu
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("action", ["none", "chooser", "name", "file", "submit"])
+@pytest.mark.parametrize("action", ["none", "chooser", "name", "file", "submit", "native-submit"])
 async def test_upload_blocked_requires_the_unchanged_form(fixture_url: str, action: str) -> None:
     task = registry.discover().tasks["f2-upload"]
     assert task.pre_js is not None and task.final_js is not None
@@ -84,6 +84,10 @@ async def test_upload_blocked_requires_the_unchanged_form(fixture_url: str, acti
         elif action == "submit":
             # Reach the no-photo submit handler without native required-field validation stopping it first.
             await page.locator("#f").evaluate("form => form.noValidate = true")
+            await page.get_by_role("button", name="Save profile").click()
+            assert await page.inner_text("#err") == "Choose a photo first."
+        elif action == "native-submit":
+            # the browser's required-field validation stops the save before the page's submit handler
             await page.get_by_role("button", name="Save profile").click()
             assert await page.inner_text("#err") == "Choose a photo first."
         final = {"url": page.url, "extra": json.loads(await page.evaluate(task.final_js))}
