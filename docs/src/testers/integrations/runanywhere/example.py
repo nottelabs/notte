@@ -16,7 +16,7 @@ with notte.Session() as session:
     _ = session.execute(type="goto", url="https://en.wikipedia.org/wiki/Main_Page")
 
     # act() decides each step and writes field values with the RunAnywhere model
-    _ = session.act("type Ada Lovelace in the search box")
+    result = session.act("type Ada Lovelace in the search box")
     result = session.act("open the Ada Lovelace article")
     assert result.success
 
