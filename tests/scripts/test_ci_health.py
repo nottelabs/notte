@@ -1,0 +1,74 @@
+"""Dependency errors stay visible and never print provider responses or keys."""
+
+import io
+import json
+from urllib.error import HTTPError, URLError
+
+import pytest
+
+from scripts import ci_health
+
+
+@pytest.mark.parametrize(
+    "code,status",
+    [(401, "authentication"), (403, "authorization"), (402, "credits"), (429, "capacity"), (503, "service_error")],
+)
+def test_http_failure_is_classified_without_retry_or_secret(
+    monkeypatch: pytest.MonkeyPatch, code: int, status: str
+) -> None:
+    calls = []
+
+    def fail(request, **kwargs):
+        calls.append(request)
+        raise HTTPError(request.full_url, code, "private-provider-body", {}, None)
+
+    monkeypatch.setattr(ci_health, "urlopen", fail)
+    result = ci_health.probe("openrouter", "fixture-private-key")
+    assert result["status"] == status
+    assert result["http_status"] == code
+    assert len(calls) == 1
+    assert "private" not in json.dumps(result)
+
+
+@pytest.mark.parametrize("error", [TimeoutError("private"), URLError("private"), ValueError("private")])
+def test_transport_and_malformed_responses_fail(monkeypatch: pytest.MonkeyPatch, error: Exception) -> None:
+    def fail(*args, **kwargs):
+        raise error
+
+    monkeypatch.setattr(ci_health, "urlopen", fail)
+    assert ci_health.probe("staging", "fixture-private-key")["status"] != "passed"
+
+
+def test_no_credentials_never_makes_an_anonymous_probe(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(ci_health, "urlopen", lambda *args, **kwargs: pytest.fail("Network must not run"))
+    assert ci_health.probe("openrouter", "")["status"] == "missing_credentials"
+
+
+def test_staging_health_requires_the_usage_read_to_succeed(monkeypatch: pytest.MonkeyPatch) -> None:
+    urls = []
+
+    def respond(request, **kwargs):
+        urls.append(request.full_url)
+        assert kwargs == {"timeout": 10}
+        payload = {"version": "fixture-version"} if request.full_url.endswith("/health") else {"items": []}
+        return io.BytesIO(json.dumps(payload).encode())
+
+    monkeypatch.setattr(ci_health, "urlopen", respond)
+    result = ci_health.probe("staging", "fixture-private-key")
+    assert result["status"] == "passed"
+    assert result["version"] == "fixture-version"
+    assert len(urls) == 2 and "/usage/logs?" in urls[1]
+
+
+@pytest.mark.parametrize(
+    "payload,passed",
+    [({"choices": [{"message": {"content": "OK"}}]}, True), ({"error": "private"}, False), ({"choices": []}, False)],
+)
+def test_provider_success_requires_a_completion(monkeypatch: pytest.MonkeyPatch, payload, passed: bool) -> None:
+    def respond(request, **kwargs):
+        assert request.full_url == "https://openrouter.ai/api/v1/chat/completions"
+        assert json.loads(request.data)["provider"] == {"allow_fallbacks": False}
+        return io.BytesIO(json.dumps(payload).encode())
+
+    monkeypatch.setattr(ci_health, "urlopen", respond)
+    assert (ci_health.probe("openrouter", "fixture-private-key")["status"] == "passed") == passed
