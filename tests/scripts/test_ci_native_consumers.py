@@ -13,7 +13,7 @@ import pytest
 from scripts import ci_integration_examples as runner
 from scripts import ci_scope as ci
 from tests.scripts import test_ci_scope as history_tests
-from tests.scripts.test_ci_integration_examples import calls, shipped_project
+from tests.scripts.test_ci_integration_examples import agent_phases, calls, shipped_project
 
 pytest_plugins = ["tests.scripts.test_ci_integration_examples"]
 
@@ -290,10 +290,13 @@ def test_recipe_source_selection_keeps_cross_language_driver(
     monkeypatch.setenv("INTEGRATION_SOURCE_ONLY", json.dumps([name]))
     monkeypatch.setenv("GITHUB_EVENT_NAME", "pull_request")
     monkeypatch.setenv("GITHUB_REF", "refs/pull/1/merge")
-    runner.main()
+    if name in runner.AGENT_RECIPES:
+        agent_phases(monkeypatch)
+    else:
+        runner.main()
     observed = calls(workspace)
     native = [call for call in observed if call["credentials"]]
-    assert any(call["args"][-1] == f"test/{name}.integration.test.ts" for call in native)
+    assert any(f"test/{name}.integration.test.ts" in call["args"] for call in native)
     assert all(call["docs_python"] == str(workspace / ".venv/bin/python") for call in native)
     expected_credentials = {
         "openai-agents": {"NOTTE_API_KEY", "OPENROUTER_API_KEY", "OPENAI_API_KEY"},
@@ -373,3 +376,25 @@ def test_workflow_transmits_source_selection_without_changing_secret_guards() ->
     assert "github.event.pull_request.head.repo.full_name == github.repository" in live["if"]
     for key in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY"):
         assert "github.ref == 'refs/heads/main' && github.event_name != 'pull_request'" in native["env"][key]
+
+
+def test_agent_jobs_supply_credentials_only_after_dependency_preparation() -> None:
+    import yaml
+
+    config = yaml.safe_load((ROOT / ".github/workflows/paired-sdk-examples.yml").read_text())
+    shared = config["jobs"]["live"]
+    native = next(step for step in shared["steps"] if "ci_integration_examples.py live" in step.get("run", ""))
+    assert "OPENROUTER_API_KEY" not in native["env"]
+    job = config["jobs"]["agent-models"]
+    assert set(job["needs"]) == {"changes", "checks"}
+    assert "github.event.pull_request.head.repo.full_name == github.repository" in job["if"]
+    assert "github.ref == 'refs/heads/main'" in job["if"]
+    for name in runner.AGENT_RECIPES:
+        assert name in job["strategy"]["matrix"]["recipe"]
+    assert not any("secrets." in str(value) for value in job["env"].values())
+    prepare = next(step for step in job["steps"] if "prepare-agent" in step.get("run", ""))
+    execute = next(step for step in job["steps"] if "test-agent" in step.get("run", ""))
+    assert job["steps"].index(prepare) < job["steps"].index(execute)
+    assert "secrets." not in str(prepare)
+    assert set(execute["env"]) == {"NOTTE_API_KEY", "OPENROUTER_API_KEY"}
+    assert not any("secrets." in str(step) for step in job["steps"] if step is not execute)
