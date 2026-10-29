@@ -320,7 +320,7 @@ class TestRemoteFunctionRuns:
             assert result.status == "closed"
 
             # Verify create_run was called
-            mock_create_run.assert_called_once_with(test_remote_function.function_id)
+            mock_create_run.assert_called_once_with(test_remote_function.function_id, version=None)
 
 
 class TestFunctionRunsErrorHandling:
