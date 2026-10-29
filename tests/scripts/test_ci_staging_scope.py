@@ -332,8 +332,9 @@ def test_native_examples_have_one_existing_required_owner() -> None:
             assert "secrets." not in str(step)
         else:
             assert '--shard "$NOTTE_DOCS_SHARD"' in step["run"]
-            for key in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY"):
+            for key in ("ANTHROPIC_API_KEY", "GEMINI_API_KEY"):
                 assert "github.ref == 'refs/heads/main' && github.event_name != 'pull_request'" in step["env"][key]
+            assert "OPENAI_API_KEY" not in step["env"]
             model = step["env"]["NOTTE_DEEPAGENTS_MODEL_LIVE"]
             assert "github.ref == 'refs/heads/main' && github.event_name != 'pull_request'" in model
             assert "secrets.ANTHROPIC_API_KEY != '' && '1' || '0'" in model

@@ -263,10 +263,8 @@ def test_sdk_diff_drives_source_install_before_native_execution(
     observed = calls(workspace)
     native = [call for call in observed if call["credentials"]]
     assert native
-    expected_credentials = (
-        ["NOTTE_API_KEY", "OPENAI_API_KEY"] if event == "push" and name == "openai-computer-use" else ["NOTTE_API_KEY"]
-    )
-    assert all(call["credentials"] == expected_credentials for call in native)
+    # CI holds no OpenAI key: the computer-use example runs its browser tests, not the real-model one
+    assert all(call["credentials"] == ["NOTTE_API_KEY"] for call in native)
     source = next(
         index
         for index, call in enumerate(observed)
@@ -374,8 +372,9 @@ def test_workflow_transmits_source_selection_without_changing_secret_guards() ->
         == "${{ toJSON(fromJSON(needs.changes.outputs.scope).integration_source_only || fromJSON('[]')) }}"
     )
     assert "github.event.pull_request.head.repo.full_name == github.repository" in live["if"]
-    for key in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY"):
+    for key in ("ANTHROPIC_API_KEY", "GEMINI_API_KEY"):
         assert "github.ref == 'refs/heads/main' && github.event_name != 'pull_request'" in native["env"][key]
+    assert "OPENAI_API_KEY" not in native["env"]
 
 
 def test_agent_jobs_supply_credentials_only_after_dependency_preparation() -> None:

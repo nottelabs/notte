@@ -346,9 +346,9 @@ def selenium_driver(project: Path, python: Path, env: dict[str, str]) -> str:
 
 
 def project_env(name: str, env: dict[str, str]) -> dict[str, str]:
+    # openai-agents and claude-agents run on OpenRouter (below); openai-computer-use runs without a model key:
+    # OpenRouter does not relay OpenAI's native computer tool, and CI holds no OpenAI key
     provider = {
-        "openai-agents": "OPENAI_API_KEY",
-        "openai-computer-use": "OPENAI_API_KEY",
         "claude-agents": "ANTHROPIC_API_KEY",
         "anthropic-computer-use": "ANTHROPIC_API_KEY",
         "deepagents": "ANTHROPIC_API_KEY",
