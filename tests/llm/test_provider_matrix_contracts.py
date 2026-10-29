@@ -26,7 +26,9 @@ def test_matrix_link_ground_truth_matches_saved_document(case):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("case", EXPECTED_LINKS)
-@pytest.mark.parametrize("outcome", ["complete", "missing", "invented", "reordered", "refusal", "punctuation"])
+@pytest.mark.parametrize(
+    "outcome", ["complete", "dropped_period", "missing", "invented", "reordered", "refusal", "punctuation"]
+)
 @pytest.mark.parametrize("response_format", ["json_schema", "json_object"])
 async def test_matrix_checks_extracted_links_offline(case, outcome, response_format, monkeypatch, request):
     monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
@@ -40,9 +42,12 @@ async def test_matrix_checks_extracted_links_offline(case, outcome, response_for
         links[-1]["url"] = "https://example.com/invented"
     elif outcome == "reordered":
         links.reverse()
+    elif outcome == "dropped_period":
+        # Replay MiniMax's dropped period, which the matrix accepts.
+        links[0]["label"] = links[0]["label"].removesuffix(".")
     elif outcome == "punctuation":
-        # Replay MiniMax's dropped period; adding punctuation is also a label change.
-        links[0]["label"] = "Learn more" if case == "checkout/article" else links[0]["label"] + "."
+        # Adding punctuation is still a label change.
+        links[0]["label"] += "."
     payload = {"success": True, "error": None, "data": {"title": "Title", "links": links, "summary": None}}
     if outcome == "refusal":
         payload = {"success": False, "error": "Fewer than three navigation links", "data": None}
@@ -57,7 +62,7 @@ async def test_matrix_checks_extracted_links_offline(case, outcome, response_for
 
     monkeypatch.setattr(httpx.AsyncClient, "send", send)
     route = next(route for route in ROUTES if route.name == ("minimax" if response_format == "json_object" else "kimi"))
-    if outcome == "complete":
+    if outcome in ("complete", "dropped_period"):
         await live_matrix.test_provider_matrix(route, case, monkeypatch, lambda name, value: None, request)
     else:
         with pytest.raises(AssertionError):
