@@ -27,6 +27,9 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
   IDs. Don't point them at a provider's direct API key; the shared direct
   Gemini key hits rate limits. Extraction and the provider matrix use only
   OpenRouter credentials; the Vertex matrix leg also routes through OpenRouter.
+- CI holds no OpenAI key. The OpenAI Agents example gets the OpenRouter key under the SDK's
+  `OPENAI_API_KEY` name with `OPENAI_BASE_URL`. The OpenAI Computer Use example runs its browser tests
+  only: OpenRouter does not relay OpenAI's native `computer` tool, so its real-model test runs locally.
 - OpenRouter can send heartbeat frames while an LLM response is pending. HTTPX read
   timeouts reset per chunk; keep the total per-attempt deadline in `LLMEngine` so a
   pending response cannot run until pytest-timeout terminates an xdist worker.

@@ -198,7 +198,6 @@ jobs:
           INTEGRATION_EXAMPLES: ${{ toJSON(fromJSON(needs.changes.outputs.scope).integration_examples) }}
           INTEGRATION_SOURCE_ONLY: ${{ toJSON(fromJSON(needs.changes.outputs.scope).integration_source_only || fromJSON('[]')) }}
           NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_EXAMPLES || secrets.NOTTE_API_KEY }}
-          OPENAI_API_KEY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.OPENAI_API_KEY || '' }}
           ANTHROPIC_API_KEY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.ANTHROPIC_API_KEY || '' }}
           NOTTE_DEEPAGENTS_MODEL_LIVE: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.ANTHROPIC_API_KEY != '' && '1' || '0' }}
           GEMINI_API_KEY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.GEMINI_API_KEY || '' }}

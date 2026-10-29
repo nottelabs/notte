@@ -1550,8 +1550,8 @@ OWN_PROVIDER = {
     "gemini-computer-use": "GEMINI_API_KEY",
     "inngest": "ANTHROPIC_API_KEY",
     "laminar": "LMNR_PROJECT_API_KEY",
+    # OpenRouter's key, under the OpenAI SDK's variable name (below); openai-computer-use gets no model key
     "openai-agents": "OPENAI_API_KEY",
-    "openai-computer-use": "OPENAI_API_KEY",
 }
 
 
