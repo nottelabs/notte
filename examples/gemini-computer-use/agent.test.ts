@@ -57,6 +57,7 @@ test('Browser actions fill a form and honor confirmation before clicking', { ski
       const destination = await perform(page, 'click', await point('button'));
       assert.notEqual(destination, page);
       assert.equal(await destination.title(), 'Popup');
+      assert.deepEqual(await destination.evaluate(() => [innerWidth, innerHeight]), [1440, 900]);
     } finally { await browser.close(); }
   });
   await closed(id);

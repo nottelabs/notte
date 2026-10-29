@@ -71,6 +71,7 @@ class ComputerUseTests(unittest.IsolatedAsyncioTestCase):
                     destination = await agent.perform(page, "click", await point("button"))
                     self.assertIsNot(destination, page)
                     self.assertEqual(await destination.title(), "Popup")
+                    self.assertEqual(await destination.evaluate("[innerWidth, innerHeight]"), [1440, 900])
                 finally:
                     await browser.close()
         await closed(client, session.session_id)
