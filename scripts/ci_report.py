@@ -21,7 +21,8 @@ class Job(TypedDict):
     conclusion: str | None
 
 
-def report(needs: dict[str, Need], jobs: list[Job], trusted: bool) -> tuple[str, bool]:
+def report(needs: dict[str, Need], jobs: list[Job], trusted: bool, agent_models: bool = True) -> tuple[str, bool]:
+    """`agent_models` is false for Dependabot runs, which the paired workflow excludes from model checks."""
     scope = cast(dict[str, bool | list[str]], json.loads(needs["changes"]["outputs"].get("scope") or "{}"))
     complete = needs["changes"]["result"] == "success" and bool(scope)
     lines = ["## CI coverage", "", "| Suite | Selection | Result |", "| --- | --- | --- |"]
@@ -80,6 +81,11 @@ def report(needs: dict[str, Need], jobs: list[Job], trusted: bool) -> tuple[str,
                 "readme_live": ["readme / live"],
             }
         )
+    if trusted and agent_models:
+        examples = cast(list[str], scope.get("integration_examples") or [])
+        expected_jobs["paired_live"] = [
+            f"paired / agent-models ({recipe})" for recipe in ("openai-agents", "claude-agents") if recipe in examples
+        ]
     if scope.get("integration_examples"):
         expected_jobs["paired_static"] += [f"paired / native-checks ({shard}/6)" for shard in range(1, 7)]
     if scope.get("cli_contract") is True:
@@ -128,7 +134,9 @@ def report(needs: dict[str, Need], jobs: list[Job], trusted: bool) -> tuple[str,
 def main() -> None:
     needs = cast(dict[str, Need], json.loads(os.environ["RESULTS"]))
     jobs = cast(list[Job], json.loads(os.environ["JOBS"]))
-    summary, complete = report(needs, jobs, os.environ["TRUSTED_LIVE"] == "true")
+    summary, complete = report(
+        needs, jobs, os.environ["TRUSTED_LIVE"] == "true", os.environ["GITHUB_ACTOR"] != "dependabot[bot]"
+    )
     with Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a") as output:
         _ = output.write(summary)
     if not complete:

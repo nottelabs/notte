@@ -159,3 +159,20 @@ def test_workflow_collects_all_job_pages_and_propagates_api_errors(tmp_path: Pat
     name, separator, value = (tmp_path / "output").read_text().strip().partition("=")
     assert (name, separator) == ("jobs", "=")
     assert json.loads(value) == jobs
+
+
+def test_selected_agent_model_jobs_are_required_except_for_dependabot() -> None:
+    scope: dict[str, bool | list[str]] = {
+        "paired_live": True,
+        "paired_shards": [],
+        "integration_examples": ["claude-agents", "e2b"],
+    }
+    summary, accepted = report(needs(scope), [], True)
+    assert not accepted
+    assert "- paired / agent-models (claude-agents)" in summary
+    assert "openai-agents" not in summary
+    jobs: list[Job] = [{"name": "paired / agent-models (claude-agents)", "conclusion": "skipped"}]
+    assert not report(needs(scope), jobs, True)[1]
+    jobs[0]["conclusion"] = "success"
+    assert report(needs(scope), jobs, True)[1]
+    assert report(needs(scope), [], True, agent_models=False)[1]
