@@ -81,6 +81,18 @@ def test_fork_still_requires_selected_offline_jobs() -> None:
     assert not report(needs({"node_static": True}), [], False)[1]
 
 
+def test_selected_native_example_shards_are_required() -> None:
+    results = needs({"paired_static": True, "integration_examples": ["claude-agents"]})
+    jobs: list[Job] = [{"name": "paired / checks", "conclusion": "success"}]
+    jobs += [{"name": f"paired / native-checks ({shard}/6)", "conclusion": "success"} for shard in range(1, 6)]
+    summary, accepted = report(results, jobs, False)
+    assert not accepted
+    assert "- paired / native-checks (6/6)" in summary
+    jobs.append({"name": "paired / native-checks (6/6)", "conclusion": "success"})
+    assert report(results, jobs, False)[1]
+    assert report(needs({"paired_static": True, "integration_examples": []}), jobs[:1], False)[1]
+
+
 def test_mixed_fork_suite_reports_withheld_live_coverage_after_offline_success() -> None:
     jobs: list[Job] = [
         {"name": "node / tests (22)", "conclusion": "success"},

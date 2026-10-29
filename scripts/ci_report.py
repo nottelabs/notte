@@ -80,6 +80,8 @@ def report(needs: dict[str, Need], jobs: list[Job], trusted: bool) -> tuple[str,
                 "readme_live": ["readme / live"],
             }
         )
+    if scope.get("integration_examples"):
+        expected_jobs["paired_static"] += [f"paired / native-checks ({shard}/6)" for shard in range(1, 7)]
     if scope.get("cli_contract") is True:
         expected_jobs["cli_contract"] = [
             "python / cli-contract (ubuntu-24.04, file)",
