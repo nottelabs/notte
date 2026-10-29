@@ -1,0 +1,21 @@
+name: Require current PR head
+description: Reject obsolete queued PR work before dependency installation or live resource use.
+runs:
+  using: composite
+  steps:
+    - name: Check live PR metadata
+      if: github.event_name == 'pull_request'
+      shell: bash
+      working-directory: ${{ github.workspace }}
+      env:
+        GH_TOKEN: ${{ github.token }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+      run: |
+        set -euo pipefail
+        current=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" \
+          --jq 'select(.state == "open" and .base.ref == "main") | .head.sha')
+        if [ "$current" != "$EXPECTED_HEAD" ]; then
+          echo '::error::This PR run is obsolete. Validate the latest open PR head.'
+          exit 1
+        fi

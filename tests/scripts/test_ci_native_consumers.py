@@ -386,7 +386,7 @@ def test_agent_jobs_supply_credentials_only_after_dependency_preparation() -> No
     native = next(step for step in shared["steps"] if "ci_integration_examples.py live" in step.get("run", ""))
     assert "OPENROUTER_API_KEY" not in native["env"]
     job = config["jobs"]["agent-models"]
-    assert set(job["needs"]) == {"changes", "checks"}
+    assert job["needs"] == "changes"
     assert "github.event.pull_request.head.repo.full_name == github.repository" in job["if"]
     assert "github.ref == 'refs/heads/main'" in job["if"]
     for name in runner.AGENT_RECIPES:
