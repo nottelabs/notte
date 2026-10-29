@@ -18,9 +18,12 @@ on:
 permissions:
   contents: read
 
+# Preparation and publication change the same releases: never run them at once,
+# and queue every request so a pending publication is never dropped.
 concurrency:
-  group: publish-release
+  group: release
   cancel-in-progress: false
+  queue: max
 
 env:
   DISABLE_TELEMETRY: "true"
@@ -31,6 +34,9 @@ jobs:
     name: Check and publish the draft
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 20
+    # The workflow token lists draft releases only with push access.
+    permissions:
+      contents: write
     env:
       VERSION: ${{ inputs.version }}
       TARGET_SHA: ${{ inputs.target_sha }}

@@ -464,7 +464,8 @@ def test_publish_release_checks_production_before_publishing_with_the_automation
     assert inputs["target_sha"]["required"] is True
     assert "github.ref == 'refs/heads/main'" in job["if"]
     assert workflow["permissions"] == {"contents": "read"}
-    assert "permissions" not in job
+    # The workflow token lists draft releases only with push access.
+    assert job["permissions"] == {"contents": "write"}
     assert not any("continue-on-error" in step or "if" in step for step in steps)
 
     checkout = next(step for step in steps if str(step.get("uses", "")).startswith("actions/checkout@"))
@@ -524,3 +525,97 @@ def test_publish_release_rejects_a_short_sha(tmp_path: Path) -> None:
     )
     assert result.returncode != 0
     assert "40-character" in result.stdout
+
+
+def test_preparation_and_publication_never_overlap_or_drop_a_request() -> None:
+    for name in ("prepare-release.yml", "publish-release.yml"):
+        assert _load_workflow(name)["concurrency"] == {"group": "release", "cancel-in-progress": False, "queue": "max"}
+
+
+def _fake_release_writes(tmp_path: Path, fail_on: str = "") -> dict[str, str]:
+    """Stand in for `gh`, recording each call and failing the one matching `fail_on`."""
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    gh = fake_bin / "gh"
+    gh.write_text(
+        f"""#!/bin/sh
+printf '%s\\n' "$*" >> {tmp_path / "calls"}
+case "$*" in
+  *{fail_on or "never-match"}*) exit 1 ;;
+  "release create"*) echo https://github.com/nottelabs/notte/releases/tag/untagged-9 ;;
+  *-F\ draft=false*) echo https://github.com/nottelabs/notte/releases/tag/v1.9.1 ;;
+esac
+exit 0
+"""
+    )
+    gh.chmod(0o755)
+    (tmp_path / "calls").touch()
+    summary = tmp_path / "summary"
+    summary.touch()
+    return {
+        **os.environ,
+        "PATH": f"{fake_bin}:{os.environ['PATH']}",
+        "GITHUB_REPOSITORY": "nottelabs/notte",
+        "GITHUB_STEP_SUMMARY": str(summary),
+        "TAG": "v1.9.1",
+    }
+
+
+def _calls(tmp_path: Path) -> list[str]:
+    return (tmp_path / "calls").read_text().splitlines()
+
+
+@pytest.mark.parametrize(
+    ("kept", "stale", "calls"),
+    [
+        ("", "", [f"release create v1.9.1 --draft --target {TARGET} --title v1.9.1 --generate-notes"]),
+        (
+            "",
+            "1 3",
+            [
+                "api -X DELETE repos/nottelabs/notte/releases/1",
+                "api -X DELETE repos/nottelabs/notte/releases/3",
+                f"release create v1.9.1 --draft --target {TARGET} --title v1.9.1 --generate-notes",
+            ],
+        ),
+        ("https://github.com/nottelabs/notte/releases/2", "1", ["api -X DELETE repos/nottelabs/notte/releases/1"]),
+    ],
+)
+def test_prepare_release_deletes_only_stale_drafts_then_drafts_once(
+    tmp_path: Path, kept: str, stale: str, calls: list[str]
+) -> None:
+    env = _fake_release_writes(tmp_path)
+    result = subprocess.run(
+        ["bash", "-c", _prepare_step("Draft the release")["run"]],
+        env={**env, "TARGET": TARGET, "KEPT": kept, "STALE": stale},
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert _calls(tmp_path) == calls
+
+
+def test_prepare_release_does_not_draft_after_a_failed_deletion(tmp_path: Path) -> None:
+    env = _fake_release_writes(tmp_path, fail_on="releases/1")
+    result = subprocess.run(
+        ["bash", "-c", _prepare_step("Draft the release")["run"]],
+        env={**env, "TARGET": TARGET, "KEPT": "", "STALE": "1 3"},
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode != 0
+    assert _calls(tmp_path) == ["api -X DELETE repos/nottelabs/notte/releases/1"]
+
+
+@pytest.mark.parametrize("fails", [False, True])
+def test_publish_release_publishes_only_the_found_draft(tmp_path: Path, fails: bool) -> None:
+    env = _fake_release_writes(tmp_path, fail_on="releases/7" if fails else "")
+    result = subprocess.run(
+        ["bash", "-c", _publish_step("Publish the draft")["run"]],
+        env={**env, "ID": "7", "TARGET_SHA": TARGET},
+        capture_output=True,
+        text=True,
+    )
+    assert _calls(tmp_path) == ["api -X PATCH repos/nottelabs/notte/releases/7 -F draft=false --jq .html_url"]
+    assert (result.returncode != 0) is fails, result.stdout + result.stderr
+    assert ("Published v1.9.1" in (tmp_path / "summary").read_text()) is not fails
