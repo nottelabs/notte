@@ -2522,7 +2522,7 @@ wheels = [
 
 [[package]]
 name = "notte"
-version = "1.10.2.dev0"
+version = "1.10.3.dev0"
 source = { editable = "." }
 dependencies = [
     { name = "notte-browser" },
@@ -2611,7 +2611,7 @@ lint = [{ name = "ruff", specifier = "==0.11.10" }]
 
 [[package]]
 name = "notte-browser"
-version = "1.10.2.dev0"
+version = "1.10.3.dev0"
 source = { editable = "packages/notte-browser" }
 dependencies = [
     { name = "beautifulsoup4" },
@@ -2638,7 +2638,7 @@ requires-dist = [
 
 [[package]]
 name = "notte-core"
-version = "1.10.2.dev0"
+version = "1.10.3.dev0"
 source = { editable = "packages/notte-core" }
 dependencies = [
     { name = "loguru" },
@@ -2674,7 +2674,7 @@ provides-extras = ["profiling"]
 
 [[package]]
 name = "notte-llm"
-version = "1.10.2.dev0"
+version = "1.10.3.dev0"
 source = { editable = "packages/notte-llm" }
 dependencies = [
     { name = "chevron" },
@@ -2693,7 +2693,7 @@ requires-dist = [
 
 [[package]]
 name = "notte-sdk"
-version = "1.10.2.dev0"
+version = "1.10.3.dev0"
 source = { editable = "packages/notte-sdk" }
 dependencies = [
     { name = "anyio" },
