@@ -282,7 +282,7 @@ def test_required_gate_waits_for_all_families_and_fails_closed(
 ) -> None:
     job = workflow("ci.yml")["jobs"]["tests"]
     assert job["if"] == "always()"
-    assert set(job["needs"]) == {"changes", *ci_scope.GROUPS}
+    assert set(job["needs"]) == {"changes", "job-results", *ci_scope.GROUPS}
     results: dict[str, Need] = {name: {"result": "skipped", "outputs": {}} for name in job["needs"]}
     scope = json.dumps({flag: False for flag in ci_scope.ALL})
     results["changes"]["outputs"] = {"scope": scope}

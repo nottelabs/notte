@@ -131,9 +131,30 @@ jobs:
       scope: ${{ needs.changes.outputs.scope }}
     secrets: inherit # pragma: allowlist secret
 
+  # Only this job reads Actions data; it never checks out or runs PR code.
+  job-results:
+    needs: [changes, python, node, docs, paired, readme]
+    if: always()
+    runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-2vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
+    timeout-minutes: 5
+    permissions:
+      actions: read
+    outputs:
+      jobs: ${{ steps.read.outputs.jobs }}
+    steps:
+      - name: Read latest job results for this run
+        id: read
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh api --paginate --slurp
+          "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs?filter=latest&per_page=100"
+          | jq -r '"jobs=" + ([.[].jobs[] | {name, conclusion}] | tojson)' >> "$GITHUB_OUTPUT"
+
   # Preserve the required check name and wait for all selected suite families.
   tests:
-    needs: [changes, python, node, docs, paired, readme]
+    needs: [changes, python, node, docs, paired, readme, job-results]
     if: always()
     runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-2vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
     timeout-minutes: 5
@@ -152,3 +173,10 @@ jobs:
           # Fork PRs get no secrets, so their selected live suites skip and cannot pass.
           TRUSTED_LIVE: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
         run: python3 -m scripts.ci_validation gate
+      - name: Report correctness, integration results and coverage
+        if: always()
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+          JOBS: ${{ needs.job-results.outputs.jobs }}
+          TRUSTED_LIVE: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+        run: python3 -m scripts.ci_report
