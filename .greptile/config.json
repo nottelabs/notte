@@ -2,8 +2,12 @@
   "rules": [
     {
       "id": "sdk-parity",
-      "rule": "The Python SDK (packages/notte-sdk) and the Node SDK (node-sdk) expose the same API. When a PR changes public SDK behavior in one of them (a client method, parameter, default, return type, error or retry), check that the other SDK gets the same change in the PR or a linked follow-up, or that the PR description says the feature is intentionally single-SDK. Name the matching file or method in the other SDK. Ignore the generated API client (node-sdk/src/lib/client) and changes to one SDK's internals, tests or tooling.",
-      "scope": ["packages/notte-sdk/src/**", "node-sdk/src/**"],
+      "rule": "The Python SDK (packages/notte-sdk, including the action classes it re-exports from packages/notte-core/src/notte_core/actions) and the Node SDK (node-sdk) expose the same API. When a PR changes public SDK behavior in one of them (a client method, parameter, default, return type, error or retry), check that the other SDK gets the same change in the PR or a linked follow-up, or that the PR description says the feature is intentionally single-SDK. Name the matching file or method in the other SDK. Ignore the generated API client (node-sdk/src/lib/client) and changes to one SDK's internals, tests or tooling.",
+      "scope": [
+        "packages/notte-sdk/src/**",
+        "packages/notte-core/src/notte_core/actions/**",
+        "node-sdk/src/**"
+      ],
       "severity": "medium"
     }
   ]

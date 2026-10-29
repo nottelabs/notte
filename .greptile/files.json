@@ -1,9 +1,0 @@
-{
-  "files": [
-    {
-      "path": "node-sdk/PYTHON_PARITY.md",
-      "description": "Known differences between the Node and Python SDKs, and which ones are planned to be ported",
-      "scope": ["packages/notte-sdk/src/**", "node-sdk/src/**"]
-    }
-  ]
-}
