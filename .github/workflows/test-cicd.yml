@@ -15,10 +15,6 @@ on:
         description: Extraction provider selected from live PR metadata
         type: string
         default: openrouter
-      live_authorized:
-        description: Maintainer authorization verified for this exact CI run and head
-        type: boolean
-        default: false
   # Periodic full live coverage; offline tests remain the secret-free PR gate.
   schedule:
     - cron: '0 */4 * * 1-5'

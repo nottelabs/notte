@@ -15,26 +15,8 @@ both validation and serialization schemas.
 
 ## CI validation before merging
 
-Each PR push runs the selected offline checks. Selected staging and model tests
-are deferred until a maintainer explicitly authorizes that head's **CI** run and
-chooses **Re-run all jobs**. The run summary prints the exact two commands:
-
-```sh
-gh api --method POST repos/nottelabs/notte/statuses/HEAD_SHA -f state=success -f context=ci/live-validation/RUN_ID -f target_url=https://github.com/nottelabs/notte/actions/runs/RUN_ID
-gh run rerun RUN_ID --repo nottelabs/notte
-```
-
-Replace `HEAD_SHA` and `RUN_ID` with that run's commit and ID. The status must be
-created by the same human GitHub account that starts the rerun; creating a status
-requires repository write permission. The workflow only reads statuses and
-rejects workflow-bot authorization. A rerun or a label alone cannot authorize
-live work, even when the original suite-selection job failed.
-
-Until then the required `tests` gate reports that live validation is needed,
-even when offline checks pass. This is an explicit merge requirement. Re-running
-only the gate or only failed jobs cannot create authorization. A new push starts
-a new offline run and requires authorization for its new head and run ID.
-PRs whose selected scope needs no live tests can pass on their first run.
+Each push to a same-repository PR runs the selected offline and live checks
+automatically. No authorization or rerun is needed.
 
 All selected checks must pass on the current head before merging. Queued live
 jobs check the live PR head before dependency installation; obsolete jobs fail
@@ -44,7 +26,8 @@ Native preparation runs in up to six parallel shards, independently of documenta
 checks and the live jobs, and remains part of the required result.
 
 Fork PRs receive no secrets. Their live coverage requires a reviewed branch in
-this repository. Main pushes and scheduled/manual coverage retain live testing.
+this repository; until then the `tests` gate stays red when the fork's change
+selects live suites. Main pushes and scheduled/manual coverage retain live testing.
 
 ## Reporting an Issue
 
