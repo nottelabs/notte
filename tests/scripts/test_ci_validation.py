@@ -1,4 +1,4 @@
-"""Deferred live coverage and obsolete PR heads must never satisfy merge validation."""
+"""Selected live coverage runs on every same-repository PR push; forks and obsolete heads never satisfy the gate."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ import yaml
 from scripts import ci_integration_examples as runner
 from scripts import ci_scope
 from scripts.ci_scope import ALL, GROUPS, select
-from scripts.ci_validation import LIVE, Need, Scope, Status, assess, authorized, plan
+from scripts.ci_validation import LIVE, Need, Scope, assess
 from tests.scripts.test_ci_staging_scope import workflow
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -23,234 +23,92 @@ def selected() -> Scope:
     return {**{flag: True for flag in ALL}, "file_checks": True, "integration_examples": ["openai-agents"]}
 
 
-def approval() -> Status:
+def results(scope: Scope) -> dict[str, Need]:
     return {
-        "context": "ci/live-validation/123",
-        "state": "success",
-        "url": "https://api.github.com/repos/fixture/repo/statuses/" + "a" * 40,
-        "target_url": "https://github.com/fixture/repo/actions/runs/123",
-        "creator": {"login": "maintainer"},
-    }
-
-
-def test_failed_selection_reruns_never_authorize_live_coverage_by_attempt_number() -> None:
-    for attempt in (1, 2, 3, 50):
-        execution, deferred = plan(selected(), "pull_request", attempt)
-        assert deferred
-        assert all(execution[flag] is False for flag in LIVE)
-
-
-@pytest.mark.parametrize(
-    "head,run_id,actor",
-    [
-        ("a" * 40, "123", "maintainer"),
-        ("b" * 40, "123", "maintainer"),
-        ("a" * 40, "124", "maintainer"),
-        ("a" * 40, "123", "someone-else"),
-    ],
-)
-def test_authorization_binds_head_run_and_rerunning_maintainer(head: str, run_id: str, actor: str) -> None:
-    assert authorized([approval()], "fixture/repo", head, run_id, actor) is (
-        head == "a" * 40 and run_id == "123" and actor == "maintainer"
-    )
-
-
-def test_revocation_and_workflow_bot_statuses_do_not_authorize_live_work() -> None:
-    revoked = approval()
-    revoked.update(context="CI/LIVE-VALIDATION/123", state="failure")
-    assert not authorized([revoked, approval()], "fixture/repo", "a" * 40, "123", "maintainer")
-    bot = approval()
-    bot["creator"] = {"login": "github-actions[bot]"}
-    assert not authorized([bot], "fixture/repo", "a" * 40, "123", "github-actions[bot]")
-    assert not authorized([], "fixture/repo", "a" * 40, "123", "maintainer")
-
-
-@pytest.mark.parametrize("has_authorization", [False, True])
-def test_workflow_reads_authorization_for_the_exact_head_before_planning(
-    tmp_path: Path, has_authorization: bool
-) -> None:
-    changes = workflow("ci.yml")["jobs"]["changes"]
-    step = next(item for item in changes["steps"] if item.get("id") == "validation")
-    assert changes["permissions"]["statuses"] == "read"
-    assert step["env"]["TRIGGERING_ACTOR"] == "${{ github.triggering_actor }}"
-    assert step["env"]["HEAD_SHA"] == "${{ github.event.pull_request.head.sha || github.sha }}"
-    source = tmp_path / "statuses.json"
-    source.write_text(json.dumps([[approval()]] if has_authorization else []))
-    stub = tmp_path / "gh"
-    stub.write_text("""#!/usr/bin/env python3
-import os, sys
-from pathlib import Path
-assert sys.argv[1:] == ["api", "--paginate", "--slurp", "repos/fixture/repo/commits/" + "a" * 40 + "/statuses?per_page=100"]
-print(Path(os.environ["STATUS_SOURCE"]).read_text())
-""")
-    stub.chmod(0o755)
-    output = tmp_path / "output"
-    result = subprocess.run(
-        ["bash", "-e", "-o", "pipefail", "-c", step["run"]],
-        cwd=ROOT,
-        env={
-            **os.environ,
-            "PATH": str(tmp_path) + os.pathsep + os.environ["PATH"],
-            "SCOPE": json.dumps(selected()),
-            "EVENT_NAME": "pull_request",
-            "RUN_ATTEMPT": "2",  # Includes a failed-selection rerun.
-            "TRUSTED_LIVE": "true",
-            "GITHUB_REPOSITORY": "fixture/repo",
-            "GITHUB_RUN_ID": "123",
-            "HEAD_SHA": "a" * 40,
-            "TRIGGERING_ACTOR": "maintainer",
-            "STATUS_SOURCE": str(source),
-            "AUTHORIZATION_STATUSES": str(tmp_path / "authorization.json"),
-            "GITHUB_OUTPUT": str(output),
-            "GITHUB_STEP_SUMMARY": str(tmp_path / "summary"),
-        },
-        capture_output=True,
-        text=True,
-    )
-    assert result.returncode == 0, result.stdout + result.stderr
-    outputs = dict(line.split("=", 1) for line in output.read_text().splitlines())
-    assert outputs["live_authorized"] == str(has_authorization).lower()
-    assert outputs["live_deferred"] == str(not has_authorization).lower()
-
-
-def results(scope: Scope, attempt: int, live_authorized: bool = False) -> dict[str, Need]:
-    execution, deferred = plan(scope, "pull_request", attempt, live_authorized=live_authorized)
-    return {
-        "changes": {
-            "result": "success",
-            "outputs": {
-                "scope": json.dumps(execution),
-                "selected_scope": json.dumps(scope),
-                "live_deferred": str(deferred).lower(),
-            },
-        },
+        "changes": {"result": "success", "outputs": {"scope": json.dumps(scope)}},
         **{family: {"result": "success", "outputs": {}} for family in GROUPS},
     }
 
 
-def test_first_push_runs_all_selected_offline_checks_but_cannot_merge() -> None:
-    scope = selected()
-    execution, deferred = plan(scope, "pull_request", 1)
-    assert deferred
-    assert scope == selected()
-    for flag, value in scope.items():
-        assert execution[flag] == (False if flag in LIVE else value)
-    message, ready = assess(results(scope, 1))
-    assert not ready
-    assert "Re-run all jobs" in message
+def test_pr_suites_receive_the_selected_scope_without_approval() -> None:
+    config = workflow("ci.yml")
+    changes = config["jobs"]["changes"]
+    assert changes["outputs"]["scope"] == "${{ steps.scope.outputs.scope }}"
+    assert "statuses" not in changes["permissions"]
+    assert "ci_validation plan" not in json.dumps(config)
+    assert "live_authorized" not in json.dumps(config)
+    assert "live_authorized" not in json.dumps(workflow("test-cicd.yml"))
 
 
-@pytest.mark.parametrize("event", ["push", "schedule", "workflow_dispatch"])
-def test_main_and_periodic_coverage_are_not_deferred(event: str) -> None:
-    assert plan(selected(), event, 1) == (selected(), False)
-
-
-def test_deliberate_full_rerun_validates_every_selected_suite() -> None:
-    assert plan(selected(), "pull_request", 2, live_authorized=True) == (selected(), False)
-    assert assess(results(selected(), 2, live_authorized=True))[1]
-
-
-def test_rerun_cannot_authorize_fork_secrets_or_claim_fork_live_coverage() -> None:
-    for attempt in (1, 2, 3):
-        execution, deferred = plan(selected(), "pull_request", attempt, trusted=False, live_authorized=True)
-        assert deferred
-        assert all(execution[flag] is False for flag in LIVE)
-
-
-def test_new_push_invalidates_live_authorization_and_gate_only_rerun_cannot_restore_it() -> None:
-    assert assess(results(selected(), 2, live_authorized=True))[1]
-    new_run = results(selected(), 1)
-    # Re-running just the failed gate retains the original changes-job outputs.
-    assert not assess(new_run)[1]
-    assert not assess(json.loads(json.dumps(new_run)))[1]
+def test_first_push_with_every_suite_passing_can_merge() -> None:
+    message, ready = assess(results(selected()))
+    assert ready, message
 
 
 def test_offline_only_scope_can_merge_on_first_run() -> None:
     scope: Scope = {**{flag: False for flag in ALL}, "python_unit": True}
-    assert plan(scope, "pull_request", 1) == (scope, False)
-    assert assess(results(scope, 1))[1]
+    assert assess(results(scope))[1]
 
 
 @pytest.mark.parametrize("family", sorted(GROUPS))
 @pytest.mark.parametrize("conclusion", ["skipped", "failure", "cancelled"])
 def test_selected_suites_must_succeed(family: str, conclusion: str) -> None:
-    needs = results(selected(), 2, live_authorized=True)
+    needs = results(selected())
     needs[family]["result"] = conclusion
-    assert not assess(needs)[1]
+    message, ready = assess(needs)
+    assert not ready
+    assert family in message
     del needs[family]
     assert not assess(needs)[1]
 
 
 @pytest.mark.parametrize("flag", sorted(LIVE))
-def test_removed_live_coverage_cannot_satisfy_gate(flag: str) -> None:
-    needs = results(selected(), 2, live_authorized=True)
-    execution = json.loads(needs["changes"]["outputs"]["scope"])
-    execution[flag] = False
-    needs["changes"]["outputs"]["scope"] = json.dumps(execution)
-    assert not assess(needs)[1]
-
-
-def test_missing_example_selection_or_shards_cannot_satisfy_gate() -> None:
-    needs = results(selected(), 2, live_authorized=True)
-    execution = json.loads(needs["changes"]["outputs"]["scope"])
-    execution["integration_examples"] = []
-    needs["changes"]["outputs"]["scope"] = json.dumps(execution)
-    assert not assess(needs)[1]
-
-
-def test_offline_failure_is_reported_before_deferred_live_validation() -> None:
-    needs = results(selected(), 1)
-    needs["python"]["result"] = "failure"
-    message, ready = assess(needs)
+def test_fork_pr_with_selected_live_coverage_cannot_merge(flag: str) -> None:
+    scope: Scope = {**{name: False for name in ALL}, "python_unit": True, flag: True}
+    assert assess(results(scope))[1]
+    message, ready = assess(results(scope), trusted=False)
     assert not ready
-    assert "python" in message
+    assert "Fork live coverage" in message
 
 
-@pytest.mark.parametrize("scope,attempt", [({}, 1), (selected(), 0)])
-def test_missing_or_invalid_planning_metadata_fails_closed(scope: Scope, attempt: int) -> None:
+def test_fork_pr_with_offline_only_scope_can_merge() -> None:
+    scope: Scope = {**{flag: False for flag in ALL}, "python_unit": True}
+    assert assess(results(scope), trusted=False)[1]
+
+
+def test_gate_reads_fork_trust_from_the_pr_head_repository() -> None:
+    gate = next(step for step in workflow("ci.yml")["jobs"]["tests"]["steps"] if "RESULTS" in step.get("env", {}))
+    assert gate["env"]["TRUSTED_LIVE"] == (
+        "${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}"
+    )
+
+
+def test_missing_or_invalid_selection_fails_closed() -> None:
+    needs = results(selected())
+    needs["changes"]["result"] = "failure"
+    assert not assess(needs)[1]
     with pytest.raises(ValueError):
-        plan(scope, "pull_request", attempt)
+        assess(results({}))
 
 
-def test_cli_outputs_survive_the_actual_plan_to_gate_boundary(tmp_path: Path) -> None:
-    output = tmp_path / "output"
-    summary = tmp_path / "summary"
-    authorization = tmp_path / "authorization.json"
-    env = {
-        **os.environ,
-        "SCOPE": json.dumps(selected()),
-        "EVENT_NAME": "pull_request",
-        "TRUSTED_LIVE": "true",
-        "AUTHORIZATION_STATUSES": str(authorization),
-        "GITHUB_REPOSITORY": "fixture/repo",
-        "GITHUB_RUN_ID": "123",
-        "HEAD_SHA": "a" * 40,
-        "TRIGGERING_ACTOR": "maintainer",
-        "GITHUB_OUTPUT": str(output),
-        "GITHUB_STEP_SUMMARY": str(summary),
-    }
-    for attempt in (1, 2):
-        output.write_text("")
-        authorization.write_text(json.dumps([[approval()]] if attempt == 2 else []))
-        completed = subprocess.run(
-            ["python3", "-m", "scripts.ci_validation", "plan"],
-            cwd=ROOT,
-            env={**env, "RUN_ATTEMPT": str(attempt)},
-            capture_output=True,
-            text=True,
-        )
-        assert completed.returncode == 0, completed.stderr
-        outputs = dict(line.split("=", 1) for line in output.read_text().splitlines())
-        needs = results(selected(), attempt, live_authorized=attempt == 2)
-        needs["changes"]["outputs"] = {**outputs, "selected_scope": json.dumps(selected())}
+def test_gate_cli_reports_the_suite_results(tmp_path: Path) -> None:
+    for family, trusted, expected in ((None, "true", 0), ("python", "true", 1), (None, "false", 1)):
+        needs = results(selected())
+        if family:
+            needs[family]["result"] = "failure"
         gate = subprocess.run(
             ["python3", "-m", "scripts.ci_validation", "gate"],
             cwd=ROOT,
-            env={**env, "RESULTS": json.dumps(needs)},
+            env={
+                **os.environ,
+                "RESULTS": json.dumps(needs),
+                "TRUSTED_LIVE": trusted,
+                "GITHUB_STEP_SUMMARY": str(tmp_path / "summary"),
+            },
             capture_output=True,
             text=True,
         )
-        assert gate.returncode == (1 if attempt == 1 else 0), gate.stdout + gate.stderr
+        assert gate.returncode == expected, gate.stdout + gate.stderr
 
 
 @pytest.mark.parametrize(
