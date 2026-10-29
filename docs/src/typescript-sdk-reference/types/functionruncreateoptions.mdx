@@ -13,6 +13,8 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 export interface FunctionRunCreateOptions {
 	/** Mark the record as a local run. Defaults to false; the Node SDK only executes on the cloud. */
 	local?: boolean;
+	/** Saved version to run, from the function's `versions`. Omit to run the latest version. */
+	version?: string;
 }
 ```
 
@@ -20,4 +22,8 @@ export interface FunctionRunCreateOptions {
 
 <ParamField body="local" type={"boolean | undefined"}>
 Mark the record as a local run. Defaults to false; the Node SDK only executes on the cloud.
+</ParamField>
+
+<ParamField body="version" type={"string | undefined"}>
+Saved version to run, from the function's `versions`. Omit to run the latest version.
 </ParamField>

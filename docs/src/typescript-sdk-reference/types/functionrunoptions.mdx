@@ -19,6 +19,11 @@ export interface FunctionRunOptions {
 	raiseOnFailure?: boolean;
 	/** Execute a record returned by createRun(). Omit to create a new run. */
 	functionRunId?: string;
+	/**
+	 * Saved version to run, from the function's `versions`. Omit to run the latest version.
+	 * A run's version is set when it is created: with `functionRunId`, pass it to `createRun()` instead.
+	 */
+	version?: string;
 	/** Override the saved function runtime; omit to inherit its default. */
 	runtime?: FunctionRuntime;
 	/**
@@ -45,6 +50,11 @@ Throw `FailedToRunCloudFunctionError` when execution fails. Defaults to true, ma
 
 <ParamField body="functionRunId" type={"string | undefined"}>
 Execute a record returned by createRun(). Omit to create a new run.
+</ParamField>
+
+<ParamField body="version" type={"string | undefined"}>
+Saved version to run, from the function's `versions`. Omit to run the latest version.
+A run's version is set when it is created: with `functionRunId`, pass it to `createRun()` instead.
 </ParamField>
 
 <ParamField body="runtime" type={"FunctionRuntime | undefined"}>

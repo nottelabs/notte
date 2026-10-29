@@ -21,7 +21,7 @@ NotteFunction.createRun(options?: FunctionRunCreateOptions): Promise<FunctionRun
 ## Parameters
 
 <ParamField body="options" type={"FunctionRunCreateOptions"}>
-Run-record settings; `local` defaults to false. Node execution remains cloud-only.
+Run-record settings; `local` defaults to false. Node execution remains cloud-only. `version` pins a saved version; omitted means the latest.
 
 Default:
 
@@ -47,6 +47,9 @@ A created run record and its ID. No function code has executed yet.
 ```typescript
 const created = await fn.createRun();
 const result = await fn.run({ url: 'https://example.com' }, { functionRunId: created.function_run_id });
+
+const { versions } = await fn.get();
+const pinned = await fn.createRun({ version: versions[0] });
 ```
 
 ## Related types

@@ -305,8 +305,9 @@ class FunctionsClient(_FunctionsEndpoints, FunctionsOperations):
         """
         return self._request_upload(*_update_request(function_id, restricted, data))
 
-    def create_run(self, function_id: str) -> CreateFunctionRunResponse:
-        request = CreateFunctionRunRequest()
+    def create_run(self, function_id: str, version: str | None = None) -> CreateFunctionRunResponse:
+        """Create a run record; `version` pins a saved version, otherwise the run uses the latest one."""
+        request = CreateFunctionRunRequest(version=version)
         return self.request(self._create_function_run_endpoint(function_id).with_request(request))
 
     @override
@@ -394,15 +395,19 @@ def _write_code(path: str, code: str) -> None:
 
 
 def _run_variables(
-    version: str | None, input_variables: dict[str, Any] | None, variables: dict[str, Any]
+    version: str | None,
+    function_run_id: str | None,
+    input_variables: dict[str, Any] | None,
+    variables: dict[str, Any],
 ) -> dict[str, Any]:
     """The script inputs of `run`: keyword inputs merged with `input_variables`."""
     if input_variables is not None:
         if duplicates := input_variables.keys() & variables.keys():
             raise ValueError(f"Duplicate input variables: {sorted(duplicates)}")
         variables = {**input_variables, **variables}
-    if version is not None:
-        raise ValueError("Running a specific version is not supported by the Notte cloud; update the function instead")
+    if version is not None and function_run_id is not None:
+        # A run executes the version it was created with.
+        raise ValueError("Pass version to create_run(version=...) instead; a run's version is set when it is created")
     return variables
 
 
@@ -540,13 +545,14 @@ class NotteFunction:
         logger.info(f"[Function] {self.response.function_id} downloaded successfully to {final_path}.")
         return code_content
 
-    def create_run(self) -> CreateFunctionRunResponse:
+    def create_run(self, version: str | None = None) -> CreateFunctionRunResponse:
         """
         Create a run record without starting execution.
 
         Returns the run ID before execution begins. Pass it explicitly to
         `run(function_run_id=...)` to execute this run; `run()` without an ID
-        creates a new run.
+        creates a new run. Pass `version` to run a saved version of the
+        function instead of the latest one.
 
         ```python
         function = notte.Function("<your-function-id>")
@@ -557,7 +563,7 @@ class NotteFunction:
         `run()` still waits for completion. Creating a run does not launch a
         background job or change which run `run()` uses by default.
         """
-        return self.client.create_run(self._function_id)
+        return self.client.create_run(self._function_id, version=version)
 
     def run(
         self,
@@ -581,6 +587,8 @@ class NotteFunction:
         for longer cloud execution, or runtime="standard" to override that default.
         Use `input_variables={"runtime": value}` for script inputs whose names match
         SDK options; these are merged with keyword inputs, rejecting duplicates.
+        Pass `version` to run a saved version of the function instead of the latest
+        one; for a run made with `create_run()`, pass `version` there instead.
 
         ```python
         function = notte.Function("<your-function-id>")
@@ -589,10 +597,10 @@ class NotteFunction:
 
         > Make sure that the correct variables are provided based on the python file previously uploaded. Otherwise, the function will fail.
         """
-        variables = _run_variables(version, input_variables, variables)
+        variables = _run_variables(version, function_run_id, input_variables, variables)
         # first create the run on DB
         if function_run_id is None:
-            function_run_id = self.client.create_run(self.function_id).function_run_id
+            function_run_id = self.client.create_run(self.function_id, version=version).function_run_id
 
         logger.info(
             f"[Function Run] {function_run_id} created and scheduled for cloud execution with raise_on_failure={raise_on_failure}."
@@ -655,8 +663,9 @@ class AsyncFunctionsClient(_FunctionsEndpoints, AsyncFunctionsOperations):
         """
         return await self._request_upload(*_update_request(function_id, restricted, data))
 
-    async def create_run(self, function_id: str) -> CreateFunctionRunResponse:
-        request = CreateFunctionRunRequest()
+    async def create_run(self, function_id: str, version: str | None = None) -> CreateFunctionRunResponse:
+        """Create a run record; `version` pins a saved version, otherwise the run uses the latest one."""
+        request = CreateFunctionRunRequest(version=version)
         return await self.request(self._create_function_run_endpoint(function_id).with_request(request))
 
     @override
@@ -886,13 +895,14 @@ class AsyncNotteFunction:
         logger.info(f"[Function] {self.function_id} downloaded successfully to {final_path}.")
         return code_content
 
-    async def create_run(self) -> CreateFunctionRunResponse:
+    async def create_run(self, version: str | None = None) -> CreateFunctionRunResponse:
         """
         Create a run record without starting execution.
 
         Returns the run ID before execution begins. Pass it explicitly to
         `run(function_run_id=...)` to execute this run; `run()` without an ID
-        creates a new run.
+        creates a new run. Pass `version` to run a saved version of the
+        function instead of the latest one.
 
         ```python
         function = client.Function("<your-function-id>")
@@ -903,7 +913,7 @@ class AsyncNotteFunction:
         `run()` still waits for completion. Creating a run does not launch a
         background job or change which run `run()` uses by default.
         """
-        return await self.client.create_run(await self._created())
+        return await self.client.create_run(await self._created(), version=version)
 
     async def run(
         self,
@@ -927,6 +937,8 @@ class AsyncNotteFunction:
         for longer cloud execution, or runtime="standard" to override that default.
         Use `input_variables={"runtime": value}` for script inputs whose names match
         SDK options; these are merged with keyword inputs, rejecting duplicates.
+        Pass `version` to run a saved version of the function instead of the latest
+        one; for a run made with `create_run()`, pass `version` there instead.
         Runs of one function can execute concurrently, for example with `asyncio.gather`.
 
         ```python
@@ -936,11 +948,11 @@ class AsyncNotteFunction:
 
         > Make sure that the correct variables are provided based on the python file previously uploaded. Otherwise, the function will fail.
         """
-        variables = _run_variables(version, input_variables, variables)
+        variables = _run_variables(version, function_run_id, input_variables, variables)
         response = await self._load()
         # first create the run on DB
         if function_run_id is None:
-            function_run_id = (await self.client.create_run(response.function_id)).function_run_id
+            function_run_id = (await self.client.create_run(response.function_id, version=version)).function_run_id
 
         logger.info(
             f"[Function Run] {function_run_id} created and scheduled for cloud execution with raise_on_failure={raise_on_failure}."
