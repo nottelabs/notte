@@ -1,8 +1,10 @@
 name: Prepare release
 
-# Run the release checks before anything is public, then open a draft release with
-# generated notes. Review and publish the draft from the Releases page: publishing
-# creates the vX.Y.Z tag, which runs pypi-release.yml and node-sdk-publish.yml.
+# Check the version before anything is public, then open a draft release with
+# generated notes at the commit to release. Publish the draft with
+# publish-release.yml, or from the Releases page, once production serves its wire
+# models: publishing creates the vX.Y.Z tag, which runs pypi-release.yml and
+# node-sdk-publish.yml.
 on:
   workflow_dispatch:
     inputs:
@@ -10,6 +12,11 @@ on:
         description: Stable version to release (X.Y.Z or vX.Y.Z)
         required: true
         type: string
+      target_sha:
+        description: Full SHA of the main commit to release (empty for the current main)
+        required: false
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -17,9 +24,6 @@ permissions:
 concurrency:
   group: prepare-release
   cancel-in-progress: false
-
-env:
-  DISABLE_TELEMETRY: "true"
 
 jobs:
   draft:
@@ -35,17 +39,30 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
-        with:
-          enable-cache: true
-          cache-dependency-glob: "uv.lock"
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version-file: ".python-version"
+
+      - name: Check out the commit to release
+        id: target
+        env:
+          TARGET_SHA: ${{ inputs.target_sha }}
+        run: |
+          set -euo pipefail
+          target="${TARGET_SHA:-$GITHUB_SHA}"
+          if ! [[ "$target" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Expected a full 40-character commit SHA, got '$target'"
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$target" "$GITHUB_SHA"; then
+            echo "::error::$target is not a commit on main"
+            exit 1
+          fi
+          git checkout --quiet --detach "$target"
+          echo "sha=$target" >> "$GITHUB_OUTPUT"
 
       - name: Check the version and the workspace
         id: version
@@ -55,34 +72,49 @@ jobs:
           python3 scripts/release_version.py validate "$tag"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
-      - name: Check the release does not exist yet
+      - name: Check the release is not published yet
+        id: existing
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.version.outputs.tag }}
+          TARGET: ${{ steps.target.outputs.sha }}
         run: |
           set -euo pipefail
           tags=$(gh api "repos/$GITHUB_REPOSITORY/git/matching-refs/tags/$TAG" \
             --jq ".[] | select(.ref == \"refs/tags/$TAG\") | .ref")
           # Drafts have no tag yet, so look for them among the releases.
           releases=$(gh api --paginate "repos/$GITHUB_REPOSITORY/releases" \
-            --jq ".[] | select(.tag_name == \"$TAG\") | .html_url")
-          if [ -n "$tags$releases" ]; then
-            echo "::error::$TAG already exists: ${releases:-tag $TAG}"
+            --jq ".[] | select(.tag_name == \"$TAG\") | [.id, .draft, .target_commitish, .html_url] | @tsv")
+          published=$(awk -F '\t' '$2 == "false" { print $4 }' <<< "$releases")
+          if [ -n "$tags$published" ]; then
+            echo "::error::$TAG already exists: ${published:-tag $TAG}"
             exit 1
           fi
-
-      - name: Check the wire models against production
-        # The same gate pypi-release.yml runs; fail here, before the release is public.
-        run: |
-          uv sync --all-packages
-          make openapi-check-prod
+          # Keep a draft of the same commit, with any edited notes. Drafts of
+          # another commit are replaced, so the release ships the requested one.
+          kept=$(awk -F '\t' -v target="$TARGET" '$3 == target { print $4; exit }' <<< "$releases")
+          stale=$(awk -F '\t' -v kept="$kept" '$4 != kept { print $1 }' <<< "$releases")
+          echo "kept=$kept" >> "$GITHUB_OUTPUT"
+          echo "stale=$(paste -sd ' ' - <<< "$stale")" >> "$GITHUB_OUTPUT"
 
       - name: Draft the release
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.version.outputs.tag }}
+          TARGET: ${{ steps.target.outputs.sha }}
+          KEPT: ${{ steps.existing.outputs.kept }}
+          STALE: ${{ steps.existing.outputs.stale }}
         run: |
           set -euo pipefail
-          url=$(gh release create "$TAG" --draft --target "$GITHUB_SHA" --title "$TAG" --generate-notes)
-          echo "Draft release for $GITHUB_SHA: $url" >> "$GITHUB_STEP_SUMMARY"
+          for id in $STALE; do
+            gh api -X DELETE "repos/$GITHUB_REPOSITORY/releases/$id"
+            echo "Deleted the draft $id of $TAG, which targeted another commit"
+          done
+          if [ -n "$KEPT" ]; then
+            echo "Draft release for $TARGET already exists: $KEPT" >> "$GITHUB_STEP_SUMMARY"
+            echo "Draft release for $TARGET already exists: $KEPT"
+            exit 0
+          fi
+          url=$(gh release create "$TAG" --draft --target "$TARGET" --title "$TAG" --generate-notes)
+          echo "Draft release for $TARGET: $url" >> "$GITHUB_STEP_SUMMARY"
           echo "Review the notes and publish the draft: $url"

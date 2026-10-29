@@ -1,0 +1,110 @@
+name: Publish release
+
+# Publish the draft that prepare-release.yml opened for a commit, once production
+# serves the wire models the SDK uses. Publishing creates the vX.Y.Z tag, which
+# runs pypi-release.yml and node-sdk-publish.yml.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Stable version to publish (X.Y.Z or vX.Y.Z)
+        required: true
+        type: string
+      target_sha:
+        description: Full SHA of the commit the draft must target
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-release
+  cancel-in-progress: false
+
+env:
+  DISABLE_TELEMETRY: "true"
+
+jobs:
+  publish:
+    if: github.repository == 'nottelabs/notte' && github.ref == 'refs/heads/main'
+    name: Check and publish the draft
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 20
+    env:
+      VERSION: ${{ inputs.version }}
+      TARGET_SHA: ${{ inputs.target_sha }}
+    steps:
+      - name: Find the draft
+        id: draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="v${VERSION#v}"
+          if ! [[ "$TARGET_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Expected a full 40-character commit SHA, got '$TARGET_SHA'"
+            exit 1
+          fi
+          releases=$(gh api --paginate "repos/$GITHUB_REPOSITORY/releases" \
+            --jq ".[] | select(.tag_name == \"$tag\") | [.id, .draft, .target_commitish, .html_url] | @tsv")
+          published=$(awk -F '\t' '$2 == "false" { print $4 }' <<< "$releases")
+          if [ -n "$published" ]; then
+            echo "::error::$tag is already published: $published"
+            exit 1
+          fi
+          tags=$(gh api "repos/$GITHUB_REPOSITORY/git/matching-refs/tags/$tag" \
+            --jq ".[] | select(.ref == \"refs/tags/$tag\") | .ref")
+          if [ -n "$tags" ]; then
+            echo "::error::Tag $tag exists without a published release"
+            exit 1
+          fi
+          draft=$(awk -F '\t' -v target="$TARGET_SHA" '$2 == "true" && $3 == target { print $1; exit }' <<< "$releases")
+          if [ -z "$draft" ]; then
+            echo "::error::No draft $tag targets $TARGET_SHA. Run Prepare release with that commit first."
+            exit 1
+          fi
+          {
+            echo "tag=$tag"
+            echo "id=$draft"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.target_sha }}
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version-file: ".python-version"
+
+      - name: Check the version and the workspace
+        env:
+          TAG: ${{ steps.draft.outputs.tag }}
+        run: python3 scripts/release_version.py validate "$TAG"
+
+      - name: Check the wire models against production
+        # The same gate pypi-release.yml runs; fail here, before the release is public.
+        run: |
+          uv sync --all-packages
+          make openapi-check-prod
+
+      - name: Publish the draft
+        env:
+          # A tag created with the workflow token would not start the tag-push
+          # release workflows, so publish with the existing automation PAT.
+          GH_TOKEN: ${{ secrets.SUBMODULE_BUMP_PAT }}
+          TAG: ${{ steps.draft.outputs.tag }}
+          ID: ${{ steps.draft.outputs.id }}
+        run: |
+          set -euo pipefail
+          url=$(gh api -X PATCH "repos/$GITHUB_REPOSITORY/releases/$ID" -F draft=false --jq .html_url)
+          echo "Published $TAG for $TARGET_SHA: $url" >> "$GITHUB_STEP_SUMMARY"
+          echo "Published $TAG for $TARGET_SHA: $url"
