@@ -1,0 +1,65 @@
+name: Dependency health
+
+on:
+  schedule:
+    - cron: '23 * * * *'
+  push:
+    branches: [main]
+    paths: ['scripts/ci_health.py', '.github/workflows/dependency-health.yml']
+  pull_request:
+    branches: [main]
+    paths: ['scripts/ci_health.py', '.github/workflows/dependency-health.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  staging:
+    name: Staging API health
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    concurrency:
+      group: notte-live-api-staging
+      queue: max
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Probe staging API reads
+        env:
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+        run: python3 -m scripts.ci_health staging
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: staging-health
+          path: .test-artifacts/ci-health
+          include-hidden-files: true
+          if-no-files-found: error
+
+  openrouter:
+    name: OpenRouter availability
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    concurrency:
+      group: notte-openrouter-health
+      queue: max
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Probe OpenRouter completion
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: python3 -m scripts.ci_health openrouter
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: openrouter-health
+          path: .test-artifacts/ci-health
+          include-hidden-files: true
+          if-no-files-found: error
