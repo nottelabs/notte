@@ -127,7 +127,7 @@ def report(needs: dict[str, Need], jobs: list[Job], trusted: bool) -> tuple[str,
 
 def main() -> None:
     needs = cast(dict[str, Need], json.loads(os.environ["RESULTS"]))
-    jobs = cast(list[Job], json.loads(Path(os.environ["JOBS_PATH"]).read_text()))
+    jobs = cast(list[Job], json.loads(os.environ["JOBS"]))
     summary, complete = report(needs, jobs, os.environ["TRUSTED_LIVE"] == "true")
     with Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a") as output:
         _ = output.write(summary)

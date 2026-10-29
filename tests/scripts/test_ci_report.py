@@ -107,8 +107,7 @@ def test_mixed_fork_suite_reports_withheld_live_coverage_after_offline_success()
 def test_partial_reruns_keep_successful_siblings_without_using_old_failures() -> None:
     from tests.scripts.test_ci_staging_scope import workflow
 
-    job = workflow("ci.yml")["jobs"]["tests"]
-    read = next(step for step in job["steps"] if step.get("name") == "Read latest job results for this run")
+    (read,) = workflow("ci.yml")["jobs"]["job-results"]["steps"]
     assert "jobs?filter=latest&per_page=100" in read["run"]
     assert "/attempts/" not in read["run"]
     results = needs({"paired_live": True, "paired_shards": ["1/2", "2/2"]})
@@ -125,11 +124,14 @@ def test_partial_reruns_keep_successful_siblings_without_using_old_failures() ->
 def test_workflow_collects_all_job_pages_and_propagates_api_errors(tmp_path: Path, api_status: int) -> None:
     from tests.scripts.test_ci_staging_scope import workflow
 
-    step = next(
-        step
-        for step in workflow("ci.yml")["jobs"]["tests"]["steps"]
-        if step.get("name") == "Read latest job results for this run"
-    )
+    jobs_by_id = workflow("ci.yml")["jobs"]
+    collector = jobs_by_id["job-results"]
+    # The Actions-read token never reaches a job that checks out or runs PR code.
+    assert collector["permissions"] == {"actions": "read"}
+    assert all("uses" not in step for step in collector["steps"])
+    assert "actions" not in jobs_by_id["tests"]["permissions"]
+    assert "job-results" in jobs_by_id["tests"]["needs"]
+    (step,) = collector["steps"]
     assert step["shell"] == "bash"
     jobs = [
         {"name": "node / tests (22)", "conclusion": "success"},
@@ -148,9 +150,12 @@ def test_workflow_collects_all_job_pages_and_propagates_api_errors(tmp_path: Pat
             "GITHUB_REPOSITORY": "fixture/repo",
             "GITHUB_RUN_ID": "123",
             "API_STATUS": str(api_status),
+            "GITHUB_OUTPUT": str(tmp_path / "output"),
         },
         capture_output=True,
         text=True,
     )
     assert result.returncode == api_status, result.stdout + result.stderr
-    assert json.loads((tmp_path / "ci-jobs.json").read_text()) == jobs
+    name, separator, value = (tmp_path / "output").read_text().strip().partition("=")
+    assert (name, separator) == ("jobs", "=")
+    assert json.loads(value) == jobs
