@@ -10,12 +10,22 @@ function key(value: string): string {
   return value.split('+').map(part => aliases[part.toUpperCase()] ?? part).join('+');
 }
 
+const viewport = { width: 1440, height: 900 };
+
+// Give a new tab the computer viewport. Tabs in the window the first page sized already share it.
+async function fit(page: Page): Promise<void> {
+  await page.waitForLoadState('domcontentloaded', { timeout: 30_000 });
+  const [width, height] = await page.evaluate(() => [innerWidth, innerHeight]);
+  if (width !== viewport.width || height !== viewport.height) await page.setViewportSize(viewport);
+}
+
 export async function execute(page: Page, name: string, args: Args): Promise<void> {
   const safety = args.safety_decision as { decision?: string } | undefined;
   if (safety !== undefined && safety !== null && !['allowed', 'regular'].includes(safety.decision ?? '')) {
     throw new ApprovalRequired('Computer action requires approval or was blocked');
   }
-  const size = page.viewportSize()!;
+  // A tab sharing the sized window has no Playwright viewport of its own.
+  const size = page.viewportSize() ?? viewport;
   const point = (prefix = ''): [number, number] => {
     const x = args[`${prefix}x`], y = args[`${prefix}y`];
     if (typeof x !== 'number' || typeof y !== 'number' || !Number.isFinite(x) || !Number.isFinite(y)
@@ -77,8 +87,7 @@ export async function perform(page: Page, name: string, args: Args): Promise<Pag
   await execute(page, name, args);
   const destination = await popup;
   if (!destination) return page;
-  await destination.setViewportSize(page.viewportSize()!);
-  await destination.waitForLoadState('domcontentloaded', { timeout: 30_000 });
+  await fit(destination);
   return destination;
 }
 
@@ -93,15 +102,14 @@ export async function run(task: string, initialUrl = 'https://example.com') {
     try {
       browser = await chromium.connectOverCDP(await session.cdpUrl());
       let page = await browser.contexts()[0].newPage();
-      await page.setViewportSize({ width: 1440, height: 900 });
+      await page.setViewportSize(viewport);
       await page.goto(initialUrl, { waitUntil: 'domcontentloaded', timeout: 30_000 });
       let activePage = page;
       page.context().on('page', destination => { activePage = destination; });
       const refreshPage = async () => {
         if (activePage === page || activePage.isClosed()) return false;
         page = activePage;
-        await page.setViewportSize({ width: 1440, height: 900 });
-        await page.waitForLoadState('domcontentloaded', { timeout: 30_000 });
+        await fit(page);
         return true;
       };
       let interaction = await ai.interactions.create({

@@ -7,7 +7,7 @@ from typing import Any
 
 from google import genai
 from notte_sdk import NotteClient
-from playwright.async_api import Page, async_playwright
+from playwright.async_api import Page, ViewportSize, async_playwright
 from playwright.async_api import TimeoutError as BrowserTimeout
 
 
@@ -28,13 +28,23 @@ def key(value: str) -> str:
     return "+".join(aliases.get(part.upper(), part) for part in value.split("+"))
 
 
+VIEWPORT: ViewportSize = {"width": 1440, "height": 900}
+
+
+async def fit(page: Page) -> None:
+    """Give a new tab the computer viewport. Tabs in the window the first page sized already share it."""
+    await page.wait_for_load_state("domcontentloaded", timeout=30_000)
+    if await page.evaluate("[innerWidth, innerHeight]") != [VIEWPORT["width"], VIEWPORT["height"]]:
+        await page.set_viewport_size(VIEWPORT)
+
+
 async def execute(page: Page, name: str, args: dict[str, Any]) -> None:
     """Execute browser-only actions. Confirmation requests stop this example."""
     safety = args.get("safety_decision")
     if safety is not None and (not isinstance(safety, dict) or safety.get("decision") not in {"allowed", "regular"}):
         raise PermissionError("Computer action requires approval or was blocked")
-    size = page.viewport_size
-    assert size is not None
+    # A tab sharing the sized window has no Playwright viewport of its own.
+    size = page.viewport_size or VIEWPORT
 
     def point(prefix: str = "") -> tuple[int, int]:
         x, y = args[prefix + "x"], args[prefix + "y"]
@@ -108,8 +118,7 @@ async def perform(page: Page, name: str, args: dict[str, Any]) -> Page:
         if popup:
             try:
                 destination = await popup
-                await destination.set_viewport_size(page.viewport_size)
-                await destination.wait_for_load_state("domcontentloaded", timeout=30_000)
+                await fit(destination)
                 return destination
             except BrowserTimeout:
                 if not popup.done() or popup.exception() is None:
@@ -135,7 +144,7 @@ async def run(task: str, initial_url: str = "https://example.com") -> dict[str, 
             try:
                 browser = await driver.chromium.connect_over_cdp(session.cdp_url())
                 page = await browser.contexts[0].new_page()
-                await page.set_viewport_size({"width": 1440, "height": 900})
+                await page.set_viewport_size(VIEWPORT)
                 await page.goto(initial_url, wait_until="domcontentloaded", timeout=30_000)
                 active_page = page
 
@@ -150,8 +159,7 @@ async def run(task: str, initial_url: str = "https://example.com") -> dict[str, 
                     if active_page is page or active_page.is_closed():
                         return False
                     page = active_page
-                    await page.set_viewport_size({"width": 1440, "height": 900})
-                    await page.wait_for_load_state("domcontentloaded", timeout=30_000)
+                    await fit(page)
                     return True
 
                 screenshot = base64.b64encode(await page.screenshot()).decode()
