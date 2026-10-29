@@ -27,6 +27,16 @@ class ComputerUseTests(unittest.IsolatedAsyncioTestCase):
             with self.subTest(decision=decision), self.assertRaises(PermissionError):
                 await agent.execute(None, "click", {"safety_decision": {"decision": decision}})
 
+    async def test_tab_without_playwright_viewport_uses_computer_viewport(self):
+        clicks = []
+
+        async def click(x, y, **_):
+            clicks.append((x, y))
+
+        page = SimpleNamespace(viewport_size=None, mouse=SimpleNamespace(click=click))
+        await agent.execute(page, "click", {"x": 500, "y": 250})
+        self.assertEqual(clicks, [(720, 225)])
+
     @unittest.skipUnless(os.getenv("NOTTE_GEMINI_LIVE") == "1", "Opt-in cloud browser test")
     async def test_form_actions_and_confirmation(self):
         self.assertTrue(os.getenv("NOTTE_API_URL"), "Choose the browser API explicitly")
@@ -41,8 +51,8 @@ class ComputerUseTests(unittest.IsolatedAsyncioTestCase):
                         "<input aria-label=\"Name\"><button onclick=\"document.title='Saved '+document.querySelector('input').value\">Save</button>"
                     )
 
-                    async def point(selector):
-                        box = await page.locator(selector).bounding_box()
+                    async def point(selector, target=None):
+                        box = await (target or page).locator(selector).bounding_box()
                         return {
                             "x": int((box["x"] + box["width"] / 2) * 1000 / 1440),
                             "y": int((box["y"] + box["height"] / 2) * 1000 / 900),
@@ -72,6 +82,9 @@ class ComputerUseTests(unittest.IsolatedAsyncioTestCase):
                     self.assertIsNot(destination, page)
                     self.assertEqual(await destination.title(), "Popup")
                     self.assertEqual(await destination.evaluate("[innerWidth, innerHeight]"), [1440, 900])
+                    await destination.set_content("<button onclick=\"document.title='Clicked'\">Popup</button>")
+                    await agent.execute(destination, "click", await point("button", destination))
+                    self.assertEqual(await destination.title(), "Clicked")
                 finally:
                     await browser.close()
         await closed(client, session.session_id)

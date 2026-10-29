@@ -27,6 +27,13 @@ test('Confirmation, blocked, and malformed safety decisions never touch the brow
   }
 });
 
+test('A tab without a Playwright viewport uses the computer viewport', async () => {
+  const clicks: number[][] = [];
+  const page = { viewportSize: () => null, mouse: { click: async (x: number, y: number) => { clicks.push([x, y]); } } };
+  await execute(page as unknown as Page, 'click', { x: 500, y: 250 });
+  assert.deepEqual(clicks, [[720, 225]]);
+});
+
 test('Browser actions fill a form and honor confirmation before clicking', { skip: !live, timeout: 120_000 }, async () => {
   assert.ok(process.env.NOTTE_API_URL, 'Choose the browser API explicitly');
   let id = '';
@@ -37,8 +44,8 @@ test('Browser actions fill a form and honor confirmation before clicking', { ski
       const page = await browser.contexts()[0].newPage();
       await page.setViewportSize({ width: 1440, height: 900 });
       await page.setContent('<input aria-label="Name"><button onclick="document.title=\'Saved \'+document.querySelector(\'input\').value">Save</button>');
-      const point = async (selector: string) => {
-        const box = (await page.locator(selector).boundingBox())!;
+      const point = async (selector: string, target = page) => {
+        const box = (await target.locator(selector).boundingBox())!;
         return { x: Math.floor((box.x + box.width / 2) * 1000 / 1440), y: Math.floor((box.y + box.height / 2) * 1000 / 900) };
       };
       await execute(page, 'click', await point('input'));
@@ -58,6 +65,9 @@ test('Browser actions fill a form and honor confirmation before clicking', { ski
       assert.notEqual(destination, page);
       assert.equal(await destination.title(), 'Popup');
       assert.deepEqual(await destination.evaluate(() => [innerWidth, innerHeight]), [1440, 900]);
+      await destination.setContent('<button onclick="document.title=\'Clicked\'">Popup</button>');
+      await execute(destination, 'click', await point('button', destination));
+      assert.equal(await destination.title(), 'Clicked');
     } finally { await browser.close(); }
   });
   await closed(id);
