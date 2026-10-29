@@ -52,15 +52,21 @@ one version. To cut a release:
    then commit the changes, open the version PR, and merge it into `main`
    before cutting the next release.
 2. Run the [Prepare release](https://github.com/nottelabs/notte/actions/workflows/prepare-release.yml)
-   workflow on `main` with the version `X.Y.Z`. It checks that the version is a
-   stable `X.Y.Z` matching the Python workspace, that no `vX.Y.Z` tag or
-   release exists yet, and that production serves the wire models the SDK uses
-   (`make openapi-check-prod`). If production fails the check, wait for the
-   backend deploy and run it again. When every check passes, it creates a draft
-   release `vX.Y.Z` targeting the checked `main` commit, with generated notes.
-3. Open the draft on [Releases](https://github.com/nottelabs/notte/releases),
-   edit the notes and publish it. Publishing creates the tag. A tag ruleset
-   only accepts `vX.Y.Z` names for `v*` tags.
+   workflow on `main` with the version `X.Y.Z` and, optionally, the full SHA of
+   the `main` commit to release (empty means the current `main`). It checks
+   that the commit is on `main`, that the version is a stable `X.Y.Z` matching
+   the Python workspace at that commit, and that `vX.Y.Z` is not published or
+   tagged yet. It then creates a draft release `vX.Y.Z` targeting that commit,
+   with generated notes. A draft of the same commit is kept with its notes; a
+   draft of another commit is replaced.
+3. Once production serves the wire models the SDK uses, run
+   [Publish release](https://github.com/nottelabs/notte/actions/workflows/publish-release.yml)
+   on `main` with the same version and commit. It finds the draft of that
+   commit, runs `make openapi-check-prod` and publishes the draft. You can also
+   edit the notes and publish the draft from
+   [Releases](https://github.com/nottelabs/notte/releases); `pypi-release.yml`
+   runs the same production check before uploading. Publishing creates the
+   tag. A tag ruleset only accepts `vX.Y.Z` names for `v*` tags.
 4. Pushing the tag runs two workflows:
    - `pypi-release.yml` builds and publishes the root `notte` package and every
      package under `packages/` to PyPI as `X.Y.Z`, verifies the install from

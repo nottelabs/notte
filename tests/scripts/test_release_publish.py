@@ -273,27 +273,89 @@ def test_prepare_release_checks_everything_before_drafting_the_release() -> None
     names = [step.get("name") for step in steps]
 
     assert list(_triggers(workflow)) == ["workflow_dispatch"]
-    assert _triggers(workflow)["workflow_dispatch"]["inputs"]["version"]["required"] is True
+    inputs = _triggers(workflow)["workflow_dispatch"]["inputs"]
+    assert inputs["version"]["required"] is True
+    assert inputs["target_sha"]["required"] is False
     assert "github.ref == 'refs/heads/main'" in job["if"]
     assert workflow["permissions"] == {"contents": "read"}
     assert job["permissions"] == {"contents": "write"}
     assert steps[0]["with"]["persist-credentials"] is False
+    assert steps[0]["with"]["fetch-depth"] == 0
 
     # A failing check stops the job before the draft: no step may run past a failure.
     assert not any("continue-on-error" in step or "if" in step for step in steps)
     assert (
-        names.index("Check the version and the workspace")
-        < names.index("Check the release does not exist yet")
-        < names.index("Check the wire models against production")
+        names.index("Check out the commit to release")
+        < names.index("Check the version and the workspace")
+        < names.index("Check the release is not published yet")
         < names.index("Draft the release")
     )
     assert names[-1] == "Draft the release"
-    assert "make openapi-check-prod" in _prepare_step("Check the wire models against production")["run"]
+    # Production may not serve the release's wire models yet; publish-release.yml checks them.
+    assert "openapi-check-prod" not in yaml.safe_dump(workflow)
 
     draft = _prepare_step("Draft the release")["run"]
-    assert 'gh release create "$TAG" --draft --target "$GITHUB_SHA"' in draft
+    assert 'gh release create "$TAG" --draft --target "$TARGET"' in draft
     assert "--generate-notes" in draft
     assert "gh release create" not in "\n".join(step.get("run", "") for step in steps[:-1])
+
+
+def _git(cwd: Path, *args: str) -> str:
+    return subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True, text=True).stdout.strip()
+
+
+@pytest.mark.parametrize("target", ["main", "ancestor", "empty", "other", "short"])
+def test_prepare_release_checks_out_only_a_main_commit(tmp_path: Path, target: str) -> None:
+    _ = _git(tmp_path, "init", "--quiet", "--initial-branch=main")
+    for message in ("first", "second"):
+        _ = _git(
+            tmp_path,
+            "-c",
+            "user.name=t",
+            "-c",
+            "user.email=t@t",
+            "-c",
+            "commit.gpgsign=false",
+            "commit",
+            "--quiet",
+            "--allow-empty",
+            "-m",
+            message,
+        )
+    main = _git(tmp_path, "rev-parse", "HEAD")
+    ancestor = _git(tmp_path, "rev-parse", "HEAD~1")
+    _ = _git(tmp_path, "checkout", "--quiet", "-b", "side", ancestor)
+    _ = _git(
+        tmp_path,
+        "-c",
+        "user.name=t",
+        "-c",
+        "user.email=t@t",
+        "-c",
+        "commit.gpgsign=false",
+        "commit",
+        "--quiet",
+        "--allow-empty",
+        "-m",
+        "side",
+    )
+    other = _git(tmp_path, "rev-parse", "HEAD")
+    _ = _git(tmp_path, "checkout", "--quiet", "main")
+    requested = {"main": main, "ancestor": ancestor, "empty": "", "other": other, "short": ancestor[:12]}[target]
+    output = tmp_path.parent / f"{tmp_path.name}-output"
+    output.touch()
+    result = subprocess.run(
+        ["bash", "-c", _prepare_step("Check out the commit to release")["run"]],
+        cwd=tmp_path,
+        env={**os.environ, "TARGET_SHA": requested, "GITHUB_SHA": main, "GITHUB_OUTPUT": str(output)},
+        capture_output=True,
+        text=True,
+    )
+    expected = {"main": main, "ancestor": ancestor, "empty": main}.get(target)
+    assert (result.returncode == 0) is (expected is not None), result.stdout + result.stderr
+    assert output.read_text() == (f"sha={expected}\n" if expected else "")
+    if expected:
+        assert _git(tmp_path, "rev-parse", "HEAD") == expected
 
 
 @pytest.mark.parametrize(
@@ -317,34 +379,246 @@ def test_prepare_release_accepts_only_the_workspace_version(tmp_path: Path, vers
     assert output.read_text() == (f"tag={tag}\n" if tag else "")
 
 
-@pytest.mark.parametrize("scenario", ["new", "tag", "release"])
-def test_prepare_release_rejects_an_existing_tag_or_release(tmp_path: Path, scenario: str) -> None:
+TARGET = "a" * 40
+OTHER = "b" * 40
+
+
+def _fake_release_api(tmp_path: Path, tags: str, releases: str) -> dict[str, str]:
+    """Stand in for `gh api ... --jq`, printing what the filters would select."""
     fake_bin = tmp_path / "bin"
     fake_bin.mkdir()
-    # Stands in for `gh api ... --jq`, printing what the filter would select.
+    (tmp_path / "tags").write_text(tags)
+    (tmp_path / "releases").write_text(releases)
     gh = fake_bin / "gh"
     gh.write_text(
-        """#!/bin/sh
+        f"""#!/bin/sh
 case "$*" in
-  *matching-refs/tags/v1.9.1*) [ "$SCENARIO" = tag ] && echo refs/tags/v1.9.1 ;;
-  *releases*) [ "$SCENARIO" = release ] && echo https://github.com/nottelabs/notte/releases/tag/untagged-1 ;;
+  *matching-refs/tags/*) cat {tmp_path / "tags"} ;;
+  *releases*) cat {tmp_path / "releases"} ;;
 esac
 exit 0
 """
     )
     gh.chmod(0o755)
+    output = tmp_path / "output"
+    output.touch()
+    return {
+        **os.environ,
+        "PATH": f"{fake_bin}:{os.environ['PATH']}",
+        "GITHUB_REPOSITORY": "nottelabs/notte",
+        "GITHUB_OUTPUT": str(output),
+    }
+
+
+def _release(id: int, draft: bool, target: str) -> str:
+    return f"{id}\t{str(draft).lower()}\t{target}\thttps://github.com/nottelabs/notte/releases/{id}\n"
+
+
+@pytest.mark.parametrize(
+    ("tags", "releases", "kept", "stale"),
+    [
+        ("", "", "", ""),
+        ("refs/tags/v1.9.1\n", "", None, None),
+        ("", _release(1, False, TARGET), None, None),
+        ("", _release(1, True, TARGET), "https://github.com/nottelabs/notte/releases/1", ""),
+        ("", _release(1, True, OTHER), "", "1"),
+        (
+            "",
+            _release(1, True, OTHER) + _release(2, True, TARGET),
+            "https://github.com/nottelabs/notte/releases/2",
+            "1",
+        ),
+    ],
+)
+def test_prepare_release_keeps_a_draft_of_the_same_commit_and_replaces_others(
+    tmp_path: Path, tags: str, releases: str, kept: str | None, stale: str | None
+) -> None:
+    env = _fake_release_api(tmp_path, tags, releases)
     result = subprocess.run(
-        ["bash", "-c", _prepare_step("Check the release does not exist yet")["run"]],
-        env={
-            **os.environ,
-            "PATH": f"{fake_bin}:{os.environ['PATH']}",
-            "SCENARIO": scenario,
-            "TAG": "v1.9.1",
-            "GITHUB_REPOSITORY": "nottelabs/notte",
-        },
+        ["bash", "-c", _prepare_step("Check the release is not published yet")["run"]],
+        env={**env, "TAG": "v1.9.1", "TARGET": TARGET},
         capture_output=True,
         text=True,
     )
-    assert (result.returncode == 0) is (scenario == "new"), result.stdout + result.stderr
-    if scenario != "new":
+    assert (result.returncode == 0) is (kept is not None), result.stdout + result.stderr
+    if kept is None:
         assert "v1.9.1 already exists" in result.stdout
+        return
+    assert (tmp_path / "output").read_text() == f"kept={kept}\nstale={stale}\n"
+
+
+def _publish_step(name: str) -> dict:
+    steps = _load_workflow("publish-release.yml")["jobs"]["publish"]["steps"]
+    return next(step for step in steps if step.get("name") == name)
+
+
+def test_publish_release_checks_production_before_publishing_with_the_automation_pat() -> None:
+    workflow = _load_workflow("publish-release.yml")
+    job = workflow["jobs"]["publish"]
+    steps = job["steps"]
+    names = [step.get("name") for step in steps]
+
+    assert list(_triggers(workflow)) == ["workflow_dispatch"]
+    inputs = _triggers(workflow)["workflow_dispatch"]["inputs"]
+    assert inputs["version"]["required"] is True
+    assert inputs["target_sha"]["required"] is True
+    assert "github.ref == 'refs/heads/main'" in job["if"]
+    assert workflow["permissions"] == {"contents": "read"}
+    # The workflow token lists draft releases only with push access.
+    assert job["permissions"] == {"contents": "write"}
+    assert not any("continue-on-error" in step or "if" in step for step in steps)
+
+    checkout = next(step for step in steps if str(step.get("uses", "")).startswith("actions/checkout@"))
+    assert checkout["with"] == {"ref": "${{ inputs.target_sha }}", "persist-credentials": False}
+    assert (
+        names.index("Find the draft")
+        < names.index("Check the version and the workspace")
+        < names.index("Check the wire models against production")
+        < names.index("Publish the draft")
+    )
+    assert names[-1] == "Publish the draft"
+    assert "make openapi-check-prod" in _publish_step("Check the wire models against production")["run"]
+
+    # Only the publish step holds the PAT, so the tag push starts the release workflows.
+    publish = _publish_step("Publish the draft")
+    assert publish["env"]["GH_TOKEN"] == "${{ secrets.SUBMODULE_BUMP_PAT }}"
+    assert "-F draft=false" in publish["run"]
+    # Publish exactly the draft the lookup found and the tag it validated.
+    assert publish["env"]["ID"] == "${{ steps.draft.outputs.id }}"
+    assert publish["env"]["TAG"] == "${{ steps.draft.outputs.tag }}"
+    others = [step for step in steps if step.get("name") != "Publish the draft"]
+    assert "SUBMODULE_BUMP_PAT" not in yaml.safe_dump(others)
+
+
+@pytest.mark.parametrize(
+    ("tags", "releases", "draft", "error"),
+    [
+        ("", _release(7, True, TARGET), "7", None),
+        ("", _release(6, True, OTHER) + _release(7, True, TARGET), "7", None),
+        ("", "", None, "No draft v1.9.1 targets"),
+        ("", _release(6, True, OTHER), None, "No draft v1.9.1 targets"),
+        ("", _release(7, False, TARGET), None, "already published"),
+        ("refs/tags/v1.9.1\n", _release(7, True, TARGET), None, "exists without a published release"),
+    ],
+)
+def test_publish_release_requires_a_draft_of_the_deployed_commit(
+    tmp_path: Path, tags: str, releases: str, draft: str | None, error: str | None
+) -> None:
+    env = _fake_release_api(tmp_path, tags, releases)
+    result = subprocess.run(
+        ["bash", "-c", _publish_step("Find the draft")["run"]],
+        env={**env, "VERSION": "1.9.1", "TARGET_SHA": TARGET},
+        capture_output=True,
+        text=True,
+    )
+    assert (result.returncode == 0) is (draft is not None), result.stdout + result.stderr
+    if error:
+        assert error in result.stdout
+    else:
+        assert (tmp_path / "output").read_text() == f"tag=v1.9.1\nid={draft}\n"
+
+
+def test_publish_release_rejects_a_short_sha(tmp_path: Path) -> None:
+    env = _fake_release_api(tmp_path, "", _release(7, True, TARGET))
+    result = subprocess.run(
+        ["bash", "-c", _publish_step("Find the draft")["run"]],
+        env={**env, "VERSION": "1.9.1", "TARGET_SHA": TARGET[:12]},
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode != 0
+    assert "40-character" in result.stdout
+
+
+def test_preparation_and_publication_never_overlap_or_drop_a_request() -> None:
+    for name in ("prepare-release.yml", "publish-release.yml"):
+        assert _load_workflow(name)["concurrency"] == {"group": "release", "cancel-in-progress": False, "queue": "max"}
+
+
+def _fake_release_writes(tmp_path: Path, fail_on: str = "") -> dict[str, str]:
+    """Stand in for `gh`, recording each call and failing the one matching `fail_on`."""
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    gh = fake_bin / "gh"
+    gh.write_text(
+        f"""#!/bin/sh
+printf '%s\\n' "$*" >> {tmp_path / "calls"}
+case "$*" in
+  *{fail_on or "never-match"}*) exit 1 ;;
+  "release create"*) echo https://github.com/nottelabs/notte/releases/tag/untagged-9 ;;
+  *-F\ draft=false*) echo https://github.com/nottelabs/notte/releases/tag/v1.9.1 ;;
+esac
+exit 0
+"""
+    )
+    gh.chmod(0o755)
+    (tmp_path / "calls").touch()
+    summary = tmp_path / "summary"
+    summary.touch()
+    return {
+        **os.environ,
+        "PATH": f"{fake_bin}:{os.environ['PATH']}",
+        "GITHUB_REPOSITORY": "nottelabs/notte",
+        "GITHUB_STEP_SUMMARY": str(summary),
+        "TAG": "v1.9.1",
+    }
+
+
+def _calls(tmp_path: Path) -> list[str]:
+    return (tmp_path / "calls").read_text().splitlines()
+
+
+@pytest.mark.parametrize(
+    ("kept", "stale", "calls"),
+    [
+        ("", "", [f"release create v1.9.1 --draft --target {TARGET} --title v1.9.1 --generate-notes"]),
+        (
+            "",
+            "1 3",
+            [
+                "api -X DELETE repos/nottelabs/notte/releases/1",
+                "api -X DELETE repos/nottelabs/notte/releases/3",
+                f"release create v1.9.1 --draft --target {TARGET} --title v1.9.1 --generate-notes",
+            ],
+        ),
+        ("https://github.com/nottelabs/notte/releases/2", "1", ["api -X DELETE repos/nottelabs/notte/releases/1"]),
+    ],
+)
+def test_prepare_release_deletes_only_stale_drafts_then_drafts_once(
+    tmp_path: Path, kept: str, stale: str, calls: list[str]
+) -> None:
+    env = _fake_release_writes(tmp_path)
+    result = subprocess.run(
+        ["bash", "-c", _prepare_step("Draft the release")["run"]],
+        env={**env, "TARGET": TARGET, "KEPT": kept, "STALE": stale},
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert _calls(tmp_path) == calls
+
+
+def test_prepare_release_does_not_draft_after_a_failed_deletion(tmp_path: Path) -> None:
+    env = _fake_release_writes(tmp_path, fail_on="releases/1")
+    result = subprocess.run(
+        ["bash", "-c", _prepare_step("Draft the release")["run"]],
+        env={**env, "TARGET": TARGET, "KEPT": "", "STALE": "1 3"},
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode != 0
+    assert _calls(tmp_path) == ["api -X DELETE repos/nottelabs/notte/releases/1"]
+
+
+@pytest.mark.parametrize("fails", [False, True])
+def test_publish_release_publishes_only_the_found_draft(tmp_path: Path, fails: bool) -> None:
+    env = _fake_release_writes(tmp_path, fail_on="releases/7" if fails else "")
+    result = subprocess.run(
+        ["bash", "-c", _publish_step("Publish the draft")["run"]],
+        env={**env, "ID": "7", "TARGET_SHA": TARGET},
+        capture_output=True,
+        text=True,
+    )
+    assert _calls(tmp_path) == ["api -X PATCH repos/nottelabs/notte/releases/7 -F draft=false --jq .html_url"]
+    assert (result.returncode != 0) is fails, result.stdout + result.stderr
+    assert ("Published v1.9.1" in (tmp_path / "summary").read_text()) is not fails
