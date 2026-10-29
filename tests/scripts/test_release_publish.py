@@ -483,6 +483,9 @@ def test_publish_release_checks_production_before_publishing_with_the_automation
     publish = _publish_step("Publish the draft")
     assert publish["env"]["GH_TOKEN"] == "${{ secrets.SUBMODULE_BUMP_PAT }}"
     assert "-F draft=false" in publish["run"]
+    # Publish exactly the draft the lookup found and the tag it validated.
+    assert publish["env"]["ID"] == "${{ steps.draft.outputs.id }}"
+    assert publish["env"]["TAG"] == "${{ steps.draft.outputs.tag }}"
     others = [step for step in steps if step.get("name") != "Publish the draft"]
     assert "SUBMODULE_BUMP_PAT" not in yaml.safe_dump(others)
 
