@@ -170,7 +170,6 @@ def test_only_selected_families_receive_the_shared_scope() -> None:
             expected_inputs.update(
                 source_sha="${{ needs.changes.outputs.source_sha }}",
                 llm_provider="${{ needs.changes.outputs.llm_provider }}",
-                live_authorized="${{ needs.changes.outputs.live_authorized == 'true' }}",
             )
         assert job["with"] == expected_inputs
         assert job["secrets"] == "inherit"  # pragma: allowlist secret
@@ -285,7 +284,7 @@ def test_required_gate_waits_for_all_families_and_fails_closed(
     assert set(job["needs"]) == {"changes", *ci_scope.GROUPS}
     results: dict[str, Need] = {name: {"result": "skipped", "outputs": {}} for name in job["needs"]}
     scope = json.dumps({flag: False for flag in ci_scope.ALL})
-    results["changes"]["outputs"] = {"scope": scope, "selected_scope": scope, "live_deferred": "false"}
+    results["changes"]["outputs"] = {"scope": scope}
     results["changes"]["result"] = changes
     results[family]["result"] = selected
     gate = next(step for step in job["steps"] if "RESULTS" in step.get("env", {}))
