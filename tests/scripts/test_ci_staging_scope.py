@@ -293,7 +293,12 @@ def test_required_gate_waits_for_all_families_and_fails_closed(
     result = subprocess.run(
         ["bash", "-e", "-o", "pipefail", "-c", gate["run"]],
         cwd=WORKFLOWS.parents[1],
-        env={**os.environ, "RESULTS": json.dumps(results), "GITHUB_STEP_SUMMARY": str(tmp_path / "summary")},
+        env={
+            **os.environ,
+            "RESULTS": json.dumps(results),
+            "TRUSTED_LIVE": "true",
+            "GITHUB_STEP_SUMMARY": str(tmp_path / "summary"),
+        },
         capture_output=True,
         text=True,
     )

@@ -26,7 +26,8 @@ Native preparation runs in up to six parallel shards, independently of documenta
 checks and the live jobs, and remains part of the required result.
 
 Fork PRs receive no secrets. Their live coverage requires a reviewed branch in
-this repository. Main pushes and scheduled/manual coverage retain live testing.
+this repository; until then the `tests` gate stays red when the fork's change
+selects live suites. Main pushes and scheduled/manual coverage retain live testing.
 
 ## Reporting an Issue
 

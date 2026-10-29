@@ -1,4 +1,4 @@
-"""Selected live coverage runs on every PR push, and obsolete PR heads never satisfy merge validation."""
+"""Selected live coverage runs on every same-repository PR push; forks and obsolete heads never satisfy the gate."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ import yaml
 from scripts import ci_integration_examples as runner
 from scripts import ci_scope
 from scripts.ci_scope import ALL, GROUPS, select
-from scripts.ci_validation import Need, Scope, assess
+from scripts.ci_validation import LIVE, Need, Scope, assess
 from tests.scripts.test_ci_staging_scope import workflow
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -62,6 +62,27 @@ def test_selected_suites_must_succeed(family: str, conclusion: str) -> None:
     assert not assess(needs)[1]
 
 
+@pytest.mark.parametrize("flag", sorted(LIVE))
+def test_fork_pr_with_selected_live_coverage_cannot_merge(flag: str) -> None:
+    scope: Scope = {**{name: False for name in ALL}, "python_unit": True, flag: True}
+    assert assess(results(scope))[1]
+    message, ready = assess(results(scope), trusted=False)
+    assert not ready
+    assert "Fork live coverage" in message
+
+
+def test_fork_pr_with_offline_only_scope_can_merge() -> None:
+    scope: Scope = {**{flag: False for flag in ALL}, "python_unit": True}
+    assert assess(results(scope), trusted=False)[1]
+
+
+def test_gate_reads_fork_trust_from_the_pr_head_repository() -> None:
+    gate = next(step for step in workflow("ci.yml")["jobs"]["tests"]["steps"] if "RESULTS" in step.get("env", {}))
+    assert gate["env"]["TRUSTED_LIVE"] == (
+        "${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}"
+    )
+
+
 def test_missing_or_invalid_selection_fails_closed() -> None:
     needs = results(selected())
     needs["changes"]["result"] = "failure"
@@ -71,14 +92,19 @@ def test_missing_or_invalid_selection_fails_closed() -> None:
 
 
 def test_gate_cli_reports_the_suite_results(tmp_path: Path) -> None:
-    for family, expected in ((None, 0), ("python", 1)):
+    for family, trusted, expected in ((None, "true", 0), ("python", "true", 1), (None, "false", 1)):
         needs = results(selected())
         if family:
             needs[family]["result"] = "failure"
         gate = subprocess.run(
             ["python3", "-m", "scripts.ci_validation", "gate"],
             cwd=ROOT,
-            env={**os.environ, "RESULTS": json.dumps(needs), "GITHUB_STEP_SUMMARY": str(tmp_path / "summary")},
+            env={
+                **os.environ,
+                "RESULTS": json.dumps(needs),
+                "TRUSTED_LIVE": trusted,
+                "GITHUB_STEP_SUMMARY": str(tmp_path / "summary"),
+            },
             capture_output=True,
             text=True,
         )

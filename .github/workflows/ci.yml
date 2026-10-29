@@ -149,4 +149,6 @@ jobs:
       - name: Check suite results
         env:
           RESULTS: ${{ toJSON(needs) }}
+          # Fork PRs get no secrets, so their selected live suites skip and cannot pass.
+          TRUSTED_LIVE: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
         run: python3 -m scripts.ci_validation gate
