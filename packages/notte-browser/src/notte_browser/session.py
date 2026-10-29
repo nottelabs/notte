@@ -34,7 +34,7 @@ from notte_core.act.context import element_contexts
 from notte_core.act.freshness import ELEMENT_SIGNATURES_JS, Signatures, signature_xpaths
 from notte_core.act.runner import DialogAnswer, JsDialog
 from notte_core.act.settle import SUGGESTIONS_JS
-from notte_core.act.space import shown_contexts
+from notte_core.act.space import covered_by_dialog, shown_contexts
 from notte_core.act.wait import (
     EMPTY_PAGE_WAIT_MS,
     WAIT_FOR_CHANGE_JS,
@@ -292,7 +292,9 @@ class LocalActDriver:
             return False
         # without a baseline (the signature script failed after observing), compare a new snapshot. So does a target
         # shown with its section's titles: the element signature does not cover what is around it
-        fast = element_id is None or (before.consistent(page, element_id) and element_id not in shown_contexts(page))
+        fast = (element_id is None and (not focus or before.focus_consistent(page))) or (
+            element_id is not None and before.consistent(page, element_id) and element_id not in shown_contexts(page)
+        )
         if before.url is not None and fast:
             xpaths = {} if element_id is None else signature_xpaths(page, element_id)
             return before.matches(await self._read_signatures(xpaths), element_id, focus=focus)
@@ -311,6 +313,14 @@ class LocalActDriver:
             fingerprint=snapshot.fingerprint(),
             contexts=element_contexts(snapshot.dom_node),
         )
+        # a dialog that opened over the page since the observation: the decider did not see it
+        if covered_by_dialog(current.description) and not covered_by_dialog(page.description):
+            return False
+        if focus and before.url is not None:
+            # Enter goes to the focused element: a new observation does not tell that it moved
+            now = await self._read_signatures({})
+            if now.url != before.url or now.focus != before.focus:
+                return False
         return same_target(page, current, element_id)
 
     async def execute(
