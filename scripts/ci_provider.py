@@ -63,19 +63,13 @@ def _same_repository(pr: dict[str, Any], repository: str) -> bool:
     return _repository(pr, "base") == repository and _repository(pr, "head") == repository
 
 
-def _selected(pr: dict[str, Any]) -> bool:
-    return pr["user"]["login"].lower() not in {"dependabot", "dependabot[bot]"} and any(
-        label["name"] == "ci:openai" for label in pr["labels"]
-    )
-
-
 def select_provider(*, event: str, ref: str, repository: str, head: str, attempt: int, pulls: Any) -> dict[str, str]:
-    """Labels select a provider; a PR's deliberate write-authorized rerun gates paid use."""
+    """Validate source provenance while keeping OpenRouter as the sole CI route."""
     if not _is_sha(head) or not _REPOSITORY.fullmatch(repository) or attempt < 1:
         raise ValueError("Invalid workflow identity")
     if not isinstance(pulls, list):
         raise ValueError("Expected a PR metadata array")
-    result = {"provider": "gemini", "source_sha": head}
+    result = {"provider": "openrouter", "source_sha": head}
     if event != "pull_request" and not (event == "push" and ref == "refs/heads/main"):
         return result
     validated = [_validate(pr) for pr in cast(list[Any], pulls)]
@@ -89,8 +83,6 @@ def select_provider(*, event: str, ref: str, repository: str, head: str, attempt
             return result
         if pr["state"] != "open" or pr["base"]["ref"] != "main" or pr["head"]["sha"] != head:
             raise ValueError("PR metadata does not match this workflow head")
-        if attempt > 1 and _selected(pr):
-            result["provider"] = "openai"
         return result
 
     matches: list[dict[str, Any]] = []
@@ -108,8 +100,6 @@ def select_provider(*, event: str, ref: str, repository: str, head: str, attempt
             matches.append(pr)
     if len(matches) > 1:
         raise ValueError("Ambiguous merged PR metadata")
-    if matches and _selected(matches[0]):
-        result["provider"] = "openai"
     return result
 
 

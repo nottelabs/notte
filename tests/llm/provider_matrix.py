@@ -36,7 +36,7 @@ ROUTES = (
     Route("deepseek", "deepseek/deepseek-chat", "deepinfra"),
     Route("together", "meta-llama/llama-3.3-70b-instruct", "together"),
     Route("zai", "z-ai/glm-5.3-flash", "z-ai"),
-    Route("vertex", "google/gemini-3.5-flash-lite"),
+    Route("vertex", "google/gemini-3.5-flash-lite", "google-vertex"),
 )
 CASES = ("github_signin", "duckduckgo", "checkout/article", "instructions")
 EXTRACTION_INSTRUCTIONS = (

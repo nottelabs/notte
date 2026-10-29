@@ -40,15 +40,15 @@ class ProviderTests(unittest.TestCase):
     def assert_provider(self, value, expected):
         self.assertEqual(value, {"provider": expected, "source_sha": HEAD})
 
-    def test_paid_pr_requires_deliberate_rerun_and_current_label(self):
-        self.assert_provider(select([pull()], attempt=1), "gemini")
-        self.assert_provider(select([pull()], attempt=2), "openai")
-        self.assert_provider(select([pull()], attempt=3), "openai")
-        self.assert_provider(select([pull(labels=[])]), "gemini")
-        self.assert_provider(select([pull(labels=[{"name": "ci:openai-other"}])]), "gemini")
-        self.assert_provider(select([]), "gemini")  # Fork metadata is intentionally not fetched.
+    def test_labels_and_reruns_cannot_change_openrouter_route(self):
+        self.assert_provider(select([pull()], attempt=1), "openrouter")
+        self.assert_provider(select([pull()], attempt=2), "openrouter")
+        self.assert_provider(select([pull()], attempt=3), "openrouter")
+        self.assert_provider(select([pull(labels=[])]), "openrouter")
+        self.assert_provider(select([pull(labels=[{"name": "ci:openai-other"}])]), "openrouter")
+        self.assert_provider(select([]), "openrouter")  # Fork metadata is intentionally not fetched.
 
-    def test_forks_deleted_repositories_and_dependabot_never_get_paid_provider(self):
+    def test_forks_deleted_repositories_and_dependabot_keep_openrouter_route(self):
         fork = pull()
         fork["head"]["repo"]["full_name"] = "contributor/notte"
         deleted = pull()
@@ -57,7 +57,7 @@ class ProviderTests(unittest.TestCase):
         foreign_base["base"]["repo"]["full_name"] = "other/notte"
         for pr in (fork, deleted, foreign_base, pull(user={"login": "dependabot[bot]"})):
             with self.subTest(pr=pr):
-                self.assert_provider(select([pr]), "gemini")
+                self.assert_provider(select([pr]), "openrouter")
 
     def test_stale_closed_wrong_base_and_ambiguous_prs_fail_closed(self):
         wrong_head = pull()
@@ -70,10 +70,10 @@ class ProviderTests(unittest.TestCase):
 
     def test_main_requires_exact_actual_merged_same_repository_commit(self):
         merged = pull(state="closed", merged=True, merge_commit_sha=HEAD)
-        self.assert_provider(select([merged], event="push", ref="refs/heads/main", attempt=1), "openai")
+        self.assert_provider(select([merged], event="push", ref="refs/heads/main", attempt=1), "openrouter")
         # Squash changes the commit SHA; the old PR head is not the main commit.
         merged["head"]["sha"] = OTHER
-        self.assert_provider(select([merged], event="push", ref="refs/heads/main"), "openai")
+        self.assert_provider(select([merged], event="push", ref="refs/heads/main"), "openrouter")
         for pr in (
             pull(state="closed", merged=True, merge_commit_sha=OTHER),
             pull(state="closed", merged=False, merge_commit_sha=HEAD),
@@ -82,18 +82,18 @@ class ProviderTests(unittest.TestCase):
             pull(state="closed", merged=True, merge_commit_sha=HEAD, user={"login": "dependabot[bot]"}),
         ):
             with self.subTest(pr=pr):
-                self.assert_provider(select([pr], event="push", ref="refs/heads/main"), "gemini")
+                self.assert_provider(select([pr], event="push", ref="refs/heads/main"), "openrouter")
         foreign = copy.deepcopy(merged)
         foreign["head"]["repo"]["full_name"] = "other/notte"
         wrong_base = copy.deepcopy(merged)
         wrong_base["base"]["ref"] = "release"
         for pr in (foreign, wrong_base):
-            self.assert_provider(select([pr], event="push", ref="refs/heads/main"), "gemini")
+            self.assert_provider(select([pr], event="push", ref="refs/heads/main"), "openrouter")
 
     def test_main_ignores_irrelevant_associations_but_refuses_multiple_matches(self):
         merged = pull(state="closed", merged=True, merge_commit_sha=HEAD)
-        self.assert_provider(select([], event="push", ref="refs/heads/main"), "gemini")
-        self.assert_provider(select([pull(), merged], event="push", ref="refs/heads/main"), "openai")
+        self.assert_provider(select([], event="push", ref="refs/heads/main"), "openrouter")
+        self.assert_provider(select([pull(), merged], event="push", ref="refs/heads/main"), "openrouter")
         with self.assertRaises(ValueError):
             select([merged, merged], event="push", ref="refs/heads/main")
 
@@ -106,7 +106,7 @@ class ProviderTests(unittest.TestCase):
             ("pull_request_target", "refs/heads/main"),
         ):
             with self.subTest(event=event, ref=ref):
-                self.assert_provider(select([pull()], event=event, ref=ref), "gemini")
+                self.assert_provider(select([pull()], event=event, ref=ref), "openrouter")
 
     def test_malformed_metadata_and_workflow_identity_fail_closed(self):
         malformed_branch = pull()
@@ -140,7 +140,7 @@ class ProviderTests(unittest.TestCase):
     def test_real_cli_prints_only_provider_and_exact_head(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "metadata.json"
-            for prs, provider in (([pull()], "openai"), ([], "gemini")):
+            for prs, provider in (([pull()], "openrouter"), ([], "openrouter")):
                 path.write_text(json.dumps(prs), encoding="utf-8")
                 result = self.cli(path)
                 self.assertEqual(result.returncode, 0, result.stderr)

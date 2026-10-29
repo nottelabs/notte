@@ -14,7 +14,7 @@ on:
       llm_provider:
         description: Extraction provider selected from live PR metadata
         type: string
-        default: gemini
+        default: openrouter
       live_authorized:
         description: Maintainer authorization verified for this exact CI run and head
         type: boolean
@@ -352,10 +352,7 @@ jobs:
       - name: Run staging and live tests
         env:
           # The coordinator verifies explicit authorization for this run/head. Forks receive no key.
-          NOTTE_CI_SOURCE_SHA: ${{ inputs.source_sha }}
-          NOTTE_CI_EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-          NOTTE_CI_LLM_PROVIDER: ${{ inputs.llm_provider || 'gemini' }}
-          OPENAI_API_KEY: ${{ inputs.llm_provider == 'openai' && inputs.source_sha == (github.event.pull_request.head.sha || github.sha) && ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && inputs.live_authorized) || (github.event_name == 'push' && github.ref == 'refs/heads/main' && !github.event.deleted)) && secrets.OPENAI_API_KEY || '' }}
+          NOTTE_CI_LLM_PROVIDER: ${{ inputs.llm_provider || 'openrouter' }}
           NOTTE_LLM_BASE_URL: https://openrouter.ai/api/v1
           NOTTE_LLM_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           NOTTE_LLM_MODEL: google/gemini-3.5-flash-lite
@@ -367,20 +364,8 @@ jobs:
           EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
         run: |
-          case "$NOTTE_CI_LLM_PROVIDER" in
-            gemini)
-              test -n "$NOTTE_LLM_API_KEY" || { echo '::error::Set the OPENROUTER_API_KEY repository secret for staging extraction'; exit 1; }
-              ;;
-            openai)
-              test "$NOTTE_CI_SOURCE_SHA" = "$NOTTE_CI_EXPECTED_SHA" && test "$(git rev-parse HEAD)" = "$NOTTE_CI_SOURCE_SHA" || { echo 'Provider selection does not match the checked-out source'; exit 1; }
-              test -n "$OPENAI_API_KEY" || { echo 'The selected provider requires the existing OpenAI repository secret'; exit 1; }
-              export NOTTE_LLM_BASE_URL=https://api.openai.com/v1
-              export NOTTE_LLM_API_KEY="$OPENAI_API_KEY"
-              export NOTTE_LLM_MODEL=gpt-4.1-mini
-              export NOTTE_TEST_DEFAULT_MODEL=gpt-4.1-nano
-              ;;
-            *) echo 'Unsupported extraction provider'; exit 1 ;;
-          esac
+          test "$NOTTE_CI_LLM_PROVIDER" = openrouter || { echo 'Unsupported CI model route: use OpenRouter'; exit 1; }
+          test -n "$NOTTE_LLM_API_KEY" || { echo '::error::Set the OPENROUTER_API_KEY repository secret for staging extraction'; exit 1; }
           make test-live PYTEST_LIVE='uv run pytest -n 2 tests -m "staging or live" --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py --ignore=tests/llm/test_provider_matrix.py --rerun-show-tracebacks'
 
       - name: Upload failed-attempt diagnostics
@@ -407,7 +392,6 @@ jobs:
     timeout-minutes: 10
     env:
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      VERTEX_AVAILABLE: ${{ secrets.VERTEX_AI != '' }}
     steps:
       - name: Checkout PR code (manual trigger)
         if: github.event_name == 'workflow_dispatch'
@@ -434,14 +418,6 @@ jobs:
           echo "Provider matrix skipped: OPENROUTER_API_KEY is absent." >> "$GITHUB_STEP_SUMMARY"
       - uses: ./.github/actions/python-setup
         if: env.OPENROUTER_API_KEY != ''
-      - name: Authenticate optional Vertex route
-        if: env.OPENROUTER_API_KEY != '' && env.VERTEX_AVAILABLE == 'true'
-        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
-        with:
-          credentials_json: ${{ secrets.VERTEX_AI }}
-      - name: Mint optional Vertex token outside notte-llm
-        if: env.OPENROUTER_API_KEY != '' && env.VERTEX_AVAILABLE == 'true'
-        run: uv run --script .github/scripts/configure_llm.py
       - name: Run local provider extraction matrix
         if: env.OPENROUTER_API_KEY != ''
         run: >-

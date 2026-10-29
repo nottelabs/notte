@@ -57,7 +57,7 @@ async def test_provider_matrix(
 ) -> None:
     record_property("route", route.name)
     record_property("model", route.model)
-    record_property("upstream", route.upstream or "Vertex direct")
+    record_property("upstream", route.upstream)
     record_property("case", case)
     trace = Trace()
     diagnostics = Diagnostics()
@@ -85,22 +85,13 @@ async def test_provider_matrix(
         # accidentally send a CI key to another endpoint or turn this into a cloud test.
         for name in ("NOTTE_LLM_BASE_URL", "NOTTE_LLM_API_KEY", "NOTTE_LLM_MODEL"):
             monkeypatch.delenv(name, raising=False)
-        if route.name == "vertex":
-            key = os.getenv("NOTTE_VERTEX_API_KEY", "")
-            base = os.getenv("NOTTE_VERTEX_BASE_URL", "")
-            if not key or not base:
-                pytest.skip("Vertex credentials absent; configure_llm.py mints the optional direct-route token")
-            monkeypatch.setenv("NOTTE_LLM_BASE_URL", base)
-            monkeypatch.setenv("NOTTE_LLM_API_KEY", key)
-            model, options = os.getenv("NOTTE_VERTEX_MODEL") or route.model, {}
-        else:
-            key = os.getenv("OPENROUTER_API_KEY", "")
-            if not key:
-                pytest.skip("OPENROUTER_API_KEY absent; fork/external PRs have no repository secrets")
-            try:
-                model, options = routing_options(route)
-            except UnavailableRoute as error:
-                pytest.skip(str(error))
+        key = os.getenv("OPENROUTER_API_KEY", "")
+        if not key:
+            pytest.skip("OPENROUTER_API_KEY absent; fork/external PRs have no repository secrets")
+        try:
+            model, options = routing_options(route)
+        except UnavailableRoute as error:
+            pytest.skip(str(error))
         record_property("resolved_model", model)
         record_property("max_completion_tokens", options.get("max_completion_tokens", 8192))
         original_send = httpx.AsyncClient.send

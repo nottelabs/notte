@@ -184,3 +184,9 @@ def test_matrix_keeps_default_flash_lite_and_additional_flash_route():
     assert routes["gemini"].model == "google/gemini-3.5-flash-lite"
     assert routes["gemini-flash"].model == "google/gemini-3.5-flash"
     assert routes["vertex"].model == "google/gemini-3.5-flash-lite"
+
+
+def test_every_matrix_route_uses_openrouter_without_cloud_credentials():
+    for route in ROUTES:
+        assert route.upstream, route.name
+    assert next(route for route in ROUTES if route.name == "vertex").upstream == "google-vertex"
