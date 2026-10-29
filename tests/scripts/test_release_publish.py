@@ -308,11 +308,37 @@ def _git(cwd: Path, *args: str) -> str:
 def test_prepare_release_checks_out_only_a_main_commit(tmp_path: Path, target: str) -> None:
     _ = _git(tmp_path, "init", "--quiet", "--initial-branch=main")
     for message in ("first", "second"):
-        _ = _git(tmp_path, "-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false", "commit", "--quiet", "--allow-empty", "-m", message)
+        _ = _git(
+            tmp_path,
+            "-c",
+            "user.name=t",
+            "-c",
+            "user.email=t@t",
+            "-c",
+            "commit.gpgsign=false",
+            "commit",
+            "--quiet",
+            "--allow-empty",
+            "-m",
+            message,
+        )
     main = _git(tmp_path, "rev-parse", "HEAD")
     ancestor = _git(tmp_path, "rev-parse", "HEAD~1")
     _ = _git(tmp_path, "checkout", "--quiet", "-b", "side", ancestor)
-    _ = _git(tmp_path, "-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false", "commit", "--quiet", "--allow-empty", "-m", "side")
+    _ = _git(
+        tmp_path,
+        "-c",
+        "user.name=t",
+        "-c",
+        "user.email=t@t",
+        "-c",
+        "commit.gpgsign=false",
+        "commit",
+        "--quiet",
+        "--allow-empty",
+        "-m",
+        "side",
+    )
     other = _git(tmp_path, "rev-parse", "HEAD")
     _ = _git(tmp_path, "checkout", "--quiet", "main")
     requested = {"main": main, "ancestor": ancestor, "empty": "", "other": other, "short": ancestor[:12]}[target]
@@ -396,7 +422,12 @@ def _release(id: int, draft: bool, target: str) -> str:
         ("", _release(1, False, TARGET), None, None),
         ("", _release(1, True, TARGET), "https://github.com/nottelabs/notte/releases/1", ""),
         ("", _release(1, True, OTHER), "", "1"),
-        ("", _release(1, True, OTHER) + _release(2, True, TARGET), "https://github.com/nottelabs/notte/releases/2", "1"),
+        (
+            "",
+            _release(1, True, OTHER) + _release(2, True, TARGET),
+            "https://github.com/nottelabs/notte/releases/2",
+            "1",
+        ),
     ],
 )
 def test_prepare_release_keeps_a_draft_of_the_same_commit_and_replaces_others(
