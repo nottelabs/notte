@@ -46,12 +46,14 @@ def test_failure_sections_do_not_claim_environment_readiness() -> None:
     jobs: list[Job] = [
         {"name": "python / tests (3.15)", "conclusion": "success"},
         {"name": "node / integration-tests", "conclusion": "failure"},
+        {"name": "paired / agent-models (claude-agents)", "conclusion": "success"},
         {"name": "python / llm-provider-matrix", "conclusion": "skipped"},
     ]
     summary, _ = report(needs({"node_live": True}), jobs, True)
-    assert "## Code correctness\n\n| Job | Result |\n| --- | --- |\n| python / tests (3.15) | success |" in summary
+    assert "## Code correctness\n\n| Job | Result |\n| --- | --- |\n| python / tests (3.15) | success |\n\n" in summary
     assert (
-        "## Staging integrations\n\n| Job | Result |\n| --- | --- |\n| node / integration-tests | failure |" in summary
+        "## Staging integrations\n\n| Job | Result |\n| --- | --- |\n| node / integration-tests | failure |\n"
+        "| paired / agent-models (claude-agents) | success |\n" in summary
     )
     assert (
         "## Provider behavior\n\n| Job | Result |\n| --- | --- |\n| python / llm-provider-matrix | skipped |" in summary

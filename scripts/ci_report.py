@@ -53,7 +53,7 @@ def report(needs: dict[str, Need], jobs: list[Job], trusted: bool) -> tuple[str,
             continue
         if name == "llm-provider-matrix":
             section = "Provider behavior"
-        elif name.startswith(("staging-and-live", "live", "integration-tests", "execution")):
+        elif name.startswith(("staging-and-live", "live", "agent-models", "integration-tests", "execution")):
             section = "Staging integrations"
         else:
             section = "Code correctness"
