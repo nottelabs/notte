@@ -18,12 +18,14 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
+      statuses: read
     runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-2vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
     timeout-minutes: 5
     outputs:
       scope: ${{ steps.validation.outputs.scope }}
       selected_scope: ${{ steps.scope.outputs.scope }}
       live_deferred: ${{ steps.validation.outputs.live_deferred }}
+      live_authorized: ${{ steps.validation.outputs.live_authorized }}
       llm_provider: ${{ steps.provider.outputs.provider }}
       source_sha: ${{ steps.provider.outputs.source_sha }}
     steps:
@@ -67,7 +69,17 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           RUN_ATTEMPT: ${{ github.run_attempt }}
           TRUSTED_LIVE: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
-        run: python3 -m scripts.ci_validation plan
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+          AUTHORIZATION_STATUSES: ${{ runner.temp }}/live-authorization.json
+        run: |
+          set -euo pipefail
+          printf '[]' > "$AUTHORIZATION_STATUSES"
+          if [ "$EVENT_NAME" = pull_request ] && [ "$TRUSTED_LIVE" = true ]; then
+            gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/commits/$HEAD_SHA/statuses?per_page=100" > "$AUTHORIZATION_STATUSES"
+          fi
+          python3 -m scripts.ci_validation plan
 
   python:
     needs: changes
@@ -87,6 +99,7 @@ jobs:
       scope: ${{ needs.changes.outputs.scope }}
       source_sha: ${{ needs.changes.outputs.source_sha }}
       llm_provider: ${{ needs.changes.outputs.llm_provider }}
+      live_authorized: ${{ needs.changes.outputs.live_authorized == 'true' }}
     secrets: inherit # pragma: allowlist secret
 
   node:

@@ -13,7 +13,7 @@ import pytest
 import yaml
 
 from scripts import ci_scope
-from scripts.ci_validation import Need, assess
+from scripts.ci_validation import Need
 
 WORKFLOWS = Path(__file__).resolve().parents[2] / ".github/workflows"
 
@@ -170,6 +170,7 @@ def test_only_selected_families_receive_the_shared_scope() -> None:
             expected_inputs.update(
                 source_sha="${{ needs.changes.outputs.source_sha }}",
                 llm_provider="${{ needs.changes.outputs.llm_provider }}",
+                live_authorized="${{ needs.changes.outputs.live_authorized == 'true' }}",
             )
         assert job["with"] == expected_inputs
         assert job["secrets"] == "inherit"  # pragma: allowlist secret
@@ -277,7 +278,7 @@ def test_deleted_docs_still_run_the_global_link_check() -> None:
 )
 @pytest.mark.parametrize("family", ["python", "node", "docs", "paired", "readme"])
 def test_required_gate_waits_for_all_families_and_fails_closed(
-    changes: str, selected: str, expected: int, family: str
+    changes: str, selected: str, expected: int, family: str, tmp_path: Path
 ) -> None:
     job = workflow("ci.yml")["jobs"]["tests"]
     assert job["if"] == "always()"
@@ -289,7 +290,15 @@ def test_required_gate_waits_for_all_families_and_fails_closed(
     results[family]["result"] = selected
     gate = next(step for step in job["steps"] if "RESULTS" in step.get("env", {}))
     assert gate["run"] == "python3 -m scripts.ci_validation gate"
-    assert assess(results)[1] is (expected == 0)
+    assert gate["env"]["RESULTS"] == "${{ toJSON(needs) }}"
+    result = subprocess.run(
+        ["bash", "-e", "-o", "pipefail", "-c", gate["run"]],
+        cwd=WORKFLOWS.parents[1],
+        env={**os.environ, "RESULTS": json.dumps(results), "GITHUB_STEP_SUMMARY": str(tmp_path / "summary")},
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == expected, result.stdout + result.stderr
 
 
 def test_native_examples_have_one_existing_required_owner() -> None:
@@ -441,7 +450,7 @@ def test_selected_provider_runs_the_full_live_suite(
         if s.get("name") == "Run staging and live tests"
     )
     paid_key = step["env"]["OPENAI_API_KEY"]
-    assert "github.event.pull_request.head.repo.full_name == github.repository && github.run_attempt > 1" in paid_key
+    assert "github.event.pull_request.head.repo.full_name == github.repository && inputs.live_authorized" in paid_key
     assert "inputs.source_sha == (github.event.pull_request.head.sha || github.sha)" in paid_key
     assert "github.event_name == 'push' && github.ref == 'refs/heads/main' && !github.event.deleted" in paid_key
     assert step["env"]["NOTTE_LLM_BASE_URL"] == "https://openrouter.ai/api/v1"

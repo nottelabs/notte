@@ -15,6 +15,10 @@ on:
         description: Extraction provider selected from live PR metadata
         type: string
         default: gemini
+      live_authorized:
+        description: Maintainer authorization verified for this exact CI run and head
+        type: boolean
+        default: false
   # Periodic full live coverage; offline tests remain the secret-free PR gate.
   schedule:
     - cron: '0 */4 * * 1-5'
@@ -347,11 +351,11 @@ jobs:
 
       - name: Run staging and live tests
         env:
-          # PR selection requires a full write-authorized rerun. Forks receive no key.
+          # The coordinator verifies explicit authorization for this run/head. Forks receive no key.
           NOTTE_CI_SOURCE_SHA: ${{ inputs.source_sha }}
           NOTTE_CI_EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           NOTTE_CI_LLM_PROVIDER: ${{ inputs.llm_provider || 'gemini' }}
-          OPENAI_API_KEY: ${{ inputs.llm_provider == 'openai' && inputs.source_sha == (github.event.pull_request.head.sha || github.sha) && ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.run_attempt > 1) || (github.event_name == 'push' && github.ref == 'refs/heads/main' && !github.event.deleted)) && secrets.OPENAI_API_KEY || '' }}
+          OPENAI_API_KEY: ${{ inputs.llm_provider == 'openai' && inputs.source_sha == (github.event.pull_request.head.sha || github.sha) && ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && inputs.live_authorized) || (github.event_name == 'push' && github.ref == 'refs/heads/main' && !github.event.deleted)) && secrets.OPENAI_API_KEY || '' }}
           NOTTE_LLM_BASE_URL: https://openrouter.ai/api/v1
           NOTTE_LLM_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           NOTTE_LLM_MODEL: google/gemini-3.5-flash-lite

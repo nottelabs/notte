@@ -1141,6 +1141,7 @@ async def test_a_client_side_navigation_is_observed_once_rendered(session: Notte
 
 
 @pytest.mark.asyncio
+@pytest.mark.timing
 async def test_typing_in_a_plain_field_costs_little(session: NotteSession) -> None:
     ids = await _ids(session)
     decider = FakeDecider(choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["name"]}], texts=["Jane"])
