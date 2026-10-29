@@ -6,10 +6,26 @@ import signal
 from http.client import IncompleteRead
 from pathlib import Path
 from urllib.error import HTTPError, URLError
+from urllib.request import HTTPRedirectHandler
 
 import pytest
 
 from scripts import ci_health
+
+
+@pytest.mark.parametrize("code,payload", [(302, None), (303, {"messages": []})])
+def test_redirects_do_not_forward_bearer_keys(monkeypatch: pytest.MonkeyPatch, code: int, payload) -> None:
+    def respond(request, **kwargs):
+        assert request.get_header("Authorization") == "Bearer fixture-private-key"
+        redirected = HTTPRedirectHandler().redirect_request(
+            request, None, code, "redirect", {}, "https://redirect.invalid/"
+        )
+        assert redirected is not None
+        assert redirected.get_header("Authorization") is None
+        return io.BytesIO(b'{"ok": true}')
+
+    monkeypatch.setattr(ci_health, "urlopen", respond)
+    assert ci_health.read("https://fixture.invalid/", "fixture-private-key", payload) == {"ok": True}
 
 
 @pytest.mark.parametrize(

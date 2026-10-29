@@ -33,11 +33,11 @@ def expired(_number: int, _frame: FrameType | None) -> None:
 
 def read(url: str, key: str = "", payload: dict[str, Json] | None = None) -> dict[str, Json]:
     headers = {"Accept": "application/json", "User-Agent": "notte-ci-health/1.0"}
-    if key:
-        headers["Authorization"] = f"Bearer {key}"
     if payload is not None:
         headers["Content-Type"] = "application/json"
     request = Request(url, data=json.dumps(payload).encode() if payload is not None else None, headers=headers)
+    if key:
+        request.add_unredirected_header("Authorization", f"Bearer {key}")
     # Socket timeouts reset for heartbeat bytes. Bound connection plus full body.
     started = time.monotonic()
     previous_handler = signal.signal(signal.SIGALRM, expired)
