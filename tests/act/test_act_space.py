@@ -1306,3 +1306,46 @@ def test_a_page_with_nothing_to_mask_is_read_as_it_is() -> None:
     assert masked is not page and "{{action}}" in masked.description
     assert "Sign in" not in accessible_text(masked)
     assert "[B1] Sign in" in accessible_text(page)
+
+
+def test_a_target_covered_since_the_observation_is_not_fresh() -> None:
+    from notte_core.act.freshness import Signatures
+
+    def read(covered: bool | None) -> Signatures:
+        return Signatures({"url": "https://a.test/", "elements": {"L1": ["A", "Economy"]}, "covered": {"L1": covered}})
+
+    # a dialog came over the link since the observation
+    assert not read(False).matches(read(True), "L1")
+    # always under something (a hidden file input under its label), or out of the viewport: unchanged
+    assert read(True).matches(read(True), "L1")
+    assert read(None).matches(read(True), "L1")
+    assert read(False).matches(read(None), "L1")
+    # uncovered since: the decider saw the page as it is now
+    assert read(True).matches(read(False), "L1")
+
+
+def test_a_target_covered_when_the_baseline_was_read_needs_a_new_observation() -> None:
+    from notte_core.act.freshness import Signatures
+
+    # a wall that came between the observation and the baseline read: the page the decider saw has no dialog
+    page = _page()
+    covered = Signatures(
+        {"url": page.url, "elements": {"B1": _signature("BUTTON", "SIGN IN")}, "covered": {"B1": True}}
+    )
+    assert not covered.consistent(page, "B1")
+    uncovered = Signatures(
+        {"url": page.url, "elements": {"B1": _signature("BUTTON", "SIGN IN")}, "covered": {"B1": False}}
+    )
+    assert uncovered.consistent(page, "B1")
+
+
+def test_enter_is_not_fresh_once_a_dialog_covers_the_focus() -> None:
+    from notte_core.act.freshness import Signatures
+
+    def read(covered: bool | None) -> Signatures:
+        return Signatures({"url": "https://a.test/", "elements": {}, "focus": "INPUT:f1", "focus_covered": covered})
+
+    assert not read(False).matches(read(True), None, focus=True)
+    assert read(True).matches(read(True), None, focus=True) and read(None).matches(read(True), None, focus=True)
+    # covered when read, while the page the decider saw had no dialog: a new observation tells
+    assert not read(True).focus_consistent(_page()) and read(False).focus_consistent(_page())
