@@ -15,7 +15,8 @@ default like `function.run(**variables)` in Python.
 Pass `{ stream: false }` to receive the backend's JSON response without
 live logs; execution still blocks until completion. Pass `functionRunId`
 to execute a record returned by `createRun()`; otherwise a new run record
-is created first, exactly like Python. A failed execution throws
+is created first, exactly like Python. Pass `version` to run a saved
+version instead of the latest one. A failed execution throws
 `FailedToRunCloudFunctionError` unless `raiseOnFailure` is false, and the
 wait is aborted with `NotteTimeoutError` after `timeoutMs`.
 
@@ -36,7 +37,7 @@ Default:
 </ParamField>
 
 <ParamField body="options" type={"FunctionRunOptions"}>
-Log streaming, failure handling, runtime, run ID, and timeout settings.
+Log streaming, failure handling, runtime, run ID, version, and timeout settings.
 
 Default:
 
@@ -64,6 +65,9 @@ The completed execution response. The function's return value is in `result`. Di
 ```typescript
 const result = await fn.run({ url: 'https://example.com' });
 console.log(result.result);
+
+const { versions } = await fn.get();
+await fn.run({ url: 'https://example.com' }, { version: versions[0] });
 
 await fn.run({ url: 'https://example.com' }, { runtime: 'extended', onLog: line => logger.info(line) });
 ```

@@ -8,7 +8,8 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 Returns the run ID before execution begins. Pass it explicitly to
 `run(function_run_id=...)` to execute this run; `run()` without an ID
-creates a new run.
+creates a new run. Pass `version` to run a saved version of the
+function instead of the latest one.
 
 ```python
 function = notte.Function("<your-function-id>")
@@ -19,6 +20,11 @@ result = function.run(function_run_id=created.function_run_id, url="https://exam
 `run()` still waits for completion. Creating a run does not launch a
 background job or change which run `run()` uses by default
 
+
+## Parameters
+
+<ParamField path="version" type="str | None" default="None">
+</ParamField>
 
 ## Returns
 

@@ -78,6 +78,16 @@ def test_function_wire_contract(client: NotteClient, monkeypatch: pytest.MonkeyP
         }
 
 
+def test_create_run_sends_a_version_only_when_given(client: NotteClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    api = fake(monkeypatch, {**RUN, "status": "created"})
+    _ = client.functions.create_run("fn", version="v1")
+    _ = client.functions.create_run("fn")
+    assert [(c.url.removeprefix(SERVER), json.loads(c.data)) for c in api.calls] == [
+        ("/functions/fn/runs/create", {"version": "v1"}),
+        ("/functions/fn/runs/create", {}),
+    ]
+
+
 @pytest.mark.parametrize(
     "name,args",
     [

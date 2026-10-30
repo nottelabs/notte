@@ -2471,11 +2471,14 @@ class ListFunctionsResponse(SdkResponse):
 
 
 class CreateFunctionRunRequestDict(TypedDict, total=False):
-    pass
+    version: str | None
 
 
 class CreateFunctionRunRequest(SdkRequest):
-    pass
+    version: Annotated[
+        str | None,
+        Field(description="The saved version of the function to run. Omit to run the latest version."),
+    ] = None
 
 
 class StartFunctionRunRequest(SdkRequest):

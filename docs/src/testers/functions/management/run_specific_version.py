@@ -1,22 +1,30 @@
-# @sniptest filename=rollback_version.py
+# @sniptest filename=run_specific_version.py
+# @sniptest typecheck_only=true
 import requests
 from notte_sdk import NotteClient
 
 client = NotteClient()
 
 function = client.Function(function_id="func_abc123")
-
-# Cloud runs always execute the latest version
-result = function.run(url="https://example.com")
-
-# To go back to an older version, roll back to it: its code is redeployed
-# as a new latest version
 print(function.response.versions)
 
+# Without a version, a run executes the latest version
+result = function.run(url="https://example.com")
+
+# Pin a run to a saved version, for example a known-good one
+known_good = function.response.versions[0]
+pinned = function.run(version=known_good, url="https://example.com")
+
+# A run created ahead of time keeps the version it was created with
+created = function.create_run(version=known_good)
+later = function.run(function_run_id=created.function_run_id, url="https://example.com")
+
+# Rolling back redeploys the old code as a new latest version, for every
+# run that does not pass a version
 response = requests.post(
     f"https://api.notte.cc/functions/{function.function_id}/rollback",
     headers={"Authorization": "Bearer YOUR_API_KEY"},
-    json={"version": function.response.versions[0]},
+    json={"version": known_good},
 )
 response.raise_for_status()
 print(response.json()["latest_version"])

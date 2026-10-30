@@ -79,9 +79,17 @@ Functions automatically version on each update:
 
 <VersionManagement />
 
+### Run a Specific Version
+
+A run executes the latest version unless you pass `version`, one of the values in `versions`. Use it to keep production on a known-good version while you test changes: `update` adds new versions, and runs that pass `version` keep executing the one they name.
+
+Pass `version` to `function.run()` or `function.create_run()` in Python, `fn.run(variables, { version })` or `fn.createRun({ version })` in TypeScript, or in the body of `POST /functions/{function_id}/runs/start` over HTTP. A run keeps the version it was created with, so for a run made with `create_run()`, pass `version` there. An unknown version returns 404. Only the function's owner can choose a version other than the latest.
+
 ### Roll Back to a Previous Version
 
-Cloud runs always execute the latest version. To go back to an older one, roll back with `POST /functions/{function_id}/rollback` and a version from `versions`, or `fn.rollback({ version })` in TypeScript. The old code is redeployed as a new latest version:
+Rolling back changes the latest version itself, so it affects every run that does not pass `version`, including schedules. Roll back with `POST /functions/{function_id}/rollback` and a version from `versions`, or `fn.rollback({ version })` in TypeScript. The old code is redeployed as a new latest version, and runs pinned to a version are unaffected.
+
+This example pins runs to a version, then rolls back:
 
 <RunSpecificVersion />
 

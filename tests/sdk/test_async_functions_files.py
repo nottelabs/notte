@@ -383,8 +383,14 @@ def function_flows(code: str, tmp_path: Path) -> dict[str, Flow]:
     async def failed_run(c: Any, wait: Any) -> Any:
         return await wait(c.Function("f-1").run())
 
-    async def run_rejects_version(c: Any, wait: Any) -> Any:
-        return await wait(c.Function("f-1").run(version="v2"))
+    async def run_pins_version(c: Any, wait: Any) -> Any:
+        return await wait(c.Function("f-1").run(version="v2", stream=False))
+
+    async def run_rejects_version_with_run_id(c: Any, wait: Any) -> Any:
+        return await wait(c.Function("f-1").run(version="v2", function_run_id="r-1"))
+
+    async def create_run_pins_version(c: Any, wait: Any) -> Any:
+        return await wait(c.Function("f-1").create_run(version="v2"))
 
     async def lifecycle(c: Any, wait: Any) -> Any:
         function = c.Function("f-1")
@@ -419,7 +425,9 @@ def function_flows(code: str, tmp_path: Path) -> dict[str, Flow]:
         "run_once_with_run_id",
         "replay_run_session",
         "failed_run",
-        "run_rejects_version",
+        "run_pins_version",
+        "run_rejects_version_with_run_id",
+        "create_run_pins_version",
         "lifecycle",
         "download",
         "download_other_version",
@@ -429,7 +437,7 @@ async def test_function_objects_send_the_same_requests(
     monkeypatch: pytest.MonkeyPatch, code: str, tmp_path: Path, name: str
 ) -> None:
     routes = run_routes("failed" if name == "failed_run" else "closed")
-    if name == "run_rejects_version":
+    if name == "run_rejects_version_with_run_id":
         exchange = exchange_sync(
             monkeypatch, Api(routes), lambda c: _drive(function_flows(code, tmp_path)[name](c, _passthrough))
         )
@@ -445,6 +453,9 @@ async def test_function_objects_send_the_same_requests(
         assert exchange.outcome[1].__name__ == "FailedToRunCloudFunctionError"
     else:
         assert exchange.outcome[0] == "ok", exchange.outcome
+    if name in ("run_pins_version", "create_run_pins_version"):
+        creates = [call for call in exchange.calls if call.url == f"{SERVER}/functions/f-1/runs/create"]
+        assert [json.loads(call.data) for call in creates] == [{"version": "v2"}]
     if name == "replay_run_session":
         assert ("GET", f"{SERVER}/sessions/s-9/replay") in [(call.method, call.url) for call in exchange.calls]
         assert exchange.outcome[1]["mp4_url"] == "https://cdn.test/r.mp4"

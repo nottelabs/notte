@@ -118,6 +118,8 @@ export interface FunctionRunCreateResult {
 export interface FunctionRunCreateOptions {
 	/** Mark the record as a local run. Defaults to false; the Node SDK only executes on the cloud. */
 	local?: boolean;
+	/** Saved version to run, from the function's `versions`. Omit to run the latest version. */
+	version?: string;
 }
 
 export interface FunctionRunOptions {
@@ -129,6 +131,11 @@ export interface FunctionRunOptions {
 	raiseOnFailure?: boolean;
 	/** Execute a record returned by createRun(). Omit to create a new run. */
 	functionRunId?: string;
+	/**
+	 * Saved version to run, from the function's `versions`. Omit to run the latest version.
+	 * A run's version is set when it is created: with `functionRunId`, pass it to `createRun()` instead.
+	 */
+	version?: string;
 	/** Override the saved function runtime; omit to inherit its default. */
 	runtime?: FunctionRuntime;
 	/**
@@ -478,19 +485,22 @@ export class NotteFunction {
 	 * before execution, then pass it to `run(variables, { functionRunId })`.
 	 * `run()` otherwise creates a new run on its own.
 	 *
-	 * @param options - Run-record settings; `local` defaults to false. Node execution remains cloud-only.
+	 * @param options - Run-record settings; `local` defaults to false. Node execution remains cloud-only. `version` pins a saved version; omitted means the latest.
 	 * @returns A created run record and its ID. No function code has executed yet.
 	 * @throws NotteAPIError if run creation is rejected.
 	 * @example
 	 * const created = await fn.createRun();
 	 * const result = await fn.run({ url: 'https://example.com' }, { functionRunId: created.function_run_id });
+	 *
+	 * const { versions } = await fn.get();
+	 * const pinned = await fn.createRun({ version: versions[0] });
 	 */
 	async createRun(options: FunctionRunCreateOptions = {}): Promise<FunctionRunCreateResult> {
 		const functionId = await this.ensureInitialized();
 		return this.postRunEndpoint<FunctionRunCreateResult>({
 			url: FUNCTION_RUN_ENDPOINTS.create,
 			path: { function_id: functionId },
-			body: { local: options.local ?? false },
+			body: { local: options.local ?? false, ...(options.version !== undefined ? { version: options.version } : {}) },
 		});
 	}
 
@@ -525,12 +535,13 @@ export class NotteFunction {
 	 * Pass `{ stream: false }` to receive the backend's JSON response without
 	 * live logs; execution still blocks until completion. Pass `functionRunId`
 	 * to execute a record returned by `createRun()`; otherwise a new run record
-	 * is created first, exactly like Python. A failed execution throws
+	 * is created first, exactly like Python. Pass `version` to run a saved
+	 * version instead of the latest one. A failed execution throws
 	 * `FailedToRunCloudFunctionError` unless `raiseOnFailure` is false, and the
 	 * wait is aborted with `NotteTimeoutError` after `timeoutMs`.
 	 *
 	 * @param variables - JSON-serializable keyword arguments passed to the Python function's `run` entry point.
-	 * @param options - Log streaming, failure handling, runtime, run ID, and timeout settings.
+	 * @param options - Log streaming, failure handling, runtime, run ID, version, and timeout settings.
 	 * @returns The completed execution response. The function's return value is in `result`. Disabling streaming still waits for completion.
 	 * @throws FailedToRunCloudFunctionError if execution fails and `raiseOnFailure` is true.
 	 * @throws NotteTimeoutError if the execution request exceeds `timeoutMs`.
@@ -538,6 +549,9 @@ export class NotteFunction {
 	 * @example
 	 * const result = await fn.run({ url: 'https://example.com' });
 	 * console.log(result.result);
+	 *
+	 * const { versions } = await fn.get();
+	 * await fn.run({ url: 'https://example.com' }, { version: versions[0] });
 	 *
 	 * await fn.run({ url: 'https://example.com' }, { runtime: 'extended', onLog: line => logger.info(line) });
 	 */
@@ -547,9 +561,12 @@ export class NotteFunction {
 		if (!(timeoutMs > 0)) {
 			throw new InvalidRequestError('timeoutMs must be a positive number');
 		}
+		if (options.version !== undefined && options.functionRunId !== undefined) {
+			throw new InvalidRequestError("Pass version to createRun({ version }) instead; a run's version is set when it is created");
+		}
 		const functionId = await this.ensureInitialized();
 		// Create the run record first, like RemoteWorkflow.run in Python.
-		const functionRunId = options.functionRunId ?? (await this.createRun()).function_run_id;
+		const functionRunId = options.functionRunId ?? (await this.createRun({ version: options.version })).function_run_id;
 		const body: RunFunctionRequest = {
 			workflow_id: functionId,
 			variables,

@@ -488,6 +488,14 @@ describe('NotteFunction', () => {
 			expect(post).toHaveBeenCalledWith(expect.objectContaining({ body: { local: true } }));
 		});
 
+		it('pins the requested version', async () => {
+			post.mockResolvedValue(resolved(created));
+
+			await fn.createRun({ version: 'v1' });
+
+			expect(post).toHaveBeenCalledWith(expect.objectContaining({ body: { local: false, version: 'v1' } }));
+		});
+
 		it('executes a created run through the hand-rolled start endpoint without creating another', async () => {
 			post.mockResolvedValueOnce(resolved(created)).mockResolvedValueOnce(resolved(runResult));
 
@@ -542,6 +550,21 @@ describe('NotteFunction', () => {
 				signal: expect.any(AbortSignal),
 				throwOnError: true,
 			});
+		});
+
+		it('creates the run record with the requested version', async () => {
+			mockRun(runResult);
+
+			await expect(fn.run({}, { version: 'v1', stream: false })).resolves.toEqual(runResult);
+
+			expect(post.mock.calls[0]![0]).toMatchObject({ url: FUNCTION_RUN_ENDPOINTS.create, body: { local: false, version: 'v1' } });
+			expect(startCall().body).not.toHaveProperty('version');
+		});
+
+		it('rejects a version for an existing run before sending anything', async () => {
+			await expect(fn.run({}, { functionRunId: 'run-1', version: 'v1' })).rejects.toBeInstanceOf(InvalidRequestError);
+
+			expect(post).not.toHaveBeenCalled();
 		});
 
 		it('does not create a record when functionRunId is given', async () => {
