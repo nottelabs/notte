@@ -250,6 +250,10 @@ def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
 # connection, timeout). completion() retries them after these delays before giving up.
 _TRANSIENT_RETRY_DELAYS_SECONDS = (2.0, 5.0)
 
+# (base URL, model) pairs whose provider rejected a temperature setting: those endpoints only
+# take the default temperature (OpenAI reasoning models), so the field is left out of later calls.
+_TEMPERATURE_UNSUPPORTED: set[tuple[str, str]] = set()
+
 # OpenRouter tries these, in order, when the requested model errors (for example a 503 while it
 # is overloaded). Both support the structured outputs the agent relies on.
 OPENROUTER_FALLBACK_MODELS = ("google/gemini-3.8-flash", "openai/gpt-4.1-mini")
@@ -512,23 +516,35 @@ class LLMEngine:
         # Explicit endpoint options override defaults; None removes an optional field.
         body.update(self.extra_body)
         body = {name: value for name, value in body.items() if value is not None}
+        endpoint = (self.settings.base_url, model)
+        if endpoint in _TEMPERATURE_UNSUPPORTED:
+            body.pop("temperature", None)
         async with httpx.AsyncClient(transport=self.transport) as client:
             for attempt, retry_delay in enumerate((*_TRANSIENT_RETRY_DELAYS_SECONDS, None), start=1):
                 try:
                     # HTTPX's read timeout resets for every chunk. OpenRouter can keep
                     # an unfinished response alive with heartbeat frames indefinitely.
-                    async with asyncio.timeout(self.timeout):
-                        response = await client.post(
-                            f"{self.settings.base_url}/chat/completions",
-                            headers={"Authorization": f"Bearer {key}"},
-                            json=body,
-                            timeout=self.timeout,
-                        )
-                    status = response.status_code
-                    try:
-                        payload: Any = response.json()
-                    except ValueError:
-                        payload = None
+                    # Reasoning models only accept the default temperature, so a rejection
+                    # retries once without the field and later calls omit it too.
+                    for _ in range(2):
+                        async with asyncio.timeout(self.timeout):
+                            response = await client.post(
+                                f"{self.settings.base_url}/chat/completions",
+                                headers={"Authorization": f"Bearer {key}"},
+                                json=body,
+                                timeout=self.timeout,
+                            )
+                        status = response.status_code
+                        try:
+                            payload: Any = response.json()
+                        except ValueError:
+                            payload = None
+                        if status == 400 and "temperature" in body and "temperature" in response.text.lower():
+                            _TEMPERATURE_UNSUPPORTED.add(endpoint)
+                            body.pop("temperature")
+                            logger.info(f"Model {model} rejected the temperature setting; retrying without it")
+                            continue
+                        break
                     # Compatible gateways can also embed a provider error in an HTTP 200 body.
                     if isinstance(payload, dict) and "error" in payload and status < 400:
                         error = cast(dict[str, Any], payload).get("error")
