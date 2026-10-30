@@ -85,6 +85,10 @@ def create_model_from_schema(schema: dict[str, Any]) -> type[BaseModel]:
             else:
                 return Union[tuple(types)]  # type: ignore[return-value]
 
+        # `"type": ["string", "null"]` is the same schema as an anyOf of each type.
+        if isinstance(field_schema.get("type"), list):
+            return resolve_field_type({"anyOf": [{**field_schema, "type": item} for item in field_schema["type"]]})
+
         field_type = TYPE_MAPPING.get(field_schema.get("type"), Any)  # type: ignore[arg-type]
 
         # Handle datetime fields

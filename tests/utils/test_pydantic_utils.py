@@ -210,3 +210,31 @@ def test_omitted_optional_properties_survive_a_dump_and_validate_round_trip():
     assert model.model_validate_json(parsed.model_dump_json()) == parsed
     document = MaskedDocument(content="", links={}, images={})
     assert unmask_pydantic(document, parsed) == parsed
+
+
+def test_properties_with_a_list_of_types_are_unions():
+    schema = {
+        "type": "object",
+        "properties": {
+            "title": {"type": ["string", "null"]},
+            "price": {"type": ["number", "string"]},
+            "tags": {"type": ["array", "null"], "items": {"type": "string"}},
+            "seller": {
+                "type": ["object", "null"],
+                "properties": {"name": {"type": ["string", "null"]}},
+                "required": ["name"],
+            },
+        },
+        "required": ["title", "price", "tags", "seller"],
+    }
+
+    model = convert_response_format_to_pydantic_model(schema)
+    assert model is not None
+
+    data = {"title": None, "price": "12", "tags": ["a"], "seller": {"name": None}}
+    assert model.model_validate(data).model_dump() == data
+    assert model.model_validate({**data, "tags": None, "seller": None}).model_dump()["seller"] is None
+    with pytest.raises(ValidationError):
+        _ = model.model_validate({**data, "title": 1})
+    with pytest.raises(ValidationError):
+        _ = model.model_validate({**data, "tags": [1]})
