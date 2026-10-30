@@ -7,6 +7,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
 import pytest
+from notte_core.errors import LLMProviderError
 from notte_llm.engine import LLMEngine
 
 TEMPERATURE_ERROR = (
@@ -76,3 +77,30 @@ async def test_rejected_temperature_is_retried_and_remembered(endpoint: FakeEndp
 
     assert len(endpoint.bodies) == 3
     assert "temperature" not in endpoint.bodies[2]
+
+
+@pytest.mark.asyncio
+async def test_validation_error_does_not_drop_temperature(endpoint: FakeEndpoint) -> None:
+    """A range error is not an unsupported parameter: no retry, no cached suppression."""
+    endpoint.responses = [
+        (
+            400,
+            {
+                "error": {
+                    "message": "temperature must be between 0 and 2",
+                    "type": "invalid_request_error",
+                }
+            },
+        )
+    ]
+
+    with pytest.raises(LLMProviderError):
+        await LLMEngine(model="gpt-5.5").completion([{"role": "user", "content": "hi"}], temperature=3.0)
+
+    assert len(endpoint.bodies) == 1
+
+    # The rejected value is not remembered, so a valid temperature is still sent.
+    endpoint.responses = [ANSWER]
+    await LLMEngine(model="gpt-5.5").completion([{"role": "user", "content": "hi"}], temperature=0.5)
+
+    assert endpoint.bodies[-1]["temperature"] == 0.5

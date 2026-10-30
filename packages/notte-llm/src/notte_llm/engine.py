@@ -254,6 +254,26 @@ _TRANSIENT_RETRY_DELAYS_SECONDS = (2.0, 5.0)
 # take the default temperature (OpenAI reasoning models), so the field is left out of later calls.
 _TEMPERATURE_UNSUPPORTED: set[tuple[str, str]] = set()
 
+# A 400 that rejects the parameter itself (unsupported/unknown), as opposed to a validation
+# error such as "temperature must be between 0 and 2": only the former may be retried without
+# the field and remembered for later calls.
+_TEMPERATURE_REJECTED_MARKERS = (
+    "unsupported parameter",
+    "unsupported value",
+    "does not support",
+    "not supported",
+    "unknown parameter",
+    "unrecognized",
+)
+
+
+def _temperature_rejected(response_text: str) -> bool:
+    """Whether a 400 response says the ``temperature`` parameter is unsupported."""
+    text = response_text.lower()
+    if "temperature" not in text:
+        return False
+    return any(marker in text for marker in _TEMPERATURE_REJECTED_MARKERS)
+
 # OpenRouter tries these, in order, when the requested model errors (for example a 503 while it
 # is overloaded). Both support the structured outputs the agent relies on.
 OPENROUTER_FALLBACK_MODELS = ("google/gemini-3.8-flash", "openai/gpt-4.1-mini")
@@ -539,7 +559,7 @@ class LLMEngine:
                             payload: Any = response.json()
                         except ValueError:
                             payload = None
-                        if status == 400 and "temperature" in body and "temperature" in response.text.lower():
+                        if status == 400 and "temperature" in body and _temperature_rejected(response.text):
                             _TEMPERATURE_UNSUPPORTED.add(endpoint)
                             body.pop("temperature")
                             logger.info(f"Model {model} rejected the temperature setting; retrying without it")
