@@ -251,6 +251,7 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 ## Functions
 
 - [GET Download Run Payload](https://docs.notte.cc/api-reference/functions/download-run-payload.md)
+- [POST Function Conditional Rollback](https://docs.notte.cc/api-reference/functions/function-conditional-rollback.md)
 - [POST Function Create](https://docs.notte.cc/api-reference/functions/function-create.md)
 - [DELETE Function Delete](https://docs.notte.cc/api-reference/functions/function-delete.md)
 - [GET Function Download Url](https://docs.notte.cc/api-reference/functions/function-download-url.md)
