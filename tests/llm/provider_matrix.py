@@ -33,7 +33,9 @@ ROUTES = (
     Route("xai", "x-ai/grok-4.3", "xai"),
     Route("qwen", "qwen/qwen3.5-397b-a17b", "alibaba"),
     Route("minimax", "minimax/minimax-m2.5", "minimax"),
-    Route("deepseek", "deepseek/deepseek-chat", "deepinfra"),
+    # OpenRouter's deepseek/deepseek-chat is the December 2024 V3 release, not an alias
+    # for DeepSeek's current chat model. V4 Flash is DeepSeek's current non-thinking model.
+    Route("deepseek", "deepseek/deepseek-v4-flash", "deepinfra"),
     Route("together", "meta-llama/llama-3.3-70b-instruct", "together"),
     Route("zai", "z-ai/glm-5.3-flash", "z-ai"),
     Route("vertex", "google/gemini-3.5-flash-lite", "google-vertex"),

@@ -33,6 +33,10 @@ Docs pages under `docs/src/` also follow `docs/src/.claude/CLAUDE.md`.
 - OpenRouter can send heartbeat frames while an LLM response is pending. HTTPX read
   timeouts reset per chunk; keep the total per-attempt deadline in `LLMEngine` so a
   pending response cannot run until pytest-timeout terminates an xdist worker.
+- Provider matrix model IDs are fixed OpenRouter models, not moving aliases:
+  `deepseek/deepseek-chat` is the December 2024 V3 release. When a route times
+  out after `HTTP 200` headers, compare that endpoint's tokens per second with
+  the provider's other models before changing the engine deadline or retries.
 - Live CI prefers `NOTTE_API_KEY_CI_PY` over the legacy `NOTTE_API_KEY` secret.
   Staging persona 403s naming the `CI/CD` workspace indicate a token/workspace
   mismatch. Lucas must supply the workspace-matched `NOTTE_API_KEY_CI_PY`;
