@@ -30,6 +30,7 @@ ManagedAuthOperation: api-only field updated_at (required)
 ReplayResponse: expires_at required api=True sdk=False
 ReplayResponse: expires_at nullable api=False sdk=True
 RunFunctionRequest: api-only field callback_url
+RunFunctionRequest: api-only field version
 RunFunctionRequest: variables required api=False sdk=True
 ScrapeRequest: api-only field only_images
 SessionStartRequest: api-only field screenshot_type

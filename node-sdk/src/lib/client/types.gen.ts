@@ -6515,6 +6515,12 @@ export type RunFunctionRequest = {
      * Callback Url
      */
     callback_url?: string | null;
+    /**
+     * Version
+     *
+     * Run this saved version of the function instead of the latest. Only the function's owner can choose a version other than the latest.
+     */
+    version?: string | null;
 };
 
 /**

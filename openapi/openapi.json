@@ -3,7 +3,7 @@
   "info": {
     "title": "Notte API",
     "description": "Notte API is a REST API that allows you to interact with Notte. It is used to create cloud browser sessions, scrape webpages, and run web ai agents to act on your behalf on the internet.",
-    "version": "1.10.2",
+    "version": "1.10.3",
     "x-logo": {
       "url": "https://www.notte.cc/images/logo/logo-white.png"
     }
@@ -1674,12 +1674,12 @@
         "x-codeSamples": [
           {
             "lang": "Python",
-            "source": "from notte_sdk import NotteClient, actions\nfrom pydantic import BaseModel\n\n\nclass StoryInfo(BaseModel):\n    title: str\n    points: int | None = None\n\n\nclass Stories(BaseModel):\n    stories: list[StoryInfo]\n\n\nnotte = NotteClient()\nwith notte.Session() as session:\n    _ = session.execute(actions.Goto(url=\"https://news.ycombinator.com\"))\n    stories = session.scrape(\n        instructions=\"Extract the top 5 story titles and their points\",\n        response_format=Stories,\n    )",
+            "source": "from notte_sdk import NotteClient, actions\nfrom pydantic import BaseModel\n\n\nclass BookInfo(BaseModel):\n    title: str\n    price: float | None = None\n\n\nclass Books(BaseModel):\n    books: list[BookInfo]\n\n\nnotte = NotteClient()\nwith notte.Session() as session:\n    _ = session.execute(actions.Goto(url=\"https://books.toscrape.com\"))\n    books = session.scrape(\n        instructions=\"Extract the first 5 book titles and their prices\",\n        response_format=Books,\n    )",
             "label": "python"
           },
           {
             "lang": "TypeScript",
-            "source": "import { NotteClient } from \"notte-sdk\";\nimport { z } from \"zod\";\n\nconst StoryInfo = z.object({\n  title: z.string(),\n  points: z.number().nullable(),\n});\n\nconst Stories = z.object({\n  stories: z.array(StoryInfo),\n});\n\nconst notte = new NotteClient();\nawait notte.Session().use(async (session) => {\n  await session.execute({\n    type: \"goto\",\n    url: \"https://news.ycombinator.com\",\n  });\n  const stories = await session.scrape({\n    instructions:\n      \"Extract the top 5 story titles and their points\",\n    response_format: Stories,\n  });\n});",
+            "source": "import { NotteClient } from \"notte-sdk\";\nimport { z } from \"zod\";\n\nconst BookInfo = z.object({\n  title: z.string(),\n  price: z.number().nullable(),\n});\n\nconst Books = z.object({\n  books: z.array(BookInfo),\n});\n\nconst notte = new NotteClient();\nawait notte.Session().use(async (session) => {\n  await session.execute({\n    type: \"goto\",\n    url: \"https://books.toscrape.com\",\n  });\n  const books = await session.scrape({\n    instructions:\n      \"Extract the first 5 book titles and their prices\",\n    response_format: Books,\n  });\n});",
             "label": "node"
           },
           {
@@ -25216,7 +25216,7 @@
           "version": {
             "type": "string",
             "title": "Version",
-            "default": "1.10.2"
+            "default": "1.10.3"
           },
           "description": {
             "type": "string",
@@ -30186,6 +30186,19 @@
               }
             ],
             "title": "Callback Url"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version",
+            "description": "Run this saved version of the function instead of the latest. Only the function's owner can choose a version other than the latest."
           }
         },
         "additionalProperties": false,
