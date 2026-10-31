@@ -281,6 +281,7 @@
   "#/components/schemas/RetryDelivery": "RetryDelivery",
   "#/components/schemas/RootModel_Any_": "RootModelAny",
   "#/components/schemas/RunFunctionRequest": "RunFunctionRequest",
+  "#/components/schemas/RunFunctionRequest/version#-datamodel-code-generator-#-anyOf-#-special-#/0#-datamodel-code-generator-#-array-#-special-#": "Version",
   "#/components/schemas/RunPayloadReference": "RunPayloadReference",
   "#/components/schemas/RunPayloadUploadRequest": "RunPayloadUploadRequest",
   "#/components/schemas/RunPayloadUploadResponse": "RunPayloadUploadResponse",
