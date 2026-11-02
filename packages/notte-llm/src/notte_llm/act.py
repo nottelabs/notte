@@ -141,8 +141,9 @@ def _json_object(content: str) -> dict[str, Any]:
 class LlmWriter:
     """Writes the text of one field with a small LLM that answers exactly `{"text": <string or null>}`.
 
-    When the provider of `model` refuses the request on content-policy grounds (`ContentFilterError`),
-    the text is asked once more from `fallback_model` (the decision model with `default_decider()`).
+    When the provider of `model` refuses the request on content-policy grounds (`ContentFilterError`)
+    or is unavailable after the engine's retries (rate limit, 5xx, timeout), the text is asked once more
+    from `fallback_model` (the decision model with `default_decider()`).
     """
 
     def __init__(self, model: str, *, fallback_model: str | None = None) -> None:
@@ -156,18 +157,22 @@ class LlmWriter:
         ]
         try:
             content, _ = await _complete(self.model, messages, {"type": "json_object"}, max_tokens=1024)
-        except ContentFilterError:
-            if self.fallback_model is None:
+        except LLMProviderError as e:
+            refused = isinstance(e, ContentFilterError)
+            if self.fallback_model is None or not (refused or e.should_retry_later):
                 raise
-            logger.warning(f"{self.model} refused to write a field value; asking {self.fallback_model}")
+            reason = "refused to write a field value" if refused else "is unavailable"
+            logger.warning(f"{self.model} {reason}; asking {self.fallback_model}")
             try:
                 content, _ = await _complete(self.fallback_model, messages, {"type": "json_object"}, max_tokens=1024)
-            except ContentFilterError as e:
+            except ContentFilterError as fallback_error:
+                if not refused:
+                    raise
                 field = context.field.get("label") or "the field"
                 raise ContentFilterError(
                     f"{self.model} and {self.fallback_model}",
                     f"both text models refused to write the value of {field!r}; nothing typed",
-                ) from e
+                ) from fallback_error
         output = _json_object(content)
         value = output.get("text")
         if set(output) != {"text"}:
