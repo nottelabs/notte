@@ -47,6 +47,7 @@ from notte_core.act.errors import DeciderNotAvailableError, InvalidDecisionError
 from notte_core.act.prompts import TEXT_VALUE
 from notte_core.errors import (
     ContentFilterError,
+    InsufficentCreditsError,
     InvalidJsonResponseForStructuredOutput,
     LLMProviderError,
     ModelNotFoundError,
@@ -159,7 +160,9 @@ class LlmWriter:
             content, _ = await _complete(self.model, messages, {"type": "json_object"}, max_tokens=1024)
         except LLMProviderError as e:
             refused = isinstance(e, ContentFilterError)
-            if self.fallback_model is None or not (refused or e.should_retry_later):
+            # out of credits is retryable but not an outage: the fallback runs on the same account
+            unavailable = e.should_retry_later and not isinstance(e, InsufficentCreditsError)
+            if self.fallback_model is None or not (refused or unavailable):
                 raise
             reason = "refused to write a field value" if refused else "is unavailable"
             logger.warning(f"{self.model} {reason}; asking {self.fallback_model}")

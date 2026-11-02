@@ -10,6 +10,7 @@ from notte_core.act import resolve as act_resolve
 from notte_core.act.errors import InvalidDecisionError
 from notte_core.errors import (
     ContentFilterError,
+    InsufficentCreditsError,
     InvalidAPIKeyError,
     LLMProviderError,
     RateLimitError,
@@ -458,6 +459,7 @@ async def test_unavailable_writer_reraises_the_fallback_error(monkeypatch: pytes
     "error",
     [
         InvalidAPIKeyError(provider="writer"),
+        InsufficentCreditsError(),
         LLMProviderError(dev_message="HTTP 400", user_message="bad", agent_message=None, should_retry_later=False),
     ],
 )
