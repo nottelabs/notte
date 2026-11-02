@@ -11,7 +11,7 @@
     "dev": "eve dev"
   },
   "dependencies": {
-    "eve": "0.80.1",
+    "eve": "1.0.0-rc.1",
     "ai": "7.0.137",
     "notte-sdk": "1.9.7",
     "playwright-core": "1.63.0",
