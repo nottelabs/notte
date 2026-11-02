@@ -250,6 +250,16 @@ def fix_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
 # connection, timeout). completion() retries them after these delays before giving up.
 _TRANSIENT_RETRY_DELAYS_SECONDS = (2.0, 5.0)
 
+# OpenAI reasoning models (o-series, GPT-5 and later) reject `temperature` unless the request sets
+# `reasoning_effort` to `none`, and most of them reason by default. OpenRouter drops the field itself.
+_OPENAI_REASONING_MODEL = re.compile(r"o\d|gpt-([5-9]|\d{2,})")
+
+
+def _rejects_temperature(body: dict[str, Any]) -> bool:
+    name = str(body["model"]).rsplit("/", 1)[-1].lower()
+    return _OPENAI_REASONING_MODEL.match(name) is not None and body.get("reasoning_effort") != "none"
+
+
 # OpenRouter tries these, in order, when the requested model errors (for example a 503 while it
 # is overloaded). Both support the structured outputs the agent relies on.
 OPENROUTER_FALLBACK_MODELS = ("google/gemini-3.8-flash", "openai/gpt-4.1-mini")
@@ -512,6 +522,8 @@ class LLMEngine:
         # Explicit endpoint options override defaults; None removes an optional field.
         body.update(self.extra_body)
         body = {name: value for name, value in body.items() if value is not None}
+        if not self.settings.is_openrouter and _rejects_temperature(body):
+            body.pop("temperature", None)
         async with httpx.AsyncClient(transport=self.transport) as client:
             for attempt, retry_delay in enumerate((*_TRANSIENT_RETRY_DELAYS_SECONDS, None), start=1):
                 try:

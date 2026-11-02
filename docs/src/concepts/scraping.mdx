@@ -226,6 +226,8 @@ OpenRouter URL. Custom endpoints require an explicit model, supplied through `NO
 
 `NOTTE_LLM_TEMPERATURE` defaults to `0.0`, `NOTTE_LLM_NB_RETRIES_STRUCTURED_OUTPUT` to `2`, and
 `NOTTE_LLM_CONTEXT_TOKENS` to `128000`. Document clipping estimates four characters per token.
+Outside OpenRouter, OpenAI reasoning models (o-series, GPT-5 and later) are sent no temperature
+unless the request sets `reasoning_effort` to `none`: they accept only their default while they reason.
 The client uses a 60-second HTTP timeout and retries transient errors after 2 and 5 seconds.
 Typed extraction tries strict schemas, then JSON-object output with the schema in the prompt;
 if the endpoint rejects JSON-object mode as well, the schema stays in the prompt alone.
