@@ -255,8 +255,8 @@ _TRANSIENT_RETRY_DELAYS_SECONDS = (2.0, 5.0)
 _OPENAI_REASONING_MODEL = re.compile(r"o\d|gpt-([5-9]|\d{2,})")
 
 
-def _rejects_temperature(model: str, body: dict[str, Any]) -> bool:
-    name = model.rsplit("/", 1)[-1].lower()
+def _rejects_temperature(body: dict[str, Any]) -> bool:
+    name = str(body["model"]).rsplit("/", 1)[-1].lower()
     return _OPENAI_REASONING_MODEL.match(name) is not None and body.get("reasoning_effort") != "none"
 
 
@@ -522,7 +522,7 @@ class LLMEngine:
         # Explicit endpoint options override defaults; None removes an optional field.
         body.update(self.extra_body)
         body = {name: value for name, value in body.items() if value is not None}
-        if not self.settings.is_openrouter and _rejects_temperature(model, body):
+        if not self.settings.is_openrouter and _rejects_temperature(body):
             body.pop("temperature", None)
         async with httpx.AsyncClient(transport=self.transport) as client:
             for attempt, retry_delay in enumerate((*_TRANSIENT_RETRY_DELAYS_SECONDS, None), start=1):

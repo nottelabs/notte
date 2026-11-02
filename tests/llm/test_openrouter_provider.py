@@ -99,6 +99,12 @@ async def test_reasoning_effort_none_keeps_temperature(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_temperature_follows_the_model_sent(monkeypatch):
+    body = await _sent_body("gpt-5.5", "https://api.openai.com/v1", monkeypatch, extra_body={"model": "gpt-4o"})
+    assert body["temperature"] == 0.0
+
+
+@pytest.mark.asyncio
 async def test_openrouter_still_receives_temperature(monkeypatch):
     body = await _sent_body("openai/gpt-5.5", "https://openrouter.ai/api/v1", monkeypatch)
     assert body["temperature"] == 0.0
