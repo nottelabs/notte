@@ -8,7 +8,14 @@ import pytest
 from notte_core.act import DeciderNotAvailableError, DecisionState, PageState, Question, WriteContext
 from notte_core.act import resolve as act_resolve
 from notte_core.act.errors import InvalidDecisionError
-from notte_core.errors import ContentFilterError, InvalidAPIKeyError, LLMProviderError, UnsupportedResponseSchemaError
+from notte_core.errors import (
+    ContentFilterError,
+    InsufficentCreditsError,
+    InvalidAPIKeyError,
+    LLMProviderError,
+    RateLimitError,
+    UnsupportedResponseSchemaError,
+)
 from notte_llm import act as llm_act
 from notte_llm.act import DEFAULT_ACT_MODEL, DEFAULT_TEXT_MODEL, JevDecider, LlmDecider, LlmWriter, default_decider
 from pydantic import JsonValue
@@ -406,16 +413,60 @@ async def test_writer_without_fallback_reraises_the_refusal(monkeypatch: pytest.
     assert calls == ["m"]
 
 
-@pytest.mark.asyncio
-async def test_other_writer_errors_do_not_fall_back(monkeypatch: pytest.MonkeyPatch) -> None:
-    calls: list[str] = []
-
+def _failing(errors: dict[str, LLMProviderError], calls: list[str]):  # pyright: ignore[reportUnknownParameterType]
     async def fake(model: str, messages: list[dict[str, Any]], response_format: dict[str, Any], max_tokens: int):  # pyright: ignore[reportUnusedParameter]
         calls.append(model)
-        raise InvalidAPIKeyError(provider=model)
+        if model in errors:
+            raise errors[model]
+        return '{"text": "Ada Lovelace"}', {}
 
-    monkeypatch.setattr(llm_act, "_complete", fake)
-    with pytest.raises(InvalidAPIKeyError):
+    return fake
+
+
+UNAVAILABLE = [
+    RateLimitError(provider="writer"),
+    LLMProviderError(dev_message="HTTP 503", user_message="down", agent_message=None, should_retry_later=True),
+]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("error", UNAVAILABLE)
+async def test_writer_asks_the_fallback_model_when_its_provider_is_unavailable(
+    error: LLMProviderError, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    calls: list[str] = []
+    monkeypatch.setattr(llm_act, "_complete", _failing({"writer": error}, calls))
+    assert await LlmWriter("writer", fallback_model="decider").write(CONTEXT) == "Ada Lovelace"
+    assert calls == ["writer", "decider"]
+
+
+@pytest.mark.asyncio
+async def test_unavailable_writer_reraises_the_fallback_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[str] = []
+    errors: dict[str, LLMProviderError] = {
+        "writer": RateLimitError(provider="writer"),
+        "decider": ContentFilterError("decider", "refused"),
+    }
+    monkeypatch.setattr(llm_act, "_complete", _failing(errors, calls))
+    with pytest.raises(ContentFilterError) as exc:
+        _ = await LlmWriter("writer", fallback_model="decider").write(CONTEXT)
+    assert exc.value.model == "decider"
+    assert calls == ["writer", "decider"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "error",
+    [
+        InvalidAPIKeyError(provider="writer"),
+        InsufficentCreditsError(),
+        LLMProviderError(dev_message="HTTP 400", user_message="bad", agent_message=None, should_retry_later=False),
+    ],
+)
+async def test_other_writer_errors_do_not_fall_back(error: LLMProviderError, monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[str] = []
+    monkeypatch.setattr(llm_act, "_complete", _failing({"writer": error}, calls))
+    with pytest.raises(type(error)):
         _ = await LlmWriter("writer", fallback_model="decider").write(CONTEXT)
     assert calls == ["writer"]
 

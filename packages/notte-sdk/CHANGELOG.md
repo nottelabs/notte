@@ -12,7 +12,7 @@ methods runs: `JevDecider` (TypeSafe's Jev, through OpenRouter with `OPENROUTER_
 Deciders see elements by their accessible names and the page as visible text (`NOTTE_ACT_LABELS=html` sends
 the rendered HTML instead). The default field writer is `inception/mercury-3` on OpenRouter
 (`NOTTE_ACT_TEXT_MODEL` overrides it), falling back to the decision model when the writer's provider refuses
-on content-policy grounds. Cloud sessions do not support these methods yet.
+on content-policy grounds or stays unavailable (rate limit, server error or timeout; not insufficient credits). Cloud sessions do not support these methods yet.
 
 ## Unreleased: controls outside the viewport in observations
 
