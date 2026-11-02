@@ -12,7 +12,7 @@
     "test:unit": "node --test test/provider.error.test.ts"
   },
   "dependencies": {
-    "e2e": "0.21.1",
+    "e2e": "0.22.0",
     "@e2e-dev/web": "0.15.1",
     "notte-sdk": "1.9.7"
   },

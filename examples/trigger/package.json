@@ -13,13 +13,13 @@
     "test:hosted": "node --experimental-strip-types --test test/hosted.live.test.ts"
   },
   "dependencies": {
-    "@trigger.dev/sdk": "4.7.4",
+    "@trigger.dev/sdk": "4.8.3",
     "notte-sdk": "1.9.7",
     "playwright-core": "1.63.0"
   },
   "devDependencies": {
     "@types/node": "24.10.0",
-    "trigger.dev": "4.7.4",
+    "trigger.dev": "4.8.3",
     "typescript": "6.0.3"
   },
   "overrides": {
