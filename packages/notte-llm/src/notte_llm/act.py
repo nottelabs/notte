@@ -143,7 +143,7 @@ class LlmWriter:
     """Writes the text of one field with a small LLM that answers exactly `{"text": <string or null>}`.
 
     When the provider of `model` refuses the request on content-policy grounds (`ContentFilterError`)
-    or is unavailable after the engine's retries (rate limit, 5xx, timeout), the text is asked once more
+    or is unavailable after the engine's retries (rate limit, 5xx, timeout; not insufficient credits), the text is asked once more
     from `fallback_model` (the decision model with `default_decider()`).
     """
 
@@ -453,7 +453,7 @@ def _text_model(endpoint: LlmSettings, decision_model: str) -> str:
 
 def _writer(endpoint: LlmSettings | None) -> LlmWriter | None:
     """The field writer of `JevDecider` (Jev cannot write text): on the `NOTTE_LLM_*` endpoint, falling back to
-    the LLM decision model when the writer model refuses on content-policy grounds."""
+    the LLM decision model when the writer model refuses on content-policy grounds or is unavailable."""
     if endpoint is None:
         return None
     fallback = _decision_model()
