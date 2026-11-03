@@ -552,6 +552,16 @@ class NotteProxy(SdkRequest):
     id: str | None = None
     country: ProxyGeolocationCountry | None = None
     city: str | None = None
+    sticky_session: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Keep the session's exit on one residential IP, shared with a proxy gateway credential "
+                "minted with the same `sticky_session`. 1-64 letters, digits or hyphens."
+            ),
+            pattern=r"^[A-Za-z0-9-]{1,64}$",
+        ),
+    ] = None
     # TODO: enable domainPattern later on
     # domainPattern: str | None = None
 
@@ -568,6 +578,17 @@ class NotteProxy(SdkRequest):
                 if "city" not in values and "city" in geolocation:
                     values["city"] = geolocation["city"]
         return values  # type: ignore[return-value]
+
+    @model_serializer(mode="wrap")
+    def omit_unset_sticky_session(self, handler: SerializerFunctionWrapHandler, info: SerializationInfo) -> Any:
+        data: Any = _RawRequestObject.serialize_raw(self, handler, info)
+        if not isinstance(data, dict):
+            return data
+        fields = cast(dict[str, Any], data)
+        # APIs that predate `sticky_session` reject it, even as null.
+        if "sticky_session" in fields and fields["sticky_session"] is None:
+            fields = {key: value for key, value in fields.items() if key != "sticky_session"}
+        return fields
 
     @field_validator("city")
     @classmethod
@@ -600,14 +621,24 @@ class NotteProxy(SdkRequest):
         return super().from_raw(data)
 
     @staticmethod
-    def from_country(country: str, proxy_id: str | None = None, **kwargs: Any) -> "NotteProxy":
-        proxy = NotteProxy.from_raw(dict(id=NotteProxy._resolve_proxy_id(proxy_id, kwargs), country=country))
+    def from_country(
+        country: str, proxy_id: str | None = None, sticky_session: str | None = None, **kwargs: Any
+    ) -> "NotteProxy":
+        data: dict[str, Any] = dict(id=NotteProxy._resolve_proxy_id(proxy_id, kwargs), country=country)
+        if sticky_session is not None:
+            data["sticky_session"] = sticky_session
+        proxy = NotteProxy.from_raw(data)
         proxy._raw_input = False
         return proxy
 
     @staticmethod
-    def from_city(city: str, proxy_id: str | None = None, **kwargs: Any) -> "NotteProxy":
-        return NotteProxy.model_construct(id=NotteProxy._resolve_proxy_id(proxy_id, kwargs), city=city)
+    def from_city(
+        city: str, proxy_id: str | None = None, sticky_session: str | None = None, **kwargs: Any
+    ) -> "NotteProxy":
+        data: dict[str, Any] = dict(id=NotteProxy._resolve_proxy_id(proxy_id, kwargs), city=city)
+        if sticky_session is not None:
+            data["sticky_session"] = sticky_session
+        return NotteProxy.model_construct(**data)
 
 
 class ExternalProxy(SdkRequest):
@@ -750,6 +781,7 @@ class NotteProxyDict(TypedDict, total=False):
     id: str | None
     country: ProxyGeolocationCountry | None
     city: str | None
+    sticky_session: str | None
 
 
 class TailnetProxyDict(TypedDict, total=False):
@@ -1465,6 +1497,17 @@ def _drop_duration_format(schema: dict[str, Any]) -> None:
     _ = schema.pop("format", None)
 
 
+class SecretProxySummary(SdkResponse):
+    """The session's `secret` proxy entry, without its credentials or certificates."""
+
+    server: Annotated[str, Field(description="URL of the secret proxy.")]
+    hosts: Annotated[list[str], Field(description="Hosts routed through the secret proxy.")]
+    ca_sha256: Annotated[
+        list[str],
+        Field(description="SHA-256 fingerprints of the CA certificates trusted for the secret proxy."),
+    ]
+
+
 class SessionResponse(SdkResponse):
     record_session: bool = Field(default=True, description="Whether saved session replay is enabled. Defaults to true.")
     log_session: bool = Field(
@@ -1523,6 +1566,10 @@ class SessionResponse(SdkResponse):
             description="Whether proxies were used for the session. True if any proxy was applied during session creation."
         ),
     ] = False
+    secret_proxy: Annotated[
+        SecretProxySummary | None,
+        Field(description="The session's secret proxy, when one was configured. Credentials are never returned."),
+    ] = None
     # remaining args
     browser_type: BrowserType = "chromium"
     network_request_bytes: Annotated[int, Field(description="Total byte usage for network requests.")] = 0
