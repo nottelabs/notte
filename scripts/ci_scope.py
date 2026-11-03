@@ -385,7 +385,7 @@ def base_scopes_for_path(path: str, *, code_changed: bool = True) -> set[str]:
             return PYTHON_RUNTIME | {"llm_provider_live"} | GROUPS["readme"]
         if path.startswith(("tests/data/", "tests/mock/")) or path in {
             "tests/ci_shard.py",
-            "tests/ci_smtp.py",
+            "tests/ci_email.py",
         }:
             return PYTHON_RUNTIME.copy()
         if path in PYTHON_LIVE_TESTS:

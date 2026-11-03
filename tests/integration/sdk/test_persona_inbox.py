@@ -8,7 +8,7 @@ from notte_sdk import NotteClient
 from notte_sdk.endpoints.personas import NottePersona
 
 import notte
-from tests.ci_smtp import require_smtp_configuration, send_test_email
+from tests.ci_email import require_email_configuration, send_test_email
 
 EMAIL_READ_WINDOW = dt.timedelta(minutes=10)
 EMAIL_READ_TIMEOUT_S = 40.0
@@ -41,13 +41,13 @@ def test_local_session_rejects_inbox_actions(persona: NottePersona):
 
 @pytest.mark.flaky(reruns=3, reruns_delay=5)
 def test_signup_email_extraction(client: NotteClient):
-    require_smtp_configuration()
+    require_email_configuration()
 
     with client.Persona(create_vault=False, create_phone_number=False) as persona:
         started_at = dt.datetime.now(dt.UTC) - dt.timedelta(seconds=10)
         subject = f"Notte signup persona email delivery {uuid.uuid4()}"
         sender = send_test_email(persona.info.email, subject)
-        print(f"Sent SMTP email from {sender} to persona {persona.persona_id}: {persona.info.email}")
+        print(f"Sent email from {sender} to persona {persona.persona_id}: {persona.info.email}")
 
         # A fresh persona has an empty inbox, so the first email listed is the one just sent.
         emails = persona.wait_for_emails(
@@ -65,4 +65,4 @@ def test_signup_email_extraction(client: NotteClient):
 
         matching_emails = [email for email in emails if email.created_at >= started_at and email.subject == subject]
         subjects = [email.subject for email in emails]
-        assert matching_emails, f"No fresh SMTP test email found in {len(emails)} emails. Subjects: {subjects!r}"
+        assert matching_emails, f"No fresh test email found in {len(emails)} emails. Subjects: {subjects!r}"

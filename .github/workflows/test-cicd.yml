@@ -324,20 +324,17 @@ jobs:
       - name: Verify environment variables
         env:
           NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_PY || secrets.NOTTE_API_KEY }}
-          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
-          EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
-          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          PERSONA_TEST_RESEND_API_KEY: ${{ secrets.PERSONA_TEST_RESEND_API_KEY }}
         run: |
           if [ -z "$NOTTE_API_KEY" ]; then
             echo "NOTTE_API_KEY is not set. For an external/fork PR, a maintainer should review the diff and run this workflow via 'Run workflow' (workflow_dispatch) with the PR number."
             exit 1
           fi
-          # The SMTP test (tests/integration/sdk/test_persona_inbox.py) skips itself without these, so only warn.
-          for name in SMTP_SERVER EMAIL_SENDER EMAIL_PASSWORD; do
-            if [ -z "${!name}" ]; then
-              echo "::warning::$name is not set, the SMTP test will be skipped"
-            fi
-          done
+          # The persona inbox delivery test (tests/integration/sdk/test_persona_inbox.py) sends
+          # its probe through Resend and skips itself without the key, so only warn.
+          if [ -z "$PERSONA_TEST_RESEND_API_KEY" ]; then
+            echo "::warning::PERSONA_TEST_RESEND_API_KEY is not set, the persona email delivery test will be skipped"
+          fi
           echo "Environment variables are set"
 
       - name: Wait for the API to be ready
@@ -356,9 +353,7 @@ jobs:
           NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY_CI_PY || secrets.NOTTE_API_KEY }}
           NOTTE_VAULT_TEST_EMAIL: ${{ secrets.NOTTE_VAULT_TEST_EMAIL }}
           NOTTE_VAULT_TEST_PASSWORD: ${{ secrets.NOTTE_VAULT_TEST_PASSWORD }}
-          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
-          EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
-          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          PERSONA_TEST_RESEND_API_KEY: ${{ secrets.PERSONA_TEST_RESEND_API_KEY }}
         run: |
           test "$NOTTE_CI_LLM_PROVIDER" = openrouter || { echo 'Unsupported CI model route: use OpenRouter'; exit 1; }
           test -n "$NOTTE_LLM_API_KEY" || { echo '::error::Set the OPENROUTER_API_KEY repository secret for staging extraction'; exit 1; }
