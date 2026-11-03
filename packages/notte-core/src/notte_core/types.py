@@ -646,6 +646,97 @@ class TailnetProxy(SdkRequest):
     exit_node: str | None = None
 
 
+_SECRET_PROXY_HOST_LABEL = re.compile(r"^[^\s/:*?#@\[\]\\.]+$")
+_PEM_PRIVATE_KEY = re.compile(r"-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----")
+
+
+class SecretProxy(SdkRequest):
+    """Your own TLS-intercepting proxy that swaps stand-in values for secrets.
+
+    Traffic to `hosts` is routed through this proxy, which decrypts it, replaces the stand-in
+    values typed in the browser with the real secrets, and opens its own connection to the
+    destination. The proxy must forward that traffic to an exit itself. All other traffic uses
+    the session's other proxy entry (or a direct connection when there is none).
+
+    At most one `secret` entry is allowed per session, and it cannot be combined with a
+    `tailnet` entry.
+    """
+
+    # Validation errors must not echo the proxy password or a pasted private key.
+    model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid", hide_input_in_errors=True)
+
+    type: Literal["secret"] = "secret"
+    server: Annotated[
+        str,
+        Field(description="Proxy URL with an `http://` or `https://` scheme, host and port."),
+    ]
+    username: Annotated[str | None, Field(description="Optional Basic auth username for the proxy.")] = None
+    password: Annotated[
+        str | None,
+        Field(description="Optional Basic auth password for the proxy. Never returned by the API.", repr=False),
+    ] = None
+    ca_certificate: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Optional PEM certificate(s) of the CA that signs the proxy's certificates. Trusted for the "
+                "connection to the proxy and for the certificates it presents for `hosts`. Never include a "
+                "private key."
+            )
+        ),
+    ] = None
+    hosts: Annotated[
+        list[str],
+        Field(
+            description=(
+                "Hosts routed through the proxy: exact hostnames or a leading `*.` wildcard "
+                "(for example `api.example.com` or `*.example.com`). No bare `*`, paths or ports."
+            ),
+            min_length=1,
+        ),
+    ]
+
+    @field_validator("server")
+    @classmethod
+    def validate_server(cls, value: str) -> str:
+        scheme, separator, rest = value.partition("://")
+        if not separator or scheme.lower() not in ("http", "https") or not rest.strip("/"):
+            raise ValueError("server must be an http:// or https:// URL with a host")
+        return value
+
+    @field_validator("hosts")
+    @classmethod
+    def validate_hosts(cls, value: list[str]) -> list[str]:
+        for host in value:
+            name = host[2:] if host.startswith("*.") else host
+            labels = name.split(".")
+            if not name or not all(_SECRET_PROXY_HOST_LABEL.match(label) for label in labels):
+                raise ValueError(
+                    f"Invalid host {host!r}: use an exact hostname or a leading `*.` wildcard, "
+                    + "without a bare `*`, scheme, path or port"
+                )
+        return value
+
+    @field_validator("ca_certificate")
+    @classmethod
+    def validate_ca_certificate(cls, value: str | None) -> str | None:
+        if value is not None and _PEM_PRIVATE_KEY.search(value):
+            raise ValueError(
+                "ca_certificate contains a PRIVATE KEY block. Send only the CA certificate, "
+                + "and rotate that key because it has been exposed."
+            )
+        return value
+
+
+class SecretProxyDict(TypedDict, total=False):
+    type: Literal["secret"]
+    server: Required[str]
+    username: str | None
+    password: str | None
+    ca_certificate: str | None
+    hosts: Required[list[str]]
+
+
 class ExternalProxyDict(TypedDict, total=False):
     type: Literal["external"]
     server: Required[str]
@@ -668,8 +759,10 @@ class TailnetProxyDict(TypedDict, total=False):
     exit_node: str | None
 
 
-ProxySettings = Annotated[NotteProxy | ExternalProxy | TailnetProxy, Field(discriminator="type")]
-ProxySettingsDict = Annotated[NotteProxyDict | ExternalProxyDict | TailnetProxyDict, Field(discriminator="type")]
+ProxySettings = Annotated[NotteProxy | ExternalProxy | TailnetProxy | SecretProxy, Field(discriminator="type")]
+ProxySettingsDict = Annotated[
+    NotteProxyDict | ExternalProxyDict | TailnetProxyDict | SecretProxyDict, Field(discriminator="type")
+]
 
 
 def _read_cookie_file(path: str | Path) -> list[dict[str, Any]]:
@@ -876,6 +969,10 @@ class LocalSessionStartRequestDict(_SessionStartRequestDict, total=False):
 
 
 class _SessionStartRequest(SdkRequest):
+    # Proxy entries carry credentials (a `secret` proxy's password, an `external` proxy's
+    # password); validation errors must not echo them.
+    model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid", hide_input_in_errors=True)
+
     solve_captchas: Annotated[bool, Field(description="Whether to try to automatically solve captchas")] = True
 
     max_duration_minutes: Annotated[
@@ -1064,6 +1161,17 @@ class _SessionStartRequest(SdkRequest):
             return [NotteProxy(country=ProxyGeolocationCountry(value))]
         return value
 
+    @model_validator(mode="after")
+    def validate_secret_proxy_combination(self) -> "_SessionStartRequest":
+        if not isinstance(self.proxies, list):
+            return self
+        proxy_types = [proxy.type for proxy in self.proxies]
+        if proxy_types.count("secret") > 1:
+            raise ValueError("At most one `secret` proxy is allowed per session")
+        if "secret" in proxy_types and "tailnet" in proxy_types:
+            raise ValueError("A `secret` proxy cannot be combined with a `tailnet` proxy")
+        return self
+
     @property
     def playwright_proxy(self) -> PlaywrightProxySettings | None:
         if self.proxies is True:
@@ -1093,6 +1201,10 @@ class _SessionStartRequest(SdkRequest):
             case "tailnet":
                 raise NotImplementedError(
                     "Tailnet proxy only supported in cloud browser sessions. Please use our API to create a session with a tailnet proxy."
+                )
+            case "secret":
+                raise NotImplementedError(
+                    "Secret proxy only supported in cloud browser sessions. Please use our API to create a session with a secret proxy."
                 )
         raise ValueError(f"Unsupported proxy type: {base_proxy.type}")  # pyright: ignore[reportUnreachable]
 
@@ -1126,7 +1238,12 @@ class SessionStartRequest(_SessionStartRequest):
         if isinstance(proxies, str) and proxies in ProxyGeolocationCountry._value2member_map_:
             data["proxies"] = [NotteProxy.from_country(proxies)]
         elif isinstance(proxies, list):
-            proxy_models = {"notte": NotteProxy, "external": ExternalProxy, "tailnet": TailnetProxy}
+            proxy_models = {
+                "notte": NotteProxy,
+                "external": ExternalProxy,
+                "tailnet": TailnetProxy,
+                "secret": SecretProxy,
+            }
             data["proxies"] = [
                 proxy_models[item["type"]].from_raw(cast(dict[str, Any], item))
                 if isinstance(item, dict)
