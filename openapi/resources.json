@@ -183,6 +183,31 @@
     "resource": "functions",
     "telemetry": null
   },
+  "function_schedules_add": {
+    "method": "addSchedule",
+    "resource": "functions",
+    "telemetry": null
+  },
+  "function_schedules_list": {
+    "method": "listSchedules",
+    "resource": "functions",
+    "telemetry": null
+  },
+  "function_schedules_remove": {
+    "method": "removeSchedule",
+    "resource": "functions",
+    "telemetry": null
+  },
+  "function_schedules_resume": {
+    "method": "resumeSchedules",
+    "resource": "functions",
+    "telemetry": null
+  },
+  "function_schedules_update": {
+    "method": "updateSchedule",
+    "resource": "functions",
+    "telemetry": null
+  },
   "function_update": {
     "method": "update",
     "resource": "functions",

@@ -90,8 +90,12 @@ from notte_sdk._generated.models import (
 from notte_sdk._generated.models import (
     FunctionRunUpdateRequest as FunctionRunUpdateRequest,
 )
+from notte_sdk._generated.models import FunctionSchedule as FunctionSchedule
 from notte_sdk._generated.models import (
     FunctionScheduleCreateRequest as FunctionScheduleCreateRequest,
+)
+from notte_sdk._generated.models import (
+    FunctionScheduleListResponse as FunctionScheduleListResponse,
 )
 from notte_sdk._generated.models import (
     GetSessionScriptParametersQuery as GetSessionScriptParametersQuery,
@@ -374,8 +378,10 @@ __all__ = [
     "FunctionRuntimeHealthParametersQuery",
     "FunctionRuntimeHealthParametersQueryDict",
     "FunctionRuntimeHealthResponse",
+    "FunctionSchedule",
     "FunctionScheduleCreateRequest",
     "FunctionScheduleCreateRequestDict",
+    "FunctionScheduleListResponse",
     "GetCookiesResponse",
     "GetCredentialsRequest",
     "GetCredentialsRequestDict",

@@ -196,6 +196,32 @@ class FunctionsOperations(RunPayloadsOperations):
         request = wire_request(models.FunctionScheduleCreateRequest, data)
         return self.request(api.function_schedule_set(function_id, request))
 
+    def add_schedule(
+        self, function_id: str, **data: Unpack[FunctionScheduleCreateRequestDict]
+    ) -> models.FunctionSchedule:
+        "Function Schedules Add (`POST /functions/{function_id}/schedules`)."
+        request = wire_request(models.FunctionScheduleCreateRequest, data)
+        return self.request(api.function_schedules_add(function_id, request))
+
+    def list_schedules(self, function_id: str) -> models.FunctionScheduleListResponse:
+        "Function Schedules List (`GET /functions/{function_id}/schedules`)."
+        return self.request(api.function_schedules_list(function_id))
+
+    def remove_schedule(self, function_id: str, schedule_id: str) -> models.ScheduleDeleteResponse:
+        "Function Schedules Remove (`DELETE /functions/{function_id}/schedules/{schedule_id}`)."
+        return self.request(api.function_schedules_remove(function_id, schedule_id))
+
+    def resume_schedules(self, function_id: str) -> models.FunctionScheduleListResponse:
+        "Function Schedules Resume (`POST /functions/{function_id}/schedules/resume`)."
+        return self.request(api.function_schedules_resume(function_id))
+
+    def update_schedule(
+        self, function_id: str, schedule_id: str, **data: Unpack[FunctionScheduleCreateRequestDict]
+    ) -> models.FunctionSchedule:
+        "Function Schedules Update (`PATCH /functions/{function_id}/schedules/{schedule_id}`)."
+        request = wire_request(models.FunctionScheduleCreateRequest, data)
+        return self.request(api.function_schedules_update(function_id, schedule_id, request))
+
     def list_runs(self, function_id: str, **data: Unpack[ListFunctionRunsRequestDict]) -> core.ListFunctionRunsResponse:
         "List Function Runs By Function Id (`GET /functions/{function_id}/runs/`)."
         _ = data.setdefault("only_active", True)
@@ -313,6 +339,32 @@ class AsyncFunctionsOperations(AsyncRunPayloadsOperations):
         "Function Schedule Set (`POST /functions/{function_id}/schedule`)."
         request = wire_request(models.FunctionScheduleCreateRequest, data)
         return await self.request(api.function_schedule_set(function_id, request))
+
+    async def add_schedule(
+        self, function_id: str, **data: Unpack[FunctionScheduleCreateRequestDict]
+    ) -> models.FunctionSchedule:
+        "Function Schedules Add (`POST /functions/{function_id}/schedules`)."
+        request = wire_request(models.FunctionScheduleCreateRequest, data)
+        return await self.request(api.function_schedules_add(function_id, request))
+
+    async def list_schedules(self, function_id: str) -> models.FunctionScheduleListResponse:
+        "Function Schedules List (`GET /functions/{function_id}/schedules`)."
+        return await self.request(api.function_schedules_list(function_id))
+
+    async def remove_schedule(self, function_id: str, schedule_id: str) -> models.ScheduleDeleteResponse:
+        "Function Schedules Remove (`DELETE /functions/{function_id}/schedules/{schedule_id}`)."
+        return await self.request(api.function_schedules_remove(function_id, schedule_id))
+
+    async def resume_schedules(self, function_id: str) -> models.FunctionScheduleListResponse:
+        "Function Schedules Resume (`POST /functions/{function_id}/schedules/resume`)."
+        return await self.request(api.function_schedules_resume(function_id))
+
+    async def update_schedule(
+        self, function_id: str, schedule_id: str, **data: Unpack[FunctionScheduleCreateRequestDict]
+    ) -> models.FunctionSchedule:
+        "Function Schedules Update (`PATCH /functions/{function_id}/schedules/{schedule_id}`)."
+        request = wire_request(models.FunctionScheduleCreateRequest, data)
+        return await self.request(api.function_schedules_update(function_id, schedule_id, request))
 
     async def list_runs(
         self, function_id: str, **data: Unpack[ListFunctionRunsRequestDict]
