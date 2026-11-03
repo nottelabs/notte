@@ -18,8 +18,12 @@ def require_email_configuration() -> None:
         pytest.skip(f"{RESEND_API_KEY_ENV} required")
 
 
-def send_test_email(recipient: str, subject: str) -> str:
-    """Send one probe and return its sender. A used-up sending quota skips the test."""
+def send_test_email(recipient: str, subject: str, *, first_attempt: bool = True) -> str:
+    """Send one probe and return its sender.
+
+    A used-up sending quota skips the test on its first attempt. On a rerun it
+    fails instead: an earlier attempt failed, and a skip would hide that.
+    """
     require_email_configuration()
     api_key = os.environ[RESEND_API_KEY_ENV]
     sender = os.getenv(SENDER_ENV) or DEFAULT_SENDER
@@ -42,5 +46,7 @@ def send_test_email(recipient: str, subject: str) -> str:
         error = None
     error_name = error.get("name") if isinstance(error, dict) else None
     if response.status_code == 429 and error_name in RESEND_QUOTA_ERRORS:
-        pytest.skip(f"Resend sending quota exhausted ({error_name}); live email delivery cannot be checked.")
+        if first_attempt:
+            pytest.skip(f"Resend sending quota exhausted ({error_name}); live email delivery cannot be checked.")
+        raise AssertionError(f"Resend sending quota exhausted ({error_name}) on a rerun after a failed attempt")
     raise AssertionError(f"Resend rejected the persona probe: HTTP {response.status_code} {response.text}")

@@ -66,6 +66,14 @@ def test_used_up_quota_skips(resend: FakeResend, name: str) -> None:
         _ = send_test_email("persona@example.test", "delivery check")
 
 
+@pytest.mark.parametrize("name", sorted(ci_email.RESEND_QUOTA_ERRORS))
+def test_used_up_quota_fails_a_rerun(resend: FakeResend, name: str) -> None:
+    resend.responses.append(httpx.Response(429, json={"name": name, "message": "quota"}))
+
+    with pytest.raises(AssertionError, match="on a rerun"):
+        _ = send_test_email("persona@example.test", "delivery check", first_attempt=False)
+
+
 @pytest.mark.parametrize(
     "response",
     [

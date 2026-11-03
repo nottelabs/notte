@@ -40,13 +40,15 @@ def test_local_session_rejects_inbox_actions(persona: NottePersona):
 
 
 @pytest.mark.flaky(reruns=3, reruns_delay=5)
-def test_signup_email_extraction(client: NotteClient):
+def test_signup_email_extraction(client: NotteClient, request: pytest.FixtureRequest):
     require_email_configuration()
 
     with client.Persona(create_vault=False, create_phone_number=False) as persona:
         started_at = dt.datetime.now(dt.UTC) - dt.timedelta(seconds=10)
         subject = f"Notte signup persona email delivery {uuid.uuid4()}"
-        sender = send_test_email(persona.info.email, subject)
+        # pytest-rerunfailures counts attempts from 1.
+        attempt = getattr(request.node, "execution_count", 1)
+        sender = send_test_email(persona.info.email, subject, first_attempt=attempt == 1)
         print(f"Sent email from {sender} to persona {persona.persona_id}: {persona.info.email}")
 
         # A fresh persona has an empty inbox, so the first email listed is the one just sent.
