@@ -62,6 +62,9 @@ export const DEFAULT_ALLOWED_PATTERNS: RegExp[] = [
   /^functions\/[^\/]+\/runs\/[^\/]+\/payloads\/[^\/]+\/upload$/, // /functions/{function_id}/runs/{run_id}/payloads/{field}/upload
   /^functions\/[^\/]+\/runs\/start$/, // /functions/{function_id}/runs/start
   /^functions\/[^\/]+\/schedule$/, // /functions/{function_id}/schedule
+  /^functions\/[^\/]+\/schedules$/, // /functions/{function_id}/schedules
+  /^functions\/[^\/]+\/schedules\/[^\/]+$/, // /functions/{function_id}/schedules/{schedule_id}
+  /^functions\/[^\/]+\/schedules\/resume$/, // /functions/{function_id}/schedules/resume
   /^functions\/health$/, // /functions/health
 
   // Mailboxes endpoints

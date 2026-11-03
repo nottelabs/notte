@@ -167,6 +167,11 @@ export function createResources(client: Client, getApiKey: () => string) {
     },
   },
   functions: {
+    /** functionSchedulesAdd: /functions/{function_id}/schedules. Returns the API response body. */
+    addSchedule: async (functionId: Types.FunctionSchedulesAddData['path']["function_id"], body: Types.FunctionSchedulesAddData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionSchedulesAddData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.functionSchedulesAdd({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "function_id": functionId }, body });
+      return response.data;
+    },
     /** functionCreate: /functions. Returns the API response body. */
     create: async (body: Types.FunctionCreateData['body'], query: Types.FunctionCreateData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionCreateData['headers']>, 'x-notte-api-key'> } = {}) => {
       const response = await operations.functionCreate({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, body, query });
@@ -207,6 +212,11 @@ export function createResources(client: Client, getApiKey: () => string) {
       const response = await operations.listFunctionRunsByFunctionId({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "function_id": functionId }, query });
       return response.data;
     },
+    /** functionSchedulesList: /functions/{function_id}/schedules. Returns the API response body. */
+    listSchedules: async (functionId: Types.FunctionSchedulesListData['path']["function_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionSchedulesListData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.functionSchedulesList({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "function_id": functionId } });
+      return response.data;
+    },
     /** functionMetadataUpdate: /functions/{function_id}. Returns the API response body. */
     metadataUpdate: async (functionId: Types.FunctionMetadataUpdateData['path']["function_id"], body: Types.FunctionMetadataUpdateData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionMetadataUpdateData['headers']>, 'x-notte-api-key'> } = {}) => {
       const response = await operations.functionMetadataUpdate({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "function_id": functionId }, body });
@@ -215,6 +225,16 @@ export function createResources(client: Client, getApiKey: () => string) {
     /** prepareRunPayloadUpload: /functions/{function_id}/runs/{run_id}/payloads/{field}/upload. Returns the API response body. */
     prepareRunPayloadUpload: async (functionId: Types.PrepareRunPayloadUploadData['path']["function_id"], runId: Types.PrepareRunPayloadUploadData['path']["run_id"], field: Types.PrepareRunPayloadUploadData['path']["field"], body: Types.PrepareRunPayloadUploadData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.PrepareRunPayloadUploadData['headers']>, 'x-notte-api-key'> } = {}) => {
       const response = await operations.prepareRunPayloadUpload({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "function_id": functionId, "run_id": runId, "field": field }, body });
+      return response.data;
+    },
+    /** functionSchedulesRemove: /functions/{function_id}/schedules/{schedule_id}. Returns the API response body. */
+    removeSchedule: async (functionId: Types.FunctionSchedulesRemoveData['path']["function_id"], scheduleId: Types.FunctionSchedulesRemoveData['path']["schedule_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionSchedulesRemoveData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.functionSchedulesRemove({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "function_id": functionId, "schedule_id": scheduleId } });
+      return response.data;
+    },
+    /** functionSchedulesResume: /functions/{function_id}/schedules/resume. Returns the API response body. */
+    resumeSchedules: async (functionId: Types.FunctionSchedulesResumeData['path']["function_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionSchedulesResumeData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.functionSchedulesResume({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "function_id": functionId } });
       return response.data;
     },
     /** functionRollback: /functions/{function_id}/rollback. Returns the API response body. */
@@ -255,6 +275,11 @@ export function createResources(client: Client, getApiKey: () => string) {
     /** functionUpdate: /functions/{function_id}. Returns the API response body. */
     update: async (functionId: Types.FunctionUpdateData['path']["function_id"], body: Types.FunctionUpdateData['body'], query: Types.FunctionUpdateData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionUpdateData['headers']>, 'x-notte-api-key'> } = {}) => {
       const response = await operations.functionUpdate({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "function_id": functionId }, body, query });
+      return response.data;
+    },
+    /** functionSchedulesUpdate: /functions/{function_id}/schedules/{schedule_id}. Returns the API response body. */
+    updateSchedule: async (functionId: Types.FunctionSchedulesUpdateData['path']["function_id"], scheduleId: Types.FunctionSchedulesUpdateData['path']["schedule_id"], body: Types.FunctionSchedulesUpdateData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionSchedulesUpdateData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.functionSchedulesUpdate({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "function_id": functionId, "schedule_id": scheduleId }, body });
       return response.data;
     },
   },

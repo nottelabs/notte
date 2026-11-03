@@ -237,6 +237,67 @@ def function_schedule_set(
     )
 
 
+def function_schedules_add(
+    function_id: str,
+    body: BaseModel,
+) -> NotteEndpoint[models.FunctionSchedule]:
+    """Function Schedules Add (`POST /functions/{function_id}/schedules`)."""
+    return NotteEndpoint(
+        method="POST",
+        path=f"/functions/{_segment(function_id)}/schedules",
+        response=models.FunctionSchedule,
+        request=body,
+    )
+
+
+def function_schedules_list(
+    function_id: str,
+) -> NotteEndpoint[models.FunctionScheduleListResponse]:
+    """Function Schedules List (`GET /functions/{function_id}/schedules`)."""
+    return NotteEndpoint(
+        method="GET",
+        path=f"/functions/{_segment(function_id)}/schedules",
+        response=models.FunctionScheduleListResponse,
+    )
+
+
+def function_schedules_remove(
+    function_id: str,
+    schedule_id: str,
+) -> NotteEndpoint[models.ScheduleDeleteResponse]:
+    """Function Schedules Remove (`DELETE /functions/{function_id}/schedules/{schedule_id}`)."""
+    return NotteEndpoint(
+        method="DELETE",
+        path=f"/functions/{_segment(function_id)}/schedules/{_segment(schedule_id)}",
+        response=models.ScheduleDeleteResponse,
+    )
+
+
+def function_schedules_resume(
+    function_id: str,
+) -> NotteEndpoint[models.FunctionScheduleListResponse]:
+    """Function Schedules Resume (`POST /functions/{function_id}/schedules/resume`)."""
+    return NotteEndpoint(
+        method="POST",
+        path=f"/functions/{_segment(function_id)}/schedules/resume",
+        response=models.FunctionScheduleListResponse,
+    )
+
+
+def function_schedules_update(
+    function_id: str,
+    schedule_id: str,
+    body: BaseModel,
+) -> NotteEndpoint[models.FunctionSchedule]:
+    """Function Schedules Update (`PATCH /functions/{function_id}/schedules/{schedule_id}`)."""
+    return NotteEndpoint(
+        method="PATCH",
+        path=f"/functions/{_segment(function_id)}/schedules/{_segment(schedule_id)}",
+        response=models.FunctionSchedule,
+        request=body,
+    )
+
+
 def function_update(
     function_id: str,
     body: BaseModel,

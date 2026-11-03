@@ -3700,6 +3700,520 @@
         ]
       }
     },
+    "/functions/{function_id}/schedules": {
+      "get": {
+        "tags": [
+          "functions"
+        ],
+        "summary": "Function Schedules List",
+        "operationId": "function_schedules_list",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "function_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Function Id"
+            }
+          },
+          {
+            "name": "x-notte-request-origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Request-Origin"
+            }
+          },
+          {
+            "name": "x-notte-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Sdk-Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FunctionScheduleListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Python",
+            "source": "import os\n\nimport requests\n\nfunction_id = \"<function_id>\"\nresponse = requests.get(\n    f\"{os.environ.get('NOTTE_API_URL', 'https://api.notte.cc')}/functions/{function_id}/schedules\",\n    headers={\"Authorization\": f\"Bearer {os.environ['NOTTE_API_KEY']}\"},\n    timeout=30,\n)\nresponse.raise_for_status()\nfor schedule in response.json()[\"schedules\"]:\n    print(schedule[\"schedule_id\"], schedule[\"cron\"], schedule[\"variables\"])",
+            "label": "python"
+          },
+          {
+            "lang": "TypeScript",
+            "source": "const functionId = \"<function_id>\";\nconst response = await fetch(`https://api.notte.cc/functions/${functionId}/schedules`, {\n  method: \"GET\",\n  headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` },\n  signal: AbortSignal.timeout(30_000),\n});\nif (!response.ok) throw new Error(await response.text());\nconsole.log(await response.json());",
+            "label": "node"
+          },
+          {
+            "lang": "Curl",
+            "source": "curl -X GET \"https://api.notte.cc/functions/$function_id/schedules\" \\\n-H \"Authorization: Bearer $NOTTE_API_KEY\"",
+            "label": "curl"
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "functions"
+        ],
+        "summary": "Function Schedules Add",
+        "operationId": "function_schedules_add",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "function_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Function Id"
+            }
+          },
+          {
+            "name": "x-notte-request-origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Request-Origin"
+            }
+          },
+          {
+            "name": "x-notte-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Sdk-Version"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FunctionScheduleCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FunctionSchedule"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Python",
+            "source": "import os\n\nimport requests\n\n# Each schedule runs the function with its own variables.\nfunction_id = \"<function_id>\"\nresponse = requests.post(\n    f\"{os.environ.get('NOTTE_API_URL', 'https://api.notte.cc')}/functions/{function_id}/schedules\",\n    headers={\"Authorization\": f\"Bearer {os.environ['NOTTE_API_KEY']}\"},\n    json={\"cron\": \"0 17 ? * MON-FRI *\", \"variables\": {\"url\": \"https://shop.notte.cc/\"}},\n    timeout=30,\n)\nresponse.raise_for_status()\nprint(response.json()[\"schedule_id\"])",
+            "label": "python"
+          },
+          {
+            "lang": "TypeScript",
+            "source": "const functionId = \"<function_id>\";\n// Each schedule runs the function with its own variables.\nconst response = await fetch(`https://api.notte.cc/functions/${functionId}/schedules`, {\n  method: \"POST\",\n  headers: {\n    Authorization: `Bearer ${process.env.NOTTE_API_KEY}`,\n    \"Content-Type\": \"application/json\",\n  },\n  body: JSON.stringify({\n    cron: \"0 17 ? * MON-FRI *\",\n    variables: { url: \"https://shop.notte.cc/\" },\n  }),\n  signal: AbortSignal.timeout(30_000),\n});\nif (!response.ok) throw new Error(await response.text());\nconsole.log(await response.json());",
+            "label": "node"
+          },
+          {
+            "lang": "Curl",
+            "source": "curl -X POST \"https://api.notte.cc/functions/$function_id/schedules\" \\\n-H \"Authorization: Bearer $NOTTE_API_KEY\" \\\n-H \"Content-Type: application/json\" \\\n-d '{\n\"cron\": \"0 17 ? * MON-FRI *\",\n\"variables\": {\"url\": \"https://shop.notte.cc/\"}\n}'",
+            "label": "curl"
+          }
+        ]
+      }
+    },
+    "/functions/{function_id}/schedules/resume": {
+      "post": {
+        "tags": [
+          "functions"
+        ],
+        "summary": "Function Schedules Resume",
+        "operationId": "function_schedules_resume",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "function_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Function Id"
+            }
+          },
+          {
+            "name": "x-notte-request-origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Request-Origin"
+            }
+          },
+          {
+            "name": "x-notte-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Sdk-Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FunctionScheduleListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Python",
+            "source": "import os\n\nimport requests\n\n# Resumes every schedule of a paused function and keeps each one as it is.\nfunction_id = \"<function_id>\"\nresponse = requests.post(\n    f\"{os.environ.get('NOTTE_API_URL', 'https://api.notte.cc')}/functions/{function_id}/schedules/resume\",\n    headers={\"Authorization\": f\"Bearer {os.environ['NOTTE_API_KEY']}\"},\n    timeout=30,\n)\nresponse.raise_for_status()\nprint(response.json()[\"state\"])",
+            "label": "python"
+          },
+          {
+            "lang": "TypeScript",
+            "source": "const functionId = \"<function_id>\";\n// Resumes every schedule of a paused function and keeps each one as it is.\nconst response = await fetch(`https://api.notte.cc/functions/${functionId}/schedules/resume`, {\n  method: \"POST\",\n  headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` },\n  signal: AbortSignal.timeout(30_000),\n});\nif (!response.ok) throw new Error(await response.text());\nconsole.log(await response.json());",
+            "label": "node"
+          },
+          {
+            "lang": "Curl",
+            "source": "curl -X POST \"https://api.notte.cc/functions/$function_id/schedules/resume\" \\\n-H \"Authorization: Bearer $NOTTE_API_KEY\"",
+            "label": "curl"
+          }
+        ]
+      }
+    },
+    "/functions/{function_id}/schedules/{schedule_id}": {
+      "patch": {
+        "tags": [
+          "functions"
+        ],
+        "summary": "Function Schedules Update",
+        "operationId": "function_schedules_update",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "function_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Function Id"
+            }
+          },
+          {
+            "name": "schedule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Schedule Id"
+            }
+          },
+          {
+            "name": "x-notte-request-origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Request-Origin"
+            }
+          },
+          {
+            "name": "x-notte-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Sdk-Version"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FunctionScheduleCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FunctionSchedule"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Python",
+            "source": "import os\n\nimport requests\n\nfunction_id = \"<function_id>\"\nschedule_id = \"<schedule_id>\"\nresponse = requests.patch(\n    f\"{os.environ.get('NOTTE_API_URL', 'https://api.notte.cc')}/functions/{function_id}/schedules/{schedule_id}\",\n    headers={\"Authorization\": f\"Bearer {os.environ['NOTTE_API_KEY']}\"},\n    json={\"cron\": \"0 18 ? * MON-FRI *\", \"variables\": {\"url\": \"https://shop.notte.cc/\"}},\n    timeout=30,\n)\nresponse.raise_for_status()\nprint(response.json())",
+            "label": "python"
+          },
+          {
+            "lang": "TypeScript",
+            "source": "const functionId = \"<function_id>\";\nconst scheduleId = \"<schedule_id>\";\nconst response = await fetch(`https://api.notte.cc/functions/${functionId}/schedules/${scheduleId}`, {\n  method: \"PATCH\",\n  headers: {\n    Authorization: `Bearer ${process.env.NOTTE_API_KEY}`,\n    \"Content-Type\": \"application/json\",\n  },\n  body: JSON.stringify({\n    cron: \"0 18 ? * MON-FRI *\",\n    variables: { url: \"https://shop.notte.cc/\" },\n  }),\n  signal: AbortSignal.timeout(30_000),\n});\nif (!response.ok) throw new Error(await response.text());\nconsole.log(await response.json());",
+            "label": "node"
+          },
+          {
+            "lang": "Curl",
+            "source": "curl -X PATCH \"https://api.notte.cc/functions/$function_id/schedules/$schedule_id\" \\\n-H \"Authorization: Bearer $NOTTE_API_KEY\" \\\n-H \"Content-Type: application/json\" \\\n-d '{\n\"cron\": \"0 18 ? * MON-FRI *\",\n\"variables\": {\"url\": \"https://shop.notte.cc/\"}\n}'",
+            "label": "curl"
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "functions"
+        ],
+        "summary": "Function Schedules Remove",
+        "operationId": "function_schedules_remove",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "function_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Function Id"
+            }
+          },
+          {
+            "name": "schedule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Schedule Id"
+            }
+          },
+          {
+            "name": "x-notte-request-origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Request-Origin"
+            }
+          },
+          {
+            "name": "x-notte-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Sdk-Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleDeleteResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Python",
+            "source": "import os\n\nimport requests\n\nfunction_id = \"<function_id>\"\nschedule_id = \"<schedule_id>\"\nresponse = requests.delete(\n    f\"{os.environ.get('NOTTE_API_URL', 'https://api.notte.cc')}/functions/{function_id}/schedules/{schedule_id}\",\n    headers={\"Authorization\": f\"Bearer {os.environ['NOTTE_API_KEY']}\"},\n    timeout=30,\n)\nresponse.raise_for_status()\nprint(response.json())",
+            "label": "python"
+          },
+          {
+            "lang": "TypeScript",
+            "source": "const functionId = \"<function_id>\";\nconst scheduleId = \"<schedule_id>\";\nconst response = await fetch(`https://api.notte.cc/functions/${functionId}/schedules/${scheduleId}`, {\n  method: \"DELETE\",\n  headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` },\n  signal: AbortSignal.timeout(30_000),\n});\nif (!response.ok) throw new Error(await response.text());\nconsole.log(await response.json());",
+            "label": "node"
+          },
+          {
+            "lang": "Curl",
+            "source": "curl -X DELETE \"https://api.notte.cc/functions/$function_id/schedules/$schedule_id\" \\\n-H \"Authorization: Bearer $NOTTE_API_KEY\"",
+            "label": "curl"
+          }
+        ]
+      }
+    },
     "/functions/{function_id}/runs/start": {
       "post": {
         "tags": [
@@ -24159,6 +24673,48 @@
         ],
         "title": "FunctionRuntimeHealthResponse"
       },
+      "FunctionSchedule": {
+        "properties": {
+          "schedule_id": {
+            "type": "string",
+            "title": "Schedule Id"
+          },
+          "cron": {
+            "type": "string",
+            "title": "Cron"
+          },
+          "variables": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variables"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "schedule_id",
+          "cron"
+        ],
+        "title": "FunctionSchedule"
+      },
       "FunctionScheduleCreateRequest": {
         "properties": {
           "cron": {
@@ -24186,6 +24742,56 @@
           "variables"
         ],
         "title": "FunctionScheduleCreateRequest"
+      },
+      "FunctionScheduleListResponse": {
+        "properties": {
+          "schedules": {
+            "items": {
+              "$ref": "#/components/schemas/FunctionSchedule"
+            },
+            "type": "array",
+            "title": "Schedules",
+            "description": "The function's schedules, oldest first."
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "enabled",
+                  "paused"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State",
+            "description": "Applies to every schedule. Null when the function has none."
+          },
+          "paused_reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "credit_exhausted",
+                  "function_inactive",
+                  "managed_auth_failure"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paused Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "schedules",
+          "state"
+        ],
+        "title": "FunctionScheduleListResponse"
       },
       "FunctionSdkGeneration": {
         "type": "string",

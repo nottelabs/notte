@@ -3467,6 +3467,30 @@ export type FunctionRuntimeHealthResponse = {
 };
 
 /**
+ * FunctionSchedule
+ */
+export type FunctionSchedule = {
+    /**
+     * Schedule Id
+     */
+    schedule_id: string;
+    /**
+     * Cron
+     */
+    cron: string;
+    /**
+     * Variables
+     */
+    variables?: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * Created At
+     */
+    created_at?: string | null;
+};
+
+/**
  * FunctionScheduleCreateRequest
  */
 export type FunctionScheduleCreateRequest = {
@@ -3484,6 +3508,28 @@ export type FunctionScheduleCreateRequest = {
     variables: {
         [key: string]: unknown;
     } | null;
+};
+
+/**
+ * FunctionScheduleListResponse
+ */
+export type FunctionScheduleListResponse = {
+    /**
+     * Schedules
+     *
+     * The function's schedules, oldest first.
+     */
+    schedules: Array<FunctionSchedule>;
+    /**
+     * State
+     *
+     * Applies to every schedule. Null when the function has none.
+     */
+    state: 'enabled' | 'paused' | null;
+    /**
+     * Paused Reason
+     */
+    paused_reason?: 'credit_exhausted' | 'function_inactive' | 'managed_auth_failure' | null;
 };
 
 /**
@@ -12134,6 +12180,214 @@ export type FunctionScheduleSetResponses = {
 };
 
 export type FunctionScheduleSetResponse = FunctionScheduleSetResponses[keyof FunctionScheduleSetResponses];
+
+export type FunctionSchedulesListData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Function Id
+         */
+        function_id: string;
+    };
+    query?: never;
+    url: '/functions/{function_id}/schedules';
+};
+
+export type FunctionSchedulesListErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type FunctionSchedulesListError = FunctionSchedulesListErrors[keyof FunctionSchedulesListErrors];
+
+export type FunctionSchedulesListResponses = {
+    /**
+     * Successful Response
+     */
+    200: FunctionScheduleListResponse;
+};
+
+export type FunctionSchedulesListResponse = FunctionSchedulesListResponses[keyof FunctionSchedulesListResponses];
+
+export type FunctionSchedulesAddData = {
+    body: FunctionScheduleCreateRequest;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Function Id
+         */
+        function_id: string;
+    };
+    query?: never;
+    url: '/functions/{function_id}/schedules';
+};
+
+export type FunctionSchedulesAddErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type FunctionSchedulesAddError = FunctionSchedulesAddErrors[keyof FunctionSchedulesAddErrors];
+
+export type FunctionSchedulesAddResponses = {
+    /**
+     * Successful Response
+     */
+    200: FunctionSchedule;
+};
+
+export type FunctionSchedulesAddResponse = FunctionSchedulesAddResponses[keyof FunctionSchedulesAddResponses];
+
+export type FunctionSchedulesResumeData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Function Id
+         */
+        function_id: string;
+    };
+    query?: never;
+    url: '/functions/{function_id}/schedules/resume';
+};
+
+export type FunctionSchedulesResumeErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type FunctionSchedulesResumeError = FunctionSchedulesResumeErrors[keyof FunctionSchedulesResumeErrors];
+
+export type FunctionSchedulesResumeResponses = {
+    /**
+     * Successful Response
+     */
+    200: FunctionScheduleListResponse;
+};
+
+export type FunctionSchedulesResumeResponse = FunctionSchedulesResumeResponses[keyof FunctionSchedulesResumeResponses];
+
+export type FunctionSchedulesRemoveData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Function Id
+         */
+        function_id: string;
+        /**
+         * Schedule Id
+         */
+        schedule_id: string;
+    };
+    query?: never;
+    url: '/functions/{function_id}/schedules/{schedule_id}';
+};
+
+export type FunctionSchedulesRemoveErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type FunctionSchedulesRemoveError = FunctionSchedulesRemoveErrors[keyof FunctionSchedulesRemoveErrors];
+
+export type FunctionSchedulesRemoveResponses = {
+    /**
+     * Successful Response
+     */
+    200: ScheduleDeleteResponse;
+};
+
+export type FunctionSchedulesRemoveResponse = FunctionSchedulesRemoveResponses[keyof FunctionSchedulesRemoveResponses];
+
+export type FunctionSchedulesUpdateData = {
+    body: FunctionScheduleCreateRequest;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Function Id
+         */
+        function_id: string;
+        /**
+         * Schedule Id
+         */
+        schedule_id: string;
+    };
+    query?: never;
+    url: '/functions/{function_id}/schedules/{schedule_id}';
+};
+
+export type FunctionSchedulesUpdateErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type FunctionSchedulesUpdateError = FunctionSchedulesUpdateErrors[keyof FunctionSchedulesUpdateErrors];
+
+export type FunctionSchedulesUpdateResponses = {
+    /**
+     * Successful Response
+     */
+    200: FunctionSchedule;
+};
+
+export type FunctionSchedulesUpdateResponse = FunctionSchedulesUpdateResponses[keyof FunctionSchedulesUpdateResponses];
 
 export type FunctionRunStartData = {
     body: RunFunctionRequest;

@@ -22,6 +22,14 @@ These operations use the configured client's authentication and transport. Signa
 client.functions.list(options?: FunctionListOptions): Promise<FunctionListItemResponse[]>;
 ```
 
+## addSchedule
+
+functionSchedulesAdd: /functions/&#123;function_id&#125;/schedules. Returns the API response body.
+
+```typescript
+client.functions.addSchedule(functionId: FunctionSchedulesAddData["path"]["function_id"], body: FunctionSchedulesAddData["body"], requestOptions?: ResourceRequestOptions & { headers?: Omit<NonNullable<FunctionSchedulesAddData["headers"]>, "x-notte-api-key">; }): Promise<FunctionSchedule>;
+```
+
 ## create
 
 functionCreate: /functions. Returns the API response body.
@@ -78,6 +86,14 @@ listFunctionRunsByFunctionId: /functions/&#123;function_id&#125;/runs. Returns t
 client.functions.listRuns(functionId: ListFunctionRunsByFunctionIdData["path"]["function_id"], query?: ListFunctionRunsByFunctionIdData["query"], requestOptions?: ResourceRequestOptions & { headers?: Omit<NonNullable<ListFunctionRunsByFunctionIdData["headers"]>, "x-notte-api-key">; }): Promise<PaginatedResponseFunctionRunListItemResponse>;
 ```
 
+## listSchedules
+
+functionSchedulesList: /functions/&#123;function_id&#125;/schedules. Returns the API response body.
+
+```typescript
+client.functions.listSchedules(functionId: FunctionSchedulesListData["path"]["function_id"], requestOptions?: ResourceRequestOptions & { headers?: Omit<NonNullable<FunctionSchedulesListData["headers"]>, "x-notte-api-key">; }): Promise<FunctionScheduleListResponse>;
+```
+
 ## metadataUpdate
 
 functionMetadataUpdate: /functions/&#123;function_id&#125;. Returns the API response body.
@@ -92,6 +108,22 @@ prepareRunPayloadUpload: /functions/&#123;function_id&#125;/runs/&#123;run_id&#1
 
 ```typescript
 client.functions.prepareRunPayloadUpload(functionId: PrepareRunPayloadUploadData["path"]["function_id"], runId: PrepareRunPayloadUploadData["path"]["run_id"], field: PrepareRunPayloadUploadData["path"]["field"], body: PrepareRunPayloadUploadData["body"], requestOptions?: ResourceRequestOptions & { headers?: Omit<NonNullable<PrepareRunPayloadUploadData["headers"]>, "x-notte-api-key">; }): Promise<RunPayloadUploadResponse>;
+```
+
+## removeSchedule
+
+functionSchedulesRemove: /functions/&#123;function_id&#125;/schedules/&#123;schedule_id&#125;. Returns the API response body.
+
+```typescript
+client.functions.removeSchedule(functionId: FunctionSchedulesRemoveData["path"]["function_id"], scheduleId: FunctionSchedulesRemoveData["path"]["schedule_id"], requestOptions?: ResourceRequestOptions & { headers?: Omit<NonNullable<FunctionSchedulesRemoveData["headers"]>, "x-notte-api-key">; }): Promise<ScheduleDeleteResponse>;
+```
+
+## resumeSchedules
+
+functionSchedulesResume: /functions/&#123;function_id&#125;/schedules/resume. Returns the API response body.
+
+```typescript
+client.functions.resumeSchedules(functionId: FunctionSchedulesResumeData["path"]["function_id"], requestOptions?: ResourceRequestOptions & { headers?: Omit<NonNullable<FunctionSchedulesResumeData["headers"]>, "x-notte-api-key">; }): Promise<FunctionScheduleListResponse>;
 ```
 
 ## rollback
@@ -156,4 +188,12 @@ functionUpdate: /functions/&#123;function_id&#125;. Returns the API response bod
 
 ```typescript
 client.functions.update(functionId: FunctionUpdateData["path"]["function_id"], body: FunctionUpdateData["body"], query?: FunctionUpdateData["query"], requestOptions?: ResourceRequestOptions & { headers?: Omit<NonNullable<FunctionUpdateData["headers"]>, "x-notte-api-key">; }): Promise<FunctionResponse>;
+```
+
+## updateSchedule
+
+functionSchedulesUpdate: /functions/&#123;function_id&#125;/schedules/&#123;schedule_id&#125;. Returns the API response body.
+
+```typescript
+client.functions.updateSchedule(functionId: FunctionSchedulesUpdateData["path"]["function_id"], scheduleId: FunctionSchedulesUpdateData["path"]["schedule_id"], body: FunctionSchedulesUpdateData["body"], requestOptions?: ResourceRequestOptions & { headers?: Omit<NonNullable<FunctionSchedulesUpdateData["headers"]>, "x-notte-api-key">; }): Promise<FunctionSchedule>;
 ```
