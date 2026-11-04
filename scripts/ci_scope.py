@@ -106,7 +106,6 @@ INTEGRATION_DEPENDENCIES: dict[str, set[str]] = {
     "tzafon": {"python-source", "node-source"},
     "valtown": {"wire-api"},
     "watsonx": {"python-source", "node-source"},
-    "yutori": {"python-source"},
 }
 RECIPE_INPUTS = {
     "openapi/openapi.json": {"terraform-profiles"},
@@ -175,7 +174,6 @@ INTEGRATION_WORKFLOWS = {
     "tzafon-integration.yml",
     "valtown-integration.yml",
     "watsonx-integration.yml",
-    "yutori-integration.yml",
 }
 
 
