@@ -217,6 +217,9 @@
   "get_payment": {
     "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
   },
+  "get_payment_wallet_connection": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
   "get_policy": {
     "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
   },
@@ -270,6 +273,9 @@
     "telemetry": "cloud.function.list"
   },
   "list_monitors": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
+  "list_payment_requests": {
     "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
   },
   "list_personas": {
