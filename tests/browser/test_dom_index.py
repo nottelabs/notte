@@ -6,7 +6,7 @@ import pytest
 from notte_browser.action_space import build_action_space
 from notte_browser.resolution import resolve
 from notte_core.actions import ClickAction
-from notte_core.dom_tree import ComputedDomAttributes, DomNode
+from notte_core.dom_tree import ComputedDomAttributes, DomAttributes, DomNode
 from notte_core.errors import InvalidActionError
 from notte_core.node_type import NodeRole, NodeType
 from notte_core.observation import Observation, TimedSpan
@@ -78,6 +78,22 @@ def test_interactive_element_with_dialog_role_is_not_a_dialog() -> None:
     close = get_empty_dom_node("B2", "Close")
     modal = replace(_dialog("modal", [close]), id="M2", type=NodeType.INTERACTION)
     root = replace(DomNode.empty_root(), children=[add_to_basket, modal])
+    assert [id(n) for n in root.prune_non_dialogs_if_present()] == [id(modal)]
+    # a link marked role="dialog" stays a control even when the builder marks something inside it clickable
+    inner = get_empty_dom_node("B3", "Ship to")
+    link = replace(_dialog("Change shipping country", [inner]), attributes=DomAttributes.safe_init(tag_name="a"))
+    root = replace(DomNode.empty_root(), children=[link, add_to_basket])
+    assert root.prune_non_dialogs_if_present()[0] is root
+
+
+@pytest.mark.parametrize(
+    "attributes",
+    [DomAttributes.safe_init(tag_name="dialog"), DomAttributes.safe_init(tag_name="div", aria_modal=True)],
+    ids=["native-dialog", "aria-modal"],
+)
+def test_real_modal_that_is_its_only_control_is_a_dialog(attributes: DomAttributes) -> None:
+    modal = replace(_dialog("modal", []), id="M1", type=NodeType.INTERACTION, attributes=attributes)
+    root = replace(DomNode.empty_root(), children=[get_empty_dom_node("B1", "Add to basket"), modal])
     assert [id(n) for n in root.prune_non_dialogs_if_present()] == [id(modal)]
 
 
