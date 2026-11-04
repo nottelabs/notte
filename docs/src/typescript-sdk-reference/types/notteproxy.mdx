@@ -24,6 +24,12 @@ export type NotteProxy = {
      * City
      */
     city?: string | null;
+    /**
+     * Sticky Session
+     *
+     * Keep the session's exit on one residential IP, shared with a proxy gateway credential minted with the same `sticky_session`. 1-64 letters, digits or hyphens.
+     */
+    sticky_session?: string | null;
 };
 ```
 
@@ -43,6 +49,10 @@ export type NotteProxy = {
 
 <ParamField body="city" type={"string | null | undefined"}>
 
+</ParamField>
+
+<ParamField body="sticky_session" type={"string | null | undefined"}>
+Keep the session's exit on one residential IP, shared with a proxy gateway credential minted with the same `sticky_session`. 1-64 letters, digits or hyphens.
 </ParamField>
 
 ## Related types

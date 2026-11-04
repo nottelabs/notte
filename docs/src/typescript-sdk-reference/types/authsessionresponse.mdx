@@ -73,6 +73,10 @@ Error message if the operation failed to complete
 Whether proxies were used for the session. True if any proxy was applied during session creation.
 </ParamField>
 
+<ParamField body="secret_proxy" type={"SecretProxySummary | null | undefined"}>
+The session's secret proxy: its server, hosts and CA fingerprints, never its credentials.
+</ParamField>
+
 <ParamField body="browser_type" type={"\"chromium\" | \"chrome\" | \"chrome-nightly\" | \"chrome-turbo\" | \"firefox\" | undefined"}>
 
 </ParamField>
@@ -123,10 +127,6 @@ Managed Auth connection IDs attached to this session.
 
 <ParamField body="system_hidden" type={"boolean | undefined"}>
 Whether this session is an internal system run. Internal system runs are omitted from session.list() unless include_system=True is requested.
-</ParamField>
-
-<ParamField body="secret_proxy" type={"SecretProxySummary | null | undefined"}>
-The session's secret proxy: its server, hosts and CA fingerprints, never its credentials.
 </ParamField>
 
 <ParamField body="timeout_minutes" type={"number"} required>

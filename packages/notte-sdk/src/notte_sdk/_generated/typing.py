@@ -16,6 +16,7 @@ class NotteProxyDict(TypedDict):
     id: NotRequired[str | None]
     country: NotRequired[core.ProxyGeolocationCountry | None]
     city: NotRequired[str | None]
+    sticky_session: NotRequired[str | None]
 
 
 class ExternalProxyDict(TypedDict):
@@ -35,11 +36,11 @@ class TailnetProxyDict(TypedDict):
 
 class SecretProxyDict(TypedDict):
     type: NotRequired[Literal["secret"]]
-    server: Required[str]
+    server: NotRequired[str | None]
     username: NotRequired[str | None]
     password: NotRequired[str | None]
     ca_certificate: NotRequired[str | None]
-    hosts: Required[list[str]]
+    hosts: NotRequired[models.Hosts | None]
 
 
 class SessionProfileDict(TypedDict):
