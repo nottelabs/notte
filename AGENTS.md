@@ -46,6 +46,7 @@ This is the standalone Python/Node SDK repository. The machine's monorepo
 - `make test` is the offline gate. `make test-live` runs tests marked
   `staging` or `live` and needs `NOTTE_API_KEY`; set `NOTTE_API_URL` to point
   the SDK at a different API.
+- Local agents use `NOTTE_API_KEY_STAGING` from the root `.env` against `https://us-staging.notte.cc`.
 - A click that opens a file chooser fails with `FileChooserOpenedError`.
   Local `act()` maps either the raised error or failed execution result to
   BLOCKED because it cannot supply a file; `tests/act/test_local_act.py` covers both modes.
