@@ -19,7 +19,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 A secret proxy lets an agent fill card numbers, passwords and other secrets on a site while Notte only handles stand-in values, provided your proxy also [masks responses](#mask-real-values-in-responses).
 
-Your tokenization provider, such as [Evervault](/features/sessions/secret-proxies/evervault) or [VGS](/features/sessions/secret-proxies/vgs), or [your own proxy](/features/sessions/secret-proxies/custom-proxy), gives you stand-ins for the real values. The agent types the stand-ins. Traffic to the hosts you list goes through your secret proxy, which replaces each stand-in with the real value on its way to the site. Every other host stays on the session's normal proxy.
+Your tokenization provider, such as [Evervault](/features/sessions/secret-proxies/evervault) or [VGS](/features/sessions/secret-proxies/vgs), or your own proxy, such as the open-source [browser-secret-proxy](/features/sessions/secret-proxies/custom-proxy#use-browser-secret-proxy), gives you stand-ins for the real values. The agent types the stand-ins. Traffic to the hosts you list goes through your secret proxy, which replaces each stand-in with the real value on its way to the site. Every other host stays on the session's normal proxy.
 
 This works for any value your proxy can read in the page's requests, not only cards: usernames and passwords on login forms, 2FA codes, API keys and tokens. A value the page encrypts before sending it cannot be swapped. See [Passwords, 2FA codes and API keys](/features/sessions/secret-proxies/credentials).
 
@@ -130,6 +130,6 @@ Whether your provider can send its traffic through another proxy depends on the 
   </Card>
 
   <Card title="Custom proxy" icon="server" href="/features/sessions/secret-proxies/custom-proxy">
-    Run your own secret proxy
+    Run browser-secret-proxy or your own secret proxy
   </Card>
 </CardGroup>
