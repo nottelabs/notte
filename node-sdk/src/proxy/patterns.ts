@@ -87,8 +87,10 @@ export const DEFAULT_ALLOWED_PATTERNS: RegExp[] = [
   /^managed-auth\/operations\/[^\/]+$/, // /managed-auth/operations/{operation_id}
 
   // Payments endpoints
+  /^payments$/, // /payments
   /^payments\/[^\/]+$/, // /payments/{payment_id}
   /^payments\/connect$/, // /payments/connect
+  /^payments\/connection$/, // /payments/connection
   /^payments\/disconnect$/, // /payments/disconnect
 
   // Personas endpoints

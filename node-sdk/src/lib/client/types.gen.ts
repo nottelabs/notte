@@ -5374,6 +5374,32 @@ export type PaginatedResponseFunctionRunListItemResponse = {
 };
 
 /**
+ * PaginatedResponse[PaymentListItem]
+ */
+export type PaginatedResponsePaymentListItem = {
+    /**
+     * Items
+     */
+    items: Array<PaymentListItem>;
+    /**
+     * Page
+     */
+    page: number;
+    /**
+     * Page Size
+     */
+    page_size: number;
+    /**
+     * Has Next
+     */
+    has_next: boolean;
+    /**
+     * Has Previous
+     */
+    readonly has_previous: boolean;
+};
+
+/**
  * PaginatedResponse[PersonaResponse]
  */
 export type PaginatedResponsePersonaResponse = {
@@ -5570,6 +5596,50 @@ export type PaymentConnectionResponse = {
 };
 
 /**
+ * PaymentConnectionStatusResponse
+ */
+export type PaymentConnectionStatusResponse = {
+    /**
+     * Id
+     *
+     * Null when the caller has never connected a wallet in this mode.
+     */
+    id?: string | null;
+    /**
+     * Mode
+     */
+    mode: 'test' | 'live';
+    /**
+     * Status
+     */
+    status: 'not_connected' | 'creating' | 'awaiting_connection' | 'connected' | 'expired' | 'failed';
+    /**
+     * Connection Url
+     */
+    connection_url?: string | null;
+    /**
+     * Connection Phrase
+     */
+    connection_phrase?: string | null;
+    /**
+     * Expires At
+     */
+    expires_at?: string | null;
+    /**
+     * Error Code
+     */
+    error_code?: string | null;
+    /**
+     * Created At
+     */
+    created_at?: string | null;
+    /**
+     * Updated At
+     */
+    updated_at?: string | null;
+};
+
+/**
  * PaymentDisconnectError
  */
 export type PaymentDisconnectError = {
@@ -5591,6 +5661,89 @@ export type PaymentDisconnectResponse = {
      * Status
      */
     status?: 'disconnected';
+};
+
+/**
+ * PaymentListItem
+ */
+export type PaymentListItem = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Session Id
+     */
+    session_id: string;
+    /**
+     * Status
+     */
+    status: string;
+    /**
+     * Mode
+     */
+    mode: string;
+    /**
+     * Amount
+     *
+     * Amount in currency units, serialized as an exact decimal string.
+     */
+    amount: string;
+    /**
+     * Currency
+     */
+    currency: string;
+    /**
+     * Merchant Name
+     */
+    merchant_name: string;
+    /**
+     * Merchant Url
+     */
+    merchant_url: string;
+    /**
+     * Vault Id
+     */
+    vault_id?: string | null;
+    /**
+     * Approval Url
+     */
+    approval_url?: string | null;
+    /**
+     * Connection Url
+     */
+    connection_url?: string | null;
+    /**
+     * Connection Phrase
+     */
+    connection_phrase?: string | null;
+    /**
+     * Expires At
+     */
+    expires_at?: string | null;
+    /**
+     * Error Code
+     */
+    error_code?: string | null;
+    next_action?: PaymentNextAction | null;
+    /**
+     * Purchase Status
+     */
+    purchase_status?: 'unverified';
+    /**
+     * User Id
+     *
+     * The user who requested the payment.
+     */
+    user_id: string;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
 };
 
 /**
@@ -10175,6 +10328,28 @@ export type PaginatedResponseFunctionRunListItemResponseWritable = {
 };
 
 /**
+ * PaginatedResponse[PaymentListItem]
+ */
+export type PaginatedResponsePaymentListItemWritable = {
+    /**
+     * Items
+     */
+    items: Array<PaymentListItem>;
+    /**
+     * Page
+     */
+    page: number;
+    /**
+     * Page Size
+     */
+    page_size: number;
+    /**
+     * Has Next
+     */
+    has_next: boolean;
+};
+
+/**
  * PaginatedResponse[PersonaResponse]
  */
 export type PaginatedResponsePersonaResponseWritable = {
@@ -13426,6 +13601,118 @@ export type CreatePaymentResponses = {
 };
 
 export type CreatePaymentResponse = CreatePaymentResponses[keyof CreatePaymentResponses];
+
+export type ListPaymentRequestsData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: {
+        /**
+         * Page
+         *
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page Size
+         *
+         * Number of items per page
+         */
+        page_size?: number;
+        /**
+         * Session Id
+         *
+         * Only payments of this session
+         */
+        session_id?: string | null;
+        /**
+         * Status
+         *
+         * Only payments in this state
+         */
+        status?: 'awaiting_connection' | 'creating' | 'awaiting_approval' | 'requires_action' | 'approved' | 'provisioning' | 'ready' | 'declined' | 'expired' | 'failed' | 'closed' | null;
+        /**
+         * Mode
+         *
+         * Only test or live payments
+         */
+        mode?: 'test' | 'live' | null;
+        /**
+         * User Id
+         *
+         * Only payments this user requested. Members see only their own payments.
+         */
+        user_id?: string | null;
+    };
+    url: '/payments';
+};
+
+export type ListPaymentRequestsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListPaymentRequestsError = ListPaymentRequestsErrors[keyof ListPaymentRequestsErrors];
+
+export type ListPaymentRequestsResponses = {
+    /**
+     * Successful Response
+     */
+    200: PaginatedResponsePaymentListItem;
+};
+
+export type ListPaymentRequestsResponse = ListPaymentRequestsResponses[keyof ListPaymentRequestsResponses];
+
+export type GetPaymentWalletConnectionData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: {
+        /**
+         * Mode
+         */
+        mode?: 'test' | 'live';
+    };
+    url: '/payments/connection';
+};
+
+export type GetPaymentWalletConnectionErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetPaymentWalletConnectionError = GetPaymentWalletConnectionErrors[keyof GetPaymentWalletConnectionErrors];
+
+export type GetPaymentWalletConnectionResponses = {
+    /**
+     * Successful Response
+     */
+    200: PaymentConnectionStatusResponse;
+};
+
+export type GetPaymentWalletConnectionResponse = GetPaymentWalletConnectionResponses[keyof GetPaymentWalletConnectionResponses];
 
 export type GetPaymentData = {
     body?: never;
