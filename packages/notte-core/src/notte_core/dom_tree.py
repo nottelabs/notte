@@ -442,17 +442,20 @@ class DomNode:
         dialogs: list[DomNode] = []
 
         def visit(node: DomNode) -> bool:
-            has_interaction = node.is_interaction()
-            if has_interaction:
+            is_interaction = node.is_interaction()
+            if is_interaction:
                 assert node.id is not None
                 interactions[node.id] = node
             dialog_start = len(dialogs)
+            holds_interaction = False
             for child in node.children:
-                has_interaction = visit(child) or has_interaction
-            if node.role == NodeRole.DIALOG and node.computed_attributes.in_viewport and has_interaction:
+                holds_interaction = visit(child) or holds_interaction
+            # A dialog counts when it contains a control. An element marked `role="dialog"` that is itself the only
+            # control, such as a header link, opens a dialog rather than being one.
+            if node.role == NodeRole.DIALOG and node.computed_attributes.in_viewport and holds_interaction:
                 # An eligible outer dialog replaces its nested dialogs, retaining document order.
                 dialogs[dialog_start:] = [node]
-            return has_interaction
+            return is_interaction or holds_interaction
 
         _ = visit(self)
         return interactions, tuple(dialogs) if dialogs else (self,)
@@ -463,7 +466,7 @@ class DomNode:
         return self._index[0]
 
     def prune_non_dialogs_if_present(self) -> Sequence["DomNode"]:
-        """Return topmost visible dialogs with interactions, or the root, from the shared index."""
+        """Return topmost visible dialogs that contain interactions, or the root, from the shared index."""
         return self._index[1]
 
     def interaction_nodes(self) -> Sequence["DomNode"]:

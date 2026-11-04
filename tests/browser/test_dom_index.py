@@ -64,9 +64,21 @@ def test_no_eligible_dialog_falls_back_to_root() -> None:
     alert = replace(_dialog("alert", [get_empty_dom_node("B2", "alert button")]), role=NodeRole.ALERTDIALOG)
     root = replace(DomNode.empty_root(), children=[_dialog("empty", []), hidden, alert])
     assert root.prune_non_dialogs_if_present()[0] is root
-    # An interactive dialog can qualify on its own, without interactive children.
-    interactive_dialog = replace(_dialog("self", []), id="M1", type=NodeType.INTERACTION)
-    assert interactive_dialog.prune_non_dialogs_if_present()[0] is interactive_dialog
+
+
+def test_interactive_element_with_dialog_role_is_not_a_dialog() -> None:
+    # Boots' header link `<a role="dialog" title="Change shipping country">Ship to</a>`: the element is the only
+    # control, it opens a dialog. Taken for an open one, it hid the page (and its "Add to basket") from act().
+    ship_to = replace(_dialog("Change shipping country", []), id="M1", type=NodeType.INTERACTION)
+    add_to_basket = get_empty_dom_node("B1", "Add to basket")
+    root = replace(DomNode.empty_root(), children=[ship_to, add_to_basket])
+    assert root.prune_non_dialogs_if_present()[0] is root
+    assert list(root.interaction_nodes_by_id) == ["M1", "B1"]
+    # an interactive dialog that holds controls is still a dialog
+    close = get_empty_dom_node("B2", "Close")
+    modal = replace(_dialog("modal", [close]), id="M2", type=NodeType.INTERACTION)
+    root = replace(DomNode.empty_root(), children=[add_to_basket, modal])
+    assert [id(n) for n in root.prune_non_dialogs_if_present()] == [id(modal)]
 
 
 @pytest.mark.asyncio
