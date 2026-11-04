@@ -1550,6 +1550,30 @@ async def test_clicking_a_skipped_field_offers_it_again(session: NotteSession) -
 
 
 @pytest.mark.asyncio
+async def test_clicking_a_skipped_field_that_clears_it_offers_it_again(session: NotteSession) -> None:
+    page = """<label for="finder">Address finder</label><input id="finder" onclick="this.value = ''">
+<button type="button">Continue</button>"""
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    ids = await _ids(session)
+    decider = FakeDecider(
+        choices=[
+            {"operation": "TYPE_TEXT", "type_text_target": ids["finder"]},
+            {"operation": "DONE"},
+            {"operation": "CLICK", "click_target": ids["finder"]},
+            {"operation": "DONE"},
+        ],
+        texts=[None],
+    )
+    _ = await session.aact("Deliver to 221B Baker Street", decider=decider)
+    # the field got a value since it was skipped, and clicking it empties it again: no longer skipped
+    await session.window.page.fill("#finder", "221B")
+    _ = await session.aact("Deliver to 221B Baker Street", decider=decider)
+    assert await session.window.page.input_value("#finder") == ""
+    _ = await session.aact("Deliver to 221B Baker Street", decider=decider)
+    assert ids["finder"] in decider.questions[3]["type_text_target"].criteria
+
+
+@pytest.mark.asyncio
 async def test_a_call_skipping_too_many_fields_blocks(session: NotteSession) -> None:
     fields = "".join(f'<label for="f{i}">Field {i}</label><input id="f{i}">' for i in range(MAX_SKIPPED_FIELDS + 1))
     _ = await session.window.page.goto(f"data:text/html,{quote(f'<form>{fields}</form>')}")

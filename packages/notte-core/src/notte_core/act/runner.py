@@ -295,11 +295,12 @@ class ActHistory:
     def unskip(self, page: ObservedPage, element_id: str) -> None:
         """The decider clicked the field `element_id` of `page`: it takes it for the next step, so a skip of it (the
         writer's "no value" can be wrong) ends."""
-        dropped = [skipped for skipped, id in self._skipped_on(page) if id == element_id]
+        dropped = [skipped for skipped, id in self._skipped_on(page, any_value=True) if id == element_id]
         self.skipped = [skipped for skipped in self.skipped if skipped not in dropped]
 
-    def _skipped_on(self, page: ObservedPage) -> list[tuple[SkippedField, str]]:
-        """The skipped fields found on `page` with the value they held when skipped, with their ids there."""
+    def _skipped_on(self, page: ObservedPage, *, any_value: bool = False) -> list[tuple[SkippedField, str]]:
+        """The skipped fields found on `page` with the value they held when skipped (with `any_value`, whatever they
+        hold now), with their ids there."""
         if not self.skipped:
             return []
         names = accessible_names(page)
@@ -315,7 +316,7 @@ class ActHistory:
                     continue
                 if names.get(action.id, skipped.name) != skipped.name:
                     continue
-                if _field_value(page, action.id) == skipped.value:
+                if any_value or _field_value(page, action.id) == skipped.value:
                     found.append((skipped, action.id))
         return found
 
