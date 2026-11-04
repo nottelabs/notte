@@ -32,9 +32,9 @@ export type ApiSessionStartRequest = {
     /**
      * Proxies
      *
-     * List of custom proxies to use for the session. If True, the default proxies will be used.
+     * List of custom proxies to use for the session. If True, the default proxies will be used. At most one `secret` entry routes its hosts through the caller's secret proxy; the other entry, if any, is the session's exit.
      */
-    proxies?: Array<NotteProxy | ExternalProxy | TailnetProxy> | boolean;
+    proxies?: Array<NotteProxy | ExternalProxy | TailnetProxy | SecretProxy> | boolean;
     /**
      * Browser Type
      *
@@ -172,8 +172,8 @@ Maximum session lifetime in minutes (absolute maximum, not affected by activity)
 Idle timeout in minutes. Session closes after this period of inactivity (resets on each operation).
 </ParamField>
 
-<ParamField body="proxies" type={"boolean | (NotteProxy | ExternalProxy | TailnetProxy)[] | undefined"}>
-List of custom proxies to use for the session. If True, the default proxies will be used.
+<ParamField body="proxies" type={"boolean | (NotteProxy | ExternalProxy | TailnetProxy | SecretProxy)[] | undefined"}>
+List of custom proxies to use for the session. If True, the default proxies will be used. At most one `secret` entry routes its hosts through the caller's secret proxy; the other entry, if any, is the session's exit.
 </ParamField>
 
 <ParamField body="browser_type" type={"\"chromium\" | \"chrome\" | \"chrome-nightly\" | \"chrome-turbo\" | undefined"}>
@@ -264,5 +264,6 @@ Whether to enable the Notte recorder extension for this session. The extension i
 
 - [ExternalProxy](/typescript-sdk-reference/types/externalproxy)
 - [NotteProxy](/typescript-sdk-reference/types/notteproxy)
+- [SecretProxy](/typescript-sdk-reference/types/secretproxy)
 - [SessionProfile](/typescript-sdk-reference/types/sessionprofile)
 - [TailnetProxy](/typescript-sdk-reference/types/tailnetproxy)

@@ -678,7 +678,6 @@ class TailnetProxy(SdkRequest):
 
 
 _SECRET_PROXY_HOST_LABEL = re.compile(r"^[^\s/:*?#@\[\]\\.]+$")
-_PEM_PRIVATE_KEY = re.compile(r"-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----")
 
 
 class SecretProxy(SdkRequest):
@@ -689,6 +688,9 @@ class SecretProxy(SdkRequest):
     destination. The proxy must forward that traffic to an exit itself. All other traffic uses
     the session's other proxy entry (or a direct connection when there is none).
 
+    Leave `server` unset to use the workspace's saved secret proxy: the fields you set then
+    replace the saved ones for this session.
+
     At most one `secret` entry is allowed per session, and it cannot be combined with a
     `tailnet` entry.
     """
@@ -698,74 +700,87 @@ class SecretProxy(SdkRequest):
 
     type: Literal["secret"] = "secret"
     server: Annotated[
-        str,
-        Field(description="Proxy URL with an `http://` or `https://` scheme, host and port."),
-    ]
-    username: Annotated[str | None, Field(description="Optional Basic auth username for the proxy.")] = None
+        str | None,
+        Field(
+            description=(
+                "The secret proxy, as http://host:port or https://host:port on a public address. "
+                "Leave it unset to use the workspace's saved secret proxy."
+            )
+        ),
+    ] = None
+    username: Annotated[str | None, Field(description="Basic auth username for the secret proxy.")] = None
     password: Annotated[
         str | None,
-        Field(description="Optional Basic auth password for the proxy. Never returned by the API.", repr=False),
+        Field(description="Basic auth password for the secret proxy. Never stored or returned.", repr=False),
     ] = None
     ca_certificate: Annotated[
         str | None,
         Field(
             description=(
-                "Optional PEM certificate(s) of the CA that signs the proxy's certificates. Trusted for the "
-                "connection to the proxy and for the certificates it presents for `hosts`. Never include a "
-                "private key."
+                "PEM CA certificates the browser trusts for this session: for the secret proxy itself and for "
+                "the certificates it presents for `hosts`. At most 16384 bytes; each must be a CA and not "
+                "expired. Never include a private key."
             )
         ),
     ] = None
     hosts: Annotated[
-        list[str],
+        list[str] | None,
         Field(
             description=(
-                "Hosts routed through the proxy: exact hostnames or a leading `*.` wildcard "
-                "(for example `api.example.com` or `*.example.com`). No bare `*`, paths or ports."
+                "Hosts routed through the secret proxy: exact hostnames or a leading '*.' wildcard, without "
+                "scheme, path or port. A bare '*' is not allowed. Required with `server`."
             ),
             min_length=1,
         ),
-    ]
+    ] = None
 
     @field_validator("server")
     @classmethod
-    def validate_server(cls, value: str) -> str:
+    def validate_server(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
         scheme, separator, rest = value.partition("://")
         if not separator or scheme.lower() not in ("http", "https") or not rest.strip("/"):
-            raise ValueError("server must be an http:// or https:// URL with a host")
+            raise ValueError("secret proxy server must be http://host:port or https://host:port")
         return value
 
     @field_validator("hosts")
     @classmethod
-    def validate_hosts(cls, value: list[str]) -> list[str]:
-        for host in value:
-            name = host[2:] if host.startswith("*.") else host
-            labels = name.split(".")
-            if not name or not all(_SECRET_PROXY_HOST_LABEL.match(label) for label in labels):
+    def validate_hosts(cls, value: list[str] | None) -> list[str] | None:
+        for host in value or []:
+            stripped = host.strip()
+            name = stripped.removeprefix("*.")
+            if not name or not all(_SECRET_PROXY_HOST_LABEL.match(label) for label in name.split(".")):
                 raise ValueError(
-                    f"Invalid host {host!r}: use an exact hostname or a leading `*.` wildcard, "
-                    + "without a bare `*`, scheme, path or port"
+                    f"secret proxy host {host!r} must be an exact hostname or a leading '*.' wildcard, "
+                    + "without a bare '*', scheme, path or port"
                 )
         return value
 
     @field_validator("ca_certificate")
     @classmethod
     def validate_ca_certificate(cls, value: str | None) -> str | None:
-        if value is not None and _PEM_PRIVATE_KEY.search(value):
+        if value is not None and "PRIVATE KEY" in value:
             raise ValueError(
-                "ca_certificate contains a PRIVATE KEY block. Send only the CA certificate, "
-                + "and rotate that key because it has been exposed."
+                "ca_certificate contains a private key. Send only the CA certificate, "
+                + "and rotate that key: it is no longer secret"
             )
         return value
+
+    @model_validator(mode="after")
+    def validate_hosts_with_server(self) -> "SecretProxy":
+        if self.server is not None and self.hosts is None:
+            raise ValueError("secret proxy hosts are required with server")
+        return self
 
 
 class SecretProxyDict(TypedDict, total=False):
     type: Literal["secret"]
-    server: Required[str]
+    server: str | None
     username: str | None
     password: str | None
     ca_certificate: str | None
-    hosts: Required[list[str]]
+    hosts: list[str] | None
 
 
 class ExternalProxyDict(TypedDict, total=False):
@@ -1504,8 +1519,8 @@ class SecretProxySummary(SdkResponse):
     hosts: Annotated[list[str], Field(description="Hosts routed through the secret proxy.")]
     ca_sha256: Annotated[
         list[str],
-        Field(description="SHA-256 fingerprints of the CA certificates trusted for the secret proxy."),
-    ]
+        Field(description="SHA-256 fingerprints (hex) of the trusted CA certificates."),
+    ] = Field(default_factory=list)
 
 
 class SessionResponse(SdkResponse):

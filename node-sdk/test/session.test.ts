@@ -18,7 +18,7 @@ import {
   sessionStatus,
   sessionStop,
 } from '@/lib/client/sdk.gen';
-import type { Cookie, ReplayResponse, SessionDebugResponse } from '@/index';
+import type { Cookie, ReplayResponse, SecretProxy, SecretProxySummary, SessionDebugResponse } from '@/index';
 import { openBrowser } from '@/utils';
 import { executionResult, mockNotteClient, sessionResponse } from './helpers/session-mocks';
 
@@ -75,6 +75,38 @@ describe('Session Unit Tests', () => {
       expect(session.getResponse()?.cdp_url).toBe('wss://browser.example/cdp');
     },
   );
+
+  it('sends a secret proxy entry and exposes its summary', async () => {
+    const summary: SecretProxySummary = {
+      server: 'https://relay.example.com:443',
+      hosts: ['api.stripe.com', '*.adyen.com'],
+      ca_sha256: ['ab'.repeat(32)],
+    };
+    const secret: SecretProxy = {
+      type: 'secret',
+      server: 'https://relay.example.com:443',
+      username: 'proxy-user',
+      password: 'proxy-password', // pragma: allowlist secret
+      hosts: ['api.stripe.com', '*.adyen.com'],
+    };
+    vi.mocked(sessionStart).mockResolvedValueOnce({ data: sessionResponse({ secret_proxy: summary }) } as never);
+    const session = new Session(mockClient, { proxies: [{ type: 'notte', country: 'gb' }, secret] });
+
+    await session.start();
+
+    expect(sessionStart).toHaveBeenCalledWith(
+      expect.objectContaining({ body: { proxies: [{ type: 'notte', country: 'gb' }, secret] } }),
+    );
+    expectTypeOf(session.getResponse()!.secret_proxy).toEqualTypeOf<SecretProxySummary | null | undefined>();
+    expect(session.getResponse()?.secret_proxy).toEqual(summary);
+    expect(JSON.stringify(session.getResponse())).not.toContain('proxy-password');
+  });
+
+  it('leaves the secret proxy summary unset for other sessions', async () => {
+    const session = new Session(mockClient);
+    await session.start();
+    expect(session.getResponse()?.secret_proxy).toBeUndefined();
+  });
 
   it.each(['scroll_up', 'scroll_down'] as const)('forwards the selector for %s', async type => {
     vi.mocked(pageExecute).mockResolvedValue({ data: executionResult({ success: true }) } as never);

@@ -240,9 +240,9 @@ export type ApiSessionStartRequest = {
     /**
      * Proxies
      *
-     * List of custom proxies to use for the session. If True, the default proxies will be used.
+     * List of custom proxies to use for the session. If True, the default proxies will be used. At most one `secret` entry routes its hosts through the caller's secret proxy; the other entry, if any, is the session's exit.
      */
-    proxies?: Array<NotteProxy | ExternalProxy | TailnetProxy> | boolean;
+    proxies?: Array<NotteProxy | ExternalProxy | TailnetProxy | SecretProxy> | boolean;
     /**
      * Browser Type
      *
@@ -7177,6 +7177,66 @@ export type SecretMetadata = {
 export type SecretNamespace = 'llm_provider' | 'function_env' | 'tailscale'; // pragma: allowlist secret
 
 /**
+ * SecretProxy
+ */
+export type SecretProxy = {
+    /**
+     * Type
+     */
+    type?: 'secret';
+    /**
+     * Server
+     *
+     * The secret proxy, as http://host:port or https://host:port on a public address.
+     */
+    server: string;
+    /**
+     * Username
+     *
+     * Basic auth username for the secret proxy.
+     */
+    username?: string | null;
+    /**
+     * Password
+     *
+     * Basic auth password for the secret proxy. Never stored or returned.
+     */
+    password?: string | null;
+    /**
+     * Ca Certificate
+     *
+     * PEM CA certificates the browser trusts for this session: for the secret proxy itself and for the certificates it presents for `hosts`. At most 16384 bytes; each must be a CA and not expired. Never include a private key.
+     */
+    ca_certificate?: string | null;
+    /**
+     * Hosts
+     *
+     * Hosts routed through the secret proxy: exact hostnames or a leading '*.' wildcard, without scheme, path or port. A bare '*' is not allowed.
+     */
+    hosts: Array<string>;
+};
+
+/**
+ * SecretProxySummary
+ */
+export type SecretProxySummary = {
+    /**
+     * Server
+     */
+    server: string;
+    /**
+     * Hosts
+     */
+    hosts: Array<string>;
+    /**
+     * Ca Sha256
+     *
+     * SHA-256 fingerprints (hex) of the trusted CA certificates.
+     */
+    ca_sha256?: Array<string>;
+};
+
+/**
  * SecretStoreRequest
  */
 export type SecretStoreRequest = {
@@ -7663,6 +7723,10 @@ export type SessionResponse = {
      * Whether this session is an internal system run. Internal system runs are omitted from session.list() unless include_system=True is requested.
      */
     system_hidden?: boolean;
+    /**
+     * The session's secret proxy: its server, hosts and CA fingerprints, never its credentials.
+     */
+    secret_proxy?: SecretProxySummary | null;
     /**
      * Timeout Minutes
      *
@@ -10471,6 +10535,10 @@ export type SessionResponseWritable = {
      * Whether this session is an internal system run. Internal system runs are omitted from session.list() unless include_system=True is requested.
      */
     system_hidden?: boolean;
+    /**
+     * The session's secret proxy: its server, hosts and CA fingerprints, never its credentials.
+     */
+    secret_proxy?: SecretProxySummary | null;
     [key: string]: unknown;
 };
 

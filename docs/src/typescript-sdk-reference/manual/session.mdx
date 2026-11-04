@@ -120,8 +120,8 @@ Maximum session lifetime in minutes (absolute maximum, not affected by activity)
 Idle timeout in minutes. Session closes after this period of inactivity (resets on each operation).
 </ParamField>
 
-<ParamField body="proxies" type={"boolean | (NotteProxy | ExternalProxy | TailnetProxy)[] | undefined"}>
-List of custom proxies to use for the session. If True, the default proxies will be used.
+<ParamField body="proxies" type={"boolean | (NotteProxy | ExternalProxy | TailnetProxy | SecretProxy)[] | undefined"}>
+List of custom proxies to use for the session. If True, the default proxies will be used. At most one `secret` entry routes its hosts through the caller's secret proxy; the other entry, if any, is the session's exit.
 </ParamField>
 
 <ParamField body="browser_type" type={"\"chromium\" | \"chrome\" | \"chrome-nightly\" | \"chrome-turbo\" | undefined"}>

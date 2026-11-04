@@ -532,6 +532,8 @@ MODEL_OVERRIDES = {
             "SessionProfile": "SessionProfile",
             "NotteProxy": "NotteProxy",
             "ExternalProxy": "ExternalProxy",
+            "SecretProxy": "SecretProxy",  # pragma: allowlist secret
+            "SecretProxySummary": "SecretProxySummary",  # pragma: allowlist secret
             "GetCookiesResponse": "GetCookiesResponse",
         }.items()
     },
@@ -570,6 +572,7 @@ KEYWORD_NAMES = {
     "NotteProxy": "NotteProxyDict",
     "ExternalProxy": "ExternalProxyDict",
     "TailnetProxy": "TailnetProxyDict",
+    "SecretProxy": "SecretProxyDict",  # pragma: allowlist secret
     "BodyFunctionCreateFunctionsPost": "CreateFunctionRequestDict",
     "BodyUploadSessionFileSessionsSessionIdFilesPost": "UploadSessionFileRequestDict",
     "FunctionUpdateParametersQuery": "UpdateFunctionRequestDict",
@@ -968,6 +971,8 @@ def render_resources(spec: JsonObject) -> dict[str, str]:
                 "TabSessionDebugResponse",
                 "SessionProfile",
                 "TailnetProxy",
+                "SecretProxy",
+                "SecretProxySummary",
             )
         },
         "SessionProfileDict": "typing.SessionProfileDict",
@@ -1048,14 +1053,15 @@ def render_resources(spec: JsonObject) -> dict[str, str]:
         "NotteProxy",
         "ExternalProxy",
         "TailnetProxy",
+        "SecretProxy",
         "SessionProfile",
     ):
         model = cast(type[BaseModel], getattr(_generated_models(), nested))
         keywords[KEYWORD_NAMES.get(nested, f"{nested}Dict")] = _keywords(Binding("models", nested, model), classes)
-    nested_names = ["NotteProxyDict", "ExternalProxyDict", "TailnetProxyDict", "SessionProfileDict"]
+    nested_names = ["NotteProxyDict", "ExternalProxyDict", "TailnetProxyDict", "SecretProxyDict", "SessionProfileDict"]
     keywords = {
         **{name: keywords.pop(name) for name in nested_names},
-        "ProxySettingsDict": 'ProxySettingsDict = Annotated[NotteProxyDict | ExternalProxyDict | TailnetProxyDict, Field(discriminator="type")]\n',
+        "ProxySettingsDict": 'ProxySettingsDict = Annotated[NotteProxyDict | ExternalProxyDict | TailnetProxyDict | SecretProxyDict, Field(discriminator="type")]\n',
         **keywords,
     }
     for empty in EMPTY_REQUESTS.values():

@@ -25,6 +25,8 @@ from notte_core.types import NotteProxy as NotteProxy
 from notte_core.types import PersonaListRequest as PersonaListRequest
 from notte_core.types import ProxySettings as ProxySettings
 from notte_core.types import ReplayResponse as ReplayResponse
+from notte_core.types import SecretProxy as SecretProxy
+from notte_core.types import SecretProxySummary as SecretProxySummary
 from notte_core.types import SessionAuthResponse as SessionAuthResponse
 from notte_core.types import SessionDebugResponse as SessionDebugResponse
 from notte_core.types import SessionListRequest as SessionListRequest
@@ -296,6 +298,7 @@ from notte_sdk._generated.typing import ProxySettingsDict as ProxySettingsDict
 from notte_sdk._generated.typing import (
     RunPayloadUploadRequestDict as RunPayloadUploadRequestDict,
 )
+from notte_sdk._generated.typing import SecretProxyDict as SecretProxyDict
 from notte_sdk._generated.typing import SessionListRequestDict as SessionListRequestDict
 from notte_sdk._generated.typing import (
     SessionMouseReplayParametersQueryDict as SessionMouseReplayParametersQueryDict,
@@ -453,6 +456,9 @@ __all__ = [
     "SMSResponse",
     "ScheduleDeleteResponse",
     "ScheduleResponse",
+    "SecretProxy",
+    "SecretProxyDict",
+    "SecretProxySummary",
     "SessionAuthResponse",
     "SessionDebugResponse",
     "SessionFile",

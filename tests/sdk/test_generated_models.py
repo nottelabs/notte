@@ -89,6 +89,7 @@ def test_unmigrated_and_page_operation_types_still_reexport_core() -> None:
             "ExternalProxyDict",
             "TailnetProxy",
             "TailnetProxyDict",
+            "SecretProxyDict",
             "ProxySettings",
             "ProxySettingsDict",
             "CreateFunctionRequest",

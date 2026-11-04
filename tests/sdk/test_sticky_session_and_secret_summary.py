@@ -93,6 +93,10 @@ class TestSecretProxySummary:
         assert response.secret_proxy.ca_sha256 == SUMMARY["ca_sha256"]
         assert json.loads(response.model_dump_json(exclude_none=True))["secret_proxy"] == SUMMARY
 
+    def test_fingerprints_default_to_empty(self):
+        summary = SecretProxySummary.model_validate({"server": SUMMARY["server"], "hosts": SUMMARY["hosts"]})
+        assert summary.ca_sha256 == []
+
     def test_returned_by_start(self, monkeypatch: pytest.MonkeyPatch):
         _ = fake(monkeypatch, {**SESSION, "secret_proxy": SUMMARY})
         response = NotteClient(api_key="test").sessions.start()  # pragma: allowlist secret
@@ -102,7 +106,7 @@ class TestSecretProxySummary:
     def test_schemas_are_concrete(self, mode: Literal["validation", "serialization"]):
         summary = SecretProxySummary.model_json_schema(mode=mode)
         assert summary["type"] == "object"
-        assert set(summary["required"]) == {"server", "hosts", "ca_sha256"}
+        assert set(summary["required"]) == {"server", "hosts"}
         session = SessionResponse.model_json_schema(mode=mode)
         assert session["type"] == "object"
         assert "secret_proxy" not in session["required"]

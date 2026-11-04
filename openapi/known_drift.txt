@@ -34,6 +34,9 @@ RunFunctionRequest: api-only field callback_url
 RunFunctionRequest: api-only field version
 RunFunctionRequest: variables required api=False sdk=True
 ScrapeRequest: api-only field only_images
-SessionResponse: sdk-only field secret_proxy
+SecretProxy: hosts required api=True sdk=False
+SecretProxy: hosts nullable api=False sdk=True
+SecretProxy: server required api=True sdk=False
+SecretProxy: server nullable api=False sdk=True
 SessionStartRequest: api-only field screenshot_type
 SessionStartRequest: api-only field demonstrate

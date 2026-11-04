@@ -75,9 +75,24 @@ class TestSecretProxyModel:
     def test_valid_hosts(self, hosts: list[str]):
         assert SecretProxy(server="https://relay.example.com:443", hosts=hosts).hosts == hosts
 
-    def test_hosts_required(self):
+    def test_hosts_required_with_server(self):
         message = validation_error([{k: v for k, v in secret_entry().items() if k != "hosts"}])
-        assert "hosts" in message
+        assert "hosts are required with server" in message
+
+    def test_saved_configuration(self):
+        # No server: the workspace's saved secret proxy fills in the entry.
+        assert SecretProxy().server is None
+        assert SecretProxy().hosts is None
+        override = SecretProxy(hosts=["api.stripe.com"], password=PASSWORD)
+        assert (override.server, override.hosts) == (None, ["api.stripe.com"])
+        request = SessionStartRequest.model_validate({"proxies": [{"type": "notte"}, {"type": "secret"}]})
+        assert isinstance(request.proxies, list)
+        assert isinstance(request.proxies[1], SecretProxy)
+
+    def test_hosts_are_checked_without_surrounding_whitespace(self):
+        assert SecretProxy(server="https://relay.example.com:443", hosts=[" api.stripe.com "]).hosts == [
+            " api.stripe.com "
+        ]
 
     def test_hosts_not_empty(self):
         message = validation_error([secret_entry(hosts=[])])
@@ -101,23 +116,23 @@ class TestSecretProxyModel:
     )
     def test_invalid_hosts(self, host: str):
         message = validation_error([secret_entry(hosts=["api.stripe.com", host])])
-        assert "Invalid host" in message
+        assert "must be an exact hostname or a leading '*.' wildcard" in message
 
     @pytest.mark.parametrize("server", ["relay.example.com:443", "socks5://relay.example.com:1080", "https://"])
     def test_invalid_server(self, server: str):
         message = validation_error([secret_entry(server=server)])
-        assert "server must be an http:// or https:// URL" in message
+        assert "server must be http://host:port or https://host:port" in message
 
     def test_private_key_rejected(self):
         message = validation_error([secret_entry(ca_certificate=CA + PRIVATE_KEY)])
-        assert "PRIVATE KEY" in message
+        assert "contains a private key" in message
         assert "rotate" in message
 
     @pytest.mark.parametrize("label", ["RSA PRIVATE KEY", "EC PRIVATE KEY", "ENCRYPTED PRIVATE KEY"])
     def test_typed_private_keys_rejected(self, label: str):
         key = f"-----BEGIN {label}-----\nprivatekeymaterial\n-----END {label}-----\n"
         message = validation_error([secret_entry(ca_certificate=key)])
-        assert "PRIVATE KEY" in message
+        assert "contains a private key" in message
 
     def test_direct_construction_errors_hide_the_password(self):
         with pytest.raises(ValidationError) as error:
@@ -197,7 +212,7 @@ class TestSecretProxyWire:
         schema = SecretProxy.model_json_schema(mode="validation")
         assert schema["type"] == "object"
         assert {"type", "server", "username", "password", "ca_certificate", "hosts"} <= set(schema["properties"])
-        assert set(schema["required"]) >= {"server", "hosts"}
+        assert "required" not in schema
         session_schema = SessionStartRequest.model_json_schema(mode="validation")
         assert "SecretProxy" in session_schema["$defs"]
         proxies = json.dumps(session_schema["properties"]["proxies"])

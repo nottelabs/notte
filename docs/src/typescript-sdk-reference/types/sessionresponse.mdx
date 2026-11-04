@@ -172,6 +172,10 @@ export type SessionResponse = {
      */
     system_hidden?: boolean;
     /**
+     * The session's secret proxy: its server, hosts and CA fingerprints, never its credentials.
+     */
+    secret_proxy?: SecretProxySummary | null;
+    /**
      * Timeout Minutes
      *
      * @deprecated
@@ -291,6 +295,10 @@ Managed Auth connection IDs attached to this session.
 Whether this session is an internal system run. Internal system runs are omitted from session.list() unless include_system=True is requested.
 </ParamField>
 
+<ParamField body="secret_proxy" type={"SecretProxySummary | null | undefined"}>
+The session's secret proxy: its server, hosts and CA fingerprints, never its credentials.
+</ParamField>
+
 <ParamField body="timeout_minutes" type={"number"} required>
 
 
@@ -298,3 +306,7 @@ Whether this session is an internal system run. Internal system runs are omitted
 
 
 </ParamField>
+
+## Related types
+
+- [SecretProxySummary](/typescript-sdk-reference/types/secretproxysummary)
