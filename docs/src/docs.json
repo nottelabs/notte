@@ -331,7 +331,8 @@
             "icon": "plug",
             "pages": [
               "integrations/index",
-              "mcp-server"
+              "mcp-server",
+              "integrations/secret-proxy"
             ]
           },
           {
