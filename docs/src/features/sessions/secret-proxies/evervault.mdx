@@ -17,7 +17,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 - An Evervault app with Browser Tokens, and its app ID and API key.
 - The data to fill, encrypted with Evervault (for example with [Card Collection](https://docs.evervault.com/cards/card-collection)).
-- The hostnames that receive the data: the payment provider or iframe host, not only the merchant's site. They must be HTTPS hosts: Evervault's browser proxy only handles `CONNECT` tunnels, so it rejects plain-HTTP requests even with a valid token.
+- The hostnames that receive the data: the payment provider or iframe host, not only the merchant's site, or for a login, the host the login form posts to. They must be HTTPS hosts: Evervault's browser proxy only handles `CONNECT` tunnels, so it rejects plain-HTTP requests even with a valid token.
 - For the example below: `httpx` in Python, or the built-in `fetch` in Node.
 
 ## Map Evervault's values to the secret entry
@@ -82,6 +82,13 @@ This example fills a card number and CVV on `api.stripe.com`, with Evervault's e
 <EvervaultFlow />
 
 Give the agent the stand-ins from `data[].value`. Evervault swaps them for the real values only on requests to `api.stripe.com`.
+
+## Passwords and other credentials
+
+Browser Tokens are not limited to cards. Evervault's docs list passwords, account credentials, recovery codes, one-time backup codes and API keys among the values they can stand for, with the `credential.password` category for passwords. Create the tokens the same way, and set `permissions[].target` and `hosts` to the host that receives the login request, which is often a separate auth domain. See [What you can swap](/features/sessions/secret-proxies/credentials#what-you-can-swap).
+
+- Evervault's docs do not describe computing a value at request time, so a TOTP code that changes every 30 seconds needs a [custom proxy](/features/sessions/secret-proxies/credentials#2fa-codes) or a [Notte vault](/features/sessions/secret-proxies/credentials#secret-proxy-or-vault).
+- Some sites encrypt values in the page before sending them, so the request carries no token to swap. Evervault notes that some payment provider flows need shims, which it manages. Test each site first. See [Values the page encrypts before sending](/features/sessions/secret-proxies/credentials#values-the-page-encrypts-before-sending).
 
 ## Learn more
 

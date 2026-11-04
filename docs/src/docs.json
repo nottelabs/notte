@@ -257,6 +257,7 @@
                     "group": "Secret Proxies",
                     "pages": [
                       "features/sessions/secret-proxies/overview",
+                      "features/sessions/secret-proxies/credentials",
                       "features/sessions/secret-proxies/evervault",
                       "features/sessions/secret-proxies/vgs",
                       "features/sessions/secret-proxies/custom-proxy"
@@ -287,6 +288,7 @@
             "icon": "key",
             "pages": [
               "concepts/vaults",
+              "features/sessions/secret-proxies/credentials",
               "features/sessions/browser-profiles",
               "concepts/personas",
               "guides/managed-auth"
