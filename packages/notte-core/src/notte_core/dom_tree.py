@@ -461,7 +461,8 @@ class DomNode:
             if (
                 node.role == NodeRole.DIALOG
                 and node.computed_attributes.in_viewport
-                and (modal or (holds_interaction and not control))
+                and not control
+                and (modal or holds_interaction)
             ):
                 # An eligible outer dialog replaces its nested dialogs, retaining document order.
                 dialogs[dialog_start:] = [node]

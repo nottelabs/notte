@@ -84,6 +84,10 @@ def test_interactive_element_with_dialog_role_is_not_a_dialog() -> None:
     link = replace(_dialog("Change shipping country", [inner]), attributes=DomAttributes.safe_init(tag_name="a"))
     root = replace(DomNode.empty_root(), children=[link, add_to_basket])
     assert root.prune_non_dialogs_if_present()[0] is root
+    # nor when it is also marked aria-modal
+    modal_link = replace(link, attributes=DomAttributes.safe_init(tag_name="a", **{"aria-modal": "true"}))
+    root = replace(DomNode.empty_root(), children=[modal_link, add_to_basket])
+    assert root.prune_non_dialogs_if_present()[0] is root
 
 
 @pytest.mark.parametrize(
