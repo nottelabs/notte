@@ -34,7 +34,7 @@ export type GlobalScrapeRequest = {
      *
      * List of custom proxies to use for the session. If True, the default proxies will be used.
      */
-    proxies?: Array<NotteProxy | ExternalProxy | TailnetProxy> | boolean;
+    proxies?: Array<NotteProxy | ExternalProxy | TailnetProxy | SecretProxy> | boolean;
     /**
      * Browser Type
      *
@@ -234,7 +234,7 @@ Maximum session lifetime in minutes (absolute maximum, not affected by activity)
 Idle timeout in minutes. Session closes after this period of inactivity (resets on each operation).
 </ParamField>
 
-<ParamField body="proxies" type={"boolean | (NotteProxy | ExternalProxy | TailnetProxy)[] | undefined"}>
+<ParamField body="proxies" type={"boolean | (NotteProxy | ExternalProxy | TailnetProxy | SecretProxy)[] | undefined"}>
 List of custom proxies to use for the session. If True, the default proxies will be used.
 </ParamField>
 
@@ -374,5 +374,6 @@ Image scraping was removed; true returns 422.
 
 - [ExternalProxy](/typescript-sdk-reference/types/externalproxy)
 - [NotteProxy](/typescript-sdk-reference/types/notteproxy)
+- [SecretProxy](/typescript-sdk-reference/types/secretproxy)
 - [SessionProfile](/typescript-sdk-reference/types/sessionprofile)
 - [TailnetProxy](/typescript-sdk-reference/types/tailnetproxy)

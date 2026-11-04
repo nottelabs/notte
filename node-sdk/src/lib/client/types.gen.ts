@@ -3845,7 +3845,7 @@ export type GlobalScrapeRequest = {
      *
      * List of custom proxies to use for the session. If True, the default proxies will be used.
      */
-    proxies?: Array<NotteProxy | ExternalProxy | TailnetProxy> | boolean;
+    proxies?: Array<NotteProxy | ExternalProxy | TailnetProxy | SecretProxy> | boolean;
     /**
      * Browser Type
      *
@@ -5193,6 +5193,12 @@ export type NotteProxy = {
      * City
      */
     city?: string | null;
+    /**
+     * Sticky Session
+     *
+     * Keep the session's exit on one residential IP, shared with a proxy gateway credential minted with the same `sticky_session`. 1-64 letters, digits or hyphens.
+     */
+    sticky_session?: string | null;
 };
 
 /**
@@ -7187,9 +7193,9 @@ export type SecretProxy = {
     /**
      * Server
      *
-     * The secret proxy, as http://host:port or https://host:port on a public address.
+     * The secret proxy, as http://host:port or https://host:port on a public address. Omit it (or send null) to use the workspace's saved secret proxy (Settings > Integrations in the console): the other fields you send then replace the saved ones for this session, and a field sent as null keeps its saved value.
      */
-    server: string;
+    server?: string | null;
     /**
      * Username
      *
@@ -7211,9 +7217,9 @@ export type SecretProxy = {
     /**
      * Hosts
      *
-     * Hosts routed through the secret proxy: exact hostnames or a leading '*.' wildcard, without scheme, path or port. A bare '*' is not allowed.
+     * Hosts routed through the secret proxy: exact hostnames or a leading '*.' wildcard, without scheme, path or port. A bare '*' is not allowed. Required with `server`.
      */
-    hosts: Array<string>;
+    hosts?: Array<string> | null;
 };
 
 /**
@@ -7222,10 +7228,14 @@ export type SecretProxy = {
 export type SecretProxySummary = {
     /**
      * Server
+     *
+     * URL of the secret proxy.
      */
     server: string;
     /**
      * Hosts
+     *
+     * Hosts routed through the secret proxy.
      */
     hosts: Array<string>;
     /**
@@ -7648,6 +7658,10 @@ export type SessionResponse = {
      */
     proxies?: boolean;
     /**
+     * The session's secret proxy: its server, hosts and CA fingerprints, never its credentials.
+     */
+    secret_proxy?: SecretProxySummary | null;
+    /**
      * Browser Type
      */
     browser_type?: 'chromium' | 'chrome' | 'firefox' | 'chrome-nightly' | 'chrome-turbo';
@@ -7723,10 +7737,6 @@ export type SessionResponse = {
      * Whether this session is an internal system run. Internal system runs are omitted from session.list() unless include_system=True is requested.
      */
     system_hidden?: boolean;
-    /**
-     * The session's secret proxy: its server, hosts and CA fingerprints, never its credentials.
-     */
-    secret_proxy?: SecretProxySummary | null;
     /**
      * Timeout Minutes
      *
@@ -10460,6 +10470,10 @@ export type SessionResponseWritable = {
      */
     proxies?: boolean;
     /**
+     * The session's secret proxy: its server, hosts and CA fingerprints, never its credentials.
+     */
+    secret_proxy?: SecretProxySummary | null;
+    /**
      * Browser Type
      */
     browser_type?: 'chromium' | 'chrome' | 'firefox' | 'chrome-nightly' | 'chrome-turbo';
@@ -10535,10 +10549,6 @@ export type SessionResponseWritable = {
      * Whether this session is an internal system run. Internal system runs are omitted from session.list() unless include_system=True is requested.
      */
     system_hidden?: boolean;
-    /**
-     * The session's secret proxy: its server, hosts and CA fingerprints, never its credentials.
-     */
-    secret_proxy?: SecretProxySummary | null;
     [key: string]: unknown;
 };
 
