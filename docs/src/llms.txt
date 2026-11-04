@@ -31,6 +31,13 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 - [Stealth Mode](https://docs.notte.cc/features/sessions/stealth-mode.md): Configure anti-detection features for your browser sessions
 - [Proxies](https://docs.notte.cc/features/sessions/proxies.md): Route your automation traffic with precision & control
+
+#### Secret Proxies
+
+- [Secret Proxies](https://docs.notte.cc/features/sessions/secret-proxies/overview.md): Fill card numbers and other secrets in a session without Notte seeing the real values
+- [Evervault](https://docs.notte.cc/features/sessions/secret-proxies/evervault.md): Fill Evervault Browser Tokens in a Notte session
+- [VGS](https://docs.notte.cc/features/sessions/secret-proxies/vgs.md): Fill VGS aliases in a Notte session through the VGS outbound proxy
+- [Custom Proxy](https://docs.notte.cc/features/sessions/secret-proxies/custom-proxy.md): Requirements for running your own secret proxy with Notte sessions
 - [CAPTCHA Solving](https://docs.notte.cc/features/sessions/captcha-solving.md): Automatically detect and solve captchas during browser automation
 - [Ad Blocking](https://docs.notte.cc/features/sessions/ad-blocking.md): Built-in ad and tracker blocking for browser sessions
 - [Recordings](https://docs.notte.cc/features/sessions/recordings.md): Record and replay your browser sessions for debugging and analysis
@@ -79,6 +86,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 - [Integrations](https://docs.notte.cc/integrations/index.md): Connect Notte to the tools your team already uses.
 - [Notte Browser MCP](https://docs.notte.cc/mcp-server.md): Connect your AI assistant to cloud browsers with Notte Browser MCP
+- [Notte Secret Proxy](https://docs.notte.cc/integrations/secret-proxy.md): Fill card numbers and other secrets through your tokenization proxy, without Notte seeing the real values
 
 ## Coding Agents
 
@@ -141,6 +149,8 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 - [Agentcard](https://docs.notte.cc/integrations/agentcard.md): Attach Agentcard checkout to a hosted Notte browser.
 - [Stripe Link](https://docs.notte.cc/integrations/stripe-link.md): Fill approved Link test credentials into a Notte browser with the native SDK.
+- [Evervault](https://docs.notte.cc/features/sessions/secret-proxies/evervault.md): Fill Evervault Browser Tokens in a Notte session
+- [VGS](https://docs.notte.cc/features/sessions/secret-proxies/vgs.md): Fill VGS aliases in a Notte session through the VGS outbound proxy
 
 ## File Storage
 
