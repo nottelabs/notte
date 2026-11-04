@@ -1004,11 +1004,11 @@ def build_act_space(
     display_text: Callable[[str], str] = str,
     labels: LabelMode = "html",
     display_cut: Callable[[str], str] | None = None,
-    no_text: Collection[tuple[str, str]] = (),
+    no_text: Collection[str] = (),
     unsubmitted: Collection[str] = (),
 ) -> ActSpace:
     """`display_text` masks the presentation strings; `display_cut` (default `display_text`) the live values the
-    browser cut, where a protected value can start at the cut. `no_text`: the (element id, label) of the fields
+    browser cut, where a protected value can start at the cut. `no_text`: the ids of the fields
     the writer had no value for, not offered to TYPE_TEXT again. `unsubmitted`: the ids of the fields holding text
     act() typed that nothing submitted yet (see `ActHistory`), shown with `submitted: false`."""
     # Determine IDs, roles and supported operations from the original page. Only
@@ -1020,7 +1020,7 @@ def build_act_space(
     has_live_state = len(page.states) > 0
 
     def add(operation: Operation, target: Target, element: dict[str, Any]) -> None:
-        if operation == "TYPE_TEXT" and (target.element_id, target.label) in no_text:
+        if operation == "TYPE_TEXT" and target.element_id in no_text:
             return
         _ = space.targets.setdefault(operation, {}).__setitem__(target.key, target)
         if operation not in element["operations"]:
@@ -1173,6 +1173,13 @@ def build_act_space(
         space.controls["SCROLL_UP"] = Control(
             "SCROLL_UP", "Scroll up one page", ScrollUpAction(selector=page.inner_scroll.get("up"))
         )
+    if any(e.get("expanded") is True and e["role"] in ("textbox", "combobox") for e in space.elements) and any(
+        e["role"] == "option" for e in space.elements
+    ):
+        # a field's suggestion list is open: it can cover the next fields, and clicking the field keeps it open
+        space.controls["CLOSE_SUGGESTIONS"] = Control(
+            "CLOSE_SUGGESTIONS", prompts.CLOSE_SUGGESTIONS, PressKeyAction(key="Escape")
+        )
     space.controls["PRESS_ENTER"] = Control(
         "PRESS_ENTER",
         "Press Enter in the focused field (e.g. submit a typed search that has no visible button)",
@@ -1197,7 +1204,8 @@ def field_context(
     exclude: str = "",
 ) -> dict[str, str]:
     """What the writer is told about a field besides its label (`exclude`, left out when they repeat it): its
-    `placeholder` and the page text right before it (`nearby`: "Select State" next to an unnamed combobox)."""
+    `placeholder`, the page text right before it (`nearby`: "Select State" next to an unnamed combobox) and right
+    after it (`after`: "Please enter a valid phone number")."""
     context: dict[str, str] = {}
     match = _RENDERED_ELEMENT.match(_rendered_lines(page.description).get(element_id, ""))
     placeholder = None if match is None else dict(_RENDERED_ATTRIBUTE.findall(match.group(2))).get("placeholder")
@@ -1216,6 +1224,17 @@ def field_context(
             before.insert(0, _cut(text, MAX_NEARBY_LABEL_LENGTH))
     if before:
         context["nearby"] = " / ".join(before)
+    after: list[str] = []
+    # up to two lines of text right after it, up to the next element: where a form shows the field's error message
+    for key, line in lines[(len(lines) if position is None else position + 1) :]:
+        text = line.strip()
+        if key is not None or len(after) == 2 or (labels == "html" and not text.startswith("_[:]")):
+            break
+        text = text.removeprefix("_[:]").strip()
+        if text and not _same_text(text, exclude):
+            after.append(_cut(text, MAX_NEARBY_LABEL_LENGTH))
+    if after:
+        context["after"] = " / ".join(after)
     return context
 
 
