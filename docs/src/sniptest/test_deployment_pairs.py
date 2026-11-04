@@ -30,10 +30,10 @@ class DeploymentPairsTest(unittest.TestCase):
                     self.assertIsNotNone(config.show)
                     self.assertIn(filename, rendered)
                     self.assertIn(title, rendered)
-                    for hidden in ("paired deployment", "finally", ".delete()", "export {", "results ="):
+                    for hidden in ("paired deployment", "finally", ".delete(", "export {", "results ="):
                         self.assertNotIn(hidden, rendered)
                     self.assertIn("finally", path.read_text())
-                    self.assertIn(".delete()", path.read_text())
+                    self.assertIn(".delete(", path.read_text())
 
     def test_deployments_keep_version_output_in_both_languages(self):
         for name in ("deploy_function", "creating/deploy_sdk"):

@@ -14,5 +14,5 @@ console.log(deletion_protected);
 // Turning it off takes the key of a workspace admin or owner
 const released = await fn.updateMetadata({ deletion_protected: false });
 
-const results = [deletion_protected === true, released.deletion_protected === false];
+const results = [deletion_protected === true && released.deletion_protected === false];
 export { results };

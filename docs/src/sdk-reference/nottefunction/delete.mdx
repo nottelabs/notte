@@ -6,19 +6,19 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
+This cannot be undone, so it must be confirmed.
+
 ```python
 function = notte.Function("<your-function-id>")
 function.delete(confirm=True)
 ```
 
-Deleting is permanent, so a call without `confirm=True` raises a `ValueError`. A function with
-deletion protection on cannot be deleted until it is turned off.
+A function with deletion protection on cannot be deleted until it is turned off
 
 
 ## Parameters
 
 <ParamField path="confirm" type="bool" default="False">
-Must be `True` for the function to be deleted.
 </ParamField>
 
 ## Returns

@@ -11,7 +11,8 @@ function = client.Function(function_id=function_id)
 
 # Protect the function: deletes are refused until this is turned off
 function.set_deletion_protection(True)
-print(function.response.deletion_protected)
+protected = function.response.deletion_protected
+print(protected)
 
 # Turning it off takes the key of a workspace admin or owner
 function.set_deletion_protection(False)

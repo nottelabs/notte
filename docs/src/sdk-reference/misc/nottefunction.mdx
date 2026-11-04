@@ -26,10 +26,10 @@ Create a run record without starting execution
 ### delete
 
 ```python
-delete() -> None
+delete(confirm: bool = False) -> None
 ```
 
-Delete the function from the notte console
+Delete the function permanently
 
 ---
 
@@ -112,6 +112,16 @@ Run the function on the Notte cloud using the specified variables
 **Returns:**
 
 <Visibility for="humans">[`FunctionRunResponse`](/sdk-reference/misc/functionrunresponse)</Visibility><Visibility for="agents">[`FunctionRunResponse`](/sdk-reference/misc/functionrunresponse.md)</Visibility>
+
+---
+
+### set_deletion_protection
+
+```python
+set_deletion_protection(enabled: bool) -> None
+```
+
+Turn deletion protection on or off
 
 ---
 
