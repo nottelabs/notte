@@ -450,19 +450,15 @@ class DomNode:
             holds_interaction = False
             for child in node.children:
                 holds_interaction = visit(child) or holds_interaction
-            # A dialog counts when it contains a control, or when it is a real modal (a native <dialog> or
-            # aria-modal="true"). A link or button marked `role="dialog"`, such as a header link that opens one, is a
-            # control, never a dialog, whatever it contains.
-            attributes = node.attributes
-            tag = attributes.tag_name.lower() if attributes is not None else ""
-            # the browser sends aria-modal as the string "true"
-            modal = attributes is not None and (tag == "dialog" or str(attributes.aria_modal).lower() == "true")
-            control = tag in ("a", "button")
+            # A dialog counts when it contains a control. A modal with none (a closed drawer, its buttons hidden) does
+            # not: it would hide the page behind nothing. A link or button marked `role="dialog"`, such as a header link
+            # that opens one, is a control, never a dialog, whatever it contains.
+            tag = node.attributes.tag_name.lower() if node.attributes is not None else ""
             if (
                 node.role == NodeRole.DIALOG
                 and node.computed_attributes.in_viewport
-                and not control
-                and (modal or holds_interaction)
+                and tag not in ("a", "button")
+                and holds_interaction
             ):
                 # An eligible outer dialog replaces its nested dialogs, retaining document order.
                 dialogs[dialog_start:] = [node]
@@ -477,7 +473,7 @@ class DomNode:
         return self._index[0]
 
     def prune_non_dialogs_if_present(self) -> Sequence["DomNode"]:
-        """Return topmost visible dialogs that contain interactions or are modal, or the root, from the shared index."""
+        """Return topmost visible dialogs that contain interactions, or the root, from the shared index."""
         return self._index[1]
 
     def interaction_nodes(self) -> Sequence["DomNode"]:

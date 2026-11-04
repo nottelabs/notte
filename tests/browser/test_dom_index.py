@@ -94,15 +94,15 @@ def test_interactive_element_with_dialog_role_is_not_a_dialog() -> None:
     "attributes",
     [
         DomAttributes.safe_init(tag_name="dialog"),
-        DomAttributes.safe_init(tag_name="div", aria_modal=True),
-        DomAttributes.safe_init(tag_name="div", **{"aria-modal": "true"}),
+        DomAttributes.safe_init(tag_name="aside", **{"aria-modal": "true"}),
     ],
-    ids=["native-dialog", "aria-modal", "aria-modal-browser-string"],
+    ids=["native-dialog", "aria-modal"],
 )
-def test_real_modal_that_is_its_only_control_is_a_dialog(attributes: DomAttributes) -> None:
-    modal = replace(_dialog("modal", []), id="M1", type=NodeType.INTERACTION, attributes=attributes)
-    root = replace(DomNode.empty_root(), children=[get_empty_dom_node("B1", "Add to basket"), modal])
-    assert [id(n) for n in root.prune_non_dialogs_if_present()] == [id(modal)]
+def test_a_modal_without_a_control_inside_does_not_hide_the_page(attributes: DomAttributes) -> None:
+    # a closed drawer (`<aside role="dialog" aria-modal="true">`, its buttons hidden): the page stays usable
+    drawer = replace(_dialog("Filters", []), attributes=attributes)
+    root = replace(DomNode.empty_root(), children=[get_empty_dom_node("B1", "Open filters"), drawer])
+    assert root.prune_non_dialogs_if_present()[0] is root
 
 
 @pytest.mark.asyncio
@@ -155,10 +155,3 @@ def test_index_is_not_serialized() -> None:
     assert not snapshot.interaction_nodes()
     assert snapshot.dom_node.prune_non_dialogs_if_present()[0] is snapshot.dom_node
     assert snapshot.model_dump() == before
-
-
-def test_aria_modal_false_is_not_a_modal() -> None:
-    attributes = DomAttributes.safe_init(tag_name="div", **{"aria-modal": "false"})
-    modal = replace(_dialog("modal", []), id="M1", type=NodeType.INTERACTION, attributes=attributes)
-    root = replace(DomNode.empty_root(), children=[get_empty_dom_node("B1", "Add to basket"), modal])
-    assert root.prune_non_dialogs_if_present()[0] is root
