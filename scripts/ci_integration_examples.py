@@ -53,6 +53,8 @@ CREDENTIALS = {
     "WATSONX_MODEL_ID",
     "WATSONX_PROJECT_ID",
     "WATSONX_URL",
+    # Kept after the Yutori example was removed, so a locally exported key is still stripped.
+    "YUTORI_API_KEY",
 }
 DRIVER_IMPORTS = {
     "braintrust": "from braintrust import init_logger; from notte_sdk import NotteClient",

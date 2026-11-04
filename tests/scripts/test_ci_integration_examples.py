@@ -74,6 +74,7 @@ with open(os.environ["COMMAND_LOG"], "a") as log:
                             "WATSONX_MODEL_ID",
                             "WATSONX_PROJECT_ID",
                             "WATSONX_URL",
+                            "YUTORI_API_KEY",
                         )
                         if os.environ.get(k)
                     )
