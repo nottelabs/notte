@@ -1082,41 +1082,6 @@
       }
     ]
   },
-  "sessions/secret_proxies/start_session.mdx": {
-    "group": true,
-    "blocks": [
-      {
-        "source": "sessions/secret_proxies/start_session.sh",
-        "language": "bash",
-        "title": "cURL"
-      },
-      {
-        "source": "sessions/secret_proxies/start_session.http",
-        "language": "http",
-        "title": "HTTP"
-      }
-    ]
-  },
-  "sessions/secret_proxies/session_response.mdx": {
-    "group": true,
-    "blocks": [
-      {
-        "source": "sessions/secret_proxies/session_response.json",
-        "language": "json",
-        "title": "Response"
-      }
-    ]
-  },
-  "sessions/secret_proxies/workspace_session.mdx": {
-    "group": true,
-    "blocks": [
-      {
-        "source": "sessions/secret_proxies/workspace_session.sh",
-        "language": "bash",
-        "title": "cURL"
-      }
-    ]
-  },
   "sessions/secret_proxies/gateway_credentials.mdx": {
     "group": true,
     "blocks": [
@@ -1134,36 +1099,6 @@
         "source": "sessions/secret_proxies/gateway_credentials_response.json",
         "language": "json",
         "title": "Response"
-      }
-    ]
-  },
-  "sessions/secret_proxies/shared_exit_session.mdx": {
-    "group": true,
-    "blocks": [
-      {
-        "source": "sessions/secret_proxies/shared_exit_session.sh",
-        "language": "bash",
-        "title": "cURL"
-      }
-    ]
-  },
-  "sessions/secret_proxies/evervault_flow.mdx": {
-    "group": true,
-    "blocks": [
-      {
-        "source": "sessions/secret_proxies/evervault_flow.sh",
-        "language": "bash",
-        "title": "cURL"
-      }
-    ]
-  },
-  "sessions/secret_proxies/vgs_session.mdx": {
-    "group": true,
-    "blocks": [
-      {
-        "source": "sessions/secret_proxies/vgs_session.sh",
-        "language": "bash",
-        "title": "cURL"
       }
     ]
   },

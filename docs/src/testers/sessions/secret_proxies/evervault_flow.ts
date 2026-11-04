@@ -1,0 +1,66 @@
+// @sniptest filename=evervault_flow.ts
+// @sniptest typecheck_only=true
+import { NotteClient, type NotteProxy, type SecretProxy } from 'notte-sdk';
+
+const STICKY_SESSION = 'checkout-4821';
+
+// 1. Mint a Notte gateway credential pinned to one residential exit
+const gateway = (await (
+  await fetch('https://api.notte.cc/proxies/gateway/credentials', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ country: 'us', sticky_session: STICKY_SESSION }),
+  })
+).json()) as { username: string; password: string };
+
+// 2. Create Browser Tokens; Evervault's egress goes through Notte's gateway
+const evervaultAuth = Buffer.from(`${process.env.EVERVAULT_APP_ID}:${process.env.EVERVAULT_API_KEY}`).toString('base64');
+const tokens = (await (
+  await fetch('https://api.evervault.com/browser-tokens', {
+    method: 'POST',
+    headers: { Authorization: `Basic ${evervaultAuth}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      data: [
+        { category: 'card.number', value: 'ev:encrypted:...', id: 'card-number' },
+        { category: 'card.cvv', value: 'ev:encrypted:...', id: 'card-cvv' },
+      ],
+      permissions: [{ action: 'decrypt', target: 'api.stripe.com' }],
+      ttl: 900,
+      proxySettings: {
+        type: 'custom',
+        scheme: 'https',
+        hostname: 'proxy.notte.cc',
+        port: 443,
+        username: gateway.username,
+        password: gateway.password,
+      },
+    }),
+  })
+).json()) as {
+  data: { id: string; value: string }[];
+  proxyConfiguration: { hostname: string; port: number; username: string; password: string };
+};
+const relay = tokens.proxyConfiguration;
+
+// 3. Start the session: same sticky_session and country, Evervault's relay for the listed host.
+// sticky_session is not in the published NotteProxy type yet.
+const exit: NotteProxy & { sticky_session: string } = {
+  type: 'notte',
+  country: 'us',
+  sticky_session: STICKY_SESSION,
+};
+const secret: SecretProxy = {
+  type: 'secret',
+  server: `https://${relay.hostname}:${relay.port}`,
+  username: relay.username,
+  password: relay.password,
+  ca_certificate: await (await fetch('https://ca.evervault.com')).text(),
+  hosts: ['api.stripe.com'],
+};
+
+const client = new NotteClient();
+await client.Session({ proxies: [exit, secret] }).use(async (session) => {
+  // 4. The stand-in values the agent types
+  const standIns = Object.fromEntries(tokens.data.map((item) => [item.id, item.value]));
+  console.log(session.getId(), standIns);
+});

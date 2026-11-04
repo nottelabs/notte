@@ -3,7 +3,6 @@ title: 'Secret Proxies'
 description: 'Fill card numbers and other secrets in a session without Notte seeing the real values'
 ---
 import StartSession from '/snippets/sessions/secret_proxies/start_session.mdx';
-import SessionResponse from '/snippets/sessions/secret_proxies/session_response.mdx';
 import WorkspaceSession from '/snippets/sessions/secret_proxies/workspace_session.mdx';
 import GatewayCredentials from '/snippets/sessions/secret_proxies/gateway_credentials.mdx';
 import GatewayCredentialsResponse from '/snippets/sessions/secret_proxies/gateway_credentials_response.mdx';
@@ -13,7 +12,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 <AgentMdNotice />
 
 <Note>
-  The Python and TypeScript SDKs do not support `type: "secret"` yet. SDK support is coming soon; until then, start these sessions with the REST API.
+  SDK support for secret proxies is coming soon: `SecretProxy` and `sticky_session` ship in the next release of the Python and Node SDKs after 1.10.3.
 </Note>
 
 ## Overview
@@ -62,9 +61,7 @@ Add a `secret` entry to `proxies`, next to the entry that sets the session's exi
 
 ### Response
 
-The session response shows the secret proxy's server, hosts and the SHA-256 fingerprint of each trusted CA certificate. It never contains the username, password or the certificate itself:
-
-<SessionResponse />
+The session response has a `secret_proxy` summary (`SecretProxySummary`) with the server, the hosts and the SHA-256 fingerprint of each trusted CA certificate. It never contains the username, password or the certificate itself. Read it from `session.response.secret_proxy` in Python or `session.getResponse()?.secret_proxy` in Node, as in the example above.
 
 ## If your secret proxy is unavailable
 
@@ -73,6 +70,8 @@ Requests to the listed hosts never fall back to the session's exit or a direct c
 Requests to every other host are not affected.
 
 ## Save the configuration in the console
+
+{/* TODO(review): saved workspace configuration (console card and a secret entry without server) is not released yet. Publish this section only once it is available, or mark it as coming soon. */}
 
 Instead of sending the configuration with every session, a workspace can save one secret proxy under **[Settings → Integrations](https://console.notte.cc/settings/integrations)** in the Notte console. The card has presets for VGS, Evervault and a custom proxy, and a **Test connection** button that checks that:
 
@@ -93,7 +92,7 @@ An entry that sets `server` never reads the saved configuration, so the saved cr
 
 By default the site sees two IP addresses: the session's exit for most requests, and your secret proxy's egress for the listed hosts. To give both the same IP, send your secret proxy's outgoing traffic through Notte's proxy gateway, pinned to the same residential exit as the session:
 
-1. Mint a gateway credential with a `sticky_session` of your choice: 1 to 64 letters, digits or hyphens.
+1. Mint a gateway credential with a `sticky_session` of your choice: 1 to 64 letters, digits or hyphens. The SDKs have no method for this endpoint, so call it over HTTP.
 
 <GatewayCredentials />
 

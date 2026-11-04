@@ -14,7 +14,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 - An Evervault app with Browser Tokens, and its app ID and API key.
 - The data to fill, encrypted with Evervault (for example with [Card Collection](https://docs.evervault.com/cards/card-collection)).
 - The hostnames that receive the data: the payment provider or iframe host, not only the merchant's site.
-- `curl` and `jq` for the example below.
+- For the example below: `httpx` in Python, or the built-in `fetch` in Node.
 
 ## Map Evervault's values to the secret entry
 
@@ -29,6 +29,8 @@ Each `POST /browser-tokens` call returns the stand-ins (`data[].value`) and a `p
 | `hosts` | The same hostnames as the `target` values of your `permissions`. Both use the same rules: exact hostnames or a leading `*.` wildcard. |
 
 The tokens and the proxy password stop working when the `ttl` you set expires, so set a `ttl` that covers the whole session.
+
+{/* TODO(review): depends on the saved workspace configuration, which is not released yet. */}
 
 If you [save the configuration in the console](/features/sessions/secret-proxies/overview#save-the-configuration-in-the-console) with the Evervault preset, save the server, username, CA certificate and hosts, and send only the `password` with each session.
 
@@ -48,7 +50,7 @@ By default, requests to the listed hosts leave from Evervault's IP addresses. Ev
   Evervault accepts egress credentials of up to 256 characters. The gateway username contains your `sticky_session` twice, so keep `sticky_session` to 32 characters or fewer.
 </Note>
 
-{/* TODO(review): verify end to end on staging that Evervault's custom egress connects to proxy.notte.cc:443 with a minted gateway credential and that the merchant sees the session's exit IP. */}
+{/* TODO(review): verify end to end that Evervault's custom egress connects to proxy.notte.cc:443 with a minted gateway credential and that the merchant sees the session's exit IP. */}
 
 ## Mask real values in responses
 

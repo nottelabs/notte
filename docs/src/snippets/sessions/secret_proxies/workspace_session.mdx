@@ -1,20 +1,42 @@
 {/* Auto-generated mdx file. Do not edit! */}
-{/* @sniptest testers/sessions/secret_proxies/workspace_session.sh */}
+{/* @sniptest testers/sessions/secret_proxies/workspace_session.py */}
 
 <CodeGroup>
 
-```bash cURL
+```python workspace_session.py
+from notte_sdk import NotteClient
+from notte_sdk.types import NotteProxy, ProxySettings, SecretProxy
+
+client = NotteClient()
+
 # Use the workspace's saved secret proxy as it is
-curl -X POST https://api.notte.cc/sessions/start \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"proxies": [{"type": "notte"}, {"type": "secret"}]}'
+saved: list[ProxySettings] = [NotteProxy(), SecretProxy()]
+with client.Session(proxies=saved) as session:
+    print(session.session_id)
 
 # Use the saved secret proxy with a different password for this session
-curl -X POST https://api.notte.cc/sessions/start \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"proxies": [{"type": "notte"}, {"type": "secret", "password": "SESSION_PASSWORD"}]}'
+override: list[ProxySettings] = [NotteProxy(), SecretProxy(password="SESSION_PASSWORD")]
+with client.Session(proxies=override) as session:
+    print(session.session_id)
+```
+
+```typescript workspace_session.ts
+import { NotteClient, type SecretProxy } from 'notte-sdk';
+
+const client = new NotteClient();
+
+// An entry without `server` uses the workspace's saved secret proxy.
+// The published types still require `server` and `hosts`, hence the cast.
+const saved = { type: 'secret' } as SecretProxy;
+await client.Session({ proxies: [{ type: 'notte' }, saved] }).use(async (session) => {
+  console.log(session.getId());
+});
+
+// Use the saved secret proxy with a different password for this session
+const override = { type: 'secret', password: 'SESSION_PASSWORD' } as SecretProxy;
+await client.Session({ proxies: [{ type: 'notte' }, override] }).use(async (session) => {
+  console.log(session.getId());
+});
 ```
 
 </CodeGroup>
