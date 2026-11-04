@@ -414,3 +414,60 @@ async def test_sort_state_uses_the_headers_effective_role(role: str, target: str
         )
 
     assert node.state == (ElementState(sort="descending") if role.startswith("columnheader") else None)
+
+
+FIELD_ERRORS = """<meta charset="utf-8"><form onsubmit="event.preventDefault()">
+<div><label for="street">Street *</label><input id="street" required></div>
+<div class="field"><label for="number">House number *</label><input id="number" required>
+  <span class="form-error">Required field</span></div>
+<div><label for="zip">Postcode</label><input id="zip" aria-invalid="true" aria-errormessage="zip-error">
+  <p id="zip-error">Invalid postcode</p></div>
+<div><label for="phone">Phone</label><input id="phone" aria-invalid="true" aria-describedby="phone-help">
+  <small id="phone-help">Enter a valid phone number</small></div>
+<div><label for="mail">Email</label><input id="mail" aria-describedby="mail-help">
+  <small id="mail-help">We send the receipt here</small></div>
+<div><label for="town">Town</label><input id="town"><p class="text-red-error" style="display: none">Invalid</p></div>
+<div><label for="typed">Typed email</label><input id="typed" type="email"></div>
+<div class="row error"><input id="first" aria-label="First"><input id="last" aria-label="Last">
+  <span class="error-text">Fix the form</span></div>
+<label><input type="checkbox" id="terms" aria-invalid="true"> I accept the terms</label>
+<button>Continue</button></form>"""
+
+
+@pytest.mark.asyncio
+async def test_observe_reads_the_errors_a_page_shows_for_its_fields() -> None:
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(_data_url(FIELD_ERRORS))
+        await page.fill("#typed", "not-an-email")
+        await page.locator("#typed").blur()
+        _ = await session.aobserve()
+        states = _state_by_selector(session)
+
+    def error(field: str) -> tuple[bool | None, str | None]:
+        state = states[field]
+        assert state is not None
+        return state.invalid, state.error
+
+    # an untouched required field is not invalid: only the page or a change by the user makes it so
+    assert error("street") == (None, None)
+    # an error element next to the field, without any ARIA
+    assert error("number") == (None, "Required field")
+    # `aria-errormessage`, and `aria-describedby` of an invalid field
+    assert error("zip") == (True, "Invalid postcode")
+    assert error("phone") == (True, "Enter a valid phone number")
+    # `aria-describedby` of a valid field is a hint, and a hidden error element is no error
+    assert error("mail") == (None, None)
+    assert error("town") == (None, None)
+    # the browser's own validation, once the field was changed (`:user-invalid`)
+    invalid, message = error("typed")
+    assert invalid is True and message is not None and "@" in message
+    # an error in a container that holds other fields is the form's, not one field's
+    assert error("first") == (None, None) and error("last") == (None, None)
+    assert error("terms")[0] is True
+
+
+def test_element_state_masks_its_error_message() -> None:
+    state = ElementState(value="jane@x", error="'jane@x' is not a valid email", invalid=True)
+    masked = state.masked({"jane@x": "{{email}}"})
+    assert masked.error == "'{{email}}' is not a valid email" and masked.invalid is True

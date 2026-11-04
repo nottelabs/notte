@@ -42,6 +42,7 @@ from notte_core.act.space import (
     build_act_space,
     changed_beyond,
     field_context,
+    field_errors,
     find_field,
     interpret,
     label_mode,
@@ -208,6 +209,9 @@ class ActHistoryEntry:
     dialogs: list[dict[str, str]] = field(default_factory=list[dict[str, str]])
     # the field a TYPE_TEXT typed in (`_typed_field`): the writer is told what was typed there before
     field_key: str | None = None
+    # the fields the page marked invalid or showed an error for once the action ran (`field_errors`, unmasked):
+    # why a Continue did not go on
+    field_errors: list[str] = field(default_factory=list[str])
 
 
 # clicking these does not submit what was typed in a field
@@ -243,6 +247,7 @@ class ActHistory:
         if len(self.entries) > 0 and self.entries[-1].pending:
             self.entries[-1].page_changed = page.fingerprint != self.entries[-1].fingerprint
             self.entries[-1].pending = False
+            self.entries[-1].field_errors = field_errors(page)
             source_url = self.entries[-1].source_url
             self.entries[-1].left_page = source_url is not None and source_url != page.url
         for entry in self.entries:
@@ -356,6 +361,7 @@ class ActHistory:
         return [
             {"action": e.action, "kind": e.kind, "text": e.text, "page_changed": e.page_changed}
             | ({} if e.error is None else {"error": e.error})
+            | ({} if not e.field_errors else {"field_errors": list(e.field_errors)})
             | ({} if e.typed is None or e.typed.before is not None else {"submitted": False})
             | ({} if not e.left_page or e.page is None else {"previous_page": e.page.model_dump()})
             | ({} if not e.dialogs else {"dialogs": list(e.dialogs)})
@@ -833,6 +839,12 @@ def _write_context(
         "value": target.value or "",
     }
     field.update(field_context(page, target.element_id, labels, history.privacy.text, exclude=target.label))
+    state = page.states.get(target.element_id)
+    if state is not None and state.invalid:
+        field["invalid"] = True
+    if state is not None and state.error:
+        # the error the page shows for the field: what to write differently
+        field["error"] = history.privacy.text(state.error)
     if typed_before is not None:
         # what act typed in this field before: the field changed it (a length limit, a mask) or the page rejected it
         field["retry"] = prompts.RETRY_TYPED.format(text=history.privacy.text(typed_before))

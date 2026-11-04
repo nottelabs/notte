@@ -527,7 +527,94 @@
 		}
 		const sort = header === null ? null : getAttribute(header, "aria-sort");
 		if (sort === "ascending" || sort === "descending" || sort === "other") state.sort = sort;
+		readFieldError(element, tagName, state);
 		return Object.keys(state).length > 0 ? state : undefined;
+	}
+
+	// Field errors (see `readFieldError`): a longer message is cut.
+	const MAX_ERROR_LENGTH = 150;
+	// the ancestors of a field searched for its error message, up to one that holds another control
+	const MAX_ERROR_DEPTH = 3;
+	// ARIA roles of the controls a form can mark invalid
+	const ERROR_FIELD_ROLES = new Set([
+		"textbox", "searchbox", "combobox", "spinbutton", "listbox", "checkbox", "radio", "switch", "slider",
+	]);
+	const NO_ERROR_INPUT_TYPES = new Set(["submit", "button", "reset", "image", "hidden"]);
+	// what shows a field's error next to it: an alert, or a class or id that names an error
+	const ERROR_SELECTOR =
+		'[role="alert"], [aria-live="assertive"], [class*="error" i], [class*="invalid" i], [id*="error" i]';
+	// the controls of a form: a container holding another one is the form's or a group's, and so are its errors
+	const CONTROL_SELECTOR =
+		'input:not([type="hidden"]), select, textarea, [contenteditable="true"], [role="textbox"], [role="combobox"]';
+
+	function isErrorField(element, tagName) {
+		if (tagName === "input") return !NO_ERROR_INPUT_TYPES.has((propertyOf(element, "type") || "text").toLowerCase());
+		return tagName === "select" || tagName === "textarea" || !!propertyOf(element, "isContentEditable") ||
+			ERROR_FIELD_ROLES.has(getRole(element)) || isListboxValueButton(element);
+	}
+
+	// the text an element shows, on one line ("" when hidden)
+	function shownText(element) {
+		if (!isElementVisible(element)) return "";
+		return String(propertyOf(element, "innerText") ?? textContentOf(element) ?? "").replace(/\s+/g, " ").trim();
+	}
+
+	// the text of the visible elements an idref attribute (`aria-errormessage`, `aria-describedby`) points to
+	function idrefText(element, attribute) {
+		const scope = getRootNode(element);
+		const parts = [];
+		for (const id of (getAttribute(element, attribute) || "").trim().split(/\s+/)) {
+			const target = id && (scope instanceof Document ? DOCUMENT.getElementById.call(scope, id) : scope.getElementById?.(id));
+			if (!target || target === element) continue;
+			const text = shownText(target);
+			if (text) parts.push(text);
+		}
+		return parts.join(" ");
+	}
+
+	// The error shown next to a field: a visible alert or error element in the field's own container (an ancestor,
+	// up to `MAX_ERROR_DEPTH`, that holds no other control), with text.
+	function nearbyErrorText(element) {
+		let container = parentElementOf(element);
+		for (let depth = 0; container !== null && depth < MAX_ERROR_DEPTH; depth++, container = parentElementOf(container)) {
+			const controls = Array.from(querySelectorAllOf(container, CONTROL_SELECTOR));
+			if (controls.some((control) => !contains(element, control) && !contains(control, element))) return "";
+			for (const candidate of querySelectorAllOf(container, ERROR_SELECTOR)) {
+				if (contains(candidate, element) || contains(element, candidate)) continue;
+				if (querySelectorAllOf(candidate, CONTROL_SELECTOR).length > 0) continue;
+				const text = shownText(candidate);
+				if (text) return text;
+			}
+		}
+		return "";
+	}
+
+	/**
+	 * Whether the page marks a form field invalid, and the error message it shows for it, into `state`:
+	 * - `invalid`: `aria-invalid` (other than "false"), or the browser's `:user-invalid` (a constraint the
+	 *   field breaks once the user changed it or tried to submit its form: not an untouched required field);
+	 * - `error`: the text of its `aria-errormessage`, else (when invalid) of its `aria-describedby`, else of a
+	 *   visible alert or error element next to it (`nearbyErrorText`), else (when invalid) the browser's own
+	 *   `validationMessage`.
+	 * A form that refuses to go on says why there: the field the goal still has to fill or fix.
+	 */
+	function readFieldError(element, tagName, state) {
+		if (!isErrorField(element, tagName)) return;
+		const aria = (getAttribute(element, "aria-invalid") || "").trim().toLowerCase();
+		let invalid = aria !== "" && aria !== "false";
+		if (!invalid) {
+			try {
+				invalid = matches(element, ":user-invalid");
+			} catch {
+				// a browser without `:user-invalid`
+			}
+		}
+		let message = idrefText(element, "aria-errormessage");
+		if (!message && invalid) message = idrefText(element, "aria-describedby");
+		if (!message) message = nearbyErrorText(element);
+		if (!message && invalid) message = String(propertyOf(element, "validationMessage") || "").trim();
+		if (invalid) state.invalid = true;
+		if (message) state.error = message.slice(0, MAX_ERROR_LENGTH);
 	}
 
 	// Accessible names of the highlighted elements (see `getAccessibleName`): longer names are cut.

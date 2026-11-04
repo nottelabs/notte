@@ -51,6 +51,8 @@ from notte_core.snapshot import ViewportData
 MAX_ELEMENTS = 250
 MAX_LABEL_LENGTH = 300
 MAX_CONTEXT_LENGTH = 120
+# a field's error message shown to the models (`ElementState.error`)
+MAX_ERROR_LENGTH = 150
 MAX_PAGE_TEXT_LENGTH = 12_000
 # the longest a WAIT lasts: it ends as soon as the page changes (see `notte_core.act.wait`)
 WAIT_MS = 3_000
@@ -977,6 +979,11 @@ def _element(
                 element[key] = value
         if state.options is not None:
             element["value"] = display_text(", ".join(option.label for option in state.selected_options))
+        # the page marks the field invalid, and the error it shows for it: why a form does not go on
+        if state.invalid:
+            element["invalid"] = True
+        if state.error:
+            element["error"] = _cut(display_text(state.error), MAX_ERROR_LENGTH)
     elif has_live_state and role == "textbox":
         element["value"] = ""
     return element
@@ -1055,7 +1062,7 @@ def build_act_space(
         current = element.get("value")
         base: dict[str, Any] = {
             k: element[k]
-            for k in ("role", "type", "format", "checked", "selected", "expanded", "draggable")
+            for k in ("role", "type", "format", "checked", "selected", "expanded", "draggable", "invalid", "error")
             if k in element
         }
 
@@ -1236,6 +1243,28 @@ def field_context(
     if after:
         context["after"] = " / ".join(after)
     return context
+
+
+# the invalid fields listed after an action (`field_errors`)
+MAX_FIELD_ERRORS = 4
+
+
+def field_errors(page: ObservedPage, display_text: Callable[[str], str] = str) -> list[str]:
+    """The fields of `page` the page marks invalid or shows an error for (`ElementState.invalid` / `error`), in page
+    order, as `<name>: <error>` (`<name>: invalid` without a message), the first `MAX_FIELD_ERRORS`: what a form
+    that did not go on still needs."""
+    names = accessible_names(page)
+    errors: list[str] = []
+    for action in page.actions:
+        state = page.states.get(action.id)
+        name = names.get(action.id)
+        if state is None or name is None or not (state.invalid or state.error):
+            continue
+        error = _cut(display_text(state.error), MAX_ERROR_LENGTH) if state.error else "invalid"
+        errors.append(f"{_cut(display_text(name), MAX_NEARBY_LABEL_LENGTH)}: {error}")
+        if len(errors) == MAX_FIELD_ERRORS:
+            break
+    return errors
 
 
 def page_state(

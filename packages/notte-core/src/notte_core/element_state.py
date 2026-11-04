@@ -46,6 +46,10 @@ class ElementState(BaseModel):
       button), when the column is sorted.
     - `draggable`: the element explicitly enables HTML drag and drop. This does not imply that
       clicking it drags it, or that its click action is unavailable.
+    - `invalid` / `error`: the page marks the form field invalid (`aria-invalid`, or the browser's
+      `:user-invalid` once it was changed or its form submitted), and the error message it shows for it
+      (`aria-errormessage`, `aria-describedby` of an invalid field, an alert or error element next to it, or
+      the browser's validation message), cut to 150 characters. Either can come without the other.
     """
 
     model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, populate_by_name=True)
@@ -64,6 +68,8 @@ class ElementState(BaseModel):
     pressed: bool | Literal["mixed"] | None = None
     sort: Literal["ascending", "descending", "other"] | None = None
     draggable: bool | None = None
+    invalid: bool | None = None
+    error: str | None = None
 
     @staticmethod
     def from_payload(payload: dict[str, Any] | None) -> "ElementState | None":
@@ -94,6 +100,8 @@ class ElementState(BaseModel):
             return text
 
         value = mask(self.value)
+        # an error message can repeat what was typed ("'x@y' is not a valid email")
+        error = mask(self.error)
         digest = self.value_digest
         if self.value_truncated:
             # The browser cut the value (and hashed the whole of it) before this runs: a secret can sit past the
@@ -103,7 +111,7 @@ class ElementState(BaseModel):
             digest = None
         elif value != self.value:
             digest = None
-        return self.model_copy(update={"value": value, "value_digest": digest})
+        return self.model_copy(update={"value": value, "value_digest": digest, "error": error})
 
     def digest(self) -> str:
         """A stable string of the state, for fingerprints."""
