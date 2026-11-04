@@ -6,7 +6,7 @@ import pytest
 from notte_browser.action_space import build_action_space
 from notte_browser.resolution import resolve
 from notte_core.actions import ClickAction
-from notte_core.dom_tree import ComputedDomAttributes, DomNode
+from notte_core.dom_tree import ComputedDomAttributes, DomAttributes, DomNode
 from notte_core.errors import InvalidActionError
 from notte_core.node_type import NodeRole, NodeType
 from notte_core.observation import Observation, TimedSpan
@@ -64,9 +64,45 @@ def test_no_eligible_dialog_falls_back_to_root() -> None:
     alert = replace(_dialog("alert", [get_empty_dom_node("B2", "alert button")]), role=NodeRole.ALERTDIALOG)
     root = replace(DomNode.empty_root(), children=[_dialog("empty", []), hidden, alert])
     assert root.prune_non_dialogs_if_present()[0] is root
-    # An interactive dialog can qualify on its own, without interactive children.
-    interactive_dialog = replace(_dialog("self", []), id="M1", type=NodeType.INTERACTION)
-    assert interactive_dialog.prune_non_dialogs_if_present()[0] is interactive_dialog
+
+
+def test_interactive_element_with_dialog_role_is_not_a_dialog() -> None:
+    # Boots' header link `<a role="dialog" title="Change shipping country">Ship to</a>`: the element is the only
+    # control, it opens a dialog. Taken for an open one, it hid the page (and its "Add to basket") from act().
+    ship_to = replace(_dialog("Change shipping country", []), id="M1", type=NodeType.INTERACTION)
+    add_to_basket = get_empty_dom_node("B1", "Add to basket")
+    root = replace(DomNode.empty_root(), children=[ship_to, add_to_basket])
+    assert root.prune_non_dialogs_if_present()[0] is root
+    assert list(root.interaction_nodes_by_id) == ["M1", "B1"]
+    # an interactive dialog that holds controls is still a dialog
+    close = get_empty_dom_node("B2", "Close")
+    modal = replace(_dialog("modal", [close]), id="M2", type=NodeType.INTERACTION)
+    root = replace(DomNode.empty_root(), children=[add_to_basket, modal])
+    assert [id(n) for n in root.prune_non_dialogs_if_present()] == [id(modal)]
+    # a link marked role="dialog" stays a control even when the builder marks something inside it clickable
+    inner = get_empty_dom_node("B3", "Ship to")
+    link = replace(_dialog("Change shipping country", [inner]), attributes=DomAttributes.safe_init(tag_name="a"))
+    root = replace(DomNode.empty_root(), children=[link, add_to_basket])
+    assert root.prune_non_dialogs_if_present()[0] is root
+    # nor when it is also marked aria-modal
+    modal_link = replace(link, attributes=DomAttributes.safe_init(tag_name="a", **{"aria-modal": "true"}))
+    root = replace(DomNode.empty_root(), children=[modal_link, add_to_basket])
+    assert root.prune_non_dialogs_if_present()[0] is root
+
+
+@pytest.mark.parametrize(
+    "attributes",
+    [
+        DomAttributes.safe_init(tag_name="dialog"),
+        DomAttributes.safe_init(tag_name="div", aria_modal=True),
+        DomAttributes.safe_init(tag_name="div", **{"aria-modal": "true"}),
+    ],
+    ids=["native-dialog", "aria-modal", "aria-modal-browser-string"],
+)
+def test_real_modal_that_is_its_only_control_is_a_dialog(attributes: DomAttributes) -> None:
+    modal = replace(_dialog("modal", []), id="M1", type=NodeType.INTERACTION, attributes=attributes)
+    root = replace(DomNode.empty_root(), children=[get_empty_dom_node("B1", "Add to basket"), modal])
+    assert [id(n) for n in root.prune_non_dialogs_if_present()] == [id(modal)]
 
 
 @pytest.mark.asyncio
@@ -119,3 +155,10 @@ def test_index_is_not_serialized() -> None:
     assert not snapshot.interaction_nodes()
     assert snapshot.dom_node.prune_non_dialogs_if_present()[0] is snapshot.dom_node
     assert snapshot.model_dump() == before
+
+
+def test_aria_modal_false_is_not_a_modal() -> None:
+    attributes = DomAttributes.safe_init(tag_name="div", **{"aria-modal": "false"})
+    modal = replace(_dialog("modal", []), id="M1", type=NodeType.INTERACTION, attributes=attributes)
+    root = replace(DomNode.empty_root(), children=[get_empty_dom_node("B1", "Add to basket"), modal])
+    assert root.prune_non_dialogs_if_present()[0] is root
