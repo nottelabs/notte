@@ -70,6 +70,8 @@ class ElementState(BaseModel):
     draggable: bool | None = None
     invalid: bool | None = None
     error: str | None = None
+    # the browser cut a longer error message to `error`
+    error_truncated: bool = Field(default=False, alias="errorTruncated")
 
     @staticmethod
     def from_payload(payload: dict[str, Any] | None) -> "ElementState | None":
@@ -102,6 +104,9 @@ class ElementState(BaseModel):
         value = mask(self.value)
         # an error message can repeat what was typed ("'x@y' is not a valid email")
         error = mask(self.error)
+        if self.error_truncated:
+            # as for a cut value: a secret the message repeats can sit across the cut
+            error = _mask_cut_secret(error, literals, secrets)
         digest = self.value_digest
         if self.value_truncated:
             # The browser cut the value (and hashed the whole of it) before this runs: a secret can sit past the

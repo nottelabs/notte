@@ -543,9 +543,12 @@
 	// what shows a field's error next to it: an alert, or a class or id that names an error
 	const ERROR_SELECTOR =
 		'[role="alert"], [aria-live="assertive"], [class*="error" i], [class*="invalid" i], [id*="error" i]';
-	// the controls of a form: a container holding another one is the form's or a group's, and so are its errors
-	const CONTROL_SELECTOR =
-		'input:not([type="hidden"]), select, textarea, [contenteditable="true"], [role="textbox"], [role="combobox"]';
+	// the controls of a form (the fields `isErrorField` accepts): a container holding another one is the form's or a
+	// group's, and so are its errors
+	const CONTROL_SELECTOR = [
+		'input:not([type="hidden"])', "select", "textarea", '[contenteditable="true"]',
+		...Array.from(ERROR_FIELD_ROLES, (role) => `[role="${role}"]`),
+	].join(", ");
 
 	function isErrorField(element, tagName) {
 		if (tagName === "input") return !NO_ERROR_INPUT_TYPES.has((propertyOf(element, "type") || "text").toLowerCase());
@@ -555,8 +558,18 @@
 
 	// the text an element shows, on one line ("" when hidden)
 	function shownText(element) {
-		if (!isElementVisible(element)) return "";
+		if (!isElementVisible(element) || isVisuallyHidden(element)) return "";
 		return String(propertyOf(element, "innerText") ?? textContentOf(element) ?? "").replace(/\s+/g, " ").trim();
+	}
+
+	// Hidden from sight while laid out: transparent (`opacity: 0`, its own or an ancestor's). Forms keep an error
+	// element like this until they show it.
+	function isVisuallyHidden(element) {
+		for (let node = element; node !== null; node = parentElementOf(node)) {
+			const opacity = getCachedComputedStyle(node)?.opacity;
+			if (opacity !== undefined && opacity !== "" && Number(opacity) === 0) return true;
+		}
+		return false;
 	}
 
 	// the text of the visible elements an idref attribute (`aria-errormessage`, `aria-describedby`) points to
@@ -614,7 +627,11 @@
 		if (!message) message = nearbyErrorText(element);
 		if (!message && invalid) message = String(propertyOf(element, "validationMessage") || "").trim();
 		if (invalid) state.invalid = true;
-		if (message) state.error = message.slice(0, MAX_ERROR_LENGTH);
+		if (message) {
+			state.error = message.slice(0, MAX_ERROR_LENGTH);
+			// the cut can split a secret the message repeats: `ElementState.masked` masks its visible start
+			if (message.length > MAX_ERROR_LENGTH) state.errorTruncated = true;
+		}
 	}
 
 	// Accessible names of the highlighted elements (see `getAccessibleName`): longer names are cut.

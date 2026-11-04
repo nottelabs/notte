@@ -427,6 +427,10 @@ FIELD_ERRORS = """<meta charset="utf-8"><form onsubmit="event.preventDefault()">
 <div><label for="mail">Email</label><input id="mail" aria-describedby="mail-help">
   <small id="mail-help">We send the receipt here</small></div>
 <div><label for="town">Town</label><input id="town"><p class="text-red-error" style="display: none">Invalid</p></div>
+<div><label for="city">City</label><input id="city"><span class="field-error" style="opacity: 0">Enter a city</span></div>
+<div class="choices"><div role="checkbox" id="opt-a" tabindex="0" aria-checked="false">Gift wrap</div>
+  <div role="checkbox" id="opt-b" tabindex="0" aria-checked="false">Gift note</div>
+  <span role="alert">Pick at least one option</span></div>
 <div><label for="typed">Typed email</label><input id="typed" type="email"></div>
 <div class="row error"><input id="first" aria-label="First"><input id="last" aria-label="Last">
   <span class="error-text">Fix the form</span></div>
@@ -459,12 +463,52 @@ async def test_observe_reads_the_errors_a_page_shows_for_its_fields() -> None:
     # `aria-describedby` of a valid field is a hint, and a hidden error element is no error
     assert error("mail") == (None, None)
     assert error("town") == (None, None)
+    # nor is an error element kept transparent until the form shows it
+    assert error("city") == (None, None)
     # the browser's own validation, once the field was changed (`:user-invalid`)
     invalid, message = error("typed")
     assert invalid is True and message is not None and "@" in message
     # an error in a container that holds other fields is the form's, not one field's
     assert error("first") == (None, None) and error("last") == (None, None)
+    # custom controls count as fields: a group's error is the group's, not each option's
+    assert error("opt-a") == (None, None) and error("opt-b") == (None, None)
     assert error("terms")[0] is True
+
+
+CUT_ERROR_PAGE = f"""<html><body><form><div>
+<input id="email" type="email" name="email" aria-invalid="true" aria-errormessage="email-error"
+  oninput="document.getElementById('email-error').textContent = '{"x" * 140} ' + this.value">
+<p id="email-error">Enter your email</p></div></form></body></html>"""
+
+
+@pytest.mark.asyncio
+async def test_observation_masks_a_secret_cut_off_in_an_error_message(session: NotteSession) -> None:
+    from notte_core.actions import FillAction
+    from notte_core.credentials import EMAIL
+
+    from tests.mock.mock_vault import MockVault
+
+    page = session.window.page
+    _ = await page.route(VAULT_URL, lambda route: route.fulfill(body=CUT_ERROR_PAGE, content_type="text/html"))
+    _ = await page.goto(VAULT_URL)
+    session.vault = MockVault({VAULT_URL: {"email": SECRETS["email"]}})  # pyright: ignore[reportArgumentType]
+    _ = await session.aobserve()
+    result = await session.aexecute(FillAction(selector="#email", value=EMAIL), raise_on_failure=True)
+    assert result.success
+
+    obs = await session.aobserve()
+    errors = [state for state in (obs.element_states or {}).values() if state.error_truncated]
+    # the browser cut the message inside the email it repeats: the start of the email that is left is masked too
+    assert len(errors) == 1 and errors[0].error is not None and errors[0].error.startswith("x" * 140)
+    # (the page text shows what the page prints, the email included: masking covers the element states)
+    assert SECRETS["email"][:5] not in obs.model_dump_json(include={"element_states"})
+
+
+def test_element_state_masks_a_secret_cut_off_in_its_error_message() -> None:
+    state = ElementState(error="x" * 140 + " jane@exam", error_truncated=True)
+    assert state.masked({"jane@example.org": "{{email}}"}).error == "x" * 140 + " {{email}}"
+    # a message that was not cut is masked only where a whole secret appears
+    assert ElementState(error="call jane").masked({"jane@example.org": "{{email}}"}).error == "call jane"
 
 
 def test_element_state_masks_its_error_message() -> None:
