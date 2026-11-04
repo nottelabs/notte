@@ -151,6 +151,62 @@ Set a cron schedule for the function
 | `--cron <minutes hours day-of-month month day-of-week year>` | AWS EventBridge schedule expression. Six space-separated fields, minutes first: minutes hours day-of-month month day-of-week year. This is neither five-field Unix crontab nor the seconds-first six-field dialect used by Quartz and cron-parser. Exactly one of day-of-month and day-of-week must be `?`, the other must be a real value. Schedules fire in UTC. Example: `0 12 ? * * *` runs daily at noon UTC. `rate(...)` expressions such as `rate(1 hour)` are accepted too. Required. |
 | `--function-id <string>` | Function ID (uses current function if not specified) |
 
+## `notte functions schedules add`
+
+Add a schedule to the function
+
+| Flag | Description |
+| - | - |
+| `--cron <minutes hours day-of-month month day-of-week year>` | AWS EventBridge schedule expression. Six space-separated fields, minutes first: minutes hours day-of-month month day-of-week year. This is neither five-field Unix crontab nor the seconds-first six-field dialect used by Quartz and cron-parser. Exactly one of day-of-month and day-of-week must be `?`, the other must be a real value. Schedules fire in UTC. Example: `0 12 ? * * *` runs daily at noon UTC. `rate(...)` expressions such as `rate(1 hour)` are accepted too. Required. |
+| `--function-id <string>` | Function ID (uses current function if not specified) |
+| `--var <stringArray>` | Variable as key=value pair (can be used multiple times) |
+| `--vars <string>` | Variables as JSON object string |
+
+```bash
+# Every weekday at 9:00 UTC, for Paris
+notte functions schedules add --cron "0 9 ? * MON-FRI *" --var city=paris
+
+# Every day at 18:00 UTC, with JSON variables
+notte functions schedules add --cron "0 18 ? * * *" --vars '{"city": "tokyo", "limit": 5}'
+```
+
+## `notte functions schedules list`
+
+List the function's schedules
+
+| Flag | Description |
+| - | - |
+| `--function-id <string>` | Function ID (uses current function if not specified) |
+
+## `notte functions schedules remove <schedule-id>`
+
+Remove one schedule from the function
+
+Aliases: `rm`
+
+| Flag | Description |
+| - | - |
+| `--function-id <string>` | Function ID (uses current function if not specified) |
+
+## `notte functions schedules resume`
+
+Resume the function's paused schedules without changing them
+
+| Flag | Description |
+| - | - |
+| `--function-id <string>` | Function ID (uses current function if not specified) |
+
+## `notte functions schedules update <schedule-id>`
+
+Change a schedule's cron expression or variables. What is not given keeps its current value: `--cron` alone keeps the variables, and `--var` or `--vars` alone keeps the cron expression. Given variables replace all of the schedule's variables.
+
+| Flag | Description |
+| - | - |
+| `--cron <minutes hours day-of-month month day-of-week year>` | AWS EventBridge schedule expression. Six space-separated fields, minutes first: minutes hours day-of-month month day-of-week year. This is neither five-field Unix crontab nor the seconds-first six-field dialect used by Quartz and cron-parser. Exactly one of day-of-month and day-of-week must be `?`, the other must be a real value. Schedules fire in UTC. Example: `0 12 ? * * *` runs daily at noon UTC. `rate(...)` expressions such as `rate(1 hour)` are accepted too. |
+| `--function-id <string>` | Function ID (uses current function if not specified) |
+| `--var <stringArray>` | Variable as key=value pair (can be used multiple times) |
+| `--vars <string>` | Variables as JSON object string |
+
 ## `notte functions secrets delete <secret-id>`
 
 Delete a function environment secret
