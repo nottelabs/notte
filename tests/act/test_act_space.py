@@ -557,6 +557,51 @@ async def test_a_scroll_that_failed_is_not_offered_again_on_the_same_page() -> N
 
 
 @pytest.mark.asyncio
+async def test_a_scroll_that_worked_offers_the_failed_direction_again() -> None:
+    import datetime as dt
+
+    from notte_core.act import run_act
+    from notte_core.actions import ScrollDownAction
+    from notte_core.observation import ExecutionResult
+
+    from tests.act.fakes import FakeDecider
+
+    # the fingerprint ignores the scroll position: the page stays "a" while it scrolls
+    viewport = ViewportData(
+        scroll_x=0, scroll_y=500, viewport_width=1280, viewport_height=720, total_width=1280, total_height=2000
+    )
+    pages = [_page(fingerprint="a", viewport=viewport) for _ in range(3)]
+
+    class Driver:
+        has_vault: bool = False
+
+        def secret_replacements(self) -> dict[str, str]:
+            return {}
+
+        async def observe(self, observation: Any) -> ObservedPage:  # pyright: ignore[reportUnusedParameter]
+            return pages.pop(0)
+
+        async def is_fresh(self, page: ObservedPage, element_id: str | None, *, focus: bool = False) -> bool:  # pyright: ignore[reportUnusedParameter]
+            return True
+
+        async def execute(self, action: Any, raise_on_failure: bool, **_: Any) -> ExecutionResult:  # pyright: ignore[reportUnusedParameter]
+            now = dt.datetime.now()
+            down = isinstance(action, ScrollDownAction)
+            return ExecutionResult(
+                action=action, success=not down, message="Scroll failed." if down else "", started_at=now, ended_at=now
+            )
+
+    decider = FakeDecider(choices=[{"operation": "SCROLL_DOWN"}, {"operation": "SCROLL_UP"}, {"operation": "DONE"}])
+    history = ActHistory()
+    _ = await run_act(Driver(), decider, history, "go", raise_on_failure=False)
+    _ = await run_act(Driver(), decider, history, "go", raise_on_failure=False)
+    assert "SCROLL_DOWN" not in decider.questions[1]["operation"].criteria
+    # scrolling up moved the page: down can work again
+    _ = await run_act(Driver(), decider, history, "go", raise_on_failure=False)
+    assert "SCROLL_DOWN" in decider.questions[2]["operation"].criteria
+
+
+@pytest.mark.asyncio
 async def test_choose_masks_protected_options() -> None:
     from notte_core.act import run_choose
 

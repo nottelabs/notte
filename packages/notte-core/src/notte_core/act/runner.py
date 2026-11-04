@@ -240,13 +240,16 @@ class ActHistory:
         return len(self.entries) > 0 and self.entries[-1].pending and self.entries[-1].kind != "WAIT"
 
     def failed_scrolls(self, page: ObservedPage) -> set[str]:
-        """The scroll directions that failed on `page` since it last changed (the newest actions all ran on it): the
-        page cannot scroll that way, and trying again fails again."""
+        """The scroll directions that failed on `page` since it last changed or scrolled (the newest actions all ran
+        on it): the page cannot scroll that way, and trying again fails again. A scroll that worked moved the page,
+        which the fingerprint does not show, so the directions that failed before it may work again."""
         failed: set[str] = set()
         for entry in reversed(self.entries):
             if entry.fingerprint != page.fingerprint:
                 break
-            if entry.kind in ("SCROLL_DOWN", "SCROLL_UP") and entry.error is not None:
+            if entry.kind in ("SCROLL_DOWN", "SCROLL_UP"):
+                if entry.error is None:
+                    break
                 failed.add(entry.kind)
         return failed
 
