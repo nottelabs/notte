@@ -90,6 +90,12 @@ export type FunctionResponse = {
      */
     reference_workflow_id?: string | null;
     /**
+     * Deletion Protected
+     *
+     * Whether the function is protected from deletion. It must be turned off before a delete.
+     */
+    deletion_protected?: boolean;
+    /**
      * Published
      */
     published?: boolean;
@@ -212,6 +218,10 @@ Whether the function is public and can beshared with other users
 
 <ParamField body="reference_workflow_id" type={"string | null | undefined"}>
 The ID of the reference function (i.e whether the function was forked from another function or not)
+</ParamField>
+
+<ParamField body="deletion_protected" type={"boolean | undefined"}>
+Whether the function is protected from deletion. It must be turned off before a delete.
 </ParamField>
 
 <ParamField body="published" type={"boolean | undefined"}>

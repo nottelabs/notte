@@ -1,6 +1,6 @@
 ---
 title: "delete"
-description: "Delete the function from the notte console"
+description: "Delete the function permanently"
 ---
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
@@ -8,9 +8,18 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 ```python
 function = notte.Function("<your-function-id>")
-function.delete()
+function.delete(confirm=True)
 ```
 
+Deleting is permanent, so a call without `confirm=True` raises a `ValueError`. A function with
+deletion protection on cannot be deleted until it is turned off.
+
+
+## Parameters
+
+<ParamField path="confirm" type="bool" default="False">
+Must be `True` for the function to be deleted.
+</ParamField>
 
 ## Returns
 

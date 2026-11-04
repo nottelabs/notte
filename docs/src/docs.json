@@ -578,6 +578,7 @@
                       "sdk-reference/nottefunction/run",
                       "sdk-reference/nottefunction/update",
                       "sdk-reference/nottefunction/delete",
+                      "sdk-reference/nottefunction/set_deletion_protection",
                       "sdk-reference/nottefunction/download",
                       "sdk-reference/nottefunction/fork",
                       "sdk-reference/nottefunction/get_curl"

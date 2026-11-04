@@ -1,0 +1,26 @@
+---
+title: "set_deletion_protection"
+description: "Turn deletion protection on or off"
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+```python
+function = notte.Function("<your-function-id>")
+function.set_deletion_protection(True)
+print(function.response.deletion_protected)
+```
+
+While deletion protection is on, the function cannot be deleted. Any workspace member's key can
+turn it on. Turning it off takes the key of a workspace admin or owner.
+
+
+## Parameters
+
+<ParamField path="enabled" type="bool" required>
+</ParamField>
+
+## Returns
+
+`None`

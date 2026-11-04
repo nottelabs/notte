@@ -75,7 +75,7 @@ remain spec-owned; high-level agent APIs and their tests are no longer included.
 |---|---|------|---------|------------------|----------|----------|
 | ✅  | 5.1 | Create function from local file | `functionCreate` unwrapped. | `client.functions.create(path, name, description, shared)` and `NotteFunction(path=...)` | P1 | |
 | ✅  | 5.2 | `update()` | `functionUpdate` / `functionMetadataUpdate` unwrapped. | `NotteFunction.update(path, version, restricted)` | P1 | |
-| ✅ | 5.3 | `delete()` | `functionDelete` unwrapped. | `NotteFunction.delete()` | P1 | |
+| ✅ | 5.3 | `delete()` | `functionDelete` unwrapped. | `NotteFunction.delete(confirm=True)` | P1 | |
 | ✅  | 5.4 | `list()` | `listFunctions` unwrapped. | `client.functions.list(...)` | P1 | |
 | ❌  | 5.5 | `stopRun()` | `functionRunStop` unwrapped. Runs cannot be cancelled through the wrapper. | `NotteFunction.stop_run(run_id)` | P1 | |
 | ❌  | 5.6 | `fork()` | `functionFork` unwrapped. | `NotteFunction.fork()` | P2 | |

@@ -347,7 +347,7 @@ describe('NotteFunction', () => {
 			const response = { status: 'success' as const, message: 'deleted' };
 			vi.mocked(functionDelete).mockResolvedValue(resolved(response) as never);
 
-			await expect(fn.delete()).resolves.toEqual(response);
+			await expect(fn.delete({ confirm: true })).resolves.toEqual(response);
 			expect(functionDelete).toHaveBeenCalledWith({
 				client: generatedClient,
 				throwOnError: true,
@@ -355,11 +355,17 @@ describe('NotteFunction', () => {
 			});
 		});
 
+		it('refuses to delete without confirmation', async () => {
+			await expect((fn as unknown as { delete(options?: object): Promise<unknown> }).delete()).rejects.toThrow(InvalidRequestError);
+			await expect(fn.delete({ confirm: false })).rejects.toThrow('delete({ confirm: true })');
+			expect(functionDelete).not.toHaveBeenCalled();
+		});
+
 		it('propagates API errors as NotteAPIError', async () => {
 			const error = new NotteAPIError(`/functions/${FUNCTION_ID}`, 404, { message: 'Function not found' });
 			vi.mocked(functionDelete).mockRejectedValue(error);
 
-			await expect(fn.delete()).rejects.toBe(error);
+			await expect(fn.delete({ confirm: true })).rejects.toBe(error);
 		});
 	});
 

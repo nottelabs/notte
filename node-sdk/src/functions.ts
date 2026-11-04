@@ -172,6 +172,11 @@ export interface FunctionUpdateOptions {
 /** Metadata fields accepted by `PATCH /functions/{function_id}`. */
 export type FunctionMetadataUpdateOptions = FunctionMetadataUpdateRequest;
 
+export interface FunctionDeleteOptions {
+	/** Must be `true`: deleting a function is permanent. */
+	confirm: boolean;
+}
+
 export interface FunctionScheduleOptions {
 	/** Cron expression of the schedule. */
 	cron: FunctionScheduleCreateRequest['cron'];
@@ -350,14 +355,22 @@ export class NotteFunction {
 	}
 
 	/**
-	 * Delete the function from the Notte console.
+	 * Delete the function permanently. This cannot be undone, so it must be confirmed.
 	 *
+	 * A function with deletion protection on cannot be deleted until it is turned off
+	 * with `updateMetadata({ deletion_protected: false })`.
+	 *
+	 * @param options - Must set `confirm` to `true`.
 	 * @returns The API's function-deletion confirmation.
+	 * @throws InvalidRequestError if `confirm` is not `true`.
 	 * @throws NotteAPIError if the function cannot be deleted.
 	 * @example
-	 * await fn.delete();
+	 * await fn.delete({ confirm: true });
 	 */
-	async delete(): Promise<DeleteFunctionResponse> {
+	async delete(options: FunctionDeleteOptions): Promise<DeleteFunctionResponse> {
+		if (options?.confirm !== true) {
+			throw new InvalidRequestError('Deleting a function is permanent. Call delete({ confirm: true }) to proceed.');
+		}
 		const functionId = await this.ensureInitialized();
 		const response = await functionDelete({
 			client: this.client.getClient(),

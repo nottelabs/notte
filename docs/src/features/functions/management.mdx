@@ -19,6 +19,7 @@ import ModifyForked from "/snippets/functions/management/modify_forked.mdx";
 import DownloadCode from "/snippets/functions/management/download_code.mdx";
 import BackupFunctions from "/snippets/functions/management/backup_functions.mdx";
 import DeleteFunction from "/snippets/functions/management/delete_function.mdx";
+import DeletionProtection from "/snippets/functions/management/deletion_protection.mdx";
 import MakePublic from "/snippets/functions/management/make_public.mdx";
 import PrivateFunction from "/snippets/functions/management/private_function.mdx";
 import VersionBackup from "/snippets/functions/management/version_backup.mdx";
@@ -186,7 +187,7 @@ Back up all your Functions:
 
 ### Delete Function
 
-Remove a Function permanently:
+Remove a Function permanently. The SDKs ask you to confirm with `confirm=True` in Python or `{ confirm: true }` in Node:
 
 <DeleteFunction />
 
@@ -194,6 +195,14 @@ Remove a Function permanently:
 - Deletion is permanent
 - All versions are deleted
 - Cannot be undone
+
+### Protect a Function from Deletion
+
+Turn on deletion protection for Functions you rely on in production. While it's on, the Function can't be deleted from the console, API, SDK or CLI, and a delete returns `409`. Code updates, rollbacks and runs still work.
+
+<DeletionProtection />
+
+Any workspace member can turn protection on. Only a workspace admin or owner can turn it off, and an API key acts with its owner's role.
 
 ## Sharing Functions
 

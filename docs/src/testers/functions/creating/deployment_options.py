@@ -18,4 +18,4 @@ try:
     assert response.latest_version in response.versions
     results = [response.name, response.description, response.shared, result.result]
 finally:
-    function.delete()
+    function.delete(confirm=True)

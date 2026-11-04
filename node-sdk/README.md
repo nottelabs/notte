@@ -640,7 +640,10 @@ await fn.deleteSchedule();
 const runs = await fn.runs();                   // all runs, including completed ones
 const functions = await notte.functions.list();
 
-await fn.delete();
+await fn.updateMetadata({ deletion_protected: true });  // refuse deletes until turned off
+await fn.updateMetadata({ deletion_protected: false });
+
+await fn.delete({ confirm: true });                     // permanent, so it must be confirmed
 ```
 
 `run()` waits at most 300 s by default; pass `timeoutMs` to change it. A failed

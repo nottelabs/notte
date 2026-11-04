@@ -3059,6 +3059,12 @@ export type FunctionListItemResponse = {
      */
     reference_workflow_id?: string | null;
     /**
+     * Deletion Protected
+     *
+     * Whether the function is protected from deletion. It must be turned off before a delete.
+     */
+    deletion_protected?: boolean;
+    /**
      * Published
      */
     published?: boolean;
@@ -3124,6 +3130,12 @@ export type FunctionMetadataUpdateRequest = {
      * Enable or disable public code sharing and forking for this function. Source code, including embedded credentials, becomes public. Runs, results and stored runtime secrets remain private. This does not enable public execution. Omit or send null to leave sharing unchanged.
      */
     shared?: boolean | null;
+    /**
+     * Deletion Protected
+     *
+     * Turn deletion protection on or off. While it is on, the function cannot be deleted. Any workspace member's key can turn it on; turning it off takes the key of a workspace admin or owner. Omit or send null to leave it unchanged.
+     */
+    deletion_protected?: boolean | null;
     /**
      * Response Format
      *
@@ -3216,6 +3228,12 @@ export type FunctionResponse = {
      * The ID of the reference function (i.e whether the function was forked from another function or not)
      */
     reference_workflow_id?: string | null;
+    /**
+     * Deletion Protected
+     *
+     * Whether the function is protected from deletion. It must be turned off before a delete.
+     */
+    deletion_protected?: boolean;
     /**
      * Published
      */
@@ -3630,6 +3648,12 @@ export type FunctionWithLinkResponse = {
      * The ID of the reference function (i.e whether the function was forked from another function or not)
      */
     reference_workflow_id?: string | null;
+    /**
+     * Deletion Protected
+     *
+     * Whether the function is protected from deletion. It must be turned off before a delete.
+     */
+    deletion_protected?: boolean;
     /**
      * Published
      */
@@ -9673,6 +9697,12 @@ export type FunctionListItemResponseWritable = {
      */
     reference_workflow_id?: string | null;
     /**
+     * Deletion Protected
+     *
+     * Whether the function is protected from deletion. It must be turned off before a delete.
+     */
+    deletion_protected?: boolean;
+    /**
      * Published
      */
     published?: boolean;
@@ -9782,6 +9812,12 @@ export type FunctionResponseWritable = {
      * The ID of the reference function (i.e whether the function was forked from another function or not)
      */
     reference_workflow_id?: string | null;
+    /**
+     * Deletion Protected
+     *
+     * Whether the function is protected from deletion. It must be turned off before a delete.
+     */
+    deletion_protected?: boolean;
     /**
      * Published
      */
@@ -9970,6 +10006,12 @@ export type FunctionWithLinkResponseWritable = {
      * The ID of the reference function (i.e whether the function was forked from another function or not)
      */
     reference_workflow_id?: string | null;
+    /**
+     * Deletion Protected
+     *
+     * Whether the function is protected from deletion. It must be turned off before a delete.
+     */
+    deletion_protected?: boolean;
     /**
      * Published
      */

@@ -341,7 +341,7 @@ try:
     result = function.run(url="https://www.notte.cc", stream=False)
     print(result.result)
 finally:
-    function.delete()
+    function.delete(confirm=True)
 ```
 
 # Scraping

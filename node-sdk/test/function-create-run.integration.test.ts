@@ -31,7 +31,7 @@ describe('Function createRun live API integration', () => {
 
 	afterAll(async () => {
 		try {
-			if (fn) await fn.delete();
+			if (fn) await fn.delete({ confirm: true });
 		} finally {
 			rmSync(dir, { recursive: true, force: true });
 		}

@@ -1,0 +1,34 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/management/deletion_protection.py */}
+
+<CodeGroup>
+
+```python deletion_protection.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+function = client.Function(function_id=function_id)
+
+# Protect the function: deletes are refused until this is turned off
+function.set_deletion_protection(True)
+print(function.response.deletion_protected)
+
+# Turning it off takes the key of a workspace admin or owner
+function.set_deletion_protection(False)
+```
+
+```typescript deletion_protection.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+const fn = client.NotteFunction({ function_id: functionId });
+
+// Protect the function: deletes are refused until this is turned off
+const { deletion_protected } = await fn.updateMetadata({ deletion_protected: true });
+console.log(deletion_protected);
+
+// Turning it off takes the key of a workspace admin or owner
+const released = await fn.updateMetadata({ deletion_protected: false });
+```
+
+</CodeGroup>
