@@ -216,6 +216,16 @@ _SELECT_CONTENTS = script("select_contents.js")
 
 _IS_TEXT_FORM_CONTROL = "(el) => el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement"
 
+# Page-side implementation: js/typed_value.js
+_TYPED_VALUE = script("typed_value.js")
+# The delay between the keys of the typing that follows a fill the field did not keep
+_FILL_FALLBACK_KEY_DELAY_MS = 50
+# How long the value read after a task is waited for. Chrome can hold back the timers of a hidden tab (up to a
+# minute): the value is then read as it is.
+_LATE_VALUE_READ_S = 1.0
+# The most digits a mask may put before the typed number: a fixed country code ("+1 (415) 555-0123" for "4155550123")
+_MASK_PREFIX_DIGITS = 3
+
 # Page-side implementation: js/find_dropdown_option.js
 _FIND_DROPDOWN_OPTION = script("find_dropdown_option.js")
 
@@ -348,6 +358,75 @@ async def _append_text(window: BrowserWindow, locator: Locator, text: str, timeo
     await locator.focus(timeout=timeout)
     await locator.evaluate(_MOVE_CARET_TO_END, timeout=timeout)
     await window.page.keyboard.insert_text(text)
+
+
+def _alphanumerics(text: str) -> str:
+    """The letters and digits of `text`, case-folded: what a mask that formats it keeps."""
+    return "".join(char for char in text.casefold() if char.isalnum())
+
+
+def _field_keeps(text: str, value: str) -> bool:
+    """Whether a text field whose value is `value` holds the typed `text`: as typed, or as a mask formats it
+    ("(415) 555-0123" or "+1 415 555 0123" for "4155550123", "SW1A 1AA" for "sw1a1aa"). A field that drops a typed
+    country code keeps "+1 415 555 0123" as "4155550123"."""
+    if value == text:
+        return True
+    typed, kept = _alphanumerics(text), _alphanumerics(value)
+    if len(typed) == 0 or len(kept) == 0:
+        return False
+    if kept == typed:
+        return True
+    if not (typed.isdigit() and kept.isdigit()):
+        return False
+    if kept.endswith(typed):
+        # a mask with a fixed prefix
+        return len(kept) - len(typed) <= _MASK_PREFIX_DIGITS
+    return text.lstrip().startswith("+") and typed.endswith(kept) and len(typed) - len(kept) <= _MASK_PREFIX_DIGITS
+
+
+async def _typed_value(field: ElementHandle) -> str | None:
+    """The value of a text field once a mask has run (`js/typed_value.js`), None for other elements."""
+    try:
+        return await asyncio.wait_for(field.evaluate(_TYPED_VALUE, True), _LATE_VALUE_READ_S)
+    except asyncio.TimeoutError:
+        return await field.evaluate(_TYPED_VALUE, False)
+
+
+async def _fill(window: BrowserWindow, locator: Locator, text: str, budget: _ActionBudget) -> None:
+    """Replace the element's value with `text`. A text field that does not keep the text, as a masked input that
+    refuses a value set at once (Playwright inserts the whole text in one input event, without key events), is then
+    typed into key by key. It fails when the field does not keep the text either way."""
+    # The element, not its selector: typing can change the page so that the selector no longer finds the field (an
+    # address autocomplete in a checkout frame did), and reading it back would wait for it until the timeout.
+    field = await locator.element_handle(timeout=budget.remaining_ms())
+    try:
+        # `force` (skip actionability checks) is what every default fill used before `clear_before_fill` stopped
+        # being passed as `force`.
+        await field.fill(text, timeout=budget.remaining_ms(), force=True)
+        value = await _typed_value(field)
+        if value is None or _field_keeps(text, value):
+            return
+        logger.info("The field did not keep the filled text: typing it key by key")
+        try:
+            # a forced fill does not wait for a field that is not shown yet: its text went nowhere
+            await field.wait_for_element_state("visible", timeout=budget.remaining_ms())
+        except PlaywrightTimeoutError as e:
+            raise ActionExecutionError("fill", window.page.url, reason="The field is not visible") from e
+        # selected without a select-all shortcut, which a mask that refuses letter keys refuses too
+        await field.select_text(force=True, timeout=budget.remaining_ms())
+        await window.page.keyboard.press("Backspace")
+        await field.type(text, delay=_FILL_FALLBACK_KEY_DELAY_MS, timeout=budget.remaining_ms())
+        value = await _typed_value(field)
+        if value is None or _field_keeps(text, value):
+            return
+        # the text is not quoted: it can be a secret
+        reason = (
+            "The field stayed empty after typing" if value == "" else "The field holds other text than the typed text"
+        )
+        raise ActionExecutionError("fill", window.page.url, reason=reason)
+    finally:
+        with suppress(Error):  # the fill may have navigated away
+            await field.dispose()
 
 
 _SLIDER_VALUE = script("slider_value.js")
@@ -897,9 +976,7 @@ async def _interact(
 
                 await window.short_wait()
             elif action.clear_before_fill:
-                # `fill` replaces the current value. `force` (skip actionability checks) is what every
-                # default fill used before `clear_before_fill` stopped being passed as `force`.
-                await locator.fill(get_str_value(value), timeout=budget.remaining_ms(), force=True)
+                await _fill(window, locator, get_str_value(value), budget)
             else:
                 await _append_text(window, locator, get_str_value(value), budget.remaining_ms())
         case MultiFactorFillAction(value=value):

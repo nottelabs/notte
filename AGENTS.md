@@ -275,6 +275,13 @@ classification. Intersect only axes that clip, using the scaled inner bounds acr
 hosts, and respect positioned popup escapes; a full-box center can be outside while the
 editor still accepts a fill. `tests/browser/test_dom_contenteditable.py` covers this integration.
 
+A replacing `FillAction` reads text inputs and textareas back: Playwright's `fill` inserts the whole text
+in one input event without key events, and masked inputs can revert it. A value the field did not keep
+(compared by letters and digits, so mask formatting counts as kept) is typed key by key, and a field that
+keeps neither fails the action. Read the field through an element handle taken before the fill, not
+its locator: a checkout's address autocomplete changed the DOM so the field's CSS path found nothing, and a
+locator read waited until the 15 s action timeout. `tests/browser/test_controller_fill_masked.py` covers it.
+
 ## Public API
 
 - Jev route selection does not require the optional LLM field writer. Incomplete
