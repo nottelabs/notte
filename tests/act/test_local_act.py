@@ -1043,6 +1043,25 @@ async def test_an_open_suggestion_list_can_be_closed_with_escape(session: NotteS
 
 
 @pytest.mark.asyncio
+async def test_escape_is_stale_when_the_focus_moved(session: NotteSession) -> None:
+    page = """<label for="street">Street address</label>
+<input id="street" role="combobox" aria-controls="suggestions" aria-expanded="true">
+<ul id="suggestions" role="listbox"><li role="option">777 Florida St Orlando FL 32806</li></ul>
+<label for="city">City</label><input id="city">"""
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    _ = await session.window.page.focus("#street")
+    fields = iter(["#city", "#street"])
+
+    async def move_focus() -> None:
+        await session.window.page.focus(next(fields))
+
+    decider = FakeDecider(choices=[{"operation": "CLOSE_SUGGESTIONS"}] * 2, on_choose=move_focus)
+    result = await session.aact("Deliver to 777 Florida St, San Francisco", decider=decider, raise_on_failure=False)
+    # Escape would go to another field than the decision saw: decided again, then stale
+    assert result.status == "stale" and len(decider.states) == 2
+
+
+@pytest.mark.asyncio
 async def test_an_unlisted_option_is_typed_by_its_label(session: NotteSession) -> None:
     # 60 options: the live state lists the first 50, the others are typed by label; labels are not values
     options = (
@@ -1398,8 +1417,8 @@ async def test_a_field_with_no_value_is_skipped_not_blocked(session: NotteSessio
         "error": "NoValueFromInstruction",
     }
 
-    # the next call does not offer the skipped field again; "" in an empty field is no value either, and a second
-    # field without a value is skipped too (an optional "Address line 2", then a "County")
+    # the next call with the same instruction does not offer the skipped field again; "" in an empty field is no
+    # value either, and a second field without a value is skipped too (an optional "Address line 2", then a "County")
     decider = FakeDecider(
         choices=[
             {"operation": "TYPE_TEXT", "type_text_target": ids["notes"]},
@@ -1407,7 +1426,7 @@ async def test_a_field_with_no_value_is_skipped_not_blocked(session: NotteSessio
         ],
         texts=[""],
     )
-    result = await session.aact("Search flights", decider=decider, raise_on_failure=False)
+    result = await session.aact("Search flights from Paris", decider=decider, raise_on_failure=False)
     assert ids["dep"] not in decider.questions[0]["type_text_target"].criteria
     assert ids["notes"] not in decider.questions[1].get("type_text_target", Question(criteria={})).criteria
     assert result.status == "executed" and result.target == search
@@ -1431,6 +1450,38 @@ async def test_the_writer_reads_the_error_shown_after_a_field_it_typed_in(sessio
     _ = await session.aact("Phone +44 20 7946 0123", decider=decider)
     assert decider.contexts[1].field["retry"] == prompts.RETRY_TYPED.format(text="+44 20 7946 0123")
     assert await session.window.page.input_value("#phone") == "02079460123"
+
+
+@pytest.mark.asyncio
+async def test_the_writer_is_told_what_was_typed_on_a_page_whose_url_is_masked(session: NotteSession) -> None:
+    # the URL holds a variable's value: the model's copy of the page has it masked, not what act remembers
+    page = '<p>Account AlexTester42</p><label for="phone">Phone number</label><input id="phone">'
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    ids = await _ids(session)
+    decider = FakeDecider(
+        choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["phone"]}] * 2,
+        texts=["+44 20 7946 0123", "02079460123"],
+    )
+    for _ in range(2):
+        _ = await session.aact("Phone +44 20 7946 0123 for {{who}}", variables={"who": "AlexTester42"}, decider=decider)
+    assert decider.contexts[1].field["retry"] == prompts.RETRY_TYPED.format(text="+44 20 7946 0123")
+
+
+@pytest.mark.asyncio
+async def test_a_new_instruction_can_fill_a_field_skipped_for_another(session: NotteSession) -> None:
+    page = '<label for="county">County</label><input id="county"><button type="button">Continue</button>'
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    ids = await _ids(session)
+    decider = FakeDecider(
+        choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["county"]}, {"operation": "DONE"}]
+        + [{"operation": "TYPE_TEXT", "type_text_target": ids["county"]}],
+        texts=[None, "Surrey"],
+    )
+    _ = await session.aact("Deliver to 221B Baker Street", decider=decider)
+    # the goal gave no county; another goal that gives one is offered the field
+    _ = await session.aact("Set the county to Surrey", decider=decider)
+    assert ids["county"] in decider.questions[2]["type_text_target"].criteria
+    assert await session.window.page.input_value("#county") == "Surrey"
 
 
 @pytest.mark.asyncio

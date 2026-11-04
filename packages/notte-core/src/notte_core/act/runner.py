@@ -172,11 +172,13 @@ class TypedText:
 class SkippedField:
     """A field the writer had no value for (an optional "Address line 2", a "County" the goal does not give, a field
     already holding what the goal gives): not offered to TYPE_TEXT again while it holds the same value on the same
-    URL, in this act() call and the next ones."""
+    URL, in this act() call and the next ones with the same instruction."""
 
     name: str
     url: str
     element_id: str
+    # the instruction the writer had no value from: another one can give the field a value
+    instruction: str = ""
     selectors: NodeSelectors | None = None
     # the field's value when it was skipped ("" when empty): a field whose value changed since is offered again
     value: str = ""
@@ -268,8 +270,8 @@ class ActHistory:
             if same:
                 entry.typed = None
 
-    def skip(self, page: ObservedPage, target: Target) -> None:
-        """The writer had no value for the field `target` of `page`."""
+    def skip(self, page: ObservedPage, target: Target, instruction: str) -> None:
+        """The writer had no value for the field `target` of `page` from `instruction`."""
         action = next((action for action in page.actions if action.id == target.element_id), None)
         name = accessible_names(page).get(target.element_id, target.label)
         selectors = None if action is None else action.selectors
@@ -278,16 +280,17 @@ class ActHistory:
                 name=name,
                 url=page.url,
                 element_id=target.element_id,
+                instruction=instruction,
                 selectors=selectors,
                 value=_field_value(page, target.element_id),
                 at=self.observations,
             )
         )
 
-    def no_text(self, page: ObservedPage) -> set[str]:
-        """The ids, on `page`, of the skipped fields that still hold the value they held when skipped (a field whose
-        value changed since is offered again)."""
-        return {element_id for _, element_id in self._skipped_on(page)}
+    def no_text(self, page: ObservedPage, instruction: str) -> set[str]:
+        """The ids, on `page`, of the fields skipped for `instruction` that still hold the value they held when skipped
+        (a field whose value changed since is offered again)."""
+        return {element_id for skipped, element_id in self._skipped_on(page) if skipped.instruction == instruction}
 
     def unskip(self, page: ObservedPage, element_id: str) -> None:
         """The decider clicked the field `element_id` of `page`: it takes it for the next step, so a skip of it (the
@@ -315,6 +318,12 @@ class ActHistory:
                 if _field_value(page, action.id) == skipped.value:
                     found.append((skipped, action.id))
         return found
+
+    def typed_before(self, field_key: str) -> str | None:
+        """The text act last typed in the field `field_key` (`_typed_field`), if any."""
+        return next(
+            (e.text for e in reversed(self.entries) if e.field_key == field_key and e.text and e.error is None), None
+        )
 
     def acted_since_observed(self) -> bool:
         """An action other than a WAIT ran since the last observation (the next one tells what it changed)."""
@@ -425,7 +434,7 @@ async def run_act(
             labels=labels,
             display_cut=history.privacy.cut_text,
             # the fields the writer had no value for (in this call or an earlier one), not offered to TYPE_TEXT
-            no_text=history.no_text(page),
+            no_text=history.no_text(page, instruction),
             unsubmitted=history.unsubmitted(),
         )
         model_page = history.privacy.page(page)
@@ -470,7 +479,11 @@ async def run_act(
             text = written.get(key)
             if text is None:
                 step = time.perf_counter()
-                context = _write_context(instruction, target, space, model_page, history, variables, driver, labels)
+                # what act typed in this field before, found by the page's own URL (the model's can be masked)
+                before = history.typed_before(_typed_field(page, target))
+                context = _write_context(
+                    instruction, target, space, model_page, history, variables, driver, labels, typed_before=before
+                )
                 try:
                     text = await _write(decider, context)
                 except ContentFilterError as e:
@@ -487,7 +500,7 @@ async def run_act(
                         # the field is not the next step (a vague label, an optional field the goal gives no value
                         # for): skipped, and decided again without it, the decider told through the history
                         skipped += 1
-                        history.skip(page, target)
+                        history.skip(page, target, instruction)
                         history.entries.append(
                             ActHistoryEntry(
                                 action=target.label,
@@ -522,9 +535,11 @@ async def run_act(
             return run.result(status="proposed", action=action, **common)
 
         step = time.perf_counter()
-        # Enter goes to the focused element: it must still be the one the decision saw
+        # Enter and Escape go to the focused element: it must still be the one the decision saw
         fresh = await driver.is_fresh(
-            page, None if target is None else target.element_id, focus=decision.operation == "PRESS_ENTER"
+            page,
+            None if target is None else target.element_id,
+            focus=decision.operation in ("PRESS_ENTER", "CLOSE_SUGGESTIONS"),
         )
         run.timings.fresh_ms += _ms(step)
         if not fresh:
@@ -785,6 +800,8 @@ def _write_context(
     variables: Mapping[str, str],
     driver: ActDriver,
     labels: LabelMode,
+    *,
+    typed_before: str | None = None,
 ) -> WriteContext:
     """The field (with its id, as in the page text's `[I1]` markers, and its placeholder and the text before it
     when they say more than its label), the page text around it, and the values of the other fields: a short or
@@ -796,13 +813,9 @@ def _write_context(
         "value": target.value or "",
     }
     field.update(field_context(page, target.element_id, labels, history.privacy.text, exclude=target.label))
-    key = _typed_field(page, target)
-    before = next(
-        (e.text for e in reversed(history.entries) if e.field_key == key and e.text and e.error is None), None
-    )
-    if before is not None:
+    if typed_before is not None:
         # what act typed in this field before: the field changed it (a length limit, a mask) or the page rejected it
-        field["retry"] = prompts.RETRY_TYPED.format(text=history.privacy.text(before))
+        field["retry"] = prompts.RETRY_TYPED.format(text=history.privacy.text(typed_before))
     if target.input_type is not None:
         field["type"] = target.input_type
     if target.value_format is not None:
