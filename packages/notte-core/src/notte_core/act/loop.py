@@ -87,8 +87,11 @@ def _repeating(results: list[ActResult]) -> bool:
     same = [r.operation for r in recent if _repeat_key(r) == key]
     if key[1] != "SCROLL":
         first = next(i for i, r in enumerate(recent) if _repeat_key(r) == key)
-        # an action repeated on a page that never changed is the unchanged-page guard's (`_stop`)
-        return len(same) >= REPEAT_LIMIT and any(r.fingerprint != key[0] for r in recent[first:])
+        # an action repeated on a page that never changed is the unchanged-page guard's (`_stop`), unless scrolls or
+        # WAITs came in between, which that guard skips
+        return len(same) >= REPEAT_LIMIT and any(
+            r.fingerprint != key[0] or r.operation in _UNTRACKED_OPERATIONS for r in recent[first:]
+        )
     down, up = same.count("SCROLL_DOWN"), same.count("SCROLL_UP")
     return max(down, up) >= REPEAT_LIMIT and min(down, up) >= REPEAT_LIMIT - 1 and _reversals(same) >= SCROLL_REVERSALS
 

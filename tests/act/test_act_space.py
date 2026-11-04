@@ -430,6 +430,12 @@ def test_act_until_done_goes_on_when_scrolling_back_up_once() -> None:
     assert len(act_until_done(_ScriptedSession(steps), "go", max_steps=count)) == count
 
 
+def test_act_until_done_stops_when_an_action_repeats_between_scrolls_on_one_page() -> None:
+    # a submit that fails on a form whose page never changes, with a scroll after each try
+    steps = [_step("form", "CLICK", "B2") if i % 2 == 0 else _step("form", "SCROLL_DOWN") for i in range(20)]
+    assert len(act_until_done(_ScriptedSession(steps), "go", max_steps=20)) == 5
+
+
 def test_act_until_done_goes_on_when_the_same_action_runs_on_new_pages() -> None:
     # "Load more" then a scroll, on a list that grows each time: the page is never the same
     steps = [
@@ -607,6 +613,52 @@ async def test_a_scroll_that_worked_offers_the_failed_direction_again() -> None:
     # scrolling up moved the page: down can work again
     _ = await run_act(Driver(), decider, history, "go", raise_on_failure=False)
     assert "SCROLL_DOWN" in decider.questions[2]["operation"].criteria
+
+
+@pytest.mark.asyncio
+async def test_another_action_offers_the_failed_direction_again() -> None:
+    import datetime as dt
+
+    from notte_core.act import run_act
+    from notte_core.actions import ScrollUpAction
+    from notte_core.observation import ExecutionResult
+
+    from tests.act.fakes import FakeDecider
+
+    # a click can scroll the page (an element brought into view) without changing its fingerprint
+    viewport = ViewportData(
+        scroll_x=0, scroll_y=500, viewport_width=1280, viewport_height=720, total_width=1280, total_height=2000
+    )
+    pages = [_page(fingerprint="a", viewport=viewport) for _ in range(3)]
+
+    class Driver:
+        has_vault: bool = False
+
+        def secret_replacements(self) -> dict[str, str]:
+            return {}
+
+        async def observe(self, observation: Any) -> ObservedPage:  # pyright: ignore[reportUnusedParameter]
+            return pages.pop(0)
+
+        async def is_fresh(self, page: ObservedPage, element_id: str | None, *, focus: bool = False) -> bool:  # pyright: ignore[reportUnusedParameter]
+            return True
+
+        async def execute(self, action: Any, raise_on_failure: bool, **_: Any) -> ExecutionResult:  # pyright: ignore[reportUnusedParameter]
+            now = dt.datetime.now()
+            up = isinstance(action, ScrollUpAction)
+            return ExecutionResult(
+                action=action, success=not up, message="Scroll failed." if up else "", started_at=now, ended_at=now
+            )
+
+    decider = FakeDecider(
+        choices=[{"operation": "SCROLL_UP"}, {"operation": "CLICK", "click_target": "B1"}, {"operation": "DONE"}]
+    )
+    history = ActHistory()
+    _ = await run_act(Driver(), decider, history, "go", raise_on_failure=False)
+    _ = await run_act(Driver(), decider, history, "go", raise_on_failure=False)
+    assert "SCROLL_UP" not in decider.questions[1]["operation"].criteria
+    _ = await run_act(Driver(), decider, history, "go", raise_on_failure=False)
+    assert "SCROLL_UP" in decider.questions[2]["operation"].criteria
 
 
 @pytest.mark.asyncio
