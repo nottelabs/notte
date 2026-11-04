@@ -33,12 +33,23 @@ class TailnetProxyDict(TypedDict):
     exit_node: NotRequired[str | None]
 
 
+class SecretProxyDict(TypedDict):
+    type: NotRequired[Literal["secret"]]
+    server: Required[str]
+    username: NotRequired[str | None]
+    password: NotRequired[str | None]
+    ca_certificate: NotRequired[str | None]
+    hosts: Required[list[str]]
+
+
 class SessionProfileDict(TypedDict):
     id: Required[str]
     persist: NotRequired[bool]
 
 
-ProxySettingsDict = Annotated[NotteProxyDict | ExternalProxyDict | TailnetProxyDict, Field(discriminator="type")]
+ProxySettingsDict = Annotated[
+    NotteProxyDict | ExternalProxyDict | TailnetProxyDict | SecretProxyDict, Field(discriminator="type")
+]
 
 
 class RunPayloadUploadRequestDict(TypedDict):

@@ -17112,6 +17112,9 @@
                     },
                     {
                       "$ref": "#/components/schemas/TailnetProxy"
+                    },
+                    {
+                      "$ref": "#/components/schemas/SecretProxy"
                     }
                   ],
                   "discriminator": {
@@ -17119,6 +17122,7 @@
                     "mapping": {
                       "external": "#/components/schemas/ExternalProxy",
                       "notte": "#/components/schemas/NotteProxy",
+                      "secret": "#/components/schemas/SecretProxy",
                       "tailnet": "#/components/schemas/TailnetProxy"
                     }
                   }
@@ -17130,7 +17134,7 @@
               }
             ],
             "title": "Proxies",
-            "description": "List of custom proxies to use for the session. If True, the default proxies will be used.",
+            "description": "List of custom proxies to use for the session. If True, the default proxies will be used. At most one `secret` entry routes its hosts through the caller's secret proxy; the other entry, if any, is the session's exit.",
             "default": true
           },
           "browser_type": {
@@ -31733,6 +31737,102 @@
         ],
         "title": "SecretNamespace"
       },
+      "SecretProxy": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "secret",
+            "title": "Type",
+            "default": "secret"
+          },
+          "server": {
+            "type": "string",
+            "title": "Server",
+            "description": "The secret proxy, as http://host:port or https://host:port on a public address."
+          },
+          "username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username",
+            "description": "Basic auth username for the secret proxy."
+          },
+          "password": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Password",
+            "description": "Basic auth password for the secret proxy. Never stored or returned."
+          },
+          "ca_certificate": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ca Certificate",
+            "description": "PEM CA certificates the browser trusts for this session: for the secret proxy itself and for the certificates it presents for `hosts`. At most 16384 bytes; each must be a CA and not expired. Never include a private key."
+          },
+          "hosts": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Hosts",
+            "description": "Hosts routed through the secret proxy: exact hostnames or a leading '*.' wildcard, without scheme, path or port. A bare '*' is not allowed."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "server",
+          "hosts"
+        ],
+        "title": "SecretProxy"
+      },
+      "SecretProxySummary": {
+        "properties": {
+          "server": {
+            "type": "string",
+            "title": "Server"
+          },
+          "hosts": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Hosts"
+          },
+          "ca_sha256": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Ca Sha256",
+            "description": "SHA-256 fingerprints (hex) of the trusted CA certificates."
+          }
+        },
+        "type": "object",
+        "required": [
+          "server",
+          "hosts"
+        ],
+        "title": "SecretProxySummary"
+      },
       "SecretStoreRequest": {
         "properties": {
           "namespace": {
@@ -32523,6 +32623,17 @@
             "title": "System Hidden",
             "description": "Whether this session is an internal system run. Internal system runs are omitted from session.list() unless include_system=True is requested.",
             "default": false
+          },
+          "secret_proxy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SecretProxySummary"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The session's secret proxy: its server, hosts and CA fingerprints, never its credentials."
           },
           "timeout_minutes": {
             "type": "integer",

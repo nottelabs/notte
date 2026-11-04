@@ -552,6 +552,16 @@ class NotteProxy(SdkRequest):
     id: str | None = None
     country: ProxyGeolocationCountry | None = None
     city: str | None = None
+    sticky_session: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Keep the session's exit on one residential IP, shared with a proxy gateway credential "
+                "minted with the same `sticky_session`. 1-64 letters, digits or hyphens."
+            ),
+            pattern=r"^[A-Za-z0-9-]{1,64}$",
+        ),
+    ] = None
     # TODO: enable domainPattern later on
     # domainPattern: str | None = None
 
@@ -568,6 +578,17 @@ class NotteProxy(SdkRequest):
                 if "city" not in values and "city" in geolocation:
                     values["city"] = geolocation["city"]
         return values  # type: ignore[return-value]
+
+    @model_serializer(mode="wrap")
+    def omit_unset_sticky_session(self, handler: SerializerFunctionWrapHandler, info: SerializationInfo) -> Any:
+        data: Any = _RawRequestObject.serialize_raw(self, handler, info)
+        if not isinstance(data, dict):
+            return data
+        fields = cast(dict[str, Any], data)
+        # APIs that predate `sticky_session` reject it, even as null.
+        if "sticky_session" in fields and fields["sticky_session"] is None:
+            fields = {key: value for key, value in fields.items() if key != "sticky_session"}
+        return fields
 
     @field_validator("city")
     @classmethod
@@ -600,14 +621,24 @@ class NotteProxy(SdkRequest):
         return super().from_raw(data)
 
     @staticmethod
-    def from_country(country: str, proxy_id: str | None = None, **kwargs: Any) -> "NotteProxy":
-        proxy = NotteProxy.from_raw(dict(id=NotteProxy._resolve_proxy_id(proxy_id, kwargs), country=country))
+    def from_country(
+        country: str, proxy_id: str | None = None, sticky_session: str | None = None, **kwargs: Any
+    ) -> "NotteProxy":
+        data: dict[str, Any] = dict(id=NotteProxy._resolve_proxy_id(proxy_id, kwargs), country=country)
+        if sticky_session is not None:
+            data["sticky_session"] = sticky_session
+        proxy = NotteProxy.from_raw(data)
         proxy._raw_input = False
         return proxy
 
     @staticmethod
-    def from_city(city: str, proxy_id: str | None = None, **kwargs: Any) -> "NotteProxy":
-        return NotteProxy.model_construct(id=NotteProxy._resolve_proxy_id(proxy_id, kwargs), city=city)
+    def from_city(
+        city: str, proxy_id: str | None = None, sticky_session: str | None = None, **kwargs: Any
+    ) -> "NotteProxy":
+        data: dict[str, Any] = dict(id=NotteProxy._resolve_proxy_id(proxy_id, kwargs), city=city)
+        if sticky_session is not None:
+            data["sticky_session"] = sticky_session
+        return NotteProxy.model_construct(**data)
 
 
 class ExternalProxy(SdkRequest):
@@ -646,6 +677,112 @@ class TailnetProxy(SdkRequest):
     exit_node: str | None = None
 
 
+_SECRET_PROXY_HOST_LABEL = re.compile(r"^[^\s/:*?#@\[\]\\.]+$")
+
+
+class SecretProxy(SdkRequest):
+    """Your own TLS-intercepting proxy that swaps stand-in values for secrets.
+
+    Traffic to `hosts` is routed through this proxy, which decrypts it, replaces the stand-in
+    values typed in the browser with the real secrets, and opens its own connection to the
+    destination. The proxy must forward that traffic to an exit itself. All other traffic uses
+    the session's other proxy entry (or a direct connection when there is none).
+
+    Leave `server` unset to use the workspace's saved secret proxy: the fields you set then
+    replace the saved ones for this session.
+
+    At most one `secret` entry is allowed per session, and it cannot be combined with a
+    `tailnet` entry.
+    """
+
+    # Validation errors must not echo the proxy password or a pasted private key.
+    model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid", hide_input_in_errors=True)
+
+    type: Literal["secret"] = "secret"
+    server: Annotated[
+        str | None,
+        Field(
+            description=(
+                "The secret proxy, as http://host:port or https://host:port on a public address. "
+                "Leave it unset to use the workspace's saved secret proxy."
+            )
+        ),
+    ] = None
+    username: Annotated[str | None, Field(description="Basic auth username for the secret proxy.")] = None
+    password: Annotated[
+        str | None,
+        Field(description="Basic auth password for the secret proxy. Never stored or returned.", repr=False),
+    ] = None
+    ca_certificate: Annotated[
+        str | None,
+        Field(
+            description=(
+                "PEM CA certificates the browser trusts for this session: for the secret proxy itself and for "
+                "the certificates it presents for `hosts`. At most 16384 bytes; each must be a CA and not "
+                "expired. Never include a private key."
+            )
+        ),
+    ] = None
+    hosts: Annotated[
+        list[str] | None,
+        Field(
+            description=(
+                "Hosts routed through the secret proxy: exact hostnames or a leading '*.' wildcard, without "
+                "scheme, path or port. A bare '*' is not allowed. Required with `server`."
+            ),
+            min_length=1,
+        ),
+    ] = None
+
+    @field_validator("server")
+    @classmethod
+    def validate_server(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        scheme, separator, rest = value.partition("://")
+        if not separator or scheme.lower() not in ("http", "https") or not rest.strip("/"):
+            raise ValueError("secret proxy server must be http://host:port or https://host:port")
+        return value
+
+    @field_validator("hosts")
+    @classmethod
+    def validate_hosts(cls, value: list[str] | None) -> list[str] | None:
+        for host in value or []:
+            stripped = host.strip()
+            name = stripped.removeprefix("*.")
+            if not name or not all(_SECRET_PROXY_HOST_LABEL.match(label) for label in name.split(".")):
+                raise ValueError(
+                    f"secret proxy host {host!r} must be an exact hostname or a leading '*.' wildcard, "
+                    + "without a bare '*', scheme, path or port"
+                )
+        return value
+
+    @field_validator("ca_certificate")
+    @classmethod
+    def validate_ca_certificate(cls, value: str | None) -> str | None:
+        if value is not None and "PRIVATE KEY" in value:
+            raise ValueError(
+                "ca_certificate contains a private key. Send only the CA certificate, "
+                + "and rotate that key: it is no longer secret"
+            )
+        return value
+
+    @model_validator(mode="after")
+    def validate_hosts_with_server(self) -> "SecretProxy":
+        if self.server is not None and self.hosts is None:
+            raise ValueError("secret proxy hosts are required with server")
+        return self
+
+
+class SecretProxyDict(TypedDict, total=False):
+    type: Literal["secret"]
+    server: str | None
+    username: str | None
+    password: str | None
+    ca_certificate: str | None
+    hosts: list[str] | None
+
+
 class ExternalProxyDict(TypedDict, total=False):
     type: Literal["external"]
     server: Required[str]
@@ -659,6 +796,7 @@ class NotteProxyDict(TypedDict, total=False):
     id: str | None
     country: ProxyGeolocationCountry | None
     city: str | None
+    sticky_session: str | None
 
 
 class TailnetProxyDict(TypedDict, total=False):
@@ -668,8 +806,10 @@ class TailnetProxyDict(TypedDict, total=False):
     exit_node: str | None
 
 
-ProxySettings = Annotated[NotteProxy | ExternalProxy | TailnetProxy, Field(discriminator="type")]
-ProxySettingsDict = Annotated[NotteProxyDict | ExternalProxyDict | TailnetProxyDict, Field(discriminator="type")]
+ProxySettings = Annotated[NotteProxy | ExternalProxy | TailnetProxy | SecretProxy, Field(discriminator="type")]
+ProxySettingsDict = Annotated[
+    NotteProxyDict | ExternalProxyDict | TailnetProxyDict | SecretProxyDict, Field(discriminator="type")
+]
 
 
 def _read_cookie_file(path: str | Path) -> list[dict[str, Any]]:
@@ -876,6 +1016,10 @@ class LocalSessionStartRequestDict(_SessionStartRequestDict, total=False):
 
 
 class _SessionStartRequest(SdkRequest):
+    # Proxy entries carry credentials (a `secret` proxy's password, an `external` proxy's
+    # password); validation errors must not echo them.
+    model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid", hide_input_in_errors=True)
+
     solve_captchas: Annotated[bool, Field(description="Whether to try to automatically solve captchas")] = True
 
     max_duration_minutes: Annotated[
@@ -1064,6 +1208,17 @@ class _SessionStartRequest(SdkRequest):
             return [NotteProxy(country=ProxyGeolocationCountry(value))]
         return value
 
+    @model_validator(mode="after")
+    def validate_secret_proxy_combination(self) -> "_SessionStartRequest":
+        if not isinstance(self.proxies, list):
+            return self
+        proxy_types = [proxy.type for proxy in self.proxies]
+        if proxy_types.count("secret") > 1:
+            raise ValueError("At most one `secret` proxy is allowed per session")
+        if "secret" in proxy_types and "tailnet" in proxy_types:
+            raise ValueError("A `secret` proxy cannot be combined with a `tailnet` proxy")
+        return self
+
     @property
     def playwright_proxy(self) -> PlaywrightProxySettings | None:
         if self.proxies is True:
@@ -1093,6 +1248,10 @@ class _SessionStartRequest(SdkRequest):
             case "tailnet":
                 raise NotImplementedError(
                     "Tailnet proxy only supported in cloud browser sessions. Please use our API to create a session with a tailnet proxy."
+                )
+            case "secret":
+                raise NotImplementedError(
+                    "Secret proxy only supported in cloud browser sessions. Please use our API to create a session with a secret proxy."
                 )
         raise ValueError(f"Unsupported proxy type: {base_proxy.type}")  # pyright: ignore[reportUnreachable]
 
@@ -1126,7 +1285,12 @@ class SessionStartRequest(_SessionStartRequest):
         if isinstance(proxies, str) and proxies in ProxyGeolocationCountry._value2member_map_:
             data["proxies"] = [NotteProxy.from_country(proxies)]
         elif isinstance(proxies, list):
-            proxy_models = {"notte": NotteProxy, "external": ExternalProxy, "tailnet": TailnetProxy}
+            proxy_models = {
+                "notte": NotteProxy,
+                "external": ExternalProxy,
+                "tailnet": TailnetProxy,
+                "secret": SecretProxy,
+            }
             data["proxies"] = [
                 proxy_models[item["type"]].from_raw(cast(dict[str, Any], item))
                 if isinstance(item, dict)
@@ -1348,6 +1512,17 @@ def _drop_duration_format(schema: dict[str, Any]) -> None:
     _ = schema.pop("format", None)
 
 
+class SecretProxySummary(SdkResponse):
+    """The session's `secret` proxy entry, without its credentials or certificates."""
+
+    server: Annotated[str, Field(description="URL of the secret proxy.")]
+    hosts: Annotated[list[str], Field(description="Hosts routed through the secret proxy.")]
+    ca_sha256: Annotated[
+        list[str],
+        Field(description="SHA-256 fingerprints (hex) of the trusted CA certificates."),
+    ] = Field(default_factory=list)
+
+
 class SessionResponse(SdkResponse):
     record_session: bool = Field(default=True, description="Whether saved session replay is enabled. Defaults to true.")
     log_session: bool = Field(
@@ -1406,6 +1581,10 @@ class SessionResponse(SdkResponse):
             description="Whether proxies were used for the session. True if any proxy was applied during session creation."
         ),
     ] = False
+    secret_proxy: Annotated[
+        SecretProxySummary | None,
+        Field(description="The session's secret proxy, when one was configured. Credentials are never returned."),
+    ] = None
     # remaining args
     browser_type: BrowserType = "chromium"
     network_request_bytes: Annotated[int, Field(description="Total byte usage for network requests.")] = 0
