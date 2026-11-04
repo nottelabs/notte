@@ -1,0 +1,129 @@
+---
+title: 'Secret Proxies'
+description: 'Fill card numbers and other secrets in a session without Notte seeing the real values'
+---
+import StartSession from '/snippets/sessions/secret_proxies/start_session.mdx';
+import WorkspaceSession from '/snippets/sessions/secret_proxies/workspace_session.mdx';
+import GatewayCredentials from '/snippets/sessions/secret_proxies/gateway_credentials.mdx';
+import GatewayCredentialsResponse from '/snippets/sessions/secret_proxies/gateway_credentials_response.mdx';
+import SharedExitSession from '/snippets/sessions/secret_proxies/shared_exit_session.mdx';
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+<Note>
+  SDK support for secret proxies is coming soon: `SecretProxy` and `sticky_session` ship in the next release of the Python and Node SDKs after 1.10.3.
+</Note>
+
+## Overview
+
+A secret proxy lets an agent fill card numbers, passwords and other secrets on a site while Notte only handles stand-in values, provided your proxy also [masks responses](#mask-real-values-in-responses).
+
+Your tokenization provider, such as [Evervault](/features/sessions/secret-proxies/evervault) or [VGS](/features/sessions/secret-proxies/vgs), or [your own proxy](/features/sessions/secret-proxies/custom-proxy), gives you stand-ins for the real values. The agent types the stand-ins. Traffic to the hosts you list goes through your secret proxy, which replaces each stand-in with the real value on its way to the site. Every other host stays on the session's normal proxy.
+
+## How it works
+
+1. Your provider creates stand-in values, for example a Luhn-valid card number that keeps the card's brand.
+2. You start a session with a `secret` entry in `proxies`. For this session, the browser trusts your proxy's CA for the hosts you list, and only for those.
+3. The agent fills the stand-ins. The page, the agent, screenshots, recordings and network logs contain stand-ins.
+4. Requests to the listed hosts go to your secret proxy. For HTTPS sites they go through a tunnel, so Notte only carries encrypted bytes.
+5. Your secret proxy decrypts the request, swaps each stand-in for the real value and sends the request on to the site over its own TLS connection.
+
+## Mask real values in responses
+
+<Warning>
+  Notte does not change responses. If a listed site sends a real value back, for example a page that shows the full card number or an endpoint that echoes the request, that value reaches the browser, and from there the agent, screenshots, recordings and network logs. Configure your secret proxy to replace real values with stand-ins in responses from the listed hosts. Each integration page covers the setting for that provider.
+</Warning>
+
+## Start a session
+
+Add a `secret` entry to `proxies`, next to the entry that sets the session's exit:
+
+<StartSession />
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `server` | Yes, unless the workspace has a [saved configuration](#save-the-configuration-in-the-console) | Your secret proxy, as `http://host:port` or `https://host:port`. It must be a public address: private and loopback IPs, `localhost` and internal names (such as `.local` or `.internal`) are rejected. Put credentials in `username` and `password`, not in the URL. |
+| `username`, `password` | No | Basic auth credentials for your secret proxy. Notte never stores or returns them. |
+| `ca_certificate` | No, but needed when your proxy decrypts HTTPS | One or more PEM certificates, 16 KB at most. Each must be a CA certificate (`basicConstraints CA:TRUE`) that has not expired. Notte uses it to verify your proxy's own TLS certificate, and the browser trusts it for the certificates your proxy presents for `hosts`. |
+| `hosts` | Yes, with `server` | The hosts to send through your secret proxy: exact hostnames, or a leading `*.` wildcard. `*.example.com` matches `pay.example.com` and deeper subdomains, but not `example.com`. A bare `*`, wildcards on a top-level domain (`*.com`), schemes, paths and ports are rejected. |
+
+<Warning>
+  Send only the CA certificate. A `ca_certificate` that contains a `PRIVATE KEY` block is rejected. If that happens, rotate the key: it has left your systems.
+</Warning>
+
+### Rules
+
+- A session can have at most one `secret` entry.
+- The other entry, if any, is the session's exit for every host you do not list: a [built-in or custom proxy](/features/sessions/proxies), or none for a direct connection.
+- A secret proxy cannot be combined with a [Tailscale proxy](/features/sessions/proxies#tailscale-tsnet-proxies).
+- Proxies, including a secret proxy, are not supported on sessions that connect to an external browser with `cdp_url`.
+
+### Response
+
+The session response has a `secret_proxy` summary (`SecretProxySummary`) with the server, the hosts and the SHA-256 fingerprint of each trusted CA certificate. It never contains the username, password or the certificate itself. Read it from `session.response.secret_proxy` in Python or `session.getResponse()?.secret_proxy` in Node, as in the example above.
+
+## If your secret proxy is unavailable
+
+Requests to the listed hosts never fall back to the session's exit or a direct connection, because a stand-in sent to the site would fail without a clear error. If your secret proxy is unreachable or refuses the connection, for example because the credentials are wrong, the request fails with `502 Bad Gateway`. For HTTPS sites the browser shows this as `ERR_TUNNEL_CONNECTION_FAILED`.
+
+Requests to every other host are not affected.
+
+## Save the configuration in the console
+
+{/* TODO(review): saved workspace configuration (console card and a secret entry without server) is not released yet. Publish this section only once it is available, or mark it as coming soon. */}
+
+Instead of sending the configuration with every session, a workspace can save one secret proxy under **[Settings → Integrations](https://console.notte.cc/settings/integrations)** in the Notte console. The card has presets for VGS, Evervault and a custom proxy, and a **Test connection** button that checks that:
+
+1. the server resolves to a public address,
+2. Notte can connect to it,
+3. it accepts the credentials, and
+4. with a CA certificate, it presents a certificate from that CA for the first exact host in `hosts`.
+
+Only workspace owners and admins can save, change, delete or test the configuration. Notte stores the credentials and certificate encrypted. Each change is recorded in the workspace's audit log and emailed to its owners and admins.
+
+A `secret` entry without `server` uses the saved configuration. Any field you send replaces the saved value for that session only, which is useful for a password that changes per session:
+
+<WorkspaceSession />
+
+An entry that sets `server` never reads the saved configuration, so the saved credentials are only ever sent to the saved server.
+
+## Share the exit IP
+
+By default the site sees two IP addresses: the session's exit for most requests, and your secret proxy's egress for the listed hosts. To give both the same IP, send your secret proxy's outgoing traffic through Notte's proxy gateway, pinned to the same residential exit as the session:
+
+1. Mint a gateway credential with a `sticky_session` of your choice: 1 to 64 letters, digits or hyphens. The SDKs have no method for this endpoint, so call it over HTTP.
+
+<GatewayCredentials />
+
+<GatewayCredentialsResponse />
+
+2. Configure your secret proxy to send its outgoing connections through `proxy.notte.cc` with that credential: `proxy_url_tls` for a proxy that can use TLS to its upstream, or `proxy_url_plain` for one that cannot.
+
+3. Start the session with the same `sticky_session`, and the same `country` or `city`, on its `notte` entry:
+
+<SharedExitSession />
+
+Connections made with the credential and the session's own traffic then exit from the same IP. The credential is valid for your plan's maximum session duration.
+
+<Note>
+  `sticky_session` works with Notte's default residential pool. It cannot be combined with a static IP proxy or a proxy `id` that uses another pool.
+</Note>
+
+Whether your provider can send its traffic through another proxy depends on the provider: see the [Evervault](/features/sessions/secret-proxies/evervault) and [VGS](/features/sessions/secret-proxies/vgs) pages.
+
+## Next Steps
+
+<CardGroup cols={3}>
+  <Card title="Evervault" icon="shield-halved" href="/features/sessions/secret-proxies/evervault">
+    Use Evervault Browser Tokens
+  </Card>
+
+  <Card title="VGS" icon="vault" href="/features/sessions/secret-proxies/vgs">
+    Use the VGS outbound proxy
+  </Card>
+
+  <Card title="Custom proxy" icon="server" href="/features/sessions/secret-proxies/custom-proxy">
+    Run your own secret proxy
+  </Card>
+</CardGroup>

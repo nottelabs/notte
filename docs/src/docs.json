@@ -253,6 +253,15 @@
                 "pages": [
                   "features/sessions/stealth-mode",
                   "features/sessions/proxies",
+                  {
+                    "group": "Secret Proxies",
+                    "pages": [
+                      "features/sessions/secret-proxies/overview",
+                      "features/sessions/secret-proxies/evervault",
+                      "features/sessions/secret-proxies/vgs",
+                      "features/sessions/secret-proxies/custom-proxy"
+                    ]
+                  },
                   "features/sessions/captcha-solving",
                   "features/sessions/ad-blocking",
                   "features/sessions/recordings",
@@ -322,7 +331,8 @@
             "icon": "plug",
             "pages": [
               "integrations/index",
-              "mcp-server"
+              "mcp-server",
+              "integrations/secret-proxy"
             ]
           },
           {
@@ -405,7 +415,9 @@
             "icon": "credit-card",
             "pages": [
               "integrations/agentcard",
-              "integrations/stripe-link"
+              "integrations/stripe-link",
+              "features/sessions/secret-proxies/evervault",
+              "features/sessions/secret-proxies/vgs"
             ]
           },
           {

@@ -1,0 +1,58 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/secret_proxies/shared_exit_session.py */}
+
+<CodeGroup>
+
+```python shared_exit_session.py
+from pathlib import Path
+
+from notte_sdk import NotteClient
+from notte_sdk.types import NotteProxy, ProxyGeolocationCountry, ProxySettings, SecretProxy
+
+client = NotteClient()
+
+proxies: list[ProxySettings] = [
+    # Same sticky_session and country as the gateway credential
+    NotteProxy(country=ProxyGeolocationCountry.UNITED_STATES, sticky_session="checkout-4821"),
+    SecretProxy(
+        server="https://secret-proxy.example.com:443",
+        username="YOUR_PROXY_USERNAME",
+        password="YOUR_PROXY_PASSWORD",
+        ca_certificate=Path("your-ca.pem").read_text(),
+        hosts=["api.stripe.com"],
+    ),
+]
+
+with client.Session(proxies=proxies) as session:
+    print(session.session_id)
+```
+
+```typescript shared_exit_session.ts
+import { readFileSync } from 'node:fs';
+import { NotteClient, type NotteProxy, type SecretProxy } from 'notte-sdk';
+
+const client = new NotteClient();
+
+// Same sticky_session and country as the gateway credential.
+// sticky_session is not in the published NotteProxy type yet.
+const exit: NotteProxy & { sticky_session: string } = {
+  type: 'notte',
+  country: 'us',
+  sticky_session: 'checkout-4821',
+};
+
+const secret: SecretProxy = {
+  type: 'secret',
+  server: 'https://secret-proxy.example.com:443',
+  username: 'YOUR_PROXY_USERNAME',
+  password: 'YOUR_PROXY_PASSWORD',
+  ca_certificate: readFileSync('your-ca.pem', 'utf8'),
+  hosts: ['api.stripe.com'],
+};
+
+await client.Session({ proxies: [exit, secret] }).use(async (session) => {
+  console.log(session.getId());
+});
+```
+
+</CodeGroup>

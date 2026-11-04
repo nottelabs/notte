@@ -1081,5 +1081,45 @@
         "title": ""
       }
     ]
+  },
+  "sessions/secret_proxies/gateway_credentials.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/secret_proxies/gateway_credentials.sh",
+        "language": "bash",
+        "title": "cURL"
+      }
+    ]
+  },
+  "sessions/secret_proxies/gateway_credentials_response.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/secret_proxies/gateway_credentials_response.json",
+        "language": "json",
+        "title": "Response"
+      }
+    ]
+  },
+  "sessions/secret_proxies/custom_check.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/secret_proxies/custom_check.sh",
+        "language": "bash",
+        "title": "cURL"
+      }
+    ]
+  },
+  "sessions/secret_proxies/custom_upstream.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/secret_proxies/custom_upstream.sh",
+        "language": "bash",
+        "title": "cURL"
+      }
+    ]
   }
 }
