@@ -1,0 +1,8 @@
+# Your proxy's upstream for listed hosts: Notte's gateway with a minted credential
+UPSTREAM=$(curl -s -X POST https://api.notte.cc/proxies/gateway/credentials \
+  -H "Authorization: Bearer $NOTTE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"country": "us", "sticky_session": "checkout-4821"}' | jq -r '.proxy_url_tls')
+
+# Check it: this request leaves from the same exit as a session with the same sticky_session
+curl -s --proxy "$UPSTREAM" https://api.ipify.org

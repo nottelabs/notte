@@ -1,0 +1,44 @@
+---
+title: 'Custom Proxy'
+description: 'Requirements for running your own secret proxy with Notte sessions'
+---
+import StartSession from '/snippets/sessions/secret_proxies/start_session.mdx';
+import CustomCheck from '/snippets/sessions/secret_proxies/custom_check.mdx';
+import CustomUpstream from '/snippets/sessions/secret_proxies/custom_upstream.mdx';
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+You can use a proxy you run yourself as a Notte [secret proxy](/features/sessions/secret-proxies/overview), for example one connected to your own vault. Notte sends it the browser's traffic to the hosts you list, and nothing else.
+
+## Requirements
+
+Your proxy must:
+
+1. **Be reachable on a public address**, as `http://host:port` or `https://host:port`. With `https://`, its TLS certificate must be valid for that hostname, issued by a public CA or by the CA you send in `ca_certificate`.
+2. **Speak HTTP proxy protocol**: `CONNECT host:443` tunnels for HTTPS sites, and absolute-form requests (`GET http://host/path`) for plain HTTP sites.
+3. **Accept Basic auth** in the `Proxy-Authorization` header if you set `username` and `password`, and answer `407` to wrong credentials. Notte then fails the browser's request with `502`.
+4. **Decrypt HTTPS for the listed hosts only**, presenting a certificate for the requested host issued by your CA. Send that CA certificate, never its private key, in `ca_certificate`. The browser trusts it for the listed hosts in that session only.
+5. **Replace stand-ins with real values only on requests to the listed hosts.** If a value cannot be swapped, return an error instead of forwarding the stand-in.
+6. **Replace real values with stand-ins in responses** from the listed hosts, so a site that sends a real value back does not expose it to the browser, the agent, screenshots, recordings or network logs. See [why this matters](/features/sessions/secret-proxies/overview#mask-real-values-in-responses).
+7. **Forward requests unchanged apart from the swapped values**, over a new TLS connection to the site that verifies the site's certificate.
+
+## Share the exit IP
+
+To make the site see one IP address for the whole session, send your proxy's outgoing connections for the listed hosts through Notte's proxy gateway with a [gateway credential](/features/sessions/secret-proxies/overview#share-the-exit-ip). Use `proxy_url_tls` if your proxy can use TLS to its upstream, or `proxy_url_plain` if it cannot, and start the session with the same `sticky_session`, and the same `country` or `city`, on its `notte` entry.
+
+<CustomUpstream />
+
+The credential is valid for your plan's maximum session duration, so mint a new one for each session or before it expires.
+
+## Test your proxy
+
+Check that a listed host goes through your proxy and presents a certificate from your CA:
+
+<CustomCheck />
+
+You can also save the proxy in the console with the Custom preset and run **Test connection**, which checks the address, the connection, the credentials and the CA. See [Save the configuration in the console](/features/sessions/secret-proxies/overview#save-the-configuration-in-the-console).
+
+## Start a session
+
+<StartSession />

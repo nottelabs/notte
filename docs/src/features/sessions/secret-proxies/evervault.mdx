@@ -1,0 +1,70 @@
+---
+title: 'Evervault'
+description: 'Fill Evervault Browser Tokens in a Notte session'
+---
+import EvervaultFlow from '/snippets/sessions/secret_proxies/evervault_flow.mdx';
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+[Evervault Browser Tokens](https://docs.evervault.com/browser-tokens) turn encrypted card data and credentials into format-preserving stand-ins for an agent to type. Evervault's browser proxy replaces each token with the real value, but only on its way to the hostnames you allow. Use it as a Notte [secret proxy](/features/sessions/secret-proxies/overview).
+
+## Prerequisites
+
+- An Evervault app with Browser Tokens, and its app ID and API key.
+- The data to fill, encrypted with Evervault (for example with [Card Collection](https://docs.evervault.com/cards/card-collection)).
+- The hostnames that receive the data: the payment provider or iframe host, not only the merchant's site.
+- `curl` and `jq` for the example below.
+
+## Map Evervault's values to the secret entry
+
+Each `POST /browser-tokens` call returns the stand-ins (`data[].value`) and a `proxyConfiguration` for Evervault's browser proxy. Use it like this:
+
+| Secret entry field | Value |
+|--------------------|-------|
+| `server` | `https://` + `proxyConfiguration.hostname` + `:` + `proxyConfiguration.port`, for example `https://us-va.browser.relay.evervault.app:443` (US) or `https://eu-ie.browser.relay.evervault.app:443` (EU) |
+| `username` | `proxyConfiguration.username` |
+| `password` | `proxyConfiguration.password`. Evervault issues a new, time-bound password with each batch of tokens, so send it with each session. |
+| `ca_certificate` | Evervault's CA certificate, from [ca.evervault.com](https://ca.evervault.com) (PEM). |
+| `hosts` | The same hostnames as the `target` values of your `permissions`. Both use the same rules: exact hostnames or a leading `*.` wildcard. |
+
+The tokens and the proxy password stop working when the `ttl` you set expires, so set a `ttl` that covers the whole session.
+
+If you [save the configuration in the console](/features/sessions/secret-proxies/overview#save-the-configuration-in-the-console) with the Evervault preset, save the server, username, CA certificate and hosts, and send only the `password` with each session.
+
+## Share the exit IP
+
+By default, requests to the listed hosts leave from Evervault's IP addresses. Evervault can send its outgoing traffic through your own CONNECT proxy with `proxySettings` of `type: "custom"`. Point it at Notte's proxy gateway with a [gateway credential](/features/sessions/secret-proxies/overview#share-the-exit-ip), and give the session's `notte` entry the same `sticky_session`. The site then sees the session's exit IP for every request.
+
+| `proxySettings` field | Value |
+|-----------------------|-------|
+| `type` | `custom` |
+| `scheme` | `https` |
+| `hostname` | `proxy.notte.cc` |
+| `port` | `443` |
+| `username`, `password` | The `username` and `password` of the gateway credential |
+
+<Note>
+  Evervault accepts egress credentials of up to 256 characters. The gateway username contains your `sticky_session` twice, so keep `sticky_session` to 32 characters or fewer.
+</Note>
+
+{/* TODO(review): verify end to end on staging that Evervault's custom egress connects to proxy.notte.cc:443 with a minted gateway credential and that the merchant sees the session's exit IP. */}
+
+## Mask real values in responses
+
+Notte does not change responses, so a listed site that sends a real value back exposes it to the browser. See [Mask real values in responses](/features/sessions/secret-proxies/overview#mask-real-values-in-responses).
+
+{/* TODO(review): Evervault's Browser Tokens docs do not describe re-tokenizing or redacting real values in responses from allowed hosts. Relay's "encrypt on response" route action exists for standard Relays (https://docs.evervault.com/relay), but nothing confirms it applies to the browser proxy. Confirm with Evervault and document the setting here, or state that it is not available. */}
+
+## Example
+
+This example fills a card number and CVV on `api.stripe.com`, with Evervault's egress going through the session's exit:
+
+<EvervaultFlow />
+
+Give the agent the stand-ins from `data[].value`. Evervault swaps them for the real values only on requests to `api.stripe.com`.
+
+## Learn more
+
+- [Evervault Browser Tokens](https://docs.evervault.com/browser-tokens)
+- [Secret proxies](/features/sessions/secret-proxies/overview)

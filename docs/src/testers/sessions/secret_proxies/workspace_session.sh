@@ -1,0 +1,11 @@
+# Use the workspace's saved secret proxy as it is
+curl -X POST https://api.notte.cc/sessions/start \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"proxies": [{"type": "notte"}, {"type": "secret"}]}'
+
+# Use the saved secret proxy with a different password for this session
+curl -X POST https://api.notte.cc/sessions/start \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"proxies": [{"type": "notte"}, {"type": "secret", "password": "SESSION_PASSWORD"}]}'

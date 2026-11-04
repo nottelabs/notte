@@ -1,0 +1,53 @@
+---
+title: 'VGS'
+description: 'Fill VGS aliases in a Notte session through the VGS outbound proxy'
+---
+import VgsSession from '/snippets/sessions/secret_proxies/vgs_session.mdx';
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+VGS stores sensitive data in its vault and gives you aliases in its place. Its [outbound proxy](https://docs.verygoodsecurity.com/vault/http-proxy/outbound-connection) sits between a client and third parties and reveals the real values in transit, following the routes you configure. Use it as a Notte [secret proxy](/features/sessions/secret-proxies/overview): the agent types aliases, and VGS reveals them only on requests to your listed hosts.
+
+## Prerequisites
+
+- A VGS vault holding the data to fill, and its vault ID (it starts with `tnt`).
+- Aliases the site's form accepts. For card numbers, the `FPE_6_T_4` alias format keeps the card's format and Luhn check (see [operations](https://docs.verygoodsecurity.com/vault/http-proxy/operations)).
+- The hostnames that receive the data: the payment provider or iframe host, not only the merchant's site.
+
+## Configure VGS
+
+1. **Create an outbound route for each host** you will list in `hosts`, with that host as its upstream host. VGS answers requests to a host with no matching route with HTTP 400 ([FAQ](https://docs.verygoodsecurity.com/vault/faq)).
+2. **Reveal aliases in requests.** On each route, add a filter in the request phase with a reveal operation that selects the field where the agent types the alias: the form field name for form posts, a JSONPath for JSON bodies, or a regex ([selecting data elements](https://docs.verygoodsecurity.com/vault/http-proxy/operations)).
+3. **Redact real values in responses.** On each route, add a filter in the response phase with a redact operation that selects every field where the site can return a real value. VGS then stores the value and returns an alias instead, as in its [card issuing guide](https://docs.verygoodsecurity.com/vault/guides/card-issuing). A response that matches no filter passes through unchanged, so check what each listed host returns. See [why this matters](/features/sessions/secret-proxies/overview#mask-real-values-in-responses).
+4. **Get outbound access credentials** under your vault's settings ([access credentials](https://docs.verygoodsecurity.com/vault/http-proxy/outbound-connection/access-credentials)). VGS shows the password only once, when you generate the credentials.
+5. **Download the VGS certificate** for your environment (sandbox or live) from the **Code snippets** section of the VGS dashboard.
+
+{/* TODO(review): confirm with VGS that a single route's response-phase redact filter applies to forward-proxy (CONNECT) traffic from a browser, including HTML and form responses. */}
+
+## Map VGS's values to the secret entry
+
+| Secret entry field | Value |
+|--------------------|-------|
+| `server` | `https://<VAULT_ID>.<ENVIRONMENT>.verygoodproxy.com:8443`, where `<ENVIRONMENT>` is `sandbox` or `live` |
+| `username`, `password` | Your outbound access credentials |
+| `ca_certificate` | The VGS certificate for that environment (`sandbox.pem` or `live.pem`) |
+| `hosts` | The upstream hosts of your outbound routes |
+
+The access credentials do not change per session, so you can [save the configuration in the console](/features/sessions/secret-proxies/overview#save-the-configuration-in-the-console) with the VGS preset and start sessions with `{"type": "secret"}`.
+
+## Example
+
+<VgsSession />
+
+## Exit IP
+
+VGS's public documentation describes no setting to send outbound traffic through another proxy, so requests to the listed hosts leave from VGS's IP addresses (listed in its [FAQ](https://docs.verygoodsecurity.com/vault/faq)), not from the session's exit. Notte's [shared exit IP](/features/sessions/secret-proxies/overview#share-the-exit-ip) is not available with VGS unless VGS supports an upstream proxy for your vault.
+
+{/* TODO(review): ask VGS whether outbound routes can use a custom upstream (egress) proxy, such as proxy.notte.cc with a gateway credential. If they can, document the setting here. */}
+
+## Learn more
+
+- [VGS outbound routes](https://docs.verygoodsecurity.com/vault/http-proxy/outbound-connection)
+- [Filters](https://docs.verygoodsecurity.com/vault/http-proxy/filters) and [operations](https://docs.verygoodsecurity.com/vault/http-proxy/operations)
+- [Secret proxies](/features/sessions/secret-proxies/overview)

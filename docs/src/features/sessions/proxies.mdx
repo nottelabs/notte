@@ -22,8 +22,9 @@ With Notte, you can:
 - Use built-in proxies: Effortlessly route traffic through our managed residential proxies
 - Bring your own proxies: Use custom HTTP/HTTPS proxies for greater control over network routing
 - Reach private services: Route the session through your Tailscale tailnet
+- Keep secrets out of the browser: Send selected hosts through your tokenization proxy with a [secret proxy](/features/sessions/secret-proxies/overview)
 
-Each session uses a single proxy.
+Each session uses a single proxy as its exit. A secret proxy is added next to it and only carries the hosts you list.
 
 Proxies are configured when creating a session through the API or SDK.
 

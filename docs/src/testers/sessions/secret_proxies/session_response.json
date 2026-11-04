@@ -1,0 +1,9 @@
+{
+  "session_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "status": "active",
+  "secret_proxy": {
+    "server": "https://secret-proxy.example.com:443",
+    "hosts": ["api.stripe.com", "*.adyen.com"],
+    "ca_sha256": ["3f1c9a0e5b7d2c4a8e6f1b3d5a7c9e0f2b4d6a8c0e1f3a5b7d9c2e4f6a8b0c1d"]
+  }
+}
