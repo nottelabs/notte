@@ -22,6 +22,7 @@ from notte_core.act import (
     WriteContext,
     prompts,
 )
+from notte_core.act.runner import MAX_SKIPPED_FIELDS, SKIP_OBSERVATIONS
 from notte_core.actions import CheckAction, FillAction, SelectDropdownOptionAction, WaitAction
 from notte_core.errors import ActionExecutionError
 from patchright.async_api import Route
@@ -1025,6 +1026,23 @@ async def test_a_read_only_combobox_is_set_by_its_option_label(session: NotteSes
 
 
 @pytest.mark.asyncio
+async def test_an_open_suggestion_list_can_be_closed_with_escape(session: NotteSession) -> None:
+    page = """<label for="street">Street address</label>
+<input id="street" role="combobox" aria-controls="suggestions" aria-expanded="true" value="777 Florida St"
+ onkeydown="if (event.key === 'Escape') { suggestions.hidden = true; this.setAttribute('aria-expanded', 'false') }">
+<ul id="suggestions" role="listbox"><li role="option">777 Florida St Orlando FL 32806</li></ul>
+<label for="city">City</label><input id="city">"""
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    _ = await session.window.page.focus("#street")
+    decider = FakeDecider(choices=[{"operation": "CLOSE_SUGGESTIONS"}, {"operation": "DONE"}])
+    result = await session.aact("Deliver to 777 Florida St, San Francisco", decider=decider)
+    assert result.status == "executed" and await session.window.page.is_hidden("#suggestions")
+    # closed: no longer offered
+    _ = await session.aact("Deliver to 777 Florida St, San Francisco", decider=decider)
+    assert "CLOSE_SUGGESTIONS" not in decider.questions[1]["operation"].criteria
+
+
+@pytest.mark.asyncio
 async def test_an_unlisted_option_is_typed_by_its_label(session: NotteSession) -> None:
     # 60 options: the live state lists the first 50, the others are typed by label; labels are not values
     options = (
@@ -1380,17 +1398,96 @@ async def test_a_field_with_no_value_is_skipped_not_blocked(session: NotteSessio
         "error": "NoValueFromInstruction",
     }
 
-    # "" in an empty field is no value either; twice in one call blocks
+    # the next call does not offer the skipped field again; "" in an empty field is no value either, and a second
+    # field without a value is skipped too (an optional "Address line 2", then a "County")
     decider = FakeDecider(
         choices=[
             {"operation": "TYPE_TEXT", "type_text_target": ids["notes"]},
-            {"operation": "TYPE_TEXT", "type_text_target": ids["dep"]},
+            {"operation": "CLICK", "click_target": search},
         ],
-        texts=["", None],
+        texts=[""],
     )
-    blocked = await session.aact("Search flights", decider=decider, raise_on_failure=False)
-    assert blocked.status == "blocked" and "Departure" in (blocked.message or "")
+    result = await session.aact("Search flights", decider=decider, raise_on_failure=False)
+    assert ids["dep"] not in decider.questions[0]["type_text_target"].criteria
+    assert ids["notes"] not in decider.questions[1].get("type_text_target", Question(criteria={})).criteria
+    assert result.status == "executed" and result.target == search
     assert await session.window.page.input_value("#notes") == ""
+
+
+@pytest.mark.asyncio
+async def test_the_writer_reads_the_error_shown_after_a_field_it_typed_in(session: NotteSession) -> None:
+    page = """<label for="phone">Phone number</label><input id="phone">
+<p>The phone number entered is invalid</p><label for="city">City</label><input id="city">"""
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    ids = await _ids(session)
+    decider = FakeDecider(
+        choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["phone"]}] * 2,
+        texts=["+44 20 7946 0123", "02079460123"],
+    )
+    _ = await session.aact("Phone +44 20 7946 0123", decider=decider)
+    first = decider.contexts[0].field
+    assert first["after"] == "The phone number entered is invalid" and "retry" not in first
+    # typed in before: the writer is told what, to write another form if the field rejected it
+    _ = await session.aact("Phone +44 20 7946 0123", decider=decider)
+    assert decider.contexts[1].field["retry"] == prompts.RETRY_TYPED.format(text="+44 20 7946 0123")
+    assert await session.window.page.input_value("#phone") == "02079460123"
+
+
+@pytest.mark.asyncio
+async def test_a_skipped_field_is_offered_again_once_its_value_changed(session: NotteSession) -> None:
+    page = """<label for="finder">Address finder</label><input id="finder" value="221B Baker Street">
+<label for="city">City</label><input id="city"><button type="button">Continue</button>"""
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    ids = await _ids(session)
+    decider = FakeDecider(
+        choices=[
+            {"operation": "TYPE_TEXT", "type_text_target": ids["finder"]},
+            {"operation": "TYPE_TEXT", "type_text_target": ids["city"]},
+            {"operation": "DONE"},
+        ],
+        texts=[None, "London"],
+    )
+    # a field already holding what the goal gives is skipped as an empty one is, in this call and the next
+    _ = await session.aact("Deliver to 221B Baker Street, London", decider=decider)
+    assert ids["finder"] not in decider.questions[1]["type_text_target"].criteria
+    _ = await session.aact("Deliver to 221B Baker Street, London", decider=decider)
+    assert ids["finder"] not in decider.questions[2]["type_text_target"].criteria
+    # its value changed: offered again
+    await session.window.page.fill("#finder", "221B")
+    decider = FakeDecider(choices=[{"operation": "DONE"}])
+    _ = await session.aact("Deliver to 221B Baker Street, London", decider=decider)
+    assert ids["finder"] in decider.questions[0]["type_text_target"].criteria
+
+
+@pytest.mark.asyncio
+async def test_a_skip_lasts_a_few_observations(session: NotteSession) -> None:
+    page = '<label for="finder">Address finder</label><input id="finder"><button type="button">Continue</button>'
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    ids = await _ids(session)
+    decider = FakeDecider(
+        choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["finder"]}]
+        + [{"operation": "DONE"}] * (SKIP_OBSERVATIONS + 1),
+        texts=[None],
+    )
+    for _ in range(SKIP_OBSERVATIONS):
+        _ = await session.aact("Deliver to 221B Baker Street", decider=decider)
+    assert ids["finder"] not in decider.questions[-1].get("type_text_target", Question(criteria={})).criteria
+    # the writer's "no value" can be wrong: the field is offered again
+    _ = await session.aact("Deliver to 221B Baker Street", decider=decider)
+    assert ids["finder"] in decider.questions[-1]["type_text_target"].criteria
+
+
+@pytest.mark.asyncio
+async def test_a_call_skipping_too_many_fields_blocks(session: NotteSession) -> None:
+    fields = "".join(f'<label for="f{i}">Field {i}</label><input id="f{i}">' for i in range(MAX_SKIPPED_FIELDS + 1))
+    _ = await session.window.page.goto(f"data:text/html,{quote(f'<form>{fields}</form>')}")
+    ids = await _ids(session)
+    decider = FakeDecider(
+        choices=[{"operation": "TYPE_TEXT", "type_text_target": ids[f"f{i}"]} for i in range(MAX_SKIPPED_FIELDS + 1)],
+        texts=[None] * (MAX_SKIPPED_FIELDS + 1),
+    )
+    blocked = await session.aact("Fill the form", decider=decider, raise_on_failure=False)
+    assert blocked.status == "blocked" and f"Field {MAX_SKIPPED_FIELDS}" in (blocked.message or "")
 
 
 @pytest.mark.asyncio

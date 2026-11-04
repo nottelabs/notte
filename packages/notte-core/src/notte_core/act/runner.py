@@ -91,6 +91,11 @@ WRITER_FIELDS = 12
 WRITER_NEXT_CONTROLS = 4
 # the `error` of a history entry for a field the writer had no value for (nothing was typed)
 NO_VALUE = "NoValueFromInstruction"
+# the fields one act() call skips because the writer had no value for them, before it gives up (blocked)
+MAX_SKIPPED_FIELDS = 4
+# the observations a skip lasts (more than one call can make): then the field is offered again, as the writer's "no
+# value" can be wrong (an "Address finder" the goal's address goes in)
+SKIP_OBSERVATIONS = MAX_SKIPPED_FIELDS + 2
 
 
 @dataclass(frozen=True)
@@ -163,6 +168,22 @@ class TypedText:
     selectors: NodeSelectors | None = None
 
 
+@dataclass(frozen=True)
+class SkippedField:
+    """A field the writer had no value for (an optional "Address line 2", a "County" the goal does not give, a field
+    already holding what the goal gives): not offered to TYPE_TEXT again while it holds the same value on the same
+    URL, in this act() call and the next ones."""
+
+    name: str
+    url: str
+    element_id: str
+    selectors: NodeSelectors | None = None
+    # the field's value when it was skipped ("" when empty): a field whose value changed since is offered again
+    value: str = ""
+    # `ActHistory.observations` when it was skipped (see `SKIP_OBSERVATIONS`)
+    at: int = 0
+
+
 @dataclass
 class ActHistoryEntry:
     action: str
@@ -183,6 +204,8 @@ class ActHistoryEntry:
     source_url: str | None = field(default=None, repr=False)
     # the JavaScript dialogs the action opened, and how act() answered them (masked)
     dialogs: list[dict[str, str]] = field(default_factory=list[dict[str, str]])
+    # the field a TYPE_TEXT typed in (`_typed_field`): the writer is told what was typed there before
+    field_key: str | None = None
 
 
 # clicking these does not submit what was typed in a field
@@ -203,8 +226,18 @@ class ActHistory:
 
     entries: deque[ActHistoryEntry] = field(default_factory=lambda: deque(maxlen=HISTORY_SIZE))
     privacy: ActPrivacy = field(default_factory=ActPrivacy, repr=False)
+    skipped: list[SkippedField] = field(default_factory=list[SkippedField])
+    observations: int = 0
 
     def observed(self, page: ObservedPage) -> None:
+        self.observations += 1
+        # a field skipped on another page is forgotten (a field of the same name there is another field), and a skip
+        # lasts `SKIP_OBSERVATIONS`
+        self.skipped = [
+            skipped
+            for skipped in self.skipped
+            if skipped.url == page.url and self.observations - skipped.at <= SKIP_OBSERVATIONS
+        ]
         if len(self.entries) > 0 and self.entries[-1].pending:
             self.entries[-1].page_changed = page.fingerprint != self.entries[-1].fingerprint
             self.entries[-1].pending = False
@@ -234,6 +267,44 @@ class ActHistory:
             )
             if same:
                 entry.typed = None
+
+    def skip(self, page: ObservedPage, target: Target) -> None:
+        """The writer had no value for the field `target` of `page`."""
+        action = next((action for action in page.actions if action.id == target.element_id), None)
+        name = accessible_names(page).get(target.element_id, target.label)
+        selectors = None if action is None else action.selectors
+        self.skipped.append(
+            SkippedField(
+                name=name,
+                url=page.url,
+                element_id=target.element_id,
+                selectors=selectors,
+                value=_field_value(page, target.element_id),
+                at=self.observations,
+            )
+        )
+
+    def no_text(self, page: ObservedPage) -> set[str]:
+        """The ids, on `page`, of the skipped fields that still hold the value they held when skipped (a field whose
+        value changed since is offered again)."""
+        if not self.skipped:
+            return set()
+        names = accessible_names(page)
+        ids: set[str] = set()
+        for skipped in self.skipped:
+            if skipped.url != page.url:
+                continue
+            for action in page.actions:
+                if skipped.selectors is not None:
+                    if action.selectors != skipped.selectors:
+                        continue
+                elif action.id != skipped.element_id:
+                    continue
+                if names.get(action.id, skipped.name) != skipped.name:
+                    continue
+                if _field_value(page, action.id) == skipped.value:
+                    ids.add(action.id)
+        return ids
 
     def acted_since_observed(self) -> bool:
         """An action other than a WAIT ran since the last observation (the next one tells what it changed)."""
@@ -327,12 +398,13 @@ async def run_act(
     labels = label_mode()
     # text written for a field, reused if a stale page forces a new decision on the same field (`_field_identity`)
     written: dict[tuple[str, ...], str] = {}
-    # the fields the writer had no value for, not offered to TYPE_TEXT when deciding again
-    no_text: set[tuple[str, str]] = set()
+    # a decision taken again after a stale page (once), and the fields skipped for want of a value
+    stale_retries = 0
+    skipped = 0
 
-    for attempt in range(2):
+    while True:
         step = time.perf_counter()
-        page = await driver.observe(observation if attempt == 0 else None)
+        page = await driver.observe(observation if stale_retries + skipped == 0 else None)
         run.timings.observe_ms += _ms(step)
         history.observed(page)
         history.privacy.remember_secrets(driver.secret_replacements())
@@ -342,7 +414,8 @@ async def run_act(
             display_text=history.privacy.text,
             labels=labels,
             display_cut=history.privacy.cut_text,
-            no_text=no_text,
+            # the fields the writer had no value for (in this call or an earlier one), not offered to TYPE_TEXT
+            no_text=history.no_text(page),
             unsubmitted=history.unsubmitted(),
         )
         model_page = history.privacy.page(page)
@@ -400,10 +473,11 @@ async def run_act(
                 # "" clears a field, but names no option of a dropdown and clears nothing in an empty field
                 empty = not target.value and not target.filled
                 if text is None or (text == "" and (target.kind == "select_text" or empty)):
-                    if attempt == 0:
-                        # the field is not the next step (a vague label, a field the goal does not mention):
-                        # decide again without it, the decider told through the history
-                        no_text.add((target.element_id, target.label))
+                    if skipped < MAX_SKIPPED_FIELDS:
+                        # the field is not the next step (a vague label, an optional field the goal gives no value
+                        # for): skipped, and decided again without it, the decider told through the history
+                        skipped += 1
+                        history.skip(page, target)
                         history.entries.append(
                             ActHistoryEntry(
                                 action=target.label,
@@ -444,7 +518,8 @@ async def run_act(
         )
         run.timings.fresh_ms += _ms(step)
         if not fresh:
-            if attempt == 0:
+            if stale_retries == 0:
+                stale_retries += 1
                 continue
             return run.result(
                 status="stale", message="The page kept changing between decision and execution.", **common
@@ -460,6 +535,7 @@ async def run_act(
             pending=not unknown,
             page=state.page,
             source_url=page.url,
+            field_key=None if target is None or decision.operation != "TYPE_TEXT" else _typed_field(page, target),
         )
 
         async def answer_dialog(dialog: JsDialog, entry: ActHistoryEntry = entry) -> DialogAnswer:
@@ -509,8 +585,6 @@ async def run_act(
         history.entries.append(entry)
         return run.result(status="executed", action=action, execution=execution, message=execution.message, **common)
 
-    raise AssertionError("unreachable")  # pragma: no cover
-
 
 def _typed(page: ObservedPage, element_id: str, value: str) -> TypedText | None:
     """What was typed in the field `element_id` of `page`, to tell later whether it was submitted (None for a field
@@ -551,6 +625,23 @@ async def _answer(
             if attempt == 1:
                 raise
     raise AssertionError("unreachable")  # pragma: no cover
+
+
+def _field_value(page: ObservedPage, element_id: str) -> str:
+    """The live value of the field `element_id` of `page`, to tell whether it changed ("" when unknown): a cut
+    value adds its digest, a password (no value read) whether it holds one."""
+    state = page.states.get(element_id)
+    if state is None:
+        return ""
+    return "\0".join((state.value or "", state.value_digest or "", "filled" if state.filled else ""))
+
+
+def _typed_field(page: ObservedPage, target: Target) -> str:
+    """Which field a TYPE_TEXT typed in, across observations of the same URL: its selectors (its label can change, an
+    error message added to it), else its id and label."""
+    selectors = next((action.selectors for action in page.actions if action.id == target.element_id), None)
+    who = f"{target.element_id}|{target.label}" if selectors is None else selectors.model_dump_json()
+    return f"{page.url}|{who}"
 
 
 def _field_identity(page: ObservedPage, target: Target) -> tuple[str, ...]:
@@ -693,6 +784,13 @@ def _write_context(
         "value": target.value or "",
     }
     field.update(field_context(page, target.element_id, labels, history.privacy.text, exclude=target.label))
+    key = _typed_field(page, target)
+    before = next(
+        (e.text for e in reversed(history.entries) if e.field_key == key and e.text and e.error is None), None
+    )
+    if before is not None:
+        # what act typed in this field before: the field changed it (a length limit, a mask) or the page rejected it
+        field["retry"] = prompts.RETRY_TYPED.format(text=history.privacy.text(before))
     if target.input_type is not None:
         field["type"] = target.input_type
     if target.value_format is not None:
