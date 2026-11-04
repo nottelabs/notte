@@ -8,6 +8,7 @@ within the last twelve: a cycle through several pages or elements (Checkout, the
 opens; Continue, then a scroll, on a form that does not submit; scrolling down and up again).
 """
 
+from collections.abc import Sequence
 from typing import Any, Protocol
 
 from notte_core.act.types import ActResult
@@ -25,6 +26,9 @@ _SCROLLS = ("SCROLL_DOWN", "SCROLL_UP")
 # scrolls both ways this many times each within `REPEAT_WINDOW` actions, whatever the page: lazy content and sticky
 # banners change the fingerprint as the page scrolls, so a back-and-forth does not always land on the same page
 SCROLL_BACK_AND_FORTH = 4
+# direction changes a run of scrolls needs to be a back-and-forth: down, up, then down again. Totals alone are not:
+# three down then two up to reach a button above a field reverses once
+SCROLL_REVERSALS = 2
 
 
 class SupportsAct(Protocol):
@@ -60,18 +64,25 @@ def _repeat_key(result: ActResult) -> tuple[str | None, ...] | None:
     return (result.fingerprint, operation, result.target, result.value)
 
 
+def _reversals(operations: Sequence[str | None]) -> int:
+    return sum(1 for a, b in zip(operations, operations[1:]) if a != b)
+
+
 def _repeating(results: list[ActResult]) -> bool:
     """The last action ran on the same page `REPEAT_LIMIT` times within the last `REPEAT_WINDOW` actions: the run
     goes round a cycle (A, B, A, B, A or A, B, C, A, B, C, A), whatever its length. Scrolls count once they go both
     ways on that page: down `REPEAT_LIMIT` times and up `REPEAT_LIMIT - 1` times, or the reverse; or both ways
-    `SCROLL_BACK_AND_FORTH` times each on any page."""
+    `SCROLL_BACK_AND_FORTH` times each on any page; either way changing direction `SCROLL_REVERSALS` times."""
     key = _repeat_key(results[-1])
     if key is None:
         return False
     recent = results[-REPEAT_WINDOW:]
     if key[1] == "SCROLL":
-        scrolls = [r.operation for r in recent if r.status == "executed"]
-        if min(scrolls.count("SCROLL_DOWN"), scrolls.count("SCROLL_UP")) >= SCROLL_BACK_AND_FORTH:
+        scrolls = [r.operation for r in recent if r.status == "executed" and r.operation in _SCROLLS]
+        if (
+            min(scrolls.count("SCROLL_DOWN"), scrolls.count("SCROLL_UP")) >= SCROLL_BACK_AND_FORTH
+            and _reversals(scrolls) >= SCROLL_REVERSALS
+        ):
             return True
     same = [r.operation for r in recent if _repeat_key(r) == key]
     if key[1] != "SCROLL":
@@ -79,7 +90,7 @@ def _repeating(results: list[ActResult]) -> bool:
         # an action repeated on a page that never changed is the unchanged-page guard's (`_stop`)
         return len(same) >= REPEAT_LIMIT and any(r.fingerprint != key[0] for r in recent[first:])
     down, up = same.count("SCROLL_DOWN"), same.count("SCROLL_UP")
-    return max(down, up) >= REPEAT_LIMIT and min(down, up) >= REPEAT_LIMIT - 1
+    return max(down, up) >= REPEAT_LIMIT and min(down, up) >= REPEAT_LIMIT - 1 and _reversals(same) >= SCROLL_REVERSALS
 
 
 def _stop(results: list[ActResult]) -> bool:

@@ -422,6 +422,14 @@ def test_act_until_done_goes_on_when_reading_a_long_page() -> None:
     assert len(act_until_done(_ScriptedSession(steps), "go", max_steps=12)) == 12
 
 
+def test_act_until_done_goes_on_when_scrolling_back_up_once() -> None:
+    # down three times to a field, up twice to the button above it: one change of direction, not a cycle
+    steps = [_step("p", "SCROLL_DOWN") for _ in range(3)] + [_step("p", "SCROLL_UP") for _ in range(2)]
+    steps += [_step(f"next{i}", "CLICK", f"B{i}") for i in range(3)]
+    count = len(steps)
+    assert len(act_until_done(_ScriptedSession(steps), "go", max_steps=count)) == count
+
+
 def test_act_until_done_goes_on_when_the_same_action_runs_on_new_pages() -> None:
     # "Load more" then a scroll, on a list that grows each time: the page is never the same
     steps = [
