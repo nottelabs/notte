@@ -455,7 +455,8 @@ class DomNode:
             # control, never a dialog, whatever it contains.
             attributes = node.attributes
             tag = attributes.tag_name.lower() if attributes is not None else ""
-            modal = attributes is not None and (tag == "dialog" or attributes.aria_modal is True)
+            # the browser sends aria-modal as the string "true"
+            modal = attributes is not None and (tag == "dialog" or str(attributes.aria_modal).lower() == "true")
             control = tag in ("a", "button")
             if (
                 node.role == NodeRole.DIALOG
