@@ -381,6 +381,78 @@ def test_act_until_done_does_not_count_scrolls_as_unchanged() -> None:
     assert len(act_until_done(session, "go", max_steps=7)) == 7
 
 
+def _step(fingerprint: str, operation: str = "CLICK", target: str | None = None) -> ActResult:
+    return ActResult.model_validate(
+        {
+            "instruction": "go",
+            "status": "executed",
+            "fingerprint": fingerprint,
+            "operation": operation,
+            "target": target,
+        }
+    )
+
+
+def test_act_until_done_stops_when_a_cycle_through_two_pages_repeats() -> None:
+    # Checkout on the cart, then back from the sign-in page it opens (a new URL each time): the 3rd Checkout stops
+    steps = [_step("cart", "CLICK", "B4") if i % 2 == 0 else _step(f"login{i}", "GO_BACK") for i in range(20)]
+    assert len(act_until_done(_ScriptedSession(steps), "go", max_steps=20)) == 5
+
+
+def test_act_until_done_stops_when_a_longer_cycle_repeats() -> None:
+    # cart → sign-in → home → cart, each page with its own action
+    cycle = [_step("cart", "CLICK", "L21"), _step("login", "CLICK", "L1"), _step("home", "CLICK", "B7")]
+    assert len(act_until_done(_ScriptedSession(cycle * 6), "go", max_steps=18)) == 7
+
+
+def test_act_until_done_stops_when_scrolls_go_back_and_forth() -> None:
+    steps = [_step("p", "SCROLL_DOWN" if i % 2 == 0 else "SCROLL_UP") for i in range(20)]
+    assert len(act_until_done(_ScriptedSession(steps), "go", max_steps=20)) == 5
+
+
+def test_act_until_done_stops_when_scrolls_go_back_and_forth_over_changing_pages() -> None:
+    # each scroll lands on a new fingerprint (lazy content): 4 down and 4 up within 12 actions
+    steps = [_step(f"p{i}", "SCROLL_DOWN" if i % 2 == 0 else "SCROLL_UP") for i in range(20)]
+    assert len(act_until_done(_ScriptedSession(steps), "go", max_steps=20)) == 8
+
+
+def test_act_until_done_goes_on_when_reading_a_long_page() -> None:
+    # down through a long page, one look back up, then on
+    steps = [_step(f"p{i}", "SCROLL_UP" if i == 6 else "SCROLL_DOWN") for i in range(12)]
+    assert len(act_until_done(_ScriptedSession(steps), "go", max_steps=12)) == 12
+
+
+def test_act_until_done_goes_on_when_scrolling_back_up_once() -> None:
+    # down three times to a field, up twice to the button above it: one change of direction, not a cycle
+    steps = [_step("p", "SCROLL_DOWN") for _ in range(3)] + [_step("p", "SCROLL_UP") for _ in range(2)]
+    steps += [_step(f"next{i}", "CLICK", f"B{i}") for i in range(3)]
+    count = len(steps)
+    assert len(act_until_done(_ScriptedSession(steps), "go", max_steps=count)) == count
+
+
+def test_act_until_done_stops_when_an_action_repeats_between_scrolls_on_one_page() -> None:
+    # a submit that fails on a form whose page never changes, with a scroll after each try
+    steps = [_step("form", "CLICK", "B2") if i % 2 == 0 else _step("form", "SCROLL_DOWN") for i in range(20)]
+    assert len(act_until_done(_ScriptedSession(steps), "go", max_steps=20)) == 5
+
+
+def test_act_until_done_goes_on_when_the_same_action_runs_on_new_pages() -> None:
+    # "Load more" then a scroll, on a list that grows each time: the page is never the same
+    steps = [
+        _step(f"list{i // 2}", "CLICK", "B9") if i % 2 == 0 else _step(f"list{i // 2}x", "SCROLL_DOWN")
+        for i in range(12)
+    ]
+    assert len(act_until_done(_ScriptedSession(steps), "go", max_steps=12)) == 12
+
+
+def test_act_until_done_ignores_repeats_outside_the_window() -> None:
+    # the same Continue on the same form 3 times, 12 actions apart: not a cycle
+    filler = [_step(f"f{i}", "TYPE_TEXT", f"I{i}") for i in range(6)]
+    steps = [_step("form", "CLICK", "B2"), *filler, _step("form", "CLICK", "B2"), *filler, _step("form", "CLICK", "B2")]
+    count = len(steps)
+    assert len(act_until_done(_ScriptedSession(steps), "go", max_steps=count)) == count
+
+
 def _signature(tag: str, text: str, value: Any = None, checked: Any = None, options: Any = None) -> list[Any]:
     return [tag, text, value, checked, None, None, None, None, None, None, None, None, None, None, options, [], False]
 
@@ -455,6 +527,138 @@ async def test_vault_secrets_typed_earlier_are_masked() -> None:
     _ = await run_act(Driver(), decider, ActHistory(), "check the account", raise_on_failure=False)
     assert vault_email not in decider.states[0].model_dump_json()
     assert "user@example.org" in decider.states[0].model_dump_json()
+
+
+@pytest.mark.asyncio
+async def test_a_scroll_that_failed_is_not_offered_again_on_the_same_page() -> None:
+    import datetime as dt
+
+    from notte_core.act import run_act
+    from notte_core.observation import ExecutionResult
+
+    from tests.act.fakes import FakeDecider
+
+    pages = [_page(fingerprint="a"), _page(fingerprint="a"), _page(fingerprint="b")]
+    observed: list[ObservedPage] = []
+
+    class Driver:
+        has_vault: bool = False
+
+        def secret_replacements(self) -> dict[str, str]:
+            return {}
+
+        async def observe(self, observation: Any) -> ObservedPage:  # pyright: ignore[reportUnusedParameter]
+            observed.append(pages.pop(0))
+            return observed[-1]
+
+        async def is_fresh(self, page: ObservedPage, element_id: str | None, *, focus: bool = False) -> bool:  # pyright: ignore[reportUnusedParameter]
+            return True
+
+        async def execute(self, action: Any, raise_on_failure: bool, **_: Any) -> ExecutionResult:  # pyright: ignore[reportUnusedParameter]
+            now = dt.datetime.now()
+            return ExecutionResult(action=action, success=False, message="Scroll failed.", started_at=now, ended_at=now)
+
+    decider = FakeDecider(choices=[{"operation": "SCROLL_DOWN"}, {"operation": "DONE"}, {"operation": "DONE"}])
+    history = ActHistory()
+    first = await run_act(Driver(), decider, history, "go", raise_on_failure=False)
+    assert first.operation == "SCROLL_DOWN"
+    # same page: the failed direction is gone, the other one stays
+    _ = await run_act(Driver(), decider, history, "go", raise_on_failure=False)
+    assert "SCROLL_DOWN" not in decider.questions[1]["operation"].criteria
+    # the page changed: offered again
+    _ = await run_act(Driver(), decider, history, "go", raise_on_failure=False)
+    assert "SCROLL_DOWN" in decider.questions[2]["operation"].criteria
+
+
+@pytest.mark.asyncio
+async def test_a_scroll_that_worked_offers_the_failed_direction_again() -> None:
+    import datetime as dt
+
+    from notte_core.act import run_act
+    from notte_core.actions import ScrollDownAction
+    from notte_core.observation import ExecutionResult
+
+    from tests.act.fakes import FakeDecider
+
+    # the fingerprint ignores the scroll position: the page stays "a" while it scrolls
+    viewport = ViewportData(
+        scroll_x=0, scroll_y=500, viewport_width=1280, viewport_height=720, total_width=1280, total_height=2000
+    )
+    pages = [_page(fingerprint="a", viewport=viewport) for _ in range(3)]
+
+    class Driver:
+        has_vault: bool = False
+
+        def secret_replacements(self) -> dict[str, str]:
+            return {}
+
+        async def observe(self, observation: Any) -> ObservedPage:  # pyright: ignore[reportUnusedParameter]
+            return pages.pop(0)
+
+        async def is_fresh(self, page: ObservedPage, element_id: str | None, *, focus: bool = False) -> bool:  # pyright: ignore[reportUnusedParameter]
+            return True
+
+        async def execute(self, action: Any, raise_on_failure: bool, **_: Any) -> ExecutionResult:  # pyright: ignore[reportUnusedParameter]
+            now = dt.datetime.now()
+            down = isinstance(action, ScrollDownAction)
+            return ExecutionResult(
+                action=action, success=not down, message="Scroll failed." if down else "", started_at=now, ended_at=now
+            )
+
+    decider = FakeDecider(choices=[{"operation": "SCROLL_DOWN"}, {"operation": "SCROLL_UP"}, {"operation": "DONE"}])
+    history = ActHistory()
+    _ = await run_act(Driver(), decider, history, "go", raise_on_failure=False)
+    _ = await run_act(Driver(), decider, history, "go", raise_on_failure=False)
+    assert "SCROLL_DOWN" not in decider.questions[1]["operation"].criteria
+    # scrolling up moved the page: down can work again
+    _ = await run_act(Driver(), decider, history, "go", raise_on_failure=False)
+    assert "SCROLL_DOWN" in decider.questions[2]["operation"].criteria
+
+
+@pytest.mark.asyncio
+async def test_another_action_offers_the_failed_direction_again() -> None:
+    import datetime as dt
+
+    from notte_core.act import run_act
+    from notte_core.actions import ScrollUpAction
+    from notte_core.observation import ExecutionResult
+
+    from tests.act.fakes import FakeDecider
+
+    # a click can scroll the page (an element brought into view) without changing its fingerprint
+    viewport = ViewportData(
+        scroll_x=0, scroll_y=500, viewport_width=1280, viewport_height=720, total_width=1280, total_height=2000
+    )
+    pages = [_page(fingerprint="a", viewport=viewport) for _ in range(3)]
+
+    class Driver:
+        has_vault: bool = False
+
+        def secret_replacements(self) -> dict[str, str]:
+            return {}
+
+        async def observe(self, observation: Any) -> ObservedPage:  # pyright: ignore[reportUnusedParameter]
+            return pages.pop(0)
+
+        async def is_fresh(self, page: ObservedPage, element_id: str | None, *, focus: bool = False) -> bool:  # pyright: ignore[reportUnusedParameter]
+            return True
+
+        async def execute(self, action: Any, raise_on_failure: bool, **_: Any) -> ExecutionResult:  # pyright: ignore[reportUnusedParameter]
+            now = dt.datetime.now()
+            up = isinstance(action, ScrollUpAction)
+            return ExecutionResult(
+                action=action, success=not up, message="Scroll failed." if up else "", started_at=now, ended_at=now
+            )
+
+    decider = FakeDecider(
+        choices=[{"operation": "SCROLL_UP"}, {"operation": "CLICK", "click_target": "B1"}, {"operation": "DONE"}]
+    )
+    history = ActHistory()
+    _ = await run_act(Driver(), decider, history, "go", raise_on_failure=False)
+    _ = await run_act(Driver(), decider, history, "go", raise_on_failure=False)
+    assert "SCROLL_UP" not in decider.questions[1]["operation"].criteria
+    _ = await run_act(Driver(), decider, history, "go", raise_on_failure=False)
+    assert "SCROLL_UP" in decider.questions[2]["operation"].criteria
 
 
 @pytest.mark.asyncio

@@ -330,6 +330,22 @@ class ActHistory:
         """An action other than a WAIT ran since the last observation (the next one tells what it changed)."""
         return len(self.entries) > 0 and self.entries[-1].pending and self.entries[-1].kind != "WAIT"
 
+    def failed_scrolls(self, page: ObservedPage) -> set[str]:
+        """The scroll directions that failed on `page` as its newest actions (WAITs aside): the page cannot scroll
+        that way, and trying again fails again. Any other action may have moved the page (a scroll that worked, a
+        click that scrolled an element into view), which the fingerprint does not show, so the directions that failed
+        before it may work again."""
+        failed: set[str] = set()
+        for entry in reversed(self.entries):
+            if entry.kind == "WAIT":
+                continue
+            if entry.fingerprint != page.fingerprint or entry.kind not in ("SCROLL_DOWN", "SCROLL_UP"):
+                break
+            if entry.error is None:
+                break
+            failed.add(entry.kind)
+        return failed
+
     def unsubmitted(self) -> set[str]:
         """The ids, on the last observed page, of the fields holding typed text not submitted yet."""
         return {e.typed.element_id for e in self.entries if e.typed is not None and e.typed.before is None}
@@ -438,6 +454,9 @@ async def run_act(
             no_text=history.no_text(page, instruction),
             unsubmitted=history.unsubmitted(),
         )
+        # a scroll that failed on this very page fails again: not offered until the page changes
+        for operation in history.failed_scrolls(page):
+            _ = space.controls.pop(operation, None)
         model_page = history.privacy.page(page)
         state = DecisionState(
             page=page_state(model_page, labels, history.privacy.text, viewport_only=True),
