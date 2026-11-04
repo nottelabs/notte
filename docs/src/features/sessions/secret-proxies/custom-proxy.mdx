@@ -1,17 +1,102 @@
 ---
 title: 'Custom Proxy'
-description: 'Requirements for running your own secret proxy with Notte sessions'
+description: 'Run browser-secret-proxy, the open-source secret proxy, or build your own secret proxy for Notte sessions'
 ---
 import StartSession from '/snippets/sessions/secret_proxies/start_session.mdx';
 import CustomCheck from '/snippets/sessions/secret_proxies/custom_check.mdx';
 import CustomUpstream from '/snippets/sessions/secret_proxies/custom_upstream.mdx';
+import BspBuild from '/snippets/sessions/secret_proxies/bsp_build.mdx';
+import BspCa from '/snippets/sessions/secret_proxies/bsp_ca.mdx';
+import BspSwaps from '/snippets/sessions/secret_proxies/bsp_swaps.mdx';
+import BspRun from '/snippets/sessions/secret_proxies/bsp_run.mdx';
+import BspSession from '/snippets/sessions/secret_proxies/bsp_session.mdx';
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
 You can use a proxy you run yourself as a Notte [secret proxy](/features/sessions/secret-proxies/overview), for example one connected to your own vault. Notte sends it the browser's traffic to the hosts you list, and nothing else.
 
-## Requirements
+There are two ways to do it:
+
+- [Use browser-secret-proxy](#use-browser-secret-proxy), Notte's open-source secret proxy, which you run on your own infrastructure. Start here.
+- [Build your own](#build-your-own) proxy that meets Notte's requirements.
+
+## Use browser-secret-proxy
+
+[browser-secret-proxy](https://github.com/nottelabs/browser-secret-proxy) is an open-source forward proxy (Apache-2.0, written in Go) that you host. The browser and the agent only handle stand-ins. The proxy replaces them with the real values on requests to the hosts you allowlist, so the real values stay on infrastructure you control and never reach Notte.
+
+What it does:
+
+- **Swaps stand-ins wherever the site expects them**: request headers, the query string, form bodies and JSON bodies, including JSON strings written with `\u` escapes. Each real value is escaped for where it lands.
+- **Decrypts only the hosts you allowlist** with `-hosts`. Traffic to every other host is tunneled without decryption.
+- **Fails closed.** If a stand-in cannot be resolved, may not go to the request's host or has expired, the request is answered `502` and nothing of it is sent.
+- **Masks responses by default.** Real values that a listed site sends back are replaced by their stand-ins before they reach the browser. See [why this matters](/features/sessions/secret-proxies/overview#mask-real-values-in-responses).
+- **Looks up real values in one of three ways**, set with `-resolver`:
+  - `file`: a JSON file of stand-ins and their real values, reloaded when it changes. A secret manager can write it for you.
+  - `http`: a detokenize service you run, called over mutual TLS. Use it when your values already live in a vault or tokenization service with an API, or to compute [2FA codes](/features/sessions/secret-proxies/credentials#2fa-codes) at request time.
+  - `sealed`: the values travel in the proxy password as a token that your issuer signs and encrypts to the proxy, with no lookup service and no storage.
+- **Relays the browser's connection without changing how it looks to the site.**
+
+It handles HTTPS sites only: plain HTTP requests through it are refused.
+
+### Quick start
+
+This runs the proxy with the `file` resolver and starts a Notte session that uses it.
+
+<Steps>
+  <Step title="Build the proxy">
+    <BspBuild />
+
+    Releases publish binaries and a signed image, `ghcr.io/nottelabs/browser-secret-proxy:<version>`, on the repository's GitHub Releases page.
+  </Step>
+
+  <Step title="Create a CA">
+    The proxy issues a certificate for each listed host from this CA, and the session's browser trusts it for those hosts only. Anyone holding `ca.key` can impersonate any host to a client that trusts `ca.pem`.
+
+    <BspCa />
+  </Step>
+
+  <Step title="Map stand-ins to real values">
+    Write `swaps.json` and restrict it with `chmod 600 swaps.json`. Pick stand-ins that cannot appear by accident in other traffic, such as a prefix of your own.
+
+    <BspSwaps />
+  </Step>
+
+  <Step title="Run the proxy">
+    <BspRun />
+
+    The proxy listens in plain HTTP, so its credentials would travel in clear text. Put a TLS terminator in front of it, such as a load balancer with a TLS listener, stunnel or HAProxy in TCP mode, on a public address Notte can reach. See the proxy's [deployment guide](https://github.com/nottelabs/browser-secret-proxy/blob/main/docs/deployment.md) for Docker, systemd, Kubernetes and TLS setups.
+  </Step>
+
+  <Step title="Start a session">
+    Add a `secret` entry with your terminator's address, the proxy credentials, `ca.pem` and the same hosts as `-hosts`. A host in the entry but not in `-hosts` is tunneled without swaps.
+
+    <BspSession />
+
+    The proxy logs `swapped stand-ins` with the host and the number of fields, never the values. Because masking is on, an echo endpoint shows the stand-in again, not the real value.
+  </Step>
+</Steps>
+
+To give the site one IP address for the whole session, set `-upstream-proxy` (or `SECRET_PROXY_UPSTREAM`) to a gateway credential's `proxy_url_tls`. See [Share the exit IP](#share-the-exit-ip).
+
+### Learn more
+
+- [README](https://github.com/nottelabs/browser-secret-proxy#readme): every flag, format and limit, and the [security model](https://github.com/nottelabs/browser-secret-proxy#security-model).
+- [Documentation](https://github.com/nottelabs/browser-secret-proxy/tree/main/docs): [concepts](https://github.com/nottelabs/browser-secret-proxy/blob/main/docs/concepts.md), [deployment](https://github.com/nottelabs/browser-secret-proxy/blob/main/docs/deployment.md), [resolvers](https://github.com/nottelabs/browser-secret-proxy/blob/main/docs/resolvers.md) and [security](https://github.com/nottelabs/browser-secret-proxy/blob/main/docs/security.md).
+- [Cookbook](https://github.com/nottelabs/browser-secret-proxy/tree/main/docs/cookbook), one recipe per secret, with the exact flags and values:
+  - [Card number and CVC at checkout](https://github.com/nottelabs/browser-secret-proxy/blob/main/docs/cookbook/card.md)
+  - [Password in a login form](https://github.com/nottelabs/browser-secret-proxy/blob/main/docs/cookbook/password-form.md)
+  - [Password in a JSON login call](https://github.com/nottelabs/browser-secret-proxy/blob/main/docs/cookbook/password-json.md)
+  - [2FA TOTP code](https://github.com/nottelabs/browser-secret-proxy/blob/main/docs/cookbook/totp.md)
+  - [API token in a Bearer header](https://github.com/nottelabs/browser-secret-proxy/blob/main/docs/cookbook/bearer-token.md)
+  - [API key in a query string](https://github.com/nottelabs/browser-secret-proxy/blob/main/docs/cookbook/api-key-query.md)
+  - [Response masking](https://github.com/nottelabs/browser-secret-proxy/blob/main/docs/cookbook/masking.md)
+
+## Build your own
+
+If you want to write your own proxy, or connect one you already run, it must meet the requirements below.
+
+### Requirements
 
 Your proxy must:
 
@@ -25,7 +110,7 @@ Your proxy must:
 
 To fill 2FA codes, your proxy can also compute a value at request time, for example the current TOTP code for a stored seed. See [2FA codes](/features/sessions/secret-proxies/credentials#2fa-codes).
 
-## Share the exit IP
+### Share the exit IP
 
 To make the site see one IP address for the whole session, send your proxy's outgoing connections for the listed hosts through Notte's proxy gateway with a [gateway credential](/features/sessions/secret-proxies/overview#share-the-exit-ip). Use `proxy_url_tls` if your proxy can use TLS to its upstream, or `proxy_url_plain` if it cannot, and start the session with the same `sticky_session`, and the same `country` or `city`, on its `notte` entry.
 
@@ -33,7 +118,7 @@ To make the site see one IP address for the whole session, send your proxy's out
 
 The credential is valid for your plan's maximum session duration, so mint a new one for each session or before it expires.
 
-## Test your proxy
+### Test your proxy
 
 Check that a listed host goes through your proxy and presents a certificate from your CA:
 
@@ -43,6 +128,6 @@ Check that a listed host goes through your proxy and presents a certificate from
 
 You can also save the proxy in the console with the Custom preset and run **Test connection**, which checks the address, the connection, the credentials and the CA. See [Save the configuration in the console](/features/sessions/secret-proxies/overview#save-the-configuration-in-the-console).
 
-## Start a session
+### Start a session
 
 <StartSession />

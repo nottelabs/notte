@@ -1,0 +1,5 @@
+# Needs Go 1.26 or later
+git clone https://github.com/nottelabs/browser-secret-proxy
+cd browser-secret-proxy
+make build     # bin/browser-secret-proxy
+make docker    # or a container image: browser-secret-proxy:dev

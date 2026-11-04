@@ -38,7 +38,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [Passwords, 2FA Codes and API Keys](https://docs.notte.cc/features/sessions/secret-proxies/credentials.md): Swap passwords, one-time codes, API keys and tokens through a secret proxy, not only card numbers
 - [Evervault](https://docs.notte.cc/features/sessions/secret-proxies/evervault.md): Fill Evervault Browser Tokens in a Notte session
 - [VGS](https://docs.notte.cc/features/sessions/secret-proxies/vgs.md): Fill VGS aliases in a Notte session through the VGS outbound proxy
-- [Custom Proxy](https://docs.notte.cc/features/sessions/secret-proxies/custom-proxy.md): Requirements for running your own secret proxy with Notte sessions
+- [Custom Proxy](https://docs.notte.cc/features/sessions/secret-proxies/custom-proxy.md): Run browser-secret-proxy, the open-source secret proxy, or build your own secret proxy for Notte sessions
 - [CAPTCHA Solving](https://docs.notte.cc/features/sessions/captcha-solving.md): Automatically detect and solve captchas during browser automation
 - [Ad Blocking](https://docs.notte.cc/features/sessions/ad-blocking.md): Built-in ad and tracker blocking for browser sessions
 - [Recordings](https://docs.notte.cc/features/sessions/recordings.md): Record and replay your browser sessions for debugging and analysis

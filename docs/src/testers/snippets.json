@@ -1121,5 +1121,45 @@
         "title": "cURL"
       }
     ]
+  },
+  "sessions/secret_proxies/bsp_build.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/secret_proxies/bsp_build.sh",
+        "language": "bash",
+        "title": "Terminal"
+      }
+    ]
+  },
+  "sessions/secret_proxies/bsp_ca.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/secret_proxies/bsp_ca.sh",
+        "language": "bash",
+        "title": "Terminal"
+      }
+    ]
+  },
+  "sessions/secret_proxies/bsp_swaps.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/secret_proxies/bsp_swaps.json",
+        "language": "json",
+        "title": "swaps.json"
+      }
+    ]
+  },
+  "sessions/secret_proxies/bsp_run.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/secret_proxies/bsp_run.sh",
+        "language": "bash",
+        "title": "Terminal"
+      }
+    ]
   }
 }
