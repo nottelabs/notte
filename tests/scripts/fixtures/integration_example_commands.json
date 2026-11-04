@@ -211,7 +211,6 @@
     "terraform-profiles": "terraform-go",
     "tzafon": "typescript-driver",
     "valtown": "valtown-deno",
-    "watsonx": "typescript-driver",
-    "yutori": "python-project"
+    "watsonx": "typescript-driver"
   }
 }

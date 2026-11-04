@@ -74,7 +74,6 @@ with open(os.environ["COMMAND_LOG"], "a") as log:
                             "WATSONX_MODEL_ID",
                             "WATSONX_PROJECT_ID",
                             "WATSONX_URL",
-                            "YUTORI_API_KEY",
                         )
                         if os.environ.get(k)
                     )
@@ -1170,41 +1169,13 @@ def test_python_profile_rejects_unknown_project_before_setup(workspace: Path, mo
     assert calls(workspace) == []
 
 
-def test_yutori_keeps_python312_requirements_and_both_sdk_modes_without_vendor_credentials(
-    workspace: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    project = shipped_project(workspace, monkeypatch, "yutori", "python-project")
-    for module in ("main.py", "test_protocol.py", "test_browser.py"):
-        (project / module).write_text("# Source fixture\n")
-    monkeypatch.setenv("NOTTE_YUTORI_LIVE", "1")
-    monkeypatch.setenv("GITHUB_REF", "refs/heads/main")
-    for key in runner.CREDENTIALS - {"NOTTE_API_KEY"}:
-        monkeypatch.setenv(key, "fixture-unused-provider")
-    runner.main()
-    observed = calls(workspace)
-    commands = [call["args"] for call in observed]
-    assert commands[0][-3:] == ["--clear", "--python", "3.12"]
-    assert commands[1][-2:] == ["-r", "requirements.txt"]
-    assert not any(command[0] in {"npm", "npx"} or "sync" in command for command in commands)
-    suites = [call for call in observed if "unittest" in call["args"]]
-    assert len(suites) == 3
-    assert all(call["args"][-2:] == ["test_browser.py", "test_protocol.py"] for call in suites)
-    assert suites[0]["credentials"] == [] and suites[0]["live_flags"]["NOTTE_YUTORI_LIVE"] == "0"
-    assert all(call["credentials"] == ["NOTTE_API_KEY"] for call in suites[1:])
-    assert all(call["live_flags"]["NOTTE_YUTORI_LIVE"] == "1" for call in suites[1:])
-    assert all(not call["credentials"] for call in observed if call not in suites)
-    source = next(command for command in commands if "-e" in command)
-    assert source[-4:] == ["-e", str(workspace / "packages/notte-core"), "-e", str(workspace / "packages/notte-sdk")]
-    assert len([command for command in commands if command[:3] == ["uv", "pip", "check"]]) == 2
-
-
 @pytest.mark.parametrize("failure", [None, "import", "native"])
 def test_openagi_preserves_import_only_static_and_native_sdk_modes_without_vendor_key(
     workspace: Path, monkeypatch: pytest.MonkeyPatch, failure: str | None
 ) -> None:
     project = shipped_project(workspace, monkeypatch, "openagi", "python-project")
     (project / "test_live.py").write_text("# Native module fixture\n")
-    for flag in ("NOTTE_PRIME_LIVE", "NOTTE_YUTORI_LIVE", "NOTTE_OPENAGI_LIVE"):
+    for flag in ("NOTTE_PRIME_LIVE", "NOTTE_OPENAGI_LIVE"):
         monkeypatch.delenv(flag, raising=False)
     monkeypatch.setenv("GITHUB_REF", "refs/heads/main")
     for key in runner.CREDENTIALS - {"NOTTE_API_KEY"}:
@@ -1224,10 +1195,7 @@ def test_openagi_preserves_import_only_static_and_native_sdk_modes_without_vendo
     assert all(call["args"] == ["python", "-m", "unittest", "-v", "test_live.py"] for call in suites)
     assert all(call["credentials"] == ["NOTTE_API_KEY"] for call in suites)
     assert all(not call["credentials"] for call in observed if call not in suites)
-    assert all(
-        not {"NOTTE_PRIME_LIVE", "NOTTE_YUTORI_LIVE", "NOTTE_OPENAGI_LIVE"} & call["live_flags"].keys()
-        for call in suites
-    )
+    assert all(not {"NOTTE_PRIME_LIVE", "NOTTE_OPENAGI_LIVE"} & call["live_flags"].keys() for call in suites)
     assert all(call["cwd"] == str(project) for call in observed)
     assert commands[:4] == [
         ["uv", "sync", "--locked", "--python", "3.11"],
@@ -1256,7 +1224,7 @@ def test_pipedream_keeps_independent_native_languages_and_real_python_without_ve
 ) -> None:
     project = shipped_project(workspace, monkeypatch, "pipedream", "python-project")
     (project / "test_live.py").write_text("# Native module fixture\n")
-    for flag in ("NOTTE_PRIME_LIVE", "NOTTE_YUTORI_LIVE", "NOTTE_PIPEDREAM_LIVE"):
+    for flag in ("NOTTE_PRIME_LIVE", "NOTTE_PIPEDREAM_LIVE"):
         monkeypatch.delenv(flag, raising=False)
     monkeypatch.setenv("GITHUB_REF", "refs/heads/main")
     for key in runner.CREDENTIALS - {"NOTTE_API_KEY"}:
@@ -1283,10 +1251,7 @@ def test_pipedream_keeps_independent_native_languages_and_real_python_without_ve
     assert all(call["example_python"] == str(python) for call in suites)
     assert all(call["credentials"] == ["NOTTE_API_KEY"] for call in suites)
     assert all(not call["credentials"] for call in observed if call not in suites)
-    assert all(
-        not {"NOTTE_PRIME_LIVE", "NOTTE_YUTORI_LIVE", "NOTTE_PIPEDREAM_LIVE"} & call["live_flags"].keys()
-        for call in suites
-    )
+    assert all(not {"NOTTE_PRIME_LIVE", "NOTTE_PIPEDREAM_LIVE"} & call["live_flags"].keys() for call in suites)
     assert all(call["cwd"] == str(project) for call in observed)
     assert commands[:5] == [
         ["uv", "sync", "--locked", "--python", "3.11"],

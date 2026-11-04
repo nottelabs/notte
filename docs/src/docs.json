@@ -369,7 +369,6 @@
               "integrations/openai-computer-use",
               "integrations/claude-computer-use",
               "integrations/gemini-computer-use",
-              "integrations/yutori",
               "integrations/openagi",
               "integrations/tzafon"
             ]

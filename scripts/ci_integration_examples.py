@@ -53,7 +53,6 @@ CREDENTIALS = {
     "WATSONX_MODEL_ID",
     "WATSONX_PROJECT_ID",
     "WATSONX_URL",
-    "YUTORI_API_KEY",
 }
 DRIVER_IMPORTS = {
     "braintrust": "from braintrust import init_logger; from notte_sdk import NotteClient",
@@ -86,7 +85,6 @@ def projects(shard: str) -> list[tuple[str, str]]:
             raise ValueError("Unknown Node integration project")
         if registry[name] == "python-project" and name not in {
             "prime-intellect",
-            "yutori",
             "openagi",
             "pipedream",
             "e2b",
@@ -200,12 +198,7 @@ def check(project: Path, env: dict[str, str], convention: str = "") -> Path:
         run([str(python), "-m", "unittest", "test_cli", "-v"], project, {**env, "TERRAFORM_BIN": str(cli)})
         return python
     if convention == "python-project":
-        if project.name == "yutori":
-            run(["uv", "venv", str(project / ".venv"), "--clear", "--python", "3.12"], project, env)
-            run(["uv", "pip", "install", "--python", str(python), "-r", "requirements.txt"], project, env)
-            run([str(python), "-m", "compileall", "-q", *sorted(p.name for p in project.glob("*.py"))], project, env)
-        else:
-            run(["uv", "sync", "--locked", "--python", "3.11"], project, env)
+        run(["uv", "sync", "--locked", "--python", "3.11"], project, env)
         run(["uv", "pip", "check", "--python", str(python)], project, env)
         if project.name in {"openagi", "pipedream"}:
             imports = "import demo; from oagi import AsyncDefaultAgent" if project.name == "openagi" else "import demo"
@@ -582,7 +575,7 @@ def live(project: Path, python: Path, python_env: str, env: dict[str, str], inst
         )
         return
     if python_env == "python-project":
-        flags = {"prime-intellect": "NOTTE_PRIME_LIVE", "yutori": "NOTTE_YUTORI_LIVE"}
+        flags = {"prime-intellect": "NOTTE_PRIME_LIVE"}
         env = {**project_env(project.name, env), "DISABLE_TELEMETRY": "true"}
         if flag := flags.get(project.name):
             env[flag] = "1"

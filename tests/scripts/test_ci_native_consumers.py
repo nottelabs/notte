@@ -18,7 +18,7 @@ from tests.scripts.test_ci_integration_examples import agent_phases, calls, ship
 pytest_plugins = ["tests.scripts.test_ci_integration_examples"]
 
 ROOT = Path(__file__).resolve().parents[2]
-PYTHON_ONLY = {"boat", "daytona", "e2b", "openagi", "prime-intellect", "yutori"}
+PYTHON_ONLY = {"boat", "daytona", "e2b", "openagi", "prime-intellect"}
 NODE_ONLY = {"agentcard", "e2e", "eve", "fx", "trigger"}
 PUBLISHED_ONLY = {"docker-sandboxes", "inngest", "temporal"}
 NON_SDK = {"replit", "terraform-profiles", "valtown"}
@@ -62,7 +62,7 @@ def test_dependency_inventory_covers_registered_projects_and_real_manifests() ->
         dependencies = ci.INTEGRATION_DEPENDENCIES[name]
         if "python-source" in dependencies and name not in runner.RECIPES:
             manifest = project / (
-                "requirements.txt" if name in {"box", "gemini-computer-use", "selenium", "yutori"} else "pyproject.toml"
+                "requirements.txt" if name in {"box", "gemini-computer-use", "selenium"} else "pyproject.toml"
             )
             assert "notte-sdk" in manifest.read_text(), name
         if dependencies & {"node-source", "node-published"} and name not in runner.RECIPES:
@@ -137,7 +137,6 @@ def test_node_inputs_select_node_source_consumers_on_both_events(
         ("docs/package-lock.json", {"claude-agents", "openai-agents", "mongodb"}),
         ("examples/braintrust/python/demo.py", {"braintrust"}),
         ("examples/braintrust/typescript/package-lock.json", {"braintrust"}),
-        ("examples/yutori/requirements.txt", {"yutori"}),
         ("examples/temporal/package-lock.json", {"temporal"}),
         ("examples/replit/test/mcp.live.test.mjs", {"replit"}),
     ],

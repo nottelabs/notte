@@ -370,7 +370,7 @@ class GitHistoryTests(unittest.TestCase):
                         path = f"examples/{name}/package.json"
                     elif convention == "valtown-deno":
                         path = f"examples/{name}/main.ts"
-                    elif name in {"box", "yutori"}:
+                    elif name == "box":
                         path = f"examples/{name}/requirements.txt"
                     else:
                         path = f"examples/{name}/pyproject.toml"
