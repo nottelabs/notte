@@ -34,7 +34,8 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 #### Secret Proxies
 
-- [Secret Proxies](https://docs.notte.cc/features/sessions/secret-proxies/overview.md): Fill card numbers and other secrets in a session without Notte seeing the real values
+- [Secret Proxies](https://docs.notte.cc/features/sessions/secret-proxies/overview.md): Fill card numbers, passwords, 2FA codes and other secrets in a session without Notte seeing the real values
+- [Passwords, 2FA Codes and API Keys](https://docs.notte.cc/features/sessions/secret-proxies/credentials.md): Swap passwords, one-time codes, API keys and tokens through a secret proxy, not only card numbers
 - [Evervault](https://docs.notte.cc/features/sessions/secret-proxies/evervault.md): Fill Evervault Browser Tokens in a Notte session
 - [VGS](https://docs.notte.cc/features/sessions/secret-proxies/vgs.md): Fill VGS aliases in a Notte session through the VGS outbound proxy
 - [Custom Proxy](https://docs.notte.cc/features/sessions/secret-proxies/custom-proxy.md): Requirements for running your own secret proxy with Notte sessions
@@ -55,6 +56,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 ## Authentication
 
 - [Secret Vaults](https://docs.notte.cc/concepts/vaults.md): Enterprise-grade credential management for your Sessions
+- [Passwords, 2FA Codes and API Keys](https://docs.notte.cc/features/sessions/secret-proxies/credentials.md): Swap passwords, one-time codes, API keys and tokens through a secret proxy, not only card numbers
 - [Browser Profiles](https://docs.notte.cc/features/sessions/browser-profiles.md): Persist browser state across sessions
 - [Persona Identities](https://docs.notte.cc/concepts/personas.md): Self-service identities for web automation (account creation, 2FA,etc.)
 - [Managed Auth](https://docs.notte.cc/guides/managed-auth.md): Start browser sessions with saved authentication connections
@@ -86,7 +88,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 - [Integrations](https://docs.notte.cc/integrations/index.md): Connect Notte to the tools your team already uses.
 - [Notte Browser MCP](https://docs.notte.cc/mcp-server.md): Connect your AI assistant to cloud browsers with Notte Browser MCP
-- [Notte Secret Proxy](https://docs.notte.cc/integrations/secret-proxy.md): Fill card numbers and other secrets through your tokenization proxy, without Notte seeing the real values
+- [Notte Secret Proxy](https://docs.notte.cc/integrations/secret-proxy.md): Fill card numbers, passwords, 2FA codes and other secrets through your tokenization proxy, without Notte seeing the real values
 
 ## Coding Agents
 

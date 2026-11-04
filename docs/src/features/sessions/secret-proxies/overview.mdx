@@ -1,6 +1,6 @@
 ---
 title: 'Secret Proxies'
-description: 'Fill card numbers and other secrets in a session without Notte seeing the real values'
+description: 'Fill card numbers, passwords, 2FA codes and other secrets in a session without Notte seeing the real values'
 ---
 import StartSession from '/snippets/sessions/secret_proxies/start_session.mdx';
 import WorkspaceSession from '/snippets/sessions/secret_proxies/workspace_session.mdx';
@@ -21,9 +21,11 @@ A secret proxy lets an agent fill card numbers, passwords and other secrets on a
 
 Your tokenization provider, such as [Evervault](/features/sessions/secret-proxies/evervault) or [VGS](/features/sessions/secret-proxies/vgs), or [your own proxy](/features/sessions/secret-proxies/custom-proxy), gives you stand-ins for the real values. The agent types the stand-ins. Traffic to the hosts you list goes through your secret proxy, which replaces each stand-in with the real value on its way to the site. Every other host stays on the session's normal proxy.
 
+This works for any value your proxy can read in the page's requests, not only cards: usernames and passwords on login forms, 2FA codes, API keys and tokens. A value the page encrypts before sending it cannot be swapped. See [Passwords, 2FA codes and API keys](/features/sessions/secret-proxies/credentials).
+
 ## How it works
 
-1. Your provider creates stand-in values, for example a Luhn-valid card number that keeps the card's brand.
+1. Your provider creates stand-in values, for example a Luhn-valid card number that keeps the card's brand, or a token that stands for a password.
 2. You start a session with a `secret` entry in `proxies`. For this session, the browser trusts your proxy's CA for the hosts you list, and only for those.
 3. The agent fills the stand-ins. The page, the agent, screenshots, recordings and network logs contain stand-ins.
 4. Requests to the listed hosts go to your secret proxy. For HTTPS sites they go through a tunnel, so Notte only carries encrypted bytes.
@@ -114,7 +116,11 @@ Whether your provider can send its traffic through another proxy depends on the 
 
 ## Next Steps
 
-<CardGroup cols={3}>
+<CardGroup cols={2}>
+  <Card title="Passwords, 2FA codes and API keys" icon="key" href="/features/sessions/secret-proxies/credentials">
+    Swap login credentials, one-time codes and API keys
+  </Card>
+
   <Card title="Evervault" icon="shield-halved" href="/features/sessions/secret-proxies/evervault">
     Use Evervault Browser Tokens
   </Card>

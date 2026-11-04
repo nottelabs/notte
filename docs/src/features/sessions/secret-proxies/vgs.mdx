@@ -12,8 +12,8 @@ VGS stores sensitive data in its vault and gives you aliases in its place. Its [
 ## Prerequisites
 
 - A VGS vault holding the data to fill, and its vault ID (it starts with `tnt`).
-- Aliases the site's form accepts. For card numbers, the `FPE_6_T_4` alias format keeps the card's format and Luhn check (see [operations](https://docs.verygoodsecurity.com/vault/http-proxy/operations)).
-- The hostnames that receive the data: the payment provider or iframe host, not only the merchant's site.
+- Aliases the site's form accepts. For card numbers, the `FPE_6_T_4` alias format keeps the card's format and Luhn check (see [operations](https://docs.verygoodsecurity.com/vault/http-proxy/operations)). For passwords, API keys and other data, the generic formats such as `UUID` can stand for any data (see [aliases](https://docs.verygoodsecurity.com/vault/tokens)).
+- The hostnames that receive the data: the payment provider or iframe host, not only the merchant's site, or for a login, the host the login form posts to.
 
 ## Configure VGS
 
@@ -41,6 +41,12 @@ The access credentials do not change per session, so you can [save the configura
 ## Example
 
 <VgsSession />
+
+## Passwords and other credentials
+
+Reveal a password or API key alias the same way as a card alias: add a route for the host that receives it, and a request-phase reveal filter that selects its field, such as the password input's form field name or the JSONPath of the password in a JSON login request. See [What you can swap](/features/sessions/secret-proxies/credentials#what-you-can-swap) for where each kind of secret usually appears and which host to list.
+
+VGS's public docs do not describe computing a value at request time, so a TOTP code that changes every 30 seconds needs a [custom proxy](/features/sessions/secret-proxies/credentials#2fa-codes) or a [Notte vault](/features/sessions/secret-proxies/credentials#secret-proxy-or-vault).
 
 ## Exit IP
 
