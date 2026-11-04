@@ -21,7 +21,7 @@ A secret proxy lets an agent fill card numbers, passwords and other secrets on a
 
 Your tokenization provider, such as [Evervault](/features/sessions/secret-proxies/evervault) or [VGS](/features/sessions/secret-proxies/vgs), or [your own proxy](/features/sessions/secret-proxies/custom-proxy), gives you stand-ins for the real values. The agent types the stand-ins. Traffic to the hosts you list goes through your secret proxy, which replaces each stand-in with the real value on its way to the site. Every other host stays on the session's normal proxy.
 
-This works for any value the page sends over HTTP or HTTPS, not only cards: usernames and passwords on login forms, 2FA codes, API keys and tokens. See [Passwords, 2FA codes and API keys](/features/sessions/secret-proxies/credentials).
+This works for any value your proxy can read in the page's requests, not only cards: usernames and passwords on login forms, 2FA codes, API keys and tokens. A value the page encrypts before sending it cannot be swapped. See [Passwords, 2FA codes and API keys](/features/sessions/secret-proxies/credentials).
 
 ## How it works
 
