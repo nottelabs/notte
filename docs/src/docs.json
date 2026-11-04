@@ -416,7 +416,9 @@
             "icon": "credit-card",
             "pages": [
               "integrations/agentcard",
-              "integrations/stripe-link"
+              "integrations/stripe-link",
+              "features/sessions/secret-proxies/evervault",
+              "features/sessions/secret-proxies/vgs"
             ]
           },
           {
