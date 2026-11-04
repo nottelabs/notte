@@ -1478,6 +1478,27 @@ async def test_a_skip_lasts_a_few_observations(session: NotteSession) -> None:
 
 
 @pytest.mark.asyncio
+async def test_clicking_a_skipped_field_offers_it_again(session: NotteSession) -> None:
+    page = '<label for="name">Enable/disable</label><input id="name"><button type="button">Continue</button>'
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    ids = await _ids(session)
+    decider = FakeDecider(
+        choices=[
+            {"operation": "TYPE_TEXT", "type_text_target": ids["name"]},
+            {"operation": "CLICK", "click_target": ids["name"]},
+            {"operation": "TYPE_TEXT", "type_text_target": ids["name"]},
+        ],
+        texts=["", "hello"],
+    )
+    # a wrong "" from the writer skips the field; the decider clicking it takes it for the next step
+    _ = await session.aact("Type hello in the text input", decider=decider)
+    assert ids["name"] not in decider.questions[1].get("type_text_target", Question(criteria={})).criteria
+    _ = await session.aact("Type hello in the text input", decider=decider)
+    assert ids["name"] in decider.questions[2]["type_text_target"].criteria
+    assert await session.window.page.input_value("#name") == "hello"
+
+
+@pytest.mark.asyncio
 async def test_a_call_skipping_too_many_fields_blocks(session: NotteSession) -> None:
     fields = "".join(f'<label for="f{i}">Field {i}</label><input id="f{i}">' for i in range(MAX_SKIPPED_FIELDS + 1))
     _ = await session.window.page.goto(f"data:text/html,{quote(f'<form>{fields}</form>')}")

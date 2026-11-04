@@ -287,10 +287,20 @@ class ActHistory:
     def no_text(self, page: ObservedPage) -> set[str]:
         """The ids, on `page`, of the skipped fields that still hold the value they held when skipped (a field whose
         value changed since is offered again)."""
+        return {element_id for _, element_id in self._skipped_on(page)}
+
+    def unskip(self, page: ObservedPage, element_id: str) -> None:
+        """The decider clicked the field `element_id` of `page`: it takes it for the next step, so a skip of it (the
+        writer's "no value" can be wrong) ends."""
+        dropped = [skipped for skipped, id in self._skipped_on(page) if id == element_id]
+        self.skipped = [skipped for skipped in self.skipped if skipped not in dropped]
+
+    def _skipped_on(self, page: ObservedPage) -> list[tuple[SkippedField, str]]:
+        """The skipped fields found on `page` with the value they held when skipped, with their ids there."""
         if not self.skipped:
-            return set()
+            return []
         names = accessible_names(page)
-        ids: set[str] = set()
+        found: list[tuple[SkippedField, str]] = []
         for skipped in self.skipped:
             if skipped.url != page.url:
                 continue
@@ -303,8 +313,8 @@ class ActHistory:
                 if names.get(action.id, skipped.name) != skipped.name:
                     continue
                 if _field_value(page, action.id) == skipped.value:
-                    ids.add(action.id)
-        return ids
+                    found.append((skipped, action.id))
+        return found
 
     def acted_since_observed(self) -> bool:
         """An action other than a WAIT ran since the last observation (the next one tells what it changed)."""
@@ -537,6 +547,8 @@ async def run_act(
             source_url=page.url,
             field_key=None if target is None or decision.operation != "TYPE_TEXT" else _typed_field(page, target),
         )
+        if target is not None and decision.operation == "CLICK":
+            history.unskip(page, target.element_id)
 
         async def answer_dialog(dialog: JsDialog, entry: ActHistoryEntry = entry) -> DialogAnswer:
             # a credential the action typed before the dialog opened is masked in what the decider reads of it
