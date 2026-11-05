@@ -13,6 +13,7 @@ from notte_core.act.space import (
     accessible_text,
     act_questions,
     build_act_space,
+    changed_beyond,
     covered_by_dialog,
     description_lines,
     field_errors,
@@ -1788,7 +1789,9 @@ def test_an_unnamed_listbox_is_named_by_the_short_text_before_it() -> None:
     names = accessible_names(page)
     # past the "Size guide" button
     assert names["I1"] == "Size"
-    assert "[I1] Size" in accessible_text(page)
+    text = accessible_text(page).splitlines()
+    # the label is not repeated as a line of its own
+    assert "[I1] Size" in text and "Size" not in text
     # not past a field, whose label the text is; not a sentence
     assert names["I3"] == "listbox"
     assert names["I4"] == "listbox"
@@ -1818,3 +1821,17 @@ def test_an_unnamed_listbox_is_named_without_the_observations_names() -> None:
     description = '_[:]Size\nI1[:]<ul role="listbox"></ul>\nO1[:]<li role="option">S</li>'
     actions = [FillAction(id="I1", value="<sample_value>", text_label=""), ClickAction(id="O1", text_label="S")]
     assert accessible_names(_page({}, description=description, actions=actions))["I1"] == "Size"
+
+
+def test_the_label_of_a_listbox_stays_text_of_the_page() -> None:
+    field = FillAction(id="I2", value="<sample_value>", text_label="note", accessible_name="Note")
+    listbox = FillAction(id="I1", value="<sample_value>", text_label="")
+    note = 'I2[:]<input type="text" name="note"></input>'
+    # a list with nothing to choose is not shown: the text before it stays a line of the page
+    empty = _page({}, description=f'{note}\n_[:]Size\nI1[:]<ul role="listbox"></ul>', actions=[field, listbox])
+    assert "Size" in accessible_text(empty).splitlines()
+    # options showing up under it name the list by the text, which is not gone from the page
+    description = f'{note}\n_[:]Size\nI1[:]<ul role="listbox"></ul>\nO1[:]<li role="option">S</li>'
+    shown = _page({}, description=description, actions=[field, listbox, ClickAction(id="O1", text_label="S")])
+    assert accessible_names(shown)["I1"] == "Size"
+    assert not changed_beyond(empty, shown, "I2", ["x"])

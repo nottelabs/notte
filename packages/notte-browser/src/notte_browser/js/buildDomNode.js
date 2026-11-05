@@ -801,8 +801,10 @@
 	const MAX_FALLBACK_DESCENDANTS = 200;
 
 	/**
-	 * The elements inside `element`, in document order, that may carry a markup hint (a test id, `<use>`, a class),
-	 * at most `MAX_HINT_ELEMENTS` of them.
+	 * The shown elements inside `element` (its composed tree: shadow roots and slotted content, as `contentText`
+	 * reads it), in reading order, that may carry a markup hint (a test id, `<use>`, a class), at most
+	 * `MAX_HINT_ELEMENTS` of them. An element hidden by CSS is left out (a hidden "previous" arrow next to the
+	 * shown "next" one), an `aria-hidden` icon is not (it is what a sighted user sees).
 	 *
 	 * @param {Element} element - The control.
 	 * @returns {Element[] | undefined} The elements, or undefined when `element` holds more than
@@ -810,14 +812,19 @@
 	 */
 	function hintElements(element) {
 		const found = [];
-		const stack = Array.from(childrenOf(element)).reverse();
+		const elementsIn = (node) =>
+			Array.from(contentChildren(node)).filter((child) => nodeTypeOf(child) === Node.ELEMENT_NODE);
+		const stack = elementsIn(element).reverse();
 		let seen = 0;
 		while (stack.length > 0) {
 			if (++seen > MAX_FALLBACK_DESCENDANTS) return undefined;
 			const node = stack.pop();
-			if (found.length < MAX_HINT_ELEMENTS && matches(node, MARKUP_HINT_SELECTOR)) found.push(node);
-			const children = childrenOf(node);
-			for (let i = children.length - 1; i >= 0; i--) stack.push(children[i]);
+			const style = getCachedComputedStyle(node);
+			// nothing inside a `display: none` element shows; a child of a `visibility: hidden` one can
+			if (style?.display === "none") continue;
+			const shown = style?.visibility !== "hidden" && style?.visibility !== "collapse";
+			if (shown && found.length < MAX_HINT_ELEMENTS && matches(node, MARKUP_HINT_SELECTOR)) found.push(node);
+			stack.push(...elementsIn(node).reverse());
 		}
 		return found;
 	}

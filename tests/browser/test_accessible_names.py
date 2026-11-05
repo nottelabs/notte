@@ -502,6 +502,13 @@ FALLBACK_PAGE = (
 <button id="stopwords" class="box" data-testid="btn-icon"></button>
 <input id="field" class="box size-input" data-testid="size-field">
 <input id="toggle" type="checkbox" data-testid="newsletter-optin">
+<button id="shownicon" class="box"><svg style="display: none" width="10" height="10"><use href="#arrow-left"></use></svg>
+  <svg width="10" height="10" aria-hidden="true"><use href="#arrow-right"></use></svg></button>
+<div id="shadow" class="box" role="button" tabindex="0"></div>
+<script>
+  document.getElementById("shadow").attachShadow({ mode: "open" }).innerHTML =
+    '<svg width="10" height="10"><use href="#icon-search"></use></svg>';
+</script>
 <div id="large" class="box" onclick="">"""
     + "<span></span>" * 200
     + """<span class="arrow-left"></span></div>
@@ -527,6 +534,9 @@ FALLBACK_EXPECTED = {
     # fields, checkboxes and radios are named by the text next to them
     "field": None,
     "toggle": None,
+    # the icon it shows, not a hidden one before it; an icon in its shadow root
+    "shownicon": "arrow right",
+    "shadow": "search",
     # a control with more than 200 elements inside is not an icon: its markup is not looked at
     "large": None,
 }

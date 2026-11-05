@@ -338,6 +338,8 @@ class _Names:
     used: frozenset[int]
     # clickable `<label>` elements that label the field next to them: the field is offered instead
     labels: frozenset[str]
+    # unnamed lists of options named by the text before them ("Size"), which is then not a line of its own
+    listbox_labels: frozenset[str] = frozenset()
     # the name of each disabled control (a `_[:]<... disabled>` block, without an id), by block index
     disabled: dict[int, str] = field(default_factory=dict)
     # what each control outside the viewport is (`_offscreen`, a `_[:]<...>` block without an id), by block index
@@ -448,12 +450,14 @@ MAX_LISTBOX_LABEL_LENGTH = 40
 _LISTBOX_LABEL_BLOCKS = 4
 
 
-def _listbox_label(blocks: Sequence[tuple[str | None, str]], index: int, used: Collection[int]) -> str | None:
-    """The short text before the listbox at block `index` that labels it ("Size", "Colour"): the nearest text of at
-    most `MAX_LISTBOX_LABEL_LENGTH` characters within `_LISTBOX_LABEL_BLOCKS` blocks, past buttons and links only (a
-    "Size guide" between them), and not one that is already the label of another element (`used`). It stops at
-    anything else: a field or another list (disabled or off-screen ones too, rendered without an id), or text too
-    long to be a label (a sentence between "Shipping" and the list)."""
+def _listbox_label(
+    blocks: Sequence[tuple[str | None, str]], index: int, used: Collection[int]
+) -> tuple[int, str] | None:
+    """The short text before the listbox at block `index` that labels it ("Size", "Colour"), with its block index:
+    the nearest text of at most `MAX_LISTBOX_LABEL_LENGTH` characters within `_LISTBOX_LABEL_BLOCKS` blocks, past
+    buttons and links only (a "Size guide" between them), and not one that is already the label of another element
+    (`used`). It stops at anything else: a field or another list (disabled or off-screen ones too, rendered without
+    an id), or text too long to be a label (a sentence between "Shipping" and the list)."""
     for i in range(index - 1, max(-1, index - 1 - _LISTBOX_LABEL_BLOCKS), -1):
         key, content = blocks[i]
         if key is None or i in used:
@@ -473,7 +477,7 @@ def _listbox_label(blocks: Sequence[tuple[str | None, str]], index: int, used: C
         if len(text) > MAX_LISTBOX_LABEL_LENGTH:
             return None
         if text:
-            return text
+            return i, text
     return None
 
 
@@ -495,6 +499,9 @@ def _read_names(page: ObservedPage) -> _Names:
     names: dict[str, str] = {}
     used: set[int] = set()
     labels: set[str] = set()
+    # unnamed lists of options named by the text before them
+    listbox_labels: set[str] = set()
+    empty = _empty_listboxes(page)
 
     def toggle(index: int) -> bool:
         if index < 0:
@@ -558,10 +565,15 @@ def _read_names(page: ObservedPage) -> _Names:
             )
         else:
             names[key] = _approximate_name(action, content, before, after)
-        if role == "listbox" and names[key] == role:
+        if role == "listbox" and names[key] == role and key not in empty:
             # an unnamed list of options (a size picker) is named by the short text before it ("Size"), with or
-            # without the observation's names
-            names[key] = _listbox_label(blocks, i, used) or role
+            # without the observation's names; the text is then not repeated (an empty list is not shown, and
+            # keeps its text)
+            found = _listbox_label(blocks, i, used)
+            if found is not None:
+                used.add(found[0])
+                names[key] = found[1]
+                listbox_labels.add(key)
         if role in ("checkbox", "radio"):
             neighbours = [(i + 1, after), (i - 1, before)]
         elif role in _FIELDS:
@@ -582,6 +594,7 @@ def _read_names(page: ObservedPage) -> _Names:
         names={k: v for k, v in names.items() if k not in labels},
         used=frozenset(used),
         labels=frozenset(labels),
+        listbox_labels=frozenset(listbox_labels),
         disabled=disabled,
         offscreen=offscreen,
     )
@@ -758,11 +771,15 @@ def _content(page: ObservedPage, field: str | None) -> Counter[str]:
 def _read_content(page: ObservedPage, field: str | None) -> Counter[str]:
     rendered = _rendered_lines(page.description)
     actions = {action.id: action for action in page.actions}
+    names = _names(page)
     content: Counter[str] = Counter()
     for key, line in _accessible_lines(page, str):
         if key is not None:
             action = actions.get(key)
             if key == field or (action is not None and _role(action, rendered.get(key, "")) in ("option", "listbox")):
+                if key in names.listbox_labels:
+                    # the text before the list that names it is still text of the page
+                    content[" ".join(names.names[key].split())] += 1
                 continue
             line = line.removeprefix(f"[{key}] ")
         content[" ".join(line.split())] += 1
