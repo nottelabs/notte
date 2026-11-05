@@ -86,6 +86,7 @@ class FunctionMetadataUpdateRequestDict(TypedDict):
     instructions: NotRequired[str | None]
     self_healing: NotRequired[bool | None]
     shared: NotRequired[bool | None]
+    deletion_protected: NotRequired[bool | None]
     response_format: NotRequired[dict[str, Any] | None]
 
 

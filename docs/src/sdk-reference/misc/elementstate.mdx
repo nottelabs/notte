@@ -21,7 +21,11 @@ Fields that do not apply to the element are `None`.
 - `sort`: the `aria-sort` of a column header, on the header and on the controls inside it (its sort
   button), when the column is sorted.
 - `draggable`: the element explicitly enables HTML drag and drop. This does not imply that
-  clicking it drags it, or that its click action is unavailable
+  clicking it drags it, or that its click action is unavailable.
+- `invalid` / `error`: the page marks the form field invalid (`aria-invalid`, or the browser's
+  `:user-invalid` once it was changed or its form submitted), and the error message it shows for it
+  (`aria-errormessage`, `aria-describedby` of an invalid field, an alert or error element next to it, or
+  the browser's validation message), cut to 150 characters. Either can come without the other
 
 ## Fields
 
@@ -65,6 +69,15 @@ Fields that do not apply to the element are `None`.
 </ParamField>
 
 <ParamField path="draggable" type="bool | None">
+</ParamField>
+
+<ParamField path="invalid" type="bool | None">
+</ParamField>
+
+<ParamField path="error" type="str | None">
+</ParamField>
+
+<ParamField path="error_truncated" type="bool" default="False">
 </ParamField>
 
 
