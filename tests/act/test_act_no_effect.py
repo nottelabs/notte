@@ -170,3 +170,51 @@ def test_a_go_back_that_moved_the_tab_back_is_offered_again() -> None:
     assert history.no_effect(replace(_page(), history_index=2), "check out") == set()
     # it did not move
     assert history.no_effect(replace(_page(), history_index=3), "check out") == {("GO_BACK", None)}
+
+
+def test_an_action_that_failed_twice_the_same_way_is_not_offered_again() -> None:
+    # typing into a dropdown that is not a text field fails every time, whatever the text
+    failed = _history(("TYPE_TEXT", "I13"), ("TYPE_TEXT", "I13"), error="NotteBaseError")
+    assert failed.no_effect(_page(), "check out") == {("TYPE_TEXT", "I13")}
+    # once can be bad luck
+    assert _history(("TYPE_TEXT", "I13"), error="NotteBaseError").no_effect(_page(), "check out") == set()
+    # for another instruction, or on another page, it is offered again
+    assert failed.no_effect(_page(), "change the email") == set()
+    from dataclasses import replace
+
+    assert failed.no_effect(replace(_page(), fingerprint="other"), "check out") == set()
+
+
+def test_failures_with_different_errors_are_offered_again() -> None:
+    history = _history(("TYPE_TEXT", "I2"), error="ActionExecutionError")
+    history.entries += _history(("TYPE_TEXT", "I2"), error="TimeoutError").entries
+    assert history.no_effect(_page(), "check out") == set()
+
+
+def test_a_click_that_failed_twice_is_not_offered_to_close_a_dialog_either() -> None:
+    failed = _history(("CLICK", "B1"), ("CLOSE_DIALOG", "B1"), error="TimeoutError")
+    assert failed.no_effect(_page(), "check out") == {("CLICK", "B1"), ("CLOSE_DIALOG", "B1")}
+
+
+EXPIRY_PAGE = """<meta charset="utf-8"><label for="month">Expiry month</label>
+<div id="month" role="combobox" tabindex="0" aria-label="Expiry month">MM</div>
+<button id="pay">Review order</button>"""
+
+
+@pytest.mark.asyncio
+async def test_typing_that_fails_twice_the_same_way_is_not_offered_again(session: NotteSession) -> None:
+    # a dropdown that is not a text field: typing in it fails, whatever the text (a card expiry month)
+    _ = await session.window.page.goto(f"data:text/html,{quote(EXPIRY_PAGE)}")
+    month = (await _ids(session))["month"]
+    decider = FakeDecider(
+        choices=[{"operation": "TYPE_TEXT", "type_text_target": month}] * 2 + [{"operation": "DONE"}],
+        texts=["12", "03"],
+    )
+    for _ in range(3):
+        _ = await session.aact("Set the expiry month to 03", decider=decider, raise_on_failure=False)
+    # once can be bad luck: offered again after the first failure
+    assert month in decider.questions[1]["type_text_target"].criteria
+    # twice the same way: not offered again on this page (clicking the field still is)
+    third = decider.questions[2]
+    assert "type_text_target" not in third or month not in third["type_text_target"].criteria
+    assert month in third["click_target"].criteria
