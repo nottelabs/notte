@@ -227,6 +227,11 @@ _LATE_VALUE_READ_S = 1.0
 _MASK_PREFIX_DIGITS = 3
 # How long the field that replaced the filled one is looked up (it is already on the page: see `_read_back`)
 _REPLACED_FIELD_TIMEOUT_MS = 1000
+# What a field the page re-rendered keeps, and another field does not share
+_FIELD_IDENTITY = (
+    "(el) => [el.localName, el.type || '', el.id, el.name || '', el.getAttribute('aria-label') || '',"
+    " el.placeholder || '', el.autocomplete || '']"
+)
 
 # Page-side implementation: js/find_dropdown_option.js
 _FIND_DROPDOWN_OPTION = script("find_dropdown_option.js")
@@ -400,11 +405,14 @@ async def _read_back(
     """The value the field holds after a fill (`_typed_value`), and the field it was read from. None when it cannot be
     checked, and the fill is then taken as done (as before the read-back): another element than a text field, a
     fill that navigated (an OTP form that goes on at its last digit), or a page that replaced the field with one the
-    selector does not find as a single element. A field the page replaced is read where the selector now finds it:
-    the element act filled, removed from the page, would still hold the text."""
+    selector does not find as a single element with the same identity (`_FIELD_IDENTITY`). A field the page replaced
+    is read where the selector now finds it: the element act filled, removed from the page, would still hold the
+    text. Another field the selector now finds (the next input for `input:nth-of-type(1)`) is never read or typed
+    into."""
     try:
         if await field.evaluate("(el) => el.isConnected"):
             return await _typed_value(field), field
+        identity = await field.evaluate(_FIELD_IDENTITY)
     except Error:
         # the document is gone: the fill navigated
         return None, field
@@ -413,6 +421,8 @@ async def _read_back(
             return None, field
         replacement = await locator.element_handle(timeout=_REPLACED_FIELD_TIMEOUT_MS)
         handles.append(replacement)
+        if await replacement.evaluate(_FIELD_IDENTITY) != identity:
+            return None, field
         return await _typed_value(replacement), replacement
     except Error:
         return None, field
@@ -1028,21 +1038,23 @@ async def _interact(
                 else:
                     await locator.evaluate(_MOVE_CARET_TO_END, timeout=budget.remaining_ms())
 
-                # Use isolated clipboard variable instead of system clipboard
-                handled: bool = await locator.evaluate(_PASTE_TEXT, get_str_value(value), timeout=budget.remaining_ms())
+                # the element, taken before the paste: a handler of the paste can change the page so that the
+                # selector no longer finds the field (as in `_fill`)
+                field = await locator.element_handle(timeout=budget.remaining_ms())
+                handles = [field]
+                try:
+                    # Use isolated clipboard variable instead of system clipboard
+                    handled: bool = await field.evaluate(_PASTE_TEXT, get_str_value(value))
 
-                await window.short_wait()
-                if action.clear_before_fill and not in_editing_host and not handled:
-                    # a text field can refuse a paste as it refuses a fill (`_fill`). A page that handled the paste
-                    # itself put the text where it wanted it, not necessarily in the field.
-                    field = await locator.element_handle(timeout=budget.remaining_ms())
-                    handles = [field]
-                    try:
+                    await window.short_wait()
+                    if action.clear_before_fill and not in_editing_host and not handled:
+                        # a text field can refuse a paste as it refuses a fill (`_fill`). A page that handled the
+                        # paste itself put the text where it wanted it, not necessarily in the field.
                         await _check_kept(window, locator, field, get_str_value(value), budget, handles)
-                    finally:
-                        for handle in handles:
-                            with suppress(Error):
-                                await handle.dispose()
+                finally:
+                    for handle in handles:
+                        with suppress(Error):
+                            await handle.dispose()
             elif action.clear_before_fill:
                 await _fill(window, locator, get_str_value(value), budget)
             else:

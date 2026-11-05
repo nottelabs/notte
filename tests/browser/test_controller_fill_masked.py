@@ -179,6 +179,26 @@ async def test_a_field_the_page_replaced_is_read_where_its_selector_finds_it(ses
 
 
 @pytest.mark.asyncio
+async def test_another_field_the_selector_finds_after_a_removal_is_left_alone(session: NotteSession) -> None:
+    # the filled field goes away: its selector now finds the next input, which is another field
+    await _open(session, '<input id="code" oninput="this.remove()"><input id="other" value="keep">')
+    result = await session.aexecute(
+        FillAction(selector="input:nth-of-type(1)", value="4155550123", timeout=3000), raise_on_failure=False
+    )
+    assert result.success, result.message
+    assert await _value(session, "#other") == "keep"
+
+
+@pytest.mark.asyncio
+async def test_a_paste_into_a_field_its_handler_renames_is_read_back(session: NotteSession) -> None:
+    # a leading space makes the fill a paste; the page renames the field as it is typed into
+    await _open(session, """<input id="code" oninput="this.id = 'code-typed'">""")
+    result = await session.aexecute(FillAction(selector="#code", value=" AB12", timeout=3000), raise_on_failure=False)
+    assert result.success, result.message
+    assert (await _value(session, "#code-typed")).strip() == "AB12"
+
+
+@pytest.mark.asyncio
 async def test_a_refused_paste_is_typed_into(session: NotteSession) -> None:
     # a leading space makes the fill a paste (indentation): the field refuses it as it refuses a fill
     await _open(session, REFUSING.replace("LATER", "false"))
