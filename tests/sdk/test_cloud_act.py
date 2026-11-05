@@ -15,7 +15,6 @@ from notte_sdk.endpoints.page import ACT_TIMEOUT_SECONDS
 from notte_sdk.endpoints.sessions import RemoteSession
 
 from scripts.generate_sdk_endpoints import REQUEST_TIMEOUTS
-
 from tests.sdk.test_async_resources import exchange_async, exchange_sync
 from tests.sdk.test_generated_endpoints import SERVER, fake
 
