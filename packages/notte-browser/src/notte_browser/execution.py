@@ -44,6 +44,7 @@ from notte_core.errors import (
     FileChooserOpenedError,
     NotteTimeoutError,
     SnapshotProcessingError,
+    TextNotKeptError,
 )
 from notte_core.logging import logger
 from notte_core.profiling import profiler
@@ -411,10 +412,10 @@ async def _read_back(
         return None, field
 
 
-def _not_kept(window: BrowserWindow, value: str) -> ActionExecutionError:
+def _not_kept(window: BrowserWindow, value: str) -> TextNotKeptError:
     # the text is not quoted: it can be a secret
     reason = "The field stayed empty after typing" if value == "" else "The field holds other text than the typed text"
-    return ActionExecutionError("fill", window.page.url, reason=reason)
+    return TextNotKeptError(window.page.url, reason=reason)
 
 
 async def _retype(

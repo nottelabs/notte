@@ -436,9 +436,70 @@ def test_act_until_done_goes_on_when_alternating_actions_are_on_different_elemen
     assert len(act_until_done(session, "go")) == 5
 
 
-def test_act_until_done_ignores_waits_and_respects_the_budget() -> None:
-    session = _ScriptedSession([_result(fingerprint="a", operation="WAIT") for _ in range(10)])
-    assert len(act_until_done(session, "go", max_steps=6)) == 6
+def _wait(changed: bool, fingerprint: str = "a") -> ActResult:
+    """A WAIT whose watch of the page saw it change (`changed`), or not: what `wait_for_change` returns."""
+    import datetime as dt
+
+    from notte_core.act.wait import wait_result
+
+    started = dt.datetime.now(dt.timezone.utc)
+    return ActResult.model_validate(
+        {
+            "instruction": "go",
+            "status": "executed",
+            "fingerprint": fingerprint,
+            "operation": "WAIT",
+            "execution": wait_result("changed" if changed else "unchanged", started, 3000),
+        }
+    )
+
+
+def test_act_until_done_ignores_a_few_waits_and_respects_the_budget() -> None:
+    # waiting on a page that loads: a few WAITs, below the limit, are not a loop
+    session = _ScriptedSession([_wait(changed=False) for _ in range(10)])
+    assert len(act_until_done(session, "go", max_steps=4)) == 4
+
+
+def test_act_until_done_stops_after_waits_through_which_the_page_changed_nothing() -> None:
+    # a page that never renders: WAIT after WAIT, nothing changes, until the budget ran out
+    session = _ScriptedSession([_wait(changed=False, fingerprint="blank") for _ in range(60)])
+    # 5 WAITs saw nothing, and the 6th decision was taken on the same page: nothing changed after the 5th either
+    assert len(act_until_done(session, "go", max_steps=60)) == 6
+
+
+def test_act_until_done_goes_on_when_the_sixth_wait_sees_a_change() -> None:
+    # five quiet WAITs, then the page renders while the sixth watches it
+    results = [_wait(changed=False) for _ in range(5)] + [_wait(changed=True)]
+    session = _ScriptedSession([*results, _step("b", "CLICK", "B1"), _result("done", "c")])
+    assert len(act_until_done(session, "go", max_steps=20)) == 8
+
+
+def test_act_until_done_goes_on_when_the_page_changed_after_the_last_wait() -> None:
+    # a button rendered during the 5th WAIT, in a way its watch missed: the next decision sees another page
+    results = [_wait(changed=False) for _ in range(5)]
+    session = _ScriptedSession([*results, _step("b", "CLICK", "B1"), _result("done", "c")])
+    assert len(act_until_done(session, "go", max_steps=20)) == 7
+
+
+def test_act_until_done_goes_on_waiting_while_the_page_text_changes() -> None:
+    # "Preparing report: 40%": the text changes, the fingerprint (URL and controls) does not
+    session = _ScriptedSession([_wait(changed=True) for _ in range(10)])
+    assert len(act_until_done(session, "go", max_steps=10)) == 10
+
+
+def test_act_until_done_goes_on_waiting_while_the_page_changes_between_waits() -> None:
+    # the page loads while act observes and decides, and is quiet while each WAIT watches it
+    session = _ScriptedSession([_wait(changed=False, fingerprint=f"p{i}") for i in range(10)])
+    assert len(act_until_done(session, "go", max_steps=10)) == 10
+
+
+def test_act_until_done_counts_only_waits_in_a_row() -> None:
+    # another action between the WAITs (a scroll) starts the count again
+    results = [_wait(changed=False) for _ in range(4)]
+    results += [_step("a", "SCROLL_DOWN")]
+    results += [_wait(changed=False) for _ in range(4)]
+    session = _ScriptedSession([*results, _result("done", "r")])
+    assert len(act_until_done(session, "go", max_steps=20)) == 10
 
 
 def test_act_errors_rehydrate_from_their_serialized_form() -> None:

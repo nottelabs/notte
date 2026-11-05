@@ -22,7 +22,7 @@ An invalid answer (decision or field value) is asked again once; a second invali
 
 import asyncio
 import time
-from collections import deque
+from collections import Counter, deque
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from typing import Any, Protocol
@@ -83,7 +83,7 @@ from notte_core.credentials.base import (
     UserNameField,
 )
 from notte_core.dom_tree import NodeSelectors
-from notte_core.errors import ContentFilterError, FileChooserOpenedError
+from notte_core.errors import ContentFilterError, FileChooserOpenedError, TextNotKeptError
 from notte_core.observation import ExecutionResult, Observation
 
 HISTORY_SIZE = 10
@@ -238,6 +238,10 @@ class ActHistoryEntry:
 _UNTRACKED = ("WAIT", "SCROLL_DOWN", "SCROLL_UP")
 # keys pressed in the focused field: what they do depends on the focus, which the fingerprint ignores
 _FOCUSED_KEYS = ("PRESS_ENTER", "CLOSE_SUGGESTIONS")
+# an action that failed this many times with the same error on one page is not offered again there (`no_effect`):
+# once can be bad luck (a click that timed out), twice the same way is how the element answers (typing into a
+# dropdown that is not a text field)
+FAILURE_LIMIT = 2
 # both click a button: one that changed nothing is not offered as the other either
 _CLICKS = ("CLICK", "CLOSE_DIALOG")
 
@@ -433,8 +437,9 @@ class ActHistory:
         Scrolls and WAIT are left out: the fingerprint ignores the scroll position, and a wait is expected to change
         nothing. So is a key pressed in the focused field (Enter, Escape) followed by an action that can move the
         focus, which the fingerprint ignores (a click, not a scroll or another key), and a GO_BACK that moved the tab
-        back in its history (`history_index`). So is an action that failed (a click that timed out can work when tried again), unless it opened a file chooser: that
-        opens it again."""
+        back in its history (`history_index`). So is an action that failed (a click that timed out can work when tried
+        again), unless it opened a file chooser, which it opens again; one that failed twice the same way is in
+        `repeated_failures`."""
         entries = list(self.entries)
         return {
             (kind, e.target)
@@ -452,6 +457,35 @@ class ActHistory:
                 or all(later.kind in _UNTRACKED or later.kind in _FOCUSED_KEYS for later in entries[i + 1 :])
             )
             for kind in (_CLICKS if e.kind in _CLICKS else (e.kind,))
+        }
+
+    def repeated_failures(self, page: ObservedPage, instruction: str) -> set[tuple[str, str | None]]:
+        """The (operation, target key) of the actions for `instruction` that failed `FAILURE_LIMIT` times with the
+        same error on the very page state of `page`: trying again fails again (typing "03" and "12" into a dropdown
+        that is not a text field). One failure can be bad luck (a click that timed out): it is offered again. So is a
+        field that did not keep the text (`TextNotKeptError`): it rejected that value, and the writer writes it in
+        another form (`RETRY_TYPED`)."""
+        entries = list(self.entries)
+        # a click and a dialog close on one element are one click (as in `no_effect`)
+        failures = Counter(
+            ("CLICK" if e.kind in _CLICKS else e.kind, e.target, e.error)
+            for i, e in enumerate(entries)
+            if e.error is not None
+            and e.error != TextNotKeptError.__name__
+            and e.instruction == instruction
+            and e.fingerprint == page.fingerprint
+            and e.kind not in _UNTRACKED
+            # a key pressed in the focused field, followed by an action that can move the focus (as in `no_effect`)
+            and (
+                e.kind not in _FOCUSED_KEYS
+                or all(later.kind in _UNTRACKED or later.kind in _FOCUSED_KEYS for later in entries[i + 1 :])
+            )
+        )
+        return {
+            (kind, target)
+            for (operation, target, _), count in failures.items()
+            if count >= FAILURE_LIMIT
+            for kind in (_CLICKS if operation in _CLICKS else (operation,))
         }
 
     def acted_since_observed(self) -> bool:
@@ -611,6 +645,8 @@ async def run_act(
             # what act typed in the fields: a field holding another form of it shows what was typed
             typed=history.typed_values(page),
             no_effect=history.no_effect(page, instruction),
+            # what failed twice the same way on this page: not offered again, checkboxes included
+            failed=history.repeated_failures(page, instruction),
         )
         # a scroll that failed on this very page fails again: not offered until the page changes
         for operation in history.failed_scrolls(page):

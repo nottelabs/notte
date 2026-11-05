@@ -93,6 +93,10 @@ def wait_failure(reason: str, url: str, started: dt.datetime, timeout_ms: int) -
     )
 
 
+# how the message of a WAIT that saw the page change neither its DOM nor its URL starts (`wait_result`)
+UNCHANGED_MESSAGE = "The page did not change in"
+
+
 def wait_result(outcome: str, started: dt.datetime, timeout_ms: int) -> ExecutionResult:
     """The `ExecutionResult` of a WAIT that ended with `outcome`: `changed`, `navigated` or `unchanged`."""
     ended = dt.datetime.now(dt.timezone.utc)
@@ -100,7 +104,17 @@ def wait_result(outcome: str, started: dt.datetime, timeout_ms: int) -> Executio
     message = {
         "changed": f"The page changed after {elapsed} ms.",
         "navigated": f"The page navigated after {elapsed} ms.",
-    }.get(outcome, f"The page did not change in {timeout_ms} ms.")
+    }.get(outcome, f"{UNCHANGED_MESSAGE} {timeout_ms} ms.")
     return ExecutionResult(
         action=WaitAction(time_ms=timeout_ms), success=True, message=message, started_at=started, ended_at=ended
+    )
+
+
+def waited_for_nothing(execution: ExecutionResult | None) -> bool:
+    """`execution` is a WAIT that ran to its end without the page changing its DOM (text included) or its URL."""
+    return (
+        execution is not None
+        and execution.success
+        and isinstance(execution.action, WaitAction)
+        and (execution.message or "").startswith(UNCHANGED_MESSAGE)
     )
