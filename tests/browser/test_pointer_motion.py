@@ -434,7 +434,7 @@ async def test_a_check_whose_element_is_gone_afterwards_still_succeeds(session: 
 
     async def removed_first(page: Page, element: Locator | ElementHandle) -> None:
         # the page removes the checkbox once it changed, before the pointer is recorded
-        _ = await evaluate_in_main_world(page.main_frame, "document.getElementById('gone').remove()")
+        _ = await evaluate_in_main_world(page.main_frame, "document.getElementById('gone')?.remove()")
         await record(page, element)
 
     started = time.monotonic()
@@ -443,3 +443,21 @@ async def test_a_check_whose_element_is_gone_afterwards_still_succeeds(session: 
     assert result.success, result.message
     # recording where the pointer went does not wait for an element that is gone
     assert time.monotonic() - started < 2
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("pointer_motion")
+async def test_recording_the_pointer_does_not_use_the_actions_deadline(session: NotteSession, site: str) -> None:
+    _ = await session.aexecute(type="goto", url=f"{site}/vanishing")
+    viewport = pointer._viewport  # pyright: ignore[reportPrivateUsage]
+
+    async def slow_viewport(page: Page) -> tuple[float, float]:
+        # slower than the rest of the action's budget, within the record's own bound
+        await asyncio.sleep(0.45)
+        return await viewport(page)
+
+    with patch.object(pointer, "_viewport", slow_viewport):
+        result = await session.aexecute(CheckAction(selector="#gone", value=True, timeout=400), raise_on_failure=False)
+    assert result.success, result.message
+    state = pointer.track(session.window.page)
+    assert state.position is not None and inside(state.position, (200, 200, 20, 20))

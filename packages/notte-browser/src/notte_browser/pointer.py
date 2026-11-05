@@ -10,7 +10,9 @@ can seed.
 import asyncio
 import math
 import random
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Iterator
+from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass
 from typing import TypedDict
 from weakref import WeakKeyDictionary
@@ -77,6 +79,8 @@ class _PointerState:
 
 
 _STATES: WeakKeyDictionary[Page, _PointerState] = WeakKeyDictionary()
+# Elements the driver moved the pointer onto inside an action's deadline, recorded after it (`deferred_records`)
+_DEFERRED: ContextVar[list[tuple[Page, Locator | ElementHandle]] | None] = ContextVar("pointer_deferred", default=None)
 
 
 def track(page: Page) -> _PointerState:
@@ -100,6 +104,24 @@ def moved(page: Page, point: Point | None) -> None:
         state.position = point
 
 
+@contextmanager
+def deferred_records() -> Iterator[list[tuple[Page, Locator | ElementHandle]]]:
+    """Inside, `moved_onto` only notes its element, so reading where it is cannot use an action's deadline. Pass
+    the notes to `record_deferred` once the deadline no longer applies."""
+    records: list[tuple[Page, Locator | ElementHandle]] = []
+    token = _DEFERRED.set(records)
+    try:
+        yield records
+    finally:
+        _DEFERRED.reset(token)
+
+
+async def record_deferred(records: list[tuple[Page, Locator | ElementHandle]]) -> None:
+    """Records the last element noted by `deferred_records`: the pointer was last moved onto it."""
+    if records:
+        await moved_onto(*records[-1])
+
+
 async def moved_onto(page: Page, element: Locator | ElementHandle) -> None:
     """Records that an action of the driver on `element` (a click, a check, a hover) moved the pointer of `page`
     onto it, to the middle of its visible part, when the pointer is tracked."""
@@ -107,6 +129,10 @@ async def moved_onto(page: Page, element: Locator | ElementHandle) -> None:
     if state is None:
         return
     state.position = None
+    pending = _DEFERRED.get()
+    if pending is not None:
+        pending.append((page, element))
+        return
     scope = asyncio.timeout(_ELEMENT_BOX_S)
     try:
         async with scope:

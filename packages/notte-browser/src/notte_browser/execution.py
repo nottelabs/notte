@@ -854,37 +854,40 @@ async def execute_interaction_action(
     scope = asyncio.timeout_at(deadline)
     clicked_page = window.page if after_click is not None else None
     closed_error: Error | None = None
-    try:
-        async with scope:
-            try:
-                await _interact(
-                    window,
-                    action,
-                    _ActionBudget(deadline),
-                    prev_snapshot,
-                    storage=storage,
-                    verbose=verbose,
-                    before_click=before_click,
-                )
-            except Error as error:
-                if (
-                    after_click is not None
-                    and clicked_page is not None
-                    and clicked_page.is_closed()
-                    and "Target page, context or browser has been closed" in str(error)
-                    and any(not candidate.is_closed() for candidate in clicked_page.context.pages)
-                ):
-                    closed_error = error
-                    await after_click(False)
+    # where the pointer went is read after the deadline: it cannot fail an action that succeeded
+    with pointer.deferred_records() as records:
+        try:
+            async with scope:
+                try:
+                    await _interact(
+                        window,
+                        action,
+                        _ActionBudget(deadline),
+                        prev_snapshot,
+                        storage=storage,
+                        verbose=verbose,
+                        before_click=before_click,
+                    )
+                except Error as error:
+                    if (
+                        after_click is not None
+                        and clicked_page is not None
+                        and clicked_page.is_closed()
+                        and "Target page, context or browser has been closed" in str(error)
+                        and any(not candidate.is_closed() for candidate in clicked_page.context.pages)
+                    ):
+                        closed_error = error
+                        await after_click(False)
+                    raise
+                if after_click is not None:
+                    await after_click(True)
+        except TimeoutError as e:
+            if not scope.expired():
                 raise
-            if after_click is not None:
-                await after_click(True)
-    except TimeoutError as e:
-        if not scope.expired():
-            raise
-        if closed_error is not None:
-            raise closed_error from e
-        raise NotteTimeoutError(message=f"Action timed out after {action.timeout}ms") from e
+            if closed_error is not None:
+                raise closed_error from e
+            raise NotteTimeoutError(message=f"Action timed out after {action.timeout}ms") from e
+    await pointer.record_deferred(records)
     return True
 
 
