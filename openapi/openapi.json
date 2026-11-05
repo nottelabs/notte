@@ -17411,15 +17411,31 @@
             "default": true
           },
           "browser_type": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "chromium",
+                  "chrome",
+                  "firefox",
+                  "chrome-nightly",
+                  "chrome-turbo"
+                ]
+              },
+              {
+                "type": "string",
+                "const": "chrome-nitro"
+              }
+            ],
             "enum": [
               "chromium",
               "chrome",
+              "chrome-nitro",
               "chrome-nightly",
               "chrome-turbo"
             ],
             "title": "Browser Type",
-            "description": "The browser type to use. Supported values are chromium and chrome. chrome-nightly and chrome-turbo are legacy aliases for chrome.",
+            "description": "The browser type to use. Supported values are chromium, chrome and chrome-nitro. chrome-nitro creates a managed Chrome Nitro session. chrome-nightly and chrome-turbo are legacy aliases for chrome.",
             "default": "chromium"
           },
           "user_agent": {
