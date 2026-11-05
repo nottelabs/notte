@@ -35,7 +35,7 @@ All body fields are optional. Any other field is rejected.
 | Field | Description |
 |-------|-------------|
 | `proxy_url_tls` | `https://user:pass@proxy.notte.cc:443`. Your client connects to the gateway over TLS. Use it when your client supports HTTPS proxies. |
-| `proxy_url_plain` | `http://user:pass@proxy.notte.cc:3128`. For clients that only support HTTP proxies. |
+| `proxy_url_plain` | `http://user:pass@proxy.notte.cc:3128`. For clients that only support HTTP proxies. The credential then travels unencrypted to the gateway, even for `https://` sites, and anyone on the network path can reuse it until it expires. Prefer `proxy_url_tls`. |
 | `username`, `password` | The same credential, for clients that take them separately. |
 | `expires_at` | When the credential stops working. |
 
