@@ -5,13 +5,16 @@ Not an agent: one instruction, no planning. It stops when the decider answers DO
 last four actions alternate between two on the same element (A, B, A, B: a select set to 1900, 1901, 1900, 1901),
 which change the page each time without getting anywhere, or when the same action ran on the same page three times
 within the last twelve: a cycle through several pages or elements (Checkout, then back from the sign-in page it
-opens; Continue, then a scroll, on a form that does not submit; scrolling down and up again).
+opens; Continue, then a scroll, on a form that does not submit; scrolling down and up again). It also stops after five
+WAITs in a row through which the page changed nothing, its text included: a page that never renders does not start
+rendering by waiting longer.
 """
 
 from collections.abc import Sequence
 from typing import Any, Protocol
 
 from notte_core.act.types import ActResult
+from notte_core.act.wait import waited_for_nothing
 
 UNCHANGED_LIMIT = 3
 # A, B, A, B
@@ -29,6 +32,9 @@ SCROLL_BACK_AND_FORTH = 4
 # direction changes a run of scrolls needs to be a back-and-forth: down, up, then down again. Totals alone are not:
 # three down then two up to reach a button above a field reverses once
 SCROLL_REVERSALS = 2
+# WAITs in a row through which the page did not change: a page still loading changes within a few (each waits up to a
+# few seconds for a change); on a guest-checkout benchmark no run that went on to finish waited more than twice in a row
+WAIT_LIMIT = 5
 
 
 class SupportsAct(Protocol):
@@ -96,9 +102,25 @@ def _repeating(results: list[ActResult]) -> bool:
     return max(down, up) >= REPEAT_LIMIT and min(down, up) >= REPEAT_LIMIT - 1 and _reversals(same) >= SCROLL_REVERSALS
 
 
+def _waiting(results: list[ActResult]) -> bool:
+    """`WAIT_LIMIT` WAITs in a row through which the page changed nothing, both while each WAIT watched it (its DOM,
+    text included, and its URL) and between them, while act observed and decided: the decision after the last of
+    them, a WAIT again that saw nothing either, was taken on the page the first was (same fingerprint). Any other
+    action, a WAIT that saw a change ("Preparing report: 40%"), or a page that changed between two WAITs starts the
+    count again."""
+    recent = results[-(WAIT_LIMIT + 1) :]
+    return (
+        len(recent) == WAIT_LIMIT + 1
+        and all(r.status == "executed" and r.operation == "WAIT" for r in recent)
+        and all(waited_for_nothing(r.execution) for r in recent)
+        and all(r.fingerprint is not None for r in recent)
+        and len({r.fingerprint for r in recent}) == 1
+    )
+
+
 def _stop(results: list[ActResult]) -> bool:
     last = results[-1]
-    if last.status != "executed" or _alternating(results) or _repeating(results):
+    if last.status != "executed" or _alternating(results) or _repeating(results) or _waiting(results):
         return True
     # the page each decision was taken on: identical fingerprints mean the actions in between changed nothing
     recent = results[-(UNCHANGED_LIMIT + 1) :]
@@ -112,8 +134,8 @@ def _stop(results: list[ActResult]) -> bool:
 
 def act_until_done(session: SupportsAct, instruction: str, *, max_steps: int = 20, **kwargs: Any) -> list[ActResult]:
     """Call `session.act(instruction)` until DONE / BLOCKED / stale, `max_steps`, 3 unchanged actions
-    (WAIT and scrolls aside), 4 actions alternating on one element, or the same action on the same page 3 times
-    within 12 actions."""
+    (WAIT and scrolls aside), 4 actions alternating on one element, the same action on the same page 3 times
+    within 12 actions, or 5 WAITs in a row through which the page changed nothing."""
     results: list[ActResult] = []
     for _ in range(max_steps):
         results.append(session.act(instruction, raise_on_failure=False, **kwargs))
