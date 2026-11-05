@@ -463,7 +463,15 @@ def test_act_until_done_ignores_a_few_waits_and_respects_the_budget() -> None:
 def test_act_until_done_stops_after_waits_through_which_the_page_changed_nothing() -> None:
     # a page that never renders: WAIT after WAIT, nothing changes, until the budget ran out
     session = _ScriptedSession([_wait(changed=False, fingerprint="blank") for _ in range(60)])
-    assert len(act_until_done(session, "go", max_steps=60)) == 5
+    # 5 WAITs saw nothing, and the 6th decision was taken on the same page: nothing changed after the 5th either
+    assert len(act_until_done(session, "go", max_steps=60)) == 6
+
+
+def test_act_until_done_goes_on_when_the_page_changed_after_the_last_wait() -> None:
+    # a button rendered during the 5th WAIT, in a way its watch missed: the next decision sees another page
+    results = [_wait(changed=False) for _ in range(5)]
+    session = _ScriptedSession([*results, _step("b", "CLICK", "B1"), _result("done", "c")])
+    assert len(act_until_done(session, "go", max_steps=20)) == 7
 
 
 def test_act_until_done_goes_on_waiting_while_the_page_text_changes() -> None:
