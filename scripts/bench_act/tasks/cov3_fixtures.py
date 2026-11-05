@@ -3,7 +3,8 @@
 phone fields with a ticket stepper, a client-side routed help center, a store finder in nested cross-origin frames, an
 infinite scroll on the page itself, a paged table with icon-only buttons, a Spanish cookie dialog in a cross-origin
 frame, an inbox named by titles and aria-labelledby chains, a submit button disabled until the form is valid (with an
-async name check), and an Undo toast that disappears."""
+async name check), an Undo toast that disappears, and an add-to-cart upsell dialog followed by a confirmation dialog
+that holds Checkout."""
 
 import json
 from dataclasses import replace
@@ -194,6 +195,13 @@ TASKS = [
         "Rechaza todas las cookies opcionales y abre la página de contacto.",
         _cookie_refused,
         tags=("es", "consent", "dark-pattern", "iframe", "cross-origin"),
+    ),
+    Task(
+        "f3-added",
+        "{fixtures}/cov3/added.html",
+        "Add the socks to the cart without any protection plan, then go to checkout.",
+        _page("added-checkout.html", item="socks", qty="1", protection="no"),
+        tags=("modal", "add-to-cart", "upsell"),
     ),
     Task(
         "f3-inbox",

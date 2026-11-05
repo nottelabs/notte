@@ -1132,6 +1132,41 @@ async def test_a_dialog_over_the_page_is_closed_by_its_own_operation(session: No
     assert "Pricing" in decider.states[1].page.text
 
 
+# an add-to-cart confirmation: the dialog the click opens holds the next step
+ADDED_PAGE = """<h1>Socks</h1><button id="add" onclick="added.hidden = false">Add to cart</button>
+<div id="added" hidden style="position:fixed;inset:0;background:rgba(0,0,0,.5)">
+<div role="dialog" aria-modal="true" aria-label="Added to cart" style="background:#fff;padding:24px">
+<p>Added to your cart</p><a id="checkout" href="#checkout">Checkout</a>
+<button id="close" onclick="added.hidden = true">Close</button></div></div>"""
+
+
+@pytest.mark.asyncio
+async def test_the_action_that_opened_a_dialog_is_told(session: NotteSession) -> None:
+    _ = await session.window.page.goto(f"data:text/html,{quote(ADDED_PAGE)}")
+    ids = await _ids(session)
+    decider = FakeDecider(
+        choices=[
+            {"operation": "CLICK", "click_target": ids["add"]},
+            {"operation": "CLOSE_DIALOG", "close_dialog_target": "B1"},
+            {"operation": "DONE"},
+        ]
+    )
+    _ = await session.aact("Buy the socks", decider=decider)
+    _ = await session.aact("Buy the socks", decider=decider)
+    _ = await session.aact("Buy the socks", decider=decider)
+    # the dialog over the page is the click's result: the decider is told, with the rule on what to do in it
+    assert decider.states[1].recent_actions[-1] == {
+        "action": "Add to cart",
+        "kind": "CLICK",
+        "text": None,
+        "page_changed": True,
+        "opened_dialog": True,
+    }
+    assert "opened_dialog" in decider.questions[1]["operation"].instructions["rules"]
+    # closing it opened nothing
+    assert "opened_dialog" not in decider.states[2].recent_actions[-1]
+
+
 # the next observation sees what an action started (`notte_core.act.settle`)
 COMBOBOX = """<label for="to">Where to?</label>
 <input id="to" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="list">

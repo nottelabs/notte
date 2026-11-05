@@ -44,6 +44,7 @@ from notte_core.act.space import (
     build_act_space,
     changed_beyond,
     compact,
+    covered_by_dialog,
     field_context,
     field_errors,
     find_field,
@@ -232,6 +233,11 @@ class ActHistoryEntry:
     # the tab's position in its history when the action ran (`ObservedPage.history_index`): a GO_BACK that moved it
     # did something, though the page can look the same
     history_index: int | None = field(default=None, repr=False)
+    # a dialog covered the page the action ran on (`covered_by_dialog`)
+    dialog_before: bool = field(default=False, repr=False)
+    # none did, and one covers the page observed next on the same URL: the action opened it, and the dialog is its
+    # result (an "Added to cart" holding "Checkout"), filled in by that observation
+    opened_dialog: bool = False
 
 
 # operations that are expected to leave the fingerprint unchanged (it ignores the scroll position)
@@ -286,6 +292,11 @@ class ActHistory:
             )
             source_url = self.entries[-1].source_url
             self.entries[-1].left_page = source_url is not None and source_url != page.url
+            self.entries[-1].opened_dialog = (
+                not self.entries[-1].dialog_before
+                and not self.entries[-1].left_page
+                and covered_by_dialog(page.description)
+            )
             self._read_back(self.entries[-1], page)
         for entry in self.entries:
             if entry.typed is not None:
@@ -523,6 +534,7 @@ class ActHistory:
             | ({} if e.typed is None or e.typed.before is not None else {"submitted": False})
             | ({} if not e.left_page or e.page is None else {"previous_page": e.page.model_dump()})
             | ({} if not e.dialogs else {"dialogs": list(e.dialogs)})
+            | ({} if not e.opened_dialog else {"opened_dialog": True})
             for e in list(self.entries)[-limit:]
         ]
 
@@ -779,6 +791,7 @@ async def run_act(
             target=None if target is None else target.key,
             instruction=instruction,
             history_index=page.history_index,
+            dialog_before=covered_by_dialog(page.description),
         )
         if target is not None and decision.operation == "CLICK":
             history.unskip(page, target.element_id)
