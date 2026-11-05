@@ -190,6 +190,21 @@ async def test_another_field_the_selector_finds_after_a_removal_is_left_alone(se
 
 
 @pytest.mark.asyncio
+async def test_an_unnamed_field_that_went_away_is_not_followed(session: NotteSession) -> None:
+    # two inputs with nothing that names them look the same: the next one is another field, never typed into
+    await _open(
+        session,
+        """<input oninput="if (this.value) this.remove()"><input value="keep">""",
+    )
+    result = await session.aexecute(
+        FillAction(selector="input:nth-of-type(1)", value="4155550123", timeout=3000), raise_on_failure=False
+    )
+    assert result.success, result.message
+    assert await _value(session, "input") == "keep"
+    assert await _keys(session) == 0
+
+
+@pytest.mark.asyncio
 async def test_a_paste_into_a_field_its_handler_renames_is_read_back(session: NotteSession) -> None:
     # a leading space makes the fill a paste; the page renames the field as it is typed into
     await _open(session, """<input id="code" oninput="this.id = 'code-typed'">""")

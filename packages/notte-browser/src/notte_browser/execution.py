@@ -232,6 +232,8 @@ _FIELD_IDENTITY = (
     "(el) => [el.localName, el.type || '', el.id, el.name || '', el.getAttribute('aria-label') || '',"
     " el.placeholder || '', el.autocomplete || '']"
 )
+# the parts of `_FIELD_IDENTITY` that name a field (id, name, label, placeholder): one of them must be set to follow it
+_NAMING_IDENTITY = (2, 3, 4, 5)
 
 # Page-side implementation: js/find_dropdown_option.js
 _FIND_DROPDOWN_OPTION = script("find_dropdown_option.js")
@@ -408,13 +410,16 @@ async def _read_back(
     selector does not find as a single element with the same identity (`_FIELD_IDENTITY`). A field the page replaced
     is read where the selector now finds it: the element act filled, removed from the page, would still hold the
     text. Another field the selector now finds (the next input for `input:nth-of-type(1)`) is never read or typed
-    into."""
+    into: a field without an id, name, label or placeholder is not followed, as two such fields of one type look
+    the same."""
     try:
         if await field.evaluate("(el) => el.isConnected"):
             return await _typed_value(field), field
-        identity = await field.evaluate(_FIELD_IDENTITY)
+        identity: list[str] = await field.evaluate(_FIELD_IDENTITY)
     except Error:
         # the document is gone: the fill navigated
+        return None, field
+    if not any(identity[index] for index in _NAMING_IDENTITY):
         return None, field
     try:
         if await locator.count() != 1:
