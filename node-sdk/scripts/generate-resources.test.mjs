@@ -185,7 +185,7 @@ test('honors generated names for reserved operation identifiers', () => {
   assert.throws(() => generateMappedResources(sdk('unmapped_'), data(`url: '/sessions';`)), /Unmapped operation: unmapped_/);
 });
 
-test('cloud act operations get a longer request timeout the caller can still override', () => {
+test('cloud act operations get a longer request timeout', () => {
   registry.set('pageAct', { resource: 'sessions', method: 'act' });
   const generated = generateResources(
     'export const pageAct = (options: Options<PageActData, true>) => client.post(options);',

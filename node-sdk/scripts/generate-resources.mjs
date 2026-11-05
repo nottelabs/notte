@@ -68,7 +68,7 @@ export function generateResources(sdkSource, typesSource, registry = byOperation
       }
       const timeoutMs = REQUEST_TIMEOUT_MS[operation];
       if (timeoutMs !== undefined) {
-        // A default the caller's own headers still override.
+        // Read by NotteClient's request interceptor (TIMEOUT_HEADER) in place of the client's default timeout.
         const timeoutHeader = `'x-notte-timeout-ms': '${timeoutMs}'`;
         const index = request.findIndex(part => part.startsWith('headers: { '));
         if (index >= 0) request[index] = request[index].replace('headers: { ', `headers: { ${timeoutHeader}, `);
