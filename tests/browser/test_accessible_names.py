@@ -496,6 +496,7 @@ FALLBACK_PAGE = """
 <button id="classes" class="box sc-iJminA qty-plus"></button>
 <button id="nothing" class="box sc-iJminA XJVSs"></button>
 <a id="layout" href="#features" class="box button_size-md__1jSxL float-left"></a>
+<button id="mixed" class="box chevron-right float-left"></button>
 <div id="texted" class="box carousel-arrow" onclick="">Next</div>
 <button id="stopwords" class="box" data-testid="btn-icon"></button>
 <input id="field" class="box size-input" data-testid="size-field">
@@ -510,6 +511,8 @@ FALLBACK_EXPECTED = {
     "testid": "product detail gallery nav right",
     "icon": "close",
     "classes": "qty plus",
+    # a direction only from the class that names the control: "chevron-right", not the layout's "float-left"
+    "mixed": "chevron right",
     # nothing to go by, or text that names it already (the page text renders it)
     "nothing": None,
     # layout classes ("size", "left") name nothing

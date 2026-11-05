@@ -451,7 +451,9 @@ _LISTBOX_LABEL_BLOCKS = 4
 def _listbox_label(blocks: Sequence[tuple[str | None, str]], index: int, used: Collection[int]) -> str | None:
     """The short text before the listbox at block `index` that labels it ("Size", "Colour"): the nearest text of at
     most `MAX_LISTBOX_LABEL_LENGTH` characters within `_LISTBOX_LABEL_BLOCKS` blocks, past buttons and links only (a
-    "Size guide" between them), and not one that is already the label of another element (`used`)."""
+    "Size guide" between them), and not one that is already the label of another element (`used`). It stops at
+    anything else: a field or another list (disabled or off-screen ones too, rendered without an id), or text too
+    long to be a label (a sentence between "Shipping" and the list)."""
     for i in range(index - 1, max(-1, index - 1 - _LISTBOX_LABEL_BLOCKS), -1):
         key, content = blocks[i]
         if key is None or i in used:
@@ -461,10 +463,16 @@ def _listbox_label(blocks: Sequence[tuple[str | None, str]], index: int, used: C
                 # a field or another list: the text before it is its own
                 return None
             continue
-        if _RENDERED_ELEMENT.match(content) is not None:
-            continue
+        rendered = _RENDERED_ELEMENT.match(content)
+        if rendered is not None:
+            if rendered.group(1).lower() in ("button", "a"):
+                continue
+            # a control without an id (disabled, off-screen): the text before it is its own
+            return None
         text = " ".join(content.split())
-        if 0 < len(text) <= MAX_LISTBOX_LABEL_LENGTH:
+        if len(text) > MAX_LISTBOX_LABEL_LENGTH:
+            return None
+        if text:
             return text
     return None
 
@@ -548,11 +556,12 @@ def _read_names(page: ObservedPage) -> _Names:
                 before if toggle_role or role in ("textbox", "combobox") else None,
                 after if toggle_role else None,
             )
-            if role == "listbox" and names[key] == role:
-                # an unnamed list of options (a size picker) is named by the short text before it ("Size")
-                names[key] = _listbox_label(blocks, i, used) or role
         else:
             names[key] = _approximate_name(action, content, before, after)
+        if role == "listbox" and names[key] == role:
+            # an unnamed list of options (a size picker) is named by the short text before it ("Size"), with or
+            # without the observation's names
+            names[key] = _listbox_label(blocks, i, used) or role
         if role in ("checkbox", "radio"):
             neighbours = [(i + 1, after), (i - 1, before)]
         elif role in _FIELDS:

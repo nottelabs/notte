@@ -1792,3 +1792,29 @@ def test_an_unnamed_listbox_is_named_by_the_short_text_before_it() -> None:
     # not past a field, whose label the text is; not a sentence
     assert names["I3"] == "listbox"
     assert names["I4"] == "listbox"
+
+
+@pytest.mark.parametrize(
+    "barrier",
+    [
+        # a disabled field (rendered without an id): the text before it is its label
+        '_[:]<select disabled name="colour"><option>Red</option></select>',
+        # text too long to be the label of the list, nearer than the short one
+        "_[:]Free shipping on every order over fifty euros, returns within thirty days",
+    ],
+    ids=["disabled field", "long text"],
+)
+def test_an_unnamed_listbox_is_not_named_past_a_barrier(barrier: str) -> None:
+    description = f'_[:]Colour\n{barrier}\nI1[:]<ul role="listbox"></ul>\nO1[:]<li role="option">S</li>'
+    actions = [
+        FillAction(id="I1", value="<sample_value>", text_label=""),
+        ClickAction(id="O1", text_label="S", accessible_name="S"),
+    ]
+    assert accessible_names(_page({}, description=description, actions=actions))["I1"] == "listbox"
+
+
+def test_an_unnamed_listbox_is_named_without_the_observations_names() -> None:
+    # an older server sends no accessible names: the names are approximated, and the list still gets its label
+    description = '_[:]Size\nI1[:]<ul role="listbox"></ul>\nO1[:]<li role="option">S</li>'
+    actions = [FillAction(id="I1", value="<sample_value>", text_label=""), ClickAction(id="O1", text_label="S")]
+    assert accessible_names(_page({}, description=description, actions=actions))["I1"] == "Size"

@@ -843,14 +843,20 @@
 			const text = icon ? hint(hintWords(icon)) : undefined;
 			if (text) return text;
 		}
+		// each class on its own: a direction only counts in a class that names a control ("chevron-right", not the
+		// "float-left" next to it)
 		const words = [];
 		for (const candidate of elements) {
-			const classes = getAttribute(candidate, "class") || "";
-			for (const word of hintWords(classes)) {
-				if ((HINT_CLASS_WORDS.has(word) || HINT_DIRECTION_WORDS.has(word)) && !words.includes(word)) words.push(word);
+			const classes = (getAttribute(candidate, "class") || "").trim().split(/\s+/);
+			for (const token of classes) {
+				const tokenWords = hintWords(token);
+				if (!tokenWords.some((word) => HINT_CLASS_WORDS.has(word))) continue;
+				for (const word of tokenWords) {
+					if ((HINT_CLASS_WORDS.has(word) || HINT_DIRECTION_WORDS.has(word)) && !words.includes(word)) words.push(word);
+				}
 			}
 		}
-		return words.some((word) => HINT_CLASS_WORDS.has(word)) ? words.join(" ").slice(0, MAX_HINT_LENGTH) : undefined;
+		return words.length > 0 ? words.join(" ").slice(0, MAX_HINT_LENGTH) : undefined;
 	}
 
 	function textAlternative(element, context, step) {
