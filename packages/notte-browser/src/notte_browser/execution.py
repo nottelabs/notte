@@ -51,6 +51,12 @@ from notte_core.profiling import profiler
 from notte_core.snapshot import BrowserSnapshot
 from notte_core.storage import BaseStorage
 
+from notte_browser.action_hooks import (
+    active_action_hooks,
+    notify_pointer_moved,
+    run_after_navigation,
+    run_before_click,
+)
 from notte_browser.captcha import solve_captcha
 from notte_browser.click_input import ClickInputReporter
 from notte_browser.dom.locate import locate_element, selectors_through_shadow_dom
@@ -86,6 +92,8 @@ _FILE_INPUT_CLICKS = script("file_input_clicks.js")
 # How long a click waits for the report of its input after the driver returned (s). A page listener that stops
 # `pointerdown` before the click's own keeps it from ever coming.
 _CLICK_INPUT_REPORT_S = 1.0
+# Budget a click keeps for itself after its `before_click` hook (ms), besides the share held for its JS fallback
+_CLICK_AFTER_HOOK_MS = 1000
 
 
 def text_contains_tabs(text: str) -> bool:
@@ -317,6 +325,7 @@ async def _select_custom_dropdown_option(
         _ = await locator.click(timeout=budget.remaining_ms())
     except Exception as e:
         raise ActionExecutionError("select_dropdown", window.page.url, reason="Invalid selector") from e
+    notify_pointer_moved(locator.page, None)
     # The options may render a little after the click (animation, lazy list).
     deadline = asyncio.get_running_loop().time() + min(budget.remaining_ms(), 2000) / 1000
     while True:
@@ -325,6 +334,7 @@ async def _select_custom_dropdown_option(
             option = handle.as_element()
             if option is not None:
                 await option.click(timeout=budget.remaining_ms())
+                notify_pointer_moved(locator.page, None)
                 return
         finally:
             with suppress(Error):  # the click may have navigated away
@@ -810,6 +820,7 @@ async def execute_browser_action(window: BrowserWindow, action: BaseAction, *, v
                     point = await _scroll_container_point(window, delta)
                     if point is not None:
                         await window.page.mouse.move(*point)
+                        notify_pointer_moved(window.page, point)
                         await window.page.mouse.wheel(delta_x=0, delta_y=delta)
                         scrolled = await _scroll_ended(read)
                 if not scrolled:
@@ -983,6 +994,10 @@ async def _interact(
             # An image-map area has no box: its JS click follows the link without actionability waits.
             js_click = await locator.evaluate("(el) => el.localName === 'area'", timeout=budget.remaining_ms())
             if not js_click:
+                hooks = active_action_hooks()
+                if hooks is not None:
+                    time_left_s = budget.remaining_ms(keep_ms=action.timeout / 5 + _CLICK_AFTER_HOOK_MS) / 1000
+                    await run_before_click(hooks, locator.page, locator, time_left_s)
                 try:
                     # Hold back part of the budget for the JS fallback. Navigation belongs to PageSettle,
                     # including a response that has not committed before the interaction deadline.
@@ -1046,6 +1061,7 @@ async def _interact(
         case MultiFactorFillAction(value=value):
             # click the locator, then fill in one number at a time
             await locator.click(timeout=budget.remaining_ms())
+            notify_pointer_moved(locator.page, None)
             if action.clear_before_fill:
                 await _clear_focused_field(window)
 
@@ -1054,6 +1070,7 @@ async def _interact(
                 await window.page.wait_for_timeout(100)
         case FallbackFillAction(value=value):
             await locator.click(timeout=budget.remaining_ms())
+            notify_pointer_moved(locator.page, None)
             if action.clear_before_fill:
                 await _clear_focused_field(window)
             else:
@@ -1061,10 +1078,17 @@ async def _interact(
             await locator.press_sequentially(get_str_value(value), delay=100, timeout=budget.remaining_ms())
             await window.short_wait()
         case CheckAction(value=value):
+            # an element already in the requested state is not clicked, so the pointer does not move;
+            # read only for installed hooks, so the action costs nothing more without them
+            changes = (
+                active_action_hooks() is not None and await locator.is_checked(timeout=budget.remaining_ms()) != value
+            )
             if value:
                 await locator.check(timeout=budget.remaining_ms())
             else:
                 await locator.uncheck(timeout=budget.remaining_ms())
+            if changes:
+                notify_pointer_moved(locator.page, None)
         case SelectDropdownOptionAction(value=value):
             # Check if it's a standard HTML select
             tag_name: str = await locator.evaluate("el => el.tagName.toLowerCase()", timeout=budget.remaining_ms())
@@ -1141,6 +1165,10 @@ async def execute(
     return retval
 
 
+# actions that navigate the page they act on, or open one
+_NAVIGATIONS = (GotoAction, GotoNewTabAction, GoBackAction, GoForwardAction, ReloadAction)
+
+
 async def _execute(
     window: BrowserWindow,
     action: BaseAction,
@@ -1157,6 +1185,16 @@ async def _execute(
     tabs = list(context.pages)
     opener = await page.opener() if isinstance(action, ClickAction) else None
     url = page.url
+    hooks = active_action_hooks()
+    # navigations of the page's main frame during the action, counted only for the hooks; a document restored
+    # from the back-forward cache fires no load event, but its main frame does navigate
+    loads = 0
+
+    def count_load(frame: Frame) -> None:
+        nonlocal loads
+        if frame.parent_frame is None:
+            loads += 1
+
     # a tab opened once the settle is over is switched to by the next observation
     await window.watch_new_tabs(_can_create_tab(action))
     # tracked from right before the action
@@ -1248,6 +1286,9 @@ async def _execute(
     retval = True
     closed_during_click: Error | None = None
     try:
+        # registered inside the block whose `finally` removes it
+        if hooks is not None:
+            page.on("framenavigated", count_load)
         match action:
             case InteractionAction():
                 try:
@@ -1359,7 +1400,16 @@ async def _execute(
                     _ = await replacement.evaluate("() => document.readyState")
             except (Error, TimeoutError):
                 raise closed_during_click
+        if (
+            hooks is not None
+            and retval
+            and (isinstance(action, _NAVIGATIONS) or loads > 0 or window.page is not page)
+            and not window.page.is_closed()
+        ):
+            await run_after_navigation(hooks, window.page)
     finally:
+        if hooks is not None:
+            page.remove_listener("framenavigated", count_load)
         for click_input in click_inputs:
             await click_input.dispose()
         if click_frames:
