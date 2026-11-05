@@ -773,6 +773,86 @@
 		return cleaned.length > 0 ? cleaned.slice(0, MAX_NAME_LENGTH) : undefined;
 	}
 
+	// roles a fallback name never applies to: a field, checkbox or radio is named by the text next to it (see
+	// `notte_core.act.space`), which a name from its markup would hide
+	const NO_FALLBACK_NAME_ROLES = new Set([...EDITABLE_CONTROL_ROLES, "checkbox", "radio", "switch"]);
+	// test id attributes: names the page's developers gave the element ("product-detail-gallery-nav-left")
+	const TEST_ID_ATTRIBUTES = ["data-testid", "data-test-id", "data-test", "data-qa", "data-cy", "data-automation-id"];
+	const MARKUP_HINT_SELECTOR = `${TEST_ID_ATTRIBUTES.map((name) => `[${name}]`).join(",")},use,[class]`;
+	// words of a test id or icon name that say nothing about what the element does
+	const HINT_STOP_WORDS = new Set([
+		"btn", "button", "icon", "icons", "ico", "svg", "img", "image", "div", "span", "wrapper", "wrap", "container",
+		"component", "item", "el", "js", "root", "inner", "outer", "base", "default", "test", "id", "qa", "cta",
+		"true", "false", "sprite", "symbol", "link",
+	]);
+	// words of a class name that tell what an icon-only control does. A class name is mostly layout ("button_size-md",
+	// "float-left"): only these count, and a direction only next to one of them ("carousel arrow left")
+	const HINT_CLASS_WORDS = new Set([
+		"arrow", "chevron", "prev", "previous", "next", "close", "dismiss", "plus", "minus", "increase", "decrease",
+		"increment", "decrement", "remove", "delete", "trash", "quantity", "qty", "swatch", "thumbnail", "thumb",
+		"carousel", "gallery", "zoom", "play", "pause", "hamburger", "search", "cart", "basket", "wishlist",
+		"favorite", "favourite", "heart", "share",
+	]);
+	const HINT_DIRECTION_WORDS = new Set(["left", "right", "up", "down"]);
+	const MAX_HINT_LENGTH = 60;
+	const MAX_HINT_ELEMENTS = 30;
+
+	function hintWords(text) {
+		return String(text)
+			.replace(/([a-z])([A-Z])/g, "$1 $2")
+			.split(/[^A-Za-z]+/)
+			.map((word) => word.toLowerCase())
+			.filter((word) => word.length > 1);
+	}
+
+	/**
+	 * A name for a control without an accessible name (an icon button, a clickable `<div>` around an image): what
+	 * its content shows to a sighted user (the `alt` of an image inside it, an `<svg><title>`, an `aria-label`
+	 * inside), else what its markup says it is: a test id ("product-detail-gallery-nav-left"), the icon it draws
+	 * (`<use href="icons.svg#arrow-left">`), then the words of its class names that tell what a control does
+	 * ("carousel arrow left"). An element that shows text, or whose markup names nothing, gets none (`undefined`).
+	 *
+	 * @param {HTMLElement} element - A highlighted element without an accessible name.
+	 * @returns {string | undefined} The name, cut to `MAX_NAME_LENGTH` (a markup hint to `MAX_HINT_LENGTH`).
+	 */
+	function getFallbackName(element) {
+		const role = getRole(element);
+		if (FIELD_TAGS.has(localNameOf(element)) || NO_FALLBACK_NAME_ROLES.has(role) || isEditingHost(element)) return undefined;
+		// the text it shows names it already (the page text renders it): only an element without text is named here
+		if (shownText(element).length > 0) return undefined;
+		const context = { visited: new Set([element]), budget: 4 * MAX_NAME_LENGTH };
+		const content = contentText(element, context, { root: false, labelledBy: false, content: true, hidden: false })
+			.replace(/\s+/g, " ").trim();
+		if (content.length > 0) return content.slice(0, MAX_NAME_LENGTH);
+		const elements = [element, ...Array.from(querySelectorAllOf(element, MARKUP_HINT_SELECTOR)).slice(0, MAX_HINT_ELEMENTS)];
+		const hint = (words) => {
+			const kept = words.filter((word) => !HINT_STOP_WORDS.has(word));
+			return kept.some((word) => word.length >= 3) ? kept.join(" ").slice(0, MAX_HINT_LENGTH) : undefined;
+		};
+		for (const candidate of elements) {
+			for (const name of TEST_ID_ATTRIBUTES) {
+				const value = getAttribute(candidate, name);
+				const text = value ? hint(hintWords(value)) : undefined;
+				if (text) return text;
+			}
+		}
+		for (const candidate of elements) {
+			if (localNameOf(candidate) !== "use") continue;
+			const href = getAttribute(candidate, "href") || getAttribute(candidate, "xlink:href") || "";
+			const icon = href.includes("#") ? href.slice(href.lastIndexOf("#") + 1) : "";
+			const text = icon ? hint(hintWords(icon)) : undefined;
+			if (text) return text;
+		}
+		const words = [];
+		for (const candidate of elements) {
+			const classes = getAttribute(candidate, "class") || "";
+			for (const word of hintWords(classes)) {
+				if ((HINT_CLASS_WORDS.has(word) || HINT_DIRECTION_WORDS.has(word)) && !words.includes(word)) words.push(word);
+			}
+		}
+		return words.some((word) => HINT_CLASS_WORDS.has(word)) ? words.join(" ").slice(0, MAX_HINT_LENGTH) : undefined;
+	}
+
 	function textAlternative(element, context, step) {
 		if (context.visited.has(element) || context.budget <= 0) return "";
 		context.visited.add(element);
@@ -3000,6 +3080,9 @@
 						if (state !== undefined) nodeData.state = state;
 						const accessibleName = getAccessibleName(node);
 						if (accessibleName !== undefined) nodeData.accessibleName = accessibleName;
+						// one without is named from its images or icons, else its markup (`getFallbackName`)
+						const fallbackName = accessibleName === undefined ? getFallbackName(node) : undefined;
+						if (fallbackName !== undefined) nodeData.fallbackName = fallbackName;
 						// a mouse handler of its own (the ones `isInteractiveElement` counts): the element may do
 						// something else than the control around or inside it
 						if (hasClickHandler(node)) {

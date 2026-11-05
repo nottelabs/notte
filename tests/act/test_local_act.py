@@ -1561,6 +1561,31 @@ async def test_a_continue_the_form_refused_is_explained_by_its_field_errors(sess
     assert await session.window.page.input_value("#number") == "77"
 
 
+SIZE_PICKER = """<meta charset="utf-8">
+<h1>Crew socks</h1>
+<p>Size</p>
+<div role="listbox">
+  <div role="option" id="s" aria-selected="false" tabindex="0">S</div>
+  <div role="option" id="m" aria-selected="false" tabindex="0">M</div>
+</div>
+<div id="gallery"><span id="prev" class="carousel-arrow-left" onclick="" style="display:inline-block;width:20px;height:20px">
+  <svg width="20" height="20" aria-hidden="true"><use href="#chevron-left"></use></svg></span></div>
+<button id="add">Add to bag</button>"""
+
+
+@pytest.mark.asyncio
+async def test_the_decider_sees_names_for_an_icon_only_control_and_an_unnamed_listbox(session: NotteSession) -> None:
+    _ = await session.window.page.goto(f"data:text/html,{quote(SIZE_PICKER)}")
+    ids = await _ids(session)
+    decider = FakeDecider(choices=[{"operation": "CLICK", "click_target": ids["s"]}])
+    _ = await session.aact("Pick size S", decider=decider)
+    elements = {e["index"]: e for e in decider.states[0].elements}
+    # the icon-only arrow is named by the icon it draws, the size list by the text before it
+    assert elements[ids["prev"]]["label"] == "chevron left"
+    listbox = next(e for e in decider.states[0].elements if e["role"] == "listbox")
+    assert listbox["label"] == "Size"
+
+
 REFORMATTING_FORM = """<meta charset="utf-8">
 <label for="zip">Postcode</label><input id="zip" oninput="this.value = this.value.replace(/\\s/g, '')">
 <label for="phone">Phone</label><input id="phone" oninput="

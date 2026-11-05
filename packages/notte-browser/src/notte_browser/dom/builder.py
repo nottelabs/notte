@@ -65,6 +65,9 @@ class RawNode(TypedDict):
     state: NotRequired[dict[str, Any]]
     # accessible name of highlighted and disabled elements, and of off-screen ones without text, when they have one
     accessibleName: NotRequired[str]
+    # a name for a highlighted element without an accessible name, from its images, icons or markup
+    # (`getFallbackName`): shown as its name, though it does not make a nested clickable a control of its own
+    fallbackName: NotRequired[str]
     # a highlighted element with a click handler of its own (`onclick`)
     clickHandler: NotRequired[bool]
     # visible iframe elements of the child frames the caller asked about
@@ -390,7 +393,7 @@ class _TreeBuilder:
             ),
             bbox=BoundingBox.model_validate(bbox) if bbox else None,
             state=ElementState.from_payload(raw.get("state")),
-            accessible_name=raw.get("accessibleName"),
+            accessible_name=raw.get("accessibleName") or raw.get("fallbackName"),
             disabled=raw.get("disabled", False),
             # only real controls: generic clickables are often wrappers, told apart by `duplicate_clickables` in view
             offscreen=raw.get("offscreen", False)

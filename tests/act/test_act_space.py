@@ -1756,3 +1756,39 @@ def test_enter_is_not_fresh_once_a_dialog_covers_the_focus() -> None:
     assert read(True).matches(read(True), None, focus=True) and read(None).matches(read(True), None, focus=True)
     # covered when read, while the page the decider saw had no dialog: a new observation tells
     assert not read(True).focus_consistent(_page()) and read(False).focus_consistent(_page())
+
+
+LISTBOX_DESCRIPTION = """_[:]Size
+B1[:]<button>Size guide</button>
+I1[:]<ul role="listbox"></ul>
+O1[:]<li role="option">S</li>
+O2[:]<li role="option">M</li>
+_[:]Fit
+I2[:]<input type="text" name="note"></input>
+I3[:]<ul role="listbox"></ul>
+O3[:]<li role="option">Regular</li>
+_[:]A sentence about the colours, much too long to be the label of a list
+I4[:]<ul role="listbox"></ul>
+O4[:]<li role="option">Red</li>"""
+
+
+def test_an_unnamed_listbox_is_named_by_the_short_text_before_it() -> None:
+    actions = [
+        ClickAction(id="B1", text_label="Size guide"),
+        FillAction(id="I1", value="<sample_value>", text_label=""),
+        ClickAction(id="O1", text_label="S"),
+        ClickAction(id="O2", text_label="M"),
+        FillAction(id="I2", value="<sample_value>", text_label="note", accessible_name="Note"),
+        FillAction(id="I3", value="<sample_value>", text_label=""),
+        ClickAction(id="O3", text_label="Regular"),
+        FillAction(id="I4", value="<sample_value>", text_label=""),
+        ClickAction(id="O4", text_label="Red"),
+    ]
+    page = _page({}, description=LISTBOX_DESCRIPTION, actions=actions)
+    names = accessible_names(page)
+    # past the "Size guide" button
+    assert names["I1"] == "Size"
+    assert "[I1] Size" in accessible_text(page)
+    # not past a field, whose label the text is; not a sentence
+    assert names["I3"] == "listbox"
+    assert names["I4"] == "listbox"
