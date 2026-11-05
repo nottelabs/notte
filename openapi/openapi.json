@@ -16081,10 +16081,12 @@
     "/agents/start": {
       "post": {
         "tags": [
-          "agents"
+          "agents",
+          "legacy"
         ],
         "summary": "Agent Start",
         "operationId": "agent_start",
+        "deprecated": true,
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -16156,6 +16158,7 @@
             }
           }
         },
+        "x-excluded": true,
         "x-codeSamples": [
           {
             "lang": "Python",
@@ -16178,10 +16181,12 @@
     "/agents/{agent_id}/stop": {
       "delete": {
         "tags": [
-          "agents"
+          "agents",
+          "legacy"
         ],
         "summary": "Agent Stop",
         "operationId": "agent_stop",
+        "deprecated": true,
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -16265,6 +16270,7 @@
             "description": "The agent is stopping but its final state is not saved yet; check its status shortly."
           }
         },
+        "x-excluded": true,
         "x-codeSamples": [
           {
             "lang": "Python",
@@ -16287,11 +16293,13 @@
     "/agents/{agent_id}": {
       "get": {
         "tags": [
-          "agents"
+          "agents",
+          "legacy"
         ],
         "summary": "Agent Status",
         "description": "Retrieves the current status of a specific <agent_id>.\n\nThe most important fields are:\n- success: Whether the agent task was successful (None if still running)\n- answer: The answer to the agent task (None if still running)\n\nAlso you can check the `steps` field to better understand which actions where taken by the agent.",
         "operationId": "agent_status",
+        "deprecated": true,
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -16362,17 +16370,20 @@
             }
           }
         },
-        "x-hidden": true
+        "x-hidden": true,
+        "x-excluded": true
       }
     },
     "/agents/{agent_id}/workflow/code": {
       "get": {
         "tags": [
-          "agents"
+          "agents",
+          "legacy"
         ],
         "summary": "Get Script",
         "description": "Retrieves the current status of a specific <agent_id>.\n\nThe most important fields are:\n- success: Whether the agent task was successful (None if still running)\n- answer: The answer to the agent task (None if still running)\n\nAlso you can check the `steps` field to better understand which actions where taken by the agent.",
         "operationId": "get_script",
+        "deprecated": true,
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -16466,6 +16477,7 @@
             }
           }
         },
+        "x-excluded": true,
         "x-codeSamples": [
           {
             "lang": "Python",
@@ -16483,11 +16495,13 @@
     "/agents": {
       "get": {
         "tags": [
-          "agents"
+          "agents",
+          "legacy"
         ],
         "summary": "List Agents",
         "description": "Retrieves a list of all agents associated with the authenticated user.\n\nParameters:\n- request: AgentListRequest containing:\n    - only_active: Whether to only return active agents\n    - limit: Maximum number of agents to return",
         "operationId": "list_agents",
+        "deprecated": true,
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -16612,7 +16626,8 @@
             }
           }
         },
-        "x-hidden": true
+        "x-hidden": true,
+        "x-excluded": true
       }
     },
     "/sessions/{session_id}/workflow/code": {
@@ -30288,6 +30303,18 @@
               }
             ],
             "title": "Name"
+          },
+          "email_domain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email Domain",
+            "description": "Domain of the persona's email address, for the `notte` provider only. Defaults to the standard domain; other configured domains are listed by GET /personas/create/email-domains."
           }
         },
         "additionalProperties": false,

@@ -37,6 +37,10 @@ Whether to create a phone number for the persona
 
 </ParamField>
 
+<ParamField body="email_domain" type={"string | null | undefined"}>
+Domain of the persona's email address, for the `notte` provider only. Defaults to the standard domain; other configured domains are listed by GET /personas/create/email-domains.
+</ParamField>
+
 ## Related types
 
 - [PersonaCreateRequest](/typescript-sdk-reference/types/personacreaterequest)
