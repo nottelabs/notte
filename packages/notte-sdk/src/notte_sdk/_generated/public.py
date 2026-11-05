@@ -107,6 +107,13 @@ from notte_sdk._generated.models import (
 )
 from notte_sdk._generated.models import MouseReplayPage as MouseReplayPage
 from notte_sdk._generated.models import NetworkLogsResponse as NetworkLogsResponse
+from notte_sdk._generated.models import PageActParametersQuery as PageActParametersQuery
+from notte_sdk._generated.models import (
+    PageCheckParametersQuery as PageCheckParametersQuery,
+)
+from notte_sdk._generated.models import (
+    PageChooseParametersQuery as PageChooseParametersQuery,
+)
 from notte_sdk._generated.models import (
     PageExecuteParametersQuery as PageExecuteParametersQuery,
 )
@@ -261,6 +268,15 @@ from notte_sdk._generated.typing import (
 )
 from notte_sdk._generated.typing import MessageReadRequestDict as MessageReadRequestDict
 from notte_sdk._generated.typing import NotteProxyDict as NotteProxyDict
+from notte_sdk._generated.typing import (
+    PageActParametersQueryDict as PageActParametersQueryDict,
+)
+from notte_sdk._generated.typing import (
+    PageCheckParametersQueryDict as PageCheckParametersQueryDict,
+)
+from notte_sdk._generated.typing import (
+    PageChooseParametersQueryDict as PageChooseParametersQueryDict,
+)
 from notte_sdk._generated.typing import (
     PageExecuteParametersQueryDict as PageExecuteParametersQueryDict,
 )
@@ -417,6 +433,12 @@ __all__ = [
     "NetworkLogsResponse",
     "NotteProxy",
     "NotteProxyDict",
+    "PageActParametersQuery",
+    "PageActParametersQueryDict",
+    "PageCheckParametersQuery",
+    "PageCheckParametersQueryDict",
+    "PageChooseParametersQuery",
+    "PageChooseParametersQueryDict",
     "PageExecuteParametersQuery",
     "PageExecuteParametersQueryDict",
     "PageObserveParametersQuery",

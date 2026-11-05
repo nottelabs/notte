@@ -3,6 +3,7 @@ title: Act, choose and check
 description: Run one step of a natural-language instruction, or ask typed questions about the page
 ---
 import ActLocal from "/snippets/act/act_local.mdx";
+import ActCloud from "/snippets/act/act_cloud.mdx";
 import ActOptions from "/snippets/act/act_options.mdx";
 import ChooseCheck from "/snippets/act/choose_check.mdx";
 import ActLoop from "/snippets/act/act_loop.mdx";
@@ -16,10 +17,20 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 The decider never writes selectors or actions: Notte turns the observed page into multiple-choice questions, validates the answers strictly (an answer that is not one of the offered options executes nothing), and maps the chosen option back to a Notte action.
 
 <Note>
-`act()`, `choose()` and `check()` are available in the Python SDK on local sessions (`notte.Session`). Cloud sessions (`client.Session`) do not support them yet.
+`act()`, `choose()` and `check()` are available in the Python SDK on local sessions (`notte.Session`) and on cloud sessions (`client.Session`, see [Cloud sessions](#cloud-sessions)).
 </Note>
 
+## Cloud sessions
+
+On a cloud session the API runs the step next to the browser and makes the model calls itself: no decider key or `notte[llm]` is needed, and the calls are billed as LLM usage. The decider is Jev through OpenRouter, and field text is written by `google/gemini-3.1-flash-lite`. The methods take the same arguments as on a local session, except `observation` and `decider`, and return the same `ActResult` and `Choice`.
+
+<ActCloud />
+
+With `solve_captchas=True` (the default), a CAPTCHA on the page is solved before the step and after its action, as for `execute()`. A challenge still unsolved after a minute answers `409` and nothing runs. Some sessions with a vault or a payment card also answer `409` for now.
+
 ## Setup
+
+The rest of this page is about local sessions.
 
 Install the deciders with `pip install "notte[llm]"` (or `pip install notte-llm` next to `notte-sdk`), then configure one of:
 

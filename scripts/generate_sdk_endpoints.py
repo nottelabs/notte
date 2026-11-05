@@ -45,6 +45,9 @@ OUTPUT = SDK_SRC / "_generated" / "endpoints.py"
 # Values are (body model, response model); None means an untyped/no body or response.
 CORE_OPERATIONS = {
     "health_check": (None, None),
+    "page_act": ("ActRequest", "ActResult"),
+    "page_check": ("CheckRequest", "CheckResponse"),
+    "page_choose": ("ChooseRequest", "Choice"),
     "page_execute": (None, "ExecutionResultResponse"),
     "page_observe": ("ObserveRequest", "ObserveResponse"),
     "page_scrape": ("ScrapeRequest", "ScrapeResponse"),
@@ -487,6 +490,9 @@ PAGE_OPERATIONS = {
     "page_observe": ("ObserveRequest", "ObserveRequestDict"),
     "page_scrape": ("ScrapeRequest", "ScrapeRequestDict"),
     "page_execute": ("actions.BaseAction", None),
+    "page_act": ("ActRequest", "ActRequestDict"),
+    "page_choose": ("ChooseRequest", "ChooseRequestDict"),
+    "page_check": ("CheckRequest", "CheckRequestDict"),
 }
 
 

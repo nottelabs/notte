@@ -337,6 +337,21 @@
   "news_search": {
     "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
   },
+  "page_act": {
+    "method": "act",
+    "resource": "sessions",
+    "telemetry": "cloud.session.act"
+  },
+  "page_check": {
+    "method": "check",
+    "resource": "sessions",
+    "telemetry": "cloud.session.check"
+  },
+  "page_choose": {
+    "method": "choose",
+    "resource": "sessions",
+    "telemetry": "cloud.session.choose"
+  },
   "page_execute": {
     "method": "execute",
     "resource": "sessions",

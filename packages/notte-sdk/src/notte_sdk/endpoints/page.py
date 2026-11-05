@@ -2,10 +2,12 @@ import os
 import sys
 import time
 import warnings
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Unpack, cast, overload
 
 import notte_core
+from notte_core.act import ActResult, Choice, NoActionFoundError
 from notte_core.actions import ActionUnion, CaptchaSolveAction, InteractionActionUnion, WaitAction
 from notte_core.config import PerceptionType
 from notte_core.data import StructuredData, TBaseModel
@@ -13,7 +15,10 @@ from notte_core.errors import NotteBaseError, ScrapeFailedError
 from notte_core.logging import logger
 from notte_core.telemetry import track_usage
 from notte_core.types import (
+    ActRequest,
     CaptchaExecuteParams,
+    CheckRequest,
+    ChooseRequest,
     ExecutionResultResponse,
     ObserveRequest,
     ObserveRequestDict,
@@ -41,14 +46,50 @@ OBSERVE_MIGRATION_URL = "https://docs.notte.cc/features/sessions/observe-migrati
 _SDK_PACKAGES = tuple(f"{path}{os.sep}" for path in (Path(notte_core.__file__).parent, Path(__file__).parents[1]))
 
 
+# One cloud act() call takes a few model calls (about 1 s each) and one action, plus up to a minute of CAPTCHA
+# solving before and after it on a session that solves CAPTCHAs; the API allows it 180 s.
+ACT_TIMEOUT_SECONDS = 200
+
+
+def _act_request(
+    instruction: str, variables: Mapping[str, str] | None, dry_run: bool, min_confidence: float
+) -> ActRequest:
+    return ActRequest(
+        instruction=instruction,
+        variables=dict(variables) if variables is not None else None,
+        dry_run=dry_run,
+        min_confidence=min_confidence,
+    )
+
+
+def _checked_act(result: ActResult, raise_on_failure: bool) -> ActResult:
+    """`result`, or what a local session's `act()` raises with `raise_on_failure`: `NoActionFoundError`
+    when blocked, the action's error when it failed."""
+    if not raise_on_failure:
+        return result
+    if result.status == "blocked":
+        raise NoActionFoundError(result.instruction, result.message or "no operation can progress", result)
+    execution = result.execution
+    if result.status == "executed" and execution is not None and not execution.success:
+        if execution.exception is not None:
+            raise execution.exception
+        message = str(execution.message).strip() or f"act() failed to run {result.operation}"
+        raise NotteBaseError(dev_message=message, user_message=message, agent_message=message)
+    return result
+
+
+def _choose_request(question: str, options: Sequence[str] | Mapping[str, str]) -> ChooseRequest:
+    return ChooseRequest(question=question, options=dict(options) if isinstance(options, Mapping) else list(options))
+
+
 def _warn_deprecated_observe(instructions: str | None, perception_type: PerceptionType | None) -> None:
     """`instructions` and `perception_type='deep'` are removed from the API on December 1, 2026."""
     messages: list[str] = []
     if instructions is not None:
         messages.append(
             "`observe(instructions=...)` is deprecated and will be removed on December 1, 2026; "
-            + "use `session.act(instruction)` on a local session (`notte.Session`), which picks the action and runs it; "
-            + "cloud sessions do not run `act()` yet: call `observe()` without `instructions` and pick from the returned actions."
+            + "use `session.act(instruction)`, which picks the action and runs it, "
+            + "or call `observe()` without `instructions` and pick from the returned actions."
         )
     if perception_type is not None and perception_type != "fast":
         messages.append(
@@ -391,9 +432,9 @@ class PageClient(BaseClient):
 
         Deprecated: `perception_type='deep'` and `instructions` are removed on December 1, 2026, and passing
         either emits a `DeprecationWarning`. Use `perception_type='fast'` (the default) instead of `'deep'`.
-        For `instructions`: use `session.act(instruction)` on a local session (`notte.Session`), which picks
-        the action for the instruction and runs it. Cloud sessions do not run `act()` yet: call `observe()` without
-        `instructions` and pick from the returned actions (`observation.space.actions`). See the migration guide: https://docs.notte.cc/features/sessions/observe-migration
+        For `instructions`: use `session.act(instruction)`, which picks the action for the instruction and
+        runs it, or call `observe()` without `instructions` and pick from the returned actions
+        (`observation.space.actions`). See the migration guide: https://docs.notte.cc/features/sessions/observe-migration
 
         Parameters:
             session_id: The session ID to observe.
@@ -405,6 +446,54 @@ class PageClient(BaseClient):
         """
         request = _observe_request(data)
         return _observe_result(request, self.request(page_api.page_observe(session_id, request)))
+
+    @track_usage("cloud.session.act")
+    def act(
+        self,
+        session_id: str,
+        instruction: str,
+        *,
+        variables: Mapping[str, str] | None = None,
+        dry_run: bool = False,
+        min_confidence: float = 0.0,
+        raise_on_failure: bool = True,
+    ) -> ActResult:
+        """Carry out one step of a natural-language instruction on the session's page: pick one action, run it.
+
+        Args:
+            session_id: The session ID.
+            instruction: What to do, e.g. "accept the cookies".
+            variables: Values for `{{name}}` placeholders in typed text, filled in after the model call.
+            dry_run: Choose the action without running it (`status="proposed"`).
+            min_confidence: Below this decider confidence nothing runs (`status="blocked"`).
+            raise_on_failure: Raise `NoActionFoundError` when blocked, and the action's error when it failed.
+
+        Returns:
+            ActResult: `status` (`executed`, `proposed`, `done`, `blocked`, `stale`), the `action`, its
+            `execution`, the decider's `confidence` and `probabilities`, and per-step `timings`.
+        """
+        request = _act_request(instruction, variables, dry_run, min_confidence)
+        result = self.request(page_api.page_act(session_id, request), timeout=ACT_TIMEOUT_SECONDS)
+        return _checked_act(result, raise_on_failure)
+
+    @track_usage("cloud.session.choose")
+    def choose(self, session_id: str, question: str, options: Sequence[str] | Mapping[str, str]) -> Choice:
+        """Pick one of `options` about the session's current page, with a probability per option.
+
+        Args:
+            session_id: The session ID.
+            question: The question about the page.
+            options: The options, or a mapping from option key to a description of the option.
+        """
+        request = _choose_request(question, options)
+        return self.request(page_api.page_choose(session_id, request), timeout=ACT_TIMEOUT_SECONDS)
+
+    @track_usage("cloud.session.check")
+    def check(self, session_id: str, question: str) -> float:
+        """The probability (0 to 1) that a yes/no statement or question holds on the session's current page."""
+        request = CheckRequest(question=question)
+        response = self.request(page_api.page_check(session_id, request), timeout=ACT_TIMEOUT_SECONDS)
+        return response.probability
 
     @track_usage("cloud.session.execute")
     def execute(self, session_id: str, action: ActionUnion) -> ExecutionResultResponse:
@@ -579,9 +668,9 @@ class AsyncPageClient(AsyncBaseClient):
 
         Deprecated: `perception_type='deep'` and `instructions` are removed on December 1, 2026, and passing
         either emits a `DeprecationWarning`. Use `perception_type='fast'` (the default) instead of `'deep'`.
-        For `instructions`: use `session.act(instruction)` on a local session (`notte.Session`), which picks
-        the action for the instruction and runs it. Cloud sessions do not run `act()` yet: call `observe()` without
-        `instructions` and pick from the returned actions (`observation.space.actions`). See the migration guide: https://docs.notte.cc/features/sessions/observe-migration
+        For `instructions`: use `session.act(instruction)`, which picks the action for the instruction and
+        runs it, or call `observe()` without `instructions` and pick from the returned actions
+        (`observation.space.actions`). See the migration guide: https://docs.notte.cc/features/sessions/observe-migration
 
         Parameters:
             session_id: The session ID to observe.
@@ -593,6 +682,54 @@ class AsyncPageClient(AsyncBaseClient):
         """
         request = _observe_request(data)
         return _observe_result(request, await self.request(page_api.page_observe(session_id, request)))
+
+    @track_usage("cloud.session.act")
+    async def act(
+        self,
+        session_id: str,
+        instruction: str,
+        *,
+        variables: Mapping[str, str] | None = None,
+        dry_run: bool = False,
+        min_confidence: float = 0.0,
+        raise_on_failure: bool = True,
+    ) -> ActResult:
+        """Carry out one step of a natural-language instruction on the session's page: pick one action, run it.
+
+        Args:
+            session_id: The session ID.
+            instruction: What to do, e.g. "accept the cookies".
+            variables: Values for `{{name}}` placeholders in typed text, filled in after the model call.
+            dry_run: Choose the action without running it (`status="proposed"`).
+            min_confidence: Below this decider confidence nothing runs (`status="blocked"`).
+            raise_on_failure: Raise `NoActionFoundError` when blocked, and the action's error when it failed.
+
+        Returns:
+            ActResult: `status` (`executed`, `proposed`, `done`, `blocked`, `stale`), the `action`, its
+            `execution`, the decider's `confidence` and `probabilities`, and per-step `timings`.
+        """
+        request = _act_request(instruction, variables, dry_run, min_confidence)
+        result = await self.request(page_api.page_act(session_id, request), timeout=ACT_TIMEOUT_SECONDS)
+        return _checked_act(result, raise_on_failure)
+
+    @track_usage("cloud.session.choose")
+    async def choose(self, session_id: str, question: str, options: Sequence[str] | Mapping[str, str]) -> Choice:
+        """Pick one of `options` about the session's current page, with a probability per option.
+
+        Args:
+            session_id: The session ID.
+            question: The question about the page.
+            options: The options, or a mapping from option key to a description of the option.
+        """
+        request = _choose_request(question, options)
+        return await self.request(page_api.page_choose(session_id, request), timeout=ACT_TIMEOUT_SECONDS)
+
+    @track_usage("cloud.session.check")
+    async def check(self, session_id: str, question: str) -> float:
+        """The probability (0 to 1) that a yes/no statement or question holds on the session's current page."""
+        request = CheckRequest(question=question)
+        response = await self.request(page_api.page_check(session_id, request), timeout=ACT_TIMEOUT_SECONDS)
+        return response.probability
 
     @track_usage("cloud.session.execute")
     async def execute(self, session_id: str, action: ActionUnion) -> ExecutionResultResponse:

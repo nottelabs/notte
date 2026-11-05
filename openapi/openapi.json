@@ -1690,6 +1690,309 @@
         ]
       }
     },
+    "/sessions/{session_id}/page/act": {
+      "post": {
+        "tags": [
+          "sessions",
+          "page"
+        ],
+        "summary": "Page Act",
+        "operationId": "page_act",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "update_metadata",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Update Metadata"
+            }
+          },
+          {
+            "name": "x-notte-request-origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Request-Origin"
+            }
+          },
+          {
+            "name": "x-notte-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Sdk-Version"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": []
+      }
+    },
+    "/sessions/{session_id}/page/choose": {
+      "post": {
+        "tags": [
+          "sessions",
+          "page"
+        ],
+        "summary": "Page Choose",
+        "operationId": "page_choose",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "update_metadata",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Update Metadata"
+            }
+          },
+          {
+            "name": "x-notte-request-origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Request-Origin"
+            }
+          },
+          {
+            "name": "x-notte-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Sdk-Version"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChooseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Choice"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": []
+      }
+    },
+    "/sessions/{session_id}/page/check": {
+      "post": {
+        "tags": [
+          "sessions",
+          "page"
+        ],
+        "summary": "Page Check",
+        "operationId": "page_check",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "update_metadata",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Update Metadata"
+            }
+          },
+          {
+            "name": "x-notte-request-origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Request-Origin"
+            }
+          },
+          {
+            "name": "x-notte-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Sdk-Version"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": []
+      }
+    },
     "/sessions/{session_id}/network/logs": {
       "get": {
         "tags": [
@@ -16737,6 +17040,344 @@
   },
   "components": {
     "schemas": {
+      "ActRequest": {
+        "properties": {
+          "instruction": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Instruction",
+            "description": "What to do, e.g. \"accept the cookies\"."
+          },
+          "variables": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variables",
+            "description": "Values for `{{name}}` placeholders in typed text, substituted after the model call: they never reach a model."
+          },
+          "dry_run": {
+            "type": "boolean",
+            "title": "Dry Run",
+            "description": "Choose the action without running it (`status=\"proposed\"`).",
+            "default": false
+          },
+          "min_confidence": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Min Confidence",
+            "description": "Below this decider confidence nothing runs (`status=\"blocked\"`).",
+            "default": 0.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "instruction"
+        ],
+        "title": "ActRequest"
+      },
+      "ActResult": {
+        "properties": {
+          "instruction": {
+            "type": "string",
+            "title": "Instruction"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "executed",
+              "proposed",
+              "done",
+              "blocked",
+              "stale"
+            ],
+            "title": "Status"
+          },
+          "action": {
+            "anyOf": [
+              {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/FormFillAction"
+                  },
+                  {
+                    "$ref": "#/components/schemas/GotoAction"
+                  },
+                  {
+                    "$ref": "#/components/schemas/GotoNewTabAction"
+                  },
+                  {
+                    "$ref": "#/components/schemas/CloseTabAction"
+                  },
+                  {
+                    "$ref": "#/components/schemas/SwitchTabAction"
+                  },
+                  {
+                    "$ref": "#/components/schemas/GoBackAction"
+                  },
+                  {
+                    "$ref": "#/components/schemas/GoForwardAction"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ReloadAction"
+                  },
+                  {
+                    "$ref": "#/components/schemas/WaitAction-Output"
+                  },
+                  {
+                    "$ref": "#/components/schemas/PressKeyAction"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ScrollUpAction"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ScrollDownAction"
+                  },
+                  {
+                    "$ref": "#/components/schemas/CaptchaSolveAction"
+                  },
+                  {
+                    "$ref": "#/components/schemas/HelpAction"
+                  },
+                  {
+                    "$ref": "#/components/schemas/CompletionAction"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ScrapeAction"
+                  },
+                  {
+                    "$ref": "#/components/schemas/EmailReadAction"
+                  },
+                  {
+                    "$ref": "#/components/schemas/EmailVerificationReadAction"
+                  },
+                  {
+                    "$ref": "#/components/schemas/SmsReadAction"
+                  },
+                  {
+                    "$ref": "#/components/schemas/EvaluateJsAction"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ClickAction-Output"
+                  },
+                  {
+                    "$ref": "#/components/schemas/FillAction-Output"
+                  },
+                  {
+                    "$ref": "#/components/schemas/MultiFactorFillAction-Output"
+                  },
+                  {
+                    "$ref": "#/components/schemas/FallbackFillAction-Output"
+                  },
+                  {
+                    "$ref": "#/components/schemas/CheckAction-Output"
+                  },
+                  {
+                    "$ref": "#/components/schemas/SelectDropdownOptionAction-Output"
+                  },
+                  {
+                    "$ref": "#/components/schemas/UploadFileAction-Output"
+                  },
+                  {
+                    "$ref": "#/components/schemas/DownloadFileAction-Output"
+                  }
+                ],
+                "discriminator": {
+                  "propertyName": "type",
+                  "mapping": {
+                    "captcha_solve": "#/components/schemas/CaptchaSolveAction",
+                    "check": "#/components/schemas/CheckAction-Output",
+                    "click": "#/components/schemas/ClickAction-Output",
+                    "close_tab": "#/components/schemas/CloseTabAction",
+                    "completion": "#/components/schemas/CompletionAction",
+                    "download_file": "#/components/schemas/DownloadFileAction-Output",
+                    "email_read": "#/components/schemas/EmailReadAction",
+                    "email_verification_read": "#/components/schemas/EmailVerificationReadAction",
+                    "evaluate_js": "#/components/schemas/EvaluateJsAction",
+                    "fallback_fill": "#/components/schemas/FallbackFillAction-Output",
+                    "fill": "#/components/schemas/FillAction-Output",
+                    "form_fill": "#/components/schemas/FormFillAction",
+                    "go_back": "#/components/schemas/GoBackAction",
+                    "go_forward": "#/components/schemas/GoForwardAction",
+                    "goto": "#/components/schemas/GotoAction",
+                    "goto_new_tab": "#/components/schemas/GotoNewTabAction",
+                    "help": "#/components/schemas/HelpAction",
+                    "multi_factor_fill": "#/components/schemas/MultiFactorFillAction-Output",
+                    "press_key": "#/components/schemas/PressKeyAction",
+                    "reload": "#/components/schemas/ReloadAction",
+                    "scrape": "#/components/schemas/ScrapeAction",
+                    "scroll_down": "#/components/schemas/ScrollDownAction",
+                    "scroll_up": "#/components/schemas/ScrollUpAction",
+                    "select_dropdown_option": "#/components/schemas/SelectDropdownOptionAction-Output",
+                    "sms_read": "#/components/schemas/SmsReadAction",
+                    "switch_tab": "#/components/schemas/SwitchTabAction",
+                    "upload_file": "#/components/schemas/UploadFileAction-Output",
+                    "wait": "#/components/schemas/WaitAction-Output"
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Action"
+          },
+          "execution": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExecutionResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "operation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operation"
+          },
+          "target": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "probabilities": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Probabilities"
+          },
+          "operation_probabilities": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Operation Probabilities"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "fingerprint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fingerprint"
+          },
+          "timings": {
+            "$ref": "#/components/schemas/ActTimings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "instruction",
+          "status"
+        ],
+        "title": "ActResult"
+      },
+      "ActTimings": {
+        "properties": {
+          "observe_ms": {
+            "type": "number",
+            "title": "Observe Ms",
+            "default": 0.0
+          },
+          "decide_ms": {
+            "type": "number",
+            "title": "Decide Ms",
+            "default": 0.0
+          },
+          "write_ms": {
+            "type": "number",
+            "title": "Write Ms",
+            "default": 0.0
+          },
+          "fresh_ms": {
+            "type": "number",
+            "title": "Fresh Ms",
+            "default": 0.0
+          },
+          "execute_ms": {
+            "type": "number",
+            "title": "Execute Ms",
+            "default": 0.0
+          },
+          "total_ms": {
+            "type": "number",
+            "title": "Total Ms",
+            "default": 0.0
+          }
+        },
+        "type": "object",
+        "title": "ActTimings"
+      },
       "ActionParameter": {
         "properties": {
           "name": {
@@ -21226,6 +21867,104 @@
         ],
         "title": "CheckAction"
       },
+      "CheckRequest": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Question"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question"
+        ],
+        "title": "CheckRequest"
+      },
+      "CheckResponse": {
+        "properties": {
+          "probability": {
+            "type": "number",
+            "title": "Probability",
+            "description": "The probability (0 to 1) that the statement or question holds."
+          }
+        },
+        "type": "object",
+        "required": [
+          "probability"
+        ],
+        "title": "CheckResponse"
+      },
+      "Choice": {
+        "properties": {
+          "choice": {
+            "type": "string",
+            "title": "Choice"
+          },
+          "probabilities": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Probabilities"
+          },
+          "confidence": {
+            "type": "number",
+            "title": "Confidence"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          }
+        },
+        "type": "object",
+        "required": [
+          "choice",
+          "probabilities",
+          "confidence"
+        ],
+        "title": "Choice"
+      },
+      "ChooseRequest": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Question"
+          },
+          "options": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              }
+            ],
+            "title": "Options",
+            "description": "The options, or a mapping from option key to a description of the option."
+          }
+        },
+        "type": "object",
+        "required": [
+          "question",
+          "options"
+        ],
+        "title": "ChooseRequest"
+      },
       "ClickAction-Input": {
         "properties": {
           "type": {
@@ -23408,6 +24147,183 @@
           "message"
         ],
         "title": "ExecutionResponse"
+      },
+      "ExecutionResult": {
+        "properties": {
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At"
+          },
+          "ended_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ended At"
+          },
+          "action": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FormFillAction"
+              },
+              {
+                "$ref": "#/components/schemas/GotoAction"
+              },
+              {
+                "$ref": "#/components/schemas/GotoNewTabAction"
+              },
+              {
+                "$ref": "#/components/schemas/CloseTabAction"
+              },
+              {
+                "$ref": "#/components/schemas/SwitchTabAction"
+              },
+              {
+                "$ref": "#/components/schemas/GoBackAction"
+              },
+              {
+                "$ref": "#/components/schemas/GoForwardAction"
+              },
+              {
+                "$ref": "#/components/schemas/ReloadAction"
+              },
+              {
+                "$ref": "#/components/schemas/WaitAction-Output"
+              },
+              {
+                "$ref": "#/components/schemas/PressKeyAction"
+              },
+              {
+                "$ref": "#/components/schemas/ScrollUpAction"
+              },
+              {
+                "$ref": "#/components/schemas/ScrollDownAction"
+              },
+              {
+                "$ref": "#/components/schemas/CaptchaSolveAction"
+              },
+              {
+                "$ref": "#/components/schemas/HelpAction"
+              },
+              {
+                "$ref": "#/components/schemas/CompletionAction"
+              },
+              {
+                "$ref": "#/components/schemas/ScrapeAction"
+              },
+              {
+                "$ref": "#/components/schemas/EmailReadAction"
+              },
+              {
+                "$ref": "#/components/schemas/EmailVerificationReadAction"
+              },
+              {
+                "$ref": "#/components/schemas/SmsReadAction"
+              },
+              {
+                "$ref": "#/components/schemas/EvaluateJsAction"
+              },
+              {
+                "$ref": "#/components/schemas/ClickAction-Output"
+              },
+              {
+                "$ref": "#/components/schemas/FillAction-Output"
+              },
+              {
+                "$ref": "#/components/schemas/MultiFactorFillAction-Output"
+              },
+              {
+                "$ref": "#/components/schemas/FallbackFillAction-Output"
+              },
+              {
+                "$ref": "#/components/schemas/CheckAction-Output"
+              },
+              {
+                "$ref": "#/components/schemas/SelectDropdownOptionAction-Output"
+              },
+              {
+                "$ref": "#/components/schemas/UploadFileAction-Output"
+              },
+              {
+                "$ref": "#/components/schemas/DownloadFileAction-Output"
+              }
+            ],
+            "title": "Action",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "captcha_solve": "#/components/schemas/CaptchaSolveAction",
+                "check": "#/components/schemas/CheckAction-Output",
+                "click": "#/components/schemas/ClickAction-Output",
+                "close_tab": "#/components/schemas/CloseTabAction",
+                "completion": "#/components/schemas/CompletionAction",
+                "download_file": "#/components/schemas/DownloadFileAction-Output",
+                "email_read": "#/components/schemas/EmailReadAction",
+                "email_verification_read": "#/components/schemas/EmailVerificationReadAction",
+                "evaluate_js": "#/components/schemas/EvaluateJsAction",
+                "fallback_fill": "#/components/schemas/FallbackFillAction-Output",
+                "fill": "#/components/schemas/FillAction-Output",
+                "form_fill": "#/components/schemas/FormFillAction",
+                "go_back": "#/components/schemas/GoBackAction",
+                "go_forward": "#/components/schemas/GoForwardAction",
+                "goto": "#/components/schemas/GotoAction",
+                "goto_new_tab": "#/components/schemas/GotoNewTabAction",
+                "help": "#/components/schemas/HelpAction",
+                "multi_factor_fill": "#/components/schemas/MultiFactorFillAction-Output",
+                "press_key": "#/components/schemas/PressKeyAction",
+                "reload": "#/components/schemas/ReloadAction",
+                "scrape": "#/components/schemas/ScrapeAction",
+                "scroll_down": "#/components/schemas/ScrollDownAction",
+                "scroll_up": "#/components/schemas/ScrollUpAction",
+                "select_dropdown_option": "#/components/schemas/SelectDropdownOptionAction-Output",
+                "sms_read": "#/components/schemas/SmsReadAction",
+                "switch_tab": "#/components/schemas/SwitchTabAction",
+                "upload_file": "#/components/schemas/UploadFileAction-Output",
+                "wait": "#/components/schemas/WaitAction-Output"
+              }
+            }
+          },
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DataSpace"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "exception": {
+            "type": "null",
+            "title": "Exception"
+          },
+          "exception_detail": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SerializedError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "started_at",
+          "ended_at",
+          "action",
+          "success",
+          "message"
+        ],
+        "title": "ExecutionResult"
       },
       "ExternalProxy": {
         "properties": {

@@ -22,12 +22,36 @@ These operations use the configured client's authentication and transport. Signa
 client.sessions.list(options?: SessionListOptions): Promise<SessionResponse[]>;
 ```
 
+## act
+
+pageAct: /sessions/&#123;session_id&#125;/page/act. Returns the API response body.
+
+```typescript
+client.sessions.act(sessionId: PageActData["path"]["session_id"], body: PageActData["body"], query?: PageActData["query"], requestOptions?: ResourceRequestOptions & { headers?: Omit<NonNullable<PageActData["headers"]>, "x-notte-api-key">; }): Promise<ActResult>;
+```
+
 ## authReadiness
 
 sessionAuthReadiness: /sessions/&#123;session_id&#125;/auth. Returns the API response body.
 
 ```typescript
 client.sessions.authReadiness(sessionId: SessionAuthReadinessData["path"]["session_id"], requestOptions?: ResourceRequestOptions & { headers?: Omit<NonNullable<SessionAuthReadinessData["headers"]>, "x-notte-api-key">; }): Promise<ManagedAuthReadiness>;
+```
+
+## check
+
+pageCheck: /sessions/&#123;session_id&#125;/page/check. Returns the API response body.
+
+```typescript
+client.sessions.check(sessionId: PageCheckData["path"]["session_id"], body: PageCheckData["body"], query?: PageCheckData["query"], requestOptions?: ResourceRequestOptions & { headers?: Omit<NonNullable<PageCheckData["headers"]>, "x-notte-api-key">; }): Promise<CheckResponse>;
+```
+
+## choose
+
+pageChoose: /sessions/&#123;session_id&#125;/page/choose. Returns the API response body.
+
+```typescript
+client.sessions.choose(sessionId: PageChooseData["path"]["session_id"], body: PageChooseData["body"], query?: PageChooseData["query"], requestOptions?: ResourceRequestOptions & { headers?: Omit<NonNullable<PageChooseData["headers"]>, "x-notte-api-key">; }): Promise<Choice>;
 ```
 
 ## createPayment

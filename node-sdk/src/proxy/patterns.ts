@@ -134,6 +134,9 @@ export const DEFAULT_ALLOWED_PATTERNS: RegExp[] = [
   /^sessions\/[^\/]+\/files\/[^\/]+$/, // /sessions/{session_id}/files/{file_id}
   /^sessions\/[^\/]+\/network\/logs$/, // /sessions/{session_id}/network/logs
   /^sessions\/[^\/]+\/offset$/, // /sessions/{session_id}/offset
+  /^sessions\/[^\/]+\/page\/act$/, // /sessions/{session_id}/page/act
+  /^sessions\/[^\/]+\/page\/check$/, // /sessions/{session_id}/page/check
+  /^sessions\/[^\/]+\/page\/choose$/, // /sessions/{session_id}/page/choose
   /^sessions\/[^\/]+\/page\/execute$/, // /sessions/{session_id}/page/execute
   /^sessions\/[^\/]+\/page\/execute\/file$/, // /sessions/{session_id}/page/execute/file
   /^sessions\/[^\/]+\/page\/observe$/, // /sessions/{session_id}/page/observe

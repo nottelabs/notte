@@ -2,7 +2,7 @@ import asyncio
 import os
 import random
 import time
-from collections.abc import Awaitable, Callable, Coroutine, Mapping
+from collections.abc import Awaitable, Callable, Coroutine, Mapping, Sequence
 from enum import StrEnum
 from pathlib import Path
 from types import TracebackType
@@ -11,6 +11,7 @@ from urllib.parse import urlsplit
 from webbrowser import open as open_browser
 
 from notte_core import __version__ as notte_core_version
+from notte_core.act import ActResult, Choice
 from notte_core.actions import BaseAction, InteractionActionUnion
 from notte_core.actions.typedicts import (
     CaptchaSolveActionDict,
@@ -1451,6 +1452,73 @@ class RemoteSession(SyncResource):
         """
         return self.client.page.scrape(self.session_id, raise_on_failure=raise_on_failure, **data)
 
+    def act(
+        self,
+        instruction: str,
+        *,
+        variables: Mapping[str, str] | None = None,
+        dry_run: bool = False,
+        min_confidence: float = 0.0,
+        raise_on_failure: bool | None = None,
+    ) -> ActResult:
+        """Carry out one step of a natural-language instruction: observe the page, pick one action, run it.
+
+        ```python
+        result = session.act("accept the cookies")
+        result = session.act("type {{email}} in the email field", variables={"email": "jane@example.com"})
+        ```
+
+        The same step as a local session's `act()`, run by the API: TypeSafe's Jev classification model
+        picks the operation (click, type, select, scroll, ...) and the element, and a small LLM writes the
+        text of a field. `{{name}}` in typed text is replaced by `variables[name]` after the model call,
+        so variable values never reach a model. The model calls are billed as LLM usage.
+
+        Args:
+            instruction: What to do, e.g. "search for running shoes".
+            variables: Values for `{{name}}` placeholders in typed text.
+            dry_run: Choose the action but do not run it (`status="proposed"`).
+            min_confidence: Below this decider confidence, nothing runs (`status="blocked"`).
+            raise_on_failure: Raise `NoActionFoundError` when blocked, and the action's error when it
+                failed. Defaults to the session's `raise_on_failure`.
+
+        Returns:
+            ActResult: `status` (`executed`, `proposed`, `done`, `blocked`, `stale`), the `action`, its
+            `execution`, the decider's `confidence` / `probabilities` and per-step `timings`.
+        """
+        return self.client.page.act(
+            self.session_id,
+            instruction,
+            variables=variables,
+            dry_run=dry_run,
+            min_confidence=min_confidence,
+            raise_on_failure=self.default_raise_on_failure if raise_on_failure is None else raise_on_failure,
+        )
+
+    def choose(self, question: str, options: Sequence[str] | Mapping[str, str]) -> Choice:
+        """Pick one of `options` about the current page, with a probability per option.
+
+        ```python
+        choice = session.choose("Which plan is selected?", ["free", "pro", "enterprise"])
+        choice.choice, choice.probabilities["pro"], choice.confidence
+        ```
+
+        `options` is a list of options, or a mapping from option key to a description of the option.
+        Billed as LLM usage.
+        """
+        return self.client.page.choose(self.session_id, question, options)
+
+    def check(self, question: str) -> float:
+        """The probability (0 to 1) that a yes/no question holds on the current page.
+
+        ```python
+        if session.check("Is the user logged in?") > 0.8:
+            ...
+        ```
+
+        Billed as LLM usage.
+        """
+        return self.client.page.check(self.session_id, question)
+
     @overload
     def observe(
         self,
@@ -1500,9 +1568,9 @@ class RemoteSession(SyncResource):
 
         Deprecated: `perception_type='deep'` and `instructions` are removed on December 1, 2026, and passing
         either emits a `DeprecationWarning`. Use `perception_type='fast'` (the default) instead of `'deep'`.
-        For `instructions`: use `session.act(instruction)` on a local session (`notte.Session`), which picks
-        the action for the instruction and runs it. Cloud sessions do not run `act()` yet: call `observe()` without
-        `instructions` and pick from the returned actions (`observation.space.actions`). See the migration guide: https://docs.notte.cc/features/sessions/observe-migration
+        For `instructions`: use `session.act(instruction)`, which picks the action for the instruction and
+        runs it, or call `observe()` without `instructions` and pick from the returned actions
+        (`observation.space.actions`). See the migration guide: https://docs.notte.cc/features/sessions/observe-migration
 
 
         Args:
@@ -2299,6 +2367,73 @@ class AsyncRemoteSession:
             ``raise_on_failure=False``.
         """
         return await self.client.page.scrape(self.session_id, raise_on_failure=raise_on_failure, **data)
+
+    async def act(
+        self,
+        instruction: str,
+        *,
+        variables: Mapping[str, str] | None = None,
+        dry_run: bool = False,
+        min_confidence: float = 0.0,
+        raise_on_failure: bool | None = None,
+    ) -> ActResult:
+        """Carry out one step of a natural-language instruction: observe the page, pick one action, run it.
+
+        ```python
+        result = await session.act("accept the cookies")
+        result = await session.act("type {{email}} in the email field", variables={"email": "jane@example.com"})
+        ```
+
+        The same step as a local session's `act()`, run by the API: TypeSafe's Jev classification model
+        picks the operation (click, type, select, scroll, ...) and the element, and a small LLM writes the
+        text of a field. `{{name}}` in typed text is replaced by `variables[name]` after the model call,
+        so variable values never reach a model. The model calls are billed as LLM usage.
+
+        Args:
+            instruction: What to do, e.g. "search for running shoes".
+            variables: Values for `{{name}}` placeholders in typed text.
+            dry_run: Choose the action but do not run it (`status="proposed"`).
+            min_confidence: Below this decider confidence, nothing runs (`status="blocked"`).
+            raise_on_failure: Raise `NoActionFoundError` when blocked, and the action's error when it
+                failed. Defaults to the session's `raise_on_failure`.
+
+        Returns:
+            ActResult: `status` (`executed`, `proposed`, `done`, `blocked`, `stale`), the `action`, its
+            `execution`, the decider's `confidence` / `probabilities` and per-step `timings`.
+        """
+        return await self.client.page.act(
+            self.session_id,
+            instruction,
+            variables=variables,
+            dry_run=dry_run,
+            min_confidence=min_confidence,
+            raise_on_failure=self.default_raise_on_failure if raise_on_failure is None else raise_on_failure,
+        )
+
+    async def choose(self, question: str, options: Sequence[str] | Mapping[str, str]) -> Choice:
+        """Pick one of `options` about the current page, with a probability per option.
+
+        ```python
+        choice = await session.choose("Which plan is selected?", ["free", "pro", "enterprise"])
+        choice.choice, choice.probabilities["pro"], choice.confidence
+        ```
+
+        `options` is a list of options, or a mapping from option key to a description of the option.
+        Billed as LLM usage.
+        """
+        return await self.client.page.choose(self.session_id, question, options)
+
+    async def check(self, question: str) -> float:
+        """The probability (0 to 1) that a yes/no question holds on the current page.
+
+        ```python
+        if await session.check("Is the user logged in?") > 0.8:
+            ...
+        ```
+
+        Billed as LLM usage.
+        """
+        return await self.client.page.check(self.session_id, question)
 
     @overload
     async def observe(

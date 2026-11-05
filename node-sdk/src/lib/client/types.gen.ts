@@ -5,6 +5,184 @@ export type ClientOptions = {
 };
 
 /**
+ * ActRequest
+ */
+export type ActRequest = {
+    /**
+     * Instruction
+     *
+     * What to do, e.g. "accept the cookies".
+     */
+    instruction: string;
+    /**
+     * Variables
+     *
+     * Values for `{{name}}` placeholders in typed text, substituted after the model call: they never reach a model.
+     */
+    variables?: {
+        [key: string]: string;
+    } | null;
+    /**
+     * Dry Run
+     *
+     * Choose the action without running it (`status="proposed"`).
+     */
+    dry_run?: boolean;
+    /**
+     * Min Confidence
+     *
+     * Below this decider confidence nothing runs (`status="blocked"`).
+     */
+    min_confidence?: number;
+};
+
+/**
+ * ActResult
+ */
+export type ActResult = {
+    /**
+     * Instruction
+     */
+    instruction: string;
+    /**
+     * Status
+     */
+    status: 'executed' | 'proposed' | 'done' | 'blocked' | 'stale';
+    /**
+     * Action
+     */
+    action?: ({
+        type: 'form_fill';
+    } & FormFillAction) | ({
+        type: 'goto';
+    } & GotoAction) | ({
+        type: 'goto_new_tab';
+    } & GotoNewTabAction) | ({
+        type: 'close_tab';
+    } & CloseTabAction) | ({
+        type: 'switch_tab';
+    } & SwitchTabAction) | ({
+        type: 'go_back';
+    } & GoBackAction) | ({
+        type: 'go_forward';
+    } & GoForwardAction) | ({
+        type: 'reload';
+    } & ReloadAction) | ({
+        type: 'wait';
+    } & WaitActionOutput) | ({
+        type: 'press_key';
+    } & PressKeyAction) | ({
+        type: 'scroll_up';
+    } & ScrollUpAction) | ({
+        type: 'scroll_down';
+    } & ScrollDownAction) | ({
+        type: 'captcha_solve';
+    } & CaptchaSolveAction) | ({
+        type: 'help';
+    } & HelpAction) | ({
+        type: 'completion';
+    } & CompletionAction) | ({
+        type: 'scrape';
+    } & ScrapeAction) | ({
+        type: 'email_read';
+    } & EmailReadAction) | ({
+        type: 'email_verification_read';
+    } & EmailVerificationReadAction) | ({
+        type: 'sms_read';
+    } & SmsReadAction) | ({
+        type: 'evaluate_js';
+    } & EvaluateJsAction) | ({
+        type: 'click';
+    } & ClickActionOutput) | ({
+        type: 'fill';
+    } & FillActionOutput) | ({
+        type: 'multi_factor_fill';
+    } & MultiFactorFillActionOutput) | ({
+        type: 'fallback_fill';
+    } & FallbackFillActionOutput) | ({
+        type: 'check';
+    } & CheckActionOutput) | ({
+        type: 'select_dropdown_option';
+    } & SelectDropdownOptionActionOutput) | ({
+        type: 'upload_file';
+    } & UploadFileActionOutput) | ({
+        type: 'download_file';
+    } & DownloadFileActionOutput) | null;
+    execution?: ExecutionResult | null;
+    /**
+     * Operation
+     */
+    operation?: string | null;
+    /**
+     * Target
+     */
+    target?: string | null;
+    /**
+     * Value
+     */
+    value?: string | null;
+    /**
+     * Confidence
+     */
+    confidence?: number | null;
+    /**
+     * Probabilities
+     */
+    probabilities?: {
+        [key: string]: number;
+    };
+    /**
+     * Operation Probabilities
+     */
+    operation_probabilities?: {
+        [key: string]: number;
+    };
+    /**
+     * Model
+     */
+    model?: string | null;
+    /**
+     * Message
+     */
+    message?: string | null;
+    /**
+     * Fingerprint
+     */
+    fingerprint?: string | null;
+    timings?: ActTimings;
+};
+
+/**
+ * ActTimings
+ */
+export type ActTimings = {
+    /**
+     * Observe Ms
+     */
+    observe_ms?: number;
+    /**
+     * Decide Ms
+     */
+    decide_ms?: number;
+    /**
+     * Write Ms
+     */
+    write_ms?: number;
+    /**
+     * Fresh Ms
+     */
+    fresh_ms?: number;
+    /**
+     * Execute Ms
+     */
+    execute_ms?: number;
+    /**
+     * Total Ms
+     */
+    total_ms?: number;
+};
+
+/**
  * ActionParameter
  */
 export type ActionParameter = {
@@ -1400,6 +1578,70 @@ export type CheckActionOutput = {
 };
 
 /**
+ * CheckRequest
+ */
+export type CheckRequest = {
+    /**
+     * Question
+     */
+    question: string;
+};
+
+/**
+ * CheckResponse
+ */
+export type CheckResponse = {
+    /**
+     * Probability
+     *
+     * The probability (0 to 1) that the statement or question holds.
+     */
+    probability: number;
+};
+
+/**
+ * Choice
+ */
+export type Choice = {
+    /**
+     * Choice
+     */
+    choice: string;
+    /**
+     * Probabilities
+     */
+    probabilities: {
+        [key: string]: number;
+    };
+    /**
+     * Confidence
+     */
+    confidence: number;
+    /**
+     * Model
+     */
+    model?: string | null;
+};
+
+/**
+ * ChooseRequest
+ */
+export type ChooseRequest = {
+    /**
+     * Question
+     */
+    question: string;
+    /**
+     * Options
+     *
+     * The options, or a mapping from option key to a description of the option.
+     */
+    options: Array<string> | {
+        [key: string]: string;
+    };
+};
+
+/**
  * ClickAction
  */
 export type ClickActionInput = {
@@ -2621,6 +2863,94 @@ export type ExecutionResponse = {
      * A message describing the operation
      */
     message: string;
+};
+
+/**
+ * ExecutionResult
+ */
+export type ExecutionResult = {
+    /**
+     * Started At
+     */
+    started_at: string;
+    /**
+     * Ended At
+     */
+    ended_at: string;
+    /**
+     * Action
+     */
+    action: ({
+        type: 'form_fill';
+    } & FormFillAction) | ({
+        type: 'goto';
+    } & GotoAction) | ({
+        type: 'goto_new_tab';
+    } & GotoNewTabAction) | ({
+        type: 'close_tab';
+    } & CloseTabAction) | ({
+        type: 'switch_tab';
+    } & SwitchTabAction) | ({
+        type: 'go_back';
+    } & GoBackAction) | ({
+        type: 'go_forward';
+    } & GoForwardAction) | ({
+        type: 'reload';
+    } & ReloadAction) | ({
+        type: 'wait';
+    } & WaitActionOutput) | ({
+        type: 'press_key';
+    } & PressKeyAction) | ({
+        type: 'scroll_up';
+    } & ScrollUpAction) | ({
+        type: 'scroll_down';
+    } & ScrollDownAction) | ({
+        type: 'captcha_solve';
+    } & CaptchaSolveAction) | ({
+        type: 'help';
+    } & HelpAction) | ({
+        type: 'completion';
+    } & CompletionAction) | ({
+        type: 'scrape';
+    } & ScrapeAction) | ({
+        type: 'email_read';
+    } & EmailReadAction) | ({
+        type: 'email_verification_read';
+    } & EmailVerificationReadAction) | ({
+        type: 'sms_read';
+    } & SmsReadAction) | ({
+        type: 'evaluate_js';
+    } & EvaluateJsAction) | ({
+        type: 'click';
+    } & ClickActionOutput) | ({
+        type: 'fill';
+    } & FillActionOutput) | ({
+        type: 'multi_factor_fill';
+    } & MultiFactorFillActionOutput) | ({
+        type: 'fallback_fill';
+    } & FallbackFillActionOutput) | ({
+        type: 'check';
+    } & CheckActionOutput) | ({
+        type: 'select_dropdown_option';
+    } & SelectDropdownOptionActionOutput) | ({
+        type: 'upload_file';
+    } & UploadFileActionOutput) | ({
+        type: 'download_file';
+    } & DownloadFileActionOutput);
+    /**
+     * Success
+     */
+    success: boolean;
+    /**
+     * Message
+     */
+    message: string;
+    data?: DataSpace | null;
+    /**
+     * Exception
+     */
+    exception?: null;
+    exception_detail?: SerializedError | null;
 };
 
 /**
@@ -9260,6 +9590,122 @@ export type PaginatedResponseAgentResponse = {
 };
 
 /**
+ * ActResult
+ */
+export type ActResultWritable = {
+    /**
+     * Instruction
+     */
+    instruction: string;
+    /**
+     * Status
+     */
+    status: 'executed' | 'proposed' | 'done' | 'blocked' | 'stale';
+    /**
+     * Action
+     */
+    action?: ({
+        type: 'form_fill';
+    } & FormFillActionWritable) | ({
+        type: 'goto';
+    } & GotoAction) | ({
+        type: 'goto_new_tab';
+    } & GotoNewTabAction) | ({
+        type: 'close_tab';
+    } & CloseTabAction) | ({
+        type: 'switch_tab';
+    } & SwitchTabAction) | ({
+        type: 'go_back';
+    } & GoBackAction) | ({
+        type: 'go_forward';
+    } & GoForwardAction) | ({
+        type: 'reload';
+    } & ReloadAction) | ({
+        type: 'wait';
+    } & WaitActionOutput) | ({
+        type: 'press_key';
+    } & PressKeyAction) | ({
+        type: 'scroll_up';
+    } & ScrollUpAction) | ({
+        type: 'scroll_down';
+    } & ScrollDownAction) | ({
+        type: 'captcha_solve';
+    } & CaptchaSolveAction) | ({
+        type: 'help';
+    } & HelpAction) | ({
+        type: 'completion';
+    } & CompletionAction) | ({
+        type: 'scrape';
+    } & ScrapeAction) | ({
+        type: 'email_read';
+    } & EmailReadAction) | ({
+        type: 'email_verification_read';
+    } & EmailVerificationReadAction) | ({
+        type: 'sms_read';
+    } & SmsReadAction) | ({
+        type: 'evaluate_js';
+    } & EvaluateJsAction) | ({
+        type: 'click';
+    } & ClickActionOutput) | ({
+        type: 'fill';
+    } & FillActionOutputWritable) | ({
+        type: 'multi_factor_fill';
+    } & MultiFactorFillActionOutputWritable) | ({
+        type: 'fallback_fill';
+    } & FallbackFillActionOutputWritable) | ({
+        type: 'check';
+    } & CheckActionOutput) | ({
+        type: 'select_dropdown_option';
+    } & SelectDropdownOptionActionOutputWritable) | ({
+        type: 'upload_file';
+    } & UploadFileActionOutput) | ({
+        type: 'download_file';
+    } & DownloadFileActionOutput) | null;
+    execution?: ExecutionResultWritable | null;
+    /**
+     * Operation
+     */
+    operation?: string | null;
+    /**
+     * Target
+     */
+    target?: string | null;
+    /**
+     * Value
+     */
+    value?: string | null;
+    /**
+     * Confidence
+     */
+    confidence?: number | null;
+    /**
+     * Probabilities
+     */
+    probabilities?: {
+        [key: string]: number;
+    };
+    /**
+     * Operation Probabilities
+     */
+    operation_probabilities?: {
+        [key: string]: number;
+    };
+    /**
+     * Model
+     */
+    model?: string | null;
+    /**
+     * Message
+     */
+    message?: string | null;
+    /**
+     * Fingerprint
+     */
+    fingerprint?: string | null;
+    timings?: ActTimings;
+};
+
+/**
  * ActionSpace
  */
 export type ActionSpaceWritable = {
@@ -9396,6 +9842,94 @@ export type ConnectLinkSubmitRequestWritable = {
      * Inbox the second-factor code will arrive in. Required when the connector reads its code from email and the link did not already name one.
      */
     mailbox_id?: string | null;
+};
+
+/**
+ * ExecutionResult
+ */
+export type ExecutionResultWritable = {
+    /**
+     * Started At
+     */
+    started_at: string;
+    /**
+     * Ended At
+     */
+    ended_at: string;
+    /**
+     * Action
+     */
+    action: ({
+        type: 'form_fill';
+    } & FormFillActionWritable) | ({
+        type: 'goto';
+    } & GotoAction) | ({
+        type: 'goto_new_tab';
+    } & GotoNewTabAction) | ({
+        type: 'close_tab';
+    } & CloseTabAction) | ({
+        type: 'switch_tab';
+    } & SwitchTabAction) | ({
+        type: 'go_back';
+    } & GoBackAction) | ({
+        type: 'go_forward';
+    } & GoForwardAction) | ({
+        type: 'reload';
+    } & ReloadAction) | ({
+        type: 'wait';
+    } & WaitActionOutput) | ({
+        type: 'press_key';
+    } & PressKeyAction) | ({
+        type: 'scroll_up';
+    } & ScrollUpAction) | ({
+        type: 'scroll_down';
+    } & ScrollDownAction) | ({
+        type: 'captcha_solve';
+    } & CaptchaSolveAction) | ({
+        type: 'help';
+    } & HelpAction) | ({
+        type: 'completion';
+    } & CompletionAction) | ({
+        type: 'scrape';
+    } & ScrapeAction) | ({
+        type: 'email_read';
+    } & EmailReadAction) | ({
+        type: 'email_verification_read';
+    } & EmailVerificationReadAction) | ({
+        type: 'sms_read';
+    } & SmsReadAction) | ({
+        type: 'evaluate_js';
+    } & EvaluateJsAction) | ({
+        type: 'click';
+    } & ClickActionOutput) | ({
+        type: 'fill';
+    } & FillActionOutputWritable) | ({
+        type: 'multi_factor_fill';
+    } & MultiFactorFillActionOutputWritable) | ({
+        type: 'fallback_fill';
+    } & FallbackFillActionOutputWritable) | ({
+        type: 'check';
+    } & CheckActionOutput) | ({
+        type: 'select_dropdown_option';
+    } & SelectDropdownOptionActionOutputWritable) | ({
+        type: 'upload_file';
+    } & UploadFileActionOutput) | ({
+        type: 'download_file';
+    } & DownloadFileActionOutput);
+    /**
+     * Success
+     */
+    success: boolean;
+    /**
+     * Message
+     */
+    message: string;
+    data?: DataSpace | null;
+    /**
+     * Exception
+     */
+    exception?: null;
+    exception_detail?: SerializedError | null;
 };
 
 /**
@@ -11569,6 +12103,141 @@ export type PageScrapeResponses = {
 };
 
 export type PageScrapeResponse = PageScrapeResponses[keyof PageScrapeResponses];
+
+export type PageActData = {
+    body: ActRequest;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Session Id
+         */
+        session_id: string;
+    };
+    query?: {
+        /**
+         * Update Metadata
+         */
+        update_metadata?: boolean;
+    };
+    url: '/sessions/{session_id}/page/act';
+};
+
+export type PageActErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type PageActError = PageActErrors[keyof PageActErrors];
+
+export type PageActResponses = {
+    /**
+     * Successful Response
+     */
+    200: ActResult;
+};
+
+export type PageActResponse = PageActResponses[keyof PageActResponses];
+
+export type PageChooseData = {
+    body: ChooseRequest;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Session Id
+         */
+        session_id: string;
+    };
+    query?: {
+        /**
+         * Update Metadata
+         */
+        update_metadata?: boolean;
+    };
+    url: '/sessions/{session_id}/page/choose';
+};
+
+export type PageChooseErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type PageChooseError = PageChooseErrors[keyof PageChooseErrors];
+
+export type PageChooseResponses = {
+    /**
+     * Successful Response
+     */
+    200: Choice;
+};
+
+export type PageChooseResponse = PageChooseResponses[keyof PageChooseResponses];
+
+export type PageCheckData = {
+    body: CheckRequest;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Session Id
+         */
+        session_id: string;
+    };
+    query?: {
+        /**
+         * Update Metadata
+         */
+        update_metadata?: boolean;
+    };
+    url: '/sessions/{session_id}/page/check';
+};
+
+export type PageCheckErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type PageCheckError = PageCheckErrors[keyof PageCheckErrors];
+
+export type PageCheckResponses = {
+    /**
+     * Successful Response
+     */
+    200: CheckResponse;
+};
+
+export type PageCheckResponse = PageCheckResponses[keyof PageCheckResponses];
 
 export type SessionNetworkLogsData = {
     body?: never;

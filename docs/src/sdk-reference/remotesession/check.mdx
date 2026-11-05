@@ -1,0 +1,23 @@
+---
+title: "check"
+description: "The probability (0 to 1) that a yes/no question holds on the current page"
+---
+
+
+
+```python
+if session.check("Is the user logged in?") > 0.8:
+    ...
+```
+
+Billed as LLM usage
+
+
+## Parameters
+
+<ParamField path="question" type="str" required>
+</ParamField>
+
+## Returns
+
+`float`
