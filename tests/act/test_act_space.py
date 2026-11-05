@@ -14,6 +14,7 @@ from notte_core.act.space import (
     build_act_space,
     covered_by_dialog,
     description_lines,
+    field_errors,
     interpret,
     label_elements,
     label_mode,
@@ -111,6 +112,56 @@ def test_build_act_space_with_live_state() -> None:
     # scrolled to the top of a long page: no SCROLL_UP
     assert list(space.controls) == ["SCROLL_DOWN", "PRESS_ENTER", "GO_BACK", "WAIT"]
     assert set(space.operations) == {"CLICK", "TYPE_TEXT", "SELECT", *space.controls, "DONE", "BLOCKED"}
+
+
+def test_a_field_the_page_marks_invalid_shows_its_error() -> None:
+    states = {
+        **STATES,
+        "I1": ElementState(value="jane@", invalid=True, error="Enter a valid email for jane@"),
+        "I4": ElementState(value="", error="Required field"),
+    }
+    space = build_act_space(_page(states), display_text=lambda text: text.replace("jane@", "{{email}}"))
+    elements = {e["index"]: e for e in space.elements}
+    assert elements["I1"]["invalid"] is True and elements["I1"]["error"] == "Enter a valid email for {{email}}"
+    assert "invalid" not in elements["I4"] and elements["I4"]["error"] == "Required field"
+    assert "invalid" not in elements["I3"] and "error" not in elements["I3"]
+    # the target questions see it too
+    assert space.targets["TYPE_TEXT"]["I1"].criteria["error"] == "Enter a valid email for {{email}}"
+    assert space.targets["CLICK"]["I4"].criteria["error"] == "Required field"
+    # the fields with an error, in page order, named
+    page = _page(states)
+    names = accessible_names(page)
+    assert field_errors(page) == [f"{names['I1']}: Enter a valid email for jane@", f"{names['I4']}: Required field"]
+    assert field_errors(_page({"I1": ElementState(value="x", invalid=True)})) == [f"{names['I1']}: invalid"]
+    assert field_errors(_page()) == []
+
+
+def test_an_error_the_browser_cut_masks_the_start_of_a_protected_value() -> None:
+    from notte_core.act.privacy import ActPrivacy
+
+    privacy = ActPrivacy()
+    privacy.remember({"card": "4242424242424242"})
+    cut = ElementState(value="", invalid=True, error="Card 42424242 is declined, try 4242", error_truncated=True)
+    whole = ElementState(value="", invalid=True, error="Code 4242 is wrong")
+    states = {**STATES, "I1": cut, "I4": whole}
+    space = build_act_space(_page(states), display_text=privacy.text, display_cut=privacy.cut_text)
+    elements = {e["index"]: e for e in space.elements}
+    # the browser cut the message inside the card number it repeats: its visible start is masked
+    assert elements["I1"]["error"] == "Card 42424242 is declined, try {{card}}"
+    # a message that was not cut is masked only where a whole protected value appears
+    assert elements["I4"]["error"] == "Code 4242 is wrong"
+    names = accessible_names(_page(states))
+    assert field_errors(_page(states), display_cut=privacy.cut_text)[0] == (
+        f"{names['I1']}: Card 42424242 is declined, try {{{{card}}}}"
+    )
+
+
+def test_cut_text_masks_a_protected_value_whose_whitespace_the_page_collapsed() -> None:
+    from notte_core.act.privacy import ActPrivacy
+
+    privacy = ActPrivacy()
+    privacy.remember({"phrase": "alpha  betaSecret"})
+    assert privacy.cut_text("x" * 140 + " alpha bet") == "x" * 140 + " {{phrase}}"
 
 
 def test_a_sorted_column_shows_its_sort_order() -> None:

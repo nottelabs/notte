@@ -1481,6 +1481,51 @@ async def test_the_writer_reads_the_error_shown_after_a_field_it_typed_in(sessio
     assert await session.window.page.input_value("#phone") == "02079460123"
 
 
+REQUIRED_FIELD_FORM = """<meta charset="utf-8"><form id="form" novalidate>
+<div><label for="street">Street *</label><input id="street"></div>
+<div><label for="number">House number *</label><input id="number"><span class="error" id="number-error"></span></div>
+<button type="submit">Continue to payment</button></form>
+<script>
+document.getElementById("form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const number = document.getElementById("number");
+  const error = document.getElementById("number-error");
+  error.textContent = number.value ? "" : "This field is required";
+  number.setAttribute("aria-invalid", number.value ? "false" : "true");
+});
+</script>"""
+
+
+@pytest.mark.asyncio
+async def test_a_continue_the_form_refused_is_explained_by_its_field_errors(session: NotteSession) -> None:
+    # the form does not go on while a required field is empty, and says so next to the field only
+    _ = await session.window.page.goto(f"data:text/html,{quote(REQUIRED_FIELD_FORM)}")
+    ids = await _ids(session)
+    names = {"number": "House number *"}
+    continue_id = next(a.id for a in (await session.aobserve()).space.interaction_actions if a.id.startswith("B"))
+    decider = FakeDecider(
+        choices=[
+            {"operation": "TYPE_TEXT", "type_text_target": ids["street"]},
+            {"operation": "CLICK", "click_target": continue_id},
+            {"operation": "TYPE_TEXT", "type_text_target": ids["number"]},
+        ],
+        texts=["Unter den Linden 77", "77"],
+    )
+    goal = "Ship to Unter den Linden 77"
+    for _ in range(3):
+        _ = await session.aact(goal, decider=decider)
+    # after the refused Continue: the history names the field and its error, and so does the field
+    state = decider.states[2]
+    assert state.recent_actions[-1]["field_errors"] == [f"{names['number']}: This field is required"]
+    number = next(e for e in state.elements if e["index"] == ids["number"])
+    assert number["invalid"] is True and number["error"] == "This field is required"
+    assert "field_errors" not in state.recent_actions[0]
+    # the writer of the field reads it too
+    field = decider.contexts[1].field
+    assert field["invalid"] is True and field["error"] == "This field is required"
+    assert await session.window.page.input_value("#number") == "77"
+
+
 @pytest.mark.asyncio
 async def test_the_writer_is_told_what_was_typed_on_a_page_whose_url_is_masked(session: NotteSession) -> None:
     # the URL holds a variable's value: the model's copy of the page has it masked, not what act remembers
@@ -2516,6 +2561,45 @@ async def test_a_credential_typed_before_the_dialog_is_masked_in_its_question(
     _ = await session.aact("Log in", decider=decider)
     asked = decider.questions[1]["dialog"].instructions["dialog"]["message"]
     assert "s3cret-pw" not in asked and "{{vault_password}}" in asked
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("then", ["act", "choose"])
+async def test_a_credential_the_page_repeats_in_a_cut_field_error_is_masked(
+    session: NotteSession, monkeypatch: pytest.MonkeyPatch, then: str
+) -> None:
+    secret = "s3cret-password-123"  # pragma: allowlist secret
+    page = session.window.page
+    # the page repeats the value in the field's name, cut at 80 characters inside it, and in an error message the
+    # browser cuts (at 150 characters) inside it
+    await page.set_content(
+        f"<label>Account {'y' * 66} {secret} <input id='f' aria-errormessage='e'></label><p id='e'></p>"
+        "<button id='b' onclick=\"f.setAttribute('aria-invalid', 'true');"
+        f" e.textContent = '{'x' * 140} {secret}'\">Go</button>"
+    )
+    ids = await _ids(session)
+    calls = 0
+
+    def replacements(_driver: LocalActDriver) -> dict[str, str]:
+        # the vault typed the secret during the action: known only from then on
+        nonlocal calls
+        calls += 1
+        return {} if calls == 1 else {secret: "{{vault_password}}"}
+
+    monkeypatch.setattr(LocalActDriver, "secret_replacements", replacements)
+    second = {"operation": "DONE"} if then == "act" else {"answer": "a"}
+    decider = FakeDecider(choices=[{"operation": "CLICK", "click_target": ids["b"]}, second])
+    _ = await session.aact("Log in", decider=decider)
+    # the next call sees the click in its history, with the error the page showed after it
+    if then == "act":
+        _ = await session.aact("Log in", decider=decider)
+    else:
+        _ = await session.achoose("Signed in?", {"a": "yes", "b": "no"}, decider=decider)
+    state = decider.states[-1]
+    (errors,) = [entry["field_errors"] for entry in state.recent_actions if "field_errors" in entry]
+    # masked, then cut to the display length
+    assert len(errors) == 1 and errors[0].count("{{vau") == 2 and secret[:5] not in errors[0]
+    assert secret[:5] not in str(state.elements)
 
 
 @pytest.mark.asyncio

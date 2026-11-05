@@ -42,6 +42,7 @@ from notte_core.act.space import (
     build_act_space,
     changed_beyond,
     field_context,
+    field_errors,
     find_field,
     interpret,
     label_mode,
@@ -208,6 +209,9 @@ class ActHistoryEntry:
     dialogs: list[dict[str, str]] = field(default_factory=list[dict[str, str]])
     # the field a TYPE_TEXT typed in (`_typed_field`): the writer is told what was typed there before
     field_key: str | None = None
+    # the fields the page marked invalid or showed an error for once the action ran (`field_errors`, unmasked):
+    # why a Continue did not go on
+    field_errors: list[str] = field(default_factory=list[str])
 
 
 # clicking these does not submit what was typed in a field
@@ -243,6 +247,12 @@ class ActHistory:
         if len(self.entries) > 0 and self.entries[-1].pending:
             self.entries[-1].page_changed = page.fingerprint != self.entries[-1].fingerprint
             self.entries[-1].pending = False
+            # masked here, before names and messages are cut to their display length (a protected value across the
+            # cut would keep its start); a message the browser cut can end with a protected value's start, which only
+            # `cut_text` masks
+            self.entries[-1].field_errors = field_errors(
+                page, display_text=self.privacy.text, display_cut=self.privacy.cut_text
+            )
             source_url = self.entries[-1].source_url
             self.entries[-1].left_page = source_url is not None and source_url != page.url
         for entry in self.entries:
@@ -356,6 +366,7 @@ class ActHistory:
         return [
             {"action": e.action, "kind": e.kind, "text": e.text, "page_changed": e.page_changed}
             | ({} if e.error is None else {"error": e.error})
+            | ({} if not e.field_errors else {"field_errors": list(e.field_errors)})
             | ({} if e.typed is None or e.typed.before is not None else {"submitted": False})
             | ({} if not e.left_page or e.page is None else {"previous_page": e.page.model_dump()})
             | ({} if not e.dialogs else {"dialogs": list(e.dialogs)})
@@ -442,8 +453,10 @@ async def run_act(
         step = time.perf_counter()
         page = await driver.observe(observation if stale_retries + skipped == 0 else None)
         run.timings.observe_ms += _ms(step)
-        history.observed(page)
+        # the secrets the vault typed so far, the last action's included, before `observed` masks what the page
+        # shows after it (`field_errors`)
         history.privacy.remember_secrets(driver.secret_replacements())
+        history.observed(page)
 
         space = build_act_space(
             page,
@@ -833,6 +846,13 @@ def _write_context(
         "value": target.value or "",
     }
     field.update(field_context(page, target.element_id, labels, history.privacy.text, exclude=target.label))
+    state = page.states.get(target.element_id)
+    if state is not None and state.invalid:
+        field["invalid"] = True
+    if state is not None and state.error:
+        # the error the page shows for the field: what to write differently
+        privacy = history.privacy
+        field["error"] = (privacy.cut_text if state.error_truncated else privacy.text)(state.error)
     if typed_before is not None:
         # what act typed in this field before: the field changed it (a length limit, a mask) or the page rejected it
         field["retry"] = prompts.RETRY_TYPED.format(text=history.privacy.text(typed_before))
@@ -898,8 +918,9 @@ async def run_choose(
         raise ValueError("choose() needs at least two options")
     labels = label_mode()
     page = await driver.observe(observation)
-    history.observed(page)
+    # as in `run_act`: the secrets the last act() typed are known before `observed` records what the page showed
     history.privacy.remember_secrets(driver.secret_replacements())
+    history.observed(page)
     model_page = history.privacy.page(page)
     state = DecisionState(
         page=page_state(model_page, labels, history.privacy.text),
