@@ -1,12 +1,12 @@
 ---
 title: n8n
-description: Use Notte browser agents inside n8n workflows
+description: Use Notte scraping and functions inside n8n workflows
 ---
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-[n8n](https://n8n.io/) is a workflow automation tool. The `n8n-nodes-notte` community node adds Notte as a step in any workflow, so a browser agent can run between your triggers, branches and downstream integrations without writing code.
+[n8n](https://n8n.io/) is a workflow automation tool. The `n8n-nodes-notte` community node adds Notte scraping and functions as steps between your triggers, branches and downstream integrations without writing code.
 
 ## Install the node
 
@@ -30,15 +30,16 @@ Create a **Notte API** credential with an API key from [console.notte.cc](https:
 
 ### Notte Agent Browser
 
-The main node runs in one of three modes:
+For new workflows, use the main node's Scrape or Function mode:
 
 | Mode | What it does |
 |------|--------------|
-| **Agent** | Runs an AI agent that performs a browser task autonomously from a natural language prompt |
 | **Scrape** | Extracts structured data from a URL |
 | **Function** | Runs a deployed [Notte function](/concepts/functions) by id |
 
-Agent mode is the one to reach for when the task needs judgement - logging in, navigating a flow, reacting to what is on the page. Scrape mode is faster and cheaper when you only need data off a known URL. Function mode is for work you have already made repeatable: author the function once, then call it from as many workflows as you like.
+Use Scrape mode for data from a known URL. Use Function mode for repeatable browser work: author the function once, then call it from your workflows.
+
+The node's legacy Agent mode uses the deprecated hosted agent APIs. For interactive browser work, use [browser sessions](/concepts/sessions), the [CLI](/cli-reference/index) or [MCP](/mcp-server), and deploy repeatable scripts as [Functions](/concepts/functions).
 
 ### Notte Trigger
 

@@ -91,6 +91,10 @@
       "destination": "/concepts/functions"
     },
     {
+      "source": "/api-reference/agents/:slug*",
+      "destination": "/sdk-reference/manual/index#migrating-from-the-legacy-agent-apis"
+    },
+    {
       "source": "/sdk-reference/manual/agent",
       "destination": "/sdk-reference/notteclient"
     },
