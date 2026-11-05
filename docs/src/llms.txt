@@ -317,6 +317,8 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [POST Create Payment](https://docs.notte.cc/api-reference/payments/create-payment.md)
 - [POST Disconnect Payment Wallet](https://docs.notte.cc/api-reference/payments/disconnect-payment-wallet.md)
 - [GET Get Payment](https://docs.notte.cc/api-reference/payments/get-payment.md)
+- [GET Get Payment Wallet Connection](https://docs.notte.cc/api-reference/payments/get-payment-wallet-connection.md)
+- [GET List Payment Requests](https://docs.notte.cc/api-reference/payments/list-payment-requests.md)
 
 ## Personas
 
