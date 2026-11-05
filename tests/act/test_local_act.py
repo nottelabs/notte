@@ -787,6 +787,35 @@ async def test_a_failed_action_is_recorded_as_failed(session: NotteSession) -> N
     assert "Malformed" not in json.dumps(entry)
 
 
+# A masked phone field that refuses other keys than digits and reverts a value with another character: a text filled
+# at once ("415 555 0123") is thrown away, typed key by key it keeps the digits. `KEEP` false: it keeps nothing.
+MASKED_PHONE = """<label for=phone>Mobile number (XXX XXX XXXX)</label><input id=phone>
+<script>
+const phone = document.getElementById("phone");
+let kept = "";
+phone.addEventListener("keydown", (event) => {
+    if (event.key.length === 1 && !(KEEP && /[0-9]/.test(event.key))) event.preventDefault();
+});
+phone.addEventListener("input", () => {
+    if (KEEP && /^[0-9]*$/.test(phone.value)) kept = phone.value; else phone.value = kept;
+});
+</script>"""
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("keeps", [True, False], ids=["keeps the digits", "keeps nothing"])
+async def test_typing_into_a_masked_field_is_checked(session: NotteSession, keeps: bool) -> None:
+    page = MASKED_PHONE.replace("KEEP", "true" if keeps else "false")
+    _ = await session.window.page.goto(f"data:text/html,{quote(page)}")
+    ids = await _ids(session)
+    decider = FakeDecider(
+        choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["phone"]}], texts=["415 555 0123"]
+    )
+    result = await session.aact("Type the phone number", decider=decider, raise_on_failure=False)
+    assert result.execution is not None and result.execution.success is keeps
+    assert await session.window.page.input_value("#phone") == ("4155550123" if keeps else "")
+
+
 @pytest.mark.asyncio
 async def test_a_raised_failure_is_recorded_too(session: NotteSession) -> None:
     _ = await session.window.page.goto(f"data:text/html,{quote('<label for=d>Date</label><input id=d type=date>')}")
