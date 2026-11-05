@@ -257,3 +257,11 @@ async def test_a_phone_field_that_rejects_two_formats_takes_a_third(session: Not
     # two formats rejected: typing in the field is still offered, and the third format is kept
     assert phone in decider.questions[2]["type_text_target"].criteria
     assert await session.window.page.input_value("#phone") == "0612345678"
+
+
+def test_a_focused_key_that_failed_twice_is_offered_again_once_the_focus_can_have_moved() -> None:
+    # Enter failed twice in the focused field; a click then can focus another one, which the fingerprint leaves out
+    failed = _history(("PRESS_ENTER", None), ("PRESS_ENTER", None), error="TimeoutError")
+    assert failed.repeated_failures(_page(), "check out") == {("PRESS_ENTER", None)}
+    failed.entries += _history(("CLICK", "B1")).entries
+    assert failed.repeated_failures(_page(), "check out") == set()

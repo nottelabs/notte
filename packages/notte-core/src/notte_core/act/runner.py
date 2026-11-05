@@ -465,15 +465,21 @@ class ActHistory:
         that is not a text field). One failure can be bad luck (a click that timed out): it is offered again. So is a
         field that did not keep the text (`TextNotKeptError`): it rejected that value, and the writer writes it in
         another form (`RETRY_TYPED`)."""
+        entries = list(self.entries)
         # a click and a dialog close on one element are one click (as in `no_effect`)
         failures = Counter(
             ("CLICK" if e.kind in _CLICKS else e.kind, e.target, e.error)
-            for e in self.entries
+            for i, e in enumerate(entries)
             if e.error is not None
             and e.error != TextNotKeptError.__name__
             and e.instruction == instruction
             and e.fingerprint == page.fingerprint
             and e.kind not in _UNTRACKED
+            # a key pressed in the focused field, followed by an action that can move the focus (as in `no_effect`)
+            and (
+                e.kind not in _FOCUSED_KEYS
+                or all(later.kind in _UNTRACKED or later.kind in _FOCUSED_KEYS for later in entries[i + 1 :])
+            )
         )
         return {
             (kind, target)
