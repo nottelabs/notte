@@ -593,7 +593,7 @@ KEYWORD_NAMES = {
 KEYWORD_ANNOTATIONS = {
     "PersonaCreateRequest": {"email_provider": 'Literal["notte", "agentmail", "resend"]'},
     "ApiSessionStartRequest": {
-        "browser_type": "config.BrowserType",
+        "browser_type": 'config.BrowserType | Literal["chrome-nitro"]',
         "proxies": "list[core.ProxySettings] | list[ProxySettingsDict] | bool | core.ProxyGeolocationCountry | core.ProxyGeolocationCountryCode",
         "viewport_width": "int | None",
         "viewport_height": "int | None",

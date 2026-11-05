@@ -218,7 +218,7 @@ class SessionStartRequestDict(TypedDict):
         | core.ProxyGeolocationCountry
         | core.ProxyGeolocationCountryCode
     ]
-    browser_type: NotRequired[config.BrowserType]
+    browser_type: NotRequired[config.BrowserType | Literal["chrome-nitro"]]
     user_agent: NotRequired[str | None]
     chrome_args: NotRequired[list[str] | None]
     viewport_width: NotRequired[int | None]

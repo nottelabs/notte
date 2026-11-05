@@ -983,7 +983,7 @@ class _SessionStartRequestDict(TypedDict, total=False):
     proxies: (
         list[ProxySettings] | list[ProxySettingsDict] | bool | ProxyGeolocationCountry | ProxyGeolocationCountryCode
     )
-    browser_type: BrowserType
+    browser_type: BrowserType | Literal["chrome-nitro"]
     user_agent: str | None
     chrome_args: list[str] | None
     viewport_width: int | None
@@ -1050,7 +1050,8 @@ class _SessionStartRequest(SdkRequest):
         ),
     ] = False
     browser_type: Annotated[
-        BrowserType, Field(description="The browser type to use. Can be chromium, chrome or firefox.")
+        BrowserType | Literal["chrome-nitro"],
+        Field(description="The browser type to use. chrome-nitro starts a managed Chrome Nitro session."),
     ] = DEFAULT_BROWSER_TYPE
     user_agent: Annotated[str | None, Field(description="The user agent to use for the session")] = DEFAULT_USER_AGENT
     chrome_args: Annotated[list[str] | None, Field(description="Overwrite the chrome instance arguments")] = Field(

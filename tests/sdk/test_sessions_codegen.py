@@ -88,6 +88,7 @@ def test_session_wire_contract(client: NotteClient, monkeypatch: pytest.MonkeyPa
         ({"record_session": False, "log_session": True}, {"record_session": False}),
         ({"record_session": True, "log_session": True}, {}),
         ({"auth_ids": ["connection"], "auth_retry": 2}, {"auth_ids": ["connection"], "auth_retry": 2}),
+        ({"browser_type": "chrome-nitro"}, {"browser_type": "chrome-nitro"}),
     ],
 )
 def test_session_start_omission_contract(
