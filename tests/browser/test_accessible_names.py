@@ -484,7 +484,8 @@ async def test_listbox_value_stops_at_fixed_node_and_text_budgets(shape: str) ->
         assert states[0]["valueDigest"] == _value_digest(expected)
 
 
-FALLBACK_PAGE = """
+FALLBACK_PAGE = (
+    """
 <style>.box { display: block; width: 40px; height: 40px; }</style>
 <div id="thumb" class="box" onclick=""><img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="Red cap, side view"
   width="40" height="40"></div>
@@ -501,7 +502,11 @@ FALLBACK_PAGE = """
 <button id="stopwords" class="box" data-testid="btn-icon"></button>
 <input id="field" class="box size-input" data-testid="size-field">
 <input id="toggle" type="checkbox" data-testid="newsletter-optin">
+<div id="large" class="box" onclick="">"""
+    + "<span></span>" * 200
+    + """<span class="arrow-left"></span></div>
 """
+)
 
 FALLBACK_EXPECTED = {
     # what its content shows: the image inside it
@@ -522,6 +527,8 @@ FALLBACK_EXPECTED = {
     # fields, checkboxes and radios are named by the text next to them
     "field": None,
     "toggle": None,
+    # a control with more than 200 elements inside is not an icon: its markup is not looked at
+    "large": None,
 }
 
 

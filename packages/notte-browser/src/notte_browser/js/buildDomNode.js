@@ -796,6 +796,31 @@
 	const HINT_DIRECTION_WORDS = new Set(["left", "right", "up", "down"]);
 	const MAX_HINT_LENGTH = 60;
 	const MAX_HINT_ELEMENTS = 30;
+	// an icon-only control is small: one with more elements than this inside is not named from its markup, which
+	// keeps the work for each unnamed control bounded (nested controls each look inside themselves)
+	const MAX_FALLBACK_DESCENDANTS = 200;
+
+	/**
+	 * The elements inside `element`, in document order, that may carry a markup hint (a test id, `<use>`, a class),
+	 * at most `MAX_HINT_ELEMENTS` of them.
+	 *
+	 * @param {Element} element - The control.
+	 * @returns {Element[] | undefined} The elements, or undefined when `element` holds more than
+	 *   `MAX_FALLBACK_DESCENDANTS` elements.
+	 */
+	function hintElements(element) {
+		const found = [];
+		const stack = Array.from(childrenOf(element)).reverse();
+		let seen = 0;
+		while (stack.length > 0) {
+			if (++seen > MAX_FALLBACK_DESCENDANTS) return undefined;
+			const node = stack.pop();
+			if (found.length < MAX_HINT_ELEMENTS && matches(node, MARKUP_HINT_SELECTOR)) found.push(node);
+			const children = childrenOf(node);
+			for (let i = children.length - 1; i >= 0; i--) stack.push(children[i]);
+		}
+		return found;
+	}
 
 	function hintWords(text) {
 		return String(text)
@@ -810,7 +835,8 @@
 	 * its content shows to a sighted user (the `alt` of an image inside it, an `<svg><title>`, an `aria-label`
 	 * inside), else what its markup says it is: a test id ("product-detail-gallery-nav-left"), the icon it draws
 	 * (`<use href="icons.svg#arrow-left">`), then the words of its class names that tell what a control does
-	 * ("carousel arrow left"). An element that shows text, or whose markup names nothing, gets none (`undefined`).
+	 * ("carousel arrow left"). An element that shows text, holds more than `MAX_FALLBACK_DESCENDANTS` elements, or
+	 * whose markup names nothing, gets none (`undefined`).
 	 *
 	 * @param {HTMLElement} element - A highlighted element without an accessible name.
 	 * @returns {string | undefined} The name, cut to `MAX_NAME_LENGTH` (a markup hint to `MAX_HINT_LENGTH`).
@@ -818,13 +844,15 @@
 	function getFallbackName(element) {
 		const role = getRole(element);
 		if (FIELD_TAGS.has(localNameOf(element)) || NO_FALLBACK_NAME_ROLES.has(role) || isEditingHost(element)) return undefined;
+		const inside = hintElements(element);
+		if (inside === undefined) return undefined;
 		// the text it shows names it already (the page text renders it): only an element without text is named here
 		if (shownText(element).length > 0) return undefined;
 		const context = { visited: new Set([element]), budget: 4 * MAX_NAME_LENGTH };
 		const content = contentText(element, context, { root: false, labelledBy: false, content: true, hidden: false })
 			.replace(/\s+/g, " ").trim();
 		if (content.length > 0) return content.slice(0, MAX_NAME_LENGTH);
-		const elements = [element, ...Array.from(querySelectorAllOf(element, MARKUP_HINT_SELECTOR)).slice(0, MAX_HINT_ELEMENTS)];
+		const elements = [element, ...inside];
 		const hint = (words) => {
 			const kept = words.filter((word) => !HINT_STOP_WORDS.has(word));
 			return kept.some((word) => word.length >= 3) ? kept.join(" ").slice(0, MAX_HINT_LENGTH) : undefined;
