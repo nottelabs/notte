@@ -99,6 +99,15 @@ def test_session_start_omission_contract(
     assert json.loads(api.calls[0].data) == {**DEFAULT_START, **extra}
 
 
+def test_hosted_browser_selection_is_remote_only() -> None:
+    from notte_core.types import LocalSessionStartRequest, SessionStartRequest
+
+    remote = SessionStartRequest.from_data({"browser_type": "chrome-nitro"})
+    assert remote.model_dump(context={"wire": True})["browser_type"] == "chrome-nitro"
+    with pytest.raises(ValidationError):
+        LocalSessionStartRequest.model_validate({"browser_type": "chrome-nitro"})
+
+
 @pytest.mark.parametrize(
     "name,args,kwargs",
     [

@@ -6,7 +6,7 @@ import warnings
 from enum import StrEnum
 from pathlib import Path
 from types import NoneType
-from typing import Annotated, Any, ClassVar, Literal, Required, Self, cast, get_args
+from typing import Annotated, Any, ClassVar, Generic, Literal, Required, Self, cast, get_args
 
 from pydantic import (
     AliasChoices,
@@ -26,7 +26,7 @@ from pydantic import (
 )
 from pydantic.main import IncEx
 from pyotp import TOTP
-from typing_extensions import NotRequired, TypedDict, deprecated, override
+from typing_extensions import NotRequired, TypedDict, TypeVar, deprecated, override
 
 from notte_core.actions import (
     ActionUnion,
@@ -983,7 +983,6 @@ class _SessionStartRequestDict(TypedDict, total=False):
     proxies: (
         list[ProxySettings] | list[ProxySettingsDict] | bool | ProxyGeolocationCountry | ProxyGeolocationCountryCode
     )
-    browser_type: BrowserType | Literal["chrome-nitro"]
     user_agent: str | None
     chrome_args: list[str] | None
     viewport_width: int | None
@@ -999,6 +998,7 @@ class _SessionStartRequestDict(TypedDict, total=False):
 
 
 class SessionStartRequestDict(_SessionStartRequestDict, total=False):
+    browser_type: BrowserType | Literal["chrome-nitro"]
     record_session: bool
     log_session: bool
     auth_retry: int
@@ -1012,10 +1012,14 @@ class SessionStartRequestDict(_SessionStartRequestDict, total=False):
 class LocalSessionStartRequestDict(_SessionStartRequestDict, total=False):
     """Request dictionary for starting a browser session on the local machine."""
 
+    browser_type: BrowserType
     headless: bool
 
 
-class _SessionStartRequest(SdkRequest):
+_SessionBrowserType = TypeVar("_SessionBrowserType", bound=str, default=BrowserType)
+
+
+class _SessionStartRequest(SdkRequest, Generic[_SessionBrowserType]):
     # Proxy entries carry credentials (a `secret` proxy's password, an `external` proxy's
     # password); validation errors must not echo them.
     model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid", hide_input_in_errors=True)
@@ -1049,10 +1053,9 @@ class _SessionStartRequest(SdkRequest):
             description="List of custom proxies to use for the session. If True, the default proxies will be used.",
         ),
     ] = False
-    browser_type: Annotated[
-        BrowserType | Literal["chrome-nitro"],
-        Field(description="The browser type to use. chrome-nitro starts a managed Chrome Nitro session."),
-    ] = DEFAULT_BROWSER_TYPE
+    browser_type: Annotated[_SessionBrowserType, Field(description="The browser type to use.")] = cast(
+        _SessionBrowserType, DEFAULT_BROWSER_TYPE
+    )
     user_agent: Annotated[str | None, Field(description="The user agent to use for the session")] = DEFAULT_USER_AGENT
     chrome_args: Annotated[list[str] | None, Field(description="Overwrite the chrome instance arguments")] = Field(
         default_factory=lambda: DEFAULT_CHROME_ARGS
@@ -1112,7 +1115,7 @@ class _SessionStartRequest(SdkRequest):
         return values  # pyright: ignore[reportUnknownVariableType]
 
     @model_validator(mode="after")
-    def validate_unique_auth_ids(self) -> "_SessionStartRequest":
+    def validate_unique_auth_ids(self) -> Self:
         if len(self.auth_ids) != len(set(self.auth_ids)):
             raise ValueError("auth_ids must not contain duplicates")
         return self
@@ -1136,7 +1139,7 @@ class _SessionStartRequest(SdkRequest):
         return data
 
     @model_validator(mode="after")
-    def check_viewport(self) -> "_SessionStartRequest":
+    def check_viewport(self) -> Self:
         if self.cdp_url is not None:
             if "proxies" not in self.model_fields_set:
                 self.proxies = False
@@ -1151,7 +1154,7 @@ class _SessionStartRequest(SdkRequest):
         return self
 
     @model_validator(mode="after")
-    def check_solve_captchas(self) -> "_SessionStartRequest":
+    def check_solve_captchas(self) -> Self:
         if self.browser_type in ("chrome-nightly", "chrome-turbo") and self.solve_captchas and not self.proxies:
             raise ValueError(
                 f"`proxies` parameter cannot be falsy when setting `solve_captchas=True` with `browser_type` '{self.browser_type}'."
@@ -1160,7 +1163,7 @@ class _SessionStartRequest(SdkRequest):
         return self
 
     @model_validator(mode="after")
-    def validate_cdp_url_constraints(self) -> "_SessionStartRequest":
+    def validate_cdp_url_constraints(self) -> Self:
         """
         Validate that browser settings are left to the external CDP provider.
 
@@ -1189,7 +1192,7 @@ class _SessionStartRequest(SdkRequest):
         return self
 
     @model_validator(mode="after")
-    def validate_timeout_relationship(self) -> "_SessionStartRequest":
+    def validate_timeout_relationship(self) -> Self:
         """
         Validate that idle_timeout_minutes does not exceed max_duration_minutes.
 
@@ -1210,7 +1213,7 @@ class _SessionStartRequest(SdkRequest):
         return value
 
     @model_validator(mode="after")
-    def validate_secret_proxy_combination(self) -> "_SessionStartRequest":
+    def validate_secret_proxy_combination(self) -> Self:
         if not isinstance(self.proxies, list):
             return self
         proxy_types = [proxy.type for proxy in self.proxies]
@@ -1257,7 +1260,7 @@ class _SessionStartRequest(SdkRequest):
         raise ValueError(f"Unsupported proxy type: {base_proxy.type}")  # pyright: ignore[reportUnreachable]
 
 
-class SessionStartRequest(_SessionStartRequest):
+class SessionStartRequest(_SessionStartRequest[BrowserType | Literal["chrome-nitro"]]):
     record_session: Annotated[
         StrictBool,
         Field(description="Save session replay. False permanently disables saved replay; Live View remains available."),
@@ -1426,7 +1429,7 @@ class SessionStartRequest(_SessionStartRequest):
         return self
 
 
-class LocalSessionStartRequest(_SessionStartRequest):
+class LocalSessionStartRequest(_SessionStartRequest[BrowserType]):
     """Request for starting a browser session on the local machine."""
 
     headless: Annotated[bool, Field(description="Whether to run the local browser in headless mode.")] = config.headless
