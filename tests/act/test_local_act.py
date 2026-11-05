@@ -1163,8 +1163,9 @@ async def test_the_action_that_opened_a_dialog_is_told(session: NotteSession) ->
         "opened_dialog": True,
     }
     assert "opened_dialog" in decider.questions[1]["operation"].instructions["rules"]
-    # closing it opened nothing
+    # closing it opened nothing, and the click is no longer said to have opened the dialog now over the page
     assert "opened_dialog" not in decider.states[2].recent_actions[-1]
+    assert all("opened_dialog" not in action for action in decider.states[2].recent_actions)
 
 
 # the next observation sees what an action started (`notte_core.act.settle`)
