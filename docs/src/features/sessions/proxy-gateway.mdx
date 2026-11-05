@@ -6,6 +6,7 @@ import GatewayCredentials from '/snippets/sessions/secret_proxies/gateway_creden
 import GatewayCredentialsResponse from '/snippets/sessions/secret_proxies/gateway_credentials_response.mdx';
 import UseGateway from '/snippets/sessions/proxy_gateway/use_gateway.mdx';
 import HttpClient from '/snippets/sessions/proxy_gateway/http_client.mdx';
+import UseApiKey from '/snippets/sessions/proxy_gateway/use_api_key.mdx';
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
@@ -14,7 +15,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 The proxy gateway at `proxy.notte.cc` gives you Notte's residential proxies outside a browser session. Use it from curl, an HTTP client, a scraper, or your own proxy, such as a [secret proxy](/features/sessions/secret-proxies/overview) that should exit from the same IP as your session.
 
-You mint a short-lived credential with your API key, then use it as a standard proxy URL. Browser sessions do not need this: their [built-in proxies](/features/sessions/proxies#built-in-proxies) are on by default.
+You mint a short-lived credential with your API key, then use it as a standard proxy URL. For quick tests, you can also [use your API key directly](#use-your-api-key-directly). Browser sessions do not need this: their [built-in proxies](/features/sessions/proxies#built-in-proxies) are on by default.
 
 ## Mint a credential
 
@@ -59,13 +60,38 @@ Mint the credential with a `sticky_session`, then start a browser session with t
 
 A credential is valid for your plan's maximum session duration, up to 24 hours. You cannot choose a different lifetime. Reuse one credential for every request until it expires, then mint a new one before `expires_at`. An expired credential is rejected with `407`.
 
+## Use your API key directly
+
+The gateway also accepts your API key as the proxy password, so you can skip minting:
+
+```
+https://<username>:<NOTTE_API_KEY>@proxy.notte.cc:443
+```
+
+<UseApiKey />
+
+The username picks the exit. Use `notte` on its own, or join options with `_`, such as `country-gb_sticky-checkout-42`.
+
+| Option | Description |
+|--------|-------------|
+| `notte` | No targeting: traffic exits in the US. Cannot be combined with other options. |
+| `country-<code>` | Two-letter country code, such as `country-gb`. |
+| `city-<city id>` | City id, such as `city-new.york`. Takes precedence over `country-`. |
+| `sticky-<id>` | 1 to 64 letters, digits or hyphens. Pins every connection that uses the same username to one exit IP. Works on its own or with `country-` or `city-`. |
+
+An unknown option, country or city returns `400` with `X-Notte-Proxy-Error: invalid_username`. As with a minted credential, a browser session with the same `sticky_session`, and the same `country` or `city`, on its `notte` proxy exits from the same IP.
+
+The API key only works over TLS on port 443. On port 3128 the gateway refuses it with `407` and `X-Notte-Proxy-Error: api_key_requires_tls`, so your client must support HTTPS proxies.
+
+This is the simplest option for quick tests and your own scripts. But your API key gives full access to your workspace and does not expire. For a proxy you run in production, such as a secret proxy, prefer a minted credential: it only works for proxy traffic and expires.
+
 ## Billing and limits
 
-Traffic through the gateway is billed as built-in proxy bandwidth, at the [built-in proxy rate](/features/sessions/proxies#billing), to the workspace whose API key minted the credential.
+Traffic through the gateway is billed as built-in proxy bandwidth, at the [built-in proxy rate](/features/sessions/proxies#billing), to the workspace of the API key that minted the credential, or of the API key used as the password.
 
 | Status | Meaning |
 |--------|---------|
-| `407` | The credential is missing, invalid or expired. |
+| `407` | The credential is missing, invalid or expired, or the API key is invalid. |
 | `402` | The workspace has no remaining balance, or its plan's proxy spend limit is reached. |
 | `403` | The target is a private, loopback or link-local address. |
 | `429` | Too many credentials minted, or too many connections open at once or opened too quickly. Retry with backoff. |
