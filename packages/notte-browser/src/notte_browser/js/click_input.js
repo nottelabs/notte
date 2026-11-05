@@ -1,9 +1,10 @@
 // Report input before a handler can close its tab. The driver timestamps input and requests on one host clock.
+// Runs in an isolated world: `name` is a DevTools binding of that world only, never exposed to the page.
 (name, token) => {
     const notify = globalThis[name];
     const mark = () => notify(token);
     const onInput = (event) => {
-        if (event.isTrusted) void mark();
+        if (event.isTrusted) mark();
     };
     window.addEventListener("pointerdown", onInput, true);
     return {
