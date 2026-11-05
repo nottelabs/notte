@@ -42,6 +42,11 @@ PAGES = {
 {"".join(f'<a href="#{i}" style="display:inline-block; width:90px; margin:40px 60px">link {i}</a>' for i in range(30))}
 <canvas width="300" height="150"></canvas><div class="pointer" style="cursor:pointer; height:80px">Card</div>
 <button>Buy</button>{RECORD}</body></html>""",
+    # a product gallery under a pointer cursor over most of the page, a strip of plain text above it
+    "/gallery": f"""<html><body style="margin:0; height:3000px">
+<p style="height:120px; margin:0">Plain header text</p>
+<div class="pointer" style="cursor:pointer; position:absolute; top:120px; left:0; right:0; height:900px"></div>
+{RECORD}</body></html>""",
     "/calm": f"""<html><body style="margin:0; height:3000px"><p>Plain text</p>{RECORD}</body></html>""",
 }
 
@@ -238,13 +243,29 @@ async def test_the_pointer_moves_once_per_page_load_and_keeps_off_controls(sessi
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("seed", range(3))
+async def test_the_pointer_finds_the_parts_of_a_page_without_controls(
+    session: NotteSession, site: str, seed: int
+) -> None:
+    _ = await session.aexecute(type="goto", url=f"{site}/gallery")
+    page = session.window.page
+    start = time.monotonic()
+    assert await pointer.move_after_load(page, rand=random.Random(seed))
+    assert time.monotonic() - start >= pointer.AFTER_LOAD_MOVE_S[0]
+    moves = await main_world(page, "moves")
+    assert len(moves) >= 5
+    assert all(float(y) < 120 for _, y in moves)
+    assert await main_world(page, "overs") == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("seed", range(3))
 async def test_the_document_scrolls_a_little_and_back(session: NotteSession, site: str, seed: int) -> None:
     _ = await session.aexecute(type="goto", url=f"{site}/calm")
     page = session.window.page
     await page.evaluate("() => window.scrollTo(0, 700)")
     assert await pointer.move_after_load(page, rand=random.Random(seed))
     wheels = await main_world(page, "wheels")
-    assert len(wheels) == 2 and float(wheels[0]) > 0 and float(wheels[1]) == -float(wheels[0])
+    assert len(wheels) == 2 and float(wheels[0]) != 0 and float(wheels[1]) == -float(wheels[0])
     assert await page.evaluate("() => window.scrollY") == 700
 
 

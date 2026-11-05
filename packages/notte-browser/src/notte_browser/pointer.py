@@ -34,8 +34,9 @@ AFTER_LOAD_MOVE_S = (1.2, 1.8)
 AFTER_LOAD_WAYPOINTS = (3, 5)
 AFTER_LOAD_SCROLL_PX = (80, 240)
 AFTER_LOAD_MAX_S = 3.5
-# Plans tried to find a path that stays off controls
-_PLAN_ATTEMPTS = 4
+# Points checked across the viewport (columns, rows) for the moves after a load, and moves tried from each point
+AFTER_LOAD_GRID = (10, 8)
+_SEGMENT_CANDIDATES = 6
 
 rng = random.Random()
 
@@ -193,21 +194,53 @@ async def approach(
     return None
 
 
-def _plan(start: Point, width: float, height: float, rand: random.Random) -> list[Point]:
-    """A path from `start` through a few points of the viewport, away from its edges."""
-    path: list[Point] = []
-    current = start
-    for _ in range(rand.randint(*AFTER_LOAD_WAYPOINTS)):
-        target = (rand.uniform(0.1, 0.9) * width, rand.uniform(0.15, 0.9) * height)
-        path.extend(curve(current, target, rand.randint(6, 12), rand, (width, height)))
-        current = target
-    return path
+def _grid(width: float, height: float, rand: random.Random) -> list[Point]:
+    """One point at random in each cell of a grid over the viewport, away from its edges."""
+    columns, rows = AFTER_LOAD_GRID
+    cell_w, cell_h = width * 0.94 / columns, height * 0.94 / rows
+    return [
+        (width * 0.03 + (c + rand.uniform(0.2, 0.8)) * cell_w, height * 0.03 + (r + rand.uniform(0.2, 0.8)) * cell_h)
+        for r in range(rows)
+        for c in range(columns)
+    ]
+
+
+def _segments(
+    current: Point,
+    targets: list[Point],
+    width: float,
+    height: float,
+    rand: random.Random,
+    *,
+    nearby: int = 2,
+    reach: tuple[float, float] = (15, 60),
+) -> list[list[Point]]:
+    """Candidate moves from `current`: curves to a few of `targets`, then `nearby` short moves around it."""
+    others = [target for target in targets if target != current]
+    segments = [
+        curve(current, target, rand.randint(6, 12), rand, (width, height))
+        for target in rand.sample(others, min(len(others), _SEGMENT_CANDIDATES))
+    ]
+    for _ in range(nearby):
+        angle = rand.uniform(0, 2 * math.pi)
+        distance = rand.uniform(*reach)
+        close = _clamp(
+            (current[0] + math.cos(angle) * distance, current[1] + math.sin(angle) * distance), width, height
+        )
+        segments.append(curve(current, close, rand.randint(3, 6), rand, (width, height)))
+    return segments
+
+
+async def _points(page: Page, points: list[Point]) -> _Points:
+    return await page.evaluate(_POINTER_POINTS, [list(point) for point in points])
 
 
 async def move_after_load(page: Page, *, rand: random.Random | None = None, sleep: Sleep = asyncio.sleep) -> bool:
     """Once per document loaded in `page`: moves the pointer over points of the viewport that are not on a
     control (a link, a button, a field, a frame, an element with a pointer cursor, ...), then scrolls the document a
-    little and back when the pointer rests on it. Bounded by `AFTER_LOAD_MAX_S`. Returns whether it moved."""
+    little and back when the pointer rests on it. Every point the pointer goes through is checked first: it moves
+    from one checked point to the next across parts of the page without controls, and only around where it is when
+    there are none. Bounded by `AFTER_LOAD_MAX_S`. Returns whether it moved."""
     rand = rand or rng
     state = track(page)
     if state.moved_after_load == state.loads or page.is_closed():
@@ -221,28 +254,51 @@ async def move_after_load(page: Page, *, rand: random.Random | None = None, slee
             width, height = await _viewport(page)
             if width < 50 or height < 50:
                 return False
+            grid = _grid(width, height, rand)
             start = state.position or (rand.uniform(0.3, 0.7) * width, rand.uniform(0.3, 0.7) * height)
-            path: list[Point] = []
-            wheel = False
-            for _ in range(_PLAN_ATTEMPTS):
-                plan = [start, *_plan(start, width, height, rand)]
-                points: _Points = await page.evaluate(_POINTER_POINTS, [list(p) for p in plan])
-                # the longest safe prefix of the plan
-                safe = 0
-                while safe < len(plan) and points["safe"][safe]:
-                    safe += 1
-                if safe > len(path):
-                    path = plan[:safe]
-                    wheel = points["wheel"] and safe == len(plan)
-                if safe == len(plan):
+            verdicts = await _points(page, [start, *grid])
+            targets = [point for point, safe in zip(grid, verdicts["safe"][1:]) if safe]
+            if not verdicts["safe"][0]:
+                if not targets:
+                    return False
+                # the pointer comes in over a part of the page without controls
+                start = rand.choice(targets)
+            path = [start]
+            for _ in range(rand.randint(*AFTER_LOAD_WAYPOINTS)):
+                safe = None
+                # then shorter moves only, where controls leave little room
+                for attempt in range(3):
+                    segments = (
+                        _segments(path[-1], targets, width, height, rand)
+                        if attempt == 0
+                        else _segments(path[-1], [], width, height, rand, nearby=6, reach=(6, 30 / attempt))
+                    )
+                    checked = await _points(page, [point for segment in segments for point in segment])
+                    offset = 0
+                    for segment in segments:
+                        if all(checked["safe"][offset : offset + len(segment)]):
+                            safe = segment
+                            break
+                        offset += len(segment)
+                    if safe is not None:
+                        break
+                if safe is None:
                     break
+                path.extend(safe)
             if len(path) < 2:
                 return False
             await _move(page, path, rand.uniform(*AFTER_LOAD_MOVE_S), sleep)
             state.position = path[-1]
-            if wheel:
+            # The scroll moves the page under the pointer: what comes under it is checked too, the part of the page
+            # below it (above it, near the bottom of the viewport) by the length of the scroll.
+            x, y = path[-1]
+            sign = 1 if height - 1 - y >= AFTER_LOAD_SCROLL_PX[0] else -1
+            delta = min(rand.randint(*AFTER_LOAD_SCROLL_PX), int(height - 1 - y if sign > 0 else y))
+            column = [(x, y + sign * dy) for dy in range(0, delta, 10)] + [(x, y + sign * delta)]
+            checked = await _points(page, column) if delta >= AFTER_LOAD_SCROLL_PX[0] else None
+            if checked is not None and checked["wheel"] and all(checked["safe"]):
+                delta *= sign
                 before: float = await page.evaluate("() => window.scrollY")
-                delta = rand.randint(*AFTER_LOAD_SCROLL_PX)
                 await page.mouse.wheel(0, delta)
                 await sleep(rand.uniform(0.25, 0.45))
                 await page.mouse.wheel(0, -delta)

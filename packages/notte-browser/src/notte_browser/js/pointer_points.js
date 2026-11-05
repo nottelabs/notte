@@ -1,4 +1,4 @@
-// Which viewport points the pointer can rest on without hovering a control, and whether a wheel at the last
+// Which viewport points the pointer can rest on without hovering a control, and whether a wheel at the first
 // one scrolls the document. With no points, it gives the viewport size only.
 (points) => {
     const controls = [
@@ -53,11 +53,11 @@
         return true;
     };
     const elements = points.map(([x, y]) => at(x, y));
-    const last = elements.length > 0 ? elements[elements.length - 1] : null;
+    const first = elements.length > 0 ? elements[0] : null;
     return {
         width: window.innerWidth,
         height: window.innerHeight,
         safe: elements.map(safe),
-        wheel: last !== null && safe(last) && scrollsDocument(last),
+        wheel: first !== null && safe(first) && scrollsDocument(first),
     };
 }
