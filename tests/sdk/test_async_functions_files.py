@@ -402,6 +402,7 @@ def function_flows(code: str, tmp_path: Path) -> dict[str, Flow]:
         await wait(function.update(code, restricted=False))
         forked = await wait(function.fork())
         await wait(function.set_deletion_protection(True))
+        await wait(function.set_deletion_protection(False))
         await wait(function.delete(confirm=True))
         # The sync `function_id` of a fork fetches its metadata; the async one does not.
         return [created, run, stopped, curl, function.response, type(forked).__name__.removeprefix("Async")]
