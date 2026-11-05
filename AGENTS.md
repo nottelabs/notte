@@ -362,9 +362,10 @@ the docs `type-check` CI job sets it. Without it, `typecheck_only` testers pass 
 The Sphinx build-finished hook corrects `Answers.usage`: sphinx-mintlify currently marks its
 `default_factory` field required. Keep the generated reference aligned with the optional model field.
 
-After changing `packages/notte-sdk/src/`, run `make docs-sdk` (the
-`docs-sdk-generate` pre-commit hook runs the same target) and commit the
-generated files. `make docs-check` fails if they are out of date.
+After changing `packages/notte-sdk/src/` or `packages/notte-core/src/`, run `make docs-sdk`
+(the `docs-sdk-generate` pre-commit hook runs the same target) and commit the generated files:
+the reference renders notte_core models too. The OpenAPI refresh workflow runs it after the
+generators, so its PR carries the regenerated reference. `make docs-check` fails if they are out of date.
 Manual SDK pages repeat constructor parameter fields; keep their type strings
 in sync with the generated `__init__.mdx` pages. Docs tests compare both.
 The `docs/package.json` override gives `@browserbasehq/stagehand` the docs' own
