@@ -9,6 +9,11 @@ const naming = JSON.parse(fs.readFileSync(path.join(root, '../openapi/resources.
 const groups = [...new Set(Object.values(naming).filter(entry => !entry.exclude).map(entry => entry.resource))];
 const camel = value => value.replace(/^_+/, "").replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
 const byOperation = new Map(Object.entries(naming).map(([id, entry]) => [entry.nodeOperation ?? camel(id), entry]));
+// Operations that take longer than the client's default request timeout, in milliseconds (the
+// `x-notte-timeout-ms` header). A cloud act() / choose() / check() takes several model calls and may
+// wait for a CAPTCHA solve; the Python SDK's `ACT_TIMEOUT_SECONDS` is the same 200 s.
+export const REQUEST_TIMEOUT_MS = { pageAct: 200_000, pageChoose: 200_000, pageCheck: 200_000 };
+
 export function checkCoverage(spec) {
   const ids = new Set(Object.values(spec.paths).flatMap(item => Object.entries(item)
     .filter(([method]) => ['get', 'post', 'put', 'patch', 'delete'].includes(method))
@@ -60,6 +65,14 @@ export function generateResources(sdkSource, typesSource, registry = byOperation
         }
         const values = [supplied.length ? '...requestOptions.headers' : '', bound ? "'x-notte-api-key': getApiKey()" : ''].filter(Boolean);
         if (values.length) request.push(`headers: { ${values.join(', ')} }`);
+      }
+      const timeoutMs = REQUEST_TIMEOUT_MS[operation];
+      if (timeoutMs !== undefined) {
+        // A default the caller's own headers still override.
+        const timeoutHeader = `'x-notte-timeout-ms': '${timeoutMs}'`;
+        const index = request.findIndex(part => part.startsWith('headers: { '));
+        if (index >= 0) request[index] = request[index].replace('headers: { ', `headers: { ${timeoutHeader}, `);
+        else request.push(`headers: { ${timeoutHeader} }`);
       }
       const pathMember = members.get('path');
       if (pathMember?.type && pathMember.type.kind !== ts.SyntaxKind.NeverKeyword) {
