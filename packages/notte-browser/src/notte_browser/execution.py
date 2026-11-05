@@ -1078,11 +1078,17 @@ async def _interact(
             await locator.press_sequentially(get_str_value(value), delay=100, timeout=budget.remaining_ms())
             await window.short_wait()
         case CheckAction(value=value):
+            # an element already in the requested state is not clicked, so the pointer does not move;
+            # read only for installed hooks, so the action costs nothing more without them
+            changes = (
+                active_action_hooks() is not None and await locator.is_checked(timeout=budget.remaining_ms()) != value
+            )
             if value:
                 await locator.check(timeout=budget.remaining_ms())
             else:
                 await locator.uncheck(timeout=budget.remaining_ms())
-            notify_pointer_moved(locator.page, None)
+            if changes:
+                notify_pointer_moved(locator.page, None)
         case SelectDropdownOptionAction(value=value):
             # Check if it's a standard HTML select
             tag_name: str = await locator.evaluate("el => el.tagName.toLowerCase()", timeout=budget.remaining_ms())
@@ -1187,8 +1193,6 @@ async def _execute(
         nonlocal loads
         loads += 1
 
-    if hooks is not None:
-        page.on("domcontentloaded", count_load)
     # a tab opened once the settle is over is switched to by the next observation
     await window.watch_new_tabs(_can_create_tab(action))
     # tracked from right before the action
@@ -1280,6 +1284,9 @@ async def _execute(
     retval = True
     closed_during_click: Error | None = None
     try:
+        # registered inside the block whose `finally` removes it
+        if hooks is not None:
+            page.on("domcontentloaded", count_load)
         match action:
             case InteractionAction():
                 try:

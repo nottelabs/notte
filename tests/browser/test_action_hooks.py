@@ -218,3 +218,16 @@ async def test_without_hooks_a_click_moves_the_pointer_once(session: NotteSessio
     _ = await session.aexecute(type="goto", url=f"{site}/")
     assert (await session.aexecute(ClickAction(selector="#stay"), raise_on_failure=True)).success
     assert await evaluate_in_main_world(session.window.page.main_frame, "moves") <= 1
+
+
+@pytest.mark.asyncio
+async def test_a_check_that_changes_nothing_reports_no_move(
+    session: NotteSession, site: str, recorder: Recorder
+) -> None:
+    _ = await session.aexecute(type="goto", url=f"{site}/")
+    _ = await session.aexecute(CheckAction(selector="#box", value=True), raise_on_failure=True)
+    recorder.moves.clear()
+    # already checked: the box is not clicked
+    result = await session.aexecute(CheckAction(selector="#box", value=True), raise_on_failure=True)
+    assert result.success
+    assert recorder.moves == []
