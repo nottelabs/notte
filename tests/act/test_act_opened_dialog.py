@@ -101,3 +101,26 @@ def test_a_dialog_that_shows_while_a_field_is_skipped_is_told_on_the_next_decisi
     )
     history.observed(_page(DIALOG, "dialog"))
     assert click.opened_dialog is True
+
+
+def test_a_click_whose_navigation_ended_later_did_not_open_the_dialog_on_the_new_page() -> None:
+    # the click is first observed on its own page; its navigation ends while a field is skipped, onto a page that
+    # shows a dialog of its own
+    history = ActHistory()
+    click = _act(history, "CLICK", "page")
+    history.observed(_page(PAGE, "page"))
+    history.entries.append(
+        ActHistoryEntry(
+            action="Gift note",
+            kind="TYPE_TEXT",
+            text=None,
+            fingerprint="page",
+            page_changed=False,
+            pending=False,
+            error=NO_VALUE,
+        )
+    )
+    from dataclasses import replace
+
+    history.observed(replace(_page(DIALOG, "dialog"), url="https://example.test/cart"))
+    assert click.opened_dialog is False

@@ -308,6 +308,8 @@ class ActHistory:
             opener.opened_dialog = (
                 not opener.dialog_before
                 and not any(e.left_page for e in entries[len(entries) - 1 - waits :])
+                # still on the page the action ran on: a click whose navigation ended later opened another page
+                and (opener.source_url is None or opener.source_url == page.url)
                 and covered_by_dialog(page.description)
             )
         for entry in self.entries:
