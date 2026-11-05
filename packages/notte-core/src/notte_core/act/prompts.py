@@ -28,8 +28,8 @@ Do not toggle a checkbox, switch, or radio already in the requested state.
 Submit populated search fields before opening a result; a populated field alone is not an applied search.
 Close or confirm an open dialog before Search/Submit. A Search/Submit that opened a date picker or dialog
 instead of results has not run: confirm it, then CLICK Search/Submit again.
-When the last recent action has opened_dialog, it opened the dialog now over the page: the dialog is its result (an
-item added, a choice to make). When the dialog holds the goal's next step (Checkout, View basket, Continue, a field or option the goal
+When the last recent action other than WAIT has opened_dialog, it opened the dialog now over the page: the dialog is
+its result (an item added, a choice to make). When the dialog holds the goal's next step (Checkout, View basket, Continue, a field or option the goal
 gives), act inside it; close it only when it holds none. Closing it, then repeating that action, opens it again.
 WAIT only when the needed control is absent/disabled, or submitted results are still loading.
 If Search/Submit is visible and the required fields are ready, CLICK it immediately.

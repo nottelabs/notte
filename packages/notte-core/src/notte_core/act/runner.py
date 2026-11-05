@@ -293,14 +293,22 @@ class ActHistory:
             source_url = self.entries[-1].source_url
             self.entries[-1].left_page = source_url is not None and source_url != page.url
             # only the last action is said to have opened the dialog now over the page: an earlier one's dialog was
-            # closed or replaced since (a protection upsell declined, then the confirmation)
-            for entry in list(self.entries)[:-1]:
+            # closed or replaced since (a protection upsell declined, then the confirmation). A dialog that shows
+            # during WAITs is the result of the action before them (a click whose request answered late), not of a
+            # WAIT
+            entries = list(self.entries)
+            waits = 0
+            while waits < len(entries) and entries[-1 - waits].kind == "WAIT":
+                waits += 1
+            opener = entries[-1 - waits] if waits < len(entries) else None
+            for entry in entries:
                 entry.opened_dialog = False
-            self.entries[-1].opened_dialog = (
-                not self.entries[-1].dialog_before
-                and not self.entries[-1].left_page
-                and covered_by_dialog(page.description)
-            )
+            if opener is not None:
+                opener.opened_dialog = (
+                    not opener.dialog_before
+                    and not any(e.left_page for e in entries[len(entries) - 1 - waits :])
+                    and covered_by_dialog(page.description)
+                )
             self._read_back(self.entries[-1], page)
         for entry in self.entries:
             if entry.typed is not None:
