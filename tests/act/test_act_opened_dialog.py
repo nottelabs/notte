@@ -79,3 +79,25 @@ def test_a_skipped_field_is_not_said_to_have_opened_a_dialog() -> None:
     assert skipped.opened_dialog is False and wait.opened_dialog is False
     # the click opened it, and the dialog is still the one over the page
     assert click.opened_dialog is True
+
+
+def test_a_dialog_that_shows_while_a_field_is_skipped_is_told_on_the_next_decision() -> None:
+    # the click's dialog shows while the writer decides it has no value for a field: the observation after the skip
+    # (no action ran) tells the click opened it
+    history = ActHistory()
+    click = _act(history, "CLICK", "page")
+    history.observed(_page(PAGE, "page"))
+    assert click.opened_dialog is False
+    history.entries.append(
+        ActHistoryEntry(
+            action="Gift note",
+            kind="TYPE_TEXT",
+            text=None,
+            fingerprint="page",
+            page_changed=False,
+            pending=False,
+            error=NO_VALUE,
+        )
+    )
+    history.observed(_page(DIALOG, "dialog"))
+    assert click.opened_dialog is True
