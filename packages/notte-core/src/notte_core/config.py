@@ -87,6 +87,7 @@ class NotteConfigDict(TypedDict, total=False):
     raise_on_session_execution_failure: bool
     evaluate_js_max_result_bytes: int
     evaluate_js_max_result_values: int
+    pointer_motion: bool
 
     # [error]
     raise_condition: RaiseCondition
@@ -175,6 +176,8 @@ class NotteConfig(TomlConfig):
     raise_on_session_execution_failure: bool
     evaluate_js_max_result_bytes: int = Field(default=16 * 1024 * 1024, gt=0)
     evaluate_js_max_result_values: int = Field(default=50_000, gt=0)
+    # Move the pointer along a short curve before a click, and over the page once it has loaded
+    pointer_motion: bool = True
 
     # [error]
     raise_condition: RaiseCondition

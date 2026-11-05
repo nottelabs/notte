@@ -73,3 +73,15 @@ evaluate_js_max_result_values = 50000
 This is an output budget, not a hard process-memory limit. It bounds conversion
 buffering, but excludes the browser result already decoded into Python and memory
 used by other concurrent requests. Raising it increases the possible memory peak.
+
+## Pointer movement
+
+`pointer_motion` defaults to `true`. Before a click, the pointer moves along a short
+curved path to a point inside the element (about 0.5 s), and after a page loads it
+moves over parts of the page that are not links, buttons or fields, with a small
+scroll and back (about 2 s, once per page load). Set it to `false` to click and load
+pages without these moves.
+
+```toml
+pointer_motion = false
+```

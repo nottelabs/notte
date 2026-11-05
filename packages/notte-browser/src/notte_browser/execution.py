@@ -50,6 +50,7 @@ from notte_core.profiling import profiler
 from notte_core.snapshot import BrowserSnapshot
 from notte_core.storage import BaseStorage
 
+from notte_browser import pointer
 from notte_browser.captcha import solve_captcha
 from notte_browser.click_input import ClickInputReporter
 from notte_browser.dom.locate import locate_element, selectors_through_shadow_dom
@@ -85,6 +86,8 @@ _FILE_INPUT_CLICKS = script("file_input_clicks.js")
 # How long a click waits for the report of its input after the driver returned (s). A page listener that stops
 # `pointerdown` before the click's own keeps it from ever coming.
 _CLICK_INPUT_REPORT_S = 1.0
+# Budget a click keeps for itself after the pointer approached its element (ms)
+_CLICK_AFTER_APPROACH_MS = 1000
 
 
 def text_contains_tabs(text: str) -> bool:
@@ -982,6 +985,13 @@ async def _interact(
             # An image-map area has no box: its JS click follows the link without actionability waits.
             js_click = await locator.evaluate("(el) => el.localName === 'area'", timeout=budget.remaining_ms())
             if not js_click:
+                if config.pointer_motion:
+                    # the pointer comes to the element before the click, as long as the click keeps its own time
+                    _ = await pointer.approach(
+                        locator.page,
+                        locator,
+                        time_left_s=budget.remaining_ms(keep_ms=action.timeout / 5 + _CLICK_AFTER_APPROACH_MS) / 1000,
+                    )
                 try:
                     # Hold back part of the budget for the JS fallback. Navigation belongs to PageSettle,
                     # including a response that has not committed before the interaction deadline.
@@ -1156,6 +1166,9 @@ async def _execute(
     tabs = list(context.pages)
     opener = await page.opener() if isinstance(action, ClickAction) else None
     url = page.url
+    if config.pointer_motion:
+        # counts the document loads the action causes
+        _ = pointer.track(page)
     # a tab opened once the settle is over is switched to by the next observation
     await window.watch_new_tabs(_can_create_tab(action))
     # tracked from right before the action
@@ -1358,6 +1371,13 @@ async def _execute(
                     _ = await replacement.evaluate("() => document.readyState")
             except (Error, TimeoutError):
                 raise closed_during_click
+        if (
+            config.pointer_motion
+            and retval
+            and not isinstance(action, (CompletionAction, EvaluateJsAction, HelpAction))
+        ):
+            # once the page an action loaded (or the first one acted on) has settled
+            _ = await pointer.move_after_load(window.page)
     finally:
         for click_input in click_inputs:
             await click_input.dispose()

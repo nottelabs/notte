@@ -4,3 +4,5 @@ browser_type = "chromium"
 web_security = false
 viewport_width = 1920
 viewport_height = 1080
+# Tests that check pointer movement turn it on themselves; it adds seconds per page load
+pointer_motion = false
