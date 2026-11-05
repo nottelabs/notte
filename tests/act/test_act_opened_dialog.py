@@ -1,6 +1,6 @@
 """Which action the history says opened the dialog now over the page (`ActHistoryEntry.opened_dialog`)."""
 
-from notte_core.act.runner import ActHistory, ActHistoryEntry
+from notte_core.act.runner import NO_VALUE, ActHistory, ActHistoryEntry
 from notte_core.act.space import ObservedPage
 from notte_core.actions import ClickAction
 
@@ -54,3 +54,28 @@ def test_only_the_last_action_opened_the_dialog_now_over_the_page() -> None:
     decline.dialog_before = True
     history.observed(_page(DIALOG, "dialog2"))
     assert click.opened_dialog is False and decline.opened_dialog is False
+
+
+def test_a_skipped_field_is_not_said_to_have_opened_a_dialog() -> None:
+    # the click opened the dialog; a field the goal gives no value for is skipped (nothing ran); then act waits
+    history = ActHistory()
+    click = _act(history, "CLICK", "page")
+    history.observed(_page(DIALOG, "dialog"))
+    history.entries.append(
+        ActHistoryEntry(
+            action="Gift note",
+            kind="TYPE_TEXT",
+            text=None,
+            fingerprint="dialog",
+            page_changed=False,
+            pending=False,
+            error=NO_VALUE,
+        )
+    )
+    skipped = history.entries[-1]
+    wait = _act(history, "WAIT", "dialog")
+    wait.dialog_before = True
+    history.observed(_page(DIALOG, "dialog"))
+    assert skipped.opened_dialog is False and wait.opened_dialog is False
+    # the click opened it, and the dialog is still the one over the page
+    assert click.opened_dialog is True

@@ -295,10 +295,12 @@ class ActHistory:
             # only the last action is said to have opened the dialog now over the page: an earlier one's dialog was
             # closed or replaced since (a protection upsell declined, then the confirmation). A dialog that shows
             # during WAITs is the result of the action before them (a click whose request answered late), not of a
-            # WAIT
+            # WAIT, nor of a field skipped without typing (`NO_VALUE`: nothing ran)
             entries = list(self.entries)
             waits = 0
-            while waits < len(entries) and entries[-1 - waits].kind == "WAIT":
+            while waits < len(entries) and (
+                entries[-1 - waits].kind == "WAIT" or entries[-1 - waits].error == NO_VALUE
+            ):
                 waits += 1
             opener = entries[-1 - waits] if waits < len(entries) else None
             for entry in entries:
