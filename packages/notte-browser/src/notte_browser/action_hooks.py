@@ -10,7 +10,7 @@ is up, is stopped and logged at debug level, and the action goes on as it would 
 """
 
 import asyncio
-from collections.abc import Awaitable, Callable, Iterator
+from collections.abc import Awaitable, Callable, Generator
 from contextlib import contextmanager
 from contextvars import ContextVar
 
@@ -36,8 +36,8 @@ class ActionHooks:
 
     async def after_navigation(self, page: Page, time_left_s: float) -> None:
         """Called once an action that navigated has settled, with the page now acted on: after a goto (in the
-        current or a new tab), back, forward or reload, after any action during which the page loaded a new
-        document, and after an action that switched to another page (a tab it opened or switched to). Several
+        current or a new tab), back, forward or reload, after any action during which the page's main frame
+        navigated (a new document, one restored from the back-forward cache, or a URL change within it), and after an action that switched to another page (a tab it opened or switched to). Several
         calls can concern the same document. `time_left_s` bounds this call."""
         del page, time_left_s
 
@@ -60,7 +60,7 @@ def install_action_hooks(hooks: ActionHooks | None) -> ActionHooks | None:
 
 
 @contextmanager
-def use_action_hooks(hooks: ActionHooks) -> Iterator[None]:
+def use_action_hooks(hooks: ActionHooks) -> Generator[None]:
     """Uses `hooks` for the actions executed inside the block (in the current task and the tasks it creates),
     in place of the process hooks."""
     token = _SCOPED_HOOKS.set(hooks)

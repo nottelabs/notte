@@ -156,7 +156,8 @@ async def upload_file(
                     logger.info("Attempting file chooser detection")
                 async with window.page.expect_file_chooser(timeout=remaining_ms()) as fc:
                     await locator.click(timeout=remaining_ms())
-                notify_pointer_moved(window.page, None)
+                    # the click moved the pointer even when no chooser opens
+                    notify_pointer_moved(window.page, None)
                 file_chooser = await fc.value
                 await file_chooser.set_files(upload_file_path)
                 file_chooser_flag = True
@@ -269,7 +270,8 @@ async def download_file(
 
             async with window.page.expect_download(timeout=remaining_ms()) as dw:
                 await locator.click(timeout=remaining_ms())
-            notify_pointer_moved(window.page, None)
+                # the click moved the pointer even when no download comes
+                notify_pointer_moved(window.page, None)
             download = await dw.value
 
             dl_url = download.url

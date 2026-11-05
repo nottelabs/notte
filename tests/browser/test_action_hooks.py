@@ -26,8 +26,12 @@ PAGES = {
 <button id="stay" style="position:absolute; left:400px; top:300px; width:120px; height:40px">Stay</button>
 <a id="next" href="/next" style="position:absolute; left:100px; top:100px">Next</a>
 <a id="tab" href="/next" target="_blank" style="position:absolute; left:100px; top:200px">Tab</a>
-<input type="checkbox" id="box" style="position:absolute; left:100px; top:400px">{RECORD}</body></html>""",
-    "/next": f"<html><body><p>Next page</p>{RECORD}</body></html>",
+<input type="checkbox" id="box" style="position:absolute; left:100px; top:400px">{RECORD}
+<script>addEventListener('pageshow', e => {{ document.documentElement.dataset.restored = e.persisted }})</script>
+</body></html>""",
+    "/next": f"""<html><body><p>Next page</p>
+<button id="back" onclick="history.back()" style="position:absolute; left:100px; top:100px">Back</button>
+{RECORD}</body></html>""",
 }
 
 
@@ -231,3 +235,19 @@ async def test_a_check_that_changes_nothing_reports_no_move(
     result = await session.aexecute(CheckAction(selector="#box", value=True), raise_on_failure=True)
     assert result.success
     assert recorder.moves == []
+
+
+@pytest.mark.asyncio
+async def test_a_click_that_restores_a_cached_page_calls_after_navigation(
+    session: NotteSession, site: str, recorder: Recorder
+) -> None:
+    _ = await session.aexecute(type="goto", url=f"{site}/")
+    _ = await session.aexecute(ClickAction(selector="#next"), raise_on_failure=True)
+    recorder.calls.clear()
+    result = await session.aexecute(ClickAction(selector="#back"), raise_on_failure=True)
+    assert result.success
+    page = session.window.page
+    assert page.url == f"{site}/"
+    # the back-forward cache restored the document: it fired no load event
+    assert await page.evaluate("() => document.documentElement.dataset.restored") == "true"
+    assert ("after_navigation", "") in recorder.calls

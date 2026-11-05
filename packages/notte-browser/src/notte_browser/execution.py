@@ -1186,12 +1186,14 @@ async def _execute(
     opener = await page.opener() if isinstance(action, ClickAction) else None
     url = page.url
     hooks = active_action_hooks()
-    # documents the page loaded during the action, counted only for the hooks
+    # navigations of the page's main frame during the action, counted only for the hooks; a document restored
+    # from the back-forward cache fires no load event, but its main frame does navigate
     loads = 0
 
-    def count_load(_: Page) -> None:
+    def count_load(frame: Frame) -> None:
         nonlocal loads
-        loads += 1
+        if frame.parent_frame is None:
+            loads += 1
 
     # a tab opened once the settle is over is switched to by the next observation
     await window.watch_new_tabs(_can_create_tab(action))
@@ -1286,7 +1288,7 @@ async def _execute(
     try:
         # registered inside the block whose `finally` removes it
         if hooks is not None:
-            page.on("domcontentloaded", count_load)
+            page.on("framenavigated", count_load)
         match action:
             case InteractionAction():
                 try:
@@ -1407,7 +1409,7 @@ async def _execute(
             await run_after_navigation(hooks, window.page)
     finally:
         if hooks is not None:
-            page.remove_listener("domcontentloaded", count_load)
+            page.remove_listener("framenavigated", count_load)
         for click_input in click_inputs:
             await click_input.dispose()
         if click_frames:
