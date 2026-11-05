@@ -42,6 +42,12 @@ export type FunctionMetadataUpdateRequest = {
      */
     shared?: boolean | null;
     /**
+     * Deletion Protected
+     *
+     * Turn deletion protection on or off. While it is on, the function cannot be deleted. Any workspace member's key can turn it on; turning it off takes the key of a workspace admin or owner. Omit or send null to leave it unchanged.
+     */
+    deletion_protected?: boolean | null;
+    /**
      * Response Format
      *
      * JSON Schema of run()'s return value, computed by the caller from its pydantic model
@@ -80,6 +86,10 @@ export type FunctionMetadataUpdateRequest = {
 
 <ParamField body="shared" type={"boolean | null | undefined"}>
 Enable or disable public code sharing and forking for this function. Source code, including embedded credentials, becomes public. Runs, results and stored runtime secrets remain private. This does not enable public execution. Omit or send null to leave sharing unchanged.
+</ParamField>
+
+<ParamField body="deletion_protected" type={"boolean | null | undefined"}>
+Turn deletion protection on or off. While it is on, the function cannot be deleted. Any workspace member's key can turn it on; turning it off takes the key of a workspace admin or owner. Omit or send null to leave it unchanged.
 </ParamField>
 
 <ParamField body="response_format" type={"{ [key: string]: unknown; } | null | undefined"}>
