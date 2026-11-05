@@ -983,7 +983,10 @@ def _element(
         if state.invalid:
             element["invalid"] = True
         if state.error:
-            element["error"] = _cut(display_text(state.error), MAX_ERROR_LENGTH)
+            # a message the browser cut can end with the start of a protected value: masked like a cut value
+            element["error"] = _cut(
+                (display_cut if state.error_truncated else display_text)(state.error), MAX_ERROR_LENGTH
+            )
     elif has_live_state and role == "textbox":
         element["value"] = ""
     return element
@@ -1249,10 +1252,12 @@ def field_context(
 MAX_FIELD_ERRORS = 4
 
 
-def field_errors(page: ObservedPage, display_text: Callable[[str], str] = str) -> list[str]:
+def field_errors(
+    page: ObservedPage, display_text: Callable[[str], str] = str, display_cut: Callable[[str], str] | None = None
+) -> list[str]:
     """The fields of `page` the page marks invalid or shows an error for (`ElementState.invalid` / `error`), in page
     order, as `<name>: <error>` (`<name>: invalid` without a message), the first `MAX_FIELD_ERRORS`: what a form
-    that did not go on still needs."""
+    that did not go on still needs. `display_cut` (default `display_text`) masks a message the browser cut."""
     names = accessible_names(page)
     errors: list[str] = []
     for action in page.actions:
@@ -1260,7 +1265,8 @@ def field_errors(page: ObservedPage, display_text: Callable[[str], str] = str) -
         name = names.get(action.id)
         if state is None or name is None or not (state.invalid or state.error):
             continue
-        error = _cut(display_text(state.error), MAX_ERROR_LENGTH) if state.error else "invalid"
+        display = (display_cut or display_text) if state.error_truncated else display_text
+        error = _cut(display(state.error), MAX_ERROR_LENGTH) if state.error else "invalid"
         errors.append(f"{_cut(display_text(name), MAX_NEARBY_LABEL_LENGTH)}: {error}")
         if len(errors) == MAX_FIELD_ERRORS:
             break

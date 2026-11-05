@@ -546,7 +546,8 @@
 	// the controls of a form (the fields `isErrorField` accepts): a container holding another one is the form's or a
 	// group's, and so are its errors
 	const CONTROL_SELECTOR = [
-		'input:not([type="hidden"])', "select", "textarea", '[contenteditable="true"]',
+		`input${Array.from(NO_ERROR_INPUT_TYPES, (type) => `:not([type="${type}" i])`).join("")}`,
+		"select", "textarea", '[contenteditable="true"]',
 		...Array.from(ERROR_FIELD_ROLES, (role) => `[role="${role}"]`),
 	].join(", ");
 

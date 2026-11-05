@@ -427,6 +427,8 @@ FIELD_ERRORS = """<meta charset="utf-8"><form onsubmit="event.preventDefault()">
 <div><label for="mail">Email</label><input id="mail" aria-describedby="mail-help">
   <small id="mail-help">We send the receipt here</small></div>
 <div><label for="town">Town</label><input id="town"><p class="text-red-error" style="display: none">Invalid</p></div>
+<div class="field"><label for="code">Promo code</label><input id="code"><input type="button" value="Apply">
+  <span class="form-error">Unknown code</span></div>
 <div><label for="city">City</label><input id="city"><span class="field-error" style="opacity: 0">Enter a city</span></div>
 <div class="choices"><div role="checkbox" id="opt-a" tabindex="0" aria-checked="false">Gift wrap</div>
   <div role="checkbox" id="opt-b" tabindex="0" aria-checked="false">Gift note</div>
@@ -457,6 +459,8 @@ async def test_observe_reads_the_errors_a_page_shows_for_its_fields() -> None:
     assert error("street") == (None, None)
     # an error element next to the field, without any ARIA
     assert error("number") == (None, "Required field")
+    # a button beside the field is not another field: the error is still the field's
+    assert error("code") == (None, "Unknown code")
     # `aria-errormessage`, and `aria-describedby` of an invalid field
     assert error("zip") == (True, "Invalid postcode")
     assert error("phone") == (True, "Enter a valid phone number")

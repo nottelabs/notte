@@ -136,6 +136,26 @@ def test_a_field_the_page_marks_invalid_shows_its_error() -> None:
     assert field_errors(_page()) == []
 
 
+def test_an_error_the_browser_cut_masks_the_start_of_a_protected_value() -> None:
+    from notte_core.act.privacy import ActPrivacy
+
+    privacy = ActPrivacy()
+    privacy.remember({"card": "4242424242424242"})
+    cut = ElementState(value="", invalid=True, error="Card 42424242 is declined, try 4242", error_truncated=True)
+    whole = ElementState(value="", invalid=True, error="Code 4242 is wrong")
+    states = {**STATES, "I1": cut, "I4": whole}
+    space = build_act_space(_page(states), display_text=privacy.text, display_cut=privacy.cut_text)
+    elements = {e["index"]: e for e in space.elements}
+    # the browser cut the message inside the card number it repeats: its visible start is masked
+    assert elements["I1"]["error"] == "Card 42424242 is declined, try {{card}}"
+    # a message that was not cut is masked only where a whole protected value appears
+    assert elements["I4"]["error"] == "Code 4242 is wrong"
+    names = accessible_names(_page(states))
+    assert field_errors(_page(states), display_cut=privacy.cut_text)[0] == (
+        f"{names['I1']}: Card 42424242 is declined, try {{{{card}}}}"
+    )
+
+
 def test_a_sorted_column_shows_its_sort_order() -> None:
     # after a sort, the header's `aria-sort` is the only sign of the order: its sort button carries it
     description = DESCRIPTION + '\nB2[:]<span role="button" aria_label="Age: Activate to invert sorting"></span>'

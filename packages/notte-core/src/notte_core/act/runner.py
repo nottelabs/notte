@@ -247,7 +247,9 @@ class ActHistory:
         if len(self.entries) > 0 and self.entries[-1].pending:
             self.entries[-1].page_changed = page.fingerprint != self.entries[-1].fingerprint
             self.entries[-1].pending = False
-            self.entries[-1].field_errors = field_errors(page)
+            # (masked when sent, by `privacy.payload`; a cut message's last characters can start a protected value,
+            # which only `cut_text` masks)
+            self.entries[-1].field_errors = field_errors(page, display_cut=self.privacy.cut_text)
             source_url = self.entries[-1].source_url
             self.entries[-1].left_page = source_url is not None and source_url != page.url
         for entry in self.entries:
@@ -844,7 +846,8 @@ def _write_context(
         field["invalid"] = True
     if state is not None and state.error:
         # the error the page shows for the field: what to write differently
-        field["error"] = history.privacy.text(state.error)
+        privacy = history.privacy
+        field["error"] = (privacy.cut_text if state.error_truncated else privacy.text)(state.error)
     if typed_before is not None:
         # what act typed in this field before: the field changed it (a length limit, a mask) or the page rejected it
         field["retry"] = prompts.RETRY_TYPED.format(text=history.privacy.text(typed_before))
