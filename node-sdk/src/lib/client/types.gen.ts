@@ -2401,6 +2401,18 @@ export type ElementState = {
      * Draggable
      */
     draggable?: boolean | null;
+    /**
+     * Invalid
+     */
+    invalid?: boolean | null;
+    /**
+     * Error
+     */
+    error?: string | null;
+    /**
+     * Errortruncated
+     */
+    errorTruncated?: boolean;
 };
 
 /**
