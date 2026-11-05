@@ -191,7 +191,7 @@ describe('function endpoint paths', () => {
 	it('delete deletes /functions/{id}', async () => {
 		responses.push({ status: 'success', message: 'deleted' });
 
-		await fn.delete();
+		await fn.delete({ confirm: true });
 
 		expect(calls).toEqual([expect.objectContaining({ method: 'DELETE', path: `/functions/${FUNCTION_ID}` })]);
 	});

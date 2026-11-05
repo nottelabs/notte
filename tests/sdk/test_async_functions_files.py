@@ -228,6 +228,7 @@ def run_routes(stream_status: str = "closed") -> Routes:
         ("POST", "/functions/"): FUNCTION,
         ("GET", "/functions/f-1"): LINK,
         ("POST", "/functions/f-1"): FUNCTION,
+        ("PATCH", "/functions/f-1"): {**FUNCTION, "deletion_protected": True},
         ("DELETE", "/functions/f-1"): {"status": "success", "message": "deleted"},
         ("POST", "/functions/f-1/fork"): {**FUNCTION, "function_id": "f-2"},
         ("POST", "/functions/f-1/runs/create"): {**RUN, "status": "created"},
@@ -400,7 +401,9 @@ def function_flows(code: str, tmp_path: Path) -> dict[str, Flow]:
         curl = await wait(function.get_curl(a=1))
         await wait(function.update(code, restricted=False))
         forked = await wait(function.fork())
-        await wait(function.delete())
+        await wait(function.set_deletion_protection(True))
+        await wait(function.set_deletion_protection(False))
+        await wait(function.delete(confirm=True))
         # The sync `function_id` of a fork fetches its metadata; the async one does not.
         return [created, run, stopped, curl, function.response, type(forked).__name__.removeprefix("Async")]
 

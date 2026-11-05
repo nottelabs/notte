@@ -1,16 +1,25 @@
 ---
 title: "delete"
-description: "Delete the function from the notte console"
+description: "Delete the function permanently"
 ---
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
+This cannot be undone, so it must be confirmed.
+
 ```python
 function = notte.Function("<your-function-id>")
-function.delete()
+function.delete(confirm=True)
 ```
 
+A function with deletion protection on cannot be deleted until it is turned off
+
+
+## Parameters
+
+<ParamField path="confirm" type="bool" default="False">
+</ParamField>
 
 ## Returns
 

@@ -464,7 +464,8 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [create_run](https://docs.notte.cc/sdk-reference/nottefunction/create_run.md): Create a run record without starting execution
 - [run](https://docs.notte.cc/sdk-reference/nottefunction/run.md): Run the function on the Notte cloud using the specified variables
 - [update](https://docs.notte.cc/sdk-reference/nottefunction/update.md): Update the function with a new code version
-- [delete](https://docs.notte.cc/sdk-reference/nottefunction/delete.md): Delete the function from the notte console
+- [delete](https://docs.notte.cc/sdk-reference/nottefunction/delete.md): Delete the function permanently
+- [set_deletion_protection](https://docs.notte.cc/sdk-reference/nottefunction/set_deletion_protection.md): Turn deletion protection on or off
 - [download](https://docs.notte.cc/sdk-reference/nottefunction/download.md): Download the function code from the notte console as a python file
 - [fork](https://docs.notte.cc/sdk-reference/nottefunction/fork.md): Fork a shared function into your own private function
 - [get_curl](https://docs.notte.cc/sdk-reference/nottefunction/get_curl.md): Convert the function run to a curl request

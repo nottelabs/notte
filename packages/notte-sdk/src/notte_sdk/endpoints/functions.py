@@ -181,6 +181,11 @@ class _FunctionsEndpoints:
         return "".join(result_parts)
 
 
+def _require_delete_confirmation(confirm: bool) -> None:
+    if confirm is not True:
+        raise ValueError("Deleting a function is permanent. Call delete(confirm=True) to proceed.")
+
+
 def _update_request(
     function_id: str, restricted: bool, data: UpdateFunctionRequestDict
 ) -> tuple[NotteEndpoint[GetFunctionResponse], dict[str, UploadFile]]:
@@ -495,17 +500,36 @@ class NotteFunction:
             f"[Function] {self.response.function_id} updated successfully to version {self.response.latest_version}."
         )
 
-    def delete(self) -> None:
+    def delete(self, *, confirm: bool = False) -> None:
         """
-        Delete the function from the notte console.
+        Delete the function permanently. This cannot be undone, so it must be confirmed.
 
         ```python
         function = notte.Function("<your-function-id>")
-        function.delete()
+        function.delete(confirm=True)
         ```
+
+        A function with deletion protection on cannot be deleted until it is turned off.
         """
+        _require_delete_confirmation(confirm)
         _ = self.client.delete(function_id=self.response.function_id)
         logger.info(f"[Function] {self.response.function_id} deleted successfully.")
+
+    def set_deletion_protection(self, enabled: bool) -> None:
+        """
+        Turn deletion protection on or off. While it is on, the function cannot be deleted.
+
+        ```python
+        function = notte.Function("<your-function-id>")
+        function.set_deletion_protection(True)
+        print(function.response.deletion_protected)
+        ```
+
+        Any workspace member's key can turn it on. Turning it off takes the key of a
+        workspace admin or owner.
+        """
+        self._response = self.client.metadata_update(function_id=self._function_id, deletion_protected=enabled)
+        logger.info(f"[Function] {self._function_id} deletion protection set to {enabled}.")
 
     def get_url(self, version: str | None = None, decryption_key: str | None = None) -> str:
         if not isinstance(self.response, GetFunctionWithLinkResponse) or version != self.response.latest_version:
@@ -844,18 +868,38 @@ class AsyncNotteFunction:
             f"[Function] {self._response.function_id} updated successfully to version {self._response.latest_version}."
         )
 
-    async def delete(self) -> None:
+    async def delete(self, *, confirm: bool = False) -> None:
         """
-        Delete the function from the notte console.
+        Delete the function permanently. This cannot be undone, so it must be confirmed.
 
         ```python
         function = client.Function("<your-function-id>")
-        await function.delete()
+        await function.delete(confirm=True)
         ```
+
+        A function with deletion protection on cannot be deleted until it is turned off.
         """
+        _require_delete_confirmation(confirm)
         response = await self._load()
         _ = await self.client.delete(function_id=response.function_id)
         logger.info(f"[Function] {response.function_id} deleted successfully.")
+
+    async def set_deletion_protection(self, enabled: bool) -> None:
+        """
+        Turn deletion protection on or off. While it is on, the function cannot be deleted.
+
+        ```python
+        function = await client.Function("<your-function-id>")
+        await function.set_deletion_protection(True)
+        print(function.response.deletion_protected)
+        ```
+
+        Any workspace member's key can turn it on. Turning it off takes the key of a
+        workspace admin or owner.
+        """
+        response = await self._load()
+        self._response = await self.client.metadata_update(function_id=response.function_id, deletion_protected=enabled)
+        logger.info(f"[Function] {response.function_id} deletion protection set to {enabled}.")
 
     async def get_url(self, version: str | None = None, decryption_key: str | None = None) -> str:
         response = await self._load()

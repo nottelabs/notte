@@ -42,7 +42,7 @@ describe('Function live integration', () => {
 	afterAll(async () => {
 		try {
 			if (fn) {
-				const deleted = await fn.delete();
+				const deleted = await fn.delete({ confirm: true });
 				expect(deleted.status).toBe('success');
 			}
 		} finally {

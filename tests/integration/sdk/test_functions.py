@@ -20,7 +20,7 @@ def function(tmp_path: Path) -> Generator[NotteFunction, None, None]:
     try:
         yield fn
     finally:
-        fn.delete()
+        fn.delete(confirm=True)
 
 
 @pytest.mark.parametrize("stream", [True, False])

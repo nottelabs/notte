@@ -9,11 +9,20 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 [Source: node-sdk/src/functions.ts](https://github.com/nottelabs/notte/blob/main/node-sdk/src/functions.ts)
 
-Delete the function from the Notte console.
+Delete the function permanently. This cannot be undone, so it must be confirmed.
+
+A function with deletion protection on cannot be deleted until it is turned off
+with `updateMetadata({ deletion_protected: false })`.
 
 ```typescript
-NotteFunction.delete(): Promise<DeleteFunctionResponse>;
+NotteFunction.delete(options: FunctionDeleteOptions): Promise<DeleteFunctionResponse>;
 ```
+
+## Parameters
+
+<ParamField body="options" type={"FunctionDeleteOptions"} required>
+Must set `confirm` to `true`.
+</ParamField>
 
 ## Returns
 
@@ -25,14 +34,16 @@ The API's function-deletion confirmation.
 
 ## Raises
 
+- InvalidRequestError if `confirm` is not `true`.
 - NotteAPIError if the function cannot be deleted.
 
 ## Example
 
 ```typescript
-await fn.delete();
+await fn.delete({ confirm: true });
 ```
 
 ## Related types
 
 - [DeleteFunctionResponse](/typescript-sdk-reference/types/deletefunctionresponse)
+- [FunctionDeleteOptions](/typescript-sdk-reference/types/functiondeleteoptions)

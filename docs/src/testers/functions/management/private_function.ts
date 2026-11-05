@@ -18,6 +18,6 @@ try {
   if (!metadata.versions.includes(metadata.latest_version)) throw new Error('Missing deployed version');
   results = [metadata.name, metadata.description, metadata.shared, result.result];
 } finally {
-  await fn.delete();
+  await fn.delete({ confirm: true });
 }
 export { results };

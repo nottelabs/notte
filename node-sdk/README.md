@@ -640,7 +640,10 @@ await fn.deleteSchedule();
 const runs = await fn.runs();                   // all runs, including completed ones
 const functions = await notte.functions.list();
 
-await fn.delete();
+await fn.updateMetadata({ deletion_protected: true });  // refuse deletes until turned off
+await fn.updateMetadata({ deletion_protected: false });
+
+await fn.delete({ confirm: true });                     // permanent, so it must be confirmed
 ```
 
 `run()` waits at most 300 s by default; pass `timeoutMs` to change it. A failed
@@ -651,7 +654,7 @@ run throws `FailedToRunCloudFunctionError` unless `raiseOnFailure: false`.
 - `run(variables?, options?)` - Stream logs and wait for completion; use `stream: false` for the backend's JSON response without live logs. Options: `runtime`, `functionRunId`, `onLog`, `raiseOnFailure`, `timeoutMs`
 - `get(options?)` - Function metadata, versions and download link
 - `update(options)` / `updateMetadata(body)` - Upload a new version / change name, description
-- `delete()` - Delete the function
+- `delete({ confirm: true })` - Delete the function; throws without `confirm`
 - `setSchedule(body)` / `deleteSchedule()` - Manage the cron schedule
 - `rollback(options)` - Roll back to a previous version
 - `runs(options?)` - List runs (all runs by default, `only_active: true` for active ones)

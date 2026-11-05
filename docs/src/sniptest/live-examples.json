@@ -31,6 +31,13 @@
       ]
     }
   },
+  "functions/management/deletion_protection.ts": {
+    "expected": {
+      "results": [
+        true
+      ]
+    }
+  },
   "functions/management/private_function.ts": {
     "expected": {
       "results": [

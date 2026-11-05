@@ -17,7 +17,7 @@ async def main() -> None:
             result = await same_function.run(url="https://example.com")
             print(result.status, result.result)
         finally:
-            await function.delete()
+            await function.delete(confirm=True)
 
 
 asyncio.run(main())
