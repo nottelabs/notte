@@ -87,15 +87,19 @@ This is the standalone Python/Node SDK repository. The machine's monorepo
   (or the JS fallback click). Actionability waits can outlast background navigation;
   Native clicks use `no_wait_after=True`: the action timeout bounds input, while
   `PageSettle` waits for navigation even if its response has not committed.
-  Starting `Locator.click` is not the input boundary. The page binding reports
-  input before a handler closes the tab. Reuse one binding per page, clearing
-  action callbacks and input listeners after each action; a new binding per click
-  would retain callbacks in the driver's page registry.
+  Starting `Locator.click` is not the input boundary. `click_input.py` reports
+  input before a handler closes the tab, through a CDP binding added to an isolated
+  world of its own (`Page.createIsolatedWorld`), on a CDP session that lives for the
+  action. Never use `expose_function`/`expose_binding` for it: Patchright installs
+  a catch-all route for them, so every later request of the page waits for the
+  driver. A raw `Runtime.addBinding` needs an explicit context id (Patchright never
+  sends `Runtime.enable`). Reuse the world per frame document; dispose input listeners
+  after each action.
   Await input delivery inside the existing action timeout before settlement or
   replacement selection, including closed-target acknowledgements. The JS click
   fallback must await its input notification before invoking the handler.
-  Queue navigation attribution alongside input bindings: exposed callbacks run
-  as tasks, so immediate request timestamps can invert buffered event order.
+  Queue navigation attribution alongside input reports: both are queued with
+  `call_soon`, so immediate timestamps cannot invert buffered event order.
   Listener leak checks must prime the complete click path before their baseline:
   the driver's injected utility installs its own persistent hit-target interceptor.
   A new tab's fetch can precede that event too. Retain active context requests

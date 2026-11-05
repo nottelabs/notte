@@ -1,13 +1,9 @@
 import asyncio
-import json
 import re
 import time
 from collections.abc import Awaitable, Callable
 from contextlib import suppress
-from dataclasses import dataclass, field
-from typing import Literal, cast
-from uuid import uuid4
-from weakref import WeakKeyDictionary
+from typing import Literal
 
 from notte_core.actions import (
     BaseAction,
@@ -55,6 +51,7 @@ from notte_core.snapshot import BrowserSnapshot
 from notte_core.storage import BaseStorage
 
 from notte_browser.captcha import solve_captcha
+from notte_browser.click_input import ClickInputReporter
 from notte_browser.dom.locate import locate_element, selectors_through_shadow_dom
 from notte_browser.dom.parsing import parse_dom
 from notte_browser.driver import (
@@ -65,7 +62,6 @@ from notte_browser.driver import (
     JSHandle,
     Locator,
     Page,
-    evaluate_handle_in_main_world,
 )
 from notte_browser.errors import (
     InvalidLocatorRuntimeError,
@@ -86,27 +82,9 @@ _IS_DISABLED = script("is_disabled.js")
 _PASTE_TEXT = script("paste_text.js")
 # Page-side implementation: js/file_input_clicks.js
 _FILE_INPUT_CLICKS = script("file_input_clicks.js")
-_CLICK_INPUT = script("click_input.js")
 # How long a click waits for the report of its input after the driver returned (s). A page listener that stops
 # `pointerdown` before the click's own keeps it from ever coming.
 _CLICK_INPUT_REPORT_S = 1.0
-
-
-@dataclass
-class _ClickInputBinding:
-    name: str = field(default_factory=lambda: f"__notte_click_{uuid4().hex}")
-    callbacks: dict[str, Callable[[], None]] = field(default_factory=dict)
-
-    def notify(self, token: str) -> None:
-        if type(token) is not str:
-            return
-        callback = self.callbacks.get(token)
-        if callback is not None:
-            callback()
-
-
-# A binding lasts as long as its page; only the active action callbacks and input listeners are temporary.
-_CLICK_INPUT_BINDINGS: WeakKeyDictionary[Page, _ClickInputBinding] = WeakKeyDictionary()
 
 
 def text_contains_tabs(text: str) -> bool:
@@ -1193,8 +1171,7 @@ async def _execute(
     existing_settles: dict[Page, PageSettle] = {}
     click_input_times: list[float] = []
     click_input_received = asyncio.Event()
-    click_inputs: list[JSHandle] = []
-    click_bindings: list[tuple[_ClickInputBinding, str]] = []
+    click_inputs: list[ClickInputReporter] = []
     # the frame whose document reports the click's input, and whether that document was replaced since
     click_frames: list[Frame] = []
     click_document_replaced = False
@@ -1217,7 +1194,7 @@ async def _execute(
         if returned and click_document_replaced and not click_input_received.is_set():
             try:
                 # a URL change within the document keeps its listener
-                _ = await click_inputs[-1].evaluate("() => true")
+                await click_inputs[-1].check()
             except Error:
                 # The listener went with its document, the click landed in the next one: it came at the latest now
                 record_click_input()
@@ -1233,14 +1210,6 @@ async def _execute(
         existing_settles.update({tab: PageSettle(tab, None, tabs=False) for tab in tabs if tab is not page})
         if not existing_settles:
             return None
-        binding = _CLICK_INPUT_BINDINGS.get(page)
-        if binding is None:
-            binding = _ClickInputBinding()
-            _ = await page.expose_function(binding.name, binding.notify)  # pyright: ignore[reportUnknownMemberType]
-            _CLICK_INPUT_BINDINGS[page] = binding
-        token = uuid4().hex
-        binding.callbacks[token] = record_click_input
-        click_bindings.append((binding, token))
         element = await locator.element_handle()
         assert element is not None
         try:
@@ -1252,14 +1221,9 @@ async def _execute(
         click_frames.append(frame)
         page.on("framenavigated", click_frame_navigated)
 
-        async def report_input(frame: Frame) -> JSHandle:
-            # the binding outlives the documents of its page, the listener stays in the document of `frame`
-            click_input = cast(
-                JSHandle,
-                await evaluate_handle_in_main_world(
-                    frame, f"() => ({_CLICK_INPUT})({json.dumps(binding.name)}, {json.dumps(token)})"
-                ),
-            )
+        async def report_input(frame: Frame) -> ClickInputReporter:
+            # the listener stays in the document of `frame`
+            click_input = await ClickInputReporter.install(page, frame, record_click_input)
             click_inputs.append(click_input)
             return click_input
 
@@ -1273,8 +1237,10 @@ async def _execute(
                 if current is None:
                     raise Error("Click target is no longer attached to a frame")
                 reporter = await report_input(current)
-            # The JS path emits no trusted pointer event. Mark its input in the same task as the click.
-            await reporter.evaluate("async (input, el) => { await input.mark(); el.click(); }", element)
+            # The JS path emits no trusted pointer event: mark its input, and click once the report has arrived.
+            await reporter.mark()
+            _ = await click_input_received.wait()
+            await element.evaluate("el => el.click()")
 
         return js_click_with_input
 
@@ -1394,12 +1360,7 @@ async def _execute(
                 raise closed_during_click
     finally:
         for click_input in click_inputs:
-            with suppress(Error):
-                await click_input.evaluate("input => input.dispose()")
-            with suppress(Error):
-                await click_input.dispose()
-        for binding, token in click_bindings:
-            _ = binding.callbacks.pop(token, None)
+            await click_input.dispose()
         if click_frames:
             _ = page.remove_listener("framenavigated", click_frame_navigated)
         for existing in existing_settles.values():

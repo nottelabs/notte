@@ -9,13 +9,15 @@ from contextlib import ExitStack, closing, suppress
 from typing import Literal
 from unittest.mock import AsyncMock, patch
 
+import notte_browser.click_input as click_input_module
 import notte_browser.execution as execution_module
 import notte_browser.settle as settle_module
 import notte_browser.window as window_module
 import pytest
 import pytest_asyncio
 from aiohttp import web
-from notte_browser.driver import Error, JSHandle, Locator, Page, evaluate_in_main_world
+from notte_browser.click_input import ClickInputReporter
+from notte_browser.driver import Error, Frame, JSHandle, Locator, Page, evaluate_in_main_world
 from notte_browser.driver import TimeoutError as PlaywrightTimeoutError
 from notte_browser.session import NotteSession
 from notte_browser.settle import CAP_MS, LONG_GRACE_MS, QUIET_MS, SETTLE_MS, PageSettle
@@ -50,6 +52,7 @@ HOME = """<html><body>
 <button id="late" onclick="setTimeout(() =>
   document.body.insertAdjacentHTML('beforeend', '<p>Late result</p>'), 400)">Late</button>
 <button id="nothing">Nothing</button>
+<button id="detach-self" onclick="this.remove()">Remove this button</button>
 <button id="hang" onclick="fetch('/hang')">Hang</button>
 <a id="hang-page" href="/hanging">Hanging page</a>
 <form action="/results"><input id="q" name="q" value="lamp"></form>
@@ -173,6 +176,12 @@ window.addEventListener('load', () => setTimeout(() => fetch('/data?delay=0.9').
     "/ad-page": """<html><body><button id="nothing" onclick="frames[0].postMessage('click', '*')">Nothing</button>
 <iframe src="OTHER_ORIGIN/ad"></iframe></body></html>""",
     "/ad": """<html><body>Ad<script>window.addEventListener('message', () => fetch('/data?delay=2'))</script>
+</body></html>""",
+    # two frames with the same URL, and one on another origin (rendered out of process)
+    "/frames": """<html><body><iframe id="first" src="/frame-button"></iframe>
+<iframe id="second" src="/frame-button"></iframe><iframe id="cross" src="OTHER_ORIGIN/frame-button"></iframe>
+</body></html>""",
+    "/frame-button": """<html><body><button id="in-frame" onclick="document.body.dataset.clicked = 'yes'">In frame</button>
 </body></html>""",
     # renders its results from data it fetches once it is parsed
     "/search": """<html><body><form action="/search-results"><input id="query" name="q" value="lamp">
@@ -1283,17 +1292,19 @@ async def test_replacement_selection_waits_for_click_input_delivery(
     )
     session.window.page = popup
     notification_started, release, native_done = asyncio.Event(), asyncio.Event(), asyncio.Event()
-    notify = execution_module._ClickInputBinding.notify  # pyright: ignore[reportPrivateUsage]
+    notify = ClickInputReporter.notify
     original_click = Locator.click
     settlement = AsyncMock()
+    delayed: list[asyncio.Task[None]] = []
 
-    async def delayed_notify(
-        binding: execution_module._ClickInputBinding,
-        token: str,  # pyright: ignore[reportPrivateUsage]
-    ) -> None:
+    def delayed_notify(reporter: ClickInputReporter) -> None:
         notification_started.set()
-        await release.wait()
-        notify(binding, token)
+
+        async def deliver() -> None:
+            await release.wait()
+            notify(reporter)
+
+        delayed.append(asyncio.create_task(deliver()))
 
     async def closing_click(locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
         try:
@@ -1307,7 +1318,7 @@ async def test_replacement_selection_waits_for_click_input_delivery(
         if mode == "closed":
             raise Error("Locator.click: Target page, context or browser has been closed")
 
-    monkeypatch.setattr(execution_module._ClickInputBinding, "notify", delayed_notify)  # pyright: ignore[reportPrivateUsage]
+    monkeypatch.setattr(ClickInputReporter, "notify", delayed_notify)
     monkeypatch.setattr(Locator, "click", closing_click)
     monkeypatch.setattr(execution_module, "_settle", settlement)
     pending = asyncio.create_task(click(session, "close-self"))
@@ -1328,6 +1339,7 @@ async def test_replacement_selection_waits_for_click_input_delivery(
             pending.cancel()
         with suppress(asyncio.CancelledError):
             await pending
+        _ = await asyncio.gather(*delayed, return_exceptions=True)
 
 
 @pytest.mark.asyncio
@@ -1346,20 +1358,193 @@ async def test_click_input_resources_do_not_accumulate_between_actions(session: 
 
     try:
         before = await pointer_listeners()
-        names: list[str] | None = None
         for _ in range(2):
             _ = await click(session, "nothing")
             assert await pointer_listeners() == before
-            current = await evaluate_in_main_world(
-                page.main_frame,
-                "() => Object.getOwnPropertyNames(window).filter(name => name.startsWith('__notte_click_'))",
+            # the report goes through a world of its own: nothing is exposed to the page
+            exposed = await evaluate_in_main_world(
+                page.main_frame, "() => Object.getOwnPropertyNames(window).filter(name => name.startsWith('__notte'))"
             )
-            assert len(current) == 1
-            if names is not None:
-                assert current == names
-            names = current
+            assert exposed == []
     finally:
         await cdp.detach()
+
+
+def route_count(page: Page) -> int:
+    """The routes of a page and of its context: a route makes the driver intercept the page's requests."""
+    return len(page._impl_obj._routes) + len(page.context._impl_obj._routes)  # pyright: ignore[reportPrivateUsage]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("element", ["tab", "nothing", "detach-self"])
+async def test_a_click_with_another_tab_open_reports_its_input_without_intercepting_requests(
+    session: NotteSession, site: str, monkeypatch: pytest.MonkeyPatch, element: str
+) -> None:
+    page = session.window.page
+    other = await page.context.new_page()
+    await other.goto(f"{site}/next")
+    session.window.page = page
+    reported: list[float] = []
+    notify = ClickInputReporter.notify
+
+    def counting_notify(reporter: ClickInputReporter) -> None:
+        reported.append(time.perf_counter())
+        notify(reporter)
+
+    monkeypatch.setattr(ClickInputReporter, "notify", counting_notify)
+    _ = await click(session, element)
+    # the input was reported from the page, as it came
+    assert len(reported) == 1
+    assert route_count(page) == 0
+    if element == "tab":
+        assert session.window.page.url == f"{site}/second"
+        assert "Second tab" in await text(session)
+    else:
+        assert session.window.page is page
+    if element == "detach-self":
+        assert await page.locator("#detach-self").count() == 0
+    exposed = await evaluate_in_main_world(
+        page.main_frame, "() => Object.getOwnPropertyNames(window).filter(name => name.startsWith('__notte'))"
+    )
+    assert exposed == []
+    # requests the page makes after the click are not held by the driver
+    async with page.expect_response(lambda response: "/data" in response.url):
+        await page.evaluate("fetch('/data?delay=0')")
+    assert route_count(page) == 0
+
+
+async def main_world_context_id(page: Page) -> int:
+    """The id of the main world of the page's current document, read on a CDP session of its own."""
+    session = await page.context.new_cdp_session(page)
+    contexts: list[int] = []
+
+    def created(event: dict[str, dict[str, int | str | dict[str, bool | str]]]) -> None:
+        context = event["context"]
+        aux = context["auxData"]
+        if isinstance(aux, dict) and aux.get("isDefault") is True and isinstance(context["id"], int):
+            contexts.append(context["id"])
+
+    session.on("Runtime.executionContextCreated", created)
+    try:
+        _ = await session.send("Runtime.enable")  # pyright: ignore[reportUnknownMemberType]
+        _ = await session.send("Runtime.disable")  # pyright: ignore[reportUnknownMemberType]
+    finally:
+        await session.detach()
+    assert contexts, "no main world context reported"
+    return contexts[0]
+
+
+@pytest.mark.asyncio
+async def test_a_click_never_reuses_a_world_from_a_replaced_document(
+    session: NotteSession, site: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A context id only means something in the document it was created in: after a cross-process navigation it
+    can name an unrelated context of the new document, such as the page's main world. The cached world is keyed by
+    the frame's document (its loader id), so a stale entry is never reused, even when its context id is live."""
+    page = session.window.page
+    other = await page.context.new_page()
+    await other.goto(f"{site}/next")
+    session.window.page = page
+    reported: list[float] = []
+    notify = ClickInputReporter.notify
+
+    def counting_notify(reporter: ClickInputReporter) -> None:
+        reported.append(time.perf_counter())
+        notify(reporter)
+
+    monkeypatch.setattr(ClickInputReporter, "notify", counting_notify)
+    _ = await click(session, "nothing")
+    worlds = click_input_module._WORLDS[page]  # pyright: ignore[reportPrivateUsage]
+    (frame_id, stale) = next(iter(worlds.items()))
+    _ = await page.reload()
+    await page.locator("#nothing").wait_for()
+    # The worst case: the stale entry names a context that is live in the new document, its main world.
+    main_world = await main_world_context_id(page)
+    worlds[frame_id] = click_input_module._World(stale.loader_id, main_world)  # pyright: ignore[reportPrivateUsage]
+    _ = await click(session, "nothing")
+    assert len(reported) == 2
+    current = worlds[frame_id]
+    assert current.loader_id != stale.loader_id
+    assert current.context_id != main_world
+    exposed = await evaluate_in_main_world(
+        page.main_frame, "() => Object.getOwnPropertyNames(window).filter(name => name.startsWith('__notte'))"
+    )
+    assert exposed == []
+    assert route_count(page) == 0
+
+
+async def frame_with_button(page: Page, frame_id: str) -> Frame:
+    element = await page.locator(f"#{frame_id}").element_handle()
+    assert element is not None
+    frame = await element.content_frame()
+    assert frame is not None
+    await frame.locator("#in-frame").wait_for()
+    return frame
+
+
+@pytest.mark.asyncio
+async def test_click_input_is_reported_from_the_clicked_frame_only(session: NotteSession, site: str) -> None:
+    page = session.window.page
+    await page.goto(f"{site}/frames", wait_until="load")
+    first, second = await frame_with_button(page, "first"), await frame_with_button(page, "second")
+    assert first.url == second.url
+    reported: list[str] = []
+    reporter = await ClickInputReporter.install(page, second, lambda: reported.append("second"))
+    try:
+        # the same document in another frame is not the click's
+        await first.locator("#in-frame").click()
+        await asyncio.sleep(0.2)
+        assert reported == []
+        await second.locator("#in-frame").click()
+        async with asyncio.timeout(2):
+            while not reported:
+                await asyncio.sleep(0.01)
+        assert reported == ["second"]
+        # an untrusted event is not the click's input, a mark is
+        await second.locator("#in-frame").dispatch_event("pointerdown")
+        await asyncio.sleep(0.2)
+        assert reported == ["second"]
+        await reporter.mark()
+        async with asyncio.timeout(2):
+            while len(reported) < 2:
+                await asyncio.sleep(0.01)
+    finally:
+        await reporter.dispose()
+    assert route_count(page) == 0
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("frame_id", ["second", "cross"])
+async def test_a_click_in_a_frame_with_another_tab_open_reports_its_input(
+    site: str, monkeypatch: pytest.MonkeyPatch, frame_id: str
+) -> None:
+    # with site isolation, the frame on another site is rendered in a process of its own
+    async with NotteSession(headless=True, chrome_args=["--site-per-process"]) as session:
+        page = session.window.page
+        _ = await session.aexecute(type="goto", url=f"{site}/frames", wait_until="load")
+        frame = await frame_with_button(page, frame_id)
+        if frame_id == "cross":
+            # it has a protocol session of its own
+            cdp = await page.context.new_cdp_session(frame)
+            await cdp.detach()
+        other = await page.context.new_page()
+        await other.goto(f"{site}/next")
+        session.window.page = page
+        reported: list[float] = []
+        notify = ClickInputReporter.notify
+
+        def counting_notify(reporter: ClickInputReporter) -> None:
+            reported.append(time.perf_counter())
+            notify(reporter)
+
+        monkeypatch.setattr(ClickInputReporter, "notify", counting_notify)
+        result = await session.aexecute(
+            ClickAction(selector=f"#{frame_id} >> internal:control=enter-frame >> #in-frame"), raise_on_failure=True
+        )
+        assert result.success
+        assert len(reported) == 1
+        assert await frame.evaluate("document.body.dataset.clicked") == "yes"
+        assert route_count(page) == 0
 
 
 @pytest.mark.asyncio
