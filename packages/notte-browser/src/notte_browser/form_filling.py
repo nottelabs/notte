@@ -3,6 +3,7 @@ import random
 
 from notte_core.logging import logger
 
+from notte_browser import pointer
 from notte_browser.driver import Error as PlaywrightError
 from notte_browser.driver import Locator, Page
 from notte_browser.js import script
@@ -608,6 +609,7 @@ class FormFiller:
         """Fill an input field with the given value."""
         try:
             await field.hover()
+            await pointer.moved_onto(self.page, field)
             await asyncio.sleep(random.uniform(0.1, 0.3))
 
             # Check for maxlength constraint

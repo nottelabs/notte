@@ -1,11 +1,13 @@
 """The pointer travels to an element before it is clicked, and moves over a page once after it has loaded
 (`notte_browser.pointer`)."""
 
+import asyncio
+import math
 import random
 import socket
 import time
 from collections.abc import AsyncIterator, Iterator
-from contextlib import closing
+from contextlib import AbstractContextManager, closing
 from unittest.mock import patch
 
 import notte_browser.execution as execution_module
@@ -15,7 +17,7 @@ from aiohttp import web
 from notte_browser import pointer
 from notte_browser.driver import Page, evaluate_in_main_world
 from notte_browser.session import NotteSession
-from notte_core.actions import ClickAction
+from notte_core.actions import ClickAction, ScrollDownAction
 from notte_core.config import config
 
 # Chrome delivers at most one mousemove per frame, so a slow runner sees fewer
@@ -52,6 +54,36 @@ PAGES = {
 <div class="pointer" style="cursor:pointer; position:absolute; top:120px; left:0; right:0; height:900px"></div>
 {RECORD}</body></html>""",
     "/calm": f"""<html><body style="margin:0; height:3000px"><p>Plain text</p>{RECORD}</body></html>""",
+    # the first move fills the viewport with buttons, but for a small square around the pointer
+    "/reveal": """<html><body style="margin:0; height:3000px"><p>Plain text</p>"""
+    + RECORD
+    + """<script>
+addEventListener('mousemove', e => {
+  if (!e.isTrusted || window.revealed) return;
+  const [x, y, hole] = [e.clientX, e.clientY, 10];
+  window.revealed = [x, y];
+  for (const [left, top, width, height] of [
+    [0, 0, innerWidth, y - hole], [0, y + hole, innerWidth, innerHeight],
+    [0, y - hole, x - hole, 2 * hole], [x + hole, y - hole, innerWidth, 2 * hole],
+  ]) {
+    const button = document.createElement('button');
+    button.style.cssText = `position:fixed; margin:0; padding:0; border:0; left:${left}px; top:${top}px;
+      width:${width}px; height:${height}px`;
+    document.body.append(button);
+  }
+}, true);
+</script></body></html>""",
+    # links in a band at the top of the viewport once the page is scrolled to its bottom, and above it
+    "/bottom": f"""<html><body style="margin:0; height:3000px">
+<div style="position:absolute; top:2400px; left:0; right:0; height:400px; display:flex; flex-wrap:wrap">
+{"".join(f'<a href="#{i}" style="width:20px; height:20px; margin:2px">{i}</a>' for i in range(600))}</div>
+{RECORD}</body></html>""",
+    # a document that does not scroll, with a scroll container
+    "/container": f"""<html><body style="margin:0; height:100vh; overflow:hidden">
+<div id="box" style="position:absolute; left:300px; top:100px; width:600px; height:500px; overflow:auto">
+<div style="height:3000px">Plain text</div></div>
+<button id="go" style="position:absolute; left:1100px; top:700px; width:100px; height:40px">Go</button>
+{RECORD}</body></html>""",
 }
 
 
@@ -75,9 +107,13 @@ async def site() -> AsyncIterator[str]:
             await runner.cleanup()
 
 
+def pointer_motion_on() -> AbstractContextManager[object]:
+    return patch.object(execution_module, "config", config.model_copy(update={"pointer_motion": True}))
+
+
 @pytest.fixture
 def pointer_motion() -> Iterator[None]:
-    with patch.object(execution_module, "config", config.model_copy(update={"pointer_motion": True})):
+    with pointer_motion_on():
         yield
 
 
@@ -161,6 +197,34 @@ async def test_the_pointer_travels_to_the_element_before_the_click_lands(session
     assert inside(moves[-2], buy) and inside(moves[-1], buy) and inside(downs[0][1:3], buy)
     assert not all(inside(move, buy) for move in moves)
     assert all(inside(move, (0, 0, 1280, 800)) for move in moves)
+
+
+@pytest.mark.asyncio
+async def test_after_the_scroll_fallback_the_pointer_travels_from_where_it_was_moved(
+    session: NotteSession, site: str
+) -> None:
+    _ = await session.aexecute(type="goto", url=f"{site}/container")
+    page = session.window.page
+    # the pointer rests outside the scroll container, where a wheel scrolls nothing
+    state = pointer.track(page)
+    state.moved_after_load = state.loads
+    await page.mouse.move(40, 40)
+    pointer.moved(page, (40, 40))
+    with pointer_motion_on():
+        result = await session.aexecute(ScrollDownAction(amount=200), raise_on_failure=True)
+        assert result.success
+        assert await page.evaluate("() => document.getElementById('box').scrollTop") > 0
+        # the scroll fallback moved the pointer over the container
+        moves = await main_world(page, "moves")
+        fallback = moves[-1]
+        assert inside(fallback, (300, 100, 600, 500))
+        result = await session.aexecute(ClickAction(selector="#go"), raise_on_failure=True)
+        assert result.success
+    downs = await main_world(page, "downs")
+    approach = (await main_world(page, "moves"))[len(moves) : int(downs[0][3])]
+    assert len(approach) >= OBSERVED_APPROACH_MOVES
+    # the approach continues from there, not from where the pointer was before the scroll
+    assert math.dist(approach[0], fallback) < 60
 
 
 @pytest.mark.asyncio
@@ -271,6 +335,64 @@ async def test_the_document_scrolls_a_little_and_back(session: NotteSession, sit
     wheels = await main_world(page, "wheels")
     assert len(wheels) == 2 and float(wheels[0]) != 0 and float(wheels[1]) == -float(wheels[0])
     assert await page.evaluate("() => window.scrollY") == 700
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("seed", range(4))
+async def test_a_document_at_its_end_is_not_scrolled_back_past_it(session: NotteSession, site: str, seed: int) -> None:
+    _ = await session.aexecute(type="goto", url=f"{site}/bottom")
+    page = session.window.page
+    await page.set_viewport_size({"width": 1280, "height": 260})
+    # the document at its bottom, links at the top of the viewport and above it
+    await page.evaluate("() => window.scrollTo(0, 3000)")
+    bottom = await page.evaluate("() => window.scrollY")
+    assert await pointer.move_after_load(page, rand=random.Random(seed))
+    assert await main_world(page, "overs") == []
+    assert await page.evaluate("() => window.scrollY") == bottom
+
+
+@pytest.mark.asyncio
+async def test_a_timeout_after_the_first_wheel_scrolls_the_document_back(session: NotteSession, site: str) -> None:
+    _ = await session.aexecute(type="goto", url=f"{site}/calm")
+    page = session.window.page
+    await page.evaluate("() => window.scrollTo(0, 700)")
+    wheel = page.mouse.wheel
+    wheeled: list[float] = []
+
+    async def wheel_once(delta_x: float, delta_y: float) -> None:
+        wheeled.append(await page.evaluate("() => window.scrollY"))
+        await wheel(delta_x, delta_y)
+
+    async def sleep(delay: float) -> None:
+        if not wheeled:
+            await asyncio.sleep(delay)
+            return
+        # the document scrolled, then the time runs out
+        await asyncio.sleep(0.3)
+        wheeled.append(await page.evaluate("() => window.scrollY"))
+        await asyncio.sleep(60)
+
+    start = time.monotonic()
+    with patch.object(page.mouse, "wheel", wheel_once):
+        assert not await pointer.move_after_load(page, rand=random.Random(0), sleep=sleep)
+    assert time.monotonic() - start <= pointer.AFTER_LOAD_MAX_S + 0.5
+    assert len(wheeled) == 2 and wheeled[0] == 700 and wheeled[1] != 700
+    assert await page.evaluate("() => window.scrollY") == 700
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("seed", range(3))
+async def test_the_pointer_stops_before_a_control_its_moves_reveal(session: NotteSession, site: str, seed: int) -> None:
+    _ = await session.aexecute(type="goto", url=f"{site}/reveal")
+    page = session.window.page
+    assert await pointer.move_after_load(page, rand=random.Random(seed))
+    x, y = (float(value) for value in await evaluate_in_main_world(page.main_frame, "revealed"))
+    # buttons came under the points planned next: the pointer stays in the square left without them
+    assert await main_world(page, "overs") == []
+    assert all(
+        abs(float(move[0]) - x) < 10 and abs(float(move[1]) - y) < 10 for move in await main_world(page, "moves")
+    )
+    assert await main_world(page, "wheels") == []
 
 
 @pytest.mark.asyncio

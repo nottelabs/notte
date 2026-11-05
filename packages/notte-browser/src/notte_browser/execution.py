@@ -319,6 +319,7 @@ async def _select_custom_dropdown_option(
         _ = await locator.click(timeout=budget.remaining_ms())
     except Exception as e:
         raise ActionExecutionError("select_dropdown", window.page.url, reason="Invalid selector") from e
+    await pointer.moved_onto(locator.page, locator)
     # The options may render a little after the click (animation, lazy list).
     deadline = asyncio.get_running_loop().time() + min(budget.remaining_ms(), 2000) / 1000
     while True:
@@ -327,6 +328,7 @@ async def _select_custom_dropdown_option(
             option = handle.as_element()
             if option is not None:
                 await option.click(timeout=budget.remaining_ms())
+                await pointer.moved_onto(locator.page, option)
                 return
         finally:
             with suppress(Error):  # the click may have navigated away
@@ -812,6 +814,7 @@ async def execute_browser_action(window: BrowserWindow, action: BaseAction, *, v
                     point = await _scroll_container_point(window, delta)
                     if point is not None:
                         await window.page.mouse.move(*point)
+                        pointer.moved(window.page, point)
                         await window.page.mouse.wheel(delta_x=0, delta_y=delta)
                         scrolled = await _scroll_ended(read)
                 if not scrolled:
@@ -987,11 +990,14 @@ async def _interact(
             if not js_click:
                 if config.pointer_motion:
                     # the pointer comes to the element before the click, as long as the click keeps its own time
-                    _ = await pointer.approach(
+                    approached = await pointer.approach(
                         locator.page,
                         locator,
                         time_left_s=budget.remaining_ms(keep_ms=action.timeout / 5 + _CLICK_AFTER_APPROACH_MS) / 1000,
                     )
+                    if approached is None:
+                        # the click moves the pointer to a point not read
+                        pointer.moved(locator.page, None)
                 try:
                     # Hold back part of the budget for the JS fallback. Navigation belongs to PageSettle,
                     # including a response that has not committed before the interaction deadline.
@@ -1055,6 +1061,7 @@ async def _interact(
         case MultiFactorFillAction(value=value):
             # click the locator, then fill in one number at a time
             await locator.click(timeout=budget.remaining_ms())
+            await pointer.moved_onto(locator.page, locator)
             if action.clear_before_fill:
                 await _clear_focused_field(window)
 
@@ -1063,6 +1070,7 @@ async def _interact(
                 await window.page.wait_for_timeout(100)
         case FallbackFillAction(value=value):
             await locator.click(timeout=budget.remaining_ms())
+            await pointer.moved_onto(locator.page, locator)
             if action.clear_before_fill:
                 await _clear_focused_field(window)
             else:
@@ -1074,6 +1082,7 @@ async def _interact(
                 await locator.check(timeout=budget.remaining_ms())
             else:
                 await locator.uncheck(timeout=budget.remaining_ms())
+            await pointer.moved_onto(locator.page, locator)
         case SelectDropdownOptionAction(value=value):
             # Check if it's a standard HTML select
             tag_name: str = await locator.evaluate("el => el.tagName.toLowerCase()", timeout=budget.remaining_ms())

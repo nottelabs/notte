@@ -17,7 +17,7 @@ from weakref import WeakKeyDictionary
 
 from notte_core.logging import logger
 
-from notte_browser.driver import Error, Locator, Page
+from notte_browser.driver import ElementHandle, Error, Locator, Page
 from notte_browser.js import script
 
 _POINTER_POINTS = script("pointer_points.js")
@@ -34,9 +34,16 @@ AFTER_LOAD_MOVE_S = (1.2, 1.8)
 AFTER_LOAD_WAYPOINTS = (3, 5)
 AFTER_LOAD_SCROLL_PX = (80, 240)
 AFTER_LOAD_MAX_S = 3.5
+# Part of `AFTER_LOAD_MAX_S` kept to put the document back where it was scrolled (s)
+AFTER_LOAD_RESTORE_S = 0.5
 # Points checked across the viewport (columns, rows) for the moves after a load, and moves tried from each point
 AFTER_LOAD_GRID = (10, 8)
 _SEGMENT_CANDIDATES = 6
+# Time to read where an element is after an action of the driver moved the pointer onto it (s)
+_ELEMENT_BOX_S = 0.5
+
+_SCROLL_Y = "() => window.scrollY"
+_RESTORE_SCROLL = "(y) => { if (window.scrollY !== y) window.scrollTo({ top: y, behavior: 'instant' }) }"
 
 rng = random.Random()
 
@@ -83,6 +90,42 @@ def track(page: Page) -> _PointerState:
     return state
 
 
+def moved(page: Page, point: Point | None) -> None:
+    """Records that the pointer of `page` was moved to `point` (None: to a point not known), when it is tracked."""
+    state = _STATES.get(page)
+    if state is not None:
+        state.position = point
+
+
+async def moved_onto(page: Page, element: Locator | ElementHandle) -> None:
+    """Records that an action of the driver on `element` (a click, a check, a hover) moved the pointer of `page`
+    onto it, to the middle of its visible part, when the pointer is tracked."""
+    state = _STATES.get(page)
+    if state is None:
+        return
+    state.position = None
+    scope = asyncio.timeout(_ELEMENT_BOX_S)
+    try:
+        async with scope:
+            box = (
+                await element.bounding_box(timeout=_ELEMENT_BOX_S * 1000)
+                if isinstance(element, Locator)
+                else await element.bounding_box()
+            )
+            if box is None:
+                return
+            width, height = await _viewport(page)
+    except TimeoutError:
+        if not scope.expired():
+            raise
+        return
+    except Error:
+        return
+    visible = visible_part(Box(x=box["x"], y=box["y"], width=box["width"], height=box["height"]), width, height)
+    if visible is not None:
+        state.position = middle(visible)
+
+
 def _clamp(point: Point, width: float, height: float) -> Point:
     return min(max(point[0], 0.0), max(width - 1, 0.0)), min(max(point[1], 0.0), max(height - 1, 0.0))
 
@@ -125,6 +168,11 @@ def point_in(box: Box, rand: random.Random) -> Point:
     )
 
 
+def middle(box: Box) -> Point:
+    """The middle of `box`, where the driver moves the pointer to act on an element."""
+    return box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
+
+
 def visible_part(box: Box, width: float, height: float) -> Box | None:
     """The part of `box` inside a viewport of `width` x `height`, None when it is out of view."""
     left, top = max(box["x"], 0.0), max(box["y"], 0.0)
@@ -134,16 +182,40 @@ def visible_part(box: Box, width: float, height: float) -> Box | None:
     return Box(x=left, y=top, width=right - left, height=bottom - top)
 
 
-async def _move(page: Page, points: list[Point], duration_s: float, sleep: Sleep) -> None:
-    """Moves the pointer through `points`, evenly spread over `duration_s`."""
+Check = Callable[[list[Point]], Awaitable[list[bool]]]
+
+
+async def _move(
+    page: Page, points: list[Point], duration_s: float, sleep: Sleep, check: Check | None = None
+) -> Point | None:
+    """Moves the pointer through `points`, evenly spread over `duration_s`. With `check`, each point is checked
+    right before the pointer goes there, together with the next ones due while a check runs, and the pointer stops
+    before the first point that is not safe. Returns the last point the pointer moved to."""
     loop = asyncio.get_running_loop()
     start = loop.time()
     interval = duration_s / max(1, len(points))
-    for i, (x, y) in enumerate(points, start=1):
-        await page.mouse.move(x, y)
-        delay = start + i * interval - loop.time()
+    last: Point | None = None
+    # points before `checked` are safe, and the pointer stops at `end`
+    checked, end, check_s = 0, len(points), 0.0
+    for i, point in enumerate(points):
+        if check is not None and i == checked:
+            batch = points[i : i + max(1, math.ceil(check_s / interval))]
+            began = loop.time()
+            verdicts = await check(batch)
+            check_s = loop.time() - began
+            safe = next((n for n, verdict in enumerate(verdicts) if not verdict), len(batch))
+            checked = i + safe
+            if safe < len(batch):
+                end = checked
+        if i >= end:
+            break
+        await page.mouse.move(*point)
+        last = point
+        moved(page, point)
+        delay = start + (i + 1) * interval - loop.time()
         if delay > 0:
             await sleep(delay)
+    return last
 
 
 async def _viewport(page: Page) -> Point:
@@ -159,7 +231,8 @@ async def approach(
 ) -> Point | None:
     """Moves the pointer to a point inside the element of `locator`, scrolled into view first, along a curve
     from where it was. Returns that point, or None when the element is not visible or the approach could not end
-    within `time_left_s`; the click then goes ahead as it would have without it."""
+    within `time_left_s`; the click then goes ahead as it would have without it. The pointer is then recorded where
+    the click that follows moves it: the middle of the element's visible part (see `moved_onto`)."""
     rand = rand or rng
     duration = rand.uniform(*APPROACH_S)
     if time_left_s < duration + APPROACH_MAX_S:
@@ -183,8 +256,8 @@ async def approach(
             path = curve(start, target, rand.randint(*APPROACH_STEPS), rand, (width, height))
             if state.position is None:
                 path.insert(0, start)
-            await _move(page, path, duration, sleep)
-            state.position = target
+            _ = await _move(page, path, duration, sleep)
+            state.position = middle(visible)
             return target
     except TimeoutError:
         if not scope.expired():
@@ -238,9 +311,10 @@ async def _points(page: Page, points: list[Point]) -> _Points:
 async def move_after_load(page: Page, *, rand: random.Random | None = None, sleep: Sleep = asyncio.sleep) -> bool:
     """Once per document loaded in `page`: moves the pointer over points of the viewport that are not on a
     control (a link, a button, a field, a frame, an element with a pointer cursor, ...), then scrolls the document a
-    little and back when the pointer rests on it. Every point the pointer goes through is checked first: it moves
-    from one checked point to the next across parts of the page without controls, and only around where it is when
-    there are none. Bounded by `AFTER_LOAD_MAX_S`. Returns whether it moved."""
+    little and back when the pointer rests on it. Every point the pointer goes through is checked first, and again
+    right before it goes there: it moves from one checked point to the next across parts of the page without
+    controls, and only around where it is when there are none. Bounded by `AFTER_LOAD_MAX_S`, the end of which is
+    kept to put the document back where it was scrolled. Returns whether it moved."""
     rand = rand or rng
     state = track(page)
     if state.moved_after_load == state.loads or page.is_closed():
@@ -248,7 +322,13 @@ async def move_after_load(page: Page, *, rand: random.Random | None = None, slee
     if not page.url.startswith(("http://", "https://")):
         return False
     state.moved_after_load = state.loads
-    scope = asyncio.timeout(AFTER_LOAD_MAX_S)
+
+    async def still_safe(points: list[Point]) -> list[bool]:
+        return (await _points(page, points))["safe"]
+
+    # where the document was scrolled before the wheel, once it is sent
+    before: float | None = None
+    scope = asyncio.timeout(AFTER_LOAD_MAX_S - AFTER_LOAD_RESTORE_S)
     try:
         async with scope:
             width, height = await _viewport(page)
@@ -265,7 +345,7 @@ async def move_after_load(page: Page, *, rand: random.Random | None = None, slee
                 start = rand.choice(targets)
             path = [start]
             for _ in range(rand.randint(*AFTER_LOAD_WAYPOINTS)):
-                safe = None
+                safe_segment = None
                 # then shorter moves only, where controls leave little room
                 for attempt in range(3):
                     segments = (
@@ -277,40 +357,58 @@ async def move_after_load(page: Page, *, rand: random.Random | None = None, slee
                     offset = 0
                     for segment in segments:
                         if all(checked["safe"][offset : offset + len(segment)]):
-                            safe = segment
+                            safe_segment = segment
                             break
                         offset += len(segment)
-                    if safe is not None:
+                    if safe_segment is not None:
                         break
-                if safe is None:
+                if safe_segment is None:
                     break
-                path.extend(safe)
+                path.extend(safe_segment)
             if len(path) < 2:
                 return False
-            await _move(page, path, rand.uniform(*AFTER_LOAD_MOVE_S), sleep)
-            state.position = path[-1]
+            # a move can change the page (a menu opened on hover): each point is checked again before it is reached
+            last = await _move(page, path, rand.uniform(*AFTER_LOAD_MOVE_S), sleep, check=still_safe)
+            if last is None:
+                return False
             # The scroll moves the page under the pointer: what comes under it is checked too, the part of the page
             # below it (above it, near the bottom of the viewport) by the length of the scroll.
-            x, y = path[-1]
+            x, y = last
             sign = 1 if height - 1 - y >= AFTER_LOAD_SCROLL_PX[0] else -1
             delta = min(rand.randint(*AFTER_LOAD_SCROLL_PX), int(height - 1 - y if sign > 0 else y))
             column = [(x, y + sign * dy) for dy in range(0, delta, 10)] + [(x, y + sign * delta)]
             checked = await _points(page, column) if delta >= AFTER_LOAD_SCROLL_PX[0] else None
             if checked is not None and checked["wheel"] and all(checked["safe"]):
-                delta *= sign
-                before: float = await page.evaluate("() => window.scrollY")
-                await page.mouse.wheel(0, delta)
+                before = await page.evaluate(_SCROLL_Y)
+                await page.mouse.wheel(0, sign * delta)
                 await sleep(rand.uniform(0.25, 0.45))
-                await page.mouse.wheel(0, -delta)
-                await sleep(rand.uniform(0.2, 0.35))
-                # a page at its bottom scrolls down less than back up
-                await page.evaluate(
-                    "(y) => { if (window.scrollY !== y) window.scrollTo({ top: y, behavior: 'instant' }) }", before
-                )
+                scrolled = int(await page.evaluate(_SCROLL_Y) - before)
+                # The wheel back scrolls by the distance the document moved (none at its end), over the part of the
+                # page the first wheel brought under the pointer, checked again where it is in view.
+                back = [(x, y - math.copysign(dy, scrolled)) for dy in [*range(0, abs(scrolled), 10), abs(scrolled)]]
+                if scrolled != 0 and all(await still_safe([point for point in back if 0 <= point[1] < height])):
+                    await page.mouse.wheel(0, -scrolled)
+                    await sleep(rand.uniform(0.2, 0.35))
             return True
     except TimeoutError:
         if not scope.expired():
             raise
     except Error as error:
         logger.debug(f"Pointer movement after load skipped: {type(error).__name__}")
+    finally:
+        if before is not None:
+            await _restore_scroll(page, before)
     return False
+
+
+async def _restore_scroll(page: Page, y: float) -> None:
+    """Scrolls the document back to `y` at once, unless it is there, within `AFTER_LOAD_RESTORE_S`."""
+    scope = asyncio.timeout(AFTER_LOAD_RESTORE_S)
+    try:
+        async with scope:
+            await page.evaluate(_RESTORE_SCROLL, y)
+    except TimeoutError:
+        if not scope.expired():
+            raise
+    except Error as error:
+        logger.debug(f"Scroll position not restored: {type(error).__name__}")

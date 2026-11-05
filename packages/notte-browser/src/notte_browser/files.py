@@ -16,6 +16,7 @@ from notte_core.raw_file import DEFAULT_RAW_FILE_SELECTORS, get_file_ext, get_fi
 from notte_core.snapshot import BrowserSnapshot
 from notte_core.storage import BaseStorage
 
+from notte_browser import pointer
 from notte_browser.dom.locate import locate_element, locate_file_upload_element, selectors_through_shadow_dom
 from notte_browser.driver import CDPSession, Frame, Locator, evaluate_in_main_world
 from notte_browser.errors import (
@@ -155,6 +156,7 @@ async def upload_file(
                     logger.info("Attempting file chooser detection")
                 async with window.page.expect_file_chooser(timeout=remaining_ms()) as fc:
                     await locator.click(timeout=remaining_ms())
+                await pointer.moved_onto(window.page, locator)
                 file_chooser = await fc.value
                 await file_chooser.set_files(upload_file_path)
                 file_chooser_flag = True
@@ -205,9 +207,9 @@ async def upload_file(
                 # click on the center of the element
                 try:
                     async with window.page.expect_file_chooser(timeout=remaining_ms()) as fc_info:
-                        await window.page.mouse.click(
-                            bbox["x"] + bbox["width"] * 0.54, bbox["y"] + bbox["height"] * 0.35
-                        )
+                        point = (bbox["x"] + bbox["width"] * 0.54, bbox["y"] + bbox["height"] * 0.35)
+                        await window.page.mouse.click(*point)
+                        pointer.moved(window.page, point)
                         fc = await fc_info.value
                         await fc.set_files(upload_file_path, timeout=remaining_ms())
                         return True
@@ -267,6 +269,7 @@ async def download_file(
 
             async with window.page.expect_download(timeout=remaining_ms()) as dw:
                 await locator.click(timeout=remaining_ms())
+            await pointer.moved_onto(window.page, locator)
             download = await dw.value
 
             dl_url = download.url
