@@ -6,6 +6,7 @@ CI would otherwise fail the hook on unrelated pull requests.
 """
 
 import importlib.util
+import json
 from pathlib import Path
 from types import ModuleType
 
@@ -106,3 +107,77 @@ def test_failed_fetch_keeps_the_stub_line_for_the_refresh_workflow(
     # refresh-llms.yml greps stderr for this phrase to refuse a degraded file
     assert "failed to fetch openapi" in capsys.readouterr().err
     assert section == [f"- OpenAPI spec: {URL}", ""]
+
+
+@pytest.mark.parametrize(
+    "metadata",
+    [
+        {"deprecated": True},
+        {"x-excluded": True},
+        {"tags": ["Legacy"]},
+        {"tags": ["widgets", "deprecated"]},
+        {"tags": ["legacy_widgets"]},
+        {"tags": ["widgets (deprecated)"]},
+    ],
+)
+def test_render_excludes_marked_operations_without_removing_supported_methods(
+    generate_llms: ModuleType, metadata: dict
+) -> None:
+    spec = {
+        "paths": {
+            "/widgets": {
+                "parameters": [],
+                "post": {"tags": ["widgets"], "operationId": "create_widget", **metadata},
+                "get": {"tags": ["widgets"], "operationId": "list_widgets", "deprecated": False, "x-excluded": False},
+            },
+            "/legacy/widgets": {"get": {"tags": ["current"], "operationId": "supported_name"}},
+        }
+    }
+
+    rendered = "\n".join(generate_llms.render_openapi(spec))
+
+    assert "create-widget" not in rendered
+    assert "## Legacy" not in rendered
+    assert "list-widgets.md" in rendered
+    assert "supported-name.md" in rendered
+
+
+def test_local_schema_replaces_cached_content_without_fetching(
+    generate_llms: ModuleType, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    def no_network(url: str) -> dict:
+        raise AssertionError(f"fetched {url} with a local schema")
+
+    config = tmp_path / "docs.json"
+    config.write_text(json.dumps({"name": "Docs", "navigation": {"tabs": [{"tab": "API", "openapi": URL}]}}))
+    schema = tmp_path / "schema.json"
+    schema.write_text(
+        json.dumps({"paths": {"/widgets": {"get": {"tags": ["widgets"], "operationId": "list_widgets"}}}})
+    )
+    output = tmp_path / "llms.txt"
+    output.write_text(existing_llms(generate_llms))
+    monkeypatch.setattr(generate_llms, "DOCS_JSON", config)
+    monkeypatch.setattr(generate_llms, "OUTPUT", output)
+    monkeypatch.setattr(generate_llms, "SRC_DIR", tmp_path)
+    monkeypatch.setattr(generate_llms, "fetch_openapi", no_network)
+
+    assert generate_llms.main(["--openapi-file", str(schema)]) == 0
+    rendered = output.read_text()
+    assert generate_llms.openapi_begin_marker(URL) in rendered
+    assert "list-widgets.md" in rendered
+    assert "session-start.md" not in rendered
+
+
+def test_invalid_local_schema_leaves_existing_output_untouched(
+    generate_llms: ModuleType, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    schema = tmp_path / "schema.json"
+    schema.write_text("{truncated")
+    output = tmp_path / "llms.txt"
+    output.write_text("existing index")
+    monkeypatch.setattr(generate_llms, "OUTPUT", output)
+
+    with pytest.raises(json.JSONDecodeError):
+        generate_llms.main(["--openapi-file", str(schema)])
+
+    assert output.read_text() == "existing index"

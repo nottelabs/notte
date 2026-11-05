@@ -136,7 +136,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 ## Workflow Automation
 
-- [n8n](https://docs.notte.cc/integrations/n8n.md): Use Notte browser agents inside n8n workflows
+- [n8n](https://docs.notte.cc/integrations/n8n.md): Use Notte scraping and functions inside n8n workflows
 - [Trigger.dev](https://docs.notte.cc/integrations/trigger.md): Run durable browser tasks with Trigger.dev and Notte.
 - [Temporal](https://docs.notte.cc/integrations/temporal.md): Run durable browser tasks with Temporal and Notte.
 - [GitHub Actions](https://docs.notte.cc/integrations/github-actions.md): Review DOM-validated selector repairs in a manual GitHub Actions workflow.
@@ -244,14 +244,6 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [GET Summary](https://docs.notte.cc/api-reference/data-apis/summary.md)
 - [PATCH Update](https://docs.notte.cc/api-reference/data-apis/update.md)
 - [POST Youtube Endpoint](https://docs.notte.cc/api-reference/data-apis/youtube-endpoint.md)
-
-## Agents
-
-- [POST Agent Start](https://docs.notte.cc/api-reference/agents/agent-start.md)
-- [GET Agent Status](https://docs.notte.cc/api-reference/agents/agent-status.md): Retrieves the current status of a specific <agent_id>.
-- [DELETE Agent Stop](https://docs.notte.cc/api-reference/agents/agent-stop.md)
-- [GET Get Script](https://docs.notte.cc/api-reference/agents/get-script.md): Retrieves the current status of a specific <agent_id>.
-- [GET List Agents](https://docs.notte.cc/api-reference/agents/list-agents.md): Retrieves a list of all agents associated with the authenticated user.
 
 ## Anything
 

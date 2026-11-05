@@ -15,7 +15,6 @@ Limits are counted per API key, with a separate budget for each endpoint:
 | Endpoint | Description |
 |----------|-------------|
 | `POST /sessions/start` | Start a browser session |
-| `POST /agents/start` | Start an agent |
 | `POST /prompts/improve`, `POST /prompts/nudge` | Prompt helpers |
 
 Each endpoint has a per-minute, per-hour, and per-day window. The window sizes depend on your plan; see [Rate Limits](/rate-limits) for the numbers.
@@ -34,7 +33,7 @@ When a window is exhausted, the API returns `429` with an `X-Error-Class: NotteA
 }
 ```
 
-A `429` is also returned when you already have the maximum number of active sessions, agents, vaults, or personas for your plan. That response has `X-Error-Class: NotteApiMaxActiveResourcesError` and a message such as `Max active sessions limit exceeded (limit: 5, current: 5)`. Close some of those resources, or upgrade your plan.
+A `429` is also returned when you already have the maximum number of active sessions, vaults, or personas for your plan. That response has `X-Error-Class: NotteApiMaxActiveResourcesError` and a message such as `Max active sessions limit exceeded (limit: 5, current: 5)`. Close some of those resources, or upgrade your plan.
 
 Rate-limit responses do not include `X-RateLimit-*` or `Retry-After` headers. Retry with exponential backoff. `Retry-After` is only sent on `529` responses, when no browser capacity is available (see [API Error Codes](/api-reference/errors)).
 

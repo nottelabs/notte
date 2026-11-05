@@ -21,7 +21,13 @@ With the notte sdk, everything starts by creating your NotteClient:
 
 <Client/>
 
-From there, you're able to create browser sessions, run new agents, or manage credential vaults:
+From there, you're able to create browser sessions, run functions, or manage credential vaults.
+
+## Migrating from the legacy agent APIs
+
+The hosted agent APIs are deprecated. The SDK's `notte.Agent`, `client.Agent`, `client.agents` and `AgentFallback` interfaces were removed in 1.10.
+
+Use [browser sessions](/concepts/sessions) for scripted browser work, or the [CLI](/cli-reference/index) and [MCP server](/mcp-server) to give your coding agent a browser. On local Python sessions (`notte.Session`), use [session.act()](/features/sessions/act) for individual natural-language browser actions. Deploy reusable automations with [Functions](/concepts/functions).
 
 ## Available Operations
 
