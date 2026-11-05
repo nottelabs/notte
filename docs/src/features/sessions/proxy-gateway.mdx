@@ -1,0 +1,72 @@
+---
+title: 'Proxy Gateway'
+description: "Use Notte's residential proxies from your own HTTP client, scraper or proxy"
+---
+import GatewayCredentials from '/snippets/sessions/secret_proxies/gateway_credentials.mdx';
+import GatewayCredentialsResponse from '/snippets/sessions/secret_proxies/gateway_credentials_response.mdx';
+import UseGateway from '/snippets/sessions/proxy_gateway/use_gateway.mdx';
+import HttpClient from '/snippets/sessions/proxy_gateway/http_client.mdx';
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+## Overview
+
+The proxy gateway at `proxy.notte.cc` gives you Notte's residential proxies outside a browser session. Use it from curl, an HTTP client, a scraper, or your own proxy, such as a [secret proxy](/features/sessions/secret-proxies/overview) that should exit from the same IP as your session.
+
+You mint a short-lived credential with your API key, then use it as a standard proxy URL. Browser sessions do not need this: their [built-in proxies](/features/sessions/proxies#built-in-proxies) are on by default.
+
+## Mint a credential
+
+Call `POST /proxies/gateway/credentials` with your API key. The SDKs have no method for this endpoint, so call it over HTTP.
+
+<GatewayCredentials />
+
+All body fields are optional. Any other field is rejected.
+
+| Field | Description |
+|-------|-------------|
+| `country` | Two-letter country code, such as `us`. Without `country` or `city`, traffic exits in the US. |
+| `city` | City id, such as `new.york`. Takes precedence over `country`. An unsupported city returns `400` with examples of supported ones. |
+| `sticky_session` | 1 to 64 letters, digits or hyphens. Pins every connection made with the credential to one residential exit. See [Share an exit IP with a session](#share-an-exit-ip-with-a-session). |
+
+<GatewayCredentialsResponse />
+
+| Field | Description |
+|-------|-------------|
+| `proxy_url_tls` | `https://user:pass@proxy.notte.cc:443`. Your client connects to the gateway over TLS. Use it when your client supports HTTPS proxies. |
+| `proxy_url_plain` | `http://user:pass@proxy.notte.cc:3128`. For clients that only support HTTP proxies. |
+| `username`, `password` | The same credential, for clients that take them separately. |
+| `expires_at` | When the credential stops working. |
+
+## Send requests through the gateway
+
+Both proxy URLs work for `https://` sites, through a `CONNECT` tunnel, and for plain `http://` URLs. With curl:
+
+<UseGateway />
+
+From Python or Node.js:
+
+<HttpClient />
+
+In Node.js, the `proxyEnv` agent option needs Node.js 24.5 or later and applies to `https.request` and `https.get`, not to `fetch`.
+
+## Share an exit IP with a session
+
+Mint the credential with a `sticky_session`, then start a browser session with the same `sticky_session`, and the same `country` or `city`, on its `notte` proxy. Connections made with the credential and the session's own traffic then exit from the same IP. The [secret proxy guide](/features/sessions/secret-proxies/overview#share-the-exit-ip) shows the full setup.
+
+## Lifetime and renewal
+
+A credential is valid for your plan's maximum session duration, up to 24 hours. You cannot choose a different lifetime. Reuse one credential for every request until it expires, then mint a new one before `expires_at`. An expired credential is rejected with `407`.
+
+## Billing and limits
+
+Traffic through the gateway is billed as built-in proxy bandwidth, at the [built-in proxy rate](/features/sessions/proxies#billing), to the workspace whose API key minted the credential.
+
+| Status | Meaning |
+|--------|---------|
+| `407` | The credential is missing, invalid or expired. |
+| `402` | The workspace has no remaining balance, or its plan's proxy spend limit is reached. |
+| `403` | The target is a private, loopback or link-local address. |
+| `429` | Too many credentials minted, or too many connections open at once or opened too quickly. Retry with backoff. |
+| `503` | From the mint endpoint: credentials or city targeting are temporarily unavailable. Retry, or omit `city`. |

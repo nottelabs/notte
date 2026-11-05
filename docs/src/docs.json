@@ -253,6 +253,7 @@
                 "pages": [
                   "features/sessions/stealth-mode",
                   "features/sessions/proxies",
+                  "features/sessions/proxy-gateway",
                   {
                     "group": "Secret Proxies",
                     "pages": [
