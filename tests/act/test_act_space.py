@@ -436,9 +436,33 @@ def test_act_until_done_goes_on_when_alternating_actions_are_on_different_elemen
     assert len(act_until_done(session, "go")) == 5
 
 
-def test_act_until_done_ignores_waits_and_respects_the_budget() -> None:
+def test_act_until_done_ignores_a_few_waits_and_respects_the_budget() -> None:
+    # waiting on a page that loads: a few WAITs, below the limit, are not a loop
     session = _ScriptedSession([_result(fingerprint="a", operation="WAIT") for _ in range(10)])
-    assert len(act_until_done(session, "go", max_steps=6)) == 6
+    assert len(act_until_done(session, "go", max_steps=4)) == 4
+
+
+def test_act_until_done_stops_after_waiting_on_a_page_that_does_not_change() -> None:
+    # a page that never renders: WAIT after WAIT on the same page until the budget ran out
+    session = _ScriptedSession([_result(fingerprint="blank", operation="WAIT") for _ in range(60)])
+    results = act_until_done(session, "go", max_steps=60)
+    # the 6th decision sees the page the 1st did: 5 WAITs changed nothing
+    assert len(results) == 6
+
+
+def test_act_until_done_goes_on_waiting_while_the_page_changes() -> None:
+    # a page that renders step by step: each WAIT lets it change
+    session = _ScriptedSession([_result(fingerprint=f"p{i}", operation="WAIT") for i in range(10)])
+    assert len(act_until_done(session, "go", max_steps=10)) == 10
+
+
+def test_act_until_done_counts_only_waits_in_a_row() -> None:
+    # another action between the WAITs (a scroll) starts the count again
+    results = [_result(fingerprint="a", operation="WAIT") for _ in range(4)]
+    results += [_step("a", "SCROLL_DOWN")]
+    results += [_result(fingerprint="a", operation="WAIT") for _ in range(4)]
+    session = _ScriptedSession([*results, _result("done", "b")])
+    assert len(act_until_done(session, "go", max_steps=20)) == 10
 
 
 def test_act_errors_rehydrate_from_their_serialized_form() -> None:
