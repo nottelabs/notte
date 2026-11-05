@@ -554,6 +554,8 @@
 	].join(", ");
 
 	function isErrorField(element, tagName) {
+		// a listbox value button can be an `<input type="button">`
+		if (isListboxValueButton(element)) return true;
 		if (tagName === "input") return !NO_ERROR_INPUT_TYPES.has((propertyOf(element, "type") || "text").toLowerCase());
 		return tagName === "select" || tagName === "textarea" || !!propertyOf(element, "isContentEditable") ||
 			ERROR_FIELD_ROLES.has(getRole(element)) || isListboxValueButton(element);

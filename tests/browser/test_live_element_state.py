@@ -441,6 +441,8 @@ FIELD_ERRORS = """<meta charset="utf-8"><form onsubmit="event.preventDefault()">
 <div class="field"><label for="unit">Unit</label><input id="unit">
   <button type="button" aria-haspopup="listbox" id="unit-type">Unit type</button>
   <span class="form-error">Choose a unit type</span></div>
+<div><span id="size-label">Size</span><input type="button" id="size" value="Choose" aria-haspopup="listbox"
+  aria-labelledby="size-label size" aria-invalid="true" aria-errormessage="size-error"><p id="size-error">Choose a size</p></div>
 <div><label for="city">City</label><input id="city"><span class="field-error" style="opacity: 0">Enter a city</span></div>
 <div class="choices"><div role="checkbox" id="opt-a" tabindex="0" aria-checked="false">Gift wrap</div>
   <div role="checkbox" id="opt-b" tabindex="0" aria-checked="false">Gift note</div>
@@ -475,6 +477,8 @@ async def test_observe_reads_the_errors_a_page_shows_for_its_fields() -> None:
     assert error("code") == (None, "Unknown code")
     # a button that opens a listbox is another field: the error may be its own
     assert error("unit") == (None, None)
+    # a listbox value button that is an `<input type="button">` is a field
+    assert error("size") == (True, "Choose a size")
     # a combobox's own popup, hidden or open, and its toggle button are not other fields
     assert error("country") == (None, "Choose a country")
     assert error("region") == (None, "Choose a region")
