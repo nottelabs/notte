@@ -192,14 +192,6 @@ def curve(start: Point, end: Point, steps: int, rand: random.Random, bounds: Poi
     return points
 
 
-def point_in(box: Box, rand: random.Random) -> Point:
-    """A point in the middle part of `box` (30% to 70% of each side)."""
-    return (
-        box["x"] + box["width"] * rand.uniform(0.3, 0.7),
-        box["y"] + box["height"] * rand.uniform(0.3, 0.7),
-    )
-
-
 def middle(box: Box) -> Point:
     """The middle of `box`, where the driver moves the pointer to act on an element."""
     return box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
@@ -283,7 +275,8 @@ async def approach(
             visible = visible_part(Box(x=box["x"], y=box["y"], width=box["width"], height=box["height"]), width, height)
             if visible is None:
                 return None
-            target = point_in(visible, rand)
+            # the click that follows lands on the middle: the approach ends there, with no last jump
+            target = middle(visible)
             start = state.position or (rand.uniform(0.2, 0.8) * width, rand.uniform(0.2, 0.8) * height)
             path = curve(start, target, rand.randint(*APPROACH_STEPS), rand, (width, height))
             if state.position is None:
