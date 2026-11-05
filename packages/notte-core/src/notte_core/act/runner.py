@@ -247,9 +247,12 @@ class ActHistory:
         if len(self.entries) > 0 and self.entries[-1].pending:
             self.entries[-1].page_changed = page.fingerprint != self.entries[-1].fingerprint
             self.entries[-1].pending = False
-            # (masked when sent, by `privacy.payload`; a cut message's last characters can start a protected value,
-            # which only `cut_text` masks)
-            self.entries[-1].field_errors = field_errors(page, display_cut=self.privacy.cut_text)
+            # masked here, before names and messages are cut to their display length (a protected value across the
+            # cut would keep its start); a message the browser cut can end with a protected value's start, which only
+            # `cut_text` masks
+            self.entries[-1].field_errors = field_errors(
+                page, display_text=self.privacy.text, display_cut=self.privacy.cut_text
+            )
             source_url = self.entries[-1].source_url
             self.entries[-1].left_page = source_url is not None and source_url != page.url
         for entry in self.entries:

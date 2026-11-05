@@ -2540,9 +2540,10 @@ async def test_a_credential_the_page_repeats_in_a_cut_field_error_is_masked(
 ) -> None:
     secret = "s3cret-password-123"  # pragma: allowlist secret
     page = session.window.page
-    # the page repeats the value in an error message the browser cuts (at 150 characters) inside it
+    # the page repeats the value in the field's name, cut at 80 characters inside it, and in an error message the
+    # browser cuts (at 150 characters) inside it
     await page.set_content(
-        "<label>Account <input id='f' aria-errormessage='e'></label><p id='e'></p>"
+        f"<label>Account {'y' * 66} {secret} <input id='f' aria-errormessage='e'></label><p id='e'></p>"
         "<button id='b' onclick=\"f.setAttribute('aria-invalid', 'true');"
         f" e.textContent = '{'x' * 140} {secret}'\">Go</button>"
     )
@@ -2563,7 +2564,7 @@ async def test_a_credential_the_page_repeats_in_a_cut_field_error_is_masked(
     state = decider.states[-1]
     (errors,) = [entry["field_errors"] for entry in state.recent_actions if "field_errors" in entry]
     # masked, then cut to the display length
-    assert len(errors) == 1 and "{{vault_p" in errors[0] and secret[:5] not in errors[0]
+    assert len(errors) == 1 and errors[0].count("{{vau") == 2 and secret[:5] not in errors[0]
     assert secret[:5] not in str(state.elements)
 
 

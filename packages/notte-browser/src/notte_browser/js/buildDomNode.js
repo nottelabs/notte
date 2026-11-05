@@ -548,6 +548,8 @@
 	const CONTROL_SELECTOR = [
 		`input${Array.from(NO_ERROR_INPUT_TYPES, (type) => `:not([type="${type}" i])`).join("")}`,
 		"select", "textarea", '[contenteditable="true"]',
+		// a button that opens a listbox picks a value, as a select does
+		'[aria-haspopup="listbox" i]',
 		...Array.from(ERROR_FIELD_ROLES, (role) => `[role="${role}"]`),
 	].join(", ");
 
@@ -595,9 +597,12 @@
 				.flatMap((attribute) => (getAttribute(element, attribute) || "").trim().split(/\s+/))
 				.filter((id) => id !== ""),
 		);
+		// a control that opens the same popup (a combobox's toggle button) is the field's too
+		const sharesPopup = (control) =>
+			(getAttribute(control, "aria-controls") || "").trim().split(/\s+/).some((id) => own.has(id));
 		const isOther = (control) =>
 			!contains(element, control) && !contains(control, element) &&
-			!own.has(getAttribute(control, "id") || "") && isElementVisible(control);
+			!own.has(getAttribute(control, "id") || "") && !sharesPopup(control) && isElementVisible(control);
 		let container = parentElementOf(element);
 		for (let depth = 0; container !== null && depth < MAX_ERROR_DEPTH; depth++, container = parentElementOf(container)) {
 			const controls = Array.from(querySelectorAllOf(container, CONTROL_SELECTOR));

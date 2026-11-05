@@ -431,12 +431,16 @@ FIELD_ERRORS = """<meta charset="utf-8"><form onsubmit="event.preventDefault()">
   <span class="form-error">Unknown code</span></div>
 <div class="field"><label for="country">Country</label>
   <input id="country" role="combobox" aria-controls="country-list" aria-expanded="false">
+  <button type="button" aria-haspopup="listbox" aria-controls="country-list" aria-label="Open">v</button>
   <ul role="listbox" id="country-list" hidden><li role="option">France</li></ul>
   <span class="form-error">Choose a country</span></div>
 <div class="field"><label for="region">Region</label>
   <input id="region" role="combobox" aria-controls="region-list" aria-expanded="true">
   <div role="listbox" id="region-list"><div role="option">North</div></div>
   <span class="form-error">Choose a region</span></div>
+<div class="field"><label for="unit">Unit</label><input id="unit">
+  <button type="button" aria-haspopup="listbox" id="unit-type">Unit type</button>
+  <span class="form-error">Choose a unit type</span></div>
 <div><label for="city">City</label><input id="city"><span class="field-error" style="opacity: 0">Enter a city</span></div>
 <div class="choices"><div role="checkbox" id="opt-a" tabindex="0" aria-checked="false">Gift wrap</div>
   <div role="checkbox" id="opt-b" tabindex="0" aria-checked="false">Gift note</div>
@@ -469,7 +473,9 @@ async def test_observe_reads_the_errors_a_page_shows_for_its_fields() -> None:
     assert error("number") == (None, "Required field")
     # a button beside the field is not another field: the error is still the field's
     assert error("code") == (None, "Unknown code")
-    # nor is a combobox's own popup, hidden or open
+    # a button that opens a listbox is another field: the error may be its own
+    assert error("unit") == (None, None)
+    # a combobox's own popup, hidden or open, and its toggle button are not other fields
     assert error("country") == (None, "Choose a country")
     assert error("region") == (None, "Choose a region")
     # `aria-errormessage`, and `aria-describedby` of an invalid field
