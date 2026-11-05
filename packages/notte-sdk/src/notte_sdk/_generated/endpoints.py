@@ -37,6 +37,63 @@ def health_check() -> NotteEndpoint[RawResponse]:
 
 
 # sessions
+def page_act(
+    session_id: str,
+    body: wire.ActRequest,
+    *,
+    params: BaseModel | None = None,
+) -> NotteEndpoint[wire.ActResult]:
+    """Page Act (`POST /sessions/{session_id}/page/act`).
+
+    Query: update_metadata.
+    """
+    return NotteEndpoint(
+        method="POST",
+        path=f"/sessions/{_segment(session_id)}/page/act",
+        response=wire.ActResult,
+        request=body,
+        params=params,
+    )
+
+
+def page_check(
+    session_id: str,
+    body: wire.CheckRequest,
+    *,
+    params: BaseModel | None = None,
+) -> NotteEndpoint[wire.CheckResponse]:
+    """Page Check (`POST /sessions/{session_id}/page/check`).
+
+    Query: update_metadata.
+    """
+    return NotteEndpoint(
+        method="POST",
+        path=f"/sessions/{_segment(session_id)}/page/check",
+        response=wire.CheckResponse,
+        request=body,
+        params=params,
+    )
+
+
+def page_choose(
+    session_id: str,
+    body: wire.ChooseRequest,
+    *,
+    params: BaseModel | None = None,
+) -> NotteEndpoint[wire.Choice]:
+    """Page Choose (`POST /sessions/{session_id}/page/choose`).
+
+    Query: update_metadata.
+    """
+    return NotteEndpoint(
+        method="POST",
+        path=f"/sessions/{_segment(session_id)}/page/choose",
+        response=wire.Choice,
+        request=body,
+        params=params,
+    )
+
+
 def page_execute(
     session_id: str,
     body: BaseModel,

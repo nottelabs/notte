@@ -39,6 +39,9 @@ from notte_sdk._generated.typing import (
     ListFunctionsRequestDict,
     ListSessionFilesParametersQueryDict,
     MessageReadRequestDict,
+    PageActParametersQueryDict,
+    PageCheckParametersQueryDict,
+    PageChooseParametersQueryDict,
     PageExecuteParametersQueryDict,
     PageObserveParametersQueryDict,
     PageScrapeParametersQueryDict,
@@ -428,6 +431,42 @@ class SessionsOperations(BaseClient):
         request = wire_request(core.SessionListRequest, data)
         return self.request_list(api.list_sessions(params=request))
 
+    @track_usage("cloud.session.act")
+    def act(
+        self, session_id: str, *, query: PageActParametersQueryDict | None = None, **data: Unpack[core.ActRequestDict]
+    ) -> core.ActResult:
+        "Page Act (`POST /sessions/{session_id}/page/act`)."
+        request = core.ActRequest.model_validate(data)
+        return self.request(page_api.page_act(session_id, request, params=wire_request(None, query or {})), timeout=200)
+
+    @track_usage("cloud.session.check")
+    def check(
+        self,
+        session_id: str,
+        *,
+        query: PageCheckParametersQueryDict | None = None,
+        **data: Unpack[core.CheckRequestDict],
+    ) -> core.CheckResponse:
+        "Page Check (`POST /sessions/{session_id}/page/check`)."
+        request = core.CheckRequest.model_validate(data)
+        return self.request(
+            page_api.page_check(session_id, request, params=wire_request(None, query or {})), timeout=200
+        )
+
+    @track_usage("cloud.session.choose")
+    def choose(
+        self,
+        session_id: str,
+        *,
+        query: PageChooseParametersQueryDict | None = None,
+        **data: Unpack[core.ChooseRequestDict],
+    ) -> core.Choice:
+        "Page Choose (`POST /sessions/{session_id}/page/choose`)."
+        request = core.ChooseRequest.model_validate(data)
+        return self.request(
+            page_api.page_choose(session_id, request, params=wire_request(None, query or {})), timeout=200
+        )
+
     @track_usage("cloud.session.execute")
     def execute(
         self, session_id: str, body: actions.BaseAction, **data: Unpack[PageExecuteParametersQueryDict]
@@ -612,6 +651,44 @@ class AsyncSessionsOperations(AsyncBaseClient):
         "List Sessions (`GET /sessions/`)."
         request = wire_request(core.SessionListRequest, data)
         return await self.request_list(api.list_sessions(params=request))
+
+    @track_usage("cloud.session.act")
+    async def act(
+        self, session_id: str, *, query: PageActParametersQueryDict | None = None, **data: Unpack[core.ActRequestDict]
+    ) -> core.ActResult:
+        "Page Act (`POST /sessions/{session_id}/page/act`)."
+        request = core.ActRequest.model_validate(data)
+        return await self.request(
+            page_api.page_act(session_id, request, params=wire_request(None, query or {})), timeout=200
+        )
+
+    @track_usage("cloud.session.check")
+    async def check(
+        self,
+        session_id: str,
+        *,
+        query: PageCheckParametersQueryDict | None = None,
+        **data: Unpack[core.CheckRequestDict],
+    ) -> core.CheckResponse:
+        "Page Check (`POST /sessions/{session_id}/page/check`)."
+        request = core.CheckRequest.model_validate(data)
+        return await self.request(
+            page_api.page_check(session_id, request, params=wire_request(None, query or {})), timeout=200
+        )
+
+    @track_usage("cloud.session.choose")
+    async def choose(
+        self,
+        session_id: str,
+        *,
+        query: PageChooseParametersQueryDict | None = None,
+        **data: Unpack[core.ChooseRequestDict],
+    ) -> core.Choice:
+        "Page Choose (`POST /sessions/{session_id}/page/choose`)."
+        request = core.ChooseRequest.model_validate(data)
+        return await self.request(
+            page_api.page_choose(session_id, request, params=wire_request(None, query or {})), timeout=200
+        )
 
     @track_usage("cloud.session.execute")
     async def execute(

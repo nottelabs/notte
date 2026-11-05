@@ -10,9 +10,24 @@ export interface ResourceRequestOptions { signal?: AbortSignal }
 export function createResources(client: Client, getApiKey: () => string) {
   return {
   sessions: {
+    /** pageAct: /sessions/{session_id}/page/act. Returns the API response body. */
+    act: async (sessionId: Types.PageActData['path']["session_id"], body: Types.PageActData['body'], query: Types.PageActData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.PageActData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.pageAct({ client, throwOnError: true, signal: requestOptions.signal, headers: { 'x-notte-timeout-ms': '200000', ...requestOptions.headers }, path: { "session_id": sessionId }, body, query });
+      return response.data;
+    },
     /** sessionAuthReadiness: /sessions/{session_id}/auth. Returns the API response body. */
     authReadiness: async (sessionId: Types.SessionAuthReadinessData['path']["session_id"], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.SessionAuthReadinessData['headers']>, 'x-notte-api-key'> } = {}) => {
       const response = await operations.sessionAuthReadiness({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, path: { "session_id": sessionId } });
+      return response.data;
+    },
+    /** pageCheck: /sessions/{session_id}/page/check. Returns the API response body. */
+    check: async (sessionId: Types.PageCheckData['path']["session_id"], body: Types.PageCheckData['body'], query: Types.PageCheckData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.PageCheckData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.pageCheck({ client, throwOnError: true, signal: requestOptions.signal, headers: { 'x-notte-timeout-ms': '200000', ...requestOptions.headers }, path: { "session_id": sessionId }, body, query });
+      return response.data;
+    },
+    /** pageChoose: /sessions/{session_id}/page/choose. Returns the API response body. */
+    choose: async (sessionId: Types.PageChooseData['path']["session_id"], body: Types.PageChooseData['body'], query: Types.PageChooseData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.PageChooseData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.pageChoose({ client, throwOnError: true, signal: requestOptions.signal, headers: { 'x-notte-timeout-ms': '200000', ...requestOptions.headers }, path: { "session_id": sessionId }, body, query });
       return response.data;
     },
     /** createPayment: /sessions/{session_id}/payments. Returns the API response body. */

@@ -164,6 +164,18 @@ class SessionListRequestDict(TypedDict):
     include_system: NotRequired[bool | None]
 
 
+class PageActParametersQueryDict(TypedDict):
+    update_metadata: NotRequired[bool]
+
+
+class PageCheckParametersQueryDict(TypedDict):
+    update_metadata: NotRequired[bool]
+
+
+class PageChooseParametersQueryDict(TypedDict):
+    update_metadata: NotRequired[bool]
+
+
 class PageExecuteParametersQueryDict(TypedDict):
     captcha_id: NotRequired[str | None]
     captcha_timeout_seconds: NotRequired[float]

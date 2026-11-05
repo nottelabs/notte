@@ -184,3 +184,13 @@ test('honors generated names for reserved operation identifiers', () => {
   assert.doesNotThrow(() => generateMappedResources(source, data(`url: '/sessions';`)));
   assert.throws(() => generateMappedResources(sdk('unmapped_'), data(`url: '/sessions';`)), /Unmapped operation: unmapped_/);
 });
+
+test('cloud act operations get a longer request timeout', () => {
+  registry.set('pageAct', { resource: 'sessions', method: 'act' });
+  const generated = generateResources(
+    'export const pageAct = (options: Options<PageActData, true>) => client.post(options);',
+    `export type PageActData = { path: { session_id: string }; body: ActRequest;
+      headers?: { 'x-notte-request-origin'?: string }; url: '/sessions/{session_id}/page/act' };`,
+  );
+  assert.match(generated, /headers: \{ 'x-notte-timeout-ms': '200000', \.\.\.requestOptions\.headers \}/);
+});

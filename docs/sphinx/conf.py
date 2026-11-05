@@ -116,6 +116,13 @@ def curate_reference(app: Sphinx, exception: Exception | None) -> None:
                 '<ParamField path="usage" type="Dict[str, Any]" required>',
                 '<ParamField path="usage" type="Dict[str, Any]">',
             )
+        # Reached through `RemoteSession.act`, the action's type renders as the expanded discriminated union.
+        if page == reference / "misc/actresult.mdx":
+            text = re.sub(
+                r'<ParamField path="action" type="Annotated\[[^"]*\] \| None">',
+                '<ParamField path="action" type="ActionUnion | None">',
+                text,
+            )
         # Inherited lifecycle no-ops are not useful cards in the public overview.
         text = re.sub(
             r'(?:<Visibility[^>]*>\s*)?<Card\b[^>]*href="/sdk-reference/(?:nottepersona|nottevault)/(?:start|stop)(?:\.md)?"[^>]*>.*?</Card>(?:\s*</Visibility>)?',

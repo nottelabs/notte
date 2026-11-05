@@ -450,6 +450,9 @@ FILE_KEYWORDS = {
 # fetches its URL when none is given.
 REQUIRED_KEYWORDS: dict[tuple[str, str], dict[str, Any]] = {
     ("sessions", "set_cookies"): {"cookies": []},
+    ("sessions", "act"): {"instruction": "accept the cookies"},
+    ("sessions", "choose"): {"question": "Which plan?", "options": ["free", "pro"]},
+    ("sessions", "check"): {"question": "Is it done?"},
     ("sessions", "viewer_browser"): {"_viewer_url": None},
 }
 

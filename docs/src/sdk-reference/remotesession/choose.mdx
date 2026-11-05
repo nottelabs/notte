@@ -1,0 +1,27 @@
+---
+title: "choose"
+description: "Pick one of `options` about the current page, with a probability per option"
+---
+
+
+
+```python
+choice = session.choose("Which plan is selected?", ["free", "pro", "enterprise"])
+choice.choice, choice.probabilities["pro"], choice.confidence
+```
+
+`options` is a list of options, or a mapping from option key to a description of the option.
+Billed as LLM usage
+
+
+## Parameters
+
+<ParamField path="question" type="str" required>
+</ParamField>
+
+<ParamField path="options" type="Sequence[str] | Mapping[str, str]" required>
+</ParamField>
+
+## Returns
+
+<Visibility for="humans">[`Choice`](/sdk-reference/misc/choice)</Visibility><Visibility for="agents">[`Choice`](/sdk-reference/misc/choice.md)</Visibility>

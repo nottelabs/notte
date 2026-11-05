@@ -28,6 +28,8 @@ from pydantic.main import IncEx
 from pyotp import TOTP
 from typing_extensions import NotRequired, TypedDict, TypeVar, deprecated, override
 
+from notte_core.act.types import ActResult as ActResult
+from notte_core.act.types import Choice as Choice
 from notte_core.actions import (
     ActionUnion,
     ActionValidation,
@@ -2480,6 +2482,65 @@ class CaptchaExecuteParams(BaseModel):
     captcha_timeout_seconds: float = Field(default=180, gt=0, allow_inf_nan=False)
     target_page_id: str | None = None
     target_generation: int | None = None
+
+
+# `act()` / `choose()` / `check()` of a cloud session (`POST /sessions/{id}/page/act`, `page/choose`, `page/check`).
+
+
+class ActRequest(BaseModel):
+    """One step of a natural-language instruction: observe the page, pick one action, run it."""
+
+    instruction: str = Field(min_length=1, description='What to do, e.g. "accept the cookies".')
+    variables: dict[str, str] | None = Field(
+        default=None,
+        description="Values for `{{name}}` placeholders in typed text, substituted after the model call: "
+        + "they never reach a model.",
+    )
+    dry_run: bool = Field(default=False, description='Choose the action without running it (`status="proposed"`).')
+    min_confidence: float = Field(
+        default=0.0, ge=0.0, le=1.0, description='Below this decider confidence nothing runs (`status="blocked"`).'
+    )
+
+
+class ActRequestDict(TypedDict, total=False):
+    """Request dictionary for `act()` on a cloud session (`ActRequest`)."""
+
+    instruction: Required[str]
+    variables: dict[str, str] | None
+    dry_run: bool
+    min_confidence: float
+
+
+class ChooseRequest(BaseModel):
+    """Pick one of `options` about the current page."""
+
+    question: str = Field(min_length=1)
+    options: list[str] | dict[str, str] = Field(
+        description="The options, or a mapping from option key to a description of the option."
+    )
+
+
+class ChooseRequestDict(TypedDict, total=False):
+    """Request dictionary for `choose()` on a cloud session (`ChooseRequest`)."""
+
+    question: Required[str]
+    options: Required[list[str] | dict[str, str]]
+
+
+class CheckRequest(BaseModel):
+    """A yes/no question about the current page."""
+
+    question: str = Field(min_length=1)
+
+
+class CheckRequestDict(TypedDict, total=False):
+    """Request dictionary for `check()` on a cloud session (`CheckRequest`)."""
+
+    question: Required[str]
+
+
+class CheckResponse(BaseModel):
+    probability: float = Field(description="The probability (0 to 1) that the statement or question holds.")
 
 
 class ParameterInfo(BaseModel):

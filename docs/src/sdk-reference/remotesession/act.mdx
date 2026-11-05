@@ -1,0 +1,44 @@
+---
+title: "act"
+description: "Carry out one step of a natural-language instruction: observe the page, pick one action, run it"
+---
+
+
+
+```python
+result = session.act("accept the cookies")
+result = session.act("type {{email}} in the email field", variables={"email": "jane@example.com"})
+```
+
+The same step as a local session's `act()`, run by the API: TypeSafe's Jev classification model
+picks the operation (click, type, select, scroll, ...) and the element, and a small LLM writes the
+text of a field. `{{name}}` in typed text is replaced by `variables[name]` after the model call,
+so variable values never reach a model. The model calls are billed as LLM usage.
+
+
+
+## Parameters
+
+<ParamField path="instruction" type="str" required>
+  What to do, e.g. "search for running shoes".
+</ParamField>
+
+<ParamField path="variables" type="Mapping[str, str] | None" default="None">
+  Values for `{{name}}` placeholders in typed text.
+</ParamField>
+
+<ParamField path="dry_run" type="bool" default="False">
+  Choose the action but do not run it (`status="proposed"`).
+</ParamField>
+
+<ParamField path="min_confidence" type="float" default="0.0">
+  Below this decider confidence, nothing runs (`status="blocked"`).
+</ParamField>
+
+<ParamField path="raise_on_failure" type="bool | None" default="None">
+  Raise `NoActionFoundError` when blocked, and the action's error when it         failed. Defaults to the session's `raise_on_failure`.
+</ParamField>
+
+## Returns
+
+<Visibility for="humans">[`ActResult`](/sdk-reference/misc/actresult)</Visibility><Visibility for="agents">[`ActResult`](/sdk-reference/misc/actresult.md)</Visibility>: `status` (`executed`, `proposed`, `done`, `blocked`, `stale`), the `action`, its     `execution`, the decider's `confidence` / `probabilities` and per-step `timings`.
