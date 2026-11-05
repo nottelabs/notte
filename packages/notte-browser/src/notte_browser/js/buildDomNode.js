@@ -626,6 +626,8 @@
 			if (controls.some(isOther)) return "";
 			for (const candidate of querySelectorAllOf(container, ERROR_SELECTOR)) {
 				if (contains(candidate, element) || contains(element, candidate)) continue;
+				// a message in the field's popup is about the popup ("No matching regions" from its search)
+				if (inPopup(candidate)) continue;
 				if (querySelectorAllOf(candidate, CONTROL_SELECTOR).length > 0) continue;
 				const text = shownText(candidate);
 				if (text) return text;

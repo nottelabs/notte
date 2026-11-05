@@ -436,7 +436,8 @@ FIELD_ERRORS = """<meta charset="utf-8"><form onsubmit="event.preventDefault()">
   <span class="form-error">Choose a country</span></div>
 <div class="field"><label for="region">Region</label>
   <input id="region" role="combobox" aria-controls="region-list" aria-expanded="true">
-  <div role="listbox" id="region-list"><input aria-label="Search regions"><div role="option">North</div></div>
+  <div role="listbox" id="region-list"><input aria-label="Search regions">
+    <span class="search-error">No matching regions</span><div role="option">North</div></div>
   <span class="form-error">Choose a region</span></div>
 <div class="field"><label for="unit">Unit</label><input id="unit">
   <button type="button" aria-haspopup="listbox" id="unit-type" aria-invalid="true">Unit type</button>
@@ -488,7 +489,8 @@ async def test_observe_reads_the_errors_a_page_shows_for_its_fields() -> None:
     assert error("from") == (None, None) and error("to") == (None, None)
     # a listbox value button that is an `<input type="button">` is a field
     assert error("size") == (True, "Choose a size")
-    # a combobox's own popup, hidden or open (with a search field in it), and its toggle button are not other fields
+    # a combobox's own popup, hidden or open (with a search field in it), and its toggle button are not other fields,
+    # and a message in the popup is the popup's, not the field's
     assert error("country") == (None, "Choose a country")
     assert error("region") == (None, "Choose a region")
     # `aria-errormessage`, and `aria-describedby` of an invalid field
