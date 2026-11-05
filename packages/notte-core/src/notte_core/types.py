@@ -2030,6 +2030,7 @@ class PersonaCreateRequestDict(TypedDict, total=False):
     create_phone_number: bool
     email_provider: Literal["notte", "agentmail", "resend"]
     name: str | None
+    email_domain: str | None
 
 
 class PersonaCreateRequest(SdkRequest):
@@ -2042,6 +2043,12 @@ class PersonaCreateRequest(SdkRequest):
     create_vault: Annotated[bool, Field(description="Whether to create a vault for the persona")] = False
     create_phone_number: Annotated[bool, Field(description="Whether to create a phone number for the persona")] = False
     name: Annotated[str | None, Field(description="Display name of the persona")] = None
+    email_domain: Annotated[
+        str | None,
+        Field(
+            description="Domain of the persona's email address, for the `notte` provider only. Defaults to the standard domain; other configured domains are listed by GET /personas/create/email-domains."
+        ),
+    ] = None
 
 
 class PersonaResponse(SdkResponse):
