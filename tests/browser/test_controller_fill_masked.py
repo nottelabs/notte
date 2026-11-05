@@ -148,6 +148,55 @@ async def test_a_field_its_selector_no_longer_finds_is_read_back(session: NotteS
 
 
 @pytest.mark.asyncio
+async def test_a_fill_that_navigates_is_done(session: NotteSession) -> None:
+    # A one-time code form goes on at its last digit: the field is gone before it is read back.
+    page = session.window.page
+    pages = {
+        "http://otp.test/": '<input id="code" oninput="if (this.value.length === 6) location.href = \'/done\'">',
+        "http://otp.test/done": "<p>Verified</p>",
+    }
+    _ = await page.route(
+        "http://otp.test/**", lambda route: route.fulfill(body=pages[route.request.url], content_type="text/html")
+    )
+    _ = await page.goto("http://otp.test/")
+    result = await session.aexecute(FillAction(selector="#code", value="123456"), raise_on_failure=False)
+    assert result.success, result.message
+    await page.wait_for_url("http://otp.test/done")
+
+
+@pytest.mark.asyncio
+async def test_a_field_the_page_replaced_is_read_where_its_selector_finds_it(session: NotteSession) -> None:
+    # The page swaps the field for an empty one as it is typed into: the element act filled, now off the page, still
+    # holds the text.
+    await _open(
+        session,
+        """<input id="phone" oninput="if (!window.swapped) { window.swapped = true;
+          const empty = document.createElement('input'); empty.id = 'phone'; this.replaceWith(empty); }">""",
+    )
+    result = await session.aexecute(FillAction(selector="#phone", value="4155550123"), raise_on_failure=False)
+    assert result.success, result.message
+    assert await _value(session, "#phone") == "4155550123"
+
+
+@pytest.mark.asyncio
+async def test_a_refused_paste_is_typed_into(session: NotteSession) -> None:
+    # a leading space makes the fill a paste (indentation): the field refuses it as it refuses a fill
+    await _open(session, REFUSING.replace("LATER", "false"))
+    result = await session.aexecute(FillAction(selector="#phone", value=" 415 555 0123"), raise_on_failure=False)
+    assert result.success, result.message
+    assert await _value(session, "#phone") == "4155550123"
+
+
+@pytest.mark.asyncio
+async def test_a_refused_paste_with_a_tab_fails(session: NotteSession) -> None:
+    # a tab cannot be typed into the field (it moves the focus): the paste the field refused fails
+    await _open(session, REFUSING_ALL)
+    result = await session.aexecute(FillAction(selector="#phone", value="\t4155550123"), raise_on_failure=False)
+    assert not result.success
+    assert "stayed empty" in result.message
+
+
+@pytest.mark.asyncio
 async def test_a_tab_whose_timers_do_not_run_is_read_as_it_is(
     session: NotteSession, monkeypatch: pytest.MonkeyPatch
 ) -> None:

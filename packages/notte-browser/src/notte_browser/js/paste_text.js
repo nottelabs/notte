@@ -1,6 +1,7 @@
 // Paste `text` at the selection of the element's document, which has the focus: as a paste event, which editors
 // that handle pasting (CodeMirror, Monaco) insert themselves, else with the browser's text insertion. Runs in the
-// element's frame: in an iframe editor, the page's own active element is the iframe.
+// element's frame: in an iframe editor, the page's own active element is the iframe. Returns whether the page
+// handled the paste itself (it cancelled the event): the text then went where the page put it, not into the field.
 (el, text) => {
     const doc = el.ownerDocument;
     window.__isolatedClipboard = text;
@@ -16,4 +17,5 @@
     // a synthetic paste event inserts nothing by itself. The browser keeps a tab where the editor keeps white space
     // (`white-space: pre-wrap`, as code editors do), else inserts a non-breaking space, as when the tab is typed
     if (!event.defaultPrevented) doc.execCommand('insertText', false, text);
+    return event.defaultPrevented;
 }

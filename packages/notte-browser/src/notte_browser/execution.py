@@ -225,6 +225,8 @@ _FILL_FALLBACK_KEY_DELAY_MS = 50
 _LATE_VALUE_READ_S = 1.0
 # The most digits a mask may put before the typed number: a fixed country code ("+1 (415) 555-0123" for "4155550123")
 _MASK_PREFIX_DIGITS = 3
+# How long the field that replaced the filled one is looked up (it is already on the page: see `_read_back`)
+_REPLACED_FIELD_TIMEOUT_MS = 1000
 
 # Page-side implementation: js/find_dropdown_option.js
 _FIND_DROPDOWN_OPTION = script("find_dropdown_option.js")
@@ -392,6 +394,79 @@ async def _typed_value(field: ElementHandle) -> str | None:
         return await field.evaluate(_TYPED_VALUE, False)
 
 
+async def _read_back(
+    field: ElementHandle, locator: Locator, handles: list[ElementHandle]
+) -> tuple[str | None, ElementHandle]:
+    """The value the field holds after a fill (`_typed_value`), and the field it was read from. None when it cannot be
+    checked, and the fill is then taken as done (as before the read-back): another element than a text field, a
+    fill that navigated (an OTP form that goes on at its last digit), or a page that replaced the field with one the
+    selector does not find as a single element. A field the page replaced is read where the selector now finds it:
+    the element act filled, removed from the page, would still hold the text."""
+    try:
+        if await field.evaluate("(el) => el.isConnected"):
+            return await _typed_value(field), field
+    except Error:
+        # the document is gone: the fill navigated
+        return None, field
+    try:
+        if await locator.count() != 1:
+            return None, field
+        replacement = await locator.element_handle(timeout=_REPLACED_FIELD_TIMEOUT_MS)
+        handles.append(replacement)
+        return await _typed_value(replacement), replacement
+    except Error:
+        return None, field
+
+
+def _not_kept(window: BrowserWindow, value: str) -> ActionExecutionError:
+    # the text is not quoted: it can be a secret
+    reason = "The field stayed empty after typing" if value == "" else "The field holds other text than the typed text"
+    return ActionExecutionError("fill", window.page.url, reason=reason)
+
+
+async def _retype(
+    window: BrowserWindow,
+    locator: Locator,
+    field: ElementHandle,
+    text: str,
+    budget: _ActionBudget,
+    handles: list[ElementHandle],
+) -> None:
+    """Type `text` key by key into a text field that did not keep it when set at once, and fail when the field does
+    not keep it either."""
+    logger.info("The field did not keep the filled text: typing it key by key")
+    try:
+        # a forced fill does not wait for a field that is not shown yet: its text went nowhere
+        await field.wait_for_element_state("visible", timeout=budget.remaining_ms())
+    except PlaywrightTimeoutError as e:
+        raise ActionExecutionError("fill", window.page.url, reason="The field is not visible") from e
+    # selected without a select-all shortcut, which a mask that refuses letter keys refuses too
+    await field.select_text(force=True, timeout=budget.remaining_ms())
+    await window.page.keyboard.press("Backspace")
+    await field.type(text, delay=_FILL_FALLBACK_KEY_DELAY_MS, timeout=budget.remaining_ms())
+    value, _ = await _read_back(field, locator, handles)
+    if value is not None and not _field_keeps(text, value):
+        raise _not_kept(window, value)
+
+
+async def _check_kept(
+    window: BrowserWindow,
+    locator: Locator,
+    field: ElementHandle,
+    text: str,
+    budget: _ActionBudget,
+    handles: list[ElementHandle],
+) -> None:
+    """After `text` replaced the value of `field` at once (a fill or a paste): type it key by key when the field did
+    not keep it. A text with a tab is not typed (Tab would move the focus): the fill fails."""
+    value, field = await _read_back(field, locator, handles)
+    if value is None or _field_keeps(text, value):
+        return
+    if "\t" in text:
+        raise _not_kept(window, value)
+    await _retype(window, locator, field, text, budget, handles)
+
+
 async def _fill(window: BrowserWindow, locator: Locator, text: str, budget: _ActionBudget) -> None:
     """Replace the element's value with `text`. A text field that does not keep the text, as a masked input that
     refuses a value set at once (Playwright inserts the whole text in one input event, without key events), is then
@@ -399,34 +474,16 @@ async def _fill(window: BrowserWindow, locator: Locator, text: str, budget: _Act
     # The element, not its selector: typing can change the page so that the selector no longer finds the field (an
     # address autocomplete in a checkout frame did), and reading it back would wait for it until the timeout.
     field = await locator.element_handle(timeout=budget.remaining_ms())
+    handles = [field]
     try:
         # `force` (skip actionability checks) is what every default fill used before `clear_before_fill` stopped
         # being passed as `force`.
         await field.fill(text, timeout=budget.remaining_ms(), force=True)
-        value = await _typed_value(field)
-        if value is None or _field_keeps(text, value):
-            return
-        logger.info("The field did not keep the filled text: typing it key by key")
-        try:
-            # a forced fill does not wait for a field that is not shown yet: its text went nowhere
-            await field.wait_for_element_state("visible", timeout=budget.remaining_ms())
-        except PlaywrightTimeoutError as e:
-            raise ActionExecutionError("fill", window.page.url, reason="The field is not visible") from e
-        # selected without a select-all shortcut, which a mask that refuses letter keys refuses too
-        await field.select_text(force=True, timeout=budget.remaining_ms())
-        await window.page.keyboard.press("Backspace")
-        await field.type(text, delay=_FILL_FALLBACK_KEY_DELAY_MS, timeout=budget.remaining_ms())
-        value = await _typed_value(field)
-        if value is None or _field_keeps(text, value):
-            return
-        # the text is not quoted: it can be a secret
-        reason = (
-            "The field stayed empty after typing" if value == "" else "The field holds other text than the typed text"
-        )
-        raise ActionExecutionError("fill", window.page.url, reason=reason)
+        await _check_kept(window, locator, field, text, budget, handles)
     finally:
-        with suppress(Error):  # the fill may have navigated away
-            await field.dispose()
+        for handle in handles:
+            with suppress(Error):  # the fill may have navigated away
+                await handle.dispose()
 
 
 _SLIDER_VALUE = script("slider_value.js")
@@ -972,9 +1029,20 @@ async def _interact(
                     await locator.evaluate(_MOVE_CARET_TO_END, timeout=budget.remaining_ms())
 
                 # Use isolated clipboard variable instead of system clipboard
-                await locator.evaluate(_PASTE_TEXT, get_str_value(value), timeout=budget.remaining_ms())
+                handled: bool = await locator.evaluate(_PASTE_TEXT, get_str_value(value), timeout=budget.remaining_ms())
 
                 await window.short_wait()
+                if action.clear_before_fill and not in_editing_host and not handled:
+                    # a text field can refuse a paste as it refuses a fill (`_fill`). A page that handled the paste
+                    # itself put the text where it wanted it, not necessarily in the field.
+                    field = await locator.element_handle(timeout=budget.remaining_ms())
+                    handles = [field]
+                    try:
+                        await _check_kept(window, locator, field, get_str_value(value), budget, handles)
+                    finally:
+                        for handle in handles:
+                            with suppress(Error):
+                                await handle.dispose()
             elif action.clear_before_fill:
                 await _fill(window, locator, get_str_value(value), budget)
             else:
