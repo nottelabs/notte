@@ -10,7 +10,7 @@ can seed.
 import asyncio
 import math
 import random
-from collections.abc import Awaitable, Callable, Iterator
+from collections.abc import Awaitable, Callable, Generator
 from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass
@@ -105,7 +105,7 @@ def moved(page: Page, point: Point | None) -> None:
 
 
 @contextmanager
-def deferred_records() -> Iterator[list[tuple[Page, Locator | ElementHandle]]]:
+def deferred_records() -> Generator[list[tuple[Page, Locator | ElementHandle]]]:
     """Inside, `moved_onto` only notes its element, so reading where it is cannot use an action's deadline. Pass
     the notes to `record_deferred` once the deadline no longer applies."""
     records: list[tuple[Page, Locator | ElementHandle]] = []
