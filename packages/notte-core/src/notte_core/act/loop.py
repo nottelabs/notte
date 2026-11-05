@@ -103,12 +103,16 @@ def _repeating(results: list[ActResult]) -> bool:
 
 
 def _waiting(results: list[ActResult]) -> bool:
-    """The last `WAIT_LIMIT` actions were WAITs through which the page changed nothing: not its DOM, text included
-    (each WAIT watches it, unlike the fingerprint, which leaves plain text out), nor its URL. Any other action, or a
-    WAIT that saw a change ("Preparing report: 40%"), starts the count again."""
+    """The last `WAIT_LIMIT` actions were WAITs and the page changed nothing, both while each WAIT watched it (its
+    DOM, text included, and its URL) and between them, while act observed and decided (the fingerprint each WAIT was
+    decided on). Any other action, a WAIT that saw a change ("Preparing report: 40%"), or a page that changed between
+    two WAITs starts the count again."""
     recent = results[-WAIT_LIMIT:]
-    return len(recent) == WAIT_LIMIT and all(
-        r.status == "executed" and r.operation == "WAIT" and waited_for_nothing(r.execution) for r in recent
+    return (
+        len(recent) == WAIT_LIMIT
+        and all(r.status == "executed" and r.operation == "WAIT" and waited_for_nothing(r.execution) for r in recent)
+        and all(r.fingerprint is not None for r in recent)
+        and len({r.fingerprint for r in recent}) == 1
     )
 
 

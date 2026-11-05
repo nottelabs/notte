@@ -472,11 +472,17 @@ def test_act_until_done_goes_on_waiting_while_the_page_text_changes() -> None:
     assert len(act_until_done(session, "go", max_steps=10)) == 10
 
 
+def test_act_until_done_goes_on_waiting_while_the_page_changes_between_waits() -> None:
+    # the page loads while act observes and decides, and is quiet while each WAIT watches it
+    session = _ScriptedSession([_wait(changed=False, fingerprint=f"p{i}") for i in range(10)])
+    assert len(act_until_done(session, "go", max_steps=10)) == 10
+
+
 def test_act_until_done_counts_only_waits_in_a_row() -> None:
-    # another action between the WAITs (a click on a page that renders late) starts the count again
-    results = [_wait(changed=False, fingerprint=f"p{i}") for i in range(4)]
-    results += [_step("p4", "CLICK", "B1")]
-    results += [_wait(changed=False, fingerprint=f"q{i}") for i in range(4)]
+    # another action between the WAITs (a scroll) starts the count again
+    results = [_wait(changed=False) for _ in range(4)]
+    results += [_step("a", "SCROLL_DOWN")]
+    results += [_wait(changed=False) for _ in range(4)]
     session = _ScriptedSession([*results, _result("done", "r")])
     assert len(act_until_done(session, "go", max_steps=20)) == 10
 
