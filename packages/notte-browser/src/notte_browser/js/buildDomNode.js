@@ -796,35 +796,40 @@
 	const HINT_DIRECTION_WORDS = new Set(["left", "right", "up", "down"]);
 	const MAX_HINT_LENGTH = 60;
 	const MAX_HINT_ELEMENTS = 30;
-	// an icon-only control is small: one with more elements than this inside is not named from its markup, which
-	// keeps the work for each unnamed control bounded (nested controls each look inside themselves)
-	const MAX_FALLBACK_DESCENDANTS = 200;
+	// an icon-only control is small: one with more nodes than this inside (elements and text) is not named from its
+	// markup, which keeps the work for each unnamed control bounded (nested controls each look inside themselves)
+	const MAX_FALLBACK_NODES = 200;
 
 	/**
 	 * The shown elements inside `element` (its composed tree: shadow roots and slotted content, as `contentText`
 	 * reads it), in reading order, that may carry a markup hint (a test id, `<use>`, a class), at most
 	 * `MAX_HINT_ELEMENTS` of them. An element hidden by CSS is left out (a hidden "previous" arrow next to the
-	 * shown "next" one), an `aria-hidden` icon is not (it is what a sighted user sees).
+	 * shown "next" one), an `aria-hidden` icon is not (it is what a sighted user sees). The walk reads one child at a
+	 * time, so a wide element costs no more than a deep one.
 	 *
 	 * @param {Element} element - The control.
 	 * @returns {Element[] | undefined} The elements, or undefined when `element` holds more than
-	 *   `MAX_FALLBACK_DESCENDANTS` elements.
+	 *   `MAX_FALLBACK_NODES` nodes.
 	 */
 	function hintElements(element) {
 		const found = [];
-		const elementsIn = (node) =>
-			Array.from(contentChildren(node)).filter((child) => nodeTypeOf(child) === Node.ELEMENT_NODE);
-		const stack = elementsIn(element).reverse();
+		const stack = [{ children: contentChildren(element), next: 0 }];
 		let seen = 0;
 		while (stack.length > 0) {
-			if (++seen > MAX_FALLBACK_DESCENDANTS) return undefined;
-			const node = stack.pop();
+			const top = stack[stack.length - 1];
+			if (top.next >= top.children.length) {
+				stack.pop();
+				continue;
+			}
+			const node = top.children[top.next++];
+			if (++seen > MAX_FALLBACK_NODES) return undefined;
+			if (nodeTypeOf(node) !== Node.ELEMENT_NODE) continue;
 			const style = getCachedComputedStyle(node);
 			// nothing inside a `display: none` element shows; a child of a `visibility: hidden` one can
 			if (style?.display === "none") continue;
 			const shown = style?.visibility !== "hidden" && style?.visibility !== "collapse";
 			if (shown && found.length < MAX_HINT_ELEMENTS && matches(node, MARKUP_HINT_SELECTOR)) found.push(node);
-			stack.push(...elementsIn(node).reverse());
+			stack.push({ children: contentChildren(node), next: 0 });
 		}
 		return found;
 	}
@@ -842,7 +847,7 @@
 	 * its content shows to a sighted user (the `alt` of an image inside it, an `<svg><title>`, an `aria-label`
 	 * inside), else what its markup says it is: a test id ("product-detail-gallery-nav-left"), the icon it draws
 	 * (`<use href="icons.svg#arrow-left">`), then the words of its class names that tell what a control does
-	 * ("carousel arrow left"). An element that shows text, holds more than `MAX_FALLBACK_DESCENDANTS` elements, or
+	 * ("carousel arrow left"). An element that shows text, holds more than `MAX_FALLBACK_NODES` nodes, or
 	 * whose markup names nothing, gets none (`undefined`).
 	 *
 	 * @param {HTMLElement} element - A highlighted element without an accessible name.

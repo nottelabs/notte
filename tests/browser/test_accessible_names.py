@@ -537,7 +537,7 @@ FALLBACK_EXPECTED = {
     # the icon it shows, not a hidden one before it; an icon in its shadow root
     "shownicon": "arrow right",
     "shadow": "search",
-    # a control with more than 200 elements inside is not an icon: its markup is not looked at
+    # a control with more than 200 nodes inside is not an icon: its markup is not looked at
     "large": None,
 }
 
