@@ -527,7 +527,145 @@
 		}
 		const sort = header === null ? null : getAttribute(header, "aria-sort");
 		if (sort === "ascending" || sort === "descending" || sort === "other") state.sort = sort;
+		readFieldError(element, tagName, state);
 		return Object.keys(state).length > 0 ? state : undefined;
+	}
+
+	// Field errors (see `readFieldError`): a longer message is cut.
+	const MAX_ERROR_LENGTH = 150;
+	// the ancestors of a field searched for its error message, up to one that holds another control
+	const MAX_ERROR_DEPTH = 3;
+	// ARIA roles of the controls a form can mark invalid
+	const ERROR_FIELD_ROLES = new Set([
+		"textbox", "searchbox", "combobox", "spinbutton", "listbox", "checkbox", "radio", "switch", "slider",
+	]);
+	const NO_ERROR_INPUT_TYPES = new Set(["submit", "button", "reset", "image", "hidden"]);
+	// what shows a field's error next to it: an alert, or a class or id that names an error
+	const ERROR_SELECTOR =
+		'[role="alert"], [aria-live="assertive"], [class*="error" i], [class*="invalid" i], [id*="error" i]';
+	// the controls of a form (the fields `isErrorField` accepts): a container holding another one is the form's or a
+	// group's, and so are its errors
+	const CONTROL_SELECTOR = [
+		`input${Array.from(NO_ERROR_INPUT_TYPES, (type) => `:not([type="${type}" i])`).join("")}`,
+		"select", "textarea", '[contenteditable="true"]',
+		// a button that opens a listbox picks a value, as a select does
+		'[aria-haspopup="listbox" i]',
+		...Array.from(ERROR_FIELD_ROLES, (role) => `[role="${role}"]`),
+	].join(", ");
+
+	// a button that opens a listbox (an `<input type="button">` too): it picks a value, as a select does
+	function opensListbox(element) {
+		return getRole(element) === "button" && (getAttribute(element, "aria-haspopup") || "").toLowerCase() === "listbox";
+	}
+
+	function isErrorField(element, tagName) {
+		if (opensListbox(element) || isListboxValueButton(element)) return true;
+		if (tagName === "input") return !NO_ERROR_INPUT_TYPES.has((propertyOf(element, "type") || "text").toLowerCase());
+		return tagName === "select" || tagName === "textarea" || !!propertyOf(element, "isContentEditable") ||
+			ERROR_FIELD_ROLES.has(getRole(element));
+	}
+
+	// the roles of the popup a field opens (`aria-haspopup` values)
+	const POPUP_ROLES = new Set(["listbox", "tree", "grid", "dialog", "menu"]);
+
+	// the elements an idref attribute points to
+	function idrefElements(element, attribute) {
+		const scope = getRootNode(element);
+		return (getAttribute(element, attribute) || "").trim().split(/\s+/).flatMap((id) => {
+			const target = id && (scope instanceof Document ? DOCUMENT.getElementById.call(scope, id) : scope.getElementById?.(id));
+			return target ? [target] : [];
+		});
+	}
+
+	// the text an element shows, on one line ("" when hidden)
+	function shownText(element) {
+		if (!isElementVisible(element) || isVisuallyHidden(element)) return "";
+		return String(propertyOf(element, "innerText") ?? textContentOf(element) ?? "").replace(/\s+/g, " ").trim();
+	}
+
+	// Hidden from sight while laid out: transparent (`opacity: 0`, its own or an ancestor's). Forms keep an error
+	// element like this until they show it.
+	function isVisuallyHidden(element) {
+		for (let node = element; node !== null; node = parentElementOf(node)) {
+			const opacity = getCachedComputedStyle(node)?.opacity;
+			if (opacity !== undefined && opacity !== "" && Number(opacity) === 0) return true;
+		}
+		return false;
+	}
+
+	// the text of the visible elements an idref attribute (`aria-errormessage`, `aria-describedby`) points to
+	function idrefText(element, attribute) {
+		const scope = getRootNode(element);
+		const parts = [];
+		for (const id of (getAttribute(element, attribute) || "").trim().split(/\s+/)) {
+			const target = id && (scope instanceof Document ? DOCUMENT.getElementById.call(scope, id) : scope.getElementById?.(id));
+			if (!target || target === element) continue;
+			const text = shownText(target);
+			if (text) parts.push(text);
+		}
+		return parts.join(" ");
+	}
+
+	// The error shown next to a field: a visible alert or error element in the field's own container (an ancestor,
+	// up to `MAX_ERROR_DEPTH`, that holds no other control), with text. The field's own popup (a listbox, menu, ...
+	// it `aria-controls` / `aria-owns`) with the controls in it, the button that toggles that popup, and hidden
+	// controls are not other controls. A field it controls is (a checkbox that enables an input).
+	function nearbyErrorText(element) {
+		const popups = ["aria-controls", "aria-owns"]
+			.flatMap((attribute) => idrefElements(element, attribute))
+			.filter((target) => POPUP_ROLES.has(getRole(target)));
+		const inPopup = (control) => popups.some((popup) => contains(popup, control));
+		const togglesPopup = (control) =>
+			getRole(control) === "button" && idrefElements(control, "aria-controls").some((target) => popups.includes(target));
+		const isOther = (control) =>
+			!contains(element, control) && !contains(control, element) &&
+			!inPopup(control) && !togglesPopup(control) && isElementVisible(control);
+		let container = parentElementOf(element);
+		for (let depth = 0; container !== null && depth < MAX_ERROR_DEPTH; depth++, container = parentElementOf(container)) {
+			const controls = Array.from(querySelectorAllOf(container, CONTROL_SELECTOR));
+			if (controls.some(isOther)) return "";
+			for (const candidate of querySelectorAllOf(container, ERROR_SELECTOR)) {
+				if (contains(candidate, element) || contains(element, candidate)) continue;
+				// a message in the field's popup is about the popup ("No matching regions" from its search)
+				if (inPopup(candidate)) continue;
+				if (querySelectorAllOf(candidate, CONTROL_SELECTOR).length > 0) continue;
+				const text = shownText(candidate);
+				if (text) return text;
+			}
+		}
+		return "";
+	}
+
+	/**
+	 * Whether the page marks a form field invalid, and the error message it shows for it, into `state`:
+	 * - `invalid`: `aria-invalid` (other than "false"), or the browser's `:user-invalid` (a constraint the
+	 *   field breaks once the user changed it or tried to submit its form: not an untouched required field);
+	 * - `error`: the text of its `aria-errormessage`, else (when invalid) of its `aria-describedby`, else of a
+	 *   visible alert or error element next to it (`nearbyErrorText`), else (when invalid) the browser's own
+	 *   `validationMessage`.
+	 * A form that refuses to go on says why there: the field the goal still has to fill or fix.
+	 */
+	function readFieldError(element, tagName, state) {
+		if (!isErrorField(element, tagName)) return;
+		const aria = (getAttribute(element, "aria-invalid") || "").trim().toLowerCase();
+		let invalid = aria !== "" && aria !== "false";
+		if (!invalid) {
+			try {
+				invalid = matches(element, ":user-invalid");
+			} catch {
+				// a browser without `:user-invalid`
+			}
+		}
+		let message = idrefText(element, "aria-errormessage");
+		if (!message && invalid) message = idrefText(element, "aria-describedby");
+		if (!message) message = nearbyErrorText(element);
+		if (!message && invalid) message = String(propertyOf(element, "validationMessage") || "").trim();
+		if (invalid) state.invalid = true;
+		if (message) {
+			state.error = message.slice(0, MAX_ERROR_LENGTH);
+			// the cut can split a secret the message repeats: `ElementState.masked` masks its visible start
+			if (message.length > MAX_ERROR_LENGTH) state.errorTruncated = true;
+		}
 	}
 
 	// Accessible names of the highlighted elements (see `getAccessibleName`): longer names are cut.

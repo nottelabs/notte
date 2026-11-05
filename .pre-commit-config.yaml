@@ -77,7 +77,8 @@ repos:
         name: Regenerate SDK reference docs
         entry: bash -c "make docs-sdk"
         language: system
-        files: ^(packages/notte-sdk/src/|docs/sphinx/conf\.py)
+        # The reference also renders notte_core models (ElementState, the wire types).
+        files: ^(packages/notte-(sdk|core)/src/|docs/sphinx/conf\.py)
         pass_filenames: false
       - id: docs-agent-notice
         name: Check agent Markdown setup notice

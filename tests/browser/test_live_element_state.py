@@ -414,3 +414,145 @@ async def test_sort_state_uses_the_headers_effective_role(role: str, target: str
         )
 
     assert node.state == (ElementState(sort="descending") if role.startswith("columnheader") else None)
+
+
+FIELD_ERRORS = """<meta charset="utf-8"><form onsubmit="event.preventDefault()">
+<div><label for="street">Street *</label><input id="street" required></div>
+<div class="field"><label for="number">House number *</label><input id="number" required>
+  <span class="form-error">Required field</span></div>
+<div><label for="zip">Postcode</label><input id="zip" aria-invalid="true" aria-errormessage="zip-error">
+  <p id="zip-error">Invalid postcode</p></div>
+<div><label for="phone">Phone</label><input id="phone" aria-invalid="true" aria-describedby="phone-help">
+  <small id="phone-help">Enter a valid phone number</small></div>
+<div><label for="mail">Email</label><input id="mail" aria-describedby="mail-help">
+  <small id="mail-help">We send the receipt here</small></div>
+<div><label for="town">Town</label><input id="town"><p class="text-red-error" style="display: none">Invalid</p></div>
+<div class="field"><label for="code">Promo code</label><input id="code"><input type="button" value="Apply">
+  <span class="form-error">Unknown code</span></div>
+<div class="field"><label for="country">Country</label>
+  <input id="country" role="combobox" aria-controls="country-list" aria-expanded="false">
+  <button type="button" aria-haspopup="listbox" aria-controls="country-list" aria-label="Open">v</button>
+  <ul role="listbox" id="country-list" hidden><li role="option">France</li></ul>
+  <span class="form-error">Choose a country</span></div>
+<div class="field"><label for="region">Region</label>
+  <input id="region" role="combobox" aria-controls="region-list" aria-expanded="true">
+  <div role="listbox" id="region-list"><input aria-label="Search regions">
+    <span class="search-error">No matching regions</span><div role="option">North</div></div>
+  <span class="form-error">Choose a region</span></div>
+<div class="field"><label for="unit">Unit</label><input id="unit">
+  <button type="button" aria-haspopup="listbox" id="unit-type" aria-invalid="true">Unit type</button>
+  <span class="form-error">Choose a unit type</span></div>
+<div><span id="size-label">Size</span><input type="button" id="size" value="Choose" aria-haspopup="listbox"
+  aria-labelledby="size-label size" aria-invalid="true" aria-errormessage="size-error"><p id="size-error">Choose a size</p></div>
+<div class="field"><input type="checkbox" id="gift" aria-label="Gift" aria-controls="gift-note">
+  <input id="gift-note" aria-label="Gift note"><span class="form-error">Write a note</span></div>
+<div class="pair"><input id="from" role="combobox" aria-label="From" aria-controls="cities">
+  <input id="to" role="combobox" aria-label="To" aria-controls="cities"><div role="listbox" id="cities" hidden></div>
+  <span role="alert">Pick two different cities</span></div>
+<div><label for="city">City</label><input id="city"><span class="field-error" style="opacity: 0">Enter a city</span></div>
+<div class="choices"><div role="checkbox" id="opt-a" tabindex="0" aria-checked="false">Gift wrap</div>
+  <div role="checkbox" id="opt-b" tabindex="0" aria-checked="false">Gift note</div>
+  <span role="alert">Pick at least one option</span></div>
+<div><label for="typed">Typed email</label><input id="typed" type="email"></div>
+<div class="row error"><input id="first" aria-label="First"><input id="last" aria-label="Last">
+  <span class="error-text">Fix the form</span></div>
+<label><input type="checkbox" id="terms" aria-invalid="true"> I accept the terms</label>
+<button>Continue</button></form>"""
+
+
+@pytest.mark.asyncio
+async def test_observe_reads_the_errors_a_page_shows_for_its_fields() -> None:
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(_data_url(FIELD_ERRORS))
+        await page.fill("#typed", "not-an-email")
+        await page.locator("#typed").blur()
+        _ = await session.aobserve()
+        states = _state_by_selector(session)
+
+    def error(field: str) -> tuple[bool | None, str | None]:
+        state = states[field]
+        assert state is not None
+        return state.invalid, state.error
+
+    # an untouched required field is not invalid: only the page or a change by the user makes it so
+    assert error("street") == (None, None)
+    # an error element next to the field, without any ARIA
+    assert error("number") == (None, "Required field")
+    # a button beside the field is not another field: the error is still the field's
+    assert error("code") == (None, "Unknown code")
+    # a button that opens a listbox is another field: the error may be its own, and it is invalid itself
+    assert error("unit") == (None, None)
+    assert error("unit-type") == (True, None)
+    # a field a checkbox controls is another field, and so is a combobox sharing its popup
+    assert error("gift") == (None, None) and error("gift-note") == (None, None)
+    assert error("from") == (None, None) and error("to") == (None, None)
+    # a listbox value button that is an `<input type="button">` is a field
+    assert error("size") == (True, "Choose a size")
+    # a combobox's own popup, hidden or open (with a search field in it), and its toggle button are not other fields,
+    # and a message in the popup is the popup's, not the field's
+    assert error("country") == (None, "Choose a country")
+    assert error("region") == (None, "Choose a region")
+    # `aria-errormessage`, and `aria-describedby` of an invalid field
+    assert error("zip") == (True, "Invalid postcode")
+    assert error("phone") == (True, "Enter a valid phone number")
+    # `aria-describedby` of a valid field is a hint, and a hidden error element is no error
+    assert error("mail") == (None, None)
+    assert error("town") == (None, None)
+    # nor is an error element kept transparent until the form shows it
+    assert error("city") == (None, None)
+    # the browser's own validation, once the field was changed (`:user-invalid`)
+    invalid, message = error("typed")
+    assert invalid is True and message is not None and "@" in message
+    # an error in a container that holds other fields is the form's, not one field's
+    assert error("first") == (None, None) and error("last") == (None, None)
+    # custom controls count as fields: a group's error is the group's, not each option's
+    assert error("opt-a") == (None, None) and error("opt-b") == (None, None)
+    assert error("terms")[0] is True
+
+
+CUT_ERROR_PAGE = f"""<html><body><form><div>
+<input id="email" type="email" name="email" aria-invalid="true" aria-errormessage="email-error"
+  oninput="document.getElementById('email-error').textContent = '{"x" * 140} ' + this.value">
+<p id="email-error">Enter your email</p></div></form></body></html>"""
+
+
+@pytest.mark.asyncio
+async def test_observation_masks_a_secret_cut_off_in_an_error_message(session: NotteSession) -> None:
+    from notte_core.actions import FillAction
+    from notte_core.credentials import EMAIL
+
+    from tests.mock.mock_vault import MockVault
+
+    page = session.window.page
+    _ = await page.route(VAULT_URL, lambda route: route.fulfill(body=CUT_ERROR_PAGE, content_type="text/html"))
+    _ = await page.goto(VAULT_URL)
+    session.vault = MockVault({VAULT_URL: {"email": SECRETS["email"]}})  # pyright: ignore[reportArgumentType]
+    _ = await session.aobserve()
+    result = await session.aexecute(FillAction(selector="#email", value=EMAIL), raise_on_failure=True)
+    assert result.success
+
+    obs = await session.aobserve()
+    errors = [state for state in (obs.element_states or {}).values() if state.error_truncated]
+    # the browser cut the message inside the email it repeats: the start of the email that is left is masked too
+    assert len(errors) == 1 and errors[0].error is not None and errors[0].error.startswith("x" * 140)
+    # (the page text shows what the page prints, the email included: masking covers the element states)
+    assert SECRETS["email"][:5] not in obs.model_dump_json(include={"element_states"})
+
+
+def test_element_state_masks_a_secret_cut_off_in_its_error_message() -> None:
+    state = ElementState(error="x" * 140 + " jane@exam", error_truncated=True)
+    assert state.masked({"jane@example.org": "{{email}}"}).error == "x" * 140 + " {{email}}"
+    # a message that was not cut is masked only where a whole secret appears
+    assert ElementState(error="call jane").masked({"jane@example.org": "{{email}}"}).error == "call jane"
+
+
+def test_a_cut_error_masks_a_secret_whose_whitespace_the_page_collapsed() -> None:
+    state = ElementState(error="x" * 140 + " alpha bet", error_truncated=True)
+    assert state.masked({"alpha  betaSecret": "{{p}}"}).error == "x" * 140 + " {{p}}"
+
+
+def test_element_state_masks_its_error_message() -> None:
+    state = ElementState(value="jane@x", error="'jane@x' is not a valid email", invalid=True)
+    masked = state.masked({"jane@x": "{{email}}"})
+    assert masked.error == "'{{email}}' is not a valid email" and masked.invalid is True

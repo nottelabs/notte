@@ -27,6 +27,7 @@ Pass any of `--name`, `--description`, `--domain`, `--run-instructions`, `--defa
 | Flag | Description |
 | - | - |
 | `--default-runtime <string>` | Runtime this function's runs use unless a run overrides it: standard or extended |
+| `--deletion-protected` | Turn deletion protection on or off. While it is on, the function cannot be deleted. Any workspace member's key can turn it on; turning it off takes the key of a workspace admin or owner. Omit or send null to leave it unchanged. |
 | `--description <string>` | description |
 | `--domain <string>` | domain |
 | `--function-id <string>` | Function ID (uses current function if not specified) |

@@ -31,6 +31,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 - [Stealth Mode](https://docs.notte.cc/features/sessions/stealth-mode.md): Configure anti-detection features for your browser sessions
 - [Proxies](https://docs.notte.cc/features/sessions/proxies.md): Route your automation traffic with precision & control
+- [Proxy Gateway](https://docs.notte.cc/features/sessions/proxy-gateway.md): Use Notte's residential proxies from your own HTTP client, scraper or proxy
 
 #### Secret Proxies
 
@@ -317,6 +318,8 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [POST Create Payment](https://docs.notte.cc/api-reference/payments/create-payment.md)
 - [POST Disconnect Payment Wallet](https://docs.notte.cc/api-reference/payments/disconnect-payment-wallet.md)
 - [GET Get Payment](https://docs.notte.cc/api-reference/payments/get-payment.md)
+- [GET Get Payment Wallet Connection](https://docs.notte.cc/api-reference/payments/get-payment-wallet-connection.md)
+- [GET List Payment Requests](https://docs.notte.cc/api-reference/payments/list-payment-requests.md)
 
 ## Personas
 

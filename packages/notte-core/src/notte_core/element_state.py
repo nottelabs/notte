@@ -46,6 +46,10 @@ class ElementState(BaseModel):
       button), when the column is sorted.
     - `draggable`: the element explicitly enables HTML drag and drop. This does not imply that
       clicking it drags it, or that its click action is unavailable.
+    - `invalid` / `error`: the page marks the form field invalid (`aria-invalid`, or the browser's
+      `:user-invalid` once it was changed or its form submitted), and the error message it shows for it
+      (`aria-errormessage`, `aria-describedby` of an invalid field, an alert or error element next to it, or
+      the browser's validation message), cut to 150 characters. Either can come without the other.
     """
 
     model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, populate_by_name=True)
@@ -64,6 +68,10 @@ class ElementState(BaseModel):
     pressed: bool | Literal["mixed"] | None = None
     sort: Literal["ascending", "descending", "other"] | None = None
     draggable: bool | None = None
+    invalid: bool | None = None
+    error: str | None = None
+    # the browser cut a longer error message to `error`
+    error_truncated: bool = Field(default=False, alias="errorTruncated")
 
     @staticmethod
     def from_payload(payload: dict[str, Any] | None) -> "ElementState | None":
@@ -94,6 +102,11 @@ class ElementState(BaseModel):
             return text
 
         value = mask(self.value)
+        # an error message can repeat what was typed ("'x@y' is not a valid email")
+        error = mask(self.error)
+        if self.error_truncated:
+            # as for a cut value: a secret the message repeats can sit across the cut
+            error = _mask_cut_secret(error, literals, secrets)
         digest = self.value_digest
         if self.value_truncated:
             # The browser cut the value (and hashed the whole of it) before this runs: a secret can sit past the
@@ -103,7 +116,7 @@ class ElementState(BaseModel):
             digest = None
         elif value != self.value:
             digest = None
-        return self.model_copy(update={"value": value, "value_digest": digest})
+        return self.model_copy(update={"value": value, "value_digest": digest, "error": error})
 
     def digest(self) -> str:
         """A stable string of the state, for fingerprints."""
@@ -118,10 +131,19 @@ def _mask_cut_secret(value: str | None, literals: list[str], secrets: Mapping[st
     if value is None:
         return None
     for literal in literals:
-        for length in range(min(len(literal), len(value)), min(MIN_CUT_SECRET_PREFIX, len(literal)) - 1, -1):
-            if value.endswith(literal[:length]):
-                return value[: len(value) - length] + secrets[literal]
+        # as typed, and with its whitespace collapsed as rendered text shows it (a field's error message)
+        length = max(_cut_prefix_length(value, shown) for shown in (literal, " ".join(literal.split())))
+        if length > 0:
+            return value[: len(value) - length] + secrets[literal]
     return value
+
+
+def _cut_prefix_length(value: str, literal: str) -> int:
+    """The length of the longest start of `literal` (from `MIN_CUT_SECRET_PREFIX` characters) `value` ends with."""
+    for length in range(min(len(literal), len(value)), min(MIN_CUT_SECRET_PREFIX, len(literal)) - 1, -1):
+        if length > 0 and value.endswith(literal[:length]):
+            return length
+    return 0
 
 
 def page_fingerprint(url: str, elements: Iterable[tuple[str, str, ElementState | None]]) -> str:

@@ -36,18 +36,24 @@ from notte_core.act.space import (
     Decision,
     LabelMode,
     ObservedPage,
+    Readback,
     Target,
+    TypedValue,
     accessible_names,
     act_questions,
     build_act_space,
     changed_beyond,
+    compact,
     field_context,
+    field_errors,
     find_field,
     interpret,
     label_mode,
     needs_text,
     page_state,
     page_text,
+    readback,
+    shown_value,
     substitute_variables,
     target_action,
     validate_answer,
@@ -64,7 +70,7 @@ from notte_core.act.types import (
     Question,
     WriteContext,
 )
-from notte_core.actions import BaseAction, CheckAction, FillAction
+from notte_core.actions import BaseAction, CheckAction, FillAction, InteractionAction
 from notte_core.credentials.base import (
     CardCVVField,
     CardFullExpirationField,
@@ -81,6 +87,8 @@ from notte_core.errors import ContentFilterError, FileChooserOpenedError
 from notte_core.observation import ExecutionResult, Observation
 
 HISTORY_SIZE = 10
+# the letters and digits of a protected value in a row that a field's value must not show in the history (`field_value`)
+PROTECTED_RUN = 4
 # how long act() takes to answer a dialog its action opened (one decision, and a prompt's text): the page waits
 DIALOG_ANSWER_S = 30
 WRITER_HISTORY_SIZE = 6
@@ -208,7 +216,30 @@ class ActHistoryEntry:
     dialogs: list[dict[str, str]] = field(default_factory=list[dict[str, str]])
     # the field a TYPE_TEXT typed in (`_typed_field`): the writer is told what was typed there before
     field_key: str | None = None
+    # the fields the page marked invalid or showed an error for once the action ran (`field_errors`, unmasked):
+    # why a Continue did not go on
+    field_errors: list[str] = field(default_factory=list[str])
+    # the value the browser got (`text` with the variables substituted, unmasked): compared, never sent
+    typed_value: str | None = field(default=None, repr=False)
+    # what that field held at the next observation (unmasked; None when not found) and how it compares with what was
+    # typed (`readback`): the page can reformat, cut, replace or clear it ("11000" for "110 00", a phone mask)
+    holds: str | None = field(default=None, repr=False)
+    readback: Readback | None = None
+    # the target key of the action (`B1`, `I2:3`), None for a control
+    target: str | None = None
+    # the instruction the action ran for: another instruction is offered it again (see `ActHistory.no_effect`)
+    instruction: str | None = field(default=None, repr=False)
+    # the tab's position in its history when the action ran (`ObservedPage.history_index`): a GO_BACK that moved it
+    # did something, though the page can look the same
+    history_index: int | None = field(default=None, repr=False)
 
+
+# operations that are expected to leave the fingerprint unchanged (it ignores the scroll position)
+_UNTRACKED = ("WAIT", "SCROLL_DOWN", "SCROLL_UP")
+# keys pressed in the focused field: what they do depends on the focus, which the fingerprint ignores
+_FOCUSED_KEYS = ("PRESS_ENTER", "CLOSE_SUGGESTIONS")
+# both click a button: one that changed nothing is not offered as the other either
+_CLICKS = ("CLICK", "CLOSE_DIALOG")
 
 # clicking these does not submit what was typed in a field
 _FORM_ROLES = ("textbox", "combobox", "checkbox", "radio", "select")
@@ -243,8 +274,15 @@ class ActHistory:
         if len(self.entries) > 0 and self.entries[-1].pending:
             self.entries[-1].page_changed = page.fingerprint != self.entries[-1].fingerprint
             self.entries[-1].pending = False
+            # masked here, before names and messages are cut to their display length (a protected value across the
+            # cut would keep its start); a message the browser cut can end with a protected value's start, which only
+            # `cut_text` masks
+            self.entries[-1].field_errors = field_errors(
+                page, display_text=self.privacy.text, display_cut=self.privacy.cut_text
+            )
             source_url = self.entries[-1].source_url
             self.entries[-1].left_page = source_url is not None and source_url != page.url
+            self._read_back(self.entries[-1], page)
         for entry in self.entries:
             if entry.typed is not None:
                 entry.typed = _still_typed(entry.typed, page)
@@ -320,11 +358,101 @@ class ActHistory:
                     found.append((skipped, action.id))
         return found
 
+    def _read_back(self, entry: ActHistoryEntry, page: ObservedPage) -> None:
+        """What the field a TYPE_TEXT typed in holds on the page observed next, compared there (with the field's
+        options, as the element is): the element and the history entry say the same."""
+        typed = _typed_value(entry)
+        action = None if typed is None else _find_field(page, entry.field_key)
+        if typed is None or action is None:
+            return
+        state = page.states.get(action.id)
+        entry.holds = shown_value(state)
+        entry.readback = readback(typed, state, self.privacy.text)
+
+    def _field_value(self, entry: ActHistoryEntry) -> dict[str, Any]:
+        """What the field of a TYPE_TEXT holds when it is not what was typed (`field_value`), and whether that is the
+        same value in the page's own format (`reformatted`)."""
+        if entry.holds is None or entry.readback not in ("reformatted", "changed"):
+            return {}
+        if entry.readback == "reformatted":
+            typed = _typed_value(entry)
+            if typed is not None and self._protected(typed):
+                # the page's format of a protected value (a card number with spaces) is not the literal the masking
+                # knows: the value is shown as what was typed, a variable or a vault placeholder
+                return {"field_value": self.privacy.text(typed.text), "reformatted": True}
+            return {"field_value": self.privacy.text(entry.holds), "reformatted": True}
+        typed = _typed_value(entry)
+        if typed is not None and self._protected(typed):
+            # a protected value the page cut keeps its start: masked as a cut value is. One the page also formatted
+            # ("4111 1111 1111 1111" of a card number) is not a literal the masking knows: the placeholder is shown
+            masked = self.privacy.cut_text(entry.holds)
+            if self._shows_protected(masked):
+                return {"field_value": self.privacy.text(typed.text)}
+            return {"field_value": masked}
+        return {"field_value": self.privacy.text(entry.holds)}
+
+    def _shows_protected(self, text: str) -> bool:
+        """`text` still shows part of a protected value: `PROTECTED_RUN` of its letters and digits in a row, whatever
+        the page put between them."""
+        shown = compact(text)
+        for literal in self.privacy.replacements:
+            key = compact(literal)
+            if any(key[i : i + PROTECTED_RUN] in shown for i in range(len(key) - PROTECTED_RUN + 1)):
+                return True
+        return False
+
+    def _protected(self, typed: TypedValue) -> bool:
+        """`typed` holds a protected value: a variable the browser got substituted, or a vault placeholder."""
+        placeholders = set(self.privacy.replacements.values())
+        return typed.text != typed.value or any(placeholder in typed.text for placeholder in placeholders)
+
+    def typed_values(self, page: ObservedPage) -> dict[str, TypedValue]:
+        """What act last typed in each field of `page`, by id (see `typed_before`)."""
+        typed: dict[str, TypedValue] = {}
+        for action in page.actions:
+            if action.selectors is None:
+                continue
+            key = _field_key(page.url, action.selectors.model_dump_json())
+            # a clear ("" typed) counts: a page that puts a value back changed what act did. So does a fill that
+            # failed because the field did not keep the text: what it holds is what to write differently
+            entry = next((e for e in reversed(self.entries) if e.field_key == key and e.text is not None), None)
+            value = None if entry is None else _typed_value(entry)
+            if value is not None:
+                typed[action.id] = replace(value, protected=self._protected(value))
+        return typed
+
     def typed_before(self, field_key: str) -> str | None:
-        """The text act last typed in the field `field_key` (`_typed_field`), if any."""
-        return next(
-            (e.text for e in reversed(self.entries) if e.field_key == field_key and e.text and e.error is None), None
-        )
+        """The text act last typed in the field `field_key` (`_typed_field`), if any, a fill that failed included: a
+        field that did not keep the text rejected it, and the writer is told not to write it again."""
+        return next((e.text for e in reversed(self.entries) if e.field_key == field_key and e.text), None)
+
+    def no_effect(self, page: ObservedPage, instruction: str) -> set[tuple[str, str | None]]:
+        """The (operation, target key) of the recent actions for `instruction` that ran on the very page state of
+        `page` (same fingerprint) and left it unchanged: offered again, the decider picked them again and again (a
+        click on a focused field, a button a form error keeps from submitting, a value the field already holds).
+        Scrolls and WAIT are left out: the fingerprint ignores the scroll position, and a wait is expected to change
+        nothing. So is a key pressed in the focused field (Enter, Escape) followed by an action that can move the
+        focus, which the fingerprint ignores (a click, not a scroll or another key), and a GO_BACK that moved the tab
+        back in its history (`history_index`). So is an action that failed (a click that timed out can work when tried again), unless it opened a file chooser: that
+        opens it again."""
+        entries = list(self.entries)
+        return {
+            (kind, e.target)
+            for i, e in enumerate(entries)
+            if e.page_changed is False
+            and (e.error is None or e.error == FileChooserOpenedError.__name__)
+            and e.instruction == instruction
+            and e.fingerprint == page.fingerprint
+            and e.kind not in _UNTRACKED
+            # a GO_BACK that moved the tab back in its history did something: an app can push entries for one URL
+            # and page, and the page it opened before is further back
+            and not (e.kind == "GO_BACK" and e.history_index != page.history_index)
+            and (
+                e.kind not in _FOCUSED_KEYS
+                or all(later.kind in _UNTRACKED or later.kind in _FOCUSED_KEYS for later in entries[i + 1 :])
+            )
+            for kind in (_CLICKS if e.kind in _CLICKS else (e.kind,))
+        }
 
     def acted_since_observed(self) -> bool:
         """An action other than a WAIT ran since the last observation (the next one tells what it changed)."""
@@ -356,11 +484,36 @@ class ActHistory:
         return [
             {"action": e.action, "kind": e.kind, "text": e.text, "page_changed": e.page_changed}
             | ({} if e.error is None else {"error": e.error})
+            | ({} if not e.field_errors else {"field_errors": list(e.field_errors)})
+            | self._field_value(e)
             | ({} if e.typed is None or e.typed.before is not None else {"submitted": False})
             | ({} if not e.left_page or e.page is None else {"previous_page": e.page.model_dump()})
             | ({} if not e.dialogs else {"dialogs": list(e.dialogs)})
             for e in list(self.entries)[-limit:]
         ]
+
+
+def _typed_value(entry: ActHistoryEntry) -> TypedValue | None:
+    """What a TYPE_TEXT typed, a clear ("") and a failed fill included (None for any other entry): a fill fails when
+    the field does not keep the text, and what the field holds then tells why."""
+    if entry.field_key is None or entry.text is None or entry.typed_value is None:
+        return None
+    return TypedValue(text=entry.text, value=entry.typed_value)
+
+
+def _find_field(page: ObservedPage, field_key: str | None) -> InteractionAction | None:
+    """The field `field_key` (`_typed_field`) on `page`, found by its selectors. A field without selectors is not
+    found: its id and label are a position, which can be another field once the page re-rendered."""
+    if field_key is None:
+        return None
+    return next(
+        (
+            action
+            for action in page.actions
+            if action.selectors is not None and _field_key(page.url, action.selectors.model_dump_json()) == field_key
+        ),
+        None,
+    )
 
 
 def _still_typed(typed: TypedText, page: ObservedPage) -> TypedText | None:
@@ -442,8 +595,10 @@ async def run_act(
         step = time.perf_counter()
         page = await driver.observe(observation if stale_retries + skipped == 0 else None)
         run.timings.observe_ms += _ms(step)
-        history.observed(page)
+        # the secrets the vault typed so far, the last action's included, before `observed`, which masks what the
+        # page shows after it (`field_errors`) and compares a field with what the vault typed in it
         history.privacy.remember_secrets(driver.secret_replacements())
+        history.observed(page)
 
         space = build_act_space(
             page,
@@ -453,6 +608,9 @@ async def run_act(
             # the fields the writer had no value for (in this call or an earlier one), not offered to TYPE_TEXT
             no_text=history.no_text(page, instruction),
             unsubmitted=history.unsubmitted(),
+            # what act typed in the fields: a field holding another form of it shows what was typed
+            typed=history.typed_values(page),
+            no_effect=history.no_effect(page, instruction),
         )
         # a scroll that failed on this very page fails again: not offered until the page changes
         for operation in history.failed_scrolls(page):
@@ -581,6 +739,10 @@ async def run_act(
             page=state.page,
             source_url=page.url,
             field_key=None if target is None or decision.operation != "TYPE_TEXT" else _typed_field(page, target),
+            typed_value=None if text is None else substitute_variables(text, variables),
+            target=None if target is None else target.key,
+            instruction=instruction,
+            history_index=page.history_index,
         )
         if target is not None and decision.operation == "CLICK":
             history.unskip(page, target.element_id)
@@ -688,7 +850,11 @@ def _typed_field(page: ObservedPage, target: Target) -> str:
     error message added to it), else its id and label."""
     selectors = next((action.selectors for action in page.actions if action.id == target.element_id), None)
     who = f"{target.element_id}|{target.label}" if selectors is None else selectors.model_dump_json()
-    return f"{page.url}|{who}"
+    return _field_key(page.url, who)
+
+
+def _field_key(url: str, who: str) -> str:
+    return f"{url}|{who}"
 
 
 def _field_identity(page: ObservedPage, target: Target) -> tuple[str, ...]:
@@ -833,6 +999,13 @@ def _write_context(
         "value": target.value or "",
     }
     field.update(field_context(page, target.element_id, labels, history.privacy.text, exclude=target.label))
+    state = page.states.get(target.element_id)
+    if state is not None and state.invalid:
+        field["invalid"] = True
+    if state is not None and state.error:
+        # the error the page shows for the field: what to write differently
+        privacy = history.privacy
+        field["error"] = (privacy.cut_text if state.error_truncated else privacy.text)(state.error)
     if typed_before is not None:
         # what act typed in this field before: the field changed it (a length limit, a mask) or the page rejected it
         field["retry"] = prompts.RETRY_TYPED.format(text=history.privacy.text(typed_before))
@@ -898,8 +1071,9 @@ async def run_choose(
         raise ValueError("choose() needs at least two options")
     labels = label_mode()
     page = await driver.observe(observation)
-    history.observed(page)
+    # as in `run_act`: the secrets the last act() typed are known before `observed` records what the page showed
     history.privacy.remember_secrets(driver.secret_replacements())
+    history.observed(page)
     model_page = history.privacy.page(page)
     state = DecisionState(
         page=page_state(model_page, labels, history.privacy.text),

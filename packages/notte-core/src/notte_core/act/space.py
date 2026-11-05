@@ -51,6 +51,8 @@ from notte_core.snapshot import ViewportData
 MAX_ELEMENTS = 250
 MAX_LABEL_LENGTH = 300
 MAX_CONTEXT_LENGTH = 120
+# a field's error message shown to the models (`ElementState.error`)
+MAX_ERROR_LENGTH = 150
 MAX_PAGE_TEXT_LENGTH = 12_000
 # the longest a WAIT lasts: it ends as soon as the page changes (see `notte_core.act.wait`)
 WAIT_MS = 3_000
@@ -110,6 +112,9 @@ class ObservedPage:
     inner_scroll: Mapping[Literal["up", "down"], str] = field(default_factory=dict[Literal["up", "down"], str])
     # the tab has a page of its own to go back to, read by the local driver (True when unknown)
     can_go_back: bool = True
+    # the tab's position in its history, read by the local driver (None when unknown): a GO_BACK that moved it did
+    # something, though the page can look the same (an app that pushed entries for one URL)
+    history_index: int | None = None
     # what is read from the page once per step and needed several times (names, contexts, ...), by `_once`. A
     # changed page is a new `ObservedPage` (`dataclasses.replace` included), with an empty cache
     _derived: dict[str, Any] = field(default_factory=dict[str, Any], init=False, repr=False, compare=False)
@@ -977,6 +982,14 @@ def _element(
                 element[key] = value
         if state.options is not None:
             element["value"] = display_text(", ".join(option.label for option in state.selected_options))
+        # the page marks the field invalid, and the error it shows for it: why a form does not go on
+        if state.invalid:
+            element["invalid"] = True
+        if state.error:
+            # a message the browser cut can end with the start of a protected value: masked like a cut value
+            element["error"] = _cut(
+                (display_cut if state.error_truncated else display_text)(state.error), MAX_ERROR_LENGTH
+            )
     elif has_live_state and role == "textbox":
         element["value"] = ""
     return element
@@ -1006,11 +1019,17 @@ def build_act_space(
     display_cut: Callable[[str], str] | None = None,
     no_text: Collection[str] = (),
     unsubmitted: Collection[str] = (),
+    typed: Mapping[str, "TypedValue"] | None = None,
+    no_effect: Collection[tuple[str, str | None]] = (),
 ) -> ActSpace:
     """`display_text` masks the presentation strings; `display_cut` (default `display_text`) the live values the
     browser cut, where a protected value can start at the cut. `no_text`: the ids of the fields
     the writer had no value for, not offered to TYPE_TEXT again. `unsubmitted`: the ids of the fields holding text
-    act() typed that nothing submitted yet (see `ActHistory`), shown with `submitted: false`."""
+    act() typed that nothing submitted yet (see `ActHistory`), shown with `submitted: false`. `typed`: what act()
+    last typed in a field, by id: a field that holds something else (`readback`) shows the text typed (`typed`), and
+    whether it is the same value in the page's own format (`reformatted`: "11000" for "110 00", "CA" for
+    "California"). `no_effect`: the (operation, target key, None for a control) that already ran on this very page
+    state and changed nothing, not offered again: repeating them cannot change the page either."""
     # Determine IDs, roles and supported operations from the original page. Only
     # presentation strings pass through display_text, before their display caps.
     lines = _rendered_lines(page.description)
@@ -1021,6 +1040,9 @@ def build_act_space(
 
     def add(operation: Operation, target: Target, element: dict[str, Any]) -> None:
         if operation == "TYPE_TEXT" and target.element_id in no_text:
+            return
+        # without live state the fingerprint does not show a checkbox toggled
+        if (operation, target.key) in no_effect and (target.kind != "check" or has_live_state):
             return
         _ = space.targets.setdefault(operation, {}).__setitem__(target.key, target)
         if operation not in element["operations"]:
@@ -1052,10 +1074,33 @@ def build_act_space(
         context = contexts.get(action.id)
         if context is not None:
             element["context"] = _cut(shorten(context, display_text), MAX_CONTEXT_LENGTH)
+        typed_value = None if typed is None else typed.get(action.id)
+        verdict = None if typed_value is None else readback(typed_value, state, display_text)
+        if typed_value is not None and verdict in ("reformatted", "changed"):
+            # the page changed what act typed: reformatted it (the same value), or cut, replaced or cleared it
+            element["typed"] = _cut(display_text(typed_value.text), MAX_LABEL_LENGTH)
+            if verdict == "reformatted":
+                element["reformatted"] = True
+            elif typed_value.protected and state is not None and state.value and state.options is None:
+                # a protected value the page cut keeps its start ("424242424242424" of a card number)
+                element["value"] = (display_cut or display_text)(state.value)
+        # after the masking above: the targets' questions (`current_value`) show the element's value too
         current = element.get("value")
         base: dict[str, Any] = {
             k: element[k]
-            for k in ("role", "type", "format", "checked", "selected", "expanded", "draggable")
+            for k in (
+                "role",
+                "type",
+                "format",
+                "checked",
+                "selected",
+                "expanded",
+                "draggable",
+                "invalid",
+                "error",
+                "typed",
+                "reformatted",
+            )
             if k in element
         }
 
@@ -1152,7 +1197,10 @@ def build_act_space(
             key: target
             for key, target in space.targets.get("CLICK", {}).items()
             # a button or link closes a dialog; clicking a field inside it (a search box) does not
-            if target.kind == "click" and target.element_id in lines and target.role in ("button", "link")
+            if target.kind == "click"
+            and target.element_id in lines
+            and target.role in ("button", "link")
+            and ("CLOSE_DIALOG", key) not in no_effect
         }
         if close:
             space.targets["CLOSE_DIALOG"] = close
@@ -1173,19 +1221,22 @@ def build_act_space(
         space.controls["SCROLL_UP"] = Control(
             "SCROLL_UP", "Scroll up one page", ScrollUpAction(selector=page.inner_scroll.get("up"))
         )
-    if any(e.get("expanded") is True and e["role"] in ("textbox", "combobox") for e in space.elements) and any(
-        e["role"] == "option" for e in space.elements
+    if (
+        ("CLOSE_SUGGESTIONS", None) not in no_effect
+        and any(e.get("expanded") is True and e["role"] in ("textbox", "combobox") for e in space.elements)
+        and any(e["role"] == "option" for e in space.elements)
     ):
         # a field's suggestion list is open: it can cover the next fields, and clicking the field keeps it open
         space.controls["CLOSE_SUGGESTIONS"] = Control(
             "CLOSE_SUGGESTIONS", prompts.CLOSE_SUGGESTIONS, PressKeyAction(key="Escape")
         )
-    space.controls["PRESS_ENTER"] = Control(
-        "PRESS_ENTER",
-        "Press Enter in the focused field (e.g. submit a typed search that has no visible button)",
-        PressKeyAction(key="Enter"),
-    )
-    if page.can_go_back:
+    if ("PRESS_ENTER", None) not in no_effect:
+        space.controls["PRESS_ENTER"] = Control(
+            "PRESS_ENTER",
+            "Press Enter in the focused field (e.g. submit a typed search that has no visible button)",
+            PressKeyAction(key="Enter"),
+        )
+    if page.can_go_back and ("GO_BACK", None) not in no_effect:
         space.controls["GO_BACK"] = Control("GO_BACK", "Go back to the previous page", GoBackAction())
     space.controls["WAIT"] = Control(
         "WAIT",
@@ -1193,6 +1244,118 @@ def build_act_space(
         WaitAction(time_ms=WAIT_MS),
     )
     return space
+
+
+# the shortest typed value that, with a prefix or suffix added by the page, is still the same value (`same_value`)
+MIN_KEPT_LENGTH = 4
+# the most digits of a country code a page puts before a typed phone number (`same_value`)
+MAX_COUNTRY_CODE_DIGITS = 3
+# a number as typed: a sign and a decimal part change its value, unlike the layout of a postcode or a phone number
+_NUMBER = re.compile(r"[+-]?\d+(?:[.,]\d+)?")
+# a number with one separator before three digits, which can be a thousands separator ("1,000", "12.500")
+_GROUPED = re.compile(r"[+-]?\d{1,3}[.,]\d{3}")
+# an email address as typed: compared whole (`same_value`), its punctuation is not formatting
+_EMAIL = re.compile(r"[^\s@]+@[^\s@]+\.[^\s@]+")
+_DIGITS = re.compile(r"\+?\d+")
+
+
+@dataclass(frozen=True)
+class TypedValue:
+    """What act() typed in a field: `text` as the writer wrote it (`{{variables}}` and vault placeholders, what the
+    models see) and `value` as the browser got it (variables substituted: compared with what the field holds, never
+    shown)."""
+
+    text: str
+    value: str
+    # it holds a protected value (a variable or a vault placeholder): what the page changed it to can keep part of
+    # that value, masked at its end as a cut value is
+    protected: bool = False
+
+
+Readback = Literal["same", "reformatted", "changed"]
+
+
+def readback(
+    typed: TypedValue, state: ElementState | None, display_text: Callable[[str], str] = str
+) -> Readback | None:
+    """What the field holds (`state`) after act typed `typed` in it: `same`, the same value in the page's own format
+    (`reformatted`, see `same_value`), or `changed` (cut, replaced or cleared). None when unknown: no live value, or
+    one the browser cut. A value the vault typed is compared masked (`display_text`): the field holds the secret, the
+    action its placeholder."""
+    held = None if state is None or state.value_truncated else shown_value(state)
+    if held is None:
+        return None
+    if held == typed.value or display_text(held) == display_text(typed.text):
+        return "same"
+    return "reformatted" if same_value(typed.value, held, state) else "changed"
+
+
+def compact(text: str) -> str:
+    """The letters and digits of `text`, case-folded: two forms of one value ("110 00" and "11000", "+1 415-555"
+    and "+1 (415) 555") have the same."""
+    return "".join(c for c in text.casefold() if c.isalnum())
+
+
+def _numbers(text: str) -> frozenset[float]:
+    """The numbers `text` can mean (empty when it is not a number): one separator followed by three digits is a
+    decimal point or a thousands separator ("1,000" is 1 or 1000), as pages format amounts either way."""
+    text = text.strip()
+    if not _NUMBER.fullmatch(text):
+        return frozenset()
+    numbers = {float(text.replace(",", "."))}
+    if _GROUPED.fullmatch(text):
+        numbers.add(float(text.replace(",", "").replace(".", "")))
+    return frozenset(numbers)
+
+
+def same_value(typed: str, value: str, state: ElementState | None = None) -> bool:
+    """The field holding `value` (as shown) after `typed` was typed in it holds the same value in the page's own
+    format:
+    - for a `<select>`, the option whose value or label was typed ("CA" for "California");
+    - for a number with a sign or a decimal part, the same number ("100.00" for "100", not "100" for "-100" or "15"
+      for "1.5");
+    - otherwise the same letters and digits ("11000" for "110 00"), or the typed digits after a country code the page
+      added ("+48 512 345 678" for "512345678"; not "0 12345678" for "12345678", a different number)."""
+    key = compact(typed)
+    if not key:
+        return False
+    options = () if state is None or state.options is None else state.selected_options
+    if any(key in (compact(option.value), compact(option.label)) for option in options):
+        return True
+    if _EMAIL.fullmatch(typed.strip()):
+        # the dots and dashes of an email are part of it ("john.smith@" is not "johnsmith@"): only its case can change
+        return typed.strip().casefold() == value.strip().casefold()
+    typed_numbers, held_numbers = _numbers(typed), _numbers(value)
+    plain = _DIGITS.fullmatch(typed.strip()) is not None
+    if typed_numbers and not plain:
+        return bool(typed_numbers & held_numbers)
+    if plain and held_numbers and _DIGITS.fullmatch(value.strip()) is None:
+        # digits typed, a number with a sign, a decimal part or a thousands separator held
+        return bool(typed_numbers & held_numbers)
+    held = compact(value)
+    if key == held:
+        return True
+    # a country code: a "+" and at most `MAX_COUNTRY_CODE_DIGITS` digits before the typed digits
+    shown = value.strip()
+    return (
+        shown.startswith("+")
+        # a number typed with its own country code is changed by another one ("+1 48 512..." for "+48 512...")
+        and not typed.strip().startswith("+")
+        and key.isdigit()
+        and len(key) >= MIN_KEPT_LENGTH
+        and held.isdigit()
+        and held.endswith(key)
+        and 0 < len(held) - len(key) <= MAX_COUNTRY_CODE_DIGITS
+    )
+
+
+def shown_value(state: ElementState | None) -> str | None:
+    """What a field shows as its value (as `_element`): its selected options' labels for a `<select>`."""
+    if state is None:
+        return None
+    if state.options is not None:
+        return ", ".join(option.label for option in state.selected_options)
+    return state.value
 
 
 def field_context(
@@ -1236,6 +1399,31 @@ def field_context(
     if after:
         context["after"] = " / ".join(after)
     return context
+
+
+# the invalid fields listed after an action (`field_errors`)
+MAX_FIELD_ERRORS = 4
+
+
+def field_errors(
+    page: ObservedPage, display_text: Callable[[str], str] = str, display_cut: Callable[[str], str] | None = None
+) -> list[str]:
+    """The fields of `page` the page marks invalid or shows an error for (`ElementState.invalid` / `error`), in page
+    order, as `<name>: <error>` (`<name>: invalid` without a message), the first `MAX_FIELD_ERRORS`: what a form
+    that did not go on still needs. `display_cut` (default `display_text`) masks a message the browser cut."""
+    names = accessible_names(page)
+    errors: list[str] = []
+    for action in page.actions:
+        state = page.states.get(action.id)
+        name = names.get(action.id)
+        if state is None or name is None or not (state.invalid or state.error):
+            continue
+        display = (display_cut or display_text) if state.error_truncated else display_text
+        error = _cut(display(state.error), MAX_ERROR_LENGTH) if state.error else "invalid"
+        errors.append(f"{_cut(display_text(name), MAX_NEARBY_LABEL_LENGTH)}: {error}")
+        if len(errors) == MAX_FIELD_ERRORS:
+            break
+    return errors
 
 
 def page_state(

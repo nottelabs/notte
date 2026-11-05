@@ -46,6 +46,7 @@ This is the standalone Python/Node SDK repository. The machine's monorepo
 - `make test` is the offline gate. `make test-live` runs tests marked
   `staging` or `live` and needs `NOTTE_API_KEY`; set `NOTTE_API_URL` to point
   the SDK at a different API.
+- Local agents use `NOTTE_API_KEY_STAGING` from the root `.env` against `https://us-staging.notte.cc`.
 - A click that opens a file chooser fails with `FileChooserOpenedError`.
   Local `act()` maps either the raised error or failed execution result to
   BLOCKED because it cannot supply a file; `tests/act/test_local_act.py` covers both modes.
@@ -86,15 +87,19 @@ This is the standalone Python/Node SDK repository. The machine's monorepo
   (or the JS fallback click). Actionability waits can outlast background navigation;
   Native clicks use `no_wait_after=True`: the action timeout bounds input, while
   `PageSettle` waits for navigation even if its response has not committed.
-  Starting `Locator.click` is not the input boundary. The page binding reports
-  input before a handler closes the tab. Reuse one binding per page, clearing
-  action callbacks and input listeners after each action; a new binding per click
-  would retain callbacks in the driver's page registry.
+  Starting `Locator.click` is not the input boundary. `click_input.py` reports
+  input before a handler closes the tab, through a CDP binding added to an isolated
+  world of its own (`Page.createIsolatedWorld`), on a CDP session that lives for the
+  action. Never use `expose_function`/`expose_binding` for it: Patchright installs
+  a catch-all route for them, so every later request of the page waits for the
+  driver. A raw `Runtime.addBinding` needs an explicit context id (Patchright never
+  sends `Runtime.enable`). Reuse the world per frame document; dispose input listeners
+  after each action.
   Await input delivery inside the existing action timeout before settlement or
   replacement selection, including closed-target acknowledgements. The JS click
   fallback must await its input notification before invoking the handler.
-  Queue navigation attribution alongside input bindings: exposed callbacks run
-  as tasks, so immediate request timestamps can invert buffered event order.
+  Queue navigation attribution alongside input reports: both are queued with
+  `call_soon`, so immediate timestamps cannot invert buffered event order.
   Listener leak checks must prime the complete click path before their baseline:
   the driver's injected utility installs its own persistent hit-target interceptor.
   A new tab's fetch can precede that event too. Retain active context requests
@@ -274,6 +279,13 @@ classification. Intersect only axes that clip, using the scaled inner bounds acr
 hosts, and respect positioned popup escapes; a full-box center can be outside while the
 editor still accepts a fill. `tests/browser/test_dom_contenteditable.py` covers this integration.
 
+A replacing `FillAction` reads text inputs and textareas back: Playwright's `fill` inserts the whole text
+in one input event without key events, and masked inputs can revert it. A value the field did not keep
+(compared by letters and digits, so mask formatting counts as kept) is typed key by key, and a field that
+keeps neither fails the action. Read the field through an element handle taken before the fill, not
+its locator: a checkout's address autocomplete changed the DOM so the field's CSS path found nothing, and a
+locator read waited until the 15 s action timeout. `tests/browser/test_controller_fill_masked.py` covers it.
+
 ## Public API
 
 - Jev route selection does not require the optional LLM field writer. Incomplete
@@ -354,9 +366,10 @@ the docs `type-check` CI job sets it. Without it, `typecheck_only` testers pass 
 The Sphinx build-finished hook corrects `Answers.usage`: sphinx-mintlify currently marks its
 `default_factory` field required. Keep the generated reference aligned with the optional model field.
 
-After changing `packages/notte-sdk/src/`, run `make docs-sdk` (the
-`docs-sdk-generate` pre-commit hook runs the same target) and commit the
-generated files. `make docs-check` fails if they are out of date.
+After changing `packages/notte-sdk/src/` or `packages/notte-core/src/`, run `make docs-sdk`
+(the `docs-sdk-generate` pre-commit hook runs the same target) and commit the generated files:
+the reference renders notte_core models too. The OpenAPI refresh workflow runs it after the
+generators, so its PR carries the regenerated reference. `make docs-check` fails if they are out of date.
 Manual SDK pages repeat constructor parameter fields; keep their type strings
 in sync with the generated `__init__.mdx` pages. Docs tests compare both.
 The `docs/package.json` override gives `@browserbasehq/stagehand` the docs' own

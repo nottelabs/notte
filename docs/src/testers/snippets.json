@@ -1161,5 +1161,25 @@
         "title": "Terminal"
       }
     ]
+  },
+  "sessions/proxy_gateway/use_gateway.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/proxy_gateway/use_gateway.sh",
+        "language": "bash",
+        "title": "cURL"
+      }
+    ]
+  },
+  "sessions/proxy_gateway/use_api_key.mdx": {
+    "group": true,
+    "blocks": [
+      {
+        "source": "sessions/proxy_gateway/use_api_key.sh",
+        "language": "bash",
+        "title": "cURL"
+      }
+    ]
   }
 }
