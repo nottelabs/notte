@@ -450,8 +450,10 @@ async def run_act(
         step = time.perf_counter()
         page = await driver.observe(observation if stale_retries + skipped == 0 else None)
         run.timings.observe_ms += _ms(step)
-        history.observed(page)
+        # the secrets the vault typed so far, the last action's included, before `observed` masks what the page
+        # shows after it (`field_errors`)
         history.privacy.remember_secrets(driver.secret_replacements())
+        history.observed(page)
 
         space = build_act_space(
             page,

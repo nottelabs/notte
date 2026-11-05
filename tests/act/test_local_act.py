@@ -2535,6 +2535,39 @@ async def test_a_credential_typed_before_the_dialog_is_masked_in_its_question(
 
 
 @pytest.mark.asyncio
+async def test_a_credential_the_page_repeats_in_a_cut_field_error_is_masked(
+    session: NotteSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    secret = "s3cret-password-123"  # pragma: allowlist secret
+    page = session.window.page
+    # the page repeats the value in an error message the browser cuts (at 150 characters) inside it
+    await page.set_content(
+        "<label>Account <input id='f' aria-errormessage='e'></label><p id='e'></p>"
+        "<button id='b' onclick=\"f.setAttribute('aria-invalid', 'true');"
+        f" e.textContent = '{'x' * 140} {secret}'\">Go</button>"
+    )
+    ids = await _ids(session)
+    calls = 0
+
+    def replacements(_driver: LocalActDriver) -> dict[str, str]:
+        # the vault typed the secret during the action: known only from then on
+        nonlocal calls
+        calls += 1
+        return {} if calls == 1 else {secret: "{{vault_password}}"}
+
+    monkeypatch.setattr(LocalActDriver, "secret_replacements", replacements)
+    decider = FakeDecider(choices=[{"operation": "CLICK", "click_target": ids["b"]}, {"operation": "DONE"}])
+    _ = await session.aact("Log in", decider=decider)
+    # the next call sees the click in its history, with the error the page showed after it
+    _ = await session.aact("Log in", decider=decider)
+    state = decider.states[-1]
+    (errors,) = [entry["field_errors"] for entry in state.recent_actions if "field_errors" in entry]
+    # masked, then cut to the display length
+    assert len(errors) == 1 and "{{vault_p" in errors[0] and secret[:5] not in errors[0]
+    assert secret[:5] not in str(state.elements)
+
+
+@pytest.mark.asyncio
 async def test_a_target_a_dialog_covers_while_deciding_is_decided_again(session: NotteSession) -> None:
     # a consent wall that comes after the observation, while the decider thinks
     page = session.window.page

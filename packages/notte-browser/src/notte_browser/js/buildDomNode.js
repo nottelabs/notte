@@ -587,12 +587,21 @@
 	}
 
 	// The error shown next to a field: a visible alert or error element in the field's own container (an ancestor,
-	// up to `MAX_ERROR_DEPTH`, that holds no other control), with text.
+	// up to `MAX_ERROR_DEPTH`, that holds no other control), with text. The field's own popup (`aria-controls` /
+	// `aria-owns`, a combobox's listbox) and hidden controls are not other controls.
 	function nearbyErrorText(element) {
+		const own = new Set(
+			["aria-controls", "aria-owns"]
+				.flatMap((attribute) => (getAttribute(element, attribute) || "").trim().split(/\s+/))
+				.filter((id) => id !== ""),
+		);
+		const isOther = (control) =>
+			!contains(element, control) && !contains(control, element) &&
+			!own.has(getAttribute(control, "id") || "") && isElementVisible(control);
 		let container = parentElementOf(element);
 		for (let depth = 0; container !== null && depth < MAX_ERROR_DEPTH; depth++, container = parentElementOf(container)) {
 			const controls = Array.from(querySelectorAllOf(container, CONTROL_SELECTOR));
-			if (controls.some((control) => !contains(element, control) && !contains(control, element))) return "";
+			if (controls.some(isOther)) return "";
 			for (const candidate of querySelectorAllOf(container, ERROR_SELECTOR)) {
 				if (contains(candidate, element) || contains(element, candidate)) continue;
 				if (querySelectorAllOf(candidate, CONTROL_SELECTOR).length > 0) continue;
