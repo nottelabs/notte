@@ -131,10 +131,19 @@ def _mask_cut_secret(value: str | None, literals: list[str], secrets: Mapping[st
     if value is None:
         return None
     for literal in literals:
-        for length in range(min(len(literal), len(value)), min(MIN_CUT_SECRET_PREFIX, len(literal)) - 1, -1):
-            if value.endswith(literal[:length]):
-                return value[: len(value) - length] + secrets[literal]
+        # as typed, and with its whitespace collapsed as rendered text shows it (a field's error message)
+        length = max(_cut_prefix_length(value, shown) for shown in (literal, " ".join(literal.split())))
+        if length > 0:
+            return value[: len(value) - length] + secrets[literal]
     return value
+
+
+def _cut_prefix_length(value: str, literal: str) -> int:
+    """The length of the longest start of `literal` (from `MIN_CUT_SECRET_PREFIX` characters) `value` ends with."""
+    for length in range(min(len(literal), len(value)), min(MIN_CUT_SECRET_PREFIX, len(literal)) - 1, -1):
+        if length > 0 and value.endswith(literal[:length]):
+            return length
+    return 0
 
 
 def page_fingerprint(url: str, elements: Iterable[tuple[str, str, ElementState | None]]) -> str:

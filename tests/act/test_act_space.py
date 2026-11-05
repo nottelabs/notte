@@ -156,6 +156,14 @@ def test_an_error_the_browser_cut_masks_the_start_of_a_protected_value() -> None
     )
 
 
+def test_cut_text_masks_a_protected_value_whose_whitespace_the_page_collapsed() -> None:
+    from notte_core.act.privacy import ActPrivacy
+
+    privacy = ActPrivacy()
+    privacy.remember({"phrase": "alpha  betaSecret"})
+    assert privacy.cut_text("x" * 140 + " alpha bet") == "x" * 140 + " {{phrase}}"
+
+
 def test_a_sorted_column_shows_its_sort_order() -> None:
     # after a sort, the header's `aria-sort` is the only sign of the order: its sort button carries it
     description = DESCRIPTION + '\nB2[:]<span role="button" aria_label="Age: Activate to invert sorting"></span>'

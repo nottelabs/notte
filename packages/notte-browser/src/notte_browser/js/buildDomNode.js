@@ -553,12 +553,28 @@
 		...Array.from(ERROR_FIELD_ROLES, (role) => `[role="${role}"]`),
 	].join(", ");
 
+	// a button that opens a listbox (an `<input type="button">` too): it picks a value, as a select does
+	function opensListbox(element) {
+		return getRole(element) === "button" && (getAttribute(element, "aria-haspopup") || "").toLowerCase() === "listbox";
+	}
+
 	function isErrorField(element, tagName) {
-		// a listbox value button can be an `<input type="button">`
-		if (isListboxValueButton(element)) return true;
+		if (opensListbox(element) || isListboxValueButton(element)) return true;
 		if (tagName === "input") return !NO_ERROR_INPUT_TYPES.has((propertyOf(element, "type") || "text").toLowerCase());
 		return tagName === "select" || tagName === "textarea" || !!propertyOf(element, "isContentEditable") ||
-			ERROR_FIELD_ROLES.has(getRole(element)) || isListboxValueButton(element);
+			ERROR_FIELD_ROLES.has(getRole(element));
+	}
+
+	// the roles of the popup a field opens (`aria-haspopup` values)
+	const POPUP_ROLES = new Set(["listbox", "tree", "grid", "dialog", "menu"]);
+
+	// the elements an idref attribute points to
+	function idrefElements(element, attribute) {
+		const scope = getRootNode(element);
+		return (getAttribute(element, attribute) || "").trim().split(/\s+/).flatMap((id) => {
+			const target = id && (scope instanceof Document ? DOCUMENT.getElementById.call(scope, id) : scope.getElementById?.(id));
+			return target ? [target] : [];
+		});
 	}
 
 	// the text an element shows, on one line ("" when hidden)
@@ -591,20 +607,19 @@
 	}
 
 	// The error shown next to a field: a visible alert or error element in the field's own container (an ancestor,
-	// up to `MAX_ERROR_DEPTH`, that holds no other control), with text. The field's own popup (`aria-controls` /
-	// `aria-owns`, a combobox's listbox) and hidden controls are not other controls.
+	// up to `MAX_ERROR_DEPTH`, that holds no other control), with text. The field's own popup (a listbox, menu, ...
+	// it `aria-controls` / `aria-owns`) with the controls in it, the button that toggles that popup, and hidden
+	// controls are not other controls. A field it controls is (a checkbox that enables an input).
 	function nearbyErrorText(element) {
-		const own = new Set(
-			["aria-controls", "aria-owns"]
-				.flatMap((attribute) => (getAttribute(element, attribute) || "").trim().split(/\s+/))
-				.filter((id) => id !== ""),
-		);
-		// a control that opens the same popup (a combobox's toggle button) is the field's too
-		const sharesPopup = (control) =>
-			(getAttribute(control, "aria-controls") || "").trim().split(/\s+/).some((id) => own.has(id));
+		const popups = ["aria-controls", "aria-owns"]
+			.flatMap((attribute) => idrefElements(element, attribute))
+			.filter((target) => POPUP_ROLES.has(getRole(target)));
+		const inPopup = (control) => popups.some((popup) => contains(popup, control));
+		const togglesPopup = (control) =>
+			getRole(control) === "button" && idrefElements(control, "aria-controls").some((target) => popups.includes(target));
 		const isOther = (control) =>
 			!contains(element, control) && !contains(control, element) &&
-			!own.has(getAttribute(control, "id") || "") && !sharesPopup(control) && isElementVisible(control);
+			!inPopup(control) && !togglesPopup(control) && isElementVisible(control);
 		let container = parentElementOf(element);
 		for (let depth = 0; container !== null && depth < MAX_ERROR_DEPTH; depth++, container = parentElementOf(container)) {
 			const controls = Array.from(querySelectorAllOf(container, CONTROL_SELECTOR));

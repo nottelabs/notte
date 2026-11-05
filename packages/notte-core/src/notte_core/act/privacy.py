@@ -16,6 +16,14 @@ _LINE_BREAK = r"(?:\n[ \t]*(?:[A-Z]\d+|_)\[:\]|\s)+"
 _CUT_ATTRIBUTE = re.compile(r'(\b[\w-]+=")([^"\n]*)\.\.\.(?=")')
 
 
+def _cut_prefix_length(value: str, literal: str, minimum: int) -> int:
+    """The length of the longest start of `literal` (from `minimum` characters) `value` ends with, 0 for none."""
+    for length in range(min(len(literal), len(value)), min(minimum, len(literal)) - 1, -1):
+        if length > 0 and value.endswith(literal[:length]):
+            return length
+    return 0
+
+
 @dataclass(frozen=True)
 class _Patterns:
     """The patterns of a set of replacements (`ActPrivacy._compiled`)."""
@@ -64,9 +72,10 @@ class ActPrivacy:
 
     def _cut_suffix(self, value: str) -> str:
         for literal in sorted(self.replacements, key=len, reverse=True):
-            for length in range(min(len(literal), len(value)), min(3, len(literal)) - 1, -1):
-                if value.endswith(literal[:length]):
-                    return value[: len(value) - length] + self.replacements[literal]
+            # as typed, and with its whitespace collapsed as rendered text shows it (a field's error message)
+            length = max(_cut_prefix_length(value, shown, 3) for shown in (literal, " ".join(literal.split())))
+            if length > 0:
+                return value[: len(value) - length] + self.replacements[literal]
         return value
 
     def text(self, value: str) -> str:
