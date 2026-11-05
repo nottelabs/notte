@@ -184,7 +184,7 @@ jobs:
             STATUS='> [!CAUTION]
           > **Not mergeable as is.** Fix the cause on this branch (map new operations in `openapi/resources.json`, change `notte_core.types`, or fix a generator), run `make sdk-generate-all docs-sdk` and push. Scheduled runs leave this PR alone once it has manual commits.'
             if [ "$GENERATORS_FAILED" = "true" ]; then
-              STATUS+=$'\n> - A generator failed, so some SDK files are not regenerated.'
+              STATUS+=$'\n> - A generator or the Python SDK reference build failed, so some generated files are not regenerated.'
             fi
             if [ "$CONTRACT_FAILED" = "true" ]; then
               STATUS+=$'\n> - The contract check reports new drift.'
@@ -239,7 +239,7 @@ jobs:
           CONTRACT_FAILED: ${{ steps.contract.outputs.failed }}
         run: |
           if [ "$GENERATORS_FAILED" = "true" ]; then
-            echo "::error::make sdk-generate-all failed; see the 'Regenerate both SDKs' step log."
+            echo "::error::make sdk-generate-all docs-sdk failed; see the 'Regenerate both SDKs and both SDK references' step log."
           fi
           if [ "$CONTRACT_FAILED" = "true" ]; then
             echo "::error::scripts/openapi_contract.py --check reports new drift; see the 'Check the contract' step log."
