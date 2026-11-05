@@ -2535,8 +2535,9 @@ async def test_a_credential_typed_before_the_dialog_is_masked_in_its_question(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("then", ["act", "choose"])
 async def test_a_credential_the_page_repeats_in_a_cut_field_error_is_masked(
-    session: NotteSession, monkeypatch: pytest.MonkeyPatch
+    session: NotteSession, monkeypatch: pytest.MonkeyPatch, then: str
 ) -> None:
     secret = "s3cret-password-123"  # pragma: allowlist secret
     page = session.window.page
@@ -2557,10 +2558,14 @@ async def test_a_credential_the_page_repeats_in_a_cut_field_error_is_masked(
         return {} if calls == 1 else {secret: "{{vault_password}}"}
 
     monkeypatch.setattr(LocalActDriver, "secret_replacements", replacements)
-    decider = FakeDecider(choices=[{"operation": "CLICK", "click_target": ids["b"]}, {"operation": "DONE"}])
+    second = {"operation": "DONE"} if then == "act" else {"answer": "a"}
+    decider = FakeDecider(choices=[{"operation": "CLICK", "click_target": ids["b"]}, second])
     _ = await session.aact("Log in", decider=decider)
     # the next call sees the click in its history, with the error the page showed after it
-    _ = await session.aact("Log in", decider=decider)
+    if then == "act":
+        _ = await session.aact("Log in", decider=decider)
+    else:
+        _ = await session.achoose("Signed in?", {"a": "yes", "b": "no"}, decider=decider)
     state = decider.states[-1]
     (errors,) = [entry["field_errors"] for entry in state.recent_actions if "field_errors" in entry]
     # masked, then cut to the display length

@@ -918,8 +918,9 @@ async def run_choose(
         raise ValueError("choose() needs at least two options")
     labels = label_mode()
     page = await driver.observe(observation)
-    history.observed(page)
+    # as in `run_act`: the secrets the last act() typed are known before `observed` records what the page showed
     history.privacy.remember_secrets(driver.secret_replacements())
+    history.observed(page)
     model_page = history.privacy.page(page)
     state = DecisionState(
         page=page_state(model_page, labels, history.privacy.text),
