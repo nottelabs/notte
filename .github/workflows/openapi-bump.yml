@@ -1,7 +1,7 @@
 name: bump-openapi
 
 # The only live staging-spec refresh: propose one reviewable PR containing the
-# snapshot, both SDKs and the TypeScript reference. Drift cannot fail unrelated PRs.
+# snapshot, both SDKs and both SDK references. Drift cannot fail unrelated PRs.
 # If a generator or the contract check fails, the refresh PR is opened (or moved back)
 # as a draft with the failure at the top of its body, and the run fails.
 
@@ -106,7 +106,7 @@ jobs:
           NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
         run: make openapi-fetch OPENAPI_URL="$NOTTE_API_URL"
 
-      - name: Regenerate both SDKs and the TypeScript reference
+      - name: Regenerate both SDKs and both SDK references
         id: generators
         # Keep the refreshed snapshot and report failures in the PR, even if a
         # generator cannot consume the new contract. `-k` runs every generator so
@@ -116,7 +116,8 @@ jobs:
         run: |
           log="$RUNNER_TEMP/generators.log"
           status=0
-          make --no-print-directory -k sdk-generate-all >"$log" 2>&1 || status=$?
+          # docs-sdk is the Python reference the PR's docs-sdk-generate hook checks.
+          make --no-print-directory -k sdk-generate-all docs-sdk >"$log" 2>&1 || status=$?
           cat "$log"
           delimiter="EOF_$(openssl rand -hex 8)"
           {
@@ -133,7 +134,8 @@ jobs:
           git add -A -- \
             openapi packages/notte-sdk/src/notte_sdk/_generated \
             node-sdk/src/lib/client node-sdk/src/proxy/patterns.ts \
-            node-sdk/src/resources.gen.ts docs/src/typescript-sdk-reference docs/src/docs.json
+            node-sdk/src/resources.gen.ts docs/src/typescript-sdk-reference docs/src/docs.json \
+            docs/src/sdk-reference docs/src/llms.txt
           if git diff --cached --quiet; then
             echo "openapi/openapi.json is up to date with staging."
             echo "changes=false" >> "$GITHUB_OUTPUT"
@@ -180,9 +182,9 @@ jobs:
             DRAFT=true
             # shellcheck disable=SC2016
             STATUS='> [!CAUTION]
-          > **Not mergeable as is.** Fix the cause on this branch (map new operations in `openapi/resources.json`, change `notte_core.types`, or fix a generator), run `make sdk-generate-all` and push. Scheduled runs leave this PR alone once it has manual commits.'
+          > **Not mergeable as is.** Fix the cause on this branch (map new operations in `openapi/resources.json`, change `notte_core.types`, or fix a generator), run `make sdk-generate-all docs-sdk` and push. Scheduled runs leave this PR alone once it has manual commits.'
             if [ "$GENERATORS_FAILED" = "true" ]; then
-              STATUS+=$'\n> - A generator failed, so some SDK files are not regenerated.'
+              STATUS+=$'\n> - A generator or the Python SDK reference build failed, so some generated files are not regenerated.'
             fi
             if [ "$CONTRACT_FAILED" = "true" ]; then
               STATUS+=$'\n> - The contract check reports new drift.'
@@ -196,7 +198,7 @@ jobs:
             "$STATUS" \
             "Contract check (\`scripts/openapi_contract.py\`). If it reports new drift, change \`notte_core.types\` instead of merging:" \
             "$REPORT" \
-            "Python models/endpoints, Node client/resources/proxy patterns and TypeScript reference (\`make sdk-generate-all\`):" \
+            "Python models/endpoints, Node client/resources/proxy patterns and both SDK references (\`make sdk-generate-all docs-sdk\`):" \
             "$GENERATORS")
 
           git checkout -B "$BRANCH"
@@ -237,7 +239,7 @@ jobs:
           CONTRACT_FAILED: ${{ steps.contract.outputs.failed }}
         run: |
           if [ "$GENERATORS_FAILED" = "true" ]; then
-            echo "::error::make sdk-generate-all failed; see the 'Regenerate both SDKs' step log."
+            echo "::error::make sdk-generate-all docs-sdk failed; see the 'Regenerate both SDKs and both SDK references' step log."
           fi
           if [ "$CONTRACT_FAILED" = "true" ]; then
             echo "::error::scripts/openapi_contract.py --check reports new drift; see the 'Check the contract' step log."
