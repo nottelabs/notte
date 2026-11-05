@@ -438,44 +438,46 @@ class ActHistory:
         nothing. So is a key pressed in the focused field (Enter, Escape) followed by an action that can move the
         focus, which the fingerprint ignores (a click, not a scroll or another key), and a GO_BACK that moved the tab
         back in its history (`history_index`). So is an action that failed (a click that timed out can work when tried
-        again), unless it opened a file chooser, which it opens again, or it failed `FAILURE_LIMIT` times with the same
-        error on this page: trying again fails again (typing "03" and "12" into a dropdown that is not a text field)."""
+        again), unless it opened a file chooser, which it opens again; one that failed twice the same way is in
+        `repeated_failures`."""
         entries = list(self.entries)
-        # a click and a dialog close on one element are one click (as below)
+        return {
+            (kind, e.target)
+            for i, e in enumerate(entries)
+            if e.page_changed is False
+            and (e.error is None or e.error == FileChooserOpenedError.__name__)
+            and e.instruction == instruction
+            and e.fingerprint == page.fingerprint
+            and e.kind not in _UNTRACKED
+            # a GO_BACK that moved the tab back in its history did something: an app can push entries for one URL
+            # and page, and the page it opened before is further back
+            and not (e.kind == "GO_BACK" and e.history_index != page.history_index)
+            and (
+                e.kind not in _FOCUSED_KEYS
+                or all(later.kind in _UNTRACKED or later.kind in _FOCUSED_KEYS for later in entries[i + 1 :])
+            )
+            for kind in (_CLICKS if e.kind in _CLICKS else (e.kind,))
+        }
+
+    def repeated_failures(self, page: ObservedPage, instruction: str) -> set[tuple[str, str | None]]:
+        """The (operation, target key) of the actions for `instruction` that failed `FAILURE_LIMIT` times with the
+        same error on the very page state of `page`: trying again fails again (typing "03" and "12" into a dropdown
+        that is not a text field). One failure can be bad luck (a click that timed out): it is offered again."""
+        # a click and a dialog close on one element are one click (as in `no_effect`)
         failures = Counter(
             ("CLICK" if e.kind in _CLICKS else e.kind, e.target, e.error)
-            for e in entries
+            for e in self.entries
             if e.error is not None
             and e.instruction == instruction
             and e.fingerprint == page.fingerprint
             and e.kind not in _UNTRACKED
         )
-        repeated = {
+        return {
             (kind, target)
             for (operation, target, _), count in failures.items()
             if count >= FAILURE_LIMIT
             for kind in (_CLICKS if operation in _CLICKS else (operation,))
         }
-        return (
-            repeated
-            | {
-                (kind, e.target)
-                for i, e in enumerate(entries)
-                if e.page_changed is False
-                and (e.error is None or e.error == FileChooserOpenedError.__name__)
-                and e.instruction == instruction
-                and e.fingerprint == page.fingerprint
-                and e.kind not in _UNTRACKED
-                # a GO_BACK that moved the tab back in its history did something: an app can push entries for one URL
-                # and page, and the page it opened before is further back
-                and not (e.kind == "GO_BACK" and e.history_index != page.history_index)
-                and (
-                    e.kind not in _FOCUSED_KEYS
-                    or all(later.kind in _UNTRACKED or later.kind in _FOCUSED_KEYS for later in entries[i + 1 :])
-                )
-                for kind in (_CLICKS if e.kind in _CLICKS else (e.kind,))
-            }
-        )
 
     def acted_since_observed(self) -> bool:
         """An action other than a WAIT ran since the last observation (the next one tells what it changed)."""
@@ -634,6 +636,8 @@ async def run_act(
             # what act typed in the fields: a field holding another form of it shows what was typed
             typed=history.typed_values(page),
             no_effect=history.no_effect(page, instruction),
+            # what failed twice the same way on this page: not offered again, checkboxes included
+            failed=history.repeated_failures(page, instruction),
         )
         # a scroll that failed on this very page fails again: not offered until the page changes
         for operation in history.failed_scrolls(page):

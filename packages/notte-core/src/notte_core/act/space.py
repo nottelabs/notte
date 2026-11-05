@@ -1021,6 +1021,7 @@ def build_act_space(
     unsubmitted: Collection[str] = (),
     typed: Mapping[str, "TypedValue"] | None = None,
     no_effect: Collection[tuple[str, str | None]] = (),
+    failed: Collection[tuple[str, str | None]] = (),
 ) -> ActSpace:
     """`display_text` masks the presentation strings; `display_cut` (default `display_text`) the live values the
     browser cut, where a protected value can start at the cut. `no_text`: the ids of the fields
@@ -1029,7 +1030,9 @@ def build_act_space(
     last typed in a field, by id: a field that holds something else (`readback`) shows the text typed (`typed`), and
     whether it is the same value in the page's own format (`reformatted`: "11000" for "110 00", "CA" for
     "California"). `no_effect`: the (operation, target key, None for a control) that already ran on this very page
-    state and changed nothing, not offered again: repeating them cannot change the page either."""
+    state and changed nothing, not offered again: repeating them cannot change the page either. `failed`: those that
+    failed the same way twice on this page state, not offered again either, checkboxes included (a click that fails
+    did not toggle anything)."""
     # Determine IDs, roles and supported operations from the original page. Only
     # presentation strings pass through display_text, before their display caps.
     lines = _rendered_lines(page.description)
@@ -1037,9 +1040,13 @@ def build_act_space(
     contexts = _contexts(page)
     space = ActSpace()
     has_live_state = len(page.states) > 0
+    # the controls and dialog closes not offered again: they changed nothing, or failed the same way twice
+    unavailable = {*no_effect, *failed}
 
     def add(operation: Operation, target: Target, element: dict[str, Any]) -> None:
         if operation == "TYPE_TEXT" and target.element_id in no_text:
+            return
+        if (operation, target.key) in failed:
             return
         # without live state the fingerprint does not show a checkbox toggled
         if (operation, target.key) in no_effect and (target.kind != "check" or has_live_state):
@@ -1200,7 +1207,7 @@ def build_act_space(
             if target.kind == "click"
             and target.element_id in lines
             and target.role in ("button", "link")
-            and ("CLOSE_DIALOG", key) not in no_effect
+            and ("CLOSE_DIALOG", key) not in unavailable
         }
         if close:
             space.targets["CLOSE_DIALOG"] = close
@@ -1222,7 +1229,7 @@ def build_act_space(
             "SCROLL_UP", "Scroll up one page", ScrollUpAction(selector=page.inner_scroll.get("up"))
         )
     if (
-        ("CLOSE_SUGGESTIONS", None) not in no_effect
+        ("CLOSE_SUGGESTIONS", None) not in unavailable
         and any(e.get("expanded") is True and e["role"] in ("textbox", "combobox") for e in space.elements)
         and any(e["role"] == "option" for e in space.elements)
     ):
@@ -1230,13 +1237,13 @@ def build_act_space(
         space.controls["CLOSE_SUGGESTIONS"] = Control(
             "CLOSE_SUGGESTIONS", prompts.CLOSE_SUGGESTIONS, PressKeyAction(key="Escape")
         )
-    if ("PRESS_ENTER", None) not in no_effect:
+    if ("PRESS_ENTER", None) not in unavailable:
         space.controls["PRESS_ENTER"] = Control(
             "PRESS_ENTER",
             "Press Enter in the focused field (e.g. submit a typed search that has no visible button)",
             PressKeyAction(key="Enter"),
         )
-    if page.can_go_back and ("GO_BACK", None) not in no_effect:
+    if page.can_go_back and ("GO_BACK", None) not in unavailable:
         space.controls["GO_BACK"] = Control("GO_BACK", "Go back to the previous page", GoBackAction())
     space.controls["WAIT"] = Control(
         "WAIT",

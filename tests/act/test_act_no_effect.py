@@ -175,25 +175,32 @@ def test_a_go_back_that_moved_the_tab_back_is_offered_again() -> None:
 def test_an_action_that_failed_twice_the_same_way_is_not_offered_again() -> None:
     # typing into a dropdown that is not a text field fails every time, whatever the text
     failed = _history(("TYPE_TEXT", "I13"), ("TYPE_TEXT", "I13"), error="NotteBaseError")
-    assert failed.no_effect(_page(), "check out") == {("TYPE_TEXT", "I13")}
+    assert failed.repeated_failures(_page(), "check out") == {("TYPE_TEXT", "I13")}
     # once can be bad luck
-    assert _history(("TYPE_TEXT", "I13"), error="NotteBaseError").no_effect(_page(), "check out") == set()
+    assert _history(("TYPE_TEXT", "I13"), error="NotteBaseError").repeated_failures(_page(), "check out") == set()
     # for another instruction, or on another page, it is offered again
-    assert failed.no_effect(_page(), "change the email") == set()
+    assert failed.repeated_failures(_page(), "change the email") == set()
     from dataclasses import replace
 
-    assert failed.no_effect(replace(_page(), fingerprint="other"), "check out") == set()
+    assert failed.repeated_failures(replace(_page(), fingerprint="other"), "check out") == set()
 
 
 def test_failures_with_different_errors_are_offered_again() -> None:
     history = _history(("TYPE_TEXT", "I2"), error="ActionExecutionError")
     history.entries += _history(("TYPE_TEXT", "I2"), error="TimeoutError").entries
-    assert history.no_effect(_page(), "check out") == set()
+    assert history.repeated_failures(_page(), "check out") == set()
 
 
 def test_a_click_that_failed_twice_is_not_offered_to_close_a_dialog_either() -> None:
     failed = _history(("CLICK", "B1"), ("CLOSE_DIALOG", "B1"), error="TimeoutError")
-    assert failed.no_effect(_page(), "check out") == {("CLICK", "B1"), ("CLOSE_DIALOG", "B1")}
+    assert failed.repeated_failures(_page(), "check out") == {("CLICK", "B1"), ("CLOSE_DIALOG", "B1")}
+
+
+def test_a_checkbox_that_failed_twice_is_left_out_without_live_state() -> None:
+    # without live state an unchanged checkbox stays offered (its toggle cannot be seen); a failed click toggled nothing
+    failed = {("CLICK", "I1")}
+    assert "I1" in build_act_space(_page(), no_effect=failed).targets["CLICK"]
+    assert "I1" not in build_act_space(_page(), failed=failed).targets.get("CLICK", {})
 
 
 EXPIRY_PAGE = """<meta charset="utf-8"><label for="month">Expiry month</label>
