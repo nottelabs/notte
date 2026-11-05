@@ -92,7 +92,7 @@ An entry that sets `server` never reads the saved configuration, so the saved cr
 
 ## Share the exit IP
 
-By default the site sees two IP addresses: the session's exit for most requests, and your secret proxy's egress for the listed hosts. To give both the same IP, send your secret proxy's outgoing traffic through Notte's proxy gateway, pinned to the same residential exit as the session:
+By default the site sees two IP addresses: the session's exit for most requests, and your secret proxy's egress for the listed hosts. To give both the same IP, send your secret proxy's outgoing traffic through Notte's [proxy gateway](/features/sessions/proxy-gateway), pinned to the same residential exit as the session:
 
 1. Mint a gateway credential with a `sticky_session` of your choice: 1 to 64 letters, digits or hyphens. The SDKs have no method for this endpoint, so call it over HTTP.
 

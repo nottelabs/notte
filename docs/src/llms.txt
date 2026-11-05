@@ -31,6 +31,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 - [Stealth Mode](https://docs.notte.cc/features/sessions/stealth-mode.md): Configure anti-detection features for your browser sessions
 - [Proxies](https://docs.notte.cc/features/sessions/proxies.md): Route your automation traffic with precision & control
+- [Proxy Gateway](https://docs.notte.cc/features/sessions/proxy-gateway.md): Use Notte's residential proxies from your own HTTP client, scraper or proxy
 
 #### Secret Proxies
 
