@@ -9,6 +9,7 @@ from contextlib import ExitStack, closing, suppress
 from typing import Literal
 from unittest.mock import AsyncMock, patch
 
+import notte_browser.click_input as click_input_module
 import notte_browser.execution as execution_module
 import notte_browser.settle as settle_module
 import notte_browser.window as window_module
@@ -1369,9 +1370,9 @@ async def test_click_input_resources_do_not_accumulate_between_actions(session: 
         await cdp.detach()
 
 
-def routes(page: Page) -> list[object]:
+def route_count(page: Page) -> int:
     """The routes of a page and of its context: a route makes the driver intercept the page's requests."""
-    return [*page._impl_obj._routes, *page.context._impl_obj._routes]  # pyright: ignore[reportPrivateUsage]
+    return len(page._impl_obj._routes) + len(page.context._impl_obj._routes)  # pyright: ignore[reportPrivateUsage]
 
 
 @pytest.mark.asyncio
@@ -1394,7 +1395,7 @@ async def test_a_click_with_another_tab_open_reports_its_input_without_intercept
     _ = await click(session, element)
     # the input was reported from the page, as it came
     assert len(reported) == 1
-    assert routes(page) == []
+    assert route_count(page) == 0
     if element == "tab":
         assert session.window.page.url == f"{site}/second"
         assert "Second tab" in await text(session)
@@ -1409,7 +1410,67 @@ async def test_a_click_with_another_tab_open_reports_its_input_without_intercept
     # requests the page makes after the click are not held by the driver
     async with page.expect_response(lambda response: "/data" in response.url):
         await page.evaluate("fetch('/data?delay=0')")
-    assert routes(page) == []
+    assert route_count(page) == 0
+
+
+async def main_world_context_id(page: Page) -> int:
+    """The id of the main world of the page's current document, read on a CDP session of its own."""
+    session = await page.context.new_cdp_session(page)
+    contexts: list[int] = []
+
+    def created(event: dict[str, dict[str, int | str | dict[str, bool | str]]]) -> None:
+        context = event["context"]
+        aux = context["auxData"]
+        if isinstance(aux, dict) and aux.get("isDefault") is True and isinstance(context["id"], int):
+            contexts.append(context["id"])
+
+    session.on("Runtime.executionContextCreated", created)
+    try:
+        _ = await session.send("Runtime.enable")  # pyright: ignore[reportUnknownMemberType]
+        _ = await session.send("Runtime.disable")  # pyright: ignore[reportUnknownMemberType]
+    finally:
+        await session.detach()
+    assert contexts, "no main world context reported"
+    return contexts[0]
+
+
+@pytest.mark.asyncio
+async def test_a_click_never_reuses_a_world_from_a_replaced_document(
+    session: NotteSession, site: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A context id only means something in the document it was created in: after a cross-process navigation it
+    can name an unrelated context of the new document, such as the page's main world. The cached world is keyed by
+    the frame's document (its loader id), so a stale entry is never reused, even when its context id is live."""
+    page = session.window.page
+    other = await page.context.new_page()
+    await other.goto(f"{site}/next")
+    session.window.page = page
+    reported: list[float] = []
+    notify = ClickInputReporter.notify
+
+    def counting_notify(reporter: ClickInputReporter) -> None:
+        reported.append(time.perf_counter())
+        notify(reporter)
+
+    monkeypatch.setattr(ClickInputReporter, "notify", counting_notify)
+    _ = await click(session, "nothing")
+    worlds = click_input_module._WORLDS[page]  # pyright: ignore[reportPrivateUsage]
+    (frame_id, stale) = next(iter(worlds.items()))
+    _ = await page.reload()
+    await page.locator("#nothing").wait_for()
+    # The worst case: the stale entry names a context that is live in the new document, its main world.
+    main_world = await main_world_context_id(page)
+    worlds[frame_id] = click_input_module._World(stale.loader_id, main_world)  # pyright: ignore[reportPrivateUsage]
+    _ = await click(session, "nothing")
+    assert len(reported) == 2
+    current = worlds[frame_id]
+    assert current.loader_id != stale.loader_id
+    assert current.context_id != main_world
+    exposed = await evaluate_in_main_world(
+        page.main_frame, "() => Object.getOwnPropertyNames(window).filter(name => name.startsWith('__notte'))"
+    )
+    assert exposed == []
+    assert route_count(page) == 0
 
 
 async def frame_with_button(page: Page, frame_id: str) -> Frame:
@@ -1449,7 +1510,7 @@ async def test_click_input_is_reported_from_the_clicked_frame_only(session: Nott
                 await asyncio.sleep(0.01)
     finally:
         await reporter.dispose()
-    assert routes(page) == []
+    assert route_count(page) == 0
 
 
 @pytest.mark.asyncio
@@ -1483,7 +1544,7 @@ async def test_a_click_in_a_frame_with_another_tab_open_reports_its_input(
         assert result.success
         assert len(reported) == 1
         assert await frame.evaluate("document.body.dataset.clicked") == "yes"
-        assert routes(page) == []
+        assert route_count(page) == 0
 
 
 @pytest.mark.asyncio
