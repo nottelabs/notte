@@ -2608,6 +2608,10 @@ class GetFunctionResponse(SdkResponse):
             description="The ID of the reference function (i.e whether the function was forked from another function or not)"
         ),
     ] = None
+    deletion_protected: Annotated[
+        bool,
+        Field(description="Whether the function is protected from deletion. It must be turned off before a delete."),
+    ] = False
 
 
 class GetFunctionWithLinkResponse(GetFunctionResponse, FileLinkResponse):
