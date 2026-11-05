@@ -467,6 +467,13 @@ def test_act_until_done_stops_after_waits_through_which_the_page_changed_nothing
     assert len(act_until_done(session, "go", max_steps=60)) == 6
 
 
+def test_act_until_done_goes_on_when_the_sixth_wait_sees_a_change() -> None:
+    # five quiet WAITs, then the page renders while the sixth watches it
+    results = [_wait(changed=False) for _ in range(5)] + [_wait(changed=True)]
+    session = _ScriptedSession([*results, _step("b", "CLICK", "B1"), _result("done", "c")])
+    assert len(act_until_done(session, "go", max_steps=20)) == 8
+
+
 def test_act_until_done_goes_on_when_the_page_changed_after_the_last_wait() -> None:
     # a button rendered during the 5th WAIT, in a way its watch missed: the next decision sees another page
     results = [_wait(changed=False) for _ in range(5)]
