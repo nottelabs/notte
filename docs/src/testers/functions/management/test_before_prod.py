@@ -19,4 +19,4 @@ def validate_before_production():
         print(f"Test failed: {test_result.result}")
 
     # Remove the staging function once validated
-    staging.delete()
+    staging.delete(confirm=True)

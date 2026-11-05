@@ -109,6 +109,7 @@ export type {
   FunctionRunListOptions,
   FunctionGetOptions,
   FunctionUpdateOptions,
+  FunctionDeleteOptions,
   FunctionMetadataUpdateOptions,
   FunctionScheduleOptions,
   FunctionRollbackOptions,
