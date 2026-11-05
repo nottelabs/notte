@@ -6181,6 +6181,12 @@ export type PersonaCreateRequest = {
      * Name
      */
     name?: string | null;
+    /**
+     * Email Domain
+     *
+     * Domain of the persona's email address, for the `notte` provider only. Defaults to the standard domain; other configured domains are listed by GET /personas/create/email-domains.
+     */
+    email_domain?: string | null;
 };
 
 export type PersonaEmailProvider = 'notte' | 'agentmail' | 'resend';

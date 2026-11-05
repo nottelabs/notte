@@ -1462,6 +1462,8 @@ export const scrapeFromHtml = <ThrowOnError extends boolean = false>(options: Op
 
 /**
  * Agent Start
+ *
+ * @deprecated
  */
 export const agentStart = <ThrowOnError extends boolean = false>(options: Options<AgentStartData, ThrowOnError>): RequestResult<AgentStartResponses, AgentStartErrors, ThrowOnError> => (options.client ?? client).post<AgentStartResponses, AgentStartErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1475,6 +1477,8 @@ export const agentStart = <ThrowOnError extends boolean = false>(options: Option
 
 /**
  * Agent Stop
+ *
+ * @deprecated
  */
 export const agentStop = <ThrowOnError extends boolean = false>(options: Options<AgentStopData, ThrowOnError>): RequestResult<AgentStopResponses, AgentStopErrors, ThrowOnError> => (options.client ?? client).delete<AgentStopResponses, AgentStopErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1492,6 +1496,8 @@ export const agentStop = <ThrowOnError extends boolean = false>(options: Options
  * - answer: The answer to the agent task (None if still running)
  *
  * Also you can check the `steps` field to better understand which actions where taken by the agent.
+ *
+ * @deprecated
  */
 export const agentStatus = <ThrowOnError extends boolean = false>(options: Options<AgentStatusData, ThrowOnError>): RequestResult<AgentStatusResponses, AgentStatusErrors, ThrowOnError> => (options.client ?? client).get<AgentStatusResponses, AgentStatusErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1509,6 +1515,8 @@ export const agentStatus = <ThrowOnError extends boolean = false>(options: Optio
  * - answer: The answer to the agent task (None if still running)
  *
  * Also you can check the `steps` field to better understand which actions where taken by the agent.
+ *
+ * @deprecated
  */
 export const getScript = <ThrowOnError extends boolean = false>(options: Options<GetScriptData, ThrowOnError>): RequestResult<GetScriptResponses, GetScriptErrors, ThrowOnError> => (options.client ?? client).get<GetScriptResponses, GetScriptErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1525,6 +1533,8 @@ export const getScript = <ThrowOnError extends boolean = false>(options: Options
  * - request: AgentListRequest containing:
  * - only_active: Whether to only return active agents
  * - limit: Maximum number of agents to return
+ *
+ * @deprecated
  */
 export const listAgents = <ThrowOnError extends boolean = false>(options?: Options<ListAgentsData, ThrowOnError>): RequestResult<ListAgentsResponses, ListAgentsErrors, ThrowOnError> => (options?.client ?? client).get<ListAgentsResponses, ListAgentsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

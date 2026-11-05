@@ -271,6 +271,7 @@ class PersonaCreateRequestDict(TypedDict):
     create_phone_number: NotRequired[bool]
     email_provider: NotRequired[Literal["notte", "agentmail", "resend"]]
     name: NotRequired[str | None]
+    email_domain: NotRequired[str | None]
 
 
 class MessageReadRequestDict(TypedDict):
