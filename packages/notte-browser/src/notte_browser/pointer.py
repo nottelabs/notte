@@ -10,11 +10,11 @@ can seed.
 import asyncio
 import math
 import random
-from collections.abc import Awaitable, Callable, Generator
-from contextlib import contextmanager
+from collections.abc import AsyncGenerator, Awaitable, Callable
+from contextlib import asynccontextmanager, suppress
 from contextvars import ContextVar
-from dataclasses import dataclass
-from typing import TypedDict
+from dataclasses import dataclass, field
+from typing import Protocol, TypedDict
 from weakref import WeakKeyDictionary
 
 from notte_core.logging import logger
@@ -79,8 +79,37 @@ class _PointerState:
 
 
 _STATES: WeakKeyDictionary[Page, _PointerState] = WeakKeyDictionary()
-# Elements the driver moved the pointer onto inside an action's deadline, recorded after it (`deferred_records`)
-_DEFERRED: ContextVar[list[tuple[Page, Locator | ElementHandle]] | None] = ContextVar("pointer_deferred", default=None)
+
+
+class _Disposable(Protocol):
+    async def dispose(self) -> None: ...
+
+
+@dataclass
+class Deferred:
+    """Elements the driver moved the pointer onto inside an action's deadline (`deferred_records`), and the
+    handles kept alive to read where they are once the deadline no longer applies."""
+
+    records: list[tuple[Page, Locator | ElementHandle]] = field(default_factory=list)
+    handles: list[_Disposable] = field(default_factory=list)
+
+    async def record(self) -> None:
+        """Records the last element noted: the pointer was last moved onto it. Then frees the kept handles."""
+        try:
+            if self.records:
+                await _record(*self.records[-1])
+        finally:
+            self.records.clear()
+            await self._dispose()
+
+    async def _dispose(self) -> None:
+        handles, self.handles = self.handles, []
+        for handle in handles:
+            with suppress(Error):  # the action may have navigated away
+                await handle.dispose()
+
+
+_DEFERRED: ContextVar[Deferred | None] = ContextVar("pointer_deferred", default=None)
 
 
 def track(page: Page) -> _PointerState:
@@ -104,35 +133,44 @@ def moved(page: Page, point: Point | None) -> None:
         state.position = point
 
 
-@contextmanager
-def deferred_records() -> Generator[list[tuple[Page, Locator | ElementHandle]]]:
-    """Inside, `moved_onto` only notes its element, so reading where it is cannot use an action's deadline. Pass
-    the notes to `record_deferred` once the deadline no longer applies."""
-    records: list[tuple[Page, Locator | ElementHandle]] = []
-    token = _DEFERRED.set(records)
+@asynccontextmanager
+async def deferred_records() -> AsyncGenerator[Deferred]:
+    """Inside, `moved_onto` only notes its element, so reading where it is cannot use an action's deadline. Call
+    `record` on what it yields once the deadline no longer applies; handles not recorded are freed on exit."""
+    pending = Deferred()
+    token = _DEFERRED.set(pending)
     try:
-        yield records
+        yield pending
     finally:
         _DEFERRED.reset(token)
+        await pending._dispose()  # pyright: ignore[reportPrivateUsage]
 
 
-async def record_deferred(records: list[tuple[Page, Locator | ElementHandle]]) -> None:
-    """Records the last element noted by `deferred_records`: the pointer was last moved onto it."""
-    if records:
-        await moved_onto(*records[-1])
-
-
-async def moved_onto(page: Page, element: Locator | ElementHandle) -> None:
+async def moved_onto(page: Page, element: Locator | ElementHandle, *, dispose: _Disposable | None = None) -> None:
     """Records that an action of the driver on `element` (a click, a check, a hover) moved the pointer of `page`
-    onto it, to the middle of its visible part, when the pointer is tracked."""
+    onto it, to the middle of its visible part, when the pointer is tracked. `dispose`: a handle the caller
+    hands over, freed once `element` was read (after the deadline when the record is deferred)."""
+    pending = _DEFERRED.get()
+    state = _STATES.get(page)
+    if pending is not None and state is not None:
+        state.position = None
+        pending.records.append((page, element))
+        if dispose is not None:
+            pending.handles.append(dispose)
+        return
+    try:
+        await _record(page, element)
+    finally:
+        if dispose is not None:
+            with suppress(Error):
+                await dispose.dispose()
+
+
+async def _record(page: Page, element: Locator | ElementHandle) -> None:
     state = _STATES.get(page)
     if state is None:
         return
     state.position = None
-    pending = _DEFERRED.get()
-    if pending is not None:
-        pending.append((page, element))
-        return
     scope = asyncio.timeout(_ELEMENT_BOX_S)
     try:
         async with scope:

@@ -324,15 +324,19 @@ async def _select_custom_dropdown_option(
     deadline = asyncio.get_running_loop().time() + min(budget.remaining_ms(), 2000) / 1000
     while True:
         handle = await locator.evaluate_handle(_FIND_DROPDOWN_OPTION, value, timeout=budget.remaining_ms())
+        handed_over = False
         try:
             option = handle.as_element()
             if option is not None:
                 await option.click(timeout=budget.remaining_ms())
-                await pointer.moved_onto(locator.page, option)
+                # the pointer record frees the handle once it read where the option is
+                handed_over = True
+                await pointer.moved_onto(locator.page, option, dispose=handle)
                 return
         finally:
-            with suppress(Error):  # the click may have navigated away
-                await handle.dispose()
+            if not handed_over:
+                with suppress(Error):  # the click may have navigated away
+                    await handle.dispose()
         if asyncio.get_running_loop().time() >= deadline:
             raise ActionExecutionError(
                 "select_dropdown", window.page.url, reason=f"No dropdown option matches {value!r}"
@@ -855,7 +859,7 @@ async def execute_interaction_action(
     clicked_page = window.page if after_click is not None else None
     closed_error: Error | None = None
     # where the pointer went is read after the deadline: it cannot fail an action that succeeded
-    with pointer.deferred_records() as records:
+    async with pointer.deferred_records() as pending:
         try:
             async with scope:
                 try:
@@ -887,7 +891,7 @@ async def execute_interaction_action(
             if closed_error is not None:
                 raise closed_error from e
             raise NotteTimeoutError(message=f"Action timed out after {action.timeout}ms") from e
-    await pointer.record_deferred(records)
+        await pending.record()
     return True
 
 

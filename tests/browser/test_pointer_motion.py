@@ -18,7 +18,7 @@ from aiohttp import web
 from notte_browser import pointer
 from notte_browser.driver import ElementHandle, Locator, Page, evaluate_in_main_world
 from notte_browser.session import NotteSession
-from notte_core.actions import CheckAction, ClickAction, ScrollDownAction
+from notte_core.actions import CheckAction, ClickAction, ScrollDownAction, SelectDropdownOptionAction
 from notte_core.config import config
 
 # Chrome delivers at most one mousemove per frame, so a slow runner sees fewer
@@ -81,6 +81,18 @@ addEventListener('mousemove', e => {
 {RECORD}</body></html>""",
     # a document that does not scroll, with a scroll container
     "/vanishing": """<html><body style="margin:0"><input type="checkbox" id="gone" style="position:absolute; left:200px; top:200px"></body></html>""",
+    "/dropdown": """<html><body style="margin:0">
+<div id="fruit" role="combobox" aria-controls="fruit-list" tabindex="0"
+  style="position:absolute; left:100px; top:100px; width:160px; height:30px">Pick a fruit</div>
+<div id="fruit-list" role="listbox" style="position:absolute; left:100px; top:140px; width:160px">
+  <div role="option" id="apple" style="height:30px">Apple</div>
+  <div role="option" id="banana" style="height:30px">Banana</div>
+</div>
+<script>
+for (const option of document.querySelectorAll("[role=option]")) {
+  option.addEventListener("click", () => { document.getElementById("fruit").dataset.selected = option.id; });
+}
+</script></body></html>""",
     "/container": f"""<html><body style="margin:0; height:100vh; overflow:hidden">
 <div id="box" style="position:absolute; left:300px; top:100px; width:600px; height:500px; overflow:auto">
 <div style="height:3000px">Plain text</div></div>
@@ -490,3 +502,18 @@ async def test_no_wheel_back_when_it_would_not_scroll_the_document(session: Nott
         assert await pointer.move_after_load(page, rand=random.Random(seed))
     assert len(wheels) == 1
     assert await page.evaluate("() => window.scrollY") == 700
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("pointer_motion")
+async def test_after_a_dropdown_selection_the_pointer_is_on_the_option(session: NotteSession, site: str) -> None:
+    _ = await session.aexecute(type="goto", url=f"{site}/dropdown")
+    page = session.window.page
+    result = await session.aexecute(
+        SelectDropdownOptionAction(selector="#fruit", value="Banana"), raise_on_failure=True
+    )
+    assert result.success
+    assert await page.locator("#fruit").get_attribute("data-selected") == "banana"
+    # the next click's curve starts from the option the selection clicked
+    state = pointer.track(page)
+    assert state.position is not None and inside(state.position, (100, 170, 160, 30))
