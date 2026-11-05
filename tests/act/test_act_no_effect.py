@@ -225,3 +225,35 @@ async def test_typing_that_fails_twice_the_same_way_is_not_offered_again(session
     third = decider.questions[2]
     assert "type_text_target" not in third or month not in third["type_text_target"].criteria
     assert month in third["click_target"].criteria
+
+
+def test_a_field_that_rejected_two_values_is_offered_again() -> None:
+    # the field did not keep the text: another form of the value can be kept (the writer is told what failed)
+    rejected = _history(("TYPE_TEXT", "I2"), ("TYPE_TEXT", "I2"), error="TextNotKeptError")
+    assert rejected.repeated_failures(_page(), "check out") == set()
+
+
+NATIONAL_PHONE_PAGE = """<meta charset="utf-8"><label for="phone">Phone</label><input id="phone">
+<script>
+// keeps only a start of the national form 0612345678, as typed key by key; anything else is put back
+const phone = document.getElementById("phone");
+let kept = "";
+phone.addEventListener("input", () => {
+  if ("0612345678".startsWith(phone.value)) kept = phone.value; else phone.value = kept;
+});
+</script>"""
+
+
+@pytest.mark.asyncio
+async def test_a_phone_field_that_rejects_two_formats_takes_a_third(session: NotteSession) -> None:
+    _ = await session.window.page.goto(f"data:text/html,{quote(NATIONAL_PHONE_PAGE)}")
+    phone = (await _ids(session))["phone"]
+    decider = FakeDecider(
+        choices=[{"operation": "TYPE_TEXT", "type_text_target": phone}] * 3 + [{"operation": "DONE"}],
+        texts=["+33612345678", "612345678", "0612345678"],
+    )
+    for _ in range(3):
+        _ = await session.aact("Phone +33 6 12 34 56 78", decider=decider, raise_on_failure=False)
+    # two formats rejected: typing in the field is still offered, and the third format is kept
+    assert phone in decider.questions[2]["type_text_target"].criteria
+    assert await session.window.page.input_value("#phone") == "0612345678"

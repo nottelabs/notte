@@ -83,7 +83,7 @@ from notte_core.credentials.base import (
     UserNameField,
 )
 from notte_core.dom_tree import NodeSelectors
-from notte_core.errors import ContentFilterError, FileChooserOpenedError
+from notte_core.errors import ContentFilterError, FileChooserOpenedError, TextNotKeptError
 from notte_core.observation import ExecutionResult, Observation
 
 HISTORY_SIZE = 10
@@ -462,12 +462,15 @@ class ActHistory:
     def repeated_failures(self, page: ObservedPage, instruction: str) -> set[tuple[str, str | None]]:
         """The (operation, target key) of the actions for `instruction` that failed `FAILURE_LIMIT` times with the
         same error on the very page state of `page`: trying again fails again (typing "03" and "12" into a dropdown
-        that is not a text field). One failure can be bad luck (a click that timed out): it is offered again."""
+        that is not a text field). One failure can be bad luck (a click that timed out): it is offered again. So is a
+        field that did not keep the text (`TextNotKeptError`): it rejected that value, and the writer writes it in
+        another form (`RETRY_TYPED`)."""
         # a click and a dialog close on one element are one click (as in `no_effect`)
         failures = Counter(
             ("CLICK" if e.kind in _CLICKS else e.kind, e.target, e.error)
             for e in self.entries
             if e.error is not None
+            and e.error != TextNotKeptError.__name__
             and e.instruction == instruction
             and e.fingerprint == page.fingerprint
             and e.kind not in _UNTRACKED
