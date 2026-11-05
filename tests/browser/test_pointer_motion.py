@@ -15,9 +15,9 @@ import pytest
 import pytest_asyncio
 from aiohttp import web
 from notte_browser import pointer
-from notte_browser.driver import Page, evaluate_in_main_world
+from notte_browser.driver import ElementHandle, Locator, Page, evaluate_in_main_world
 from notte_browser.session import NotteSession
-from notte_core.actions import ClickAction, ScrollDownAction
+from notte_core.actions import CheckAction, ClickAction, ScrollDownAction
 from notte_core.config import config
 
 # Chrome delivers at most one mousemove per frame, so a slow runner sees fewer
@@ -79,6 +79,7 @@ addEventListener('mousemove', e => {
 {"".join(f'<a href="#{i}" style="width:20px; height:20px; margin:2px">{i}</a>' for i in range(600))}</div>
 {RECORD}</body></html>""",
     # a document that does not scroll, with a scroll container
+    "/vanishing": """<html><body style="margin:0"><input type="checkbox" id="gone" style="position:absolute; left:200px; top:200px"></body></html>""",
     "/container": f"""<html><body style="margin:0; height:100vh; overflow:hidden">
 <div id="box" style="position:absolute; left:300px; top:100px; width:600px; height:500px; overflow:auto">
 <div style="height:3000px">Plain text</div></div>
@@ -423,3 +424,22 @@ async def test_movement_after_load_and_the_approach_are_bounded(session: NotteSe
 async def test_no_movement_on_a_blank_page(session: NotteSession) -> None:
     page = session.window.page
     assert not await pointer.move_after_load(page)
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("pointer_motion")
+async def test_a_check_whose_element_is_gone_afterwards_still_succeeds(session: NotteSession, site: str) -> None:
+    _ = await session.aexecute(type="goto", url=f"{site}/vanishing")
+    record = pointer.moved_onto
+
+    async def removed_first(page: Page, element: Locator | ElementHandle) -> None:
+        # the page removes the checkbox once it changed, before the pointer is recorded
+        _ = await evaluate_in_main_world(page.main_frame, "document.getElementById('gone').remove()")
+        await record(page, element)
+
+    started = time.monotonic()
+    with patch.object(pointer, "moved_onto", removed_first):
+        result = await session.aexecute(CheckAction(selector="#gone", value=True, timeout=400), raise_on_failure=False)
+    assert result.success, result.message
+    # recording where the pointer went does not wait for an element that is gone
+    assert time.monotonic() - started < 2

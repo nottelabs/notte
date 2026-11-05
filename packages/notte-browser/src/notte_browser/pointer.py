@@ -41,6 +41,9 @@ AFTER_LOAD_GRID = (10, 8)
 _SEGMENT_CANDIDATES = 6
 # Time to read where an element is after an action of the driver moved the pointer onto it (s)
 _ELEMENT_BOX_S = 0.5
+# How long a recorded element may take to answer once it was found, in case
+# it is removed between the two reads.
+_GONE_ELEMENT_WAIT_MS = 50
 
 _SCROLL_Y = "() => window.scrollY"
 _RESTORE_SCROLL = "(y) => { if (window.scrollY !== y) window.scrollTo({ top: y, behavior: 'instant' }) }"
@@ -107,11 +110,14 @@ async def moved_onto(page: Page, element: Locator | ElementHandle) -> None:
     scope = asyncio.timeout(_ELEMENT_BOX_S)
     try:
         async with scope:
-            box = (
-                await element.bounding_box(timeout=_ELEMENT_BOX_S * 1000)
-                if isinstance(element, Locator)
-                else await element.bounding_box()
-            )
+            if isinstance(element, Locator):
+                # The action may have removed its element (a change handler, a menu
+                # that closes): never wait for it, the action already succeeded.
+                if await element.count() != 1:
+                    return
+                box = await element.bounding_box(timeout=_GONE_ELEMENT_WAIT_MS)
+            else:
+                box = await element.bounding_box()
             if box is None:
                 return
             width, height = await _viewport(page)
