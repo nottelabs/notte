@@ -1448,17 +1448,16 @@ async def test_a_field_with_no_value_is_skipped_not_blocked(session: NotteSessio
 
     # the next call with the same instruction does not offer the skipped field again; "" in an empty field is no
     # value either, and a second field without a value is skipped too (an optional "Address line 2", then a "County")
+    # (the Search click above changed nothing: it is not offered again for this instruction)
     decider = FakeDecider(
-        choices=[
-            {"operation": "TYPE_TEXT", "type_text_target": ids["notes"]},
-            {"operation": "CLICK", "click_target": search},
-        ],
+        choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["notes"]}, {"operation": "DONE"}],
         texts=[""],
     )
     result = await session.aact("Search flights from Paris", decider=decider, raise_on_failure=False)
     assert ids["dep"] not in decider.questions[0]["type_text_target"].criteria
+    assert search not in decider.questions[0].get("click_target", Question(criteria={})).criteria
     assert ids["notes"] not in decider.questions[1].get("type_text_target", Question(criteria={})).criteria
-    assert result.status == "executed" and result.target == search
+    assert result.status == "done"
     assert await session.window.page.input_value("#notes") == ""
 
 
