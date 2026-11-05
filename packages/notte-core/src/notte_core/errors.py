@@ -114,6 +114,14 @@ class ActionExecutionError(ActionError):
         )
 
 
+class TextNotKeptError(ActionExecutionError):
+    """A fill whose field did not keep the text, set at once or typed key by key: it rejects that value (a phone
+    number in a format the field refuses), and another form of it can be kept."""
+
+    def __init__(self, url: str, reason: str) -> None:
+        super().__init__("fill", url, reason=reason)
+
+
 class FileChooserOpenedError(ActionError):
     def __init__(self) -> None:
         message = "The click opened a file chooser, which was closed with no file chosen: a click cannot choose files."
