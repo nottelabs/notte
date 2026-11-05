@@ -5,7 +5,11 @@ import socket
 import time
 from collections.abc import AsyncIterator, Iterator
 from contextlib import closing
+from typing import cast
+from unittest.mock import AsyncMock, MagicMock
 
+import notte_browser.execution as execution_module
+import notte_browser.files as files_module
 import pytest
 import pytest_asyncio
 from aiohttp import web
@@ -13,7 +17,11 @@ from notte_browser import action_hooks
 from notte_browser.action_hooks import ActionHooks, Point, install_action_hooks, use_action_hooks
 from notte_browser.driver import Locator, Page, evaluate_in_main_world
 from notte_browser.session import NotteSession
-from notte_core.actions import CheckAction, ClickAction
+from notte_browser.window import BrowserWindow
+from notte_core.actions import CheckAction, ClickAction, DownloadFileAction, GotoAction, UploadFileAction
+from notte_core.snapshot import BrowserSnapshot
+from notte_core.storage import BaseStorage
+from patchright.async_api import TimeoutError as PlaywrightTimeoutError
 
 RECORD = """<script>
 window.moves = 0; window.downs = [];
@@ -251,3 +259,94 @@ async def test_a_click_that_restores_a_cached_page_calls_after_navigation(
     # the back-forward cache restored the document: it fired no load event
     assert await page.evaluate("() => document.documentElement.dataset.restored") == "true"
     assert ("after_navigation", "") in recorder.calls
+
+
+class _NoEvent:
+    """An `expect_file_chooser` / `expect_download` context whose event never comes."""
+
+    def __init__(self, events: list[str]) -> None:
+        self.events: list[str] = events
+
+    async def __aenter__(self) -> MagicMock:
+        return MagicMock()
+
+    async def __aexit__(self, *_exc: object) -> bool:
+        self.events.append("waited")
+        raise PlaywrightTimeoutError("no event")
+
+
+def _file_window(events: list[str]) -> MagicMock:
+    window = MagicMock()
+    window.page.expect_file_chooser = MagicMock(return_value=_NoEvent(events))
+    window.page.expect_download = MagicMock(return_value=_NoEvent(events))
+    window.is_chromium_based = False
+    return window
+
+
+@pytest.mark.asyncio
+async def test_a_file_chooser_click_reports_its_move_when_no_chooser_opens(recorder: Recorder) -> None:
+    events: list[str] = []
+    window = _file_window(events)
+    locator = AsyncMock()
+    snapshot = MagicMock()
+    snapshot.dom_node.find.return_value.attributes.tag_name = "button"
+    storage = MagicMock(upload_dir="uploads")
+    storage.get_file = AsyncMock(return_value="uploads/example.txt")
+    with pytest.raises(PlaywrightTimeoutError):
+        _ = await files_module.upload_file(
+            cast(BrowserWindow, window),
+            cast(Locator, locator),
+            UploadFileAction(id="B1", file_path="example.txt"),
+            lambda: 1000,
+            cast(BrowserSnapshot, snapshot),
+            storage=cast(BaseStorage, storage),
+        )
+    locator.click.assert_awaited_once()
+    assert events == ["waited"]
+    assert recorder.moves == [None]
+
+
+@pytest.mark.asyncio
+async def test_a_download_click_reports_its_move_when_no_download_comes(
+    recorder: Recorder, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    events: list[str] = []
+    window = _file_window(events)
+    locator = AsyncMock()
+    monkeypatch.setattr(files_module, "is_raw_file", lambda _window: False)
+    monkeypatch.setattr(files_module, "_resolve_locator_frame", AsyncMock(return_value=MagicMock()))
+    monkeypatch.setattr(files_module, "_evaluate_blob_expression", AsyncMock(return_value=None))
+    storage = MagicMock(download_dir="downloads")
+    with pytest.raises(PlaywrightTimeoutError):
+        await files_module.download_file(
+            cast(BrowserWindow, window),
+            cast(Locator, locator),
+            DownloadFileAction(selector="#download"),
+            lambda: 1000,
+            storage=cast(BaseStorage, storage),
+        )
+    locator.click.assert_awaited_once()
+    assert events == ["waited"]
+    assert recorder.moves == [None]
+
+
+@pytest.mark.asyncio
+async def test_an_action_cancelled_during_setup_leaves_no_hook_listener(recorder: Recorder) -> None:
+    del recorder
+    window = MagicMock()
+    window.page.url = "about:blank"
+    started = asyncio.Event()
+
+    async def hang(*_args: object) -> None:
+        started.set()
+        await asyncio.Event().wait()
+
+    window.watch_new_tabs = AsyncMock(side_effect=hang)
+    task = asyncio.ensure_future(execution_module.execute(window, GotoAction(url="https://example.com")))
+    await started.wait()
+    _ = task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    added = [call.args for call in window.page.on.call_args_list if call.args[0] == "framenavigated"]
+    removed = [call.args for call in window.page.remove_listener.call_args_list if call.args[0] == "framenavigated"]
+    assert added == removed
