@@ -8,6 +8,7 @@ from notte_core.act import ActHistory, ActResult, Answer, Answers, ObservedPage,
 from notte_core.act.errors import InvalidDecisionError
 from notte_core.act.prompts import DIALOG_COVERS_PAGE, TYPE_TEXT_RANGE
 from notte_core.act.space import (
+    TypedValue,
     accessible_names,
     accessible_text,
     act_questions,
@@ -19,6 +20,8 @@ from notte_core.act.space import (
     label_elements,
     label_mode,
     page_state,
+    readback,
+    same_value,
     substitute_variables,
     target_action,
     validate_answer,
@@ -162,6 +165,94 @@ def test_cut_text_masks_a_protected_value_whose_whitespace_the_page_collapsed() 
     privacy = ActPrivacy()
     privacy.remember({"phrase": "alpha  betaSecret"})
     assert privacy.cut_text("x" * 140 + " alpha bet") == "x" * 140 + " {{phrase}}"
+
+
+def _typed(text: str, value: str | None = None) -> TypedValue:
+    return TypedValue(text=text, value=text if value is None else value)
+
+
+def test_a_field_holding_another_form_of_what_was_typed_shows_it() -> None:
+    states = {
+        **STATES,
+        "I1": ElementState(value="11000"),
+        "I4": ElementState(value="(141) 555-5012"),
+    }
+    typed = {"I1": _typed("110 00"), "I3": _typed("us"), "I4": _typed("+1 415 555 0123"), "B1": _typed("x")}
+    space = build_act_space(_page(states), typed=typed)
+    elements = {e["index"]: e for e in space.elements}
+    # the same letters and digits: the page's own format of the value
+    assert elements["I1"]["typed"] == "110 00" and elements["I1"]["reformatted"] is True
+    assert space.targets["TYPE_TEXT"]["I1"].criteria["reformatted"] is True
+    # the option whose value was typed
+    assert elements["I3"]["typed"] == "us" and elements["I3"]["reformatted"] is True
+    # a mask that cut a digit: changed, not reformatted
+    assert elements["I4"]["typed"] == "+1 415 555 0123" and "reformatted" not in elements["I4"]
+    # nothing to say about a field holding what was typed, or one act did not type in
+    same = build_act_space(_page({**STATES, "I1": ElementState(value="110 00")}), typed={"I1": _typed("110 00")})
+    assert "typed" not in same.elements[0]
+    assert all("typed" not in e for e in build_act_space(_page(states)).elements)
+    # a value the vault typed: the field holds the secret, the action its placeholder, compared masked
+    masked = build_act_space(
+        _page({**STATES, "I1": ElementState(value="jane@x.org")}),
+        display_text=lambda text: text.replace("jane@x.org", "[EmailPlaceholder]"),
+        typed={"I1": _typed("[EmailPlaceholder]")},
+    )
+    assert "typed" not in masked.elements[0]
+    # a page that cleared what was typed: changed
+    cleared = build_act_space(_page({**STATES, "I1": ElementState(value="")}), typed={"I1": _typed("110 00")})
+    assert cleared.elements[0]["typed"] == "110 00" and "reformatted" not in cleared.elements[0]
+
+
+def test_a_variable_is_compared_by_its_value_and_shown_as_its_template() -> None:
+    # the writer answered {{zip}}, the browser got "110 00", the page keeps "11000"
+    space = build_act_space(
+        _page({**STATES, "I1": ElementState(value="11000")}),
+        display_text=lambda text: text.replace("110 00", "{{zip}}"),
+        typed={"I1": _typed("{{zip}}", "110 00")},
+    )
+    assert space.elements[0]["typed"] == "{{zip}}" and space.elements[0]["reformatted"] is True
+    assert readback(_typed("{{zip}}", "110 00"), ElementState(value="110 00")) == "same"
+    assert readback(_typed("x"), ElementState(value="y" * 200, value_truncated=True)) is None
+    assert readback(_typed("x"), ElementState(filled=True)) is None
+
+
+def test_same_value_compares_letters_and_digits() -> None:
+    assert same_value("110 00", "11000") and same_value("+1 415-555-0123", "+1 (415) 555 0123")
+    assert same_value("Praha", "PRAHA")
+    # a country code the page added keeps the value; a short value inside a longer one is another value
+    assert same_value("512345678", "+48 512 345 678") and not same_value("12", "1234")
+    # only a country code: a digit the page added without one, or a suffix, makes another value
+    assert not same_value("12345678", "0 12345678") and not same_value("12345678", "12345678-9")
+    assert not same_value("512345678", "+4812 512 345 678")
+    assert not same_value("+48 512 345 678", "+1 48 512 345 678")
+    assert not same_value("1000", "10000") and not same_value("0612345678", "612345678")
+    assert not same_value("+1 415 555 0123", "(141) 555-5012") and not same_value("California", "Cal")
+    assert not same_value("-", "")
+    state = ElementState(value="CA", options=(SelectOption(value="CA", label="California", selected=True),))
+    assert same_value("CA", "California", state) and same_value("california", "California", state)
+
+
+def test_same_value_keeps_the_sign_and_decimal_part_of_a_number() -> None:
+    assert not same_value("-100", "100") and not same_value("1.5", "15") and not same_value("1.50", "150")
+    assert not same_value("-1234", "1234") and not same_value("1000", "1000.5")
+    assert same_value("100", "100.00") and same_value("1,5", "1.5") and same_value("-3", "-3.0")
+
+
+def test_same_value_compares_an_email_whole() -> None:
+    # the punctuation of an email is part of it: another address is not a reformatted one
+    assert not same_value("john.smith@example.com", "johnsmith@example.com")
+    assert not same_value("ana-ruiz@example.com", "anaruiz@example.com")
+    # only its case and the spaces around it can change
+    assert same_value("Jane@Example.com", "jane@example.com") and same_value(" jane@example.com", "jane@example.com")
+
+
+def test_same_value_reads_one_separator_before_three_digits_as_a_thousands_separator() -> None:
+    # pages group amounts: "1,000" (or "12.500") can be the 1000 typed
+    assert same_value("1000", "1,000") and same_value("1,000", "1000") and same_value("12500", "12.500")
+    # ...or a decimal number: both readings are kept
+    assert same_value("1,500", "1.5") and same_value("1.5", "1,500")
+    # other separators keep their meaning
+    assert not same_value("1.5", "15") and not same_value("1000", "1,0000") and not same_value("100", "1,000")
 
 
 def test_a_sorted_column_shows_its_sort_order() -> None:

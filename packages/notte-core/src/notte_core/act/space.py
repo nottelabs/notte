@@ -1016,11 +1016,15 @@ def build_act_space(
     display_cut: Callable[[str], str] | None = None,
     no_text: Collection[str] = (),
     unsubmitted: Collection[str] = (),
+    typed: Mapping[str, "TypedValue"] | None = None,
 ) -> ActSpace:
     """`display_text` masks the presentation strings; `display_cut` (default `display_text`) the live values the
     browser cut, where a protected value can start at the cut. `no_text`: the ids of the fields
     the writer had no value for, not offered to TYPE_TEXT again. `unsubmitted`: the ids of the fields holding text
-    act() typed that nothing submitted yet (see `ActHistory`), shown with `submitted: false`."""
+    act() typed that nothing submitted yet (see `ActHistory`), shown with `submitted: false`. `typed`: what act()
+    last typed in a field, by id: a field that holds something else (`readback`) shows the text typed (`typed`), and
+    whether it is the same value in the page's own format (`reformatted`: "11000" for "110 00", "CA" for
+    "California")."""
     # Determine IDs, roles and supported operations from the original page. Only
     # presentation strings pass through display_text, before their display caps.
     lines = _rendered_lines(page.description)
@@ -1062,10 +1066,33 @@ def build_act_space(
         context = contexts.get(action.id)
         if context is not None:
             element["context"] = _cut(shorten(context, display_text), MAX_CONTEXT_LENGTH)
+        typed_value = None if typed is None else typed.get(action.id)
+        verdict = None if typed_value is None else readback(typed_value, state, display_text)
+        if typed_value is not None and verdict in ("reformatted", "changed"):
+            # the page changed what act typed: reformatted it (the same value), or cut, replaced or cleared it
+            element["typed"] = _cut(display_text(typed_value.text), MAX_LABEL_LENGTH)
+            if verdict == "reformatted":
+                element["reformatted"] = True
+            elif typed_value.protected and state is not None and state.value and state.options is None:
+                # a protected value the page cut keeps its start ("424242424242424" of a card number)
+                element["value"] = (display_cut or display_text)(state.value)
+        # after the masking above: the targets' questions (`current_value`) show the element's value too
         current = element.get("value")
         base: dict[str, Any] = {
             k: element[k]
-            for k in ("role", "type", "format", "checked", "selected", "expanded", "draggable", "invalid", "error")
+            for k in (
+                "role",
+                "type",
+                "format",
+                "checked",
+                "selected",
+                "expanded",
+                "draggable",
+                "invalid",
+                "error",
+                "typed",
+                "reformatted",
+            )
             if k in element
         }
 
@@ -1203,6 +1230,118 @@ def build_act_space(
         WaitAction(time_ms=WAIT_MS),
     )
     return space
+
+
+# the shortest typed value that, with a prefix or suffix added by the page, is still the same value (`same_value`)
+MIN_KEPT_LENGTH = 4
+# the most digits of a country code a page puts before a typed phone number (`same_value`)
+MAX_COUNTRY_CODE_DIGITS = 3
+# a number as typed: a sign and a decimal part change its value, unlike the layout of a postcode or a phone number
+_NUMBER = re.compile(r"[+-]?\d+(?:[.,]\d+)?")
+# a number with one separator before three digits, which can be a thousands separator ("1,000", "12.500")
+_GROUPED = re.compile(r"[+-]?\d{1,3}[.,]\d{3}")
+# an email address as typed: compared whole (`same_value`), its punctuation is not formatting
+_EMAIL = re.compile(r"[^\s@]+@[^\s@]+\.[^\s@]+")
+_DIGITS = re.compile(r"\+?\d+")
+
+
+@dataclass(frozen=True)
+class TypedValue:
+    """What act() typed in a field: `text` as the writer wrote it (`{{variables}}` and vault placeholders, what the
+    models see) and `value` as the browser got it (variables substituted: compared with what the field holds, never
+    shown)."""
+
+    text: str
+    value: str
+    # it holds a protected value (a variable or a vault placeholder): what the page changed it to can keep part of
+    # that value, masked at its end as a cut value is
+    protected: bool = False
+
+
+Readback = Literal["same", "reformatted", "changed"]
+
+
+def readback(
+    typed: TypedValue, state: ElementState | None, display_text: Callable[[str], str] = str
+) -> Readback | None:
+    """What the field holds (`state`) after act typed `typed` in it: `same`, the same value in the page's own format
+    (`reformatted`, see `same_value`), or `changed` (cut, replaced or cleared). None when unknown: no live value, or
+    one the browser cut. A value the vault typed is compared masked (`display_text`): the field holds the secret, the
+    action its placeholder."""
+    held = None if state is None or state.value_truncated else shown_value(state)
+    if held is None:
+        return None
+    if held == typed.value or display_text(held) == display_text(typed.text):
+        return "same"
+    return "reformatted" if same_value(typed.value, held, state) else "changed"
+
+
+def compact(text: str) -> str:
+    """The letters and digits of `text`, case-folded: two forms of one value ("110 00" and "11000", "+1 415-555"
+    and "+1 (415) 555") have the same."""
+    return "".join(c for c in text.casefold() if c.isalnum())
+
+
+def _numbers(text: str) -> frozenset[float]:
+    """The numbers `text` can mean (empty when it is not a number): one separator followed by three digits is a
+    decimal point or a thousands separator ("1,000" is 1 or 1000), as pages format amounts either way."""
+    text = text.strip()
+    if not _NUMBER.fullmatch(text):
+        return frozenset()
+    numbers = {float(text.replace(",", "."))}
+    if _GROUPED.fullmatch(text):
+        numbers.add(float(text.replace(",", "").replace(".", "")))
+    return frozenset(numbers)
+
+
+def same_value(typed: str, value: str, state: ElementState | None = None) -> bool:
+    """The field holding `value` (as shown) after `typed` was typed in it holds the same value in the page's own
+    format:
+    - for a `<select>`, the option whose value or label was typed ("CA" for "California");
+    - for a number with a sign or a decimal part, the same number ("100.00" for "100", not "100" for "-100" or "15"
+      for "1.5");
+    - otherwise the same letters and digits ("11000" for "110 00"), or the typed digits after a country code the page
+      added ("+48 512 345 678" for "512345678"; not "0 12345678" for "12345678", a different number)."""
+    key = compact(typed)
+    if not key:
+        return False
+    options = () if state is None or state.options is None else state.selected_options
+    if any(key in (compact(option.value), compact(option.label)) for option in options):
+        return True
+    if _EMAIL.fullmatch(typed.strip()):
+        # the dots and dashes of an email are part of it ("john.smith@" is not "johnsmith@"): only its case can change
+        return typed.strip().casefold() == value.strip().casefold()
+    typed_numbers, held_numbers = _numbers(typed), _numbers(value)
+    plain = _DIGITS.fullmatch(typed.strip()) is not None
+    if typed_numbers and not plain:
+        return bool(typed_numbers & held_numbers)
+    if plain and held_numbers and _DIGITS.fullmatch(value.strip()) is None:
+        # digits typed, a number with a sign, a decimal part or a thousands separator held
+        return bool(typed_numbers & held_numbers)
+    held = compact(value)
+    if key == held:
+        return True
+    # a country code: a "+" and at most `MAX_COUNTRY_CODE_DIGITS` digits before the typed digits
+    shown = value.strip()
+    return (
+        shown.startswith("+")
+        # a number typed with its own country code is changed by another one ("+1 48 512..." for "+48 512...")
+        and not typed.strip().startswith("+")
+        and key.isdigit()
+        and len(key) >= MIN_KEPT_LENGTH
+        and held.isdigit()
+        and held.endswith(key)
+        and 0 < len(held) - len(key) <= MAX_COUNTRY_CODE_DIGITS
+    )
+
+
+def shown_value(state: ElementState | None) -> str | None:
+    """What a field shows as its value (as `_element`): its selected options' labels for a `<select>`."""
+    if state is None:
+        return None
+    if state.options is not None:
+        return ", ".join(option.label for option in state.selected_options)
+    return state.value
 
 
 def field_context(
