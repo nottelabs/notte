@@ -2579,6 +2579,28 @@ async def test_go_back_is_offered_only_with_a_page_to_go_back_to() -> None:
 
 
 @pytest.mark.asyncio
+async def test_go_back_stays_offered_while_it_moves_back_through_entries_of_one_page() -> None:
+    # an app pushed history entries for the same URL and page: going back moves through them with no visible change,
+    # and the page it opened before is further back
+    async def app(route: Route) -> None:
+        await route.fulfill(body="<h1>Shipping</h1><button>Continue</button>", content_type="text/html")
+
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        await page.context.route("http://app.test/**", app)
+        _ = await page.goto("http://app.test/cart")
+        _ = await page.goto("http://app.test/shipping")
+        await page.evaluate(
+            "history.pushState({step: 1}, '', location.href); history.pushState({step: 2}, '', location.href)"
+        )
+        decider = FakeDecider(choices=[{"operation": "GO_BACK"}, {"operation": "GO_BACK"}, {"operation": "DONE"}])
+        for _ in range(3):
+            _ = await session.aact("Go back to the cart", decider=decider)
+        # each GO_BACK moved the tab back in its history: offered again on the same-looking page
+        assert all("GO_BACK" in questions["operation"].criteria for questions in decider.questions[:3])
+
+
+@pytest.mark.asyncio
 async def test_the_page_an_action_left_is_sent_as_previous_page(session: NotteSession) -> None:
     pages = {
         "/start": '<p>Order 7731</p><a href="/form">Continue</a>',

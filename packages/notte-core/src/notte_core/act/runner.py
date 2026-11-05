@@ -229,6 +229,9 @@ class ActHistoryEntry:
     target: str | None = None
     # the instruction the action ran for: another instruction is offered it again (see `ActHistory.no_effect`)
     instruction: str | None = field(default=None, repr=False)
+    # the tab's position in its history when the action ran (`ObservedPage.history_index`): a GO_BACK that moved it
+    # did something, though the page can look the same
+    history_index: int | None = field(default=None, repr=False)
 
 
 # operations that are expected to leave the fingerprint unchanged (it ignores the scroll position)
@@ -429,7 +432,8 @@ class ActHistory:
         click on a focused field, a button a form error keeps from submitting, a value the field already holds).
         Scrolls and WAIT are left out: the fingerprint ignores the scroll position, and a wait is expected to change
         nothing. So is a key pressed in the focused field (Enter, Escape) followed by an action that can move the
-        focus, which the fingerprint ignores (a click, not a scroll or another key). So is an action that failed (a click that timed out can work when tried again), unless it opened a file chooser: that
+        focus, which the fingerprint ignores (a click, not a scroll or another key), and a GO_BACK that moved the tab
+        back in its history (`history_index`). So is an action that failed (a click that timed out can work when tried again), unless it opened a file chooser: that
         opens it again."""
         entries = list(self.entries)
         return {
@@ -440,6 +444,9 @@ class ActHistory:
             and e.instruction == instruction
             and e.fingerprint == page.fingerprint
             and e.kind not in _UNTRACKED
+            # a GO_BACK that moved the tab back in its history did something: an app can push entries for one URL
+            # and page, and the page it opened before is further back
+            and not (e.kind == "GO_BACK" and e.history_index != page.history_index)
             and (
                 e.kind not in _FOCUSED_KEYS
                 or all(later.kind in _UNTRACKED or later.kind in _FOCUSED_KEYS for later in entries[i + 1 :])
@@ -735,6 +742,7 @@ async def run_act(
             typed_value=None if text is None else substitute_variables(text, variables),
             target=None if target is None else target.key,
             instruction=instruction,
+            history_index=page.history_index,
         )
         if target is not None and decision.operation == "CLICK":
             history.unskip(page, target.element_id)

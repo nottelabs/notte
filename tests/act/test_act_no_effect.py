@@ -159,3 +159,14 @@ def test_an_action_that_failed_is_offered_again_unless_it_opened_a_file_chooser(
     # clicking again opens the file chooser again
     chooser = _history(("CLICK", "B1"), error="FileChooserOpenedError")
     assert chooser.no_effect(_page(), "check out") == {("CLICK", "B1"), ("CLOSE_DIALOG", "B1")}
+
+
+def test_a_go_back_that_moved_the_tab_back_is_offered_again() -> None:
+    from dataclasses import replace
+
+    history = _history(("GO_BACK", None))
+    history.entries[0].history_index = 3
+    # the tab moved back in its history: the GO_BACK did something, though the page looks the same
+    assert history.no_effect(replace(_page(), history_index=2), "check out") == set()
+    # it did not move
+    assert history.no_effect(replace(_page(), history_index=3), "check out") == {("GO_BACK", None)}

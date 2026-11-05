@@ -112,6 +112,9 @@ class ObservedPage:
     inner_scroll: Mapping[Literal["up", "down"], str] = field(default_factory=dict[Literal["up", "down"], str])
     # the tab has a page of its own to go back to, read by the local driver (True when unknown)
     can_go_back: bool = True
+    # the tab's position in its history, read by the local driver (None when unknown): a GO_BACK that moved it did
+    # something, though the page can look the same (an app that pushed entries for one URL)
+    history_index: int | None = None
     # what is read from the page once per step and needed several times (names, contexts, ...), by `_once`. A
     # changed page is a new `ObservedPage` (`dataclasses.replace` included), with an empty cache
     _derived: dict[str, Any] = field(default_factory=dict[str, Any], init=False, repr=False, compare=False)
