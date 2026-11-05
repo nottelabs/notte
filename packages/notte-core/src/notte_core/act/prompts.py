@@ -8,7 +8,8 @@
 # file upload line, the choose / check rules, the rule on page text outside the viewport, submitting a typed query
 # with no suggestion listed, the DONE line for typed text not submitted yet, the element context rule, the rule on
 # submitting after a dialog, the final-state rule of DONE, the dialog button rule, setting sliders and spin
-# buttons by typing, the invalid field / field error rules, and the rule on fields the page reformatted.
+# buttons by typing, the invalid field / field error rules, the rule on fields the page reformatted, and the rule on
+# a dialog an action opened.
 """Instructions sent with the questions of `act()` / `choose()` / `check()` and to the field writer."""
 
 NEXT_ACTION = """Advance the user's entire goal from the CURRENT page using one operation.
@@ -27,6 +28,9 @@ Do not toggle a checkbox, switch, or radio already in the requested state.
 Submit populated search fields before opening a result; a populated field alone is not an applied search.
 Close or confirm an open dialog before Search/Submit. A Search/Submit that opened a date picker or dialog
 instead of results has not run: confirm it, then CLICK Search/Submit again.
+When the last recent action other than WAIT or a skipped field has opened_dialog, it opened the dialog now over the
+page: the dialog is its result (an item added, a choice to make). When the dialog holds the goal's next step (Checkout, View basket, Continue, a field or option the goal
+gives), act inside it; close it only when it holds none. Closing it, then repeating that action, opens it again.
 WAIT only when the needed control is absent/disabled, or submitted results are still loading.
 If Search/Submit is visible and the required fields are ready, CLICK it immediately.
 Recent WAIT actions are not evidence of loading. Prefer a useful visible control over WAIT.

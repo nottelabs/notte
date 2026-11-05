@@ -1,0 +1,31 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Merino socks - Northwind Store</title>
+<style>[hidden]{display:none!important}body{font-family:sans-serif;margin:0}header{display:flex;justify-content:space-between;padding:12px 24px;border-bottom:1px solid #ddd}
+main{padding:24px;max-width:640px}.scrim{position:fixed;inset:0;background:#0006;display:flex;align-items:center;justify-content:center}
+[role=dialog]{background:#fff;padding:20px;border-radius:8px;width:380px;position:relative}.x{position:absolute;top:8px;right:8px}</style></head>
+<body>
+<header><strong>Northwind Store</strong><button type="button" id="bag">Bag (<span id="count">0</span>)</button></header>
+<main><h1>Merino socks</h1><p>$18 · Navy · One size</p><p>Soft merino wool, reinforced heel and toe.</p>
+<button type="button" id="add">Add to cart</button></main>
+<!-- an upsell first (closing it is the step), then the confirmation, whose Checkout is the next step: the bag button
+opens the same confirmation, so closing it and opening it again goes round -->
+<div class="scrim" id="upsell" hidden><div role="dialog" aria-modal="true" aria-labelledby="up-h">
+  <h2 id="up-h">Protect your socks?</h2><p>2-year protection plan for $4.99.</p>
+  <button type="button" id="protect">Add protection</button> <button type="button" id="skip">No thanks</button></div></div>
+<div class="scrim" id="added" hidden><div role="dialog" aria-modal="true" aria-labelledby="ad-h">
+  <button type="button" class="x" id="close" aria-label="Close">×</button>
+  <h2 id="ad-h">Added to your cart</h2><p>Merino socks · Navy · $18</p><p id="prot"></p>
+  <button type="button" id="continue">Continue shopping</button> <a id="checkout" href="added-checkout.html">Checkout</a></div></div>
+<script>
+const $ = id => document.getElementById(id);
+let items = 0, protection = 'no';
+const added = v => { $('added').hidden = !v; };
+$('add').onclick = () => { $('upsell').hidden = false; };
+const toCart = p => {
+  protection = p; items = 1; $('count').textContent = items; $('upsell').hidden = true;
+  $('prot').textContent = p === 'yes' ? '+ 2-year protection plan' : '';
+  $('checkout').href = `added-checkout.html?item=socks&qty=${items}&protection=${protection}`; added(true);
+};
+$('protect').onclick = () => toCart('yes'); $('skip').onclick = () => toCart('no');
+$('close').onclick = () => added(false); $('continue').onclick = () => added(false);
+$('bag').onclick = () => { if (items) added(true); };
+</script></body></html>
