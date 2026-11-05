@@ -437,7 +437,7 @@ class SessionsOperations(BaseClient):
     ) -> core.ActResult:
         "Page Act (`POST /sessions/{session_id}/page/act`)."
         request = core.ActRequest.model_validate(data)
-        return self.request(page_api.page_act(session_id, request, params=wire_request(None, query or {})))
+        return self.request(page_api.page_act(session_id, request, params=wire_request(None, query or {})), timeout=200)
 
     @track_usage("cloud.session.check")
     def check(
@@ -449,7 +449,9 @@ class SessionsOperations(BaseClient):
     ) -> core.CheckResponse:
         "Page Check (`POST /sessions/{session_id}/page/check`)."
         request = core.CheckRequest.model_validate(data)
-        return self.request(page_api.page_check(session_id, request, params=wire_request(None, query or {})))
+        return self.request(
+            page_api.page_check(session_id, request, params=wire_request(None, query or {})), timeout=200
+        )
 
     @track_usage("cloud.session.choose")
     def choose(
@@ -461,7 +463,9 @@ class SessionsOperations(BaseClient):
     ) -> core.Choice:
         "Page Choose (`POST /sessions/{session_id}/page/choose`)."
         request = core.ChooseRequest.model_validate(data)
-        return self.request(page_api.page_choose(session_id, request, params=wire_request(None, query or {})))
+        return self.request(
+            page_api.page_choose(session_id, request, params=wire_request(None, query or {})), timeout=200
+        )
 
     @track_usage("cloud.session.execute")
     def execute(
@@ -654,7 +658,9 @@ class AsyncSessionsOperations(AsyncBaseClient):
     ) -> core.ActResult:
         "Page Act (`POST /sessions/{session_id}/page/act`)."
         request = core.ActRequest.model_validate(data)
-        return await self.request(page_api.page_act(session_id, request, params=wire_request(None, query or {})))
+        return await self.request(
+            page_api.page_act(session_id, request, params=wire_request(None, query or {})), timeout=200
+        )
 
     @track_usage("cloud.session.check")
     async def check(
@@ -666,7 +672,9 @@ class AsyncSessionsOperations(AsyncBaseClient):
     ) -> core.CheckResponse:
         "Page Check (`POST /sessions/{session_id}/page/check`)."
         request = core.CheckRequest.model_validate(data)
-        return await self.request(page_api.page_check(session_id, request, params=wire_request(None, query or {})))
+        return await self.request(
+            page_api.page_check(session_id, request, params=wire_request(None, query or {})), timeout=200
+        )
 
     @track_usage("cloud.session.choose")
     async def choose(
@@ -678,7 +686,9 @@ class AsyncSessionsOperations(AsyncBaseClient):
     ) -> core.Choice:
         "Page Choose (`POST /sessions/{session_id}/page/choose`)."
         request = core.ChooseRequest.model_validate(data)
-        return await self.request(page_api.page_choose(session_id, request, params=wire_request(None, query or {})))
+        return await self.request(
+            page_api.page_choose(session_id, request, params=wire_request(None, query or {})), timeout=200
+        )
 
     @track_usage("cloud.session.execute")
     async def execute(

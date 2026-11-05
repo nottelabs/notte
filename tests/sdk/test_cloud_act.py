@@ -14,6 +14,8 @@ from notte_sdk.client import NotteClient
 from notte_sdk.endpoints.page import ACT_TIMEOUT_SECONDS
 from notte_sdk.endpoints.sessions import RemoteSession
 
+from scripts.generate_sdk_endpoints import REQUEST_TIMEOUTS
+
 from tests.sdk.test_async_resources import exchange_async, exchange_sync
 from tests.sdk.test_generated_endpoints import SERVER, fake
 
@@ -149,3 +151,12 @@ def test_an_action_that_failed_raises_its_error(client: NotteClient, monkeypatch
 def test_steps_that_ran_nothing_never_raise(client: NotteClient, monkeypatch, status: str) -> None:
     _ = fake(monkeypatch, act_result(status))
     assert _session(client).act("accept the cookies").status == status
+
+
+def test_the_generated_low_level_bindings_wait_as_long_as_the_session_methods(
+    client: NotteClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    assert {REQUEST_TIMEOUTS[name] for name in ("page_act", "page_choose", "page_check")} == {ACT_TIMEOUT_SECONDS}
+    api = fake(monkeypatch, {"probability": 0.5})
+    _ = client.sessions.check(SESSION_ID, question="Is it done?")
+    assert api.calls[0].timeout.get("read") == ACT_TIMEOUT_SECONDS

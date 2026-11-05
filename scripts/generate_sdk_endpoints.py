@@ -507,6 +507,10 @@ def _factories(name: str) -> tuple[str, ...]:
     )
 
 
+# Operations that take longer than the client's default request timeout, in seconds. A cloud act() / choose() /
+# check() takes several model calls and may wait for a CAPTCHA solve: `endpoints.page.ACT_TIMEOUT_SECONDS`, which
+# tests/sdk/test_cloud_act.py checks these against.
+REQUEST_TIMEOUTS = {"page_act": 200, "page_choose": 200, "page_check": 200}
 # Multipart file fields are sent from a local path; these keep their public keyword.
 FILE_KEYWORDS = {"BodyFunctionCreateFunctionsPost": {"file": "path"}}
 # Behavior-rich types keep their core identity. Request serialization bypasses
@@ -923,6 +927,8 @@ def _method(bound: Bound, name: str, *, asynchronous: bool = False) -> str:
     call = f"self.{runtime}({endpoint}{headers}{raw})"
     if op.name == "session_auth_readiness":
         call = f"self.{runtime}({endpoint}, timeout=10)"
+    if (timeout := REQUEST_TIMEOUTS.get(op.name)) is not None:
+        call = f"self.{runtime}({endpoint}{headers}{raw}, timeout={timeout})"
     if asynchronous:
         call = f"await {call}"
     if field := RESULT_FIELDS.get(op.name):
