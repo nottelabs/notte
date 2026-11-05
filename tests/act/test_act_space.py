@@ -1804,8 +1804,12 @@ def test_an_unnamed_listbox_is_named_by_the_short_text_before_it() -> None:
         '_[:]<select disabled name="colour"><option>Red</option></select>',
         # text too long to be the label of the list, nearer than the short one
         "_[:]Free shipping on every order over fifty euros, returns within thirty days",
+        # a checkbox or a tab, which get B ids like buttons: the text before it is its own
+        'B1[:]<div role="checkbox" aria-checked="false">Gift wrap</div>',
+        'B1[:]<input type="checkbox" name="gift"></input>',
+        'B1[:]<button role="tab">Details</button>',
     ],
-    ids=["disabled field", "long text"],
+    ids=["disabled field", "long text", "aria checkbox", "checkbox input", "tab"],
 )
 def test_an_unnamed_listbox_is_not_named_past_a_barrier(barrier: str) -> None:
     description = f'_[:]Colour\n{barrier}\nI1[:]<ul role="listbox"></ul>\nO1[:]<li role="option">S</li>'
@@ -1813,6 +1817,8 @@ def test_an_unnamed_listbox_is_not_named_past_a_barrier(barrier: str) -> None:
         FillAction(id="I1", value="<sample_value>", text_label=""),
         ClickAction(id="O1", text_label="S", accessible_name="S"),
     ]
+    if barrier.startswith("B1"):
+        actions.append(ClickAction(id="B1", text_label="", accessible_name="Gift wrap"))
     assert accessible_names(_page({}, description=description, actions=actions))["I1"] == "listbox"
 
 

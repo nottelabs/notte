@@ -463,13 +463,13 @@ def _listbox_label(
         if key is None or i in used:
             return None
         if key != "_":
-            if key[:1] not in ("B", "L"):
-                # a field or another list: the text before it is its own
+            if key[:1] not in ("B", "L") or not _button_or_link(content):
+                # a field, another list, a checkbox or a tab (B ids too): the text before it is its own
                 return None
             continue
         rendered = _RENDERED_ELEMENT.match(content)
         if rendered is not None:
-            if rendered.group(1).lower() in ("button", "a"):
+            if rendered.group(1).lower() in ("button", "a") and _button_or_link(content):
                 continue
             # a control without an id (disabled, off-screen): the text before it is its own
             return None
@@ -479,6 +479,14 @@ def _listbox_label(
         if text:
             return i, text
     return None
+
+
+def _button_or_link(content: str) -> bool:
+    """Whether a rendered element is a plain button or link, not a checkbox, radio, switch or tab (which get B ids
+    as well)."""
+    if content.startswith("<input") and ('type="checkbox"' in content or 'type="radio"' in content):
+        return False
+    return _aria_role(content) in (None, "button", "link")
 
 
 def _names(page: ObservedPage) -> _Names:
