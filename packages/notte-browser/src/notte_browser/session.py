@@ -216,7 +216,8 @@ class LocalActDriver:
         except PlaywrightError:
             # navigated meanwhile: the next observation reads the new page
             inner_scroll = {}
-        page = replace(page, inner_scroll=inner_scroll, can_go_back=await self._can_go_back())
+        can_go_back, history_index = await self._history()
+        page = replace(page, inner_scroll=inner_scroll, can_go_back=can_go_back, history_index=history_index)
         if self._capture_signatures:
             self._signatures = await self._read_signatures(signature_xpaths(page))
             page = replace(page, readonly=self._signatures.readonly())
@@ -260,21 +261,21 @@ class LocalActDriver:
                 _ = targets.setdefault(direction, f"{outer}css={path}")
         return targets
 
-    async def _can_go_back(self) -> bool:
-        """Whether the tab has a page of its own to go back to: not when a link opened it (no previous entry), nor on
-        the first page the session opened (the previous entry is the blank page the tab started on, and going back
-        loses the page). True when unknown (no CDP)."""
+    async def _history(self) -> tuple[bool, int | None]:
+        """Whether the tab has a page of its own to go back to, and its position in its history (None when unknown).
+        It has none when a link opened it (no previous entry), nor on the first page the session opened (the previous
+        entry is the blank page the tab started on, and going back loses the page). True when unknown (no CDP)."""
         window = self.session.window
         if not window.is_chromium_based:
-            return True
+            return True, None
         try:
             session = await window.get_cdp_session()
             history: Mapping[str, int | list[_NavigationEntry]] = await session.send("Page.getNavigationHistory")  # pyright: ignore[reportUnknownMemberType]
         except PlaywrightError:
-            return True
+            return True, None
         index = cast(int, history["currentIndex"])
         entries = cast(list[_NavigationEntry], history["entries"])
-        return index >= 2 or (index == 1 and entries[0]["url"] != "about:blank")
+        return index >= 2 or (index == 1 and entries[0]["url"] != "about:blank"), index
 
     async def _changes(self, timeout_ms: int) -> bool:
         """The page changes (DOM or URL) within `timeout_ms`, and has settled since (`notte_core.act.wait`)."""

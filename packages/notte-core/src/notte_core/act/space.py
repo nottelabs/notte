@@ -112,6 +112,9 @@ class ObservedPage:
     inner_scroll: Mapping[Literal["up", "down"], str] = field(default_factory=dict[Literal["up", "down"], str])
     # the tab has a page of its own to go back to, read by the local driver (True when unknown)
     can_go_back: bool = True
+    # the tab's position in its history, read by the local driver (None when unknown): a GO_BACK that moved it did
+    # something, though the page can look the same (an app that pushed entries for one URL)
+    history_index: int | None = None
     # what is read from the page once per step and needed several times (names, contexts, ...), by `_once`. A
     # changed page is a new `ObservedPage` (`dataclasses.replace` included), with an empty cache
     _derived: dict[str, Any] = field(default_factory=dict[str, Any], init=False, repr=False, compare=False)
@@ -1017,6 +1020,7 @@ def build_act_space(
     no_text: Collection[str] = (),
     unsubmitted: Collection[str] = (),
     typed: Mapping[str, "TypedValue"] | None = None,
+    no_effect: Collection[tuple[str, str | None]] = (),
 ) -> ActSpace:
     """`display_text` masks the presentation strings; `display_cut` (default `display_text`) the live values the
     browser cut, where a protected value can start at the cut. `no_text`: the ids of the fields
@@ -1024,7 +1028,8 @@ def build_act_space(
     act() typed that nothing submitted yet (see `ActHistory`), shown with `submitted: false`. `typed`: what act()
     last typed in a field, by id: a field that holds something else (`readback`) shows the text typed (`typed`), and
     whether it is the same value in the page's own format (`reformatted`: "11000" for "110 00", "CA" for
-    "California")."""
+    "California"). `no_effect`: the (operation, target key, None for a control) that already ran on this very page
+    state and changed nothing, not offered again: repeating them cannot change the page either."""
     # Determine IDs, roles and supported operations from the original page. Only
     # presentation strings pass through display_text, before their display caps.
     lines = _rendered_lines(page.description)
@@ -1035,6 +1040,9 @@ def build_act_space(
 
     def add(operation: Operation, target: Target, element: dict[str, Any]) -> None:
         if operation == "TYPE_TEXT" and target.element_id in no_text:
+            return
+        # without live state the fingerprint does not show a checkbox toggled
+        if (operation, target.key) in no_effect and (target.kind != "check" or has_live_state):
             return
         _ = space.targets.setdefault(operation, {}).__setitem__(target.key, target)
         if operation not in element["operations"]:
@@ -1189,7 +1197,10 @@ def build_act_space(
             key: target
             for key, target in space.targets.get("CLICK", {}).items()
             # a button or link closes a dialog; clicking a field inside it (a search box) does not
-            if target.kind == "click" and target.element_id in lines and target.role in ("button", "link")
+            if target.kind == "click"
+            and target.element_id in lines
+            and target.role in ("button", "link")
+            and ("CLOSE_DIALOG", key) not in no_effect
         }
         if close:
             space.targets["CLOSE_DIALOG"] = close
@@ -1210,19 +1221,22 @@ def build_act_space(
         space.controls["SCROLL_UP"] = Control(
             "SCROLL_UP", "Scroll up one page", ScrollUpAction(selector=page.inner_scroll.get("up"))
         )
-    if any(e.get("expanded") is True and e["role"] in ("textbox", "combobox") for e in space.elements) and any(
-        e["role"] == "option" for e in space.elements
+    if (
+        ("CLOSE_SUGGESTIONS", None) not in no_effect
+        and any(e.get("expanded") is True and e["role"] in ("textbox", "combobox") for e in space.elements)
+        and any(e["role"] == "option" for e in space.elements)
     ):
         # a field's suggestion list is open: it can cover the next fields, and clicking the field keeps it open
         space.controls["CLOSE_SUGGESTIONS"] = Control(
             "CLOSE_SUGGESTIONS", prompts.CLOSE_SUGGESTIONS, PressKeyAction(key="Escape")
         )
-    space.controls["PRESS_ENTER"] = Control(
-        "PRESS_ENTER",
-        "Press Enter in the focused field (e.g. submit a typed search that has no visible button)",
-        PressKeyAction(key="Enter"),
-    )
-    if page.can_go_back:
+    if ("PRESS_ENTER", None) not in no_effect:
+        space.controls["PRESS_ENTER"] = Control(
+            "PRESS_ENTER",
+            "Press Enter in the focused field (e.g. submit a typed search that has no visible button)",
+            PressKeyAction(key="Enter"),
+        )
+    if page.can_go_back and ("GO_BACK", None) not in no_effect:
         space.controls["GO_BACK"] = Control("GO_BACK", "Go back to the previous page", GoBackAction())
     space.controls["WAIT"] = Control(
         "WAIT",

@@ -225,7 +225,21 @@ class ActHistoryEntry:
     # typed (`readback`): the page can reformat, cut, replace or clear it ("11000" for "110 00", a phone mask)
     holds: str | None = field(default=None, repr=False)
     readback: Readback | None = None
+    # the target key of the action (`B1`, `I2:3`), None for a control
+    target: str | None = None
+    # the instruction the action ran for: another instruction is offered it again (see `ActHistory.no_effect`)
+    instruction: str | None = field(default=None, repr=False)
+    # the tab's position in its history when the action ran (`ObservedPage.history_index`): a GO_BACK that moved it
+    # did something, though the page can look the same
+    history_index: int | None = field(default=None, repr=False)
 
+
+# operations that are expected to leave the fingerprint unchanged (it ignores the scroll position)
+_UNTRACKED = ("WAIT", "SCROLL_DOWN", "SCROLL_UP")
+# keys pressed in the focused field: what they do depends on the focus, which the fingerprint ignores
+_FOCUSED_KEYS = ("PRESS_ENTER", "CLOSE_SUGGESTIONS")
+# both click a button: one that changed nothing is not offered as the other either
+_CLICKS = ("CLICK", "CLOSE_DIALOG")
 
 # clicking these does not submit what was typed in a field
 _FORM_ROLES = ("textbox", "combobox", "checkbox", "radio", "select")
@@ -412,6 +426,34 @@ class ActHistory:
         field that did not keep the text rejected it, and the writer is told not to write it again."""
         return next((e.text for e in reversed(self.entries) if e.field_key == field_key and e.text), None)
 
+    def no_effect(self, page: ObservedPage, instruction: str) -> set[tuple[str, str | None]]:
+        """The (operation, target key) of the recent actions for `instruction` that ran on the very page state of
+        `page` (same fingerprint) and left it unchanged: offered again, the decider picked them again and again (a
+        click on a focused field, a button a form error keeps from submitting, a value the field already holds).
+        Scrolls and WAIT are left out: the fingerprint ignores the scroll position, and a wait is expected to change
+        nothing. So is a key pressed in the focused field (Enter, Escape) followed by an action that can move the
+        focus, which the fingerprint ignores (a click, not a scroll or another key), and a GO_BACK that moved the tab
+        back in its history (`history_index`). So is an action that failed (a click that timed out can work when tried again), unless it opened a file chooser: that
+        opens it again."""
+        entries = list(self.entries)
+        return {
+            (kind, e.target)
+            for i, e in enumerate(entries)
+            if e.page_changed is False
+            and (e.error is None or e.error == FileChooserOpenedError.__name__)
+            and e.instruction == instruction
+            and e.fingerprint == page.fingerprint
+            and e.kind not in _UNTRACKED
+            # a GO_BACK that moved the tab back in its history did something: an app can push entries for one URL
+            # and page, and the page it opened before is further back
+            and not (e.kind == "GO_BACK" and e.history_index != page.history_index)
+            and (
+                e.kind not in _FOCUSED_KEYS
+                or all(later.kind in _UNTRACKED or later.kind in _FOCUSED_KEYS for later in entries[i + 1 :])
+            )
+            for kind in (_CLICKS if e.kind in _CLICKS else (e.kind,))
+        }
+
     def acted_since_observed(self) -> bool:
         """An action other than a WAIT ran since the last observation (the next one tells what it changed)."""
         return len(self.entries) > 0 and self.entries[-1].pending and self.entries[-1].kind != "WAIT"
@@ -568,6 +610,7 @@ async def run_act(
             unsubmitted=history.unsubmitted(),
             # what act typed in the fields: a field holding another form of it shows what was typed
             typed=history.typed_values(page),
+            no_effect=history.no_effect(page, instruction),
         )
         # a scroll that failed on this very page fails again: not offered until the page changes
         for operation in history.failed_scrolls(page):
@@ -697,6 +740,9 @@ async def run_act(
             source_url=page.url,
             field_key=None if target is None or decision.operation != "TYPE_TEXT" else _typed_field(page, target),
             typed_value=None if text is None else substitute_variables(text, variables),
+            target=None if target is None else target.key,
+            instruction=instruction,
+            history_index=page.history_index,
         )
         if target is not None and decision.operation == "CLICK":
             history.unskip(page, target.element_id)
