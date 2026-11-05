@@ -246,9 +246,9 @@ export type ApiSessionStartRequest = {
     /**
      * Browser Type
      *
-     * The browser type to use. Supported values are chromium and chrome. chrome-nightly and chrome-turbo are legacy aliases for chrome.
+     * The browser type to use. Supported values are chromium, chrome and chrome-nitro. chrome-nitro creates a managed Chrome Nitro session. chrome-nightly and chrome-turbo are legacy aliases for chrome.
      */
-    browser_type?: 'chromium' | 'chrome' | 'chrome-nightly' | 'chrome-turbo';
+    browser_type?: 'chromium' | 'chrome' | 'chrome-nitro' | 'chrome-nightly' | 'chrome-turbo';
     /**
      * User Agent
      *
