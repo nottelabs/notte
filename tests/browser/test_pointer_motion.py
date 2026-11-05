@@ -8,6 +8,7 @@ import socket
 import time
 from collections.abc import AsyncIterator, Iterator
 from contextlib import AbstractContextManager, closing
+from typing import Any
 from unittest.mock import patch
 
 import notte_browser.execution as execution_module
@@ -464,3 +465,28 @@ async def test_recording_the_pointer_does_not_use_the_actions_deadline(session: 
     assert result.success, result.message
     # the record ran (its own bound may skip it on a slow machine), and it did not fail the check
     assert len(reads) == 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("seed", range(3))
+async def test_no_wheel_back_when_it_would_not_scroll_the_document(session: NotteSession, site: str, seed: int) -> None:
+    _ = await session.aexecute(type="goto", url=f"{site}/calm")
+    page = session.window.page
+    await page.evaluate("() => window.scrollTo(0, 700)")
+    points = pointer._points  # pyright: ignore[reportPrivateUsage]
+    wheel = page.mouse.wheel
+    wheels: list[float] = []
+
+    async def counted_wheel(delta_x: float, delta_y: float) -> None:
+        wheels.append(delta_y)
+        await wheel(delta_x, delta_y)
+
+    async def container_after_the_wheel(page: Page, at: list[pointer.Point]) -> Any:
+        checked = await points(page, at)
+        # once the document moved, a scrollable container is under the pointer
+        return {**checked, "wheel": False} if wheels else checked
+
+    with patch.object(page.mouse, "wheel", counted_wheel), patch.object(pointer, "_points", container_after_the_wheel):
+        assert await pointer.move_after_load(page, rand=random.Random(seed))
+    assert len(wheels) == 1
+    assert await page.evaluate("() => window.scrollY") == 700

@@ -411,7 +411,10 @@ async def move_after_load(page: Page, *, rand: random.Random | None = None, slee
                 # The wheel back scrolls by the distance the document moved (none at its end), over the part of the
                 # page the first wheel brought under the pointer, checked again where it is in view.
                 back = [(x, y - math.copysign(dy, scrolled)) for dy in [*range(0, abs(scrolled), 10), abs(scrolled)]]
-                if scrolled != 0 and all(await still_safe([point for point in back if 0 <= point[1] < height])):
+                # and only when the wheel still scrolls the document: a container now under the pointer would scroll
+                # instead, and the restore below puts back the document only
+                returned = await _points(page, [p for p in back if 0 <= p[1] < height]) if scrolled != 0 else None
+                if returned is not None and returned["wheel"] and all(returned["safe"]):
                     await page.mouse.wheel(0, -scrolled)
                     await sleep(rand.uniform(0.2, 0.35))
             return True
