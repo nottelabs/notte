@@ -3,6 +3,7 @@ import re
 from pathlib import Path
 
 import notte_sdk
+import pytest
 from notte_core import types as types_module
 from notte_core.types import SdkRequest, SdkResponse
 
@@ -19,14 +20,20 @@ ALLOWED_UNREFERENCED: dict[str, str] = {
 
 
 def _models() -> set[str]:
-    return {
-        name
-        for name, obj in vars(types_module).items()
-        if inspect.isclass(obj)
-        and issubclass(obj, (SdkRequest, SdkResponse))
-        and obj not in (SdkRequest, SdkResponse)
-        and obj.__module__ == types_module.__name__
-    }
+    models: set[str] = set()
+    for name, obj in vars(types_module).items():
+        if not (
+            inspect.isclass(obj)
+            and issubclass(obj, (SdkRequest, SdkResponse))
+            and obj not in (SdkRequest, SdkResponse)
+            and obj.__module__ == types_module.__name__
+        ):
+            continue
+        # Pydantic registers runtime generic specializations in the module too.
+        # Their source reference is to the declared generic, not its expanded name.
+        origin = getattr(obj, "__pydantic_generic_metadata__", {}).get("origin")
+        models.add(origin.__name__ if origin is not None else name)
+    return models
 
 
 def _sdk_code() -> str:
@@ -71,3 +78,14 @@ def test_allowlist_is_valid_and_not_stale() -> None:
     code = _sdk_code()
     stale = {name for name in ALLOWED_UNREFERENCED if _reference_count(name, code) > 1}
     assert not stale, f"Now referenced, remove from ALLOWED_UNREFERENCED: {sorted(stale)}"
+
+
+def test_generic_normalization_still_detects_an_unwired_model(monkeypatch: pytest.MonkeyPatch) -> None:
+    class UnwiredRequest(SdkRequest):
+        pass
+
+    UnwiredRequest.__module__ = types_module.__name__
+    monkeypatch.setattr(types_module, "UnwiredRequest", UnwiredRequest, raising=False)
+    assert "UnwiredRequest" in _models()
+    with pytest.raises(AssertionError, match="UnwiredRequest"):
+        test_every_model_is_referenced_somewhere()
