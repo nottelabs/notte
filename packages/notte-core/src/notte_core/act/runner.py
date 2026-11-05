@@ -43,6 +43,7 @@ from notte_core.act.space import (
     act_questions,
     build_act_space,
     changed_beyond,
+    compact,
     field_context,
     field_errors,
     find_field,
@@ -86,6 +87,8 @@ from notte_core.errors import ContentFilterError, FileChooserOpenedError
 from notte_core.observation import ExecutionResult, Observation
 
 HISTORY_SIZE = 10
+# the letters and digits of a protected value in a row that a field's value must not show in the history (`field_value`)
+PROTECTED_RUN = 4
 # how long act() takes to answer a dialog its action opened (one decision, and a prompt's text): the page waits
 DIALOG_ANSWER_S = 30
 WRITER_HISTORY_SIZE = 6
@@ -366,9 +369,23 @@ class ActHistory:
             return {"field_value": self.privacy.text(entry.holds), "reformatted": True}
         typed = _typed_value(entry)
         if typed is not None and self._protected(typed):
-            # a protected value the page cut keeps its start: masked as a cut value is
-            return {"field_value": self.privacy.cut_text(entry.holds)}
+            # a protected value the page cut keeps its start: masked as a cut value is. One the page also formatted
+            # ("4111 1111 1111 1111" of a card number) is not a literal the masking knows: the placeholder is shown
+            masked = self.privacy.cut_text(entry.holds)
+            if self._shows_protected(masked):
+                return {"field_value": self.privacy.text(typed.text)}
+            return {"field_value": masked}
         return {"field_value": self.privacy.text(entry.holds)}
+
+    def _shows_protected(self, text: str) -> bool:
+        """`text` still shows part of a protected value: `PROTECTED_RUN` of its letters and digits in a row, whatever
+        the page put between them."""
+        shown = compact(text)
+        for literal in self.privacy.replacements:
+            key = compact(literal)
+            if any(key[i : i + PROTECTED_RUN] in shown for i in range(len(key) - PROTECTED_RUN + 1)):
+                return True
+        return False
 
     def _protected(self, typed: TypedValue) -> bool:
         """`typed` holds a protected value: a variable the browser got substituted, or a vault placeholder."""

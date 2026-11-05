@@ -1652,6 +1652,28 @@ async def test_a_protected_value_the_page_cut_keeps_its_start_masked(session: No
 
 
 @pytest.mark.asyncio
+async def test_a_vault_card_number_the_page_formatted_stays_out_of_the_history(
+    session: NotteSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # the vault types the card number for its placeholder; the page shows it with spaces, a form the masking of the
+    # literal does not match
+    card = "4111111111111111"
+    await session.window.page.set_content(
+        "<label>Card number <input id='card' oninput=\"this.value = '4111 1111 1111 1111'\"></label>"
+    )
+    ids = await _ids(session)
+    monkeypatch.setattr(LocalActDriver, "secret_replacements", lambda _driver: {card: "[card]"})
+    decider = FakeDecider(
+        choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["card"]}, {"operation": "DONE"}], texts=["[card]"]
+    )
+    for _ in range(2):
+        _ = await session.aact("Pay by card", decider=decider, raise_on_failure=False)
+    last = decider.states[-1].recent_actions[-1]
+    assert last["field_value"] == "[card]"
+    assert "4111" not in json.dumps(decider.states[-1].recent_actions)
+
+
+@pytest.mark.asyncio
 async def test_a_clear_the_page_undid_is_reported(session: NotteSession) -> None:
     await session.window.page.set_content(
         "<label>Coupon <input id='coupon' value='SAVE10' oninput=\"if (!this.value) this.value = 'SAVE10'\"></label>"
