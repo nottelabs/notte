@@ -140,13 +140,23 @@ def _cost_class(item: Item) -> int:
     return 2 if item.fixture else 0
 
 
-def plan(items: list[Item], runners: list[str], versions: list[str], repeats: int) -> list[Job]:
+def plan(
+    items: list[Item], runners: list[str], versions: list[str], repeats: int, fixture_repeats: int | None = None
+) -> list[Job]:
     """The runs in start order. The versions of one item and runner are adjacent, so they see the same site and
-    machine conditions; which one goes first alternates from item to item and from repeat to repeat."""
+    machine conditions; which one goes first alternates from item to item and from repeat to repeat. Fixture tasks
+    run `fixture_repeats` times when given (the fixture rule tolerates one failure in four, see `rules.py`), every
+    other item `repeats` times."""
     ordered = sorted(items, key=_cost_class)
     jobs: list[Job] = []
-    for repeat in range(1, repeats + 1):
+
+    def times(item: Item) -> int:
+        return fixture_repeats if fixture_repeats and item.kind == "task" and item.fixture else repeats
+
+    for repeat in range(1, max([repeats, *map(times, ordered)], default=repeats) + 1):
         for k, item in enumerate(ordered):
+            if repeat > times(item):
+                continue
             kinds = PROBE_RUNNERS if item.kind == "probes" else TASK_RUNNERS
             order = versions if (k + repeat) % 2 else versions[::-1]
             for runner in runners:

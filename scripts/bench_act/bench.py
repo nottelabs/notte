@@ -265,6 +265,7 @@ def main() -> None:
     parser.add_argument("--probes", default="", help="only these probes")
     parser.add_argument("--tags", default="", help="only the tasks and probes with one of these tags, e.g. ci-core")
     parser.add_argument("--repeats", type=int, default=1)
+    parser.add_argument("--fixture-repeats", type=int, default=0, help="runs per fixture task (default: --repeats)")
     parser.add_argument("--shard", default="1/1", help="i/n: every n-th task or probe page, from the i-th")
     parser.add_argument("--concurrency", type=int, default=default_concurrency(), help="runs at once")
     parser.add_argument("--tree", action="append", default=[], help="NAME=PATH, a checkout to run (repeatable)")
@@ -298,7 +299,7 @@ def main() -> None:
         with_probes=any(r in PROBE_RUNNERS for r in runners),
         tags=names(args.tags),
     )
-    jobs = plan(shard(items, index, count), runners, list(trees), args.repeats)
+    jobs = plan(shard(items, index, count), runners, list(trees), args.repeats, args.fixture_repeats or None)
     if args.dry_run:
         for job in jobs:
             print(job.file)
@@ -318,6 +319,7 @@ def main() -> None:
         "suites": names(args.suites),
         "tags": names(args.tags),
         "repeats": args.repeats,
+        "fixture_repeats": args.fixture_repeats or args.repeats,
         "trees": shas,
         "today": today,
         "jobs": [job.file for job in jobs],

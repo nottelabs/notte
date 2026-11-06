@@ -25,6 +25,9 @@ on:
       repeats:
         description: Runs per task and probe page (1-5)
         default: '1'
+      fixture_repeats:
+        description: Runs per fixture task (1-5); the rule allows one failure in four
+        default: '4'
       shards:
         description: Parallel jobs (1-8)
         default: '4'
@@ -58,6 +61,7 @@ jobs:
       tags: ${{ steps.plan.outputs.tags }}
       runners: ${{ steps.plan.outputs.runners }}
       repeats: ${{ steps.plan.outputs.repeats }}
+      fixture_repeats: ${{ steps.plan.outputs.fixture_repeats }}
       today: ${{ steps.plan.outputs.today }}
     steps:
       - name: Decide whether to run, and on which commits
@@ -80,6 +84,7 @@ jobs:
           TAGS: ${{ inputs.tags || 'ci-core' }}
           RUNNERS: ${{ inputs.runners || 'notte-local,probe-local-jev' }}
           REPEATS: ${{ inputs.repeats || '1' }}
+          FIXTURE_REPEATS: ${{ inputs.fixture_repeats || '4' }}
           SHARDS: ${{ inputs.shards || '4' }}
         run: |
           set -euo pipefail
@@ -114,7 +119,8 @@ jobs:
             echo "::error::bad suites, tags or runners"; exit 1; }
           if [ "$EVENT" != workflow_dispatch ] && jq -e 'index("act-bench-all")' <<<"$PR_LABELS" >/dev/null; then TAGS=all; fi
           if [ "$TAGS" = all ]; then TAGS=""; fi
-          [[ "$REPEATS" =~ ^[1-5]$ && "$SHARDS" =~ ^[1-8]$ ]] || { echo "::error::repeats must be 1-5 and shards 1-8"; exit 1; }
+          [[ "$REPEATS" =~ ^[1-5]$ && "$FIXTURE_REPEATS" =~ ^[1-5]$ && "$SHARDS" =~ ^[1-8]$ ]] || {
+            echo "::error::repeats and fixture_repeats must be 1-5 and shards 1-8"; exit 1; }
           if [ "$EVENT" = workflow_dispatch ]; then
             head=$GITHUB_SHA
             base=""
@@ -136,6 +142,7 @@ jobs:
             echo "tags=$TAGS"
             echo "runners=$RUNNERS"
             echo "repeats=$REPEATS"
+            echo "fixture_repeats=$FIXTURE_REPEATS"
             # one day for every shard: the travel tasks count their dates from it
             echo "today=$(date -u +%F)"
           } >> "$GITHUB_OUTPUT"
@@ -219,12 +226,14 @@ jobs:
           TAGS: ${{ needs.plan.outputs.tags }}
           RUNNERS: ${{ needs.plan.outputs.runners }}
           REPEATS: ${{ needs.plan.outputs.repeats }}
+          FIXTURE_REPEATS: ${{ needs.plan.outputs.fixture_repeats }}
           TODAY: ${{ needs.plan.outputs.today }}
         run: |
           trees=(--tree head=head)
           if [ "$HAS_BASE" = true ]; then trees=(--tree base=base --tree head=head); fi
           python head/scripts/bench_act/bench.py "${trees[@]}" --shard "$SHARD" --concurrency 4 \
-            --runners "$RUNNERS" --suites "$SUITES" --tags "$TAGS" --repeats "$REPEATS" --today "$TODAY" --out runs
+            --runners "$RUNNERS" --suites "$SUITES" --tags "$TAGS" --repeats "$REPEATS" \
+            --fixture-repeats "$FIXTURE_REPEATS" --today "$TODAY" --out runs
 
       - name: Upload shard runs
         if: always()

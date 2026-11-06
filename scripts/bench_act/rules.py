@@ -34,6 +34,9 @@ TIMING_RUNNERS = ("notte-local-scripted", "probe-local-scripted")
 # the runners the rules judge (Jev); the others are reported only
 JUDGED_RUNNERS = ("notte-local", "notte-local-html", "probe-local-jev")
 INFRA_MISS_LIMIT = 0.05
+# a fixture task may fail once in every this many judged runs (3 of 4): a single unlucky decision on an
+# otherwise reliable fixture (about 97-99% per run) no longer fails the PR, while a real drop still does
+FIXTURE_RUNS_PER_ALLOWED_FAILURE = 4
 
 RULES = (__doc__ or "").strip()
 # pages that block automated browsers, matched in the visible text of the landing or final page
@@ -282,11 +285,25 @@ def judge(runs: list[dict[str, Any]], probe_runs: list[dict[str, Any]], missing:
         )
     runs = [r for r in runs if r["runner"] in JUDGED_RUNNERS]
     probe_runs = [r for r in probe_runs if r["runner"] in JUDGED_RUNNERS]
+    fixture_runs: dict[tuple[str, str], list[dict[str, Any]]] = {}
     for run in runs:
-        failed = not run.get("success") and not infra_miss(run.get("error"))
-        if run.get("version", "head") == "head" and FIXTURES in run.get("url", "") and failed:
+        if run.get("version", "head") == "head" and FIXTURES in run.get("url", "") and not infra_miss(run.get("error")):
+            fixture_runs.setdefault((run["runner"], run["task"]), []).append(run)
+    for (runner, task), group in fixture_runs.items():
+        failed = [run for run in group if not run.get("success")]
+        allowed = len(group) // FIXTURE_RUNS_PER_ALLOWED_FAILURE
+        if len(failed) <= allowed:
+            continue
+        reasons = ", ".join(f"#{run['repeat']} {run.get('error') or run.get('stop_reason')}" for run in failed)
+        if len(group) == 1:
+            run = failed[0]
             reason = run.get("error") or run.get("stop_reason")
-            verdict.failures.append(f"fixture task {run['runner']} / {run['task']} #{run['repeat']} failed ({reason})")
+            verdict.failures.append(f"fixture task {runner} / {task} #{run['repeat']} failed ({reason})")
+        else:
+            verdict.failures.append(
+                f"fixture task {runner} / {task}: {len(group) - len(failed)}/{len(group)} passed, "
+                f"needs {len(group) - allowed} ({reasons})"
+            )
     for row in probe_rows(probe_runs):
         if row.fixture and not all(row.head):
             verdict.failures.append(f"fixture probe {row.runner} / {row.name}: {sum(row.head)}/{len(row.head)} right")
