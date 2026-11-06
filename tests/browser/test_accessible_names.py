@@ -482,3 +482,72 @@ async def test_listbox_value_stops_at_fixed_node_and_text_budgets(shape: str) ->
         expected = {"wide": "x" * 512, "deep": "", "whitespace": "", "transformed": "X" * 4096}[shape]
         assert states[0]["value"] == expected[:200]
         assert states[0]["valueDigest"] == _value_digest(expected)
+
+
+FALLBACK_PAGE = (
+    """
+<style>.box { display: block; width: 40px; height: 40px; }</style>
+<div id="thumb" class="box" onclick=""><img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="Red cap, side view"
+  width="40" height="40"></div>
+<div id="arrow" class="box carousel-products__arrow carousel-products__arrow-left" onclick=""><span>
+  <svg width="20" height="20" aria-hidden="true"><use href="/images/icons/arrows.svg#arrow-left"></use></svg></span></div>
+<button id="testid" class="box" data-test-id="product-detail-gallery-nav-right"></button>
+<button id="icon" class="box"><svg width="10" height="10" aria-hidden="true"><use xlink:href="#icon-close"></use></svg>
+  </button>
+<button id="classes" class="box sc-iJminA qty-plus"></button>
+<button id="nothing" class="box sc-iJminA XJVSs"></button>
+<a id="layout" href="#features" class="box button_size-md__1jSxL float-left"></a>
+<button id="mixed" class="box chevron-right float-left"></button>
+<div id="texted" class="box carousel-arrow" onclick="">Next</div>
+<button id="stopwords" class="box" data-testid="btn-icon"></button>
+<input id="field" class="box size-input" data-testid="size-field">
+<input id="toggle" type="checkbox" data-testid="newsletter-optin">
+<button id="shownicon" class="box"><svg style="display: none" width="10" height="10"><use href="#arrow-left"></use></svg>
+  <svg width="10" height="10" aria-hidden="true"><use href="#arrow-right"></use></svg></button>
+<div id="shadow" class="box" role="button" tabindex="0"></div>
+<script>
+  document.getElementById("shadow").attachShadow({ mode: "open" }).innerHTML =
+    '<svg width="10" height="10"><use href="#icon-search"></use></svg>';
+</script>
+<div id="large" class="box" onclick="">"""
+    + "<span></span>" * 200
+    + """<span class="arrow-left"></span></div>
+"""
+)
+
+FALLBACK_EXPECTED = {
+    # what its content shows: the image inside it
+    "thumb": "Red cap, side view",
+    # then its markup: the icon it draws, a test id, the words of its classes that say what a control does
+    "arrow": "arrow left",
+    "testid": "product detail gallery nav right",
+    "icon": "close",
+    "classes": "qty plus",
+    # a direction only from the class that names the control: "chevron-right", not the layout's "float-left"
+    "mixed": "chevron right",
+    # nothing to go by, or text that names it already (the page text renders it)
+    "nothing": None,
+    # layout classes ("size", "left") name nothing
+    "layout": None,
+    "texted": None,
+    "stopwords": None,
+    # fields, checkboxes and radios are named by the text next to them
+    "field": None,
+    "toggle": None,
+    # the icon it shows, not a hidden one before it; an icon in its shadow root
+    "shownicon": "arrow right",
+    "shadow": "search",
+    # a control with more than 200 nodes inside is not an icon: its markup is not looked at
+    "large": None,
+}
+
+
+@pytest.mark.asyncio
+async def test_unnamed_controls_get_a_name_from_their_images_and_markup(session: NotteSession) -> None:
+    _ = await session.window.page.goto(_data_url(FALLBACK_PAGE))
+    obs = await session.aobserve()
+    nodes = _nodes_by_html_id(session)
+
+    assert {html_id: nodes[html_id].accessible_name for html_id in FALLBACK_EXPECTED} == FALLBACK_EXPECTED
+    actions = {action.id: action for action in obs.space.interaction_actions}
+    assert actions[nodes["arrow"].id or ""].accessible_name == "arrow left"

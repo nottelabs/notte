@@ -338,6 +338,8 @@ class _Names:
     used: frozenset[int]
     # clickable `<label>` elements that label the field next to them: the field is offered instead
     labels: frozenset[str]
+    # unnamed lists of options named by the text before them ("Size"), which is then not a line of its own
+    listbox_labels: frozenset[str] = frozenset()
     # the name of each disabled control (a `_[:]<... disabled>` block, without an id), by block index
     disabled: dict[int, str] = field(default_factory=dict)
     # what each control outside the viewport is (`_offscreen`, a `_[:]<...>` block without an id), by block index
@@ -442,6 +444,51 @@ def _same_text(a: str, b: str) -> bool:
     return " ".join(a.split()).casefold() == " ".join(b.split()).casefold()
 
 
+# a text before a listbox is its label ("Size") when this short; a longer one is a sentence about it
+MAX_LISTBOX_LABEL_LENGTH = 40
+# how many blocks before a listbox its label is looked for: a "Size guide" button can sit in between
+_LISTBOX_LABEL_BLOCKS = 4
+
+
+def _listbox_label(
+    blocks: Sequence[tuple[str | None, str]], index: int, used: Collection[int]
+) -> tuple[int, str] | None:
+    """The short text before the listbox at block `index` that labels it ("Size", "Colour"), with its block index:
+    the nearest text of at most `MAX_LISTBOX_LABEL_LENGTH` characters within `_LISTBOX_LABEL_BLOCKS` blocks, past
+    buttons and links only (a "Size guide" between them), and not one that is already the label of another element
+    (`used`). It stops at anything else: a field or another list (disabled or off-screen ones too, rendered without
+    an id), or text too long to be a label (a sentence between "Shipping" and the list)."""
+    for i in range(index - 1, max(-1, index - 1 - _LISTBOX_LABEL_BLOCKS), -1):
+        key, content = blocks[i]
+        if key is None or i in used:
+            return None
+        if key != "_":
+            if key[:1] not in ("B", "L") or not _button_or_link(content):
+                # a field, another list, a checkbox or a tab (B ids too): the text before it is its own
+                return None
+            continue
+        rendered = _RENDERED_ELEMENT.match(content)
+        if rendered is not None:
+            if rendered.group(1).lower() in ("button", "a") and _button_or_link(content):
+                continue
+            # a control without an id (disabled, off-screen): the text before it is its own
+            return None
+        text = " ".join(content.split())
+        if len(text) > MAX_LISTBOX_LABEL_LENGTH:
+            return None
+        if text:
+            return i, text
+    return None
+
+
+def _button_or_link(content: str) -> bool:
+    """Whether a rendered element is a plain button or link, not a checkbox, radio, switch or tab (which get B ids
+    as well)."""
+    if content.startswith("<input") and ('type="checkbox"' in content or 'type="radio"' in content):
+        return False
+    return _aria_role(content) in (None, "button", "link")
+
+
 def _names(page: ObservedPage) -> _Names:
     return _once(page, "names", lambda: _read_names(page))
 
@@ -460,6 +507,9 @@ def _read_names(page: ObservedPage) -> _Names:
     names: dict[str, str] = {}
     used: set[int] = set()
     labels: set[str] = set()
+    # unnamed lists of options named by the text before them
+    listbox_labels: set[str] = set()
+    empty = _empty_listboxes(page)
 
     def toggle(index: int) -> bool:
         if index < 0:
@@ -523,6 +573,15 @@ def _read_names(page: ObservedPage) -> _Names:
             )
         else:
             names[key] = _approximate_name(action, content, before, after)
+        if role == "listbox" and names[key] == role and key not in empty:
+            # an unnamed list of options (a size picker) is named by the short text before it ("Size"), with or
+            # without the observation's names; the text is then not repeated (an empty list is not shown, and
+            # keeps its text)
+            found = _listbox_label(blocks, i, used)
+            if found is not None:
+                used.add(found[0])
+                names[key] = found[1]
+                listbox_labels.add(key)
         if role in ("checkbox", "radio"):
             neighbours = [(i + 1, after), (i - 1, before)]
         elif role in _FIELDS:
@@ -543,6 +602,7 @@ def _read_names(page: ObservedPage) -> _Names:
         names={k: v for k, v in names.items() if k not in labels},
         used=frozenset(used),
         labels=frozenset(labels),
+        listbox_labels=frozenset(listbox_labels),
         disabled=disabled,
         offscreen=offscreen,
     )
@@ -719,11 +779,15 @@ def _content(page: ObservedPage, field: str | None) -> Counter[str]:
 def _read_content(page: ObservedPage, field: str | None) -> Counter[str]:
     rendered = _rendered_lines(page.description)
     actions = {action.id: action for action in page.actions}
+    names = _names(page)
     content: Counter[str] = Counter()
     for key, line in _accessible_lines(page, str):
         if key is not None:
             action = actions.get(key)
             if key == field or (action is not None and _role(action, rendered.get(key, "")) in ("option", "listbox")):
+                if key in names.listbox_labels:
+                    # the text before the list that names it is still text of the page
+                    content[" ".join(names.names[key].split())] += 1
                 continue
             line = line.removeprefix(f"[{key}] ")
         content[" ".join(line.split())] += 1

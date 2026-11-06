@@ -773,6 +773,132 @@
 		return cleaned.length > 0 ? cleaned.slice(0, MAX_NAME_LENGTH) : undefined;
 	}
 
+	// roles a fallback name never applies to: a field, checkbox or radio is named by the text next to it (see
+	// `notte_core.act.space`), which a name from its markup would hide
+	const NO_FALLBACK_NAME_ROLES = new Set([...EDITABLE_CONTROL_ROLES, "checkbox", "radio", "switch"]);
+	// test id attributes: names the page's developers gave the element ("product-detail-gallery-nav-left")
+	const TEST_ID_ATTRIBUTES = ["data-testid", "data-test-id", "data-test", "data-qa", "data-cy", "data-automation-id"];
+	const MARKUP_HINT_SELECTOR = `${TEST_ID_ATTRIBUTES.map((name) => `[${name}]`).join(",")},use,[class]`;
+	// words of a test id or icon name that say nothing about what the element does
+	const HINT_STOP_WORDS = new Set([
+		"btn", "button", "icon", "icons", "ico", "svg", "img", "image", "div", "span", "wrapper", "wrap", "container",
+		"component", "item", "el", "js", "root", "inner", "outer", "base", "default", "test", "id", "qa", "cta",
+		"true", "false", "sprite", "symbol", "link",
+	]);
+	// words of a class name that tell what an icon-only control does. A class name is mostly layout ("button_size-md",
+	// "float-left"): only these count, and a direction only next to one of them ("carousel arrow left")
+	const HINT_CLASS_WORDS = new Set([
+		"arrow", "chevron", "prev", "previous", "next", "close", "dismiss", "plus", "minus", "increase", "decrease",
+		"increment", "decrement", "remove", "delete", "trash", "quantity", "qty", "swatch", "thumbnail", "thumb",
+		"carousel", "gallery", "zoom", "play", "pause", "hamburger", "search", "cart", "basket", "wishlist",
+		"favorite", "favourite", "heart", "share",
+	]);
+	const HINT_DIRECTION_WORDS = new Set(["left", "right", "up", "down"]);
+	const MAX_HINT_LENGTH = 60;
+	const MAX_HINT_ELEMENTS = 30;
+	// an icon-only control is small: one with more nodes than this inside (elements and text) is not named from its
+	// markup, which keeps the work for each unnamed control bounded (nested controls each look inside themselves)
+	const MAX_FALLBACK_NODES = 200;
+
+	/**
+	 * The shown elements inside `element` (its composed tree: shadow roots and slotted content, as `contentText`
+	 * reads it), in reading order, that may carry a markup hint (a test id, `<use>`, a class), at most
+	 * `MAX_HINT_ELEMENTS` of them. An element hidden by CSS is left out (a hidden "previous" arrow next to the
+	 * shown "next" one), an `aria-hidden` icon is not (it is what a sighted user sees). The walk reads one child at a
+	 * time, so a wide element costs no more than a deep one.
+	 *
+	 * @param {Element} element - The control.
+	 * @returns {Element[] | undefined} The elements, or undefined when `element` holds more than
+	 *   `MAX_FALLBACK_NODES` nodes.
+	 */
+	function hintElements(element) {
+		const found = [];
+		const stack = [{ children: contentChildren(element), next: 0 }];
+		let seen = 0;
+		while (stack.length > 0) {
+			const top = stack[stack.length - 1];
+			if (top.next >= top.children.length) {
+				stack.pop();
+				continue;
+			}
+			const node = top.children[top.next++];
+			if (++seen > MAX_FALLBACK_NODES) return undefined;
+			if (nodeTypeOf(node) !== Node.ELEMENT_NODE) continue;
+			const style = getCachedComputedStyle(node);
+			// nothing inside a `display: none` element shows; a child of a `visibility: hidden` one can
+			if (style?.display === "none") continue;
+			const shown = style?.visibility !== "hidden" && style?.visibility !== "collapse";
+			if (shown && found.length < MAX_HINT_ELEMENTS && matches(node, MARKUP_HINT_SELECTOR)) found.push(node);
+			stack.push({ children: contentChildren(node), next: 0 });
+		}
+		return found;
+	}
+
+	function hintWords(text) {
+		return String(text)
+			.replace(/([a-z])([A-Z])/g, "$1 $2")
+			.split(/[^A-Za-z]+/)
+			.map((word) => word.toLowerCase())
+			.filter((word) => word.length > 1);
+	}
+
+	/**
+	 * A name for a control without an accessible name (an icon button, a clickable `<div>` around an image): what
+	 * its content shows to a sighted user (the `alt` of an image inside it, an `<svg><title>`, an `aria-label`
+	 * inside), else what its markup says it is: a test id ("product-detail-gallery-nav-left"), the icon it draws
+	 * (`<use href="icons.svg#arrow-left">`), then the words of its class names that tell what a control does
+	 * ("carousel arrow left"). An element that shows text, holds more than `MAX_FALLBACK_NODES` nodes, or
+	 * whose markup names nothing, gets none (`undefined`).
+	 *
+	 * @param {HTMLElement} element - A highlighted element without an accessible name.
+	 * @returns {string | undefined} The name, cut to `MAX_NAME_LENGTH` (a markup hint to `MAX_HINT_LENGTH`).
+	 */
+	function getFallbackName(element) {
+		const role = getRole(element);
+		if (FIELD_TAGS.has(localNameOf(element)) || NO_FALLBACK_NAME_ROLES.has(role) || isEditingHost(element)) return undefined;
+		const inside = hintElements(element);
+		if (inside === undefined) return undefined;
+		// the text it shows names it already (the page text renders it): only an element without text is named here
+		if (shownText(element).length > 0) return undefined;
+		const context = { visited: new Set([element]), budget: 4 * MAX_NAME_LENGTH };
+		const content = contentText(element, context, { root: false, labelledBy: false, content: true, hidden: false })
+			.replace(/\s+/g, " ").trim();
+		if (content.length > 0) return content.slice(0, MAX_NAME_LENGTH);
+		const elements = [element, ...inside];
+		const hint = (words) => {
+			const kept = words.filter((word) => !HINT_STOP_WORDS.has(word));
+			return kept.some((word) => word.length >= 3) ? kept.join(" ").slice(0, MAX_HINT_LENGTH) : undefined;
+		};
+		for (const candidate of elements) {
+			for (const name of TEST_ID_ATTRIBUTES) {
+				const value = getAttribute(candidate, name);
+				const text = value ? hint(hintWords(value)) : undefined;
+				if (text) return text;
+			}
+		}
+		for (const candidate of elements) {
+			if (localNameOf(candidate) !== "use") continue;
+			const href = getAttribute(candidate, "href") || getAttribute(candidate, "xlink:href") || "";
+			const icon = href.includes("#") ? href.slice(href.lastIndexOf("#") + 1) : "";
+			const text = icon ? hint(hintWords(icon)) : undefined;
+			if (text) return text;
+		}
+		// each class on its own: a direction only counts in a class that names a control ("chevron-right", not the
+		// "float-left" next to it)
+		const words = [];
+		for (const candidate of elements) {
+			const classes = (getAttribute(candidate, "class") || "").trim().split(/\s+/);
+			for (const token of classes) {
+				const tokenWords = hintWords(token);
+				if (!tokenWords.some((word) => HINT_CLASS_WORDS.has(word))) continue;
+				for (const word of tokenWords) {
+					if ((HINT_CLASS_WORDS.has(word) || HINT_DIRECTION_WORDS.has(word)) && !words.includes(word)) words.push(word);
+				}
+			}
+		}
+		return words.length > 0 ? words.join(" ").slice(0, MAX_HINT_LENGTH) : undefined;
+	}
+
 	function textAlternative(element, context, step) {
 		if (context.visited.has(element) || context.budget <= 0) return "";
 		context.visited.add(element);
@@ -3000,6 +3126,9 @@
 						if (state !== undefined) nodeData.state = state;
 						const accessibleName = getAccessibleName(node);
 						if (accessibleName !== undefined) nodeData.accessibleName = accessibleName;
+						// one without is named from its images or icons, else its markup (`getFallbackName`)
+						const fallbackName = accessibleName === undefined ? getFallbackName(node) : undefined;
+						if (fallbackName !== undefined) nodeData.fallbackName = fallbackName;
 						// a mouse handler of its own (the ones `isInteractiveElement` counts): the element may do
 						// something else than the control around or inside it
 						if (hasClickHandler(node)) {

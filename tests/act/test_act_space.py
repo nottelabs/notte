@@ -13,6 +13,7 @@ from notte_core.act.space import (
     accessible_text,
     act_questions,
     build_act_space,
+    changed_beyond,
     covered_by_dialog,
     description_lines,
     field_errors,
@@ -1756,3 +1757,87 @@ def test_enter_is_not_fresh_once_a_dialog_covers_the_focus() -> None:
     assert read(True).matches(read(True), None, focus=True) and read(None).matches(read(True), None, focus=True)
     # covered when read, while the page the decider saw had no dialog: a new observation tells
     assert not read(True).focus_consistent(_page()) and read(False).focus_consistent(_page())
+
+
+LISTBOX_DESCRIPTION = """_[:]Size
+B1[:]<button>Size guide</button>
+I1[:]<ul role="listbox"></ul>
+O1[:]<li role="option">S</li>
+O2[:]<li role="option">M</li>
+_[:]Fit
+I2[:]<input type="text" name="note"></input>
+I3[:]<ul role="listbox"></ul>
+O3[:]<li role="option">Regular</li>
+_[:]A sentence about the colours, much too long to be the label of a list
+I4[:]<ul role="listbox"></ul>
+O4[:]<li role="option">Red</li>"""
+
+
+def test_an_unnamed_listbox_is_named_by_the_short_text_before_it() -> None:
+    actions = [
+        ClickAction(id="B1", text_label="Size guide"),
+        FillAction(id="I1", value="<sample_value>", text_label=""),
+        ClickAction(id="O1", text_label="S"),
+        ClickAction(id="O2", text_label="M"),
+        FillAction(id="I2", value="<sample_value>", text_label="note", accessible_name="Note"),
+        FillAction(id="I3", value="<sample_value>", text_label=""),
+        ClickAction(id="O3", text_label="Regular"),
+        FillAction(id="I4", value="<sample_value>", text_label=""),
+        ClickAction(id="O4", text_label="Red"),
+    ]
+    page = _page({}, description=LISTBOX_DESCRIPTION, actions=actions)
+    names = accessible_names(page)
+    # past the "Size guide" button
+    assert names["I1"] == "Size"
+    text = accessible_text(page).splitlines()
+    # the label is not repeated as a line of its own
+    assert "[I1] Size" in text and "Size" not in text
+    # not past a field, whose label the text is; not a sentence
+    assert names["I3"] == "listbox"
+    assert names["I4"] == "listbox"
+
+
+@pytest.mark.parametrize(
+    "barrier",
+    [
+        # a disabled field (rendered without an id): the text before it is its label
+        '_[:]<select disabled name="colour"><option>Red</option></select>',
+        # text too long to be the label of the list, nearer than the short one
+        "_[:]Free shipping on every order over fifty euros, returns within thirty days",
+        # a checkbox or a tab, which get B ids like buttons: the text before it is its own
+        'B1[:]<div role="checkbox" aria-checked="false">Gift wrap</div>',
+        'B1[:]<input type="checkbox" name="gift"></input>',
+        'B1[:]<button role="tab">Details</button>',
+    ],
+    ids=["disabled field", "long text", "aria checkbox", "checkbox input", "tab"],
+)
+def test_an_unnamed_listbox_is_not_named_past_a_barrier(barrier: str) -> None:
+    description = f'_[:]Colour\n{barrier}\nI1[:]<ul role="listbox"></ul>\nO1[:]<li role="option">S</li>'
+    actions = [
+        FillAction(id="I1", value="<sample_value>", text_label=""),
+        ClickAction(id="O1", text_label="S", accessible_name="S"),
+    ]
+    if barrier.startswith("B1"):
+        actions.append(ClickAction(id="B1", text_label="", accessible_name="Gift wrap"))
+    assert accessible_names(_page({}, description=description, actions=actions))["I1"] == "listbox"
+
+
+def test_an_unnamed_listbox_is_named_without_the_observations_names() -> None:
+    # an older server sends no accessible names: the names are approximated, and the list still gets its label
+    description = '_[:]Size\nI1[:]<ul role="listbox"></ul>\nO1[:]<li role="option">S</li>'
+    actions = [FillAction(id="I1", value="<sample_value>", text_label=""), ClickAction(id="O1", text_label="S")]
+    assert accessible_names(_page({}, description=description, actions=actions))["I1"] == "Size"
+
+
+def test_the_label_of_a_listbox_stays_text_of_the_page() -> None:
+    field = FillAction(id="I2", value="<sample_value>", text_label="note", accessible_name="Note")
+    listbox = FillAction(id="I1", value="<sample_value>", text_label="")
+    note = 'I2[:]<input type="text" name="note"></input>'
+    # a list with nothing to choose is not shown: the text before it stays a line of the page
+    empty = _page({}, description=f'{note}\n_[:]Size\nI1[:]<ul role="listbox"></ul>', actions=[field, listbox])
+    assert "Size" in accessible_text(empty).splitlines()
+    # options showing up under it name the list by the text, which is not gone from the page
+    description = f'{note}\n_[:]Size\nI1[:]<ul role="listbox"></ul>\nO1[:]<li role="option">S</li>'
+    shown = _page({}, description=description, actions=[field, listbox, ClickAction(id="O1", text_label="S")])
+    assert accessible_names(shown)["I1"] == "Size"
+    assert not changed_beyond(empty, shown, "I2", ["x"])

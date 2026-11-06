@@ -148,6 +148,26 @@ def test_generic_clickables_inside_a_control_get_no_id() -> None:
     assert len(inner) == 3 and all(node.id is None and node.type is NodeType.OTHER for node in inner)
 
 
+def test_a_fallback_name_names_a_control_without_making_a_nested_icon_one() -> None:
+    # `getFallbackName`: an icon-only clickable named by its markup ("arrow left"), and an icon inside a button,
+    # which a name from its markup ("plus") does not make a control of its own
+    nodes: dict[str, RawNode] = {
+        "1": _element("div", "/body/div", [], highlight=0),
+        "2": _text("Increase"),
+        "3": _element("span", "/body/button/span", [], highlight=2),
+        "4": _element("button", "/body/button", ["2", "3"], highlight=1),
+        "5": _element("body", "/body", ["1", "4"]),
+    }
+    nodes["1"]["fallbackName"] = "arrow left"
+    nodes["3"]["fallbackName"] = "plus"
+    root = build_dom_tree(_frame(nodes, "5"), url="https://example.com")
+    assert root is not None
+    assert [(node.id, node.accessible_name) for node in root.interaction_nodes()] == [
+        ("M1", "arrow left"),
+        ("B1", None),
+    ]
+
+
 def test_a_generic_clickable_around_one_control_with_the_same_name_gets_no_id() -> None:
     nodes: dict[str, RawNode] = {
         # Amazon's search button: `<div>Go</div>` with a pointer cursor around the submit input
