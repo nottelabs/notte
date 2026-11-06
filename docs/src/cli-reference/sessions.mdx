@@ -106,7 +106,7 @@ Start a new browser session
 | `--auth-ids <strings>` | Managed Auth connection IDs to verify and, when necessary, authenticate inside this session. Initial verification runs before returning; when login is needed, the session returns as authenticating. Poll /sessions/&#123;id&#125;/auth for readiness. (repeatable) |
 | `--auth-retry <int>` | auth-retry (API default: 0) |
 | `--block-ads` | Block ads and trackers in managed browsers using Basic filtering. Set false to disable. Does not configure externally supplied CDP browsers. (API default: true) |
-| `--browser-type <string>` | The browser type to use. Supported values are chromium and chrome. chrome-nightly and chrome-turbo are legacy aliases for chrome. (API default: chromium) (chromium, chrome, chrome-nightly, chrome-turbo) |
+| `--browser-type <string>` | The browser type to use. Supported values are chromium, chrome and chrome-nitro. chrome-nitro creates a managed Chrome Nitro session. chrome-nightly and chrome-turbo are legacy aliases for chrome. (API default: chromium) (chromium, chrome, firefox, chrome-nightly, chrome-turbo) |
 | `--cdp-url <string>` | The CDP URL of another remote session provider. |
 | `--chrome-args <strings>` | Overwrite the chrome instance arguments (repeatable) |
 | `--demonstrate` | Whether to enable the Notte recorder extension for this session. The extension is installed but remains inactive when this is false. (API default: false) |

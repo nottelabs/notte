@@ -14,9 +14,11 @@ List, create, and operate on functions.
 
 Update a function's metadata.
 
-Pass any of `--name`, `--description`, `--domain`, `--run-instructions`, `--default-runtime`, `--response-format`, `--self-healing`, or `--shared`. Only the flags you pass are sent; omitted fields are left unchanged.
+Pass any of `--name`, `--description`, `--domain`, `--run-instructions`, `--default-runtime`, `--response-format`, `--self-healing`, `--deletion-protected`, or `--shared`. Only the flags you pass are sent; omitted fields are left unchanged.
 
 `--shared` enables a public code/fork link; `--shared`=false disables it. Code literals become public. Runs, results and runtime secrets stay private. This does not enable public execution.
+
+`--deletion-protected` refuses deletes until it is turned off with `--deletion-protected`=false, which takes the key of a workspace admin or owner.
 
 `--run-instructions` is documentation for whoever calls the function - how long a run takes, what each variable is for, which sites it trips over. It is not input to the self-healing agent.
 
