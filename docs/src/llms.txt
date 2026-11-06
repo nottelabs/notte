@@ -358,6 +358,9 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [GET Get Session Script](https://docs.notte.cc/api-reference/sessions/get-session-script.md): Generate a Python script from a session's trajectory.
 - [GET List Session Files](https://docs.notte.cc/api-reference/sessions/list-session-files.md)
 - [GET List Sessions](https://docs.notte.cc/api-reference/sessions/list-sessions.md)
+- [POST Page Act](https://docs.notte.cc/api-reference/sessions/page-act.md)
+- [POST Page Check](https://docs.notte.cc/api-reference/sessions/page-check.md)
+- [POST Page Choose](https://docs.notte.cc/api-reference/sessions/page-choose.md)
 - [POST Page Execute](https://docs.notte.cc/api-reference/sessions/page-execute.md)
 - [POST Page Observe](https://docs.notte.cc/api-reference/sessions/page-observe.md)
 - [POST Page Scrape](https://docs.notte.cc/api-reference/sessions/page-scrape.md)
