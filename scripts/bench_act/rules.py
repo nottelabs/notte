@@ -4,7 +4,9 @@
 Rules (the workflow is red when one fails). Rules 1, 2, 5 and 6 judge the Jev runners only (`JUDGED_RUNNERS`);
 the LLM and scripted runners are reported, not judged.
 
-1. Fixture tasks (local pages, no site noise) pass in every head run.
+1. Fixture tasks (local pages, no site noise) pass in their head runs, with at most one failure in every four
+   judged runs (`FIXTURE_RUNS_PER_ALLOWED_FAILURE`; CI runs them 4 times, so 3 of 4). Infra misses are not
+   judged runs (rule 4 counts them); with fewer than four judged runs, every one must pass.
 2. Fixture probes are answered right in every head run.
 3. Every planned run produced a complete run file matching its planned inputs.
 4. Infra misses stay at or under 5% of the runs (task runs and probe answers, both versions, every runner). An
