@@ -299,6 +299,8 @@ def main() -> None:
         with_probes=any(r in PROBE_RUNNERS for r in runners),
         tags=names(args.tags),
     )
+    if args.fixture_repeats < 0:
+        parser.error("--fixture-repeats must be 0 (same as --repeats) or more")
     jobs = plan(shard(items, index, count), runners, list(trees), args.repeats, args.fixture_repeats or None)
     if args.dry_run:
         for job in jobs:
