@@ -118,6 +118,18 @@ class TestSecretProxyModel:
         message = validation_error([secret_entry(hosts=["api.stripe.com", host])])
         assert "must be an exact hostname or a leading '*.' wildcard" in message
 
+    @pytest.mark.parametrize("hosts", [["@payments"], ["@payments", "pay.merchant.co.uk"], ["@payments:2026-11"]])
+    def test_host_presets_are_sent_as_is(self, hosts: list[str]):
+        proxy = SecretProxy(server="https://relay.example.com:443", hosts=hosts)
+        assert proxy.hosts == hosts
+        request = SessionStartRequest(proxies=[proxy])
+        assert request.model_dump(exclude_none=True)["proxies"][0]["hosts"] == hosts
+
+    @pytest.mark.parametrize("host", ["@", "@pay ments", "@payments/x", "pay@ments.com", "@*.payments"])
+    def test_invalid_host_presets(self, host: str):
+        message = validation_error([secret_entry(hosts=[host])])
+        assert "must be an exact hostname or a leading '*.' wildcard" in message
+
     @pytest.mark.parametrize("server", ["relay.example.com:443", "socks5://relay.example.com:1080", "https://"])
     def test_invalid_server(self, server: str):
         message = validation_error([secret_entry(server=server)])
