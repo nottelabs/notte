@@ -680,6 +680,8 @@ class TailnetProxy(SdkRequest):
 
 
 _SECRET_PROXY_HOST_LABEL = re.compile(r"^[^\s/:*?#@\[\]\\.]+$")
+# A host preset: a host list Notte maintains, such as `@payments`. The API decides which exist.
+_SECRET_PROXY_HOST_PRESET = re.compile(r"^@[a-z0-9-]+(?::[a-z0-9.-]+)?$")
 
 
 class SecretProxy(SdkRequest):
@@ -730,7 +732,8 @@ class SecretProxy(SdkRequest):
         Field(
             description=(
                 "Hosts routed through the secret proxy: exact hostnames or a leading '*.' wildcard, without "
-                "scheme, path or port. A bare '*' is not allowed. Required with `server`."
+                "scheme, path or port, or a host preset Notte maintains, such as '@payments'. A bare '*' is "
+                "not allowed. Required with `server`."
             ),
             min_length=1,
         ),
@@ -751,6 +754,8 @@ class SecretProxy(SdkRequest):
     def validate_hosts(cls, value: list[str] | None) -> list[str] | None:
         for host in value or []:
             stripped = host.strip()
+            if _SECRET_PROXY_HOST_PRESET.match(stripped.lower()):
+                continue
             name = stripped.removeprefix("*.")
             if not name or not all(_SECRET_PROXY_HOST_LABEL.match(label) for label in name.split(".")):
                 raise ValueError(
