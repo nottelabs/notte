@@ -84,7 +84,7 @@ jobs:
         run: |
           set -euo pipefail
           # Paths that change what observe shows or what act does.
-          paths='^(packages/notte-browser/src/notte_browser/(js|dom)/|packages/notte-core/src/notte_core/act/|packages/notte-llm/src/notte_llm/act\.py$|scripts/bench_act/|\.github/workflows/act-bench\.yml$)'
+          paths='^(packages/notte-browser/src/notte_browser/(js|dom)/|packages/notte-core/src/notte_core/(act/|dom_tree\.py$|node_type\.py$)|packages/notte-llm/src/notte_llm/act\.py$|scripts/bench_act/|\.github/workflows/act-bench\.yml$)'
           run=false
           if [ "$EVENT" = workflow_dispatch ]; then
             run=true
