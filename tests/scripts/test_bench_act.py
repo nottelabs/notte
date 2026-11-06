@@ -950,6 +950,7 @@ def test_benchmark_labels_share_push_concurrency_group(action: str, label: str) 
     [
         ("packages/notte-core/src/notte_core/dom_tree.py", True),
         ("packages/notte-core/src/notte_core/node_type.py", True),
+        ("packages/notte-core/src/notte_core/element_state.py", True),
         ("packages/notte-core/src/notte_core/act/space.py", True),
         ("packages/notte-browser/src/notte_browser/dom/builder.py", True),
         ("packages/notte-browser/src/notte_browser/js/buildDomNode.js", True),
