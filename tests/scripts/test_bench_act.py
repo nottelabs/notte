@@ -945,6 +945,31 @@ def test_benchmark_labels_share_push_concurrency_group(action: str, label: str) 
     assert workflow["concurrency"]["cancel-in-progress"] is True
 
 
+@pytest.mark.parametrize(
+    ("path", "selected"),
+    [
+        ("packages/notte-core/src/notte_core/dom_tree.py", True),
+        ("packages/notte-core/src/notte_core/node_type.py", True),
+        ("packages/notte-core/src/notte_core/act/space.py", True),
+        ("packages/notte-browser/src/notte_browser/dom/builder.py", True),
+        ("packages/notte-browser/src/notte_browser/js/buildDomNode.js", True),
+        ("packages/notte-llm/src/notte_llm/act.py", True),
+        ("scripts/bench_act/bench.py", True),
+        ("packages/notte-core/src/notte_core/dom_tree.pyi", False),
+        ("packages/notte-core/src/notte_core/actions.py", False),
+        ("packages/notte-sdk/src/notte_sdk/client.py", False),
+        ("README.md", False),
+    ],
+)
+def test_benchmark_runs_on_changes_to_what_act_sees(path: str, selected: bool) -> None:
+    workflow = yaml.safe_load((Path(__file__).resolve().parents[2] / ".github/workflows/act-bench.yml").read_text())
+    [script] = [step["run"] for step in workflow["jobs"]["plan"]["steps"] if step.get("id") == "plan"]
+    [paths] = re.findall(r"^\s*paths='(.*)'$", script, flags=re.MULTILINE)
+    # the workflow matches with `grep -qE`: run the same matcher
+    matched = subprocess.run(["grep", "-qE", paths], input=path, text=True, check=False).returncode == 0
+    assert matched is selected
+
+
 def test_trees_are_base_and_head_only(tmp_path: Path) -> None:
     assert bench.parse_trees([], tmp_path) == {"head": tmp_path}
     trees = bench.parse_trees([f"head={tmp_path}/h", f"base={tmp_path}/b"], tmp_path)
