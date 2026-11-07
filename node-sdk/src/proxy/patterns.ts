@@ -119,6 +119,9 @@ export const DEFAULT_ALLOWED_PATTERNS: RegExp[] = [
   // Search endpoints
   /^search$/, // /search
 
+  // Secret-proxy endpoints
+  /^secret-proxy\/host-presets$/, // /secret-proxy/host-presets
+
   // Secrets endpoints
   /^secrets$/, // /secrets
   /^secrets\/[^\/]+$/, // /secrets/{name}

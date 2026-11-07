@@ -1436,6 +1436,14 @@ export type CaptchaStatus = {
      * Cancel Reason
      */
     cancel_reason?: 'navigation' | null;
+    /**
+     * Challenge Type
+     */
+    challenge_type?: string | null;
+    /**
+     * Challenge State
+     */
+    challenge_state?: 'interstitial' | 'captcha' | 'banned' | null;
 };
 
 /**
@@ -4538,6 +4546,28 @@ export type HelpAction = {
      * Reason
      */
     reason: string;
+};
+
+/**
+ * HostPresetEntry
+ */
+export type HostPresetEntry = {
+    /**
+     * Host
+     */
+    host: string;
+    /**
+     * Provider
+     */
+    provider: string;
+    /**
+     * Evidence
+     */
+    evidence: 'observed' | 'documented';
+    /**
+     * Source
+     */
+    source: string;
 };
 
 /**
@@ -7742,9 +7772,49 @@ export type SecretProxy = {
     /**
      * Hosts
      *
-     * Hosts routed through the secret proxy: exact hostnames or a leading '*.' wildcard, without scheme, path or port. A bare '*' is not allowed. Required with `server`.
+     * Hosts routed through the secret proxy: exact hostnames or a leading '*.' wildcard, without scheme, path or port. A bare '*' is not allowed. Required with `server`. A host preset such as `@payments` stands for a list Notte maintains (common payment providers); `GET /secret-proxy/host-presets` returns each preset's current hosts.
      */
     hosts?: Array<string> | null;
+};
+
+/**
+ * SecretProxyHostPresetResponse
+ */
+export type SecretProxyHostPresetResponse = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Token
+     */
+    token: string;
+    /**
+     * Version
+     */
+    version: string;
+    /**
+     * Description
+     */
+    description: string;
+    /**
+     * Hosts
+     */
+    hosts: Array<string>;
+    /**
+     * Entries
+     */
+    entries: Array<HostPresetEntry>;
+};
+
+/**
+ * SecretProxyHostPresetsResponse
+ */
+export type SecretProxyHostPresetsResponse = {
+    /**
+     * Presets
+     */
+    presets: Array<SecretProxyHostPresetResponse>;
 };
 
 /**
@@ -15935,6 +16005,41 @@ export type DeleteSecretResponses = {
 };
 
 export type DeleteSecretResponse = DeleteSecretResponses[keyof DeleteSecretResponses];
+
+export type ListSecretProxyHostPresetsData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/secret-proxy/host-presets';
+};
+
+export type ListSecretProxyHostPresetsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListSecretProxyHostPresetsError = ListSecretProxyHostPresetsErrors[keyof ListSecretProxyHostPresetsErrors];
+
+export type ListSecretProxyHostPresetsResponses = {
+    /**
+     * Successful Response
+     */
+    200: SecretProxyHostPresetsResponse;
+};
+
+export type ListSecretProxyHostPresetsResponse = ListSecretProxyHostPresetsResponses[keyof ListSecretProxyHostPresetsResponses];
 
 export type ListAuditEventsData = {
     body?: never;
