@@ -4,7 +4,7 @@
 # Copyright (c) 2026 Browser Use. Licensed under the MIT License: see `LICENSE-jev-ultrafast`
 # next to this file. Changes: notte-specific operation labels (controls, PRESS_ENTER, typing an
 # unlisted dropdown option, closing a dialog), native date / time fields in the date picker rule, the format /
-# variable / credential / clearing / field context / field part rules of the field writer, the dialog line, the
+# variable / credential / clearing / field context / field part / address lookup writer rules, the dialog line, the
 # file upload line, the choose / check rules, the rule on page text outside the viewport, submitting a typed query
 # with no suggestion listed, the DONE line for typed text not submitted yet, the element context rule, the rule on
 # submitting after a dialog, the final-state rule of DONE, the dialog button rule, setting sliders and spin
@@ -70,8 +70,10 @@ other fields (page.fields), to tell which part of the goal this field takes: a f
 Write only that part: leave out the parts that other fields or controls take (page.next_controls: dates, guests,
 filters), even when the placeholder shows a longer example.
 When field.retry is given, follow it.
-If the goal is to clear the field, return {"text": ""}. If neither the goal nor observed page context or history
-gives a value for this field, return
+If the goal is to clear the field, return {"text": ""}.
+An address lookup field ("Start typing your postcode", "Find your address") takes the goal's postal code, or its
+address when the field asks for an address: the goal gives a value for it, never null. If neither the goal nor
+observed page context or history gives a value for this field, return
 {"text": null}. Otherwise return {"text": "the field value"}."""
 
 # `field.retry` of the writer, for a field act typed in before (`{text}`, the text typed)
