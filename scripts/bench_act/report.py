@@ -522,12 +522,14 @@ def ci_summary(
     for m in plans:
         trees.update(m.get("trees") or {})
     plan = plans[0] if plans else {}
+    fixture_repeats = plan.get("fixture_repeats", plan.get("repeats", 1))
+    fixture_note = f" (fixture tasks {fixture_repeats})" if fixture_repeats != plan.get("repeats", 1) else ""
     heads = " · ".join(f"{name} `{(sha or '?')[:10]}`" for name, sha in trees.items())
     lines = [
         f"## act bench: {'pass' if verdict.ok else 'FAIL'}",
         "",
         f"{heads} · runners {', '.join(plan.get('runners', []))} · suites {', '.join(plan.get('suites') or ['all'])} · "
-        f"{plan.get('repeats', 1)} repeat(s) · {len(plans)} shard(s)",
+        f"{plan.get('repeats', 1)} repeat(s){fixture_note} · {len(plans)} shard(s)",
         "",
     ]
     if verdict.failures:

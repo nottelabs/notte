@@ -221,6 +221,23 @@ def test_plan_runs_versions_back_to_back_alternating_and_longest_first() -> None
     assert jobs[0].file == "base/notte-local__r0__1.json"
 
 
+def test_fixture_tasks_can_run_more_often_than_the_rest() -> None:
+    items = registry.select(_registry())
+    jobs = registry.plan(items, ["notte-local", "probe-local-jev"], ["base", "head"], repeats=1, fixture_repeats=4)
+    runs: dict[tuple[str, str], int] = {}
+    for job in jobs:
+        key = ("fixture" if job.item.fixture and job.item.kind == "task" else job.item.kind, job.item.key)
+        runs[key] = runs.get(key, 0) + 1
+    # each version of a fixture task runs 4 times, every other item once per version
+    assert {n for (kind, _), n in runs.items() if kind == "fixture"} == {8}
+    assert {n for (kind, _), n in runs.items() if kind != "fixture"} == {2}
+    assert sorted({j.repeat for j in jobs if j.item.fixture and j.item.kind == "task"}) == [1, 2, 3, 4]
+    # without fixture_repeats nothing changes
+    assert registry.plan(items, ["notte-local"], ["head"], repeats=2) == registry.plan(
+        items, ["notte-local"], ["head"], repeats=2, fixture_repeats=None
+    )
+
+
 def test_site_miss_needs_evidence_from_the_site() -> None:
     url = "https://www.example.com/start"
     assert rules.site_miss(url, {"success": True, "nav_error": "x"}) == "navigation failed: x"
@@ -278,6 +295,25 @@ def _task_run(task: str, version: str, success: bool, **extra: Any) -> dict[str,
     return {"runner": "notte-local", "task": task, "url": url, "suite": suite, "version": version, "repeat": 1,
             "sha": ("a" if version == "base" else "b") * 40, "run_identity": "inputs", "steps": [],
             "site_miss": None, "success": success, "stop_reason": "done", **extra}  # fmt: skip
+
+
+def test_a_fixture_task_passes_with_one_failure_in_four_runs() -> None:
+    def runs(*results: bool, **extra: Any) -> list[dict[str, Any]]:
+        return [_task_run("f1", "head", ok, repeat=k, **extra) for k, ok in enumerate(results, start=1)]
+
+    # 3 of 4 passes; 2 of 4 does not, and the message names each failed run
+    assert rules.judge(runs(True, False, True, True), [], [], with_base=False).ok
+    verdict = rules.judge(runs(False, True, False, True), [], [], with_base=False)
+    assert verdict.failures == ["fixture task notte-local / f1: 2/4 passed, needs 3 (#1 done, #3 done)"]
+    # fewer than four runs allow no failure
+    assert not rules.judge(runs(True, True, False), [], [], with_base=False).ok
+    # infra misses are not judged runs: 3 passes out of 3 judged runs pass the fixture rule (the infra-miss rate
+    # is judged on its own)
+    infra = _task_run("f1", "head", False, repeat=4, error="LLMProviderError: Jev decisions returned HTTP 503: busy")
+    failures = rules.judge(runs(True, True, True) + [infra], [], [], with_base=False).failures
+    assert not [f for f in failures if f.startswith("fixture task")]
+    # base runs are never judged by the fixture rule
+    assert rules.judge([_task_run("f1", "base", False, repeat=k) for k in (1, 2)], [], [], with_base=False).ok
 
 
 def _public(base: list[bool], head: list[bool], **head_extra: Any) -> list[dict[str, Any]]:

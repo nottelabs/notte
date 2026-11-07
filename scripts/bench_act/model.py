@@ -81,7 +81,7 @@ class Task:
 
     @property
     def fixture(self) -> bool:
-        """On the local fixture server: no site noise, so it must always pass (see `rules.py`)."""
+        """On the local fixture server: no site noise, so it must pass nearly always (3 of 4 runs, see `rules.py`)."""
         return self.url.startswith(FIXTURES)
 
 

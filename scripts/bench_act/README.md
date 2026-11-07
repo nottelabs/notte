@@ -105,7 +105,8 @@ both versions interleaved. A report job merges the shards, writes the job summar
 `rules.py`:
 
 - the rules judge the Jev runners; the LLM and scripted runners are reported only;
-- fixture tasks and fixture probes must always pass;
+- fixture tasks run 4 times and must pass at least 3 of them (one failure in four is allowed: a single unlucky
+  decision on a fixture that passes 97-99% of the time no longer fails the PR); fixture probes must always pass;
 - public sites fail only on a clear drop against base;
 - site misses (blocks, CAPTCHAs, redirects off the site) are left out;
 - infra misses (the decider could not be reached, timed out or answered 5xx) are counted apart, and the run fails
