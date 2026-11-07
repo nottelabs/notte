@@ -1,0 +1,46 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Candles - Northwind Store</title>
+<style>[hidden]{display:none!important}body{font-family:sans-serif;margin:0}header{display:flex;justify-content:space-between;padding:12px 24px;border-bottom:1px solid #ddd}
+main{padding:24px;max-width:640px}.scrim{position:fixed;inset:0;background:#0006;display:flex;align-items:center;justify-content:center}
+[role=dialog]{background:#fff;padding:20px;border-radius:8px;width:380px;position:relative}.x{position:absolute;top:8px;right:8px}</style></head>
+<body>
+<header><strong>Northwind Store</strong><button type="button" id="bag">Cart (<span id="count">0</span>)</button></header>
+<main><h1>Candles, 4 pack</h1><p>€2.50 · Beige · 25 cm</p><p>Unscented paraffin candles.</p>
+<button type="button" id="add">Add to cart</button></main>
+<!-- the cart needs a delivery postcode first. Save shows nothing for a while: it checks the postcode (a request), then
+adds the item a second later (another request) and shows the confirmation 1.5 s after that. Closing the postcode dialog
+meanwhile drops the item, as some shops do -->
+<div class="scrim" id="zip-dialog" hidden><div role="dialog" aria-modal="true" aria-labelledby="zip-h">
+  <button type="button" class="x" id="zip-close" aria-label="Close Enter your postcode">×</button>
+  <h2 id="zip-h">Enter your postcode</h2><p>We check that we deliver to your area.</p>
+  <label for="zip">Postcode *</label> <input id="zip" inputmode="numeric"> <p id="zip-error" hidden>Enter a postcode.</p>
+  <button type="button" id="save">Save</button></div></div>
+<div class="scrim" id="added" hidden><div role="dialog" aria-modal="true" aria-labelledby="ad-h">
+  <button type="button" class="x" id="close" aria-label="Close">×</button>
+  <h2 id="ad-h">Added to your cart</h2><p>Candles, 4 pack · €2.50</p>
+  <button type="button" id="continue">Continue shopping</button> <a id="checkout" href="added-checkout.html">Checkout</a></div></div>
+<script>
+const $ = id => document.getElementById(id);
+let items = 0, saving = 0;
+const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+$('add').onclick = () => { $('zip-dialog').hidden = false; };
+$('save').onclick = async () => {
+  const zip = $('zip').value.trim();
+  $('zip-error').hidden = Boolean(zip);
+  if (!zip) return;
+  const run = ++saving;
+  await fetch(`items.json?check=${encodeURIComponent(zip)}&t=${Date.now()}`);
+  await wait(1000);
+  if (run !== saving) return;
+  await fetch(`items.json?add=candles&t=${Date.now()}`);
+  await wait(1500);
+  if (run !== saving) return;
+  items = 1; $('count').textContent = items; $('zip-dialog').hidden = true;
+  $('checkout').href = `added-checkout.html?item=candles&qty=${items}&zip=${encodeURIComponent(zip)}`;
+  $('added').hidden = false;
+};
+// closing the postcode dialog while it saves drops the item
+$('zip-close').onclick = () => { saving++; $('zip-dialog').hidden = true; };
+$('close').onclick = () => { $('added').hidden = true; };
+$('continue').onclick = () => { $('added').hidden = true; };
+$('bag').onclick = () => { if (items) $('added').hidden = false; };
+</script></body></html>
