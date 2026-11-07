@@ -272,4 +272,5 @@ async def test_local_writer_fills_an_address_lookup_with_the_postcode() -> None:
         # the writer once answered "no value" for this field (the goal gives the postcode)
         assert result.status == "executed", result
         value = await session.window.page.input_value("#address")
-        assert "nw16xe" in "".join(value.split()).casefold(), value
+        # the field asks for a postcode: the postcode alone, not the whole address
+        assert "".join(value.split()).casefold() == "nw16xe", value
