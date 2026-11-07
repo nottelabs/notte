@@ -11,10 +11,6 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-<Note>
-  SDK support for secret proxies is coming soon: `SecretProxy` and `sticky_session` ship in the next release of the Python and Node SDKs after 1.10.3.
-</Note>
-
 ## Overview
 
 A secret proxy lets an agent fill card numbers, passwords and other secrets on a site while Notte only handles stand-in values, provided your proxy also [masks responses](#mask-real-values-in-responses).
@@ -48,7 +44,7 @@ Add a `secret` entry to `proxies`, next to the entry that sets the session's exi
 | `server` | Yes, unless the workspace has a [saved configuration](#save-the-configuration-in-the-console) | Your secret proxy, as `http://host:port` or `https://host:port`. It must be a public address: private and loopback IPs, `localhost` and internal names (such as `.local` or `.internal`) are rejected. Put credentials in `username` and `password`, not in the URL. |
 | `username`, `password` | No | Basic auth credentials for your secret proxy. Notte never stores or returns them. |
 | `ca_certificate` | No, but needed when your proxy decrypts HTTPS | One or more PEM certificates, 16 KB at most. Each must be a CA certificate (`basicConstraints CA:TRUE`) that has not expired. Notte uses it to verify your proxy's own TLS certificate, and the browser trusts it for the certificates your proxy presents for `hosts`. |
-| `hosts` | Yes, with `server` | The hosts to send through your secret proxy: exact hostnames, or a leading `*.` wildcard. `*.example.com` matches `pay.example.com` and deeper subdomains, but not `example.com`. A bare `*`, wildcards on a top-level domain (`*.com`), schemes, paths and ports are rejected. |
+| `hosts` | Yes, with `server` | The hosts to send through your secret proxy: exact hostnames, a leading `*.` wildcard, or a [host preset](#payment-provider-hosts) such as `@payments`. `*.example.com` matches `pay.example.com` and deeper subdomains, but not `example.com`. A bare `*`, wildcards on a top-level domain (`*.com`), schemes, paths and ports are rejected. |
 
 <Warning>
   Send only the CA certificate. A `ca_certificate` that contains a `PRIVATE KEY` block is rejected. If that happens, rotate the key: it has left your systems.
@@ -65,6 +61,18 @@ Add a `secret` entry to `proxies`, next to the entry that sets the session's exi
 
 The session response has a `secret_proxy` summary (`SecretProxySummary`) with the server, the hosts and the SHA-256 fingerprint of each trusted CA certificate. It never contains the username, password or the certificate itself. Read it from `session.response.secret_proxy` in Python or `session.getResponse()?.secret_proxy` in Node, as in the example above.
 
+## Payment provider hosts
+
+Instead of listing payment provider hosts yourself, add `@payments` to `hosts`, next to your own hosts: `hosts=["@payments", "pay.merchant.example"]`.
+
+`@payments` stands for the hosts that common payment providers' card fields send card data to, a list Notte keeps up to date. It currently covers Stripe, Braintree and Worldpay. Providers that encrypt card data in the page before sending it, such as Adyen, are not in the list: a secret proxy only ever sees encrypted values there, so it has no stand-in to replace.
+
+- A session expands `@payments` when it starts. Its routing, the hosts its CA is trusted for and its `secret_proxy` summary name the expanded hosts, and a running session keeps them.
+- A [saved configuration](#save-the-configuration-in-the-console) keeps `@payments`, so new sessions follow the list as it changes. In the console, it is the **Common payment providers** checkbox.
+- Your secret proxy must decrypt the same hosts. List them with `GET https://api.notte.cc/secret-proxy/host-presets` and your API key. Each preset has its `hosts`, a `version` that changes whenever they do, and per host the provider and how Notte knows it receives card data.
+
+An unknown preset is rejected like any other invalid host. If Notte cannot read the current list, a session that names a preset fails to start with `503` instead of starting with a partial list.
+
 ## If your secret proxy is unavailable
 
 Requests to the listed hosts never fall back to the session's exit or a direct connection, because a stand-in sent to the site would fail without a clear error. If your secret proxy is unreachable or refuses the connection, for example because the credentials are wrong, the request fails with `502 Bad Gateway`. For HTTPS sites the browser shows this as `ERR_TUNNEL_CONNECTION_FAILED`.
@@ -72,8 +80,6 @@ Requests to the listed hosts never fall back to the session's exit or a direct c
 Requests to every other host are not affected.
 
 ## Save the configuration in the console
-
-{/* TODO(review): saved workspace configuration (console card and a secret entry without server) is not released yet. Publish this section only once it is available, or mark it as coming soon. */}
 
 Instead of sending the configuration with every session, a workspace can save one secret proxy under **[Settings → Integrations](https://console.notte.cc/settings/integrations)** in the Notte console. The card has presets for VGS, Evervault and a custom proxy, and a **Test connection** button that checks that:
 
