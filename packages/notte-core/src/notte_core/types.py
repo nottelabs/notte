@@ -2474,6 +2474,8 @@ class CaptchaStatus(BaseModel):
     retry_after_ms: int = 1000
     message: str = ""
     cancel_reason: str | None = None
+    challenge_type: str | None = None
+    challenge_state: Literal["interstitial", "captcha", "banned"] | None = None
 
 
 class ExecutionResultResponse(ExecutionResult):

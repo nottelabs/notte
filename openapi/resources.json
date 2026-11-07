@@ -284,6 +284,9 @@
     "resource": "personas",
     "telemetry": null
   },
+  "list_secret_proxy_host_presets": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
   "list_secrets": {
     "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
   },

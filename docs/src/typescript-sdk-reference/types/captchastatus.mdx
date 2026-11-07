@@ -39,6 +39,14 @@ export type CaptchaStatus = {
      * Cancel Reason
      */
     cancel_reason?: 'navigation' | null;
+    /**
+     * Challenge Type
+     */
+    challenge_type?: string | null;
+    /**
+     * Challenge State
+     */
+    challenge_state?: 'interstitial' | 'captcha' | 'banned' | null;
 };
 ```
 
@@ -69,5 +77,13 @@ export type CaptchaStatus = {
 </ParamField>
 
 <ParamField body="cancel_reason" type={"\"navigation\" | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="challenge_type" type={"string | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="challenge_state" type={"\"captcha\" | \"interstitial\" | \"banned\" | null | undefined"}>
 
 </ParamField>
