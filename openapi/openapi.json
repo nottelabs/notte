@@ -3,7 +3,7 @@
   "info": {
     "title": "Notte API",
     "description": "Notte API is a REST API that allows you to interact with Notte. It is used to create cloud browser sessions, scrape webpages, and run web ai agents to act on your behalf on the internet.",
-    "version": "1.10.7",
+    "version": "1.10.8",
     "x-logo": {
       "url": "https://www.notte.cc/images/logo/logo-white.png"
     }
@@ -10133,6 +10133,83 @@
           }
         },
         "x-codeSamples": []
+      }
+    },
+    "/secret-proxy/host-presets": {
+      "get": {
+        "tags": [
+          "secret-proxy"
+        ],
+        "summary": "List Secret Proxy Host Presets",
+        "operationId": "list_secret_proxy_host_presets",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-notte-request-origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Request-Origin"
+            }
+          },
+          {
+            "name": "x-notte-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Sdk-Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecretProxyHostPresetsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Curl",
+            "source": "curl -X GET \"https://api.notte.cc/secret-proxy/host-presets\" \\\n-H \"Authorization: Bearer $NOTTE_API_KEY\"",
+            "label": "curl"
+          }
+        ]
       }
     },
     "/audit-events": {
@@ -21609,6 +21686,33 @@
               }
             ],
             "title": "Cancel Reason"
+          },
+          "challenge_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Challenge Type"
+          },
+          "challenge_state": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "interstitial",
+                  "captcha",
+                  "banned"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Challenge State"
           }
         },
         "type": "object",
@@ -27107,7 +27211,7 @@
           "version": {
             "type": "string",
             "title": "Version",
-            "default": "1.10.7"
+            "default": "1.10.8"
           },
           "description": {
             "type": "string",
@@ -27146,6 +27250,38 @@
           "reason"
         ],
         "title": "HelpAction"
+      },
+      "HostPresetEntry": {
+        "properties": {
+          "host": {
+            "type": "string",
+            "title": "Host"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          },
+          "evidence": {
+            "type": "string",
+            "enum": [
+              "observed",
+              "documented"
+            ],
+            "title": "Evidence"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          }
+        },
+        "type": "object",
+        "required": [
+          "host",
+          "provider",
+          "evidence",
+          "source"
+        ],
+        "title": "HostPresetEntry"
       },
       "ImageResolution": {
         "properties": {
@@ -33411,12 +33547,72 @@
               }
             ],
             "title": "Hosts",
-            "description": "Hosts routed through the secret proxy: exact hostnames or a leading '*.' wildcard, without scheme, path or port. A bare '*' is not allowed. Required with `server`."
+            "description": "Hosts routed through the secret proxy: exact hostnames or a leading '*.' wildcard, without scheme, path or port. A bare '*' is not allowed. Required with `server`. A host preset such as `@payments` stands for a list Notte maintains (common payment providers); `GET /secret-proxy/host-presets` returns each preset's current hosts."
           }
         },
         "additionalProperties": false,
         "type": "object",
         "title": "SecretProxy"
+      },
+      "SecretProxyHostPresetResponse": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "token": {
+            "type": "string",
+            "title": "Token"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "hosts": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Hosts"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/HostPresetEntry"
+            },
+            "type": "array",
+            "title": "Entries"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "token",
+          "version",
+          "description",
+          "hosts",
+          "entries"
+        ],
+        "title": "SecretProxyHostPresetResponse"
+      },
+      "SecretProxyHostPresetsResponse": {
+        "properties": {
+          "presets": {
+            "items": {
+              "$ref": "#/components/schemas/SecretProxyHostPresetResponse"
+            },
+            "type": "array",
+            "title": "Presets"
+          }
+        },
+        "type": "object",
+        "required": [
+          "presets"
+        ],
+        "title": "SecretProxyHostPresetsResponse"
       },
       "SecretProxySummary": {
         "properties": {
