@@ -343,6 +343,10 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 
 - [POST Search Web](https://docs.notte.cc/api-reference/search/search-web.md)
 
+## Secret-Proxy
+
+- [GET List Secret Proxy Host Presets](https://docs.notte.cc/api-reference/secret-proxy/list-secret-proxy-host-presets.md)
+
 ## Secrets
 
 - [DELETE Delete Secret](https://docs.notte.cc/api-reference/secrets/delete-secret.md)
