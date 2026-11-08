@@ -44,7 +44,7 @@ def test_discovery_works_without_installed_packages() -> None:
 
 def test_discover_names_every_task_and_probe_once_with_its_module_as_suite() -> None:
     found = registry.discover()
-    assert len(found.tasks) == 142
+    assert len(found.tasks) == 143
     assert len(found.probes) == 161
     suites = {
         "cov_fixtures",
