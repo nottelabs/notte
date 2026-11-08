@@ -12,12 +12,13 @@ import os
 from urllib.parse import parse_qs, quote, urlsplit
 
 import pytest
-from notte_core.act import ActResult, Decider, aact_until_done
+from notte_core.act import ActResult, Decider, WriteContext, aact_until_done
 from notte_core.actions import SelectDropdownOptionAction
 from notte_core.dom_tree import NodeSelectors
 from notte_core.observation import Observation
 
 import notte
+from tests.act.fakes import FakeDecider
 
 # the default decision and writer models are OpenRouter model ids
 _ON_OPENROUTER = urlsplit(os.getenv("NOTTE_LLM_BASE_URL") or "https://openrouter.ai").hostname == "openrouter.ai"
@@ -226,3 +227,50 @@ async def test_local_check_true_and_false(kind: str) -> None:
         print(f"\nlocal check ({kind}): ada={about_ada:.3f} turing={about_turing:.3f}")
         assert about_ada > 0.5
         assert about_turing < 0.5
+
+
+# a checkout's address finder: the field asks for a postcode to look the address up, a button offers manual entry
+ADDRESS_LOOKUP = """<!doctype html><title>Delivery</title><h1>Guest Checkout</h1><h2>Contact details</h2>
+<label for="first">First name*</label><input id="first" value="Alex">
+<label for="last">Last name*</label><input id="last" value="Tester">
+<label for="email">Email*</label><input id="email" type="email" value="alex@example.com">
+<h2>Address Details</h2><p>Your address *</p>
+<input id="address" aria-label="Your address *" placeholder="Start typing your postcode">
+<p>Start typing your postcode and select from the options. Or</p>
+<button type="button">enter address manually</button><button type="button" disabled>Continue</button>"""
+ADDRESS_GOAL = (
+    "Check out as a guest. Buyer: email alex@example.com, first name Alex, last name Tester. Delivery address:"
+    + " 221B Baker Street, city London, postal code NW1 6XE, country United Kingdom."
+)
+
+
+@pytest.mark.asyncio
+@pytest.mark.skipif(not HAS_OPENROUTER, reason="needs an OpenRouter key (OPENROUTER_API_KEY, NOTTE_LLM_BASE_URL unset)")
+async def test_local_writer_fills_an_address_lookup_with_the_postcode() -> None:
+    from notte_llm.act import DEFAULT_ACT_MODEL, DEFAULT_TEXT_MODEL, LlmWriter  # noqa: PLC0415
+
+    writer = LlmWriter(DEFAULT_TEXT_MODEL, fallback_model=DEFAULT_ACT_MODEL)
+
+    class LookupDecider(FakeDecider):
+        async def write(self, context: WriteContext) -> str | None:
+            self.contexts.append(context)
+            return await writer.write(context)
+
+    async with notte.Session(headless=True) as session:
+        url = "https://act-fixture.notte.test/delivery"
+        await session.window.page.route(url, lambda route: route.fulfill(content_type="text/html", body=ADDRESS_LOOKUP))
+        _ = await session.window.page.goto(url)
+        observation = await session.aobserve()
+        field = next(a.id for a in observation.space.interaction_actions if a.accessible_name == "Your address *")
+        # the decision is fixed: the field writer alone decides what goes in the field. Without a value, the field is
+        # skipped and the next decision gives up
+        decider = LookupDecider(
+            choices=[{"operation": "TYPE_TEXT", "type_text_target": field}, {"operation": "BLOCKED"}]
+        )
+        result = await session.aact(ADDRESS_GOAL, observation=observation, decider=decider, raise_on_failure=False)
+        _report("address lookup", [result])
+        # the writer once answered "no value" for this field (the goal gives the postcode)
+        assert result.status == "executed", result
+        value = await session.window.page.input_value("#address")
+        # the field asks for a postcode: the postcode alone, not the whole address
+        assert "".join(value.split()).casefold() == "nw16xe", value
