@@ -33547,7 +33547,7 @@
               }
             ],
             "title": "Hosts",
-            "description": "Hosts routed through the secret proxy: exact hostnames or a leading '*.' wildcard, without scheme, path or port. A bare '*' is not allowed. Required with `server`. A host preset such as `@payments` stands for a list Notte maintains (common payment providers); `GET /secret-proxy/host-presets` returns each preset's current hosts."
+            "description": "Hosts routed through the secret proxy: exact hostnames or a leading '*.' wildcard, without scheme, path or port, or '*' to route every host (the secret proxy then decides where to swap; '*' replaces any other entry). Required with `server`. A host preset such as `@payments` stands for a list Notte maintains (common payment providers); `GET /secret-proxy/host-presets` returns each preset's current hosts."
           }
         },
         "additionalProperties": false,
