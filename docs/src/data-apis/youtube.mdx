@@ -65,7 +65,15 @@ curl -X POST https://api.notte.cc/data/youtube/extract \
 </ResponseField>
 
 <ResponseField name="captions" type="object[]">
-  When available: `start`, `duration` and `text` for each caption line, plus `captions_language` and `captions_automatic`.
+  When available: `start`, `duration` and `text` for each caption line.
+</ResponseField>
+
+<ResponseField name="captions_language" type="string">
+  The language of the captions, when available.
+</ResponseField>
+
+<ResponseField name="captions_automatic" type="boolean">
+  Whether the captions were generated automatically, when available.
 </ResponseField>
 
 <ResponseField name="videos" type="object[]">

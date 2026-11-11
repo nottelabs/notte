@@ -72,6 +72,14 @@ curl -X POST https://api.notte.cc/data/brand/retrieve \
   Prioritize speed.
 </ParamField>
 
+<ParamField body="timeoutOpts" type="object">
+  `milliseconds` and `behavior`: `fail` or `return-partial`.
+</ParamField>
+
+<ParamField body="tags" type="string[]">
+  Free-form labels attached to the request.
+</ParamField>
+
 ## When no merchant is found
 
 If the descriptor can't be resolved reliably, the API returns:

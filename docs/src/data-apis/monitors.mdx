@@ -6,7 +6,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-A monitor checks a target on a schedule, compares it with the previous result, and records a change when something is different. Add a webhook to be notified.
+A monitor checks a target on a schedule and records a change when the result differs from what it saw before. Add a webhook to be notified.
 
 <Card title="Try it in the Console" icon="play" href="https://console.notte.cc/data-apis/monitors" horizontal>
   Try this API in the playground, no code needed.
@@ -42,7 +42,7 @@ curl -X POST https://api.notte.cc/data/monitors \
 }
 ```
 
-Creating a monitor runs it once right away to record the baseline. Later runs are compared with it. Save the webhook `secret`.
+Creating a monitor runs it once right away to record a baseline. Save the webhook `secret`.
 
 ## Create a monitor
 
@@ -55,10 +55,16 @@ Creating a monitor runs it once right away to record the baseline. Later runs ar
 
   | `type` | What it watches | Fields |
   |--------|-----------------|--------|
-  | `page` | One page | `url`, `instructions`, `include_selectors`, `exclude_selectors`, `actions`, `normalize_whitespace` (default `true`) |
+  | `page` | One page | `url`, `instructions`, `include_selectors`, `exclude_selectors`, `actions` (up to 5), `normalize_whitespace` (default `true`) |
   | `sitemap` | The list of URLs in a sitemap | `url`, `include`, `exclude`, `max_urls` (default `5000`) |
   | `extract` | Data extracted from one or more pages | `url`, `instructions` (required), `schema`, `max_pages` (default `10`), `max_depth`, `follow_subdomains` (default `false`) |
 </ParamField>
+
+A `page` target's `actions` run before each check, in order. Each one is one of:
+
+- `{"do": "wait", "timeMs": 1000}`
+- `{"do": "scroll", "direction": "down", "amount": "viewport", "maxScrolls": 3}`
+- `{"do": "perform", "action": "click the Load more button"}`
 
 <ParamField body="schedule" type="object" required>
   `{"type": "interval", "frequency": 1, "unit": "days"}`. `unit` is `minutes`, `hours` or `days`.

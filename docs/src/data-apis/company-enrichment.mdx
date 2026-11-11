@@ -60,15 +60,21 @@ To resolve a card-statement line instead, see [Merchant resolution](/data-apis/m
 </ParamField>
 
 <ParamField body="maxSpeed" type="boolean" default="false">
-  Prioritize speed.
+  Prioritize speed. Not available on `by_direct_url`.
 </ParamField>
 
 <ParamField body="force_language" type="string">
-  Return text fields in this language, for example `english` or `french`.
+  Return text fields in this language, for example `english` or `french`. Not available on `by_direct_url`.
+</ParamField>
+
+<ParamField body="timeoutOpts" type="object">
+  `milliseconds` and `behavior`: `fail` or `return-partial`.
+</ParamField>
+
+<ParamField body="tags" type="string[]">
+  Free-form labels attached to the request.
 </ParamField>
 
 ## Response fields
 
 `brand` can contain: `domain`, `title`, `description`, `slogan`, `colors`, `logos`, `backdrops`, `socials`, `address`, `stock`, `employees`, `industries`, `links`, `email`, `phone`, `is_nsfw`, `primary_language`. Fields that weren't found are `null` or empty. `partial: true` means the profile is incomplete.
-
-See [common parameters](/data-apis/overview#common-parameters) for `timeoutOpts`, `zdr` and `tags`.

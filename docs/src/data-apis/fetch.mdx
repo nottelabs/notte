@@ -53,6 +53,18 @@ Each format you request comes back as `{ requested, success, data }`. Formats yo
   - `parse`: parsed Google Maps data. Also set `parseParams` to `{"type": "prebuilt", "parser": "google-maps"}`
 </ParamField>
 
+To get parsed Google Maps data, request `parse` and set the parser:
+
+```json
+{
+  "url": "https://www.google.com/maps/place/...",
+  "formats": {"parse": true},
+  "parseParams": {"type": "prebuilt", "parser": "google-maps"}
+}
+```
+
+The result comes back in the `parsed` field of the response.
+
 <ParamField body="markdownParams" type="object">
   `includeLinks` (default `true`), `includeImages` (default `false`), `inlineImages` (`placeholder` or `preserve`).
 </ParamField>

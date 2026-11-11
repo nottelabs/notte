@@ -78,25 +78,21 @@ Control it per request with these headers:
   Store the result for less time than the default. `0` means don't store it.
 </ParamField>
 
-Responses include `cache_metadata` with `status` (`hit` or `miss`) and `age_ms`.
+Fetch, Styleguide and Company enrichment (including Merchant resolution) responses include `cache_metadata` with `status` (`hit` or `miss`) and `age_ms`.
 
 Read your current policy with `GET /data/cache`. Clear cached results with `DELETE /data/cache`.
 
 ## Common parameters
 
-Most APIs also accept:
+Some APIs accept these optional fields. Check the table before sending them, because unsupported fields are rejected.
 
-<ParamField body="timeoutOpts" type="object">
-  `milliseconds` (integer) and `behavior`: `fail` returns an error on timeout, `return-partial` returns what was collected so far.
-</ParamField>
+| Field | What it does | Accepted by |
+|-------|--------------|-------------|
+| `timeoutOpts` | `milliseconds` (integer) and `behavior`: `fail` returns an error on timeout, `return-partial` returns what was collected so far | Fetch, Styleguide, Company enrichment, Merchant resolution, People |
+| `zdr` | `enabled` turns on zero data retention for the request. `disabled` is the default | Fetch, Styleguide, People |
+| `tags` | Free-form labels attached to the request | Fetch, Styleguide, Company enrichment, Merchant resolution, People, News, Monitors |
 
-<ParamField body="zdr" type="string">
-  `enabled` turns on zero data retention for the request. `disabled` is the default.
-</ParamField>
-
-<ParamField body="tags" type="string[]">
-  Free-form labels attached to the request.
-</ParamField>
+Products, Maps and YouTube take none of them. For Styleguide, which is a `GET`, they are query parameters (`timeoutOpts[milliseconds]`, `timeoutOpts[behavior]`, `zdr`, `tags`). For the others they go in the JSON body.
 
 ## Errors
 
@@ -116,6 +112,8 @@ Errors return a JSON body with an `error_code`, a `message` and a `request_id`:
 | 401 | `UNAUTHORIZED` | Missing or invalid API key. |
 | 408 | `TIMEOUT` | The page didn't finish loading in time. |
 | | `NOT_FOUND` | The API couldn't resolve what you asked for (for example an unknown merchant). |
+
+The OpenAPI spec also lists a `422` response with a `detail` array for validation errors on some endpoints. Handle both `400` and `422` as invalid input.
 
 Include the `request_id` when you contact support.
 

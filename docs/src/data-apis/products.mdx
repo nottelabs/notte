@@ -38,7 +38,14 @@ curl -X POST https://api.notte.cc/data/products/extract \
       "imageUrl": "https://www.allbirds.com/cdn/shop/files/...",
       "images": ["..."],
       "features": ["..."],
-      "variants": ["..."]
+      "variants": [
+        {
+          "sku": null,
+          "url": "https://www.allbirds.com/products/mens-tree-runners-navy-night?size=8",
+          "attributes": {},
+          "images": []
+        }
+      ]
     }
   }
 }
@@ -58,6 +65,6 @@ If the page isn't a product page, `isProductPage` is `false` and `product` is `n
 
 ## Response fields
 
-`name`, `description`, `brand`, `sku`, `price`, `regularPrice`, `currency`, `availability`, `category`, `imageUrl`, `images`, `dimensions`, `features`, `targetAudience`, `tags`, `variants`. Fields the page doesn't expose are `null`.
+`name`, `description`, `brand`, `sku`, `price`, `regularPrice`, `currency`, `availability`, `category`, `imageUrl`, `images`, `dimensions`, `features`, `targetAudience`, `tags`, `variants`. Scalar fields the page doesn't expose (like `regularPrice` or `category`) are `null`. List fields (`images`, `dimensions`, `features`, `targetAudience`, `tags`, `variants`) can be empty or left out. Each variant has `sku`, `url`, `attributes` and `images`.
 
 You can also get product data as part of [Raw fetch](/data-apis/fetch) with `"formats": {"product": true}`.

@@ -19,6 +19,8 @@ curl "https://api.notte.cc/data/web/styleguide?domain=stripe.com" \
   -H "Authorization: Bearer $NOTTE_API_KEY"
 ```
 
+The response is abbreviated below.
+
 ```json
 {
   "status": "ok",
@@ -36,6 +38,7 @@ curl "https://api.notte.cc/data/web/styleguide?domain=stripe.com" \
     "fontLinks": {},
     "components": {}
   },
+  "code": 200,
   "finalDOMState": "loaded",
   "cache_metadata": { "status": "miss", "age_ms": 0 },
   "request_id": "..."
@@ -64,4 +67,4 @@ All parameters are query parameters.
   Maximum age of a cached result. `0` forces a fresh capture.
 </ParamField>
 
-`timeoutOpts[milliseconds]`, `timeoutOpts[behavior]`, `zdr` and `tags` work as described in [common parameters](/data-apis/overview#common-parameters).
+`timeoutOpts[milliseconds]`, `timeoutOpts[behavior]`, `zdr` and `tags` are also query parameters. They work as described in [common parameters](/data-apis/overview#common-parameters).
