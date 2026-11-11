@@ -17,7 +17,7 @@ Sessions close on their own after an idle timeout or a maximum duration. Both ar
 | `idle_timeout_minutes` | 3 | 30 |
 | `max_duration_minutes` | 15 | 1440 |
 
-Set them to the shortest values your workflow needs. See [Session lifecycle](/features/sessions/lifecycle#2-set-appropriate-timeouts) for details.
+The idle timeout cannot exceed the maximum duration, so raise `max_duration_minutes` first if you need a longer idle timeout. Set both to the shortest values your workflow needs. See [Session lifecycle](/features/sessions/lifecycle#2-set-appropriate-timeouts) for details.
 
 ## Turn off proxies you don't need
 
@@ -37,7 +37,7 @@ When an allowance is used up:
 Notte sends an email when:
 
 * 80% of your plan's credits are used.
-* Your credits run out. New sessions are blocked and scheduled functions are paused until you top up.
+* Your credits run out. New sessions are blocked and scheduled functions are paused. Top up to start new sessions again, then [resume the paused schedules](/features/functions/schedules#paused-schedules) with `client.functions.resume_schedules(function_id)`.
 
 Top up from the [billing page](https://console.notte.cc/billing).
 
