@@ -16,6 +16,33 @@ Clear all locally stored state including current session, viewer URL, and functi
 
 Check if the Notte API is healthy and responding.
 
+## `notte login`
+
+Log in to Notte from any machine.
+
+The CLI prints a link and a code. Open the link in a browser on any device, check that the code matches, choose a workspace and approve. The CLI then receives a new API key named after this machine ("CLI · &lt;host&gt; · &lt;date&gt;"), which you can revoke from the console's API keys page or with notte logout.
+
+Nothing listens on this machine, so this also works over SSH, in containers and in sandboxes.
+
+To store a key you already have instead, pipe it in:
+
+```bash
+echo "$NOTTE_API_KEY" | notte login --with-token
+```
+
+The API key is stored in your system credential store: the macOS Keychain, the Windows Credential Manager, or a Secret Service, KWallet or pass on Linux. Without one (headless hosts, containers), it goes to an encrypted file in the config directory whose password is fixed, so it is protected no better than a file only your user can read.
+
+| Flag | Description |
+| - | - |
+| `--no-browser` | Print the link without trying to open a browser |
+| `--with-token` | Read an existing API key from standard input instead of logging in through the console |
+
+## `notte logout`
+
+Remove the stored API key from this machine.
+
+A key created by notte login is also revoked, so it stops working everywhere. A key you stored with `--with-token` is only removed from this machine.
+
 ## `notte search <query>`
 
 Search the web via the Notte search API.
@@ -45,3 +72,7 @@ Uses Homebrew when the CLI was installed with Homebrew. Otherwise it re-runs the
 ## `notte version`
 
 Print version information
+
+## `notte whoami`
+
+Show which API key and environment this CLI uses
