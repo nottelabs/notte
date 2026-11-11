@@ -42,7 +42,10 @@ jobs:
     concurrency:
       group: notte-offline-readme-check-static-${{ github.event.pull_request.number || github.run_id }}
       cancel-in-progress: ${{ github.event_name == 'pull_request' }}
-    runs-on: ubuntu-latest
+    # GitHub-hosted runners could not resolve Ubuntu's package mirrors for over an hour on
+    # 2026-11-11, which failed the setup commands' browser install; CI_RUNNER_PROVIDER=github
+    # switches back, as for the other CI jobs.
+    runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-2vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
