@@ -90,6 +90,8 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 ## Anything API
 
+- [Anything API](https://anything.notte.cc/): Turn any website into an API
+- [Anything API Docs](https://anything.notte.cc/docs): Anything API documentation
 
 
 # Integrations

@@ -140,6 +140,15 @@ Check what happened to a delivery:
 | Delivery attempts | `GET /data/webhooks/deliveries/{delivery_id}/attempts` |
 | Retry a delivery | `POST /data/webhooks/deliveries/{delivery_id}/retry` |
 
-A delivery's `status` is `pending`, `delivering`, `retrying`, `delivered`, `failed` or `cancelled`. To filter the list, send `monitor_id`, `run_id`, `status`, `created_after`, `limit` (default `25`) and `cursor` in the request body.
+A delivery's `status` is `pending`, `delivering`, `retrying`, `delivered`, `failed` or `cancelled`.
+
+The list request needs `"type": "monitor"`. Add any of `monitor_id`, `run_id`, `status`, `created_after`, `limit` (default `25`, max `100`) and `cursor` to filter and page:
+
+```bash
+curl -X POST https://api.notte.cc/data/webhooks/deliveries \
+  -H "Authorization: Bearer $NOTTE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"type": "monitor", "monitor_id": "mon_d6d9873bc88a4df19d0ddd1c576fd27a", "status": "failed"}'
+```
 
 Rotate a webhook secret with `POST /data/monitors/{monitor_id}/webhook/rotate-secret`.

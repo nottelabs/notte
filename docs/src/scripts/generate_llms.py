@@ -168,11 +168,13 @@ def page_url(page_path: str) -> str:
 
 def render_page(page_path: str) -> str | None:
     fm = read_frontmatter(page_path)
-    if fm.get("url"):
+    external_url = str(fm.get("url") or "")
+    # External-link pages are skipped unless they opt in with `llms: true`.
+    if external_url and not fm.get("llms"):
         return None
     title = str(fm.get("title", page_path))
     desc = str(fm.get("description", "")).strip()
-    line = f"- [{title}]({page_url(page_path)})"
+    line = f"- [{title}]({external_url or page_url(page_path)})"
     if desc:
         line += f": {desc}"
     return line
