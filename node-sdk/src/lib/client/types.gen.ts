@@ -3903,7 +3903,7 @@ export type FunctionScheduleListResponse = {
 /**
  * FunctionSdkGeneration
  */
-export type FunctionSdkGeneration = 'v19' | 'v110';
+export type FunctionSdkGeneration = 'v19' | 'v110' | 'node110';
 
 /**
  * FunctionSource

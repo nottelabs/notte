@@ -26176,7 +26176,8 @@
         "type": "string",
         "enum": [
           "v19",
-          "v110"
+          "v110",
+          "node110"
         ],
         "title": "FunctionSdkGeneration"
       },
