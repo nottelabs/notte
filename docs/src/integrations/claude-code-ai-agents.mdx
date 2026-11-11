@@ -11,8 +11,15 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 The [Notte CLI](https://github.com/nottelabs/notte-cli) lets AI agents control browsers through simple shell commands.
 
 ```bash
-brew tap nottelabs/notte-cli https://github.com/nottelabs/notte-cli.git
-brew install notte
+curl -fsSL https://notte.cc/install-cli.sh | sh
+```
+
+Homebrew and Go installs are also available; see [CLI installation](/cli-reference/index#installation).
+
+Then sign in, or set `NOTTE_API_KEY` in your environment:
+
+```bash
+notte auth login
 ```
 
 ## Install notte-skill

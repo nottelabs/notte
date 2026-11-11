@@ -12,7 +12,7 @@ const PATH_FIX = 'export PATH="$PATH:$(go env GOROOT)/bin:$(go env GOPATH)/bin"'
 //    disabled so the agent can only see pages through a real Notte browser.
 const agent = await client.beta.agents.create({
   name: "browser-operator",
-  model: "claude-haiku-4-5",
+  model: "claude-haiku-5-5",
   system:
     `You drive real browsers with the notte CLI. ` +
     `Prefix every shell command with: ${PATH_FIX}`,

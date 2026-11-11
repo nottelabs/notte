@@ -19,5 +19,3 @@ Edit `selectors.json` with your page URL and each selector's expected role (`lin
 Copy the project at the same path in your repository and copy the [manual workflow](https://github.com/nottelabs/notte/blob/main/.github/workflows/selector-repair.yml) into `.github/workflows`. Add `NOTTE_API_KEY` to Actions secrets, then run **Review browser selector repairs** on `main`. The default run produces an artifact for review.
 
 Enable `create_pr` only to open a draft PR. That job alone receives repository-write permissions. It checks the producing job's artifact digest, source hash, unchanged main commit, fixed map path and repair-branch contents before replacing known selector fields. Your repository must permit Actions-created PRs. Nothing merges automatically; `GITHUB_TOKEN`-created PRs normally need their required checks started separately.
-
-Real-browser tests cover repairs, refusals and cancellation with independent browser-closure checks. GitHub REST fixtures cover optional publication; creating a hosted GitHub PR has not been tested.

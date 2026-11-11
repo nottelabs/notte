@@ -1,24 +1,9 @@
 # @sniptest filename=steel_init.py
-# @sniptest show=20-27
 # @sniptest typecheck_only=true
 import os
 
 from notte_sdk import NotteClient
-
-
-class SteelSession:
-    websocket_url: str = "wss://connect.steel.dev/session"
-
-
-class Sessions:
-    def create(self) -> "SteelSession":
-        return SteelSession()
-
-
-class Steel:
-    def __init__(self, steel_api_key: str | None = None):
-        self.sessions = Sessions()
-
+from steel import Steel
 
 STEEL_API_KEY = os.getenv("STEEL_API_KEY")
 

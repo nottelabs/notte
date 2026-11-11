@@ -4,30 +4,33 @@
 <CodeGroup>
 
 ```python manage_schedule.py
-import requests
+from notte_sdk import NotteClient
 
-endpoint = f"{api_url}/functions/{function_id}"
-headers = {"Authorization": f"Bearer {api_key}"}
+client = NotteClient()
 
+# Add a schedule. Times are UTC.
+schedule = client.functions.add_schedule(
+    function_id,
+    cron="0 9 ? * * *",
+    variables={"url": "https://example.com"},
+)
 try:
-    # Create or replace the schedule. Times are UTC.
-    response = requests.post(
-        f"{endpoint}/schedule",
-        headers=headers,
-        json={"cron": "0 9 ? * * *", "variables": {"url": "https://example.com"}},
-        timeout=30,
+    # Change it in place: same schedule ID, new expression.
+    client.functions.update_schedule(
+        function_id,
+        schedule.schedule_id,
+        cron="0 18 ? * MON-FRI *",
+        variables={"url": "https://example.com"},
     )
-    response.raise_for_status()
 
-    # Read the schedule from the function metadata.
-    metadata = requests.get(endpoint, headers=headers, timeout=30)
-    metadata.raise_for_status()
-    schedule = metadata.json()
-    print(schedule["schedule_cron"], schedule["schedule_state"])
+    # List every schedule of the function and their shared state.
+    listed = client.functions.list_schedules(function_id)
+    for item in listed.schedules:
+        print(item.schedule_id, item.cron)
+    print(listed.state)
 finally:
-    # Delete the schedule when it is no longer needed.
-    deleted = requests.delete(f"{endpoint}/schedule", headers=headers, timeout=30)
-    deleted.raise_for_status()
+    # Remove this schedule. The function's other schedules keep running.
+    client.functions.remove_schedule(function_id, schedule.schedule_id)
 ```
 
 ```typescript manage_schedule.ts
@@ -37,7 +40,7 @@ const client = new NotteClient();
 const fn = client.NotteFunction({ function_id: functionId });
 let schedule;
 try {
-  // Create or replace the schedule. Times are UTC.
+  // Replace all of the function's schedules with this one. Times are UTC.
   await fn.setSchedule({
     cron: '0 9 ? * * *',
     variables: { url: 'https://example.com' },
@@ -46,7 +49,7 @@ try {
   schedule = await fn.get();
   console.log(schedule.schedule_cron, schedule.schedule_state);
 } finally {
-  // Delete the schedule when it is no longer needed.
+  // Delete every schedule of the function.
   await fn.deleteSchedule();
 }
 

@@ -24,6 +24,4 @@ Run `uv run --locked python demo.py --discover` or `npm start -- --discover` to 
 
 Tool discovery does not make every advertised action read-only. To call one tool, select its name and input schema from `--discover`, obtain the required approval, and complete its connection flow. Store a JSON object with `name` and `arguments` in a private file outside your checkout, then set `PIPEDREAM_ACTION_FILE` to its path. The example verifies the offered name, rejects MCP errors, and discards provider output. Its completion flag confirms a successful MCP response, not a verified vendor side effect. Pipedream can return a hosted Connect Link when an action needs authorization; discovery alone does not start OAuth.
 
-The example owns a browser with a three-minute lifetime and closes it on success, failure or cancellation. It does not add a Notte OAuth UI or automatically attach connected-app tools to Notte Agent API runs.
-
-Native protocol tests cover a real Notte browser with local Pipedream OAuth/MCP fixtures, including synthetic tool-call success/error, pagination, unoffered-tool rejection and browser cleanup during cancellation. Hosted Pipedream OAuth and vendor action execution have not been tested.
+The example owns a browser with a three-minute lifetime and closes it on success, failure or cancellation. It does not add a Notte OAuth UI.

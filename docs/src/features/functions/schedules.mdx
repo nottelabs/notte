@@ -9,7 +9,9 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 Schedule a Function to run automatically, for example to collect data every morning or check a page every hour. Each scheduled run executes the latest version of the Function with the variables you saved on the schedule.
 
-A Function has at most one schedule. You can manage it from the **Schedule** tab of the Function in the [Notte Console](https://console.notte.cc), over HTTP, or with the TypeScript SDK. The Python SDK has no schedule methods yet, so call the HTTP API from Python.
+A Function can have up to 10 schedules, each with its own cron expression and variables. Manage them from the **Schedule** tab of the Function in the [Notte Console](https://console.notte.cc), with the Python SDK (`client.functions`), or over HTTP (`/functions/{function_id}/schedules`).
+
+The TypeScript SDK has `setSchedule()` and `deleteSchedule()`, which manage the Function's schedules as a single one: `setSchedule()` replaces all of them with one schedule, and `deleteSchedule()` removes all of them. The Python SDK has the same pair as `set_schedule()` and `delete_schedule()`.
 
 ## Cron Expressions
 
@@ -35,37 +37,52 @@ A five-field expression such as `0 9 * * *` is rejected.
 
 ## Variables
 
-Every scheduled run receives the same `variables`. They must supply every parameter of `run()` that has no default value, and must not include names that `run()` does not declare. A Function without parameters can use an empty object.
+Every run of a schedule receives that schedule's `variables`. They must supply every parameter of `run()` that has no default value, and must not include names that `run()` does not declare. A Function without parameters can use an empty object.
 
-## Create or Update a Schedule
+## Add, Update, and Remove Schedules
 
-Setting a schedule replaces the existing one, if any. Set `function_id` / `functionId` to your function ID. For Python, set `api_url` to your API base URL and `api_key` to your API key. The complete example creates, reads, and then removes the schedule:
+Set `function_id` / `functionId` to your function ID. The Python example adds a schedule next to any existing ones, changes it in place, lists the Function's schedules, and then removes only the one it added. The TypeScript example replaces all of the Function's schedules with one, reads it back, and deletes them:
 
 <ManageSchedule />
 
-## Check a Schedule
+| Python SDK | HTTP | Effect |
+|------------|------|--------|
+| `add_schedule(function_id, cron=..., variables=...)` | `POST /functions/{function_id}/schedules` | Adds a schedule (at most 10 per Function) |
+| `update_schedule(function_id, schedule_id, cron=..., variables=...)` | `PATCH /functions/{function_id}/schedules/{schedule_id}` | Changes one schedule, keeping its ID |
+| `remove_schedule(function_id, schedule_id)` | `DELETE /functions/{function_id}/schedules/{schedule_id}` | Removes one schedule |
+| `list_schedules(function_id)` | `GET /functions/{function_id}/schedules` | Lists the schedules, oldest first, with their shared state |
+| `set_schedule(function_id, cron=..., variables=...)` | `POST /functions/{function_id}/schedule` | Replaces all schedules with one |
+| `delete_schedule(function_id)` | `DELETE /functions/{function_id}/schedule` | Removes all schedules |
 
-The Function's metadata (`GET /functions/{function_id}`, or `fn.get()` in TypeScript) includes:
+## Check Schedules
 
-- `schedule_cron`: the expression, or `null` when the Function is not scheduled
-- `schedule_variables`: the variables passed to each scheduled run
-- `schedule_state`: `enabled`, `paused`, or `null` when there is no schedule
+`list_schedules()` (`GET /functions/{function_id}/schedules`) returns:
 
-The example above reads these fields after setting the schedule.
+- `schedules`: each schedule's `schedule_id`, `cron`, `variables`, and `created_at`, oldest first
+- `state`: `enabled`, `paused`, or `null` when the Function has no schedule. It applies to all of the Function's schedules.
+- `paused_reason`: why the schedules are paused, or `null`
+
+The Function's metadata (`GET /functions/{function_id}`, or `fn.get()` in TypeScript) also has `schedule_cron`, `schedule_variables`, and `schedule_state`. `schedule_cron` and `schedule_variables` describe only the oldest schedule; use `list_schedules()` to see all of them.
 
 Scheduled runs appear in the Function's run history like any other run. See [Function Management](/features/functions/management#monitoring-executions).
 
 ## Paused Schedules
 
-Notte pauses a schedule when its runs cannot succeed without your intervention, for example when your workspace runs out of credit or the Function is no longer active. A paused schedule keeps its expression and variables but stops firing, and `schedule_state` becomes `paused`.
+Notte pauses a Function's schedules when their runs cannot succeed without your intervention. `paused_reason` tells you why:
 
-To resume it, fix the cause and set the schedule again with the same request as above.
+- `credit_exhausted`: your workspace ran out of credit
+- `function_inactive`: the Function is no longer active
+- `managed_auth_failure`: a [managed authentication](/guides/managed-auth) login the Function depends on failed
 
-## Delete a Schedule
+Paused schedules keep their expressions and variables but stop firing, and `state` becomes `paused`.
 
-Deleting the schedule stops future runs. The Function itself is unchanged and can still be invoked manually.
+To resume, fix the cause and call `client.functions.resume_schedules(function_id)` (`POST /functions/{function_id}/schedules/resume`). Every schedule is enabled again as it was. Calling `set_schedule()` / `setSchedule()` also resumes, but it replaces all schedules with one.
 
-The example above deletes the schedule in `finally`, including when a metadata request fails.
+## Delete Schedules
+
+Removing a schedule stops its future runs; the Function's other schedules keep running. `delete_schedule()` / `deleteSchedule()` removes all of them. The Function itself is unchanged and can still be invoked manually.
+
+The examples above clean up in `finally`, including when a request fails.
 
 ## Best Practices
 

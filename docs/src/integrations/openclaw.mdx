@@ -10,7 +10,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 ## Prerequisites
 
-- A Notte API key ([get one here](https://console.notte.cc))
+- A Notte API key ([get one here](https://console.notte.cc/apikeys))
 - OpenClaw installed ([installation guide](https://docs.openclaw.ai))
 
 ## Connect OpenClaw to a Notte browser
@@ -34,7 +34,7 @@ OpenClaw's browser tool supports remote CDP **profiles**. Add a `notte` profile 
 }
 ```
 
-Replace `<NOTTE_API_KEY>` with your key from the [Notte console](https://console.notte.cc). That's it - OpenClaw now runs its browser tool on a Notte cloud browser.
+Replace `<NOTTE_API_KEY>` with your key from the [Notte console](https://console.notte.cc/apikeys). That's it - OpenClaw now runs its browser tool on a Notte cloud browser.
 
 <Note>
   The `wss://api.notte.cc/sessions/connect` endpoint creates a fresh browser session when OpenClaw connects and tears it down when the connection closes, so there is no manual session lifecycle to manage.

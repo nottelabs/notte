@@ -4,7 +4,7 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import { generateText, stepCountIs } from "ai";
 
 const mcp = await createMCPClient({
-  transport: new StreamableHTTPClientTransport(new URL("https://api.notte.cc/mcp/"), {
+  transport: new StreamableHTTPClientTransport(new URL("https://api.notte.cc/mcp"), {
     requestInit: {
       headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` },
     },
@@ -14,7 +14,7 @@ const mcp = await createMCPClient({
 const tools = await mcp.tools();
 
 const result = await generateText({
-  model: anthropic("claude-sonnet-4-5-20250929"),
+  model: anthropic("claude-haiku-5-5"),
   tools,
   stopWhen: stepCountIs(6),
   prompt: "What is the main heading on https://example.com?",

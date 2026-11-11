@@ -45,15 +45,15 @@ Notte Personas provide automated identity management for AI agents, enabling the
 
 ![persona-workflow](/images/persona-workflow.png)
 
-Personas act as complete digital identities that your AI agents can assume during execution. When an agent needs to create an account or authenticate with a service, it uses the persona's credentials and communication channels to complete the entire flow autonomously.
+A persona is a complete digital identity for your automations. When a session needs to create an account or authenticate with a service, it uses the persona's details, inbox, and phone number to complete the flow.
 
-The persona system integrates with both the browser session and the secure vault, allowing agents to:
+The persona system integrates with both the browser session and the secure vault, so your automation can:
 1. Fill registration forms with persona details
-2. Receive and read verification emails automatically
+2. Receive and read verification emails
 3. Handle SMS-based 2FA codes
 4. Store generated passwords and tokens securely
 
-This creates a seamless experience where agents can navigate complex authentication flows without breaking execution to wait for human intervention.
+Your automation can complete sign-up and login flows without waiting for a human to forward a code.
 
 ## Persona Management
 
@@ -84,7 +84,6 @@ With the REST API, pass `email_provider` to `POST /personas/create`. Persona res
 Only the inbox backend and the email address change. Everything else works the same way with either provider:
 
 - Read emails with `persona.emails()` or `GET /personas/{persona_id}/emails`.
-- Agents that use the persona read verification emails automatically.
 - Vaults, credentials and phone numbers are unaffected.
 - Deleting the persona also deletes its AgentMail inbox.
 
@@ -112,7 +111,7 @@ Personas excel at automating account registration across multiple platforms:
 - 🔒 Full audit trail of persona activities
 
 <Tip>
-Personas are designed to work seamlessly with Notte's existing vault system. You can create a persona with an associated vault to store any credentials generated during account creation, ensuring they're available for future agent sessions.
+Personas are designed to work seamlessly with Notte's existing vault system. You can create a persona with an associated vault to store any credentials generated during account creation, ensuring they're available for future sessions.
 </Tip>
 
 <Warning>

@@ -19,7 +19,7 @@ This is useful when you need residential IP rotation, geo-targeted traffic, or w
 
 ## Prerequisites
 
-- A Notte API key ([get one here](https://console.notte.cc))
+- A Notte API key ([get one here](https://console.notte.cc/apikeys))
 - A Massive account with proxy credentials (sign up at [partners.joinmassive.com](https://partners.joinmassive.com/create-account))
 
 ## Setup
@@ -33,6 +33,8 @@ Log in to your [Massive dashboard](https://partners.joinmassive.com) and grab yo
 | HTTP     | 65534 | Recommended for most use cases |
 | HTTPS    | 65535 | For encrypted proxy connections |
 | SOCKS5   | 65533 | For advanced routing needs |
+
+With `browser_type="chrome-nitro"`, use the HTTP or HTTPS port: that browser type accepts only HTTP and HTTPS proxies.
 
 ### 2. Install the Notte SDK
 

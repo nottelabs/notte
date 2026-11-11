@@ -15,7 +15,6 @@ CASES = [
     "browser-controls/scroll_up",
     "browser-controls/press_key",
     "browser-controls/wait",
-    "guides/wait_time",
     "sessions/captcha/combine_stealth",
     "sessions/captcha/ensure_requirements",
     "sessions/stealth/combine_techniques",

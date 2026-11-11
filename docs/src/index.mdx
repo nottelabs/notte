@@ -1,64 +1,100 @@
 ---
 title: Introduction
+description: "Notte is the unified platform for AI agents and automation scripts that need to use the browser."
 mode: "wide"
 ---
 
-Notte is the unified platform for AI agents and automation scripts that need to use the browser. Build, debug, and deploy production workflows with cloud browsers, web agents, scraping, serverless functions, credentials, and identities in one place.
+<div className="nv-hero">
+  <div className="nv-cluster nv-cluster--left" data-align="right" aria-hidden="true" />
+  <div className="nv-cluster nv-cluster--right" data-align="left" aria-hidden="true" />
 
-<CardGroup cols={2}>
-  <Card title="Quickstart" icon="square-arrow-up-right" href="/quickstart">
-    Continue to the full quickstart for Sessions, Fetch, and additional examples.
-  </Card>
+  <div className="nv-hero__rows" aria-hidden="true">
+    <div className="nv-hero__row">
+      <img className="nv-hero__logo nv-hero__logo--light" src="/logo/notte-mark.svg" alt="" />
+      <img className="nv-hero__logo nv-hero__logo--dark" src="/logo/notte-mark-white.svg" alt="" />
+    </div>
+    <div className="nv-hero__row"><span className="nv-hero__word">Developer</span></div>
+    <div className="nv-hero__row"><span className="nv-hero__word">Documentation</span></div>
+  </div>
 
-  <Card title="Templates" icon="copy" href="https://www.notte.cc/templates">
-    Start from ready-made browser automation templates for common workflows.
-  </Card>
+  <p className="nv-hero__text">
+    Notte is the unified platform for AI agents and automation scripts that need to use the browser. Build, debug, and deploy production workflows with cloud browsers, web agents, scraping, serverless functions, credentials, and identities in one place.
+  </p>
+</div>
 
-  <Card title="SDK Reference" icon="book" href="/sdk-reference/manual/index">
-    Start from the SDK entrypoint for Sessions, Vaults, Personas, and Functions.
-  </Card>
+<ul className="nv-grid nv-grid--feature">
+  <li className="nv-frame nv-frame--tall">
+    <div className="nv-asset">
+      <div className="nv-binary" aria-hidden="true" />
+      <img className="nv-asset__img" src="/images/home/browsers.svg" alt="Stacked browser windows" />
+    </div>
+    <span className="nv-frame__eyebrow">Recommended</span>
+    <a className="nv-frame__title" href="/quickstart">Quickstart</a>
+    <span className="nv-frame__desc">Start a cloud browser session, fetch a page, and run your first automation in minutes.</span>
+  </li>
+  <li className="nv-frame nv-frame--tall">
+    <div className="nv-asset">
+      <div className="nv-binary" aria-hidden="true" />
+      <img className="nv-asset__img" src="/images/home/terminal.svg" alt="Terminal and code panels" />
+    </div>
+    <a className="nv-frame__title" href="/cli-reference/index">CLI Reference</a>
+    <span className="nv-frame__desc">Drive Notte browser sessions, functions, and vaults from your terminal, scripts, or coding agents.</span>
+  </li>
+</ul>
 
-  <Card title="API Reference" icon="code" href="/api-reference/authentication">
-    Explore authentication, endpoints, parameters, and API responses.
-  </Card>
-</CardGroup>
+<ul className="nv-grid nv-grid--3 nv-grid--follow">
+  <li className="nv-frame">
+    <a className="nv-frame__title" href="/sdk-reference/manual/index">SDK Reference</a>
+    <span className="nv-frame__desc">Start from the SDK entrypoint for Sessions, Vaults, Personas, and Functions.</span>
+  </li>
+  <li className="nv-frame">
+    <a className="nv-frame__title" href="/api-reference/authentication">API Reference</a>
+    <span className="nv-frame__desc">Explore authentication, endpoints, parameters, and API responses.</span>
+  </li>
+  <li className="nv-frame">
+    <a className="nv-frame__title" href="https://www.notte.cc/templates">Templates</a>
+    <span className="nv-frame__desc">Start from ready-made browser automation templates for common workflows.</span>
+  </li>
+</ul>
 
-## Platform
+<h2 className="nv-section">Platform</h2>
 
-The building blocks for your web agents and automations.
+<ul className="nv-grid">
+  <li className="nv-frame">
+    <span className="nv-frame__eyebrow">01</span>
+    <a className="nv-frame__title" href="/concepts/sessions">Sessions</a>
+    <span className="nv-frame__desc">Remote browser infrastructure. Fast, scalable browsers with anti-detection, proxies, and captcha solving.</span>
+  </li>
+  <li className="nv-frame">
+    <span className="nv-frame__eyebrow">02</span>
+    <a className="nv-frame__title" href="/concepts/vaults">Authentication</a>
+    <span className="nv-frame__desc">Vaults, browser profiles, and personas for logged-in workflows.</span>
+  </li>
+  <li className="nv-frame">
+    <span className="nv-frame__eyebrow">03</span>
+    <a className="nv-frame__title" href="/concepts/functions">Functions</a>
+    <span className="nv-frame__desc">Deploy your scripts as API endpoints. Serverless automations you can invoke and schedule anywhere.</span>
+  </li>
+  <li className="nv-frame">
+    <span className="nv-frame__eyebrow">04</span>
+    <a className="nv-frame__title" href="/concepts/scraping">Fetch</a>
+    <span className="nv-frame__desc">Extract structured data with AI. Turn any website into structured data.</span>
+  </li>
+</ul>
 
-<CardGroup cols={2}>
-  <Card title="Sessions" icon="tv" href="/concepts/sessions">
-    Remote browser infrastructure. Fast, scalable browsers with anti-detection, proxies, and captcha solving.
-  </Card>
+<h2 className="nv-section">Authentication</h2>
 
-  <Card title="Authentication" icon="key" href="/concepts/vaults">
-    Vaults, browser profiles, and personas for logged-in workflows.
-  </Card>
-
-  <Card title="Functions" icon="/logo/square-function.svg" href="/concepts/functions">
-    Deploy your scripts as API endpoints. Serverless automations you can invoke and schedule anywhere.
-  </Card>
-
-  <Card title="Fetch" icon="download" href="/concepts/scraping">
-    Extract structured data with AI. Turn any website into structured data.
-  </Card>
-</CardGroup>
-
-## Authentication
-
-Credentials and identities for logged-in workflows.
-
-<CardGroup cols={3}>
-  <Card title="Vaults" icon="lock" href="/concepts/vaults">
-    Secure credential storage. Keep passwords, API keys, and sensitive data encrypted.
-  </Card>
-
-  <Card title="Browser Profiles" icon="user" href="/features/sessions/browser-profiles">
-    Persist cookies and login state across sessions.
-  </Card>
-
-  <Card title="Personas" icon="fingerprint" href="/concepts/personas">
-    Emails and phone numbers for sign-up and 2FA. Verified identities to interact across platforms.
-  </Card>
-</CardGroup>
+<ul className="nv-grid nv-grid--3">
+  <li className="nv-frame">
+    <a className="nv-frame__title" href="/concepts/vaults">Vaults</a>
+    <span className="nv-frame__desc">Secure credential storage. Keep passwords, API keys, and sensitive data encrypted.</span>
+  </li>
+  <li className="nv-frame">
+    <a className="nv-frame__title" href="/features/sessions/browser-profiles">Browser Profiles</a>
+    <span className="nv-frame__desc">Persist cookies and login state across sessions.</span>
+  </li>
+  <li className="nv-frame">
+    <a className="nv-frame__title" href="/concepts/personas">Personas</a>
+    <span className="nv-frame__desc">Emails and phone numbers for sign-up and 2FA. Verified identities to interact across platforms.</span>
+  </li>
+</ul>
