@@ -1,5 +1,7 @@
 # Notte
 
+> Notte is the unified platform for AI agents and automation scripts that need to use the browser.
+
 ## Setup For AI Agents
 
 Read https://notte.cc/skill.md and follow its setup instructions.
@@ -11,7 +13,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 ## Getting Started
 
-- [Introduction](https://docs.notte.cc/index.md)
+- [Introduction](https://docs.notte.cc/index.md): Notte is the unified platform for AI agents and automation scripts that need to use the browser.
 - [Quickstart](https://docs.notte.cc/quickstart.md): Get started in a few seconds
 - [Notte Browser MCP](https://docs.notte.cc/mcp-server.md): Connect your AI assistant to cloud browsers with Notte Browser MCP
 - [Migrate to Notte](https://docs.notte.cc/migrate-to-notte.md): Safely migrate browser automation from another provider to Notte with an AI coding agent.
@@ -76,12 +78,6 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [Search](https://docs.notte.cc/concepts/search.md): Search the web and get URLs, snippets, or a sourced answer
 - [Anything API](https://docs.notte.cc/concepts/anything.md): Build and run web automations from a single API call
 
-## Guides
-
-- [Anti-Detection Playbook](https://docs.notte.cc/guides/stealth.md): Diagnose blocked browser sessions and choose the next step
-- [Create accounts with Personas](https://docs.notte.cc/guides/account_creation.md): How to use notte personas for account creation
-- [Scrape a website hourly into MySQL](https://docs.notte.cc/guides/scrape-to-mysql.md): Save structured scrape results to MySQL using a scheduled Notte Function or your own scheduler.
-
 
 # Integrations
 
@@ -91,36 +87,48 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [Notte Browser MCP](https://docs.notte.cc/mcp-server.md): Connect your AI assistant to cloud browsers with Notte Browser MCP
 - [Notte Secret Proxy](https://docs.notte.cc/integrations/secret-proxy.md): Fill card numbers, passwords, 2FA codes and other secrets through your tokenization proxy, without Notte seeing the real values
 
+## Browser Drivers
+
+- [Connect with Playwright](https://docs.notte.cc/features/sessions/playwright.md): Use Playwright directly with Notte sessions via Chrome DevTools Protocol
+- [Connect with Puppeteer](https://docs.notte.cc/features/sessions/puppeteer.md): Use Puppeteer with Notte sessions via Chrome DevTools Protocol
+- [Vercel agent-browser](https://docs.notte.cc/integrations/agent-browser.md): Run agent-browser commands on a Notte cloud browser.
+- [Selenium](https://docs.notte.cc/integrations/selenium.md): Run Selenium WebDriver commands on a hosted Notte browser.
+
+## Browser Agents
+
+- [Browser Use](https://docs.notte.cc/integrations/browser-use.md): Run Browser Use agents on Notte cloud browsers over CDP
+- [Stagehand](https://docs.notte.cc/integrations/stagehand.md): Use Stagehand v4 with a Notte cloud browser in Python or TypeScript
+
 ## Coding Agents
 
 - [Claude Code & AI Agents](https://docs.notte.cc/integrations/claude-code-ai-agents.md): Use Notte with AI coding assistants like Claude Code, Cursor, and Windsurf
 - [Claude Managed Agents](https://docs.notte.cc/integrations/claude-managed-agents.md): Give Anthropic's hosted agents a Notte browser, with your key held in a vault
 - [Replit Agent](https://docs.notte.cc/integrations/replit.md): Give Replit Agent cloud browsers through Notte's hosted MCP server.
 - [Docker Sandboxes](https://docs.notte.cc/integrations/docker-sandboxes.md): Give local sandboxed coding agents Notte browser tools.
+
+## Sandboxes
+
 - [boat](https://docs.notte.cc/integrations/boat.md): Test apps running in boat sandboxes with Notte cloud browsers.
 - [Daytona](https://docs.notte.cc/integrations/daytona.md): Test apps running in Daytona sandboxes with Notte cloud browsers.
 - [E2B](https://docs.notte.cc/integrations/e2b.md): Test apps running in E2B sandboxes with Notte cloud browsers.
-- [fx](https://docs.notte.cc/integrations/fx.md): Run the native fx agent engine with an owned Notte browser.
 
 ## Agent Frameworks
 
-- [Browser Use](https://docs.notte.cc/integrations/browser-use.md): Run Browser Use agents on Notte cloud browsers over CDP
 - [LangChain](https://docs.notte.cc/integrations/langchain.md): Give LangChain and LangGraph agents a browser with the Notte MCP server
 - [Deep Agents](https://docs.notte.cc/integrations/deepagents.md): Give LangChain Deep Agents a Notte cloud browser.
 - [crewAI](https://docs.notte.cc/integrations/crewai.md): Give crewAI agents a browser with the Notte MCP server
 - [Agno](https://docs.notte.cc/integrations/agno.md): Give Agno agents a browser with the Notte MCP server
-- [Google ADK](https://docs.notte.cc/integrations/google-adk.md): Give Google ADK agents a browser with the Notte MCP server
 - [OpenAI Agents SDK](https://docs.notte.cc/integrations/openai-agents.md): Give OpenAI agents a Notte browser in Python or TypeScript.
+- [Google ADK](https://docs.notte.cc/integrations/google-adk.md): Give Google ADK agents a browser with the Notte MCP server
 - [Vercel AI SDK](https://docs.notte.cc/integrations/vercel-ai-sdk.md): Give AI SDK agents a browser with the Notte MCP server
 - [Mastra](https://docs.notte.cc/integrations/mastra.md): Give Mastra agents a browser with the Notte MCP server
 - [Inngest AgentKit](https://docs.notte.cc/integrations/inngest-agentkit.md): Give AgentKit agents browser tools with Notte.
 - [OpenClaw](https://docs.notte.cc/integrations/openclaw.md): Use Notte cloud browsers with OpenClaw
 - [Hermes Agent](https://docs.notte.cc/integrations/hermes.md): Use Notte cloud browsers with Hermes Agent
-- [Stagehand](https://docs.notte.cc/integrations/stagehand.md): Use Stagehand v4 with a Notte cloud browser in Python or TypeScript
-- [Claude Agent SDK](https://docs.notte.cc/integrations/claude-agents.md): Give Claude agents a Notte cloud browser through MCP.
 - [Prime Intellect](https://docs.notte.cc/integrations/prime-intellect.md): Build Verifiers browser tasksets with Notte sessions.
-- [IBM watsonx.ai](https://docs.notte.cc/integrations/watsonx.md): Describe Notte browser screenshots with a watsonx.ai vision model.
+- [Claude Agent SDK](https://docs.notte.cc/integrations/claude-agents.md): Give Claude agents a Notte cloud browser through MCP.
 - [Vercel Eve](https://docs.notte.cc/integrations/eve.md): Give an Eve agent an owned Notte browser tool.
+- [fx](https://docs.notte.cc/integrations/fx.md): Run the native fx agent engine with an owned Notte browser.
 
 ## Computer Use
 
@@ -130,18 +138,19 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [OpenAGI Lux](https://docs.notte.cc/integrations/openagi.md): Connect OpenAGI's native Lux agent to a Notte cloud browser.
 - [Tzafon Lightcone](https://docs.notte.cc/integrations/tzafon.md): Run a Northstar computer-use loop on a Notte browser.
 
-## Model Providers
-
-- [RunAnywhere](https://docs.notte.cc/integrations/runanywhere.md): Run the open-source Notte framework on open models served by RunAnywhere Wally.
-
 ## Workflow Automation
 
-- [n8n](https://docs.notte.cc/integrations/n8n.md): Use Notte scraping and functions inside n8n workflows
 - [Trigger.dev](https://docs.notte.cc/integrations/trigger.md): Run durable browser tasks with Trigger.dev and Notte.
-- [Temporal](https://docs.notte.cc/integrations/temporal.md): Run durable browser tasks with Temporal and Notte.
+- [n8n](https://docs.notte.cc/integrations/n8n.md): Use Notte scraping and functions inside n8n workflows
 - [GitHub Actions](https://docs.notte.cc/integrations/github-actions.md): Review DOM-validated selector repairs in a manual GitHub Actions workflow.
+- [Temporal](https://docs.notte.cc/integrations/temporal.md): Run durable browser tasks with Temporal and Notte.
 - [Val Town](https://docs.notte.cc/integrations/val-town.md): Run Notte browser tasks from Val Town HTTP triggers.
 - [Connected apps with Pipedream](https://docs.notte.cc/integrations/pipedream.md): Combine Notte browser tools with Pipedream connected-app tools.
+
+## Inference Providers
+
+- [RunAnywhere](https://docs.notte.cc/integrations/runanywhere.md): Run the open-source Notte framework on open models served by RunAnywhere Wally.
+- [IBM watsonx.ai](https://docs.notte.cc/integrations/watsonx.md): Describe Notte browser screenshots with a watsonx.ai vision model.
 
 ## Observability
 
@@ -171,28 +180,14 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 - [e2e](https://docs.notte.cc/integrations/e2e.md): Run e2e web tests on Notte cloud browsers with a native browser provider.
 
-## Credentials
+## Secrets
 
 - [1Password](https://docs.notte.cc/integrations/onepassword.md): Fill Notte browser forms with login fields from 1Password.
 - [Bitwarden](https://docs.notte.cc/integrations/bitwarden.md): Fill local Notte sessions with logins from Bitwarden Password Manager or Bitwarden Secrets Manager.
 
-## Browser Drivers
-
-- [Connect with Playwright](https://docs.notte.cc/features/sessions/playwright.md): Use Playwright directly with Notte sessions via Chrome DevTools Protocol
-- [Connect with Puppeteer](https://docs.notte.cc/features/sessions/puppeteer.md): Use Puppeteer with Notte sessions via Chrome DevTools Protocol
-- [Vercel agent-browser](https://docs.notte.cc/integrations/agent-browser.md): Run agent-browser commands on a Notte cloud browser.
-- [Selenium](https://docs.notte.cc/integrations/selenium.md): Run Selenium WebDriver commands on a hosted Notte browser.
-
-## Infrastructure as Code
+## Infrastructure
 
 - [Terraform](https://docs.notte.cc/integrations/terraform.md): Manage durable Notte profiles with a native Terraform provider.
-
-## Browser Infrastructure
-
-- [Kernel.sh](https://docs.notte.cc/integrations/kernel.md): Integrate with Kernel browsers
-- [Steel](https://docs.notte.cc/integrations/steel.md): Run Notte with Steel cloud browsers (CDP)
-- [Massive](https://docs.notte.cc/integrations/massive.md): Use Massive residential proxies with Notte sessions
-- [Cloudflare Web Bot Auth](https://docs.notte.cc/features/sessions/cloudflare-web-bot-auth.md): Access Cloudflare-protected websites by cryptographically signing browser requests
 
 
 # APIs and SDKs
