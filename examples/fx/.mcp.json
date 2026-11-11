@@ -2,7 +2,7 @@
   "mcpServers": {
     "notte": {
       "type": "http",
-      "url": "https://api.notte.cc/mcp/",
+      "url": "https://api.notte.cc/mcp",
       "bearer_token_env": "NOTTE_API_KEY"
     }
   }

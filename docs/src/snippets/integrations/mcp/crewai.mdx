@@ -8,7 +8,7 @@ from crewai import Agent
 from crewai_tools import MCPServerAdapter
 
 server_params = {
-    "url": "https://api.notte.cc/mcp/",
+    "url": "https://api.notte.cc/mcp",
     "transport": "streamable-http",
     "headers": {"Authorization": f"Bearer {os.environ['NOTTE_API_KEY']}"},
 }

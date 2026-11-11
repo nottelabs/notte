@@ -16,16 +16,16 @@
     "light": "/logo/notte-mark.svg"
   },
   "favicon": "/favicon.ico",
-  "banner": {
-    "content": "Supercharge your AI agents with the Notte CLI and MCP. [Use this quickstart prompt for AI.](/quickstart)",
-    "dismissible": false,
-    "color": {
-      "light": "#e8f6ee",
-      "dark": "#163528"
-    }
-  },
   "seo.indexing": "all",
   "redirects": [
+    {
+      "source": "/concepts",
+      "destination": "/quickstart"
+    },
+    {
+      "source": "/guides/web_automation_tips",
+      "destination": "/features/sessions/playwright-vs-notte"
+    },
     {
       "source": "/typescript-sdk-reference/manual/nottesearch",
       "destination": "/typescript-sdk-reference/client/search"
@@ -228,6 +228,7 @@
     "tabs": [
       {
         "tab": "Documentation",
+        "icon": "book-open",
         "groups": [
           {
             "group": "Getting Started",
@@ -318,20 +319,12 @@
               "concepts/search",
               "concepts/anything"
             ]
-          },
-          {
-            "group": "Guides",
-            "icon": "book-open",
-            "pages": [
-              "guides/stealth",
-              "guides/account_creation",
-              "guides/scrape-to-mysql"
-            ]
           }
         ]
       },
       {
         "tab": "Integrations",
+        "icon": "puzzle-piece",
         "groups": [
           {
             "group": "Integrations",
@@ -343,40 +336,61 @@
             ]
           },
           {
+            "group": "Browser Drivers",
+            "icon": "gamepad",
+            "pages": [
+              "features/sessions/playwright",
+              "features/sessions/puppeteer",
+              "integrations/agent-browser",
+              "integrations/selenium"
+            ]
+          },
+          {
+            "group": "Browser Agents",
+            "icon": "hand-pointer",
+            "pages": [
+              "integrations/browser-use",
+              "integrations/stagehand"
+            ]
+          },
+          {
             "group": "Coding Agents",
             "icon": "code",
             "pages": [
               "integrations/claude-code-ai-agents",
               "integrations/claude-managed-agents",
               "integrations/replit",
-              "integrations/docker-sandboxes",
+              "integrations/docker-sandboxes"
+            ]
+          },
+          {
+            "group": "Sandboxes",
+            "icon": "box",
+            "pages": [
               "integrations/boat",
               "integrations/daytona",
-              "integrations/e2b",
-              "integrations/fx"
+              "integrations/e2b"
             ]
           },
           {
             "group": "Agent Frameworks",
             "icon": "robot",
             "pages": [
-              "integrations/browser-use",
               "integrations/langchain",
               "integrations/deepagents",
               "integrations/crewai",
               "integrations/agno",
-              "integrations/google-adk",
               "integrations/openai-agents",
+              "integrations/google-adk",
               "integrations/vercel-ai-sdk",
               "integrations/mastra",
               "integrations/inngest-agentkit",
               "integrations/openclaw",
               "integrations/hermes",
-              "integrations/stagehand",
-              "integrations/claude-agents",
               "integrations/prime-intellect",
-              "integrations/watsonx",
-              "integrations/eve"
+              "integrations/claude-agents",
+              "integrations/eve",
+              "integrations/fx"
             ]
           },
           {
@@ -391,22 +405,23 @@
             ]
           },
           {
-            "group": "Model Providers",
-            "icon": "microchip",
-            "pages": [
-              "integrations/runanywhere"
-            ]
-          },
-          {
             "group": "Workflow Automation",
             "icon": "diagram-project",
             "pages": [
-              "integrations/n8n",
               "integrations/trigger",
-              "integrations/temporal",
+              "integrations/n8n",
               "integrations/github-actions",
+              "integrations/temporal",
               "integrations/val-town",
               "integrations/pipedream"
+            ]
+          },
+          {
+            "group": "Inference Providers",
+            "icon": "microchip",
+            "pages": [
+              "integrations/runanywhere",
+              "integrations/watsonx"
             ]
           },
           {
@@ -456,7 +471,7 @@
             ]
           },
           {
-            "group": "Credentials",
+            "group": "Secrets",
             "icon": "key",
             "pages": [
               "integrations/onepassword",
@@ -464,36 +479,17 @@
             ]
           },
           {
-            "group": "Browser Drivers",
-            "icon": "gamepad",
-            "pages": [
-              "features/sessions/playwright",
-              "features/sessions/puppeteer",
-              "integrations/agent-browser",
-              "integrations/selenium"
-            ]
-          },
-          {
-            "group": "Infrastructure as Code",
+            "group": "Infrastructure",
             "icon": "cubes",
             "pages": [
               "integrations/terraform"
-            ]
-          },
-          {
-            "group": "Browser Infrastructure",
-            "icon": "server",
-            "pages": [
-              "integrations/kernel",
-              "integrations/steel",
-              "integrations/massive",
-              "features/sessions/cloudflare-web-bot-auth"
             ]
           }
         ]
       },
       {
         "tab": "APIs and SDKs",
+        "icon": "cube",
         "groups": [
           {
             "group": "Getting Started",
@@ -860,6 +856,7 @@
       },
       {
         "tab": "CLI",
+        "icon": "terminal",
         "groups": [
           {
             "group": "Getting Started",
@@ -889,6 +886,7 @@
       },
       {
         "tab": "Resources",
+        "icon": "folder-open",
         "groups": [
           {
             "group": "Resources",
@@ -931,13 +929,8 @@
   "navbar": {
     "links": [
       {
-        "label": "Support",
+        "label": "Slack Support",
         "href": "https://join.slack.com/t/nottelabs-dev/shared_invite/zt-39a8n6hr9-d_BG7RNfytimSpVo5H03mA",
-        "icon": "arrow-up-right-from-square"
-      },
-      {
-        "label": "Book Demo",
-        "href": "https://cal.com/team/notte/demo",
         "icon": "arrow-up-right-from-square"
       },
       {

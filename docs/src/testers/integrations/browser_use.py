@@ -15,7 +15,7 @@ async def main():
 
         agent = Agent(
             task="Go to https://example.com and tell me the exact H1 heading text.",
-            llm=ChatAnthropic(model="claude-sonnet-4-5-20250929"),
+            llm=ChatAnthropic(model="claude-haiku-5-5"),
             browser=browser,
         )
 

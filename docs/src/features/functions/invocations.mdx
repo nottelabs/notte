@@ -215,11 +215,9 @@ To iterate on a function before deploying it, call its `run` handler directly fr
 
 ### Account Limits
 
-Functions have rate limits based on your plan:
+Runs of your own Functions have no separate run limit. The browser sessions a run opens count toward your plan's concurrent browser limit, like any other session. See [Rate Limits](/rate-limits).
 
-- **Free**: 10 concurrent runs
-- **Pro**: 50 concurrent runs
-- **Enterprise**: Custom limits
+Running a Function that someone else published is limited per caller and Function to 10 runs per minute and 100 runs per hour.
 
 ### Handling Rate Limits
 

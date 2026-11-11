@@ -5,7 +5,7 @@ import { MCPClient } from "@mastra/mcp";
 const mcp = new MCPClient({
   servers: {
     notte: {
-      url: new URL("https://api.notte.cc/mcp/"),
+      url: new URL("https://api.notte.cc/mcp"),
       requestInit: {
         headers: { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` },
       },
@@ -16,7 +16,7 @@ const mcp = new MCPClient({
 const agent = new Agent({
   name: "notte-browser-agent",
   instructions: "You browse the web using the Notte tools.",
-  model: anthropic("claude-sonnet-4-5-20250929"),
+  model: anthropic("claude-haiku-5-5"),
   tools: await mcp.listTools(),
 });
 

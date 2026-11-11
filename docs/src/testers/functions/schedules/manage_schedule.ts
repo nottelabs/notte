@@ -8,7 +8,7 @@ const client = new NotteClient();
 const fn = client.NotteFunction({ function_id: functionId });
 let schedule;
 try {
-  // Create or replace the schedule. Times are UTC.
+  // Replace all of the function's schedules with this one. Times are UTC.
   await fn.setSchedule({
     cron: '0 9 ? * * *',
     variables: { url: 'https://example.com' },
@@ -17,7 +17,7 @@ try {
   schedule = await fn.get();
   console.log(schedule.schedule_cron, schedule.schedule_state);
 } finally {
-  // Delete the schedule when it is no longer needed.
+  // Delete every schedule of the function.
   await fn.deleteSchedule();
 }
 

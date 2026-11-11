@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 280" fill="none" stroke="#0a0a0b" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+  <!-- stacked panels -->
+  <g transform="translate(96 22)">
+    <rect x="0" y="0" width="230" height="150" rx="10" fill="#fff"/>
+    <path d="M0 26h230"/>
+    <path d="M16 13h40"/>
+    <path d="M20 48h40M70 48h90M20 66h120M20 84h70M100 84h50"/>
+  </g>
+  <g transform="translate(40 92)">
+    <rect x="0" y="0" width="240" height="160" rx="10" fill="#fff"/>
+    <path d="M0 26h240"/>
+    <circle cx="16" cy="13" r="4"/><circle cx="30" cy="13" r="4"/><circle cx="44" cy="13" r="4"/>
+    <!-- prompt -->
+    <path d="M20 50l10 8-10 8"/>
+    <path d="M42 66h70"/>
+    <path d="M20 86h150M20 104h110M20 122h170"/>
+    <path d="M20 142l10 -8"/>
+    <rect x="40" y="134" width="10" height="14" fill="#0a0a0b"/>
+  </g>
+  <!-- braces badge -->
+  <g transform="translate(250 176)">
+    <rect x="0" y="0" width="76" height="64" rx="10" fill="#fff"/>
+    <path d="M28 18c-6 0-8 3-8 8v4c0 3-2 4-5 4 3 0 5 1 5 4v4c0 5 2 8 8 8M48 18c6 0 8 3 8 8v4c0 3 2 4 5 4-3 0-5 1-5 4v4c0 5-2 8-8 8"/>
+  </g>
+</svg>

@@ -460,12 +460,6 @@
     },
     "closedSession": true
   },
-  "guides/wait_time.ts": {
-    "expected": {
-      "status": "closed"
-    },
-    "closedSession": true
-  },
   "sessions/captcha/combine_stealth.ts": {
     "expected": {
       "status": "closed"

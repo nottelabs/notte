@@ -2,9 +2,8 @@
 {/* @sniptest testers/integrations/steel/connect.py */}
 
 ```python steel_connect.py
-
-# Connect Notte to Steel's browser via CDP
-with client.Session(cdp_url=steel_session.websocket_url) as session:
+# Connect Notte to Steel's browser via CDP. Steel's URL needs your API key.
+with client.Session(cdp_url=f"{steel_session.websocket_url}&apiKey={STEEL_API_KEY}") as session:
     # Drive the Steel browser with Notte actions
     session.execute(type="goto", url="https://www.notte.cc/pricing")
 

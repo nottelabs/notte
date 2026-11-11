@@ -15,7 +15,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-Notte can connect to any browser that exposes a Chrome DevTools Protocol (CDP) endpoint. This allows you to use Notte's features (Actions, Scraping, Observation) with browser infrastructure from providers like Kernel.sh or BrowserBase.
+Notte can connect to any browser that exposes a Chrome DevTools Protocol (CDP) endpoint. This allows you to use Notte's features (Actions, Scraping, Observation) with browser infrastructure from providers like Kernel.sh, BrowserBase, or Steel.
 
 ## How It Works
 
@@ -43,6 +43,10 @@ Kernel.sh is a browser infrastructure platform optimized for AI agents. Here's h
 BrowserBase provides managed browser infrastructure. Connect it to Notte:
 
 <ExternalBrowserbase />
+
+## Other Providers
+
+Any provider that gives you a CDP WebSocket URL works the same way. See the [Steel integration](/integrations/steel) for a complete example.
 
 ## Benefits of External Providers
 
@@ -155,18 +159,6 @@ Some providers require authentication in the CDP URL:
 
 <ExternalCdpAuth />
 
-## Provider Comparison
-
-| Feature | Notte Built-in | Kernel.sh + Notte | BrowserBase + Notte |
-|---------|---------------|-------------------|---------------------|
-| Setup Complexity | Simple | Simple | Medium |
-| Anti-detection | ✅ Built-in | ✅ Built-in | ✅ Built-in |
-| Captcha Solving | ✅ Optional | ❌ | ❌ |
-| Residential Proxies | ✅ Optional | ✅ | ✅ |
-| Session Replay | ✅ Yes | ✅ Via Notte | ✅ Via Notte |
-| Live Viewer | ✅ Yes | ✅ Yes | ✅ Yes |
-| Pricing | Per session | Per session | Per session |
-
 ## Best Practices
 
 ### 1. Clean Up Resources
@@ -183,7 +175,6 @@ CDP connections can fail. Always use try-except:
 
 ### 3. Choose the Right Provider
 
-- **High Volume**: Use managed providers (Kernel, BrowserBase)
 - **Simplicity**: Use Notte's built-in browsers
 - **Existing Infrastructure**: Connect to your current provider setup
 

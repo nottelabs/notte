@@ -2,6 +2,11 @@
 {/* @sniptest testers/integrations/steel/init.py */}
 
 ```python steel_init.py
+import os
+
+from notte_sdk import NotteClient
+from steel import Steel
+
 STEEL_API_KEY = os.getenv("STEEL_API_KEY")
 
 # Initialize clients

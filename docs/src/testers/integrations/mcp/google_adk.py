@@ -9,7 +9,7 @@ from google.adk.tools.mcp_tool.mcp_toolset import McpToolset
 
 toolset = McpToolset(
     connection_params=StreamableHTTPConnectionParams(
-        url="https://api.notte.cc/mcp/",
+        url="https://api.notte.cc/mcp",
         headers={"Authorization": f"Bearer {os.environ['NOTTE_API_KEY']}"},
     )
 )

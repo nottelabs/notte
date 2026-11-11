@@ -50,13 +50,13 @@ Do not retry every exception: configuration errors require a fix, and repeating 
   {
     slug: 'rate-limits',
     title: 'Rate Limits',
-    content: `The API returns HTTP \`429\` when a rate limit is exceeded. See the [API rate-limit reference](/api-reference/rate-limits) for response headers.
+    content: `The API returns HTTP \`429\` both when a rate window is exhausted and when you already have the maximum number of active resources for your plan. See the [API rate-limit reference](/api-reference/rate-limits) for the \`X-Error-Class\` values that tell them apart.
 
 ## Handling rate limits
 
 Check \`error instanceof NotteAPIError\` and \`error.statusCode === 429\` to identify rate limiting. Response headers are available through \`error.response?.headers\`; Node uses \`statusCode\`, not Python’s \`status_code\`.
 
-When your HTTP integration exposes a verified \`429\` response, honor \`Retry-After\` if provided; otherwise use bounded exponential backoff with jitter. Set a retry limit and retry only operations that are safe to repeat. Automatic rate-limit retries are not provided by the high-level client.
+For a rate-window \`429\`, retry with bounded exponential backoff and jitter. These responses do not include \`Retry-After\`; the API sends that header only with \`529\` capacity responses. Set a retry limit and retry only operations that are safe to repeat. Automatic rate-limit retries are not provided by the high-level client.
 
 ## Reduce request volume
 

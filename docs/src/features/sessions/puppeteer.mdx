@@ -83,13 +83,9 @@ npm install puppeteer-core
 
 ### 2. Handle Disconnections
 
-CDP connections can be interrupted. Always wrap operations in try-catch:
-
-Catch connection errors around `puppeteer.connect()`. Put browser operations inside `try/finally` so errors still reach your session cleanup.
+CDP connections can be interrupted. Catch connection errors around `puppeteer.connect()`. Put browser operations inside `try/finally` so errors still reach your session cleanup.
 
 ### 3. Disconnect Properly
-
-Always disconnect the browser when done:
 
 Call `browser.disconnect()` in `finally` to disconnect Puppeteer. Also stop the Notte session, or use `session.use()` to manage that lifecycle. Disconnecting the client and stopping the session are separate operations.
 
@@ -101,9 +97,7 @@ Remember that Notte sessions have a timeout. Set an appropriate value when creat
 
 ### 5. Environment Variables
 
-Store your Notte API key in environment variables:
-
-Read the key from `process.env.NOTTE_API_KEY` on your server. The complete example below shows the authenticated HTTP requests.
+Store your Notte API key in an environment variable: read the key from `process.env.NOTTE_API_KEY` on your server. The complete example below shows the authenticated HTTP requests.
 
 ## Complete Example: Web Scraping
 

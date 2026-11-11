@@ -103,7 +103,9 @@ Use file storage with scripted automation:
 | Method | Description |
 |--------|-------------|
 | `upload(file_path, upload_file_name=None)` | Upload a local file to storage |
-| `download(file_name, local_dir, force=False)` | Download a file to local directory |
+| `list(source=None, limit=100, offset=0)` | List the session's files, optionally only `"user_upload"` or `"session_download"` |
+| `download(file_id, local_dir=".", force=False)` | Download a file to a local directory |
+| `delete(file_id)` | Delete a file from storage |
 | `list_uploaded_files()` | List files you've uploaded |
 | `list_downloaded_files()` | List files downloaded by sessions |
 
@@ -113,10 +115,17 @@ Use file storage with scripted automation:
 - `file_path` - Path to the local file to upload
 - `upload_file_name` - Optional custom name for the uploaded file
 
+**list()**
+- `source` - `"user_upload"` or `"session_download"`; all files when omitted
+- `limit` / `offset` - Page through results (default: 100 per page)
+
 **download()**
 - `file_id` - ID of the file, from `upload()` or `list()` (`SessionFile.id`)
 - `local_dir` - Local directory to save the file (default: current directory)
 - `force` - Overwrite an existing local file (default: False)
+
+**delete()**
+- `file_id` - ID of the file to delete
 
 ## Supported File Types
 

@@ -11,7 +11,7 @@ async def main():
     client = MultiServerMCPClient(
         {
             "notte": {
-                "url": "https://api.notte.cc/mcp/",
+                "url": "https://api.notte.cc/mcp",
                 "transport": "streamable_http",
                 "headers": {"Authorization": f"Bearer {os.environ['NOTTE_API_KEY']}"},
             }
@@ -21,7 +21,7 @@ async def main():
     tools = await client.get_tools()
     print(f"Loaded {len(tools)} Notte tools")
 
-    agent = create_react_agent("anthropic:claude-sonnet-4-5-20250929", tools)
+    agent = create_react_agent("anthropic:claude-haiku-5-5", tools)
     result = await agent.ainvoke({"messages": [{"role": "user", "content": "What is the H1 on https://example.com?"}]})
     print(result["messages"][-1].content)
 
