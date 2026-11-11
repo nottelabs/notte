@@ -3337,7 +3337,7 @@ export type FunctionListItemResponse = {
     /**
      * Sdk Generation
      */
-    sdk_generation?: 'v19' | 'v110';
+    sdk_generation?: 'v19' | 'v110' | 'node110';
     /**
      * Upload Sdk Version
      */
@@ -3507,7 +3507,7 @@ export type FunctionResponse = {
     /**
      * Sdk Generation
      */
-    sdk_generation?: 'v19' | 'v110';
+    sdk_generation?: 'v19' | 'v110' | 'node110';
     /**
      * Upload Sdk Version
      */
@@ -3811,7 +3811,7 @@ export type FunctionRuntimeHealthResponse = {
     /**
      * Sdk Generation
      */
-    sdk_generation?: 'v19' | 'v110';
+    sdk_generation?: 'v19' | 'v110' | 'node110';
     /**
      * Source Manifest
      */
@@ -3927,7 +3927,7 @@ export type FunctionWithLinkResponse = {
     /**
      * Sdk Generation
      */
-    sdk_generation?: 'v19' | 'v110';
+    sdk_generation?: 'v19' | 'v110' | 'node110';
     /**
      * Upload Sdk Version
      */
@@ -10247,7 +10247,7 @@ export type FunctionListItemResponseWritable = {
     /**
      * Sdk Generation
      */
-    sdk_generation?: 'v19' | 'v110';
+    sdk_generation?: 'v19' | 'v110' | 'node110';
     /**
      * Upload Sdk Version
      */
@@ -10363,7 +10363,7 @@ export type FunctionResponseWritable = {
     /**
      * Sdk Generation
      */
-    sdk_generation?: 'v19' | 'v110';
+    sdk_generation?: 'v19' | 'v110' | 'node110';
     /**
      * Upload Sdk Version
      */
@@ -10557,7 +10557,7 @@ export type FunctionWithLinkResponseWritable = {
     /**
      * Sdk Generation
      */
-    sdk_generation?: 'v19' | 'v110';
+    sdk_generation?: 'v19' | 'v110' | 'node110';
     /**
      * Upload Sdk Version
      */
@@ -12700,7 +12700,7 @@ export type FunctionRuntimeHealthData = {
         /**
          * Sdk Generation
          */
-        sdk_generation?: 'v19' | 'v110';
+        sdk_generation?: 'v19' | 'v110' | 'node110';
     };
     url: '/functions/health';
 };
