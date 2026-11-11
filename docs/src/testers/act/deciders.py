@@ -7,7 +7,7 @@ import notte
 # explicit deciders instead of the environment-based default
 # the writer asks `fallback_model` once when its own provider refuses on content-policy grounds or is unavailable
 # (rate limit, server error or timeout; not insufficient credits)
-writer = LlmWriter("google/gemini-3.1-flash-lite", fallback_model="openai/gpt-4.1-mini")
+writer = LlmWriter("google/gemini-3.8-flash", fallback_model="google/gemini-3.1-flash-lite")
 jev = JevDecider(route="openrouter", writer=writer)  # OPENROUTER_API_KEY (route="typesafe": TYPESAFE_API_KEY)
 llm = LlmDecider("google/gemini-3.1-flash-lite")  # OPENROUTER_API_KEY
 

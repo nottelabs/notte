@@ -473,8 +473,6 @@ async def test_other_writer_errors_do_not_fall_back(error: LLMProviderError, mon
 
 def test_default_writers_fall_back_to_the_decision_model(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("OPENROUTER_API_KEY", "k")
-    # a writer other than the decision model, which is the default writer on OpenRouter
-    monkeypatch.setenv("NOTTE_ACT_TEXT_MODEL", "writer-model")
     monkeypatch.setenv("NOTTE_ACT_DECIDER", "llm")
     llm = default_decider()
     assert isinstance(llm, LlmDecider) and llm.writer.fallback_model == DEFAULT_ACT_MODEL
@@ -485,7 +483,7 @@ def test_default_writers_fall_back_to_the_decision_model(monkeypatch: pytest.Mon
         jev = default_decider()
         assert isinstance(jev, JevDecider) and isinstance(jev.writer, LlmWriter)
         # Jev cannot write: the fallback is a text model
-        assert jev.writer.model == "writer-model" and jev.writer.fallback_model == DEFAULT_ACT_MODEL
+        assert jev.writer.model == DEFAULT_TEXT_MODEL and jev.writer.fallback_model == DEFAULT_ACT_MODEL
 
 
 OPENROUTER_DECISION = {
@@ -636,11 +634,11 @@ def test_an_empty_or_openrouter_base_url_is_openrouter(monkeypatch: pytest.Monke
     assert isinstance(decider.writer, LlmWriter) and decider.writer.model == DEFAULT_TEXT_MODEL
 
 
-def test_default_writer_is_the_decision_model_on_openrouter(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_default_writer_is_gemini_flash_on_openrouter(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("OPENROUTER_API_KEY", "k")
     decider = default_decider()
     assert isinstance(decider, JevDecider) and isinstance(decider.writer, LlmWriter)
-    assert decider.writer.model == "google/gemini-3.1-flash-lite"
+    assert decider.writer.model == "google/gemini-3.8-flash"
 
 
 @pytest.mark.asyncio
