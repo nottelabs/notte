@@ -63,10 +63,10 @@ from notte_llm.prompt import Message
 # Decision model of `LlmDecider` on OpenRouter: fast (about 1 to 1.5 s per decision), cheap,
 # structured outputs, no mandatory reasoning, and it completed the smoke tests (see the act docs).
 DEFAULT_ACT_MODEL = "google/gemini-3.1-flash-lite"
-# Field writer on OpenRouter: Inception's Mercury 3 (diffusion LLM). Measured in act() loops against
-# Mercury 2.5: write p50/p90 700/1,044 ms vs 1,092/1,623 ms, same texts, no reasoning tokens with
-# reasoning disabled (Mercury 2.5 still spent 25-37 per call).
-DEFAULT_TEXT_MODEL = "inception/mercury-3"
+# Field writer on OpenRouter. Inception's Mercury 3, the previous writer, is no longer served on
+# OpenRouter; the decision model put the whole address in a postcode lookup field
+# (test_local_writer_fills_an_address_lookup_with_the_postcode).
+DEFAULT_TEXT_MODEL = "google/gemini-3.8-flash"
 DEFAULT_TYPESAFE_MODEL = "jev-latest"
 DEFAULT_TYPESAFE_BASE_URL = "https://api.typesafe.ai"
 # Jev through OpenRouter's decisions endpoint (alpha): same request and answers as TypeSafe's `/v1/systemone`

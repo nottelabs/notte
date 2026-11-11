@@ -32,7 +32,7 @@ ROUTES = (
     Route("kimi", "moonshotai/kimi-k2.5", "novita"),
     Route("xai", "x-ai/grok-4.3", "xai"),
     Route("qwen", "qwen/qwen3.5-397b-a17b", "alibaba"),
-    Route("minimax", "minimax/minimax-m2.5", "novita"),
+    Route("minimax", "minimax/minimax-m2.5", "atlas-cloud"),
     # OpenRouter's deepseek/deepseek-chat is the December 2024 V3 release, not an alias
     # for DeepSeek's current chat model. V3.2 is the V3 line's current non-thinking release.
     Route("deepseek", "deepseek/deepseek-v3.2", "deepinfra"),
