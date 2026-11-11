@@ -1,0 +1,71 @@
+---
+title: Maps businesses
+description: Find local businesses from Google Maps with ratings, hours and contact details
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+`POST /data/maps/search` returns businesses from a Google Maps search.
+
+<Card title="Try it in the Console" icon="play" href="https://console.notte.cc/data-apis/maps" horizontal>
+  Try this API in the playground, no code needed.
+</Card>
+
+## Quick start
+
+```bash
+curl -X POST https://api.notte.cc/data/maps/search \
+  -H "Authorization: Bearer $NOTTE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"search": "coffee shops in Brooklyn, NY"}'
+```
+
+```json
+{
+  "results": [
+    {
+      "place_id": "ChIJ2wEUJhtbwokRIm0YqqLWk7o",
+      "name": "Casita of Brooklyn",
+      "rating": 4.8,
+      "number_of_reviews": 0,
+      "website": null,
+      "google_maps_url": "https://www.google.com/maps/place/...",
+      "google_category": ["Coffee shop"],
+      "latitude": 40.668,
+      "longitude": -73.9878,
+      "claimed": true
+    }
+  ]
+}
+```
+
+## Parameters
+
+<ParamField body="search" type="string">
+  What to look for, for example `coffee shops in Brooklyn, NY`.
+</ParamField>
+
+<ParamField body="url" type="string">
+  A Google Maps URL to read instead of running a search.
+</ParamField>
+
+Send either `search` or `url`.
+
+## Response fields
+
+Each item in `results` can include:
+
+| Field | Description |
+|-------|-------------|
+| `place_id`, `cid` | Google identifiers |
+| `name`, `about`, `google_description` | Name and descriptions |
+| `google_category` | Categories, for example `["Coffee shop"]` |
+| `rating`, `number_of_reviews`, `google_reviews_url` | Reviews |
+| `website`, `google_phone`, `google_maps_url` | Contact and links |
+| `google_hours` | Opening hours |
+| `google_price_range_dollar_sign` | Price level, for example `$$` |
+| `claimed` | Whether the owner claimed the listing |
+| `latitude`, `longitude` | Coordinates |
+| `street_addr`, `city`, `state`, `postal_code`, `country` | Address |
+| `order_online_url`, `google_orders_urls` | Ordering links |

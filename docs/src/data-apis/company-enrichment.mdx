@@ -1,0 +1,74 @@
+---
+title: Company enrichment
+description: Get logos, colors, socials and company details from a domain, name, email or ticker
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+`POST /data/brand/retrieve` returns a company profile. Pick how you identify the company with the `type` field.
+
+<Card title="Try it in the Console" icon="play" href="https://console.notte.cc/data-apis/brands" horizontal>
+  Try this API in the playground, no code needed.
+</Card>
+
+## Quick start
+
+```bash
+curl -X POST https://api.notte.cc/data/brand/retrieve \
+  -H "Authorization: Bearer $NOTTE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"type": "by_domain", "domain": "stripe.com"}'
+```
+
+```json
+{
+  "status": "ok",
+  "code": 200,
+  "brand": {
+    "domain": "stripe.com",
+    "title": "Stripe",
+    "description": "Stripe is a financial services platform that helps all types of businesses accept payments...",
+    "colors": [{ "hex": "#533afd", "source": "site" }],
+    "logos": [{ "url": "https://images.stripeassets.com/.../favicon.svg", "type": "icon" }],
+    "socials": [{ "type": "...", "url": "..." }],
+    "links": { "careers": "...", "privacy": "...", "contact": "...", "blog": "...", "pricing": "..." },
+    "primary_language": "english"
+  },
+  "cache_metadata": { "status": "miss", "age_ms": 0 },
+  "request_id": "...",
+  "partial": false
+}
+```
+
+## Look up by
+
+| `type` | Required field | Notes |
+|--------|----------------|-------|
+| `by_domain` | `domain` | `stripe.com` |
+| `by_name` | `name` | Optional `country_gl` to narrow the match |
+| `by_email` | `email` | `hello@stripe.com` |
+| `by_ticker` | `ticker` | Optional `ticker_exchange`, default `NASDAQ` |
+| `by_direct_url` | `direct_url` | A specific page to profile |
+
+To resolve a card-statement line instead, see [Merchant resolution](/data-apis/merchants).
+
+## Optional parameters
+
+<ParamField body="maxAgeMs" type="integer" default="7776000000">
+  Maximum age of a cached profile (default 90 days). Not available on `by_direct_url`.
+</ParamField>
+
+<ParamField body="maxSpeed" type="boolean" default="false">
+  Prioritize speed.
+</ParamField>
+
+<ParamField body="force_language" type="string">
+  Return text fields in this language, for example `english` or `french`.
+</ParamField>
+
+## Response fields
+
+`brand` can contain: `domain`, `title`, `description`, `slogan`, `colors`, `logos`, `backdrops`, `socials`, `address`, `stock`, `employees`, `industries`, `links`, `email`, `phone`, `is_nsfw`, `primary_language`. Fields that weren't found are `null` or empty. `partial: true` means the profile is incomplete.
+
+See [common parameters](/data-apis/overview#common-parameters) for `timeoutOpts`, `zdr` and `tags`.

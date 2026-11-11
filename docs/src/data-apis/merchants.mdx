@@ -1,0 +1,87 @@
+---
+title: Merchant resolution
+description: Turn a raw card-statement descriptor into a merchant profile
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+`POST /data/brand/retrieve` with `"type": "by_transaction"` takes the messy text from a card or bank statement and returns the merchant behind it, using the same profile as [Company enrichment](/data-apis/company-enrichment).
+
+<Card title="Try it in the Console" icon="play" href="https://console.notte.cc/data-apis/merchants" horizontal>
+  Try this API in the playground, no code needed.
+</Card>
+
+## Quick start
+
+```bash
+curl -X POST https://api.notte.cc/data/brand/retrieve \
+  -H "Authorization: Bearer $NOTTE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "by_transaction",
+    "transaction_info": "STARBUCKS STORE 12345 SEATTLE WA",
+    "country_gl": "us"
+  }'
+```
+
+```json
+{
+  "status": "ok",
+  "code": 200,
+  "brand": {
+    "domain": "starbucks.com",
+    "title": "Starbucks Coffee Company",
+    "colors": [{ "hex": "#00754a", "source": "site" }],
+    "logos": [{ "url": "https://www.starbucks.com/assets/icons/siren.svg", "type": "logo" }]
+  }
+}
+```
+
+## Parameters
+
+<ParamField body="type" type="string" required>
+  Always `by_transaction`.
+</ParamField>
+
+<ParamField body="transaction_info" type="string" required>
+  The descriptor text, 3 to 500 characters.
+</ParamField>
+
+<ParamField body="country_gl" type="string">
+  Country code to narrow the match, for example `us`.
+</ParamField>
+
+<ParamField body="city" type="string">
+  City from the transaction.
+</ParamField>
+
+<ParamField body="mcc" type="string">
+  Merchant category code.
+</ParamField>
+
+<ParamField body="phone" type="string">
+  Merchant phone number from the transaction.
+</ParamField>
+
+<ParamField body="high_confidence_only" type="boolean" default="false">
+  Only return a match when the API is confident.
+</ParamField>
+
+<ParamField body="maxSpeed" type="boolean" default="false">
+  Prioritize speed.
+</ParamField>
+
+## When no merchant is found
+
+If the descriptor can't be resolved reliably, the API returns:
+
+```json
+{
+  "error_code": "NOT_FOUND",
+  "message": "The merchant could not be identified reliably.",
+  "request_id": "..."
+}
+```
+
+Add `city`, `mcc` or `phone` and retry.

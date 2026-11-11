@@ -52,27 +52,27 @@
     },
     {
       "source": "/product/anything-api",
-      "destination": "/concepts/anything"
+      "destination": "https://anything.notte.cc/docs"
     },
     {
       "source": "/concepts/agents",
-      "destination": "/concepts/anything"
+      "destination": "https://anything.notte.cc/docs"
     },
     {
       "source": "/concepts/bua",
-      "destination": "/concepts/anything"
+      "destination": "https://anything.notte.cc/docs"
     },
     {
       "source": "/features/agents/hello",
-      "destination": "/concepts/anything"
+      "destination": "https://anything.notte.cc/docs"
     },
     {
       "source": "/features/agents/configuration",
-      "destination": "/concepts/anything"
+      "destination": "https://anything.notte.cc/docs"
     },
     {
       "source": "/features/agents/lifecycle",
-      "destination": "/concepts/anything"
+      "destination": "https://anything.notte.cc/docs"
     },
     {
       "source": "/features/agents/replay",
@@ -217,6 +217,10 @@
     {
       "source": "/integrations/anthropic-computer-use",
       "destination": "/integrations/claude-computer-use"
+    },
+    {
+      "source": "/concepts/anything",
+      "destination": "https://anything.notte.cc/docs"
     }
   ],
   "errors": {
@@ -312,12 +316,30 @@
             ]
           },
           {
-            "group": "Web API",
-            "icon": "download",
+            "group": "Data APIs",
+            "icon": "database",
             "pages": [
+              "data-apis/overview",
               "concepts/scraping",
               "concepts/search",
-              "concepts/anything"
+              "data-apis/fetch",
+              "data-apis/styleguide",
+              "data-apis/products",
+              "data-apis/company-enrichment",
+              "data-apis/merchants",
+              "data-apis/maps",
+              "data-apis/people",
+              "data-apis/news",
+              "data-apis/youtube",
+              "data-apis/monitors"
+            ]
+          },
+          {
+            "group": "Anything API",
+            "icon": "wand-magic-sparkles",
+            "pages": [
+              "anything-api/app",
+              "anything-api/docs"
             ]
           }
         ]

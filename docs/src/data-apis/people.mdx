@@ -1,0 +1,61 @@
+---
+title: People enrichment
+description: Enrich a person from a name, email or social profile
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+`POST /data/people/enrich` takes whatever you know about a person and returns the matching profile. The more clues you send, the better the match.
+
+<Card title="Try it in the Console" icon="play" href="https://console.notte.cc/data-apis/people" horizontal>
+  Try this API in the playground, no code needed.
+</Card>
+
+## Quick start
+
+```bash
+curl -X POST https://api.notte.cc/data/people/enrich \
+  -H "Authorization: Bearer $NOTTE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": {"first": "Ada", "last": "Lovelace"},
+    "company": {"domain": "example.com"}
+  }'
+```
+
+The response contains the best `match`, a `request_id`, and `partial: true` when the result is incomplete.
+
+## Parameters
+
+Send at least one clue. All fields are optional.
+
+<ParamField body="social_urls" type="string[]">
+  Social profile URLs for the person.
+</ParamField>
+
+<ParamField body="name" type="object">
+  `first` and `last`.
+</ParamField>
+
+<ParamField body="email" type="string">
+  The person's email address.
+</ParamField>
+
+<ParamField body="company" type="object">
+  `name` and/or `domain` of their employer.
+</ParamField>
+
+<ParamField body="education" type="object[]">
+  Each item can have `institution` (`name` and/or `domain`), `degree`, `field_of_study` and `graduation_year`.
+</ParamField>
+
+<ParamField body="location" type="object">
+  `city`, `region` and `country`.
+</ParamField>
+
+<ParamField body="timeoutOpts" type="object">
+  `milliseconds` and `behavior`: `fail` (default) returns an error on timeout, `return-partial` returns what was found.
+</ParamField>
+
+See [common parameters](/data-apis/overview#common-parameters) for `zdr` and `tags`.

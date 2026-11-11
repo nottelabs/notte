@@ -1,0 +1,67 @@
+---
+title: Styleguide
+description: Extract a website's colors, typography, spacing and components
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+`GET /data/web/styleguide` visits a site and returns its design tokens: colors, fonts, spacing, shadows and common components.
+
+<Card title="Try it in the Console" icon="play" href="https://console.notte.cc/data-apis/styleguide" horizontal>
+  Try this API in the playground, no code needed.
+</Card>
+
+## Quick start
+
+```bash
+curl "https://api.notte.cc/data/web/styleguide?domain=stripe.com" \
+  -H "Authorization: Bearer $NOTTE_API_KEY"
+```
+
+```json
+{
+  "status": "ok",
+  "domain": "stripe.com",
+  "styleguide": {
+    "mode": "light",
+    "colors": { "accent": "#533afd", "background": "#ffffff", "text": "#ffffff" },
+    "typography": {
+      "headings": {
+        "h1": { "fontFamily": "sohne-var", "fontSize": "48px", "fontWeight": 300, "lineHeight": "55.2px" }
+      }
+    },
+    "elementSpacing": {},
+    "shadows": {},
+    "fontLinks": {},
+    "components": {}
+  },
+  "finalDOMState": "loaded",
+  "cache_metadata": { "status": "miss", "age_ms": 0 },
+  "request_id": "..."
+}
+```
+
+`finalDOMState` is `loaded` or `still-loading`. If it is `still-loading`, the page hadn't settled when the styleguide was captured.
+
+## Parameters
+
+All parameters are query parameters.
+
+<ParamField query="domain" type="string">
+  The site to analyze, for example `stripe.com`.
+</ParamField>
+
+<ParamField query="directUrl" type="string">
+  A full URL, when you need a specific page instead of a domain.
+</ParamField>
+
+<ParamField query="colorScheme" type="string" default="light">
+  Which color scheme to capture.
+</ParamField>
+
+<ParamField query="maxAgeMs" type="integer">
+  Maximum age of a cached result. `0` forces a fresh capture.
+</ParamField>
+
+`timeoutOpts[milliseconds]`, `timeoutOpts[behavior]`, `zdr` and `tags` work as described in [common parameters](/data-apis/overview#common-parameters).
