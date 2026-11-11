@@ -1,0 +1,43 @@
+---
+title: Control your spend
+description: The settings, limits and emails that keep usage and credits predictable
+---
+
+Usage is paid from dollar-based credits (see [Pricing](/pricing)). These are the safeguards that keep spend predictable.
+
+## Keep sessions short
+
+Sessions close on their own after an idle timeout or a maximum duration. Both are set per session.
+
+| Setting | Default | Maximum |
+| --- | --- | --- |
+| `idle_timeout_minutes` | 3 | 30 |
+| `max_duration_minutes` | 15 | 1440 |
+
+Set them to the shortest values your workflow needs. See [Session lifecycle](/features/sessions/lifecycle#2-set-appropriate-timeouts) for details.
+
+## Turn off proxies you don't need
+
+Built-in proxies are on by default and are billed per GB. Set `proxies` to `false` for sessions that don't need them. See [Proxies](/features/sessions/proxies#billing) for rates.
+
+## Plan allowances
+
+Some plans cap spend per source: LLM, proxy, browser sessions, workflow runs and agent tool calls. The **Included usage** card on the Limits page under [Billing](https://console.notte.cc/billing) in the console shows how much of each allowance you have used and when it resets.
+
+When an allowance is used up:
+
+* **With a payment method on file**, further usage is billed to your card at the end of the period.
+* **Without one**, new work for that source is rejected with a `402` until the period resets, you add a payment method, or you upgrade your plan.
+
+## Emails
+
+Notte sends an email when:
+
+* 80% of your plan's credits are used.
+* Your credits run out. New sessions are blocked and scheduled functions are paused until you top up.
+
+Top up from the [billing page](https://console.notte.cc/billing).
+
+## What doesn't exist yet
+
+There is no workspace-level monthly spending cap that you set yourself. Limits come from your plan's allowances and your credit balance.
