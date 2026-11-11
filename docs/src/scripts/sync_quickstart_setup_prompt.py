@@ -1,35 +1,18 @@
 #!/usr/bin/env python3
-"""Keep Quickstart copy, preview, and agent output pointed at the shared setup."""
+"""Keep the Quickstart's agent menu, prompt preview, and agent output pointed at the shared setup."""
 
 from __future__ import annotations
 
 import argparse
-import json
+import html
 import re
 import sys
 from pathlib import Path
+from urllib.parse import quote
 
 SRC_DIR = Path(__file__).resolve().parent.parent
 QUICKSTART = SRC_DIR / "quickstart.mdx"
 SETUP_PROMPT = "Read https://notte.cc/skill.md and follow its setup instructions."
-
-
-def render_clipboard_prompt(prompt: str) -> str:
-    lines = prompt.rstrip("\n").split("\n")
-    rendered_lines = ",\n".join(f"          {json.dumps(line)}" for line in lines)
-    return (
-        f'        const notteSetupPrompt = [\n{rendered_lines}\n        ].join("\\n");\n\n'
-        "        navigator.clipboard.writeText(notteSetupPrompt);"
-    )
-
-
-def render_accordion(prompt: str) -> str:
-    indented = "\n".join(f"    {line}" if line else "" for line in prompt.rstrip("\n").split("\n"))
-    return f"""<Accordion title="View setup prompt">
-    ````markdown
-{indented}
-    ````
-  </Accordion>"""
 
 
 def render_agent_visibility(prompt: str) -> str:
@@ -43,30 +26,35 @@ def replace_one(pattern: str, replacement: str, text: str, label: str, flags: in
     return updated
 
 
-def remove_top_level_js_prompt(text: str) -> str:
-    return re.sub(
-        r"\n*export const notteSetupPrompt = \[\n.*?\n\]\.join\(\"\\n\"\);\n*",
-        "\n\n",
-        text,
-        count=1,
-        flags=re.DOTALL,
-    )
+def replace_all(pattern: str, replacement: str, text: str, label: str) -> str:
+    updated, count = re.subn(pattern, lambda _: replacement, text)
+    if count == 0:
+        raise RuntimeError(f"expected to replace at least one {label}, replaced 0")
+    return updated
 
 
 def update_quickstart(text: str, prompt: str) -> str:
-    text = remove_top_level_js_prompt(text)
-    text = replace_one(
-        r"(?:        const notteSetupPrompt = \[\n.*?\n        \]\.join\(\"\\n\"\);\n\n)?        navigator\.clipboard\.writeText\(notteSetupPrompt\);",
-        render_clipboard_prompt(prompt),
+    """Point every copy of the prompt on the page at `prompt`.
+
+    The "Connect your agent" menu copies it from each item's data-nv-copy-prompt, the
+    Claude Code and Cursor items also pass it URL-encoded in their deep links, the
+    prompt box previews it, and agents read the Visibility block.
+    """
+    encoded = quote(prompt, safe="")
+    text = replace_all(
+        r'data-nv-copy-prompt="[^"]*"',
+        f'data-nv-copy-prompt="{html.escape(prompt, quote=True)}"',
         text,
-        "clipboard setup prompt",
+        "menu copy prompt",
     )
+    text = replace_one(r'href="claude-cli://open\?q=[^"]*"', f'href="claude-cli://open?q={encoded}"', text, "Claude Code link")
     text = replace_one(
-        r"<Accordion title=\"View setup prompt\">\n.*?\n  </Accordion>",
-        render_accordion(prompt),
+        r'href="https://cursor\.com/link/prompt\?text=[^"]*"',
+        f'href="https://cursor.com/link/prompt?text={encoded}"',
         text,
-        "setup prompt accordion",
+        "Cursor link",
     )
+    text = replace_preview(text, prompt)
     text = replace_one(
         r"<Visibility for=\"agents\">\n.*?\n</Visibility>",
         render_agent_visibility(prompt),
@@ -74,6 +62,19 @@ def update_quickstart(text: str, prompt: str) -> str:
         "agents Visibility block",
     )
     return text.rstrip("\n") + "\n"
+
+
+def replace_preview(text: str, prompt: str) -> str:
+    updated, count = re.subn(
+        r'(<div className="nv-qs__prompt">.*?<code>).*?(</code>)',
+        lambda m: m.group(1) + html.escape(prompt, quote=False) + m.group(2),
+        text,
+        count=1,
+        flags=re.DOTALL,
+    )
+    if count != 1:
+        raise RuntimeError(f"expected to replace exactly one prompt preview, replaced {count}")
+    return updated
 
 
 def main() -> int:

@@ -34,6 +34,7 @@ CLI_DIR = REPO_ROOT / "notte-cli"
 OUT_DIR = SRC_DIR / "cli-reference"
 DOCS_JSON = SRC_DIR / "docs.json"
 TAB = "CLI"
+TAB_ICON = "terminal"
 # The CLI tab sits right after this one.
 AFTER_TAB = "APIs and SDKs"
 GENERATE_TIMEOUT_SECONDS = 600
@@ -105,6 +106,7 @@ def sync_nav(docs: dict[str, Any], pages: list[str]) -> None:
     overview, commands = pages[:1], pages[1:]
     entry = {
         "tab": TAB,
+        "icon": TAB_ICON,
         "groups": [
             {"group": "Getting Started", "pages": overview},
             {"group": "Commands", "pages": commands},
