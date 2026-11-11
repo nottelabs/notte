@@ -1,0 +1,160 @@
+---
+title: Monitors
+description: Watch a page, a sitemap or an extraction on a schedule and get a webhook when it changes
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+A monitor checks a target on a schedule and records a change when the result differs from what it saw before. Add a webhook to be notified.
+
+<Card title="Try it in the Console" icon="play" href="https://console.notte.cc/data-apis/monitors" horizontal>
+  Try this API in the playground, no code needed.
+</Card>
+
+## Quick start
+
+```bash
+curl -X POST https://api.notte.cc/data/monitors \
+  -H "Authorization: Bearer $NOTTE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Pricing page",
+    "target": {"type": "page", "url": "https://example.com/pricing"},
+    "schedule": {"type": "interval", "frequency": 1, "unit": "days"},
+    "change_detection": {"type": "exact"},
+    "webhook": {"url": "https://your-app.com/hooks/notte", "events": ["change.detected"]}
+  }'
+```
+
+```json
+{
+  "id": "mon_d6d9873bc88a4df19d0ddd1c576fd27a",
+  "name": "Pricing page",
+  "status": "active",
+  "next_run_at": "2026-11-12T12:47:27Z",
+  "initial_run_id": "run_e7853515005345c08e9f9fd7aa98971e",
+  "webhook": {
+    "url": "https://your-app.com/hooks/notte",
+    "events": ["change.detected"],
+    "secret": "whsec_..."
+  }
+}
+```
+
+Creating a monitor runs it once right away to record a baseline. Save the webhook `secret`.
+
+## Create a monitor
+
+<ParamField body="name" type="string" required>
+  A label for the monitor.
+</ParamField>
+
+<ParamField body="target" type="object" required>
+  What to watch. Pick a `type`:
+
+  | `type` | What it watches | Fields |
+  |--------|-----------------|--------|
+  | `page` | One page | `url`, `instructions`, `include_selectors`, `exclude_selectors`, `actions` (up to 5), `normalize_whitespace` (default `true`) |
+  | `sitemap` | The list of URLs in a sitemap | `url`, `include`, `exclude`, `max_urls` (default `5000`) |
+  | `extract` | Data extracted from one or more pages | `url`, `instructions` (required), `schema`, `max_pages` (default `10`), `max_depth`, `follow_subdomains` (default `false`) |
+</ParamField>
+
+A `page` target's `actions` run before each check, in order. Each one is one of:
+
+- `{"do": "wait", "timeMs": 1000}`
+- `{"do": "scroll", "direction": "down", "amount": "viewport", "maxScrolls": 3}`
+- `{"do": "perform", "action": "click the Load more button"}`
+
+<ParamField body="schedule" type="object" required>
+  `{"type": "interval", "frequency": 1, "unit": "days"}`. `unit` is `minutes`, `hours` or `days`.
+</ParamField>
+
+<ParamField body="change_detection" type="object">
+  How changes are decided:
+
+  - `{"type": "exact"}`: any difference counts.
+  - `{"type": "semantic", "confidence_threshold": 0.75}`: only meaningful differences count.
+</ParamField>
+
+<ParamField body="webhook" type="object">
+  `url`, `events` (`change.detected`, `run.completed`) and optional `retry` with `delays_seconds`, for example `[10, 60, 300]`.
+</ParamField>
+
+<ParamField body="tags" type="string[]">
+  Free-form labels.
+</ParamField>
+
+## Manage monitors
+
+| Action | Request |
+|--------|---------|
+| List | `GET /data/monitors` |
+| Get | `GET /data/monitors/{monitor_id}` |
+| Update | `PATCH /data/monitors/{monitor_id}` |
+| Delete | `DELETE /data/monitors/{monitor_id}` |
+| Run now | `POST /data/monitors/{monitor_id}/run` |
+| Check your limit | `GET /data/monitors/limits` |
+| Check credit usage | `GET /data/monitors/credit-usage` |
+
+`PATCH` accepts the same fields as create, plus `status`: `active` or `paused`.
+
+`POST .../run` returns `202` with the `run_id`.
+
+## Runs and changes
+
+Every check is a run. A run that finds a difference also creates a change.
+
+| Action | Request |
+|--------|---------|
+| Runs of a monitor | `GET /data/monitors/{monitor_id}/runs` |
+| One run | `GET /data/monitors/{monitor_id}/runs/{run_id}` |
+| Changes of a monitor | `GET /data/monitors/{monitor_id}/changes` |
+| One change | `GET /data/monitors/{monitor_id}/changes/{change_id}` |
+| Runs across all monitors | `GET /data/monitors/runs` |
+| Changes across all monitors | `GET /data/monitors/changes` |
+
+A run looks like this:
+
+```json
+{
+  "id": "run_2e5eaa50d8ed4d4a95dcfe5bbed36964",
+  "monitor_id": "mon_d6d9873bc88a4df19d0ddd1c576fd27a",
+  "status": "completed",
+  "run_type": "scheduled",
+  "change_detected": false,
+  "change_id": null,
+  "webhook_delivery_ids": []
+}
+```
+
+`run_type` is `baseline` for the first run and `scheduled` for the others.
+
+## Webhooks
+
+When a monitor has a webhook, Notte sends a delivery to your `url` for each event you subscribed to.
+
+- `change.detected`: a run found a change.
+- `run.completed`: a run finished.
+
+Check what happened to a delivery:
+
+| Action | Request |
+|--------|---------|
+| List deliveries | `POST /data/webhooks/deliveries` |
+| One delivery | `GET /data/webhooks/deliveries/{delivery_id}` |
+| Delivery attempts | `GET /data/webhooks/deliveries/{delivery_id}/attempts` |
+| Retry a delivery | `POST /data/webhooks/deliveries/{delivery_id}/retry` |
+
+A delivery's `status` is `pending`, `delivering`, `retrying`, `delivered`, `failed` or `cancelled`.
+
+The list request needs `"type": "monitor"`. Add any of `monitor_id`, `run_id`, `status`, `created_after`, `limit` (default `25`, max `100`) and `cursor` to filter and page:
+
+```bash
+curl -X POST https://api.notte.cc/data/webhooks/deliveries \
+  -H "Authorization: Bearer $NOTTE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"type": "monitor", "monitor_id": "mon_d6d9873bc88a4df19d0ddd1c576fd27a", "status": "failed"}'
+```
+
+Rotate a webhook secret with `POST /data/monitors/{monitor_id}/webhook/rotate-secret`.

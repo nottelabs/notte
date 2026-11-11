@@ -1,0 +1,93 @@
+---
+title: Raw fetch
+description: Get a web page as HTML, markdown or product data in one call
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+`POST /data/web/fetch` loads a URL in a cloud browser and returns the formats you ask for. To extract your own schema with an LLM, use [Fetch](/concepts/scraping) instead.
+
+<Card title="Try it in the Console" icon="play" href="https://console.notte.cc/data-apis/fetch" horizontal>
+  Try this API in the playground, no code needed.
+</Card>
+
+## Quick start
+
+```bash
+curl -X POST https://api.notte.cc/data/web/fetch \
+  -H "Authorization: Bearer $NOTTE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com", "formats": {"markdown": true}}'
+```
+
+```json
+{
+  "url": "https://example.com/",
+  "markdown": {
+    "requested": true,
+    "success": true,
+    "data": "Example Domain\n\nThis domain is for use in documentation examples..."
+  },
+  "metadata": { "title": "Example Domain", "language": "en" },
+  "cache_metadata": { "status": "miss", "age_ms": 0 },
+  "isPartial": false,
+  "request_id": "9efce509-100a-4bac-9afe-c38323c84303"
+}
+```
+
+Each format you request comes back as `{ requested, success, data }`. Formats you didn't request have `requested: false`.
+
+## Parameters
+
+<ParamField body="url" type="string" required>
+  The page to load.
+</ParamField>
+
+<ParamField body="formats" type="object" required>
+  Which outputs to return. Set any of these to `true`:
+
+  - `html`: the page HTML
+  - `markdown`: the page as markdown
+  - `product`: [product data](/data-apis/products)
+  - `parse`: parsed Google Maps data. Also set `parseParams` to `{"type": "prebuilt", "parser": "google-maps"}`
+</ParamField>
+
+To get parsed Google Maps data, request `parse` and set the parser:
+
+```json
+{
+  "url": "https://www.google.com/maps/place/...",
+  "formats": {"parse": true},
+  "parseParams": {"type": "prebuilt", "parser": "google-maps"}
+}
+```
+
+The result comes back in the `parsed` field of the response.
+
+<ParamField body="markdownParams" type="object">
+  `includeLinks` (default `true`), `includeImages` (default `false`), `inlineImages` (`placeholder` or `preserve`).
+</ParamField>
+
+<ParamField body="productParams" type="object">
+  `dedupeImages` (default `false`).
+</ParamField>
+
+<ParamField body="sharedParams" type="object">
+  How the page is loaded:
+
+  - `waitFor`: how long to wait after load, in milliseconds. Default `500`.
+  - `actions`: steps to run before extracting, in order:
+    - `{"do": "wait", "timeMs": 1000}`
+    - `{"do": "scroll", "direction": "down", "amount": "viewport", "maxScrolls": 3}`
+    - `{"do": "perform", "action": "click the Load more button"}`
+  - `mainContentOnly`: keep only the main content. Default `false`.
+  - `includeSelectors` / `excludeSelectors`: CSS selectors to keep or drop.
+  - `theme`: `light` or `dark`. Default `light`.
+</ParamField>
+
+<ParamField body="maxAgeMs" type="integer">
+  Maximum age of a cached result. Omit for the default policy, `0` forces a fresh load.
+</ParamField>
+
+See [common parameters](/data-apis/overview#common-parameters) for `timeoutOpts`, `zdr` and `tags`, and [caching](/data-apis/overview#caching) for the cache headers.

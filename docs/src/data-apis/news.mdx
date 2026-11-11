@@ -1,0 +1,82 @@
+---
+title: Company news
+description: Search news articles about a company by name, domain, ticker or ISIN
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+`POST /data/news/search` returns recent articles about a company, with filters and cursor pagination.
+
+<Card title="Try it in the Console" icon="play" href="https://console.notte.cc/data-apis/news" horizontal>
+  Try this API in the playground, no code needed.
+</Card>
+
+## Quick start
+
+```bash
+curl -X POST https://api.notte.cc/data/news/search \
+  -H "Authorization: Bearer $NOTTE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "searchBy": {"type": "entity", "entity": {"type": "name", "name": "Stripe"}},
+    "limit": 2
+  }'
+```
+
+```json
+{
+  "data": [
+    {
+      "id": "59a2a2b022898353547631c59f6eb09f",
+      "story_id": "88d3b5ceb2ca4b0cea76c3af4ec4a38c",
+      "url": "https://finance.yahoo.com/...",
+      "title": "Stripe Just Built the Full-Stack Agent Commerce Infrastructure in One Day",
+      "description": "...",
+      "language": "en",
+      "authors": ["Tessa Vaughn"],
+      "published_at": "2026-09-23T11:17:02Z",
+      "type": "editorial",
+      "source": { "name": "Yahoo! Finance", "domain": "finance.yahoo.com" }
+    }
+  ],
+  "has_more": true,
+  "next_cursor": "MjowNmM4...",
+  "meta": { "count": 2 },
+  "request_id": "..."
+}
+```
+
+## Parameters
+
+<ParamField body="searchBy" type="object" required>
+  `{"type": "entity", "entity": {...}}`. The entity is one of:
+
+  - `{"type": "name", "name": "Stripe"}`
+  - `{"type": "domain", "domain": "stripe.com"}`
+  - `{"type": "ticker", "ticker": "AAPL", "exchange": "NASDAQ"}`
+  - `{"type": "isin", "isin": "US0378331005"}`
+</ParamField>
+
+<ParamField body="filterBy" type="object">
+  Narrow the results:
+
+  - `sourceDomain`: only these publishers, for example `["reuters.com"]`
+  - `sourceCountry`: publisher countries, for example `["us", "gb"]`
+  - `articleLanguage`: for example `["en", "fr"]`
+  - `articleType`: a list of `editorial`, `press_release`, `regulatory_filing` or `advisory`, for example `["editorial"]`
+</ParamField>
+
+<ParamField body="sortBy" type="object">
+  `{"type": "newest"}` (default) or `{"type": "relevance"}`.
+</ParamField>
+
+<ParamField body="limit" type="integer" default="10">
+  Articles per page.
+</ParamField>
+
+<ParamField body="cursor" type="string">
+  Pass `next_cursor` from the previous response to get the next page. Stop when `has_more` is `false`.
+</ParamField>
+
+Each article also has a `match` object describing how it matched your entity.

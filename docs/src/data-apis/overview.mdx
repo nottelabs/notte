@@ -1,0 +1,148 @@
+---
+title: Data APIs
+description: Ready-made REST endpoints that turn a URL, a company, a person or a search into structured data
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+Data APIs are single-call REST endpoints. You send a URL, a domain, a name or a query, and you get structured JSON back. No browser session to manage.
+
+<CardGroup cols={2}>
+  <Card title="Open the Console" icon="play" href="https://console.notte.cc/data-apis">
+    Try every Data API in the playground.
+  </Card>
+  <Card title="Get your API key" icon="key" href="https://console.notte.cc/apikeys">
+    Create a key to call the API.
+  </Card>
+</CardGroup>
+
+## Quick start
+
+```bash
+curl -X POST https://api.notte.cc/data/brand/retrieve \
+  -H "Authorization: Bearer $NOTTE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"type": "by_domain", "domain": "stripe.com"}'
+```
+
+## The 10 Data APIs
+
+| API | Endpoint | Use it to |
+|-----|----------|-----------|
+| [Raw fetch](/data-apis/fetch) | `POST /data/web/fetch` | Get a page as HTML, markdown or product data |
+| [Styleguide](/data-apis/styleguide) | `GET /data/web/styleguide` | Extract a website's colors, fonts and components |
+| [Products](/data-apis/products) | `POST /data/products/extract` | Extract price, variants and images from a product page |
+| [Company enrichment](/data-apis/company-enrichment) | `POST /data/brand/retrieve` | Get logos, colors, socials and company details |
+| [Merchant resolution](/data-apis/merchants) | `POST /data/brand/retrieve` | Turn a raw card-statement line into a merchant |
+| [Maps businesses](/data-apis/maps) | `POST /data/maps/search` | Find local businesses on Google Maps |
+| [People enrichment](/data-apis/people) | `POST /data/people/enrich` | Enrich a person from a name, email or social profile |
+| [Company news](/data-apis/news) | `POST /data/news/search` | Search news articles about a company |
+| [YouTube](/data-apis/youtube) | `POST /data/youtube/extract` | Get a video's metadata and captions, or a channel's videos |
+| [Monitors](/data-apis/monitors) | `POST /data/monitors` | Watch a page on a schedule and get a webhook when it changes |
+
+You can list them at any time with `GET /data`.
+
+## Authentication
+
+Every request needs your API key as a bearer token:
+
+```bash
+-H "Authorization: Bearer $NOTTE_API_KEY"
+```
+
+## Caching
+
+Results are cached on the server. Defaults per API:
+
+| API | Default cache |
+|-----|---------------|
+| Company enrichment | 7 days |
+| Styleguide, People, YouTube, Merchants | 24 hours |
+| Maps | 1 hour |
+| Fetch, Products | 15 minutes |
+| News | 5 minutes |
+| Monitors | Never cached (always live) |
+
+Control it per request with these headers:
+
+<ParamField header="X-Notte-Cache-Mode" type="string" default="default">
+  `default` uses the cache, `refresh` re-fetches and updates it, `bypass` skips it.
+</ParamField>
+
+<ParamField header="X-Notte-Cache-Max-Age-Ms" type="integer">
+  Maximum age of a cached result you accept, in milliseconds. `0` forces a fresh result.
+</ParamField>
+
+<ParamField header="X-Notte-Cache-Ttl-Seconds" type="integer">
+  Store the result for less time than the default. `0` means don't store it.
+</ParamField>
+
+Fetch, Styleguide and Company enrichment (including Merchant resolution) responses include `cache_metadata` with `status` (`hit` or `miss`) and `age_ms`.
+
+Read your current policy with `GET /data/cache`. Clear cached results with `DELETE /data/cache`.
+
+## Common parameters
+
+Some APIs accept these optional fields. Check the table before sending them, because unsupported fields are rejected.
+
+| Field | What it does | Accepted by |
+|-------|--------------|-------------|
+| `timeoutOpts` | `milliseconds` (integer) and `behavior`: `fail` returns an error on timeout, `return-partial` returns what was collected so far | Fetch, Styleguide, Company enrichment, Merchant resolution, People |
+| `zdr` | `enabled` turns on zero data retention for the request. `disabled` is the default | Fetch, Styleguide, People |
+| `tags` | Free-form labels attached to the request | Fetch, Styleguide, Company enrichment, Merchant resolution, People, News, Monitors |
+
+Products, Maps and YouTube take none of them. For Styleguide, which is a `GET`, they are query parameters (`timeoutOpts[milliseconds]`, `timeoutOpts[behavior]`, `zdr`, `tags`). For the others they go in the JSON body.
+
+## Errors
+
+Errors return a JSON body with an `error_code`, a `message` and a `request_id`:
+
+```json
+{
+  "error_code": "UNAUTHORIZED",
+  "message": "Not authenticated",
+  "request_id": "6bc00896-30e1-490d-8de8-16756eb7c95f"
+}
+```
+
+| Status | `error_code` | Meaning |
+|--------|--------------|---------|
+| 400 | `INPUT_VALIDATION_ERROR` | A field is missing or invalid. The `message` names it. |
+| 401 | `UNAUTHORIZED` | Missing or invalid API key. |
+| 408 | `TIMEOUT` | The page didn't finish loading in time. |
+| | `NOT_FOUND` | The API couldn't resolve what you asked for (for example an unknown merchant). |
+
+The OpenAPI spec also lists a `422` response with a `detail` array for validation errors on some endpoints. Handle both `400` and `422` as invalid input.
+
+Include the `request_id` when you contact support.
+
+## Usage
+
+`GET /data/analytics` returns your request counts, successes, partial results and p50/p95 latency per API. It takes optional `since` and `until` (ISO 8601) query parameters and defaults to the last 7 days. You can also see usage in the [Console](https://console.notte.cc/data-apis/usage).
+
+```bash
+curl https://api.notte.cc/data/analytics \
+  -H "Authorization: Bearer $NOTTE_API_KEY"
+```
+
+```json
+{
+  "data": [
+    {
+      "operation": "products",
+      "capability": "products",
+      "requests": 37,
+      "successes": 25,
+      "partial_results": 0,
+      "server_errors": 0,
+      "p50_ms": 6093.5,
+      "p95_ms": 25712.3
+    }
+  ],
+  "since": "2026-11-04T20:10:09Z",
+  "until": "2026-11-11T20:10:09Z"
+}
+```
+
+To inspect individual requests, use `GET /data/analytics/requests` and `GET /data/analytics/requests/{request_id}`.

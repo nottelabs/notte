@@ -72,11 +72,26 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [Function Schedules](https://docs.notte.cc/features/functions/schedules.md): Run Functions automatically on a cron schedule
 - [Function Management](https://docs.notte.cc/features/functions/management.md): Update, version, monitor, and manage your deployed Functions
 
-## Web API
+## Data APIs
 
+- [Data APIs](https://docs.notte.cc/data-apis/overview.md): Ready-made REST endpoints that turn a URL, a company, a person or a search into structured data
 - [Fetch](https://docs.notte.cc/concepts/scraping.md): Extract content and structured data from web pages
 - [Search](https://docs.notte.cc/concepts/search.md): Search the web and get URLs, snippets, or a sourced answer
-- [Anything API](https://docs.notte.cc/concepts/anything.md): Build and run web automations from a single API call
+- [Raw fetch](https://docs.notte.cc/data-apis/fetch.md): Get a web page as HTML, markdown or product data in one call
+- [Styleguide](https://docs.notte.cc/data-apis/styleguide.md): Extract a website's colors, typography, spacing and components
+- [Products](https://docs.notte.cc/data-apis/products.md): Extract price, variants and images from any product page
+- [Company enrichment](https://docs.notte.cc/data-apis/company-enrichment.md): Get logos, colors, socials and company details from a domain, name, email or ticker
+- [Merchant resolution](https://docs.notte.cc/data-apis/merchants.md): Turn a raw card-statement descriptor into a merchant profile
+- [Maps businesses](https://docs.notte.cc/data-apis/maps.md): Find local businesses from Google Maps with ratings, hours and contact details
+- [People enrichment](https://docs.notte.cc/data-apis/people.md): Enrich a person from a name, email or social profile
+- [Company news](https://docs.notte.cc/data-apis/news.md): Search news articles about a company by name, domain, ticker or ISIN
+- [YouTube](https://docs.notte.cc/data-apis/youtube.md): Get a video's metadata and captions, or a channel's videos
+- [Monitors](https://docs.notte.cc/data-apis/monitors.md): Watch a page, a sitemap or an extraction on a schedule and get a webhook when it changes
+
+## Anything API
+
+- [Anything API](https://anything.notte.cc/): Turn any website into an API
+- [Anything API Docs](https://anything.notte.cc/docs): Anything API documentation
 
 
 # Integrations

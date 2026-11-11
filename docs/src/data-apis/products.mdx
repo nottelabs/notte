@@ -1,0 +1,70 @@
+---
+title: Products
+description: Extract price, variants and images from any product page
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+`POST /data/products/extract` reads a product page and returns normalized product data. It also tells you whether the page is a product page at all.
+
+<Card title="Try it in the Console" icon="play" href="https://console.notte.cc/data-apis/products" horizontal>
+  Try this API in the playground, no code needed.
+</Card>
+
+## Quick start
+
+```bash
+curl -X POST https://api.notte.cc/data/products/extract \
+  -H "Authorization: Bearer $NOTTE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://www.allbirds.com/products/mens-tree-runners"}'
+```
+
+```json
+{
+  "requested": true,
+  "success": true,
+  "data": {
+    "isProductPage": true,
+    "product": {
+      "name": "Men's Tree Runner",
+      "brand": "Allbirds",
+      "sku": "MENS_TREE_RUNNERS",
+      "price": 70.0,
+      "regularPrice": null,
+      "currency": "USD",
+      "availability": "in_stock",
+      "imageUrl": "https://www.allbirds.com/cdn/shop/files/...",
+      "images": ["..."],
+      "features": ["..."],
+      "variants": [
+        {
+          "sku": null,
+          "url": "https://www.allbirds.com/products/mens-tree-runners-navy-night?size=8",
+          "attributes": {},
+          "images": []
+        }
+      ]
+    }
+  }
+}
+```
+
+If the page isn't a product page, `isProductPage` is `false` and `product` is `null`.
+
+## Parameters
+
+<ParamField body="url" type="string" required>
+  The product page URL.
+</ParamField>
+
+<ParamField body="productParams" type="object">
+  `dedupeImages` (default `false`): remove duplicate images from `images`.
+</ParamField>
+
+## Response fields
+
+`name`, `description`, `brand`, `sku`, `price`, `regularPrice`, `currency`, `availability`, `category`, `imageUrl`, `images`, `dimensions`, `features`, `targetAudience`, `tags`, `variants`. Scalar fields the page doesn't expose (like `regularPrice` or `category`) are `null`. List fields (`images`, `dimensions`, `features`, `targetAudience`, `tags`, `variants`) can be empty or left out. Each variant has `sku`, `url`, `attributes` and `images`.
+
+You can also get product data as part of [Raw fetch](/data-apis/fetch) with `"formats": {"product": true}`.

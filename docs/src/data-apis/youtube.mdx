@@ -1,0 +1,81 @@
+---
+title: YouTube
+description: Get a video's metadata and captions, or a channel's videos
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+`POST /data/youtube/extract` takes a YouTube video or channel URL and returns a markdown summary plus structured metadata.
+
+<Card title="Try it in the Console" icon="play" href="https://console.notte.cc/data-apis/youtube" horizontal>
+  Try this API in the playground, no code needed.
+</Card>
+
+## Quick start
+
+```bash
+curl -X POST https://api.notte.cc/data/youtube/extract \
+  -H "Authorization: Bearer $NOTTE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"}'
+```
+
+```json
+{
+  "markdown": "# Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster)\n\nChannel: Rick Astley\nDuration: 03:33\n...",
+  "metadata": {
+    "kind": "video",
+    "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    "video_id": "dQw4w9WgXcQ",
+    "title": "Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster)",
+    "channel": "Rick Astley",
+    "duration_seconds": 213,
+    "views": "1836132776",
+    "published": "2009-10-24T23:57:33-07:00"
+  },
+  "captions_status": "unavailable",
+  "captions": [],
+  "videos": []
+}
+```
+
+## Parameters
+
+<ParamField body="url" type="string" required>
+  A video or channel URL.
+</ParamField>
+
+<ParamField body="includeImages" type="boolean" default="false">
+  Include images in the markdown.
+</ParamField>
+
+## Response fields
+
+<ResponseField name="markdown" type="string">
+  Title, channel, description and (when available) the transcript, as markdown.
+</ResponseField>
+
+<ResponseField name="metadata" type="object">
+  `kind` is `video` or `channel`. Videos have `video_id`, `title`, `channel`, `channel_url`, `description`, `duration_seconds`, `views`, `published` and `image_url`. Channels have `subscribers` and `video_count`.
+</ResponseField>
+
+<ResponseField name="captions_status" type="string">
+  `available`, `unavailable`, `disabled` or `not_applicable` (channels).
+</ResponseField>
+
+<ResponseField name="captions" type="object[]">
+  When available: `start`, `duration` and `text` for each caption line.
+</ResponseField>
+
+<ResponseField name="captions_language" type="string">
+  The language of the captions, when available.
+</ResponseField>
+
+<ResponseField name="captions_automatic" type="boolean">
+  Whether the captions were generated automatically, when available.
+</ResponseField>
+
+<ResponseField name="videos" type="object[]">
+  For channels: `id`, `url`, `title`, `duration`, `views` and `published` of listed videos.
+</ResponseField>

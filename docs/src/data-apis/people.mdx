@@ -1,0 +1,86 @@
+---
+title: People enrichment
+description: Enrich a person from a name, email or social profile
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+`POST /data/people/enrich` takes whatever you know about a person and returns the matching profile. The more clues you send, the better the match.
+
+<Card title="Try it in the Console" icon="play" href="https://console.notte.cc/data-apis/people" horizontal>
+  Try this API in the playground, no code needed.
+</Card>
+
+## Quick start
+
+```bash
+curl -X POST https://api.notte.cc/data/people/enrich \
+  -H "Authorization: Bearer $NOTTE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": {"first": "Ada", "last": "Lovelace"},
+    "company": {"domain": "example.com"}
+  }'
+```
+
+The response has this shape (values are illustrative):
+
+```json
+{
+  "partial": false,
+  "match": {
+    "status": "candidate",
+    "score": 87,
+    "person": { "name": {}, "current_role": {}, "social_urls": [], "education": [] }
+  },
+  "request_id": "..."
+}
+```
+
+Check `match.status` first:
+
+- `candidate`: `score` is the match confidence and `person` is the profile. `person` can include `name`, `email`, `avatar_url`, `bio`, `location`, `social_urls`, `website_urls`, `current_role`, `experience`, `education`, `skills` and `last_updated`.
+- `not_found`: no one matched. `score` and `person` are `null`.
+
+`partial: true` means the result is incomplete.
+
+## Parameters
+
+Send at least one clue. All fields are optional.
+
+<ParamField body="social_urls" type="string[]">
+  Social profile URLs for the person.
+</ParamField>
+
+<ParamField body="name" type="object">
+  `first` and `last`.
+</ParamField>
+
+<ParamField body="email" type="string">
+  The person's email address.
+</ParamField>
+
+<ParamField body="company" type="object">
+  `name` and/or `domain` of their employer.
+</ParamField>
+
+<ParamField body="education" type="object[]">
+  Each item can have `institution` (`name` and/or `domain`), `degree`, `field_of_study` and `graduation_year`.
+</ParamField>
+
+<ParamField body="location" type="object">
+  `city`, `region` and `country`.
+</ParamField>
+
+<ParamField body="timeoutOpts" type="object">
+  `milliseconds` and `behavior`: `fail` (default) returns an error on timeout, `return-partial` returns what was found.
+</ParamField>
+
+<ParamField body="zdr" type="string">
+  `enabled` or `disabled` (default). See [common parameters](/data-apis/overview#common-parameters).
+</ParamField>
+
+<ParamField body="tags" type="string[]">
+  Free-form labels attached to the request.
+</ParamField>
