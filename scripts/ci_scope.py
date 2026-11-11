@@ -77,6 +77,7 @@ INTEGRATION_DEPENDENCIES: dict[str, set[str]] = {
     "anthropic-computer-use": {"python-source", "node-source"},
     "boat": {"python-source"},
     "box": {"python-source", "node-source"},
+    "boxd": {"python-source"},
     "braintrust": {"python-source", "node-source"},
     "claude-agents": {"python-source", "node-source"},
     "daytona": {"python-source"},
