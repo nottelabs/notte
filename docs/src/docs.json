@@ -390,6 +390,7 @@
             "icon": "box",
             "pages": [
               "integrations/boat",
+              "integrations/boxd",
               "integrations/daytona",
               "integrations/e2b"
             ]

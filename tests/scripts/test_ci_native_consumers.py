@@ -18,7 +18,7 @@ from tests.scripts.test_ci_integration_examples import agent_phases, calls, ship
 pytest_plugins = ["tests.scripts.test_ci_integration_examples"]
 
 ROOT = Path(__file__).resolve().parents[2]
-PYTHON_ONLY = {"boat", "daytona", "e2b", "openagi", "prime-intellect"}
+PYTHON_ONLY = {"boat", "boxd", "daytona", "e2b", "openagi", "prime-intellect"}
 NODE_ONLY = {"agentcard", "e2e", "eve", "fx", "trigger"}
 PUBLISHED_ONLY = {"docker-sandboxes", "inngest", "temporal"}
 NON_SDK = {"replit", "terraform-profiles", "valtown"}

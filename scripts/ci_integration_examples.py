@@ -92,6 +92,7 @@ def projects(shard: str) -> list[tuple[str, str]]:
             "e2b",
             "daytona",
             "boat",
+            "boxd",
         }:
             raise ValueError("Unknown Python integration project")
         if registry[name] == "terraform-go" and name != "terraform-profiles":
