@@ -111,7 +111,7 @@ class FunctionRunUpdateRequestDict(TypedDict):
 
 
 class FunctionRuntimeHealthParametersQueryDict(TypedDict):
-    sdk_generation: NotRequired[Literal["v19", "v110"]]
+    sdk_generation: NotRequired[Literal["v19", "v110", "node110"]]
 
 
 class FunctionScheduleCreateRequestDict(TypedDict):
