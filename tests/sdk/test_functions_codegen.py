@@ -230,3 +230,69 @@ def test_function_metadata_preserves_omitted_and_null_sharing(
     assert client.functions.metadata_update("fn", name="renamed").shared is True
     assert client.functions.metadata_update("fn", name="renamed", shared=None).shared is True
     assert [json.loads(call.data) for call in api.calls] == [{"name": "renamed"}, {"name": "renamed"}]
+
+
+TYPESCRIPT_FUNCTION = {
+    **FUNCTION,
+    "url": "https://storage.example/code",
+    "sdk_generation": "node110",
+    "language": "node",
+}
+
+
+def test_typescript_function_responses_parse(client: NotteClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    api = fake(monkeypatch, {**PAGE, "items": [FUNCTION, TYPESCRIPT_FUNCTION]})
+    page = client.functions.list()
+    assert [item.sdk_generation for item in page.items] == ["v19", "node110"]
+    api.payload = TYPESCRIPT_FUNCTION
+    function = client.functions.download_url("fn")
+    assert function.sdk_generation == "node110"
+    api.payload = {**RUN, "artifact_sdk_generation": "node110", "sdk_generation": "node110"}
+    run = client.functions.run_get_metadata("fn", "run")
+    assert (run.artifact_sdk_generation, run.sdk_generation) == ("node110", "node110")
+    api.payload = {**PAGE, "items": [{**RUN, "sdk_generation": "node110"}]}
+    assert client.functions.list_runs("fn").items[0].function_run_id == "run"
+
+
+def test_typescript_function_code_is_not_saved_as_python(
+    client: NotteClient, monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+) -> None:
+    from notte_sdk.endpoints import functions
+
+    _ = fake(monkeypatch, TYPESCRIPT_FUNCTION)
+    downloads: list[str] = []
+
+    def get_text(url: str, timeout: float) -> str:
+        downloads.append(url)
+        return "export async function run() {}\n"
+
+    monkeypatch.setattr(functions, "get_text", get_text)
+    function = client.Function("fn")
+    path = tmp_path / "function.py"
+    with pytest.raises(ValueError, match="fn is a TypeScript function: its code cannot be saved as a Python file"):
+        _ = function.download(path=str(path))
+    assert not path.exists() and downloads == []
+    # Without a path the source is only returned, never written or run.
+    assert function.download() == "export async function run() {}\n"
+    assert downloads == ["https://storage.example/code"]
+
+
+@pytest.mark.asyncio
+async def test_async_typescript_function_code_is_not_saved_as_python(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+) -> None:
+    from notte_sdk import AsyncNotteClient
+    from notte_sdk.endpoints import functions
+
+    from tests.sdk.test_async_resources import KEY, afake
+
+    _ = afake(monkeypatch, TYPESCRIPT_FUNCTION)
+
+    async def aget_text(url: str, timeout: float) -> str:
+        raise AssertionError("the code must not be downloaded")
+
+    monkeypatch.setattr(functions, "aget_text", aget_text)
+    path = tmp_path / "function.py"
+    with pytest.raises(ValueError, match="fn is a TypeScript function"):
+        _ = await AsyncNotteClient(api_key=KEY, server_url=SERVER).Function("fn").download(path=str(path))
+    assert not path.exists()

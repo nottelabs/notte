@@ -2615,6 +2615,8 @@ class ListFunctionsRequestDict(ListRequestDict, total=False):
 
 
 FunctionRuntime = Literal["standard", "extended"]
+# The SDK a function's code was written for: Python 1.9 (`v19`), Python 1.10 (`v110`) or TypeScript (`node110`).
+FunctionSdkGeneration = Literal["v19", "v110", "node110"]
 
 
 class RunFunctionRequestDict(TypedDict, total=False):
@@ -2665,7 +2667,7 @@ class ForkFunctionRequest(SdkRequest):
 
 class GetFunctionResponse(SdkResponse):
     default_runtime: FunctionRuntime = "standard"
-    sdk_generation: Literal["v19", "v110"] = "v19"
+    sdk_generation: FunctionSdkGeneration = "v19"
     upload_sdk_version: str | None = None
     function_id: Annotated[
         str, Field(description="The ID of the function", validation_alias=AliasChoices("workflow_id", "function_id"))
@@ -2798,8 +2800,8 @@ class FunctionRunResponse(SdkResponse):
 
 
 class GetFunctionRunResponse(SdkResponse):
-    artifact_sdk_generation: Literal["v19", "v110"] = "v19"
-    sdk_generation: Literal["v19", "v110"] = "v19"
+    artifact_sdk_generation: FunctionSdkGeneration = "v19"
+    sdk_generation: FunctionSdkGeneration = "v19"
     function_id: Annotated[
         str, Field(description="The ID of the function", validation_alias=AliasChoices("workflow_id", "function_id"))
     ]
