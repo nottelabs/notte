@@ -394,6 +394,15 @@ def _download_error(file_url: str, error: TransportError) -> ValueError:
     return ValueError(f"Failed to download function code from {file_url} in 30 seconds: {error}")
 
 
+def _require_python_code(response: GetFunctionResponse) -> None:
+    """Refuse to save a TypeScript function's code as a Python file."""
+    if response.sdk_generation == "node110":
+        raise ValueError(
+            f"Function {response.function_id} is a TypeScript function: its code cannot be saved as a Python file. "
+            + "Call download() without a path to get its source, or use the Notte Node SDK."
+        )
+
+
 def _write_code(path: str, code: str) -> None:
     with open(path, "w") as f:
         _ = f.write(code)
@@ -549,6 +558,8 @@ class NotteFunction:
         """
         Download the function code from the notte console as a python file.
 
+        A TypeScript function's code is only returned: passing `path` raises `ValueError`.
+
         ```python
         function = notte.Function("<your-function-id>")
         function.download(path="<path-to-your-function.py>", decryption_key="<your-key>")
@@ -558,6 +569,8 @@ class NotteFunction:
         final_path = None if path is None else _validate_path(path)
 
         file_url = self.get_url(version=version, decryption_key=decryption_key)
+        if final_path is not None:
+            _require_python_code(self.response)
         try:
             code_content = get_text(file_url, timeout=self.client.DEFAULT_REQUEST_TIMEOUT_SECONDS)
         except TransportError as e:
@@ -919,6 +932,8 @@ class AsyncNotteFunction:
         """
         Download the function code from the notte console as a python file.
 
+        A TypeScript function's code is only returned: passing `path` raises `ValueError`.
+
         ```python
         function = client.Function("<your-function-id>")
         await function.download(path="<path-to-your-function.py>", decryption_key="<your-key>")
@@ -928,6 +943,8 @@ class AsyncNotteFunction:
         final_path = None if path is None else _validate_path(path)
 
         file_url = await self.get_url(version=version, decryption_key=decryption_key)
+        if final_path is not None:
+            _require_python_code(self.response)
         try:
             code_content = await aget_text(file_url, timeout=self.client.DEFAULT_REQUEST_TIMEOUT_SECONDS)
         except TransportError as e:
