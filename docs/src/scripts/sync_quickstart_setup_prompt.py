@@ -47,7 +47,9 @@ def update_quickstart(text: str, prompt: str) -> str:
         text,
         "menu copy prompt",
     )
-    text = replace_one(r'href="claude-cli://open\?q=[^"]*"', f'href="claude-cli://open?q={encoded}"', text, "Claude Code link")
+    text = replace_one(
+        r'href="claude-cli://open\?q=[^"]*"', f'href="claude-cli://open?q={encoded}"', text, "Claude Code link"
+    )
     text = replace_one(
         r'href="https://cursor\.com/link/prompt\?text=[^"]*"',
         f'href="https://cursor.com/link/prompt?text={encoded}"',
