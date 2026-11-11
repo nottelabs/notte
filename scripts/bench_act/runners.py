@@ -26,7 +26,7 @@ from notte_core.act.loop import _stop  # pyright: ignore[reportPrivateUsage]
 from .model import Probe, Task
 
 VIEWPORT: dict[str, Any] = {"viewport_width": 1120, "viewport_height": 780}
-WRITER = "inception/mercury-3"
+WRITER = "google/gemini-3.1-flash-lite"
 LLM_MODEL = "google/gemini-3.1-flash-lite"
 PROBE_JS = """(() => { let consent = null, cart = null; try { consent = localStorage.getItem('consent');
     cart = localStorage.getItem('cart-contents') } catch (e) {}
