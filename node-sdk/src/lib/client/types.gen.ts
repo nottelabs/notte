@@ -391,6 +391,10 @@ export type ApiExecutionResponse = {
      * Code
      */
     code?: string | null;
+    /**
+     * Failed Navigation Url
+     */
+    failed_navigation_url?: string | null;
 };
 
 /**
@@ -9898,6 +9902,10 @@ export type ApiExecutionResponseWritable = {
      * Code
      */
     code?: string | null;
+    /**
+     * Failed Navigation Url
+     */
+    failed_navigation_url?: string | null;
 };
 
 /**
