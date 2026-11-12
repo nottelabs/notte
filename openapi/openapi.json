@@ -34263,7 +34263,8 @@
               "authenticating",
               "closed",
               "error",
-              "timed_out"
+              "timed_out",
+              "paused"
             ],
             "title": "Status"
           },
