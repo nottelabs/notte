@@ -20,10 +20,12 @@ INSTRUCTION = "Fill the delivery form with phone +44 7700 900123 and continue"
 def _form(label: str, *, accepts: str = "", live: bool = False) -> str:
     """A delivery form whose phone field rejects every number but `accepts` (with an error shown under it), checked
     when Continue is clicked, or as it is typed (`live`). An empty field passes: the number is optional when `label`
-    says so."""
+    says so. Its name field is never checked."""
     check = "phone.addEventListener('input', check);" if live else ""
     return f"""<html><head><title>Delivery</title></head><body>
 <form onsubmit="event.preventDefault();">
+  <label for="name">Full name</label>
+  <input id="name" name="name">
   <label for="phone">{label}</label>
   <input id="phone" name="phone" aria-describedby="phone-error">
   <p id="phone-error"></p>
@@ -97,8 +99,9 @@ async def test_a_required_field_that_refuses_the_value_in_every_layout_is_not_ty
     decider.choices.append({"operation": "BLOCKED"})
     result = await session.aact(INSTRUCTION, decider=decider, raise_on_failure=False)
 
-    # the same digits rejected twice: not offered to type again, and the decider is told the page refuses them
-    assert ids["phone"] not in _typable(decider, 4)
+    # the same digits rejected twice: the decider is told the page refuses them; the field stays offered, for another
+    # value the goal could give
+    assert ids["phone"] in _typable(decider, 4)
     assert _element(decider, 4, ids["phone"])["refused"] == prompts.REFUSED_REQUIRED
     assert result.status == "blocked"
     assert len(decider.contexts) == 2
@@ -117,7 +120,6 @@ async def test_a_field_checked_as_it_is_typed_refuses_the_value_after_two_reject
     assert ids["phone"] in _typable(decider, 2)
     result = await session.aact(INSTRUCTION, decider=decider, raise_on_failure=False)
 
-    assert ids["phone"] not in _typable(decider, 3)
     assert _element(decider, 3, ids["phone"])["refused"] == prompts.REFUSED_REQUIRED
     assert result.status == "blocked"
 
@@ -161,6 +163,72 @@ async def test_a_value_accepted_in_its_second_layout_is_not_refused(session: Not
     assert result.status == "done"
     assert ids["phone"] in _typable(decider, 4)
     assert "refused" not in _element(decider, 4, ids["phone"])
+
+
+@pytest.mark.asyncio
+async def test_an_accepted_layout_followed_by_another_field_is_not_refused_before_continue(
+    session: NotteSession,
+) -> None:
+    """A form checked on Continue: the second layout is accepted, but its field keeps the first one's error while the
+    name is typed. Only Continue checks it: the field is not refused before."""
+    ids = await _open(session, _form("Phone", accepts="7700900123"))
+    phone, name = (
+        {"operation": "TYPE_TEXT", "type_text_target": ids["phone"]},
+        {"operation": "TYPE_TEXT", "type_text_target": ids["name"]},
+    )
+    decider = FakeDecider(
+        choices=[
+            phone,
+            {"operation": "CLICK", "click_target": ids["next"]},
+            phone,
+            name,
+            {"operation": "CLICK", "click_target": ids["next"]},
+        ],
+        texts=["07700900123", "7700900123", "Jamie Burke"],
+    )
+    for _ in range(5):
+        assert (await session.aact(INSTRUCTION, decider=decider)).status == "executed"
+
+    # typing the name ran between the accepted layout and Continue, with the old error still shown
+    assert "refused" not in _element(decider, 4, ids["phone"])
+    assert await session.window.page.text_content("#out") == "Choose a delivery option"
+
+
+BACKUP = "Fill the delivery form with phone +44 7700 900123 (if the page refuses it, use 020 7946 0123) and continue"
+
+
+@pytest.mark.asyncio
+async def test_a_backup_value_the_goal_gives_is_typed_after_the_first_is_refused(session: NotteSession) -> None:
+    ids = await _open(session, _form("Phone", accepts="02079460123"))
+    phone, continue_ = {"operation": "TYPE_TEXT", "type_text_target": ids["phone"]}, {"click_target": ids["next"]}
+    decider = FakeDecider(
+        choices=[step for _ in range(3) for step in (phone, {"operation": "CLICK", **continue_})],
+        texts=["07700900123", "7700900123", "02079460123"],
+    )
+    for _ in range(4):
+        assert (await session.aact(BACKUP, decider=decider)).status == "executed"
+
+    # refused: the field stays offered, and the goal's other number is typed in it
+    result = await session.aact(BACKUP, decider=decider)
+    assert _element(decider, 4, ids["phone"])["refused"] == prompts.REFUSED_REQUIRED
+    assert result.action == FillAction(id=ids["phone"], value="02079460123")
+    assert (await session.aact(BACKUP, decider=decider)).status == "executed"
+    assert await session.window.page.text_content("#out") == "Choose a delivery option"
+
+
+@pytest.mark.asyncio
+async def test_the_refused_value_written_again_in_another_layout_is_not_typed(session: NotteSession) -> None:
+    ids = await _open(session, _form("Phone"))
+    decider = await _type_and_continue(session, ids, ["07700900123", "7700900123"])
+    decider.choices += [{"operation": "TYPE_TEXT", "type_text_target": ids["phone"]}, {"operation": "BLOCKED"}]
+    decider.texts.append("+44 7700 900123")
+
+    result = await session.aact(INSTRUCTION, decider=decider, raise_on_failure=False)
+
+    # written again in a third layout: not typed, the field left, and the decider stops
+    assert await session.window.page.input_value("#phone") == "7700900123"
+    assert ids["phone"] not in _typable(decider, 5)
+    assert result.status == "blocked"
 
 
 @pytest.mark.parametrize(

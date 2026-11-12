@@ -96,8 +96,8 @@ RETRY_TYPED = (
 _REFUSED = "The page refused the goal's value for this field in every form typed: it is not typed again."
 REFUSED_REQUIRED = (
     _REFUSED
-    + " The field is not marked optional: unless the goal gives another value for it, the page cannot go on with the"
-    + " goal's values (BLOCKED)."
+    + " The field is not marked optional: TYPE_TEXT in it only with another value the goal gives for it; without one,"
+    + " the page cannot go on with the goal's values (BLOCKED)."
 )
 REFUSED_OPTIONAL = _REFUSED + " The field is optional: leave it empty and go on."
 # the same, while the optional field still holds the refused value: TYPE_TEXT empties it
