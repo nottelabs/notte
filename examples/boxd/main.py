@@ -8,6 +8,7 @@ running on the machine would.
 
 import json
 import os
+import re
 import shlex
 from pathlib import Path
 from uuid import uuid4
@@ -20,6 +21,8 @@ PORT = 8000  # The machine's HTTPS URL forwards to this port.
 DELETE_AFTER_SECONDS = 1800  # boxd deletes the machine after 30 minutes, also when this script dies.
 APP_DIR = "/home/boxd/app"
 OUTPUT_DIR = Path(__file__).parent / "output"
+TODOS = ["Write the app", "Start the server"]  # The to-dos the app starts with.
+NEW_TODO = "Ship the boxd example"  # The to-do the Notte CLI adds.
 
 # A small to-do app, standing in for whatever your agent builds on the machine.
 APP_HTML = """<!doctype html>
@@ -58,6 +61,10 @@ class CommandError(RuntimeError):
     """A command on the machine exited with a non-zero code."""
 
 
+class CheckError(RuntimeError):
+    """A browser did not see the app as expected."""
+
+
 def notte_env() -> dict[str, str]:
     """The environment the Notte CLI needs on the machine."""
     env = {"NOTTE_API_KEY": os.environ["NOTTE_API_KEY"]}
@@ -81,13 +88,18 @@ def run(
     return str(result.stdout)
 
 
-def delete_machine(boxd: Boxd, machine_id: str) -> None:
-    """Delete the machine. Warn instead of raising, so a failed delete never hides an earlier error."""
+def delete_machine(boxd: Boxd, machine_id: str) -> bool:
+    """Delete the machine and return whether that worked.
+
+    Warn instead of raising, so a failed delete never hides an earlier error.
+    """
     try:
         boxd.machines.delete(machine_id)
-        print("Machine deleted")
     except Exception as error:
         print(f"Warning: could not delete machine {machine_id}: {error}")
+        return False
+    print("Machine deleted")
+    return True
 
 
 def create_machine(boxd: Boxd) -> Machine:
@@ -164,7 +176,7 @@ def check_with_notte_cli(boxd: Boxd, machine_id: str, url: str) -> str:
         print(f"Notte CLI started session {session['session_id']}, watch it live: {session.get('viewer_url')}")
         commands = [
             f"notte page goto {shlex.quote(url)}",
-            "notte page fill '#title' 'Ship the boxd example'",
+            f"notte page fill '#title' {shlex.quote(NEW_TODO)}",
             "notte page click 'button[type=submit]'",
             "notte page scrape --only-main-content",
         ]
@@ -184,6 +196,23 @@ def check_with_notte_cli(boxd: Boxd, machine_id: str, url: str) -> str:
             print(f"Warning: could not stop the Notte CLI session: {error}")
 
 
+def expect_todos(todos: list[str]) -> None:
+    """Raise unless Playwright read the to-dos the app starts with."""
+    if todos != TODOS:
+        raise CheckError(f"Playwright saw the to-dos {todos}, expected {TODOS}")
+
+
+def expect_new_todo(page: str) -> None:
+    """Raise unless the page the Notte CLI scraped shows the added to-do and the new count."""
+    # The CLI wraps long lines at spaces and hyphens, so join them again before comparing.
+    seen = re.sub(r"-\s+", "-", " ".join(page.split()))
+    count = f"{len(TODOS) + 1} to-dos"
+    if NEW_TODO not in seen:
+        raise CheckError(f"The Notte CLI did not see '{NEW_TODO}' on the page: {page}")
+    if not re.search(rf"(?<!\d){re.escape(count)}", seen):
+        raise CheckError(f"The Notte CLI did not see '{count}' on the page: {page}")
+
+
 def main() -> None:
     load_dotenv()
     notte = NotteClient()
@@ -193,11 +222,18 @@ def main() -> None:
     try:
         url = start_app(boxd, machine)
         print(f"App is live on port {PORT} at {url}")
-        check_with_playwright(notte, url)
+        expect_todos(check_with_playwright(notte, url))
         install_notte(boxd, machine.id)
-        check_with_notte_cli(boxd, machine.id, url)
+        expect_new_todo(check_with_notte_cli(boxd, machine.id, url))
+        print("Both browsers saw the app")
     finally:
-        delete_machine(boxd, machine.id)
+        # An error from the run above passes through here, also when the delete fails.
+        deleted = delete_machine(boxd, machine.id)
+    if not deleted:
+        raise SystemExit(
+            f"Machine {machine.id} was not deleted. Delete it yourself, or boxd deletes it "
+            f"{DELETE_AFTER_SECONDS // 60} minutes after it was created."
+        )
 
 
 if __name__ == "__main__":

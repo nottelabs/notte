@@ -29,6 +29,7 @@ CREDENTIALS = {
     "AI_GATEWAY_API_KEY",
     "ANTHROPIC_API_KEY",
     "ANTHROPIC_AUTH_TOKEN",
+    "BOXD_API_KEY",
     "BOX_ACCESS_TOKEN",
     "BRAINTRUST_API_KEY",
     "GEMINI_API_KEY",
@@ -351,6 +352,7 @@ def project_env(name: str, env: dict[str, str]) -> dict[str, str]:
         "gemini-computer-use": "GEMINI_API_KEY",
         "inngest": "ANTHROPIC_API_KEY",
         "braintrust": "BRAINTRUST_API_KEY",
+        "boxd": "BOXD_API_KEY",
         "laminar": "LMNR_PROJECT_API_KEY",
     }.get(name)
     main = env.get("GITHUB_REF") == "refs/heads/main" and env.get("GITHUB_EVENT_NAME") != "pull_request"
