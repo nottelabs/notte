@@ -21,6 +21,8 @@ An invalid answer (decision or field value) is asked again once; a second invali
 """
 
 import asyncio
+import hashlib
+import json
 import time
 from collections import Counter, deque
 from collections.abc import Awaitable, Callable, Mapping, Sequence
@@ -240,6 +242,9 @@ class ActHistoryEntry:
     opened_dialog: bool = False
     # a TYPE_TEXT not run: the field already held exactly the text to type (`_already_filled`)
     already_filled: bool = False
+    # the variables that text was compared with (`_bindings`, a digest): the same instruction with other values types
+    # in the field again (`no_effect`)
+    bindings: str | None = field(default=None, repr=False)
 
 
 # operations that are expected to leave the fingerprint unchanged (it ignores the scroll position)
@@ -462,7 +467,9 @@ class ActHistory:
         field that did not keep the text rejected it, and the writer is told not to write it again."""
         return next((e.text for e in reversed(self.entries) if e.field_key == field_key and e.text), None)
 
-    def no_effect(self, page: ObservedPage, instruction: str) -> set[tuple[str, str | None]]:
+    def no_effect(
+        self, page: ObservedPage, instruction: str, variables: Mapping[str, str] | None = None
+    ) -> set[tuple[str, str | None]]:
         """The (operation, target key) of the recent actions for `instruction` that ran on the very page state of
         `page` (same fingerprint) and left it unchanged: offered again, the decider picked them again and again (a
         click on a focused field, a button a form error keeps from submitting, a value the field already holds).
@@ -471,8 +478,10 @@ class ActHistory:
         focus, which the fingerprint ignores (a click, not a scroll or another key), and a GO_BACK that moved the tab
         back in its history (`history_index`). So is an action that failed (a click that timed out can work when tried
         again), unless it opened a file chooser, which it opens again; one that failed twice the same way is in
-        `repeated_failures`."""
+        `repeated_failures`. So is a field skipped as already filled with other `variables`: their new values are typed
+        in it."""
         entries = list(self.entries)
+        bindings = _bindings(variables or {})
         return {
             (kind, e.target)
             for i, e in enumerate(entries)
@@ -481,6 +490,7 @@ class ActHistory:
             and e.instruction == instruction
             and e.fingerprint == page.fingerprint
             and e.kind not in _UNTRACKED
+            and not (e.already_filled and e.bindings != bindings)
             # a GO_BACK that moved the tab back in its history did something: an app can push entries for one URL
             # and page, and the page it opened before is further back
             and not (e.kind == "GO_BACK" and e.history_index != page.history_index)
@@ -678,7 +688,7 @@ async def run_act(
             unsubmitted=history.unsubmitted(),
             # what act typed in the fields: a field holding another form of it shows what was typed
             typed=history.typed_values(page),
-            no_effect=history.no_effect(page, instruction),
+            no_effect=history.no_effect(page, instruction, variables),
             # what failed twice the same way on this page: not offered again, checkboxes included
             failed=history.repeated_failures(page, instruction),
         )
@@ -780,6 +790,7 @@ async def run_act(
                         target=target.key,
                         instruction=instruction,
                         already_filled=True,
+                        bindings=_bindings(variables),
                     )
                 )
                 continue
@@ -932,6 +943,12 @@ def _field_value(page: ObservedPage, element_id: str) -> str:
     if state is None:
         return ""
     return "\0".join((state.value or "", state.value_digest or "", "filled" if state.filled else ""))
+
+
+def _bindings(variables: Mapping[str, str]) -> str:
+    """A digest of `variables`: which values a field skipped as already filled was compared with, without keeping
+    them in the history."""
+    return hashlib.sha256(json.dumps(sorted(variables.items())).encode()).hexdigest()
 
 
 def _already_filled(

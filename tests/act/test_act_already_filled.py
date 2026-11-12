@@ -121,6 +121,29 @@ async def test_a_variable_the_field_already_holds_is_compared_without_reaching_t
     assert not any(postcode in request for request in sent)
 
 
+@pytest.mark.asyncio
+async def test_the_same_instruction_with_another_variable_value_types_the_field_again(session: NotteSession) -> None:
+    """A field skipped as already holding a variable's value is not suppressed for that instruction with other values:
+    the page looks the same, but the text to type changed."""
+    ids = await _open(session, _form(name="", postcode="SW1A 1AA"))
+    first = FakeDecider(
+        choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["postcode"]}, {"operation": "DONE"}],
+        texts=["{{postcode}}"],
+    )
+    result = await session.aact("type {{postcode}} in the postcode", variables={"postcode": "SW1A 1AA"}, decider=first)
+    assert result.status == "done"
+    assert await _field(session, "postcode") == ("SW1A 1AA", 0)
+
+    second = FakeDecider(
+        choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["postcode"]}], texts=["{{postcode}}"]
+    )
+    result = await session.aact("type {{postcode}} in the postcode", variables={"postcode": "EC1A 1BB"}, decider=second)
+
+    assert ids["postcode"] in second.questions[0]["type_text_target"].criteria
+    assert result.status == "executed"
+    assert (await _field(session, "postcode"))[0] == "EC1A 1BB"
+
+
 VAULT_EMAIL = "jane.private@example.test"
 # the email placeholder of a vault: the vault types its secret instead
 PLACEHOLDER = "user@example.org"
