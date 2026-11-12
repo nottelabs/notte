@@ -43,8 +43,11 @@ try:
         page.goto(machine.access.url)
         print(page.locator("h1").inner_text())
 
-    # The CLI steps from the next section, run on the machine. The Notte key goes with each command.
+    # The CLI steps from the next section, run on the machine. The Notte key goes with each command,
+    # and so does the API URL when you set one, so both browsers use the same Notte API.
     env = {"NOTTE_API_KEY": os.environ["NOTTE_API_KEY"]}
+    if api_url := os.environ.get("NOTTE_API_URL"):
+        env["NOTTE_API_URL"] = api_url
     steps = [
         "curl -fsSL https://notte.cc/install-cli.sh | sh",
         "notte skill add --yes",

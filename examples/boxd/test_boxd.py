@@ -341,6 +341,15 @@ class DocsPageTests(unittest.TestCase):
         self.assertEqual(boxd.machines.runs[-1], "notte sessions stop --yes")
         self.assertEqual(boxd.machines.deleted, ["m-1"])
 
+    def test_python_snippet_sends_the_api_url_to_the_cli(self):
+        boxd = fake_boxd()
+        with patch.dict(os.environ, {"NOTTE_API_URL": "https://example.test"}):
+            run_docs_snippet(boxd)
+        cli_envs = [env for env in boxd.machines.envs if env]
+        self.assertTrue(cli_envs)
+        for env in cli_envs:
+            self.assertEqual(env, {"NOTTE_API_KEY": TEST_KEY, "NOTTE_API_URL": "https://example.test"})
+
 
 @unittest.skipUnless(
     os.environ.get("BOXD_API_KEY") and os.environ.get("NOTTE_API_KEY"), "Needs real boxd and Notte API keys"
