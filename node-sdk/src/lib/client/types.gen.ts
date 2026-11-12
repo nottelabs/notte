@@ -8333,6 +8333,12 @@ export type SessionResponse = {
      */
     system_hidden?: boolean;
     /**
+     * Pausable
+     *
+     * Whether the session can be paused now (POST /sessions/{session_id}/pause). Only in a status read.
+     */
+    pausable?: boolean;
+    /**
      * Timeout Minutes
      *
      * @deprecated
@@ -11388,6 +11394,12 @@ export type SessionResponseWritable = {
      * Whether this session is an internal system run. Internal system runs are omitted from session.list() unless include_system=True is requested.
      */
     system_hidden?: boolean;
+    /**
+     * Pausable
+     *
+     * Whether the session can be paused now (POST /sessions/{session_id}/pause). Only in a status read.
+     */
+    pausable?: boolean;
     [key: string]: unknown;
 };
 
@@ -11749,6 +11761,86 @@ export type SessionStopResponses = {
 };
 
 export type SessionStopResponse = SessionStopResponses[keyof SessionStopResponses];
+
+export type SessionPauseData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Session Id
+         */
+        session_id: string;
+    };
+    query?: never;
+    url: '/sessions/{session_id}/pause';
+};
+
+export type SessionPauseErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SessionPauseError = SessionPauseErrors[keyof SessionPauseErrors];
+
+export type SessionPauseResponses = {
+    /**
+     * Successful Response
+     */
+    200: SessionResponse;
+};
+
+export type SessionPauseResponse = SessionPauseResponses[keyof SessionPauseResponses];
+
+export type SessionResumeData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Session Id
+         */
+        session_id: string;
+    };
+    query?: never;
+    url: '/sessions/{session_id}/resume';
+};
+
+export type SessionResumeErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SessionResumeError = SessionResumeErrors[keyof SessionResumeErrors];
+
+export type SessionResumeResponses = {
+    /**
+     * Successful Response
+     */
+    200: SessionResponse;
+};
+
+export type SessionResumeResponse = SessionResumeResponses[keyof SessionResumeResponses];
 
 export type SessionCookiesGetData = {
     body?: never;
@@ -15763,7 +15855,7 @@ export type GetUsageLogsData = {
          *
          * The endpoint to filter logs by
          */
-        endpoint?: 'sessions.start' | 'sessions.stop' | 'sessions.status' | 'sessions.cookies.set' | 'sessions.cookies.get' | 'sessions.list' | 'sessions.replay' | 'sessions.offset' | 'sessions.debug.info' | 'sessions.debug.info.tab' | 'sessions.debug.recording.wss' | 'sessions.debug.log.wss' | 'sessions.debug.tab.wss' | 'sessions.debug.browser.wss' | 'sessions.network.logs' | 'sessions.script' | 'page.observe' | 'page.execute' | 'page.scrape' | 'profiles.create' | 'profiles.duplicate' | 'profiles.get' | 'profiles.list' | 'profiles.delete' | 'profiles.cookies.set' | 'profiles.cookies.get' | 'vaults.create' | 'vaults.list' | 'vaults.delete' | 'vaults.update' | 'vaults.credentials.add' | 'vaults.credentials.get' | 'vaults.credentials.delete' | 'vaults.credentials.list' | 'vaults.credit_card.set' | 'vaults.credit_card.get' | 'vaults.credit_card.delete' | 'personas.create' | 'personas.list' | 'personas.delete' | 'personas.emails' | 'personas.sms' | 'personas.number.create' | 'personas.get' | 'personas.update' | 'mailboxes.connect' | 'mailboxes.sync' | 'mailboxes.list' | 'mailboxes.get' | 'mailboxes.update' | 'mailboxes.delete' | 'sessions.files.upload' | 'sessions.files.list' | 'sessions.files.download' | 'sessions.files.delete' | 'agents.start' | 'agents.stop' | 'agents.status' | 'agents.list' | 'agents.replay' | 'agents.debug.recording' | 'agents.save' | 'agents.repeat' | 'agents.script' | 'scrape' | 'scrape_from_html' | 'search' | 'usage' | 'workflows.upload' | 'workflows.download' | 'workflows.list' | 'workflows.delete' | 'workflows.update' | 'workflows.fork' | 'workflows.rollback' | 'workflows.schedule.create' | 'workflows.schedule.delete' | 'workflows.runs.create' | 'workflows.runs.start' | 'workflows.runs.get' | 'workflows.runs.list' | 'workflows.runs.update' | 'workflows.runs.stop' | null;
+        endpoint?: 'sessions.start' | 'sessions.stop' | 'sessions.status' | 'sessions.pause' | 'sessions.resume' | 'sessions.cookies.set' | 'sessions.cookies.get' | 'sessions.list' | 'sessions.replay' | 'sessions.offset' | 'sessions.debug.info' | 'sessions.debug.info.tab' | 'sessions.debug.recording.wss' | 'sessions.debug.log.wss' | 'sessions.debug.tab.wss' | 'sessions.debug.browser.wss' | 'sessions.network.logs' | 'sessions.script' | 'page.observe' | 'page.execute' | 'page.scrape' | 'profiles.create' | 'profiles.duplicate' | 'profiles.get' | 'profiles.list' | 'profiles.delete' | 'profiles.cookies.set' | 'profiles.cookies.get' | 'vaults.create' | 'vaults.list' | 'vaults.delete' | 'vaults.update' | 'vaults.credentials.add' | 'vaults.credentials.get' | 'vaults.credentials.delete' | 'vaults.credentials.list' | 'vaults.credit_card.set' | 'vaults.credit_card.get' | 'vaults.credit_card.delete' | 'personas.create' | 'personas.list' | 'personas.delete' | 'personas.emails' | 'personas.sms' | 'personas.number.create' | 'personas.get' | 'personas.update' | 'mailboxes.connect' | 'mailboxes.sync' | 'mailboxes.list' | 'mailboxes.get' | 'mailboxes.update' | 'mailboxes.delete' | 'sessions.files.upload' | 'sessions.files.list' | 'sessions.files.download' | 'sessions.files.delete' | 'agents.start' | 'agents.stop' | 'agents.status' | 'agents.list' | 'agents.replay' | 'agents.debug.recording' | 'agents.save' | 'agents.repeat' | 'agents.script' | 'scrape' | 'scrape_from_html' | 'search' | 'usage' | 'workflows.upload' | 'workflows.download' | 'workflows.list' | 'workflows.delete' | 'workflows.update' | 'workflows.fork' | 'workflows.rollback' | 'workflows.schedule.create' | 'workflows.schedule.delete' | 'workflows.runs.create' | 'workflows.runs.start' | 'workflows.runs.get' | 'workflows.runs.list' | 'workflows.runs.update' | 'workflows.runs.stop' | null;
         /**
          * Page
          *

@@ -526,6 +526,9 @@
     "resource": "sessions",
     "telemetry": "cloud.session.offset"
   },
+  "session_pause": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
   "session_profile_preview": {
     "method": "profilePreview",
     "resource": "sessions",
@@ -540,6 +543,9 @@
     "method": "replay",
     "resource": "sessions",
     "telemetry": "cloud.session.replay"
+  },
+  "session_resume": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
   },
   "session_start": {
     "method": "start",

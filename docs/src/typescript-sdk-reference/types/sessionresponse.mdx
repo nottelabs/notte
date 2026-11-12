@@ -176,6 +176,12 @@ export type SessionResponse = {
      */
     system_hidden?: boolean;
     /**
+     * Pausable
+     *
+     * Whether the session can be paused now (POST /sessions/{session_id}/pause). Only in a status read.
+     */
+    pausable?: boolean;
+    /**
      * Timeout Minutes
      *
      * @deprecated
@@ -297,6 +303,10 @@ Managed Auth connection IDs attached to this session.
 
 <ParamField body="system_hidden" type={"boolean | undefined"}>
 Whether this session is an internal system run. Internal system runs are omitted from session.list() unless include_system=True is requested.
+</ParamField>
+
+<ParamField body="pausable" type={"boolean | undefined"}>
+Whether the session can be paused now (POST /sessions/&#123;session_id&#125;/pause). Only in a status read.
 </ParamField>
 
 <ParamField body="timeout_minutes" type={"number"} required>

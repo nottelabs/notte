@@ -118,6 +118,10 @@ description: ""
   Whether this session is an internal system run. Internal system runs are omitted from session.list() unless include_system=True is requested.
 </ParamField>
 
+<ParamField path="pausable" type="bool" default="False">
+  Whether the session can be paused now (POST /sessions/{session_id}/pause). Only in a status read.
+</ParamField>
+
 
 ## Module
 
