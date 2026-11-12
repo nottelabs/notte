@@ -17,6 +17,7 @@ Use Python 3.11+, a [boxd API key](https://docs.boxd.sh/cli/authentication?ref=n
 Serve the app on port 8000, which the machine's HTTPS URL forwards to. Turn off the machine's bot protection so the URL serves the app directly instead of a browser check first. The URL is public, so anyone who has it can open the app. `delete_after=1800` makes boxd delete the machine after 30 minutes if the script dies before its own delete runs. `session.page` is a Playwright page connected to the Notte browser over CDP.
 
 ```python
+import os
 from uuid import uuid4
 
 from boxd import Boxd
@@ -28,7 +29,7 @@ machine = boxd.machines.create(f"notte-example-{uuid4().hex[:8]}", isolated=True
 try:
     machine = boxd.machines.wait_until_ready(machine.id)
     boxd.machines.set_bot_protection(machine.id, mode="off")
-    # The CLI steps below fill #title and click the submit button.
+    # The CLI steps fill #title and click the submit button.
     html = '<h1>Hello from boxd</h1><input id="title"><button type="submit">Add</button>'
     boxd.machines.files.upload(machine.id, "/home/boxd/app/index.html", html)
     boxd.machines.exec(machine.id, "nohup python3 -m http.server 8000 > /tmp/app.log 2>&1 &", cwd="/home/boxd/app", timeout=30)
@@ -42,7 +43,26 @@ try:
         page.goto(machine.access.url)
         print(page.locator("h1").inner_text())
 
-    # Run the CLI steps from the next section here, while the machine exists.
+    # The CLI steps from the next section, run on the machine. The Notte key goes with each command.
+    env = {"NOTTE_API_KEY": os.environ["NOTTE_API_KEY"]}
+    steps = [
+        "curl -fsSL https://notte.cc/install-cli.sh | sh",
+        "notte skill add --yes",
+        "notte sessions start",
+        f"notte page goto '{machine.access.url}'",
+        "notte page fill '#title' 'Ship the boxd example'",
+        "notte page click 'button[type=submit]'",
+        "notte page scrape --only-main-content",
+    ]
+    try:
+        for step in steps:
+            result = boxd.machines.exec(machine.id, step, env=env, timeout=240)
+            if result.exit_code != 0:
+                raise RuntimeError(f"{step} failed: {result.stderr or result.stdout}")
+        print(result.stdout)  # What the scrape saw.
+    finally:
+        # Stop the CLI session, also when a step failed.
+        boxd.machines.exec(machine.id, "notte sessions stop --yes", env=env, timeout=60)
 finally:
     boxd.machines.delete(machine.id)
 ```
@@ -56,7 +76,7 @@ curl -fsSL https://notte.cc/install-cli.sh | sh
 notte skill add --yes
 ```
 
-The CLI reads `NOTTE_API_KEY` from its environment. Pass it with each command (`boxd.machines.exec(machine.id, command, env={"NOTTE_API_KEY": ...})`), or give it to the agent's process. Then drive the browser at the marked place in the snippet above, while the machine exists. Replace the example URL with the machine's `access.url`:
+The CLI reads `NOTTE_API_KEY` from its environment. Pass it with each command, as the snippet above does with `env`, or give it to the agent's process. Then drive the browser. The snippet runs the install commands and these steps before it deletes the machine, with the machine's `access.url` in place of the example URL:
 
 ```bash
 notte sessions start
@@ -67,4 +87,4 @@ notte page scrape --only-main-content
 notte sessions stop --yes
 ```
 
-On the snippet's page the scrape prints `Hello from boxd Add`. The example serves a small to-do app, and fails if either browser does not see the expected to-dos or if the machine could not be deleted. It stops the CLI session even when a command fails, and deletes the machine at the end. Its tests cover the machine commands and cleanup offline, and the full flow against real boxd and Notte.
+On the snippet's page the scrape prints `Hello from boxd Add`. The example serves a small to-do app, and fails if either browser does not see the expected to-dos or if the machine could not be deleted. Like the snippet, the example stops the CLI session even when a command fails, and deletes the machine at the end. Its tests cover the machine commands and cleanup offline, and the full flow against real boxd and Notte.
