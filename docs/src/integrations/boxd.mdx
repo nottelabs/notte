@@ -62,7 +62,9 @@ try:
         print(result.stdout)  # What the scrape saw.
     finally:
         # Stop the CLI session, also when a step failed.
-        boxd.machines.exec(machine.id, "notte sessions stop --yes", env=env, timeout=60)
+        stop = boxd.machines.exec(machine.id, "notte sessions stop --yes", env=env, timeout=60)
+    if stop.exit_code != 0:
+        raise RuntimeError(f"The CLI session did not stop: {stop.stderr or stop.stdout}")
 finally:
     boxd.machines.delete(machine.id)
 ```

@@ -139,6 +139,7 @@ def test_node_inputs_select_node_source_consumers_on_both_events(
         ("examples/braintrust/typescript/package-lock.json", {"braintrust"}),
         ("examples/temporal/package-lock.json", {"temporal"}),
         ("examples/replit/test/mcp.live.test.mjs", {"replit"}),
+        ("docs/src/integrations/boxd.mdx", {"boxd"}),
     ],
 )
 def test_project_and_cross_language_recipe_inputs_keep_full_compatibility(

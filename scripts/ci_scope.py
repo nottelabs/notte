@@ -120,6 +120,7 @@ RECIPE_INPUTS = {
     "node-sdk/test/agent-browser.recipe.test.ts": {"agent-browser"},
     "tests/docs/test_agent_browser_recipe.py": {"agent-browser"},
     ".github/workflows/selector-repair.yml": {"github-actions"},
+    "docs/src/integrations/boxd.mdx": {"boxd"},
     "docs/src/integrations/github-actions.mdx": {"github-actions"},
     "docs/src/integrations/replit.mdx": {"replit"},
 }
