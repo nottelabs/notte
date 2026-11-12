@@ -53,9 +53,11 @@ from notte_core.act.space import (
     interpret,
     label_mode,
     needs_text,
+    optional_field,
     page_state,
     page_text,
     readback,
+    same_typed_value,
     shown_value,
     substitute_variables,
     target_action,
@@ -108,6 +110,10 @@ MAX_SKIPPED_FIELDS = 4
 # the observations a skip lasts (more than one call can make): then the field is offered again, as the writer's "no
 # value" can be wrong (an "Address finder" the goal's address goes in)
 SKIP_OBSERVATIONS = MAX_SKIPPED_FIELDS + 2
+# the times a field rejects one value (the same digits or text in any layout) before act takes it as refused by the
+# page (`ActHistory.refused`): one rejection is retried in another form (a national phone format), as the page can
+# want one
+REJECTION_LIMIT = 2
 
 
 @dataclass(frozen=True)
@@ -198,6 +204,18 @@ class SkippedField:
     at: int = 0
 
 
+@dataclass(frozen=True)
+class RefusedField:
+    """A field that kept its error for one value typed `REJECTION_LIMIT` times, in any layout: the page refuses that
+    value. Not offered to TYPE_TEXT again on the same URL for the same instruction and variables (an optional field
+    still holding text is offered to empty it)."""
+
+    field_key: str
+    url: str
+    instruction: str | None
+    bindings: str | None
+
+
 @dataclass
 class ActHistoryEntry:
     action: str
@@ -246,6 +264,8 @@ class ActHistoryEntry:
     # the variables that text was compared with (`_bindings`, a digest): the same instruction with other values types
     # in the field again (`no_effect`)
     bindings: str | None = field(default=None, repr=False)
+    # a TYPE_TEXT whose field still showed an error when act typed in it again: the page rejected this text
+    rejected: bool = False
 
 
 # operations that are expected to leave the fingerprint unchanged (it ignores the scroll position)
@@ -278,6 +298,7 @@ class ActHistory:
     entries: deque[ActHistoryEntry] = field(default_factory=lambda: deque(maxlen=HISTORY_SIZE))
     privacy: ActPrivacy = field(default_factory=ActPrivacy, repr=False)
     skipped: list[SkippedField] = field(default_factory=list[SkippedField])
+    refused_fields: list[RefusedField] = field(default_factory=list[RefusedField])
     observations: int = 0
 
     def observed(self, page: ObservedPage) -> None:
@@ -289,6 +310,7 @@ class ActHistory:
             for skipped in self.skipped
             if skipped.url == page.url and self.observations - skipped.at <= SKIP_OBSERVATIONS
         ]
+        self.refused_fields = [refused for refused in self.refused_fields if refused.url == page.url]
         if len(self.entries) > 0 and self.entries[-1].pending:
             self.entries[-1].page_changed = page.fingerprint != self.entries[-1].fingerprint
             self.entries[-1].pending = False
@@ -328,6 +350,62 @@ class ActHistory:
         for entry in self.entries:
             if entry.typed is not None:
                 entry.typed = _still_typed(entry.typed, page)
+        self._find_refused(page)
+
+    def retyping(self, page: ObservedPage, field_key: str) -> None:
+        """act types in the field `field_key` of `page` again: the text typed there before was rejected if the field
+        still shows an error (the decider saw it and typed again)."""
+        previous = _attempts(self.entries, field_key)
+        if previous and _shows_error(page, _find_field(page, field_key)):
+            previous[-1].rejected = True
+
+    def _find_refused(self, page: ObservedPage) -> None:
+        """Records the fields of `page` that rejected one value `REJECTION_LIMIT` times (`RefusedField`): the last text
+        typed in the field, rejected earlier in the same or another layout (`same_typed_value`), while the field still
+        shows an error. The last text counts once an action ran after it with the error still shown (a page can show
+        an error until the next action validates the field again)."""
+        entries = list(self.entries)
+        for field_key in {e.field_key for e in entries if e.field_key is not None}:
+            attempts = _attempts(entries, field_key)
+            last = attempts[-1] if attempts else None
+            if last is None or not last.typed_value or not _shows_error(page, _find_field(page, field_key)):
+                continue
+            record = RefusedField(
+                field_key=field_key, url=page.url, instruction=last.instruction, bindings=last.bindings
+            )
+            if record in self.refused_fields:
+                continue
+            # an action ran after the last text (a field skipped without typing is none)
+            after = next(i for i, e in enumerate(entries) if e is last) + 1
+            ran = any(e.error != NO_VALUE and not e.already_filled for e in entries[after:])
+            rejected = [
+                attempt
+                for attempt in attempts
+                if (attempt.rejected or (attempt is last and ran))
+                and attempt.instruction == last.instruction
+                and attempt.bindings == last.bindings
+                and same_typed_value(attempt.typed_value or "", last.typed_value)
+            ]
+            if len(rejected) >= REJECTION_LIMIT:
+                self.refused_fields.append(record)
+
+    def refused(self, page: ObservedPage, instruction: str, variables: Mapping[str, str]) -> dict[str, str]:
+        """The fields of `page` whose page refused the goal's value for `instruction` and `variables` (`RefusedField`),
+        by id, with what the decider is told about them: an optional one is left empty (emptied first while it still
+        holds text, `prompts.REFUSED_CLEAR`), a required one cannot take the goal's value."""
+        bindings = _bindings(variables)
+        refused: dict[str, str] = {}
+        for record in self.refused_fields:
+            action = _find_field(page, record.field_key)
+            if action is None or record.instruction != instruction or record.bindings != bindings:
+                continue
+            if not optional_field(page, action.id):
+                refused[action.id] = prompts.REFUSED_REQUIRED
+                continue
+            state = page.states.get(action.id)
+            holds = state is not None and bool(state.value or state.filled)
+            refused[action.id] = prompts.REFUSED_CLEAR if holds else prompts.REFUSED_OPTIONAL
+        return refused
 
     def acted(self, operation: str, target: Target | None) -> None:
         """After `operation` ran successfully: one that can submit typed text ends the tracking of every typed field."""
@@ -572,6 +650,17 @@ class ActHistory:
         ]
 
 
+def _attempts(entries: Sequence[ActHistoryEntry], field_key: str) -> list[ActHistoryEntry]:
+    """The TYPE_TEXT actions that typed in the field `field_key`, a clear and a failed fill included, oldest first."""
+    return [e for e in entries if e.field_key == field_key and e.typed_value is not None]
+
+
+def _shows_error(page: ObservedPage, action: InteractionAction | None) -> bool:
+    """The page marks the field `action` invalid or shows an error for it (`ElementState.invalid` / `error`)."""
+    state = None if action is None else page.states.get(action.id)
+    return state is not None and bool(state.invalid or state.error)
+
+
 def _typed_value(entry: ActHistoryEntry) -> TypedValue | None:
     """What a TYPE_TEXT typed, a clear ("") and a failed fill included (None for any other entry): a fill fails when
     the field does not keep the text, and what the field holds then tells why."""
@@ -678,6 +767,9 @@ async def run_act(
         # page shows after it (`field_errors`) and compares a field with what the vault typed in it
         history.privacy.remember_secrets(driver.secret_replacements())
         history.observed(page)
+        # the fields that refused the goal's value: not typed in again, but for emptying an optional one
+        refused = history.refused(page, instruction, variables)
+        clear = {element_id for element_id, told in refused.items() if told == prompts.REFUSED_CLEAR}
 
         space = build_act_space(
             page,
@@ -685,7 +777,8 @@ async def run_act(
             labels=labels,
             display_cut=history.privacy.cut_text,
             # the fields the writer had no value for (in this call or an earlier one), not offered to TYPE_TEXT
-            no_text=history.no_text(page, instruction),
+            no_text=history.no_text(page, instruction) | (refused.keys() - clear),
+            refused=refused,
             unsubmitted=history.unsubmitted(),
             # what act typed in the fields: a field holding another form of it shows what was typed
             typed=history.typed_values(page),
@@ -735,7 +828,8 @@ async def run_act(
         text: str | None = None
         if target is not None and needs_text(target):
             key = _field_identity(page, target)
-            text = written.get(key)
+            # an optional field that refused the goal's value is only emptied
+            text = "" if target.element_id in clear else written.get(key)
             if text is None:
                 step = time.perf_counter()
                 # what act typed in this field before, found by the page's own URL (the model's can be masked)
@@ -847,6 +941,9 @@ async def run_act(
         )
         if target is not None and decision.operation == "CLICK":
             history.unskip(page, target.element_id)
+        if entry.field_key is not None:
+            history.retyping(page, entry.field_key)
+            entry.bindings = _bindings(variables)
 
         async def answer_dialog(dialog: JsDialog, entry: ActHistoryEntry = entry) -> DialogAnswer:
             # a credential the action typed before the dialog opened is masked in what the decider reads of it
