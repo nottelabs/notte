@@ -1,3 +1,5 @@
+import contextlib
+import io
 import json
 import os
 import re
@@ -82,6 +84,18 @@ def run_main(boxd, todos=demo.TODOS):
         patch.object(demo, "check_with_playwright", return_value=list(todos)),
     ):
         demo.main()
+
+
+def run_docs_snippet(boxd):
+    """Run the docs page's Python snippet against the fake machines and a fake Notte browser."""
+    python = "\n".join(re.findall(r"```python\n(.*?)```", DOCS_PAGE.read_text(), re.S))
+    with (
+        patch("boxd.Boxd", return_value=boxd),
+        patch("notte_sdk.NotteClient"),
+        patch.dict(os.environ, {"NOTTE_API_KEY": TEST_KEY}),
+        contextlib.redirect_stdout(io.StringIO()),
+    ):
+        exec(compile(python, str(DOCS_PAGE), "exec"), {"__name__": "docs_snippet"})
 
 
 @patch.dict(os.environ, {"NOTTE_API_KEY": TEST_KEY})
@@ -307,6 +321,25 @@ class DocsPageTests(unittest.TestCase):
         # The goto step is an f-string, so the browser gets the machine's URL.
         self.assertIn("f\"notte page goto '{machine.access.url}'\"", python)
         self.assertLess(positions[-1], python.index("boxd.machines.delete(machine.id)"))
+
+    def test_python_snippet_fails_when_the_cli_session_does_not_stop(self):
+        boxd = fake_boxd(failing={"notte sessions stop --yes"})
+        with self.assertRaisesRegex(RuntimeError, "The CLI session did not stop"):
+            run_docs_snippet(boxd)
+        self.assertEqual(boxd.machines.deleted, ["m-1"])
+
+    def test_python_snippet_keeps_the_step_error_when_the_stop_also_fails(self):
+        boxd = fake_boxd(failing={"notte page fill '#title' 'Ship the boxd example'", "notte sessions stop --yes"})
+        with self.assertRaisesRegex(RuntimeError, "notte page fill"):
+            run_docs_snippet(boxd)
+        self.assertEqual(boxd.machines.runs[-1], "notte sessions stop --yes")
+        self.assertEqual(boxd.machines.deleted, ["m-1"])
+
+    def test_python_snippet_passes_when_every_step_and_the_stop_pass(self):
+        boxd = fake_boxd()
+        run_docs_snippet(boxd)
+        self.assertEqual(boxd.machines.runs[-1], "notte sessions stop --yes")
+        self.assertEqual(boxd.machines.deleted, ["m-1"])
 
 
 @unittest.skipUnless(
