@@ -295,6 +295,19 @@ class DocsPageTests(unittest.TestCase):
         self.assertIn('<input id="title">', python)
         self.assertIn('<button type="submit">', python)
 
+    def test_python_snippet_runs_every_cli_step_before_it_deletes_the_machine(self):
+        page = DOCS_PAGE.read_text()
+        python = "\n".join(re.findall(r"```python\n(.*?)```", page, re.S))
+        bash = "\n".join(re.findall(r"```bash\n(.*?)```", page, re.S))
+        steps = [step.replace("https://<machine>.boxd.sh", "{machine.access.url}") for step in bash.split("\n") if step]
+        self.assertIn("notte sessions start", steps)
+        positions = [python.find(f'"{step}"') for step in steps]
+        self.assertNotIn(-1, positions)
+        self.assertEqual(positions, sorted(positions))
+        # The goto step is an f-string, so the browser gets the machine's URL.
+        self.assertIn("f\"notte page goto '{machine.access.url}'\"", python)
+        self.assertLess(positions[-1], python.index("boxd.machines.delete(machine.id)"))
+
 
 @unittest.skipUnless(
     os.environ.get("BOXD_API_KEY") and os.environ.get("NOTTE_API_KEY"), "Needs real boxd and Notte API keys"
