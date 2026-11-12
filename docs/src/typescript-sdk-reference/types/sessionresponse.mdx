@@ -68,7 +68,7 @@ export type SessionResponse = {
     /**
      * Status
      */
-    status: 'active' | 'authenticating' | 'closed' | 'error' | 'timed_out';
+    status: 'active' | 'authenticating' | 'closed' | 'error' | 'timed_out' | 'paused';
     /**
      * Close Reason
      *
@@ -223,7 +223,7 @@ Last access time
 Session duration
 </ParamField>
 
-<ParamField body="status" type={"\"closed\" | \"active\" | \"authenticating\" | \"error\" | \"timed_out\""} required>
+<ParamField body="status" type={"\"paused\" | \"closed\" | \"active\" | \"authenticating\" | \"error\" | \"timed_out\""} required>
 
 </ParamField>
 

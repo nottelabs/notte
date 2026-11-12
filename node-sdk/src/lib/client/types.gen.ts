@@ -8225,7 +8225,7 @@ export type SessionResponse = {
     /**
      * Status
      */
-    status: 'active' | 'authenticating' | 'closed' | 'error' | 'timed_out';
+    status: 'active' | 'authenticating' | 'closed' | 'error' | 'timed_out' | 'paused';
     /**
      * Close Reason
      *
@@ -11281,7 +11281,7 @@ export type SessionResponseWritable = {
     /**
      * Status
      */
-    status: 'active' | 'authenticating' | 'closed' | 'error' | 'timed_out';
+    status: 'active' | 'authenticating' | 'closed' | 'error' | 'timed_out' | 'paused';
     /**
      * Close Reason
      *
