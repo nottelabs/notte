@@ -284,6 +284,11 @@ class OfflineTests(unittest.TestCase):
         with self.assertRaisesRegex(demo.CommandError, "goto"):
             demo.check_with_notte_cli(boxd, "m-1", URL)
 
+    def test_failed_stop_after_every_command_passed_raises(self):
+        boxd = fake_boxd(failing={"notte sessions stop --yes"})
+        with self.assertRaisesRegex(demo.CommandError, "sessions stop"):
+            demo.check_with_notte_cli(boxd, "m-1", URL)
+
     def test_api_error_on_stop_does_not_hide_the_original_error(self):
         boxd = fake_boxd(failing={f"notte page goto {URL}"})
         original = boxd.machines.exec

@@ -92,4 +92,4 @@ notte page scrape --only-main-content
 notte sessions stop --yes
 ```
 
-On the snippet's page the scrape prints `Hello from boxd Add`. The example serves a small to-do app, and fails if either browser does not see the expected to-dos or if the machine could not be deleted. Like the snippet, the example stops the CLI session even when a command fails, and deletes the machine at the end. Its tests cover the machine commands and cleanup offline, and the full flow against real boxd and Notte.
+On the snippet's page the scrape prints `Hello from boxd Add`. The example serves a small to-do app, and fails if either browser does not see the expected to-dos, if the CLI session did not stop, or if the machine could not be deleted. Like the snippet, the example stops the CLI session even when a command fails, and deletes the machine at the end. Its tests cover the machine commands and cleanup offline, and the full flow against real boxd and Notte.

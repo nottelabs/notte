@@ -185,8 +185,7 @@ def check_with_notte_cli(boxd: Boxd, machine_id: str, url: str) -> str:
             print(f"$ {command}")
             output = run(boxd, machine_id, command, env=env).strip()
             print(output)
-        return output
-    finally:
+    except BaseException:
         # Stop the session even when a command fails. Warn instead of raising, so a
         # failed stop never hides the original error.
         try:
@@ -194,6 +193,11 @@ def check_with_notte_cli(boxd: Boxd, machine_id: str, url: str) -> str:
             print("Notte CLI session stopped")
         except Exception as error:
             print(f"Warning: could not stop the Notte CLI session: {error}")
+        raise
+    # Every command passed, so a failed stop is the error to report.
+    run(boxd, machine_id, "notte sessions stop --yes", env=env)
+    print("Notte CLI session stopped")
+    return output
 
 
 def expect_todos(todos: list[str]) -> None:
