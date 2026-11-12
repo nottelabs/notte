@@ -312,6 +312,18 @@ async def test_a_written_value_refused_before_it_was_typed_is_written_again(monk
     assert len(decider.contexts) == 2 and "07700900123" in decider.contexts[1].field["refused"]
 
 
+@pytest.mark.asyncio
+async def test_typing_zero_does_not_break_the_next_call(session: NotteSession) -> None:
+    """A value with no letters or digits left once compared ("0": leading zeros are dropped) never compares equal to
+    itself: it is never refused, and observing the page again after typing it works."""
+    ids = await _open(session, _form("Quantity"))
+    decider = FakeDecider(
+        choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["phone"]}, {"operation": "DONE"}], texts=["0"]
+    )
+    assert (await session.aact("Set the quantity to 0", decider=decider)).status == "executed"
+    assert (await session.aact("Set the quantity to 0", decider=decider)).status == "done"
+
+
 def test_a_fill_that_failed_is_not_submitted() -> None:
     """A Continue after a fill that failed submits nothing of it: it never counts as a text the page rejected."""
     history = ActHistory()

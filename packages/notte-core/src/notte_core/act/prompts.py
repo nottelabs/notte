@@ -72,7 +72,8 @@ Use the field's label, placeholder and the text next to it (field.nearby), and t
 other fields (page.fields), to tell which part of the goal this field takes: a field's label can be short or vague.
 Write only that part: leave out the parts that other fields or controls take (page.next_controls: dates, guests,
 filters), even when the placeholder shows a longer example.
-When field.retry is given, follow it. When field.refused is given, follow it: it overrides field.retry.
+When field.retry is given, follow it. When field.refused is given, follow it: it overrides field.retry and the credential
+placeholder rule.
 If the goal is to clear the field, return {"text": ""}.
 An address lookup field ("Start typing your postcode", "Find your address") takes the goal's postal code, or its
 address when the field asks for an address: the goal gives a value for it, never null. If neither the goal nor

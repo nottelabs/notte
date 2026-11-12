@@ -383,6 +383,9 @@ class ActHistory:
                 if not any(same_typed_value(attempt.typed_value, value) for value in values):
                     values.append(attempt.typed_value)
             for value in values:
+                if not same_typed_value(value, value):
+                    # no letters or digits left to compare ("0", "--"): never counted as one value typed again
+                    continue
                 group = [a for a in attempts if same_typed_value(a.typed_value or "", value)]
                 newest = group[-1]
                 record = RefusedField(
@@ -887,7 +890,16 @@ async def run_act(
                 # what act typed in this field before, found by the page's own URL (the model's can be masked)
                 before = history.typed_before(_typed_field(page, target))
                 context = _write_context(
-                    instruction, target, space, model_page, history, variables, driver, labels, typed_before=before
+                    instruction,
+                    target,
+                    space,
+                    model_page,
+                    history,
+                    variables,
+                    driver,
+                    labels,
+                    typed_before=before,
+                    refused=refused_here,
                 )
                 try:
                     text = await _write(decider, context)
@@ -1296,6 +1308,7 @@ def _write_context(
     labels: LabelMode,
     *,
     typed_before: str | None = None,
+    refused: Sequence[str] = (),
 ) -> WriteContext:
     """The field (with its id, as in the page text's `[I1]` markers, and its placeholder and the text before it
     when they say more than its label), the page text around it, and the values of the other fields: a short or
@@ -1317,9 +1330,9 @@ def _write_context(
     if typed_before is not None:
         # what act typed in this field before: the field changed it (a length limit, a mask) or the page rejected it
         field["retry"] = prompts.RETRY_TYPED.format(text=history.privacy.text(typed_before))
-    refused = history.refused_values(page, instruction, variables).get(target.element_id, [])
     if refused:
-        # the values this field refused in every layout: another value the goal gives (a backup number), or none
+        # the values this field refused in every layout (looked up on the unmasked page, `run_act`): another value
+        # the goal gives (a backup number), or none
         field["refused"] = prompts.REFUSED_WRITE.format(
             values=", ".join(repr(history.privacy.text(value)) for value in refused)
         )
