@@ -1636,6 +1636,12 @@ class SessionResponse(SdkResponse):
             )
         ),
     ] = False
+    pausable: Annotated[
+        bool,
+        Field(
+            description="Whether the session can be paused now (POST /sessions/{session_id}/pause). Only in a status read."
+        ),
+    ] = False
 
     @field_validator("closed_at", mode="before")
     @classmethod

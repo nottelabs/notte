@@ -129,6 +129,10 @@ Managed Auth connection IDs attached to this session.
 Whether this session is an internal system run. Internal system runs are omitted from session.list() unless include_system=True is requested.
 </ParamField>
 
+<ParamField body="pausable" type={"boolean | undefined"}>
+Whether the session can be paused now (POST /sessions/&#123;session_id&#125;/pause). Only in a status read.
+</ParamField>
+
 <ParamField body="timeout_minutes" type={"number"} required>
 
 
