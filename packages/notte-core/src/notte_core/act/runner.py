@@ -939,13 +939,16 @@ def _already_filled(
 ) -> bool:
     """The text field `target` of `page` already holds exactly `text` (variables substituted): typing it again changes
     nothing. A plain comparison of the live value, never with a value the browser cut. A vault placeholder is never
-    compared: the vault puts its secret in the field at execution."""
-    if target.kind != "fill" or (has_vault and CredentialField.from_placeholder(text) is not None):
+    compared, including one a variable turns into: the vault puts its secret in the field at execution."""
+    if target.kind != "fill":
+        return False
+    typed = substitute_variables(text, variables)
+    if has_vault and CredentialField.from_placeholder(typed) is not None:
         return False
     state = page.states.get(target.element_id)
     if state is None or state.value_truncated or state.options is not None or not state.value:
         return False
-    return state.value == substitute_variables(text, variables)
+    return state.value == typed
 
 
 def _typed_field(page: ObservedPage, target: Target) -> str:

@@ -128,7 +128,9 @@ PLACEHOLDER = "user@example.org"
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("held", [VAULT_EMAIL, PLACEHOLDER])
-async def test_a_vault_placeholder_is_always_typed(held: str) -> None:
+# the writer's text is the placeholder itself, or a variable that turns into it
+@pytest.mark.parametrize(("written", "variables"), [(PLACEHOLDER, None), ("{{email}}", {"email": PLACEHOLDER})])
+async def test_a_vault_placeholder_is_always_typed(held: str, written: str, variables: dict[str, str] | None) -> None:
     """The vault picks the secret at execution: whatever the field holds (the secret, or the placeholder's own text),
     the placeholder is typed as before, and the secret reaches no model."""
     page = ObservedPage(
@@ -161,8 +163,8 @@ async def test_a_vault_placeholder_is_always_typed(held: str) -> None:
             now = dt.datetime.now()
             return ExecutionResult(action=action, success=True, message="Filled.", started_at=now, ended_at=now)
 
-    decider = FakeDecider(choices=[{"operation": "TYPE_TEXT", "type_text_target": "I1"}], texts=[PLACEHOLDER])
-    result = await run_act(Driver(), decider, ActHistory(), "sign in", raise_on_failure=False)
+    decider = FakeDecider(choices=[{"operation": "TYPE_TEXT", "type_text_target": "I1"}], texts=[written])
+    result = await run_act(Driver(), decider, ActHistory(), "sign in", raise_on_failure=False, variables=variables)
 
     assert result.status == "executed"
     assert executed == [FillAction(id="I1", value=PLACEHOLDER)]
