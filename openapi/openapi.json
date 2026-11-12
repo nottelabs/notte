@@ -18232,6 +18232,17 @@
               }
             ],
             "title": "Code"
+          },
+          "failed_navigation_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failed Navigation Url"
           }
         },
         "type": "object",
