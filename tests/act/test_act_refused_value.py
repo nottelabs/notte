@@ -1,6 +1,7 @@
 """A field that keeps its error for the goal's value, typed in several layouts, refuses that value: act stops typing
 it there and tells the decider, who leaves an optional field empty and blocks on a required one."""
 
+import datetime as dt
 from collections.abc import AsyncIterator
 from typing import Any
 from urllib.parse import quote
@@ -8,10 +9,11 @@ from urllib.parse import quote
 import pytest
 import pytest_asyncio
 from notte_browser.session import NotteSession
-from notte_core.act import ActHistory, ObservedPage, prompts
+from notte_core.act import ActHistory, ObservedPage, prompts, run_act
 from notte_core.act.runner import ActHistoryEntry
 from notte_core.act.space import optional_field, same_typed_value
 from notte_core.actions import FillAction
+from notte_core.observation import ExecutionResult
 from notte_core.snapshot import ViewportData
 
 from tests.act.fakes import FakeDecider
@@ -256,6 +258,58 @@ async def test_a_value_refused_before_the_writer_switched_to_another_is_not_type
     assert "07700900123" in decider.contexts[-1].field["refused"]
     assert await session.window.page.input_value("#phone") == "02079460123"
     assert result.status == "done"
+
+
+@pytest.mark.asyncio
+async def test_a_written_value_refused_before_it_was_typed_is_written_again(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The page changes between writing the number and typing it, and its next observation records the number as
+    refused: the cached number is not reused, the writer writes again knowing the refusal, and the backup is typed."""
+    page = ObservedPage(
+        url="https://example.test/delivery",
+        title="Delivery",
+        description='I1[:]<input type="text" name="phone"></input>\nB1[:]<button type="button">Continue</button>',
+        actions=[FillAction(id="I1", value="<sample_value>", text_label="Phone")],
+        viewport=ViewportData(
+            scroll_x=0, scroll_y=0, viewport_width=1280, viewport_height=720, total_width=1280, total_height=720
+        ),
+        states={},
+        fingerprint="fp",
+    )
+    executed: list[Any] = []
+    looks = 0
+
+    class Driver:
+        has_vault: bool = False
+
+        def secret_replacements(self) -> dict[str, str]:
+            return {}
+
+        async def observe(self, observation: Any) -> ObservedPage:  # pyright: ignore[reportUnusedParameter]
+            nonlocal looks
+            looks += 1
+            return page
+
+        async def is_fresh(self, page: ObservedPage, element_id: str | None, *, focus: bool = False) -> bool:  # pyright: ignore[reportUnusedParameter]
+            return looks > 1
+
+        async def execute(self, action: Any, raise_on_failure: bool, **_: Any) -> ExecutionResult:  # pyright: ignore[reportUnusedParameter]
+            executed.append(action)
+            now = dt.datetime.now()
+            return ExecutionResult(action=action, success=True, message="Filled.", started_at=now, ended_at=now)
+
+    # the refusal is recorded by the second observation only
+    def refused_values(self: ActHistory, page: ObservedPage, instruction: str, variables: Any) -> dict[str, list[str]]:  # pyright: ignore[reportUnusedParameter]
+        return {"I1": ["07700900123"]} if looks > 1 else {}
+
+    monkeypatch.setattr(ActHistory, "refused_values", refused_values)
+    decider = FakeDecider(
+        choices=[{"operation": "TYPE_TEXT", "type_text_target": "I1"}] * 2, texts=["07700900123", "02079460123"]
+    )
+    result = await run_act(Driver(), decider, ActHistory(), BACKUP, raise_on_failure=False)
+
+    assert result.status == "executed"
+    assert executed == [FillAction(id="I1", value="02079460123")]
+    assert len(decider.contexts) == 2 and "07700900123" in decider.contexts[1].field["refused"]
 
 
 def test_a_fill_that_failed_is_not_submitted() -> None:

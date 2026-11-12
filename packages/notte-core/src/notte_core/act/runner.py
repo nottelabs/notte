@@ -874,8 +874,14 @@ async def run_act(
         text: str | None = None
         if target is not None and needs_text(target):
             key = _field_identity(page, target)
+            refused_here = history.refused_values(page, instruction, variables).get(target.element_id, [])
             # an optional field that refused the goal's value is only emptied
             text = "" if target.element_id in clear else written.get(key)
+            if text and any(same_typed_value(substitute_variables(text, variables), v) for v in refused_here):
+                # the page refused the text written for this field since it was written (the page changed before it
+                # was typed): written again, with what the field refused (`field.refused`)
+                del written[key]
+                text = None
             if text is None:
                 step = time.perf_counter()
                 # what act typed in this field before, found by the page's own URL (the model's can be masked)
@@ -916,7 +922,6 @@ async def run_act(
                         run, f"no value to type in {target.label!r} from the instruction", raise_on_failure, common
                     )
                 written[key] = text
-            refused_here = history.refused_values(page, instruction, variables).get(target.element_id, [])
             typed_value = substitute_variables(text, variables)
             if text and any(same_typed_value(typed_value, value) for value in refused_here):
                 # the page refused this value already, in this or another layout: not typed again, the field left for
