@@ -36,7 +36,7 @@ Set cookies from a JSON file
 
 | Flag | Description |
 | - | - |
-| `--file <string>` | JSON file containing cookies array (required) |
+| `--file <string>` | JSON file with the cookies as &#123;"cookies": [...]&#125; (required) |
 | `--session-id <string>` | Session ID (uses current session if not specified) |
 
 ## `notte sessions list`
@@ -47,7 +47,7 @@ List active sessions
 | - | - |
 | `--all`, `-a` | Include stopped sessions |
 | `--page <int>` | Page number (1-indexed) |
-| `--page-size <int>` | Number of items per page |
+| `--page-size <int>`, `-n` | Number of items to show (per page) |
 
 ## `notte sessions network`
 
@@ -66,6 +66,17 @@ Get session offset info
 | Flag | Description |
 | - | - |
 | `--session-id <string>` | Session ID (uses current session if not specified) |
+
+## `notte sessions pin [session-id]`
+
+Pin an active session as the current one: the session commands use when `--session-id` is omitted, marked "*" in "notte sessions list".
+
+Pass a session ID, or enough of its start to be unique. Without one, pick from a numbered list of active sessions.
+
+```bash
+notte sessions pin 3e1103a1
+notte browser pin
+```
 
 ## `notte sessions replay`
 
@@ -109,6 +120,7 @@ Start a new browser session
 | `--browser-type <string>` | The browser type to use. Supported values are chromium, chrome and chrome-nitro. chrome-nitro creates a managed Chrome Nitro session. chrome-nightly and chrome-turbo are legacy aliases for chrome. (API default: chromium) (chromium, chrome, firefox, chrome-nightly, chrome-turbo) |
 | `--cdp-url <string>` | The CDP URL of another remote session provider. |
 | `--chrome-args <strings>` | Overwrite the chrome instance arguments (repeatable) |
+| `--count <int>`, `-n` | Number of sessions to start in parallel, with the same settings (at most 20) (default: `1`) |
 | `--demonstrate` | Whether to enable the Notte recorder extension for this session. The extension is installed but remains inactive when this is false. (API default: false) |
 | `--extra-http-headers <string>` | Extra HTTP headers as JSON (e.g. '&#123;"Authorization": "Bearer xxx"&#125;') |
 | `--idle-timeout-minutes <int>` | Idle timeout in minutes. Session closes after this period of inactivity (resets on each operation). (API default: 3) |
@@ -150,6 +162,7 @@ Stop the session
 
 | Flag | Description |
 | - | - |
+| `--all`, `-a` | Stop every active session |
 | `--session-id <string>` | Session ID (uses current session if not specified) |
 
 ## `notte sessions viewer`

@@ -717,6 +717,7 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 ## Resources
 
 - [Resources](https://docs.notte.cc/resources.md): Quick links to pricing, rate limits, and AI coding setup
+- [Control your spend](https://docs.notte.cc/control-your-spend.md): The settings, limits and emails that keep usage and credits predictable
 
 ## Legal
 
