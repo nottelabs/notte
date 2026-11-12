@@ -50,7 +50,6 @@ with open(os.environ["COMMAND_LOG"], "a") as log:
                             "AI_GATEWAY_API_KEY",
                             "ANTHROPIC_API_KEY",
                             "ANTHROPIC_AUTH_TOKEN",
-                            "BOXD_API_KEY",
                             "BOX_ACCESS_TOKEN",
                             "BRAINTRUST_API_KEY",
                             "GEMINI_API_KEY",
@@ -615,20 +614,6 @@ def test_even_a_main_ref_pull_request_cannot_receive_paid_provider_credentials(n
     }
     assert key not in runner.project_env(name, env)
     assert runner.project_env(name, env)["NOTTE_API_KEY"] == env["NOTTE_API_KEY"]
-
-
-def test_boxd_key_reaches_only_the_boxd_example_on_main() -> None:
-    env = {
-        "GITHUB_REF": "refs/heads/main",
-        "GITHUB_EVENT_NAME": "push",
-        "NOTTE_API_KEY": "fixture-ci-key",  # pragma: allowlist secret
-        "BOXD_API_KEY": "fixture-provider-key",  # pragma: allowlist secret
-    }
-    assert runner.project_env("boxd", env)["BOXD_API_KEY"] == env["BOXD_API_KEY"]
-    for other in ("boat", "e2b", "braintrust"):
-        assert "BOXD_API_KEY" not in runner.project_env(other, env)
-    assert "BOXD_API_KEY" not in runner.project_env("boxd", {**env, "GITHUB_EVENT_NAME": "pull_request"})
-    assert "BOXD_API_KEY" not in runner.project_env("boxd", {**env, "GITHUB_REF": "refs/pull/1/merge"})
 
 
 @pytest.mark.parametrize("name", ["inngest", "temporal", "trigger", "openai-agents"])
