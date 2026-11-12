@@ -21,6 +21,8 @@ An invalid answer (decision or field value) is asked again once; a second invali
 """
 
 import asyncio
+import hashlib
+import json
 import time
 from collections import Counter, deque
 from collections.abc import Awaitable, Callable, Mapping, Sequence
@@ -238,6 +240,11 @@ class ActHistoryEntry:
     # none did, and one covers the page observed next on the same URL: the action opened it, and the dialog is its
     # result (an "Added to cart" holding "Checkout"), filled in by that observation
     opened_dialog: bool = False
+    # a TYPE_TEXT not run: the field already held exactly the text to type (`_already_filled`)
+    already_filled: bool = False
+    # the variables that text was compared with (`_bindings`, a digest): the same instruction with other values types
+    # in the field again (`no_effect`)
+    bindings: str | None = field(default=None, repr=False)
 
 
 # operations that are expected to leave the fingerprint unchanged (it ignores the scroll position)
@@ -296,10 +303,15 @@ class ActHistory:
         # On every observation, one after a skipped field too: only the last action is said to have opened the dialog
         # now over the page, an earlier one's dialog was closed or replaced since (a protection upsell declined, then
         # the confirmation). A dialog that shows during WAITs is the result of the action before them (a click whose
-        # request answered late), not of a WAIT, nor of a field skipped without typing (`NO_VALUE`: nothing ran).
+        # request answered late), not of a WAIT, nor of a field skipped without typing (`NO_VALUE`, `already_filled`:
+        # nothing ran).
         entries = list(self.entries)
         waits = 0
-        while waits < len(entries) and (entries[-1 - waits].kind == "WAIT" or entries[-1 - waits].error == NO_VALUE):
+        while waits < len(entries) and (
+            entries[-1 - waits].kind == "WAIT"
+            or entries[-1 - waits].error == NO_VALUE
+            or entries[-1 - waits].already_filled
+        ):
             waits += 1
         opener = entries[-1 - waits] if waits < len(entries) else None
         for entry in entries:
@@ -455,7 +467,9 @@ class ActHistory:
         field that did not keep the text rejected it, and the writer is told not to write it again."""
         return next((e.text for e in reversed(self.entries) if e.field_key == field_key and e.text), None)
 
-    def no_effect(self, page: ObservedPage, instruction: str) -> set[tuple[str, str | None]]:
+    def no_effect(
+        self, page: ObservedPage, instruction: str, variables: Mapping[str, str] | None = None
+    ) -> set[tuple[str, str | None]]:
         """The (operation, target key) of the recent actions for `instruction` that ran on the very page state of
         `page` (same fingerprint) and left it unchanged: offered again, the decider picked them again and again (a
         click on a focused field, a button a form error keeps from submitting, a value the field already holds).
@@ -464,8 +478,10 @@ class ActHistory:
         focus, which the fingerprint ignores (a click, not a scroll or another key), and a GO_BACK that moved the tab
         back in its history (`history_index`). So is an action that failed (a click that timed out can work when tried
         again), unless it opened a file chooser, which it opens again; one that failed twice the same way is in
-        `repeated_failures`."""
+        `repeated_failures`. So is a field skipped as already filled with other `variables`: their new values are typed
+        in it."""
         entries = list(self.entries)
+        bindings = _bindings(variables or {})
         return {
             (kind, e.target)
             for i, e in enumerate(entries)
@@ -474,6 +490,7 @@ class ActHistory:
             and e.instruction == instruction
             and e.fingerprint == page.fingerprint
             and e.kind not in _UNTRACKED
+            and not (e.already_filled and e.bindings != bindings)
             # a GO_BACK that moved the tab back in its history did something: an app can push entries for one URL
             # and page, and the page it opened before is further back
             and not (e.kind == "GO_BACK" and e.history_index != page.history_index)
@@ -549,6 +566,7 @@ class ActHistory:
             | ({} if not e.left_page or e.page is None else {"previous_page": e.page.model_dump()})
             | ({} if not e.dialogs else {"dialogs": list(e.dialogs)})
             | ({} if not e.opened_dialog else {"opened_dialog": True})
+            | ({} if not e.already_filled else {"already_filled": prompts.ALREADY_FILLED})
             for e in list(self.entries)[-limit:]
         ]
 
@@ -670,7 +688,7 @@ async def run_act(
             unsubmitted=history.unsubmitted(),
             # what act typed in the fields: a field holding another form of it shows what was typed
             typed=history.typed_values(page),
-            no_effect=history.no_effect(page, instruction),
+            no_effect=history.no_effect(page, instruction, variables),
             # what failed twice the same way on this page: not offered again, checkboxes included
             failed=history.repeated_failures(page, instruction),
         )
@@ -757,6 +775,25 @@ async def run_act(
                         run, f"no value to type in {target.label!r} from the instruction", raise_on_failure, common
                     )
                 written[key] = text
+            if skipped < MAX_SKIPPED_FIELDS and _already_filled(page, target, text, variables, driver.has_vault):
+                # typing the same text again changes nothing: not typed, and decided again, the decider told through
+                # the history (the entry also keeps the field from being offered again on this page, `no_effect`)
+                skipped += 1
+                history.entries.append(
+                    ActHistoryEntry(
+                        action=target.label,
+                        kind="TYPE_TEXT",
+                        text=text,
+                        fingerprint=page.fingerprint,
+                        page_changed=False,
+                        pending=False,
+                        target=target.key,
+                        instruction=instruction,
+                        already_filled=True,
+                        bindings=_bindings(variables),
+                    )
+                )
+                continue
         common["value"] = text
 
         if target is not None:
@@ -906,6 +943,29 @@ def _field_value(page: ObservedPage, element_id: str) -> str:
     if state is None:
         return ""
     return "\0".join((state.value or "", state.value_digest or "", "filled" if state.filled else ""))
+
+
+def _bindings(variables: Mapping[str, str]) -> str:
+    """A digest of `variables`: which values a field skipped as already filled was compared with, without keeping
+    them in the history."""
+    return hashlib.sha256(json.dumps(sorted(variables.items())).encode()).hexdigest()
+
+
+def _already_filled(
+    page: ObservedPage, target: Target, text: str, variables: Mapping[str, str], has_vault: bool
+) -> bool:
+    """The text field `target` of `page` already holds exactly `text` (variables substituted): typing it again changes
+    nothing. A plain comparison of the live value, never with a value the browser cut. A vault placeholder is never
+    compared, including one a variable turns into: the vault puts its secret in the field at execution."""
+    if target.kind != "fill":
+        return False
+    typed = substitute_variables(text, variables)
+    if has_vault and CredentialField.from_placeholder(typed) is not None:
+        return False
+    state = page.states.get(target.element_id)
+    if state is None or state.value_truncated or state.options is not None or not state.value:
+        return False
+    return state.value == typed
 
 
 def _typed_field(page: ObservedPage, target: Target) -> str:
