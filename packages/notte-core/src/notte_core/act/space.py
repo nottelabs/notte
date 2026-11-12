@@ -1610,3 +1610,8 @@ _VARIABLE = re.compile(r"\{\{\s*([A-Za-z_][A-Za-z0-9_]*)\s*\}\}")
 def substitute_variables(text: str, variables: Mapping[str, str]) -> str:
     """Replace every `{{name}}` of a known variable by its value (unknown names are left as they are)."""
     return _VARIABLE.sub(lambda match: variables.get(match.group(1), match.group(0)), text)
+
+
+def undeclared_variables(text: str, variables: Collection[str]) -> list[str]:
+    """The names of the `{{name}}` placeholders in `text` that are not in `variables`, in order, each once."""
+    return list(dict.fromkeys(name for name in _VARIABLE.findall(text) if name not in variables))

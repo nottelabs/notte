@@ -57,6 +57,7 @@ from notte_core.act.space import (
     shown_value,
     substitute_variables,
     target_action,
+    undeclared_variables,
     validate_answer,
 )
 from notte_core.act.types import (
@@ -998,9 +999,19 @@ def _dialog_message(dialog: JsDialog, history: ActHistory) -> str:
 async def _write(decider: Decider, context: WriteContext) -> str | None:
     """The field value, asked again once if the writer's answer is invalid."""
     try:
-        return await decider.write(context)
+        return _declared(await decider.write(context), context.variables)
     except InvalidDecisionError:
-        return await decider.write(context)
+        return _declared(await decider.write(context), context.variables)
+
+
+def _declared(text: str | None, variables: Sequence[str]) -> str | None:
+    """`text`, unless it holds a `{{name}}` of no variable the caller passed: nothing would replace it, and the
+    placeholder itself would be typed in the field."""
+    names = [] if text is None else undeclared_variables(text, variables)
+    if names:
+        listed = ", ".join("{{" + name + "}}" for name in names)
+        raise InvalidDecisionError(f"the field writer answered {listed}, which names no passed variable; nothing typed")
+    return text
 
 
 def _invalid(

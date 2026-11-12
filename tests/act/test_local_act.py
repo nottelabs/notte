@@ -283,6 +283,47 @@ async def test_an_invalid_field_value_is_asked_again_once(session: NotteSession)
 
 
 @pytest.mark.asyncio
+async def test_a_placeholder_of_no_passed_variable_is_asked_again(session: NotteSession) -> None:
+    ids = await _ids(session)
+    decider = FakeDecider(
+        choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["name"]}], texts=["{{postal_code}}", "SW1A 1AA"]
+    )
+    result = await session.aact("Type the postcode", decider=decider)
+    assert result.status == "executed" and len(decider.contexts) == 2
+    assert isinstance(result.action, FillAction) and result.action.value == "SW1A 1AA"
+    assert await session.window.page.input_value("#name") == "SW1A 1AA"
+
+
+@pytest.mark.asyncio
+async def test_a_placeholder_of_no_passed_variable_is_never_typed(session: NotteSession) -> None:
+    ids = await _ids(session)
+    # a passed variable does not cover another name
+    decider = FakeDecider(
+        choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["name"]}],
+        texts=["{{postal_code}}", "Code {{ postal_code }}"],
+    )
+    result = await session.aact(
+        "Type the postcode", variables={"email": "a@b.c"}, decider=decider, raise_on_failure=False
+    )
+    assert result.status == "blocked" and result.execution is None and len(decider.contexts) == 2
+    assert "postal_code" in (result.message or "")
+    assert await session.window.page.input_value("#name") == ""
+
+
+@pytest.mark.asyncio
+async def test_a_placeholder_of_a_passed_variable_is_substituted(session: NotteSession) -> None:
+    ids = await _ids(session)
+    decider = FakeDecider(
+        choices=[{"operation": "TYPE_TEXT", "type_text_target": ids["name"]}], texts=["{{ postal_code }}"]
+    )
+    result = await session.aact("Type the postcode", variables={"postal_code": "SW1A 1AA"}, decider=decider)
+    assert result.status == "executed" and len(decider.contexts) == 1
+    assert isinstance(result.action, FillAction) and result.action.value == "SW1A 1AA"
+    assert result.value == "{{ postal_code }}"
+    assert await session.window.page.input_value("#name") == "SW1A 1AA"
+
+
+@pytest.mark.asyncio
 async def test_choose_and_check(session: NotteSession) -> None:
     decider = FakeDecider(choices=[{"answer": "Signup"}, {"answer": "NO"}])
     choice = await session.achoose("Which page is this?", ["Signup", "Login"], decider=decider)
