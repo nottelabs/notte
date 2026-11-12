@@ -145,13 +145,17 @@ export interface SessionOptions extends ApiSessionStartRequest {
 }
 
 /**
- * Keep the external CDP client from competing with Notte for native dialogs.
+ * Keep the SDK's Playwright connection from answering native dialogs on its own.
  *
- * Playwright automatically handles a JavaScript dialog when no listener is
- * registered. Native dialogs are target-global, so that default races the
- * Notte browser controller attached to the same target. The backend owns
- * dialog handling; this listener makes the SDK Playwright connection an
- * observer without issuing a second `Page.handleJavaScriptDialog` command.
+ * Playwright automatically dismisses a JavaScript dialog when no listener is
+ * registered. Native dialogs are target-global, so that default would race
+ * whoever the session's `dialog_policy` puts in charge. This no-op listener
+ * turns the default off without sending a `Page.handleJavaScriptDialog`
+ * command, and does not stop your own `page.on('dialog', ...)` handler.
+ * With `dialog_policy: 'auto'` (the default), the Notte backend answers
+ * dialogs. With `dialog_policy: 'client'`, your handler answers them, and
+ * Notte dismisses one nobody answers within 10 seconds (beforeunload is
+ * accepted).
  */
 export function observeServerOwnedDialog(_dialog: Dialog): void {}
 
@@ -758,7 +762,9 @@ export class Session {
   /**
    * Get a Playwright page connected to the session via CDP. The connection is
    * established lazily on first access, cached, and closed by `stop()`.
-   * Native dialogs are left to the Notte backend.
+   * The SDK never answers native dialogs itself. With `dialog_policy: 'auto'`
+   * (the default) the Notte backend answers them; with `dialog_policy: 'client'`
+   * register `page.on('dialog', ...)` to accept or dismiss them.
    *
    * Requires the optional `playwright-core` peer dependency
    * (`npm install playwright-core`).

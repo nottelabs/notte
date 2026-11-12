@@ -11,7 +11,9 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 Get a Playwright page connected to the session via CDP. The connection is
 established lazily on first access, cached, and closed by `stop()`.
-Native dialogs are left to the Notte backend.
+The SDK never answers native dialogs itself. With `dialog_policy: 'auto'`
+(the default) the Notte backend answers them; with `dialog_policy: 'client'`
+register `page.on('dialog', ...)` to accept or dismiss them.
 
 Requires the optional `playwright-core` peer dependency
 (`npm install playwright-core`).
