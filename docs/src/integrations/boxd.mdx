@@ -28,7 +28,9 @@ machine = boxd.machines.create(f"notte-example-{uuid4().hex[:8]}", isolated=True
 try:
     machine = boxd.machines.wait_until_ready(machine.id)
     boxd.machines.set_bot_protection(machine.id, mode="off")
-    boxd.machines.files.upload(machine.id, "/home/boxd/app/index.html", "<h1>Hello from boxd</h1>")
+    # The CLI steps below fill #title and click the submit button.
+    html = '<h1>Hello from boxd</h1><input id="title"><button type="submit">Add</button>'
+    boxd.machines.files.upload(machine.id, "/home/boxd/app/index.html", html)
     boxd.machines.exec(machine.id, "nohup python3 -m http.server 8000 > /tmp/app.log 2>&1 &", cwd="/home/boxd/app", timeout=30)
     # Wait until the server accepts connections. exec returns the exit code instead of raising.
     wait = "for i in $(seq 1 50); do curl -sf localhost:8000 > /dev/null && exit 0; sleep 0.2; done; exit 1"
@@ -39,6 +41,8 @@ try:
         page = session.page
         page.goto(machine.access.url)
         print(page.locator("h1").inner_text())
+
+    # Run the CLI steps from the next section here, while the machine exists.
 finally:
     boxd.machines.delete(machine.id)
 ```
@@ -52,7 +56,7 @@ curl -fsSL https://notte.cc/install-cli.sh | sh
 notte skill add --yes
 ```
 
-The CLI reads `NOTTE_API_KEY` from its environment. Pass it with each command (`boxd.machines.exec(machine.id, command, env={"NOTTE_API_KEY": ...})`), or give it to the agent's process. Then drive the browser. Replace the example URL with the machine's `access.url`:
+The CLI reads `NOTTE_API_KEY` from its environment. Pass it with each command (`boxd.machines.exec(machine.id, command, env={"NOTTE_API_KEY": ...})`), or give it to the agent's process. Then drive the browser at the marked place in the snippet above, while the machine exists. Replace the example URL with the machine's `access.url`:
 
 ```bash
 notte sessions start
@@ -63,4 +67,4 @@ notte page scrape --only-main-content
 notte sessions stop --yes
 ```
 
-The example stops the CLI session even when a command fails, and deletes the machine at the end. Its tests cover the machine commands and cleanup offline, and the full flow against real boxd and Notte.
+On the snippet's page the scrape prints `Hello from boxd Add`. The example serves a small to-do app, and fails if either browser does not see the expected to-dos or if the machine could not be deleted. It stops the CLI session even when a command fails, and deletes the machine at the end. Its tests cover the machine commands and cleanup offline, and the full flow against real boxd and Notte.

@@ -9,6 +9,8 @@ Serve a web app from a [boxd](https://boxd.sh/?ref=notte) machine and test it wi
 
 The machine's URL is public while the machine exists. Both browser sessions stop and the machine is deleted when the script ends, including after an error. The machine is created with `delete_after=1800`, so boxd deletes it after 30 minutes if the script dies before that.
 
+The script exits with an error if either browser does not see the expected to-dos, or if the machine could not be deleted.
+
 ## Run
 
 Use Python 3.11+ and [uv](https://docs.astral.sh/uv/). Copy `.env.template` to `.env` and set `BOXD_API_KEY` and `NOTTE_API_KEY`, then:

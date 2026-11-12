@@ -1,6 +1,8 @@
 import json
 import os
+import re
 import unittest
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -14,13 +16,18 @@ load_dotenv()
 
 TEST_KEY = "test-only"  # pragma: allowlist secret
 URL = "https://notte-example-1.boxd.sh"
+SCRAPE = "notte page scrape --only-main-content"
+# What the CLI prints for the app after the new to-do, wrapped as the CLI wraps it.
+SCRAPED_PAGE = "Sandbox To-dos Add Write the app Start the server Ship the boxd example 3 to-\ndos\n"
+DOCS_PAGE = Path(__file__).resolve().parent.parent.parent / "docs/src/integrations/boxd.mdx"
 
 
 class FakeMachines:
-    """Records boxd machine calls and fails the commands listed in `failing`."""
+    """Records boxd machine calls, fails the commands in `failing` and answers those in `outputs`."""
 
-    def __init__(self, failing=()):
+    def __init__(self, failing=(), outputs=None):
         self.failing = set(failing)
+        self.outputs = outputs or {}
         self.created = []
         self.uploads = []
         self.runs = []
@@ -57,11 +64,24 @@ class FakeMachines:
             return SimpleNamespace(exit_code=1, stdout="", stderr=f"{command} failed\n")
         if command == "notte sessions start -o json":
             return SimpleNamespace(exit_code=0, stdout=json.dumps({"session_id": "s-1"}), stderr="")
+        if command in self.outputs:
+            return SimpleNamespace(exit_code=0, stdout=self.outputs[command], stderr="")
         return SimpleNamespace(exit_code=0, stdout=f"output of {command}\n", stderr="")
 
 
-def fake_boxd(failing=()):
-    return SimpleNamespace(machines=FakeMachines(failing))
+def fake_boxd(failing=(), outputs=None):
+    return SimpleNamespace(machines=FakeMachines(failing, outputs))
+
+
+def run_main(boxd, todos=demo.TODOS):
+    """Run main() against the fake machines, with Playwright reporting `todos`."""
+    with (
+        patch.object(demo, "Boxd", return_value=boxd),
+        patch.object(demo, "NotteClient"),
+        patch.object(demo, "load_dotenv"),
+        patch.object(demo, "check_with_playwright", return_value=list(todos)),
+    ):
+        demo.main()
 
 
 @patch.dict(os.environ, {"NOTTE_API_KEY": TEST_KEY})
@@ -163,14 +183,61 @@ class OfflineTests(unittest.TestCase):
 
     def test_main_deletes_the_machine_when_the_app_fails(self):
         boxd = fake_boxd(failing={"nohup python3 -m http.server 8000 > /tmp/app.log 2>&1 &"})
-        with (
-            patch.object(demo, "Boxd", return_value=boxd),
-            patch.object(demo, "NotteClient"),
-            patch.object(demo, "load_dotenv"),
-        ):
-            with self.assertRaisesRegex(demo.CommandError, "http.server"):
-                demo.main()
+        with self.assertRaisesRegex(demo.CommandError, "http.server"):
+            run_main(boxd)
         self.assertEqual(boxd.machines.deleted, ["m-1"])
+
+    def test_main_passes_when_both_browsers_see_the_app(self):
+        boxd = fake_boxd(outputs={SCRAPE: SCRAPED_PAGE})
+        run_main(boxd)
+        self.assertEqual(boxd.machines.deleted, ["m-1"])
+
+    def test_main_fails_when_playwright_sees_other_todos(self):
+        boxd = fake_boxd(outputs={SCRAPE: SCRAPED_PAGE})
+        with self.assertRaisesRegex(demo.CheckError, "Playwright saw"):
+            run_main(boxd, todos=["Write the app"])
+        self.assertEqual(boxd.machines.deleted, ["m-1"])
+
+    def test_main_fails_when_the_cli_does_not_see_the_new_todo(self):
+        boxd = fake_boxd(outputs={SCRAPE: "Sandbox To-dos Add Write the app Start the server 2 to-dos\n"})
+        with self.assertRaisesRegex(demo.CheckError, "Ship the boxd example"):
+            run_main(boxd)
+        self.assertEqual(boxd.machines.deleted, ["m-1"])
+
+    def test_main_fails_when_the_cli_sees_the_wrong_count(self):
+        boxd = fake_boxd(outputs={SCRAPE: "Sandbox To-dos Add Write the app Ship the boxd example 2 to-dos\n"})
+        with self.assertRaisesRegex(demo.CheckError, "3 to-dos"):
+            run_main(boxd)
+        self.assertEqual(boxd.machines.deleted, ["m-1"])
+
+    def test_cli_count_is_not_matched_inside_a_larger_number(self):
+        with self.assertRaisesRegex(demo.CheckError, "3 to-dos"):
+            demo.expect_new_todo("Sandbox To-dos Add Ship the boxd example 13 to-dos")
+
+    def test_cli_page_is_compared_across_wrapped_lines(self):
+        demo.expect_new_todo("Sandbox To-dos Add Write the app Start the server Ship the\nboxd example 3 to-\ndos\n")
+
+    def test_main_fails_when_only_the_delete_fails(self):
+        boxd = fake_boxd(outputs={SCRAPE: SCRAPED_PAGE})
+
+        def delete_fails(machine_id):
+            raise RuntimeError("delete failed")
+
+        boxd.machines.delete = delete_fails
+        with self.assertRaises(SystemExit) as raised:
+            run_main(boxd)
+        # A message as the exit code makes Python print it and exit with 1.
+        self.assertIn("m-1 was not deleted", str(raised.exception.code))
+
+    def test_failed_delete_does_not_hide_the_run_error(self):
+        boxd = fake_boxd(failing={"nohup python3 -m http.server 8000 > /tmp/app.log 2>&1 &"})
+
+        def delete_fails(machine_id):
+            raise RuntimeError("delete failed")
+
+        boxd.machines.delete = delete_fails
+        with self.assertRaisesRegex(demo.CommandError, "http.server"):
+            run_main(boxd)
 
     def test_failed_delete_does_not_hide_the_startup_error(self):
         boxd = fake_boxd()
@@ -217,6 +284,18 @@ class OfflineTests(unittest.TestCase):
             demo.check_with_notte_cli(boxd, "m-1", URL)
 
 
+@unittest.skipUnless(DOCS_PAGE.is_file(), "Needs the docs page from the repository")
+class DocsPageTests(unittest.TestCase):
+    def test_python_snippet_serves_the_elements_the_cli_steps_use(self):
+        page = DOCS_PAGE.read_text()
+        python = "\n".join(re.findall(r"```python\n(.*?)```", page, re.S))
+        bash = "\n".join(re.findall(r"```bash\n(.*?)```", page, re.S))
+        self.assertIn("notte page fill '#title'", bash)
+        self.assertIn("notte page click 'button[type=submit]'", bash)
+        self.assertIn('<input id="title">', python)
+        self.assertIn('<button type="submit">', python)
+
+
 @unittest.skipUnless(
     os.environ.get("BOXD_API_KEY") and os.environ.get("NOTTE_API_KEY"), "Needs real boxd and Notte API keys"
 )
@@ -227,12 +306,9 @@ class LiveTests(unittest.TestCase):
         machine = demo.create_machine(boxd)
         try:
             url = demo.start_app(boxd, machine)
-            self.assertEqual(demo.check_with_playwright(notte, url), ["Write the app", "Start the server"])
+            demo.expect_todos(demo.check_with_playwright(notte, url))
             demo.install_notte(boxd, machine.id)
-            # The CLI wraps long lines, so compare without line breaks.
-            page = demo.check_with_notte_cli(boxd, machine.id, url).replace("\n", "")
-            self.assertIn("Ship the boxd example", page)
-            self.assertIn("3 to-dos", page)
+            demo.expect_new_todo(demo.check_with_notte_cli(boxd, machine.id, url))
         finally:
             demo.delete_machine(boxd, machine.id)
         with self.assertRaises(NotFoundError):
