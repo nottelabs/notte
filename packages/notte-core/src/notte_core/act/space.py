@@ -1086,6 +1086,7 @@ def build_act_space(
     typed: Mapping[str, "TypedValue"] | None = None,
     no_effect: Collection[tuple[str, str | None]] = (),
     failed: Collection[tuple[str, str | None]] = (),
+    refused: Mapping[str, str] | None = None,
 ) -> ActSpace:
     """`display_text` masks the presentation strings; `display_cut` (default `display_text`) the live values the
     browser cut, where a protected value can start at the cut. `no_text`: the ids of the fields
@@ -1096,7 +1097,9 @@ def build_act_space(
     "California"). `no_effect`: the (operation, target key, None for a control) that already ran on this very page
     state and changed nothing, not offered again: repeating them cannot change the page either. `failed`: those that
     failed the same way twice on this page state, not offered again either, checkboxes included (a click that fails
-    did not toggle anything)."""
+    did not toggle anything). `refused`: what the decider is told about the fields whose page refused the goal's
+    value (see `ActHistory.refused`), by id."""
+    refused = refused or {}
     # Determine IDs, roles and supported operations from the original page. Only
     # presentation strings pass through display_text, before their display caps.
     lines = _rendered_lines(page.description)
@@ -1133,6 +1136,8 @@ def build_act_space(
         )
         if element.get("draggable") is True:
             space.draggable = True
+        if action.id in refused:
+            element["refused"] = refused[action.id]
         input_type = _input_type(line) if role == "textbox" else None
         value_format = None if input_type is None else INPUT_FORMATS.get(input_type)
         if input_type is not None:
@@ -1365,6 +1370,51 @@ def compact(text: str) -> str:
     """The letters and digits of `text`, case-folded: two forms of one value ("110 00" and "11000", "+1 415-555"
     and "+1 (415) 555") have the same."""
     return "".join(c for c in text.casefold() if c.isalnum())
+
+
+# a phone number as typed: digits, spaces and the punctuation of its layouts ("+44 (0)7700-900123")
+_PHONE = re.compile(r"[\d\s().+/-]*\d[\d\s().+/-]*")
+# "-" and whitespace: the layout of a value typed as text ("john - doe", "SW1A 1AA")
+_TEXT_LAYOUT = re.compile(r"[\s-]+")
+
+
+def same_typed_value(a: str, b: str) -> bool:
+    """`a` and `b`, both typed in a field, are one value in two layouts: for a phone number, the same digits after its
+    leading 0s, a country code (at most `MAX_COUNTRY_CODE_DIGITS` digits) or `00` before them ("07700900123",
+    "7700900123", "+44 7700 900123", "0044 7700900123"); otherwise the same text without its case, spaces and dashes."""
+    if _PHONE.fullmatch(a.strip()) and _PHONE.fullmatch(b.strip()):
+        digits = ["".join(c for c in text if c.isdigit()).lstrip("0") for text in (a, b)]
+        short, long = sorted(digits, key=len)
+        if short == long:
+            return bool(short)
+        return (
+            len(short) >= MIN_KEPT_LENGTH and long.endswith(short) and len(long) - len(short) <= MAX_COUNTRY_CODE_DIGITS
+        )
+    plain = [_TEXT_LAYOUT.sub("", text).casefold() for text in (a, b)]
+    return bool(plain[0]) and plain[0] == plain[1]
+
+
+# a field's label or placeholder saying it can be left empty
+_OPTIONAL = re.compile(
+    r"\b(optional|optionnel|optionnelle|facultatif|facultative|facultativo|facultativa|opcional|facoltativo|"
+    + r"optioneel|freiwillig|valfritt|valgfri|valgfritt|nepovinné|nepovinný|opcjonalnie|opcjonalne)\b",
+    re.IGNORECASE,
+)
+
+
+def optional_field(page: ObservedPage, element_id: str) -> bool:
+    """The field `element_id` of `page` says it can be left empty: its name, label or placeholder reads "optional"
+    ("Telephone number (optional)"). The page's `required` attribute is not observed: a field that does not say so is
+    taken as required."""
+    texts = [accessible_names(page).get(element_id, "")]
+    match = _RENDERED_ELEMENT.match(_rendered_lines(page.description).get(element_id, ""))
+    if match is not None:
+        attributes = dict(_RENDERED_ATTRIBUTE.findall(match.group(2)))
+        texts += [attributes.get("placeholder", ""), attributes.get("aria_label", "")]
+        # the content of an input or a textarea is the value typed in it, never what the field says about itself
+        if match.group(1).lower() not in ("input", "textarea"):
+            texts.append(match.group(3))
+    return any(_OPTIONAL.search(text) for text in texts if text)
 
 
 def _numbers(text: str) -> frozenset[float]:
