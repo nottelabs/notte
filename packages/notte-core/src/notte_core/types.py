@@ -71,6 +71,7 @@ DEFAULT_VIEWPORT_WIDTH = config.viewport_width
 DEFAULT_VIEWPORT_HEIGHT = config.viewport_height
 
 AspectRatio = Literal["5:4", "16:9"]
+DialogPolicy = Literal["auto", "client"]
 
 DEFAULT_BROWSER_TYPE = config.browser_type
 DEFAULT_USER_AGENT = config.user_agent
@@ -1014,6 +1015,10 @@ class SessionStartRequestDict(_SessionStartRequestDict, total=False):
     advanced_stealth: bool
     block_ads: bool
     """Block ads and trackers in managed browsers with Basic filtering. Defaults to True."""
+    dialog_policy: DialogPolicy
+    """Who answers JavaScript dialogs. "auto" (default): Notte dismisses alert, confirm and prompt and
+    accepts beforeunload. "client": your CDP client accepts or dismisses them; Notte dismisses one nobody
+    answers within 10 seconds."""
 
 
 class LocalSessionStartRequestDict(_SessionStartRequestDict, total=False):
@@ -1374,6 +1379,18 @@ class SessionStartRequest(_SessionStartRequest[BrowserType | Literal["chrome-nit
         ),
     ] = True
 
+    dialog_policy: Annotated[
+        DialogPolicy,
+        Field(
+            description=(
+                "Who answers JavaScript dialogs (alert, confirm, prompt, beforeunload). `auto` (default): Notte "
+                "answers them, dismissing alert, confirm and prompt and accepting beforeunload. `client`: Notte "
+                "leaves them for your CDP client to accept or dismiss, and dismisses one nobody answers within "
+                "10 seconds."
+            ),
+        ),
+    ] = "auto"
+
     proxies: Annotated[
         list[ProxySettings] | bool,
         Field(
@@ -1408,8 +1425,9 @@ class SessionStartRequest(_SessionStartRequest[BrowserType | Literal["chrome-nit
         if not self.auth_ids:
             data.pop("auth_retry", None)
         # Let the API apply its default so ordinary starts also work with older APIs.
-        if "block_ads" not in self.model_fields_set:
-            data.pop("block_ads", None)
+        for name in ("block_ads", "dialog_policy"):
+            if name not in self.model_fields_set:
+                data.pop(name, None)
         return data
 
     @model_validator(mode="before")

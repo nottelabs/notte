@@ -466,6 +466,33 @@ def test_ad_blocking_is_serialized_for_remote_sessions(
         assert payload["block_ads"] is expected
 
 
+@pytest.mark.parametrize(
+    "options, expected",
+    [({}, None), ({"dialog_policy": "client"}, "client"), ({"dialog_policy": "auto"}, "auto")],
+)
+@pytest.mark.parametrize("high_level", [True, False])
+def test_dialog_policy_is_sent_only_when_set(
+    client: NotteClient,
+    session_id: str,
+    options: SessionStartRequestDict,
+    expected: str | None,
+    high_level: bool,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    api = fake(monkeypatch, session_response_dict(session_id))
+    if high_level:
+        session = client.Session(**options)
+        session.start()
+    else:
+        _ = client.sessions.start(**options)
+    assert len(api.calls) == 1
+    payload = json.loads(api.calls[0].data)
+    if expected is None:
+        assert "dialog_policy" not in payload
+    else:
+        assert payload["dialog_policy"] == expected
+
+
 def test_ad_blocking_option_is_remote_only() -> None:
     assert SessionStartRequest().block_ads is True
     assert "block_ads" not in LocalSessionStartRequest.model_fields
