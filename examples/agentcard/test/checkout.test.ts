@@ -7,8 +7,10 @@ import { runCheckout, type CheckoutOptions } from '../src/main.ts';
 
 type CleanupStage = 'checkout_cancel' | 'page_close' | 'browser_close' | 'session_stop';
 
-function fixture(outcome: 'completed' | 'unknown' = 'completed', fail?: 'attach' | 'purchase', cleanupFailures: CleanupStage[] = [], stall?: 'page_close' | 'browser_close') {
+function fixture(outcome: 'completed' | 'unknown' = 'completed', fail?: 'attach' | 'purchase', cleanupFailures: CleanupStage[] = [], stall?: 'page_close' | 'browser_close', paused = 0) {
   const calls: string[] = [];
+  // `paused` simulates a card request held for approval: getState reports it, then reconcile still refuses once.
+  let approvalPolls = paused, inFlight = paused > 0;
   const close = async (stage: CleanupStage, label: string) => {
     calls.push(label);
     if (stall === stage) await new Promise<void>(() => {});
@@ -40,7 +42,10 @@ function fixture(outcome: 'completed' | 'unknown' = 'completed', fail?: 'attach'
     } }),
   } as unknown as NotteClient;
   const connect = (async () => ({
-    contexts: () => [{ newPage: async () => { calls.push('owned context'); return page; } }],
+    contexts: () => [{
+      addInitScript: async (script: string) => { assert.match(script, /serviceWorker\.register/); calls.push('block service workers'); },
+      newPage: async () => { calls.push('owned context'); return page; },
+    }],
     close: () => close('browser_close', 'browser close'),
   })) as unknown as typeof chromium.connectOverCDP;
   const attach = (async (candidate: unknown, settings: Parameters<typeof attachToPlaywright>[1]) => {
@@ -55,17 +60,25 @@ function fixture(outcome: 'completed' | 'unknown' = 'completed', fail?: 'attach'
     if (fail === 'attach') throw new Error('sensitive transport and approval details');
     settings.onApprovalUrl!('private-test-capability');
     return {
+      getState: () => {
+        if (approvalPolls > 0) { approvalPolls--; calls.push('awaiting approval'); return { status: 'awaiting_approval', authorizationId: 'test' }; }
+        return { status: 'awaiting_merchant', authorizationId: 'test' };
+      },
       cancel: () => {
         calls.push('cancel');
         if (cleanupFailures.includes('checkout_cancel')) throw new Error('private cleanup capability');
       },
-      reconcile: async () => {
+      reconcile: () => {
+        if (inFlight) { inFlight = false; calls.push('still paused'); throw new Error('Wait for the paused request to finish before reconciling the merchant order.'); }
+        return reconcile();
+      },
+    } as unknown as Awaited<ReturnType<typeof attachToPlaywright>>;
+    async function reconcile() {
         const result = await settings.resolveMerchantResult!({ status: 'awaiting_merchant', authorizationId: 'test' });
         return { status: result.status === 'unknown' ? 'outcome_unknown' : result.status, orderId: 'orderId' in result ? result.orderId : undefined } as CheckoutState;
-      },
-    };
+    }
   }) as typeof attachToPlaywright;
-  return { calls, options, runtime: { client, connect, attach } };
+  return { calls, options, runtime: { client, connect, attach, approvalWaitMs: 10_000 } };
 }
 
 for (const outcome of ['completed', 'unknown'] as const) {
@@ -124,7 +137,7 @@ for (const stage of ['page_close', 'browser_close'] as const) {
 test('attaches before merchant actions and requires merchant evidence', async () => {
   const { calls, options, runtime } = fixture();
   assert.deepEqual(await runCheckout(options, runtime), { status: 'completed', order_id: 'sandbox-order', session_id: 'owned-session' });
-  assert.deepEqual(calls, ['registry', 'owner start', 'owned context', 'attach', 'private delivery', 'purchase', 'merchant read', 'cancel', 'page close', 'browser close', 'owner stop']);
+  assert.deepEqual(calls, ['registry', 'owner start', 'block service workers', 'owned context', 'attach', 'private delivery', 'purchase', 'merchant read', 'cancel', 'page close', 'browser close', 'owner stop']);
 });
 
 test('unknown outcome stays unknown without another purchase attempt', async () => {
@@ -144,3 +157,20 @@ for (const failure of ['attach', 'purchase'] as const) {
     assert.ok(!calls.includes('merchant read'));
   });
 }
+
+test('waits for the paused payment to finish before reading the merchant order', { timeout: 15_000 }, async () => {
+  const { calls, options, runtime } = fixture('completed', undefined, [], undefined, 2);
+  assert.deepEqual(await runCheckout(options, runtime), { status: 'completed', order_id: 'sandbox-order', session_id: 'owned-session' });
+  assert.deepEqual(calls.slice(calls.indexOf('purchase')), ['purchase', 'awaiting approval', 'awaiting approval', 'still paused', 'merchant read', 'cancel', 'page close', 'browser close', 'owner stop']);
+  assert.equal(calls.filter(call => call === 'purchase').length, 1);
+});
+
+test('an approval that never finishes fails closed without a second purchase', { timeout: 15_000 }, async () => {
+  const { calls, options, runtime } = fixture('completed', undefined, [], undefined, 1_000);
+  await assert.rejects(runCheckout(options, { ...runtime, approvalWaitMs: 1_500 }), {
+    message: 'Hosted checkout failed; verify the merchant outcome before attempting another payment',
+  });
+  assert.ok(!calls.includes('merchant read'));
+  assert.equal(calls.filter(call => call === 'purchase').length, 1);
+  assert.deepEqual(calls.slice(-4), ['cancel', 'page close', 'browser close', 'owner stop']);
+});

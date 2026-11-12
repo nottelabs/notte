@@ -17,7 +17,11 @@ interface Runtime {
   client: NotteClient;
   connect: typeof chromium.connectOverCDP;
   attach: typeof attachToPlaywright;
+  approvalWaitMs: number;
 }
+
+const BLOCK_SERVICE_WORKERS =
+  'try { if (navigator.serviceWorker) navigator.serviceWorker.register = async () => undefined; } catch {}';
 
 type CleanupError = 'checkout_cancel' | 'page_close' | 'browser_close' | 'session_stop';
 
@@ -26,6 +30,26 @@ interface CheckoutResult {
   order_id: string | undefined;
   session_id: string;
   cleanup_errors?: CleanupError[];
+}
+
+type Checkout = Awaited<ReturnType<typeof attachToPlaywright>>;
+
+// Agentcard expires an unapproved payment after 15 minutes; wait slightly longer so its own outcome lands first.
+const APPROVAL_WAIT_MS = 16 * 60_000;
+const PAUSED = /paused request/i;
+
+// The card request stays paused until the user approves or declines on their device.
+// Reconciling before that request finishes is rejected by the SDK, so wait for it first.
+async function reconcileAfterApproval(checkout: Checkout, waitMs: number) {
+  const deadline = Date.now() + waitMs;
+  for (;;) {
+    if (checkout.getState().status !== 'awaiting_approval') {
+      try { return await checkout.reconcile(); }
+      catch (error) { if (!PAUSED.test(String((error as Error)?.message))) throw error; }
+    }
+    if (Date.now() >= deadline) throw new Error('The approval wait ended before the paused payment finished');
+    await new Promise(resolve => setTimeout(resolve, 1_000));
+  }
 }
 
 async function closeTransport(close: () => Promise<void>) {
@@ -38,6 +62,7 @@ async function closeTransport(close: () => Promise<void>) {
 }
 
 export async function runCheckout(options: CheckoutOptions, runtime: Partial<Runtime> = {}): Promise<CheckoutResult> {
+  const approvalWaitMs = runtime.approvalWaitMs ?? APPROVAL_WAIT_MS;
   const client = runtime.client ?? new NotteClient();
   const connect = runtime.connect ?? chromium.connectOverCDP.bind(chromium);
   const attach = runtime.attach ?? attachToPlaywright;
@@ -58,6 +83,8 @@ export async function runCheckout(options: CheckoutOptions, runtime: Partial<Run
           try {
             const context = browser.contexts()[0];
             if (!context) throw new Error('The owned session has no browser context');
+            // A store's service worker can send the card request itself, and Playwright cannot pause it.
+            await context.addInitScript(BLOCK_SERVICE_WORKERS);
             const page = await context.newPage();
             try {
               const checkout = await attach(page, {
@@ -72,7 +99,7 @@ export async function runCheckout(options: CheckoutOptions, runtime: Partial<Run
               });
               try {
                 await options.purchase(page);
-                const result = await checkout.reconcile();
+                const result = await reconcileAfterApproval(checkout, approvalWaitMs);
                 reconciled = { status: result.status, order_id: result.orderId, session_id: session.getId()! };
                 return reconciled;
               } finally {
