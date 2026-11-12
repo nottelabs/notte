@@ -359,7 +359,7 @@ class ActHistory:
     def retyping(self, page: ObservedPage, field_key: str) -> None:
         """act types in the field `field_key` of `page` again: the text typed there before was rejected if the field
         still shows an error (the decider saw it and typed again)."""
-        previous = _attempts(self.entries, field_key)
+        previous = [a for a in _attempts(self.entries, field_key) if a.error is None]
         if previous and _shows_error(page, _find_field(page, field_key)):
             previous[-1].rejected = True
 
@@ -368,39 +368,48 @@ class ActHistory:
         typed in the field, rejected earlier in the same or another layout (`same_typed_value`), while the field still
         shows an error. The last text counts once an action that can submit it ran after it with the error still shown:
         a form checked on submit keeps the error of an earlier text until then, though typing in another field or
-        scrolling ran in between."""
+        scrolling ran in between. Every value typed in the field is counted, not only the last one (rejected twice,
+        then another value typed), and only fills that ran: one that failed typed nothing the page could reject."""
         entries = list(self.entries)
         for field_key in {e.field_key for e in entries if e.field_key is not None}:
-            attempts = _attempts(entries, field_key)
-            last = attempts[-1] if attempts else None
-            if last is None or not last.typed_value or not _shows_error(page, _find_field(page, field_key)):
+            attempts = [a for a in _attempts(entries, field_key) if a.error is None and a.typed_value]
+            if not attempts:
                 continue
-            record = RefusedField(
-                field_key=field_key,
-                url=page.url,
-                instruction=last.instruction,
-                bindings=last.bindings,
-                value=last.typed_value,
-            )
-            if any(
-                r.field_key == field_key
-                and r.url == record.url
-                and r.instruction == record.instruction
-                and r.bindings == record.bindings
-                and same_typed_value(r.value, record.value)
-                for r in self.refused_fields
-            ):
-                continue
-            rejected = [
-                attempt
-                for attempt in attempts
-                if (attempt.rejected or (attempt is last and last.submitted))
-                and attempt.instruction == last.instruction
-                and attempt.bindings == last.bindings
-                and same_typed_value(attempt.typed_value or "", last.typed_value)
-            ]
-            if len(rejected) >= REJECTION_LIMIT:
-                self.refused_fields.append(record)
+            last = attempts[-1]
+            showing = _shows_error(page, _find_field(page, field_key))
+            values: list[str] = []
+            for attempt in attempts:
+                assert attempt.typed_value is not None
+                if not any(same_typed_value(attempt.typed_value, value) for value in values):
+                    values.append(attempt.typed_value)
+            for value in values:
+                group = [a for a in attempts if same_typed_value(a.typed_value or "", value)]
+                newest = group[-1]
+                record = RefusedField(
+                    field_key=field_key,
+                    url=page.url,
+                    instruction=newest.instruction,
+                    bindings=newest.bindings,
+                    value=value,
+                )
+                if any(
+                    r.field_key == field_key
+                    and r.url == record.url
+                    and r.instruction == record.instruction
+                    and r.bindings == record.bindings
+                    and same_typed_value(r.value, record.value)
+                    for r in self.refused_fields
+                ):
+                    continue
+                rejected = [
+                    attempt
+                    for attempt in group
+                    if (attempt.rejected or (attempt is last and last.submitted and showing))
+                    and attempt.instruction == newest.instruction
+                    and attempt.bindings == newest.bindings
+                ]
+                if len(rejected) >= REJECTION_LIMIT:
+                    self.refused_fields.append(record)
 
     def refused(self, page: ObservedPage, instruction: str, variables: Mapping[str, str]) -> dict[str, str]:
         """The fields of `page` whose page refused the goal's value for `instruction` and `variables` (`RefusedField`),
@@ -412,10 +421,18 @@ class ActHistory:
             action = _find_field(page, record.field_key)
             if action is None or record.instruction != instruction or record.bindings != bindings:
                 continue
+            state = page.states.get(action.id)
+            if (
+                state is not None
+                and state.value
+                and not same_typed_value(state.value, record.value)
+                and not _shows_error(page, action)
+            ):
+                # the field took another value (the goal's backup): it no longer refuses anything
+                continue
             if not optional_field(page, action.id):
                 refused[action.id] = prompts.REFUSED_REQUIRED
                 continue
-            state = page.states.get(action.id)
             holds = state is not None and bool(state.value or state.filled)
             refused[action.id] = prompts.REFUSED_CLEAR if holds else prompts.REFUSED_OPTIONAL
         return refused
@@ -438,7 +455,8 @@ class ActHistory:
         if click or operation in ("PRESS_ENTER", "GO_BACK"):
             for entry in self.entries:
                 entry.typed = None
-                entry.submitted = True
+                # a fill that failed typed nothing: nothing of it was submitted
+                entry.submitted = entry.submitted or entry.error is None
 
     def typed(self, typed: TypedText) -> None:
         """`typed` was just typed: it replaces what was typed earlier in the same field."""
@@ -1294,6 +1312,12 @@ def _write_context(
     if typed_before is not None:
         # what act typed in this field before: the field changed it (a length limit, a mask) or the page rejected it
         field["retry"] = prompts.RETRY_TYPED.format(text=history.privacy.text(typed_before))
+    refused = history.refused_values(page, instruction, variables).get(target.element_id, [])
+    if refused:
+        # the values this field refused in every layout: another value the goal gives (a backup number), or none
+        field["refused"] = prompts.REFUSED_WRITE.format(
+            values=", ".join(repr(history.privacy.text(value)) for value in refused)
+        )
     if target.input_type is not None:
         field["type"] = target.input_type
     if target.value_format is not None:

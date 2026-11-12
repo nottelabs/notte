@@ -72,7 +72,7 @@ Use the field's label, placeholder and the text next to it (field.nearby), and t
 other fields (page.fields), to tell which part of the goal this field takes: a field's label can be short or vague.
 Write only that part: leave out the parts that other fields or controls take (page.next_controls: dates, guests,
 filters), even when the placeholder shows a longer example.
-When field.retry is given, follow it.
+When field.retry is given, follow it. When field.refused is given, follow it: it overrides field.retry.
 If the goal is to clear the field, return {"text": ""}.
 An address lookup field ("Start typing your postcode", "Find your address") takes the goal's postal code, or its
 address when the field asks for an address: the goal gives a value for it, never null. If neither the goal nor
@@ -90,6 +90,12 @@ RETRY_TYPED = (
     + " number, even when the field asks for a mobile one): digits only, in the national format (the country code"
     + " replaced by the trunk prefix 0 where the country uses one): +33 6 12 34 56 78 -> 0612345678,"
     + " +1 212 555 0199 -> 2125550199."
+)
+
+# `field.refused` of the writer, for a field that refused values in every layout (`ActHistory.refused_values`)
+REFUSED_WRITE = (
+    "The page refused {values} for this field in every form typed: never write them, in any layout. Write another"
+    + ' value the goal gives for this field (a backup), else return {{"text": null}}.'
 )
 
 # `refused` of a field that kept its error for the same value typed in several layouts (`ActHistory.refused`)

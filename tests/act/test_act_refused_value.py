@@ -8,7 +8,8 @@ from urllib.parse import quote
 import pytest
 import pytest_asyncio
 from notte_browser.session import NotteSession
-from notte_core.act import ObservedPage, prompts
+from notte_core.act import ActHistory, ObservedPage, prompts
+from notte_core.act.runner import ActHistoryEntry
 from notte_core.act.space import optional_field, same_typed_value
 from notte_core.actions import FillAction
 from notte_core.snapshot import ViewportData
@@ -213,6 +214,8 @@ async def test_a_backup_value_the_goal_gives_is_typed_after_the_first_is_refused
     result = await session.aact(BACKUP, decider=decider)
     assert _element(decider, 4, ids["phone"])["refused"] == prompts.REFUSED_REQUIRED
     assert result.action == FillAction(id=ids["phone"], value="02079460123")
+    # the writer was told which number the page refused, so it writes the goal's backup
+    assert "07700900123" in decider.contexts[-1].field["refused"]
     assert (await session.aact(BACKUP, decider=decider)).status == "executed"
     assert await session.window.page.text_content("#out") == "Choose a delivery option"
 
@@ -230,6 +233,41 @@ async def test_the_refused_value_written_again_in_another_layout_is_not_typed(se
     assert await session.window.page.input_value("#phone") == "7700900123"
     assert ids["phone"] not in _typable(decider, 5)
     assert result.status == "blocked"
+
+
+@pytest.mark.asyncio
+async def test_a_value_refused_before_the_writer_switched_to_another_is_not_typed_again(session: NotteSession) -> None:
+    """Checked as it is typed: the goal's number rejected in two layouts, then its backup accepted. The first number
+    is refused though it is not the last text typed: written again, it is not typed. The field holding the accepted
+    backup is not marked refused."""
+    ids = await _open(session, _form("Phone", accepts="02079460123", live=True))
+    phone = {"operation": "TYPE_TEXT", "type_text_target": ids["phone"]}
+    decider = FakeDecider(
+        choices=[phone, phone, phone, phone, {"operation": "DONE"}],
+        texts=["07700900123", "7700900123", "02079460123", "+44 7700 900123"],
+    )
+    for _ in range(3):
+        assert (await session.aact(BACKUP, decider=decider)).status == "executed"
+    assert await session.window.page.input_value("#phone") == "02079460123"
+
+    # the refused number, written again in a third layout: not typed over the accepted backup
+    result = await session.aact(BACKUP, decider=decider, raise_on_failure=False)
+    assert "refused" not in _element(decider, 3, ids["phone"])
+    assert "07700900123" in decider.contexts[-1].field["refused"]
+    assert await session.window.page.input_value("#phone") == "02079460123"
+    assert result.status == "done"
+
+
+def test_a_fill_that_failed_is_not_submitted() -> None:
+    """A Continue after a fill that failed submits nothing of it: it never counts as a text the page rejected."""
+    history = ActHistory()
+    typed = ActHistoryEntry(action="Phone", kind="TYPE_TEXT", text="07700900123", fingerprint="fp", pending=False)
+    failed = ActHistoryEntry(
+        action="Phone", kind="TYPE_TEXT", text="7700900123", fingerprint="fp", pending=False, error="ExecutionFailed"
+    )
+    history.entries.extend([typed, failed])
+    history.acted("CLICK", None)
+    assert typed.submitted and not failed.submitted
 
 
 def test_text_typed_in_a_field_does_not_make_it_optional() -> None:
