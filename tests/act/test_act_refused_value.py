@@ -8,9 +8,10 @@ from urllib.parse import quote
 import pytest
 import pytest_asyncio
 from notte_browser.session import NotteSession
-from notte_core.act import prompts
-from notte_core.act.space import same_typed_value
+from notte_core.act import ObservedPage, prompts
+from notte_core.act.space import optional_field, same_typed_value
 from notte_core.actions import FillAction
+from notte_core.snapshot import ViewportData
 
 from tests.act.fakes import FakeDecider
 
@@ -229,6 +230,28 @@ async def test_the_refused_value_written_again_in_another_layout_is_not_typed(se
     assert await session.window.page.input_value("#phone") == "7700900123"
     assert ids["phone"] not in _typable(decider, 5)
     assert result.status == "blocked"
+
+
+def test_text_typed_in_a_field_does_not_make_it_optional() -> None:
+    """A required textarea holding "optional" (a delivery note the buyer wrote) is still required; its label decides."""
+
+    def page(description: str) -> ObservedPage:
+        return ObservedPage(
+            url="https://example.test/checkout",
+            title="Checkout",
+            description=description,
+            actions=[FillAction(id="I1", value="<sample_value>")],
+            viewport=ViewportData(
+                scroll_x=0, scroll_y=0, viewport_width=1280, viewport_height=720, total_width=1280, total_height=720
+            ),
+            states={},
+            fingerprint="fp",
+        )
+
+    assert not optional_field(
+        page('I1[:]<textarea name="note">leave it at the door, signature optional</textarea>'), "I1"
+    )
+    assert optional_field(page('I1[:]<textarea name="note" placeholder="Delivery note (optional)"></textarea>'), "I1")
 
 
 @pytest.mark.parametrize(

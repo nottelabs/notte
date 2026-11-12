@@ -1410,7 +1410,10 @@ def optional_field(page: ObservedPage, element_id: str) -> bool:
     match = _RENDERED_ELEMENT.match(_rendered_lines(page.description).get(element_id, ""))
     if match is not None:
         attributes = dict(_RENDERED_ATTRIBUTE.findall(match.group(2)))
-        texts += [attributes.get("placeholder", ""), attributes.get("aria_label", ""), match.group(3)]
+        texts += [attributes.get("placeholder", ""), attributes.get("aria_label", "")]
+        # the content of an input or a textarea is the value typed in it, never what the field says about itself
+        if match.group(1).lower() not in ("input", "textarea"):
+            texts.append(match.group(3))
     return any(_OPTIONAL.search(text) for text in texts if text)
 
 
