@@ -1,0 +1,50 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/cdp/playwright_dialogs.py */}
+
+<CodeGroup>
+
+```python playwright_dialogs.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+# "client": your Playwright code answers dialogs, not Notte
+with client.Session(dialog_policy="client") as session:
+    page = session.page
+
+    # Register the handler before the page opens a dialog
+    page.on("dialog", lambda dialog: dialog.accept())
+
+    page.set_content(
+        "<button onclick=\"document.title = confirm('Delete this item?') ? 'accepted' : 'dismissed'\">Delete</button>"
+    )
+    page.click("button")
+    title = page.title()
+    print(title)  # accepted
+```
+
+```typescript playwright_dialogs.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+
+// 'client': your Playwright code answers dialogs, not Notte
+const session = client.Session({ dialog_policy: 'client' });
+const { title, status } = await session.use(async () => {
+  const page = await session.page();
+
+  // Register the handler before the page opens a dialog
+  page.on('dialog', dialog => dialog.accept());
+
+  await page.setContent(
+    `<button onclick="document.title = confirm('Delete this item?') ? 'accepted' : 'dismissed'">Delete</button>`,
+  );
+  await page.click('button');
+  const title = await page.title();
+  console.log(title); // accepted
+  return { title, status: await session.status() };
+});
+
+```
+
+</CodeGroup>

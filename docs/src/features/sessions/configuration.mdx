@@ -74,6 +74,14 @@ Customize your session with these options:
   This setting does not configure local browsers or externally connected CDP browsers.
 </ParamField>
 
+<ParamField path="dialog_policy" type="string" default="auto">
+  Who answers JavaScript dialogs (alert, confirm, prompt, beforeunload). With `auto`, Notte dismisses alert, confirm and prompt and accepts beforeunload.
+  With `client`, Notte leaves them for your own CDP client (Playwright, Puppeteer or raw CDP) to accept or dismiss, and dismisses one nobody answers within 10 seconds (beforeunload is accepted).
+  Use `client.Session(dialog_policy="client")` in Python or `client.Session({ dialog_policy: 'client' })` in TypeScript.
+  When omitted, the SDK leaves the setting to the API default. Explicit values require an API that supports `dialog_policy`.
+  Applies to Notte-hosted browsers and to external browsers connected with `cdp_url`. See [Handle JavaScript dialogs](/features/sessions/playwright#handle-javascript-dialogs).
+</ParamField>
+
 <ParamField path="proxies" type="boolean | string | list[ProxySettings]" default={true}>
   Residential proxies are enabled by default. Set to `false` to disable them or provide custom proxy configuration.
   See [Proxy Configuration](#proxies) for details.

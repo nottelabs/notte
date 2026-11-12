@@ -257,6 +257,13 @@
     "closedSession": true,
     "logContains": "Response: https://example.com/ - 200"
   },
+  "sessions/cdp/playwright_dialogs.ts": {
+    "expected": {
+      "status": "active",
+      "title": "accepted"
+    },
+    "closedSession": true
+  },
   "sessions/cdp/playwright_timeout.ts": {
     "expected": {
       "status": "active",

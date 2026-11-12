@@ -65,6 +65,10 @@ Listen to browser events using Puppeteer:
 
 <PuppeteerEvents />
 
+## Handle JavaScript Dialogs
+
+By default Notte answers JavaScript dialogs itself. To accept or dismiss them from Puppeteer, start the session with `dialog_policy: 'client'` and register `page.on('dialog', dialog => dialog.accept())` before the page opens one. A dialog nobody answers within 10 seconds is dismissed. See [Handle JavaScript dialogs](/features/sessions/playwright#handle-javascript-dialogs) for the full behavior.
+
 ## Screenshots and PDFs
 
 Generate screenshots and PDFs using Puppeteer:
