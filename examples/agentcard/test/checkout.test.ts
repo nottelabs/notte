@@ -9,6 +9,7 @@ type CleanupStage = 'checkout_cancel' | 'page_close' | 'browser_close' | 'sessio
 
 function fixture(outcome: 'completed' | 'unknown' = 'completed', fail?: 'attach' | 'purchase', cleanupFailures: CleanupStage[] = [], stall?: 'page_close' | 'browser_close', paused = 0) {
   const calls: string[] = [];
+  const sessions: { max_duration_minutes: number; idle_timeout_minutes: number }[] = [];
   // `paused` simulates a card request held for approval: getState reports it, then reconcile still refuses once.
   let approvalPolls = paused, inFlight = paused > 0;
   const close = async (stage: CleanupStage, label: string) => {
@@ -31,8 +32,9 @@ function fixture(outcome: 'completed' | 'unknown' = 'completed', fail?: 'attach'
     },
   };
   const client = {
-    Session: () => ({ use: async (run: (session: unknown) => Promise<unknown>) => {
+    Session: (settings: { max_duration_minutes: number; idle_timeout_minutes: number }) => ({ use: async (run: (session: unknown) => Promise<unknown>) => {
       calls.push('owner start');
+      sessions.push(settings);
       try { return await run({ cdpUrl: async () => 'wss://private.invalid', getId: () => 'owned-session' }); }
       catch (error) {
         assert.equal((error as Error).message, 'Hosted checkout failed; verify the merchant outcome before attempting another payment', 'Sanitize before the session owner can log the error');
@@ -78,7 +80,7 @@ function fixture(outcome: 'completed' | 'unknown' = 'completed', fail?: 'attach'
         return { status: result.status === 'unknown' ? 'outcome_unknown' : result.status, orderId: 'orderId' in result ? result.orderId : undefined } as CheckoutState;
     }
   }) as typeof attachToPlaywright;
-  return { calls, options, runtime: { client, connect, attach, approvalWaitMs: 10_000 } };
+  return { calls, sessions, options, runtime: { client, connect, attach, approvalWaitMs: 10_000 } };
 }
 
 for (const outcome of ['completed', 'unknown'] as const) {
@@ -173,4 +175,22 @@ test('an approval that never finishes fails closed without a second purchase', {
   assert.ok(!calls.includes('merchant read'));
   assert.equal(calls.filter(call => call === 'purchase').length, 1);
   assert.deepEqual(calls.slice(-4), ['cancel', 'page close', 'browser close', 'owner stop']);
+});
+
+test('the owned session fits Notte\'s 30-minute cap and outlives the approval wait', async () => {
+  const { sessions, options, runtime } = fixture();
+  await runCheckout(options, { ...runtime, approvalWaitMs: undefined });
+  assert.deepEqual(sessions.map(({ max_duration_minutes, idle_timeout_minutes }) => [max_duration_minutes, idle_timeout_minutes]), [[30, 30]]);
+});
+
+test('the approval wait ends before the session expires', { timeout: 15_000 }, async () => {
+  const { calls, options, runtime } = fixture('completed', undefined, [], undefined, 1_000);
+  const started = Date.now();
+  // A 2-minute session leaves no time after the reconcile margin, so the wait must end at once instead of running 10 s.
+  await assert.rejects(runCheckout(options, { ...runtime, sessionMinutes: 2 }), {
+    message: 'Hosted checkout failed; verify the merchant outcome before attempting another payment',
+  });
+  assert.ok(Date.now() - started < 5_000);
+  assert.ok(!calls.includes('merchant read'));
+  assert.equal(calls.filter(call => call === 'purchase').length, 1);
 });
