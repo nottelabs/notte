@@ -129,6 +129,8 @@ DONE_UNSUBMITTED = (
     + " a search or filter, which needs it submitted."
 )
 BLOCKED = "No supported operation can progress."
+# a recent TYPE_TEXT skipped because the field already held exactly the text to type (`already_filled`)
+ALREADY_FILLED = "Nothing typed: the field already holds this exact value. It is filled; do not type in it again."
 # a control offered while a field's suggestion list is open
 CLOSE_SUGGESTIONS = (
     "Press Escape to close the open suggestion list without choosing a suggestion (none matches the goal), to reach"

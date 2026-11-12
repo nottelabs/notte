@@ -238,6 +238,8 @@ class ActHistoryEntry:
     # none did, and one covers the page observed next on the same URL: the action opened it, and the dialog is its
     # result (an "Added to cart" holding "Checkout"), filled in by that observation
     opened_dialog: bool = False
+    # a TYPE_TEXT not run: the field already held exactly the text to type (`_already_filled`)
+    already_filled: bool = False
 
 
 # operations that are expected to leave the fingerprint unchanged (it ignores the scroll position)
@@ -296,10 +298,15 @@ class ActHistory:
         # On every observation, one after a skipped field too: only the last action is said to have opened the dialog
         # now over the page, an earlier one's dialog was closed or replaced since (a protection upsell declined, then
         # the confirmation). A dialog that shows during WAITs is the result of the action before them (a click whose
-        # request answered late), not of a WAIT, nor of a field skipped without typing (`NO_VALUE`: nothing ran).
+        # request answered late), not of a WAIT, nor of a field skipped without typing (`NO_VALUE`, `already_filled`:
+        # nothing ran).
         entries = list(self.entries)
         waits = 0
-        while waits < len(entries) and (entries[-1 - waits].kind == "WAIT" or entries[-1 - waits].error == NO_VALUE):
+        while waits < len(entries) and (
+            entries[-1 - waits].kind == "WAIT"
+            or entries[-1 - waits].error == NO_VALUE
+            or entries[-1 - waits].already_filled
+        ):
             waits += 1
         opener = entries[-1 - waits] if waits < len(entries) else None
         for entry in entries:
@@ -549,6 +556,7 @@ class ActHistory:
             | ({} if not e.left_page or e.page is None else {"previous_page": e.page.model_dump()})
             | ({} if not e.dialogs else {"dialogs": list(e.dialogs)})
             | ({} if not e.opened_dialog else {"opened_dialog": True})
+            | ({} if not e.already_filled else {"already_filled": prompts.ALREADY_FILLED})
             for e in list(self.entries)[-limit:]
         ]
 
@@ -757,6 +765,24 @@ async def run_act(
                         run, f"no value to type in {target.label!r} from the instruction", raise_on_failure, common
                     )
                 written[key] = text
+            if skipped < MAX_SKIPPED_FIELDS and _already_filled(page, target, text, variables, driver.has_vault):
+                # typing the same text again changes nothing: not typed, and decided again, the decider told through
+                # the history (the entry also keeps the field from being offered again on this page, `no_effect`)
+                skipped += 1
+                history.entries.append(
+                    ActHistoryEntry(
+                        action=target.label,
+                        kind="TYPE_TEXT",
+                        text=text,
+                        fingerprint=page.fingerprint,
+                        page_changed=False,
+                        pending=False,
+                        target=target.key,
+                        instruction=instruction,
+                        already_filled=True,
+                    )
+                )
+                continue
         common["value"] = text
 
         if target is not None:
@@ -906,6 +932,20 @@ def _field_value(page: ObservedPage, element_id: str) -> str:
     if state is None:
         return ""
     return "\0".join((state.value or "", state.value_digest or "", "filled" if state.filled else ""))
+
+
+def _already_filled(
+    page: ObservedPage, target: Target, text: str, variables: Mapping[str, str], has_vault: bool
+) -> bool:
+    """The text field `target` of `page` already holds exactly `text` (variables substituted): typing it again changes
+    nothing. A plain comparison of the live value, never with a value the browser cut. A vault placeholder is never
+    compared: the vault puts its secret in the field at execution."""
+    if target.kind != "fill" or (has_vault and CredentialField.from_placeholder(text) is not None):
+        return False
+    state = page.states.get(target.element_id)
+    if state is None or state.value_truncated or state.options is not None or not state.value:
+        return False
+    return state.value == substitute_variables(text, variables)
 
 
 def _typed_field(page: ObservedPage, target: Target) -> str:
