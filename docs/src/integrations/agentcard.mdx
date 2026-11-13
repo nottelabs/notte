@@ -10,12 +10,14 @@ Use the TypeScript helper in [`examples/agentcard`](https://github.com/nottelabs
 
 ## Set up
 
-Use Node.js 24+, a [Notte API key](https://console.notte.cc/apikeys), and sandbox credentials from the [Agentcard dashboard](https://app.agentcard.sh). Follow the [Vault quickstart](https://docs.agentcard.sh/vault/quickstart) to link a test card and obtain its user ID.
+Use Node.js 24+, a [Notte API key](https://console.notte.cc/apikeys), and sandbox credentials from the [Agentcard dashboard](https://app.agentcard.sh). Follow the [Vault quickstart](https://docs.agentcard.com/vault/quickstart) to link a test card and obtain its user ID.
 
 Open `examples/agentcard` and run `npm ci`. Create an `Agentcard` client from `@agent-cards/sdk`, then pass it to `runCheckout` with your merchant, amount, currency, and user ID.
 
-Your application supplies three callbacks: `purchase` drives the merchant checkout, `onApprovalUrl` delivers the approval link privately, and `readMerchantOrder` checks the merchant's order result. The SDK attaches before checkout actions run. Approval links and payment details must stay out of ordinary logs.
+Your application supplies three callbacks: `purchase` drives the merchant checkout, `onApprovalUrl` delivers the approval link privately, and `readMerchantOrder` checks the merchant's order result. The helper blocks service workers and attaches the SDK before checkout actions run, so the SDK can pause the card request. Approval links and payment details must stay out of ordinary logs.
 
-Validate your merchant checkout in Agentcard sandbox before production. Approval alone does not confirm an order.
+`purchase` should submit the payment and return. The helper then waits for the user to approve, decline, or let the approval expire before it calls `readMerchantOrder`. The wait lasts up to 16 minutes, since Agentcard expires approvals after 15, and always ends 2 minutes before the 30-minute Notte session does. One `runCheckout` call can take about half an hour.
 
-The helper returns a status, optional confirmed order ID, and browser session ID. It attempts to close its page, browser connection, and session. If cleanup fails after reconciliation, it preserves the checkout result and adds a sanitized `cleanup_errors` list. Use the session ID to inspect and stop the owned session if needed; do not repeat the purchase. Follow up with the merchant when the outcome is unknown or needs user action. See [Agentcard's completion guide](https://docs.agentcard.sh/vault/completing-a-purchase).
+A full sandbox purchase on Agentcard's demo store has passed: the card request paused, the user approved with a passkey, and the merchant confirmed the order. Validate your own merchant checkout in Agentcard sandbox before production. Approval alone does not confirm an order.
+
+The helper returns a status, optional confirmed order ID, and browser session ID. It attempts to close its page, browser connection, and session. If cleanup fails after reconciliation, it preserves the checkout result and adds a sanitized `cleanup_errors` list. Use the session ID to inspect and stop the owned session if needed; do not repeat the purchase. Follow up with the merchant when the outcome is unknown or needs user action. See [Agentcard's completion guide](https://docs.agentcard.com/vault/completing-a-purchase).
