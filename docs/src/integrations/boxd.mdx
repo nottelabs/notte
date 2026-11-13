@@ -1,0 +1,95 @@
+---
+title: boxd
+description: Test apps running on boxd machines with Notte cloud browsers.
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+[boxd](https://boxd.sh/?ref=notte) runs agents on full Ubuntu machines that start in about a second and keep their disk when they hibernate. Each machine gets its own HTTPS URL. Pair it with Notte when an agent builds or runs an app on a machine and needs a browser to check the result, or when it browses sites that block or challenge a datacenter IP. A Notte browser comes with stealth, residential proxies and captcha solving. See the [runnable Python example](https://github.com/nottelabs/notte/tree/main/examples/boxd).
+
+## Set up
+
+Use Python 3.11+, a [boxd API key](https://docs.boxd.sh/cli/authentication?ref=notte#api-keys), and a [Notte API key](https://console.notte.cc/apikeys). Install `boxd`, `notte-sdk[playwright]`, and `python-dotenv`.
+
+## Open a machine's app from your code
+
+Serve the app on port 8000, which the machine's HTTPS URL forwards to. Turn off the machine's bot protection so the URL serves the app directly instead of a browser check first. The URL is public, so anyone who has it can open the app. `delete_after=1800` makes boxd delete the machine after 30 minutes if the script dies before its own delete runs. `session.page` is a Playwright page connected to the Notte browser over CDP.
+
+```python
+import os
+from uuid import uuid4
+
+from boxd import Boxd
+from notte_sdk import NotteClient
+
+notte = NotteClient()
+boxd = Boxd()
+machine = boxd.machines.create(f"notte-example-{uuid4().hex[:8]}", isolated=True, delete_after=1800)
+try:
+    machine = boxd.machines.wait_until_ready(machine.id)
+    boxd.machines.set_bot_protection(machine.id, mode="off")
+    # The CLI steps fill #title and click the submit button.
+    html = '<h1>Hello from boxd</h1><input id="title"><button type="submit">Add</button>'
+    boxd.machines.files.upload(machine.id, "/home/boxd/app/index.html", html)
+    boxd.machines.exec(machine.id, "nohup python3 -m http.server 8000 > /tmp/app.log 2>&1 &", cwd="/home/boxd/app", timeout=30)
+    # Wait until the server accepts connections. exec returns the exit code instead of raising.
+    wait = "for i in $(seq 1 50); do curl -sf localhost:8000 > /dev/null && exit 0; sleep 0.2; done; exit 1"
+    if boxd.machines.exec(machine.id, wait, timeout=30).exit_code != 0:
+        raise RuntimeError("The app did not start")
+
+    with notte.Session() as session:
+        page = session.page
+        page.goto(machine.access.url)
+        print(page.locator("h1").inner_text())
+
+    # The CLI steps from the next section, run on the machine. The Notte key goes with each command,
+    # and so does the API URL when you set one, so both browsers use the same Notte API.
+    env = {"NOTTE_API_KEY": os.environ["NOTTE_API_KEY"]}
+    if api_url := os.environ.get("NOTTE_API_URL"):
+        env["NOTTE_API_URL"] = api_url
+    steps = [
+        "curl -fsSL https://notte.cc/install-cli.sh | sh",
+        "notte skill add --yes",
+        "notte sessions start",
+        f"notte page goto '{machine.access.url}'",
+        "notte page fill '#title' 'Ship the boxd example'",
+        "notte page click 'button[type=submit]'",
+        "notte page scrape --only-main-content",
+    ]
+    try:
+        for step in steps:
+            result = boxd.machines.exec(machine.id, step, env=env, timeout=240)
+            if result.exit_code != 0:
+                raise RuntimeError(f"{step} failed: {result.stderr or result.stdout}")
+        print(result.stdout)  # What the scrape saw.
+    finally:
+        # Stop the CLI session, also when a step failed.
+        stop = boxd.machines.exec(machine.id, "notte sessions stop --yes", env=env, timeout=60)
+    if stop.exit_code != 0:
+        raise RuntimeError(f"The CLI session did not stop: {stop.stderr or stop.stdout}")
+finally:
+    boxd.machines.delete(machine.id)
+```
+
+## Drive the browser from inside the machine
+
+Agents running on the machine can use the Notte CLI. Install the CLI and the Notte skills, which coding agents such as Claude Code and Codex pick up from `~/.agents/skills`:
+
+```bash
+curl -fsSL https://notte.cc/install-cli.sh | sh
+notte skill add --yes
+```
+
+The CLI reads `NOTTE_API_KEY` from its environment. Pass it with each command, as the snippet above does with `env`, or give it to the agent's process. Then drive the browser. The snippet runs the install commands and these steps before it deletes the machine, with the machine's `access.url` in place of the example URL:
+
+```bash
+notte sessions start
+notte page goto 'https://<machine>.boxd.sh'
+notte page fill '#title' 'Ship the boxd example'
+notte page click 'button[type=submit]'
+notte page scrape --only-main-content
+notte sessions stop --yes
+```
+
+On the snippet's page the scrape prints `Hello from boxd Add`. The example serves a small to-do app, and fails if either browser does not see the expected to-dos, if the CLI session did not stop, or if the machine could not be deleted. Like the snippet, the example stops the CLI session even when a command fails, and deletes the machine at the end. Its tests cover the machine commands and cleanup offline, and the full flow against real boxd and Notte.
