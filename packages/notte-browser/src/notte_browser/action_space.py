@@ -100,7 +100,7 @@ OFFSCREEN_NAME_ATTRIBUTES: frozenset[str] = frozenset(["aria_label", "title", "a
 
 
 # the states rendered as bare flags, like `disabled`: a control without an id (disabled or off-screen) carries only
-# these four in its state; `mixed` is a checkbox's `aria-checked="mixed"`
+# these four in its state; `mixed` is `aria-checked="mixed"` or `aria-pressed="mixed"`
 OFFSCREEN_STATE_FLAGS = ("checked", "pressed", "selected", "expanded")
 LIVE_STATE_FLAGS = ("checked", "mixed", "pressed", "selected", "expanded")
 
@@ -171,7 +171,11 @@ def render_node(
     flags, flag_state = (OFFSCREEN_STATE_FLAGS, node.state) if node.id is None else (LIVE_STATE_FLAGS, state)
     if flag_state is not None:
         for flag in flags:
-            if getattr(flag_state, flag) is True and not (flag == "expanded" and "aria_expanded" in attrs_relevant):
+            # a toggle button with mixed formatting (`aria-pressed="mixed"`) is `mixed`, like a checkbox
+            mixed = flag == "mixed" and flags is LIVE_STATE_FLAGS and flag_state.pressed == "mixed"
+            if (getattr(flag_state, flag) is True or mixed) and not (
+                flag == "expanded" and "aria_expanded" in attrs_relevant
+            ):
                 attrs_str += f" {flag}"
     if state is not None and live_value:
         attrs_str += f' value="{_attribute_value(live_value, max_len_per_attribute, state.value_truncated)}"'

@@ -3,7 +3,6 @@
 read only this text can tell that a goal already holds. Password values and vault secrets never appear in it."""
 
 from collections.abc import Sequence
-from typing import Any
 from urllib.parse import quote
 
 import pytest
@@ -12,16 +11,16 @@ from notte_browser.dom.builder import RawNode, build_dom_tree
 from notte_browser.session import NotteSession
 from notte_core.act.space import without_live_state
 from notte_core.dom_tree import DomNode
-from notte_core.element_state import ElementState
+from notte_core.element_state import ElementState, SelectOption
 
 from .test_dom_builder import _element, _frame, _text
 
 
-def _control(tag: str, state: dict[str, Any] | None, children: Sequence[RawNode] = (), **attributes: str) -> DomNode:
-    """A page with one interactive `tag` holding `state` (the DOM script's `state` payload)."""
+def _control(tag: str, state: ElementState | None, children: Sequence[RawNode] = (), **attributes: str) -> DomNode:
+    """A page with one interactive `tag` holding `state` (sent as the DOM script's `state` payload)."""
     node = _element(tag, f"/body/{tag}", [str(i + 1) for i in range(len(children))], highlight=0, **attributes)
     if state is not None:
-        node["state"] = state  # pyright: ignore[reportGeneralTypeIssues]
+        node["state"] = state.model_dump(by_alias=True, exclude_defaults=True)
     nodes: dict[str, RawNode] = {"0": node, **{str(i + 1): child for i, child in enumerate(children)}}
     root = build_dom_tree(_frame(nodes, "0"), url="https://example.com")
     assert root is not None
@@ -37,36 +36,38 @@ def _line(root: DomNode, secrets: dict[str, str] | None = None) -> str:
 @pytest.mark.parametrize(
     ("tag", "attributes", "state", "children", "expected"),
     [
-        ("input", {"type": "checkbox"}, {"checked": True}, [], 'B1[:]<input type="checkbox" checked></input>'),
+        ("input", {"type": "checkbox"}, ElementState(checked=True), [], 'B1[:]<input type="checkbox" checked></input>'),
         (
             "input",
             {"type": "radio", "name": "c"},
-            {"checked": True},
+            ElementState(checked=True),
             [],
             'B1[:]<input type="radio" name="c" checked></input>',
         ),
-        ("div", {"role": "checkbox"}, {"mixed": True}, [_text("All")], '<div role="checkbox" mixed>All</div>'),
-        ("button", {}, {"pressed": True}, [_text("Bold")], "B1[:]<button pressed>Bold</button>"),
+        ("div", {"role": "checkbox"}, ElementState(mixed=True), [_text("All")], '<div role="checkbox" mixed>All</div>'),
+        ("button", {}, ElementState(pressed=True), [_text("Bold")], "B1[:]<button pressed>Bold</button>"),
+        # a toggle with mixed formatting, as `aria-pressed="mixed"`
+        ("button", {}, ElementState(pressed="mixed"), [_text("Bold")], "B1[:]<button mixed>Bold</button>"),
         (
             "button",
             {"role": "tab"},
-            {"selected": True},
+            ElementState(selected=True),
             [_text("Details")],
             '<button role="tab" selected>Details</button>',
         ),
-        ("button", {}, {"expanded": True}, [_text("Menu")], "B1[:]<button expanded>Menu</button>"),
+        ("button", {}, ElementState(expanded=True), [_text("Menu")], "B1[:]<button expanded>Menu</button>"),
         # `aria-expanded` already says it
         (
             "button",
             {"aria_expanded": "true"},
-            {"expanded": True},
+            ElementState(expanded=True),
             [_text("Menu")],
             '<button aria_expanded="true">Menu</button>',
         ),
         (
             "input",
             {"type": "text", "name": "email"},
-            {"value": "a@b.co"},
+            ElementState(value="a@b.co"),
             [],
             'I1[:]<input type="text" name="email" value="a@b.co"></input>',
         ),
@@ -74,27 +75,42 @@ def _line(root: DomNode, secrets: dict[str, str] | None = None) -> str:
         (
             "input",
             {"name": "q", "value": "served"},
-            {"value": "typed"},
+            ElementState(value="typed"),
             [],
             'I1[:]<input name="q" value="typed"></input>',
         ),
-        ("textarea", {"name": "bio"}, {"value": "Hello"}, [], 'I1[:]<textarea name="bio" value="Hello"></textarea>'),
+        (
+            "textarea",
+            {"name": "bio"},
+            ElementState(value="Hello"),
+            [],
+            'I1[:]<textarea name="bio" value="Hello"></textarea>',
+        ),
         # a textarea's text is its served value: cleared by the user, it holds nothing
-        ("textarea", {"name": "bio"}, {"value": ""}, [_text("served")], 'I1[:]<textarea name="bio"></textarea>'),
+        (
+            "textarea",
+            {"name": "bio"},
+            ElementState(value=""),
+            [_text("served")],
+            'I1[:]<textarea name="bio"></textarea>',
+        ),
         (
             "select",
             {"name": "country"},
-            {
-                "value": "it",
-                "options": [{"value": "fr", "label": "France"}, {"value": "it", "label": "Italy", "selected": True}],
-            },
+            ElementState(
+                value="it",
+                options=(
+                    SelectOption(value="fr", label="France"),
+                    SelectOption(value="it", label="Italy", selected=True),
+                ),
+            ),
             [_text("France Italy")],
             'I1[:]<select name="country" value="Italy">France Italy</select>',
         ),
         (
             "input",
             {"type": "password", "name": "pw"},
-            {"filled": True},
+            ElementState(filled=True),
             [],
             'I1[:]<input type="password" name="pw"></input>',
         ),
@@ -102,25 +118,25 @@ def _line(root: DomNode, secrets: dict[str, str] | None = None) -> str:
         (
             "input",
             {"type": "password", "value": "served-pw"},
-            {"filled": True},
+            ElementState(filled=True),
             [],
             'I1[:]<input type="password"></input>',
         ),
-        ("input", {"type": "checkbox"}, {"checked": False}, [], 'B1[:]<input type="checkbox"></input>'),
-        ("input", {"type": "text"}, {"value": ""}, [], 'I1[:]<input type="text"></input>'),
+        ("input", {"type": "checkbox"}, ElementState(checked=False), [], 'B1[:]<input type="checkbox"></input>'),
+        ("input", {"type": "text"}, ElementState(value=""), [], 'I1[:]<input type="text"></input>'),
         ("input", {"placeholder": "Email"}, None, [], 'I1[:]<input placeholder="Email"></input>'),
         # a submit button's value is its label, not a live value
         (
             "input",
             {"type": "submit", "value": "Send"},
-            {"value": "Send"},
+            ElementState(value="Send"),
             [],
             'B1[:]<input type="submit" value="Send"></input>',
         ),
     ],
 )
 def test_a_control_with_an_id_says_what_it_holds(
-    tag: str, attributes: dict[str, str], state: dict[str, Any] | None, children: list[RawNode], expected: str
+    tag: str, attributes: dict[str, str], state: ElementState | None, children: list[RawNode], expected: str
 ) -> None:
     line = _line(_control(tag, state, children, **attributes))
     if expected.startswith("<"):
@@ -130,17 +146,17 @@ def test_a_control_with_an_id_says_what_it_holds(
 
 
 def test_a_value_is_cut_like_the_other_attributes_and_escaped() -> None:
-    long = _control("input", {"value": "y" * 80}, type="text")
+    long = _control("input", ElementState(value="y" * 80), type="text")
     assert _line(long) == f'I1[:]<input type="text" value="{"y" * 60}..."></input>'
     # cut by the browser (at 200 characters), it says so without a length cap too
-    cut = _control("textarea", {"value": "z" * 200, "valueTruncated": True})
+    cut = _control("textarea", ElementState(value="z" * 200, value_truncated=True))
     assert render_node(cut, secrets={}) == f'<textarea value="{"z" * 200}..."></textarea>'
-    quoted = _control("textarea", {"value": 'say "hi" <b> &\nbye'})
+    quoted = _control("textarea", ElementState(value='say "hi" <b> &\nbye'))
     assert _line(quoted) == 'I1[:]<textarea value="say &quot;hi&quot; &lt;b&gt; &amp;&#10;bye"></textarea>'
 
 
 def test_the_action_descriptions_and_a_render_without_secrets_carry_no_live_state() -> None:
-    root = _control("input", {"value": "a@b.co"}, type="email")
+    root = _control("input", ElementState(value="a@b.co"), type="email")
     space = build_action_space(root)
     assert space.description.endswith('I1[:]<input type="email"></input>')
     with_state = build_action_space(root, secrets={})
@@ -151,10 +167,10 @@ def test_the_action_descriptions_and_a_render_without_secrets_carry_no_live_stat
 
 def test_a_secret_the_vault_typed_is_rendered_as_its_placeholder() -> None:
     secrets = {"real-user@example.com": "{{email}}", "s3cr3t-pw": "{{password}}"}  # pragma: allowlist secret
-    field = _control("input", {"value": "real-user@example.com"}, type="email")
+    field = _control("input", ElementState(value="real-user@example.com"), type="email")
     assert _line(field, secrets) == 'I1[:]<input type="email" value="{{email}}"></input>'
     # also when the browser cut the value partway through the secret
-    cut = _control("input", {"value": "note: s3cr", "valueTruncated": True, "valueDigest": "abc"}, type="text")
+    cut = _control("input", ElementState(value="note: s3cr", value_truncated=True, value_digest="abc"), type="text")
     line = _line(cut, secrets)
     assert "s3cr" not in line and line == 'I1[:]<input type="text" value="note: {{password}}..."></input>'
 
