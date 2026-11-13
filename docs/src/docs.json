@@ -301,7 +301,8 @@
               "features/sessions/secret-proxies/credentials",
               "features/sessions/browser-profiles",
               "concepts/personas",
-              "guides/managed-auth"
+              "guides/managed-auth",
+              "concepts/access-tokens"
             ]
           },
           {

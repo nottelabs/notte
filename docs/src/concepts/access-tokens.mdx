@@ -1,0 +1,167 @@
+---
+title: Access Tokens
+description: Short-lived, revocable credentials minted from an API key, for agents and sandboxes
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+An access token is a short-lived credential that you mint from an API key. Give it to an agent, a sandbox or any other process you trust less than your own code, instead of your API key.
+
+A token acts as the API key it was minted from, but only on a [fixed list of routes](#where-tokens-work). It expires after at most one hour, and you can revoke it at any time without touching the key.
+
+| | API key | Access token |
+|---|---|---|
+| Looks like | `sk-notte-...` | `nat_...` |
+| Lifetime | Until you delete it | 60 seconds to 1 hour, 15 minutes by default |
+| Routes | All | [Sessions, page actions, session files, search, usage and health](#where-tokens-work) |
+| Can mint or revoke tokens | Yes | No |
+
+## How it works
+
+1. Your code keeps the API key and mints a token with `POST /access-tokens`.
+2. You pass only the token to the agent or sandbox, for example as its `NOTTE_API_KEY` environment variable.
+3. The agent sends the token as a bearer token, exactly like an API key.
+4. If the work runs longer than the token's lifetime, your code mints a new one. Tokens cannot be refreshed or extended.
+5. When the work is done, your code revokes the token and stops the sessions it started.
+
+If the token leaks, it stops working on its own when it expires, and it cannot be used to read your API key or to mint more tokens.
+
+## Mint a token
+
+Mint a token with your API key:
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.notte.cc/access-tokens \
+  -H "Authorization: Bearer $NOTTE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"expires_in": 900, "label": "sandbox-42"}'
+```
+
+```http HTTP
+POST https://api.notte.cc/access-tokens
+Authorization: Bearer sk-notte-...
+Content-Type: application/json
+
+{
+  "expires_in": 900,
+  "label": "sandbox-42"
+}
+```
+
+</CodeGroup>
+
+<ParamField body="expires_in" type="integer" default="900">
+  Lifetime in seconds, from `60` to `3600`.
+</ParamField>
+
+<ParamField body="label" type="string">
+  Optional free text of up to 128 characters, for example the id of the sandbox that receives the token.
+</ParamField>
+
+The body is optional. Without one, the token lives 15 minutes and has no label.
+
+The API answers `201 Created`:
+
+```json
+{
+  "id": "<token id>",
+  "token": "nat_...",
+  "expires_at": "2026-11-12T21:15:00Z",
+  "label": "sandbox-42"
+}
+```
+
+<Warning>
+  The `token` value is shown only in this response. Notte stores a hash of it, never the token itself, so it cannot be shown again. Keep the `id`: you need it to revoke the token.
+</Warning>
+
+Only an API key can mint tokens. An API key can have up to 50 active tokens at once; minting more answers `409`. Minting is also rate limited per API key, and answers `429` when you go over the limit.
+
+## Use a token
+
+Send the token in the `Authorization` header, the same way as an API key:
+
+```bash
+curl -X POST https://api.notte.cc/sessions/start \
+  -H "Authorization: Bearer $NOTTE_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+On the routes listed below, the request runs as the parent API key: the same workspace, plan, usage and rate limits.
+
+## Revoke a token
+
+Revoke a token with the API key that minted it:
+
+<CodeGroup>
+
+```bash cURL
+curl -X DELETE https://api.notte.cc/access-tokens/$TOKEN_ID \
+  -H "Authorization: Bearer $NOTTE_API_KEY"
+```
+
+```http HTTP
+DELETE https://api.notte.cc/access-tokens/{id}
+Authorization: Bearer sk-notte-...
+```
+
+</CodeGroup>
+
+The API answers `204 No Content`. Revoking is idempotent: revoking a token that is already revoked also answers `204`. Another API key gets `404`, and a token cannot revoke tokens.
+
+A revoked token stops working on its next request. Revoking the parent API key, or removing the key's owner from the workspace, stops its tokens within 60 seconds.
+
+## Where tokens work
+
+A token works on these routes, and nowhere else:
+
+| Area | Routes |
+|---|---|
+| Sessions | `POST /sessions/start`<br />`GET /sessions`<br />`GET /sessions/{session_id}`<br />`DELETE /sessions/{session_id}/stop` |
+| Page actions | `POST /sessions/{session_id}/page/observe`<br />`POST /sessions/{session_id}/page/execute`<br />`POST /sessions/{session_id}/page/scrape`<br />`POST /sessions/{session_id}/page/screenshot` |
+| Session debug, replay and network logs | `GET /sessions/{session_id}/debug`<br />`GET /sessions/{session_id}/offset`<br />`GET /sessions/{session_id}/network/logs`<br />`GET /sessions/{session_id}/replay` |
+| Session files | `GET /sessions/{session_id}/files`<br />`POST /sessions/{session_id}/files`<br />`GET /sessions/{session_id}/files/{file_id}` |
+| Search, usage and health | `POST /search`<br />`GET /usage`<br />`GET /health` |
+
+Every other route answers `403` with `NotteApiAccessTokenNotAllowedError` when it receives a token, including minting and revoking tokens, functions and their runs, vaults, personas and profiles. Use an API key for those.
+
+## Errors
+
+Token errors use the standard [error envelope](/api-reference/errors#error-response-format) and name their error class in the `X-Error-Class` header:
+
+| `X-Error-Class` | Status | When | `detail` |
+|---|---|---|---|
+| `NotteApiAccessTokenExpiredError` | `401` | The token has expired | `access token expired at <time>; mint a new one` |
+| `NotteApiAccessTokenInvalidError` | `401` | The token is unknown or revoked | `invalid or revoked access token` |
+| `NotteApiAccessTokenNotAllowedError` | `403` | The route does not accept tokens | `access tokens are not accepted on this route; use an API key` |
+
+Check the status code and the `X-Error-Class` header rather than the message text. On a `401`, mint a new token. On a `403`, call the route with an API key instead.
+
+## Lifetimes and what outlives a token
+
+The token itself lives for `expires_in` seconds, one hour at most, or until you revoke it.
+
+Some routes on the list return other credentials, such as session links and signed download URLs. Those keep their own lifetime: when the token expires or is revoked, they keep working.
+
+| Credential | Returned by | Valid for |
+|---|---|---|
+| Session CDP, viewer and debug links | `POST /sessions/start`, `GET /sessions/{session_id}`, `GET /sessions/{session_id}/debug` | Until the session ends |
+| Signed replay URLs | `GET /sessions/{session_id}/replay` | Up to 1 hour |
+| Signed network log URLs | `GET /sessions/{session_id}/network/logs` | Up to 1 hour |
+| File download links | `GET /sessions/{session_id}/files/{file_id}` | 5 minutes |
+
+<Warning>
+  Whoever holds a session's CDP link controls its browser: they can read the session's cookies and any secret the session fills in. Stopping the session cuts off its CDP, viewer and debug links. When you revoke a token, also stop the sessions it started.
+</Warning>
+
+## Manage tokens in the console
+
+In the [Notte Console](https://console.notte.cc), open **Settings → Access tokens** to:
+
+- create a token: choose the API key it acts as, a name and a lifetime of up to one hour. The console shows the token once.
+- list tokens, filtered by status: active, expired or revoked.
+- revoke a token.

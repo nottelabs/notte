@@ -63,6 +63,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 - [Browser Profiles](https://docs.notte.cc/features/sessions/browser-profiles.md): Persist browser state across sessions
 - [Persona Identities](https://docs.notte.cc/concepts/personas.md): Self-service identities for web automation (account creation, 2FA,etc.)
 - [Managed Auth](https://docs.notte.cc/guides/managed-auth.md): Start browser sessions with saved authentication connections
+- [Access Tokens](https://docs.notte.cc/concepts/access-tokens.md): Short-lived, revocable credentials minted from an API key, for agents and sandboxes
 
 ## Functions
 

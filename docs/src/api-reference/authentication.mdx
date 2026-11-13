@@ -38,9 +38,13 @@ curl https://api.notte.cc/sessions \
   -H "Authorization: Bearer $NOTTE_API_KEY"
 ```
 
+## Access tokens
+
+To give an agent or a sandbox a credential that expires, mint a short-lived access token (`nat_...`) from your API key instead of handing out the key. A token is sent in the same `Authorization: Bearer` header and acts as its API key on sessions, page actions, session files, search and usage. It expires within an hour and can be revoked at any time. See [Access tokens](/concepts/access-tokens).
+
 ## Request headers
 
 | Header | Required | Description |
 |--------|----------|-------------|
-| `Authorization` | Yes | Bearer token with your API key |
+| `Authorization` | Yes | Bearer token with your API key or an [access token](/concepts/access-tokens) |
 | `Content-Type` | Yes | `application/json` for POST/PATCH requests |
