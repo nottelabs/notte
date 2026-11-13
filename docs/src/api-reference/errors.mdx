@@ -13,7 +13,8 @@ The API uses standard HTTP status codes and returns structured error responses.
 | Status | Description |
 |--------|-------------|
 | `200` | Success |
-| `401` | Authentication failed (invalid or missing API key), or your plan's credits are exhausted |
+| `401` | Authentication failed (invalid or missing API key, or an expired or revoked access token), or your plan's credits are exhausted |
+| `403` | Forbidden, for example a route that does not accept [access tokens](/concepts/access-tokens#where-tokens-work) |
 | `422` | Validation error - malformed request or invalid parameters |
 | `429` | Rate limit exceeded, or too many active sessions, agents, vaults, or personas for your plan |
 | `500` | Internal server error |
@@ -50,6 +51,30 @@ Header `X-Error-Class: NotteApiInvalidApiKeyError`:
   "message": "Unauthorized. Invalid API key."
 }
 ```
+
+### Access tokens (401, 403)
+
+Requests made with an [access token](/concepts/access-tokens) can fail with one of these classes, in the standard envelope:
+
+| `X-Error-Class` | Status | `detail` |
+|---|---|---|
+| `NotteApiAccessTokenExpiredError` | `401` | `access token expired at <time>; mint a new one` |
+| `NotteApiAccessTokenInvalidError` | `401` | `invalid or revoked access token` |
+| `NotteApiAccessTokenNotAllowedError` | `403` | `access tokens are not accepted on this route; use an API key` |
+
+Header `X-Error-Class: NotteApiAccessTokenNotAllowedError`:
+
+```json
+{
+  "detail": "access tokens are not accepted on this route; use an API key",
+  "session_id": null,
+  "status": 403,
+  "error": "access tokens are not accepted on this route; use an API key",
+  "message": "access tokens are not accepted on this route; use an API key"
+}
+```
+
+On a `401`, mint a new token. On a `403`, the route needs an API key.
 
 ### Validation (422)
 
