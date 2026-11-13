@@ -9564,334 +9564,6 @@
         "x-codeSamples": []
       }
     },
-    "/usage": {
-      "get": {
-        "tags": [
-          "usage"
-        ],
-        "summary": "Get Usage",
-        "operationId": "get_usage",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "period",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "The montly period to get usage for, i.e May 2025",
-              "title": "Period"
-            },
-            "description": "The montly period to get usage for, i.e May 2025"
-          },
-          {
-            "name": "x-notte-request-origin",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Request-Origin"
-            }
-          },
-          {
-            "name": "x-notte-sdk-version",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Sdk-Version"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UsageResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "x-hidden": true
-      }
-    },
-    "/usage/logs": {
-      "get": {
-        "tags": [
-          "usage"
-        ],
-        "summary": "Get Usage Logs",
-        "operationId": "get_usage_logs",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "endpoint",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "enum": [
-                    "sessions.start",
-                    "sessions.stop",
-                    "sessions.status",
-                    "sessions.pause",
-                    "sessions.resume",
-                    "sessions.cookies.set",
-                    "sessions.cookies.get",
-                    "sessions.list",
-                    "sessions.replay",
-                    "sessions.offset",
-                    "sessions.debug.info",
-                    "sessions.debug.info.tab",
-                    "sessions.debug.recording.wss",
-                    "sessions.debug.log.wss",
-                    "sessions.debug.tab.wss",
-                    "sessions.debug.browser.wss",
-                    "sessions.network.logs",
-                    "sessions.script",
-                    "page.observe",
-                    "page.execute",
-                    "page.scrape",
-                    "profiles.create",
-                    "profiles.duplicate",
-                    "profiles.get",
-                    "profiles.list",
-                    "profiles.delete",
-                    "profiles.cookies.set",
-                    "profiles.cookies.get",
-                    "vaults.create",
-                    "vaults.list",
-                    "vaults.delete",
-                    "vaults.update",
-                    "vaults.credentials.add",
-                    "vaults.credentials.get",
-                    "vaults.credentials.delete",
-                    "vaults.credentials.list",
-                    "vaults.credit_card.set",
-                    "vaults.credit_card.get",
-                    "vaults.credit_card.delete",
-                    "personas.create",
-                    "personas.list",
-                    "personas.delete",
-                    "personas.emails",
-                    "personas.sms",
-                    "personas.number.create",
-                    "personas.get",
-                    "personas.update",
-                    "mailboxes.connect",
-                    "mailboxes.sync",
-                    "mailboxes.list",
-                    "mailboxes.get",
-                    "mailboxes.update",
-                    "mailboxes.delete",
-                    "sessions.files.upload",
-                    "sessions.files.list",
-                    "sessions.files.download",
-                    "sessions.files.delete",
-                    "agents.start",
-                    "agents.stop",
-                    "agents.status",
-                    "agents.list",
-                    "agents.replay",
-                    "agents.debug.recording",
-                    "agents.save",
-                    "agents.repeat",
-                    "agents.script",
-                    "scrape",
-                    "scrape_from_html",
-                    "search",
-                    "usage",
-                    "workflows.upload",
-                    "workflows.download",
-                    "workflows.list",
-                    "workflows.delete",
-                    "workflows.update",
-                    "workflows.fork",
-                    "workflows.rollback",
-                    "workflows.schedule.create",
-                    "workflows.schedule.delete",
-                    "workflows.runs.create",
-                    "workflows.runs.start",
-                    "workflows.runs.get",
-                    "workflows.runs.list",
-                    "workflows.runs.update",
-                    "workflows.runs.stop"
-                  ],
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "The endpoint to filter logs by",
-              "title": "Endpoint"
-            },
-            "description": "The endpoint to filter logs by"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "description": "Page number",
-              "default": 1,
-              "title": "Page"
-            },
-            "description": "Page number"
-          },
-          {
-            "name": "page_size",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "description": "Number of items per page",
-              "default": 10,
-              "title": "Page Size"
-            },
-            "description": "Number of items per page"
-          },
-          {
-            "name": "only_active",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "description": "Whether to only return active sessions",
-              "default": true,
-              "title": "Only Active"
-            },
-            "description": "Whether to only return active sessions"
-          },
-          {
-            "name": "only_current_token",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "description": "Whether to only return sessions for the current token (apikey)",
-              "default": false,
-              "title": "Only Current Token"
-            },
-            "description": "Whether to only return sessions for the current token (apikey)"
-          },
-          {
-            "name": "include_system",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "description": "Whether to include internal system sessions",
-              "default": true,
-              "title": "Include System"
-            },
-            "description": "Whether to include internal system sessions"
-          },
-          {
-            "name": "x-notte-request-origin",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Request-Origin"
-            }
-          },
-          {
-            "name": "x-notte-sdk-version",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Sdk-Version"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_UsageLog_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "x-hidden": true
-      }
-    },
     "/anything/start": {
       "post": {
         "tags": [
@@ -10373,201 +10045,6 @@
             "label": "curl"
           }
         ]
-      }
-    },
-    "/audit-events": {
-      "get": {
-        "tags": [
-          "audit"
-        ],
-        "summary": "List Audit Events",
-        "operationId": "list_audit_events",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "description": "Events per page",
-              "default": 50,
-              "title": "Limit"
-            },
-            "description": "Events per page"
-          },
-          {
-            "name": "cursor",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "`next_cursor` from the previous page",
-              "title": "Cursor"
-            },
-            "description": "`next_cursor` from the previous page"
-          },
-          {
-            "name": "since",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "format": "date-time"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Only events at or after this time (ISO-8601)",
-              "title": "Since"
-            },
-            "description": "Only events at or after this time (ISO-8601)"
-          },
-          {
-            "name": "until",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "format": "date-time"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Only events before this time (ISO-8601)",
-              "title": "Until"
-            },
-            "description": "Only events before this time (ISO-8601)"
-          },
-          {
-            "name": "action",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Only events with this action, e.g. `created`",
-              "title": "Action"
-            },
-            "description": "Only events with this action, e.g. `created`"
-          },
-          {
-            "name": "entity_type",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Only events about this kind of resource, e.g. `api_key`",
-              "title": "Entity Type"
-            },
-            "description": "Only events about this kind of resource, e.g. `api_key`"
-          },
-          {
-            "name": "actor_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Only events performed by this user",
-              "title": "Actor Id"
-            },
-            "description": "Only events performed by this user"
-          },
-          {
-            "name": "x-notte-request-origin",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Request-Origin"
-            }
-          },
-          {
-            "name": "x-notte-sdk-version",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Sdk-Version"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuditEventListResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "x-codeSamples": []
       }
     },
     "/health": {
@@ -16621,6 +16098,473 @@
         "x-hidden": true
       }
     },
+    "/audit-events": {
+      "get": {
+        "description": "List audit events for the caller's workspace, newest first.\n\nWith an organization API key, owners and admins get the whole organization's\naudit trail; members only get events about them or performed by them. A\npersonal API key returns the personal workspace's events. Only approved customer-facing details appear in `metadata`.",
+        "operationId": "list_audit_events",
+        "parameters": [
+          {
+            "description": "Events per page",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "description": "Events per page",
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "`next_cursor` from the previous page",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "description": "`next_cursor` from the previous page",
+              "title": "Cursor",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "description": "Only events at or after this time (ISO-8601)",
+            "in": "query",
+            "name": "since",
+            "required": false,
+            "schema": {
+              "description": "Only events at or after this time (ISO-8601)",
+              "format": "date-time",
+              "title": "Since",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "description": "Only events before this time (ISO-8601)",
+            "in": "query",
+            "name": "until",
+            "required": false,
+            "schema": {
+              "description": "Only events before this time (ISO-8601)",
+              "format": "date-time",
+              "title": "Until",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "description": "Only events with this action, e.g. `created`",
+            "in": "query",
+            "name": "action",
+            "required": false,
+            "schema": {
+              "description": "Only events with this action, e.g. `created`",
+              "title": "Action",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "description": "Only events about this kind of resource, e.g. `api_key`",
+            "in": "query",
+            "name": "entity_type",
+            "required": false,
+            "schema": {
+              "description": "Only events about this kind of resource, e.g. `api_key`",
+              "title": "Entity Type",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "description": "Only events performed by this user",
+            "in": "query",
+            "name": "actor_id",
+            "required": false,
+            "schema": {
+              "description": "Only events performed by this user",
+              "title": "Actor Id",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-notte-request-origin",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Request-Origin",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-notte-sdk-version",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Sdk-Version",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditEventListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List Audit Events",
+        "tags": [
+          "audit"
+        ],
+        "x-codeSamples": []
+      }
+    },
+    "/usage": {
+      "get": {
+        "description": "Get the monthly usage information for the user including (current plan, credits consumption, etc.)",
+        "operationId": "get_usage",
+        "parameters": [
+          {
+            "description": "The montly period to get usage for, i.e May 2025",
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "description": "The montly period to get usage for, i.e May 2025",
+              "title": "Period",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-notte-request-origin",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Request-Origin",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-notte-sdk-version",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Sdk-Version",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Usage",
+        "tags": [
+          "usage"
+        ],
+        "x-hidden": true
+      }
+    },
+    "/usage/logs": {
+      "get": {
+        "description": "Get the usage logs of the user, i.e all the API calls made by the user. Can be filtered by endpoint.",
+        "operationId": "get_usage_logs",
+        "parameters": [
+          {
+            "description": "The endpoint to filter logs by",
+            "in": "query",
+            "name": "endpoint",
+            "required": false,
+            "schema": {
+              "description": "The endpoint to filter logs by",
+              "enum": [
+                "sessions.start",
+                "sessions.stop",
+                "sessions.status",
+                "sessions.pause",
+                "sessions.resume",
+                "sessions.cookies.set",
+                "sessions.cookies.get",
+                "sessions.list",
+                "sessions.replay",
+                "sessions.offset",
+                "sessions.debug.info",
+                "sessions.debug.info.tab",
+                "sessions.debug.recording.wss",
+                "sessions.debug.log.wss",
+                "sessions.debug.tab.wss",
+                "sessions.debug.browser.wss",
+                "sessions.network.logs",
+                "sessions.script",
+                "page.observe",
+                "page.execute",
+                "page.scrape",
+                "profiles.create",
+                "profiles.duplicate",
+                "profiles.get",
+                "profiles.list",
+                "profiles.delete",
+                "profiles.cookies.set",
+                "profiles.cookies.get",
+                "vaults.create",
+                "vaults.list",
+                "vaults.delete",
+                "vaults.update",
+                "vaults.credentials.add",
+                "vaults.credentials.get",
+                "vaults.credentials.delete",
+                "vaults.credentials.list",
+                "vaults.credit_card.set",
+                "vaults.credit_card.get",
+                "vaults.credit_card.delete",
+                "personas.create",
+                "personas.list",
+                "personas.delete",
+                "personas.emails",
+                "personas.sms",
+                "personas.number.create",
+                "personas.get",
+                "personas.update",
+                "mailboxes.connect",
+                "mailboxes.sync",
+                "mailboxes.list",
+                "mailboxes.get",
+                "mailboxes.update",
+                "mailboxes.delete",
+                "sessions.files.upload",
+                "sessions.files.list",
+                "sessions.files.download",
+                "sessions.files.delete",
+                "agents.start",
+                "agents.stop",
+                "agents.status",
+                "agents.list",
+                "agents.replay",
+                "agents.debug.recording",
+                "agents.save",
+                "agents.repeat",
+                "agents.script",
+                "scrape",
+                "scrape_from_html",
+                "search",
+                "usage",
+                "workflows.upload",
+                "workflows.download",
+                "workflows.list",
+                "workflows.delete",
+                "workflows.update",
+                "workflows.fork",
+                "workflows.rollback",
+                "workflows.schedule.create",
+                "workflows.schedule.delete",
+                "workflows.runs.create",
+                "workflows.runs.start",
+                "workflows.runs.get",
+                "workflows.runs.list",
+                "workflows.runs.update",
+                "workflows.runs.stop"
+              ],
+              "title": "Endpoint",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Page number",
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "description": "Page number",
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Number of items per page",
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "description": "Number of items per page",
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Whether to only return active sessions",
+            "in": "query",
+            "name": "only_active",
+            "required": false,
+            "schema": {
+              "default": true,
+              "description": "Whether to only return active sessions",
+              "title": "Only Active",
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Whether to only return sessions for the current token (apikey)",
+            "in": "query",
+            "name": "only_current_token",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "Whether to only return sessions for the current token (apikey)",
+              "title": "Only Current Token",
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Whether to include internal system sessions",
+            "in": "query",
+            "name": "include_system",
+            "required": false,
+            "schema": {
+              "default": true,
+              "description": "Whether to include internal system sessions",
+              "title": "Include System",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-notte-request-origin",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Request-Origin",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-notte-sdk-version",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Sdk-Version",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponse_UsageLog_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Usage Logs",
+        "tags": [
+          "usage"
+        ],
+        "x-hidden": true
+      }
+    },
     "/agents/start": {
       "post": {
         "tags": [
@@ -18548,156 +18492,6 @@
         "additionalProperties": false,
         "type": "object",
         "title": "ApiSessionStartRequest"
-      },
-      "AuditEvent": {
-        "properties": {
-          "id": {
-            "type": "integer",
-            "title": "Id"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          },
-          "entity_type": {
-            "type": "string",
-            "title": "Entity Type"
-          },
-          "entity_id": {
-            "type": "string",
-            "title": "Entity Id"
-          },
-          "action": {
-            "type": "string",
-            "title": "Action"
-          },
-          "user_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "User Id"
-          },
-          "actor_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Actor Id"
-          },
-          "actor_type": {
-            "type": "string",
-            "title": "Actor Type"
-          },
-          "actor_email": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Actor Email",
-            "description": "Email of the actor when it is a workspace member the caller may see. Null for system actors."
-          },
-          "actor_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Actor Name"
-          },
-          "resource_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Resource Name",
-            "description": "Human-readable name of the resource (an API key's label, a secret's name, a member's email) when one is known. Never a secret value."
-          },
-          "source": {
-            "type": "string",
-            "title": "Source"
-          },
-          "metadata": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Metadata"
-          },
-          "org_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Org Id"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "created_at",
-          "entity_type",
-          "entity_id",
-          "action",
-          "actor_type",
-          "source"
-        ],
-        "title": "AuditEvent"
-      },
-      "AuditEventListResponse": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/AuditEvent"
-            },
-            "type": "array",
-            "title": "Items"
-          },
-          "next_cursor": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Next Cursor",
-            "description": "Opaque cursor for the next (older) page. Null when there are no more events."
-          },
-          "has_more": {
-            "type": "boolean",
-            "title": "Has More"
-          }
-        },
-        "type": "object",
-        "required": [
-          "items",
-          "has_more"
-        ],
-        "title": "AuditEventListResponse"
       },
       "BaseModel": {
         "properties": {},
@@ -27087,6 +26881,16 @@
             "description": "Block ads and trackers in managed browsers using Basic filtering. Set false to disable. Does not configure externally supplied CDP browsers.",
             "default": true
           },
+          "dialog_policy": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "client"
+            ],
+            "title": "Dialog Policy",
+            "description": "Who answers JavaScript dialogs (alert, confirm, prompt, beforeunload). `auto` (default): Notte answers them, dismissing alert, confirm and prompt and accepting beforeunload. `client`: Notte leaves them for your CDP client to accept or dismiss, and dismisses one nobody answers within 10 seconds.",
+            "default": "auto"
+          },
           "advanced_stealth": {
             "type": "boolean",
             "title": "Advanced Stealth",
@@ -30104,43 +29908,6 @@
           "has_previous"
         ],
         "title": "PaginatedResponse[SessionResponse]"
-      },
-      "PaginatedResponse_UsageLog_": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/UsageLog"
-            },
-            "type": "array",
-            "title": "Items"
-          },
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
-          },
-          "has_next": {
-            "type": "boolean",
-            "title": "Has Next"
-          },
-          "has_previous": {
-            "type": "boolean",
-            "title": "Has Previous",
-            "readOnly": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "items",
-          "page",
-          "page_size",
-          "has_next",
-          "has_previous"
-        ],
-        "title": "PaginatedResponse[UsageLog]"
       },
       "PaginatedResponse_Vault_": {
         "properties": {
@@ -35131,20 +34898,6 @@
         ],
         "title": "StyleguideTimeout"
       },
-      "SubscriptionType": {
-        "type": "string",
-        "enum": [
-          "free",
-          "pro",
-          "growth",
-          "playground",
-          "admin",
-          "minoan",
-          "proofs",
-          "interview"
-        ],
-        "title": "SubscriptionType"
-      },
       "SwitchTabAction": {
         "properties": {
           "type": {
@@ -35695,120 +35448,6 @@
           "file_path"
         ],
         "title": "UploadFileAction"
-      },
-      "UsageLog": {
-        "properties": {
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          },
-          "duration_ms": {
-            "type": "integer",
-            "title": "Duration Ms"
-          },
-          "endpoint": {
-            "type": "string",
-            "title": "Endpoint"
-          }
-        },
-        "type": "object",
-        "required": [
-          "created_at",
-          "duration_ms",
-          "endpoint"
-        ],
-        "title": "UsageLog"
-      },
-      "UsageResponse": {
-        "properties": {
-          "plan_type": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/SubscriptionType"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "title": "Plan Type"
-          },
-          "period": {
-            "type": "string",
-            "title": "Period"
-          },
-          "session_count": {
-            "type": "integer",
-            "title": "Session Count"
-          },
-          "function_count": {
-            "type": "integer",
-            "title": "Function Count"
-          },
-          "browser_usage_cost": {
-            "type": "number",
-            "title": "Browser Usage Cost"
-          },
-          "proxy_usage_cost": {
-            "type": "number",
-            "title": "Proxy Usage Cost"
-          },
-          "llm_usage_cost": {
-            "type": "number",
-            "title": "Llm Usage Cost"
-          },
-          "function_usage_cost": {
-            "type": "number",
-            "title": "Function Usage Cost"
-          },
-          "total_cost": {
-            "type": "number",
-            "title": "Total Cost"
-          },
-          "subscription_limit_amount": {
-            "type": "number",
-            "title": "Subscription Limit Amount"
-          },
-          "topup_limit_amount": {
-            "type": "number",
-            "title": "Topup Limit Amount"
-          },
-          "subscription_balance_amount": {
-            "type": "number",
-            "title": "Subscription Balance Amount"
-          },
-          "topup_balance_amount": {
-            "type": "number",
-            "title": "Topup Balance Amount"
-          },
-          "balance_amount": {
-            "type": "number",
-            "title": "Balance Amount"
-          },
-          "is_usage_limit_exceeded": {
-            "type": "boolean",
-            "title": "Is Usage Limit Exceeded"
-          }
-        },
-        "type": "object",
-        "required": [
-          "plan_type",
-          "period",
-          "session_count",
-          "function_count",
-          "browser_usage_cost",
-          "proxy_usage_cost",
-          "llm_usage_cost",
-          "function_usage_cost",
-          "total_cost",
-          "subscription_limit_amount",
-          "topup_limit_amount",
-          "subscription_balance_amount",
-          "topup_balance_amount",
-          "balance_amount",
-          "is_usage_limit_exceeded"
-        ],
-        "title": "UsageResponse"
       },
       "ValidationError": {
         "properties": {
@@ -36405,6 +36044,361 @@
           "time_ms"
         ],
         "title": "WaitAction"
+      },
+      "AuditEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "actor_email": {
+            "description": "Email of the actor when it is a workspace member the caller may see. Null for system actors.",
+            "title": "Actor Email",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "actor_id": {
+            "title": "Actor Id",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "actor_name": {
+            "title": "Actor Name",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "actor_type": {
+            "title": "Actor Type",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "entity_id": {
+            "title": "Entity Id",
+            "type": "string"
+          },
+          "entity_type": {
+            "title": "Entity Type",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "metadata": {
+            "additionalProperties": false,
+            "properties": {
+              "changes": {
+                "additionalProperties": false,
+                "properties": {
+                  "role": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "new": {
+                        "enum": [
+                          "owner",
+                          "admin",
+                          "member"
+                        ],
+                        "type": "string"
+                      },
+                      "old": {
+                        "enum": [
+                          "owner",
+                          "admin",
+                          "member"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "old",
+                      "new"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "role"
+                ],
+                "type": "object"
+              },
+              "display_name": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "role": {
+                "enum": [
+                  "owner",
+                  "admin",
+                  "member"
+                ],
+                "type": "string"
+              },
+              "target_email": {
+                "type": "string"
+              }
+            },
+            "required": [],
+            "title": "Metadata",
+            "type": "object"
+          },
+          "org_id": {
+            "title": "Org Id",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "resource_name": {
+            "description": "Human-readable name of the resource (an API key's label, a secret's name, a member's email) when one is known. Never a secret value.",
+            "title": "Resource Name",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "created_at",
+          "entity_type",
+          "entity_id",
+          "action",
+          "user_id",
+          "actor_id",
+          "actor_type",
+          "actor_email",
+          "actor_name",
+          "resource_name",
+          "source",
+          "metadata",
+          "org_id"
+        ],
+        "title": "AuditEvent",
+        "type": "object"
+      },
+      "AuditEventListResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AuditEvent"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "description": "Opaque cursor for the next (older) page. Null when there are no more events.",
+            "title": "Next Cursor",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "title": "AuditEventListResponse",
+        "type": "object"
+      },
+      "PaginatedResponse_UsageLog_": {
+        "properties": {
+          "has_next": {
+            "title": "Has Next",
+            "type": "boolean"
+          },
+          "has_previous": {
+            "readOnly": true,
+            "title": "Has Previous",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/UsageLog"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "page": {
+            "title": "Page",
+            "type": "integer"
+          },
+          "page_size": {
+            "title": "Page Size",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "page_size",
+          "has_next",
+          "has_previous"
+        ],
+        "title": "PaginatedResponse[UsageLog]",
+        "type": "object"
+      },
+      "SubscriptionType": {
+        "enum": [
+          "free",
+          "pro",
+          "growth",
+          "playground",
+          "admin",
+          "minoan",
+          "proofs",
+          "interview"
+        ],
+        "title": "SubscriptionType",
+        "type": "string"
+      },
+      "UsageLog": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "duration_ms": {
+            "title": "Duration Ms",
+            "type": "integer"
+          },
+          "endpoint": {
+            "title": "Endpoint",
+            "type": "string"
+          }
+        },
+        "required": [
+          "created_at",
+          "duration_ms",
+          "endpoint"
+        ],
+        "title": "UsageLog",
+        "type": "object"
+      },
+      "UsageResponse": {
+        "properties": {
+          "balance_amount": {
+            "title": "Balance Amount",
+            "type": "number"
+          },
+          "browser_usage_cost": {
+            "title": "Browser Usage Cost",
+            "type": "number"
+          },
+          "function_count": {
+            "title": "Function Count",
+            "type": "integer"
+          },
+          "function_usage_cost": {
+            "title": "Function Usage Cost",
+            "type": "number"
+          },
+          "is_usage_limit_exceeded": {
+            "title": "Is Usage Limit Exceeded",
+            "type": "boolean"
+          },
+          "llm_usage_cost": {
+            "title": "Llm Usage Cost",
+            "type": "number"
+          },
+          "period": {
+            "title": "Period",
+            "type": "string"
+          },
+          "plan_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SubscriptionType"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Plan Type"
+          },
+          "proxy_usage_cost": {
+            "title": "Proxy Usage Cost",
+            "type": "number"
+          },
+          "session_count": {
+            "title": "Session Count",
+            "type": "integer"
+          },
+          "subscription_balance_amount": {
+            "title": "Subscription Balance Amount",
+            "type": "number"
+          },
+          "subscription_limit_amount": {
+            "title": "Subscription Limit Amount",
+            "type": "number"
+          },
+          "topup_balance_amount": {
+            "title": "Topup Balance Amount",
+            "type": "number"
+          },
+          "topup_limit_amount": {
+            "title": "Topup Limit Amount",
+            "type": "number"
+          },
+          "total_cost": {
+            "title": "Total Cost",
+            "type": "number"
+          }
+        },
+        "required": [
+          "plan_type",
+          "period",
+          "session_count",
+          "function_count",
+          "browser_usage_cost",
+          "proxy_usage_cost",
+          "llm_usage_cost",
+          "function_usage_cost",
+          "total_cost",
+          "subscription_limit_amount",
+          "topup_limit_amount",
+          "subscription_balance_amount",
+          "topup_balance_amount",
+          "balance_amount",
+          "is_usage_limit_exceeded"
+        ],
+        "title": "UsageResponse",
+        "type": "object"
       },
       "AgentFunctionCodeResponse": {
         "properties": {

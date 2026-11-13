@@ -1048,24 +1048,6 @@ export const connectLinkSubmit = <ThrowOnError extends boolean = false>(options:
 export const connectLinkStatus = <ThrowOnError extends boolean = false>(options: Options<ConnectLinkStatusData, ThrowOnError>): RequestResult<ConnectLinkStatusResponses, ConnectLinkStatusErrors, ThrowOnError> => (options.client ?? client).get<ConnectLinkStatusResponses, ConnectLinkStatusErrors, ThrowOnError>({ url: '/managed-auth/connect-links/status', ...options });
 
 /**
- * Get Usage
- */
-export const getUsage = <ThrowOnError extends boolean = false>(options?: Options<GetUsageData, ThrowOnError>): RequestResult<GetUsageResponses, GetUsageErrors, ThrowOnError> => (options?.client ?? client).get<GetUsageResponses, GetUsageErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/usage',
-    ...options
-});
-
-/**
- * Get Usage Logs
- */
-export const getUsageLogs = <ThrowOnError extends boolean = false>(options?: Options<GetUsageLogsData, ThrowOnError>): RequestResult<GetUsageLogsResponses, GetUsageLogsErrors, ThrowOnError> => (options?.client ?? client).get<GetUsageLogsResponses, GetUsageLogsErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/usage/logs',
-    ...options
-});
-
-/**
  * Anything Start
  */
 export const anythingStart = <ThrowOnError extends boolean = false>(options: Options<AnythingStartData, ThrowOnError>): RequestResult<AnythingStartResponses, AnythingStartErrors, ThrowOnError> => (options.client ?? client).post<AnythingStartResponses, AnythingStartErrors, ThrowOnError>({
@@ -1124,15 +1106,6 @@ export const deleteSecret = <ThrowOnError extends boolean = false>(options: Opti
 export const listSecretProxyHostPresets = <ThrowOnError extends boolean = false>(options?: Options<ListSecretProxyHostPresetsData, ThrowOnError>): RequestResult<ListSecretProxyHostPresetsResponses, ListSecretProxyHostPresetsErrors, ThrowOnError> => (options?.client ?? client).get<ListSecretProxyHostPresetsResponses, ListSecretProxyHostPresetsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/secret-proxy/host-presets',
-    ...options
-});
-
-/**
- * List Audit Events
- */
-export const listAuditEvents = <ThrowOnError extends boolean = false>(options?: Options<ListAuditEventsData, ThrowOnError>): RequestResult<ListAuditEventsResponses, ListAuditEventsErrors, ThrowOnError> => (options?.client ?? client).get<ListAuditEventsResponses, ListAuditEventsErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/audit-events',
     ...options
 });
 
@@ -1524,6 +1497,43 @@ export const scrapeFromHtml = <ThrowOnError extends boolean = false>(options: Op
         'Content-Type': 'application/json',
         ...options.headers
     }
+});
+
+/**
+ * List Audit Events
+ *
+ * List audit events for the caller's workspace, newest first.
+ *
+ * With an organization API key, owners and admins get the whole organization's
+ * audit trail; members only get events about them or performed by them. A
+ * personal API key returns the personal workspace's events. Only approved customer-facing details appear in `metadata`.
+ */
+export const listAuditEvents = <ThrowOnError extends boolean = false>(options?: Options<ListAuditEventsData, ThrowOnError>): RequestResult<ListAuditEventsResponses, ListAuditEventsErrors, ThrowOnError> => (options?.client ?? client).get<ListAuditEventsResponses, ListAuditEventsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/audit-events',
+    ...options
+});
+
+/**
+ * Get Usage
+ *
+ * Get the monthly usage information for the user including (current plan, credits consumption, etc.)
+ */
+export const getUsage = <ThrowOnError extends boolean = false>(options?: Options<GetUsageData, ThrowOnError>): RequestResult<GetUsageResponses, GetUsageErrors, ThrowOnError> => (options?.client ?? client).get<GetUsageResponses, GetUsageErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/usage',
+    ...options
+});
+
+/**
+ * Get Usage Logs
+ *
+ * Get the usage logs of the user, i.e all the API calls made by the user. Can be filtered by endpoint.
+ */
+export const getUsageLogs = <ThrowOnError extends boolean = false>(options?: Options<GetUsageLogsData, ThrowOnError>): RequestResult<GetUsageLogsResponses, GetUsageLogsErrors, ThrowOnError> => (options?.client ?? client).get<GetUsageLogsResponses, GetUsageLogsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/usage/logs',
+    ...options
 });
 
 /**
