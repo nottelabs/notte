@@ -6,26 +6,26 @@ L2[:]<a href="https://www.article.com/"></a>
 _[:]1. Shipping & Delivery
 _[:]Contact Details
 _[:]Email
-I1[:]<input type="email" value="" name="email"></input>
+I1[:]<input type="email" name="email"></input>
 _[:]Phone
-I2[:]<input type="tel" value="" placeholder="(000) 000-0000" name="tel"></input>
+I2[:]<input type="tel" placeholder="(000) 000-0000" name="tel"></input>
 _[:]Extension (Optional)
-I3[:]<input type="tel" value="" placeholder="0000" name="tel-extension"></input>
+I3[:]<input type="tel" placeholder="0000" name="tel-extension"></input>
 _[:]Delivery Address
 _[:]First Name
-I4[:]<input type="text" value="" name="given-name"></input>
+I4[:]<input type="text" name="given-name"></input>
 _[:]Last Name
-I5[:]<input type="text" value="" name="family-name"></input>
+I5[:]<input type="text" name="family-name"></input>
 _[:]Street Address
-I6[:]<input type="text" value="" placeholder="Street Address" name="address-line1"></input>
+I6[:]<input type="text" placeholder="Street Address" name="address-line1"></input>
 _[:]Apartment / Unit / Suite (Optional)
-I7[:]<input type="text" value="" placeholder="e.g. 412 or Unit 412" name="address-line2"></input>
+I7[:]<input type="text" placeholder="e.g. 412 or Unit 412" name="address-line2"></input>
 _[:]ZIP
-I8[:]<input type="text" value="94117" name="postal-code"></input>
+I8[:]<input type="text" name="postal-code" value="94117"></input>
 _[:]City
-I9[:]<input type="text" value="San Francisco" name="address-level2"></input>
+I9[:]<input type="text" name="address-level2" value="San Francisco"></input>
 _[:]State
-I10[:]<select>Select…
+I10[:]<select value="Select…">Select…
 Alabama
 Alaska
 Arizona
@@ -78,7 +78,7 @@ West Virginia
 Wisconsin
 Wyoming</select>
 _[:]Country
-I11[:]<select>Select…
+I11[:]<select value="Select…">Select…
 United States
 Canada</select>
 _[:]Delivery Method
@@ -98,7 +98,7 @@ _[:]Delivery ETA:
 _[:]Jul 17 – 31
 L3[:]<a href="https://www.article.com/product/28855/portima-c-side-table-o..."></a>
 L4[:]<a href="https://www.article.com/product/28855/portima-c-side-table-o...">Portima C Side Table - Oak</a>
-I12[:]<select aria_label="Product quantity selector">1
+I12[:]<select aria_label="Product quantity selector" value="1">1
 2
 3
 4

@@ -1,5 +1,5 @@
 """`observe()` reads the live state of form controls (value, checked, select options) into `DomNode.state`,
-without changing the action ids or the rendered descriptions."""
+without changing the action ids. The page description renders it inline (`checked`, `value="..."`)."""
 
 from collections.abc import AsyncIterator
 from typing import Literal
@@ -106,10 +106,18 @@ async def test_observe_reads_values_changed_after_load(session: NotteSession) ->
     bio = states["bio"]
     assert bio is not None and bio.value == "x" * 200 and bio.value_truncated
 
-    # same ids, types, labels and descriptions: the state is not rendered
+    # same ids, types and labels; the description says what each control now holds
     assert after_actions == before_actions
-    assert after_description == before_description
-    # ...but the fingerprint sees the change
+    changed = set(after_description.splitlines()) - set(before_description.splitlines())
+    assert {line.split("[:]", 1)[1] for line in changed} == {
+        '<input name="name" value="typed by the user"></input>',
+        '<input type="checkbox" name="terms" checked></input>',
+        '<select name="country" value="France">France',
+        f'<textarea name="bio" value="{"x" * 60}..."></textarea>',
+    }
+    # a password's value is never read, so never rendered
+    assert "hunter2" not in after_description
+    # ...and the fingerprint sees the change
     assert session.snapshot.fingerprint() != before_fingerprint
 
 

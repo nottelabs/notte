@@ -9,16 +9,16 @@ L3[:]<a href="https://www.polywood.com/checkouts/cn/Z2NwLXVzLXdlc3QxOjAxSz..." a
 _[:]OR
 _[:]Contact
 L4[:]<a href="https://account.polywood.com/authentication/oauth/authorize?...">Log in</a>
-I1[:]<input type="email" value="" placeholder="Email" name="email"></input>
-B1[:]<input type="checkbox" name="marketing_opt_in"></input>
+I1[:]<input type="email" placeholder="Email" name="email"></input>
+B1[:]<input type="checkbox" name="marketing_opt_in" checked></input>
 M1[:]<label>I'd like to receive emails from POLYWOOD about outdoor living, new products, and special offers.</label>
 _[:]Delivery
 _[:]Country/Region
-I2[:]<select name="countryCode">United States</select>
-I3[:]<input type="text" value="" placeholder="First name" name="firstName"></input>
-I4[:]<input type="text" value="" placeholder="Last name" name="lastName"></input>
-I5[:]<input type="text" value="" placeholder="Company (optional)" name="company"></input>
-I6[:]<input type="text" value="" placeholder="Address" name="address1" role="combobox" aria_expanded="false"></input>
+I2[:]<select name="countryCode" value="United States">United States</select>
+I3[:]<input type="text" placeholder="First name" name="firstName"></input>
+I4[:]<input type="text" placeholder="Last name" name="lastName"></input>
+I5[:]<input type="text" placeholder="Company (optional)" name="company"></input>
+I6[:]<input type="text" placeholder="Address" name="address1" role="combobox" aria_expanded="false"></input>
 _[:]Apartment, suite, etc. (optional)
 _[:]<input type="text" value="" placeholder="Apartment, suite, etc. (optional)"></input>
 _[:]City
@@ -140,7 +140,7 @@ _[:]Slate Grey
 _[:]1
 _[:]$229.00
 _[:]Discount code or gift card
-I7[:]<input type="text" value="" placeholder="Discount code or gift card" name="reductions"></input>
+I7[:]<input type="text" placeholder="Discount code or gift card" name="reductions"></input>
 _[:]Apply
 _[:]Estimated Ship Date 7/23 - 7/25
 _[:](If you order by 3 PM ET 7/16)

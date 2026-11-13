@@ -1,13 +1,15 @@
+from collections.abc import Mapping
+
 from notte_core.actions import ActionParameter, ClickAction, FillAction, InteractionAction, SelectDropdownOptionAction
 from notte_core.config import config
-from notte_core.dom_tree import DomNode
+from notte_core.dom_tree import DomAttributes, DomNode
 from notte_core.errors import InvalidInternalCheckError
 from notte_core.logging import logger
 from notte_core.node_type import NodeRole, NodeType
 from notte_core.space import ActionSpace
 
 
-def build_action_space(dom_node: DomNode) -> ActionSpace:
+def build_action_space(dom_node: DomNode, *, secrets: Mapping[str, str] | None = None) -> ActionSpace:
     """List the interaction actions available on a page from its DOM, without any LLM call.
 
     The description renders the page's interactive elements (attributes cut to 60 characters, and
@@ -15,11 +17,17 @@ def build_action_space(dom_node: DomNode) -> ActionSpace:
     Disabled controls are rendered without an id (`_[:]<button disabled>Send</button>`) and offer no action, as
     are the links, buttons, fields and options above or below the viewport, with fewer attributes
     (`_[:]<a>About</a>`).
+
+    With `secrets` (a value -> placeholder map, the vault's `get_replacement_map()`; `{}` without a vault), the
+    controls with an id are rendered with what they hold (`B2[:]<input type="checkbox" checked></input>`,
+    `I1[:]<input type="text" value="a@b.co"></input>`), each secret replaced by its placeholder. Without it,
+    they are rendered without their live state.
     """
     description = render_interactions(
         dom_node,
         max_len_per_attribute=60,
         verbose=config.verbose,
+        secrets=secrets,
     )
     return ActionSpace(
         description=description,
@@ -91,12 +99,30 @@ INCLUDE_ATTRIBUTES: frozenset[str] = frozenset(
 OFFSCREEN_NAME_ATTRIBUTES: frozenset[str] = frozenset(["aria_label", "title", "alt", "placeholder", "value"])
 
 
+# the states rendered as bare flags, like `disabled`: a control without an id (disabled or off-screen) carries only
+# these four in its state; `mixed` is `aria-checked="mixed"` or `aria-pressed="mixed"`
+OFFSCREEN_STATE_FLAGS = ("checked", "pressed", "selected", "expanded")
+LIVE_STATE_FLAGS = ("checked", "mixed", "pressed", "selected", "expanded")
+
+# a rendered live value is one attribute of its line: quotes, angle brackets and line breaks are escaped
+_ATTRIBUTE_ESCAPES = str.maketrans(
+    {"&": "&amp;", '"': "&quot;", "<": "&lt;", ">": "&gt;", "\n": "&#10;", "\r": "&#13;"}
+)
+
+
 def render_node(
     node: DomNode,
     max_len_per_attribute: int | None = None,
     *,
     include_children: bool = True,
+    secrets: Mapping[str, str] | None = None,
 ) -> str:
+    """The element as one line of HTML: its relevant attributes, `disabled`, and its live state.
+
+    A control without an id (disabled or off-screen) says whether it is checked, pressed, selected or expanded. A
+    control with an id says what it holds when `secrets` is given (the page description, not the per-action
+    descriptions): those flags and `mixed`, and its current value (`value="..."`, a `<select>`'s selected options),
+    with every secret replaced by its placeholder. A password field never shows a value."""
     if node.id is None and not node.disabled and not node.offscreen:
         raise InvalidInternalCheckError(
             check="Node should have an id, or be disabled or off-screen",
@@ -106,11 +132,19 @@ def render_node(
     attrs = node.attributes
     if attrs is None:
         raise ValueError(f"Attributes are None for node: {node}")
+    tag = attrs.tag_name.lower()
+    state = node.state if node.id is not None and secrets is not None else None
+    if state is not None and secrets:
+        state = state.masked(secrets)
+    live_value = None if state is None else state.rendered_value(tag, attrs.type)
     if include_children:
         children_str = "\n".join(children_texts(node)).strip()
     else:
         # Action descriptions used childless copies with text=inner_text(), without attribute truncation.
         children_str = node.inner_text().strip() if node.get_role_str() == "text" else ""
+    if tag == "textarea" and live_value is not None:
+        # the text of a textarea is the value it was served with: what it holds now is its live value
+        children_str = ""
     include_attributes = INCLUDE_ATTRIBUTES
     if node.offscreen:
         include_attributes = frozenset(["role", "type"] if attrs.tag_name.lower() == "input" else ["role"])
@@ -119,6 +153,10 @@ def render_node(
             if not _named_by_attributes(node):
                 # only images or icons inside: their name (`<a><img alt="Home"></a>` is rendered `<a>Home</a>`)
                 children_str = (node.accessible_name or "").strip()
+    if live_value is not None or _is_password(attrs):
+        # the `value` attribute is the value the page was served with: replaced by the live one, and never shown
+        # for a password field
+        include_attributes = include_attributes - {"value"}
     attrs_str = ""
     attrs_relevant = attrs.relevant_attrs(
         include_attributes=include_attributes,
@@ -128,13 +166,32 @@ def render_node(
         attrs_str = " " + " ".join([f'{key}="{value}"' for key, value in attrs_relevant.items()])
     if node.disabled:
         attrs_str += " disabled"
-    if node.id is None and node.state is not None:
-        # a control without an id (disabled or off-screen) has no live state in the observation: whether it is
-        # checked, pressed, selected or expanded is said here, like `disabled`
-        for flag in ("checked", "pressed", "selected", "expanded"):
-            if getattr(node.state, flag) is True and not (flag == "expanded" and "aria_expanded" in attrs_relevant):
+    # whether the control is checked, pressed, selected or expanded is said like `disabled`; the element states also
+    # carry it, by action id, for a control with an id
+    flags, flag_state = (OFFSCREEN_STATE_FLAGS, node.state) if node.id is None else (LIVE_STATE_FLAGS, state)
+    if flag_state is not None:
+        for flag in flags:
+            # a toggle button with mixed formatting (`aria-pressed="mixed"`) is `mixed`, like a checkbox
+            mixed = flag == "mixed" and flags is LIVE_STATE_FLAGS and flag_state.pressed == "mixed"
+            if (getattr(flag_state, flag) is True or mixed) and not (
+                flag == "expanded" and "aria_expanded" in attrs_relevant
+            ):
                 attrs_str += f" {flag}"
+    if state is not None and live_value:
+        attrs_str += f' value="{_attribute_value(live_value, max_len_per_attribute, state.value_truncated)}"'
     return f"<{attrs.tag_name}{attrs_str}>{children_str}</{attrs.tag_name}>"
+
+
+def _is_password(attrs: DomAttributes) -> bool:
+    return attrs.tag_name.lower() == "input" and (attrs.type or "").lower() == "password"
+
+
+def _attribute_value(value: str, max_len: int | None, cut: bool) -> str:
+    """A live value as an attribute: cut to `max_len` like the other attributes (and marked cut when the browser
+    already cut it), then escaped."""
+    if max_len is not None and len(value) > max_len:
+        value, cut = value[:max_len], True
+    return (value + "..." if cut else value).translate(_ATTRIBUTE_ESCAPES)
 
 
 def format_node(
@@ -142,6 +199,8 @@ def format_node(
     node_texts: list[str],
     max_len_per_attribute: int | None,
     is_parent_interaction: bool = False,
+    *,
+    secrets: Mapping[str, str] | None = None,
 ) -> list[str]:
     if node.type.value == NodeType.TEXT.value:
         if len(node.children) > 0:
@@ -157,7 +216,7 @@ def format_node(
         # Add element with highlight_index
         if node.id is not None:
             is_parent_interaction = True
-            html_description = render_node(node, max_len_per_attribute)
+            html_description = render_node(node, max_len_per_attribute, secrets=secrets)
             node_texts.append(f"{node.id}[:]{html_description}")
         elif node.disabled or (node.offscreen and not _unnamed_offscreen(node)):
             # described (with its text) like an interactive element, but without an id to act on
@@ -171,6 +230,7 @@ def format_node(
                 node_texts=node_texts,
                 max_len_per_attribute=max_len_per_attribute,
                 is_parent_interaction=is_parent_interaction,
+                secrets=secrets,
             )
     return node_texts
 
@@ -216,6 +276,8 @@ def render_interactions(
     node: DomNode,
     max_len_per_attribute: int | None = None,
     verbose: bool = False,
+    *,
+    secrets: Mapping[str, str] | None = None,
 ) -> str:
     """Convert the processed DOM content to HTML."""
     component_node_strs: list[str] = []
@@ -225,6 +287,7 @@ def render_interactions(
             node=component_node,
             node_texts=[],
             max_len_per_attribute=max_len_per_attribute,
+            secrets=secrets,
         )
 
         rendered_component = "\n".join(formatted_text).strip()

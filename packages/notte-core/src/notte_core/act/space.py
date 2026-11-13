@@ -66,6 +66,11 @@ _DESCRIPTION_LINE = re.compile(r"^([A-Z]\d+)\[:\](.*)$")
 _DESCRIPTION_BLOCK = re.compile(r"^([A-Z]\d+|_)\[:\](.*)$")
 _RENDERED_ELEMENT = re.compile(r"^<(\w+)([^>]*)>(.*)</\1>$", re.DOTALL)
 _RENDERED_ATTRIBUTE = re.compile(r'(\w+)="([^"]*)"')
+# the opening tag of a rendered element, after its `<id>[:]` prefix when the line has one
+_OPENING_TAG = re.compile(r'^(\s*(?:[A-Z]\d+\[:\])?<(\w+))((?:\s+\w+(?:="[^"]*")?)*)(\s*>.*)$', re.DOTALL)
+_TAG_ATTRIBUTE = re.compile(r'\s+(\w+)(?:="([^"]*)")?')
+# the live state the observation renders on a control with an id as bare flags (`checked`)
+_LIVE_STATE_FLAGS = frozenset(["checked", "mixed", "pressed", "selected", "expanded"])
 # a text next to a field is taken as its label (the rendered page has no `<label for>` links) when short
 MAX_NEARBY_LABEL_LENGTH = 80
 # the only value format the browser accepts for these input types (`fill` rejects any other)
@@ -283,6 +288,28 @@ def _description_blocks(description: str) -> tuple[tuple[str | None, str], ...]:
     return tuple(blocks)
 
 
+def without_live_state(line: str, state: ElementState | None) -> str:
+    """A rendered control with an id (`I1[:]<input type="text" value="a@b.co">`, or without its prefix) without the
+    live state the observation renders on it: its `checked`, `mixed`, `pressed`, `selected` and `expanded` flags and
+    its live `value`. The models are told that state once, from `page.states` (`_element`). Unchanged without a live
+    state (an observation that renders none), or when the tag cannot be read."""
+    if state is None:
+        return line
+    match = _OPENING_TAG.match(line)
+    if match is None:
+        return line
+    attributes = [(found.group(0), found.group(1), found.group(2)) for found in _TAG_ATTRIBUTE.finditer(match.group(3))]
+    input_type = next((value for _, name, value in attributes if name == "type"), None)
+    # a password field (`filled`) is never shown with a value, not even the one it was served with
+    live_value = state.filled is not None or state.rendered_value(match.group(2), input_type) is not None
+    kept = "".join(
+        text
+        for text, name, value in attributes
+        if not (value is None and name in _LIVE_STATE_FLAGS) and not (live_value and name == "value")
+    )
+    return match.group(1) + kept + match.group(4)
+
+
 def _approximate_name(action: InteractionAction, rendered: str, before: str | None, after: str | None) -> str:
     """A name from the rendered element, for observations without `accessible_name` (an older server):
     `aria-label`, the label-like text or `<label>` next to a form field (before a text field, after a checkbox or
@@ -311,9 +338,10 @@ def _approximate_name(action: InteractionAction, rendered: str, before: str | No
         if tag == "select" and match is not None:
             candidates.append(_option_range([line.strip() for line in match.group(3).splitlines()]))
         candidates += [attributes.get("placeholder"), attributes.get("title")]
-        # notte's `text_label` of a field is its `aria-label`, `name`, value or options text
+        # notte's `text_label` of a field is its `aria-label`, `name`, value or options text; a textarea's is the text
+        # it was served with, its first value (rendered as its value attribute once the observation has live state)
         text_label = " ".join((action.text_label or "").split())
-        if text_label not in (content, attributes.get("value")):
+        if tag != "textarea" and text_label not in (content, attributes.get("value")):
             candidates.append(text_label)
     else:
         candidates += [content, attributes.get("alt"), attributes.get("placeholder"), attributes.get("title")]
@@ -842,7 +870,11 @@ def _page_text(
 ) -> str:
     if labels == "html":
         empty = _empty_listboxes(page)
-        lines = [(key, line) for key, line in _description_lines(page.description) if key not in empty]
+        lines = [
+            (key, line if key is None else without_live_state(line, page.states.get(key)))
+            for key, line in _description_lines(page.description)
+            if key not in empty
+        ]
     else:
         lines = _accessible_lines(page, display_text)
     viewport = _viewport_lines(page, lines) if windowed else None
@@ -1127,10 +1159,10 @@ def build_act_space(
         if not action.id or (names is not None and action.id in names.labels) or action.id in empty:
             continue
         line = lines.get(action.id, "")
-        shown = line if names is None else names.names.get(action.id)
+        state = page.states.get(action.id)
+        shown = without_live_state(line, state) if names is None else names.names.get(action.id)
         label = _cut(display_text(shown or action.accessible_name or action.text_label or action.id), MAX_LABEL_LENGTH)
         role = _role(action, line)
-        state = page.states.get(action.id)
         element = _element(
             action, label, role, state, has_live_state, display_text, labels, display_cut or display_text
         )

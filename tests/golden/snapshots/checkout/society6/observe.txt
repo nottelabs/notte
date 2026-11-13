@@ -9,16 +9,16 @@ B1[:]<button type="button">Show more options</button>
 _[:]OR
 _[:]Contact
 L3[:]<a href="https://account.society6.com/authentication/oauth/authorize?...">Log in</a>
-I1[:]<input type="email" value="" placeholder="Email" name="email"></input>
+I1[:]<input type="email" placeholder="Email" name="email"></input>
 B2[:]<input type="checkbox" name="marketing_opt_in"></input>
 M1[:]<label>Email me with news and offers</label>
 _[:]Delivery
 _[:]Country/Region
-I2[:]<select name="countryCode">Canada
+I2[:]<select name="countryCode" value="United States">Canada
 United States</select>
-I3[:]<input type="text" value="" placeholder="First name" name="firstName"></input>
-I4[:]<input type="text" value="" placeholder="Last name" name="lastName"></input>
-I5[:]<input type="text" value="" placeholder="Company (optional)" name="company"></input>
+I3[:]<input type="text" placeholder="First name" name="firstName"></input>
+I4[:]<input type="text" placeholder="Last name" name="lastName"></input>
+I5[:]<input type="text" placeholder="Company (optional)" name="company"></input>
 _[:]Address
 _[:]<input type="text" value="" placeholder="Address" role="combobox"></input>
 _[:]Apartment, suite, etc. (optional)
@@ -153,7 +153,7 @@ _[:]$299.00
 _[:]Discounted price
 _[:]$269.10
 _[:]Discount code or gift card
-I6[:]<input type="text" value="" placeholder="Discount code or gift card" name="reductions"></input>
+I6[:]<input type="text" placeholder="Discount code or gift card" name="reductions"></input>
 _[:]Apply
 _[:]Cost summary
 _[:]Item

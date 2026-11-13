@@ -303,7 +303,7 @@ class LocalActDriver:
         # actions resolve their ids against the snapshot just checked
         self.session.snapshot = snapshot
         self._snapshot = snapshot
-        space = build_action_space(snapshot.dom_node)
+        space = build_action_space(snapshot.dom_node, secrets=self.secret_replacements())
         current = ObservedPage(
             url=snapshot.metadata.url,
             title=snapshot.metadata.title,
@@ -697,14 +697,15 @@ class NotteSession(AsyncResource, SyncResource):
             _ = PaginationParams.model_validate(pagination)
             if config.verbose:
                 logger.info(f"🧿 observing page {self.snapshot.metadata.url}")
-            space = build_action_space(self.snapshot.dom_node)
+            # values the vault typed are masked in the description (which renders what each control holds) and in the
+            # element states the observation carries (and serializes)
+            secrets = {} if self.vault is None else self.vault.get_replacement_map()
+            space = build_action_space(self.snapshot.dom_node, secrets=secrets)
 
         # --------------------------------
         # ------- Step 3: tracing --------
         # --------------------------------
 
-        # values the vault typed are masked in the element states the observation carries (and serializes)
-        secrets = {} if self.vault is None else self.vault.get_replacement_map()
         obs = Observation.from_snapshot(self.snapshot, space=space, span=span.close(), secrets=secrets)
 
         await self.trajectory.append(obs)

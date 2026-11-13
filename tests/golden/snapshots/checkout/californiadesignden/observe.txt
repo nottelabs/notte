@@ -12,15 +12,15 @@ L3[:]<a href="https://www.californiadesignden.com/checkouts/cn/Z2NwLXVzLXd..." a
 _[:]OR
 _[:]Contact
 L4[:]<a href="https://shopify.com/authentication/2463760495/oauth/authoriz...">Log in</a>
-I1[:]<input type="email" value="" placeholder="Email" name="email"></input>
-B1[:]<input type="checkbox" name="marketing_opt_in"></input>
+I1[:]<input type="email" placeholder="Email" name="email"></input>
+B1[:]<input type="checkbox" name="marketing_opt_in" checked></input>
 M1[:]<label>Email me with news and offers</label>
 _[:]Shipping address
 _[:]Country/Region
-I2[:]<select name="countryCode">United States</select>
-I3[:]<input type="text" value="" placeholder="First name" name="firstName"></input>
-I4[:]<input type="text" value="" placeholder="Last name" name="lastName"></input>
-I5[:]<input type="text" value="" placeholder="Company (optional)" name="company"></input>
+I2[:]<select name="countryCode" value="United States">United States</select>
+I3[:]<input type="text" placeholder="First name" name="firstName"></input>
+I4[:]<input type="text" placeholder="Last name" name="lastName"></input>
+I5[:]<input type="text" placeholder="Company (optional)" name="company"></input>
 _[:]Address
 _[:]<input type="text" value="" placeholder="Address" role="combobox"></input>
 _[:]Apartment, suite, etc. (optional)
@@ -118,7 +118,7 @@ _[:]Color: Bright White
 _[:]1
 _[:]$59.99
 _[:]Discount code or gift card
-I6[:]<input type="text" value="" placeholder="Discount code or gift card" name="reductions"></input>
+I6[:]<input type="text" placeholder="Discount code or gift card" name="reductions"></input>
 _[:]Apply
 _[:]Cost summary
 _[:]Item

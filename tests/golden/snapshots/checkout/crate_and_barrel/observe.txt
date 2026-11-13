@@ -18,24 +18,24 @@ _[:]Ship To
 _[:]Shipping
 _[:]First Name
 _[:]Required
-I1[:]<input type="text" value="" name="FirstName"></input>
+I1[:]<input type="text" name="FirstName"></input>
 _[:]Last Name
 _[:]Required
-I2[:]<input type="text" value="" name="LastName"></input>
+I2[:]<input type="text" name="LastName"></input>
 _[:]Street Address
 _[:]Required
-I3[:]<input type="text" value="" placeholder="" name="Address1"></input>
+I3[:]<input type="text" placeholder="" name="Address1"></input>
 B1[:]<button type="button">Add apt, suite or other
 optional</button>
 _[:]Zip Code
 _[:]Required
-I4[:]<input type="text" value="" name="zipCode"></input>
+I4[:]<input type="text" name="zipCode"></input>
 _[:]City
 _[:]Required
-I5[:]<input type="text" value="" name="City"></input>
+I5[:]<input type="text" name="City"></input>
 _[:]State
 _[:]Required
-I6[:]<select name="State">Please Select
+I6[:]<select name="State" value="Please Select">Please Select
 Alabama
 Alaska
 Arizona

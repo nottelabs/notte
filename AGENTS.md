@@ -182,6 +182,14 @@ Disabled expanded controls can render `aria_expanded="true"` instead of a bare
 `expanded` flag; act reads that rendered attribute without treating false values
 or state words inside unrelated attribute values as true state.
 
+The page description also renders what controls with an id hold: bare `checked`,
+`mixed`, `pressed`, `selected` and `expanded` flags, and the live `value="..."` of
+text-like inputs, textareas and selects (the selected option labels). The live value
+replaces the served `value` attribute, is masked with the vault's replacement map
+(`build_action_space(..., secrets=...)`), and is never rendered for password fields.
+Per-action descriptions stay without it. Act shows state from `page.states`, so its
+html labels and page text drop the inline state (`without_live_state`).
+
 `packages/notte-browser/src/notte_browser/js/buildDomNode.js` reads elements through
 its helpers (`getAttribute(element, name)`, `childrenOf(element)`,
 `propertyOf(element, name)`, ...), never as `element.children`: a `<form>` exposes
