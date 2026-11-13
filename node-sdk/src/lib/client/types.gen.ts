@@ -554,94 +554,6 @@ export type ApiSessionStartRequest = {
 };
 
 /**
- * AuditEvent
- */
-export type AuditEvent = {
-    /**
-     * Id
-     */
-    id: number;
-    /**
-     * Created At
-     */
-    created_at: string;
-    /**
-     * Entity Type
-     */
-    entity_type: string;
-    /**
-     * Entity Id
-     */
-    entity_id: string;
-    /**
-     * Action
-     */
-    action: string;
-    /**
-     * User Id
-     */
-    user_id?: string | null;
-    /**
-     * Actor Id
-     */
-    actor_id?: string | null;
-    /**
-     * Actor Type
-     */
-    actor_type: string;
-    /**
-     * Actor Email
-     *
-     * Email of the actor when it is a workspace member the caller may see. Null for system actors.
-     */
-    actor_email?: string | null;
-    /**
-     * Actor Name
-     */
-    actor_name?: string | null;
-    /**
-     * Resource Name
-     *
-     * Human-readable name of the resource (an API key's label, a secret's name, a member's email) when one is known. Never a secret value.
-     */
-    resource_name?: string | null;
-    /**
-     * Source
-     */
-    source: string;
-    /**
-     * Metadata
-     */
-    metadata?: {
-        [key: string]: unknown;
-    };
-    /**
-     * Org Id
-     */
-    org_id?: string | null;
-};
-
-/**
- * AuditEventListResponse
- */
-export type AuditEventListResponse = {
-    /**
-     * Items
-     */
-    items: Array<AuditEvent>;
-    /**
-     * Next Cursor
-     *
-     * Opaque cursor for the next (older) page. Null when there are no more events.
-     */
-    next_cursor?: string | null;
-    /**
-     * Has More
-     */
-    has_more: boolean;
-};
-
-/**
  * BaseModel
  */
 export type BaseModel = {
@@ -4331,6 +4243,12 @@ export type GlobalScrapeRequest = {
      */
     block_ads?: boolean;
     /**
+     * Dialog Policy
+     *
+     * Who answers JavaScript dialogs (alert, confirm, prompt, beforeunload). `auto` (default): Notte answers them, dismissing alert, confirm and prompt and accepting beforeunload. `client`: Notte leaves them for your CDP client to accept or dismiss, and dismisses one nobody answers within 10 seconds.
+     */
+    dialog_policy?: 'auto' | 'client';
+    /**
      * Advanced Stealth
      *
      * Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.
@@ -5865,32 +5783,6 @@ export type PaginatedResponseSessionResponse = {
      * Items
      */
     items: Array<SessionResponse>;
-    /**
-     * Page
-     */
-    page: number;
-    /**
-     * Page Size
-     */
-    page_size: number;
-    /**
-     * Has Next
-     */
-    has_next: boolean;
-    /**
-     * Has Previous
-     */
-    readonly has_previous: boolean;
-};
-
-/**
- * PaginatedResponse[UsageLog]
- */
-export type PaginatedResponseUsageLog = {
-    /**
-     * Items
-     */
-    items: Array<UsageLog>;
     /**
      * Page
      */
@@ -8633,11 +8525,6 @@ export type StyleguideTimeout = {
 };
 
 /**
- * SubscriptionType
- */
-export type SubscriptionType = 'free' | 'pro' | 'growth' | 'playground' | 'admin' | 'minoan' | 'proofs' | 'interview';
-
-/**
  * SwitchTabAction
  */
 export type SwitchTabAction = {
@@ -8919,90 +8806,6 @@ export type UploadFileActionOutput = {
      * File Path
      */
     file_path: string;
-};
-
-/**
- * UsageLog
- */
-export type UsageLog = {
-    /**
-     * Created At
-     */
-    created_at: string;
-    /**
-     * Duration Ms
-     */
-    duration_ms: number;
-    /**
-     * Endpoint
-     */
-    endpoint: string;
-};
-
-/**
- * UsageResponse
- */
-export type UsageResponse = {
-    /**
-     * Plan Type
-     */
-    plan_type: SubscriptionType | string;
-    /**
-     * Period
-     */
-    period: string;
-    /**
-     * Session Count
-     */
-    session_count: number;
-    /**
-     * Function Count
-     */
-    function_count: number;
-    /**
-     * Browser Usage Cost
-     */
-    browser_usage_cost: number;
-    /**
-     * Proxy Usage Cost
-     */
-    proxy_usage_cost: number;
-    /**
-     * Llm Usage Cost
-     */
-    llm_usage_cost: number;
-    /**
-     * Function Usage Cost
-     */
-    function_usage_cost: number;
-    /**
-     * Total Cost
-     */
-    total_cost: number;
-    /**
-     * Subscription Limit Amount
-     */
-    subscription_limit_amount: number;
-    /**
-     * Topup Limit Amount
-     */
-    topup_limit_amount: number;
-    /**
-     * Subscription Balance Amount
-     */
-    subscription_balance_amount: number;
-    /**
-     * Topup Balance Amount
-     */
-    topup_balance_amount: number;
-    /**
-     * Balance Amount
-     */
-    balance_amount: number;
-    /**
-     * Is Usage Limit Exceeded
-     */
-    is_usage_limit_exceeded: boolean;
 };
 
 /**
@@ -9357,6 +9160,219 @@ export type NotteCoreActionsActionsWaitAction = {
      * The amount of time to wait in milliseconds (max 30 seconds)
      */
     time_ms: number;
+};
+
+/**
+ * AuditEvent
+ */
+export type AuditEvent = {
+    /**
+     * Action
+     */
+    action: string;
+    /**
+     * Actor Email
+     *
+     * Email of the actor when it is a workspace member the caller may see. Null for system actors.
+     */
+    actor_email: string | null;
+    /**
+     * Actor Id
+     */
+    actor_id: string | null;
+    /**
+     * Actor Name
+     */
+    actor_name: string | null;
+    /**
+     * Actor Type
+     */
+    actor_type: string;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Entity Id
+     */
+    entity_id: string;
+    /**
+     * Entity Type
+     */
+    entity_type: string;
+    /**
+     * Id
+     */
+    id: number;
+    /**
+     * Metadata
+     */
+    metadata: {
+        changes?: {
+            role: {
+                new: 'owner' | 'admin' | 'member';
+                old: 'owner' | 'admin' | 'member';
+            };
+        };
+        display_name?: string;
+        email?: string;
+        name?: string;
+        role?: 'owner' | 'admin' | 'member';
+        target_email?: string;
+    };
+    /**
+     * Org Id
+     */
+    org_id: string | null;
+    /**
+     * Resource Name
+     *
+     * Human-readable name of the resource (an API key's label, a secret's name, a member's email) when one is known. Never a secret value.
+     */
+    resource_name: string | null;
+    /**
+     * Source
+     */
+    source: string;
+    /**
+     * User Id
+     */
+    user_id: string | null;
+};
+
+/**
+ * AuditEventListResponse
+ */
+export type AuditEventListResponse = {
+    /**
+     * Has More
+     */
+    has_more: boolean;
+    /**
+     * Items
+     */
+    items: Array<AuditEvent>;
+    /**
+     * Next Cursor
+     *
+     * Opaque cursor for the next (older) page. Null when there are no more events.
+     */
+    next_cursor: string | null;
+};
+
+/**
+ * PaginatedResponse[UsageLog]
+ */
+export type PaginatedResponseUsageLog = {
+    /**
+     * Has Next
+     */
+    has_next: boolean;
+    /**
+     * Has Previous
+     */
+    readonly has_previous: boolean;
+    /**
+     * Items
+     */
+    items: Array<UsageLog>;
+    /**
+     * Page
+     */
+    page: number;
+    /**
+     * Page Size
+     */
+    page_size: number;
+};
+
+/**
+ * SubscriptionType
+ */
+export type SubscriptionType = 'free' | 'pro' | 'growth' | 'playground' | 'admin' | 'minoan' | 'proofs' | 'interview';
+
+/**
+ * UsageLog
+ */
+export type UsageLog = {
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Duration Ms
+     */
+    duration_ms: number;
+    /**
+     * Endpoint
+     */
+    endpoint: string;
+};
+
+/**
+ * UsageResponse
+ */
+export type UsageResponse = {
+    /**
+     * Balance Amount
+     */
+    balance_amount: number;
+    /**
+     * Browser Usage Cost
+     */
+    browser_usage_cost: number;
+    /**
+     * Function Count
+     */
+    function_count: number;
+    /**
+     * Function Usage Cost
+     */
+    function_usage_cost: number;
+    /**
+     * Is Usage Limit Exceeded
+     */
+    is_usage_limit_exceeded: boolean;
+    /**
+     * Llm Usage Cost
+     */
+    llm_usage_cost: number;
+    /**
+     * Period
+     */
+    period: string;
+    /**
+     * Plan Type
+     */
+    plan_type: SubscriptionType | string;
+    /**
+     * Proxy Usage Cost
+     */
+    proxy_usage_cost: number;
+    /**
+     * Session Count
+     */
+    session_count: number;
+    /**
+     * Subscription Balance Amount
+     */
+    subscription_balance_amount: number;
+    /**
+     * Subscription Limit Amount
+     */
+    subscription_limit_amount: number;
+    /**
+     * Topup Balance Amount
+     */
+    topup_balance_amount: number;
+    /**
+     * Topup Limit Amount
+     */
+    topup_limit_amount: number;
+    /**
+     * Total Cost
+     */
+    total_cost: number;
 };
 
 /**
@@ -11100,28 +11116,6 @@ export type PaginatedResponseSessionResponseWritable = {
 };
 
 /**
- * PaginatedResponse[UsageLog]
- */
-export type PaginatedResponseUsageLogWritable = {
-    /**
-     * Items
-     */
-    items: Array<UsageLog>;
-    /**
-     * Page
-     */
-    page: number;
-    /**
-     * Page Size
-     */
-    page_size: number;
-    /**
-     * Has Next
-     */
-    has_next: boolean;
-};
-
-/**
  * PaginatedResponse[Vault]
  */
 export type PaginatedResponseVaultWritable = {
@@ -11441,6 +11435,28 @@ export type UpdateFunctionRunResponseWritable = {
      * Status
      */
     status?: 'updated' | 'stopped';
+};
+
+/**
+ * PaginatedResponse[UsageLog]
+ */
+export type PaginatedResponseUsageLogWritable = {
+    /**
+     * Has Next
+     */
+    has_next: boolean;
+    /**
+     * Items
+     */
+    items: Array<UsageLog>;
+    /**
+     * Page
+     */
+    page: number;
+    /**
+     * Page Size
+     */
+    page_size: number;
 };
 
 /**
@@ -15808,120 +15824,6 @@ export type ConnectLinkStatusResponses = {
 
 export type ConnectLinkStatusResponse2 = ConnectLinkStatusResponses[keyof ConnectLinkStatusResponses];
 
-export type GetUsageData = {
-    body?: never;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path?: never;
-    query?: {
-        /**
-         * Period
-         *
-         * The montly period to get usage for, i.e May 2025
-         */
-        period?: string | null;
-    };
-    url: '/usage';
-};
-
-export type GetUsageErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type GetUsageError = GetUsageErrors[keyof GetUsageErrors];
-
-export type GetUsageResponses = {
-    /**
-     * Successful Response
-     */
-    200: UsageResponse;
-};
-
-export type GetUsageResponse = GetUsageResponses[keyof GetUsageResponses];
-
-export type GetUsageLogsData = {
-    body?: never;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path?: never;
-    query?: {
-        /**
-         * Endpoint
-         *
-         * The endpoint to filter logs by
-         */
-        endpoint?: 'sessions.start' | 'sessions.stop' | 'sessions.status' | 'sessions.pause' | 'sessions.resume' | 'sessions.cookies.set' | 'sessions.cookies.get' | 'sessions.list' | 'sessions.replay' | 'sessions.offset' | 'sessions.debug.info' | 'sessions.debug.info.tab' | 'sessions.debug.recording.wss' | 'sessions.debug.log.wss' | 'sessions.debug.tab.wss' | 'sessions.debug.browser.wss' | 'sessions.network.logs' | 'sessions.script' | 'page.observe' | 'page.execute' | 'page.scrape' | 'profiles.create' | 'profiles.duplicate' | 'profiles.get' | 'profiles.list' | 'profiles.delete' | 'profiles.cookies.set' | 'profiles.cookies.get' | 'vaults.create' | 'vaults.list' | 'vaults.delete' | 'vaults.update' | 'vaults.credentials.add' | 'vaults.credentials.get' | 'vaults.credentials.delete' | 'vaults.credentials.list' | 'vaults.credit_card.set' | 'vaults.credit_card.get' | 'vaults.credit_card.delete' | 'personas.create' | 'personas.list' | 'personas.delete' | 'personas.emails' | 'personas.sms' | 'personas.number.create' | 'personas.get' | 'personas.update' | 'mailboxes.connect' | 'mailboxes.sync' | 'mailboxes.list' | 'mailboxes.get' | 'mailboxes.update' | 'mailboxes.delete' | 'sessions.files.upload' | 'sessions.files.list' | 'sessions.files.download' | 'sessions.files.delete' | 'agents.start' | 'agents.stop' | 'agents.status' | 'agents.list' | 'agents.replay' | 'agents.debug.recording' | 'agents.save' | 'agents.repeat' | 'agents.script' | 'scrape' | 'scrape_from_html' | 'search' | 'usage' | 'workflows.upload' | 'workflows.download' | 'workflows.list' | 'workflows.delete' | 'workflows.update' | 'workflows.fork' | 'workflows.rollback' | 'workflows.schedule.create' | 'workflows.schedule.delete' | 'workflows.runs.create' | 'workflows.runs.start' | 'workflows.runs.get' | 'workflows.runs.list' | 'workflows.runs.update' | 'workflows.runs.stop' | null;
-        /**
-         * Page
-         *
-         * Page number
-         */
-        page?: number;
-        /**
-         * Page Size
-         *
-         * Number of items per page
-         */
-        page_size?: number;
-        /**
-         * Only Active
-         *
-         * Whether to only return active sessions
-         */
-        only_active?: boolean;
-        /**
-         * Only Current Token
-         *
-         * Whether to only return sessions for the current token (apikey)
-         */
-        only_current_token?: boolean;
-        /**
-         * Include System
-         *
-         * Whether to include internal system sessions
-         */
-        include_system?: boolean;
-    };
-    url: '/usage/logs';
-};
-
-export type GetUsageLogsErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type GetUsageLogsError = GetUsageLogsErrors[keyof GetUsageLogsErrors];
-
-export type GetUsageLogsResponses = {
-    /**
-     * Successful Response
-     */
-    200: PaginatedResponseUsageLog;
-};
-
-export type GetUsageLogsResponse = GetUsageLogsResponses[keyof GetUsageLogsResponses];
-
 export type AnythingStartData = {
     body: AnythingStartRequest;
     headers?: {
@@ -16146,84 +16048,6 @@ export type ListSecretProxyHostPresetsResponses = {
 };
 
 export type ListSecretProxyHostPresetsResponse = ListSecretProxyHostPresetsResponses[keyof ListSecretProxyHostPresetsResponses];
-
-export type ListAuditEventsData = {
-    body?: never;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path?: never;
-    query?: {
-        /**
-         * Limit
-         *
-         * Events per page
-         */
-        limit?: number;
-        /**
-         * Cursor
-         *
-         * `next_cursor` from the previous page
-         */
-        cursor?: string | null;
-        /**
-         * Since
-         *
-         * Only events at or after this time (ISO-8601)
-         */
-        since?: string | null;
-        /**
-         * Until
-         *
-         * Only events before this time (ISO-8601)
-         */
-        until?: string | null;
-        /**
-         * Action
-         *
-         * Only events with this action, e.g. `created`
-         */
-        action?: string | null;
-        /**
-         * Entity Type
-         *
-         * Only events about this kind of resource, e.g. `api_key`
-         */
-        entity_type?: string | null;
-        /**
-         * Actor Id
-         *
-         * Only events performed by this user
-         */
-        actor_id?: string | null;
-    };
-    url: '/audit-events';
-};
-
-export type ListAuditEventsErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type ListAuditEventsError = ListAuditEventsErrors[keyof ListAuditEventsErrors];
-
-export type ListAuditEventsResponses = {
-    /**
-     * Successful Response
-     */
-    200: AuditEventListResponse;
-};
-
-export type ListAuditEventsResponse = ListAuditEventsResponses[keyof ListAuditEventsResponses];
 
 export type HealthCheckData = {
     body?: never;
@@ -18500,6 +18324,198 @@ export type ScrapeFromHtmlResponses = {
 };
 
 export type ScrapeFromHtmlResponse = ScrapeFromHtmlResponses[keyof ScrapeFromHtmlResponses];
+
+export type ListAuditEventsData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: {
+        /**
+         * Limit
+         *
+         * Events per page
+         */
+        limit?: number;
+        /**
+         * Cursor
+         *
+         * `next_cursor` from the previous page
+         */
+        cursor?: string | null;
+        /**
+         * Since
+         *
+         * Only events at or after this time (ISO-8601)
+         */
+        since?: string | null;
+        /**
+         * Until
+         *
+         * Only events before this time (ISO-8601)
+         */
+        until?: string | null;
+        /**
+         * Action
+         *
+         * Only events with this action, e.g. `created`
+         */
+        action?: string | null;
+        /**
+         * Entity Type
+         *
+         * Only events about this kind of resource, e.g. `api_key`
+         */
+        entity_type?: string | null;
+        /**
+         * Actor Id
+         *
+         * Only events performed by this user
+         */
+        actor_id?: string | null;
+    };
+    url: '/audit-events';
+};
+
+export type ListAuditEventsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListAuditEventsError = ListAuditEventsErrors[keyof ListAuditEventsErrors];
+
+export type ListAuditEventsResponses = {
+    /**
+     * Successful Response
+     */
+    200: AuditEventListResponse;
+};
+
+export type ListAuditEventsResponse = ListAuditEventsResponses[keyof ListAuditEventsResponses];
+
+export type GetUsageData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: {
+        /**
+         * Period
+         *
+         * The montly period to get usage for, i.e May 2025
+         */
+        period?: string | null;
+    };
+    url: '/usage';
+};
+
+export type GetUsageErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetUsageError = GetUsageErrors[keyof GetUsageErrors];
+
+export type GetUsageResponses = {
+    /**
+     * Successful Response
+     */
+    200: UsageResponse;
+};
+
+export type GetUsageResponse = GetUsageResponses[keyof GetUsageResponses];
+
+export type GetUsageLogsData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: {
+        /**
+         * Endpoint
+         *
+         * The endpoint to filter logs by
+         */
+        endpoint?: 'sessions.start' | 'sessions.stop' | 'sessions.status' | 'sessions.pause' | 'sessions.resume' | 'sessions.cookies.set' | 'sessions.cookies.get' | 'sessions.list' | 'sessions.replay' | 'sessions.offset' | 'sessions.debug.info' | 'sessions.debug.info.tab' | 'sessions.debug.recording.wss' | 'sessions.debug.log.wss' | 'sessions.debug.tab.wss' | 'sessions.debug.browser.wss' | 'sessions.network.logs' | 'sessions.script' | 'page.observe' | 'page.execute' | 'page.scrape' | 'profiles.create' | 'profiles.duplicate' | 'profiles.get' | 'profiles.list' | 'profiles.delete' | 'profiles.cookies.set' | 'profiles.cookies.get' | 'vaults.create' | 'vaults.list' | 'vaults.delete' | 'vaults.update' | 'vaults.credentials.add' | 'vaults.credentials.get' | 'vaults.credentials.delete' | 'vaults.credentials.list' | 'vaults.credit_card.set' | 'vaults.credit_card.get' | 'vaults.credit_card.delete' | 'personas.create' | 'personas.list' | 'personas.delete' | 'personas.emails' | 'personas.sms' | 'personas.number.create' | 'personas.get' | 'personas.update' | 'mailboxes.connect' | 'mailboxes.sync' | 'mailboxes.list' | 'mailboxes.get' | 'mailboxes.update' | 'mailboxes.delete' | 'sessions.files.upload' | 'sessions.files.list' | 'sessions.files.download' | 'sessions.files.delete' | 'agents.start' | 'agents.stop' | 'agents.status' | 'agents.list' | 'agents.replay' | 'agents.debug.recording' | 'agents.save' | 'agents.repeat' | 'agents.script' | 'scrape' | 'scrape_from_html' | 'search' | 'usage' | 'workflows.upload' | 'workflows.download' | 'workflows.list' | 'workflows.delete' | 'workflows.update' | 'workflows.fork' | 'workflows.rollback' | 'workflows.schedule.create' | 'workflows.schedule.delete' | 'workflows.runs.create' | 'workflows.runs.start' | 'workflows.runs.get' | 'workflows.runs.list' | 'workflows.runs.update' | 'workflows.runs.stop';
+        /**
+         * Page
+         *
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page Size
+         *
+         * Number of items per page
+         */
+        page_size?: number;
+        /**
+         * Only Active
+         *
+         * Whether to only return active sessions
+         */
+        only_active?: boolean;
+        /**
+         * Only Current Token
+         *
+         * Whether to only return sessions for the current token (apikey)
+         */
+        only_current_token?: boolean;
+        /**
+         * Include System
+         *
+         * Whether to include internal system sessions
+         */
+        include_system?: boolean;
+    };
+    url: '/usage/logs';
+};
+
+export type GetUsageLogsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetUsageLogsError = GetUsageLogsErrors[keyof GetUsageLogsErrors];
+
+export type GetUsageLogsResponses = {
+    /**
+     * Successful Response
+     */
+    200: PaginatedResponseUsageLog;
+};
+
+export type GetUsageLogsResponse = GetUsageLogsResponses[keyof GetUsageLogsResponses];
 
 export type AgentStartData = {
     body: ApiAgentStartRequest;
