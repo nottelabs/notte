@@ -8,6 +8,7 @@ import PlaywrightAsync from '/snippets/sessions/cdp/playwright_async.mdx';
 import PlaywrightMultiplePages from '/snippets/sessions/cdp/playwright_multiple_pages.mdx';
 import PlaywrightNetwork from '/snippets/sessions/cdp/playwright_network.mdx';
 import PlaywrightEvents from '/snippets/sessions/cdp/playwright_events.mdx';
+import PlaywrightDialogs from '/snippets/sessions/cdp/playwright_dialogs.mdx';
 import PlaywrightContextManagers from '/snippets/sessions/cdp/playwright_context_managers.mdx';
 import PlaywrightTimeout from '/snippets/sessions/cdp/playwright_timeout.mdx';
 import PlaywrightCdpErrorHandling from '/snippets/sessions/cdp/playwright_cdp_error_handling.mdx';
@@ -87,6 +88,19 @@ Use Playwright's powerful network interception with Notte sessions:
 Listen to browser events using Playwright:
 
 <PlaywrightEvents />
+
+## Handle JavaScript Dialogs
+
+The `dialog_policy` session option decides who answers JavaScript dialogs (`alert`, `confirm`, `prompt` and `beforeunload`):
+
+- `auto` (default): Notte answers them. It dismisses `alert`, `confirm` and `prompt`, and accepts `beforeunload`.
+- `client`: Notte leaves them for your own CDP client (Playwright, Puppeteer or raw CDP) to accept or dismiss.
+
+To answer dialogs yourself, start the session with `dialog_policy="client"` and register a `dialog` handler before the page opens one:
+
+<PlaywrightDialogs />
+
+With `client`, a dialog nobody answers within 10 seconds is dismissed (`beforeunload` is accepted), so a forgotten dialog cannot freeze the session. While a dialog is open the page is blocked: Notte's own page actions on the session, such as `execute()` or `scrape()`, wait until the dialog is answered or the 10 seconds pass. During a Notte agent run on the session, Notte answers dialogs itself. The option applies to Notte-hosted browsers and to [external browsers](/features/sessions/external-providers) connected with `cdp_url`.
 
 ## Best Practices
 

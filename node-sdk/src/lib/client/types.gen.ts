@@ -526,6 +526,12 @@ export type ApiSessionStartRequest = {
      */
     block_ads?: boolean;
     /**
+     * Dialog Policy
+     *
+     * Who answers JavaScript dialogs (alert, confirm, prompt, beforeunload). `auto` (default): Notte answers them, dismissing alert, confirm and prompt and accepting beforeunload. `client`: Notte leaves them for your CDP client to accept or dismiss, and dismisses one nobody answers within 10 seconds.
+     */
+    dialog_policy?: 'auto' | 'client';
+    /**
      * Advanced Stealth
      *
      * Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.

@@ -136,6 +136,12 @@ export type ApiSessionStartRequest = {
      */
     block_ads?: boolean;
     /**
+     * Dialog Policy
+     *
+     * Who answers JavaScript dialogs (alert, confirm, prompt, beforeunload). `auto` (default): Notte answers them, dismissing alert, confirm and prompt and accepting beforeunload. `client`: Notte leaves them for your CDP client to accept or dismiss, and dismisses one nobody answers within 10 seconds.
+     */
+    dialog_policy?: 'auto' | 'client';
+    /**
      * Advanced Stealth
      *
      * Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.
@@ -242,6 +248,10 @@ Save browser session logs. False permanently disables saved logs, without disabl
 
 <ParamField body="block_ads" type={"boolean | undefined"}>
 Block ads and trackers in managed browsers using Basic filtering. Set false to disable. Does not configure externally supplied CDP browsers.
+</ParamField>
+
+<ParamField body="dialog_policy" type={"\"auto\" | \"client\" | undefined"}>
+Who answers JavaScript dialogs (alert, confirm, prompt, beforeunload). `auto` (default): Notte answers them, dismissing alert, confirm and prompt and accepting beforeunload. `client`: Notte leaves them for your CDP client to accept or dismiss, and dismisses one nobody answers within 10 seconds.
 </ParamField>
 
 <ParamField body="advanced_stealth" type={"boolean | undefined"}>

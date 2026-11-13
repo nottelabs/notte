@@ -81,6 +81,8 @@ def test_session_wire_contract(client: NotteClient, monkeypatch: pytest.MonkeyPa
         ({"timeout_minutes": 5}, {"idle_timeout_minutes": 5}),
         ({"advanced_stealth": True}, {"advanced_stealth": True}),
         ({"block_ads": False}, {"block_ads": False}),
+        ({"dialog_policy": "client"}, {"dialog_policy": "client"}),
+        ({"dialog_policy": "auto"}, {"dialog_policy": "auto"}),
         ({"record_session": False}, {"record_session": False}),
         ({"log_session": False}, {"log_session": False}),
         ({"record_session": False, "log_session": False}, {"record_session": False, "log_session": False}),
@@ -97,6 +99,16 @@ def test_session_start_omission_contract(
     api = fake(monkeypatch, SESSION)
     _ = client.sessions.start(**kwargs)
     assert json.loads(api.calls[0].data) == {**DEFAULT_START, **extra}
+
+
+def test_dialog_policy_is_remote_only_and_validated() -> None:
+    from notte_core.types import LocalSessionStartRequest, SessionStartRequest
+
+    assert SessionStartRequest().dialog_policy == "auto"
+    assert "dialog_policy" not in SessionStartRequest().model_dump(context={"wire": True})
+    assert "dialog_policy" not in LocalSessionStartRequest.model_fields
+    with pytest.raises(ValidationError):
+        SessionStartRequest.model_validate({"dialog_policy": "accept"})
 
 
 def test_hosted_browser_selection_is_remote_only() -> None:

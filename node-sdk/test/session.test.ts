@@ -169,6 +169,21 @@ describe('Session Unit Tests', () => {
       expect(sessionStart).toHaveBeenCalledWith(expect.objectContaining({ body: {} }));
     });
 
+    it.each(['client', 'auto'] as const)('forwards dialog_policy=%s to the session API', async dialog_policy => {
+      const options: SessionOptions = { dialog_policy };
+      expectTypeOf<SessionOptions['dialog_policy']>().toEqualTypeOf<'auto' | 'client' | undefined>();
+      const session = new Session(mockClient, options);
+      await session.start();
+      expect(sessionStart).toHaveBeenCalledWith(expect.objectContaining({ body: { dialog_policy } }));
+    });
+
+    it('leaves an omitted dialog policy to the server default', async () => {
+      const session = new Session(mockClient);
+      await session.start();
+      const { body } = vi.mocked(sessionStart).mock.calls[0][0] as { body: Record<string, unknown> };
+      expect(body).not.toHaveProperty('dialog_policy');
+    });
+
     it('should discard deprecated headless true before calling the API', async () => {
       const session = new Session(mockClient, { headless: true });
       await session.start();

@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased: `dialog_policy` for JavaScript dialogs
+
+Remote sessions accept `dialog_policy` (`client.Session(dialog_policy="client")`, or
+`client.Session({ dialog_policy: 'client' })` in the Node SDK). `auto`, the default, keeps today's
+behavior: Notte dismisses `alert`, `confirm` and `prompt` and accepts `beforeunload`. `client` leaves
+dialogs for your own CDP client (Playwright, Puppeteer or raw CDP) to accept or dismiss; one nobody
+answers within 10 seconds is dismissed (`beforeunload` accepted), and while it is open Notte's own page
+actions on the session wait. It applies to Notte-hosted browsers and `cdp_url` sessions. The SDKs send
+the field only when you set it, so ordinary starts keep working with older APIs; an explicit value needs
+an API that supports it.
+
 ## Unreleased: `act()`, `choose()` and `check()`
 
 Local sessions (`notte.Session`) gain `act(instruction)`: one observe → decide → execute step, where a
