@@ -299,8 +299,8 @@ async def test_checkboxes_outside_the_viewport_say_whether_they_are_checked() ->
         lines, actions = await _observe(session)
         assert lines == [
             "_[:]Top",
-            # in view, the checked state is the action's live state, not in the description
-            'B1[:]<input type="checkbox"></input>',
+            # in view, the checked state is said the same way (and is also the action's live state)
+            'B1[:]<input type="checkbox" checked></input>',
             "_[:]In view",
             '_[:]<input type="checkbox"></input>',
             "_[:]Checkbox 1",
@@ -335,8 +335,8 @@ async def test_buttons_outside_the_viewport_say_whether_they_are_pressed_selecte
         lines, actions = await _observe(session)
         assert lines == [
             "_[:]Top",
-            # in view, the pressed state is the action's live state, not in the description
-            "B1[:]<button>Underline</button>",
+            # in view, the pressed state is said the same way (and is also the action's live state)
+            "B1[:]<button pressed>Underline</button>",
             "_[:]<button pressed>Bold</button>",
             "_[:]<button>Italic</button>",
             '_[:]<button role="tab" selected>Details</button>',

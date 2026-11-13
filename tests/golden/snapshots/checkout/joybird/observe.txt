@@ -9,20 +9,20 @@ _[:]2
 _[:]Shipping Information
 _[:]Fields marked with an asterisk (*) are required.
 _[:]First name *
-I1[:]<input type="text" value="" placeholder="" name="first_name"></input>
+I1[:]<input type="text" placeholder="" name="first_name"></input>
 _[:]Error:
 _[:]First name is required
 _[:]Last name *
-I2[:]<input type="text" value="" placeholder="" name="last_name"></input>
+I2[:]<input type="text" placeholder="" name="last_name"></input>
 _[:]Street address *
 _[:]Street address *
-I3[:]<input type="text" value="" placeholder="" name="address"></input>
+I3[:]<input type="text" placeholder="" name="address"></input>
 _[:]City *
-I4[:]<input type="text" value="" placeholder="" name="city"></input>
+I4[:]<input type="text" placeholder="" name="city"></input>
 _[:]Apartment / suite # (optional)
-I5[:]<input type="text" value="" placeholder="" name="apartment"></input>
+I5[:]<input type="text" placeholder="" name="apartment"></input>
 _[:]Company (optional)
-I6[:]<input type="text" value="" placeholder="" name="company"></input>
+I6[:]<input type="text" placeholder="" name="company"></input>
 _[:]State *
 I7[:]<select>Alabama
 Arizona
@@ -74,9 +74,9 @@ West Virginia
 Wisconsin
 Wyoming</select>
 _[:]Zip code *
-I8[:]<input type="text" value="" placeholder="" name="zipcode"></input>
+I8[:]<input type="text" placeholder="" name="zipcode"></input>
 _[:]Phone (delivery contact) *
-I9[:]<input type="tel" value="" placeholder="" name="phone_number"></input>
+I9[:]<input type="tel" placeholder="" name="phone_number"></input>
 _[:]<button>I'd also like to receive shipping updates via text message. By signing up, you agree to our</button>
 _[:]<input type="checkbox"></input>
 _[:]<a>Privacy Policy.</a>

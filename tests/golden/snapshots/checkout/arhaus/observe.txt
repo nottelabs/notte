@@ -8,16 +8,16 @@ _[:]Express checkout
 _[:]OR
 _[:]Contact
 L3[:]<a href="https://www.arhaus.com/account/login?checkout_url=%2Fcheckou...">Log in</a>
-I1[:]<input type="email" value="" placeholder="Email" name="email"></input>
+I1[:]<input type="email" placeholder="Email" name="email"></input>
 B1[:]<input type="checkbox" name="marketing_opt_in"></input>
 M1[:]<label>Email me with news and offers</label>
 _[:]Delivery
 _[:]Country/Region
-I2[:]<select name="countryCode">United States</select>
-I3[:]<input type="text" value="" placeholder="First name" name="firstName"></input>
-I4[:]<input type="text" value="" placeholder="Last name" name="lastName"></input>
-I5[:]<input type="text" value="" placeholder="Address" name="address1" role="combobox" aria_expanded="false"></input>
-I6[:]<input type="text" value="" placeholder="Apartment, suite, etc. (optional)" name="address2"></input>
+I2[:]<select name="countryCode" value="United States">United States</select>
+I3[:]<input type="text" placeholder="First name" name="firstName"></input>
+I4[:]<input type="text" placeholder="Last name" name="lastName"></input>
+I5[:]<input type="text" placeholder="Address" name="address1" role="combobox" aria_expanded="false"></input>
+I6[:]<input type="text" placeholder="Apartment, suite, etc. (optional)" name="address2"></input>
 _[:]<input type="text" value="" placeholder="City"></input>
 _[:]State
 _[:]<select>Alabama
@@ -129,7 +129,7 @@ _[:]$5,800.00
 _[:]Discounted price
 _[:]$4,060.00
 _[:]Discount
-I7[:]<input type="text" value="" placeholder="Discount Code or Trade ID" name="reductions"></input>
+I7[:]<input type="text" placeholder="Discount Code or Trade ID" name="reductions"></input>
 _[:]Apply
 _[:]Have an Archarge reward?
 B2[:]<button type="button" aria_expanded="false">Click here</button>

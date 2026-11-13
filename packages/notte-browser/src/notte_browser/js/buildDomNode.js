@@ -452,8 +452,8 @@
 	 * (or a script) changed the element. `getAttribute('value')` is the initial value of an input,
 	 * not what is typed in it; same for `checked` and the selected option of a `<select>`.
 	 *
-	 * Returned as its own payload field (never mixed into `attributes`, which the action descriptions
-	 * render), so the rendered descriptions and the action ids are unchanged. Password values are
+	 * Returned as its own payload field (never mixed into `attributes`): the page description renders it
+	 * separately, with the vault's secrets masked, and the action ids do not depend on it. Password values are
 	 * never read: only whether the field is filled. Returns `undefined` when there is no state.
 	 *
 	 * @param {HTMLElement} element - A highlighted (interactive) element.

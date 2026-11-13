@@ -13,16 +13,16 @@ _[:]Sign in to check out faster.
 B1[:]<button type="button">Sign In</button>
 _[:]Check Out as a Guest
 _[:]Email Address
-I1[:]<input type="email" value="" name="emailAddress"></input>
-B2[:]<input type="checkbox" value="true" name="emailOptIn"></input>
+I1[:]<input type="email" name="emailAddress"></input>
+B2[:]<input type="checkbox" value="true" name="emailOptIn" checked></input>
 _[:]Sign up to receive exclusive offers + promotions. View our
 L4[:]<a href="https://www.urbanoutfitters.com/help/privacy">Privacy Policy here</a>
 _[:]for more information.
-B3[:]<button tabindex="0" role="tab">Ship</button>
+B3[:]<button tabindex="0" role="tab" selected>Ship</button>
 B4[:]<button tabindex="-1" role="tab">Pick Up</button>
 _[:]Shipping Address
 _[:]Country/Region
-I2[:]<select name="country">Albania
+I2[:]<select name="country" value="United States">Albania
 Andorra
 Anguilla
 Antigua and Barbuda

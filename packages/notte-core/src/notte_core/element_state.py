@@ -3,8 +3,9 @@
 HTML attributes only give the initial state of a form control: `<input value="...">` is the value
 the page was served with, not what was typed since; same for `checked` and the selected option of a
 `<select>`. `buildDomNode.js` reads the live properties of every interactive element into a separate
-`state` field of its payload, which `DomNode.state` carries. It is never rendered into the action
-descriptions, so observing a page gives the same descriptions and action ids as before.
+`state` field of its payload, which `DomNode.state` carries. The page description renders what a control
+holds inline (`checked`, `value="..."`, see `notte_browser.action_space.render_node`), masked like the
+observation's element states; the per-action descriptions and the action ids do not depend on it.
 """
 
 import hashlib
@@ -84,6 +85,19 @@ class ElementState(BaseModel):
     def selected_options(self) -> list[SelectOption]:
         return [option for option in self.options or () if option.selected]
 
+    def rendered_value(self, tag_name: str, input_type: str | None) -> str | None:
+        """What the page description shows as the `value` of a control of this state (`""` for an empty field), or
+        None when it shows no live value: the labels of a `<select>`'s selected options, the current value of a
+        `<textarea>` or of an `<input>` that takes a typed value. Never a password's (its value is never read)."""
+        tag = tag_name.lower()
+        if tag == "select":
+            return None if self.options is None else ", ".join(option.label for option in self.selected_options)
+        if self.value is None or self.filled is not None:
+            return None
+        if tag == "textarea" or (tag == "input" and (input_type or "text").lower() not in NO_RENDERED_VALUE_INPUTS):
+            return self.value
+        return None
+
     def masked(self, secrets: Mapping[str, str]) -> "ElementState":
         """A copy with every occurrence of a secret (`secrets` maps a value to its placeholder, e.g. a vault's
         replacement map) replaced in the field value: what the vault typed into the element.
@@ -121,6 +135,13 @@ class ElementState(BaseModel):
     def digest(self) -> str:
         """A stable string of the state, for fingerprints."""
         return self.model_dump_json(exclude_defaults=True)
+
+
+# `<input>` types whose live value the page description does not show: toggles (their state is `checked`), buttons
+# (their value is their label), files (a fake path), hidden fields, and passwords
+NO_RENDERED_VALUE_INPUTS = frozenset(
+    ["checkbox", "radio", "submit", "button", "reset", "image", "hidden", "file", "password"]
+)
 
 
 # the shortest start of a secret masked at the end of a cut value (shorter ones match ordinary text too often)

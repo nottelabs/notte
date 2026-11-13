@@ -6,7 +6,7 @@ I2[:]<input type="email" placeholder="email@example.test" aria_label="Email addr
 I3[:]<input type="password" aria_label="Account password"></input>
 I4[:]<textarea placeholder="Notes for delivery"></textarea>
 _[:]Country
-I5[:]<select>Alpha
+I5[:]<select value="Alpha">Alpha
 Beta</select>
 B1[:]<input type="checkbox"></input>
 _[:]Accept terms
