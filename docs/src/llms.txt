@@ -262,7 +262,7 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 
 ## Audit
 
-- [GET List Audit Events](https://docs.notte.cc/api-reference/audit/list-audit-events.md)
+- [GET List Audit Events](https://docs.notte.cc/api-reference/audit/list-audit-events.md): List audit events for the caller's workspace, newest first.
 
 ## Functions
 
@@ -399,8 +399,8 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 
 ## Usage
 
-- [GET Get Usage](https://docs.notte.cc/api-reference/usage/get-usage.md)
-- [GET Get Usage Logs](https://docs.notte.cc/api-reference/usage/get-usage-logs.md)
+- [GET Get Usage](https://docs.notte.cc/api-reference/usage/get-usage.md): Get the monthly usage information for the user including (current plan, credits consumption, etc.)
+- [GET Get Usage Logs](https://docs.notte.cc/api-reference/usage/get-usage-logs.md): Get the usage logs of the user, i.e all the API calls made by the user. Can be filtered by endpoint.
 
 ## Vaults
 
