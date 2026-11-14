@@ -43,7 +43,9 @@ Upgrade to the latest release with `notte upgrade`. It uses Homebrew when notte 
 
 ## Authentication
 
-The CLI reads your API key from, in order: the `NOTTE_API_KEY` environment variable, the system keyring (set by `notte login`), then `~/.notte/cli/config.json`. See [Authentication](/api-reference/authentication) to get a key.
+The CLI reads your API key from, in order: the file named by `NOTTE_API_KEY_FILE`, the `NOTTE_API_KEY` environment variable, the system keyring (set by `notte login`), then `~/.notte/cli/config.json`. See [Authentication](/api-reference/authentication) to get a key.
+
+`NOTTE_API_KEY_FILE` is read again by every new command, so a runtime can rotate a short-lived access token in it without restarting the agent; a long-running command keeps the credential it started with. When it is set, the file is the only source: a missing, unreadable, empty or oversized (above 64 KiB) file is an error, never a fallback to the other sources. `NOTTE_API_KEY` is then ignored, with a note on stderr. `notte login` and `notte logout` exit with an error while it is set.
 
 ```bash
 export NOTTE_API_KEY=your_api_key_here

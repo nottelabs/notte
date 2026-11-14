@@ -122,6 +122,7 @@ Start a new browser session
 | `--chrome-args <strings>` | Overwrite the chrome instance arguments (repeatable) |
 | `--count <int>`, `-n` | Number of sessions to start in parallel, with the same settings (at most 20) (default: `1`) |
 | `--demonstrate` | Whether to enable the Notte recorder extension for this session. The extension is installed but remains inactive when this is false. (API default: false) |
+| `--dialog-policy <auto>` | Who answers JavaScript dialogs (alert, confirm, prompt, beforeunload). auto (default): Notte answers them, dismissing alert, confirm and prompt and accepting beforeunload. `client`: Notte leaves them for your CDP client to accept or dismiss, and dismisses one nobody answers within 10 seconds. (API default: auto) (auto, client) |
 | `--extra-http-headers <string>` | Extra HTTP headers as JSON (e.g. '&#123;"Authorization": "Bearer xxx"&#125;') |
 | `--idle-timeout-minutes <int>` | Idle timeout in minutes. Session closes after this period of inactivity (resets on each operation). (API default: 3) |
 | `--log-session` | Save browser session logs. False permanently disables saved logs, without disabling metering. (API default: true) |
