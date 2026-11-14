@@ -18,7 +18,7 @@ from tests.scripts.test_ci_integration_examples import agent_phases, calls, ship
 pytest_plugins = ["tests.scripts.test_ci_integration_examples"]
 
 ROOT = Path(__file__).resolve().parents[2]
-PYTHON_ONLY = {"boat", "daytona", "e2b", "openagi", "prime-intellect"}
+PYTHON_ONLY = {"boat", "boxd", "daytona", "e2b", "openagi", "prime-intellect"}
 NODE_ONLY = {"agentcard", "e2e", "eve", "fx", "trigger"}
 PUBLISHED_ONLY = {"docker-sandboxes", "inngest", "temporal"}
 NON_SDK = {"replit", "terraform-profiles", "valtown"}
@@ -139,6 +139,7 @@ def test_node_inputs_select_node_source_consumers_on_both_events(
         ("examples/braintrust/typescript/package-lock.json", {"braintrust"}),
         ("examples/temporal/package-lock.json", {"temporal"}),
         ("examples/replit/test/mcp.live.test.mjs", {"replit"}),
+        ("docs/src/integrations/boxd.mdx", {"boxd"}),
     ],
 )
 def test_project_and_cross_language_recipe_inputs_keep_full_compatibility(
