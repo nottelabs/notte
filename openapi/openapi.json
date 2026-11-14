@@ -3,7 +3,7 @@
   "info": {
     "title": "Notte API",
     "description": "Notte API is a REST API that allows you to interact with Notte. It is used to create cloud browser sessions, scrape webpages, and run web ai agents to act on your behalf on the internet.",
-    "version": "1.10.10",
+    "version": "1.10.11",
     "x-logo": {
       "url": "https://www.notte.cc/images/logo/logo-white.png"
     }
@@ -1455,6 +1455,7 @@
           "page"
         ],
         "summary": "Page Execute",
+        "description": "Run one action on the session's current page.\n\n## While a CAPTCHA is being solved\n\nWhile a CAPTCHA on the page is unsolved or being solved (automatically with `solve_captchas: true`, or after a `captcha_solve` action), the action is **not run**. The request still answers HTTP 200, at once, with:\n\n- `success: false` and `action_executed: false`\n- `code: \"captcha_in_progress\"`, with a human-readable `message` that can vary\n- `captcha`: the solve's `captcha_id`, `page_id`, `generation`, `state: \"solving\"` and `retry_after_ms`\n\nThis applies to every action except `goto`, `wait` included: `{\"type\": \"wait\", \"time_ms\": 5000}` returns right away without waiting. An HTTP 200 does not mean the action ran: check `action_executed`, `code` and `captcha.state` on every response, not `message`.\n\nTo wait for the solve, either:\n\n- poll it: send `{\"type\": \"captcha_solve\"}` with the query parameter `captcha_id` set to `captcha.captcha_id`, every `retry_after_ms`, until `captcha.state` is no longer `\"solving\"`. A poll is read-only: it runs no action and starts no new solve.\n- or sleep on your side for `retry_after_ms` and send the action again.\n\nA solve ends `solved` (`code: \"captcha_solved\"`), `failed` (`code: \"captcha_failed\"`) or `cancelled` (`code: \"captcha_cancelled\"`, for example after a `goto`). With `solve_captchas: true`, after `failed`, actions on that page keep answering `captcha_failed` without running while the CAPTCHA is still there; a `goto` still runs.\n\nAfter `solved`, send the action again only if its response had `action_executed: false`. To make sure it runs on the same page, add the query parameters `target_page_id` and `target_generation` from the last `captcha` status; if the page changed, the answer is `code: \"captcha_page_changed\"` and nothing runs. An action that ran and then brought up a CAPTCHA answers `action_executed: true` with a `captcha` status: keep its result, poll the solve, and do not send the action again.\n\nA `goto` is never blocked: it ends a solve in progress. `captcha_timeout_seconds` (default 180) is the budget of a solve the request starts. `observe`, `scrape` and `screenshot` are not blocked by a solve: they read the page as it is.",
         "operationId": "page_execute",
         "security": [
           {
@@ -2151,6 +2152,107 @@
           }
         },
         "x-codeSamples": []
+      }
+    },
+    "/sessions/{session_id}/page/document": {
+      "post": {
+        "tags": [
+          "sessions",
+          "page"
+        ],
+        "summary": "Page Document Read",
+        "operationId": "page_document_read",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "update_metadata",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Update Metadata"
+            }
+          },
+          {
+            "name": "x-notte-request-origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Request-Origin"
+            }
+          },
+          {
+            "name": "x-notte-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Sdk-Version"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionPageDocumentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageDocumentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-hidden": true
       }
     },
     "/sessions/{session_id}/network/logs": {
@@ -27211,7 +27313,7 @@
           "version": {
             "type": "string",
             "title": "Version",
-            "default": "1.10.10"
+            "default": "1.10.11"
           },
           "description": {
             "type": "string",
@@ -29602,6 +29704,71 @@
         "additionalProperties": false,
         "type": "object",
         "title": "OrganizationClue"
+      },
+      "PageDocumentResponse": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "default": ""
+          },
+          "html": {
+            "type": "string",
+            "title": "Html",
+            "default": ""
+          },
+          "text": {
+            "type": "string",
+            "title": "Text",
+            "default": ""
+          },
+          "markdown": {
+            "type": "string",
+            "title": "Markdown",
+            "default": ""
+          },
+          "links": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Links",
+            "default": []
+          },
+          "data": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Data",
+            "default": {}
+          },
+          "status_code": {
+            "type": "integer",
+            "title": "Status Code",
+            "default": 200
+          },
+          "ready_state": {
+            "type": "string",
+            "title": "Ready State",
+            "default": "complete"
+          },
+          "timings": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Timings",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "title": "PageDocumentResponse"
       },
       "PageTarget": {
         "properties": {
@@ -34068,6 +34235,70 @@
           "offset"
         ],
         "title": "SessionOffsetResponse"
+      },
+      "SessionPageDocumentRequest": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "timeout_ms": {
+            "type": "integer",
+            "maximum": 300000.0,
+            "minimum": 1.0,
+            "title": "Timeout Ms",
+            "default": 60000
+          },
+          "timeout_behavior": {
+            "type": "string",
+            "enum": [
+              "fail",
+              "return-partial"
+            ],
+            "title": "Timeout Behavior",
+            "default": "fail"
+          },
+          "script": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Script"
+          },
+          "color_scheme": {
+            "type": "string",
+            "enum": [
+              "light",
+              "dark"
+            ],
+            "title": "Color Scheme",
+            "default": "light"
+          },
+          "actions": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Actions",
+            "default": []
+          },
+          "options": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Options",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "title": "SessionPageDocumentRequest"
       },
       "SessionProfile": {
         "properties": {
