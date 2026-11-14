@@ -355,6 +355,9 @@
     "resource": "sessions",
     "telemetry": "cloud.session.choose"
   },
+  "page_document_read": {
+    "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
+  },
   "page_execute": {
     "method": "execute",
     "resource": "sessions",
