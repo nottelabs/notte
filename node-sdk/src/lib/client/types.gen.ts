@@ -5612,6 +5612,56 @@ export type OrganizationClue = {
 };
 
 /**
+ * PageDocumentResponse
+ */
+export type PageDocumentResponse = {
+    /**
+     * Url
+     */
+    url: string;
+    /**
+     * Title
+     */
+    title?: string;
+    /**
+     * Html
+     */
+    html?: string;
+    /**
+     * Text
+     */
+    text?: string;
+    /**
+     * Markdown
+     */
+    markdown?: string;
+    /**
+     * Links
+     */
+    links?: Array<string>;
+    /**
+     * Data
+     */
+    data?: {
+        [key: string]: unknown;
+    };
+    /**
+     * Status Code
+     */
+    status_code?: number;
+    /**
+     * Ready State
+     */
+    ready_state?: string;
+    /**
+     * Timings
+     */
+    timings?: {
+        [key: string]: number;
+    };
+};
+
+/**
  * PageTarget
  */
 export type PageTarget = {
@@ -8017,6 +8067,44 @@ export type SessionOffsetResponse = {
      * Current state of the session trajectory
      */
     offset: number;
+};
+
+/**
+ * SessionPageDocumentRequest
+ */
+export type SessionPageDocumentRequest = {
+    /**
+     * Url
+     */
+    url: string;
+    /**
+     * Timeout Ms
+     */
+    timeout_ms?: number;
+    /**
+     * Timeout Behavior
+     */
+    timeout_behavior?: 'fail' | 'return-partial';
+    /**
+     * Script
+     */
+    script?: string | null;
+    /**
+     * Color Scheme
+     */
+    color_scheme?: 'light' | 'dark';
+    /**
+     * Actions
+     */
+    actions?: Array<{
+        [key: string]: unknown;
+    }>;
+    /**
+     * Options
+     */
+    options?: {
+        [key: string]: unknown;
+    };
 };
 
 /**
@@ -12430,6 +12518,51 @@ export type PageCheckResponses = {
 };
 
 export type PageCheckResponse = PageCheckResponses[keyof PageCheckResponses];
+
+export type PageDocumentReadData = {
+    body: SessionPageDocumentRequest;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Session Id
+         */
+        session_id: string;
+    };
+    query?: {
+        /**
+         * Update Metadata
+         */
+        update_metadata?: boolean;
+    };
+    url: '/sessions/{session_id}/page/document';
+};
+
+export type PageDocumentReadErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type PageDocumentReadError = PageDocumentReadErrors[keyof PageDocumentReadErrors];
+
+export type PageDocumentReadResponses = {
+    /**
+     * Successful Response
+     */
+    200: PageDocumentResponse;
+};
+
+export type PageDocumentReadResponse = PageDocumentReadResponses[keyof PageDocumentReadResponses];
 
 export type SessionNetworkLogsData = {
     body?: never;
