@@ -148,7 +148,7 @@ A restricted token works on these routes, and nowhere else:
 | Search and scrape | `POST /search`<br />`POST /scrape` |
 | Usage and health | `GET /usage`<br />`GET /health` |
 
-Every other route answers `403` with `NotteApiAccessTokenNotAllowedError` when it receives a restricted token, including minting and revoking tokens, functions and their runs, vaults, personas and profiles. Minting and revoking tokens, and admin routes, take an API key only; for the other routes, use an API key or a full token.
+Every other route answers `403` with `NotteApiAccessTokenNotAllowedError` when it receives a restricted token, including minting and revoking tokens, functions and their runs, vaults, personas and profiles. Minting and revoking tokens, admin routes, and starting an existing run by its id (`POST /functions/{function_id}/runs/{run_id}`) take an API key only; for the other routes, use an API key or a full token.
 
 A session started on your own browser (with `cdp_url` in `POST /sessions/start`) keeps that URL from a restricted token: the session routes answer it with `cdp_url: null`, since the URL can carry credentials for your browser provider.
 
