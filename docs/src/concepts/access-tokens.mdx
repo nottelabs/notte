@@ -169,7 +169,7 @@ Token errors use the standard [error envelope](/api-reference/errors#error-respo
 | `NotteApiAccessTokenInvalidError` | `401` | The token is unknown or revoked | `invalid or revoked access token` |
 | `NotteApiAccessTokenNotAllowedError` | `403` | The route does not accept tokens, or not tokens of this scope | `access tokens are not accepted on this route; use an API key` |
 
-Check the status code and the `X-Error-Class` header rather than the message text. On a `401`, mint a new token. On a `403`, call the route with an API key instead, or with a full token if the route is not a token or admin route.
+Check the status code and the `X-Error-Class` header rather than the message text. On a `401`, mint a new token. On a `403`, call the route with an API key instead, or with a full token if the route is not a token or admin route, or the start of an existing run by its id.
 
 ## Lifetimes and what outlives a token
 

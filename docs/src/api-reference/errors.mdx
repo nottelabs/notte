@@ -74,7 +74,7 @@ Header `X-Error-Class: NotteApiAccessTokenNotAllowedError`:
 }
 ```
 
-On a `401`, mint a new token. On a `403`, the route needs an API key, or a full token when a restricted token was refused on a route other than minting, revoking or admin. See [Scopes](/concepts/access-tokens#scopes).
+On a `401`, mint a new token. On a `403`, the route needs an API key, or a full token when a restricted token was refused on a route other than minting, revoking, admin or starting an existing run by its id, which take an API key only. See [Scopes](/concepts/access-tokens#scopes).
 
 ### Validation (422)
 
