@@ -8,7 +8,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 An access token is a short-lived credential that you mint from an API key. Give it to an agent, a sandbox or any other process you trust less than your own code, instead of your API key.
 
-A token acts as the API key it was minted from. It expires after at most one hour, and you can revoke it at any time without touching the key. Its [scope](#scopes) decides which routes it can call: `full`, the default, or `restricted` to browser sessions and page actions.
+A token acts as the API key it was minted from. It expires after at most one hour, and you can revoke it at any time without touching the key. Its [scope](#scopes) decides which routes it can call: `full`, the default, or `restricted` to browser sessions, page actions, session files, search, scrape and usage.
 
 | | API key | Full access token | Restricted access token |
 |---|---|---|---|
@@ -148,7 +148,7 @@ A restricted token works on these routes, and nowhere else:
 | Search and scrape | `POST /search`<br />`POST /scrape` |
 | Usage and health | `GET /usage`<br />`GET /health` |
 
-Every other route answers `403` with `NotteApiAccessTokenNotAllowedError` when it receives a restricted token, including minting and revoking tokens, functions and their runs, vaults, personas and profiles. Use an API key or a full token for those.
+Every other route answers `403` with `NotteApiAccessTokenNotAllowedError` when it receives a restricted token, including minting and revoking tokens, functions and their runs, vaults, personas and profiles. Minting and revoking tokens, and admin routes, take an API key only; for the other routes, use an API key or a full token.
 
 A session started on your own browser (with `cdp_url` in `POST /sessions/start`) keeps that URL from a restricted token: the session routes answer it with `cdp_url: null`, since the URL can carry credentials for your browser provider.
 
