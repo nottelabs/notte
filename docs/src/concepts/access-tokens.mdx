@@ -8,14 +8,14 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 An access token is a short-lived credential that you mint from an API key. Give it to an agent, a sandbox or any other process you trust less than your own code, instead of your API key.
 
-A token acts as the API key it was minted from, but only on a [fixed list of routes](#where-tokens-work). It expires after at most one hour, and you can revoke it at any time without touching the key.
+A token acts as the API key it was minted from. It expires after at most one hour, and you can revoke it at any time without touching the key. Its [scope](#scopes) decides which routes it can call: `full`, the default, or `restricted` to browser sessions and page actions.
 
-| | API key | Access token |
-|---|---|---|
-| Looks like | `sk-notte-...` | `nat_...` |
-| Lifetime | Until you delete it | 60 seconds to 1 hour, 15 minutes by default |
-| Routes | All | [Sessions, page actions, session files, search, usage and health](#where-tokens-work) |
-| Can mint or revoke tokens | Yes | No |
+| | API key | Full access token | Restricted access token |
+|---|---|---|---|
+| Looks like | `sk-notte-...` | `nat_...` | `nat_...` |
+| Lifetime | Until you delete it | 60 seconds to 1 hour, 15 minutes by default | 60 seconds to 1 hour, 15 minutes by default |
+| Routes | All | [All but token and admin routes](#full) | [Sessions, page actions, session files, search, scrape, usage and health](#restricted) |
+| Can mint or revoke tokens | Yes | No | No |
 
 ## How it works
 
@@ -25,7 +25,7 @@ A token acts as the API key it was minted from, but only on a [fixed list of rou
 4. If the work runs longer than the token's lifetime, your code mints a new one. Tokens cannot be refreshed or extended.
 5. When the work is done, your code revokes the token and stops the sessions it started.
 
-If the token leaks, it stops working on its own when it expires, and it cannot be used to read your API key or to mint more tokens.
+If the token leaks, it stops working on its own when it expires, and it cannot be used to mint more tokens. A restricted token also cannot be used to read your API key; a full token can, through a function run (see [Choose a scope](#choose-a-scope)).
 
 ## Mint a token
 
@@ -37,7 +37,7 @@ Mint a token with your API key:
 curl -X POST https://api.notte.cc/access-tokens \
   -H "Authorization: Bearer $NOTTE_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"expires_in": 900, "label": "sandbox-42"}'
+  -d '{"expires_in": 900, "label": "sandbox-42", "scope": "restricted"}'
 ```
 
 ```http HTTP
@@ -47,7 +47,8 @@ Content-Type: application/json
 
 {
   "expires_in": 900,
-  "label": "sandbox-42"
+  "label": "sandbox-42",
+  "scope": "restricted"
 }
 ```
 
@@ -61,7 +62,11 @@ Content-Type: application/json
   Optional free text of up to 128 characters, for example the id of the sandbox that receives the token.
 </ParamField>
 
-The body is optional. Without one, the token lives 15 minutes and has no label.
+<ParamField body="scope" type="string" default="full">
+  `full` or `restricted`. See [Scopes](#scopes). Any other value answers `422`.
+</ParamField>
+
+The body is optional. Without one, the token lives 15 minutes, has no label and has full access.
 
 The API answers `201 Created`:
 
@@ -70,7 +75,8 @@ The API answers `201 Created`:
   "id": "<token id>",
   "token": "nat_...",
   "expires_at": "2026-11-12T21:15:00Z",
-  "label": "sandbox-42"
+  "label": "sandbox-42",
+  "scope": "restricted"
 }
 ```
 
@@ -91,7 +97,7 @@ curl -X POST https://api.notte.cc/sessions/start \
   -d '{}'
 ```
 
-On the routes listed below, the request runs as the parent API key: the same workspace, plan, usage and rate limits.
+On the routes its scope allows, the request runs as the parent API key: the same workspace, plan, usage and rate limits.
 
 ## Revoke a token
 
@@ -113,11 +119,25 @@ Authorization: Bearer sk-notte-...
 
 The API answers `204 No Content`. Revoking is idempotent: revoking a token that is already revoked also answers `204`. Another API key gets `404`, and a token cannot revoke tokens.
 
-A revoked token stops working on its next request. Revoking the parent API key, or removing the key's owner from the workspace, stops its tokens within 60 seconds.
+A revoked token stops working within seconds. Deleting the parent API key, or removing the key's owner from the workspace, stops its tokens within 60 seconds.
 
-## Where tokens work
+## Scopes
 
-A token works on these routes, and nowhere else:
+### Full
+
+A full token, the default, acts as its API key on every route the key can call, except:
+
+- minting and revoking tokens (`POST /access-tokens`, `DELETE /access-tokens/{token_id}`), which answer `403` with `NotteApiAccessTokenNotAllowedError`;
+- admin routes, which take an API key only.
+
+Function runs work with a full token, with one exception today:
+
+- Start a run with `POST /functions/{function_id}/runs/start`, sending the token in both the `Authorization` and the `x-notte-api-key` headers.
+- Starting an existing run by its id (`POST /functions/{function_id}/runs/{run_id}`), which the SDK's `function.run()` uses, answers `400` to every access token. Use an API key there.
+
+### Restricted
+
+A restricted token works on these routes, and nowhere else:
 
 | Area | Routes |
 |---|---|
@@ -125,9 +145,19 @@ A token works on these routes, and nowhere else:
 | Page actions | `POST /sessions/{session_id}/page/observe`<br />`POST /sessions/{session_id}/page/execute`<br />`POST /sessions/{session_id}/page/scrape`<br />`POST /sessions/{session_id}/page/screenshot` |
 | Session debug, replay and network logs | `GET /sessions/{session_id}/debug`<br />`GET /sessions/{session_id}/offset`<br />`GET /sessions/{session_id}/network/logs`<br />`GET /sessions/{session_id}/replay` |
 | Session files | `GET /sessions/{session_id}/files`<br />`POST /sessions/{session_id}/files`<br />`GET /sessions/{session_id}/files/{file_id}` |
-| Search, usage and health | `POST /search`<br />`GET /usage`<br />`GET /health` |
+| Search and scrape | `POST /search`<br />`POST /scrape` |
+| Usage and health | `GET /usage`<br />`GET /health` |
 
-Every other route answers `403` with `NotteApiAccessTokenNotAllowedError` when it receives a token, including minting and revoking tokens, functions and their runs, vaults, personas and profiles. Use an API key for those.
+Every other route answers `403` with `NotteApiAccessTokenNotAllowedError` when it receives a restricted token, including minting and revoking tokens, functions and their runs, vaults, personas and profiles. Use an API key or a full token for those.
+
+A session started on your own browser (with `cdp_url` in `POST /sessions/start`) keeps that URL from a restricted token: the session routes answer it with `cdp_url: null`, since the URL can carry credentials for your browser provider.
+
+### Choose a scope
+
+A full token can start function runs, and a run's code can read the parent API key. Code that holds a full token can therefore get the key and keep using it after the token expires or is revoked.
+
+- Give a full token only to code you would trust with the API key itself.
+- Use `restricted` when the token's expiry and revocation must hold, for example for an agent that only drives a browser.
 
 ## Errors
 
@@ -137,15 +167,15 @@ Token errors use the standard [error envelope](/api-reference/errors#error-respo
 |---|---|---|---|
 | `NotteApiAccessTokenExpiredError` | `401` | The token has expired | `access token expired at <time>; mint a new one` |
 | `NotteApiAccessTokenInvalidError` | `401` | The token is unknown or revoked | `invalid or revoked access token` |
-| `NotteApiAccessTokenNotAllowedError` | `403` | The route does not accept tokens | `access tokens are not accepted on this route; use an API key` |
+| `NotteApiAccessTokenNotAllowedError` | `403` | The route does not accept tokens, or not tokens of this scope | `access tokens are not accepted on this route; use an API key` |
 
-Check the status code and the `X-Error-Class` header rather than the message text. On a `401`, mint a new token. On a `403`, call the route with an API key instead.
+Check the status code and the `X-Error-Class` header rather than the message text. On a `401`, mint a new token. On a `403`, call the route with an API key instead, or with a full token if the route is not a token or admin route.
 
 ## Lifetimes and what outlives a token
 
 The token itself lives for `expires_in` seconds, one hour at most, or until you revoke it.
 
-Some routes on the list return other credentials, such as session links and signed download URLs. Those keep their own lifetime: when the token expires or is revoked, they keep working.
+Some routes return other credentials, such as session links and signed download URLs. Those keep their own lifetime: when the token expires or is revoked, they keep working.
 
 | Credential | Returned by | Valid for |
 |---|---|---|
@@ -162,6 +192,6 @@ Some routes on the list return other credentials, such as session links and sign
 
 In the [Notte Console](https://console.notte.cc), open **Settings → Access tokens** to:
 
-- create a token: choose the API key it acts as, a name and a lifetime of up to one hour. The console shows the token once.
-- list tokens, filtered by status: active, expired or revoked.
+- create a token: choose a name, the API key it acts as, a lifetime of up to one hour and its access, **Full access** (the default) or **Restricted**. The console shows the token once.
+- list tokens, filtered by status: active, expired or revoked. The **Access** column shows each token's scope.
 - revoke a token.

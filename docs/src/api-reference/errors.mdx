@@ -14,7 +14,7 @@ The API uses standard HTTP status codes and returns structured error responses.
 |--------|-------------|
 | `200` | Success |
 | `401` | Authentication failed (invalid or missing API key, or an expired or revoked access token), or your plan's credits are exhausted |
-| `403` | Forbidden, for example a route that does not accept [access tokens](/concepts/access-tokens#where-tokens-work) |
+| `403` | Forbidden, for example a route that does not accept [access tokens](/concepts/access-tokens#scopes) of that scope |
 | `422` | Validation error - malformed request or invalid parameters |
 | `429` | Rate limit exceeded, or too many active sessions, agents, vaults, or personas for your plan |
 | `500` | Internal server error |
@@ -74,7 +74,7 @@ Header `X-Error-Class: NotteApiAccessTokenNotAllowedError`:
 }
 ```
 
-On a `401`, mint a new token. On a `403`, the route needs an API key.
+On a `401`, mint a new token. On a `403`, the route needs an API key, or a full token when a restricted token was refused on a route other than minting, revoking or admin. See [Scopes](/concepts/access-tokens#scopes).
 
 ### Validation (422)
 
