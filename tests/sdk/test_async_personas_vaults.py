@@ -605,6 +605,51 @@ async def test_awaiting_again_does_not_create_again(monkeypatch: pytest.MonkeyPa
     assert paths(exchange) == [("POST", "/vaults/create"), ("DELETE", "/vaults/vault-1")]
 
 
+@pytest.mark.asyncio
+async def test_context_manager_keeps_a_vault_opened_by_id(monkeypatch: pytest.MonkeyPatch) -> None:
+    def sync_call(c: NotteClient) -> Any:
+        with c.Vault(vault_id="vault-1") as vault:
+            return vault.list_credentials()
+
+    async def async_call(c: AsyncNotteClient) -> Any:
+        async with c.Vault(vault_id="vault-1") as vault:
+            return await vault.list_credentials()
+
+    exchange = await assert_same(monkeypatch, VAULT_ROUTES, sync_call, async_call)
+    assert ("DELETE", "/vaults/vault-1") not in paths(exchange)
+
+
+@pytest.mark.asyncio
+async def test_context_manager_keeps_a_persona_vault(monkeypatch: pytest.MonkeyPatch) -> None:
+    routes = {**VAULT_ROUTES, **PERSONA_ROUTES}
+
+    def sync_call(c: NotteClient) -> Any:
+        with c.Persona("persona-1").vault as vault:
+            return vault.vault_id
+
+    async def async_call(c: AsyncNotteClient) -> Any:
+        persona = await c.Persona("persona-1")
+        async with persona.vault as vault:
+            return vault.vault_id
+
+    exchange = await assert_same(monkeypatch, routes, sync_call, async_call)
+    assert [method for method, _ in paths(exchange)] == ["GET", "GET"]
+
+
+@pytest.mark.asyncio
+async def test_context_manager_deletes_a_vault_it_created(monkeypatch: pytest.MonkeyPatch) -> None:
+    def sync_call(c: NotteClient) -> Any:
+        with c.Vault(name="v") as vault:
+            return vault.vault_id
+
+    async def async_call(c: AsyncNotteClient) -> Any:
+        async with c.Vault(name="v") as vault:
+            return vault.vault_id
+
+    exchange = await assert_same(monkeypatch, VAULT_ROUTES, sync_call, async_call)
+    assert paths(exchange) == [("POST", "/vaults/create"), ("DELETE", "/vaults/vault-1")]
+
+
 # ---------------------------------------------------------------------------
 # Managed auth and health check
 
