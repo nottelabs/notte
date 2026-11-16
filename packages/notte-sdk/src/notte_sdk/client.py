@@ -4,7 +4,7 @@ import os
 import weakref
 from functools import partial
 from types import TracebackType
-from typing import Any, Literal, Self, TypeAlias, TypeVar, Unpack, cast, overload
+from typing import Any, Literal, NoReturn, Self, TypeAlias, TypeVar, Unpack, cast, overload
 
 from notte_core.actions import GotoAction
 from notte_core.data import StructuredData, TBaseModel
@@ -63,6 +63,33 @@ def _validated_settings(
     if api_key is None:
         raise AuthenticationError(MISSING_API_KEY_MESSAGE)
     return api_key
+
+
+# `client.Agent` was removed in notte-sdk 1.10. The `Agent` properties raise these
+# messages so code written for older versions learns what replaces it.
+AGENT_REMOVED_MESSAGE = """client.Agent was removed in notte-sdk 1.10. Drive the session with act() instead:
+
+    with client.Session() as session:
+        _ = session.execute(type="goto", url="https://example.com")
+        for _ in range(20):
+            result = session.act("describe the task here", raise_on_failure=False)
+            if result.status != "executed":  # done, blocked or stale
+                break
+        data = session.scrape(instructions="what to extract")
+
+See https://docs.notte.cc/features/sessions/act"""
+
+ASYNC_AGENT_REMOVED_MESSAGE = """client.Agent was removed in notte-sdk 1.10. Drive the session with act() instead:
+
+    async with client.Session() as session:
+        _ = await session.execute(type="goto", url="https://example.com")
+        for _ in range(20):
+            result = await session.act("describe the task here", raise_on_failure=False)
+            if result.status != "executed":  # done, blocked or stale
+                break
+        data = await session.scrape(instructions="what to extract")
+
+See https://docs.notte.cc/features/sessions/act"""
 
 
 # Shared by `NotteClient.scrape` and `AsyncNotteClient.scrape`, which open the session with
@@ -180,6 +207,11 @@ class NotteClient:
     @property
     def Session(self) -> type[RemoteSession]:
         return cast(type[RemoteSession], partial(RemoteSession, _client=self.sessions))
+
+    @property
+    def Agent(self) -> NoReturn:
+        """Removed in notte-sdk 1.10: raises `AttributeError` pointing to `session.act()`."""
+        raise AttributeError(AGENT_REMOVED_MESSAGE)
 
     @property
     def Vault(self) -> type[NotteVault]:
@@ -422,6 +454,11 @@ class AsyncNotteClient:
         traceback: TracebackType | None,
     ) -> None:
         await self.aclose()
+
+    @property
+    def Agent(self) -> NoReturn:
+        """Removed in notte-sdk 1.10: raises `AttributeError` pointing to `session.act()`."""
+        raise AttributeError(ASYNC_AGENT_REMOVED_MESSAGE)
 
     @property
     def Vault(self) -> type[AsyncNotteVault]:
