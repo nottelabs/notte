@@ -214,7 +214,7 @@ jobs:
       - name: Pytest coverage comment
         # Fork PRs get a read-only token, so they cannot post the comment. One leg posts it.
         if: ${{ always() && matrix.python == '3.15' && fromJSON(needs.changes.outputs.scope).python_unit && github.ref != 'refs/heads/main' && env.IS_TRUSTED == 'true' }}
-        uses: MishaKav/pytest-coverage-comment@9516bf7f32a9229cf18d5e1717ae387c7154f279 # v1.13.0
+        uses: MishaKav/pytest-coverage-comment@4cfb48edc8f875ac019afdcfd97c48d78ad2b723 # v1.13.1
         with:
           pytest-coverage-path: ./pytest-coverage.txt
           junitxml-path: ./pytest.xml
