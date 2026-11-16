@@ -220,7 +220,8 @@
             }
           }
         },
-        "x-hidden": true
+        "x-hidden": true,
+        "x-mcp": true
       }
     },
     "/sessions/start": {
@@ -3349,7 +3350,8 @@
             }
           }
         },
-        "x-hidden": true
+        "x-hidden": true,
+        "x-mcp": true
       }
     },
     "/functions/{function_id}": {
@@ -5009,7 +5011,8 @@
             }
           }
         },
-        "x-hidden": true
+        "x-hidden": true,
+        "x-mcp": true
       },
       "patch": {
         "tags": [
@@ -5575,7 +5578,8 @@
             }
           }
         },
-        "x-hidden": true
+        "x-hidden": true,
+        "x-mcp": true
       }
     },
     "/vaults/create": {
@@ -6036,7 +6040,8 @@
             }
           }
         },
-        "x-hidden": true
+        "x-hidden": true,
+        "x-mcp": true
       },
       "patch": {
         "tags": [
@@ -6582,7 +6587,8 @@
             }
           }
         },
-        "x-hidden": true
+        "x-hidden": true,
+        "x-mcp": true
       }
     },
     "/payments/connect": {
@@ -7411,6 +7417,7 @@
             }
           }
         },
+        "x-mcp": true,
         "x-codeSamples": [
           {
             "lang": "Python",
@@ -7999,6 +8006,7 @@
             }
           }
         },
+        "x-mcp": true,
         "x-codeSamples": [
           {
             "lang": "Python",
@@ -8249,6 +8257,7 @@
             }
           }
         },
+        "x-mcp": true,
         "x-codeSamples": [
           {
             "lang": "Python",
@@ -8632,7 +8641,8 @@
             }
           }
         },
-        "x-hidden": true
+        "x-hidden": true,
+        "x-mcp": true
       }
     },
     "/personas/{persona_id}/sms": {
@@ -12378,6 +12388,7 @@
             }
           }
         },
+        "x-mcp": true,
         "x-codeSamples": [
           {
             "lang": "Python",
@@ -13311,6 +13322,7 @@
             }
           }
         },
+        "x-mcp": true,
         "x-codeSamples": [
           {
             "lang": "Python",
@@ -16439,7 +16451,8 @@
         "tags": [
           "usage"
         ],
-        "x-hidden": true
+        "x-hidden": true,
+        "x-mcp": true
       }
     },
     "/usage/logs": {
