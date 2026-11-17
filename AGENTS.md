@@ -389,6 +389,10 @@ compare their schema types and run out of memory.
 `SessionResponse.playwright_url` was added in #1363 before the API rollout.
 Until staging publishes it, retain its optional nullable schema during snapshot
 refreshes so regeneration preserves the existing Python and Node SDK field.
+The function-run `rejected` status (in `GetFunctionRunResponse`,
+`FunctionRunListItemResponse` and `FunctionRunUpdateRequest`) and the optional
+nullable `GetFunctionRunResponse.error` object were added to the snapshot ahead of
+the API rollout too. Retain them during refreshes until staging publishes them.
 
 Every operation in `openapi/openapi.json` needs an entry in
 `openapi/resources.json`: a resource method, or `exclude` with a reason. Both

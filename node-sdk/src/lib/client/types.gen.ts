@@ -3611,7 +3611,7 @@ export type FunctionRunListItemResponse = {
     /**
      * Status
      */
-    status: 'closed' | 'active' | 'failed';
+    status: 'closed' | 'active' | 'failed' | 'rejected';
     /**
      * Session Id
      */
@@ -3665,7 +3665,7 @@ export type FunctionRunUpdateRequest = {
      *
      * The status of the workflow run
      */
-    status: 'closed' | 'active' | 'failed';
+    status: 'closed' | 'active' | 'failed' | 'rejected';
     /**
      * Payloads
      */
@@ -4051,7 +4051,7 @@ export type GetFunctionRunResponse = {
     /**
      * Status
      */
-    status: 'closed' | 'active' | 'failed';
+    status: 'closed' | 'active' | 'failed' | 'rejected';
     /**
      * Session Id
      *
@@ -4078,6 +4078,14 @@ export type GetFunctionRunResponse = {
      * The result of the function run (if any)
      */
     result?: string | null;
+    /**
+     * Error
+     *
+     * How the function's exception was classified, for failed and rejected runs
+     */
+    error?: {
+        [key: string]: unknown;
+    } | null;
     /**
      * Local
      *
@@ -10653,7 +10661,7 @@ export type FunctionRunListItemResponseWritable = {
     /**
      * Status
      */
-    status: 'closed' | 'active' | 'failed';
+    status: 'closed' | 'active' | 'failed' | 'rejected';
     /**
      * Session Id
      */
@@ -10849,7 +10857,7 @@ export type GetFunctionRunResponseWritable = {
     /**
      * Status
      */
-    status: 'closed' | 'active' | 'failed';
+    status: 'closed' | 'active' | 'failed' | 'rejected';
     /**
      * Session Id
      *
@@ -10876,6 +10884,14 @@ export type GetFunctionRunResponseWritable = {
      * The result of the function run (if any)
      */
     result?: string | null;
+    /**
+     * Error
+     *
+     * How the function's exception was classified, for failed and rejected runs
+     */
+    error?: {
+        [key: string]: unknown;
+    } | null;
     /**
      * Local
      *

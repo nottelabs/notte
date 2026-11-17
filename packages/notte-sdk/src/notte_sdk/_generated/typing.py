@@ -107,7 +107,7 @@ class FunctionRunUpdateRequestDict(TypedDict):
     logs: NotRequired[list[str] | None]
     variables: NotRequired[dict[str, Any] | None]
     result: NotRequired[Any | None]
-    status: NotRequired[Literal["closed", "active", "failed"]]
+    status: NotRequired[Literal["closed", "active", "failed", "rejected"]]
 
 
 class FunctionRuntimeHealthParametersQueryDict(TypedDict):
