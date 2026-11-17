@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased: rejected CAPTCHAs
+
+When the site rejects a CAPTCHA answer and shows the CAPTCHA again,
+`session.execute()` reports `code: 'captcha_rejected'` instead of
+`captcha_failed` and throws the new `CaptchaRejectedError`, a subclass of
+`ActionExecutionError`, so existing handlers still catch it. The API marks such
+a solve with `captcha.failure_reason: 'rejected'`; other or unknown reasons keep
+`captcha_failed`.
+
 ## Unreleased: the `rejected` function run status
 
 Function requests opt in to the `rejected` run status with the

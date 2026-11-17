@@ -3,10 +3,12 @@ from unittest.mock import MagicMock
 
 import pytest
 from notte_core.actions import CaptchaSolveAction, ClickAction, WaitAction
+from notte_core.errors import NotteBaseError
 from notte_core.observation import utc_now
 from notte_sdk.client import NotteClient
 from notte_sdk.endpoints.page import PageClient
-from notte_sdk.errors import NotteConnectionError, NotteReadTimeoutError, NotteStreamError
+from notte_sdk.endpoints.sessions import _checked_execution
+from notte_sdk.errors import CaptchaRejectedError, NotteConnectionError, NotteReadTimeoutError, NotteStreamError
 from notte_sdk.types import CaptchaStatus, ExecutionResultResponse
 
 
@@ -90,6 +92,54 @@ def test_terminal_failure_keeps_execution_state(client, state, reason):
     assert result.code == f"captcha_{state}"
     assert page.request.call_count == 2
     assert [call.args[0].request.type for call in page.request.call_args_list] == ["click", "captcha_solve"]
+
+
+def failed_wire(action, failure_reason=None):
+    """A `failed` poll answer as the API sends it, parsed like the SDK parses responses."""
+    captcha = {"captcha_id": "solve", "page_id": "page", "generation": 0, "state": "failed", "message": "CAPTCHA x"}
+    if failure_reason is not None:
+        captcha["failure_reason"] = failure_reason
+    return ExecutionResultResponse.model_validate(
+        {
+            "action": action.model_dump(),
+            "success": False,
+            "message": "CAPTCHA x",
+            "started_at": utc_now().isoformat(),
+            "ended_at": utc_now().isoformat(),
+            "action_executed": False,
+            "code": "captcha_rejected" if failure_reason == "rejected" else "captcha_failed",
+            "captcha": captcha,
+        }
+    )
+
+
+def test_rejected_captcha_has_its_own_code_and_error(client):
+    page, _ = client
+    action = ClickAction(selector="#submit")
+    page.request = MagicMock(side_effect=[response(action, "solving"), failed_wire(CaptchaSolveAction(), "rejected")])
+    result = page.execute("session", action)
+    assert not result.success and result.code == "captcha_rejected"
+    assert result.captcha is not None and result.captcha.failure_reason == "rejected"
+    assert result.message == "CAPTCHA x"
+    assert page.request.call_count == 2
+    # Raised as its own class, still caught by the handlers of other CAPTCHA failures.
+    with pytest.raises(CaptchaRejectedError, match="CAPTCHA x") as raised:
+        _ = _checked_execution(result, action, None, True)
+    assert isinstance(raised.value, NotteBaseError)
+
+
+@pytest.mark.parametrize("failure_reason", [None, "some_future_reason"])
+def test_failed_captcha_without_rejection_keeps_failed_code(client, failure_reason):
+    page, _ = client
+    action = ClickAction(selector="#submit")
+    terminal = failed_wire(CaptchaSolveAction(), failure_reason)
+    assert terminal.captcha is not None and terminal.captcha.failure_reason == failure_reason
+    page.request = MagicMock(side_effect=[response(action, "solving"), terminal])
+    result = page.execute("session", action)
+    assert not result.success and result.code == "captcha_failed"
+    with pytest.raises(NotteBaseError) as raised:
+        _ = _checked_execution(result, action, None, True)
+    assert not isinstance(raised.value, CaptchaRejectedError)
 
 
 def test_total_deadline_is_not_reset_by_polls(client):
