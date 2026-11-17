@@ -2145,6 +2145,7 @@ class EmailResponse(SdkResponse):
     attachments: Annotated[
         list[EmailAttachment], Field(description="Files attached to the email, with short-lived download URLs")
     ] = Field(default_factory=list)
+    read: Annotated[bool, Field(description="Whether the email was read before this request")]
 
     def links(self) -> list[str]:
         if self.text_content is None:
@@ -2159,6 +2160,7 @@ class SMSResponse(SdkResponse):
     sms_id: Annotated[str, Field(description="SMS UUID")]
     created_at: Annotated[dt.datetime, Field(description="Creation date")]
     sender: Annotated[str | None, Field(description="SMS sender phone number")]
+    read: Annotated[bool, Field(description="Whether the message was read before this request")]
 
 
 class CreatePhoneNumberRequestDict(TypedDict, total=False):
@@ -2500,6 +2502,8 @@ class CaptchaStatus(BaseModel):
     cancel_reason: str | None = None
     challenge_type: str | None = None
     challenge_state: Literal["interstitial", "captcha", "banned"] | None = None
+    # `rejected`: the site rejected the delivered answer and showed the CAPTCHA again (`code: "captcha_rejected"`).
+    failure_reason: Literal["rejected"] | None = None
 
 
 class ExecutionResultResponse(ExecutionResult):
@@ -2717,6 +2721,10 @@ class GetFunctionResponse(SdkResponse):
         bool,
         Field(description="Whether the function is protected from deletion. It must be turned off before a delete."),
     ] = False
+    expected_errors: Annotated[
+        list[str],
+        Field(description="Exception class names whose runs end rejected (an expected error) instead of failed."),
+    ] = Field(default_factory=list)
 
 
 class GetFunctionWithLinkResponse(GetFunctionResponse, FileLinkResponse):
@@ -2924,6 +2932,10 @@ class UpdateFunctionRunResponse(SdkResponse):
     ]
     updated_at: dt.datetime
     status: Literal["updated", "stopped"] = "updated"
+    error: Annotated[
+        dict[str, Any] | None,
+        Field(description="How the function's exception was classified, for failed and rejected runs"),
+    ] = None
 
 
 class ListFunctionRunsRequestDict(ListRequestDict, total=False):

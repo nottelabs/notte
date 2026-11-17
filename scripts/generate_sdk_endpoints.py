@@ -648,7 +648,7 @@ HIDDEN_KEYWORDS = {
     "ListFunctionsParametersQuery": {"only_current_token", "include_system"},
     "ListFunctionRunsByFunctionIdParametersQuery": {"only_current_token", "include_system", "source"},
     "FunctionDownloadUrlParametersQuery": {"decryption_key"},
-    "FunctionRunUpdateRequest": {"payloads", "result_preview"},
+    "FunctionRunUpdateRequest": {"payloads", "result_preview", "error"},
     "ListPersonasParametersQuery": {"only_current_token", "include_system"},
     "ProfileListParametersQuery": {"only_active", "only_current_token"},
     "ListVaultsParametersQuery": {"only_current_token", "include_system"},

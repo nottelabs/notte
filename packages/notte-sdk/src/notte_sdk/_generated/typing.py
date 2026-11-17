@@ -109,7 +109,6 @@ class FunctionRunUpdateRequestDict(TypedDict):
     variables: NotRequired[dict[str, Any] | None]
     result: NotRequired[Any | None]
     status: NotRequired[Literal["closed", "active", "failed", "rejected"]]
-    error: NotRequired[models.FunctionRunError | None]
 
 
 class FunctionRuntimeHealthParametersQueryDict(TypedDict):
