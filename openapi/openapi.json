@@ -25447,6 +25447,14 @@
             "description": "Whether the function is protected from deletion. It must be turned off before a delete.",
             "default": false
           },
+          "expected_errors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Expected Errors",
+            "description": "Exception class names whose runs end rejected (an expected error) instead of failed."
+          },
           "published": {
             "type": "boolean",
             "title": "Published",
@@ -25769,6 +25777,14 @@
             "description": "Whether the function is protected from deletion. It must be turned off before a delete.",
             "default": false
           },
+          "expected_errors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Expected Errors",
+            "description": "Exception class names whose runs end rejected (an expected error) instead of failed."
+          },
           "published": {
             "type": "boolean",
             "title": "Published",
@@ -25835,14 +25851,6 @@
             ],
             "title": "Response Format",
             "description": "JSON Schema of the value run() returns, or null when the author never documented one."
-          },
-          "expected_errors": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Expected Errors",
-            "description": "Exception class names whose runs end rejected (an expected error) instead of failed."
           },
           "schedule_cron": {
             "anyOf": [
@@ -26599,6 +26607,14 @@
             "description": "Whether the function is protected from deletion. It must be turned off before a delete.",
             "default": false
           },
+          "expected_errors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Expected Errors",
+            "description": "Exception class names whose runs end rejected (an expected error) instead of failed."
+          },
           "published": {
             "type": "boolean",
             "title": "Published",
@@ -26665,14 +26681,6 @@
             ],
             "title": "Response Format",
             "description": "JSON Schema of the value run() returns, or null when the author never documented one."
-          },
-          "expected_errors": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Expected Errors",
-            "description": "Exception class names whose runs end rejected (an expected error) instead of failed."
           },
           "schedule_cron": {
             "anyOf": [

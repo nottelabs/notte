@@ -3347,6 +3347,12 @@ export type FunctionListItemResponse = {
      */
     deletion_protected?: boolean;
     /**
+     * Expected Errors
+     *
+     * Exception class names whose runs end rejected (an expected error) instead of failed.
+     */
+    expected_errors?: Array<string>;
+    /**
      * Published
      */
     published?: boolean;
@@ -3523,6 +3529,12 @@ export type FunctionResponse = {
      */
     deletion_protected?: boolean;
     /**
+     * Expected Errors
+     *
+     * Exception class names whose runs end rejected (an expected error) instead of failed.
+     */
+    expected_errors?: Array<string>;
+    /**
      * Published
      */
     published?: boolean;
@@ -3562,12 +3574,6 @@ export type FunctionResponse = {
     response_format?: {
         [key: string]: unknown;
     } | null;
-    /**
-     * Expected Errors
-     *
-     * Exception class names whose runs end rejected (an expected error) instead of failed.
-     */
-    expected_errors?: Array<string>;
     /**
      * Schedule Cron
      *
@@ -4013,6 +4019,12 @@ export type FunctionWithLinkResponse = {
      */
     deletion_protected?: boolean;
     /**
+     * Expected Errors
+     *
+     * Exception class names whose runs end rejected (an expected error) instead of failed.
+     */
+    expected_errors?: Array<string>;
+    /**
      * Published
      */
     published?: boolean;
@@ -4052,12 +4064,6 @@ export type FunctionWithLinkResponse = {
     response_format?: {
         [key: string]: unknown;
     } | null;
-    /**
-     * Expected Errors
-     *
-     * Exception class names whose runs end rejected (an expected error) instead of failed.
-     */
-    expected_errors?: Array<string>;
     /**
      * Schedule Cron
      *
@@ -10552,6 +10558,12 @@ export type FunctionListItemResponseWritable = {
      */
     deletion_protected?: boolean;
     /**
+     * Expected Errors
+     *
+     * Exception class names whose runs end rejected (an expected error) instead of failed.
+     */
+    expected_errors?: Array<string>;
+    /**
      * Published
      */
     published?: boolean;
@@ -10668,6 +10680,12 @@ export type FunctionResponseWritable = {
      */
     deletion_protected?: boolean;
     /**
+     * Expected Errors
+     *
+     * Exception class names whose runs end rejected (an expected error) instead of failed.
+     */
+    expected_errors?: Array<string>;
+    /**
      * Published
      */
     published?: boolean;
@@ -10707,12 +10725,6 @@ export type FunctionResponseWritable = {
     response_format?: {
         [key: string]: unknown;
     } | null;
-    /**
-     * Expected Errors
-     *
-     * Exception class names whose runs end rejected (an expected error) instead of failed.
-     */
-    expected_errors?: Array<string>;
     /**
      * Schedule Cron
      *
@@ -10868,6 +10880,12 @@ export type FunctionWithLinkResponseWritable = {
      */
     deletion_protected?: boolean;
     /**
+     * Expected Errors
+     *
+     * Exception class names whose runs end rejected (an expected error) instead of failed.
+     */
+    expected_errors?: Array<string>;
+    /**
      * Published
      */
     published?: boolean;
@@ -10907,12 +10925,6 @@ export type FunctionWithLinkResponseWritable = {
     response_format?: {
         [key: string]: unknown;
     } | null;
-    /**
-     * Expected Errors
-     *
-     * Exception class names whose runs end rejected (an expected error) instead of failed.
-     */
-    expected_errors?: Array<string>;
     /**
      * Schedule Cron
      *

@@ -102,6 +102,12 @@ export type FunctionWithLinkResponse = {
      */
     deletion_protected?: boolean;
     /**
+     * Expected Errors
+     *
+     * Exception class names whose runs end rejected (an expected error) instead of failed.
+     */
+    expected_errors?: Array<string>;
+    /**
      * Published
      */
     published?: boolean;
@@ -141,12 +147,6 @@ export type FunctionWithLinkResponse = {
     response_format?: {
         [key: string]: unknown;
     } | null;
-    /**
-     * Expected Errors
-     *
-     * Exception class names whose runs end rejected (an expected error) instead of failed.
-     */
-    expected_errors?: Array<string>;
     /**
      * Schedule Cron
      *
@@ -240,6 +240,10 @@ The ID of the reference function (i.e whether the function was forked from anoth
 Whether the function is protected from deletion. It must be turned off before a delete.
 </ParamField>
 
+<ParamField body="expected_errors" type={"string[] | undefined"}>
+Exception class names whose runs end rejected (an expected error) instead of failed.
+</ParamField>
+
 <ParamField body="published" type={"boolean | undefined"}>
 
 </ParamField>
@@ -266,10 +270,6 @@ Builder's operating notes: typical run duration, known failure modes, which para
 
 <ParamField body="response_format" type={"{ [key: string]: unknown; } | null | undefined"}>
 JSON Schema of the value run() returns, or null when the author never documented one.
-</ParamField>
-
-<ParamField body="expected_errors" type={"string[] | undefined"}>
-Exception class names whose runs end rejected (an expected error) instead of failed.
 </ParamField>
 
 <ParamField body="schedule_cron" type={"string | null | undefined"}>
