@@ -386,6 +386,13 @@ compare their schema types and run out of memory.
 
 ## OpenAPI refresh
 
+Contract PRs also run the schema consumer round trip through the existing
+`SUBMODULE_BUMP_PAT` and the `SDK_SCHEMA_REPOSITORY` repository variable.
+It pins both revisions and requires the API after SDK installation to match
+this PR's snapshot. A failure includes the exported schema and comparison diff;
+refresh this PR from that schema, then regenerate its SDKs. Existing generator
+checks validate the outputs, so the round trip does not repeat generation.
+
 `SessionResponse.playwright_url` was added in #1363 before the API rollout.
 Until staging publishes it, retain its optional nullable schema during snapshot
 refreshes so regeneration preserves the existing Python and Node SDK field.

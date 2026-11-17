@@ -62,6 +62,7 @@ def report(needs: dict[str, Need], jobs: list[Job], trusted: bool, agent_models:
 
     expected_jobs = {
         "file_checks": ["python / checks"],
+        "schema_roundtrip": ["schema"],
         "python_static": ["python / checks"],
         "python_unit": ["python / tests (3.15)", "python / compatibility (3.11)", "python / compatible-dependencies"],
         "python_docs": ["python / docs"],
