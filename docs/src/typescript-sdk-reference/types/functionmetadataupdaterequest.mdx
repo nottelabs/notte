@@ -55,6 +55,12 @@ export type FunctionMetadataUpdateRequest = {
     response_format?: {
         [key: string]: unknown;
     } | null;
+    /**
+     * Expected Errors
+     *
+     * Exception class names the function raises on purpose. A failed run whose exception has one of these names in its class hierarchy ends rejected and is never self-healed. Replaces the stored list; send [] to clear it. Omit or send null to leave it unchanged.
+     */
+    expected_errors?: Array<string> | null;
 };
 ```
 
@@ -94,4 +100,8 @@ Turn deletion protection on or off. While it is on, the function cannot be delet
 
 <ParamField body="response_format" type={"{ [key: string]: unknown; } | null | undefined"}>
 JSON Schema of run()'s return value, computed by the caller from its pydantic model
+</ParamField>
+
+<ParamField body="expected_errors" type={"string[] | null | undefined"}>
+Exception class names the function raises on purpose. A failed run whose exception has one of these names in its class hierarchy ends rejected and is never self-healed. Replaces the stored list; send [] to clear it. Omit or send null to leave it unchanged.
 </ParamField>

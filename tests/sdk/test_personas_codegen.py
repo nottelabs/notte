@@ -22,8 +22,9 @@ EMAIL = {
     "created_at": "2026-10-13T00:00:00Z",
     "sender_email": None,
     "sender_name": None,
+    "read": False,
 }
-SMS = {"body": "Hello", "sms_id": "sms-1", "created_at": "2026-10-13T00:00:00Z", "sender": None}
+SMS = {"body": "Hello", "sms_id": "sms-1", "created_at": "2026-10-13T00:00:00Z", "sender": None, "read": False}
 
 
 def test_persona_wire_contract(client: NotteClient, monkeypatch: pytest.MonkeyPatch) -> None:

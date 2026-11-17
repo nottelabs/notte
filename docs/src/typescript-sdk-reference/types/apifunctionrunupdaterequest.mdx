@@ -44,7 +44,7 @@ type ApiFunctionRunUpdateRequest = {
      *
      * The status of the workflow run
      */
-    status: 'closed' | 'active' | 'failed';
+    status: 'closed' | 'active' | 'failed' | 'rejected';
     /**
      * Payloads
      */
@@ -55,6 +55,10 @@ type ApiFunctionRunUpdateRequest = {
      * Result Preview
      */
     result_preview?: string | null;
+    /**
+     * The typed error of a failed or rejected run
+     */
+    error?: FunctionRunError | null;
 };
 ```
 
@@ -76,7 +80,7 @@ The variables of the workflow run
 The result of the workflow run
 </ParamField>
 
-<ParamField body="status" type={"\"failed\" | \"closed\" | \"active\""} required>
+<ParamField body="status" type={"\"failed\" | \"rejected\" | \"closed\" | \"active\""} required>
 The status of the workflow run
 </ParamField>
 
@@ -88,6 +92,11 @@ The status of the workflow run
 
 </ParamField>
 
+<ParamField body="error" type={"FunctionRunError | null | undefined"}>
+The typed error of a failed or rejected run
+</ParamField>
+
 ## Related types
 
+- [FunctionRunError](/typescript-sdk-reference/types/functionrunerror)
 - [RunPayloadReference](/typescript-sdk-reference/types/runpayloadreference)

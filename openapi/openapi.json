@@ -3,7 +3,7 @@
   "info": {
     "title": "Notte API",
     "description": "Notte API is a REST API that allows you to interact with Notte. It is used to create cloud browser sessions, scrape webpages, and run web ai agents to act on your behalf on the internet.",
-    "version": "1.10.11",
+    "version": "1.10.12",
     "x-logo": {
       "url": "https://www.notte.cc/images/logo/logo-white.png"
     }
@@ -1456,7 +1456,7 @@
           "page"
         ],
         "summary": "Page Execute",
-        "description": "Run one action on the session's current page.\n\n## While a CAPTCHA is being solved\n\nWhile a CAPTCHA on the page is unsolved or being solved (automatically with `solve_captchas: true`, or after a `captcha_solve` action), the action is **not run**. The request still answers HTTP 200, at once, with:\n\n- `success: false` and `action_executed: false`\n- `code: \"captcha_in_progress\"`, with a human-readable `message` that can vary\n- `captcha`: the solve's `captcha_id`, `page_id`, `generation`, `state: \"solving\"` and `retry_after_ms`\n\nThis applies to every action except `goto`, `wait` included: `{\"type\": \"wait\", \"time_ms\": 5000}` returns right away without waiting. An HTTP 200 does not mean the action ran: check `action_executed`, `code` and `captcha.state` on every response, not `message`.\n\nTo wait for the solve, either:\n\n- poll it: send `{\"type\": \"captcha_solve\"}` with the query parameter `captcha_id` set to `captcha.captcha_id`, every `retry_after_ms`, until `captcha.state` is no longer `\"solving\"`. A poll is read-only: it runs no action and starts no new solve.\n- or sleep on your side for `retry_after_ms` and send the action again.\n\nA solve ends `solved` (`code: \"captcha_solved\"`), `failed` (`code: \"captcha_failed\"`) or `cancelled` (`code: \"captcha_cancelled\"`, for example after a `goto`). With `solve_captchas: true`, after `failed`, actions on that page keep answering `captcha_failed` without running while the CAPTCHA is still there; a `goto` still runs.\n\nAfter `solved`, send the action again only if its response had `action_executed: false`. To make sure it runs on the same page, add the query parameters `target_page_id` and `target_generation` from the last `captcha` status; if the page changed, the answer is `code: \"captcha_page_changed\"` and nothing runs. An action that ran and then brought up a CAPTCHA answers `action_executed: true` with a `captcha` status: keep its result, poll the solve, and do not send the action again.\n\nA `goto` is never blocked: it ends a solve in progress. `captcha_timeout_seconds` (default 180) is the budget of a solve the request starts. `observe`, `scrape` and `screenshot` are not blocked by a solve: they read the page as it is.",
+        "description": "Run one action on the session's current page.\n\n## While a CAPTCHA is being solved\n\nWhile a CAPTCHA on the page is unsolved or being solved (automatically with `solve_captchas: true`, or after a `captcha_solve` action), the action is **not run**. The request still answers HTTP 200, at once, with:\n\n- `success: false` and `action_executed: false`\n- `code: \"captcha_in_progress\"`, with a human-readable `message` that can vary\n- `captcha`: the solve's `captcha_id`, `page_id`, `generation`, `state: \"solving\"` and `retry_after_ms`\n\nThis applies to every action except `goto`, `wait` included: `{\"type\": \"wait\", \"time_ms\": 5000}` returns right away without waiting. An HTTP 200 does not mean the action ran: check `action_executed`, `code` and `captcha.state` on every response, not `message`.\n\nTo wait for the solve, either:\n\n- poll it: send `{\"type\": \"captcha_solve\"}` with the query parameter `captcha_id` set to `captcha.captcha_id`, every `retry_after_ms`, until `captcha.state` is no longer `\"solving\"`. A poll is read-only: it runs no action and starts no new solve.\n- or sleep on your side for `retry_after_ms` and send the action again.\n\nA solve ends `solved` (`code: \"captcha_solved\"`), `failed` (`code: \"captcha_failed\"`) or `cancelled` (`code: \"captcha_cancelled\"`, for example after a `goto`). With `solve_captchas: true`, after `failed`, actions on that page keep answering `captcha_failed` without running while the CAPTCHA is still there; a `goto` still runs.\n\nWhen the site rejects the answer our solver delivered and shows the CAPTCHA again right away, the solve ends `failed` with `code: \"captcha_rejected\"` and `captcha.failure_reason: \"rejected\"`, and solving stops for that CAPTCHA on the page: actions on that page keep answering `captcha_rejected` without running while it is there. A site that does this usually rejects every answer in the same browser session, so start a new session (for example through another proxy) instead of waiting. A `captcha_solve` action still tries again.\n\nAfter `solved`, send the action again only if its response had `action_executed: false`. To make sure it runs on the same page, add the query parameters `target_page_id` and `target_generation` from the last `captcha` status; if the page changed, the answer is `code: \"captcha_page_changed\"` and nothing runs. An action that ran and then brought up a CAPTCHA answers `action_executed: true` with a `captcha` status: keep its result, poll the solve, and do not send the action again.\n\nA `goto` is never blocked: it ends a solve in progress. `captcha_timeout_seconds` (default 180) is the budget of a solve the request starts. `observe`, `scrape` and `screenshot` are not blocked by a solve: they read the page as it is.",
         "operationId": "page_execute",
         "security": [
           {
@@ -8433,6 +8433,18 @@
             "description": "Whether to only return unread messages"
           },
           {
+            "name": "mark_read",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Whether to mark the returned messages as read",
+              "default": true,
+              "title": "Mark Read"
+            },
+            "description": "Whether to mark the returned messages as read"
+          },
+          {
             "name": "x-notte-request-origin",
             "in": "header",
             "required": false,
@@ -8711,6 +8723,18 @@
               "title": "Only Unread"
             },
             "description": "Whether to only return unread messages"
+          },
+          {
+            "name": "mark_read",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Whether to mark the returned messages as read",
+              "default": true,
+              "title": "Mark Read"
+            },
+            "description": "Whether to mark the returned messages as read"
           },
           {
             "name": "x-notte-request-origin",
@@ -21813,6 +21837,18 @@
               }
             ],
             "title": "Challenge State"
+          },
+          "failure_reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "rejected"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Reason"
           }
         },
         "type": "object",
@@ -24229,6 +24265,11 @@
             "type": "array",
             "title": "Attachments",
             "description": "Files attached to the email, with short-lived download URLs"
+          },
+          "read": {
+            "type": "boolean",
+            "title": "Read",
+            "description": "Whether the email was read before this request"
           }
         },
         "type": "object",
@@ -24237,7 +24278,8 @@
           "email_id",
           "created_at",
           "sender_email",
-          "sender_name"
+          "sender_name",
+          "read"
         ],
         "title": "EmailResponse"
       },
@@ -25405,6 +25447,14 @@
             "description": "Whether the function is protected from deletion. It must be turned off before a delete.",
             "default": false
           },
+          "expected_errors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Expected Errors",
+            "description": "Exception class names whose runs end rejected (an expected error) instead of failed."
+          },
           "published": {
             "type": "boolean",
             "title": "Published",
@@ -25573,6 +25623,25 @@
             ],
             "title": "Response Format",
             "description": "JSON Schema of run()'s return value, computed by the caller from its pydantic model"
+          },
+          "expected_errors": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string",
+                  "maxLength": 100,
+                  "minLength": 1,
+                  "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                },
+                "type": "array",
+                "maxItems": 50
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Errors",
+            "description": "Exception class names the function raises on purpose. A failed run whose exception has one of these names in its class hierarchy ends rejected and is never self-healed. Replaces the stored list; send [] to clear it. Omit or send null to leave it unchanged."
           }
         },
         "type": "object",
@@ -25707,6 +25776,14 @@
             "title": "Deletion Protected",
             "description": "Whether the function is protected from deletion. It must be turned off before a delete.",
             "default": false
+          },
+          "expected_errors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Expected Errors",
+            "description": "Exception class names whose runs end rejected (an expected error) instead of failed."
           },
           "published": {
             "type": "boolean",
@@ -25848,6 +25925,92 @@
         ],
         "title": "FunctionRollbackRequest"
       },
+      "FunctionRunError": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "expected",
+              "retryable",
+              "unexpected"
+            ],
+            "title": "Kind",
+            "description": "expected: the run was rejected on purpose; retryable: a new run may succeed"
+          },
+          "type": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Type",
+            "description": "The exception class name"
+          },
+          "mro": {
+            "items": {
+              "type": "string",
+              "maxLength": 200,
+              "minLength": 1
+            },
+            "type": "array",
+            "maxItems": 64,
+            "minItems": 1,
+            "title": "Mro",
+            "description": "The exception's class names, most derived first"
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Code",
+            "description": "A stable code, by default the class name in snake_case"
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 4000,
+            "title": "Message",
+            "description": "The exception message"
+          },
+          "heal": {
+            "type": "boolean",
+            "title": "Heal",
+            "description": "Whether self-healing may rewrite the function for this error"
+          },
+          "retry": {
+            "type": "boolean",
+            "title": "Retry",
+            "description": "Whether the caller may retry with a new run"
+          },
+          "status_code": {
+            "type": "integer",
+            "maximum": 599.0,
+            "minimum": 100.0,
+            "title": "Status Code",
+            "description": "Informational HTTP status for the error"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "class",
+              "config",
+              "default"
+            ],
+            "title": "Source",
+            "description": "class: from the exception class; config: the function's expected_errors; default: neither"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "type",
+          "mro",
+          "code",
+          "message",
+          "heal",
+          "retry",
+          "status_code",
+          "source"
+        ],
+        "title": "FunctionRunError"
+      },
       "FunctionRunListItemResponse": {
         "properties": {
           "function_id": {
@@ -25875,7 +26038,8 @@
             "enum": [
               "closed",
               "active",
-              "failed"
+              "failed",
+              "rejected"
             ],
             "title": "Status"
           },
@@ -25975,7 +26139,8 @@
             "enum": [
               "closed",
               "active",
-              "failed"
+              "failed",
+              "rejected"
             ],
             "title": "Status",
             "description": "The status of the workflow run"
@@ -26005,6 +26170,17 @@
               }
             ],
             "title": "Result Preview"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FunctionRunError"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The typed error of a failed or rejected run"
           }
         },
         "additionalProperties": false,
@@ -26431,6 +26607,14 @@
             "description": "Whether the function is protected from deletion. It must be turned off before a delete.",
             "default": false
           },
+          "expected_errors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Expected Errors",
+            "description": "Exception class names whose runs end rejected (an expected error) instead of failed."
+          },
           "published": {
             "type": "boolean",
             "title": "Published",
@@ -26635,7 +26819,8 @@
             "enum": [
               "closed",
               "active",
-              "failed"
+              "failed",
+              "rejected"
             ],
             "title": "Status"
           },
@@ -26683,6 +26868,17 @@
             ],
             "title": "Result",
             "description": "The result of the function run (if any)"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FunctionRunError"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What a failed or rejected run's exception means; null otherwise"
           },
           "local": {
             "type": "boolean",
@@ -27326,7 +27522,7 @@
           "version": {
             "type": "string",
             "title": "Version",
-            "default": "1.10.11"
+            "default": "1.10.12"
           },
           "description": {
             "type": "string",
@@ -32859,6 +33055,11 @@
             ],
             "title": "Sender",
             "description": "SMS sender phone number"
+          },
+          "read": {
+            "type": "boolean",
+            "title": "Read",
+            "description": "Whether the message was read before this request"
           }
         },
         "type": "object",
@@ -32866,7 +33067,8 @@
           "body",
           "sms_id",
           "created_at",
-          "sender"
+          "sender",
+          "read"
         ],
         "title": "SMSResponse"
       },
@@ -35359,6 +35561,16 @@
             ],
             "title": "Status",
             "default": "updated"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FunctionRunError"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "workflow_id": {
             "type": "string",

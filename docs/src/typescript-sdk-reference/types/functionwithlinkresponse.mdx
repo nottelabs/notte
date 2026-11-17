@@ -102,6 +102,12 @@ export type FunctionWithLinkResponse = {
      */
     deletion_protected?: boolean;
     /**
+     * Expected Errors
+     *
+     * Exception class names whose runs end rejected (an expected error) instead of failed.
+     */
+    expected_errors?: Array<string>;
+    /**
      * Published
      */
     published?: boolean;
@@ -232,6 +238,10 @@ The ID of the reference function (i.e whether the function was forked from anoth
 
 <ParamField body="deletion_protected" type={"boolean | undefined"}>
 Whether the function is protected from deletion. It must be turned off before a delete.
+</ParamField>
+
+<ParamField body="expected_errors" type={"string[] | undefined"}>
+Exception class names whose runs end rejected (an expected error) instead of failed.
 </ParamField>
 
 <ParamField body="published" type={"boolean | undefined"}>

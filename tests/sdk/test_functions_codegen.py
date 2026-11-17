@@ -70,6 +70,7 @@ def test_function_wire_contract(client: NotteClient, monkeypatch: pytest.MonkeyP
             "Authorization": "Bearer test-api-key",  # pragma: allowlist secret
             "x-notte-sdk-version": __version__,
             "x-notte-request-origin": "sdk-python",
+            "x-notte-accept-run-statuses": "rejected",
             **(
                 {"Content-Type": "application/json"}
                 if call.method in {"POST", "PATCH"} and call.data is not None

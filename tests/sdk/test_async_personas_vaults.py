@@ -34,8 +34,8 @@ from tests.sdk.test_generated_endpoints import PERSONA, SERVER, VAULT
 Routes = dict[tuple[str, str], list[Any]]
 
 VAULT_PERSONA = {**PERSONA, "vault_id": "vault-1"}
-EMAIL = dict(subject="code", email_id="e-1", created_at=STAMP, sender_email="a@x.test", sender_name=None)
-SMS = dict(body="123456", sms_id="s-1", created_at=STAMP, sender="+15550000")
+EMAIL = dict(subject="code", email_id="e-1", created_at=STAMP, sender_email="a@x.test", sender_name=None, read=False)
+SMS = dict(body="123456", sms_id="s-1", created_at=STAMP, sender="+15550000", read=False)
 CREDENTIALS = {"email": "ada@example.test", "password": "hunter2"}  # pragma: allowlist secret
 CARD = {
     "card_holder_name": "Ada Lovelace",

@@ -31,6 +31,7 @@ export type UpdateFunctionRunResponse = {
      * Status
      */
     status?: 'updated' | 'stopped';
+    error?: FunctionRunError | null;
     /**
      * Workflow Id
      */
@@ -60,6 +61,10 @@ The ID of the function run
 
 </ParamField>
 
+<ParamField body="error" type={"FunctionRunError | null | undefined"}>
+
+</ParamField>
+
 <ParamField body="workflow_id" type={"string"} required>
 
 </ParamField>
@@ -67,3 +72,7 @@ The ID of the function run
 <ParamField body="workflow_run_id" type={"string"} required>
 
 </ParamField>
+
+## Related types
+
+- [FunctionRunError](/typescript-sdk-reference/types/functionrunerror)

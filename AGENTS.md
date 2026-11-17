@@ -389,6 +389,12 @@ compare their schema types and run out of memory.
 `SessionResponse.playwright_url` was added in #1363 before the API rollout.
 Until staging publishes it, retain its optional nullable schema during snapshot
 refreshes so regeneration preserves the existing Python and Node SDK field.
+A refresh can add required response fields (such as `EmailResponse.read`) before
+production serves them. Mirror them in `notte_core.types`: the release workflows run
+`make openapi-check-prod` and do not publish models production doesn't serve yet.
+Request fields that only the Functions runtime sends (`FunctionRunUpdateRequest`'s
+`payloads`, `result_preview`, `error`) stay out of the public keywords
+(`HIDDEN_KEYWORDS` in `scripts/generate_sdk_endpoints.py`) and in `openapi/known_drift.txt`.
 
 Every operation in `openapi/openapi.json` needs an entry in
 `openapi/resources.json`: a resource method, or `exclude` with a reason. Both
