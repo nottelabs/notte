@@ -616,6 +616,7 @@ async def test_context_manager_keeps_a_vault_opened_by_id(monkeypatch: pytest.Mo
             return await vault.list_credentials()
 
     exchange = await assert_same(monkeypatch, VAULT_ROUTES, sync_call, async_call)
+    assert exchange.outcome[0] == "ok", exchange.outcome
     assert ("DELETE", "/vaults/vault-1") not in paths(exchange)
 
 
@@ -633,6 +634,7 @@ async def test_context_manager_keeps_a_persona_vault(monkeypatch: pytest.MonkeyP
             return vault.vault_id
 
     exchange = await assert_same(monkeypatch, routes, sync_call, async_call)
+    assert exchange.outcome[0] == "ok", exchange.outcome
     assert [method for method, _ in paths(exchange)] == ["GET", "GET"]
 
 
@@ -647,6 +649,7 @@ async def test_context_manager_deletes_a_vault_it_created(monkeypatch: pytest.Mo
             return vault.vault_id
 
     exchange = await assert_same(monkeypatch, VAULT_ROUTES, sync_call, async_call)
+    assert exchange.outcome[0] == "ok", exchange.outcome
     assert paths(exchange) == [("POST", "/vaults/create"), ("DELETE", "/vaults/vault-1")]
 
 
