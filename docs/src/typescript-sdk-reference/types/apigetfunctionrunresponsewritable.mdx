@@ -68,13 +68,9 @@ type ApiGetFunctionRunResponseWritable = {
      */
     result?: string | null;
     /**
-     * Error
-     *
-     * How the function's exception was classified, for failed and rejected runs
+     * What a failed or rejected run's exception means; null otherwise
      */
-    error?: {
-        [key: string]: unknown;
-    } | null;
+    error?: FunctionRunError | null;
     /**
      * Local
      *
@@ -130,7 +126,7 @@ The ID of the function run
 
 </ParamField>
 
-<ParamField body="status" type={"\"failed\" | \"closed\" | \"active\" | \"rejected\""} required>
+<ParamField body="status" type={"\"failed\" | \"rejected\" | \"closed\" | \"active\""} required>
 
 </ParamField>
 
@@ -150,8 +146,8 @@ The variables of the function run
 The result of the function run (if any)
 </ParamField>
 
-<ParamField body="error" type={"{ [key: string]: unknown; } | null | undefined"}>
-How the function's exception was classified, for failed and rejected runs
+<ParamField body="error" type={"FunctionRunError | null | undefined"}>
+What a failed or rejected run's exception means; null otherwise
 </ParamField>
 
 <ParamField body="local" type={"boolean | undefined"}>
@@ -176,5 +172,6 @@ Whether the function has been run locally or on the cloud
 
 ## Related types
 
+- [FunctionRunError](/typescript-sdk-reference/types/functionrunerror)
 - [FunctionSdkGeneration](/typescript-sdk-reference/types/functionsdkgeneration)
 - [RunPayloadReference](/typescript-sdk-reference/types/runpayloadreference)

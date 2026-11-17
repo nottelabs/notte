@@ -191,6 +191,8 @@ export const pageScreenshot = <ThrowOnError extends boolean = false>(options: Op
  *
  * A solve ends `solved` (`code: "captcha_solved"`), `failed` (`code: "captcha_failed"`) or `cancelled` (`code: "captcha_cancelled"`, for example after a `goto`). With `solve_captchas: true`, after `failed`, actions on that page keep answering `captcha_failed` without running while the CAPTCHA is still there; a `goto` still runs.
  *
+ * When the site rejects the answer our solver delivered and shows the CAPTCHA again right away, the solve ends `failed` with `code: "captcha_rejected"` and `captcha.failure_reason: "rejected"`, and solving stops for that CAPTCHA on the page: actions on that page keep answering `captcha_rejected` without running while it is there. A site that does this usually rejects every answer in the same browser session, so start a new session (for example through another proxy) instead of waiting. A `captcha_solve` action still tries again.
+ *
  * After `solved`, send the action again only if its response had `action_executed: false`. To make sure it runs on the same page, add the query parameters `target_page_id` and `target_generation` from the last `captcha` status; if the page changed, the answer is `code: "captcha_page_changed"` and nothing runs. An action that ran and then brought up a CAPTCHA answers `action_executed: true` with a `captcha` status: keep its result, poll the solve, and do not send the action again.
  *
  * A `goto` is never blocked: it ends a solve in progress. `captcha_timeout_seconds` (default 180) is the budget of a solve the request starts. `observe`, `scrape` and `screenshot` are not blocked by a solve: they read the page as it is.

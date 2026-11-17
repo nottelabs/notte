@@ -47,6 +47,12 @@ export type PersonaEmailsListData = {
          * Whether to only return unread messages
          */
         only_unread?: boolean;
+        /**
+         * Mark Read
+         *
+         * Whether to mark the returned messages as read
+         */
+        mark_read?: boolean;
     };
     url: '/personas/{persona_id}/emails';
 };
@@ -66,7 +72,7 @@ export type PersonaEmailsListData = {
 
 </ParamField>
 
-<ParamField body="query" type={"{ limit?: number | undefined; timedelta?: string | null | undefined; only_unread?: boolean | undefined; } | undefined"}>
+<ParamField body="query" type={"{ limit?: number | undefined; timedelta?: string | null | undefined; only_unread?: boolean | undefined; mark_read?: boolean | undefined; } | undefined"}>
 
 </ParamField>
 
