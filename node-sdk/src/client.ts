@@ -1,3 +1,4 @@
+import { ACCEPT_RUN_STATUSES_HEADER } from '@/run-statuses';
 import { NotteManagedAuth, type AuthSessionResponse as SessionResponse } from '@/managed-auth';
 import { createClient } from '@/lib/client/client';
 import { createResources } from '@/resources.gen';
@@ -66,13 +67,7 @@ export const TIMEOUT_HEADER = 'x-notte-timeout-ms';
 export const MAX_RETRIES_HEADER = 'x-notte-max-retries';
 const DB_PREVIEW_ENV = 'NOTTE_DB_PREVIEW_BRANCH';
 const DB_PREVIEW_HEADER = 'x-db-preview';
-/**
- * Opts in to the `rejected` function run status (a run whose function raised an
- * `ExpectedFunctionError`). Without it the API reports rejected runs as `failed`,
- * so clients that predate the status still treat them as failures. Sent on every
- * functions request, like `RESOURCE_HEADERS` of the Python functions client.
- */
-export const ACCEPT_RUN_STATUSES_HEADER = 'x-notte-accept-run-statuses';
+export { ACCEPT_RUN_STATUSES_HEADER };
 const EXECUTION_ERROR_CLASS = 'NotteApiExecutionError';
 
 export interface NotteClientConfig {

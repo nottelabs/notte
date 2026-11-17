@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { handleProxyRequest } from '@/proxy/core';
 import type { NotteProxyConfig } from '@/proxy/types';
 import { NotteProxyAuthError } from '@/proxy/types';
+import { NotteClient } from '@/client';
+import { FunctionRunRejectedError } from '@/errors';
 
 // Helper to create a Request object
 function makeRequest(
@@ -386,6 +388,83 @@ describe('handleProxyRequest', () => {
 
       const calledHeaders = vi.mocked(globalThis.fetch).mock.calls[0]?.[1]?.headers as Headers;
       expect(calledHeaders.get('x-custom-header')).toBe('custom-value');
+    });
+  });
+
+  describe('the rejected run status opt-in', () => {
+    // NotteClient asks for the `rejected` status on functions requests. Dropping
+    // the header here would make runs through the proxy report deliberate
+    // refusals as `failed`.
+    const OPT_IN = 'x-notte-accept-run-statuses';
+    const upstreamHeaders = () => vi.mocked(globalThis.fetch).mock.calls[0]?.[1]?.headers as Headers;
+    const runRequest = (headers: Record<string, string>) =>
+      new Request('http://localhost:3000/api/notte/functions/fn-1/runs/run-1', { method: 'POST', body: '{}', headers });
+
+    beforeEach(() => {
+      vi.mocked(globalThis.fetch).mockResolvedValue(
+        new Response(JSON.stringify({ ok: true }), { headers: { 'content-type': 'application/json' } }),
+      );
+    });
+
+    it('forwards it by default', async () => {
+      await handleProxyRequest(runRequest({ [OPT_IN]: 'rejected' }), ['functions', 'fn-1', 'runs', 'run-1'], baseConfig());
+
+      expect(upstreamHeaders().get(OPT_IN)).toBe('rejected');
+    });
+
+    it('forwards it alongside a caller-configured list, which keeps working', async () => {
+      await handleProxyRequest(
+        runRequest({ [OPT_IN]: 'rejected', 'x-custom-header': 'custom-value' }),
+        ['functions', 'fn-1', 'runs', 'run-1'],
+        baseConfig({ forwardHeaders: ['content-type', 'x-custom-header'] }),
+      );
+
+      expect(upstreamHeaders().get(OPT_IN)).toBe('rejected');
+      expect(upstreamHeaders().get('x-custom-header')).toBe('custom-value');
+      expect(upstreamHeaders().get('accept')).toBeNull();
+    });
+
+    it('does not add it to a request that did not ask', async () => {
+      await handleProxyRequest(runRequest({}), ['functions', 'fn-1', 'runs', 'run-1'], baseConfig());
+
+      expect(upstreamHeaders().has(OPT_IN)).toBe(false);
+    });
+
+    it('lets a client behind the proxy receive a rejected run as FunctionRunRejectedError', async () => {
+      const error = {
+        kind: 'expected', type: 'AccountNotUnique', mro: ['AccountNotUnique', 'ValueError', 'ExpectedFunctionError'],
+        code: 'account_not_unique', message: '2 accounts match this phone number',
+        heal: false, retry: false, status_code: 409, source: 'class',
+      };
+      const upstream: Request[] = [];
+      // One fetch serves both hops: the client calls the app's proxy route,
+      // and the proxy calls the API, which answers `rejected` only when asked.
+      vi.mocked(globalThis.fetch).mockImplementation(async (input, init) => {
+        const request = new Request(input, init);
+        const url = new URL(request.url);
+        if (url.host === 'app.example.com') {
+          const segments = url.pathname.replace(/^\/api\/notte\//, '').split('/');
+          return handleProxyRequest(request, segments, baseConfig());
+        }
+        upstream.push(request);
+        if (url.pathname.endsWith('/runs/create')) {
+          return Response.json({ function_id: 'fn-1', function_run_id: 'run-1', created_at: '2026-01-01T00:00:00Z', status: 'created' });
+        }
+        const rejected = request.headers.get(OPT_IN) === 'rejected';
+        return Response.json({
+          function_id: 'fn-1', function_run_id: 'run-1', session_id: null,
+          status: rejected ? 'rejected' : 'failed',
+          result: 'AccountNotUnique: 2 accounts match this phone number', error,
+        });
+      });
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const client = new NotteClient({ apiKey: 'client-key', baseUrl: 'https://app.example.com/api/notte' }); // pragma: allowlist secret
+
+      const run = client.NotteFunction({ function_id: 'fn-1' }).run({}, { stream: false });
+
+      await expect(run).rejects.toBeInstanceOf(FunctionRunRejectedError);
+      await expect(run).rejects.toMatchObject({ code: 'account_not_unique', error });
+      expect(upstream.map(request => request.headers.get(OPT_IN))).toEqual(['rejected', 'rejected']);
     });
   });
 
