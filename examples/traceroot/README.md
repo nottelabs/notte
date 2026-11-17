@@ -42,6 +42,6 @@ npx -y traceroot-cli@latest traces get <trace_id>
 - `traceroot.initialize(integrations=[Integration.OPENAI_AGENTS])` replaces the OpenAI Agents SDK's default trace exporter, so the spans go to traceroot instead of OpenAI. Leave the SDK's tracing on: `RunConfig(tracing_disabled=True)` drops them.
 - `traceroot.initialize(integrations=[Integration.CLAUDE_AGENT_SDK])` wraps `claude_agent_sdk.query`. Call it through the module, as `hn_claude.py` does; a `query` imported by name before `initialize()` is not traced.
 - The Vercel AI SDK reports through its own OpenTelemetry integration, registered with `registerTelemetry(new OpenTelemetry({ usage: true }))` after `TraceRoot.initialize()`.
-- The Notte key travels in the MCP connection's header, which the traces do not record. Agent errors are re-raised with only the Notte session ID.
+- The Notte key travels in the MCP connection's header, which the traces do not record.
 - The Python examples run under `asyncio.Runner`. `notte_sdk` enables `nest_asyncio` on import, and only closing the loop stops the Claude Agent SDK's worker threads, so the process can exit.
 - Python 3.14 is not supported yet: with `nest_asyncio` enabled, the MCP client cannot detect the running event loop.
