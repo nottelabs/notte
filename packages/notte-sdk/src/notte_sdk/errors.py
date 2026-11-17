@@ -1,12 +1,152 @@
+import re
 import time
 from functools import wraps
-from typing import Any, Callable, Protocol, TypeVar
+from typing import Any, Callable, ClassVar, Literal, Protocol, TypedDict, TypeVar
 
 import requests
 from notte_core.errors import NotteBaseError
 from notte_core.logging import logger
 
 T = TypeVar("T")
+
+
+class FunctionError(Exception):
+    """Base for errors a Notte Function raises to tell the runtime how to treat a failure.
+
+    Only meaningful inside the Notte Functions runtime; locally it is a normal exception.
+    Subclass `ExpectedFunctionError` or `RetryableFunctionError` rather than this class,
+    and override the class attributes to describe your error:
+
+    - `heal`: whether self-healing may rewrite the function after this failure.
+    - `retry`: whether the caller can safely retry the run. The platform never re-runs it.
+    - `status_code`: the HTTP status that describes the failure. Informational: the run
+      response is still HTTP 200, with the status in its `error` payload.
+    - `code`: a stable machine-readable code. Defaults to the class name in snake_case
+      (`AccountNotUnique` becomes `account_not_unique`).
+
+    Mix them with built-in exceptions; `except ValueError` still catches this one:
+
+    ```python
+    from notte_sdk.errors import ExpectedFunctionError
+
+    class AccountNotUnique(ValueError, ExpectedFunctionError):
+        status_code = 409
+
+    def run(email: str):
+        accounts = find_accounts(email)
+        if len(accounts) != 1:
+            raise AccountNotUnique(f"{len(accounts)} accounts match {email}")
+    ```
+    """
+
+    heal: ClassVar[bool] = True
+    retry: ClassVar[bool] = False
+    status_code: ClassVar[int] = 500
+    code: ClassVar[str | None] = None
+
+
+class ExpectedFunctionError(FunctionError):
+    """A deliberate refusal: the function worked and the failure is the correct outcome.
+
+    The run ends with status `rejected` and is never self-healed.
+    """
+
+    heal: ClassVar[bool] = False
+    status_code: ClassVar[int] = 422
+
+
+class RetryableFunctionError(FunctionError):
+    """A temporary problem, such as a site being down. The run stays `failed` and is not self-healed.
+
+    `retry` tells the caller that running it again may succeed; the platform does not re-run it.
+    """
+
+    heal: ClassVar[bool] = False
+    retry: ClassVar[bool] = True
+    status_code: ClassVar[int] = 503
+
+
+FunctionErrorKind = Literal["expected", "retryable", "unexpected"]
+
+
+class FunctionErrorPayload(TypedDict):
+    """How the Notte Functions runtime describes an exception raised by a function."""
+
+    kind: FunctionErrorKind
+    type: str
+    mro: list[str]
+    code: str
+    message: str
+    heal: bool
+    retry: bool
+    status_code: int
+    source: Literal["class", "default"]
+
+
+_CAMEL_BOUNDARY = re.compile(r"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])")
+
+
+def _snake_case(name: str) -> str:
+    """`AccountNotUnique` -> `account_not_unique`, `HTTPTimeout` -> `http_timeout`."""
+    return _CAMEL_BOUNDARY.sub("_", name).lower()
+
+
+def _message(exc: BaseException) -> str:
+    try:
+        return str(exc)
+    except Exception:  # a user-defined __str__ must not break failure reporting
+        return f"<unprintable {type(exc).__name__}>"
+
+
+def function_error_payload(exc: BaseException) -> FunctionErrorPayload:
+    """Describe an exception raised by a Notte Function, for the run's `error` field.
+
+    `kind` follows the nearest preset base in the class's MRO: `expected` for
+    `ExpectedFunctionError`, `retryable` for `RetryableFunctionError`, otherwise
+    `unexpected`. `heal`, `retry` and `status_code` report the class's actual
+    attributes, so a subclass that overrides them keeps its kind. Any other
+    exception is `unexpected`, may be healed, and has status code 500.
+    """
+    cls = type(exc)
+    mro = [klass.__name__ for klass in cls.__mro__ if klass is not object]
+    message = _message(exc)
+    if not isinstance(exc, FunctionError):
+        return FunctionErrorPayload(
+            kind="unexpected",
+            type=cls.__name__,
+            mro=mro,
+            code=_snake_case(cls.__name__),
+            message=message,
+            heal=True,
+            retry=False,
+            status_code=500,
+            source="default",
+        )
+    error_cls = type(exc)
+    kind: FunctionErrorKind = "unexpected"
+    for klass in error_cls.__mro__:
+        if klass is ExpectedFunctionError:
+            kind = "expected"
+            break
+        if klass is RetryableFunctionError:
+            kind = "retryable"
+            break
+    code = error_cls.code
+    # Read without the declared `int` type: users can assign anything at runtime. An `int`
+    # subclass such as `HTTPStatus.CONFLICT` keeps its value; `bool` or "409" falls back to 500.
+    raw_status = getattr(error_cls, "status_code", 500)
+    status_code = int(raw_status) if isinstance(raw_status, int) and not isinstance(raw_status, bool) else 500
+    return FunctionErrorPayload(
+        kind=kind,
+        type=cls.__name__,
+        mro=mro,
+        code=code if isinstance(code, str) and code else _snake_case(cls.__name__),
+        message=message,
+        heal=bool(error_cls.heal),
+        retry=bool(error_cls.retry),
+        status_code=status_code,
+        source="class",
+    )
 
 
 class APIResponse(Protocol):

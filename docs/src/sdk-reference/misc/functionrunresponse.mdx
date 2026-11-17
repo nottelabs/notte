@@ -23,8 +23,12 @@ description: ""
   The result of the function run
 </ParamField>
 
-<ParamField path="status" type="Literal['closed', 'active', 'failed']" required>
-  The status of the function run (closed, active, failed)
+<ParamField path="status" type="Literal['closed', 'active', 'failed', 'rejected']" required>
+  The status of the function run (closed, active, failed, rejected)
+</ParamField>
+
+<ParamField path="error" type="Dict[str, Any] | None">
+  How the function's exception was classified, for failed and rejected runs
 </ParamField>
 
 

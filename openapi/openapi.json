@@ -25875,7 +25875,8 @@
             "enum": [
               "closed",
               "active",
-              "failed"
+              "failed",
+              "rejected"
             ],
             "title": "Status"
           },
@@ -25975,7 +25976,8 @@
             "enum": [
               "closed",
               "active",
-              "failed"
+              "failed",
+              "rejected"
             ],
             "title": "Status",
             "description": "The status of the workflow run"
@@ -26635,7 +26637,8 @@
             "enum": [
               "closed",
               "active",
-              "failed"
+              "failed",
+              "rejected"
             ],
             "title": "Status"
           },
@@ -26683,6 +26686,19 @@
             ],
             "title": "Result",
             "description": "The result of the function run (if any)"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error",
+            "description": "How the function's exception was classified, for failed and rejected runs"
           },
           "local": {
             "type": "boolean",

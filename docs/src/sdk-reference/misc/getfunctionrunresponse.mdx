@@ -27,7 +27,7 @@ description: ""
 <ParamField path="updated_at" type="datetime" required>
 </ParamField>
 
-<ParamField path="status" type="Literal['closed', 'active', 'failed']" required>
+<ParamField path="status" type="Literal['closed', 'active', 'failed', 'rejected']" required>
 </ParamField>
 
 <ParamField path="session_id" type="str | None">
@@ -44,6 +44,10 @@ description: ""
 
 <ParamField path="result" type="str | None">
   The result of the function run (if any)
+</ParamField>
+
+<ParamField path="error" type="Dict[str, Any] | None">
+  How the function's exception was classified, for failed and rejected runs
 </ParamField>
 
 <ParamField path="local" type="bool" default="False">

@@ -45,22 +45,62 @@ if TYPE_CHECKING:
     from notte_sdk.client import AsyncNotteClient, NotteClient
 
 
-@final
 class FailedToRunCloudFunctionError(NotteBaseError):
     """
     Exception raised when a function run fails to run on the cloud.
     """
 
-    def __init__(self, function_id: str, function_run_id: str, response: FunctionRunResponse):
-        self.message = f"Function {function_id} with run_id={function_run_id} failed with result '{response.result}'"
-        self.function_id = function_id
-        self.function_run_id = function_run_id
-        self.response = response
+    def __init__(
+        self, function_id: str, function_run_id: str, response: FunctionRunResponse, message: str | None = None
+    ):
+        self.message: str = message or (
+            f"Function {function_id} with run_id={function_run_id} failed with result '{response.result}'"
+        )
+        self.function_id: str = function_id
+        self.function_run_id: str = function_run_id
+        self.response: FunctionRunResponse = response
         super().__init__(
             user_message=self.message,
             agent_message=self.message,
             dev_message=self.message,
         )
+
+
+@final
+class FunctionRunRejectedError(FailedToRunCloudFunctionError):
+    """
+    Exception raised when a function run ends with status `rejected`.
+
+    The function raised an `ExpectedFunctionError` (see `notte_sdk.errors`): a deliberate
+    refusal, such as an account that is not uniquely authorized. `error` is the run's
+    error payload and `code` its machine-readable code. It subclasses
+    `FailedToRunCloudFunctionError`, so existing handlers still catch it.
+    """
+
+    def __init__(self, function_id: str, function_run_id: str, response: FunctionRunResponse):
+        self.error: dict[str, Any] = response.error or {}
+        code = self.error.get("code")
+        self.code: str | None = code if isinstance(code, str) else None
+        reason = self.error.get("message")
+        detail = reason if isinstance(reason, str) and reason else f"result '{response.result}'"
+        label = f" ({self.code})" if self.code else ""
+        super().__init__(
+            function_id,
+            function_run_id,
+            response,
+            message=f"Function {function_id} with run_id={function_run_id} was rejected{label}: {detail}",
+        )
+
+
+_UNSUCCESSFUL_RUN_STATUSES = frozenset({"failed", "rejected"})
+
+
+def _raise_on_run_failure(function_id: str, function_run_id: str, response: FunctionRunResponse) -> None:
+    """Raise for a run that did not succeed: `rejected` and `failed` runs are never results."""
+    if response.status == "rejected":
+        raise FunctionRunRejectedError(function_id, function_run_id, response)
+    if response.status == "failed":
+        raise FailedToRunCloudFunctionError(function_id, function_run_id, response)
 
 
 class _FunctionsEndpoints:
@@ -86,6 +126,10 @@ class _FunctionsEndpoints:
     RUN_FUNCTION_ENDPOINT: ClassVar[str] = "{function_id}/runs/{run_id}"
 
     FUNCTION_RUN_TIMEOUT: ClassVar[int] = 60 * 5  # 5 minutes
+
+    # Opt in to the "rejected" run status (`ExpectedFunctionError`). Without it the
+    # API shows rejected runs as "failed", so older SDKs still raise on them.
+    RESOURCE_HEADERS: ClassVar[dict[str, str]] = {"x-notte-accept-run-statuses": "rejected"}
 
     @staticmethod
     def _create_function_run_endpoint(function_id: str) -> NotteEndpoint[CreateFunctionRunResponse]:
@@ -626,6 +670,9 @@ class NotteFunction:
         SDK options; these are merged with keyword inputs, rejecting duplicates.
         Pass `version` to run a saved version of the function instead of the latest
         one; for a run made with `create_run()`, pass `version` there instead.
+        With `raise_on_failure` (the default), a `failed` run raises
+        `FailedToRunCloudFunctionError` and a `rejected` run, where the function raised an
+        `ExpectedFunctionError`, raises its subclass `FunctionRunRejectedError`.
 
         ```python
         function = notte.Function("<your-function-id>")
@@ -650,8 +697,8 @@ class NotteFunction:
             timeout=timeout,
             variables=variables,
         )
-        if raise_on_failure and res.status == "failed":
-            raise FailedToRunCloudFunctionError(self.function_id, function_run_id, res)
+        if raise_on_failure and res.status in _UNSUCCESSFUL_RUN_STATUSES:
+            _raise_on_run_failure(self.function_id, function_run_id, res)
         return res
 
     def stop_run(self, run_id: str) -> UpdateFunctionRunResponse:
@@ -1000,6 +1047,9 @@ class AsyncNotteFunction:
         SDK options; these are merged with keyword inputs, rejecting duplicates.
         Pass `version` to run a saved version of the function instead of the latest
         one; for a run made with `create_run()`, pass `version` there instead.
+        With `raise_on_failure` (the default), a `failed` run raises
+        `FailedToRunCloudFunctionError` and a `rejected` run, where the function raised an
+        `ExpectedFunctionError`, raises its subclass `FunctionRunRejectedError`.
         Runs of one function can execute concurrently, for example with `asyncio.gather`.
 
         ```python
@@ -1026,8 +1076,8 @@ class AsyncNotteFunction:
             timeout=timeout,
             variables=variables,
         )
-        if raise_on_failure and res.status == "failed":
-            raise FailedToRunCloudFunctionError(response.function_id, function_run_id, res)
+        if raise_on_failure and res.status in _UNSUCCESSFUL_RUN_STATUSES:
+            _raise_on_run_failure(response.function_id, function_run_id, res)
         return res
 
     async def stop_run(self, run_id: str) -> UpdateFunctionRunResponse:

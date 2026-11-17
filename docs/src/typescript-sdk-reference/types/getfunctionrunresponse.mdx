@@ -17,6 +17,10 @@ export type GetFunctionRunResponse = Omit<ApiGetFunctionRunResponse, 'payloads' 
 
 ## Fields
 
+<ParamField body="error" type={"{ [key: string]: unknown; } | null | undefined"}>
+How the function's exception was classified, for failed and rejected runs
+</ParamField>
+
 <ParamField body="session_id" type={"string | null | undefined"}>
 The ID of the session
 </ParamField>
@@ -25,7 +29,7 @@ The ID of the session
 
 </ParamField>
 
-<ParamField body="status" type={"\"failed\" | \"closed\" | \"active\""} required>
+<ParamField body="status" type={"\"failed\" | \"closed\" | \"active\" | \"rejected\""} required>
 
 </ParamField>
 

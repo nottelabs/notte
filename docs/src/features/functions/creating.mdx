@@ -18,6 +18,7 @@ import ComplexTypes from "/snippets/functions/creating/complex_types.mdx";
 import EnvironmentVariables from "/snippets/functions/creating/environment_variables.mdx";
 import GracefulErrors from "/snippets/functions/creating/graceful_errors.mdx";
 import RaisingExceptions from "/snippets/functions/creating/raising_exceptions.mdx";
+import TypedErrors from "/snippets/functions/creating/typed_errors.mdx";
 import TestLocally from "/snippets/functions/creating/test_locally.mdx";
 import DocumentParams from "/snippets/functions/creating/document_params.mdx";
 import ReturnStructured from "/snippets/functions/creating/return_structured.mdx";
@@ -132,6 +133,26 @@ Return error information in results:
 Let Functions fail explicitly:
 
 <RaisingExceptions />
+
+### Typed Errors
+
+By default, an exception fails the run, and a failed run can be self-healed: Notte rewrites the Function to fix it. When the failure is a deliberate refusal, raise a subclass of `ExpectedFunctionError` from `notte_sdk.errors` instead. The run ends with status `rejected`, and the Function is not rewritten:
+
+<TypedErrors />
+
+Combine it with a built-in exception, as above, so `except ValueError` still catches it when you run the code locally.
+
+| Base class | Run status | Self-heal | `retry` | Default `status_code` |
+| --- | --- | --- | --- | --- |
+| `ExpectedFunctionError` | `rejected` | No | `false` | 422 |
+| `RetryableFunctionError` | `failed` | No | `true` | 503 |
+| Any other exception | `failed` | Yes | `false` | 500 |
+
+Use `RetryableFunctionError` for temporary problems, such as a site that is down: the run fails without being rewritten, and `retry` tells the caller that running it again may succeed. Notte does not re-run it for you.
+
+Override `heal`, `retry`, `status_code` or `code` as class attributes. `code` defaults to the class name in snake_case (`account_not_unique`). The run's `error` field carries these values. The run itself still answers with HTTP 200, so `status_code` is informational.
+
+In the Python SDK, `function.run()` raises `FunctionRunRejectedError` for a rejected run, with the payload in `error.error` and the code in `error.code`. It subclasses `FailedToRunCloudFunctionError`, so existing handlers still catch it.
 
 ## Testing Locally
 

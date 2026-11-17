@@ -44,7 +44,7 @@ type ApiFunctionRunUpdateRequest = {
      *
      * The status of the workflow run
      */
-    status: 'closed' | 'active' | 'failed';
+    status: 'closed' | 'active' | 'failed' | 'rejected';
     /**
      * Payloads
      */
@@ -76,7 +76,7 @@ The variables of the workflow run
 The result of the workflow run
 </ParamField>
 
-<ParamField body="status" type={"\"failed\" | \"closed\" | \"active\""} required>
+<ParamField body="status" type={"\"failed\" | \"closed\" | \"active\" | \"rejected\""} required>
 The status of the workflow run
 </ParamField>
 

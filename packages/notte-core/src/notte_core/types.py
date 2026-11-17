@@ -2804,7 +2804,9 @@ class StartFunctionRunRequest(SdkRequest):
         return self.function_run_id
 
 
-FunctionRunStatus = Literal["closed", "active", "failed"]
+# `rejected`: the function raised an `ExpectedFunctionError` (notte_sdk.errors), a deliberate
+# refusal rather than a failure. It is terminal, like `closed` and `failed`.
+FunctionRunStatus = Literal["closed", "active", "failed", "rejected"]
 
 
 class FunctionRunResponse(SdkResponse):
@@ -2820,7 +2822,13 @@ class FunctionRunResponse(SdkResponse):
     ]
     session_id: Annotated[str | None, Field(description="The ID of the session")]
     result: Annotated[Any, Field(description="The result of the function run")]
-    status: Annotated[FunctionRunStatus, Field(description="The status of the function run (closed, active, failed)")]
+    status: Annotated[
+        FunctionRunStatus, Field(description="The status of the function run (closed, active, failed, rejected)")
+    ]
+    error: Annotated[
+        dict[str, Any] | None,
+        Field(description="How the function's exception was classified, for failed and rejected runs"),
+    ] = None
 
 
 class GetFunctionRunResponse(SdkResponse):
@@ -2845,6 +2853,10 @@ class GetFunctionRunResponse(SdkResponse):
         default_factory=dict
     )
     result: Annotated[str | None, Field(description="The result of the function run (if any)")] = None
+    error: Annotated[
+        dict[str, Any] | None,
+        Field(description="How the function's exception was classified, for failed and rejected runs"),
+    ] = None
     local: Annotated[bool, Field(description="Whether the function has been run locally or on the cloud")] = False
 
 

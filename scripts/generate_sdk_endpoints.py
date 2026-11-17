@@ -619,7 +619,7 @@ KEYWORD_ANNOTATIONS = {
     "FunctionRunUpdateRequest": {
         "logs": "list[str] | None",
         "result": "Any | None",
-        "status": 'Literal["closed", "active", "failed"]',
+        "status": 'Literal["closed", "active", "failed", "rejected"]',
     },
     "ListSessionFilesParametersQuery": {"source": "str | None"},
 }
