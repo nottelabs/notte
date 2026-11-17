@@ -25,10 +25,6 @@ class Status(TypedDict):
     creator: StatusCreator | None
 
 
-class StatusResponse(TypedDict):
-    statuses: list[Status]
-
-
 class StatusRequest(TypedDict):
     state: Literal["pending"]
     context: str
@@ -39,15 +35,15 @@ class StatusRequest(TypedDict):
 class GitHub:
     def __init__(self, token: str):
         self.token = token
-        self.cached: dict[str, tuple[str, StatusResponse]] = {}
+        self.cached: dict[str, tuple[str, list[Status]]] = {}
 
     @overload
-    def request(self, path: str, body: None = None) -> StatusResponse: ...
+    def request(self, path: str, body: None = None) -> list[Status]: ...
 
     @overload
     def request(self, path: str, body: StatusRequest) -> Status: ...
 
-    def request(self, path: str, body: StatusRequest | None = None) -> StatusResponse | Status:
+    def request(self, path: str, body: StatusRequest | None = None) -> list[Status] | Status:
         headers = {"Authorization": f"Bearer {self.token}", "Accept": "application/vnd.github+json"}
         if body is None and path in self.cached:
             headers["If-None-Match"] = self.cached[path][0]
@@ -60,7 +56,7 @@ class GitHub:
             with urllib.request.urlopen(request, timeout=30) as response:
                 if body is not None:
                     return cast(Status, json.load(response))
-                value = cast(StatusResponse, json.load(response))
+                value = cast(list[Status], json.load(response))
                 if response.headers.get("ETag"):
                     self.cached[path] = (response.headers["ETag"], value)
                 return value
@@ -88,21 +84,28 @@ def check(github: GitHub, repository: str, sha: str, actor_id: str, *, within: f
     print("Requested the SDK contract check. Waiting for its public result.", flush=True)
     deadline = time.monotonic() + within
     while time.monotonic() < deadline:
-        statuses = github.request(f"repos/{repository}/commits/{sha}/status")["statuses"]
-        for status in statuses:
-            if (
-                status["context"] == CONTEXT
-                and status["creator"] is not None
-                and str(status["creator"]["id"]) == actor_id
-                and (status["description"] or "").startswith(description + ": ")
-            ):
-                if status["state"] == "success":
-                    print("The installed SDK contract matches its snapshot.")
-                    return
-                if status["state"] in {"failure", "error"}:
-                    raise RuntimeError(
-                        "The installed SDK contract check failed. Its owner must inspect the private diagnostics."
-                    )
+        page = 1
+        while True:
+            statuses = github.request(f"repos/{repository}/commits/{sha}/statuses?per_page=100&page={page}")
+            # GitHub returns history newest first. A later result for a cancelled
+            # request must not hide this request's completed result.
+            for status in statuses:
+                if (
+                    status["context"] == CONTEXT
+                    and status["creator"] is not None
+                    and str(status["creator"]["id"]) == actor_id
+                    and (status["description"] or "").startswith(description + ": ")
+                ):
+                    if status["state"] == "success":
+                        print("The installed SDK contract matches its snapshot.")
+                        return
+                    if status["state"] in {"failure", "error"}:
+                        raise RuntimeError(
+                            "The installed SDK contract check failed. Its owner must inspect the private diagnostics."
+                        )
+            if len(statuses) < 100:
+                break
+            page += 1
         time.sleep(min(10, max(0, deadline - time.monotonic())))
     raise TimeoutError("The SDK contract check did not publish a result before its deadline")
 

@@ -23,7 +23,7 @@ def result(state="success", actor=123, nonce=NONCE, context=ci.CONTEXT):
 
 def execute(statuses):
     github = Mock()
-    github.request.side_effect = [None, {"statuses": statuses}]
+    github.request.side_effect = [None, statuses]
     with patch.object(ci.uuid, "uuid4", return_value=Mock(hex=NONCE)):
         ci.check(github, "example/sdk", SHA, "123")
     return github
@@ -35,7 +35,7 @@ def test_trusted_result_matches_exact_request_and_uses_only_public_endpoints():
         f"repos/example/sdk/statuses/{SHA}",
         {"state": "pending", "context": ci.CONTEXT, "description": f"request {NONCE}"},
     )
-    assert github.request.call_args_list[-1].args == (f"repos/example/sdk/commits/{SHA}/status",)
+    assert github.request.call_args_list[-1].args == (f"repos/example/sdk/commits/{SHA}/statuses?per_page=100&page=1",)
 
 
 @pytest.mark.parametrize(
@@ -50,7 +50,7 @@ def test_trusted_result_matches_exact_request_and_uses_only_public_endpoints():
 )
 def test_public_token_cannot_forge_a_result_and_old_requests_do_not_count(status):
     github = Mock()
-    github.request.side_effect = [None, {"statuses": [status]}]
+    github.request.side_effect = [None, [status]]
     with (
         patch.object(ci.uuid, "uuid4", return_value=Mock(hex=NONCE)),
         patch.object(ci.time, "monotonic", side_effect=[0, 1, 2, 1201]),
@@ -84,11 +84,27 @@ def test_schema_job_has_no_consumer_secret_or_checkout():
 
 
 def test_public_status_reads_reuse_etags_without_spending_unchanged_requests():
-    response = io.BytesIO(b'{"statuses": []}')
+    response = io.BytesIO(b"[]")
     response.headers = {"ETag": '"fixture-etag"'}
     not_modified = urllib.error.HTTPError("https://api.github.com/public", 304, "Not Modified", {}, None)
     with patch.object(ci.urllib.request, "urlopen", side_effect=[response, not_modified]) as send:
         github = ci.GitHub("fixture-token")
-        assert github.request("public") == {"statuses": []}
-        assert github.request("public") == {"statuses": []}
+        assert github.request("public") == []
+        assert github.request("public") == []
     assert dict(send.call_args.args[0].header_items())["If-none-match"] == '"fixture-etag"'
+
+
+def test_overlapping_request_cannot_hide_the_matching_result_on_a_later_page():
+    github = Mock()
+    github.request.side_effect = [None, [result(nonce="c" * 32)] * 100, [result()]]
+    with patch.object(ci.uuid, "uuid4", return_value=Mock(hex=NONCE)):
+        ci.check(github, "example/sdk", SHA, "123")
+    assert [call.args[0] for call in github.request.call_args_list[1:]] == [
+        f"repos/example/sdk/commits/{SHA}/statuses?per_page=100&page=1",
+        f"repos/example/sdk/commits/{SHA}/statuses?per_page=100&page=2",
+    ]
+
+
+def test_newest_matching_failure_is_not_overridden_by_an_older_success():
+    with pytest.raises(RuntimeError, match="contract check failed"):
+        execute([result(state="failure"), result()])
