@@ -455,6 +455,7 @@ def schema_roundtrip_path(path: str) -> bool:
         in {
             "openapi/openapi.json",
             ".github/workflows/ci.yml",
+            "scripts/ci_schema_status.py",
             "packages/notte-sdk/src/notte_sdk/types.py",
         }
         or path.startswith(("packages/notte-core/src/", "packages/notte-sdk/src/notte_sdk/_compat/"))

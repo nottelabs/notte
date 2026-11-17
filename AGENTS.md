@@ -386,12 +386,13 @@ compare their schema types and run out of memory.
 
 ## OpenAPI refresh
 
-Contract PRs also run the schema consumer round trip through the existing
-`SUBMODULE_BUMP_PAT` and the `SDK_SCHEMA_REPOSITORY` repository variable.
-It pins both revisions and requires the API after SDK installation to match
-this PR's snapshot. A failure includes the exported schema and comparison diff;
-refresh this PR from that schema, then regenerate its SDKs. Existing generator
-checks validate the outputs, so the round trip does not repeat generation.
+Contract PRs request a consumer round trip through public commit statuses.
+The schema job uses only this repository's GitHub token. It never receives
+consumer credentials or source. `SDK_SCHEMA_STATUS_ACTOR_ID` pins the public
+user ID allowed to publish results; the request nonce and SDK commit must match.
+The consumer owns orchestration and keeps diagnostics private. Candidate builds
+and imports run without network or credentials. Existing generator checks
+validate the outputs, so the round trip does not repeat generation.
 
 `SessionResponse.playwright_url` was added in #1363 before the API rollout.
 Until staging publishes it, retain its optional nullable schema during snapshot

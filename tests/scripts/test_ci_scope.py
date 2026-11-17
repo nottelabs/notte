@@ -974,6 +974,7 @@ class SchemaRoundtripSelectionTests(unittest.TestCase):
             "packages/notte-core/pyproject.toml",
             "uv.lock",
             ".github/workflows/ci.yml",
+            "scripts/ci_schema_status.py",
         ):
             with self.subTest(path=path):
                 self.assertTrue(ci.schema_roundtrip_path(path))
