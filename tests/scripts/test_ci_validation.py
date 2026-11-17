@@ -226,3 +226,16 @@ def test_offline_supersession_does_not_cancel_matrix_siblings_or_live_cleanup() 
                 }
                 if "matrix" in job.get("strategy", {}):
                     assert "matrix." in concurrency["group"]
+
+
+@pytest.mark.parametrize("result", ["skipped", "failure", "cancelled"])
+def test_selected_schema_roundtrip_must_succeed(result: str) -> None:
+    scope = selected()
+    scope["schema_roundtrip"] = True
+    needs = results(scope)
+    needs["schema"] = {"result": result, "outputs": {}}
+    assert not assess(needs)[1]
+    del needs["schema"]
+    assert not assess(needs)[1]
+    needs["schema"] = {"result": "success", "outputs": {}}
+    assert assess(needs)[1]

@@ -92,6 +92,37 @@ jobs:
       scope: ${{ needs.changes.outputs.scope }}
     secrets: inherit # pragma: allowlist secret
 
+  schema:
+    needs: changes
+    if: >-
+      fromJSON(needs.changes.outputs.scope).schema_roundtrip &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-2vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
+    timeout-minutes: 22
+    concurrency:
+      group: sdk-schema-${{ github.event.pull_request.number || github.run_id }}
+      cancel-in-progress: true
+    permissions:
+      contents: read
+    steps:
+      # Fetch only the coordinator from the consumer's reviewed main commit.
+      # Candidate SDK code runs separately without this automation token.
+      - name: Check the proposed schema after SDK installation
+        env:
+          GH_TOKEN: ${{ secrets.SUBMODULE_BUMP_PAT }}
+          SDK_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          SDK_SCHEMA_REPOSITORY: ${{ vars.SDK_SCHEMA_REPOSITORY }}
+        run: |
+          set -euo pipefail
+          SOURCE_SHA=$(gh api "repos/$SDK_SCHEMA_REPOSITORY/commits/main" --jq .sha)
+          for script in sdk_schema_request.py github_conditional.py; do
+            gh api -H 'Accept: application/vnd.github.raw+json' \
+              "repos/$SDK_SCHEMA_REPOSITORY/contents/.github/scripts/$script?ref=$SOURCE_SHA" \
+              > "$RUNNER_TEMP/$script"
+          done
+          export SOURCE_SHA
+          python3 "$RUNNER_TEMP/sdk_schema_request.py"
+
   docs:
     permissions:
       contents: read
@@ -133,7 +164,7 @@ jobs:
 
   # Only this job reads Actions data; it never checks out or runs PR code.
   job-results:
-    needs: [changes, python, node, docs, paired, readme]
+    needs: [changes, python, node, schema, docs, paired, readme]
     if: always()
     runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-2vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
     timeout-minutes: 5
@@ -154,7 +185,7 @@ jobs:
 
   # Preserve the required check name and wait for all selected suite families.
   tests:
-    needs: [changes, python, node, docs, paired, readme, job-results]
+    needs: [changes, python, node, schema, docs, paired, readme, job-results]
     if: always()
     runs-on: ${{ fromJSON('{"github":"ubuntu-24.04","blacksmith":"blacksmith-2vcpu-ubuntu-2404"}')[vars.CI_RUNNER_PROVIDER || 'blacksmith'] }}
     timeout-minutes: 5

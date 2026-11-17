@@ -964,5 +964,30 @@ class GitHistoryTests(unittest.TestCase):
         self.assertTrue(all(scope[name] for name in ci.ALL))
 
 
+class SchemaRoundtripSelectionTests(unittest.TestCase):
+    def test_contract_inputs_select_the_roundtrip(self) -> None:
+        for path in (
+            "openapi/openapi.json",
+            "packages/notte-core/src/notte_core/types.py",
+            "packages/notte-sdk/src/notte_sdk/types.py",
+            "packages/notte-sdk/src/notte_sdk/_compat/profiles.py",
+            "packages/notte-core/pyproject.toml",
+            "uv.lock",
+            ".github/workflows/ci.yml",
+        ):
+            with self.subTest(path=path):
+                self.assertTrue(ci.schema_roundtrip_path(path))
+
+    def test_docs_tests_and_generated_node_output_need_no_extra_backend_environment(self) -> None:
+        for path in (
+            "docs/src/features/functions/creating.mdx",
+            "tests/sdk/test_functions_codegen.py",
+            "node-sdk/src/lib/client/types.gen.ts",
+            "packages/notte-browser/src/notte_browser/dom/builder.py",
+        ):
+            with self.subTest(path=path):
+                self.assertFalse(ci.schema_roundtrip_path(path))
+
+
 if __name__ == "__main__":
     unittest.main()
