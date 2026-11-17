@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased: the `rejected` function run status
+
+Function requests opt in to the `rejected` run status with the
+`x-notte-accept-run-statuses: rejected` header, like the Python SDK, and
+`handleProxyRequest()` forwards that header, also alongside a custom
+`forwardHeaders` list. A run is `rejected` when the function raised an
+`ExpectedFunctionError`, a deliberate refusal. `NotteFunction.run()` throws the
+new `FunctionRunRejectedError`, a subclass of `FailedToRunCloudFunctionError`
+carrying `code` and `error`, so existing handlers still catch it; with
+`raiseOnFailure: false` the run is returned with `status: 'rejected'`. A
+rejected run is never returned as a success. Run results keep the API's `error`
+payload when it reports one. `FailedToRunCloudFunctionError` accepts an optional
+message. APIs that predate the status ignore the header and keep reporting such
+runs as `failed`.
+
 ## 1.10.0
 
 - **Breaking:** the agent API is removed: `client.Agent()`, `client.agents`,

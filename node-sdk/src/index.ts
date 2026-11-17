@@ -40,6 +40,7 @@ export {
   InvalidRequestError,
   NotteTimeoutError,
   FailedToRunCloudFunctionError,
+  FunctionRunRejectedError,
   ScrapeFailedError,
   ActionExecutionError,
   EvaluateJsNoDataError,

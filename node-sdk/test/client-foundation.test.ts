@@ -5,7 +5,7 @@
  * preview-branch routing, health check and list namespaces.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_NOTTE_API_URL, NotteClient, TIMEOUT_HEADER } from '@/client';
+import { ACCEPT_RUN_STATUSES_HEADER, DEFAULT_NOTTE_API_URL, NotteClient, TIMEOUT_HEADER } from '@/client';
 import { AuthenticationError, InvalidRequestError, NotteAPIError, NotteAPIExecutionError, NotteTimeoutError } from '@/errors';
 import { SDK_VERSION } from '@/version';
 import { checkForLatestVersion, resetVersionCheckForTests } from '@/version-check';
@@ -120,6 +120,61 @@ describe('NotteClient transport', () => {
       await client.healthCheck();
 
       expect(requests[0].headers.get('x-db-preview')).toBe('explicit');
+    });
+  });
+
+  describe('accepting the rejected run status', () => {
+    // Without the header the API reports a rejected run as `failed`, so the
+    // SDK opts in on every functions request, like the Python functions client.
+    const get = (client: NotteClient, url: string) => client.getClient().get({ url, throwOnError: false });
+
+    it('opts in on functions requests only', async () => {
+      const { requests } = stubFetch(async () => jsonResponse({}));
+      const client = new NotteClient({ apiKey: API_KEY, baseUrl: DEFAULT_NOTTE_API_URL });
+
+      await get(client, '/functions');
+      await get(client, '/functions/fn-1/runs/run-1');
+      await get(client, '/sessions');
+      await get(client, '/functions-like');
+
+      expect(requests.map(r => [new URL(r.url).pathname, r.headers.get(ACCEPT_RUN_STATUSES_HEADER)])).toEqual([
+        ['/functions', 'rejected'],
+        ['/functions/fn-1/runs/run-1', 'rejected'],
+        ['/sessions', null],
+        ['/functions-like', null],
+      ]);
+    });
+
+    it('follows a base URL with a path prefix', async () => {
+      const { requests } = stubFetch(async () => jsonResponse({}));
+      const client = new NotteClient({ apiKey: API_KEY, baseUrl: 'https://gateway.example.com/notte' });
+
+      await get(client, '/functions/fn-1');
+      await get(client, '/sessions');
+
+      expect(requests.map(r => r.headers.get(ACCEPT_RUN_STATUSES_HEADER))).toEqual(['rejected', null]);
+    });
+
+    it("keeps a caller's own value", async () => {
+      const { requests } = stubFetch(async () => jsonResponse({}));
+      const client = new NotteClient({ apiKey: API_KEY, baseUrl: DEFAULT_NOTTE_API_URL });
+
+      await client.getClient().get({ url: '/functions', throwOnError: false, headers: { [ACCEPT_RUN_STATUSES_HEADER]: 'none' } });
+
+      expect(requests[0].headers.get(ACCEPT_RUN_STATUSES_HEADER)).toBe('none');
+    });
+
+    it('sends it on the run request of NotteFunction.run()', async () => {
+      const { requests } = stubFetch(async request =>
+        new URL(request.url).pathname.endsWith('/runs/create')
+          ? jsonResponse({ function_id: 'fn-1', function_run_id: 'run-1', created_at: '2026-01-01T00:00:00Z', status: 'created' })
+          : jsonResponse({ function_id: 'fn-1', function_run_id: 'run-1', session_id: null, status: 'closed', result: { ok: true } }),
+      );
+      const client = new NotteClient({ apiKey: API_KEY, baseUrl: DEFAULT_NOTTE_API_URL });
+
+      await client.NotteFunction({ function_id: 'fn-1' }).run({}, { stream: false });
+
+      expect(requests.map(r => r.headers.get(ACCEPT_RUN_STATUSES_HEADER))).toEqual(['rejected', 'rejected']);
     });
   });
 

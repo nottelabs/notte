@@ -3,13 +3,14 @@ import { basename } from 'node:path';
 import { NotteClient, TIMEOUT_HEADER } from '@/client';
 import { Encryption } from '@/encryption';
 import { offloadRunPayloads, resolveRunPayloads } from '@/run-payloads';
-import { FailedToRunCloudFunctionError, InvalidRequestError, NotteAPIError, NotteError, NotteTimeoutError } from '@/errors';
+import { FailedToRunCloudFunctionError, FunctionRunRejectedError, InvalidRequestError, NotteAPIError, NotteError, NotteTimeoutError } from '@/errors';
 import type {
 	DeleteFunctionResponse,
 	FunctionMetadataUpdateRequest,
 	FunctionResponse,
 	FunctionRunUpdateRequest as ApiFunctionRunUpdateRequest,
 	FunctionRollbackRequest,
+	FunctionRunError,
 	FunctionScheduleCreateRequest,
 	FunctionWithLinkResponse,
 	GetFunctionRunResponse as ApiGetFunctionRunResponse,
@@ -66,7 +67,7 @@ export type GetFunctionRunResponseWritable = Omit<ApiGetFunctionRunResponseWrita
 export type FunctionRunUpdateRequest = Omit<ApiFunctionRunUpdateRequest, 'payloads' | 'result_preview'>;
 
 export type FunctionRunStatus = GetFunctionRunResponse['status'];
-const FUNCTION_RUN_STATUSES: readonly FunctionRunStatus[] = ['closed', 'active', 'failed'];
+const FUNCTION_RUN_STATUSES: readonly FunctionRunStatus[] = ['closed', 'active', 'failed', 'rejected'];
 
 /** Reference an existing function by ID. */
 export interface FunctionConstructorWithId {
@@ -100,7 +101,15 @@ export interface FunctionRunResult {
 	session_id: string | null;
 	/** The value returned by the script's `run` function, decoded from JSON. */
 	result: unknown;
+	/**
+	 * `rejected` when the function raised an `ExpectedFunctionError` (a deliberate
+	 * refusal), `failed` for any other exception. Neither is a success. An API
+	 * without `rejected` support reports deliberate refusals as `failed` too;
+	 * `error.kind` is then still `expected` when the API sends `error`.
+	 */
 	status: FunctionRunStatus;
+	/** What a failed or rejected run's exception means, when the API reports it. */
+	error?: FunctionRunError;
 }
 /** Alias of `FunctionRunResult` using the Python model name. */
 export type FunctionRunResponse = FunctionRunResult;
@@ -127,7 +136,10 @@ export interface FunctionRunOptions {
 	stream?: boolean;
 	/** Receive streamed logs instead of printing them to console.log. */
 	onLog?: (message: string) => void;
-	/** Throw `FailedToRunCloudFunctionError` when execution fails. Defaults to true, matching Python. */
+	/**
+	 * Throw `FailedToRunCloudFunctionError` when execution fails, or its subclass
+	 * `FunctionRunRejectedError` when the run is rejected. Defaults to true, matching Python.
+	 */
 	raiseOnFailure?: boolean;
 	/** Execute a record returned by createRun(). Omit to create a new run. */
 	functionRunId?: string;
@@ -550,13 +562,15 @@ export class NotteFunction {
 	 * to execute a record returned by `createRun()`; otherwise a new run record
 	 * is created first, exactly like Python. Pass `version` to run a saved
 	 * version instead of the latest one. A failed execution throws
-	 * `FailedToRunCloudFunctionError` unless `raiseOnFailure` is false, and the
-	 * wait is aborted with `NotteTimeoutError` after `timeoutMs`.
+	 * `FailedToRunCloudFunctionError` and a rejected one (the function raised an
+	 * `ExpectedFunctionError`) its subclass `FunctionRunRejectedError`, unless
+	 * `raiseOnFailure` is false; the wait is aborted with `NotteTimeoutError` after `timeoutMs`.
 	 *
 	 * @param variables - JSON-serializable keyword arguments passed to the Python function's `run` entry point.
 	 * @param options - Log streaming, failure handling, runtime, run ID, version, and timeout settings.
 	 * @returns The completed execution response. The function's return value is in `result`. Disabling streaming still waits for completion.
 	 * @throws FailedToRunCloudFunctionError if execution fails and `raiseOnFailure` is true.
+	 * @throws FunctionRunRejectedError if the run is rejected and `raiseOnFailure` is true.
 	 * @throws NotteTimeoutError if the execution request exceeds `timeoutMs`.
 	 * @throws InvalidRequestError if the run options are invalid.
 	 * @example
@@ -618,6 +632,11 @@ export class NotteFunction {
 			const result = stream
 				? await readFunctionStream(raw as ReadableStream<Uint8Array>, options.onLog ?? console.log, endpointPath, controller.signal)
 				: parseFunctionRunResult(raw, endpointPath);
+			// A rejected run is never a result: it raises the subclass, so existing
+			// `FailedToRunCloudFunctionError` handlers still catch it.
+			if (result.status === 'rejected' && (options.raiseOnFailure ?? true)) {
+				throw new FunctionRunRejectedError(functionId, result.function_run_id, result);
+			}
 			if (result.status === 'failed' && (options.raiseOnFailure ?? true)) {
 				throw new FailedToRunCloudFunctionError(functionId, result.function_run_id, result);
 			}
@@ -801,12 +820,15 @@ function parseFunctionRunResult(value: unknown, path: string): FunctionRunResult
 	) {
 		throw new NotteError('Invalid function result: missing function_id, function_run_id, status or result');
 	}
+	const error = candidate.error;
 	return {
 		function_id: candidate.function_id,
 		function_run_id: candidate.function_run_id,
 		session_id: typeof candidate.session_id === 'string' ? candidate.session_id : null,
 		result: candidate.result,
 		status: status as FunctionRunStatus,
+		// Kept as the API sent it; absent when the run reported no typed error.
+		...(typeof error === 'object' && error !== null && !Array.isArray(error) ? { error: error as FunctionRunError } : {}),
 	};
 }
 

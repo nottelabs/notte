@@ -13,6 +13,7 @@ import {
 } from '@/functions';
 import {
 	FailedToRunCloudFunctionError,
+	FunctionRunRejectedError,
 	InvalidRequestError,
 	NotteAPIError,
 	NotteError,
@@ -647,6 +648,78 @@ describe('NotteFunction', () => {
 			mockRun(sseStream(event('result', JSON.stringify(failure))));
 
 			await expect(fn.run({}, { raiseOnFailure: false })).resolves.toEqual(failure);
+		});
+
+		describe('a rejected run', () => {
+			// The function raised an ExpectedFunctionError: a deliberate refusal.
+			const error = {
+				kind: 'expected' as const,
+				type: 'AccountNotUnique',
+				mro: ['AccountNotUnique', 'ValueError', 'ExpectedFunctionError', 'FunctionError', 'Exception'],
+				code: 'account_not_unique',
+				message: '2 accounts match this phone number',
+				heal: false,
+				retry: false,
+				status_code: 409,
+				source: 'class' as const,
+			};
+			const rejected = { ...runResult, status: 'rejected' as const, result: 'Traceback ...\nAccountNotUnique: 2 accounts match this phone number', error };
+
+			it.each([
+				['a JSON response', () => rejected, { stream: false }],
+				['a stream', () => sseStream(event('result', JSON.stringify(rejected))), {}],
+			] as const)('throws FunctionRunRejectedError from %s, never a result', async (_name, body, options) => {
+				mockRun(body());
+
+				const rejection = fn.run({}, options);
+				await expect(rejection).rejects.toBeInstanceOf(FunctionRunRejectedError);
+				// Existing handlers of failed runs still catch it.
+				await expect(rejection).rejects.toBeInstanceOf(FailedToRunCloudFunctionError);
+				await expect(rejection).rejects.toMatchObject({
+					functionId: FUNCTION_ID,
+					functionRunId: 'run-1',
+					code: 'account_not_unique',
+					error,
+					response: rejected,
+				});
+				await expect(rejection).rejects.toThrow(
+					`Function ${FUNCTION_ID} with run_id=run-1 was rejected (account_not_unique): 2 accounts match this phone number`,
+				);
+			});
+
+			it('falls back to the result when the API sends no error payload', async () => {
+				const { error: _omitted, ...bare } = rejected;
+				mockRun(bare);
+
+				const rejection = fn.run({}, { stream: false });
+				await expect(rejection).rejects.toMatchObject({ code: null, error: null });
+				await expect(rejection).rejects.toThrow(`was rejected: result '${bare.result}'`);
+			});
+
+			it('returns the rejected run with its error when raiseOnFailure is false', async () => {
+				mockRun(rejected);
+
+				await expect(fn.run({}, { stream: false, raiseOnFailure: false })).resolves.toEqual(rejected);
+			});
+		});
+
+		it('keeps the error payload of a failed run', async () => {
+			const error = {
+				kind: 'unexpected' as const, type: 'KeyError', mro: ['KeyError', 'LookupError', 'Exception'], code: 'key_error',
+				message: "'missing'", heal: true, retry: false, status_code: 500, source: 'default' as const,
+			};
+			const failure = { ...runResult, status: 'failed' as const, result: 'boom', error };
+			mockRun(failure);
+
+			const rejection = fn.run({}, { stream: false });
+			await expect(rejection).rejects.not.toBeInstanceOf(FunctionRunRejectedError);
+			await expect(rejection).rejects.toMatchObject({ response: failure });
+		});
+
+		it('leaves error off a run that reported none', async () => {
+			mockRun({ ...runResult, error: null });
+
+			await expect(fn.run({}, { stream: false })).resolves.toEqual(runResult);
 		});
 
 		it('rejects a non-streaming response that is not a function run result', async () => {
