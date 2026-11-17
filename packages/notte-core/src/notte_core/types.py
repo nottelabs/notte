@@ -2502,8 +2502,9 @@ class CaptchaStatus(BaseModel):
     cancel_reason: str | None = None
     challenge_type: str | None = None
     challenge_state: Literal["interstitial", "captcha", "banned"] | None = None
-    # `rejected`: the site rejected the delivered answer and showed the CAPTCHA again (`code: "captcha_rejected"`).
-    failure_reason: Literal["rejected"] | None = None
+    # Why a `failed` solve failed. `rejected`: the site rejected the delivered answer and showed the
+    # CAPTCHA again (`code: "captcha_rejected"`). Kept open so a reason added later still parses.
+    failure_reason: str | None = None
 
 
 class ExecutionResultResponse(ExecutionResult):
