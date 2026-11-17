@@ -447,6 +447,22 @@ def changed_code(base: str, head: str, path: str) -> bool:
         return True
 
 
+def schema_roundtrip_path(path: str) -> bool:
+    return (
+        path in PYTHON_CONFIG
+        or path in OPENAPI_TOOLS
+        or path
+        in {
+            "openapi/openapi.json",
+            ".github/workflows/ci.yml",
+            "packages/notte-sdk/src/notte_sdk/types.py",
+        }
+        or path.startswith(("packages/notte-core/src/", "packages/notte-sdk/src/notte_sdk/_compat/"))
+        or path.endswith("/pyproject.toml")
+        and path.startswith("packages/")
+    )
+
+
 def scopes_for_path(path: str, *, code_changed: bool = True) -> set[str]:
     selected = base_scopes_for_path(path, code_changed=code_changed)
     if path in RECIPE_INPUTS and integration_examples_for_path(path):
@@ -595,6 +611,7 @@ def select(event: str, base: str, head: str) -> dict[str, bool | str | list[str]
     lint_all = False
     docs_links = False
     file_checks = True
+    paths: list[str] = []
     try:
         if event in {"push", "pull_request"}:
             if not all(re.fullmatch(r"[0-9a-f]{40}", sha) and set(sha) != {"0"} for sha in (base, head)):
@@ -677,6 +694,7 @@ def select(event: str, base: str, head: str) -> dict[str, bool | str | list[str]
         **{name: name in selected for name in sorted(ALL)},
         "full": full,
         "file_checks": full or file_checks,
+        "schema_roundtrip": event == "pull_request" and (full or any(schema_roundtrip_path(p) for p in paths)),
         "lint_all": full or lint_all or selected == ALL,
         "docs_links": docs_links,
         "base": base,
