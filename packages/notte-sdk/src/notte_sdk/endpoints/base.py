@@ -256,6 +256,8 @@ class _ClientCore(ABC, Generic[TRoot]):
 
     DEFAULT_NOTTE_API_URL: ClassVar[str] = "https://api.notte.cc"
     DEFAULT_REQUEST_TIMEOUT_SECONDS: ClassVar[int] = 60
+    # Headers a resource client adds to every request it sends.
+    RESOURCE_HEADERS: ClassVar[dict[str, str]] = {}
     DEFAULT_FILE_CHUNK_SIZE: ClassVar[int] = 8192
 
     HEALTH_CHECK_ENDPOINT: ClassVar[str] = "health"
@@ -482,6 +484,7 @@ class _ClientCore(ABC, Generic[TRoot]):
             "Authorization": f"Bearer {self.token}",
             "x-notte-sdk-version": notte_core_version,
             "x-notte-request-origin": self.REQUEST_ORIGIN,
+            **self.RESOURCE_HEADERS,
             **preview,
             **(
                 {"x-notte-auth-capability": os.environ["NOTTE_AUTH_CAPABILITY"]}

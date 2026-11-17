@@ -47,6 +47,10 @@ export type CaptchaStatus = {
      * Challenge State
      */
     challenge_state?: 'interstitial' | 'captcha' | 'banned' | null;
+    /**
+     * Failure Reason
+     */
+    failure_reason?: 'rejected' | null;
 };
 ```
 
@@ -85,5 +89,9 @@ export type CaptchaStatus = {
 </ParamField>
 
 <ParamField body="challenge_state" type={"\"captcha\" | \"interstitial\" | \"banned\" | null | undefined"}>
+
+</ParamField>
+
+<ParamField body="failure_reason" type={"\"rejected\" | null | undefined"}>
 
 </ParamField>

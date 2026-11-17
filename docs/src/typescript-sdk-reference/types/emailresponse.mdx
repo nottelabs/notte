@@ -59,6 +59,12 @@ export type EmailResponse = {
      * Files attached to the email, with short-lived download URLs
      */
     attachments?: Array<EmailAttachment>;
+    /**
+     * Read
+     *
+     * Whether the email was read before this request
+     */
+    read: boolean;
 };
 ```
 
@@ -94,6 +100,10 @@ HTML body, can be uncorrelated with raw content
 
 <ParamField body="attachments" type={"EmailAttachment[] | undefined"}>
 Files attached to the email, with short-lived download URLs
+</ParamField>
+
+<ParamField body="read" type={"boolean"} required>
+Whether the email was read before this request
 </ParamField>
 
 ## Related types

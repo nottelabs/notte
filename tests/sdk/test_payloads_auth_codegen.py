@@ -54,6 +54,7 @@ def test_payload_upload_wire_contract(
         "Authorization": "Bearer test-api-key",  # pragma: allowlist secret
         "x-notte-sdk-version": __version__,
         "x-notte-request-origin": "sdk-python",
+        "x-notte-accept-run-statuses": "rejected",
         "Content-Type": "application/json",
     }
     # The storage request carries none of the API headers.

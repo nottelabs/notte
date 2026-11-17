@@ -77,6 +77,7 @@ def make_email() -> EmailResponse:
         sender_email="sender@example.com",
         sender_name="Sender",
         text_content="Hello",
+        read=False,
     )
 
 
@@ -86,6 +87,7 @@ def make_sms() -> SMSResponse:
         sms_id="sms_1",
         created_at=dt.datetime.now(),
         sender="+1234567890",
+        read=False,
     )
 
 

@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased: typed function errors and `rejected` runs
+
+`notte_sdk.errors` adds `FunctionError`, `ExpectedFunctionError` and `RetryableFunctionError`, also
+exported from `notte_sdk`. A Function raises a subclass to tell the runtime what a failure means: an
+`ExpectedFunctionError` is a deliberate refusal that ends the run as `rejected` and is never self-healed;
+a `RetryableFunctionError` keeps the run `failed`, is not self-healed, and sets `retry` for the caller.
+Subclasses override `heal`, `retry`, `status_code` and `code` (by default the snake_case class name) and
+can mix in built-in exceptions (`class AccountNotUnique(ValueError, ExpectedFunctionError)`).
+`function_error_payload(exc)` builds the run's `error` payload. Function run statuses gain `rejected`,
+and run responses gain an optional `error`. `NotteFunction.run()` raises `FunctionRunRejectedError`, a
+subclass of `FailedToRunCloudFunctionError` carrying `code` and `error`, for a rejected run.
+`FailedToRunCloudFunctionError` is no longer `@final`. The `rejected` status and `error` field need an API
+that reports them; older APIs keep returning `failed`.
+
 ## Unreleased: `dialog_policy` for JavaScript dialogs
 
 Remote sessions accept `dialog_policy` (`client.Session(dialog_policy="client")`, or

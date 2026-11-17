@@ -38,7 +38,7 @@ type ApiGetFunctionRunResponse = {
     /**
      * Status
      */
-    status: 'closed' | 'active' | 'failed';
+    status: 'closed' | 'active' | 'failed' | 'rejected';
     /**
      * Session Id
      *
@@ -65,6 +65,10 @@ type ApiGetFunctionRunResponse = {
      * The result of the function run (if any)
      */
     result?: string | null;
+    /**
+     * What a failed or rejected run's exception means; null otherwise
+     */
+    error?: FunctionRunError | null;
     /**
      * Local
      *
@@ -128,7 +132,7 @@ The ID of the function run
 
 </ParamField>
 
-<ParamField body="status" type={"\"failed\" | \"closed\" | \"active\""} required>
+<ParamField body="status" type={"\"failed\" | \"rejected\" | \"closed\" | \"active\""} required>
 
 </ParamField>
 
@@ -146,6 +150,10 @@ The variables of the function run
 
 <ParamField body="result" type={"string | null | undefined"}>
 The result of the function run (if any)
+</ParamField>
+
+<ParamField body="error" type={"FunctionRunError | null | undefined"}>
+What a failed or rejected run's exception means; null otherwise
 </ParamField>
 
 <ParamField body="local" type={"boolean | undefined"}>
@@ -178,5 +186,6 @@ Whether the function has been run locally or on the cloud
 
 ## Related types
 
+- [FunctionRunError](/typescript-sdk-reference/types/functionrunerror)
 - [FunctionSdkGeneration](/typescript-sdk-reference/types/functionsdkgeneration)
 - [RunPayloadReference](/typescript-sdk-reference/types/runpayloadreference)
