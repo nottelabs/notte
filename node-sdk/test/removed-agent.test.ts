@@ -3,7 +3,7 @@ import { NotteClient } from '@/client';
 
 describe('client.Agent', () => {
   it('throws with the act loop snippet', () => {
-    const client = new NotteClient({ apiKey: 'test-api-key' });
+    const client = new NotteClient({ apiKey: 'test-key' }); // pragma: allowlist secret
     let message = '';
     try {
       void client.Agent;
