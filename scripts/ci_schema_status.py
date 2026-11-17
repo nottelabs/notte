@@ -9,18 +9,45 @@ import time
 import urllib.error
 import urllib.request
 import uuid
-from typing import Any, cast, final
+from typing import Literal, TypedDict, cast, final, overload
 
 CONTEXT = "SDK schema round trip"
+
+
+class StatusCreator(TypedDict):
+    id: int
+
+
+class Status(TypedDict):
+    state: Literal["pending", "success", "failure", "error"]
+    context: str
+    description: str | None
+    creator: StatusCreator | None
+
+
+class StatusResponse(TypedDict):
+    statuses: list[Status]
+
+
+class StatusRequest(TypedDict):
+    state: Literal["pending"]
+    context: str
+    description: str
 
 
 @final
 class GitHub:
     def __init__(self, token: str):
         self.token = token
-        self.cached: dict[str, tuple[str, dict[str, Any]]] = {}
+        self.cached: dict[str, tuple[str, StatusResponse]] = {}
 
-    def request(self, path: str, body: dict[str, Any] | None = None) -> dict[str, Any]:
+    @overload
+    def request(self, path: str, body: None = None) -> StatusResponse: ...
+
+    @overload
+    def request(self, path: str, body: StatusRequest) -> Status: ...
+
+    def request(self, path: str, body: StatusRequest | None = None) -> StatusResponse | Status:
         headers = {"Authorization": f"Bearer {self.token}", "Accept": "application/vnd.github+json"}
         if body is None and path in self.cached:
             headers["If-None-Match"] = self.cached[path][0]
@@ -31,8 +58,10 @@ class GitHub:
         )
         try:
             with urllib.request.urlopen(request, timeout=30) as response:
-                value = cast(dict[str, Any], json.load(response))
-                if body is None and response.headers.get("ETag"):
+                if body is not None:
+                    return cast(Status, json.load(response))
+                value = cast(StatusResponse, json.load(response))
+                if response.headers.get("ETag"):
                     self.cached[path] = (response.headers["ETag"], value)
                 return value
         except urllib.error.HTTPError as error:
@@ -62,9 +91,10 @@ def check(github: GitHub, repository: str, sha: str, actor_id: str, *, within: f
         statuses = github.request(f"repos/{repository}/commits/{sha}/status")["statuses"]
         for status in statuses:
             if (
-                status.get("context") == CONTEXT
-                and str(status.get("creator", {}).get("id")) == actor_id
-                and status.get("description", "").startswith(description + ": ")
+                status["context"] == CONTEXT
+                and status["creator"] is not None
+                and str(status["creator"]["id"]) == actor_id
+                and (status["description"] or "").startswith(description + ": ")
             ):
                 if status["state"] == "success":
                     print("The installed SDK contract matches its snapshot.")

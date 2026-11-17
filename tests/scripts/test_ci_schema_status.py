@@ -38,7 +38,16 @@ def test_trusted_result_matches_exact_request_and_uses_only_public_endpoints():
     assert github.request.call_args_list[-1].args == (f"repos/example/sdk/commits/{SHA}/status",)
 
 
-@pytest.mark.parametrize("status", [result(actor=41898282), result(nonce="c" * 32), result(context="other")])
+@pytest.mark.parametrize(
+    "status",
+    [
+        result(actor=41898282),
+        result(nonce="c" * 32),
+        result(context="other"),
+        {**result(), "creator": None},
+        {**result(), "description": None},
+    ],
+)
 def test_public_token_cannot_forge_a_result_and_old_requests_do_not_count(status):
     github = Mock()
     github.request.side_effect = [None, {"statuses": [status]}]
