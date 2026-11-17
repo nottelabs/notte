@@ -75,6 +75,8 @@ AGENT_REMOVED_MESSAGE = """client.Agent was removed in notte-sdk 1.10. Drive the
             result = session.act("describe the task here", raise_on_failure=False)
             if result.status != "executed":  # done, blocked or stale
                 break
+        if result.status != "done":
+            raise RuntimeError(f"task stopped before it was done: {result.status}")
         data = session.scrape(instructions="what to extract")
 
 See https://docs.notte.cc/features/sessions/act"""
@@ -87,6 +89,8 @@ ASYNC_AGENT_REMOVED_MESSAGE = """client.Agent was removed in notte-sdk 1.10. Dri
             result = await session.act("describe the task here", raise_on_failure=False)
             if result.status != "executed":  # done, blocked or stale
                 break
+        if result.status != "done":
+            raise RuntimeError(f"task stopped before it was done: {result.status}")
         data = await session.scrape(instructions="what to extract")
 
 See https://docs.notte.cc/features/sessions/act"""
