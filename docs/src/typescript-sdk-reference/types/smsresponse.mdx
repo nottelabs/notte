@@ -35,6 +35,12 @@ export type SmsResponse = {
      * SMS sender phone number
      */
     sender: string | null;
+    /**
+     * Read
+     *
+     * Whether the message was read before this request
+     */
+    read: boolean;
 };
 ```
 
@@ -54,4 +60,8 @@ Creation date
 
 <ParamField body="sender" type={"string | null"} required>
 SMS sender phone number
+</ParamField>
+
+<ParamField body="read" type={"boolean"} required>
+Whether the message was read before this request
 </ParamField>

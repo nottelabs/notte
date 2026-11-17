@@ -142,6 +142,12 @@ export type FunctionWithLinkResponse = {
         [key: string]: unknown;
     } | null;
     /**
+     * Expected Errors
+     *
+     * Exception class names whose runs end rejected (an expected error) instead of failed.
+     */
+    expected_errors?: Array<string>;
+    /**
      * Schedule Cron
      *
      * Cron expression the function runs on, or null if it is not scheduled.
@@ -260,6 +266,10 @@ Builder's operating notes: typical run duration, known failure modes, which para
 
 <ParamField body="response_format" type={"{ [key: string]: unknown; } | null | undefined"}>
 JSON Schema of the value run() returns, or null when the author never documented one.
+</ParamField>
+
+<ParamField body="expected_errors" type={"string[] | undefined"}>
+Exception class names whose runs end rejected (an expected error) instead of failed.
 </ParamField>
 
 <ParamField body="schedule_cron" type={"string | null | undefined"}>

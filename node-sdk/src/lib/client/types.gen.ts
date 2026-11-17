@@ -1366,6 +1366,10 @@ export type CaptchaStatus = {
      * Challenge State
      */
     challenge_state?: 'interstitial' | 'captcha' | 'banned' | null;
+    /**
+     * Failure Reason
+     */
+    failure_reason?: 'rejected' | null;
 };
 
 /**
@@ -2705,6 +2709,12 @@ export type EmailResponse = {
      * Files attached to the email, with short-lived download URLs
      */
     attachments?: Array<EmailAttachment>;
+    /**
+     * Read
+     *
+     * Whether the email was read before this request
+     */
+    read: boolean;
 };
 
 /**
@@ -3416,6 +3426,12 @@ export type FunctionMetadataUpdateRequest = {
     response_format?: {
         [key: string]: unknown;
     } | null;
+    /**
+     * Expected Errors
+     *
+     * Exception class names the function raises on purpose. A failed run whose exception has one of these names in its class hierarchy ends rejected and is never self-healed. Replaces the stored list; send [] to clear it. Omit or send null to leave it unchanged.
+     */
+    expected_errors?: Array<string> | null;
 };
 
 /**
@@ -3547,6 +3563,12 @@ export type FunctionResponse = {
         [key: string]: unknown;
     } | null;
     /**
+     * Expected Errors
+     *
+     * Exception class names whose runs end rejected (an expected error) instead of failed.
+     */
+    expected_errors?: Array<string>;
+    /**
      * Schedule Cron
      *
      * Cron expression the function runs on, or null if it is not scheduled.
@@ -3582,6 +3604,66 @@ export type FunctionRollbackRequest = {
      * A version from the function's `versions` history to restore
      */
     version: string;
+};
+
+/**
+ * FunctionRunError
+ */
+export type FunctionRunError = {
+    /**
+     * Kind
+     *
+     * expected: the run was rejected on purpose; retryable: a new run may succeed
+     */
+    kind: 'expected' | 'retryable' | 'unexpected';
+    /**
+     * Type
+     *
+     * The exception class name
+     */
+    type: string;
+    /**
+     * Mro
+     *
+     * The exception's class names, most derived first
+     */
+    mro: Array<string>;
+    /**
+     * Code
+     *
+     * A stable code, by default the class name in snake_case
+     */
+    code: string;
+    /**
+     * Message
+     *
+     * The exception message
+     */
+    message: string;
+    /**
+     * Heal
+     *
+     * Whether self-healing may rewrite the function for this error
+     */
+    heal: boolean;
+    /**
+     * Retry
+     *
+     * Whether the caller may retry with a new run
+     */
+    retry: boolean;
+    /**
+     * Status Code
+     *
+     * Informational HTTP status for the error
+     */
+    status_code: number;
+    /**
+     * Source
+     *
+     * class: from the exception class; config: the function's expected_errors; default: neither
+     */
+    source: 'class' | 'config' | 'default';
 };
 
 /**
@@ -3676,6 +3758,10 @@ export type FunctionRunUpdateRequest = {
      * Result Preview
      */
     result_preview?: string | null;
+    /**
+     * The typed error of a failed or rejected run
+     */
+    error?: FunctionRunError | null;
 };
 
 /**
@@ -3967,6 +4053,12 @@ export type FunctionWithLinkResponse = {
         [key: string]: unknown;
     } | null;
     /**
+     * Expected Errors
+     *
+     * Exception class names whose runs end rejected (an expected error) instead of failed.
+     */
+    expected_errors?: Array<string>;
+    /**
      * Schedule Cron
      *
      * Cron expression the function runs on, or null if it is not scheduled.
@@ -4079,13 +4171,9 @@ export type GetFunctionRunResponse = {
      */
     result?: string | null;
     /**
-     * Error
-     *
-     * How the function's exception was classified, for failed and rejected runs
+     * What a failed or rejected run's exception means; null otherwise
      */
-    error?: {
-        [key: string]: unknown;
-    } | null;
+    error?: FunctionRunError | null;
     /**
      * Local
      *
@@ -7203,6 +7291,12 @@ export type SmsResponse = {
      * SMS sender phone number
      */
     sender: string | null;
+    /**
+     * Read
+     *
+     * Whether the message was read before this request
+     */
+    read: boolean;
 };
 
 /**
@@ -8759,6 +8853,7 @@ export type UpdateFunctionRunResponse = {
      * Status
      */
     status?: 'updated' | 'stopped';
+    error?: FunctionRunError | null;
     /**
      * Workflow Id
      */
@@ -10613,6 +10708,12 @@ export type FunctionResponseWritable = {
         [key: string]: unknown;
     } | null;
     /**
+     * Expected Errors
+     *
+     * Exception class names whose runs end rejected (an expected error) instead of failed.
+     */
+    expected_errors?: Array<string>;
+    /**
      * Schedule Cron
      *
      * Cron expression the function runs on, or null if it is not scheduled.
@@ -10807,6 +10908,12 @@ export type FunctionWithLinkResponseWritable = {
         [key: string]: unknown;
     } | null;
     /**
+     * Expected Errors
+     *
+     * Exception class names whose runs end rejected (an expected error) instead of failed.
+     */
+    expected_errors?: Array<string>;
+    /**
      * Schedule Cron
      *
      * Cron expression the function runs on, or null if it is not scheduled.
@@ -10885,13 +10992,9 @@ export type GetFunctionRunResponseWritable = {
      */
     result?: string | null;
     /**
-     * Error
-     *
-     * How the function's exception was classified, for failed and rejected runs
+     * What a failed or rejected run's exception means; null otherwise
      */
-    error?: {
-        [key: string]: unknown;
-    } | null;
+    error?: FunctionRunError | null;
     /**
      * Local
      *
@@ -11539,6 +11642,7 @@ export type UpdateFunctionRunResponseWritable = {
      * Status
      */
     status?: 'updated' | 'stopped';
+    error?: FunctionRunError | null;
 };
 
 /**
@@ -15357,6 +15461,12 @@ export type PersonaEmailsListData = {
          * Whether to only return unread messages
          */
         only_unread?: boolean;
+        /**
+         * Mark Read
+         *
+         * Whether to mark the returned messages as read
+         */
+        mark_read?: boolean;
     };
     url: '/personas/{persona_id}/emails';
 };
@@ -15484,6 +15594,12 @@ export type PersonaSmsListData = {
          * Whether to only return unread messages
          */
         only_unread?: boolean;
+        /**
+         * Mark Read
+         *
+         * Whether to mark the returned messages as read
+         */
+        mark_read?: boolean;
     };
     url: '/personas/{persona_id}/sms';
 };

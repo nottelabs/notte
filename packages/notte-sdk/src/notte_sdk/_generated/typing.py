@@ -88,6 +88,7 @@ class FunctionMetadataUpdateRequestDict(TypedDict):
     shared: NotRequired[bool | None]
     deletion_protected: NotRequired[bool | None]
     response_format: NotRequired[dict[str, Any] | None]
+    expected_errors: NotRequired[models.ExpectedErrors | None]
 
 
 class FunctionRollbackRequestDict(TypedDict):
@@ -108,6 +109,7 @@ class FunctionRunUpdateRequestDict(TypedDict):
     variables: NotRequired[dict[str, Any] | None]
     result: NotRequired[Any | None]
     status: NotRequired[Literal["closed", "active", "failed", "rejected"]]
+    error: NotRequired[models.FunctionRunError | None]
 
 
 class FunctionRuntimeHealthParametersQueryDict(TypedDict):
@@ -293,6 +295,7 @@ class MessageReadRequestDict(TypedDict):
     limit: NotRequired[int]
     timedelta: NotRequired[timedelta_aliased | None]
     only_unread: NotRequired[bool]
+    mark_read: NotRequired[bool]
 
 
 class PersonaUpdateRequestDict(TypedDict):
