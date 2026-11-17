@@ -34,7 +34,7 @@ Get keys from [Notte](https://console.notte.cc/apikeys), your model provider, an
 
     traceroot.initialize(integrations=[Integration.CLAUDE_AGENT_SDK])
     ...
-    async for message in claude_agent_sdk.query(prompt=prompt, options=options):
+    async for message in claude_agent_sdk.query(prompt=prompt, options=OPTIONS):
         ...
     ```
 
@@ -66,7 +66,7 @@ npx -y traceroot-cli@latest traces get <trace_id>
 </Frame>
 
 <Note>
-  The Notte key is sent in the MCP connection's header, which the trace doesn't record. Agent errors are re-raised with only the Notte session ID.
+  The Notte key is sent in the MCP connection's header, which the trace doesn't record.
 </Note>
 
 ### Other frameworks
@@ -111,8 +111,8 @@ traceroot groups findings of the same problem into a [signal](https://traceroot.
 
 For the prompt regression, the root cause analysis found the cause from the trace alone: the "don't scrape it: answer from what you know" instruction, browser tools that were listed but never called, and stories taken from the model's training data. It recommended removing the instruction and requiring a `browser_scrape` or `browser_observe` call before the final answer. Connect GitHub in traceroot's settings so the agent can also investigate your code and pinpoint the fix down to the commit, file, and line.
 
-<Frame caption="Root cause analysis on the signal for the prompt regression">
-  <img src="/images/notte-traceroot-rca.png" alt="traceroot signal 'States facts not established by the available evidence' with a root cause analysis quoting the agent's instruction not to scrape the page" />
+<Frame caption="The signal for the prompt regression: root cause analysis, and how many traces it affects over time">
+  <img src="/images/notte-traceroot-rca.png" alt="traceroot signal 'States facts not established by the available evidence' with a root cause analysis quoting the agent's instruction not to scrape the page, and a count-over-time chart showing 3 of 6 traces affected" />
 </Frame>
 
 ## Verify
@@ -126,7 +126,7 @@ uv run python hn_eval.py --broken   # with the prompt regression
 uv run python hn_eval.py            # after the fix
 ```
 
-Both runs are recorded against the same dataset, so you can compare them case by case. The version with the regression scores 0 on every case. The fixed version scores 1 on each case where every story is on the front page. If Hacker News rate-limits the browser, the agent can return placeholder stories instead of an error; that case scores 0, and the eval shows you which run to inspect.
+Both runs are recorded against the same dataset, so you can compare them case by case. The version with the regression scores 0 on every case. The fixed version scores 1 on each case where every story is on the front page. If Hacker News rate-limits the browser, the agent can return no stories or placeholder stories instead of an error; that case scores 0, and the eval shows you which run to inspect.
 
 <CardGroup cols={2}>
   <Card title="Detectors" icon="shield-halved" href="https://traceroot.ai/docs/detectors/introduction">
