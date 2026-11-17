@@ -4,7 +4,7 @@
  * callers can `catch (e) { if (e instanceof NotteError) ... }` and branch on the
  * concrete class or on `NotteAPIError.statusCode`.
  */
-import type { SerializedError } from '@/lib/client/types.gen';
+import type { FunctionRunError, SerializedError } from '@/lib/client/types.gen';
 
 export class NotteError extends Error {
   constructor(message: string, options?: { cause?: unknown }) {
@@ -84,15 +84,45 @@ export class FailedToRunCloudFunctionError extends NotteError {
   readonly functionRunId: string;
   readonly response: unknown;
 
-  constructor(functionId: string, functionRunId: string, response: unknown) {
+  constructor(functionId: string, functionRunId: string, response: unknown, message?: string) {
     super(
-      `Function ${functionId} run ${functionRunId} failed: ${
-        typeof response === 'string' ? response : describeBody((response ?? {}) as NotteAPIErrorBody)
-      }`,
+      message ??
+        `Function ${functionId} run ${functionRunId} failed: ${
+          typeof response === 'string' ? response : describeBody((response ?? {}) as NotteAPIErrorBody)
+        }`,
     );
     this.functionId = functionId;
     this.functionRunId = functionRunId;
     this.response = response;
+  }
+}
+
+/**
+ * A function run ended with status `rejected`: the function raised an
+ * `ExpectedFunctionError`, a deliberate refusal such as an account that is not
+ * uniquely authorized. `error` is the run's error payload and `code` its
+ * machine-readable code. It extends `FailedToRunCloudFunctionError`, so
+ * existing handlers still catch it, like `FunctionRunRejectedError` in Python.
+ */
+export class FunctionRunRejectedError extends FailedToRunCloudFunctionError {
+  readonly error: FunctionRunError | null;
+  readonly code: string | null;
+
+  constructor(functionId: string, functionRunId: string, response: { result: unknown; error?: FunctionRunError | null }) {
+    const error = response.error ?? null;
+    const code = typeof error?.code === 'string' && error.code ? error.code : null;
+    const detail =
+      typeof error?.message === 'string' && error.message
+        ? error.message
+        : `result '${typeof response.result === 'string' ? response.result : JSON.stringify(response.result)}'`;
+    super(
+      functionId,
+      functionRunId,
+      response,
+      `Function ${functionId} with run_id=${functionRunId} was rejected${code ? ` (${code})` : ''}: ${detail}`,
+    );
+    this.error = error;
+    this.code = code;
   }
 }
 

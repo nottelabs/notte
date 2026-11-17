@@ -66,6 +66,13 @@ export const TIMEOUT_HEADER = 'x-notte-timeout-ms';
 export const MAX_RETRIES_HEADER = 'x-notte-max-retries';
 const DB_PREVIEW_ENV = 'NOTTE_DB_PREVIEW_BRANCH';
 const DB_PREVIEW_HEADER = 'x-db-preview';
+/**
+ * Opts in to the `rejected` function run status (a run whose function raised an
+ * `ExpectedFunctionError`). Without it the API reports rejected runs as `failed`,
+ * so clients that predate the status still treat them as failures. Sent on every
+ * functions request, like `RESOURCE_HEADERS` of the Python functions client.
+ */
+export const ACCEPT_RUN_STATUSES_HEADER = 'x-notte-accept-run-statuses';
 const EXECUTION_ERROR_CLASS = 'NotteApiExecutionError';
 
 export interface NotteClientConfig {
@@ -107,6 +114,14 @@ type ResolvedConfig = Required<Pick<NotteClientConfig, 'baseUrl' | 'timeoutMs' |
 function isRelativeProxyUrl(baseUrl: string): boolean {
   // '/api/notte' is a same-origin proxy path; '//host' is protocol-relative and not allowed.
   return /^\/(?!\/)/.test(baseUrl);
+}
+
+/** Whether a request targets the configured API's `/functions` endpoints. */
+function isFunctionsRequest(requestUrl: string, baseUrl: string): boolean {
+  const url = new URL(requestUrl);
+  const api = new URL(baseUrl, url);
+  const prefix = `${api.pathname.replace(/\/$/, '')}/functions`;
+  return url.origin === api.origin && (url.pathname === prefix || url.pathname.startsWith(`${prefix}/`));
 }
 
 /** Entry point for sessions, functions, vaults, personas, and session files. */
@@ -175,6 +190,10 @@ export class NotteClient {
       headers.set('x-notte-request-origin', REQUEST_ORIGIN);
       headers.set('x-notte-sdk-version', SDK_VERSION);
       if (this.config.dbPreview) headers.set(DB_PREVIEW_HEADER, this.config.dbPreview);
+      // A caller's own value wins, so a request can still ask for the legacy statuses.
+      if (!headers.has(ACCEPT_RUN_STATUSES_HEADER) && isFunctionsRequest(request.url, this.config.baseUrl)) {
+        headers.set(ACCEPT_RUN_STATUSES_HEADER, 'rejected');
+      }
 
       const override = headers.get(TIMEOUT_HEADER);
       headers.delete(TIMEOUT_HEADER);
