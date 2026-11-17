@@ -33,6 +33,8 @@ def assess(needs: dict[str, Need], trusted: bool = True) -> tuple[str, bool]:
         if (any(scope[flag] is True for flag in flags) or (family == "python" and scope.get("file_checks")))
         and (family not in needs or needs[family]["result"] != "success")
     ]
+    if scope.get("schema_roundtrip") is True and ("schema" not in needs or needs["schema"]["result"] != "success"):
+        failures.append("schema")
     failures += [name for name, job in needs.items() if job["result"] in {"failure", "cancelled"}]
     if failures:
         return "Failed or missing selected suites: " + ", ".join(sorted(set(failures))), False

@@ -16,7 +16,7 @@ import { FailedToRunCloudFunctionError } from 'notte-sdk';
 ```
 
 ```typescript
-new FailedToRunCloudFunctionError(functionId: string, functionRunId: string, response: unknown): FailedToRunCloudFunctionError;
+new FailedToRunCloudFunctionError(functionId: string, functionRunId: string, response: unknown, message?: string): FailedToRunCloudFunctionError;
 ```
 
 <ParamField body="functionId" type={"string"} required>
@@ -28,6 +28,10 @@ new FailedToRunCloudFunctionError(functionId: string, functionRunId: string, res
 </ParamField>
 
 <ParamField body="response" type={"unknown"} required>
+
+</ParamField>
+
+<ParamField body="message" type={"string"}>
 
 </ParamField>
 

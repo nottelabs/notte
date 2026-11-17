@@ -67,7 +67,9 @@ export interface NotteProxyConfig {
 
   /**
    * List of header names to forward from the incoming request to the Notte API.
-   * @default ['content-type', 'accept']
+   * `x-notte-accept-run-statuses`, the client's opt-in to the `rejected` run
+   * status, is forwarded in addition to this list.
+   * @default ['content-type', 'accept', 'x-notte-accept-run-statuses']
    */
   forwardHeaders?: string[];
 

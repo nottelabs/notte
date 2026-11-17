@@ -34,7 +34,14 @@ The value returned by the script's `run` function, decoded from JSON.
 </ParamField>
 
 <ParamField body="status" type={"\"failed\" | \"rejected\" | \"closed\" | \"active\""} required>
+`rejected` when the function raised an `ExpectedFunctionError` (a deliberate
+refusal), `failed` for any other exception. Neither is a success. An API
+without `rejected` support reports deliberate refusals as `failed` too;
+`error.kind` is then still `expected` when the API sends `error`.
+</ParamField>
 
+<ParamField body="error" type={"FunctionRunError | undefined"}>
+What a failed or rejected run's exception means, when the API reports it.
 </ParamField>
 
 ## Related types
