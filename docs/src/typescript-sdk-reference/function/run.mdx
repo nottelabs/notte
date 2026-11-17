@@ -17,8 +17,9 @@ live logs; execution still blocks until completion. Pass `functionRunId`
 to execute a record returned by `createRun()`; otherwise a new run record
 is created first, exactly like Python. Pass `version` to run a saved
 version instead of the latest one. A failed execution throws
-`FailedToRunCloudFunctionError` unless `raiseOnFailure` is false, and the
-wait is aborted with `NotteTimeoutError` after `timeoutMs`.
+`FailedToRunCloudFunctionError` and a rejected one (the function raised an
+`ExpectedFunctionError`) its subclass `FunctionRunRejectedError`, unless
+`raiseOnFailure` is false; the wait is aborted with `NotteTimeoutError` after `timeoutMs`.
 
 ```typescript
 NotteFunction.run(variables?: Record<string, unknown>, options?: FunctionRunOptions): Promise<FunctionRunResult>;
@@ -57,6 +58,7 @@ The completed execution response. The function's return value is in `result`. Di
 ## Raises
 
 - FailedToRunCloudFunctionError if execution fails and `raiseOnFailure` is true.
+- FunctionRunRejectedError if the run is rejected and `raiseOnFailure` is true.
 - NotteTimeoutError if the execution request exceeds `timeoutMs`.
 - InvalidRequestError if the run options are invalid.
 

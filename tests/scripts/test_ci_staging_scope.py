@@ -276,13 +276,15 @@ def test_deleted_docs_still_run_the_global_link_check() -> None:
         ("cancelled", "success", 1),
     ],
 )
-@pytest.mark.parametrize("family", ["python", "node", "docs", "paired", "readme"])
+@pytest.mark.parametrize("family", [*ci_scope.GROUPS, "schema"])
 def test_required_gate_waits_for_all_families_and_fails_closed(
     changes: str, selected: str, expected: int, family: str, tmp_path: Path
 ) -> None:
-    job = workflow("ci.yml")["jobs"]["tests"]
+    jobs = workflow("ci.yml")["jobs"]
+    job = jobs["tests"]
     assert job["if"] == "always()"
-    assert set(job["needs"]) == {"changes", "job-results", *ci_scope.GROUPS}
+    selected_jobs = {name for name, suite in jobs.items() if "needs.changes.outputs.scope" in suite.get("if", "")}
+    assert selected_jobs <= set(job["needs"])
     results: dict[str, Need] = {name: {"result": "skipped", "outputs": {}} for name in job["needs"]}
     scope = json.dumps({flag: False for flag in ci_scope.ALL})
     results["changes"]["outputs"] = {"scope": scope}

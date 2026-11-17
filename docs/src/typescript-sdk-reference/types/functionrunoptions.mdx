@@ -15,7 +15,10 @@ export interface FunctionRunOptions {
 	stream?: boolean;
 	/** Receive streamed logs instead of printing them to console.log. */
 	onLog?: (message: string) => void;
-	/** Throw `FailedToRunCloudFunctionError` when execution fails. Defaults to true, matching Python. */
+	/**
+	 * Throw `FailedToRunCloudFunctionError` when execution fails, or its subclass
+	 * `FunctionRunRejectedError` when the run is rejected. Defaults to true, matching Python.
+	 */
 	raiseOnFailure?: boolean;
 	/** Execute a record returned by createRun(). Omit to create a new run. */
 	functionRunId?: string;
@@ -45,7 +48,8 @@ Receive streamed logs instead of printing them to console.log.
 </ParamField>
 
 <ParamField body="raiseOnFailure" type={"boolean | undefined"}>
-Throw `FailedToRunCloudFunctionError` when execution fails. Defaults to true, matching Python.
+Throw `FailedToRunCloudFunctionError` when execution fails, or its subclass
+`FunctionRunRejectedError` when the run is rejected. Defaults to true, matching Python.
 </ParamField>
 
 <ParamField body="functionRunId" type={"string | undefined"}>

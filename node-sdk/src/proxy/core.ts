@@ -1,9 +1,10 @@
 import { validatePath, DEFAULT_ALLOWED_PATTERNS } from './patterns';
 import type { NotteProxyConfig } from './types';
 import { NotteProxyAuthError } from './types';
+import { ACCEPT_RUN_STATUSES_HEADER } from '../run-statuses';
 
 const DEFAULT_API_URL = 'https://api.notte.cc';
-const DEFAULT_FORWARD_HEADERS = ['content-type', 'accept'];
+const DEFAULT_FORWARD_HEADERS = ['content-type', 'accept', ACCEPT_RUN_STATUSES_HEADER];
 const METHODS_WITH_BODY = ['POST', 'PUT', 'PATCH'];
 
 /**
@@ -84,8 +85,13 @@ export async function handleProxyRequest(
       config.requestOrigin || 'sdk-proxy',
     );
 
-    const headersToForward =
-      config.forwardHeaders || DEFAULT_FORWARD_HEADERS;
+    // The client's opt-in to the `rejected` run status is part of the SDK's own
+    // protocol, like the headers injected above: forward it whatever the caller
+    // lists, or runs through the proxy would report deliberate refusals as `failed`.
+    const headersToForward = new Set([
+      ...(config.forwardHeaders || DEFAULT_FORWARD_HEADERS),
+      ACCEPT_RUN_STATUSES_HEADER,
+    ]);
     for (const header of headersToForward) {
       const value = request.headers.get(header);
       if (value) {
