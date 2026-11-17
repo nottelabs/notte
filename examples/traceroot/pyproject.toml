@@ -1,0 +1,10 @@
+[project]
+name = "notte-traceroot-example"
+version = "0.0.0"
+requires-python = ">=3.11,<3.14"
+dependencies = ["notte-sdk==1.10.0", "openai-agents==0.24.0", "claude-agent-sdk==0.2.168", "traceroot==0.5.1"]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
