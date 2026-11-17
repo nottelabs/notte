@@ -1,5 +1,7 @@
 """Request a contract check using only this public repository's commit statuses."""
 
+# Disposable protocol smoke test. Do not merge this branch.
+
 from __future__ import annotations
 
 import json
