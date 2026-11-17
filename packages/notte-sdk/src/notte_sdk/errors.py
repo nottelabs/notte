@@ -132,7 +132,10 @@ def function_error_payload(exc: BaseException) -> FunctionErrorPayload:
             kind = "retryable"
             break
     code = error_cls.code
-    status_code = error_cls.status_code
+    # Read without the declared `int` type: users can assign anything at runtime. An `int`
+    # subclass such as `HTTPStatus.CONFLICT` keeps its value; `bool` or "409" falls back to 500.
+    raw_status = getattr(error_cls, "status_code", 500)
+    status_code = int(raw_status) if isinstance(raw_status, int) and not isinstance(raw_status, bool) else 500
     return FunctionErrorPayload(
         kind=kind,
         type=cls.__name__,
@@ -141,8 +144,7 @@ def function_error_payload(exc: BaseException) -> FunctionErrorPayload:
         message=message,
         heal=bool(error_cls.heal),
         retry=bool(error_cls.retry),
-        # Users set it at runtime: a non-integer status (e.g. "409") falls back to 500 rather than failing the report.
-        status_code=status_code if type(status_code) is int else 500,
+        status_code=status_code,
         source="class",
     )
 

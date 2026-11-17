@@ -1,6 +1,7 @@
 """Typed function errors: the classes users raise, the payload the runner reports, and rejected runs."""
 
 import json
+from http import HTTPStatus
 from typing import Any, ClassVar
 
 import httpx
@@ -209,6 +210,23 @@ def test_payload_never_fails_on_bad_user_classes() -> None:
     assert payload["status_code"] == 500
     assert payload["kind"] == "expected"
     json.dumps(payload)
+
+
+def test_int_subclass_status_codes_keep_their_value() -> None:
+    class Conflict(ExpectedFunctionError):
+        status_code = HTTPStatus.CONFLICT
+
+    payload = function_error_payload(raised(Conflict("x")))
+    assert payload["status_code"] == 409
+    assert type(payload["status_code"]) is int
+    assert json.dumps(payload["status_code"]) == "409"
+
+
+def test_bool_status_code_falls_back_to_500() -> None:
+    class Truthy(ExpectedFunctionError):
+        status_code = True
+
+    assert function_error_payload(raised(Truthy("x")))["status_code"] == 500
 
 
 # ---------------------------------------------------------------------------
