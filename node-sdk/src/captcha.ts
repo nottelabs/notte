@@ -77,6 +77,10 @@ export async function executeWithCaptcha(
       await pause();
       continue;
     }
+    if (status.state === 'failed' && status.failure_reason === 'rejected') {
+      // The site rejected the answer: solving stopped on this page, so waiting longer cannot help.
+      return failure(status.message || 'CAPTCHA rejected by the site', 'captcha_rejected');
+    }
     if (status.state === 'failed' || status.state === 'cancelled') {
       return failure(status.message || `CAPTCHA ${status.state}`, `captcha_${status.state}`);
     }

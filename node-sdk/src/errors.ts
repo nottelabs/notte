@@ -170,6 +170,21 @@ export class ActionExecutionError extends NotteError {
   }
 }
 
+/**
+ * The site rejected the CAPTCHA answer and showed the CAPTCHA again
+ * (`code: 'captcha_rejected'`). Automatic solving stops for that CAPTCHA on the
+ * page, and a new answer in the same browser session is usually rejected too:
+ * start a new session instead of retrying. Thrown by `session.execute()` when
+ * failures throw. It extends `ActionExecutionError`, which other CAPTCHA
+ * failures throw, so existing handlers still catch it, like
+ * `CaptchaRejectedError` in Python.
+ */
+export class CaptchaRejectedError extends ActionExecutionError {
+  constructor(message: string) {
+    super({ error_type: 'CaptchaRejectedError', dev_message: message, user_message: message, agent_message: message });
+  }
+}
+
 /** `evaluate_js` reported success but the API build predates the data payload. */
 export class EvaluateJsNoDataError extends NotteError {
   constructor() {

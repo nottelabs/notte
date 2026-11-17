@@ -36,7 +36,7 @@ import {
   sessionStatus,
   sessionStop,
 } from '@/lib/client/sdk.gen';
-import { ActionExecutionError, EvaluateJsNoDataError, NotteAPIError, NotteTimeoutError, sleep } from '@/errors';
+import { ActionExecutionError, CaptchaRejectedError, EvaluateJsNoDataError, NotteAPIError, NotteTimeoutError, sleep } from '@/errors';
 import type { ExecuteAction } from '@/actions';
 import { executeWithCaptcha, type CaptchaExecutionResponse } from '@/captcha';
 import { buildFetchScript, responseFromEvaluated, type PageFetchOptions, type PageFetchResponse } from '@/page-fetch';
@@ -873,6 +873,9 @@ export class Session {
     // Gate on "did the action fail", not "did something throw", to mirror the local session.
     if (raiseOnFailure && !result.success) {
       console.error(`🚨 Execution failed with message: '${result.message}'`);
+      if (result.code === 'captcha_rejected') {
+        throw new CaptchaRejectedError(String(result.message ?? '').trim() || 'CAPTCHA rejected by the site');
+      }
       if (result.exception_detail) {
         // The structured wire payload carries the concrete error type, messages and flags.
         throw new ActionExecutionError(result.exception_detail);
