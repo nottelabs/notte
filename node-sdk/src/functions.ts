@@ -103,7 +103,9 @@ export interface FunctionRunResult {
 	result: unknown;
 	/**
 	 * `rejected` when the function raised an `ExpectedFunctionError` (a deliberate
-	 * refusal), `failed` for any other exception. Neither is a success.
+	 * refusal), `failed` for any other exception. Neither is a success. An API
+	 * without `rejected` support reports deliberate refusals as `failed` too;
+	 * `error.kind` is then still `expected` when the API sends `error`.
 	 */
 	status: FunctionRunStatus;
 	/** What a failed or rejected run's exception means, when the API reports it. */
