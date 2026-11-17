@@ -127,6 +127,10 @@ class _FunctionsEndpoints:
 
     FUNCTION_RUN_TIMEOUT: ClassVar[int] = 60 * 5  # 5 minutes
 
+    # Opt in to the "rejected" run status (`ExpectedFunctionError`). Without it the
+    # API shows rejected runs as "failed", so older SDKs still raise on them.
+    RESOURCE_HEADERS: ClassVar[dict[str, str]] = {"x-notte-accept-run-statuses": "rejected"}
+
     @staticmethod
     def _create_function_run_endpoint(function_id: str) -> NotteEndpoint[CreateFunctionRunResponse]:
         """

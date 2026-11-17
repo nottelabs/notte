@@ -331,3 +331,9 @@ async def test_failed_run_still_raises_the_base_error(monkeypatch: pytest.Monkey
     run: Flow = flow
     exchange = await same_exchange(monkeypatch, base_routes("failed"), run)
     assert exchange.outcome[:2] == ("error", FailedToRunCloudFunctionError)
+
+
+def test_sdk_opts_in_to_the_rejected_run_status() -> None:
+    # Without this header the API shows rejected runs as "failed" (old-SDK compatibility).
+    client = NotteClient(api_key="test-key")
+    assert client.functions.headers()["x-notte-accept-run-statuses"] == "rejected"
