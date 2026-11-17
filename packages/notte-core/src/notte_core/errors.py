@@ -350,8 +350,8 @@ class CredentialFieldValidationError(CredentialReplacementError):
 # Structured extraction reads the page's text (as markdown), so values that only live in HTML
 # attributes never reach the model.
 SCRAPE_ATTRIBUTES_HINT = (
-    "Note: extraction reads the page's text as markdown, which keeps link URLs (and image src/alt with "
-    "scrape_images=True) but drops other HTML attributes, so values that only appear in attributes such as "
+    "Note: extraction reads the page's text as markdown, which keeps link URLs with scrape_links=True (and "
+    "image src/alt with scrape_images=True) but drops other HTML attributes, so values that only appear in attributes such as "
     "aria-label or data-* (e.g. a star rating) cannot be extracted. Read those with "
     "session.evaluate_js(), e.g. session.evaluate_js(\"JSON.stringify([...document.querySelectorAll('[aria-label]')]"
     ".map(e => e.getAttribute('aria-label')))\")."
