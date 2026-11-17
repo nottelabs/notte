@@ -452,7 +452,8 @@
             "icon": "chart-line",
             "pages": [
               "integrations/braintrust",
-              "integrations/laminar"
+              "integrations/laminar",
+              "integrations/traceroot"
             ]
           },
           {
