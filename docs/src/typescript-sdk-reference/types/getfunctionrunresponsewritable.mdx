@@ -17,8 +17,8 @@ export type GetFunctionRunResponseWritable = Omit<ApiGetFunctionRunResponseWrita
 
 ## Fields
 
-<ParamField body="error" type={"{ [key: string]: unknown; } | null | undefined"}>
-How the function's exception was classified, for failed and rejected runs
+<ParamField body="error" type={"FunctionRunError | null | undefined"}>
+What a failed or rejected run's exception means; null otherwise
 </ParamField>
 
 <ParamField body="session_id" type={"string | null | undefined"}>
@@ -29,7 +29,7 @@ The ID of the session
 
 </ParamField>
 
-<ParamField body="status" type={"\"failed\" | \"closed\" | \"active\" | \"rejected\""} required>
+<ParamField body="status" type={"\"failed\" | \"rejected\" | \"closed\" | \"active\""} required>
 
 </ParamField>
 

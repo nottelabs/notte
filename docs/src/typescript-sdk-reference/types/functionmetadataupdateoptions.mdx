@@ -53,6 +53,10 @@ Turn deletion protection on or off. While it is on, the function cannot be delet
 JSON Schema of run()'s return value, computed by the caller from its pydantic model
 </ParamField>
 
+<ParamField body="expected_errors" type={"string[] | null | undefined"}>
+Exception class names the function raises on purpose. A failed run whose exception has one of these names in its class hierarchy ends rejected and is never self-healed. Replaces the stored list; send [] to clear it. Omit or send null to leave it unchanged.
+</ParamField>
+
 ## Related types
 
 - [FunctionMetadataUpdateRequest](/typescript-sdk-reference/types/functionmetadataupdaterequest)

@@ -1,6 +1,7 @@
 # Known drift between notte_core.types and openapi/openapi.json; see scripts/openapi_contract.py.
 FunctionRunUpdateRequest: api-only field payloads
 FunctionRunUpdateRequest: api-only field result_preview
+FunctionRunUpdateRequest: api-only field error
 GetFunctionResponse: api-only field published
 GetFunctionResponse: api-only field required_secrets
 GetFunctionResponse: api-only field source
