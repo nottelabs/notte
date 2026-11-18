@@ -21,6 +21,11 @@ PAGE = """
 <select id="hidden-group" style="display: none"><option value="a">A</option><optgroup label="Closed" disabled><option value="b">B</option></optgroup></select>
 <select id="hidden-aria" style="display: none" aria-disabled="true"><option value="a">A</option><option value="b">B</option></select>
 <select id="hidden-disabled" style="display: none" disabled><option value="x">X</option><option value="y">Y</option></select>
+<select id="hidden-multiple" style="display: none" multiple><option value="a" selected>A</option><option value="b">B</option></select>
+<select id="hidden-aria-option" style="display: none"><option value="a">A</option><option value="b" aria-disabled="true">B</option></select>
+<select id="hidden-aria-group" style="display: none"><option value="a">A</option><optgroup label="Closed" aria-disabled="true"><option value="b">B</option></optgroup></select>
+<div id="aria-host" aria-disabled="true"></div>
+<div id="shadow-host"></div>
 <script>
     const box = document.getElementById("fruit");
     const list = document.getElementById("fruit-list");
@@ -32,6 +37,11 @@ PAGE = """
             list.hidden = true;
         });
     }
+    document.getElementById("aria-host").attachShadow({ mode: "open" }).innerHTML =
+        '<select id="hidden-shadow" style="display: none"><option value="a">A</option><option value="b">B</option></select>';
+    document.getElementById("shadow-host").attachShadow({ mode: "open" }).innerHTML =
+        '<div aria-disabled="true"><select id="hidden-shadow-wrapped" style="display: none"><option value="a">A</option><option value="b">B</option></select></div>' +
+        '<select id="hidden-shadow-group" style="display: none"><option value="a">A</option><optgroup label="Closed" aria-disabled="true"><option value="b">B</option></optgroup></select>';
     const hidden = document.getElementById("hidden");
     hidden.addEventListener("change", () => {
         document.getElementById("hidden-toggle").textContent = hidden.selectedOptions[0].textContent;
@@ -177,14 +187,40 @@ async def test_select_dropdown_option_does_not_set_a_hidden_select_disabled_befo
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("selector", ["#hidden-group", "#hidden-aria"])
+@pytest.mark.parametrize(
+    "selector",
+    [
+        "#hidden-group",
+        "#hidden-aria",
+        "#hidden-aria-option",
+        "#hidden-aria-group",
+        "#hidden-shadow",
+        "#hidden-shadow-wrapped",
+        "#hidden-shadow-group",
+    ],
+)
 async def test_select_dropdown_option_does_not_pick_a_disabled_hidden_option(
     session: NotteSession, selector: str
 ) -> None:
-    # an option in a disabled optgroup, a select disabled for assistive technology
+    # an option in a disabled optgroup, a select disabled for assistive technology, an option or optgroup disabled
+    # for assistive technology, and the same inside a shadow root: under a disabled host, a disabled wrapper or a
+    # disabled optgroup
     res = await session.aexecute(
         SelectDropdownOptionAction(selector=selector, value="b", timeout=1000), raise_on_failure=False
     )
 
     assert not res.success
     assert await session.window.page.locator(selector).input_value() == "a"
+
+
+@pytest.mark.asyncio
+async def test_select_dropdown_option_replaces_the_selection_of_a_hidden_multiple_select(session: NotteSession) -> None:
+    res = await session.aexecute(
+        SelectDropdownOptionAction(selector="#hidden-multiple", value="b", timeout=3000), raise_on_failure=True
+    )
+
+    assert res.success
+    selected: list[str] = await session.window.page.locator("#hidden-multiple").evaluate(
+        "select => [...select.selectedOptions].map(option => option.value)"
+    )
+    assert selected == ["b"]
