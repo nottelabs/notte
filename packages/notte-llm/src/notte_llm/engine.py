@@ -77,6 +77,17 @@ def is_schema_rejection(message: str) -> bool:
 _CONTENT_REFUSAL = re.compile(r"content[_ -]?(policy|filter)|responsible_?ai_?policy|input was flagged", re.IGNORECASE)
 
 
+def _is_strict_schema(response_format: Any) -> bool:
+    """Whether a request's ``response_format`` is a ``json_schema`` with ``strict: true``."""
+    if not isinstance(response_format, dict):
+        return False
+    fmt = cast(dict[str, Any], response_format)
+    if fmt.get("type") != "json_schema":
+        return False
+    schema: Any = fmt.get("json_schema")
+    return isinstance(schema, dict) and cast(dict[str, Any], schema).get("strict") is True
+
+
 def is_content_refusal(message: str) -> bool:
     """Recognize a provider's content-policy refusal in an error body."""
     return _CONTENT_REFUSAL.search(message) is not None
@@ -567,8 +578,7 @@ class LLMEngine:
                             status,
                             message,
                             model,
-                            strict_schema=isinstance(body.get("response_format"), dict)
-                            and body["response_format"].get("type") == "json_schema",
+                            strict_schema=_is_strict_schema(body.get("response_format")),
                         )
                     if not isinstance(payload, dict) or not isinstance(
                         cast(dict[str, Any], payload).get("choices"), list

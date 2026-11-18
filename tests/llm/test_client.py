@@ -96,6 +96,8 @@ async def test_error_mapping(status, message, error, monkeypatch):
             {"type": "json_schema", "json_schema": {"name": "Page", "schema": {}, "strict": True}},
             UnsupportedResponseSchemaError,
         ),
+        ({"type": "json_schema", "json_schema": {"name": "Page", "schema": {}, "strict": False}}, LLMProviderError),
+        ({"type": "json_schema", "json_schema": {"name": "Page", "schema": {}}}, LLMProviderError),
         ({"type": "json_object"}, LLMProviderError),
         (None, LLMProviderError),
     ],
