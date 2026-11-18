@@ -326,7 +326,8 @@ _API_PREFIX = re.compile(r"^\w+\.\w+: (?:Error: )?")
 _STRICT_MODE_VIOLATION = re.compile(r"strict mode violation: (?P<selector>.+) resolved to (?P<count>\d+) elements:?")
 _INPUT_TYPE_NOT_FILLABLE = re.compile(r'Input of type "(?P<type>[^"]*)" cannot be filled')
 _SELECTOR_PARSE = re.compile(
-    r"(?P<reason>.+ while parsing (?:css )?selector .+)|SyntaxError: Failed to execute '\w+' on '\w+': "
+    r'(?P<reason>.+ while parsing (?:css )?selector .+|"[\w-]+" engine expects .+)'
+    + r"|SyntaxError: Failed to execute '\w+' on '\w+': "
     + r"(?P<dom>.+ is not a valid (?:XPath expression|selector)\.)"
 )
 _FIXED_REASONS: dict[str, Callable[[str], InvalidActionTargetError]] = {

@@ -96,6 +96,11 @@ STRICT_MODE = (
             "try again.",
         ),
         (
+            'Locator.click: Error: "has-text" engine expects a single string',
+            InvalidSelectorError,
+            'The selector is not valid: "has-text" engine expects a single string. Fix its syntax and try again.',
+        ),
+        (
             # the selector quotes another error's text: only Playwright's own diagnostic decides the error
             'Locator.click: Unexpected token "" while parsing css selector "[aria-label="Malformed value"". Did you '
             "mean to CSS.escape it?",
@@ -196,6 +201,12 @@ def user_messages() -> Iterator[None]:
             ClickAction(selector="xpath=//button["),
             InvalidSelectorError,
             "The selector is not valid: The string '//button[' is not a valid XPath expression.",
+        ),
+        (
+            # the quoted form, button:has-text("Accept"), is the valid one
+            ClickAction(selector="button:has-text(Accept)"),
+            InvalidSelectorError,
+            'The selector is not valid: "has-text" engine expects a single string.',
         ),
     ],
 )
