@@ -29,7 +29,7 @@ All body fields are optional. Any other field is rejected.
 |-------|-------------|
 | `country` | Two-letter country code, such as `us`. Without `country` or `city`, traffic exits in the US. |
 | `city` | City id, such as `new.york`. Takes precedence over `country`. An unsupported city returns `400` with examples of supported ones. |
-| `sticky_session` | 1 to 64 letters, digits or hyphens. Pins every connection made with the credential to one residential exit. See [Share an exit IP with a session](#share-an-exit-ip-with-a-session). |
+| `sticky_session` | 1 to 64 letters, digits or hyphens. Pins every connection made with the credential to one residential exit, for up to 30 minutes. See [Share an exit IP with a session](#share-an-exit-ip-with-a-session). |
 
 <GatewayCredentialsResponse />
 
@@ -56,6 +56,8 @@ In Node.js, the `proxyEnv` agent option needs Node.js 24.5 or later and applies 
 
 Mint the credential with a `sticky_session`, then start a browser session with the same `sticky_session`, and the same `country` or `city`, on its `notte` proxy. Connections made with the credential and the session's own traffic then exit from the same IP. The [secret proxy guide](/features/sessions/secret-proxies/overview#share-the-exit-ip) shows the full setup.
 
+A sticky exit is a residential IP, so it does not last forever. It holds for up to 30 minutes and can change sooner, for example when the residential device behind it goes offline. Connections that keep the same `sticky_session` then continue together on a new IP. Plan for the IP to change during a longer task.
+
 ## Lifetime and renewal
 
 A credential is valid for your plan's maximum session duration, up to 24 hours. You cannot choose a different lifetime. Reuse one credential for every request until it expires, then mint a new one before `expires_at`. An expired credential is rejected with `407`.
@@ -77,7 +79,7 @@ The username picks the exit. Use `notte` on its own, or join options with `_`, s
 | `notte` | No targeting: traffic exits in the US. Cannot be combined with other options. |
 | `country-<code>` | Two-letter country code, such as `country-gb`. |
 | `city-<city id>` | City id, such as `city-new.york`. Takes precedence over `country-`. |
-| `sticky-<id>` | 1 to 64 letters, digits or hyphens. Pins every connection that uses the same username to one exit IP. Works on its own or with `country-` or `city-`. |
+| `sticky-<id>` | 1 to 64 letters, digits or hyphens. Pins every connection that uses the same username to one exit IP, for up to 30 minutes. Works on its own or with `country-` or `city-`. |
 
 An unknown option, country or city returns `400` with `X-Notte-Proxy-Error: invalid_username`. As with a minted credential, a browser session with the same `sticky_session`, and the same `country` or `city`, on its `notte` proxy exits from the same IP.
 
