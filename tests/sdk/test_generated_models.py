@@ -49,6 +49,16 @@ def test_session_playwright_url_accepts_existing_responses_and_round_trips(
             assert "playwright_url" not in json.loads(wire)
 
 
+@pytest.mark.parametrize("mode", ["validation", "serialization"])
+def test_session_proxy_fallback_schema(mode: Literal["validation", "serialization"]) -> None:
+    schema = public.SessionResponse.model_json_schema(mode=mode)
+    assert schema["type"] == "object"
+    assert schema["properties"]["started_without_proxy"]["type"] == "boolean"
+    assert schema["properties"]["warnings"]["type"] == "array"
+    assert "started_without_proxy" not in schema["required"]
+    assert "warnings" not in schema["required"]
+
+
 @pytest.mark.parametrize("model", [public.SessionResponse, models.SessionResponse])
 def test_session_started_without_proxy_defaults_to_false_and_reads_its_warning(
     model: type[core.SessionResponse] | type[models.SessionResponse],

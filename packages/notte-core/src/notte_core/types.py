@@ -2689,9 +2689,12 @@ class RunFunctionRequestDict(TypedDict, total=False):
 
 class RunFunctionRequest(SdkRequest):
     function_id: Annotated[
-        str,
-        Field(description="The ID of the function to run", validation_alias=AliasChoices("workflow_id", "function_id")),
-    ]
+        str | None,
+        Field(
+            description="The ID of the function to run. Optional: the path already names it.",
+            validation_alias=AliasChoices("workflow_id", "function_id"),
+        ),
+    ] = None
     variables: Annotated[dict[str, Any], Field(description="The variables to run the function with")]
     runtime: Annotated[
         FunctionRuntime | None, Field(description="Override the saved function runtime; omit to inherit its default")

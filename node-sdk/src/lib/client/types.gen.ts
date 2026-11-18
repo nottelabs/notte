@@ -7149,9 +7149,9 @@ export type RunFunctionRequest = {
     /**
      * Workflow Id
      *
-     * The ID of the function to run
+     * The ID of the function to run. Optional: the path already names it.
      */
-    workflow_id: string;
+    workflow_id?: string | null;
     /**
      * Variables
      *
@@ -13872,11 +13872,11 @@ export type FunctionSchedulesUpdateResponse = FunctionSchedulesUpdateResponses[k
 
 export type FunctionRunStartData = {
     body: RunFunctionRequest;
-    headers: {
+    headers?: {
         /**
          * X-Notte-Api-Key
          */
-        'x-notte-api-key': string;
+        'x-notte-api-key'?: string | null;
         /**
          * X-Db-Preview
          */

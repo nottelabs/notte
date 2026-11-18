@@ -4807,9 +4807,16 @@
           {
             "name": "x-notte-api-key",
             "in": "header",
-            "required": true,
+            "required": false,
             "schema": {
-              "type": "string",
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Notte-Api-Key"
             }
           },
@@ -4905,7 +4912,7 @@
           },
           {
             "lang": "Curl",
-            "source": "curl -X POST -L \"https://api.notte.cc/functions/$function_id/runs/start\" \\\n  -H \"Authorization: Bearer $NOTTE_API_KEY\" \\\n  -H \"x-notte-api-key: $NOTTE_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  --data '{\n    \"function_id\": \"'\"$function_id\"'\",\n    \"stream\": false,\n    \"variables\": {\n      \"url\": \"https://www.google.com\"\n    }\n  }'",
+            "source": "curl -X POST \"https://api.notte.cc/functions/$function_id/runs/start\" \\\n  -H \"Authorization: Bearer $NOTTE_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  --data '{\n    \"variables\": {\n      \"url\": \"https://www.google.com\"\n    }\n  }'",
             "label": "curl"
           }
         ]
@@ -32832,9 +32839,16 @@
       "RunFunctionRequest": {
         "properties": {
           "workflow_id": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Workflow Id",
-            "description": "The ID of the function to run"
+            "description": "The ID of the function to run. Optional: the path already names it."
           },
           "variables": {
             "additionalProperties": true,
@@ -32892,9 +32906,6 @@
         },
         "additionalProperties": false,
         "type": "object",
-        "required": [
-          "workflow_id"
-        ],
         "title": "RunFunctionRequest"
       },
       "RunPayloadReference": {

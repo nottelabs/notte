@@ -164,7 +164,7 @@ def function_run_start(
 ) -> NotteEndpoint[runtime.RawResponse]:
     """Function Run Start (`POST /functions/{function_id}/runs/start`).
 
-    Header `x-notte-api-key` (required): pass it to `BaseClient.request(headers=...)`.
+    Header `x-notte-api-key`: pass it to `BaseClient.request(headers=...)`.
     """
     return NotteEndpoint(
         method="POST",
