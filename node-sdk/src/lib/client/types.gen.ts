@@ -4403,6 +4403,12 @@ export type GlobalScrapeRequest = {
      */
     only_main_content?: boolean;
     /**
+     * Os
+     *
+     * The operating system the session's browser presents: windows or macos. When unset, each session gets one at random among those the environment offers.
+     */
+    os?: 'windows' | 'macos' | null;
+    /**
      * Response Format
      *
      * The response format to use for the scrape. You can use a Pydantic model or a JSON Schema dict (cf. https://docs.pydantic.dev/latest/concepts/json_schema/#generating-json-schema.)
