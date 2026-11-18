@@ -86,6 +86,7 @@ from notte_browser.window import BrowserWindow
 
 _BLUR_ACTIVE_ELEMENT = script("blur_active_element.js")
 _IS_DISABLED = script("is_disabled.js")
+_SELECT_HIDDEN_OPTION = script("select_hidden_option.js")
 _PASTE_TEXT = script("paste_text.js")
 # Page-side implementation: js/file_input_clicks.js
 _FILE_INPUT_CLICKS = script("file_input_clicks.js")
@@ -344,6 +345,21 @@ async def _select_custom_dropdown_option(
                 "select_dropdown", window.page.url, reason=f"No dropdown option matches {value!r}"
             )
         await window.page.wait_for_timeout(100)
+
+
+async def _select_hidden_native_option(
+    window: BrowserWindow, locator: Locator, value: str, budget: _ActionBudget
+) -> None:
+    """Select `value` in a `<select>` the page hides behind its own widget (Bootstrap, select2, chosen): Playwright
+    waits for a select to be visible, and such a select never is. The option is set in the page
+    (`js/select_hidden_option.js`) once the select is enabled and has it (a dependent select gets both late); its
+    input and change events let the widget follow."""
+    while not await locator.evaluate(_SELECT_HIDDEN_OPTION, value, timeout=budget.remaining_ms()):
+        if budget.remaining_ms() <= 1:
+            raise ActionExecutionError(
+                "select_dropdown", window.page.url, reason=f"The hidden select is disabled or has no option {value!r}"
+            )
+        await window.page.wait_for_timeout(min(100, budget.remaining_ms()))
 
 
 async def _append_text(window: BrowserWindow, locator: Locator, text: str, timeout: float) -> None:
@@ -1094,7 +1110,10 @@ async def _interact(
             tag_name: str = await locator.evaluate("el => el.tagName.toLowerCase()", timeout=budget.remaining_ms())
             if tag_name == "select":
                 # Handle standard HTML select
-                _ = await locator.select_option(get_str_value(value), timeout=budget.remaining_ms())
+                if await locator.is_visible():
+                    _ = await locator.select_option(get_str_value(value), timeout=budget.remaining_ms())
+                else:
+                    await _select_hidden_native_option(window, locator, get_str_value(value), budget)
             else:
                 await _select_custom_dropdown_option(window, locator, get_str_value(value), budget)
         case UploadFileAction():
