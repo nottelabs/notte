@@ -7,6 +7,12 @@ from notte_browser.window import BrowserWindowOptions
 from notte_sdk.types import LocalSessionStartRequest
 
 SANDBOX_FAILED = "Browser.launch: Chromium sandboxing failed!\n================================"
+SUID_HELPER_MISCONFIGURED = (
+    "Browser.launch: Target page, context or browser has been closed\n"
+    "[pid=1][err] [1:1:FATAL:sandbox/linux/suid/client/setuid_sandbox_host.cc:172] "
+    "The SUID sandbox helper binary was found, but is not configured correctly. "
+    "Rather than run without sandboxing I'm aborting now."
+)
 
 
 @pytest.fixture
@@ -60,9 +66,12 @@ async def test_no_sandbox_chrome_arg_turns_the_sandbox_off(driver: MagicMock) ->
 
 @pytest.mark.asyncio
 @pytest.mark.usefixtures("linux_user")
-async def test_sandbox_failure_relaunches_without_the_sandbox(driver: MagicMock) -> None:
+@pytest.mark.parametrize(
+    "message", [SANDBOX_FAILED, SUID_HELPER_MISCONFIGURED], ids=["no-usable-sandbox", "suid-helper"]
+)
+async def test_sandbox_failure_relaunches_without_the_sandbox(driver: MagicMock, message: str) -> None:
     browser = MagicMock(spec=Browser)
-    driver.chromium.launch = AsyncMock(side_effect=[Error(SANDBOX_FAILED), browser])
+    driver.chromium.launch = AsyncMock(side_effect=[Error(message), browser])
 
     assert await lifecycle._launch_browser(driver, _options()) is browser  # pyright: ignore[reportPrivateUsage]
 

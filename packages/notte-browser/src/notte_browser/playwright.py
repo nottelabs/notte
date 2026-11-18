@@ -32,8 +32,13 @@ async def _connect_browser(driver: Playwright, options: BrowserWindowOptions) ->
         raise CdpConnectionError(options.cdp_url) from None
 
 
-# Playwright rewrites Chromium's startup log to this when its sandbox cannot start.
-_SANDBOX_FAILED_MESSAGE = "Chromium sandboxing failed"
+# Startup errors that mean Chromium could not start its sandbox: Playwright's rewrite of
+# Chromium's "No usable sandbox!" log, and Chromium's own abort when it finds a sandbox
+# helper without the setuid bit, which Playwright passes through unchanged.
+_SANDBOX_FAILED_MESSAGES = (
+    "Chromium sandboxing failed",
+    "The SUID sandbox helper binary was found, but is not configured correctly",
+)
 
 
 def _chromium_sandbox(chrome_args: list[str]) -> bool:
@@ -87,7 +92,7 @@ async def _launch_browser(driver: Playwright, options: BrowserWindowOptions) -> 
             try:
                 browser = await launch_chromium(sandbox)
             except Error as error:
-                if not sandbox or _SANDBOX_FAILED_MESSAGE not in str(error):
+                if not sandbox or not any(message in str(error) for message in _SANDBOX_FAILED_MESSAGES):
                     raise
                 # Some Linux systems block the user namespaces the sandbox needs
                 # (Ubuntu 23.10 and later, through AppArmor, and many containers).
