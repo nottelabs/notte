@@ -2681,7 +2681,7 @@ class RunFunctionRequestDict(TypedDict, total=False):
         local: Whether to run the function locally.
     """
 
-    function_id: str
+    function_id: str | None
     variables: dict[str, Any]
     stream: bool
     runtime: FunctionRuntime | None
