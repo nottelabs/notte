@@ -88,6 +88,21 @@ STRICT_MODE = (
             'The selector is not valid: Unexpected token "/" while parsing css selector "a[href=/x]". Did you mean '
             "to CSS.escape it? Fix its syntax and try again.",
         ),
+        (
+            "Locator.click: SyntaxError: Failed to execute 'evaluate' on 'Document': The string '//button[' is not a "
+            "valid XPath expression.",
+            InvalidSelectorError,
+            "The selector is not valid: The string '//button[' is not a valid XPath expression. Fix its syntax and "
+            "try again.",
+        ),
+        (
+            # the selector quotes another error's text: only Playwright's own diagnostic decides the error
+            'Locator.click: Unexpected token "" while parsing css selector "[aria-label="Malformed value"". Did you '
+            "mean to CSS.escape it?",
+            InvalidSelectorError,
+            'The selector is not valid: Unexpected token "" while parsing css selector "[aria-label="Malformed '
+            'value"". Did you mean to CSS.escape it? Fix its syntax and try again.',
+        ),
     ],
 )
 def test_caller_errors_are_classified(detail: str, error_type: type[NotteBaseError], user_message: str) -> None:
@@ -107,6 +122,8 @@ def test_caller_errors_are_classified(detail: str, error_type: type[NotteBaseErr
         "Page.wait_for_timeout: Target page, context or browser has been closed",
         "Locator.click: Error: Element is outside of the viewport",
         "net::ERR_CONNECTION_RESET",
+        # the call log quotes the filled value, not Playwright's diagnostic
+        'Locator.click: Timeout 1000ms exceeded.\nCall log:\n  - waiting for get_by_text("Malformed value")\n',
     ],
 )
 def test_other_errors_are_not_classified(detail: str) -> None:
@@ -174,6 +191,11 @@ def user_messages() -> Iterator[None]:
             FillAction(selector="#label", value="1234"),
             ElementNotFillableError,
             "The element the selector matched cannot be filled: it is not an <input>",
+        ),
+        (
+            ClickAction(selector="xpath=//button["),
+            InvalidSelectorError,
+            "The selector is not valid: The string '//button[' is not a valid XPath expression.",
         ),
     ],
 )

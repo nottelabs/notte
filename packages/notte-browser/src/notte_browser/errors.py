@@ -320,16 +320,32 @@ class InvalidSelectorError(InvalidActionTargetError):
         )
 
 
-_STRICT_MODE_VIOLATION = re.compile(r"strict mode violation: (?P<selector>.+?) resolved to (?P<count>\d+) elements")
+# Playwright's diagnostic is the first line of its error, after the API name ("Locator.click: Error: ..."). The lines
+# after it (call log, matched elements) quote the page and the selector, so only the first line is classified.
+_API_PREFIX = re.compile(r"^\w+\.\w+: (?:Error: )?")
+_STRICT_MODE_VIOLATION = re.compile(r"strict mode violation: (?P<selector>.+) resolved to (?P<count>\d+) elements:?")
 _INPUT_TYPE_NOT_FILLABLE = re.compile(r'Input of type "(?P<type>[^"]*)" cannot be filled')
-_NOT_FILLABLE = "Element is not an <input>, <textarea> or [contenteditable] element"
-_NUMBER_INPUT = "Cannot type text into input[type=number]"
-_MALFORMED_VALUE = "Malformed value"
-_NOT_A_SELECT = "Element is not a <select> element"
-_NOT_A_CHECKBOX = "Not a checkbox or radio button"
 _SELECTOR_PARSE = re.compile(
-    r"^(?:\w+\.\w+: )?(?:Error: )?(?P<reason>.*while parsing (?:css )?selector.*)$", re.MULTILINE
+    r"(?P<reason>.+ while parsing (?:css )?selector .+)|SyntaxError: Failed to execute '\w+' on '\w+': "
+    + r"(?P<dom>.+ is not a valid (?:XPath expression|selector)\.)"
 )
+_FIXED_REASONS: dict[str, Callable[[str], InvalidActionTargetError]] = {
+    "Element is not an <input>, <textarea> or [contenteditable] element": lambda detail: ElementNotFillableError(
+        reason="it is not an <input>, <textarea> or [contenteditable] element", detail=detail
+    ),
+    "Cannot type text into input[type=number]": lambda detail: InvalidFillValueError(
+        reason="a number input does not accept text", detail=detail
+    ),
+    "Malformed value": lambda detail: InvalidFillValueError(
+        reason="the value does not match the input's format", detail=detail
+    ),
+    "Element is not a <select> element": lambda detail: ElementTypeMismatchError(
+        reason="it is not a <select> element", detail=detail
+    ),
+    "Not a checkbox or radio button": lambda detail: ElementTypeMismatchError(
+        reason="it is not a checkbox or radio button", detail=detail
+    ),
+}
 
 
 def classify_caller_playwright_error(error: Exception, selector: str | None = None) -> InvalidActionTargetError | None:
@@ -338,28 +354,19 @@ def classify_caller_playwright_error(error: Exception, selector: str | None = No
     `selector` names the selector when the caller knows it; otherwise it is read from the error.
     """
     detail = str(error)
-    if match := _STRICT_MODE_VIOLATION.search(detail):
+    diagnostic = _API_PREFIX.sub("", detail.split("\n", 1)[0], count=1).strip()
+    if match := _STRICT_MODE_VIOLATION.fullmatch(diagnostic):
         return AmbiguousSelectorError(
             selector=selector or match.group("selector"), count=int(match.group("count")), detail=detail
         )
-    if "strict mode violation" in detail:
+    if diagnostic.startswith("strict mode violation"):
         return AmbiguousSelectorError(selector=selector or "used", count=None, detail=detail)
-    if match := _INPUT_TYPE_NOT_FILLABLE.search(detail):
+    if match := _INPUT_TYPE_NOT_FILLABLE.fullmatch(diagnostic):
         return ElementNotFillableError(reason=f'it is an input of type "{match.group("type")}"', detail=detail)
-    if _NOT_FILLABLE in detail:
-        return ElementNotFillableError(
-            reason="it is not an <input>, <textarea> or [contenteditable] element", detail=detail
-        )
-    if _NUMBER_INPUT in detail:
-        return InvalidFillValueError(reason="a number input does not accept text", detail=detail)
-    if _MALFORMED_VALUE in detail:
-        return InvalidFillValueError(reason="the value does not match the input's format", detail=detail)
-    if _NOT_A_SELECT in detail:
-        return ElementTypeMismatchError(reason="it is not a <select> element", detail=detail)
-    if _NOT_A_CHECKBOX in detail:
-        return ElementTypeMismatchError(reason="it is not a checkbox or radio button", detail=detail)
-    if match := _SELECTOR_PARSE.search(detail):
-        return InvalidSelectorError(reason=match.group("reason").strip(), detail=detail)
+    if (make := _FIXED_REASONS.get(diagnostic)) is not None:
+        return make(detail)
+    if match := _SELECTOR_PARSE.fullmatch(diagnostic):
+        return InvalidSelectorError(reason=match.group("reason") or match.group("dom"), detail=detail)
     return None
 
 

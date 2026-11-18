@@ -35,6 +35,7 @@ from typing_extensions import override
 from notte_browser.dom.parsing import parse_dom
 from notte_browser.driver import Browser, BrowserContext, CDPSession, Locator, Page, Playwright, Request, Response
 from notte_browser.errors import (
+    AmbiguousSelectorError,
     BrowserExpiredError,
     EmptyPageContentError,
     FirstPageOfTabError,
@@ -602,9 +603,11 @@ class BrowserWindow:
             if "Unable to retrieve content because the page is navigating and changing the content" in str(e):
                 # Should retry after the page is loaded
                 await self.short_wait()
-            elif "strict mode violation" in str(e):
-                caller_error = classify_caller_playwright_error(e, selector=f"'{selector}'" if selector else None)
-                raise (caller_error or UnexpectedBrowserError(url=self.page.url)) from e
+            elif isinstance(
+                caller_error := classify_caller_playwright_error(e, selector=f"'{selector}'" if selector else None),
+                AmbiguousSelectorError,
+            ):
+                raise caller_error from e
             elif "Locator." in str(e) and ("Timeout" in str(e) or "waiting for locator" in str(e)):
                 # Timeout error when waiting for a locator (element not found/visible)
                 selector_str = selector if selector else "unknown"
