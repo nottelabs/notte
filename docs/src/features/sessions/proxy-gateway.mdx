@@ -56,7 +56,7 @@ In Node.js, the `proxyEnv` agent option needs Node.js 24.5 or later and applies 
 
 Mint the credential with a `sticky_session`, then start a browser session with the same `sticky_session`, and the same `country` or `city`, on its `notte` proxy. Connections made with the credential and the session's own traffic then exit from the same IP. The [secret proxy guide](/features/sessions/secret-proxies/overview#share-the-exit-ip) shows the full setup.
 
-A sticky exit is a residential IP, so it does not last forever. It holds while the device behind it stays online and can change without notice. Connections that keep the same `sticky_session` then continue together on a new IP. Plan for the IP to change during a longer task.
+A sticky exit is a residential IP, so it does not last forever. It holds while the device behind it stays online and can change without notice. New connections with the same `sticky_session` then share a new IP, while a connection still open on the old one can fail and has to be retried. Plan for the IP to change during a longer task.
 
 ## Lifetime and renewal
 

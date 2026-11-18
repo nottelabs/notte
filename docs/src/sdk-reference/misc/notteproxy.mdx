@@ -20,7 +20,7 @@ description: "Opt-in raw construction for remote requests; normal construction s
 </ParamField>
 
 <ParamField path="sticky_session" type="str | None">
-  Keep the session's exit on one residential IP, shared with a proxy gateway credential minted with the same `sticky_session`. The IP holds while its residential device stays online and can change without notice; the same `sticky_session` then continues on a new IP. 1-64 letters, digits or hyphens.
+  Keep the session's exit on one residential IP, shared with a proxy gateway credential minted with the same `sticky_session`. The IP holds while its residential device stays online and can change without notice; new connections with the same `sticky_session` then share a new IP. 1-64 letters, digits or hyphens.
 </ParamField>
 
 
