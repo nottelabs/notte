@@ -250,7 +250,6 @@ class SessionStartRequestDict(TypedDict):
     block_ads: NotRequired[bool]
     dialog_policy: NotRequired[Literal["auto", "client"]]
     advanced_stealth: NotRequired[bool]
-    start_url: NotRequired[str | None]
 
 
 class SessionStopRequestDict(TypedDict):

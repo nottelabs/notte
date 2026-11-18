@@ -546,12 +546,6 @@ export type ApiSessionStartRequest = {
      */
     screenshot_type?: 'raw' | 'full' | 'last_action';
     /**
-     * Start Url
-     *
-     * An http(s) URL the session opens in its first tab before the start returns. A profile's saved session config can set it too.
-     */
-    start_url?: string | null;
-    /**
      * Demonstrate
      *
      * Whether to enable the Notte recorder extension for this session. The extension is installed but remains inactive when this is false.

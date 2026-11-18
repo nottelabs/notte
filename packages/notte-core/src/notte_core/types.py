@@ -1019,9 +1019,6 @@ class SessionStartRequestDict(_SessionStartRequestDict, total=False):
     """Who answers JavaScript dialogs. "auto" (default): Notte dismisses alert, confirm and prompt and
     accepts beforeunload. "client": your CDP client accepts or dismisses them; Notte dismisses one nobody
     answers within 10 seconds."""
-    start_url: str | None
-    """An http(s) URL the session opens in its first tab before the start returns. A profile's saved
-    session config can set it too."""
 
 
 class LocalSessionStartRequestDict(_SessionStartRequestDict, total=False):
@@ -1411,16 +1408,6 @@ class SessionStartRequest(_SessionStartRequest[BrowserType | Literal["chrome-nit
         ),
     ] = False
 
-    start_url: Annotated[
-        str | None,
-        Field(
-            description=(
-                "An http(s) URL the session opens in its first tab before the start returns. "
-                "A profile's saved session config can set it too."
-            )
-        ),
-    ] = None
-
     @model_serializer(mode="wrap")
     def omit_disabled_advanced_stealth(
         self, handler: SerializerFunctionWrapHandler, info: SerializationInfo
@@ -1435,9 +1422,6 @@ class SessionStartRequest(_SessionStartRequest[BrowserType | Literal["chrome-nit
             return data
         if not self.advanced_stealth:
             data.pop("advanced_stealth", None)
-        # Older APIs reject the field, so a start without one leaves it out.
-        if self.start_url is None:
-            data.pop("start_url", None)
         if not self.auth_ids:
             data.pop("auth_retry", None)
         # Let the API apply its default so ordinary starts also work with older APIs.

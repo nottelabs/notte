@@ -20,7 +20,6 @@
   "#/components/schemas/ApiExecutionResponse": "ApiExecutionResponse",
   "#/components/schemas/ApiSessionStartRequest": "ApiSessionStartRequest",
   "#/components/schemas/ApiSessionStartRequest/proxies#-datamodel-code-generator-#-anyOf-#-special-#/0#-datamodel-code-generator-#-array-#-special-#/0": "Proxies",
-  "#/components/schemas/ApiSessionStartRequest/start_url#-datamodel-code-generator-#-anyOf-#-special-#/0#-datamodel-code-generator-#-array-#-special-#": "StartUrl",
   "#/components/schemas/ApiSessionStartRequest/viewport_height#-datamodel-code-generator-#-anyOf-#-special-#/0#-datamodel-code-generator-#-array-#-special-#": "ViewportHeight",
   "#/components/schemas/ApiSessionStartRequest/viewport_width#-datamodel-code-generator-#-anyOf-#-special-#/0#-datamodel-code-generator-#-array-#-special-#": "ViewportWidth",
   "#/components/schemas/AuditEvent": "AuditEvent",
