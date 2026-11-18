@@ -154,7 +154,15 @@ function readComparableContent(filePath) {
     return Buffer.from(`symlink:${fs.readlinkSync(filePath)}`);
   }
 
-  return Buffer.from(fs.readFileSync(filePath, 'utf8').replace(/\r\n/g, '\n'));
+  const raw = fs.readFileSync(filePath);
+  const out = [];
+  for (let i = 0; i < raw.length; i += 1) {
+    if (raw[i] === 0x0d && raw[i + 1] === 0x0a) {
+      continue;
+    }
+    out.push(raw[i]);
+  }
+  return Buffer.from(out);
 }
 
 function main() {
