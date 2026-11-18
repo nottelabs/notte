@@ -1,6 +1,8 @@
 """Launch owns a browser and driver; connect owns only its driver connection."""
 
 import asyncio
+import os
+import sys
 
 from notte_core.config import config
 from notte_core.logging import logger
@@ -8,7 +10,7 @@ from notte_core.profiling import profiler
 from notte_core.types import LocalSessionStartRequest
 
 from notte_browser.cleanup import cleanup_resources
-from notte_browser.driver import Browser, BrowserContext, Page, Playwright, async_playwright
+from notte_browser.driver import Browser, BrowserContext, Error, Page, Playwright, async_playwright
 from notte_browser.errors import BrowserNotAvailableError, CdpConnectionError
 from notte_browser.window import BrowserWindow, BrowserWindowOptions
 
@@ -28,6 +30,18 @@ async def _connect_browser(driver: Playwright, options: BrowserWindowOptions) ->
                     return await driver.firefox.connect(options.cdp_url)
     except Exception:
         raise CdpConnectionError(options.cdp_url) from None
+
+
+# Playwright rewrites Chromium's startup log to this when its sandbox cannot start.
+_SANDBOX_FAILED_MESSAGE = "Chromium sandboxing failed"
+
+
+def _chromium_sandbox(chrome_args: list[str]) -> bool:
+    """Whether to launch Chromium with its sandbox. Playwright turns it off unless asked."""
+    if "--no-sandbox" in chrome_args:
+        return False
+    # Chromium refuses to start as root on Linux with its sandbox on.
+    return not (sys.platform == "linux" and os.geteuid() == 0)
 
 
 @profiler.profiled("PlaywrightManager.create_playwright_browser")
@@ -55,15 +69,35 @@ async def _launch_browser(driver: Playwright, options: BrowserWindowOptions) -> 
                     "🪟 [Browser Settings] Launching browser in headless without providing a user-agent"
                     + ", for better odds at evading bot detection, set a user-agent or run in headful mode"
                 )
-            browser = await driver.chromium.launch(
-                channel="chrome"
-                if options.browser_type == "chrome"
-                else "chromium",  # opt in to new headless mode by setting chromium
-                headless=options.headless,
-                proxy=options.proxy,
-                timeout=BROWSER_CREATION_TIMEOUT_SECONDS * 1000,
-                args=options.get_chrome_args(),
-            )
+            chrome_args = options.get_chrome_args()
+            sandbox = _chromium_sandbox(chrome_args)
+
+            async def launch_chromium(chromium_sandbox: bool) -> Browser:
+                return await driver.chromium.launch(
+                    channel="chrome"
+                    if options.browser_type == "chrome"
+                    else "chromium",  # opt in to new headless mode by setting chromium
+                    headless=options.headless,
+                    proxy=options.proxy,
+                    timeout=BROWSER_CREATION_TIMEOUT_SECONDS * 1000,
+                    args=chrome_args,
+                    chromium_sandbox=chromium_sandbox,
+                )
+
+            try:
+                browser = await launch_chromium(sandbox)
+            except Error as error:
+                if not sandbox or _SANDBOX_FAILED_MESSAGE not in str(error):
+                    raise
+                # Some Linux systems block the user namespaces the sandbox needs
+                # (Ubuntu 23.10 and later, through AppArmor, and many containers).
+                logger.warning(
+                    "🪟 [Browser Settings] Chromium could not start its sandbox on this machine, so it runs without it."
+                    + " A page that exploits a Chromium bug can then run code as your user."
+                    + " See https://chromium.googlesource.com/chromium/src/+/main/docs/security/apparmor-userns-restrictions.md"
+                    + " to enable it, or pass --no-sandbox in chrome_args to silence this warning."
+                )
+                browser = await launch_chromium(False)
         case _:
             # TODO: add firefox support: this is not currently supported by patchright
             # browser = await driver.firefox.launch(
