@@ -284,3 +284,12 @@ it('leaves sharing absent from unrelated metadata updates', async () => {
   expect((await client().functions.metadataUpdate('function', { name: 'renamed' })).shared).toBe(true);
   expect(await requests[0].json()).toEqual({ name: 'renamed' });
 });
+
+it.each([undefined, null, '', ' '])('rejects an invalid function run ID before HTTP: %j', async functionId => {
+  const fetch = vi.fn();
+  vi.stubGlobal('fetch', fetch);
+  // JavaScript callers and unvalidated inputs can bypass TypeScript's required string.
+  // @ts-expect-error Exercise invalid IDs at runtime.
+  await expect(client().functions.runStart(functionId, {})).rejects.toThrow('requires a non-empty functionId');
+  expect(fetch).not.toHaveBeenCalled();
+});
