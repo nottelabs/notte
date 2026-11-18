@@ -354,6 +354,7 @@
   "#/components/schemas/SessionProfileSaveRequest/name#-datamodel-code-generator-#-anyOf-#-special-#/0#-datamodel-code-generator-#-array-#-special-#": "Name1",
   "#/components/schemas/SessionProfileSaveRequest/profile_id#-datamodel-code-generator-#-anyOf-#-special-#/0#-datamodel-code-generator-#-array-#-special-#": "ProfileId",
   "#/components/schemas/SessionResponse": "SessionResponse",
+  "#/components/schemas/SessionWarning": "SessionWarning",
   "#/components/schemas/Shadows": "Shadows",
   "#/components/schemas/SharedParams": "SharedParams",
   "#/components/schemas/SharedParams/actions#-datamodel-code-generator-#-array-#-special-#/0": "Actions2",
