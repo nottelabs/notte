@@ -46,6 +46,8 @@ class NotteVault(VaultState, SyncResource):
         super().__init__()
 
         self.vault_client = _client
+        # only a vault this object created is deleted when the `with` block exits
+        self._created: bool = vault_id is None
         if vault_id is None:
             # create a new vault
             response = _client.create(**data)
@@ -60,6 +62,9 @@ class NotteVault(VaultState, SyncResource):
 
     @override
     def stop(self) -> None:
+        """Delete the vault if this object created it. An existing vault passed by `vault_id` is kept."""
+        if not self._created:
+            return
         _log_deleted(self.vault_id)
         self.delete()
 
@@ -199,7 +204,7 @@ class AsyncNotteVault(BaseVault, AwaitableResource):
     ```
 
     `vault = await client.Vault(...)` creates the vault, or checks that `vault_id` exists, like the
-    `NotteVault` constructor; `async with` also deletes it on exit. Credentials go through the same
+    `NotteVault` constructor; `async with` also deletes it on exit, unless it was opened by `vault_id`. Credentials go through the same
     credential transformations as `NotteVault`, so the values it returns are tracked and masked the same way.
     """
 
@@ -224,6 +229,8 @@ class AsyncNotteVault(BaseVault, AwaitableResource):
         self._vault_id: str | None = vault_id
         self._create_request: VaultCreateRequestDict = data
         self._ready: bool = False
+        # only a vault this object created is deleted when the `async with` block exits
+        self._created: bool = False
 
     @property
     def vault_id(self) -> str:
@@ -241,12 +248,16 @@ class AsyncNotteVault(BaseVault, AwaitableResource):
             response = await self.vault_client.create(**self._create_request)
             _log_created(response.vault_id)
             self._vault_id = response.vault_id
+            self._created = True
         else:
             self._vault_id = await self.vault_client.get(self._vault_id)
         self._ready = True
 
     @override
     async def stop(self) -> None:
+        """Delete the vault if this object created it. An existing vault passed by `vault_id` is kept."""
+        if not self._created:
+            return
         _log_deleted(self.vault_id)
         await self.delete()
 

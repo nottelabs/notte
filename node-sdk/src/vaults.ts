@@ -179,12 +179,15 @@ export class NotteVault {
   private _vaultId: string | null = null;
   private initPromise: Promise<string> | null = null;
   private createData: VaultCreateRequest | null = null;
+  // Only a vault this object created is deleted by stop().
+  private readonly created: boolean;
 
   constructor(client: NotteClient, options: VaultConstructor = {}) {
     this.client = client;
 
     if (options && 'vault_id' in options && options.vault_id !== undefined) {
       // Constructor for existing vault
+      this.created = false;
       if (options.vault_id.length === 0) {
         throw new InvalidRequestError('Vault ID cannot be empty');
       }
@@ -193,6 +196,7 @@ export class NotteVault {
       // unhandled rejection when verification fails before anything is awaited.
       this.initPromise.catch(() => undefined);
     } else {
+      this.created = true;
       // Defer remote creation until an operation actually needs a vault. This
       // keeps local-only helpers such as generatePassword() side-effect free.
       const { vault_id: _ignored, ...createData } = (options ?? {}) as VaultConstructorCreate;
@@ -259,13 +263,17 @@ export class NotteVault {
   }
 
   /**
-   * Stop the vault: deletes it together with every credential it holds.
+   * Stop the vault: deletes it together with every credential it holds, if
+   * this object created it. A vault opened by `vault_id` is kept.
    *
    * ```ts
    * await vault.stop();
    * ```
    */
   async stop(): Promise<void> {
+    if (!this.created) {
+      return;
+    }
     const vaultId = await this.ensureInitialized();
     console.info(`[Vault] ${vaultId} deleted. All credentials have been deleted.`);
     await this.delete();
