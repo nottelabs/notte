@@ -10325,7 +10325,7 @@
           },
           {
             "lang": "Curl",
-            "source": "curl -X POST \"https://api.notte.cc/scrape\" \\\n  -H \"Authorization: Bearer $NOTTE_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"url\": \"https://shop.notte.cc/\", \"only_main_content\": true}'",
+            "source": "curl -X POST \"https://api.notte.cc/scrape\" \\\n  -H \"Authorization: Bearer $NOTTE_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"url\": \"https://www.notte.cc/\", \"only_main_content\": true}'",
             "label": "curl"
           }
         ]
@@ -18640,6 +18640,22 @@
             "title": "Demonstrate",
             "description": "Whether to enable the Notte recorder extension for this session. The extension is installed but remains inactive when this is false.",
             "default": false
+          },
+          "os": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "windows",
+                  "macos"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Os",
+            "description": "The operating system the session's browser presents: windows or macos. When unset, each session gets one at random among those the environment offers."
           }
         },
         "additionalProperties": false,
@@ -27279,6 +27295,22 @@
             "title": "Only Main Content",
             "description": "Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded.",
             "default": false
+          },
+          "os": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "windows",
+                  "macos"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Os",
+            "description": "The operating system the session's browser presents: windows or macos. When unset, each session gets one at random among those the environment offers."
           },
           "response_format": {
             "anyOf": [

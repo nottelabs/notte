@@ -72,6 +72,7 @@ DEFAULT_VIEWPORT_HEIGHT = config.viewport_height
 
 AspectRatio = Literal["5:4", "16:9"]
 DialogPolicy = Literal["auto", "client"]
+SessionOs = Literal["windows", "macos"]
 
 DEFAULT_BROWSER_TYPE = config.browser_type
 DEFAULT_USER_AGENT = config.user_agent
@@ -1022,6 +1023,9 @@ class SessionStartRequestDict(_SessionStartRequestDict, total=False):
     """Who answers JavaScript dialogs. "auto" (default): Notte dismisses alert, confirm and prompt and
     accepts beforeunload. "client": your CDP client accepts or dismisses them; Notte dismisses one nobody
     answers within 10 seconds."""
+    os: SessionOs | None
+    """The operating system the session's browser presents: windows or macos. When unset, each session gets
+    one at random among those the environment offers."""
 
 
 class LocalSessionStartRequestDict(_SessionStartRequestDict, total=False):
@@ -1411,6 +1415,16 @@ class SessionStartRequest(_SessionStartRequest[BrowserType | Literal["chrome-nit
         ),
     ] = False
 
+    os: Annotated[
+        SessionOs | None,
+        Field(
+            description=(
+                "The operating system the session's browser presents: windows or macos. When unset, each "
+                "session gets one at random among those the environment offers."
+            )
+        ),
+    ] = None
+
     @model_serializer(mode="wrap")
     def omit_disabled_advanced_stealth(
         self, handler: SerializerFunctionWrapHandler, info: SerializationInfo
@@ -1425,6 +1439,9 @@ class SessionStartRequest(_SessionStartRequest[BrowserType | Literal["chrome-nit
             return data
         if not self.advanced_stealth:
             data.pop("advanced_stealth", None)
+        # Older APIs reject the field, so a start without one leaves it out.
+        if self.os is None:
+            data.pop("os", None)
         if not self.auth_ids:
             data.pop("auth_retry", None)
         # Let the API apply its default so ordinary starts also work with older APIs.

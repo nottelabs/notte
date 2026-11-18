@@ -152,6 +152,10 @@ Ignored since notte 1.10: screenshots are returned without highlighting.
 
 </ParamField>
 
+<ParamField body="os" type={"\"windows\" | \"macos\" | null | undefined"}>
+The operating system the session's browser presents: windows or macos. When unset, each session gets one at random among those the environment offers.
+</ParamField>
+
 <ParamField body="response_format" type={"Record<string, unknown> | ZodLikeSchema<T> | null | undefined"}>
 A Zod schema or a JSON Schema object describing the data to extract.
 </ParamField>
