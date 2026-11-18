@@ -38,6 +38,17 @@
       ]
     }
   },
+  "functions/management/expected_errors.ts": {
+    "expected": {
+      "results": [
+        [
+          "AccountNotUnique",
+          "StaffReviewRequired"
+        ],
+        []
+      ]
+    }
+  },
   "functions/management/private_function.ts": {
     "expected": {
       "results": [

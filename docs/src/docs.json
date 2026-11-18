@@ -311,6 +311,7 @@
             "pages": [
               "concepts/functions",
               "features/functions/creating",
+              "features/functions/errors",
               "features/functions/invocations",
               "features/functions/schedules",
               "features/functions/management"

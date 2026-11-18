@@ -88,7 +88,7 @@ class FunctionMetadataUpdateRequestDict(TypedDict):
     shared: NotRequired[bool | None]
     deletion_protected: NotRequired[bool | None]
     response_format: NotRequired[dict[str, Any] | None]
-    expected_errors: NotRequired[models.ExpectedErrors | None]
+    expected_errors: NotRequired[list[str] | None]
 
 
 class FunctionRollbackRequestDict(TypedDict):
