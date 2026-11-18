@@ -561,7 +561,10 @@ class NotteProxy(SdkRequest):
         Field(
             description=(
                 "Keep the session's exit on one residential IP, shared with a proxy gateway credential "
-                "minted with the same `sticky_session`. 1-64 letters, digits or hyphens."
+                "minted with the same `sticky_session`. The IP holds while its residential device stays "
+                "online and can change without notice; new connections with the same `sticky_session` then "
+                "share a new IP. "
+                "1-64 letters, digits or hyphens."
             ),
             pattern=r"^[A-Za-z0-9-]{1,64}$",
         ),
