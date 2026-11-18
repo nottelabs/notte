@@ -232,3 +232,25 @@ async def test_scrape_with_ambiguous_selector_names_it(session: NotteSession) ->
 
     assert raised.value.user_message.startswith("The selector '.result' matched 2 elements")
     assert not raised.value.should_notify_team
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("selector", "starts_with"),
+    [
+        ("a[href=/x]", "The selector is not valid: 'a[href=/x]' is not a valid selector."),
+        ("xpath=//div[", "The selector is not valid: The string '//div[' is not a valid XPath expression."),
+        ("div:has-text(One)", 'The selector is not valid: "has-text" engine expects a single string.'),
+        # the error quotes the selector, whose words must not read as a closed page
+        (
+            "a[aria-label=has been closed]",
+            "The selector is not valid: 'a[aria-label=has been closed]' is not a valid selector.",
+        ),
+    ],
+)
+async def test_scrape_with_invalid_selector_names_it(session: NotteSession, selector: str, starts_with: str) -> None:
+    with pytest.raises(InvalidSelectorError) as raised:
+        _ = await session.ascrape(selector=selector, raise_on_failure=True)
+
+    assert raised.value.user_message.startswith(starts_with)
+    assert not raised.value.should_notify_team
