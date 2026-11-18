@@ -616,6 +616,8 @@ KEYWORD_ANNOTATIONS = {
     "SessionStopParametersQuery": {"close_reason": 'Literal["manual", "error"]'},
     "BodySessionCookiesSetSessionsSessionIdCookiesPost": {"cookies": "list[core.Cookie] | list[config.CookieDict]"},
     "FunctionRunGetMetadataParametersQuery": {"payload_mode": "str"},
+    # `ExpectedErrors` is a RootModel of RootModel[str] items: callers pass a plain list of class names.
+    "FunctionMetadataUpdateRequest": {"expected_errors": "list[str] | None"},
     "FunctionRunUpdateRequest": {
         "logs": "list[str] | None",
         "result": "Any | None",
