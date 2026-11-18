@@ -8437,12 +8437,42 @@ export type SessionResponse = {
      */
     pausable?: boolean;
     /**
+     * Started Without Proxy
+     *
+     * True when the session asked for the default managed proxy, none was available, and it started without a proxy instead (its traffic leaves from Notte's own IP addresses). A workspace turns this fallback off in Settings > Proxies; its starts then fail instead.
+     */
+    started_without_proxy?: boolean;
+    /**
+     * Warnings
+     *
+     * Conditions the session started with that the caller should know about, such as `PROXY_UNAVAILABLE_NO_PROXY_FALLBACK` when no managed proxy was available and the session runs without one.
+     */
+    warnings?: Array<SessionWarning>;
+    /**
      * Timeout Minutes
      *
      * @deprecated
      */
     readonly timeout_minutes: number;
     [key: string]: unknown;
+};
+
+/**
+ * SessionWarning
+ */
+export type SessionWarning = {
+    /**
+     * Code
+     *
+     * Stable machine-readable warning code.
+     */
+    code: string;
+    /**
+     * Message
+     *
+     * Human-readable explanation of the warning.
+     */
+    message: string;
 };
 
 /**
@@ -11627,6 +11657,18 @@ export type SessionResponseWritable = {
      * Whether the session can be paused now (POST /sessions/{session_id}/pause). Only in a status read.
      */
     pausable?: boolean;
+    /**
+     * Started Without Proxy
+     *
+     * True when the session asked for the default managed proxy, none was available, and it started without a proxy instead (its traffic leaves from Notte's own IP addresses). A workspace turns this fallback off in Settings > Proxies; its starts then fail instead.
+     */
+    started_without_proxy?: boolean;
+    /**
+     * Warnings
+     *
+     * Conditions the session started with that the caller should know about, such as `PROXY_UNAVAILABLE_NO_PROXY_FALLBACK` when no managed proxy was available and the session runs without one.
+     */
+    warnings?: Array<SessionWarning>;
     [key: string]: unknown;
 };
 

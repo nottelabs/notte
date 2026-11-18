@@ -34863,6 +34863,20 @@
             "description": "Whether the session can be paused now (POST /sessions/{session_id}/pause). Only in a status read.",
             "default": false
           },
+          "started_without_proxy": {
+            "type": "boolean",
+            "title": "Started Without Proxy",
+            "description": "True when the session asked for the default managed proxy, none was available, and it started without a proxy instead (its traffic leaves from Notte's own IP addresses). A workspace turns this fallback off in Settings > Proxies; its starts then fail instead.",
+            "default": false
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/SessionWarning"
+            },
+            "type": "array",
+            "title": "Warnings",
+            "description": "Conditions the session started with that the caller should know about, such as `PROXY_UNAVAILABLE_NO_PROXY_FALLBACK` when no managed proxy was available and the session runs without one."
+          },
           "timeout_minutes": {
             "type": "integer",
             "title": "Timeout Minutes",
@@ -34881,6 +34895,26 @@
           "timeout_minutes"
         ],
         "title": "SessionResponse"
+      },
+      "SessionWarning": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "Stable machine-readable warning code."
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Human-readable explanation of the warning."
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "SessionWarning"
       },
       "Shadows": {
         "properties": {

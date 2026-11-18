@@ -1552,6 +1552,11 @@ class SecretProxySummary(SdkResponse):
     ] = Field(default_factory=list)
 
 
+class SessionWarning(SdkResponse):
+    code: Annotated[str, Field(description="Stable machine-readable warning code.")]
+    message: Annotated[str, Field(description="Human-readable explanation of the warning.")]
+
+
 class SessionResponse(SdkResponse):
     record_session: bool = Field(default=True, description="Whether saved session replay is enabled. Defaults to true.")
     log_session: bool = Field(
@@ -1660,6 +1665,26 @@ class SessionResponse(SdkResponse):
             description="Whether the session can be paused now (POST /sessions/{session_id}/pause). Only in a status read."
         ),
     ] = False
+    started_without_proxy: Annotated[
+        bool,
+        Field(
+            description=(
+                "True when the session asked for the default managed proxy, none was available, and it started "
+                "without a proxy instead (its traffic leaves from Notte's own IP addresses). A workspace turns "
+                "this fallback off in Settings > Proxies; its starts then fail instead."
+            )
+        ),
+    ] = False
+    warnings: Annotated[
+        list[SessionWarning],
+        Field(
+            description=(
+                "Conditions the session started with that the caller should know about, such as "
+                "`PROXY_UNAVAILABLE_NO_PROXY_FALLBACK` when no managed proxy was available and the session "
+                "runs without one."
+            )
+        ),
+    ] = []
 
     @field_validator("closed_at", mode="before")
     @classmethod
