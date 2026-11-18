@@ -3,7 +3,7 @@ import json
 import httpx
 import pytest
 from notte_core.actions import ActionUnion
-from notte_core.errors import ErrorConfig, LLMParsingError, UnsupportedResponseSchemaError
+from notte_core.errors import ErrorConfig, LLMParsingError, LLMProviderError, UnsupportedResponseSchemaError
 from notte_llm.engine import LLMEngine, StructuredContent, fix_schema_for_openai, is_schema_rejection
 from pydantic import BaseModel, create_model
 
@@ -212,6 +212,36 @@ async def test_rejections_are_not_cached_across_calls_or_schemas(engine_factory)
     for schema in (Answer, Answer, create_model("Answer", text=(str, ...), score=(int, ...))):
         await engine.structured_completion([{"role": "user", "content": "Answer"}], schema)
     assert [b["response_format"]["type"] for b in bodies] == ["json_schema", "json_object"] * 3
+
+
+@pytest.mark.asyncio
+async def test_bare_400_on_a_strict_schema_falls_back_to_json_object(engine_factory):
+    bodies = []
+
+    def handler(request):
+        body = json.loads(request.content)
+        bodies.append(body)
+        if body["response_format"]["type"] == "json_schema":
+            return httpx.Response(400, json={"error": {"message": "Provider returned error", "code": 400}})
+        return reply('{"text":"done","score":1}')
+
+    result = await engine_factory(handler).structured_completion([{"role": "user", "content": "Answer"}], Answer)
+    assert result == Answer(text="done", score=1)
+    assert [b["response_format"]["type"] for b in bodies] == ["json_schema", "json_object"]
+
+
+@pytest.mark.asyncio
+async def test_bare_400_after_the_json_object_fallback_is_raised(engine_factory):
+    bodies = []
+
+    def handler(request):
+        bodies.append(json.loads(request.content))
+        return httpx.Response(400, json={"error": {"message": "Provider returned error", "code": 400}})
+
+    with pytest.raises(LLMProviderError) as exc:
+        await engine_factory(handler).structured_completion([{"role": "user", "content": "Answer"}], Answer)
+    assert type(exc.value) is LLMProviderError
+    assert [b["response_format"]["type"] for b in bodies] == ["json_schema", "json_object"]
 
 
 @pytest.mark.asyncio
