@@ -75,6 +75,7 @@ You can use the default parameters to create your session, or customize them:
 </ParamField>
 
 <ParamField path="os" type="typing.Literal['windows', 'macos'] | None">
+  The operating system the session's browser presents: windows or macos. When unset, each session gets one at random among those the environment offers.
 </ParamField>
 
 <ParamField path="record_session" type="bool" default={true}>
