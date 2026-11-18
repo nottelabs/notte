@@ -182,6 +182,18 @@ export type SessionResponse = {
      */
     pausable?: boolean;
     /**
+     * Started Without Proxy
+     *
+     * True when the session asked for the default managed proxy, none was available, and it started without a proxy instead (its traffic leaves from Notte's own IP addresses). A workspace turns this fallback off in Settings > Proxies; its starts then fail instead.
+     */
+    started_without_proxy?: boolean;
+    /**
+     * Warnings
+     *
+     * Conditions the session started with that the caller should know about, such as `PROXY_UNAVAILABLE_NO_PROXY_FALLBACK` when no managed proxy was available and the session runs without one.
+     */
+    warnings?: Array<SessionWarning>;
+    /**
      * Timeout Minutes
      *
      * @deprecated
@@ -309,6 +321,14 @@ Whether this session is an internal system run. Internal system runs are omitted
 Whether the session can be paused now (POST /sessions/&#123;session_id&#125;/pause). Only in a status read.
 </ParamField>
 
+<ParamField body="started_without_proxy" type={"boolean | undefined"}>
+True when the session asked for the default managed proxy, none was available, and it started without a proxy instead (its traffic leaves from Notte's own IP addresses). A workspace turns this fallback off in Settings &gt; Proxies; its starts then fail instead.
+</ParamField>
+
+<ParamField body="warnings" type={"SessionWarning[] | undefined"}>
+Conditions the session started with that the caller should know about, such as `PROXY_UNAVAILABLE_NO_PROXY_FALLBACK` when no managed proxy was available and the session runs without one.
+</ParamField>
+
 <ParamField body="timeout_minutes" type={"number"} required>
 
 
@@ -320,3 +340,4 @@ Whether the session can be paused now (POST /sessions/&#123;session_id&#125;/pau
 ## Related types
 
 - [SecretProxySummary](/typescript-sdk-reference/types/secretproxysummary)
+- [SessionWarning](/typescript-sdk-reference/types/sessionwarning)

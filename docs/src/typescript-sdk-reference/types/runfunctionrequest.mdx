@@ -14,9 +14,9 @@ export type RunFunctionRequest = {
     /**
      * Workflow Id
      *
-     * The ID of the function to run
+     * The ID of the function to run. Optional: the path already names it.
      */
-    workflow_id: string;
+    workflow_id?: string | null;
     /**
      * Variables
      *
@@ -52,8 +52,8 @@ export type RunFunctionRequest = {
 
 ## Fields
 
-<ParamField body="workflow_id" type={"string"} required>
-The ID of the function to run
+<ParamField body="workflow_id" type={"string | null | undefined"}>
+The ID of the function to run. Optional: the path already names it.
 </ParamField>
 
 <ParamField body="variables" type={"{ [key: string]: unknown; } | undefined"}>

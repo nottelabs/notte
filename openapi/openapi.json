@@ -4807,9 +4807,16 @@
           {
             "name": "x-notte-api-key",
             "in": "header",
-            "required": true,
+            "required": false,
             "schema": {
-              "type": "string",
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Notte-Api-Key"
             }
           },
@@ -4905,7 +4912,7 @@
           },
           {
             "lang": "Curl",
-            "source": "curl -X POST -L \"https://api.notte.cc/functions/$function_id/runs/start\" \\\n  -H \"Authorization: Bearer $NOTTE_API_KEY\" \\\n  -H \"x-notte-api-key: $NOTTE_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  --data '{\n    \"function_id\": \"'\"$function_id\"'\",\n    \"stream\": false,\n    \"variables\": {\n      \"url\": \"https://www.google.com\"\n    }\n  }'",
+            "source": "curl -X POST \"https://api.notte.cc/functions/$function_id/runs/start\" \\\n  -H \"Authorization: Bearer $NOTTE_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  --data '{\n    \"variables\": {\n      \"url\": \"https://www.google.com\"\n    }\n  }'",
             "label": "curl"
           }
         ]
@@ -18627,6 +18634,20 @@
             "description": "Ignored since notte 1.10: screenshots are returned without highlighting.",
             "default": "last_action",
             "deprecated": true
+          },
+          "start_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2048,
+                "pattern": "^https?://[^\\x00-\\x20/?#@\\\\]+(?:[/?#][^\\x00-\\x20]*)?$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Url",
+            "description": "An http(s) URL the session opens in its first tab before the start returns. A profile's saved session config can set it too."
           },
           "demonstrate": {
             "type": "boolean",
@@ -32832,9 +32853,16 @@
       "RunFunctionRequest": {
         "properties": {
           "workflow_id": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Workflow Id",
-            "description": "The ID of the function to run"
+            "description": "The ID of the function to run. Optional: the path already names it."
           },
           "variables": {
             "additionalProperties": true,
@@ -32892,9 +32920,6 @@
         },
         "additionalProperties": false,
         "type": "object",
-        "required": [
-          "workflow_id"
-        ],
         "title": "RunFunctionRequest"
       },
       "RunPayloadReference": {
@@ -34863,6 +34888,20 @@
             "description": "Whether the session can be paused now (POST /sessions/{session_id}/pause). Only in a status read.",
             "default": false
           },
+          "started_without_proxy": {
+            "type": "boolean",
+            "title": "Started Without Proxy",
+            "description": "True when the session asked for the default managed proxy, none was available, and it started without a proxy instead (its traffic leaves from Notte's own IP addresses). A workspace turns this fallback off in Settings > Proxies; its starts then fail instead.",
+            "default": false
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/SessionWarning"
+            },
+            "type": "array",
+            "title": "Warnings",
+            "description": "Conditions the session started with that the caller should know about, such as `PROXY_UNAVAILABLE_NO_PROXY_FALLBACK` when no managed proxy was available and the session runs without one."
+          },
           "timeout_minutes": {
             "type": "integer",
             "title": "Timeout Minutes",
@@ -34881,6 +34920,26 @@
           "timeout_minutes"
         ],
         "title": "SessionResponse"
+      },
+      "SessionWarning": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "Stable machine-readable warning code."
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Human-readable explanation of the warning."
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "SessionWarning"
       },
       "Shadows": {
         "properties": {

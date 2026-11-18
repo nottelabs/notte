@@ -546,6 +546,12 @@ export type ApiSessionStartRequest = {
      */
     screenshot_type?: 'raw' | 'full' | 'last_action';
     /**
+     * Start Url
+     *
+     * An http(s) URL the session opens in its first tab before the start returns. A profile's saved session config can set it too.
+     */
+    start_url?: string | null;
+    /**
      * Demonstrate
      *
      * Whether to enable the Notte recorder extension for this session. The extension is installed but remains inactive when this is false.
@@ -7149,9 +7155,9 @@ export type RunFunctionRequest = {
     /**
      * Workflow Id
      *
-     * The ID of the function to run
+     * The ID of the function to run. Optional: the path already names it.
      */
-    workflow_id: string;
+    workflow_id?: string | null;
     /**
      * Variables
      *
@@ -8437,12 +8443,42 @@ export type SessionResponse = {
      */
     pausable?: boolean;
     /**
+     * Started Without Proxy
+     *
+     * True when the session asked for the default managed proxy, none was available, and it started without a proxy instead (its traffic leaves from Notte's own IP addresses). A workspace turns this fallback off in Settings > Proxies; its starts then fail instead.
+     */
+    started_without_proxy?: boolean;
+    /**
+     * Warnings
+     *
+     * Conditions the session started with that the caller should know about, such as `PROXY_UNAVAILABLE_NO_PROXY_FALLBACK` when no managed proxy was available and the session runs without one.
+     */
+    warnings?: Array<SessionWarning>;
+    /**
      * Timeout Minutes
      *
      * @deprecated
      */
     readonly timeout_minutes: number;
     [key: string]: unknown;
+};
+
+/**
+ * SessionWarning
+ */
+export type SessionWarning = {
+    /**
+     * Code
+     *
+     * Stable machine-readable warning code.
+     */
+    code: string;
+    /**
+     * Message
+     *
+     * Human-readable explanation of the warning.
+     */
+    message: string;
 };
 
 /**
@@ -11627,6 +11663,18 @@ export type SessionResponseWritable = {
      * Whether the session can be paused now (POST /sessions/{session_id}/pause). Only in a status read.
      */
     pausable?: boolean;
+    /**
+     * Started Without Proxy
+     *
+     * True when the session asked for the default managed proxy, none was available, and it started without a proxy instead (its traffic leaves from Notte's own IP addresses). A workspace turns this fallback off in Settings > Proxies; its starts then fail instead.
+     */
+    started_without_proxy?: boolean;
+    /**
+     * Warnings
+     *
+     * Conditions the session started with that the caller should know about, such as `PROXY_UNAVAILABLE_NO_PROXY_FALLBACK` when no managed proxy was available and the session runs without one.
+     */
+    warnings?: Array<SessionWarning>;
     [key: string]: unknown;
 };
 
@@ -13830,11 +13878,11 @@ export type FunctionSchedulesUpdateResponse = FunctionSchedulesUpdateResponses[k
 
 export type FunctionRunStartData = {
     body: RunFunctionRequest;
-    headers: {
+    headers?: {
         /**
          * X-Notte-Api-Key
          */
-        'x-notte-api-key': string;
+        'x-notte-api-key'?: string | null;
         /**
          * X-Db-Preview
          */
