@@ -463,7 +463,7 @@ class LLMEngine:
             body["reasoning"] = self.reasoning
         return body
 
-    def _raise_provider_error(self, status: int, message: str, model: str) -> None:
+    def _raise_provider_error(self, status: int, message: str, model: str, *, strict_schema: bool = False) -> None:
         if status in (400, 403, 422) and is_content_refusal(message):
             raise ContentFilterError(model, _error_detail(message))
         if status in (401, 403):
@@ -489,6 +489,11 @@ class LLMEngine:
             raise InvalidJsonResponseForStructuredOutput(model, error_msg=message)
         if status == 402 or "insufficient balance" in message.lower() or "credit balance is too low" in message.lower():
             raise InsufficentCreditsError()
+        if strict_schema and status == 400:
+            # Some upstreams refuse a strict json_schema with a bare 400 that names no
+            # field (AtlasCloud's "invalid request params" for MiniMax M2.5 on OpenRouter):
+            # treat it as a schema rejection so structured_completion retries with json_object.
+            raise UnsupportedResponseSchemaError(model, error_msg=message)
         raise LLMProviderError(
             dev_message=f"HTTP {status} from LLM model {model}: {message}",
             user_message="The LLM provider could not process the request.",
@@ -558,7 +563,13 @@ class LLMEngine:
                     if status >= 400:
                         # Never propagate the request or its Authorization header in an error.
                         message = response.text.replace(key, "[REDACTED]")
-                        self._raise_provider_error(status, message, model)
+                        self._raise_provider_error(
+                            status,
+                            message,
+                            model,
+                            strict_schema=isinstance(body.get("response_format"), dict)
+                            and body["response_format"].get("type") == "json_schema",
+                        )
                     if not isinstance(payload, dict) or not isinstance(
                         cast(dict[str, Any], payload).get("choices"), list
                     ):

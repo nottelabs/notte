@@ -97,6 +97,11 @@ def routing_options(route: Route) -> tuple[str, dict[str, Any]]:
         "models": None,
         "provider": {"order": [route.upstream], "allow_fallbacks": False},
     }
+    if route.name == "kimi":
+        # Kimi K2.5 reasons before it answers: with reasoning on, a case took 30 to 190 s
+        # on every upstream and some outlasted the engine's 60 s attempt deadline. The
+        # matrix checks extraction through the pinned upstream, not reasoning latency.
+        options["reasoning"] = {"enabled": False}
     if route.name in {"together", "zai"}:
         candidates = (model, "z-ai/glm-5.3") if route.name == "zai" else (model,)
         for candidate in candidates:
