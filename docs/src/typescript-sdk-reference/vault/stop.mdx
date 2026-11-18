@@ -9,7 +9,8 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 [Source: node-sdk/src/vaults.ts](https://github.com/nottelabs/notte/blob/main/node-sdk/src/vaults.ts)
 
-Stop the vault: deletes it together with every credential it holds.
+Stop the vault: deletes it together with every credential it holds, if
+this object created it. A vault opened by `vault_id` is kept.
 
 ```ts
 await vault.stop();

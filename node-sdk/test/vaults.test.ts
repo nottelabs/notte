@@ -314,6 +314,13 @@ describe('NotteVault lifecycle', () => {
     expect(mocks.vaultDelete).toHaveBeenCalledWith(expect.objectContaining({ path: { vault_id: 'owned-vault-id' } }));
   });
 
+  it('stop() keeps a vault opened by id', async () => {
+    const vault = new NotteVault(client, { vault_id: 'existing-vault-id' });
+    await vault.listCredentials();
+    await vault.stop();
+    expect(mocks.vaultDelete).not.toHaveBeenCalled();
+  });
+
   it('delete() propagates API errors', async () => {
     mocks.vaultDelete.mockRejectedValue(new NotteAPIError('/vaults/owned-vault-id', 500, { message: 'boom' }));
     const vault = new NotteVault(client);

@@ -272,6 +272,20 @@ class NotteAPIExecutionError(NotteBaseError):
         )
 
 
+class CaptchaRejectedError(NotteBaseError):
+    """The site rejected the CAPTCHA answer and showed the CAPTCHA again (`code="captcha_rejected"`).
+
+    Automatic solving stops for that CAPTCHA on the page, and a new answer in the same
+    browser session is usually rejected too: start a new session instead of retrying.
+    Raised by `session.execute()` when failures raise; with `raise_on_failure=False`
+    the result has `code="captcha_rejected"`. It subclasses `NotteBaseError`, which
+    other CAPTCHA failures raise, so existing handlers still catch it.
+    """
+
+    def __init__(self, message: str) -> None:
+        super().__init__(dev_message=message, user_message=message, agent_message=message)
+
+
 class AuthenticationError(NotteBaseError):
     def __init__(self, message: str) -> None:
         super().__init__(

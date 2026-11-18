@@ -94,6 +94,8 @@ The default CAPTCHA wait is three minutes. A terminal solver failure, page chang
 or expired wait budget follows the usual `raise_on_failure` behavior. Polling does
 not restart the solve or extend the session's maximum lifetime.
 
+When the site rejects the answer and shows the CAPTCHA again, the result has `code="captcha_rejected"` and `session.execute()` raises `CaptchaRejectedError` (from `notte_sdk.errors` in Python, `notte-sdk` in Node), a subclass of the error other CAPTCHA failures raise. Start a new session instead of retrying on the same page.
+
 SDK actions blocked before execution wait for the CAPTCHA and then retry. If an
 action already executed and triggered a CAPTCHA, the SDK waits without replaying
 it. This coordination applies to Python SDK actions; direct Playwright/CDP calls

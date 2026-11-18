@@ -43,6 +43,7 @@ export {
   FunctionRunRejectedError,
   ScrapeFailedError,
   ActionExecutionError,
+  CaptchaRejectedError,
   EvaluateJsNoDataError,
   FetchResponseDecodeError,
   retry,

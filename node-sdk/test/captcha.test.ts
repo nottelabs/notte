@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createServer } from 'node:http';
 import { NotteClient } from '@/client';
 import { executeWithCaptcha, type CaptchaExecutionResponse, type CaptchaStatus } from '@/captcha';
-import { NotteAPIError, NotteTimeoutError } from '@/errors';
+import { ActionExecutionError, CaptchaRejectedError, NotteAPIError, NotteTimeoutError } from '@/errors';
 import type { ExecuteAction } from '@/actions';
 import { executionResult, sessionResponse } from './helpers/session-mocks';
 
@@ -274,6 +274,52 @@ describe('navigation before a wait executes', () => {
       expect(resumed.url.searchParams.get('target_generation')).toBe('4');
       const budgets = received.map(r => Number(r.url.searchParams.get('captcha_timeout_seconds')));
       expect(budgets.every((budget, i) => budget > 0 && (i === 0 || budget < budgets[i - 1]))).toBe(true);
+    } finally { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); }
+  });
+});
+
+describe('CAPTCHA the site rejected', () => {
+  const failed = (failureReason?: string | null): CaptchaExecutionResponse => {
+    const result = { ...response('failed'), message: 'CAPTCHA x', code: 'captcha_failed' };
+    result.captcha!.message = 'CAPTCHA x';
+    // `some_future_reason` simulates a value newer than the generated API contract.
+    if (failureReason !== undefined) Object.assign(result.captcha!, { failure_reason: failureReason });
+    return result;
+  };
+  it('reports captcha_rejected', async () => {
+    const request = vi.fn().mockResolvedValueOnce(response('solving')).mockResolvedValueOnce(failed('rejected'));
+    expect(await executeWithCaptcha(action, 180, request)).toMatchObject({
+      success: false, code: 'captcha_rejected', message: 'CAPTCHA x', captcha: { failure_reason: 'rejected' },
+    });
+    expect(request).toHaveBeenCalledTimes(2);
+  });
+  it.each([undefined, null, 'some_future_reason'])('keeps captcha_failed for failure_reason %s', async reason => {
+    const request = vi.fn().mockResolvedValueOnce(response('solving')).mockResolvedValueOnce(failed(reason));
+    expect(await executeWithCaptcha(action, 180, request)).toMatchObject({ success: false, code: 'captcha_failed' });
+    expect(request).toHaveBeenCalledTimes(2);
+  });
+  it.each([
+    ['rejected', CaptchaRejectedError],
+    [undefined, ActionExecutionError],
+    ['some_future_reason', ActionExecutionError],
+  ] as const)('Session.execute throws for failure_reason %s', async (reason, errorClass) => {
+    const server = createServer(async (req, res) => {
+      res.setHeader('Content-Type', 'application/json');
+      if (!req.url?.includes('/page/execute')) { res.end(JSON.stringify(sessionResponse())); return; }
+      for await (const _ of req) { /* drain */ }
+      res.end(JSON.stringify(failed(reason)));
+    });
+    await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+    try {
+      const address = server.address() as { port: number };
+      const client = new NotteClient({ apiKey: 'test', baseUrl: `http://127.0.0.1:${address.port}` }); // pragma: allowlist secret - local fixture
+      const session = client.Session(); await session.start();
+      const error = await session.execute(action).catch((e: unknown) => e);
+      expect(error).toBeInstanceOf(errorClass);
+      // A rejection is still an ActionExecutionError, so existing handlers catch it.
+      expect(error).toBeInstanceOf(ActionExecutionError);
+      expect(error instanceof CaptchaRejectedError).toBe(reason === 'rejected');
+      expect((error as Error).message).toBe('CAPTCHA x');
     } finally { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); }
   });
 });

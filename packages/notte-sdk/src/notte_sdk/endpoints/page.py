@@ -36,7 +36,7 @@ from notte_sdk._flow import Call, Flow, Sleep, arun, run
 from notte_sdk._generated import endpoints as page_api
 from notte_sdk._transport import INTERRUPTED_ERRORS
 from notte_sdk.endpoints.base import AsyncBaseClient, BaseClient
-from notte_sdk.errors import NotteAPIError
+from notte_sdk.errors import CaptchaRejectedError, NotteAPIError
 
 if TYPE_CHECKING:
     from notte_sdk.client import AsyncNotteClient, NotteClient
@@ -170,7 +170,7 @@ def _execute_flow(
             )
         return result
 
-    def failure(message: str, code: str) -> ExecutionResultResponse:
+    def failure(message: str, code: str, exception: NotteBaseError | None = None) -> ExecutionResultResponse:
         from notte_core.observation import utc_now
 
         result = (
@@ -191,7 +191,7 @@ def _execute_flow(
                     "success": False,
                     "message": message,
                     "code": code,
-                    "exception": NotteBaseError(message, message, message),
+                    "exception": exception or NotteBaseError(message, message, message),
                     "exception_detail": None,
                     "captcha": last.captcha if last is not None else result.captcha,
                 }
@@ -254,6 +254,10 @@ def _execute_flow(
             request_action = action
             yield Sleep(min(1.0, max(0, deadline - time.monotonic())))
             continue
+        if status.state == "failed" and status.failure_reason == "rejected":
+            # The site rejected the answer: solving stopped on this page, so waiting longer cannot help.
+            message = status.message or "CAPTCHA rejected by the site"
+            return failure(message, "captcha_rejected", CaptchaRejectedError(message))
         if status.state in ("failed", "cancelled"):
             return failure(status.message or f"CAPTCHA {status.state}", f"captcha_{status.state}")
         if status.state == "solved":
