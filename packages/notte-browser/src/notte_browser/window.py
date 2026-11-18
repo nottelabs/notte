@@ -122,9 +122,6 @@ class BrowserWindowOptions(BaseModel):
             chrome_args.extend(
                 [
                     "--disable-dev-shm-usage",
-                    "--no-sandbox",
-                    "--disable-setuid-sandbox",
-                    "--no-zygote",
                     "--mute-audio",
                     '--js-flags="--max-old-space-size=100"',
                     "--no-first-run",
