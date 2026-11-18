@@ -77,6 +77,17 @@ def is_schema_rejection(message: str) -> bool:
 _CONTENT_REFUSAL = re.compile(r"content[_ -]?(policy|filter)|responsible_?ai_?policy|input was flagged", re.IGNORECASE)
 
 
+def _is_strict_schema(response_format: Any) -> bool:
+    """Whether a request's ``response_format`` is a ``json_schema`` with ``strict: true``."""
+    if not isinstance(response_format, dict):
+        return False
+    fmt = cast(dict[str, Any], response_format)
+    if fmt.get("type") != "json_schema":
+        return False
+    schema: Any = fmt.get("json_schema")
+    return isinstance(schema, dict) and cast(dict[str, Any], schema).get("strict") is True
+
+
 def is_content_refusal(message: str) -> bool:
     """Recognize a provider's content-policy refusal in an error body."""
     return _CONTENT_REFUSAL.search(message) is not None
@@ -463,7 +474,7 @@ class LLMEngine:
             body["reasoning"] = self.reasoning
         return body
 
-    def _raise_provider_error(self, status: int, message: str, model: str) -> None:
+    def _raise_provider_error(self, status: int, message: str, model: str, *, strict_schema: bool = False) -> None:
         if status in (400, 403, 422) and is_content_refusal(message):
             raise ContentFilterError(model, _error_detail(message))
         if status in (401, 403):
@@ -489,6 +500,11 @@ class LLMEngine:
             raise InvalidJsonResponseForStructuredOutput(model, error_msg=message)
         if status == 402 or "insufficient balance" in message.lower() or "credit balance is too low" in message.lower():
             raise InsufficentCreditsError()
+        if strict_schema and status == 400:
+            # Some upstreams refuse a strict json_schema with a bare 400 that names no
+            # field (AtlasCloud's "invalid request params" for MiniMax M2.5 on OpenRouter):
+            # treat it as a schema rejection so structured_completion retries with json_object.
+            raise UnsupportedResponseSchemaError(model, error_msg=message)
         raise LLMProviderError(
             dev_message=f"HTTP {status} from LLM model {model}: {message}",
             user_message="The LLM provider could not process the request.",
@@ -558,7 +574,12 @@ class LLMEngine:
                     if status >= 400:
                         # Never propagate the request or its Authorization header in an error.
                         message = response.text.replace(key, "[REDACTED]")
-                        self._raise_provider_error(status, message, model)
+                        self._raise_provider_error(
+                            status,
+                            message,
+                            model,
+                            strict_schema=_is_strict_schema(body.get("response_format")),
+                        )
                     if not isinstance(payload, dict) or not isinstance(
                         cast(dict[str, Any], payload).get("choices"), list
                     ):

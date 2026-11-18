@@ -2,16 +2,26 @@
 {/* @sniptest testers/functions/creating/typed_errors.py */}
 
 ```python typed_errors.py
-from notte_sdk.errors import ExpectedFunctionError
+class ExpectedFunctionError(Exception):
+    """A deliberate refusal: the run ends as "rejected" and is never self-healed."""
+
+
+class RetryableFunctionError(Exception):
+    """A temporary problem: the run fails, is not self-healed, and the caller may retry."""
 
 
 class AccountNotUnique(ValueError, ExpectedFunctionError):
     status_code = 409
 
 
-def run(email: str, account_ids: list[str]):
+class PortalUnavailable(RetryableFunctionError):
+    pass
+
+
+def run(email: str, account_ids: list[str], portal_up: bool = True):
+    if not portal_up:
+        raise PortalUnavailable("The portal is down, try again later")
     if len(account_ids) != 1:
-        # A deliberate refusal: the run ends as "rejected" and is not self-healed.
         raise AccountNotUnique(f"{len(account_ids)} accounts match {email}")
 
     return {"account_id": account_ids[0]}

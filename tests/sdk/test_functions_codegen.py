@@ -233,6 +233,19 @@ def test_function_metadata_preserves_omitted_and_null_sharing(
     assert [json.loads(call.data) for call in api.calls] == [{"name": "renamed"}, {"name": "renamed"}]
 
 
+def test_function_metadata_takes_expected_errors_as_a_plain_list(
+    client: NotteClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    api = fake(monkeypatch, {**FUNCTION, "expected_errors": ["AccountNotUnique"]})
+    names: list[str] = ["AccountNotUnique"]
+    assert client.functions.metadata_update("fn", expected_errors=names).expected_errors == names
+    client.functions.metadata_update("fn", expected_errors=[])
+    assert [json.loads(call.data) for call in api.calls] == [
+        {"expected_errors": ["AccountNotUnique"]},
+        {"expected_errors": []},
+    ]
+
+
 TYPESCRIPT_FUNCTION = {
     **FUNCTION,
     "url": "https://storage.example/code",
