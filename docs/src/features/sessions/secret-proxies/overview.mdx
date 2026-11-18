@@ -112,7 +112,7 @@ By default the site sees two IP addresses: the session's exit for most requests,
 
 <SharedExitSession />
 
-Connections made with the credential and the session's own traffic then exit from the same IP. The credential is valid for your plan's maximum session duration, but the shared IP holds for up to 30 minutes and can change sooner, for example when its residential device goes offline. Both then continue together on a new IP.
+Connections made with the credential and the session's own traffic then exit from the same IP. The credential is valid for your plan's maximum session duration, but the shared IP holds only while its residential device stays online and can change without notice. Both then continue together on a new IP.
 
 <Note>
   `sticky_session` works with Notte's default residential pool. It cannot be combined with a static IP proxy or a proxy `id` that uses another pool.
