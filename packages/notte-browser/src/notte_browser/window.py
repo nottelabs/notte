@@ -35,16 +35,19 @@ from typing_extensions import override
 from notte_browser.dom.parsing import parse_dom
 from notte_browser.driver import Browser, BrowserContext, CDPSession, Locator, Page, Playwright, Request, Response
 from notte_browser.errors import (
+    AmbiguousSelectorError,
     BrowserExpiredError,
     EmptyPageContentError,
     FirstPageOfTabError,
     InvalidLocatorRuntimeError,
     InvalidProxyError,
+    InvalidSelectorError,
     InvalidURLError,
     PageLoadingError,
     PlaywrightError,
     PlaywrightTimeoutError,
     UnexpectedBrowserError,
+    classify_caller_playwright_error,
 )
 from notte_browser.js import script
 from notte_browser.settle import PageSettle, requests_of
@@ -593,17 +596,17 @@ class BrowserWindow:
             return await self.snapshot(screenshot=screenshot, retries=retries - 1, selector=selector, skip_dom=skip_dom)
 
         except Exception as e:
+            # Before the text checks below: the error quotes the selector, which can contain their words.
+            if selector and isinstance(
+                caller_error := classify_caller_playwright_error(e, selector=f"'{selector}'"),
+                (AmbiguousSelectorError, InvalidSelectorError),
+            ):
+                raise caller_error from e
             if "has been closed" in str(e):
                 raise BrowserExpiredError() from e
             if "Unable to retrieve content because the page is navigating and changing the content" in str(e):
                 # Should retry after the page is loaded
                 await self.short_wait()
-            elif "strict mode violation" in str(e):
-                # Extract selector from the error or use the one provided
-                selector_str = selector if selector else "unknown"
-                raise InvalidLocatorRuntimeError(
-                    message=f"Multiple elements found matching the selector. {str(e)}", selector=selector_str
-                ) from e
             elif "Locator." in str(e) and ("Timeout" in str(e) or "waiting for locator" in str(e)):
                 # Timeout error when waiting for a locator (element not found/visible)
                 selector_str = selector if selector else "unknown"
