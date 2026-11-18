@@ -36,6 +36,8 @@ You can override `heal`, `retry`, `status_code` or `code` as class attributes, a
 
 List exception class names in the Function's `expected_errors`. A failed run whose exception has one of these names anywhere in its class hierarchy ends as `rejected` and is not self-healed, exactly as if it subclassed `ExpectedFunctionError`:
 
+Set `function_id` (Python) or `functionId` (TypeScript) to your Function's ID.
+
 <ExpectedErrors />
 
 Over HTTP, send `PATCH /functions/{function_id}` with `{"expected_errors": ["AccountNotUnique"]}`. The list holds up to 50 Python class names. It belongs to the Function, so it applies to every run, whoever starts it.
