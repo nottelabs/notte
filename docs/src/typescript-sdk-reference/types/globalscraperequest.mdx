@@ -188,6 +188,12 @@ export type GlobalScrapeRequest = {
      */
     only_main_content?: boolean;
     /**
+     * Os
+     *
+     * The operating system the session's browser presents: windows or macos. When unset, each session gets one at random among those the environment offers.
+     */
+    os?: 'windows' | 'macos' | null;
+    /**
      * Response Format
      *
      * The response format to use for the scrape. Use a JSON Schema object; high-level Node scrape methods also accept a Zod schema
@@ -350,6 +356,10 @@ HTML tags to ignore from the page
 
 <ParamField body="only_main_content" type={"boolean | undefined"}>
 Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded.
+</ParamField>
+
+<ParamField body="os" type={"\"windows\" | \"macos\" | null | undefined"}>
+The operating system the session's browser presents: windows or macos. When unset, each session gets one at random among those the environment offers.
 </ParamField>
 
 <ParamField body="response_format" type={"unknown"}>

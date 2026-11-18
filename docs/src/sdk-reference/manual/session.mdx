@@ -74,6 +74,10 @@ You can use the default parameters to create your session, or customize them:
   Who answers JavaScript dialogs. "auto" (default): Notte dismisses alert, confirm and prompt and accepts beforeunload. "client": your CDP client accepts or dismisses them; Notte dismisses one nobody answers within 10 seconds.
 </ParamField>
 
+<ParamField path="os" type="typing.Literal['windows', 'macos'] | None">
+  The operating system the session's browser presents: windows or macos. When unset, each session gets one at random among those the environment offers.
+</ParamField>
+
 <ParamField path="record_session" type="bool" default={true}>
   Defaults to true. Set to false at session creation to disable saved replay for the entire session. Live View remains available.
 </ParamField>
