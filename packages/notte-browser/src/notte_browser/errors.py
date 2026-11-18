@@ -1,3 +1,4 @@
+import re
 import traceback
 from collections.abc import Awaitable
 from functools import wraps
@@ -250,6 +251,118 @@ class PlaywrightRuntimeError(NotteBaseError):
         )
 
 
+class InvalidActionTargetError(NotteBaseError):
+    """Playwright refused the action because of the selector or element the caller chose.
+
+    The caller can fix these by changing the selector, the target element or the value; retrying the same action
+    fails the same way.
+    """
+
+    def __init__(self, message: str, detail: str) -> None:
+        super().__init__(
+            dev_message=f"{message} Playwright error: {detail}",
+            user_message=message,
+            agent_message=f"{message}\nPlaywright error: {detail}",
+            should_retry_later=False,
+            should_notify_team=False,
+        )
+
+
+class AmbiguousSelectorError(InvalidActionTargetError):
+    def __init__(self, selector: str, count: int | None, detail: str) -> None:
+        matched = f"{count} elements" if count is not None else "more than one element"
+        super().__init__(
+            message=(
+                f"The selector {selector} matched {matched}, but an action needs a selector that matches exactly "
+                "one element. Make the selector more specific so that it is unique on the page."
+            ),
+            detail=detail,
+        )
+
+
+class ElementNotFillableError(InvalidActionTargetError):
+    def __init__(self, reason: str, detail: str) -> None:
+        super().__init__(
+            message=(
+                f"The element the selector matched cannot be filled: {reason}. Target an editable <input>, a "
+                "<textarea> or a [contenteditable] element instead."
+            ),
+            detail=detail,
+        )
+
+
+class InvalidFillValueError(InvalidActionTargetError):
+    def __init__(self, reason: str, detail: str) -> None:
+        super().__init__(
+            message=(
+                f"The element the selector matched rejected the value: {reason}. Use a value in the input's format "
+                "(for example YYYY-MM-DD for a date input, digits for a number input)."
+            ),
+            detail=detail,
+        )
+
+
+class ElementTypeMismatchError(InvalidActionTargetError):
+    def __init__(self, reason: str, detail: str) -> None:
+        super().__init__(
+            message=f"The element the selector matched does not support this action: {reason}. Target another element.",
+            detail=detail,
+        )
+
+
+class InvalidSelectorError(InvalidActionTargetError):
+    def __init__(self, reason: str, detail: str) -> None:
+        reason = reason.rstrip(".")
+        end = "" if reason.endswith(("?", "!")) else "."
+        super().__init__(
+            message=f"The selector is not valid: {reason}{end} Fix its syntax and try again.",
+            detail=detail,
+        )
+
+
+_STRICT_MODE_VIOLATION = re.compile(r"strict mode violation: (?P<selector>.+?) resolved to (?P<count>\d+) elements")
+_INPUT_TYPE_NOT_FILLABLE = re.compile(r'Input of type "(?P<type>[^"]*)" cannot be filled')
+_NOT_FILLABLE = "Element is not an <input>, <textarea> or [contenteditable] element"
+_NUMBER_INPUT = "Cannot type text into input[type=number]"
+_MALFORMED_VALUE = "Malformed value"
+_NOT_A_SELECT = "Element is not a <select> element"
+_NOT_A_CHECKBOX = "Not a checkbox or radio button"
+_SELECTOR_PARSE = re.compile(
+    r"^(?:\w+\.\w+: )?(?:Error: )?(?P<reason>.*while parsing (?:css )?selector.*)$", re.MULTILINE
+)
+
+
+def classify_caller_playwright_error(error: Exception, selector: str | None = None) -> InvalidActionTargetError | None:
+    """The caller-input error a Playwright error stands for, or `None` when it is not one.
+
+    `selector` names the selector when the caller knows it; otherwise it is read from the error.
+    """
+    detail = str(error)
+    if match := _STRICT_MODE_VIOLATION.search(detail):
+        return AmbiguousSelectorError(
+            selector=selector or match.group("selector"), count=int(match.group("count")), detail=detail
+        )
+    if "strict mode violation" in detail:
+        return AmbiguousSelectorError(selector=selector or "used", count=None, detail=detail)
+    if match := _INPUT_TYPE_NOT_FILLABLE.search(detail):
+        return ElementNotFillableError(reason=f'it is an input of type "{match.group("type")}"', detail=detail)
+    if _NOT_FILLABLE in detail:
+        return ElementNotFillableError(
+            reason="it is not an <input>, <textarea> or [contenteditable] element", detail=detail
+        )
+    if _NUMBER_INPUT in detail:
+        return InvalidFillValueError(reason="a number input does not accept text", detail=detail)
+    if _MALFORMED_VALUE in detail:
+        return InvalidFillValueError(reason="the value does not match the input's format", detail=detail)
+    if _NOT_A_SELECT in detail:
+        return ElementTypeMismatchError(reason="it is not a <select> element", detail=detail)
+    if _NOT_A_CHECKBOX in detail:
+        return ElementTypeMismatchError(reason="it is not a checkbox or radio button", detail=detail)
+    if match := _SELECTOR_PARSE.search(detail):
+        return InvalidSelectorError(reason=match.group("reason").strip(), detail=detail)
+    return None
+
+
 def capture_playwright_errors():
     """Decorator to handle playwright errors.
 
@@ -276,6 +389,9 @@ def capture_playwright_errors():
                 raise NotteTimeoutError(message="Request timed out.") from e
             # Add more except blocks for other external errors
             except PlaywrightError as e:
+                caller_error = classify_caller_playwright_error(e)
+                if caller_error is not None:
+                    raise caller_error from e
                 raise NotteBaseError(
                     dev_message=f"Unexpected playwright error: {str(e)}",
                     user_message="An unexpected error occurred. Our team has been notified.",

@@ -45,6 +45,7 @@ from notte_browser.errors import (
     PlaywrightError,
     PlaywrightTimeoutError,
     UnexpectedBrowserError,
+    classify_caller_playwright_error,
 )
 from notte_browser.js import script
 from notte_browser.settle import PageSettle, requests_of
@@ -602,11 +603,8 @@ class BrowserWindow:
                 # Should retry after the page is loaded
                 await self.short_wait()
             elif "strict mode violation" in str(e):
-                # Extract selector from the error or use the one provided
-                selector_str = selector if selector else "unknown"
-                raise InvalidLocatorRuntimeError(
-                    message=f"Multiple elements found matching the selector. {str(e)}", selector=selector_str
-                ) from e
+                caller_error = classify_caller_playwright_error(e, selector=f"'{selector}'" if selector else None)
+                raise (caller_error or UnexpectedBrowserError(url=self.page.url)) from e
             elif "Locator." in str(e) and ("Timeout" in str(e) or "waiting for locator" in str(e)):
                 # Timeout error when waiting for a locator (element not found/visible)
                 selector_str = selector if selector else "unknown"
