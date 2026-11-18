@@ -8,6 +8,7 @@ import asyncio
 import inspect
 import random
 import sys
+import typing
 from collections.abc import AsyncIterator, Callable, Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -50,6 +51,31 @@ PENDING = {
 }
 # Async resource methods that stay plain methods: they only format text and send nothing.
 NOT_COROUTINES = {"functions": {"decode_message", "get_curl"}}
+# Async resource methods that are async iterators: their sync twin returns `Iterator[X]`, they
+# return `AsyncIterator[X]`. The session objects have them under the same names.
+ASYNC_ITERATORS = {"sessions": {"iter_steps"}}
+
+
+def same_iterator_signature(sync: Callable[..., Any], async_: Callable[..., Any]) -> None:
+    """A generator and its async-generator twin: same parameters, `Iterator[X]` and `AsyncIterator[X]`."""
+    assert inspect.isasyncgenfunction(async_), async_
+    assert inspect.isgeneratorfunction(sync), sync
+    sync_signature, async_signature = inspect.signature(sync), inspect.signature(async_)
+    assert async_signature.parameters == sync_signature.parameters, sync.__qualname__
+    assert typing.get_origin(sync_signature.return_annotation) is Iterator, sync.__qualname__
+    assert typing.get_origin(async_signature.return_annotation) is AsyncIterator, async_.__qualname__
+    assert typing.get_args(async_signature.return_annotation) == typing.get_args(sync_signature.return_annotation)
+
+
+def collect(items: Iterator[Any] | AsyncIterator[Any]) -> Any:
+    """The items of an iterator method, for `exchange_sync` (a list) and `exchange_async` (a coroutine)."""
+    if isinstance(items, AsyncIterator):
+
+        async def drain(iterator: AsyncIterator[Any]) -> list[Any]:
+            return [item async for item in iterator]
+
+        return drain(items)
+    return list(items)
 
 
 @pytest.fixture(autouse=True)
@@ -169,6 +195,10 @@ def test_async_twins_have_the_same_signatures(name: str) -> None:
         # The sync client's method: generated, or the hand-written override.
         sync_method = getattr(sync, method)
         async_method = getattr(async_, method)
+        if method in ASYNC_ITERATORS.get(name, set()):
+            same_iterator_signature(sync_method, async_method)
+            assert inspect.getdoc(async_method) == inspect.getdoc(sync_method), method
+            continue
         assert inspect.iscoroutinefunction(async_method) is (method not in NOT_COROUTINES.get(name, set())), method
         assert not inspect.iscoroutinefunction(sync_method), method
         assert inspect.signature(async_method) == inspect.signature(sync_method), method
@@ -480,9 +510,14 @@ async def test_every_async_method_sends_what_its_sync_twin_sends(
             args[positional.index(name)] = value
         else:
             kwargs[name] = value
-    exchange = await assert_same_exchange(
-        monkeypatch, answer({}), lambda c: getattr(getattr(c, resource), method)(*args, **kwargs)
-    )
+    if method in ASYNC_ITERATORS.get(resource, set()):
+        exchange = await assert_same_exchange(
+            monkeypatch, answer({}), lambda c: collect(getattr(getattr(c, resource), method)(*args, **kwargs))
+        )
+    else:
+        exchange = await assert_same_exchange(
+            monkeypatch, answer({}), lambda c: getattr(getattr(c, resource), method)(*args, **kwargs)
+        )
     # Equal and empty would prove nothing: each case must reach the wire.
     assert exchange.calls, f"{resource}.{method} sent no request: {exchange.outcome}"
 

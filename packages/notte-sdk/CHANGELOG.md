@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased: session steps page by page
+
+`client.sessions.steps(session_id, cursor=None, limit=None)` returns one page of a session's steps
+(`SessionStepsResponse`: `steps` and `next_cursor`), from `GET /sessions/{session_id}/steps`.
+`client.sessions.iter_steps(session_id, limit=None)` yields every step, following `next_cursor`.
+Session objects have both as `session.steps(...)` and `session.iter_steps(...)`, and `AsyncNotteClient`
+has them as a coroutine and an async iterator. Steps have the shape of `status().steps`, which is
+unchanged. The cursor is opaque; a 400 means it is no longer valid, and reading restarts from the
+first page (`iter_steps` raises the `NotteAPIError` rather than yield the first steps again). This
+needs an API that serves the route.
+
 ## Unreleased: typed function errors and `rejected` runs
 
 `notte_sdk.errors` adds `FunctionError`, `ExpectedFunctionError` and `RetryableFunctionError`, also
