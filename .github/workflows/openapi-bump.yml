@@ -155,12 +155,14 @@ jobs:
           TIP: ${{ needs.owner.outputs.tip }}
         run: |
           set -euo pipefail
-          read -r PR_NUMBER HEAD < <(gh pr list --head "$BRANCH" --base main --state open \
+          # A standalone assignment, so a failed lookup fails the step.
+          PR=$(gh pr list --head "$BRANCH" --base main --state open \
             --json number,headRefOid,isCrossRepository \
-            --jq '[.[] | select(.isCrossRepository | not)][0] // empty | "\(.number) \(.headRefOid)"') || true
-          if [ -z "${PR_NUMBER:-}" ]; then
+            --jq '[.[] | select(.isCrossRepository | not)][0] // empty | "\(.number) \(.headRefOid)"')
+          if [ -z "$PR" ]; then
             exit 0
           fi
+          read -r PR_NUMBER HEAD <<<"$PR"
           if [ "$HEAD" != "$TIP" ]; then
             echo "::notice::Refresh PR #$PR_NUMBER moved since the owner check; leaving it open."
             exit 0
