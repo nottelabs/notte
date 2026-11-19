@@ -1177,9 +1177,12 @@ async def test_a_closing_popup_ignores_other_tabs_navigating_during_element_look
     original_click = Locator.click
 
     async def locate_with_unrelated_navigation(
-        window: BrowserWindow, action: InteractionAction, snapshot: BrowserSnapshot | None
+        window: BrowserWindow,
+        action: InteractionAction,
+        snapshot: BrowserSnapshot | None,
+        budget: execution_module._ActionBudget,  # pyright: ignore[reportPrivateUsage]
     ) -> Locator:
-        locator = await original_locate(window, action, snapshot)
+        locator = await original_locate(window, action, snapshot, budget)
         await other.goto(f"{site}/second")
         return locator
 
