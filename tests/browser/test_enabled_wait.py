@@ -150,6 +150,32 @@ async def test_the_wait_ends_with_its_share_of_the_timeout(monkeypatch: pytest.M
     assert clock.now <= 0.6 + 1e-9
 
 
+class _EnabledLater:
+    """A control that is disabled at the first look and enabled at the second."""
+
+    def __init__(self) -> None:
+        self.looks: int = 0
+
+    async def evaluate(self, expression: str, *, timeout: float) -> bool:
+        self.looks += 1
+        return self.looks == 1
+
+
+@pytest.mark.asyncio
+async def test_the_wait_ends_as_soon_as_the_control_is_enabled(monkeypatch: pytest.MonkeyPatch) -> None:
+    clock = _Clock()
+    monkeypatch.setattr(execution_module, "asyncio", clock)
+    control = _EnabledLater()
+    action = ClickAction(selector="css=#go", timeout=1000)
+    budget = execution_module._ActionBudget(deadline=1.0)  # pyright: ignore[reportPrivateUsage]
+
+    disabled = await execution_module._stays_disabled(cast(Locator, control), action, budget)  # pyright: ignore[reportPrivateUsage]
+
+    assert not disabled
+    assert clock.pauses == [0.1]
+    assert control.looks == 2
+
+
 @pytest.mark.asyncio
 async def test_a_lookup_that_used_the_share_leaves_no_wait(monkeypatch: pytest.MonkeyPatch) -> None:
     """The lookup and this wait share the same three fifths: an element found at the end of them is not waited
