@@ -282,7 +282,7 @@ async def test_click_disabled_ancestor_returns_failed_result() -> None:
             </main>
         """)
 
-        result = await session.aexecute(type="click", selector="#target", raise_on_failure=False)
+        result = await session.aexecute(type="click", selector="#target", timeout=1000, raise_on_failure=False)
 
         assert result.success is False
         assert result.message is not None

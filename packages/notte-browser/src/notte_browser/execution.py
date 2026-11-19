@@ -86,6 +86,8 @@ from notte_browser.window import BrowserWindow
 
 _BLUR_ACTIVE_ELEMENT = script("blur_active_element.js")
 _IS_DISABLED = script("is_disabled.js")
+# how often a disabled control is looked at again
+_ENABLED_POLL_S = 0.1
 _SELECT_HIDDEN_OPTION = script("select_hidden_option.js")
 _PASTE_TEXT = script("paste_text.js")
 # Page-side implementation: js/file_input_clicks.js
@@ -939,6 +941,33 @@ async def _locate(
         return await locate_element(window.page, selectors)
 
 
+async def _stays_disabled(locator: Locator, action: InteractionAction, budget: _ActionBudget) -> bool:
+    """Whether the element of a click is disabled, so that the click would do nothing.
+
+    A control its caller located with a selector of their own can be disabled while the page gets ready (a form
+    that hydrates, a Save button until its field is validated): it is looked at again until it is enabled, within
+    the share of the timeout the lookup had (see `_locate`). An observed element is refused at once.
+
+    A look waits for a control the page took away (a re-render replaces it), until the end of this wait at most:
+    one that is not back by then is still counted as disabled, and the time kept for the click is not spent."""
+    disabled: bool = await locator.evaluate(_IS_DISABLED, timeout=budget.remaining_ms())
+    if not disabled or action.id:
+        return disabled
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + budget.remaining_ms(keep_ms=2 * action.timeout / 5) / 1000
+    while disabled:
+        left_s = deadline - loop.time()
+        if left_s <= 0:
+            break
+        await asyncio.sleep(min(_ENABLED_POLL_S, left_s))
+        try:
+            # never 0, which is no timeout for the browser
+            disabled = await locator.evaluate(_IS_DISABLED, timeout=max(1.0, (deadline - loop.time()) * 1000))
+        except PlaywrightTimeoutError:
+            break
+    return disabled
+
+
 def _observed_node(action: InteractionAction, snapshot: BrowserSnapshot | None) -> DomNode | None:
     """The observed node an action targets, when it was located with that node's selectors (an empty XPath is
     the default of selectors given as a dict)."""
@@ -1009,11 +1038,7 @@ async def _interact(
     match action:
         # Interaction actions
         case ClickAction():
-            is_disabled = await locator.evaluate(
-                _IS_DISABLED,
-                timeout=budget.remaining_ms(),
-            )
-            if is_disabled:
+            if await _stays_disabled(locator, action, budget):
                 raise ActionExecutionError(action.id, window.page.url, reason="Element is disabled")
             # the JS click that reports its input, when the click's input is tracked
             js_click_with_input = None if before_click is None else await before_click(locator)
