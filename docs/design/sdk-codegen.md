@@ -162,7 +162,8 @@ Backend should publish these routes; none is added to the committed spec here:
 - `POST /functions/{id}/runs/create` and `POST /functions/{id}/runs/{run_id}`.
 - `POST /managed-auth/connections/{id}/check`, `/refresh`, `/reauthenticate`.
 - `GET /managed-auth/operations/{id}`.
-- `GET /sessions/{id}/steps` (`sessions.steps`, `sessions.iter_steps`); the API is adding it.
+- `GET /sessions/{id}/steps` (`sessions.steps`, `sessions.iter_steps`; Node `sessions.steps`,
+  `sessions.iterSteps`); the API is adding it.
 
 ## Generation and gates
 

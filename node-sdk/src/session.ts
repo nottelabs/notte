@@ -52,6 +52,14 @@ import {
 import { openBrowser } from '@/utils';
 import { backoffDelayMs, isRetryableNetworkError, isRetryableStatus, retryDelayMs } from '@/retry';
 import type { RemoteFileStorage } from '@/files';
+import {
+  getSessionSteps,
+  iterSessionSteps,
+  type SessionStep,
+  type SessionStepsIterOptions,
+  type SessionStepsOptions,
+  type SessionStepsResponse,
+} from '@/session-steps';
 
 /** Number of attempts `start()` makes on 5xx errors, like `RemoteSession.start(tries=3)`. */
 export const SESSION_START_TRIES = 3;
@@ -699,6 +707,38 @@ export class Session {
       throwOnError: true,
     });
     return response.data;
+  }
+
+  /**
+   * Get one page of the session's steps. Each step has the shape of an item of
+   * `status().steps`. Pass the page's `next_cursor` back as `cursor`, as is, to
+   * get the next page; it is `null` on the last page. Works after `stop()`.
+   *
+   * @throws NotteAPIError with status 400 when `cursor` is no longer valid: restart from the first page (no `cursor`).
+   * @example
+   * let page = await session.steps({ limit: 50 });
+   * while (page.next_cursor !== null) {
+   *   page = await session.steps({ cursor: page.next_cursor, limit: 50 });
+   * }
+   */
+  async steps(options: SessionStepsOptions = {}): Promise<SessionStepsResponse> {
+    return getSessionSteps(this.client, this.lastSessionId(), options);
+  }
+
+  /**
+   * Iterate over all of the session's steps, following `next_cursor` page by page.
+   * A cursor that is no longer valid stops the iteration with a `NotteAPIError`
+   * with status 400, after the steps already yielded; it is not restarted here,
+   * since that would yield those steps again. To read the steps again, start a
+   * new iteration. Works after `stop()`.
+   *
+   * @example
+   * for await (const step of session.iterSteps({ limit: 50 })) {
+   *   console.log(step);
+   * }
+   */
+  async *iterSteps(options: SessionStepsIterOptions = {}): AsyncGenerator<SessionStep, void, undefined> {
+    yield* iterSessionSteps(this.client, this.lastSessionId(), options);
   }
 
   // #######################################################################
