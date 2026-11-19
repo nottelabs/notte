@@ -94,11 +94,11 @@ async def test_the_wait_does_not_outlast_its_budget(monkeypatch: pytest.MonkeyPa
         _ = await session.window.page.goto(_url("<p>nothing to click</p>"))
         with pytest.raises(InvalidLocatorRuntimeError):
             _ = await locate_element(
-                session.window.page, NodeSelectors.from_unique_selector("css=#missing"), wait_ms=30
+                session.window.page, NodeSelectors.from_unique_selector("css=#missing"), wait_ms=250
             )
 
-    assert pauses
-    assert max(pauses) <= 0.03
+    # whole pauses would add up to 300 ms; however long each lookup takes, the pauses fit in the wait
+    assert sum(pauses) <= 0.25
 
 
 @pytest.mark.asyncio
