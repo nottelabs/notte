@@ -33,10 +33,9 @@ ReplayResponse: expires_at nullable api=False sdk=True
 RunFunctionRequest: api-only field callback_url
 RunFunctionRequest: api-only field version
 RunFunctionRequest: variables required api=False sdk=True
-RunFunctionRequest: workflow_id (read as function_id) required api=False sdk=True
-RunFunctionRequest: workflow_id (read as function_id) nullable api=True sdk=False
 ScrapeRequest: api-only field only_images
-SessionResponse: api-only field started_without_proxy
-SessionResponse: api-only field warnings
+# Session step readers accept omitted fields as an empty final page (test_session_steps.py).
+SessionStepsResponse: next_cursor required api=True sdk=False
+SessionStepsResponse: steps required api=True sdk=False
 SessionStartRequest: api-only field screenshot_type
 SessionStartRequest: api-only field demonstrate

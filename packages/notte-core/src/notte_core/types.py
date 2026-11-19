@@ -1572,6 +1572,11 @@ class SecretProxySummary(SdkResponse):
     ] = Field(default_factory=list)
 
 
+class SessionWarning(SdkResponse):
+    code: Annotated[str, Field(description="Stable machine-readable warning code.")]
+    message: Annotated[str, Field(description="Human-readable explanation of the warning.")]
+
+
 class SessionResponse(SdkResponse):
     record_session: bool = Field(default=True, description="Whether saved session replay is enabled. Defaults to true.")
     log_session: bool = Field(
@@ -1680,6 +1685,26 @@ class SessionResponse(SdkResponse):
             description="Whether the session can be paused now (POST /sessions/{session_id}/pause). Only in a status read."
         ),
     ] = False
+    started_without_proxy: Annotated[
+        bool,
+        Field(
+            description=(
+                "True when the session asked for the default managed proxy, none was available, and it started "
+                "without a proxy instead (its traffic leaves from Notte's own IP addresses). A workspace turns "
+                "this fallback off in Settings > Proxies; its starts then fail instead."
+            )
+        ),
+    ] = False
+    warnings: Annotated[
+        list[SessionWarning],
+        Field(
+            description=(
+                "Conditions the session started with that the caller should know about, such as "
+                "`PROXY_UNAVAILABLE_NO_PROXY_FALLBACK` when no managed proxy was available and the session "
+                "runs without one."
+            )
+        ),
+    ] = []
 
     @field_validator("closed_at", mode="before")
     @classmethod
@@ -2705,7 +2730,7 @@ class RunFunctionRequestDict(TypedDict, total=False):
         local: Whether to run the function locally.
     """
 
-    function_id: str
+    function_id: str | None
     variables: dict[str, Any]
     stream: bool
     runtime: FunctionRuntime | None
@@ -2713,9 +2738,12 @@ class RunFunctionRequestDict(TypedDict, total=False):
 
 class RunFunctionRequest(SdkRequest):
     function_id: Annotated[
-        str,
-        Field(description="The ID of the function to run", validation_alias=AliasChoices("workflow_id", "function_id")),
-    ]
+        str | None,
+        Field(
+            description="The ID of the function to run. Optional: the path already names it.",
+            validation_alias=AliasChoices("workflow_id", "function_id"),
+        ),
+    ] = None
     variables: Annotated[dict[str, Any], Field(description="The variables to run the function with")]
     runtime: Annotated[
         FunctionRuntime | None, Field(description="Override the saved function runtime; omit to inherit its default")

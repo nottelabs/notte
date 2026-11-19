@@ -4,7 +4,7 @@ import asyncio
 import json
 import re
 from collections.abc import Generator
-from typing import TYPE_CHECKING, Any, ClassVar, Self, Unpack, cast, final, overload
+from typing import TYPE_CHECKING, Any, ClassVar, Self, Unpack, final, overload
 
 from notte_core.errors import NotteBaseError
 from notte_core.logging import logger
@@ -254,7 +254,9 @@ def _run_start_request(
 ) -> tuple[str, bool, WireRequest, dict[str, str]]:
     """The function ID, stream flag, request body and headers of `run_start`."""
     # Reversible SDK normalization: legacy workflow spelling wins, as in AliasChoices.
-    function_id = cast(str, data.get("workflow_id", data.get("function_id")))
+    function_id = data.get("workflow_id", data.get("function_id"))
+    if not isinstance(function_id, str) or not function_id.strip():
+        raise ValueError("run_start requires a non-empty function_id (or legacy workflow_id).")
     stream = data.get("stream", True)
     values = {
         "workflow_id": function_id,

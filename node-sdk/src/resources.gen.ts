@@ -264,6 +264,7 @@ export function createResources(client: Client, getApiKey: () => string) {
     },
     /** functionRunStart: /functions/{function_id}/runs/start. Returns the API response body. */
     runStart: async (functionId: Types.FunctionRunStartData['path']["function_id"], body: Types.FunctionRunStartData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.FunctionRunStartData['headers']>, 'x-notte-api-key'> } = {}) => {
+      if (typeof functionId !== 'string' || !functionId.trim()) throw new TypeError('runStart requires a non-empty functionId.');
       const response = await operations.functionRunStart({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers, 'x-notte-api-key': getApiKey() }, path: { "function_id": functionId }, body });
       return response.data;
     },
