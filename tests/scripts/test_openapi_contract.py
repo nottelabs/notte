@@ -100,6 +100,22 @@ def test_requiredness_is_compared_through_the_alias() -> None:
     ]
 
 
+@pytest.mark.parametrize(
+    "prop",
+    [
+        {"anyOf": [{"type": "string"}, {"type": "null"}]},
+        {"type": ["string", "null"]},
+    ],
+    ids=["any-of", "type-list"],
+)
+def test_both_ways_of_writing_a_nullable_field_are_nullable(prop: dict[str, Any]) -> None:
+    assert contract._nullable(prop)  # pyright: ignore[reportPrivateUsage]
+
+
+def test_a_type_list_without_null_is_not_nullable() -> None:
+    assert not contract._nullable({"type": ["string", "integer"]})  # pyright: ignore[reportPrivateUsage]
+
+
 def test_unknown_names_are_still_drift() -> None:
     schema = _schema({"pipeline_id": {"type": "string"}, "variables": {"type": "object"}}, ["pipeline_id"])
     assert contract._model_drift("RunRequest", RunRequest, schema) == [  # pyright: ignore[reportPrivateUsage]

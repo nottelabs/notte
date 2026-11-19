@@ -2342,24 +2342,6 @@ export type DeleteFunctionResponse = {
 };
 
 /**
- * DeletePersonaResponse
- */
-export type DeletePersonaResponse = {
-    /**
-     * Status
-     *
-     * Status of the deletion
-     */
-    status: 'success' | 'failure';
-    /**
-     * Message
-     *
-     * Message of the deletion
-     */
-    message?: string;
-};
-
-/**
  * DeleteVaultResponse
  */
 export type DeleteVaultResponse = {
@@ -2598,36 +2580,6 @@ export type ElementState = {
 };
 
 /**
- * EmailAttachment
- */
-export type EmailAttachment = {
-    /**
-     * Filename
-     *
-     * Filename, as the sender named it
-     */
-    filename: string;
-    /**
-     * Content Type
-     *
-     * MIME type, as the sender declared it
-     */
-    content_type: string;
-    /**
-     * Size Bytes
-     *
-     * Size in bytes
-     */
-    size_bytes: number;
-    /**
-     * Download Url
-     *
-     * Signed download URL, valid for one hour
-     */
-    download_url: string;
-};
-
-/**
  * EmailReadAction
  */
 export type EmailReadAction = {
@@ -2661,66 +2613,6 @@ export type EmailReadAction = {
      * Return only previously unread emails
      */
     only_unread?: boolean;
-};
-
-/**
- * EmailResponse
- */
-export type EmailResponse = {
-    /**
-     * Subject
-     *
-     * Subject of the email
-     */
-    subject: string;
-    /**
-     * Email Id
-     *
-     * Email UUID
-     */
-    email_id: string;
-    /**
-     * Created At
-     *
-     * Creation date
-     */
-    created_at: string;
-    /**
-     * Sender Email
-     *
-     * Email address of the sender
-     */
-    sender_email: string | null;
-    /**
-     * Sender Name
-     *
-     * Name (if available) of the sender
-     */
-    sender_name: string | null;
-    /**
-     * Text Content
-     *
-     * Raw textual body, can be uncorrelated with html content
-     */
-    text_content?: string | null;
-    /**
-     * Html Content
-     *
-     * HTML body, can be uncorrelated with raw content
-     */
-    html_content?: string | null;
-    /**
-     * Attachments
-     *
-     * Files attached to the email, with short-lived download URLs
-     */
-    attachments?: Array<EmailAttachment>;
-    /**
-     * Read
-     *
-     * Whether the email was read before this request
-     */
-    read: boolean;
 };
 
 /**
@@ -4591,28 +4483,6 @@ export type HelpAction = {
 };
 
 /**
- * HostPresetEntry
- */
-export type HostPresetEntry = {
-    /**
-     * Host
-     */
-    host: string;
-    /**
-     * Provider
-     */
-    provider: string;
-    /**
-     * Evidence
-     */
-    evidence: 'observed' | 'documented';
-    /**
-     * Source
-     */
-    source: string;
-};
-
-/**
  * ImageResolution
  */
 export type ImageResolution = {
@@ -5888,32 +5758,6 @@ export type PaginatedResponsePaymentListItem = {
 };
 
 /**
- * PaginatedResponse[PersonaResponse]
- */
-export type PaginatedResponsePersonaResponse = {
-    /**
-     * Items
-     */
-    items: Array<PersonaResponse>;
-    /**
-     * Page
-     */
-    page: number;
-    /**
-     * Page Size
-     */
-    page_size: number;
-    /**
-     * Has Next
-     */
-    has_next: boolean;
-    /**
-     * Has Previous
-     */
-    readonly has_previous: boolean;
-};
-
-/**
  * PaginatedResponse[ProfileResponse]
  */
 export type PaginatedResponseProfileResponse = {
@@ -6587,113 +6431,6 @@ export type PersonRole = {
 };
 
 /**
- * PersonaCreateRequest
- */
-export type PersonaCreateRequest = {
-    /**
-     * Create Vault
-     *
-     * Whether to create a vault for the persona
-     */
-    create_vault?: boolean;
-    /**
-     * Create Phone Number
-     *
-     * Whether to create a phone number for the persona
-     */
-    create_phone_number?: boolean;
-    email_provider?: PersonaEmailProvider;
-    /**
-     * Name
-     */
-    name?: string | null;
-    /**
-     * Email Domain
-     *
-     * Domain of the persona's email address, for the `notte` provider only. Defaults to the standard domain; other configured domains are listed by GET /personas/create/email-domains.
-     */
-    email_domain?: string | null;
-};
-
-export type PersonaEmailProvider = 'notte' | 'agentmail' | 'resend';
-
-/**
- * PersonaResponse
- */
-export type PersonaResponse = {
-    /**
-     * Persona Id
-     *
-     * ID of the created persona
-     */
-    persona_id: string;
-    /**
-     * Status
-     *
-     * Status of the persona (active, closed)
-     */
-    status: string;
-    /**
-     * First Name
-     *
-     * First name of the persona
-     */
-    first_name: string;
-    /**
-     * Last Name
-     *
-     * Last name of the persona
-     */
-    last_name: string;
-    /**
-     * Email
-     *
-     * Public, human-readable email address of the persona
-     */
-    email: string;
-    /**
-     * Internal Email
-     *
-     * Internal UUID-backed mailbox address of the persona
-     */
-    internal_email: string;
-    /**
-     * Vault Id
-     *
-     * ID of the vault
-     */
-    vault_id: string | null;
-    /**
-     * Phone Number
-     *
-     * Phone number of the persona (optional)
-     */
-    phone_number: string | null;
-    /**
-     * Provider hosting the persona mailbox
-     */
-    email_provider?: PersonaEmailProvider;
-    /**
-     * Name
-     */
-    name?: string | null;
-    /**
-     * Created At
-     */
-    created_at: string;
-};
-
-/**
- * PersonaUpdateRequest
- */
-export type PersonaUpdateRequest = {
-    /**
-     * Name
-     */
-    name: string;
-};
-
-/**
  * PressKeyAction
  */
 export type PressKeyAction = {
@@ -7282,42 +7019,6 @@ export type RuntimePackage = {
 };
 
 /**
- * SMSResponse
- */
-export type SmsResponse = {
-    /**
-     * Body
-     *
-     * SMS message body
-     */
-    body: string;
-    /**
-     * Sms Id
-     *
-     * SMS UUID
-     */
-    sms_id: string;
-    /**
-     * Created At
-     *
-     * Creation date
-     */
-    created_at: string;
-    /**
-     * Sender
-     *
-     * SMS sender phone number
-     */
-    sender: string | null;
-    /**
-     * Read
-     *
-     * Whether the message was read before this request
-     */
-    read: boolean;
-};
-
-/**
  * ScheduleDeleteResponse
  */
 export type ScheduleDeleteResponse = {
@@ -7847,46 +7548,6 @@ export type SecretProxy = {
      * Hosts routed through the secret proxy: exact hostnames or a leading '*.' wildcard, without scheme, path or port, or '*' to route every host (the secret proxy then decides where to swap; '*' replaces any other entry). Required with `server`. A host preset such as `@payments` stands for a list Notte maintains (common payment providers); `GET /secret-proxy/host-presets` returns each preset's current hosts.
      */
     hosts?: Array<string> | null;
-};
-
-/**
- * SecretProxyHostPresetResponse
- */
-export type SecretProxyHostPresetResponse = {
-    /**
-     * Name
-     */
-    name: string;
-    /**
-     * Token
-     */
-    token: string;
-    /**
-     * Version
-     */
-    version: string;
-    /**
-     * Description
-     */
-    description: string;
-    /**
-     * Hosts
-     */
-    hosts: Array<string>;
-    /**
-     * Entries
-     */
-    entries: Array<HostPresetEntry>;
-};
-
-/**
- * SecretProxyHostPresetsResponse
- */
-export type SecretProxyHostPresetsResponse = {
-    /**
-     * Presets
-     */
-    presets: Array<SecretProxyHostPresetResponse>;
 };
 
 /**
@@ -8467,6 +8128,26 @@ export type SessionResponse = {
      */
     readonly timeout_minutes: number;
     [key: string]: unknown;
+};
+
+/**
+ * SessionStepsResponse
+ */
+export type SessionStepsResponse = {
+    /**
+     * Steps
+     *
+     * The session's steps on this page, oldest first, in the format of the session status `steps`.
+     */
+    steps: Array<{
+        [key: string]: unknown;
+    }>;
+    /**
+     * Next Cursor
+     *
+     * Pass as `cursor` to read the next page. Null when the page ends with the session's latest step; an active session can add more later.
+     */
+    next_cursor: string | null;
 };
 
 /**
@@ -9500,6 +9181,162 @@ export type AuditEventListResponse = {
 };
 
 /**
+ * DeletePersonaResponse
+ */
+export type DeletePersonaResponse = {
+    /**
+     * Message
+     *
+     * Message of the deletion
+     */
+    message?: string;
+    /**
+     * Status
+     *
+     * Status of the deletion
+     */
+    status: 'success' | 'failure';
+};
+
+/**
+ * EmailAttachment
+ */
+export type EmailAttachment = {
+    /**
+     * Content Type
+     *
+     * MIME type, as the sender declared it
+     */
+    content_type: string;
+    /**
+     * Download Url
+     *
+     * Signed download URL, valid for one hour
+     */
+    download_url: string;
+    /**
+     * Filename
+     *
+     * Filename, as the sender named it
+     */
+    filename: string;
+    /**
+     * Size Bytes
+     *
+     * Size in bytes
+     */
+    size_bytes: number;
+};
+
+/**
+ * EmailResponse
+ */
+export type EmailResponse = {
+    /**
+     * Attachments
+     *
+     * Files attached to the email, with short-lived download URLs
+     */
+    attachments?: Array<EmailAttachment>;
+    /**
+     * Created At
+     *
+     * Creation date
+     */
+    created_at: string;
+    /**
+     * Email Id
+     *
+     * Email UUID
+     */
+    email_id: string;
+    /**
+     * Html Content
+     *
+     * HTML body, can be uncorrelated with raw content
+     */
+    html_content?: string | null;
+    /**
+     * Read
+     *
+     * Whether the email was read before this request
+     */
+    read: boolean;
+    /**
+     * Sender Email
+     *
+     * Email address of the sender
+     */
+    sender_email: string | null;
+    /**
+     * Sender Name
+     *
+     * Name (if available) of the sender
+     */
+    sender_name: string | null;
+    /**
+     * Subject
+     *
+     * Subject of the email
+     */
+    subject: string;
+    /**
+     * Text Content
+     *
+     * Raw textual body, can be uncorrelated with html content
+     */
+    text_content?: string | null;
+};
+
+/**
+ * HostPresetEntry
+ */
+export type HostPresetEntry = {
+    /**
+     * Evidence
+     */
+    evidence: 'observed' | 'documented';
+    /**
+     * Host
+     */
+    host: string;
+    /**
+     * Provider
+     */
+    provider: string;
+    /**
+     * Source
+     */
+    source: string;
+};
+
+/**
+ * PaginatedResponse[PersonaResponse]
+ */
+export type PaginatedResponsePersonaResponse = {
+    /**
+     * Has Next
+     */
+    has_next: boolean;
+    /**
+     * Has Previous
+     */
+    readonly has_previous: boolean;
+    /**
+     * Items
+     */
+    items: Array<PersonaResponse>;
+    /**
+     * Page
+     */
+    page: number;
+    /**
+     * Page Size
+     */
+    page_size: number;
+};
+
+/**
  * PaginatedResponse[UsageLog]
  */
 export type PaginatedResponseUsageLog = {
@@ -9523,6 +9360,201 @@ export type PaginatedResponseUsageLog = {
      * Page Size
      */
     page_size: number;
+};
+
+/**
+ * PersonaCreateRequest
+ */
+export type PersonaCreateRequest = {
+    /**
+     * Create Phone Number
+     *
+     * Whether to create a phone number for the persona
+     */
+    create_phone_number?: boolean;
+    /**
+     * Create Vault
+     *
+     * Whether to create a vault for the persona
+     */
+    create_vault?: boolean;
+    /**
+     * Email Domain
+     *
+     * Domain of the persona's email address, for the `notte` provider only. Defaults to the standard domain; other configured domains are listed by GET /personas/create/email-domains.
+     */
+    email_domain?: string | null;
+    email_provider?: PersonaEmailProvider;
+    /**
+     * Name
+     */
+    name?: string | null;
+};
+
+export type PersonaEmailProvider = 'notte' | 'agentmail' | 'resend';
+
+/**
+ * PersonaResponse
+ *
+ * Local extension of the SDK's `PersonaResponse` for API-only fields.
+ *
+ * `email` is the public, human-readable address callers should use, while
+ * `internal_email` is the stable UUID-backed mailbox address. Kept under the
+ * same public name so callers (and generated clients) see one schema.
+ *
+ * Once the external notte-sdk publishes these fields this class can be
+ * deleted and the direct SDK import restored. Mirrors the local
+ * `VaultUpdateRequest` pattern in `notte_api.vault.service`.
+ */
+export type PersonaResponse = {
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Email
+     *
+     * Public, human-readable email address of the persona
+     */
+    email: string;
+    /**
+     * Provider hosting the persona mailbox
+     */
+    email_provider?: PersonaEmailProvider;
+    /**
+     * First Name
+     *
+     * First name of the persona
+     */
+    first_name: string;
+    /**
+     * Internal Email
+     *
+     * Internal UUID-backed mailbox address of the persona
+     */
+    internal_email: string;
+    /**
+     * Last Name
+     *
+     * Last name of the persona
+     */
+    last_name: string;
+    /**
+     * Name
+     */
+    name?: string | null;
+    /**
+     * Persona Id
+     *
+     * ID of the created persona
+     */
+    persona_id: string;
+    /**
+     * Phone Number
+     *
+     * Phone number of the persona (optional)
+     */
+    phone_number: string | null;
+    /**
+     * Status
+     *
+     * Status of the persona (active, closed)
+     */
+    status: string;
+    /**
+     * Vault Id
+     *
+     * ID of the vault
+     */
+    vault_id: string | null;
+};
+
+/**
+ * PersonaUpdateRequest
+ */
+export type PersonaUpdateRequest = {
+    /**
+     * Name
+     */
+    name: string;
+};
+
+/**
+ * SMSResponse
+ */
+export type SmsResponse = {
+    /**
+     * Body
+     *
+     * SMS message body
+     */
+    body: string;
+    /**
+     * Created At
+     *
+     * Creation date
+     */
+    created_at: string;
+    /**
+     * Read
+     *
+     * Whether the message was read before this request
+     */
+    read: boolean;
+    /**
+     * Sender
+     *
+     * SMS sender phone number
+     */
+    sender: string | null;
+    /**
+     * Sms Id
+     *
+     * SMS UUID
+     */
+    sms_id: string;
+};
+
+/**
+ * SecretProxyHostPresetResponse
+ *
+ * A host preset: the token `hosts` can name and the hosts it stands for.
+ */
+export type SecretProxyHostPresetResponse = {
+    /**
+     * Description
+     */
+    description: string;
+    /**
+     * Entries
+     */
+    entries: Array<HostPresetEntry>;
+    /**
+     * Hosts
+     */
+    hosts: Array<string>;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Token
+     */
+    token: string;
+    /**
+     * Version
+     */
+    version: string;
+};
+
+/**
+ * SecretProxyHostPresetsResponse
+ */
+export type SecretProxyHostPresetsResponse = {
+    /**
+     * Presets
+     */
+    presets: Array<SecretProxyHostPresetResponse>;
 };
 
 /**
@@ -11311,28 +11343,6 @@ export type PaginatedResponsePaymentListItemWritable = {
 };
 
 /**
- * PaginatedResponse[PersonaResponse]
- */
-export type PaginatedResponsePersonaResponseWritable = {
-    /**
-     * Items
-     */
-    items: Array<PersonaResponse>;
-    /**
-     * Page
-     */
-    page: number;
-    /**
-     * Page Size
-     */
-    page_size: number;
-    /**
-     * Has Next
-     */
-    has_next: boolean;
-};
-
-/**
  * PaginatedResponse[ProfileResponse]
  */
 export type PaginatedResponseProfileResponseWritable = {
@@ -11712,6 +11722,28 @@ export type UpdateFunctionRunResponseWritable = {
 };
 
 /**
+ * PaginatedResponse[PersonaResponse]
+ */
+export type PaginatedResponsePersonaResponseWritable = {
+    /**
+     * Has Next
+     */
+    has_next: boolean;
+    /**
+     * Items
+     */
+    items: Array<PersonaResponse>;
+    /**
+     * Page
+     */
+    page: number;
+    /**
+     * Page Size
+     */
+    page_size: number;
+};
+
+/**
  * PaginatedResponse[UsageLog]
  */
 export type PaginatedResponseUsageLogWritable = {
@@ -11935,6 +11967,59 @@ export type SessionStatusResponses = {
 };
 
 export type SessionStatusResponse = SessionStatusResponses[keyof SessionStatusResponses];
+
+export type SessionStepsData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Session Id
+         */
+        session_id: string;
+    };
+    query?: {
+        /**
+         * Cursor
+         *
+         * The `next_cursor` of the previous page
+         */
+        cursor?: string | null;
+        /**
+         * Limit
+         *
+         * Maximum number of steps to return
+         */
+        limit?: number;
+    };
+    url: '/sessions/{session_id}/steps';
+};
+
+export type SessionStepsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SessionStepsError = SessionStepsErrors[keyof SessionStepsErrors];
+
+export type SessionStepsResponses = {
+    /**
+     * Successful Response
+     */
+    200: SessionStepsResponse;
+};
+
+export type SessionStepsResponse2 = SessionStepsResponses[keyof SessionStepsResponses];
 
 export type SessionProfilePreviewData = {
     body?: never;
@@ -15335,361 +15420,6 @@ export type ProfileListResponses = {
 
 export type ProfileListResponse = ProfileListResponses[keyof ProfileListResponses];
 
-export type PersonaCreateData = {
-    body: PersonaCreateRequest;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path?: never;
-    query?: never;
-    url: '/personas/create';
-};
-
-export type PersonaCreateErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type PersonaCreateError = PersonaCreateErrors[keyof PersonaCreateErrors];
-
-export type PersonaCreateResponses = {
-    /**
-     * Successful Response
-     */
-    200: PersonaResponse;
-};
-
-export type PersonaCreateResponse = PersonaCreateResponses[keyof PersonaCreateResponses];
-
-export type PersonaDeleteData = {
-    body?: never;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path: {
-        /**
-         * Persona Id
-         */
-        persona_id: string;
-    };
-    query?: never;
-    url: '/personas/{persona_id}';
-};
-
-export type PersonaDeleteErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type PersonaDeleteError = PersonaDeleteErrors[keyof PersonaDeleteErrors];
-
-export type PersonaDeleteResponses = {
-    /**
-     * Successful Response
-     */
-    200: DeletePersonaResponse;
-};
-
-export type PersonaDeleteResponse = PersonaDeleteResponses[keyof PersonaDeleteResponses];
-
-export type PersonaGetData = {
-    body?: never;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path: {
-        /**
-         * Persona Id
-         */
-        persona_id: string;
-    };
-    query?: never;
-    url: '/personas/{persona_id}';
-};
-
-export type PersonaGetErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type PersonaGetError = PersonaGetErrors[keyof PersonaGetErrors];
-
-export type PersonaGetResponses = {
-    /**
-     * Successful Response
-     */
-    200: PersonaResponse;
-};
-
-export type PersonaGetResponse = PersonaGetResponses[keyof PersonaGetResponses];
-
-export type PersonaUpdateData = {
-    body: PersonaUpdateRequest;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path: {
-        /**
-         * Persona Id
-         */
-        persona_id: string;
-    };
-    query?: never;
-    url: '/personas/{persona_id}';
-};
-
-export type PersonaUpdateErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type PersonaUpdateError = PersonaUpdateErrors[keyof PersonaUpdateErrors];
-
-export type PersonaUpdateResponses = {
-    /**
-     * Successful Response
-     */
-    200: PersonaResponse;
-};
-
-export type PersonaUpdateResponse = PersonaUpdateResponses[keyof PersonaUpdateResponses];
-
-export type PersonaEmailsListData = {
-    body?: never;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path: {
-        /**
-         * Persona Id
-         */
-        persona_id: string;
-    };
-    query?: {
-        /**
-         * Limit
-         *
-         * Maximum number of emails
-         */
-        limit?: number;
-        /**
-         * Timedelta
-         *
-         * Maximum time since email reception
-         */
-        timedelta?: string | null;
-        /**
-         * Only Unread
-         *
-         * Whether to only return unread messages
-         */
-        only_unread?: boolean;
-        /**
-         * Mark Read
-         *
-         * Whether to mark the returned messages as read
-         */
-        mark_read?: boolean;
-    };
-    url: '/personas/{persona_id}/emails';
-};
-
-export type PersonaEmailsListErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type PersonaEmailsListError = PersonaEmailsListErrors[keyof PersonaEmailsListErrors];
-
-export type PersonaEmailsListResponses = {
-    /**
-     * Response Persona Emails List Personas  Persona Id  Emails Get
-     *
-     * Successful Response
-     */
-    200: Array<EmailResponse>;
-};
-
-export type PersonaEmailsListResponse = PersonaEmailsListResponses[keyof PersonaEmailsListResponses];
-
-export type ListPersonasData = {
-    body?: never;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path?: never;
-    query?: {
-        /**
-         * Page
-         *
-         * Page number
-         */
-        page?: number;
-        /**
-         * Page Size
-         *
-         * Number of items per page
-         */
-        page_size?: number;
-        /**
-         * Only Active
-         *
-         * Whether to only return active sessions
-         */
-        only_active?: boolean;
-        /**
-         * Only Current Token
-         *
-         * Whether to only return sessions for the current token (apikey)
-         */
-        only_current_token?: boolean;
-        /**
-         * Include System
-         *
-         * Whether to include internal system sessions
-         */
-        include_system?: boolean;
-    };
-    url: '/personas';
-};
-
-export type ListPersonasErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type ListPersonasError = ListPersonasErrors[keyof ListPersonasErrors];
-
-export type ListPersonasResponses = {
-    /**
-     * Successful Response
-     */
-    200: PaginatedResponsePersonaResponse;
-};
-
-export type ListPersonasResponse = ListPersonasResponses[keyof ListPersonasResponses];
-
-export type PersonaSmsListData = {
-    body?: never;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path: {
-        /**
-         * Persona Id
-         */
-        persona_id: string;
-    };
-    query?: {
-        /**
-         * Limit
-         *
-         * Maximum number of emails
-         */
-        limit?: number;
-        /**
-         * Timedelta
-         *
-         * Maximum time since email reception
-         */
-        timedelta?: string | null;
-        /**
-         * Only Unread
-         *
-         * Whether to only return unread messages
-         */
-        only_unread?: boolean;
-        /**
-         * Mark Read
-         *
-         * Whether to mark the returned messages as read
-         */
-        mark_read?: boolean;
-    };
-    url: '/personas/{persona_id}/sms';
-};
-
-export type PersonaSmsListErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type PersonaSmsListError = PersonaSmsListErrors[keyof PersonaSmsListErrors];
-
-export type PersonaSmsListResponses = {
-    /**
-     * Response Persona Sms List Personas  Persona Id  Sms Get
-     *
-     * Successful Response
-     */
-    200: Array<SmsResponse>;
-};
-
-export type PersonaSmsListResponse = PersonaSmsListResponses[keyof PersonaSmsListResponses];
-
 export type MailboxConnectTokenData = {
     body: MailboxConnectRequest;
     headers?: {
@@ -16344,41 +16074,6 @@ export type DeleteSecretResponses = {
 };
 
 export type DeleteSecretResponse = DeleteSecretResponses[keyof DeleteSecretResponses];
-
-export type ListSecretProxyHostPresetsData = {
-    body?: never;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path?: never;
-    query?: never;
-    url: '/secret-proxy/host-presets';
-};
-
-export type ListSecretProxyHostPresetsErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type ListSecretProxyHostPresetsError = ListSecretProxyHostPresetsErrors[keyof ListSecretProxyHostPresetsErrors];
-
-export type ListSecretProxyHostPresetsResponses = {
-    /**
-     * Successful Response
-     */
-    200: SecretProxyHostPresetsResponse;
-};
-
-export type ListSecretProxyHostPresetsResponse = ListSecretProxyHostPresetsResponses[keyof ListSecretProxyHostPresetsResponses];
 
 export type HealthCheckData = {
     body?: never;
@@ -18733,6 +18428,396 @@ export type ListAuditEventsResponses = {
 };
 
 export type ListAuditEventsResponse = ListAuditEventsResponses[keyof ListAuditEventsResponses];
+
+export type ListPersonasData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: {
+        /**
+         * Page
+         *
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page Size
+         *
+         * Number of items per page
+         */
+        page_size?: number;
+        /**
+         * Only Active
+         *
+         * Whether to only return active sessions
+         */
+        only_active?: boolean;
+        /**
+         * Only Current Token
+         *
+         * Whether to only return sessions for the current token (apikey)
+         */
+        only_current_token?: boolean;
+        /**
+         * Include System
+         *
+         * Whether to include internal system sessions
+         */
+        include_system?: boolean;
+    };
+    url: '/personas';
+};
+
+export type ListPersonasErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListPersonasError = ListPersonasErrors[keyof ListPersonasErrors];
+
+export type ListPersonasResponses = {
+    /**
+     * Successful Response
+     */
+    200: PaginatedResponsePersonaResponse;
+};
+
+export type ListPersonasResponse = ListPersonasResponses[keyof ListPersonasResponses];
+
+export type PersonaCreateData = {
+    body: PersonaCreateRequest;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/personas/create';
+};
+
+export type PersonaCreateErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type PersonaCreateError = PersonaCreateErrors[keyof PersonaCreateErrors];
+
+export type PersonaCreateResponses = {
+    /**
+     * Successful Response
+     */
+    200: PersonaResponse;
+};
+
+export type PersonaCreateResponse = PersonaCreateResponses[keyof PersonaCreateResponses];
+
+export type PersonaDeleteData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Persona Id
+         */
+        persona_id: string;
+    };
+    query?: never;
+    url: '/personas/{persona_id}';
+};
+
+export type PersonaDeleteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type PersonaDeleteError = PersonaDeleteErrors[keyof PersonaDeleteErrors];
+
+export type PersonaDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    200: DeletePersonaResponse;
+};
+
+export type PersonaDeleteResponse = PersonaDeleteResponses[keyof PersonaDeleteResponses];
+
+export type PersonaGetData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Persona Id
+         */
+        persona_id: string;
+    };
+    query?: never;
+    url: '/personas/{persona_id}';
+};
+
+export type PersonaGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type PersonaGetError = PersonaGetErrors[keyof PersonaGetErrors];
+
+export type PersonaGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: PersonaResponse;
+};
+
+export type PersonaGetResponse = PersonaGetResponses[keyof PersonaGetResponses];
+
+export type PersonaUpdateData = {
+    body: PersonaUpdateRequest;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Persona Id
+         */
+        persona_id: string;
+    };
+    query?: never;
+    url: '/personas/{persona_id}';
+};
+
+export type PersonaUpdateErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type PersonaUpdateError = PersonaUpdateErrors[keyof PersonaUpdateErrors];
+
+export type PersonaUpdateResponses = {
+    /**
+     * Successful Response
+     */
+    200: PersonaResponse;
+};
+
+export type PersonaUpdateResponse = PersonaUpdateResponses[keyof PersonaUpdateResponses];
+
+export type PersonaEmailsListData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Persona Id
+         */
+        persona_id: string;
+    };
+    query?: {
+        /**
+         * Limit
+         *
+         * Maximum number of emails
+         */
+        limit?: number;
+        /**
+         * Timedelta
+         *
+         * Maximum time since email reception
+         */
+        timedelta?: string | null;
+        /**
+         * Only Unread
+         *
+         * Whether to only return unread messages
+         */
+        only_unread?: boolean;
+        /**
+         * Mark Read
+         *
+         * Whether to mark the returned messages as read
+         */
+        mark_read?: boolean;
+    };
+    url: '/personas/{persona_id}/emails';
+};
+
+export type PersonaEmailsListErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type PersonaEmailsListError = PersonaEmailsListErrors[keyof PersonaEmailsListErrors];
+
+export type PersonaEmailsListResponses = {
+    /**
+     * Response Persona Emails List Personas  Persona Id  Emails Get
+     *
+     * Successful Response
+     */
+    200: Array<EmailResponse>;
+};
+
+export type PersonaEmailsListResponse = PersonaEmailsListResponses[keyof PersonaEmailsListResponses];
+
+export type PersonaSmsListData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Persona Id
+         */
+        persona_id: string;
+    };
+    query?: {
+        /**
+         * Limit
+         *
+         * Maximum number of emails
+         */
+        limit?: number;
+        /**
+         * Timedelta
+         *
+         * Maximum time since email reception
+         */
+        timedelta?: string | null;
+        /**
+         * Only Unread
+         *
+         * Whether to only return unread messages
+         */
+        only_unread?: boolean;
+        /**
+         * Mark Read
+         *
+         * Whether to mark the returned messages as read
+         */
+        mark_read?: boolean;
+    };
+    url: '/personas/{persona_id}/sms';
+};
+
+export type PersonaSmsListErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type PersonaSmsListError = PersonaSmsListErrors[keyof PersonaSmsListErrors];
+
+export type PersonaSmsListResponses = {
+    /**
+     * Response Persona Sms List Personas  Persona Id  Sms Get
+     *
+     * Successful Response
+     */
+    200: Array<SmsResponse>;
+};
+
+export type PersonaSmsListResponse = PersonaSmsListResponses[keyof PersonaSmsListResponses];
+
+export type ListSecretProxyHostPresetsData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/secret-proxy/host-presets';
+};
+
+export type ListSecretProxyHostPresetsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListSecretProxyHostPresetsError = ListSecretProxyHostPresetsErrors[keyof ListSecretProxyHostPresetsErrors];
+
+export type ListSecretProxyHostPresetsResponses = {
+    /**
+     * Successful Response
+     */
+    200: SecretProxyHostPresetsResponse;
+};
+
+export type ListSecretProxyHostPresetsResponse = ListSecretProxyHostPresetsResponses[keyof ListSecretProxyHostPresetsResponses];
 
 export type GetUsageData = {
     body?: never;

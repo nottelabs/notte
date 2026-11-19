@@ -560,6 +560,9 @@
     "resource": "sessions",
     "telemetry": "cloud.session.status"
   },
+  "session_steps": {
+    "exclude": "Behind a rollout flag that is off on prod; no high-level resource wrapper until it ships."
+  },
   "session_stop": {
     "method": "stop",
     "resource": "sessions",
