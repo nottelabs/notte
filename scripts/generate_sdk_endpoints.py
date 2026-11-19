@@ -1158,6 +1158,17 @@ def render_resources(spec: JsonObject) -> dict[str, str]:
     return outputs
 
 
+def _plain_numbers(value: object) -> object:
+    """JSON has one number type: a schema serialized as 0 and one serialized as 0.0 are the same."""
+    if isinstance(value, float) and value.is_integer():
+        return int(value)
+    if isinstance(value, list):
+        return [_plain_numbers(item) for item in cast(list[object], value)]
+    if isinstance(value, dict):
+        return {key: _plain_numbers(item) for key, item in cast(JsonObject, value).items()}
+    return value
+
+
 def migrated_contracts(spec: JsonObject) -> dict[str, str]:
     """Include referenced schemas in the production gate, not just factory names."""
     wanted = {name for resource in RESOURCES for name in (*resource.operations, *_factories(resource.name))}
@@ -1218,7 +1229,7 @@ def migrated_contracts(spec: JsonObject) -> dict[str, str]:
 
             operation_contract = wire(operation)
             contracts[operation["operationId"]] = json.dumps(
-                [path, method, operation_contract, schemas], sort_keys=True
+                _plain_numbers([path, method, operation_contract, schemas]), sort_keys=True
             )
     return contracts
 
