@@ -69,6 +69,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 - [Functions](https://docs.notte.cc/concepts/functions.md): Deploy browser automations as serverless API endpoints
 - [Creating Functions](https://docs.notte.cc/features/functions/creating.md): Write and deploy browser automation Functions
+- [Expected and Retryable Errors](https://docs.notte.cc/features/functions/errors.md): Tell Notte which Function failures are deliberate refusals or temporary problems, so they are not self-healed
 - [Function Invocations](https://docs.notte.cc/features/functions/invocations.md): Call Functions via API, SDK, cURL, or webhooks
 - [Function Schedules](https://docs.notte.cc/features/functions/schedules.md): Run Functions automatically on a cron schedule
 - [Function Management](https://docs.notte.cc/features/functions/management.md): Update, version, monitor, and manage your deployed Functions
@@ -561,6 +562,8 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [waitForAuth](https://docs.notte.cc/typescript-sdk-reference/session/waitforauth.md)
 - [downloadReplay](https://docs.notte.cc/typescript-sdk-reference/session/downloadreplay.md)
 - [saveProfile](https://docs.notte.cc/typescript-sdk-reference/session/saveprofile.md): Save a running session's browser state into a profile.
+- [steps](https://docs.notte.cc/typescript-sdk-reference/session/steps.md)
+- [iterSteps](https://docs.notte.cc/typescript-sdk-reference/session/itersteps.md)
 - [debugInfo](https://docs.notte.cc/typescript-sdk-reference/session/debuginfo.md)
 - [debugTabInfo](https://docs.notte.cc/typescript-sdk-reference/session/debugtabinfo.md)
 - [cdpUrl](https://docs.notte.cc/typescript-sdk-reference/session/cdpurl.md)

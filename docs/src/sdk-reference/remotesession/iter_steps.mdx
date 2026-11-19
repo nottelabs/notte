@@ -1,0 +1,33 @@
+---
+title: "iter_steps"
+description: "Iterate over all of the session's steps, following `next_cursor` page by page"
+---
+
+
+
+Each step has the shape of an item of `status().steps`. A cursor that is no longer
+valid stops the iteration with a `NotteAPIError` with status 400, after the steps
+already yielded; it is not restarted here, since that would yield those steps again.
+To read the steps again, start a new iteration.
+
+**Example:**
+```python
+for step in session.iter_steps(limit=50):
+    print(step)
+```
+
+
+
+## Parameters
+
+<ParamField path="limit" type="int | None" default="None">
+  Maximum number of steps per page; the API's default when omitted.
+</ParamField>
+
+## Returns
+
+`Iterator`[`Dict`[`str`, `Any`]]
+
+## Raises
+
+- `ValueError`: If the session hasn't been started yet (no session_id available).

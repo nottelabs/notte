@@ -38,6 +38,14 @@ import { RemoteFileStorage, SessionFiles } from '@/files';
 import type { SearchOptions, SearchResponse, SearchResultsResponse, SearchSourcedAnswerResponse, SearchStructuredResponse } from '@/search';
 import { NotteAnything } from '@/anything';
 import { NotteSecrets } from '@/secrets';
+import {
+  getSessionSteps,
+  iterSessionSteps,
+  type SessionStep,
+  type SessionStepsIterOptions,
+  type SessionStepsOptions,
+  type SessionStepsResponse,
+} from '@/session-steps';
 import { NotteUsage } from '@/usage';
 import {
   AuthenticationError,
@@ -452,6 +460,28 @@ export class NotteClient {
         const response = await listSessions({ client: this.getClient(), query: options });
         return response.data?.items ?? [];
       },
+      /**
+       * One page of the session's steps (`{ steps, next_cursor }`), from
+       * `GET /sessions/{session_id}/steps`. Each step has the shape of an item of
+       * `status().steps`. Pass `next_cursor` back as `cursor`, as is, for the next
+       * page; it is `null` on the last page. A `NotteAPIError` with status 400 means
+       * the cursor is no longer valid: restart from the first page (no `cursor`).
+       */
+      steps: (sessionId: string, options: SessionStepsOptions = {}): Promise<SessionStepsResponse> =>
+        getSessionSteps(this, sessionId, options),
+      /**
+       * Every step of the session, following `next_cursor` page by page. A cursor
+       * that is no longer valid stops the iteration with the 400 `NotteAPIError`,
+       * after the steps already yielded; start a new iteration to read them again.
+       *
+       * ```ts
+       * for await (const step of client.sessions.iterSteps(sessionId, { limit: 50 })) {
+       *   console.log(step);
+       * }
+       * ```
+       */
+      iterSteps: (sessionId: string, options: SessionStepsIterOptions = {}): AsyncGenerator<SessionStep, void, undefined> =>
+        iterSessionSteps(this, sessionId, options),
     };
   }
 

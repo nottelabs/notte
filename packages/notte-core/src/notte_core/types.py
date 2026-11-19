@@ -72,6 +72,7 @@ DEFAULT_VIEWPORT_HEIGHT = config.viewport_height
 
 AspectRatio = Literal["5:4", "16:9"]
 DialogPolicy = Literal["auto", "client"]
+SessionOs = Literal["windows", "macos"]
 
 DEFAULT_BROWSER_TYPE = config.browser_type
 DEFAULT_USER_AGENT = config.user_agent
@@ -560,7 +561,10 @@ class NotteProxy(SdkRequest):
         Field(
             description=(
                 "Keep the session's exit on one residential IP, shared with a proxy gateway credential "
-                "minted with the same `sticky_session`. 1-64 letters, digits or hyphens."
+                "minted with the same `sticky_session`. The IP holds while its residential device stays "
+                "online and can change without notice; new connections with the same `sticky_session` then "
+                "share a new IP. "
+                "1-64 letters, digits or hyphens."
             ),
             pattern=r"^[A-Za-z0-9-]{1,64}$",
         ),
@@ -1019,6 +1023,9 @@ class SessionStartRequestDict(_SessionStartRequestDict, total=False):
     """Who answers JavaScript dialogs. "auto" (default): Notte dismisses alert, confirm and prompt and
     accepts beforeunload. "client": your CDP client accepts or dismisses them; Notte dismisses one nobody
     answers within 10 seconds."""
+    os: SessionOs | None
+    """The operating system the session's browser presents: windows or macos. When unset, each session gets
+    one at random among those the environment offers."""
 
 
 class LocalSessionStartRequestDict(_SessionStartRequestDict, total=False):
@@ -1408,6 +1415,16 @@ class SessionStartRequest(_SessionStartRequest[BrowserType | Literal["chrome-nit
         ),
     ] = False
 
+    os: Annotated[
+        SessionOs | None,
+        Field(
+            description=(
+                "The operating system the session's browser presents: windows or macos. When unset, each "
+                "session gets one at random among those the environment offers."
+            )
+        ),
+    ] = None
+
     @model_serializer(mode="wrap")
     def omit_disabled_advanced_stealth(
         self, handler: SerializerFunctionWrapHandler, info: SerializationInfo
@@ -1422,6 +1439,9 @@ class SessionStartRequest(_SessionStartRequest[BrowserType | Literal["chrome-nit
             return data
         if not self.advanced_stealth:
             data.pop("advanced_stealth", None)
+        # Older APIs reject the field, so a start without one leaves it out.
+        if self.os is None:
+            data.pop("os", None)
         if not self.auth_ids:
             data.pop("auth_retry", None)
         # Let the API apply its default so ordinary starts also work with older APIs.
@@ -1772,6 +1792,35 @@ class DownloadFileRequest(SdkRequest):
 
 class TabSessionDebugRequest(SdkRequest):
     tab_idx: int
+
+
+# ############################################################
+# Session steps (GET /sessions/{session_id}/steps)
+# ############################################################
+
+
+class SessionStepsRequest(SdkRequest):
+    cursor: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Opaque cursor from a previous page's `next_cursor`. Omit it for the first page. "
+                "A 400 response means the cursor is no longer valid: restart from the first page."
+            )
+        ),
+    ] = None
+    limit: Annotated[int | None, Field(description="Maximum number of steps in the page.")] = None
+
+
+class SessionStepsResponse(SdkResponse):
+    # Each step has the shape of an item of `SessionResponse.steps`.
+    steps: Annotated[list[dict[str, Any]], Field(description="Steps of the session, in order")] = Field(
+        default_factory=lambda: []
+    )
+    next_cursor: Annotated[
+        str | None,
+        Field(description="Cursor of the next page, passed back as is; null on the last page."),
+    ] = None
 
 
 class TabSessionDebugResponse(SdkResponse):

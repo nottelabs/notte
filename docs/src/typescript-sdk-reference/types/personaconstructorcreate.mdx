@@ -21,12 +21,16 @@ export interface PersonaConstructorCreate extends PersonaCreateRequest {
 
 </ParamField>
 
+<ParamField body="create_phone_number" type={"boolean | undefined"}>
+Whether to create a phone number for the persona
+</ParamField>
+
 <ParamField body="create_vault" type={"boolean | undefined"}>
 Whether to create a vault for the persona
 </ParamField>
 
-<ParamField body="create_phone_number" type={"boolean | undefined"}>
-Whether to create a phone number for the persona
+<ParamField body="email_domain" type={"string | null | undefined"}>
+Domain of the persona's email address, for the `notte` provider only. Defaults to the standard domain; other configured domains are listed by GET /personas/create/email-domains.
 </ParamField>
 
 <ParamField body="email_provider" type={"PersonaEmailProvider | undefined"}>
@@ -35,10 +39,6 @@ Whether to create a phone number for the persona
 
 <ParamField body="name" type={"string | null | undefined"}>
 
-</ParamField>
-
-<ParamField body="email_domain" type={"string | null | undefined"}>
-Domain of the persona's email address, for the `notte` provider only. Defaults to the standard domain; other configured domains are listed by GET /personas/create/email-domains.
 </ParamField>
 
 ## Related types

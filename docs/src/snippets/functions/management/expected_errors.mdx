@@ -1,0 +1,33 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/functions/management/expected_errors.py */}
+
+<CodeGroup>
+
+```python expected_errors.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+# Runs that raise these classes, or a subclass of them, end as "rejected"
+function = client.functions.metadata_update(function_id, expected_errors=["AccountNotUnique", "StaffReviewRequired"])
+print(function.expected_errors)
+
+# An empty list turns it off again
+cleared = client.functions.metadata_update(function_id, expected_errors=[])
+```
+
+```typescript expected_errors.ts
+import { NotteClient } from 'notte-sdk';
+
+const client = new NotteClient();
+const fn = client.NotteFunction({ function_id: functionId });
+
+// Runs that raise these classes, or a subclass of them, end as "rejected"
+const { expected_errors } = await fn.updateMetadata({ expected_errors: ['AccountNotUnique', 'StaffReviewRequired'] });
+console.log(expected_errors);
+
+// An empty list turns it off again
+const cleared = await fn.updateMetadata({ expected_errors: [] });
+```
+
+</CodeGroup>

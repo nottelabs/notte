@@ -1,0 +1,38 @@
+---
+title: "steps"
+description: "Get one page of the session's steps"
+---
+
+
+
+Each step has the shape of an item of `status().steps`. Pass the page's `next_cursor`
+back as `cursor`, as is, to get the next page; it is None on the last page. The cursor
+is opaque. A `NotteAPIError` with status 400 means it is no longer valid: restart
+from the first page (no `cursor`).
+
+**Example:**
+```python
+page = session.steps(limit=50)
+while page.next_cursor is not None:
+    page = session.steps(cursor=page.next_cursor, limit=50)
+```
+
+
+
+## Parameters
+
+<ParamField path="cursor" type="str | None" default="None">
+  The `next_cursor` of the previous page; omit it for the first page.
+</ParamField>
+
+<ParamField path="limit" type="int | None" default="None">
+  Maximum number of steps in the page; the API's default when omitted.
+</ParamField>
+
+## Returns
+
+<Visibility for="humans">[`SessionStepsResponse`](/sdk-reference/misc/sessionstepsresponse)</Visibility><Visibility for="agents">[`SessionStepsResponse`](/sdk-reference/misc/sessionstepsresponse.md)</Visibility>: The page's `steps` and its `next_cursor`.
+
+## Raises
+
+- `ValueError`: If the session hasn't been started yet (no session_id available).

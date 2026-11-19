@@ -9,6 +9,18 @@ objects with a stable `code` (here `PROXY_UNAVAILABLE_NO_PROXY_FALLBACK`) and a
 `message`. A workspace can turn this fallback off in Settings > Proxies; its
 starts then fail instead.
 
+## Unreleased: session steps page by page
+
+`client.sessions.steps(sessionId, { cursor, limit })` returns one page of a
+session's steps (`SessionStepsResponse`: `steps` and `next_cursor`), from
+`GET /sessions/{session_id}/steps`. `client.sessions.iterSteps(sessionId, { limit })`
+is an async iterator over every step, following `next_cursor`. Session objects
+have both as `session.steps(...)` and `session.iterSteps(...)`, like the Python
+SDK. Steps have the shape of `status().steps`, which is unchanged. The cursor is
+opaque; a 400 `NotteAPIError` means it is no longer valid, and reading restarts
+from the first page (`iterSteps` throws rather than yield the first steps
+again). This needs an API that serves the route.
+
 ## Unreleased: rejected CAPTCHAs
 
 When the site rejects a CAPTCHA answer and shows the CAPTCHA again,

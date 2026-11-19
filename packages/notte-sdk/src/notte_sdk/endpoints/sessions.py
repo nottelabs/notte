@@ -2,7 +2,7 @@ import asyncio
 import os
 import random
 import time
-from collections.abc import Awaitable, Callable, Coroutine, Mapping, Sequence
+from collections.abc import AsyncIterator, Awaitable, Callable, Coroutine, Iterator, Mapping, Sequence
 from enum import StrEnum
 from pathlib import Path
 from types import TracebackType
@@ -55,6 +55,8 @@ from notte_core.types import (
     PaginationParamsDict,
     ScrapeMarkdownParamsDict,
     ScrapeRequestDict,
+    SessionStepsRequest,
+    SessionStepsResponse,
     TabSessionDebugRequest,
 )
 from pydantic import BaseModel
@@ -169,6 +171,8 @@ class SessionsClient(SessionsOperations):
     SESSION_DEBUG_TAB = "{session_id}/debug/tab"
     SESSION_DEBUG_REPLAY = "{session_id}/replay"
     SESSION_DEBUG_OFFSET = "{session_id}/offset"
+    # Absent from the committed OpenAPI schema until the API publishes it.
+    SESSION_STEPS = "{session_id}/steps"
 
     def __init__(
         self,
@@ -278,6 +282,46 @@ class SessionsClient(SessionsOperations):
             TabSessionDebugResponse: The response containing debug information for the specified tab.
         """
         return self.request(_debug_tab_endpoint(session_id, tab_idx))
+
+    @track_usage("cloud.session.steps")
+    def steps(self, session_id: str, cursor: str | None = None, limit: int | None = None) -> SessionStepsResponse:
+        """
+        Get one page of the session's steps.
+
+        Each step has the shape of an item of `status().steps`. Pass the page's `next_cursor`
+        back as `cursor`, as is, to get the next page; it is None on the last page. The cursor
+        is opaque. A `NotteAPIError` with status 400 means it is no longer valid: restart
+        from the first page (no `cursor`).
+
+        Args:
+            session_id: The identifier of the session.
+            cursor: The `next_cursor` of the previous page; omit it for the first page.
+            limit: Maximum number of steps in the page; the API's default when omitted.
+
+        Returns:
+            SessionStepsResponse: The page's `steps` and its `next_cursor`.
+        """
+        return self.request(_steps_endpoint(session_id, cursor, limit))
+
+    def iter_steps(self, session_id: str, limit: int | None = None) -> Iterator[dict[str, Any]]:
+        """
+        Iterate over all of the session's steps, following `next_cursor` page by page.
+
+        Each step has the shape of an item of `status().steps`. A cursor that is no longer
+        valid stops the iteration with a `NotteAPIError` with status 400, after the steps
+        already yielded; it is not restarted here, since that would yield those steps again.
+        To read the steps again, start a new iteration.
+
+        Args:
+            session_id: The identifier of the session.
+            limit: Maximum number of steps per page; the API's default when omitted.
+        """
+        cursor: str | None = None
+        while True:
+            page = self.steps(session_id, cursor=cursor, limit=limit)
+            yield from page.steps
+            if (cursor := page.next_cursor) is None:
+                return
 
     @override
     @track_usage("cloud.session.replay")
@@ -393,6 +437,15 @@ def _cookies_to_set(
 def _debug_tab_endpoint(session_id: str, tab_idx: int | None) -> NotteEndpoint[TabSessionDebugResponse]:
     params = TabSessionDebugRequest(tab_idx=tab_idx) if tab_idx is not None else None
     return SessionsClient._session_debug_tab_endpoint(session_id=session_id, params=params)  # pyright: ignore [reportPrivateUsage]
+
+
+def _steps_endpoint(session_id: str, cursor: str | None, limit: int | None) -> NotteEndpoint[SessionStepsResponse]:
+    return NotteEndpoint(
+        path=SessionsClient.SESSION_STEPS.format(session_id=session_id),
+        response=SessionStepsResponse,
+        method="GET",
+        params=SessionStepsRequest(cursor=cursor, limit=limit),
+    )
 
 
 def _replay_session_closed(response: SessionResponse | None, session_id: str) -> bool:
@@ -1283,6 +1336,57 @@ class RemoteSession(SyncResource):
         """
         return self.client.debug_info(session_id=self.session_id)
 
+    def steps(self, cursor: str | None = None, limit: int | None = None) -> SessionStepsResponse:
+        """
+        Get one page of the session's steps.
+
+        Each step has the shape of an item of `status().steps`. Pass the page's `next_cursor`
+        back as `cursor`, as is, to get the next page; it is None on the last page. The cursor
+        is opaque. A `NotteAPIError` with status 400 means it is no longer valid: restart
+        from the first page (no `cursor`).
+
+        **Example:**
+        ```python
+        page = session.steps(limit=50)
+        while page.next_cursor is not None:
+            page = session.steps(cursor=page.next_cursor, limit=50)
+        ```
+
+        Args:
+            cursor: The `next_cursor` of the previous page; omit it for the first page.
+            limit: Maximum number of steps in the page; the API's default when omitted.
+
+        Returns:
+            SessionStepsResponse: The page's `steps` and its `next_cursor`.
+
+        Raises:
+            ValueError: If the session hasn't been started yet (no session_id available).
+        """
+        return self.client.steps(session_id=self.session_id, cursor=cursor, limit=limit)
+
+    def iter_steps(self, limit: int | None = None) -> Iterator[dict[str, Any]]:
+        """
+        Iterate over all of the session's steps, following `next_cursor` page by page.
+
+        Each step has the shape of an item of `status().steps`. A cursor that is no longer
+        valid stops the iteration with a `NotteAPIError` with status 400, after the steps
+        already yielded; it is not restarted here, since that would yield those steps again.
+        To read the steps again, start a new iteration.
+
+        **Example:**
+        ```python
+        for step in session.iter_steps(limit=50):
+            print(step)
+        ```
+
+        Args:
+            limit: Maximum number of steps per page; the API's default when omitted.
+
+        Raises:
+            ValueError: If the session hasn't been started yet (no session_id available).
+        """
+        yield from self.client.iter_steps(session_id=self.session_id, limit=limit)
+
     def cdp_url(self) -> str:
         """
         Get the Chrome DevTools Protocol WebSocket URL for the session.
@@ -1911,6 +2015,47 @@ class AsyncSessionsClient(AsyncSessionsOperations):
         """
         return await self.request(_debug_tab_endpoint(session_id, tab_idx))
 
+    @track_usage("cloud.session.steps")
+    async def steps(self, session_id: str, cursor: str | None = None, limit: int | None = None) -> SessionStepsResponse:
+        """
+        Get one page of the session's steps.
+
+        Each step has the shape of an item of `status().steps`. Pass the page's `next_cursor`
+        back as `cursor`, as is, to get the next page; it is None on the last page. The cursor
+        is opaque. A `NotteAPIError` with status 400 means it is no longer valid: restart
+        from the first page (no `cursor`).
+
+        Args:
+            session_id: The identifier of the session.
+            cursor: The `next_cursor` of the previous page; omit it for the first page.
+            limit: Maximum number of steps in the page; the API's default when omitted.
+
+        Returns:
+            SessionStepsResponse: The page's `steps` and its `next_cursor`.
+        """
+        return await self.request(_steps_endpoint(session_id, cursor, limit))
+
+    async def iter_steps(self, session_id: str, limit: int | None = None) -> AsyncIterator[dict[str, Any]]:
+        """
+        Iterate over all of the session's steps, following `next_cursor` page by page.
+
+        Each step has the shape of an item of `status().steps`. A cursor that is no longer
+        valid stops the iteration with a `NotteAPIError` with status 400, after the steps
+        already yielded; it is not restarted here, since that would yield those steps again.
+        To read the steps again, start a new iteration.
+
+        Args:
+            session_id: The identifier of the session.
+            limit: Maximum number of steps per page; the API's default when omitted.
+        """
+        cursor: str | None = None
+        while True:
+            page = await self.steps(session_id, cursor=cursor, limit=limit)
+            for step in page.steps:
+                yield step
+            if (cursor := page.next_cursor) is None:
+                return
+
     @override
     @track_usage("cloud.session.replay")
     async def replay(
@@ -2284,6 +2429,25 @@ class AsyncRemoteSession:
     async def debug_info(self) -> SessionDebugResponse:
         """Get detailed debug information for the session."""
         return await self.client.debug_info(session_id=self.session_id)
+
+    async def steps(self, cursor: str | None = None, limit: int | None = None) -> SessionStepsResponse:
+        """
+        Get one page of the session's steps; see `RemoteSession.steps`.
+
+        Raises:
+            NotteAPIError: With status 400 when `cursor` is no longer valid: restart from the first page.
+        """
+        return await self.client.steps(session_id=self.session_id, cursor=cursor, limit=limit)
+
+    async def iter_steps(self, limit: int | None = None) -> AsyncIterator[dict[str, Any]]:
+        """
+        Iterate over all of the session's steps, following `next_cursor`; see `RemoteSession.iter_steps`.
+
+        Raises:
+            NotteAPIError: With status 400 when a cursor is no longer valid; start a new iteration.
+        """
+        async for step in self.client.iter_steps(session_id=self.session_id, limit=limit):
+            yield step
 
     async def cdp_url(self) -> str:
         """

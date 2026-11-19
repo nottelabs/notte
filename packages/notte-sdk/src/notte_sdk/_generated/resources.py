@@ -471,7 +471,7 @@ class SessionsOperations(BaseClient):
     def execute(
         self, session_id: str, body: actions.BaseAction, **data: Unpack[PageExecuteParametersQueryDict]
     ) -> core.ExecutionResultResponse:
-        'Page Execute (`POST /sessions/{session_id}/page/execute`).\n\nRun one action on the session\'s current page.\n\n## While a CAPTCHA is being solved\n\nWhile a CAPTCHA on the page is unsolved or being solved (automatically with `solve_captchas: true`, or after a `captcha_solve` action), the action is **not run**. The request still answers HTTP 200, at once, with:\n\n- `success: false` and `action_executed: false`\n- `code: "captcha_in_progress"`, with a human-readable `message` that can vary\n- `captcha`: the solve\'s `captcha_id`, `page_id`, `generation`, `state: "solving"` and `retry_after_ms`\n\nThis applies to every action except `goto`, `wait` included: `{"type": "wait", "time_ms": 5000}` returns right away without waiting. An HTTP 200 does not mean the action ran: check `action_executed`, `code` and `captcha.state` on every response, not `message`.\n\nTo wait for the solve, either:\n\n- poll it: send `{"type": "captcha_solve"}` with the query parameter `captcha_id` set to `captcha.captcha_id`, every `retry_after_ms`, until `captcha.state` is no longer `"solving"`. A poll is read-only: it runs no action and starts no new solve.\n- or sleep on your side for `retry_after_ms` and send the action again.\n\nA solve ends `solved` (`code: "captcha_solved"`), `failed` (`code: "captcha_failed"`) or `cancelled` (`code: "captcha_cancelled"`, for example after a `goto`). With `solve_captchas: true`, after `failed`, actions on that page keep answering `captcha_failed` without running while the CAPTCHA is still there; a `goto` still runs.\n\nWhen the site rejects the answer our solver delivered and shows the CAPTCHA again right away, the solve ends `failed` with `code: "captcha_rejected"` and `captcha.failure_reason: "rejected"`, and solving stops for that CAPTCHA on the page: actions on that page keep answering `captcha_rejected` without running while it is there. A site that does this usually rejects every answer in the same browser session, so start a new session (for example through another proxy) instead of waiting. A `captcha_solve` action still tries again.\n\nAfter `solved`, send the action again only if its response had `action_executed: false`. To make sure it runs on the same page, add the query parameters `target_page_id` and `target_generation` from the last `captcha` status; if the page changed, the answer is `code: "captcha_page_changed"` and nothing runs. An action that ran and then brought up a CAPTCHA answers `action_executed: true` with a `captcha` status: keep its result, poll the solve, and do not send the action again.\n\nA `goto` is never blocked: it ends a solve in progress. `captcha_timeout_seconds` (default 180) is the budget of a solve the request starts. `observe`, `scrape` and `screenshot` are not blocked by a solve: they read the page as it is.'
+        'Page Execute (`POST /sessions/{session_id}/page/execute`).\n\nRun one action on the session\'s current page.\n\n## While a CAPTCHA is being solved\n\nWhile a CAPTCHA on the page is unsolved or being solved (automatically with `solve_captchas: true`, or after a `captcha_solve` action), the action is **not run**. The request still answers HTTP 200, at once, with:\n\n- `success: false` and `action_executed: false`\n- `code: "captcha_in_progress"`, with a human-readable `message` that can vary\n- `captcha`: the solve\'s `captcha_id`, `page_id`, `generation`, `state: "solving"` and `retry_after_ms`\n\nThis applies to every action except `goto`, `wait` included: `{"type": "wait", "time_ms": 5000}` returns right away without waiting. An HTTP 200 does not mean the action ran: check `action_executed`, `code` and `captcha.state` on every response, not `message`.\n\nTo wait for the solve, either:\n\n- poll it: send `{"type": "captcha_solve"}` with the query parameter `captcha_id` set to `captcha.captcha_id`, every `retry_after_ms`, until `captcha.state` is no longer `"solving"`. A poll is read-only: it runs no action and starts no new solve.\n- or sleep on your side for `retry_after_ms` and send the action again.\n\nA solve ends `solved` (`code: "captcha_solved"`), `failed` (`code: "captcha_failed"`) or `cancelled` (`code: "captcha_cancelled"`, for example after a `goto`). With `solve_captchas: true`, after `failed`, actions on that page keep answering `captcha_failed` without running while the CAPTCHA is still there; a `goto` still runs.\n\nWhen the site rejects the answers our solver delivers, solving that CAPTCHA stops on the page: at once when the site\'s own response refuses an answer, or after 3 answers in a row that the site took and then showed the CAPTCHA again right away (before the third, the CAPTCHA is solved again). The solve then ends `failed` with `code: "captcha_rejected"` and `captcha.failure_reason: "rejected"`: actions on that page keep answering `captcha_rejected` without running while it is there. A site that refuses an answer this way often refuses every later one in the same browser session, so start a new session (for example through another proxy) instead of waiting. A `captcha_solve` action still tries again.\n\nAfter `solved`, send the action again only if its response had `action_executed: false`. To make sure it runs on the same page, add the query parameters `target_page_id` and `target_generation` from the last `captcha` status; if the page changed, the answer is `code: "captcha_page_changed"` and nothing runs. An action that ran and then brought up a CAPTCHA answers `action_executed: true` with a `captcha` status: keep its result, poll the solve, and do not send the action again.\n\nA `goto` is never blocked: it ends a solve in progress. `captcha_timeout_seconds` (default 180) is the budget of a solve the request starts. `observe`, `scrape` and `screenshot` are not blocked by a solve: they read the page as it is.'
         request = wire_request(models.PageExecuteParametersQuery, data)
         return self.request(page_api.page_execute(session_id, body, params=request))
 
@@ -694,7 +694,7 @@ class AsyncSessionsOperations(AsyncBaseClient):
     async def execute(
         self, session_id: str, body: actions.BaseAction, **data: Unpack[PageExecuteParametersQueryDict]
     ) -> core.ExecutionResultResponse:
-        'Page Execute (`POST /sessions/{session_id}/page/execute`).\n\nRun one action on the session\'s current page.\n\n## While a CAPTCHA is being solved\n\nWhile a CAPTCHA on the page is unsolved or being solved (automatically with `solve_captchas: true`, or after a `captcha_solve` action), the action is **not run**. The request still answers HTTP 200, at once, with:\n\n- `success: false` and `action_executed: false`\n- `code: "captcha_in_progress"`, with a human-readable `message` that can vary\n- `captcha`: the solve\'s `captcha_id`, `page_id`, `generation`, `state: "solving"` and `retry_after_ms`\n\nThis applies to every action except `goto`, `wait` included: `{"type": "wait", "time_ms": 5000}` returns right away without waiting. An HTTP 200 does not mean the action ran: check `action_executed`, `code` and `captcha.state` on every response, not `message`.\n\nTo wait for the solve, either:\n\n- poll it: send `{"type": "captcha_solve"}` with the query parameter `captcha_id` set to `captcha.captcha_id`, every `retry_after_ms`, until `captcha.state` is no longer `"solving"`. A poll is read-only: it runs no action and starts no new solve.\n- or sleep on your side for `retry_after_ms` and send the action again.\n\nA solve ends `solved` (`code: "captcha_solved"`), `failed` (`code: "captcha_failed"`) or `cancelled` (`code: "captcha_cancelled"`, for example after a `goto`). With `solve_captchas: true`, after `failed`, actions on that page keep answering `captcha_failed` without running while the CAPTCHA is still there; a `goto` still runs.\n\nWhen the site rejects the answer our solver delivered and shows the CAPTCHA again right away, the solve ends `failed` with `code: "captcha_rejected"` and `captcha.failure_reason: "rejected"`, and solving stops for that CAPTCHA on the page: actions on that page keep answering `captcha_rejected` without running while it is there. A site that does this usually rejects every answer in the same browser session, so start a new session (for example through another proxy) instead of waiting. A `captcha_solve` action still tries again.\n\nAfter `solved`, send the action again only if its response had `action_executed: false`. To make sure it runs on the same page, add the query parameters `target_page_id` and `target_generation` from the last `captcha` status; if the page changed, the answer is `code: "captcha_page_changed"` and nothing runs. An action that ran and then brought up a CAPTCHA answers `action_executed: true` with a `captcha` status: keep its result, poll the solve, and do not send the action again.\n\nA `goto` is never blocked: it ends a solve in progress. `captcha_timeout_seconds` (default 180) is the budget of a solve the request starts. `observe`, `scrape` and `screenshot` are not blocked by a solve: they read the page as it is.'
+        'Page Execute (`POST /sessions/{session_id}/page/execute`).\n\nRun one action on the session\'s current page.\n\n## While a CAPTCHA is being solved\n\nWhile a CAPTCHA on the page is unsolved or being solved (automatically with `solve_captchas: true`, or after a `captcha_solve` action), the action is **not run**. The request still answers HTTP 200, at once, with:\n\n- `success: false` and `action_executed: false`\n- `code: "captcha_in_progress"`, with a human-readable `message` that can vary\n- `captcha`: the solve\'s `captcha_id`, `page_id`, `generation`, `state: "solving"` and `retry_after_ms`\n\nThis applies to every action except `goto`, `wait` included: `{"type": "wait", "time_ms": 5000}` returns right away without waiting. An HTTP 200 does not mean the action ran: check `action_executed`, `code` and `captcha.state` on every response, not `message`.\n\nTo wait for the solve, either:\n\n- poll it: send `{"type": "captcha_solve"}` with the query parameter `captcha_id` set to `captcha.captcha_id`, every `retry_after_ms`, until `captcha.state` is no longer `"solving"`. A poll is read-only: it runs no action and starts no new solve.\n- or sleep on your side for `retry_after_ms` and send the action again.\n\nA solve ends `solved` (`code: "captcha_solved"`), `failed` (`code: "captcha_failed"`) or `cancelled` (`code: "captcha_cancelled"`, for example after a `goto`). With `solve_captchas: true`, after `failed`, actions on that page keep answering `captcha_failed` without running while the CAPTCHA is still there; a `goto` still runs.\n\nWhen the site rejects the answers our solver delivers, solving that CAPTCHA stops on the page: at once when the site\'s own response refuses an answer, or after 3 answers in a row that the site took and then showed the CAPTCHA again right away (before the third, the CAPTCHA is solved again). The solve then ends `failed` with `code: "captcha_rejected"` and `captcha.failure_reason: "rejected"`: actions on that page keep answering `captcha_rejected` without running while it is there. A site that refuses an answer this way often refuses every later one in the same browser session, so start a new session (for example through another proxy) instead of waiting. A `captcha_solve` action still tries again.\n\nAfter `solved`, send the action again only if its response had `action_executed: false`. To make sure it runs on the same page, add the query parameters `target_page_id` and `target_generation` from the last `captcha` status; if the page changed, the answer is `code: "captcha_page_changed"` and nothing runs. An action that ran and then brought up a CAPTCHA answers `action_executed: true` with a `captcha` status: keep its result, poll the solve, and do not send the action again.\n\nA `goto` is never blocked: it ends a solve in progress. `captcha_timeout_seconds` (default 180) is the budget of a solve the request starts. `observe`, `scrape` and `screenshot` are not blocked by a solve: they read the page as it is.'
         request = wire_request(models.PageExecuteParametersQuery, data)
         return await self.request(page_api.page_execute(session_id, body, params=request))
 
@@ -929,40 +929,40 @@ class PersonasOperations(BaseClient):
         )
 
     def list(self, **data: Unpack[PersonaListRequestDict]) -> Sequence[models.PersonaResponse]:
-        "List Personas (`GET /personas`)."
+        "List Personas (`GET /personas`).\n\nRetrieves all active personas associated to the user's account."
         request = wire_request(core.PersonaListRequest, data)
         return self.request_list(api.list_personas(params=request))
 
     @track_usage("cloud.personas.create")
     def create(self, **data: Unpack[PersonaCreateRequestDict]) -> models.PersonaResponse:
-        "Persona Create (`POST /personas/create`)."
+        "Persona Create (`POST /personas/create`).\n\nCreate a new persona, i.e. a digital identity for your agent.\nBy default, a persona holds a ID (name), email address, and can be attributed a phone number and a secure vault to store credentials.\n\nYou can update the `create_vault` parameter and `create_phone_number` parameters to create a persona with a vault and a phone number.\nAn optional `name` can be provided to label the persona; it can also be changed later via `PATCH /personas/{persona_id}`."
         request = wire_request(models.PersonaCreateRequest, data)
         return self.request(api.persona_create(request))
 
     @track_usage("cloud.personas.delete")
     def delete(self, persona_id: str) -> models.DeletePersonaResponse:
-        "Persona Delete (`DELETE /personas/{persona_id}`)."
+        "Persona Delete (`DELETE /personas/{persona_id}`).\n\nDelete a persona for the authenticated user."
         return self.request(api.persona_delete(persona_id))
 
     @track_usage("cloud.personas.emails.list")
     def emails_list(self, persona_id: str, **data: Unpack[MessageReadRequestDict]) -> Sequence[core.EmailResponse]:
-        "Persona Emails List (`GET /personas/{persona_id}/emails`)."
+        "Persona Emails List (`GET /personas/{persona_id}/emails`).\n\nLists emails in the persona's inbox.\nEmails are sorted by date (newest first) and can be filtered by timedelta and only_unread."
         request = wire_request(models.PersonaEmailsListParametersQuery, data)
         return self.request_list(api.persona_emails_list(persona_id, params=request))
 
     @track_usage("cloud.personas.get")
     def get(self, persona_id: str) -> models.PersonaResponse:
-        "Persona Get (`GET /personas/{persona_id}`)."
+        "Persona Get (`GET /personas/{persona_id}`).\n\nRetrieve a persona data by its <persona_id>.\nThis is usefull to retrieve the persona's email address, phone number, and vault ID after creation."
         return self.request(api.persona_get(persona_id))
 
     @track_usage("cloud.personas.sms.list")
     def sms_list(self, persona_id: str, **data: Unpack[MessageReadRequestDict]) -> Sequence[models.SMSResponse]:
-        "Persona Sms List (`GET /personas/{persona_id}/sms`)."
+        "Persona Sms List (`GET /personas/{persona_id}/sms`).\n\nLists SMS Messages in the persona's inbox.\nMessages are sorted by date (newest first) and can be filtered by timedelta and only_unread.\n\nNote: this endpoint is not available for personas without a phone number."
         request = wire_request(models.PersonaEmailsListParametersQuery, data)
         return self.request_list(api.persona_sms_list(persona_id, params=request))
 
     def update(self, persona_id: str, **data: Unpack[PersonaUpdateRequestDict]) -> models.PersonaResponse:
-        "Persona Update (`PATCH /personas/{persona_id}`)."
+        "Persona Update (`PATCH /personas/{persona_id}`).\n\nUpdate persona name.\n\nUpdates the name of an existing persona. The name must be between 3 and 50 characters\nand can only contain letters, numbers, spaces, hyphens, and underscores.\n\nReturns:\n- Updated persona with new name"
         request = wire_request(models.PersonaUpdateRequest, data)
         return self.request(api.persona_update(persona_id, request))
 
@@ -986,42 +986,42 @@ class AsyncPersonasOperations(AsyncBaseClient):
         )
 
     async def list(self, **data: Unpack[PersonaListRequestDict]) -> Sequence[models.PersonaResponse]:
-        "List Personas (`GET /personas`)."
+        "List Personas (`GET /personas`).\n\nRetrieves all active personas associated to the user's account."
         request = wire_request(core.PersonaListRequest, data)
         return await self.request_list(api.list_personas(params=request))
 
     @track_usage("cloud.personas.create")
     async def create(self, **data: Unpack[PersonaCreateRequestDict]) -> models.PersonaResponse:
-        "Persona Create (`POST /personas/create`)."
+        "Persona Create (`POST /personas/create`).\n\nCreate a new persona, i.e. a digital identity for your agent.\nBy default, a persona holds a ID (name), email address, and can be attributed a phone number and a secure vault to store credentials.\n\nYou can update the `create_vault` parameter and `create_phone_number` parameters to create a persona with a vault and a phone number.\nAn optional `name` can be provided to label the persona; it can also be changed later via `PATCH /personas/{persona_id}`."
         request = wire_request(models.PersonaCreateRequest, data)
         return await self.request(api.persona_create(request))
 
     @track_usage("cloud.personas.delete")
     async def delete(self, persona_id: str) -> models.DeletePersonaResponse:
-        "Persona Delete (`DELETE /personas/{persona_id}`)."
+        "Persona Delete (`DELETE /personas/{persona_id}`).\n\nDelete a persona for the authenticated user."
         return await self.request(api.persona_delete(persona_id))
 
     @track_usage("cloud.personas.emails.list")
     async def emails_list(
         self, persona_id: str, **data: Unpack[MessageReadRequestDict]
     ) -> Sequence[core.EmailResponse]:
-        "Persona Emails List (`GET /personas/{persona_id}/emails`)."
+        "Persona Emails List (`GET /personas/{persona_id}/emails`).\n\nLists emails in the persona's inbox.\nEmails are sorted by date (newest first) and can be filtered by timedelta and only_unread."
         request = wire_request(models.PersonaEmailsListParametersQuery, data)
         return await self.request_list(api.persona_emails_list(persona_id, params=request))
 
     @track_usage("cloud.personas.get")
     async def get(self, persona_id: str) -> models.PersonaResponse:
-        "Persona Get (`GET /personas/{persona_id}`)."
+        "Persona Get (`GET /personas/{persona_id}`).\n\nRetrieve a persona data by its <persona_id>.\nThis is usefull to retrieve the persona's email address, phone number, and vault ID after creation."
         return await self.request(api.persona_get(persona_id))
 
     @track_usage("cloud.personas.sms.list")
     async def sms_list(self, persona_id: str, **data: Unpack[MessageReadRequestDict]) -> Sequence[models.SMSResponse]:
-        "Persona Sms List (`GET /personas/{persona_id}/sms`)."
+        "Persona Sms List (`GET /personas/{persona_id}/sms`).\n\nLists SMS Messages in the persona's inbox.\nMessages are sorted by date (newest first) and can be filtered by timedelta and only_unread.\n\nNote: this endpoint is not available for personas without a phone number."
         request = wire_request(models.PersonaEmailsListParametersQuery, data)
         return await self.request_list(api.persona_sms_list(persona_id, params=request))
 
     async def update(self, persona_id: str, **data: Unpack[PersonaUpdateRequestDict]) -> models.PersonaResponse:
-        "Persona Update (`PATCH /personas/{persona_id}`)."
+        "Persona Update (`PATCH /personas/{persona_id}`).\n\nUpdate persona name.\n\nUpdates the name of an existing persona. The name must be between 3 and 50 characters\nand can only contain letters, numbers, spaces, hyphens, and underscores.\n\nReturns:\n- Updated persona with new name"
         request = wire_request(models.PersonaUpdateRequest, data)
         return await self.request(api.persona_update(persona_id, request))
 

@@ -119,6 +119,21 @@ def test_release_gate_includes_migrated_contracts(
     assert gen._check_against("https://example.test", committed) == 1
 
 
+def test_release_gate_reads_equal_numbers_as_equal(spec: dict[str, Any], monkeypatch: pytest.MonkeyPatch) -> None:
+    # One serializer writes an integral number as 20, another as 20.0.
+    _, committed = gen.render(spec)
+    live = copy.deepcopy(spec)
+    page_size = next(p for p in live["paths"]["/profiles"]["get"]["parameters"] if p["name"] == "page_size")["schema"]
+    numbers = {key: value for key, value in page_size.items() if type(value) is int}
+    assert numbers
+    page_size.update({key: float(value) for key, value in numbers.items()})
+    monkeypatch.setattr(gen, "used_operations", lambda: {"profile_list": ["_generated/resources.py"]})
+    monkeypatch.setattr(gen, "download", lambda _: live)
+    assert gen._check_against("https://example.test", committed) == 0
+    page_size[next(iter(numbers))] += 0.5
+    assert gen._check_against("https://example.test", committed) == 1
+
+
 def test_missing_resource_output_is_detected_without_rewriting(spec: dict[str, Any], tmp_path: Path) -> None:
     from scripts.generate_sdk_models import check_or_write
 

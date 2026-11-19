@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { AccountChangesData, AccountChangesErrors, AccountChangesResponses, AccountRunsData, AccountRunsErrors, AccountRunsResponses, AgentStartData, AgentStartErrors, AgentStartResponses, AgentStatusData, AgentStatusErrors, AgentStatusResponses, AgentStopData, AgentStopErrors, AgentStopResponses, AnythingStartData, AnythingStartErrors, AnythingStartResponses, AttemptsData, AttemptsErrors, AttemptsResponses, BrandRetrieveData, BrandRetrieveErrors, BrandRetrieveResponses, ChangesData, ChangesErrors, ChangesResponses, ConnectLinkContextData, ConnectLinkContextErrors, ConnectLinkContextResponses, ConnectLinkMailboxConnectData, ConnectLinkMailboxConnectErrors, ConnectLinkMailboxConnectResponses, ConnectLinkMailboxesData, ConnectLinkMailboxesErrors, ConnectLinkMailboxesResponses, ConnectLinkMailboxSyncData, ConnectLinkMailboxSyncErrors, ConnectLinkMailboxSyncResponses, ConnectLinkStatusData, ConnectLinkStatusErrors, ConnectLinkStatusResponses, ConnectLinkSubmitData, ConnectLinkSubmitErrors, ConnectLinkSubmitResponses, ConnectPaymentWalletData, ConnectPaymentWalletErrors, ConnectPaymentWalletResponses, CreateData, CreateErrors, CreatePaymentData, CreatePaymentErrors, CreatePaymentResponses, CreateResponses, CreditUsageData, CreditUsageErrors, CreditUsageResponses, DeleteData, DeleteErrors, DeleteResponses, DeleteSecretData, DeleteSecretErrors, DeleteSecretResponses, DeleteSessionFileData, DeleteSessionFileErrors, DeleteSessionFileResponses, DeliveriesData, DeliveriesErrors, DeliveriesResponses, DetailData, DetailErrors, DetailResponses, DisconnectPaymentWalletData, DisconnectPaymentWalletErrors, DisconnectPaymentWalletResponses, DownloadRunPayloadData, DownloadRunPayloadErrors, DownloadRunPayloadResponses, DownloadSessionFileData, DownloadSessionFileErrors, DownloadSessionFileResponses, ExecuteSessionFileData, ExecuteSessionFileErrors, ExecuteSessionFileResponses, ExtractProductEndpointData, ExtractProductEndpointErrors, ExtractProductEndpointResponses, FetchSpecializedDataData, FetchSpecializedDataErrors, FetchSpecializedDataResponses, FunctionConditionalRollbackData, FunctionConditionalRollbackErrors, FunctionConditionalRollbackResponses, FunctionCreateData, FunctionCreateErrors, FunctionCreateResponses, FunctionDeleteData, FunctionDeleteErrors, FunctionDeleteResponses, FunctionDownloadUrlData, FunctionDownloadUrlErrors, FunctionDownloadUrlResponses, FunctionForkData, FunctionForkErrors, FunctionForkResponses, FunctionMetadataUpdateData, FunctionMetadataUpdateErrors, FunctionMetadataUpdateResponses, FunctionRollbackData, FunctionRollbackErrors, FunctionRollbackResponses, FunctionRunGetMetadataData, FunctionRunGetMetadataErrors, FunctionRunGetMetadataResponses, FunctionRunStartData, FunctionRunStartErrors, FunctionRunStartResponses, FunctionRunStopData, FunctionRunStopErrors, FunctionRunStopResponses, FunctionRuntimeHealthData, FunctionRuntimeHealthErrors, FunctionRuntimeHealthResponses, FunctionRunUpdateMetadataData, FunctionRunUpdateMetadataErrors, FunctionRunUpdateMetadataResponses, FunctionScheduleDeleteData, FunctionScheduleDeleteErrors, FunctionScheduleDeleteResponses, FunctionSchedulesAddData, FunctionSchedulesAddErrors, FunctionSchedulesAddResponses, FunctionScheduleSetData, FunctionScheduleSetErrors, FunctionScheduleSetResponses, FunctionSchedulesListData, FunctionSchedulesListErrors, FunctionSchedulesListResponses, FunctionSchedulesRemoveData, FunctionSchedulesRemoveErrors, FunctionSchedulesRemoveResponses, FunctionSchedulesResumeData, FunctionSchedulesResumeErrors, FunctionSchedulesResumeResponses, FunctionSchedulesUpdateData, FunctionSchedulesUpdateErrors, FunctionSchedulesUpdateResponses, FunctionUpdateData, FunctionUpdateErrors, FunctionUpdateResponses, GetPaymentData, GetPaymentErrors, GetPaymentResponses, GetPaymentWalletConnectionData, GetPaymentWalletConnectionErrors, GetPaymentWalletConnectionResponses, GetPolicyData, GetPolicyErrors, GetPolicyResponses, GetScriptData, GetScriptErrors, GetScriptResponses, GetSecretData, GetSecretErrors, GetSecretResponses, GetSessionScriptData, GetSessionScriptErrors, GetSessionScriptResponses, GetUsageData, GetUsageErrors, GetUsageLogsData, GetUsageLogsErrors, GetUsageLogsResponses, GetUsageResponses, HealthCheckData, HealthCheckResponses, HistoryData, HistoryErrors, HistoryResponses, InvalidateData, InvalidateErrors, InvalidateResponses, LimitsData, LimitsErrors, LimitsResponses, ListAgentsData, ListAgentsErrors, ListAgentsResponses, ListAuditEventsData, ListAuditEventsErrors, ListAuditEventsResponses, ListDataApisData, ListDataApisErrors, ListDataApisResponses, ListFunctionRunsByFunctionIdData, ListFunctionRunsByFunctionIdErrors, ListFunctionRunsByFunctionIdResponses, ListFunctionsData, ListFunctionsErrors, ListFunctionsResponses, ListMonitorsData, ListMonitorsErrors, ListMonitorsResponses, ListPaymentRequestsData, ListPaymentRequestsErrors, ListPaymentRequestsResponses, ListPersonasData, ListPersonasErrors, ListPersonasResponses, ListSecretProxyHostPresetsData, ListSecretProxyHostPresetsErrors, ListSecretProxyHostPresetsResponses, ListSecretsData, ListSecretsErrors, ListSecretsResponses, ListSessionFilesData, ListSessionFilesErrors, ListSessionFilesResponses, ListSessionsData, ListSessionsErrors, ListSessionsResponses, ListVaultsData, ListVaultsErrors, ListVaultsResponses, MailboxConnectTokenData, MailboxConnectTokenErrors, MailboxConnectTokenResponses, MailboxDeleteData, MailboxDeleteErrors, MailboxDeleteResponses, MailboxGetData, MailboxGetErrors, MailboxGetResponses, MailboxListData, MailboxListErrors, MailboxListResponses, MailboxSyncData, MailboxSyncErrors, MailboxSyncResponses, MailboxUpdateData, MailboxUpdateErrors, MailboxUpdateResponses, ManagedAuthConnectLinkCreateData, ManagedAuthConnectLinkCreateErrors, ManagedAuthConnectLinkCreateResponses, MapsSearchData, MapsSearchErrors, MapsSearchResponses, NewsSearchData, NewsSearchErrors, NewsSearchResponses, PageActData, PageActErrors, PageActResponses, PageCheckData, PageCheckErrors, PageCheckResponses, PageChooseData, PageChooseErrors, PageChooseResponses, PageDocumentReadData, PageDocumentReadErrors, PageDocumentReadResponses, PageExecuteData, PageExecuteErrors, PageExecuteResponses, PageObserveData, PageObserveErrors, PageObserveResponses, PageScrapeData, PageScrapeErrors, PageScrapeResponses, PageScreenshotData, PageScreenshotErrors, PageScreenshotResponses, PeopleEnrichData, PeopleEnrichErrors, PeopleEnrichResponses, PersonaCreateData, PersonaCreateErrors, PersonaCreateResponses, PersonaDeleteData, PersonaDeleteErrors, PersonaDeleteResponses, PersonaEmailsListData, PersonaEmailsListErrors, PersonaEmailsListResponses, PersonaGetData, PersonaGetErrors, PersonaGetResponses, PersonaSmsListData, PersonaSmsListErrors, PersonaSmsListResponses, PersonaUpdateData, PersonaUpdateErrors, PersonaUpdateResponses, PrepareRunPayloadUploadData, PrepareRunPayloadUploadErrors, PrepareRunPayloadUploadResponses, ProfileCookiesGetData, ProfileCookiesGetErrors, ProfileCookiesGetResponses, ProfileCookiesSetData, ProfileCookiesSetErrors, ProfileCookiesSetResponses, ProfileCreateData, ProfileCreateErrors, ProfileCreateResponses, ProfileDeleteData, ProfileDeleteErrors, ProfileDeleteResponses, ProfileDuplicateData, ProfileDuplicateErrors, ProfileDuplicateResponses, ProfileGetData, ProfileGetErrors, ProfileGetResponses, ProfileListData, ProfileListErrors, ProfileListResponses, ProfileStateSetData, ProfileStateSetErrors, ProfileStateSetResponses, ReadyCheckData, ReadyCheckResponses, RetrieveChangeData, RetrieveChangeErrors, RetrieveChangeResponses, RetrieveData, RetrieveDeliveryData, RetrieveDeliveryErrors, RetrieveDeliveryResponses, RetrieveErrors, RetrieveResponses, RetrieveRunData, RetrieveRunErrors, RetrieveRunResponses, RetryData, RetryErrors, RetryResponses, RotateSecretData, RotateSecretErrors, RotateSecretResponses, RunNowData, RunNowErrors, RunNowResponses, RunsData, RunsErrors, RunsResponses, ScrapeFromHtmlData, ScrapeFromHtmlErrors, ScrapeFromHtmlResponses, ScrapeWebpageData, ScrapeWebpageErrors, ScrapeWebpageResponses, SearchWebData, SearchWebErrors, SearchWebResponses, SessionAuthReadinessData, SessionAuthReadinessErrors, SessionAuthReadinessResponses, SessionCookiesGetData, SessionCookiesGetErrors, SessionCookiesGetResponses, SessionCookiesSetData, SessionCookiesSetErrors, SessionCookiesSetResponses, SessionDebugInfoData, SessionDebugInfoErrors, SessionDebugInfoResponses, SessionMouseReplayData, SessionMouseReplayErrors, SessionMouseReplayResponses, SessionNetworkLogsData, SessionNetworkLogsErrors, SessionNetworkLogsResponses, SessionOffsetData, SessionOffsetErrors, SessionOffsetResponses, SessionPauseData, SessionPauseErrors, SessionPauseResponses, SessionProfilePreviewData, SessionProfilePreviewErrors, SessionProfilePreviewResponses, SessionProfileSaveData, SessionProfileSaveErrors, SessionProfileSaveResponses, SessionReplayData, SessionReplayErrors, SessionReplayResponses, SessionResumeData, SessionResumeErrors, SessionResumeResponses, SessionStartData, SessionStartErrors, SessionStartResponses, SessionStatusData, SessionStatusErrors, SessionStatusResponses, SessionStopData, SessionStopErrors, SessionStopResponses, StoreSecretData, StoreSecretErrors, StoreSecretResponses, StyleguideEndpointData, StyleguideEndpointErrors, StyleguideEndpointResponses, SummaryData, SummaryErrors, SummaryResponses, UpdateData, UpdateErrors, UpdateResponses, UploadSessionFileData, UploadSessionFileErrors, UploadSessionFileResponses, VaultCreateData, VaultCreateErrors, VaultCreateResponses, VaultCredentialsAddData, VaultCredentialsAddErrors, VaultCredentialsAddResponses, VaultCredentialsDeleteData, VaultCredentialsDeleteErrors, VaultCredentialsDeleteResponses, VaultCredentialsGetData, VaultCredentialsGetErrors, VaultCredentialsGetResponses, VaultCredentialsListData, VaultCredentialsListErrors, VaultCredentialsListResponses, VaultCreditCardDeleteData, VaultCreditCardDeleteErrors, VaultCreditCardDeleteResponses, VaultCreditCardGetData, VaultCreditCardGetErrors, VaultCreditCardGetResponses, VaultCreditCardSetData, VaultCreditCardSetErrors, VaultCreditCardSetResponses, VaultDeleteData, VaultDeleteErrors, VaultDeleteResponses, VaultUpdateData, VaultUpdateErrors, VaultUpdateResponses, YoutubeEndpointData, YoutubeEndpointErrors, YoutubeEndpointResponses } from './types.gen';
+import type { AccountChangesData, AccountChangesErrors, AccountChangesResponses, AccountRunsData, AccountRunsErrors, AccountRunsResponses, AgentStartData, AgentStartErrors, AgentStartResponses, AgentStatusData, AgentStatusErrors, AgentStatusResponses, AgentStopData, AgentStopErrors, AgentStopResponses, AnythingStartData, AnythingStartErrors, AnythingStartResponses, AttemptsData, AttemptsErrors, AttemptsResponses, BrandRetrieveData, BrandRetrieveErrors, BrandRetrieveResponses, ChangesData, ChangesErrors, ChangesResponses, ConnectLinkContextData, ConnectLinkContextErrors, ConnectLinkContextResponses, ConnectLinkMailboxConnectData, ConnectLinkMailboxConnectErrors, ConnectLinkMailboxConnectResponses, ConnectLinkMailboxesData, ConnectLinkMailboxesErrors, ConnectLinkMailboxesResponses, ConnectLinkMailboxSyncData, ConnectLinkMailboxSyncErrors, ConnectLinkMailboxSyncResponses, ConnectLinkStatusData, ConnectLinkStatusErrors, ConnectLinkStatusResponses, ConnectLinkSubmitData, ConnectLinkSubmitErrors, ConnectLinkSubmitResponses, ConnectPaymentWalletData, ConnectPaymentWalletErrors, ConnectPaymentWalletResponses, CreateData, CreateErrors, CreatePaymentData, CreatePaymentErrors, CreatePaymentResponses, CreateResponses, CreditUsageData, CreditUsageErrors, CreditUsageResponses, DeleteData, DeleteErrors, DeleteResponses, DeleteSecretData, DeleteSecretErrors, DeleteSecretResponses, DeleteSessionFileData, DeleteSessionFileErrors, DeleteSessionFileResponses, DeliveriesData, DeliveriesErrors, DeliveriesResponses, DetailData, DetailErrors, DetailResponses, DisconnectPaymentWalletData, DisconnectPaymentWalletErrors, DisconnectPaymentWalletResponses, DownloadRunPayloadData, DownloadRunPayloadErrors, DownloadRunPayloadResponses, DownloadSessionFileData, DownloadSessionFileErrors, DownloadSessionFileResponses, ExecuteSessionFileData, ExecuteSessionFileErrors, ExecuteSessionFileResponses, ExtractProductEndpointData, ExtractProductEndpointErrors, ExtractProductEndpointResponses, FetchSpecializedDataData, FetchSpecializedDataErrors, FetchSpecializedDataResponses, FunctionConditionalRollbackData, FunctionConditionalRollbackErrors, FunctionConditionalRollbackResponses, FunctionCreateData, FunctionCreateErrors, FunctionCreateResponses, FunctionDeleteData, FunctionDeleteErrors, FunctionDeleteResponses, FunctionDownloadUrlData, FunctionDownloadUrlErrors, FunctionDownloadUrlResponses, FunctionForkData, FunctionForkErrors, FunctionForkResponses, FunctionMetadataUpdateData, FunctionMetadataUpdateErrors, FunctionMetadataUpdateResponses, FunctionRollbackData, FunctionRollbackErrors, FunctionRollbackResponses, FunctionRunGetMetadataData, FunctionRunGetMetadataErrors, FunctionRunGetMetadataResponses, FunctionRunStartData, FunctionRunStartErrors, FunctionRunStartResponses, FunctionRunStopData, FunctionRunStopErrors, FunctionRunStopResponses, FunctionRuntimeHealthData, FunctionRuntimeHealthErrors, FunctionRuntimeHealthResponses, FunctionRunUpdateMetadataData, FunctionRunUpdateMetadataErrors, FunctionRunUpdateMetadataResponses, FunctionScheduleDeleteData, FunctionScheduleDeleteErrors, FunctionScheduleDeleteResponses, FunctionSchedulesAddData, FunctionSchedulesAddErrors, FunctionSchedulesAddResponses, FunctionScheduleSetData, FunctionScheduleSetErrors, FunctionScheduleSetResponses, FunctionSchedulesListData, FunctionSchedulesListErrors, FunctionSchedulesListResponses, FunctionSchedulesRemoveData, FunctionSchedulesRemoveErrors, FunctionSchedulesRemoveResponses, FunctionSchedulesResumeData, FunctionSchedulesResumeErrors, FunctionSchedulesResumeResponses, FunctionSchedulesUpdateData, FunctionSchedulesUpdateErrors, FunctionSchedulesUpdateResponses, FunctionUpdateData, FunctionUpdateErrors, FunctionUpdateResponses, GetPaymentData, GetPaymentErrors, GetPaymentResponses, GetPaymentWalletConnectionData, GetPaymentWalletConnectionErrors, GetPaymentWalletConnectionResponses, GetPolicyData, GetPolicyErrors, GetPolicyResponses, GetScriptData, GetScriptErrors, GetScriptResponses, GetSecretData, GetSecretErrors, GetSecretResponses, GetSessionScriptData, GetSessionScriptErrors, GetSessionScriptResponses, GetUsageData, GetUsageErrors, GetUsageLogsData, GetUsageLogsErrors, GetUsageLogsResponses, GetUsageResponses, HealthCheckData, HealthCheckResponses, HistoryData, HistoryErrors, HistoryResponses, InvalidateData, InvalidateErrors, InvalidateResponses, LimitsData, LimitsErrors, LimitsResponses, ListAgentsData, ListAgentsErrors, ListAgentsResponses, ListAuditEventsData, ListAuditEventsErrors, ListAuditEventsResponses, ListDataApisData, ListDataApisErrors, ListDataApisResponses, ListFunctionRunsByFunctionIdData, ListFunctionRunsByFunctionIdErrors, ListFunctionRunsByFunctionIdResponses, ListFunctionsData, ListFunctionsErrors, ListFunctionsResponses, ListMonitorsData, ListMonitorsErrors, ListMonitorsResponses, ListPaymentRequestsData, ListPaymentRequestsErrors, ListPaymentRequestsResponses, ListPersonasData, ListPersonasErrors, ListPersonasResponses, ListSecretProxyHostPresetsData, ListSecretProxyHostPresetsErrors, ListSecretProxyHostPresetsResponses, ListSecretsData, ListSecretsErrors, ListSecretsResponses, ListSessionFilesData, ListSessionFilesErrors, ListSessionFilesResponses, ListSessionsData, ListSessionsErrors, ListSessionsResponses, ListVaultsData, ListVaultsErrors, ListVaultsResponses, MailboxConnectTokenData, MailboxConnectTokenErrors, MailboxConnectTokenResponses, MailboxDeleteData, MailboxDeleteErrors, MailboxDeleteResponses, MailboxGetData, MailboxGetErrors, MailboxGetResponses, MailboxListData, MailboxListErrors, MailboxListResponses, MailboxSyncData, MailboxSyncErrors, MailboxSyncResponses, MailboxUpdateData, MailboxUpdateErrors, MailboxUpdateResponses, ManagedAuthConnectLinkCreateData, ManagedAuthConnectLinkCreateErrors, ManagedAuthConnectLinkCreateResponses, MapsSearchData, MapsSearchErrors, MapsSearchResponses, NewsSearchData, NewsSearchErrors, NewsSearchResponses, PageActData, PageActErrors, PageActResponses, PageCheckData, PageCheckErrors, PageCheckResponses, PageChooseData, PageChooseErrors, PageChooseResponses, PageDocumentReadData, PageDocumentReadErrors, PageDocumentReadResponses, PageExecuteData, PageExecuteErrors, PageExecuteResponses, PageObserveData, PageObserveErrors, PageObserveResponses, PageScrapeData, PageScrapeErrors, PageScrapeResponses, PageScreenshotData, PageScreenshotErrors, PageScreenshotResponses, PeopleEnrichData, PeopleEnrichErrors, PeopleEnrichResponses, PersonaCreateData, PersonaCreateErrors, PersonaCreateResponses, PersonaDeleteData, PersonaDeleteErrors, PersonaDeleteResponses, PersonaEmailsListData, PersonaEmailsListErrors, PersonaEmailsListResponses, PersonaGetData, PersonaGetErrors, PersonaGetResponses, PersonaSmsListData, PersonaSmsListErrors, PersonaSmsListResponses, PersonaUpdateData, PersonaUpdateErrors, PersonaUpdateResponses, PrepareRunPayloadUploadData, PrepareRunPayloadUploadErrors, PrepareRunPayloadUploadResponses, ProfileCookiesGetData, ProfileCookiesGetErrors, ProfileCookiesGetResponses, ProfileCookiesSetData, ProfileCookiesSetErrors, ProfileCookiesSetResponses, ProfileCreateData, ProfileCreateErrors, ProfileCreateResponses, ProfileDeleteData, ProfileDeleteErrors, ProfileDeleteResponses, ProfileDuplicateData, ProfileDuplicateErrors, ProfileDuplicateResponses, ProfileGetData, ProfileGetErrors, ProfileGetResponses, ProfileListData, ProfileListErrors, ProfileListResponses, ProfileStateSetData, ProfileStateSetErrors, ProfileStateSetResponses, ReadyCheckData, ReadyCheckResponses, RetrieveChangeData, RetrieveChangeErrors, RetrieveChangeResponses, RetrieveData, RetrieveDeliveryData, RetrieveDeliveryErrors, RetrieveDeliveryResponses, RetrieveErrors, RetrieveResponses, RetrieveRunData, RetrieveRunErrors, RetrieveRunResponses, RetryData, RetryErrors, RetryResponses, RotateSecretData, RotateSecretErrors, RotateSecretResponses, RunNowData, RunNowErrors, RunNowResponses, RunsData, RunsErrors, RunsResponses, ScrapeFromHtmlData, ScrapeFromHtmlErrors, ScrapeFromHtmlResponses, ScrapeWebpageData, ScrapeWebpageErrors, ScrapeWebpageResponses, SearchWebData, SearchWebErrors, SearchWebResponses, SessionAuthReadinessData, SessionAuthReadinessErrors, SessionAuthReadinessResponses, SessionCookiesGetData, SessionCookiesGetErrors, SessionCookiesGetResponses, SessionCookiesSetData, SessionCookiesSetErrors, SessionCookiesSetResponses, SessionDebugInfoData, SessionDebugInfoErrors, SessionDebugInfoResponses, SessionMouseReplayData, SessionMouseReplayErrors, SessionMouseReplayResponses, SessionNetworkLogsData, SessionNetworkLogsErrors, SessionNetworkLogsResponses, SessionOffsetData, SessionOffsetErrors, SessionOffsetResponses, SessionPauseData, SessionPauseErrors, SessionPauseResponses, SessionProfilePreviewData, SessionProfilePreviewErrors, SessionProfilePreviewResponses, SessionProfileSaveData, SessionProfileSaveErrors, SessionProfileSaveResponses, SessionReplayData, SessionReplayErrors, SessionReplayResponses, SessionResumeData, SessionResumeErrors, SessionResumeResponses, SessionStartData, SessionStartErrors, SessionStartResponses, SessionStatusData, SessionStatusErrors, SessionStatusResponses, SessionStepsData, SessionStepsErrors, SessionStepsResponses, SessionStopData, SessionStopErrors, SessionStopResponses, StoreSecretData, StoreSecretErrors, StoreSecretResponses, StyleguideEndpointData, StyleguideEndpointErrors, StyleguideEndpointResponses, SummaryData, SummaryErrors, SummaryResponses, UpdateData, UpdateErrors, UpdateResponses, UploadSessionFileData, UploadSessionFileErrors, UploadSessionFileResponses, VaultCreateData, VaultCreateErrors, VaultCreateResponses, VaultCredentialsAddData, VaultCredentialsAddErrors, VaultCredentialsAddResponses, VaultCredentialsDeleteData, VaultCredentialsDeleteErrors, VaultCredentialsDeleteResponses, VaultCredentialsGetData, VaultCredentialsGetErrors, VaultCredentialsGetResponses, VaultCredentialsListData, VaultCredentialsListErrors, VaultCredentialsListResponses, VaultCreditCardDeleteData, VaultCreditCardDeleteErrors, VaultCreditCardDeleteResponses, VaultCreditCardGetData, VaultCreditCardGetErrors, VaultCreditCardGetResponses, VaultCreditCardSetData, VaultCreditCardSetErrors, VaultCreditCardSetResponses, VaultDeleteData, VaultDeleteErrors, VaultDeleteResponses, VaultUpdateData, VaultUpdateErrors, VaultUpdateResponses, YoutubeEndpointData, YoutubeEndpointErrors, YoutubeEndpointResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -55,6 +55,17 @@ export const sessionStart = <ThrowOnError extends boolean = false>(options: Opti
 export const sessionStatus = <ThrowOnError extends boolean = false>(options: Options<SessionStatusData, ThrowOnError>): RequestResult<SessionStatusResponses, SessionStatusErrors, ThrowOnError> => (options.client ?? client).get<SessionStatusResponses, SessionStatusErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/sessions/{session_id}',
+    ...options
+});
+
+/**
+ * Session Steps
+ *
+ * List a session's steps (actions and observations), oldest first, one page at a time, in the format of the `steps` of the session status. Pass the response's `next_cursor` as `cursor` to read the next page; it is null when the page ends with the session's latest step. A cursor is opaque and belongs to the session it was returned for. A request whose cursor no longer applies answers 400 `SessionStepsCursorExpiredError`: restart without a cursor.
+ */
+export const sessionSteps = <ThrowOnError extends boolean = false>(options: Options<SessionStepsData, ThrowOnError>): RequestResult<SessionStepsResponses, SessionStepsErrors, ThrowOnError> => (options.client ?? client).get<SessionStepsResponses, SessionStepsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/sessions/{session_id}/steps',
     ...options
 });
 
@@ -191,7 +202,7 @@ export const pageScreenshot = <ThrowOnError extends boolean = false>(options: Op
  *
  * A solve ends `solved` (`code: "captcha_solved"`), `failed` (`code: "captcha_failed"`) or `cancelled` (`code: "captcha_cancelled"`, for example after a `goto`). With `solve_captchas: true`, after `failed`, actions on that page keep answering `captcha_failed` without running while the CAPTCHA is still there; a `goto` still runs.
  *
- * When the site rejects the answer our solver delivered and shows the CAPTCHA again right away, the solve ends `failed` with `code: "captcha_rejected"` and `captcha.failure_reason: "rejected"`, and solving stops for that CAPTCHA on the page: actions on that page keep answering `captcha_rejected` without running while it is there. A site that does this usually rejects every answer in the same browser session, so start a new session (for example through another proxy) instead of waiting. A `captcha_solve` action still tries again.
+ * When the site rejects the answers our solver delivers, solving that CAPTCHA stops on the page: at once when the site's own response refuses an answer, or after 3 answers in a row that the site took and then showed the CAPTCHA again right away (before the third, the CAPTCHA is solved again). The solve then ends `failed` with `code: "captcha_rejected"` and `captcha.failure_reason: "rejected"`: actions on that page keep answering `captcha_rejected` without running while it is there. A site that refuses an answer this way often refuses every later one in the same browser session, so start a new session (for example through another proxy) instead of waiting. A `captcha_solve` action still tries again.
  *
  * After `solved`, send the action again only if its response had `action_executed: false`. To make sure it runs on the same page, add the query parameters `target_page_id` and `target_generation` from the last `captcha` status; if the page changed, the answer is `code: "captcha_page_changed"` and nothing runs. An action that ran and then brought up a CAPTCHA answers `action_executed: true` with a `captcha` status: keep its result, poll the solve, and do not send the action again.
  *
@@ -885,77 +896,6 @@ export const profileList = <ThrowOnError extends boolean = false>(options?: Opti
 });
 
 /**
- * Persona Create
- */
-export const personaCreate = <ThrowOnError extends boolean = false>(options: Options<PersonaCreateData, ThrowOnError>): RequestResult<PersonaCreateResponses, PersonaCreateErrors, ThrowOnError> => (options.client ?? client).post<PersonaCreateResponses, PersonaCreateErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/personas/create',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Persona Delete
- */
-export const personaDelete = <ThrowOnError extends boolean = false>(options: Options<PersonaDeleteData, ThrowOnError>): RequestResult<PersonaDeleteResponses, PersonaDeleteErrors, ThrowOnError> => (options.client ?? client).delete<PersonaDeleteResponses, PersonaDeleteErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/personas/{persona_id}',
-    ...options
-});
-
-/**
- * Persona Get
- */
-export const personaGet = <ThrowOnError extends boolean = false>(options: Options<PersonaGetData, ThrowOnError>): RequestResult<PersonaGetResponses, PersonaGetErrors, ThrowOnError> => (options.client ?? client).get<PersonaGetResponses, PersonaGetErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/personas/{persona_id}',
-    ...options
-});
-
-/**
- * Persona Update
- */
-export const personaUpdate = <ThrowOnError extends boolean = false>(options: Options<PersonaUpdateData, ThrowOnError>): RequestResult<PersonaUpdateResponses, PersonaUpdateErrors, ThrowOnError> => (options.client ?? client).patch<PersonaUpdateResponses, PersonaUpdateErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/personas/{persona_id}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Persona Emails List
- */
-export const personaEmailsList = <ThrowOnError extends boolean = false>(options: Options<PersonaEmailsListData, ThrowOnError>): RequestResult<PersonaEmailsListResponses, PersonaEmailsListErrors, ThrowOnError> => (options.client ?? client).get<PersonaEmailsListResponses, PersonaEmailsListErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/personas/{persona_id}/emails',
-    ...options
-});
-
-/**
- * List Personas
- */
-export const listPersonas = <ThrowOnError extends boolean = false>(options?: Options<ListPersonasData, ThrowOnError>): RequestResult<ListPersonasResponses, ListPersonasErrors, ThrowOnError> => (options?.client ?? client).get<ListPersonasResponses, ListPersonasErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/personas',
-    ...options
-});
-
-/**
- * Persona Sms List
- */
-export const personaSmsList = <ThrowOnError extends boolean = false>(options: Options<PersonaSmsListData, ThrowOnError>): RequestResult<PersonaSmsListResponses, PersonaSmsListErrors, ThrowOnError> => (options.client ?? client).get<PersonaSmsListResponses, PersonaSmsListErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/personas/{persona_id}/sms',
-    ...options
-});
-
-/**
  * Mailbox Connect Token
  */
 export const mailboxConnectToken = <ThrowOnError extends boolean = false>(options: Options<MailboxConnectTokenData, ThrowOnError>): RequestResult<MailboxConnectTokenResponses, MailboxConnectTokenErrors, ThrowOnError> => (options.client ?? client).post<MailboxConnectTokenResponses, MailboxConnectTokenErrors, ThrowOnError>({
@@ -1135,15 +1075,6 @@ export const getSecret = <ThrowOnError extends boolean = false>(options: Options
 export const deleteSecret = <ThrowOnError extends boolean = false>(options: Options<DeleteSecretData, ThrowOnError>): RequestResult<DeleteSecretResponses, DeleteSecretErrors, ThrowOnError> => (options.client ?? client).delete<DeleteSecretResponses, DeleteSecretErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/secrets/{secret_id}',
-    ...options
-});
-
-/**
- * List Secret Proxy Host Presets
- */
-export const listSecretProxyHostPresets = <ThrowOnError extends boolean = false>(options?: Options<ListSecretProxyHostPresetsData, ThrowOnError>): RequestResult<ListSecretProxyHostPresetsResponses, ListSecretProxyHostPresetsErrors, ThrowOnError> => (options?.client ?? client).get<ListSecretProxyHostPresetsResponses, ListSecretProxyHostPresetsErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/secret-proxy/host-presets',
     ...options
 });
 
@@ -1549,6 +1480,117 @@ export const scrapeFromHtml = <ThrowOnError extends boolean = false>(options: Op
 export const listAuditEvents = <ThrowOnError extends boolean = false>(options?: Options<ListAuditEventsData, ThrowOnError>): RequestResult<ListAuditEventsResponses, ListAuditEventsErrors, ThrowOnError> => (options?.client ?? client).get<ListAuditEventsResponses, ListAuditEventsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/audit-events',
+    ...options
+});
+
+/**
+ * List Personas
+ *
+ * Retrieves all active personas associated to the user's account.
+ */
+export const listPersonas = <ThrowOnError extends boolean = false>(options?: Options<ListPersonasData, ThrowOnError>): RequestResult<ListPersonasResponses, ListPersonasErrors, ThrowOnError> => (options?.client ?? client).get<ListPersonasResponses, ListPersonasErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/personas',
+    ...options
+});
+
+/**
+ * Persona Create
+ *
+ * Create a new persona, i.e. a digital identity for your agent.
+ * By default, a persona holds a ID (name), email address, and can be attributed a phone number and a secure vault to store credentials.
+ *
+ * You can update the `create_vault` parameter and `create_phone_number` parameters to create a persona with a vault and a phone number.
+ * An optional `name` can be provided to label the persona; it can also be changed later via `PATCH /personas/{persona_id}`.
+ */
+export const personaCreate = <ThrowOnError extends boolean = false>(options: Options<PersonaCreateData, ThrowOnError>): RequestResult<PersonaCreateResponses, PersonaCreateErrors, ThrowOnError> => (options.client ?? client).post<PersonaCreateResponses, PersonaCreateErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/personas/create',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Persona Delete
+ *
+ * Delete a persona for the authenticated user.
+ */
+export const personaDelete = <ThrowOnError extends boolean = false>(options: Options<PersonaDeleteData, ThrowOnError>): RequestResult<PersonaDeleteResponses, PersonaDeleteErrors, ThrowOnError> => (options.client ?? client).delete<PersonaDeleteResponses, PersonaDeleteErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/personas/{persona_id}',
+    ...options
+});
+
+/**
+ * Persona Get
+ *
+ * Retrieve a persona data by its <persona_id>.
+ * This is usefull to retrieve the persona's email address, phone number, and vault ID after creation.
+ */
+export const personaGet = <ThrowOnError extends boolean = false>(options: Options<PersonaGetData, ThrowOnError>): RequestResult<PersonaGetResponses, PersonaGetErrors, ThrowOnError> => (options.client ?? client).get<PersonaGetResponses, PersonaGetErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/personas/{persona_id}',
+    ...options
+});
+
+/**
+ * Persona Update
+ *
+ * Update persona name.
+ *
+ * Updates the name of an existing persona. The name must be between 3 and 50 characters
+ * and can only contain letters, numbers, spaces, hyphens, and underscores.
+ *
+ * Returns:
+ * - Updated persona with new name
+ */
+export const personaUpdate = <ThrowOnError extends boolean = false>(options: Options<PersonaUpdateData, ThrowOnError>): RequestResult<PersonaUpdateResponses, PersonaUpdateErrors, ThrowOnError> => (options.client ?? client).patch<PersonaUpdateResponses, PersonaUpdateErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/personas/{persona_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Persona Emails List
+ *
+ * Lists emails in the persona's inbox.
+ * Emails are sorted by date (newest first) and can be filtered by timedelta and only_unread.
+ */
+export const personaEmailsList = <ThrowOnError extends boolean = false>(options: Options<PersonaEmailsListData, ThrowOnError>): RequestResult<PersonaEmailsListResponses, PersonaEmailsListErrors, ThrowOnError> => (options.client ?? client).get<PersonaEmailsListResponses, PersonaEmailsListErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/personas/{persona_id}/emails',
+    ...options
+});
+
+/**
+ * Persona Sms List
+ *
+ * Lists SMS Messages in the persona's inbox.
+ * Messages are sorted by date (newest first) and can be filtered by timedelta and only_unread.
+ *
+ * Note: this endpoint is not available for personas without a phone number.
+ */
+export const personaSmsList = <ThrowOnError extends boolean = false>(options: Options<PersonaSmsListData, ThrowOnError>): RequestResult<PersonaSmsListResponses, PersonaSmsListErrors, ThrowOnError> => (options.client ?? client).get<PersonaSmsListResponses, PersonaSmsListErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/personas/{persona_id}/sms',
+    ...options
+});
+
+/**
+ * List Secret Proxy Host Presets
+ *
+ * The host presets with their current hosts, so the secret proxy can decrypt exactly the same hosts.
+ */
+export const listSecretProxyHostPresets = <ThrowOnError extends boolean = false>(options?: Options<ListSecretProxyHostPresetsData, ThrowOnError>): RequestResult<ListSecretProxyHostPresetsResponses, ListSecretProxyHostPresetsErrors, ThrowOnError> => (options?.client ?? client).get<ListSecretProxyHostPresetsResponses, ListSecretProxyHostPresetsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/secret-proxy/host-presets',
     ...options
 });
 

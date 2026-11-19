@@ -148,6 +148,12 @@ export type GlobalScrapeRequest = {
      */
     advanced_stealth?: boolean;
     /**
+     * Os
+     *
+     * The operating system the session's browser presents: windows or macos. When unset, each session gets one at random among those the environment offers.
+     */
+    os?: 'windows' | 'macos' | null;
+    /**
      * Screenshot Type
      *
      * Ignored since notte 1.10: screenshots are returned without highlighting.
@@ -318,6 +324,10 @@ Who answers JavaScript dialogs (alert, confirm, prompt, beforeunload). `auto` (d
 
 <ParamField body="advanced_stealth" type={"boolean | undefined"}>
 Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.
+</ParamField>
+
+<ParamField body="os" type={"\"windows\" | \"macos\" | null | undefined"}>
+The operating system the session's browser presents: windows or macos. When unset, each session gets one at random among those the environment offers.
 </ParamField>
 
 <ParamField body="screenshot_type" type={"\"raw\" | \"full\" | \"last_action\" | undefined"}>

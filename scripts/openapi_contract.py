@@ -96,6 +96,11 @@ def _schema(schemas: JsonObject, name: str) -> JsonObject | None:
 
 
 def _nullable(prop: JsonObject) -> bool:
+    # OpenAPI 3.1 writes a nullable field either as an `anyOf` with a null branch
+    # (FastAPI) or as a type list such as ["string", "null"] (the Go API).
+    types_ = prop.get("type")
+    if isinstance(types_, list) and "null" in types_:
+        return True
     branches = cast(list[JsonObject], prop.get("anyOf", []))
     return any(branch.get("type") == "null" for branch in branches)
 
