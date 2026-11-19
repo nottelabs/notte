@@ -9189,7 +9189,7 @@ export type DeletePersonaResponse = {
      *
      * Message of the deletion
      */
-    message: string;
+    message?: string;
     /**
      * Status
      *
@@ -9237,7 +9237,7 @@ export type EmailResponse = {
      *
      * Files attached to the email, with short-lived download URLs
      */
-    attachments: Array<EmailAttachment>;
+    attachments?: Array<EmailAttachment>;
     /**
      * Created At
      *
@@ -9255,7 +9255,7 @@ export type EmailResponse = {
      *
      * HTML body, can be uncorrelated with raw content
      */
-    html_content: string | null;
+    html_content?: string | null;
     /**
      * Read
      *
@@ -9285,7 +9285,7 @@ export type EmailResponse = {
      *
      * Raw textual body, can be uncorrelated with html content
      */
-    text_content: string | null;
+    text_content?: string | null;
 };
 
 /**
@@ -9420,7 +9420,7 @@ export type PersonaResponse = {
     /**
      * Provider hosting the persona mailbox
      */
-    email_provider: PersonaEmailProvider;
+    email_provider?: PersonaEmailProvider;
     /**
      * First Name
      *
@@ -9442,7 +9442,7 @@ export type PersonaResponse = {
     /**
      * Name
      */
-    name: string | null;
+    name?: string | null;
     /**
      * Persona Id
      *

@@ -12,46 +12,46 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type EmailAttachment = {
     /**
-     * Filename
-     *
-     * Filename, as the sender named it
-     */
-    filename: string;
-    /**
      * Content Type
      *
      * MIME type, as the sender declared it
      */
     content_type: string;
     /**
-     * Size Bytes
-     *
-     * Size in bytes
-     */
-    size_bytes: number;
-    /**
      * Download Url
      *
      * Signed download URL, valid for one hour
      */
     download_url: string;
+    /**
+     * Filename
+     *
+     * Filename, as the sender named it
+     */
+    filename: string;
+    /**
+     * Size Bytes
+     *
+     * Size in bytes
+     */
+    size_bytes: number;
 };
 ```
 
 ## Fields
 
-<ParamField body="filename" type={"string"} required>
-Filename, as the sender named it
-</ParamField>
-
 <ParamField body="content_type" type={"string"} required>
 MIME type, as the sender declared it
 </ParamField>
 
-<ParamField body="size_bytes" type={"number"} required>
-Size in bytes
-</ParamField>
-
 <ParamField body="download_url" type={"string"} required>
 Signed download URL, valid for one hour
+</ParamField>
+
+<ParamField body="filename" type={"string"} required>
+Filename, as the sender named it
+</ParamField>
+
+<ParamField body="size_bytes" type={"number"} required>
+Size in bytes
 </ParamField>

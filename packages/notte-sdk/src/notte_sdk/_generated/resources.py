@@ -929,40 +929,40 @@ class PersonasOperations(BaseClient):
         )
 
     def list(self, **data: Unpack[PersonaListRequestDict]) -> Sequence[models.PersonaResponse]:
-        "List Personas (`GET /personas`)."
+        "List Personas (`GET /personas`).\n\nRetrieves all active personas associated to the user's account."
         request = wire_request(core.PersonaListRequest, data)
         return self.request_list(api.list_personas(params=request))
 
     @track_usage("cloud.personas.create")
     def create(self, **data: Unpack[PersonaCreateRequestDict]) -> models.PersonaResponse:
-        "Persona Create (`POST /personas/create`)."
+        "Persona Create (`POST /personas/create`).\n\nCreate a new persona, i.e. a digital identity for your agent.\nBy default, a persona holds a ID (name), email address, and can be attributed a phone number and a secure vault to store credentials.\n\nYou can update the `create_vault` parameter and `create_phone_number` parameters to create a persona with a vault and a phone number.\nAn optional `name` can be provided to label the persona; it can also be changed later via `PATCH /personas/{persona_id}`."
         request = wire_request(models.PersonaCreateRequest, data)
         return self.request(api.persona_create(request))
 
     @track_usage("cloud.personas.delete")
     def delete(self, persona_id: str) -> models.DeletePersonaResponse:
-        "Persona Delete (`DELETE /personas/{persona_id}`)."
+        "Persona Delete (`DELETE /personas/{persona_id}`).\n\nDelete a persona for the authenticated user."
         return self.request(api.persona_delete(persona_id))
 
     @track_usage("cloud.personas.emails.list")
     def emails_list(self, persona_id: str, **data: Unpack[MessageReadRequestDict]) -> Sequence[core.EmailResponse]:
-        "Persona Emails List (`GET /personas/{persona_id}/emails`)."
+        "Persona Emails List (`GET /personas/{persona_id}/emails`).\n\nLists emails in the persona's inbox.\nEmails are sorted by date (newest first) and can be filtered by timedelta and only_unread."
         request = wire_request(models.PersonaEmailsListParametersQuery, data)
         return self.request_list(api.persona_emails_list(persona_id, params=request))
 
     @track_usage("cloud.personas.get")
     def get(self, persona_id: str) -> models.PersonaResponse:
-        "Persona Get (`GET /personas/{persona_id}`)."
+        "Persona Get (`GET /personas/{persona_id}`).\n\nRetrieve a persona data by its <persona_id>.\nThis is usefull to retrieve the persona's email address, phone number, and vault ID after creation."
         return self.request(api.persona_get(persona_id))
 
     @track_usage("cloud.personas.sms.list")
     def sms_list(self, persona_id: str, **data: Unpack[MessageReadRequestDict]) -> Sequence[models.SMSResponse]:
-        "Persona Sms List (`GET /personas/{persona_id}/sms`)."
+        "Persona Sms List (`GET /personas/{persona_id}/sms`).\n\nLists SMS Messages in the persona's inbox.\nMessages are sorted by date (newest first) and can be filtered by timedelta and only_unread.\n\nNote: this endpoint is not available for personas without a phone number."
         request = wire_request(models.PersonaEmailsListParametersQuery, data)
         return self.request_list(api.persona_sms_list(persona_id, params=request))
 
     def update(self, persona_id: str, **data: Unpack[PersonaUpdateRequestDict]) -> models.PersonaResponse:
-        "Persona Update (`PATCH /personas/{persona_id}`)."
+        "Persona Update (`PATCH /personas/{persona_id}`).\n\nUpdate persona name.\n\nUpdates the name of an existing persona. The name must be between 3 and 50 characters\nand can only contain letters, numbers, spaces, hyphens, and underscores.\n\nReturns:\n- Updated persona with new name"
         request = wire_request(models.PersonaUpdateRequest, data)
         return self.request(api.persona_update(persona_id, request))
 
@@ -986,42 +986,42 @@ class AsyncPersonasOperations(AsyncBaseClient):
         )
 
     async def list(self, **data: Unpack[PersonaListRequestDict]) -> Sequence[models.PersonaResponse]:
-        "List Personas (`GET /personas`)."
+        "List Personas (`GET /personas`).\n\nRetrieves all active personas associated to the user's account."
         request = wire_request(core.PersonaListRequest, data)
         return await self.request_list(api.list_personas(params=request))
 
     @track_usage("cloud.personas.create")
     async def create(self, **data: Unpack[PersonaCreateRequestDict]) -> models.PersonaResponse:
-        "Persona Create (`POST /personas/create`)."
+        "Persona Create (`POST /personas/create`).\n\nCreate a new persona, i.e. a digital identity for your agent.\nBy default, a persona holds a ID (name), email address, and can be attributed a phone number and a secure vault to store credentials.\n\nYou can update the `create_vault` parameter and `create_phone_number` parameters to create a persona with a vault and a phone number.\nAn optional `name` can be provided to label the persona; it can also be changed later via `PATCH /personas/{persona_id}`."
         request = wire_request(models.PersonaCreateRequest, data)
         return await self.request(api.persona_create(request))
 
     @track_usage("cloud.personas.delete")
     async def delete(self, persona_id: str) -> models.DeletePersonaResponse:
-        "Persona Delete (`DELETE /personas/{persona_id}`)."
+        "Persona Delete (`DELETE /personas/{persona_id}`).\n\nDelete a persona for the authenticated user."
         return await self.request(api.persona_delete(persona_id))
 
     @track_usage("cloud.personas.emails.list")
     async def emails_list(
         self, persona_id: str, **data: Unpack[MessageReadRequestDict]
     ) -> Sequence[core.EmailResponse]:
-        "Persona Emails List (`GET /personas/{persona_id}/emails`)."
+        "Persona Emails List (`GET /personas/{persona_id}/emails`).\n\nLists emails in the persona's inbox.\nEmails are sorted by date (newest first) and can be filtered by timedelta and only_unread."
         request = wire_request(models.PersonaEmailsListParametersQuery, data)
         return await self.request_list(api.persona_emails_list(persona_id, params=request))
 
     @track_usage("cloud.personas.get")
     async def get(self, persona_id: str) -> models.PersonaResponse:
-        "Persona Get (`GET /personas/{persona_id}`)."
+        "Persona Get (`GET /personas/{persona_id}`).\n\nRetrieve a persona data by its <persona_id>.\nThis is usefull to retrieve the persona's email address, phone number, and vault ID after creation."
         return await self.request(api.persona_get(persona_id))
 
     @track_usage("cloud.personas.sms.list")
     async def sms_list(self, persona_id: str, **data: Unpack[MessageReadRequestDict]) -> Sequence[models.SMSResponse]:
-        "Persona Sms List (`GET /personas/{persona_id}/sms`)."
+        "Persona Sms List (`GET /personas/{persona_id}/sms`).\n\nLists SMS Messages in the persona's inbox.\nMessages are sorted by date (newest first) and can be filtered by timedelta and only_unread.\n\nNote: this endpoint is not available for personas without a phone number."
         request = wire_request(models.PersonaEmailsListParametersQuery, data)
         return await self.request_list(api.persona_sms_list(persona_id, params=request))
 
     async def update(self, persona_id: str, **data: Unpack[PersonaUpdateRequestDict]) -> models.PersonaResponse:
-        "Persona Update (`PATCH /personas/{persona_id}`)."
+        "Persona Update (`PATCH /personas/{persona_id}`).\n\nUpdate persona name.\n\nUpdates the name of an existing persona. The name must be between 3 and 50 characters\nand can only contain letters, numbers, spaces, hyphens, and underscores.\n\nReturns:\n- Updated persona with new name"
         request = wire_request(models.PersonaUpdateRequest, data)
         return await self.request(api.persona_update(persona_id, request))
 

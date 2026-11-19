@@ -36393,8 +36393,7 @@
           }
         },
         "required": [
-          "status",
-          "message"
+          "status"
         ],
         "title": "DeletePersonaResponse",
         "type": "object"
@@ -36501,9 +36500,6 @@
           "created_at",
           "sender_email",
           "sender_name",
-          "text_content",
-          "html_content",
-          "attachments",
           "read"
         ],
         "title": "EmailResponse",
@@ -36736,8 +36732,6 @@
           "internal_email",
           "vault_id",
           "phone_number",
-          "email_provider",
-          "name",
           "created_at"
         ],
         "title": "PersonaResponse",

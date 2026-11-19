@@ -282,11 +282,11 @@ class PersonaListRequestDict(TypedDict):
 class PersonaCreateRequestDict(TypedDict):
     "Request dictionary for creating a new persona."
 
-    create_vault: NotRequired[bool]
     create_phone_number: NotRequired[bool]
+    create_vault: NotRequired[bool]
+    email_domain: NotRequired[str | None]
     email_provider: NotRequired[Literal["notte", "agentmail", "resend"]]
     name: NotRequired[str | None]
-    email_domain: NotRequired[str | None]
 
 
 class MessageReadRequestDict(TypedDict):
