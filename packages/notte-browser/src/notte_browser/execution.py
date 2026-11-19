@@ -918,11 +918,12 @@ async def _locate(
     can match nothing. The element is then found again in the current page by what it is (see `_find_again`).
 
     An action without an element id has selectors its caller wrote, for a page that may still be rendering: the
-    element is waited for within the action's timeout, less the share held back for the interaction."""
+    element is waited for within the action's timeout, less two fifths held back for the interaction (a click
+    keeps a fifth for its fallback: an element found last still gets a fifth for the click itself)."""
     assert action.selectors is not None
     if not action.id:
         return await locate_element(
-            window.page, action.selectors, wait_ms=budget.remaining_ms(keep_ms=action.timeout / 5)
+            window.page, action.selectors, wait_ms=budget.remaining_ms(keep_ms=2 * action.timeout / 5)
         )
     try:
         return await locate_element(window.page, action.selectors)

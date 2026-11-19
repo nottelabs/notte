@@ -5,9 +5,11 @@ loads. Such a selector was looked up once and failed at once when the element wa
 "count=0" when it matched several elements.
 """
 
+import asyncio
 import time
 from urllib.parse import quote
 
+import notte_browser.dom.locate as locate_module
 import notte_browser.execution as execution_module
 import pytest
 from notte_browser.dom.locate import locate_element
@@ -73,8 +75,52 @@ async def test_an_element_that_never_renders_fails_after_the_wait() -> None:
     assert not result.success
     assert isinstance(result.exception, InvalidLocatorRuntimeError)
     assert "could not be located" in result.message
-    # four fifths of the timeout: the rest is held back for the interaction
-    assert elapsed >= 0.75
+    # three fifths of the timeout: the rest is held back for the interaction
+    assert elapsed >= 0.55
+
+
+@pytest.mark.asyncio
+async def test_the_wait_does_not_outlast_its_budget(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The last pause is cut to what is left, so the action's own timeout does not end the lookup first."""
+    pauses: list[float] = []
+    sleep = asyncio.sleep
+
+    async def record(delay: float) -> None:
+        pauses.append(delay)
+        await sleep(delay)
+
+    monkeypatch.setattr(locate_module.asyncio, "sleep", record)
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(_url("<p>nothing to click</p>"))
+        with pytest.raises(InvalidLocatorRuntimeError):
+            _ = await locate_element(
+                session.window.page, NodeSelectors.from_unique_selector("css=#missing"), wait_ms=30
+            )
+
+    assert pauses
+    assert max(pauses) <= 0.03
+
+
+@pytest.mark.asyncio
+async def test_an_element_in_a_frame_added_later_is_waited_for() -> None:
+    page = f"""
+    <script>
+      setTimeout(() => {{
+        const frame = document.createElement("iframe");
+        frame.id = "frame";
+        frame.srcdoc = '<button id="inside" onclick="parent.document.body.dataset.clicked = 1">Go</button>';
+        document.body.appendChild(frame);
+      }}, {RENDER_MS});
+    </script>
+    """
+    selector = {"css_selector": "#inside", "iframe_parent_css_selectors": ["#frame"], "in_iframe": True}
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(_url(page))
+        result = await session.aexecute(ClickAction(selector=selector), raise_on_failure=False)  # pyright: ignore[reportArgumentType]
+        clicked = await session.window.page.evaluate("() => document.body.dataset.clicked")
+
+    assert result.success, result.message
+    assert clicked == "1"
 
 
 @pytest.mark.asyncio
@@ -123,4 +169,5 @@ async def test_only_a_selector_the_caller_wrote_is_waited_for(monkeypatch: pytes
     assert observed.success, observed.message
     assert written.success, written.message
     assert waits[0] is None
-    assert waits[1] is not None and 0 < waits[1] <= 4000
+    # two fifths of the timeout are held back: one for the click, one for its fallback
+    assert waits[1] is not None and 0 < waits[1] <= 3000

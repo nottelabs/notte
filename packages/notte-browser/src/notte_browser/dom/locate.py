@@ -77,9 +77,10 @@ async def locate_element(page: Page, selectors: NodeSelectors, *, wait_ms: float
             raise AmbiguousSelectorError(
                 selector=selector, count=count, detail=f"{selector} resolved to {count} elements"
             )
-        if loop.time() >= deadline:
+        left_s = deadline - loop.time()
+        if left_s <= 0:
             break
-        await asyncio.sleep(_WAIT_POLL_S)
+        await asyncio.sleep(min(_WAIT_POLL_S, left_s))
     raise InvalidLocatorRuntimeError("count=0 for selector", selector=candidate_selectors[0])
 
 
