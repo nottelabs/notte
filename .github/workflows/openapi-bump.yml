@@ -146,17 +146,26 @@ jobs:
 
       - name: Close a refresh PR main no longer needs
         # The published schema went back to what main has, so the open PR would
-        # land an outdated contract. Only reached without manual commits.
-        if: steps.drift.outputs.changes == 'false'
+        # land an outdated contract. Only on main (a dispatch from another ref
+        # compared against that ref), and only while the PR's head is still the
+        # bot-only tip the owner job checked.
+        if: steps.drift.outputs.changes == 'false' && github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ secrets.SUBMODULE_BUMP_PAT }}
+          TIP: ${{ needs.owner.outputs.tip }}
         run: |
           set -euo pipefail
-          PR_NUMBER=$(gh pr list --head "$BRANCH" --base main --state open \
-            --json number,isCrossRepository --jq '[.[] | select(.isCrossRepository | not)][0].number // empty')
-          if [ -n "$PR_NUMBER" ]; then
-            gh pr close "$PR_NUMBER" --comment "Closing: openapi/openapi.json on main already matches the published schema."
+          read -r PR_NUMBER HEAD < <(gh pr list --head "$BRANCH" --base main --state open \
+            --json number,headRefOid,isCrossRepository \
+            --jq '[.[] | select(.isCrossRepository | not)][0] // empty | "\(.number) \(.headRefOid)"') || true
+          if [ -z "${PR_NUMBER:-}" ]; then
+            exit 0
           fi
+          if [ "$HEAD" != "$TIP" ]; then
+            echo "::notice::Refresh PR #$PR_NUMBER moved since the owner check; leaving it open."
+            exit 0
+          fi
+          gh pr close "$PR_NUMBER" --comment "Closing: openapi/openapi.json on main already matches the published schema."
 
       - name: Check the contract
         # Reported in the PR body and fails the run; the PR's own pre-commit run blocks the merge.
