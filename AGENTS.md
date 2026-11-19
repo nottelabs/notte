@@ -407,9 +407,10 @@ Request fields that only the Functions runtime sends (`FunctionRunUpdateRequest`
 Every operation in `openapi/openapi.json` needs an entry in
 `openapi/resources.json`: a resource method, or `exclude` with a reason. Both
 SDK generators also reject entries for operations the spec no longer has, so
-add or remove entries in the same change as the spec. The scheduled
-`openapi-bump.yml` refresh opens a draft PR and fails when generation or the
-contract check fails. Fix it on `chore/bump-openapi`. Scheduled runs leave
+add or remove entries in the same change as the spec. The
+`openapi-bump.yml` refresh, started whenever the API's schema changes on the
+`openapi-schema` branch, opens a draft PR and fails when generation or the
+contract check fails. Fix it on `chore/bump-openapi`. Later refreshes leave
 that PR alone once it has manual commits.
 
 OpenAPI refresh compares a temporary order-insensitive representation of JSON objects.

@@ -1,16 +1,15 @@
 name: bump-openapi
 
-# The only live staging-spec refresh: propose one reviewable PR containing the
-# snapshot, both SDKs and both SDK references. Drift cannot fail unrelated PRs.
-# If a generator or the contract check fails, the refresh PR is opened (or moved back)
-# as a draft with the failure at the top of its body, and the run fails.
+# Propose one reviewable PR containing the snapshot, both SDKs and both SDK
+# references, from the API schema published on the `openapi-schema` branch (one
+# `openapi.json`, replaced whenever the API's schema changes, which also starts
+# this workflow). Reading that branch instead of a deployed API keeps the
+# snapshot equal to the API's source, never behind or ahead of it. Drift cannot
+# fail unrelated PRs. If a generator or the contract check fails, the refresh PR
+# is opened (or moved back) as a draft with the failure at the top of its body,
+# and the run fails.
 
 on:
-  schedule:
-    # GitHub cron is UTC.
-    - cron: '0 5 * * *'
-    - cron: '30 10 * * *'
-    - cron: '0 14 * * *'
   workflow_dispatch:
 
 concurrency:
@@ -67,7 +66,7 @@ jobs:
     timeout-minutes: 30
     env:
       BRANCH: chore/bump-openapi
-      NOTTE_API_URL: https://us-staging.notte.cc
+      SCHEMA_BRANCH: openapi-schema
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -92,19 +91,13 @@ jobs:
         working-directory: node-sdk
         run: npm ci
 
-      - name: Wait for the API to be reachable
-        # The staging API scales to zero when idle and wakes on the first request.
+      - name: Refresh the snapshot from the published schema
         run: |
-          deadline=$((SECONDS + 900))
-          until [ "$(curl -s -o /dev/null --max-time 20 -w '%{http_code}' "$NOTTE_API_URL/health")" = "200" ]; do
-            [ "$SECONDS" -lt "$deadline" ] || { echo "API not reachable after 15 minutes"; exit 1; }
-            sleep 10
-          done
-
-      - name: Refresh the snapshot
-        env:
-          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
-        run: make openapi-fetch OPENAPI_URL="$NOTTE_API_URL"
+          set -euo pipefail
+          git fetch --quiet origin "refs/heads/$SCHEMA_BRANCH"
+          mkdir -p "$RUNNER_TEMP/schema"
+          git show FETCH_HEAD:openapi.json > "$RUNNER_TEMP/schema/openapi.json"
+          make openapi-fetch OPENAPI_URL="file://$RUNNER_TEMP/schema"
 
       - name: Regenerate both SDKs and both SDK references
         id: generators
@@ -137,7 +130,7 @@ jobs:
             node-sdk/src/resources.gen.ts docs/src/typescript-sdk-reference docs/src/docs.json \
             docs/src/sdk-reference docs/src/llms.txt
           if git diff --cached --quiet; then
-            echo "openapi/openapi.json is up to date with staging."
+            echo "openapi/openapi.json is up to date with the published schema."
             echo "changes=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -175,14 +168,14 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          TITLE="chore: refresh the OpenAPI snapshot from staging"
+          TITLE="chore: refresh the OpenAPI snapshot"
           STATUS="Generation and the contract check passed."
           DRAFT=false
           if [ "$GENERATORS_FAILED" = "true" ] || [ "$CONTRACT_FAILED" = "true" ]; then
             DRAFT=true
             # shellcheck disable=SC2016
             STATUS='> [!CAUTION]
-          > **Not mergeable as is.** Fix the cause on this branch (map new operations in `openapi/resources.json`, change `notte_core.types`, or fix a generator), run `make sdk-generate-all docs-sdk` and push. Scheduled runs leave this PR alone once it has manual commits.'
+          > **Not mergeable as is.** Fix the cause on this branch (map new operations in `openapi/resources.json`, change `notte_core.types`, or fix a generator), run `make sdk-generate-all docs-sdk` and push. Later refreshes leave this PR alone once it has manual commits.'
             if [ "$GENERATORS_FAILED" = "true" ]; then
               STATUS+=$'\n> - A generator or the Python SDK reference build failed, so some generated files are not regenerated.'
             fi
@@ -193,7 +186,7 @@ jobs:
           # The Markdown code fences in the format string are literal.
           # shellcheck disable=SC2016
           BODY=$(printf '%s\n\n%s\n\n%s\n\n%s\n\n```\n%s\n```\n\n%s\n\n```\n%s\n```\n' \
-            "Automated refresh of \`openapi/openapi.json\` from $NOTTE_API_URL ($(date -u '+%Y-%m-%d %H:%M UTC'))." \
+            "Automated refresh of \`openapi/openapi.json\` from the published API schema (\`$SCHEMA_BRANCH\` branch, $(date -u '+%Y-%m-%d %H:%M UTC'))." \
             "Opened by \`.github/workflows/openapi-bump.yml\`. Review the contract and generated changes before merging." \
             "$STATUS" \
             "Contract check (\`scripts/openapi_contract.py\`). If it reports new drift, change \`notte_core.types\` instead of merging:" \
