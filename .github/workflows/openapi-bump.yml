@@ -4,12 +4,19 @@ name: bump-openapi
 # references, from the API schema published on the `openapi-schema` branch (one
 # `openapi.json`, replaced whenever the API's schema changes, which also starts
 # this workflow). Reading that branch instead of a deployed API keeps the
-# snapshot equal to the API's source, never behind or ahead of it. Drift cannot
-# fail unrelated PRs. If a generator or the contract check fails, the refresh PR
-# is opened (or moved back) as a draft with the failure at the top of its body,
-# and the run fails.
+# snapshot equal to the API's source, never behind or ahead of it. Scheduled
+# runs catch up on a schema that arrived while the refresh PR had manual
+# commits. Drift cannot fail unrelated PRs. If a generator or the contract
+# check fails, the refresh PR is opened (or moved back) as a draft with the
+# failure at the top of its body, and the run fails. When main already matches
+# the published schema, an open refresh PR without manual commits is closed.
 
 on:
+  schedule:
+    # GitHub cron is UTC.
+    - cron: '0 5 * * *'
+    - cron: '30 10 * * *'
+    - cron: '0 14 * * *'
   workflow_dispatch:
 
 concurrency:
@@ -136,6 +143,20 @@ jobs:
           fi
           echo "changes=true" >> "$GITHUB_OUTPUT"
           git diff --cached --stat
+
+      - name: Close a refresh PR main no longer needs
+        # The published schema went back to what main has, so the open PR would
+        # land an outdated contract. Only reached without manual commits.
+        if: steps.drift.outputs.changes == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.SUBMODULE_BUMP_PAT }}
+        run: |
+          set -euo pipefail
+          PR_NUMBER=$(gh pr list --head "$BRANCH" --base main --state open \
+            --json number,isCrossRepository --jq '[.[] | select(.isCrossRepository | not)][0].number // empty')
+          if [ -n "$PR_NUMBER" ]; then
+            gh pr close "$PR_NUMBER" --comment "Closing: openapi/openapi.json on main already matches the published schema."
+          fi
 
       - name: Check the contract
         # Reported in the PR body and fails the run; the PR's own pre-commit run blocks the merge.

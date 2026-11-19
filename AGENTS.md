@@ -409,7 +409,7 @@ Every operation in `openapi/openapi.json` needs an entry in
 SDK generators also reject entries for operations the spec no longer has, so
 add or remove entries in the same change as the spec. The
 `openapi-bump.yml` refresh, started whenever the API's schema changes on the
-`openapi-schema` branch, opens a draft PR and fails when generation or the
+`openapi-schema` branch and three times a day, opens a draft PR and fails when generation or the
 contract check fails. Fix it on `chore/bump-openapi`. Later refreshes leave
 that PR alone once it has manual commits.
 
