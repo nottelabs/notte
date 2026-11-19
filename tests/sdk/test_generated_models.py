@@ -49,6 +49,43 @@ def test_session_playwright_url_accepts_existing_responses_and_round_trips(
             assert "playwright_url" not in json.loads(wire)
 
 
+@pytest.mark.parametrize("mode", ["validation", "serialization"])
+def test_session_proxy_fallback_schema(mode: Literal["validation", "serialization"]) -> None:
+    schema = public.SessionResponse.model_json_schema(mode=mode)
+    assert schema["type"] == "object"
+    assert schema["properties"]["started_without_proxy"]["type"] == "boolean"
+    assert schema["properties"]["warnings"]["type"] == "array"
+    assert "started_without_proxy" not in schema["required"]
+    assert "warnings" not in schema["required"]
+
+
+@pytest.mark.parametrize("model", [public.SessionResponse, models.SessionResponse])
+def test_session_started_without_proxy_defaults_to_false_and_reads_its_warning(
+    model: type[core.SessionResponse] | type[models.SessionResponse],
+) -> None:
+    payload = {
+        "session_id": "session",
+        "idle_timeout_minutes": 3,
+        "timeout_minutes": 3,
+        "created_at": "2026-01-01T00:00:00Z",
+        "last_accessed_at": "2026-01-01T00:00:00Z",
+        "status": "active",
+    }
+    # A server that does not send the fields yet reads as a normal start.
+    existing = model.model_validate(payload)
+    assert existing.started_without_proxy is False
+    assert existing.warnings in (None, [])
+
+    warning = {"code": "PROXY_UNAVAILABLE_NO_PROXY_FALLBACK", "message": "Started without a proxy."}
+    response = model.model_validate({**payload, "started_without_proxy": True, "warnings": [warning]})
+    assert response.started_without_proxy is True
+    assert response.warnings is not None
+    assert [(w.code, w.message) for w in response.warnings] == [(warning["code"], warning["message"])]
+    wire = json.loads(response.model_dump_json())
+    assert wire["started_without_proxy"] is True
+    assert wire["warnings"] == [warning]
+
+
 def test_every_component_has_an_importable_generated_type() -> None:
     spec = json.loads((ROOT / "openapi/openapi.json").read_text())
     index = json.loads((ROOT / "packages/notte-sdk/src/notte_sdk/_generated/schema_index.json").read_text())

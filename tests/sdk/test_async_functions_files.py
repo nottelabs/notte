@@ -311,6 +311,31 @@ async def test_functions_resource_sends_the_same_requests(
         assert exchange.calls[0].timeout["read"] == 30
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("function_id", [None, "", " "])
+async def test_run_start_rejects_invalid_function_ids_before_http(
+    monkeypatch: pytest.MonkeyPatch, function_id: str | None
+) -> None:
+    from tests.sdk.test_async_resources import afake
+    from tests.sdk.test_generated_endpoints import fake
+
+    sync_api = fake(monkeypatch, {})
+    sync = NotteClient(api_key=KEY, server_url=SERVER)
+    with pytest.raises(ValueError, match="requires a non-empty function_id"):
+        sync.functions.run_start("r-1", function_id=function_id)
+    with pytest.raises(ValueError, match="requires a non-empty function_id"):
+        sync.functions.run_start("r-1")
+    assert not sync_api.calls
+
+    async_api = afake(monkeypatch, {})
+    async_client = AsyncNotteClient(api_key=KEY, server_url=SERVER)
+    with pytest.raises(ValueError, match="requires a non-empty function_id"):
+        await async_client.functions.run_start("r-1", function_id=function_id)
+    with pytest.raises(ValueError, match="requires a non-empty function_id"):
+        await async_client.functions.run_start("r-1")
+    assert not async_api.calls
+
+
 def test_get_curl_and_decode_message_match() -> None:
     sync = NotteClient(api_key=KEY, server_url=SERVER).functions
     async_ = AsyncNotteClient(api_key=KEY, server_url=SERVER).functions

@@ -107,7 +107,9 @@ export function generateResources(sdkSource, typesSource, registry = byOperation
       const comment = `    /** ${operation}: ${url.literal.text.replaceAll('*/', '* /')}. Returns the API response body. */`;
       const normalize = operation === 'sessionStart'
         ? '\n      body = { ...body };\n      if (body.record_session === true) delete body.record_session;\n      if (body.log_session === true) delete body.log_session;'
-        : '';
+        : operation === 'functionRunStart'
+          ? '\n      if (typeof functionId !== \'string\' || !functionId.trim()) throw new TypeError(\'runStart requires a non-empty functionId.\');'
+          : '';
       output.get(group).set(method, `${comment}\n    ${method}: async (${args.join(', ')}) => {${normalize}\n      const response = await operations.${operation}({ ${request.join(', ')} });\n      return response.data;\n    },`);
       for (const alias of entry.aliases ?? []) {
         if (!/^[a-zA-Z_$][\w$]*$/.test(alias.method)) throw new Error(`Invalid resource alias: ${operation}`);

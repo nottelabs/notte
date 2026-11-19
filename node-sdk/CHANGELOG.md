@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased: sessions started without a proxy
+
+`SessionResponse` has two new fields. `started_without_proxy` is `true` when a
+session asked for the default managed proxy, none was available, and it started
+without a proxy instead. `warnings` lists such conditions as `SessionWarning`
+objects with a stable `code` (here `PROXY_UNAVAILABLE_NO_PROXY_FALLBACK`) and a
+`message`. A workspace can turn this fallback off in Settings > Proxies; its
+starts then fail instead.
+
 ## Unreleased: session steps page by page
 
 `client.sessions.steps(sessionId, { cursor, limit })` returns one page of a

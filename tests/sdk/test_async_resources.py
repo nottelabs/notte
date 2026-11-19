@@ -479,6 +479,7 @@ FILE_KEYWORDS = {
 # Methods that refuse to send without one of their optional arguments, and the viewer that only
 # fetches its URL when none is given.
 REQUIRED_KEYWORDS: dict[tuple[str, str], dict[str, Any]] = {
+    ("functions", "run_start"): {"function_id": "f-1"},
     ("sessions", "set_cookies"): {"cookies": []},
     ("sessions", "act"): {"instruction": "accept the cookies"},
     ("sessions", "choose"): {"question": "Which plan?", "options": ["free", "pro"]},
