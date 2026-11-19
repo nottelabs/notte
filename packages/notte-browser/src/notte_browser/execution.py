@@ -946,7 +946,10 @@ async def _stays_disabled(locator: Locator, action: InteractionAction, budget: _
 
     A control its caller located with a selector of their own can be disabled while the page gets ready (a form
     that hydrates, a Save button until its field is validated): it is looked at again until it is enabled, within
-    the share of the timeout the lookup had (see `_locate`). An observed element is refused at once."""
+    the share of the timeout the lookup had (see `_locate`). An observed element is refused at once.
+
+    A look waits for a control the page took away (a re-render replaces it), until the end of this wait at most:
+    one that is not back by then is still counted as disabled, and the time kept for the click is not spent."""
     disabled: bool = await locator.evaluate(_IS_DISABLED, timeout=budget.remaining_ms())
     if not disabled or action.id:
         return disabled
@@ -957,7 +960,11 @@ async def _stays_disabled(locator: Locator, action: InteractionAction, budget: _
         if left_s <= 0:
             break
         await asyncio.sleep(min(_ENABLED_POLL_S, left_s))
-        disabled = await locator.evaluate(_IS_DISABLED, timeout=budget.remaining_ms())
+        try:
+            # never 0, which is no timeout for the browser
+            disabled = await locator.evaluate(_IS_DISABLED, timeout=max(1.0, (deadline - loop.time()) * 1000))
+        except PlaywrightTimeoutError:
+            break
     return disabled
 
 

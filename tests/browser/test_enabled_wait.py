@@ -12,6 +12,7 @@ from urllib.parse import quote
 import notte_browser.execution as execution_module
 import pytest
 from notte_browser.driver import Locator
+from notte_browser.driver import TimeoutError as PlaywrightTimeoutError
 from notte_browser.session import NotteSession
 from notte_core.actions import ClickAction
 
@@ -81,6 +82,27 @@ async def test_a_control_that_stays_disabled_is_refused_after_the_wait() -> None
     assert elapsed >= 0.55
 
 
+@pytest.mark.asyncio
+async def test_a_control_replaced_while_disabled_is_clicked_once_it_is_back() -> None:
+    """A page that hydrates can replace the control: the wait follows the selector, not the first element."""
+    page = _url(
+        f"""{DISABLED_BUTTON}
+        <script>
+          setTimeout(() => document.querySelector("#go").remove(), 250);
+          setTimeout(() => {{
+            document.body.insertAdjacentHTML("beforeend", {BUTTON.format(attributes="")!r});
+          }}, {ENABLE_MS});
+        </script>"""
+    )
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(page)
+        result = await session.aexecute(ClickAction(selector="css=#go"), raise_on_failure=False)
+        clicked = await session.window.page.evaluate("() => document.body.dataset.clicked")
+
+    assert result.success, result.message
+    assert clicked == "1"
+
+
 class _Clock:
     """Stands in for `asyncio` in the action code: time passes only while the wait pauses."""
 
@@ -143,6 +165,41 @@ async def test_a_lookup_that_used_the_share_leaves_no_wait(monkeypatch: pytest.M
     assert disabled
     # the budget is never 0 (0 means no timeout for the browser): what is left of the share is its floor of 1 ms
     assert clock.pauses == pytest.approx([0.001])
+
+
+class _Removed:
+    """A control that is disabled at first, then taken off the page for good: a look waits for it as long as it
+    is allowed to, on the wait's clock, then times out."""
+
+    def __init__(self, clock: _Clock) -> None:
+        self.clock: _Clock = clock
+        self.timeouts: list[float] = []
+
+    async def evaluate(self, expression: str, *, timeout: float) -> bool:
+        self.timeouts.append(timeout)
+        if len(self.timeouts) == 1:
+            return True
+        self.clock.now += timeout / 1000
+        raise PlaywrightTimeoutError("the control is not on the page")
+
+
+@pytest.mark.asyncio
+async def test_a_control_taken_off_the_page_does_not_use_the_time_of_the_click(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A look at a control that is gone waits for it until the end of this wait, not of the whole action."""
+    clock = _Clock()
+    monkeypatch.setattr(execution_module, "asyncio", clock)
+    control = _Removed(clock)
+    action = ClickAction(selector="css=#go", timeout=1000)
+    budget = execution_module._ActionBudget(deadline=1.0)  # pyright: ignore[reportPrivateUsage]
+
+    disabled = await execution_module._stays_disabled(cast(Locator, control), action, budget)  # pyright: ignore[reportPrivateUsage]
+
+    assert disabled
+    # the first look has the whole action; the look after the first pause has what is left of the wait
+    assert control.timeouts == pytest.approx([1000, 500])
+    assert clock.now == pytest.approx(0.6)
 
 
 @pytest.mark.asyncio
