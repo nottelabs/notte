@@ -6766,22 +6766,22 @@
               }
             }
           },
-          "503": {
-            "description": "Payments unavailable or wallet revocation must be retried",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PaymentDisconnectError"
-                }
-              }
-            }
-          },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Payments unavailable or wallet revocation must be retried",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentDisconnectError"
                 }
               }
             }
@@ -17408,11 +17408,11 @@
           },
           "min_confidence": {
             "type": "number",
-            "maximum": 1.0,
-            "minimum": 0.0,
+            "maximum": 1,
+            "minimum": 0,
             "title": "Min Confidence",
             "description": "Below this decider confidence nothing runs (`status=\"blocked\"`).",
-            "default": 0.0
+            "default": 0
           }
         },
         "type": "object",
@@ -17684,32 +17684,32 @@
           "observe_ms": {
             "type": "number",
             "title": "Observe Ms",
-            "default": 0.0
+            "default": 0
           },
           "decide_ms": {
             "type": "number",
             "title": "Decide Ms",
-            "default": 0.0
+            "default": 0
           },
           "write_ms": {
             "type": "number",
             "title": "Write Ms",
-            "default": 0.0
+            "default": 0
           },
           "fresh_ms": {
             "type": "number",
             "title": "Fresh Ms",
-            "default": 0.0
+            "default": 0
           },
           "execute_ms": {
             "type": "number",
             "title": "Execute Ms",
-            "default": 0.0
+            "default": 0
           },
           "total_ms": {
             "type": "number",
             "title": "Total Ms",
-            "default": 0.0
+            "default": 0
           }
         },
         "type": "object",
@@ -18362,16 +18362,16 @@
           },
           "max_duration_minutes": {
             "type": "integer",
-            "maximum": 1440.0,
-            "exclusiveMinimum": 0.0,
+            "maximum": 1440,
+            "exclusiveMinimum": 0,
             "title": "Max Duration Minutes",
             "description": "Maximum session lifetime in minutes (absolute maximum, not affected by activity).",
             "default": 15
           },
           "idle_timeout_minutes": {
             "type": "integer",
-            "maximum": 30.0,
-            "exclusiveMinimum": 0.0,
+            "maximum": 30,
+            "exclusiveMinimum": 0,
             "title": "Idle Timeout Minutes",
             "description": "Idle timeout in minutes. Session closes after this period of inactivity (resets on each operation).",
             "default": 3
@@ -18473,7 +18473,7 @@
             "anyOf": [
               {
                 "type": "integer",
-                "minimum": 500.0
+                "minimum": 500
               },
               {
                 "type": "null"
@@ -18486,7 +18486,7 @@
             "anyOf": [
               {
                 "type": "integer",
-                "minimum": 500.0
+                "minimum": 500
               },
               {
                 "type": "null"
@@ -18596,8 +18596,8 @@
           },
           "auth_retry": {
             "type": "integer",
-            "maximum": 2.0,
-            "minimum": 0.0,
+            "maximum": 2,
+            "minimum": 0,
             "title": "Auth Retry",
             "default": 0
           },
@@ -18623,6 +18623,22 @@
             "description": "Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.",
             "default": false
           },
+          "os": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "windows",
+                  "macos"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Os",
+            "description": "The operating system the session's browser presents: windows or macos. When unset, each session gets one at random among those the environment offers."
+          },
           "screenshot_type": {
             "type": "string",
             "enum": [
@@ -18640,22 +18656,6 @@
             "title": "Demonstrate",
             "description": "Whether to enable the Notte recorder extension for this session. The extension is installed but remains inactive when this is false.",
             "default": false
-          },
-          "os": {
-            "anyOf": [
-              {
-                "type": "string",
-                "enum": [
-                  "windows",
-                  "macos"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Os",
-            "description": "The operating system the session's browser presents: windows or macos. When unset, each session gets one at random among those the environment offers."
           }
         },
         "additionalProperties": false,
@@ -20534,7 +20534,7 @@
           },
           "age_ms": {
             "type": "integer",
-            "minimum": 0.0,
+            "minimum": 0,
             "title": "Age Ms"
           }
         },
@@ -20608,7 +20608,7 @@
             "anyOf": [
               {
                 "type": "integer",
-                "minimum": 0.0
+                "minimum": 0
               },
               {
                 "type": "null"
@@ -21515,8 +21515,8 @@
         "properties": {
           "milliseconds": {
             "type": "integer",
-            "maximum": 300000.0,
-            "minimum": 1000.0,
+            "maximum": 300000,
+            "minimum": 1000,
             "title": "Milliseconds"
           },
           "behavior": {
@@ -21697,8 +21697,8 @@
           },
           "score": {
             "type": "integer",
-            "maximum": 100.0,
-            "minimum": 0.0,
+            "maximum": 100,
+            "minimum": 0,
             "title": "Score"
           },
           "person": {
@@ -22025,7 +22025,7 @@
           },
           "timeout": {
             "type": "integer",
-            "minimum": 0.0,
+            "minimum": 0,
             "title": "Timeout",
             "description": "Action timeout in milliseconds",
             "default": 15000
@@ -22114,7 +22114,7 @@
           },
           "timeout": {
             "type": "integer",
-            "minimum": 0.0,
+            "minimum": 0,
             "title": "Timeout",
             "description": "Action timeout in milliseconds",
             "default": 15000
@@ -22311,7 +22311,7 @@
           },
           "timeout": {
             "type": "integer",
-            "minimum": 0.0,
+            "minimum": 0,
             "title": "Timeout",
             "description": "Action timeout in milliseconds",
             "default": 15000
@@ -22393,7 +22393,7 @@
           },
           "timeout": {
             "type": "integer",
-            "minimum": 0.0,
+            "minimum": 0,
             "title": "Timeout",
             "description": "Action timeout in milliseconds",
             "default": 15000
@@ -22704,8 +22704,8 @@
           },
           "ttl_seconds": {
             "type": "integer",
-            "maximum": 86400.0,
-            "minimum": 60.0,
+            "maximum": 86400,
+            "minimum": 60,
             "title": "Ttl Seconds",
             "description": "How long the link stays usable.",
             "default": 900
@@ -23686,8 +23686,8 @@
           },
           "limit": {
             "type": "integer",
-            "maximum": 100.0,
-            "minimum": 1.0,
+            "maximum": 100,
+            "minimum": 1,
             "title": "Limit",
             "default": 25
           },
@@ -23801,7 +23801,7 @@
           },
           "timeout": {
             "type": "integer",
-            "minimum": 0.0,
+            "minimum": 0,
             "title": "Timeout",
             "description": "Action timeout in milliseconds",
             "default": 15000
@@ -23883,7 +23883,7 @@
           },
           "timeout": {
             "type": "integer",
-            "minimum": 0.0,
+            "minimum": 0,
             "title": "Timeout",
             "description": "Action timeout in milliseconds",
             "default": 15000
@@ -23934,8 +23934,8 @@
             "anyOf": [
               {
                 "type": "integer",
-                "maximum": 2200.0,
-                "minimum": 1900.0
+                "maximum": 2200,
+                "minimum": 1900
               },
               {
                 "type": "null"
@@ -24338,8 +24338,8 @@
           },
           "max_age_seconds": {
             "type": "integer",
-            "maximum": 900.0,
-            "minimum": 30.0,
+            "maximum": 900,
+            "minimum": 30,
             "title": "Max Age Seconds",
             "description": "Maximum age of the verification email in seconds",
             "default": 300
@@ -24678,8 +24678,8 @@
           },
           "max_pages": {
             "type": "integer",
-            "maximum": 50.0,
-            "minimum": 1.0,
+            "maximum": 50,
+            "minimum": 1,
             "title": "Max Pages",
             "default": 10
           },
@@ -24687,8 +24687,8 @@
             "anyOf": [
               {
                 "type": "integer",
-                "maximum": 10.0,
-                "minimum": 0.0
+                "maximum": 10,
+                "minimum": 0
               },
               {
                 "type": "null"
@@ -24799,7 +24799,7 @@
           },
           "timeout": {
             "type": "integer",
-            "minimum": 0.0,
+            "minimum": 0,
             "title": "Timeout",
             "description": "Action timeout in milliseconds",
             "default": 15000
@@ -24902,7 +24902,7 @@
           },
           "timeout": {
             "type": "integer",
-            "minimum": 0.0,
+            "minimum": 0,
             "title": "Timeout",
             "description": "Action timeout in milliseconds",
             "default": 15000
@@ -25067,7 +25067,7 @@
           },
           "timeout": {
             "type": "integer",
-            "minimum": 0.0,
+            "minimum": 0,
             "title": "Timeout",
             "description": "Action timeout in milliseconds",
             "default": 15000
@@ -25170,7 +25170,7 @@
           },
           "timeout": {
             "type": "integer",
-            "minimum": 0.0,
+            "minimum": 0,
             "title": "Timeout",
             "description": "Action timeout in milliseconds",
             "default": 15000
@@ -26004,8 +26004,8 @@
           },
           "status_code": {
             "type": "integer",
-            "maximum": 599.0,
-            "minimum": 100.0,
+            "maximum": 599,
+            "minimum": 100,
             "title": "Status Code",
             "description": "Informational HTTP status for the error"
           },
@@ -26993,16 +26993,16 @@
           },
           "max_duration_minutes": {
             "type": "integer",
-            "maximum": 1440.0,
-            "exclusiveMinimum": 0.0,
+            "maximum": 1440,
+            "exclusiveMinimum": 0,
             "title": "Max Duration Minutes",
             "description": "Maximum session lifetime in minutes (absolute maximum, not affected by activity).",
             "default": 15
           },
           "idle_timeout_minutes": {
             "type": "integer",
-            "maximum": 30.0,
-            "exclusiveMinimum": 0.0,
+            "maximum": 30,
+            "exclusiveMinimum": 0,
             "title": "Idle Timeout Minutes",
             "description": "Idle timeout in minutes. Session closes after this period of inactivity (resets on each operation).",
             "default": 3
@@ -27088,7 +27088,7 @@
             "anyOf": [
               {
                 "type": "integer",
-                "minimum": 500.0
+                "minimum": 500
               },
               {
                 "type": "null"
@@ -27101,7 +27101,7 @@
             "anyOf": [
               {
                 "type": "integer",
-                "minimum": 500.0
+                "minimum": 500
               },
               {
                 "type": "null"
@@ -27211,8 +27211,8 @@
           },
           "auth_retry": {
             "type": "integer",
-            "maximum": 2.0,
-            "minimum": 0.0,
+            "maximum": 2,
+            "minimum": 0,
             "title": "Auth Retry",
             "default": 0
           },
@@ -27237,6 +27237,22 @@
             "title": "Advanced Stealth",
             "description": "Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.",
             "default": false
+          },
+          "os": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "windows",
+                  "macos"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Os",
+            "description": "The operating system the session's browser presents: windows or macos. When unset, each session gets one at random among those the environment offers."
           },
           "screenshot_type": {
             "type": "string",
@@ -27295,22 +27311,6 @@
             "title": "Only Main Content",
             "description": "Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded.",
             "default": false
-          },
-          "os": {
-            "anyOf": [
-              {
-                "type": "string",
-                "enum": [
-                  "windows",
-                  "macos"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Os",
-            "description": "The operating system the session's browser presents: windows or macos. When unset, each session gets one at random among those the environment offers."
           },
           "response_format": {
             "anyOf": [
@@ -27637,17 +27637,17 @@
         "properties": {
           "width": {
             "type": "integer",
-            "exclusiveMinimum": 0.0,
+            "exclusiveMinimum": 0,
             "title": "Width"
           },
           "height": {
             "type": "integer",
-            "exclusiveMinimum": 0.0,
+            "exclusiveMinimum": 0,
             "title": "Height"
           },
           "aspect_ratio": {
             "type": "number",
-            "exclusiveMinimum": 0.0,
+            "exclusiveMinimum": 0,
             "title": "Aspect Ratio"
           }
         },
@@ -27670,8 +27670,8 @@
           },
           "frequency": {
             "type": "integer",
-            "maximum": 525600.0,
-            "minimum": 1.0,
+            "maximum": 525600,
+            "minimum": 1,
             "title": "Frequency",
             "default": 1
           },
@@ -28195,8 +28195,8 @@
             "anyOf": [
               {
                 "type": "number",
-                "maximum": 5.0,
-                "minimum": 0.0
+                "maximum": 5,
+                "minimum": 0
               },
               {
                 "type": "null"
@@ -28206,7 +28206,7 @@
           },
           "number_of_reviews": {
             "type": "integer",
-            "minimum": 0.0,
+            "minimum": 0,
             "title": "Number Of Reviews",
             "default": 0
           },
@@ -28326,8 +28326,8 @@
             "anyOf": [
               {
                 "type": "number",
-                "maximum": 90.0,
-                "minimum": -90.0
+                "maximum": 90,
+                "minimum": -90
               },
               {
                 "type": "null"
@@ -28339,8 +28339,8 @@
             "anyOf": [
               {
                 "type": "number",
-                "maximum": 180.0,
-                "minimum": -180.0
+                "maximum": 180,
+                "minimum": -180
               },
               {
                 "type": "null"
@@ -28762,7 +28762,7 @@
           },
           "timeout": {
             "type": "integer",
-            "minimum": 0.0,
+            "minimum": 0,
             "title": "Timeout",
             "description": "Action timeout in milliseconds",
             "default": 15000
@@ -28865,7 +28865,7 @@
           },
           "timeout": {
             "type": "integer",
-            "minimum": 0.0,
+            "minimum": 0,
             "title": "Timeout",
             "description": "Action timeout in milliseconds",
             "default": 15000
@@ -29447,8 +29447,8 @@
             "anyOf": [
               {
                 "type": "number",
-                "maximum": 1.0,
-                "minimum": 0.0
+                "maximum": 1,
+                "minimum": 0
               },
               {
                 "type": "null"
@@ -29468,7 +29468,7 @@
         "properties": {
           "count": {
             "type": "integer",
-            "minimum": 0.0,
+            "minimum": 0,
             "title": "Count"
           }
         },
@@ -29534,8 +29534,8 @@
           },
           "limit": {
             "type": "integer",
-            "maximum": 100.0,
-            "minimum": 1.0,
+            "maximum": 100,
+            "minimum": 1,
             "title": "Limit",
             "default": 10
           },
@@ -30852,7 +30852,7 @@
             "anyOf": [
               {
                 "type": "number",
-                "exclusiveMinimum": 0.0
+                "exclusiveMinimum": 0
               },
               {
                 "type": "string"
@@ -31210,8 +31210,8 @@
         "properties": {
           "milliseconds": {
             "type": "integer",
-            "maximum": 300000.0,
-            "minimum": 1000.0,
+            "maximum": 300000,
+            "minimum": 1000,
             "title": "Milliseconds"
           },
           "behavior": {
@@ -31411,8 +31411,8 @@
             "anyOf": [
               {
                 "type": "integer",
-                "maximum": 12.0,
-                "minimum": 1.0
+                "maximum": 12,
+                "minimum": 1
               },
               {
                 "type": "null"
@@ -31424,8 +31424,8 @@
             "anyOf": [
               {
                 "type": "integer",
-                "maximum": 31.0,
-                "minimum": 1.0
+                "maximum": 31,
+                "minimum": 1
               },
               {
                 "type": "null"
@@ -32833,8 +32833,8 @@
           "delays_seconds": {
             "items": {
               "type": "integer",
-              "maximum": 86400.0,
-              "minimum": 1.0
+              "maximum": 86400,
+              "minimum": 1
             },
             "type": "array",
             "maxItems": 10,
@@ -32944,8 +32944,8 @@
         "properties": {
           "size_bytes": {
             "type": "integer",
-            "maximum": 268435456.0,
-            "exclusiveMinimum": 0.0,
+            "maximum": 268435456,
+            "exclusiveMinimum": 0,
             "title": "Size Bytes"
           },
           "sha256": {
@@ -32971,8 +32971,8 @@
         "properties": {
           "size_bytes": {
             "type": "integer",
-            "maximum": 268435456.0,
-            "exclusiveMinimum": 0.0,
+            "maximum": 268435456,
+            "exclusiveMinimum": 0,
             "title": "Size Bytes"
           },
           "sha256": {
@@ -33634,8 +33634,8 @@
             "anyOf": [
               {
                 "type": "integer",
-                "maximum": 100000.0,
-                "minimum": 1.0
+                "maximum": 100000,
+                "minimum": 1
               },
               {
                 "type": "string",
@@ -33663,8 +33663,8 @@
           },
           "maxScrolls": {
             "type": "integer",
-            "maximum": 50.0,
-            "minimum": 1.0,
+            "maximum": 50,
+            "minimum": 1,
             "title": "Maxscrolls",
             "default": 1
           }
@@ -34159,7 +34159,7 @@
           },
           "timeout": {
             "type": "integer",
-            "minimum": 0.0,
+            "minimum": 0,
             "title": "Timeout",
             "description": "Action timeout in milliseconds",
             "default": 15000
@@ -34257,7 +34257,7 @@
           },
           "timeout": {
             "type": "integer",
-            "minimum": 0.0,
+            "minimum": 0,
             "title": "Timeout",
             "description": "Action timeout in milliseconds",
             "default": 15000
@@ -34319,8 +34319,8 @@
           },
           "confidence_threshold": {
             "type": "number",
-            "maximum": 1.0,
-            "minimum": 0.0,
+            "maximum": 1,
+            "minimum": 0,
             "title": "Confidence Threshold",
             "default": 0.75
           }
@@ -34502,8 +34502,8 @@
           },
           "timeout_ms": {
             "type": "integer",
-            "maximum": 300000.0,
-            "minimum": 1.0,
+            "maximum": 300000,
+            "minimum": 1,
             "title": "Timeout Ms",
             "default": 60000
           },
@@ -35101,8 +35101,8 @@
           },
           "max_urls": {
             "type": "integer",
-            "maximum": 10000.0,
-            "minimum": 1.0,
+            "maximum": 10000,
+            "minimum": 1,
             "title": "Max Urls",
             "default": 5000
           }
@@ -35407,8 +35407,8 @@
         "properties": {
           "milliseconds": {
             "type": "integer",
-            "maximum": 300000.0,
-            "minimum": 1.0,
+            "maximum": 300000,
+            "minimum": 1,
             "title": "Milliseconds"
           },
           "behavior": {
@@ -35884,7 +35884,7 @@
           },
           "timeout": {
             "type": "integer",
-            "minimum": 0.0,
+            "minimum": 0,
             "title": "Timeout",
             "description": "Action timeout in milliseconds",
             "default": 15000
@@ -35973,7 +35973,7 @@
           },
           "timeout": {
             "type": "integer",
-            "minimum": 0.0,
+            "minimum": 0,
             "title": "Timeout",
             "description": "Action timeout in milliseconds",
             "default": 15000
@@ -36142,8 +36142,8 @@
           },
           "time_ms": {
             "type": "integer",
-            "maximum": 30000.0,
-            "minimum": 0.0,
+            "maximum": 30000,
+            "minimum": 0,
             "title": "Time Ms",
             "description": "The amount of time to wait in milliseconds (max 30 seconds)"
           }
@@ -36222,14 +36222,14 @@
         "properties": {
           "start": {
             "type": "number",
-            "minimum": 0.0,
+            "minimum": 0,
             "title": "Start"
           },
           "duration": {
             "anyOf": [
               {
                 "type": "number",
-                "minimum": 0.0
+                "minimum": 0
               },
               {
                 "type": "null"
@@ -36540,8 +36540,8 @@
           },
           "timeMs": {
             "type": "integer",
-            "maximum": 30000.0,
-            "minimum": 0.0,
+            "maximum": 30000,
+            "minimum": 0,
             "title": "Timems"
           }
         },
@@ -36573,8 +36573,8 @@
           },
           "time_ms": {
             "type": "integer",
-            "maximum": 30000.0,
-            "minimum": 0.0,
+            "maximum": 30000,
+            "minimum": 0,
             "title": "Time Ms",
             "description": "The amount of time to wait in milliseconds (max 30 seconds)"
           }
@@ -37186,8 +37186,8 @@
           },
           "max_steps": {
             "type": "integer",
-            "maximum": 150.0,
-            "minimum": 1.0,
+            "maximum": 150,
+            "minimum": 1,
             "title": "Max Steps",
             "description": "The maximum number of steps the agent should take",
             "default": 20

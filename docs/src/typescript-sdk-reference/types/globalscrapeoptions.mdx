@@ -144,16 +144,16 @@ Who answers JavaScript dialogs (alert, confirm, prompt, beforeunload). `auto` (d
 Enable Notte's highest-fidelity browser environment for sites with sophisticated bot detection. Available to approved workspaces.
 </ParamField>
 
+<ParamField body="os" type={"\"windows\" | \"macos\" | null | undefined"}>
+The operating system the session's browser presents: windows or macos. When unset, each session gets one at random among those the environment offers.
+</ParamField>
+
 <ParamField body="screenshot_type" type={"\"raw\" | \"full\" | \"last_action\" | undefined"}>
 Ignored since notte 1.10: screenshots are returned without highlighting.
 
 **deprecated:**
 
 
-</ParamField>
-
-<ParamField body="os" type={"\"windows\" | \"macos\" | null | undefined"}>
-The operating system the session's browser presents: windows or macos. When unset, each session gets one at random among those the environment offers.
 </ParamField>
 
 <ParamField body="response_format" type={"Record<string, unknown> | ZodLikeSchema<T> | null | undefined"}>
