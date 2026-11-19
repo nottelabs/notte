@@ -5,8 +5,8 @@ loads. Such a selector was looked up once and failed at once when the element wa
 "count=0" when it matched several elements.
 """
 
-import asyncio
 import time
+from typing import cast
 from urllib.parse import quote
 
 import notte_browser.dom.locate as locate_module
@@ -79,27 +79,46 @@ async def test_an_element_that_never_renders_fails_after_the_wait() -> None:
     assert elapsed >= 0.55
 
 
+class _Clock:
+    """Stands in for `asyncio` in the lookup: time passes only while the lookup pauses."""
+
+    def __init__(self) -> None:
+        self.now: float = 0.0
+        self.pauses: list[float] = []
+
+    def get_running_loop(self) -> "_Clock":
+        return self
+
+    def time(self) -> float:
+        return self.now
+
+    async def sleep(self, delay: float) -> None:
+        self.pauses.append(delay)
+        self.now += delay
+
+
+class _NoMatch:
+    """A page where a selector matches nothing, and says so at once."""
+
+    def locator(self, selector: str) -> "_NoMatch":
+        return self
+
+    async def count(self) -> int:
+        return 0
+
+
 @pytest.mark.asyncio
 async def test_the_wait_does_not_outlast_its_budget(monkeypatch: pytest.MonkeyPatch) -> None:
     """The last pause is cut to what is left, so the action's own timeout does not end the lookup first."""
-    pauses: list[float] = []
-    sleep = asyncio.sleep
+    clock = _Clock()
+    monkeypatch.setattr(locate_module, "asyncio", clock)
+    page = cast(Page, _NoMatch())
 
-    async def record(delay: float) -> None:
-        pauses.append(delay)
-        await sleep(delay)
+    with pytest.raises(InvalidLocatorRuntimeError):
+        _ = await locate_element(page, NodeSelectors.from_unique_selector("css=#missing"), wait_ms=50)
 
-    monkeypatch.setattr(locate_module.asyncio, "sleep", record)
-    async with NotteSession(headless=True) as session:
-        _ = await session.window.page.goto(_url("<p>nothing to click</p>"))
-        with pytest.raises(InvalidLocatorRuntimeError):
-            _ = await locate_element(
-                session.window.page, NodeSelectors.from_unique_selector("css=#missing"), wait_ms=50
-            )
-
-    # The wait is shorter than a whole pause (100 ms): any pause taken has to be cut to what is left. A lookup too
-    # slow to leave time for a pause takes none, with or without the cut.
-    assert all(pause <= 0.05 for pause in pauses)
+    # a whole pause is 100 ms: the only one that fits in a 50 ms wait is cut to it
+    assert clock.pauses == [0.05]
 
 
 @pytest.mark.asyncio
