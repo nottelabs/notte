@@ -341,6 +341,7 @@ def test_all_request_classes_have_dict_types_and_proper_inheritance():
         # Classes that are missing Dict types but legitimately don't need them
         "DownloadFileRequest",  # Simple class with single field
         "SetCookiesRequest",  # Uses existing Cookie structures
+        "SessionStepsRequest",  # Query parameters, passed as the steps methods' own arguments
         "StartFunctionRunRequest",  # Complex composition, may not need Dict
         "TabSessionDebugRequest",  # Simple debug request with single field
         "_SessionStartRequest",  # Shared implementation for local and remote session requests

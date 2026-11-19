@@ -32,7 +32,14 @@ from notte_sdk.types import CaptchaStatus, ExecutionResultResponse
 from pydantic import BaseModel
 
 from tests.sdk.test_async_functions_files import file_entry, file_routes, same_exchange
-from tests.sdk.test_async_resources import KEY, SESSION, exchange_async, exchange_sync
+from tests.sdk.test_async_resources import (
+    ASYNC_ITERATORS,
+    KEY,
+    SESSION,
+    exchange_async,
+    exchange_sync,
+    same_iterator_signature,
+)
 from tests.sdk.test_generated_endpoints import PROFILE, SERVER
 
 # ---------------------------------------------------------------------------
@@ -50,6 +57,9 @@ def public_members(cls: type) -> dict[str, Any]:
 
 
 def same_signature(sync: Callable[..., Any], async_: Callable[..., Any]) -> None:
+    if sync.__name__ in ASYNC_ITERATORS["sessions"]:
+        same_iterator_signature(sync, async_)
+        return
     assert inspect.iscoroutinefunction(async_), async_
     assert not inspect.iscoroutinefunction(sync), sync
     assert inspect.signature(async_) == inspect.signature(sync), sync.__qualname__

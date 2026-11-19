@@ -1769,6 +1769,35 @@ class TabSessionDebugRequest(SdkRequest):
     tab_idx: int
 
 
+# ############################################################
+# Session steps (GET /sessions/{session_id}/steps)
+# ############################################################
+
+
+class SessionStepsRequest(SdkRequest):
+    cursor: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Opaque cursor from a previous page's `next_cursor`. Omit it for the first page. "
+                "A 400 response means the cursor is no longer valid: restart from the first page."
+            )
+        ),
+    ] = None
+    limit: Annotated[int | None, Field(description="Maximum number of steps in the page.")] = None
+
+
+class SessionStepsResponse(SdkResponse):
+    # Each step has the shape of an item of `SessionResponse.steps`.
+    steps: Annotated[list[dict[str, Any]], Field(description="Steps of the session, in order")] = Field(
+        default_factory=lambda: []
+    )
+    next_cursor: Annotated[
+        str | None,
+        Field(description="Cursor of the next page, passed back as is; null on the last page."),
+    ] = None
+
+
 class TabSessionDebugResponse(SdkResponse):
     metadata: TabsData
     debug_url: str
