@@ -36545,7 +36545,8 @@
           },
           "has_previous": {
             "title": "Has Previous",
-            "type": "boolean"
+            "type": "boolean",
+            "readOnly": true
           },
           "items": {
             "items": {

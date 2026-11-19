@@ -9321,7 +9321,7 @@ export type PaginatedResponsePersonaResponse = {
     /**
      * Has Previous
      */
-    has_previous: boolean;
+    readonly has_previous: boolean;
     /**
      * Items
      */
@@ -11719,6 +11719,28 @@ export type UpdateFunctionRunResponseWritable = {
      */
     status?: 'updated' | 'stopped';
     error?: FunctionRunError | null;
+};
+
+/**
+ * PaginatedResponse[PersonaResponse]
+ */
+export type PaginatedResponsePersonaResponseWritable = {
+    /**
+     * Has Next
+     */
+    has_next: boolean;
+    /**
+     * Items
+     */
+    items: Array<PersonaResponse>;
+    /**
+     * Page
+     */
+    page: number;
+    /**
+     * Page Size
+     */
+    page_size: number;
 };
 
 /**
