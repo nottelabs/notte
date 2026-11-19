@@ -1,11 +1,15 @@
+import asyncio
+
 from notte_core.dom_tree import DomNode, NodeSelectors
 from notte_core.logging import logger
 
 from notte_browser.driver import FrameLocator, Locator, Page
-from notte_browser.errors import InvalidLocatorRuntimeError
+from notte_browser.errors import AmbiguousSelectorError, InvalidLocatorRuntimeError
 from notte_browser.js import script
 
 _SHADOW_CHAIN_INDEX = script("shadow_chain_index.js")
+# how often a selector that matches nothing yet is looked up again
+_WAIT_POLL_S = 0.1
 
 
 async def locale_element_in_iframes(page: Page, selectors: NodeSelectors) -> FrameLocator | Page:
@@ -23,7 +27,13 @@ async def locale_element_in_iframes(page: Page, selectors: NodeSelectors) -> Fra
     return current_frame
 
 
-async def locate_element(page: Page, selectors: NodeSelectors) -> Locator:
+async def locate_element(page: Page, selectors: NodeSelectors, *, wait_ms: float | None = None) -> Locator:
+    """The locator of the one element `selectors` lead to.
+
+    `wait_ms` is for CSS and XPath selectors a caller wrote: an element that is not on the page yet (the page is
+    still rendering) is waited for that long, as a Playwright selector is, and a selector that matches several
+    elements is refused as ambiguous. Without it the element has to be there: the selectors of an observed
+    element were computed from the page."""
     frame: Page | FrameLocator = page
 
     if selectors.playwright_selector:
@@ -36,24 +46,40 @@ async def locate_element(page: Page, selectors: NodeSelectors) -> Locator:
         raise InvalidLocatorRuntimeError("No valid selector available", selector="")
 
     steps = _shadow_steps(selectors) if selectors.in_shadow_root else []
-    for selector in candidate_selectors:
-        if selector.startswith("xpath=") and any(not step.startswith("/") for step in steps[1:]):
-            # Playwright's XPath engine does not enter shadow roots: the chain would find a light child of the host
-            continue
-        locator = frame.locator(selector)
-        count = await locator.count()
-        if count > 0 and len(steps) > 1 and selector.startswith("css="):
-            # Playwright's CSS engine enters shadow roots, and its `>` goes from a host to both its light children and
-            # the top elements of its shadow root: the observed element is the one the XPath chain leads to. A match
-            # the chain does not lead to is another element (the light child, when the shadow child is gone)
-            index = await locator.evaluate_all(_SHADOW_CHAIN_INDEX, steps)
-            if index >= 0:
-                return locator.nth(index)
-            continue
-        if count > 1:
-            logger.debug(f"Found {count} elements for '{selector}'. Check out the dom tree for more details.")
-        elif count == 1:
-            return locator
+    loop = asyncio.get_running_loop()
+    deadline = None if wait_ms is None else loop.time() + wait_ms / 1000
+    while True:
+        several: tuple[str, int] | None = None
+        for selector in candidate_selectors:
+            if selector.startswith("xpath=") and any(not step.startswith("/") for step in steps[1:]):
+                # Playwright's XPath engine does not enter shadow roots: the chain would find a light child of the host
+                continue
+            locator = frame.locator(selector)
+            count = await locator.count()
+            if count > 0 and len(steps) > 1 and selector.startswith("css="):
+                # Playwright's CSS engine enters shadow roots, and its `>` goes from a host to both its light children
+                # and the top elements of its shadow root: the observed element is the one the XPath chain leads to. A
+                # match the chain does not lead to is another element (the light child, when the shadow child is gone)
+                index = await locator.evaluate_all(_SHADOW_CHAIN_INDEX, steps)
+                if index >= 0:
+                    return locator.nth(index)
+                continue
+            if count > 1:
+                logger.debug(f"Found {count} elements for '{selector}'. Check out the dom tree for more details.")
+                several = several or (selector, count)
+            elif count == 1:
+                return locator
+        if deadline is None:
+            break
+        if several is not None:
+            # more elements will not make the selector unique: waiting cannot help
+            selector, count = several
+            raise AmbiguousSelectorError(
+                selector=selector, count=count, detail=f"{selector} resolved to {count} elements"
+            )
+        if loop.time() >= deadline:
+            break
+        await asyncio.sleep(_WAIT_POLL_S)
     raise InvalidLocatorRuntimeError("count=0 for selector", selector=candidate_selectors[0])
 
 

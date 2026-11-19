@@ -910,11 +910,20 @@ async def execute_interaction_action(
     return True
 
 
-async def _locate(window: BrowserWindow, action: InteractionAction, snapshot: BrowserSnapshot | None) -> Locator:
+async def _locate(
+    window: BrowserWindow, action: InteractionAction, snapshot: BrowserSnapshot | None, budget: _ActionBudget
+) -> Locator:
     """Locates the element of an action. The CSS and XPath selectors of an observed element are paths from the
     root of the page: when part of the page re-renders after it was observed (a list of results updating), they
-    can match nothing. The element is then found again in the current page by what it is (see `_find_again`)."""
+    can match nothing. The element is then found again in the current page by what it is (see `_find_again`).
+
+    An action without an element id has selectors its caller wrote, for a page that may still be rendering: the
+    element is waited for within the action's timeout, less the share held back for the interaction."""
     assert action.selectors is not None
+    if not action.id:
+        return await locate_element(
+            window.page, action.selectors, wait_ms=budget.remaining_ms(keep_ms=action.timeout / 5)
+        )
     try:
         return await locate_element(window.page, action.selectors)
     except InvalidLocatorRuntimeError:
@@ -994,7 +1003,7 @@ async def _interact(
 ) -> None:
     assert action.selectors is not None
     # locate element (possibly in iframe)
-    locator: Locator = await _locate(window, action, prev_snapshot)
+    locator: Locator = await _locate(window, action, prev_snapshot, budget)
 
     match action:
         # Interaction actions
