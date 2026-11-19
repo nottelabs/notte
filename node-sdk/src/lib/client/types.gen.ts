@@ -538,6 +538,12 @@ export type ApiSessionStartRequest = {
      */
     advanced_stealth?: boolean;
     /**
+     * Os
+     *
+     * The operating system the session's browser presents: windows or macos. When unset, each session gets one at random among those the environment offers.
+     */
+    os?: 'windows' | 'macos' | null;
+    /**
      * Screenshot Type
      *
      * Ignored since notte 1.10: screenshots are returned without highlighting.
@@ -551,12 +557,6 @@ export type ApiSessionStartRequest = {
      * Whether to enable the Notte recorder extension for this session. The extension is installed but remains inactive when this is false.
      */
     demonstrate?: boolean;
-    /**
-     * Os
-     *
-     * The operating system the session's browser presents: windows or macos. When unset, each session gets one at random among those the environment offers.
-     */
-    os?: 'windows' | 'macos' | null;
 };
 
 /**
@@ -4363,6 +4363,12 @@ export type GlobalScrapeRequest = {
      */
     advanced_stealth?: boolean;
     /**
+     * Os
+     *
+     * The operating system the session's browser presents: windows or macos. When unset, each session gets one at random among those the environment offers.
+     */
+    os?: 'windows' | 'macos' | null;
+    /**
      * Screenshot Type
      *
      * Ignored since notte 1.10: screenshots are returned without highlighting.
@@ -4402,12 +4408,6 @@ export type GlobalScrapeRequest = {
      * Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded.
      */
     only_main_content?: boolean;
-    /**
-     * Os
-     *
-     * The operating system the session's browser presents: windows or macos. When unset, each session gets one at random among those the environment offers.
-     */
-    os?: 'windows' | 'macos' | null;
     /**
      * Response Format
      *
