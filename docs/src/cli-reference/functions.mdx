@@ -32,6 +32,7 @@ Pass any of `--name`, `--description`, `--domain`, `--run-instructions`, `--defa
 | `--deletion-protected` | Turn deletion protection on or off. While it is on, the function cannot be deleted. Any workspace member's key can turn it on; turning it off takes the key of a workspace admin or owner. Omit or send null to leave it unchanged. |
 | `--description <string>` | description |
 | `--domain <string>` | domain |
+| `--expected-errors <strings>` | Exception class names the function raises on purpose. A failed run whose exception has one of these names in its class hierarchy ends rejected and is never self-healed. Replaces the stored list; send [] to clear it. Omit or send null to leave it unchanged. (repeatable) |
 | `--function-id <string>` | Function ID (uses current function if not specified) |
 | `--name <string>` | name |
 | `--response-format <string>` | JSON Schema of run()'s return value, computed by the caller from its pydantic model, as inline JSON, @file, or - for stdin |

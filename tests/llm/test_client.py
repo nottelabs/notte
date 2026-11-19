@@ -89,6 +89,29 @@ async def test_error_mapping(status, message, error, monkeypatch):
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "response_format,error",
+    [
+        (
+            {"type": "json_schema", "json_schema": {"name": "Page", "schema": {}, "strict": True}},
+            UnsupportedResponseSchemaError,
+        ),
+        ({"type": "json_schema", "json_schema": {"name": "Page", "schema": {}, "strict": False}}, LLMProviderError),
+        ({"type": "json_schema", "json_schema": {"name": "Page", "schema": {}}}, LLMProviderError),
+        ({"type": "json_object"}, LLMProviderError),
+        (None, LLMProviderError),
+    ],
+)
+async def test_bare_400_is_a_schema_rejection_only_for_strict_schemas(response_format, error):
+    # AtlasCloud answers a strict json_schema for MiniMax M2.5 with this bare 400 on OpenRouter.
+    message = '{"error":{"message":"Provider returned error","code":400,"metadata":{"raw":"{\\"code\\":400,\\"msg\\":\\"invalid request params\\"}"}}}'
+    engine = LLMEngine(transport=httpx.MockTransport(lambda _: httpx.Response(400, text=message)))
+    with pytest.raises(error) as exc:
+        await engine.completion([], response_format=response_format)
+    assert type(exc.value) is error
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("status", [408, 429, 500, 502, 503, 504])
 async def test_transient_error_then_success(status, monkeypatch):
     attempts = []

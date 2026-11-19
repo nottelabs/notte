@@ -245,6 +245,14 @@ def test_advanced_stealth_is_public_but_headless_response_is_hidden_from_schema(
     assert _session_response(dt.timedelta()).model_dump()["headless"] is True
 
 
+def test_os_is_sent_only_when_set():
+    assert "os" in SessionStartRequest.model_json_schema()["properties"]
+    assert "os" not in SessionStartRequest().model_dump()
+    assert SessionStartRequest(os="macos").model_dump()["os"] == "macos"
+    with pytest.raises(ValueError):
+        _ = SessionStartRequest.model_validate({"os": "linux"})
+
+
 # ABNF `duration` rule from RFC 3339 Appendix A, which is what JSON Schema's
 # `duration` format is defined against. Integer components only.
 RFC_3339_DURATION = re.compile(r"^P(?!$)((\d+Y)?(\d+M)?(\d+D)?(T(?=\d)(\d+H)?(\d+M)?(\d+S)?)?|(\d+W)?)$")

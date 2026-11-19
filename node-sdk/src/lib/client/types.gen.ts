@@ -551,6 +551,12 @@ export type ApiSessionStartRequest = {
      * Whether to enable the Notte recorder extension for this session. The extension is installed but remains inactive when this is false.
      */
     demonstrate?: boolean;
+    /**
+     * Os
+     *
+     * The operating system the session's browser presents: windows or macos. When unset, each session gets one at random among those the environment offers.
+     */
+    os?: 'windows' | 'macos' | null;
 };
 
 /**
@@ -4397,6 +4403,12 @@ export type GlobalScrapeRequest = {
      */
     only_main_content?: boolean;
     /**
+     * Os
+     *
+     * The operating system the session's browser presents: windows or macos. When unset, each session gets one at random among those the environment offers.
+     */
+    os?: 'windows' | 'macos' | null;
+    /**
      * Response Format
      *
      * The response format to use for the scrape. You can use a Pydantic model or a JSON Schema dict (cf. https://docs.pydantic.dev/latest/concepts/json_schema/#generating-json-schema.)
@@ -5622,7 +5634,7 @@ export type NotteProxy = {
     /**
      * Sticky Session
      *
-     * Keep the session's exit on one residential IP, shared with a proxy gateway credential minted with the same `sticky_session`. 1-64 letters, digits or hyphens.
+     * Keep the session's exit on one residential IP, shared with a proxy gateway credential minted with the same `sticky_session`. The IP holds while its residential device stays online and can change without notice; new connections with the same `sticky_session` then share a new IP. 1-64 letters, digits or hyphens.
      */
     sticky_session?: string | null;
 };

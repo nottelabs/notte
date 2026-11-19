@@ -1,0 +1,73 @@
+---
+title: Expected and Retryable Errors
+description: Tell Notte which Function failures are deliberate refusals or temporary problems, so they are not self-healed
+---
+import TypedErrors from "/snippets/functions/creating/typed_errors.mdx";
+import ExpectedErrors from "/snippets/functions/management/expected_errors.mdx";
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+By default, an exception fails the run, and a Function with self-healing turned on is rewritten by an agent to fix it. That is the right call for a selector that broke. It is the wrong call when your code refused on purpose: an account that isn't uniquely authorized, an order that needs staff review, an input you don't accept. Rewriting the Function there can remove the very check you wrote.
+
+Typed errors let you say which failures are which.
+
+## Mark a failure as expected or retryable
+
+Raise an exception that subclasses `ExpectedFunctionError` for a deliberate refusal, or `RetryableFunctionError` for a temporary problem:
+
+<TypedErrors />
+
+Notte recognizes the two base classes by name, anywhere in your exception's class hierarchy. Define them in your Function as above: this works on every Function runtime. notte-sdk 1.10.12 and later also export them from `notte_sdk.errors`, but not every Function runtime includes that SDK version yet, and a Function that imports a name its runtime doesn't have fails on every run.
+
+Mix them with a built-in exception, as `AccountNotUnique(ValueError, ExpectedFunctionError)` does, so `except ValueError` still catches it when you run the code locally.
+
+| Base class | Run status | Self-heal | `retry` | Default `status_code` |
+| --- | --- | --- | --- | --- |
+| `ExpectedFunctionError` | `rejected` | No | `false` | 422 |
+| `RetryableFunctionError` | `failed` | No | `true` | 503 |
+| Any other exception | `failed` | Yes, when self-healing is on | `false` | 500 |
+
+`retry` tells the caller that running the Function again may succeed. Notte never re-runs it for you, because a run can already have had side effects, such as a submitted form.
+
+You can override `heal`, `retry`, `status_code` or `code` as class attributes, as `status_code = 409` does above. `code` defaults to the class name in snake_case (`account_not_unique`). The run itself still answers with HTTP 200, so `status_code` is informational.
+
+## Mark existing exceptions as expected without changing code
+
+List exception class names in the Function's `expected_errors`. A failed run whose exception has one of these names anywhere in its class hierarchy ends as `rejected` and is not self-healed, exactly as if it subclassed `ExpectedFunctionError`:
+
+Set `function_id` (Python) or `functionId` (TypeScript) to your Function's ID.
+
+<ExpectedErrors />
+
+Over HTTP, send `PATCH /functions/{function_id}` with `{"expected_errors": ["AccountNotUnique"]}`. The list holds up to 50 Python class names. It belongs to the Function, so it applies to every run, whoever starts it.
+
+## Read a rejected run
+
+The run's `error` field describes the exception:
+
+| Field | Meaning |
+| --- | --- |
+| `kind` | `expected`, `retryable` or `unexpected` |
+| `type` | The exception's class name |
+| `mro` | The class names in its hierarchy |
+| `code` | The machine-readable code |
+| `message` | The exception's message |
+| `heal`, `retry`, `status_code` | The values described above |
+| `source` | `class` when the exception's class decided, `config` when `expected_errors` did, `default` otherwise |
+
+In the Python SDK, `function.run()` raises `FunctionRunRejectedError` for a rejected run, with the payload in its `error` attribute and the code in `code`. It subclasses `FailedToRunCloudFunctionError`, so handlers you already have still catch it. The TypeScript SDK throws `FunctionRunRejectedError` too, or returns the run when you pass `raiseOnFailure: false`.
+
+`rejected` is a newer run status. SDK releases before it are shown a rejected run as `failed`, which they already handle. The Python SDK from 1.10.12 and the TypeScript SDK from 1.10.13 ask for `rejected` with the `x-notte-accept-run-statuses: rejected` header. Other HTTP clients always see `rejected`.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Creating Functions" icon="file-code" href="/features/functions/creating">
+    Write and deploy Functions
+  </Card>
+
+  <Card title="Management" icon="sliders" href="/features/functions/management">
+    Update metadata and monitor runs
+  </Card>
+</CardGroup>
