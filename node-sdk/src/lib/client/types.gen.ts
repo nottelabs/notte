@@ -592,6 +592,12 @@ export type BodyFunctionCreateFunctionsPost = {
      * JSON Schema of run()'s return value, computed by the caller from its pydantic model
      */
     response_format?: string | null;
+    /**
+     * Sdk Generation
+     *
+     * The Notte SDK release the code runs with: `v19` (notte 1.9) or `v110` (notte 1.10). Python only. Without it, the uploading client's SDK version decides. `v110` code is checked for APIs notte 1.10 removed.
+     */
+    sdk_generation?: 'v19' | 'v110' | null;
 };
 
 /**
@@ -608,6 +614,12 @@ export type BodyFunctionUpdateFunctionsFunctionIdPost = {
      * JSON Schema of run()'s return value, computed by the caller from its pydantic model
      */
     response_format?: string | null;
+    /**
+     * Sdk Generation
+     *
+     * The Notte SDK release the code runs with: `v19` (notte 1.9) or `v110` (notte 1.10). Python only. Without it, the uploading client's SDK version decides. `v110` code is checked for APIs notte 1.10 removed.
+     */
+    sdk_generation?: 'v19' | 'v110' | null;
 };
 
 /**

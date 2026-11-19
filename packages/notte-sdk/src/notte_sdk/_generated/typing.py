@@ -65,6 +65,7 @@ class CreateFunctionRequestDict(TypedDict):
     name: NotRequired[str | None]
     description: NotRequired[str | None]
     shared: NotRequired[bool]
+    sdk_generation: NotRequired[Literal["v19", "v110"] | None]
 
 
 class FunctionCreateParametersQueryDict(TypedDict):

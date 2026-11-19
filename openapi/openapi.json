@@ -18761,6 +18761,22 @@
             ],
             "title": "Response Format",
             "description": "JSON Schema of run()'s return value, computed by the caller from its pydantic model"
+          },
+          "sdk_generation": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "v19",
+                  "v110"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sdk Generation",
+            "description": "The Notte SDK release the code runs with: `v19` (notte 1.9) or `v110` (notte 1.10). Python only. Without it, the uploading client's SDK version decides. `v110` code is checked for APIs notte 1.10 removed."
           }
         },
         "type": "object",
@@ -18787,6 +18803,22 @@
             ],
             "title": "Response Format",
             "description": "JSON Schema of run()'s return value, computed by the caller from its pydantic model"
+          },
+          "sdk_generation": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "v19",
+                  "v110"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sdk Generation",
+            "description": "The Notte SDK release the code runs with: `v19` (notte 1.9) or `v110` (notte 1.10). Python only. Without it, the uploading client's SDK version decides. `v110` code is checked for APIs notte 1.10 removed."
           }
         },
         "type": "object",
@@ -36544,9 +36576,9 @@
             "type": "boolean"
           },
           "has_previous": {
+            "readOnly": true,
             "title": "Has Previous",
-            "type": "boolean",
-            "readOnly": true
+            "type": "boolean"
           },
           "items": {
             "items": {
