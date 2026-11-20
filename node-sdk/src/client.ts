@@ -127,6 +127,26 @@ function isFunctionsRequest(requestUrl: string, baseUrl: string): boolean {
   return url.origin === api.origin && (url.pathname === prefix || url.pathname.startsWith(`${prefix}/`));
 }
 
+/** What `client.Agent` throws: the Agent API was removed in notte-sdk 1.10. */
+export const AGENT_REMOVED_MESSAGE = `client.Agent was removed in notte-sdk 1.10. Drive the session with act() instead:
+
+    const session = client.Session();
+    await session.start();
+    try {
+      await session.execute({ type: 'goto', url: 'https://example.com' });
+      let result;
+      for (let i = 0; i < 20; i++) {
+        result = await client.sessions.act(session.getId()!, { instruction: 'describe the task here' });
+        if (result.status !== 'executed') break; // done, blocked or stale
+      }
+      if (result?.status !== 'done') throw new Error(\`task stopped before it was done: \${result?.status}\`);
+      const data = await session.scrape({ instructions: 'what to extract' });
+    } finally {
+      await session.stop();
+    }
+
+See https://docs.notte.cc/features/sessions/act`;
+
 /** Entry point for sessions, functions, vaults, personas, and session files. */
 export class NotteClient {
   private readonly config: ResolvedConfig;
@@ -399,6 +419,11 @@ export class NotteClient {
    */
   Session(options: SessionOptions = {}): Session {
     return new Session(this, options);
+  }
+
+  /** Removed in notte-sdk 1.10: throws an error pointing to the act loop. @internal */
+  get Agent(): never {
+    throw new Error(AGENT_REMOVED_MESSAGE);
   }
 
   /** Generated file operations; use Files(sessionId) for local file IO helpers. */

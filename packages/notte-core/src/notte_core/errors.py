@@ -347,12 +347,23 @@ class CredentialFieldValidationError(CredentialReplacementError):
         )
 
 
+# Structured extraction reads the page's text (as markdown), so values that only live in HTML
+# attributes never reach the model.
+SCRAPE_ATTRIBUTES_HINT = (
+    "Note: extraction reads the page's text as markdown, which keeps link URLs with scrape_links=True (and "
+    "image src/alt with scrape_images=True) but drops other HTML attributes, so values that only appear in attributes such as "
+    "aria-label or data-* (e.g. a star rating) cannot be extracted. Read those with "
+    "session.evaluate_js(), e.g. session.evaluate_js(\"JSON.stringify([...document.querySelectorAll('[aria-label]')]"
+    ".map(e => e.getAttribute('aria-label')))\")."
+)
+
+
 class ScrapeFailedError(NotteBaseError):
     def __init__(self, error_message: str) -> None:
         super().__init__(
-            dev_message=f"Structured data extraction failed: {error_message}",
+            dev_message=f"Structured data extraction failed: {error_message}. {SCRAPE_ATTRIBUTES_HINT}",
             user_message=f"Failed to extract structured data: {error_message}",
-            agent_message=f"Structured data extraction failed: {error_message}. Hint: verify the page contains the expected data or adjust your instructions.",
+            agent_message=f"Structured data extraction failed: {error_message}. Hint: verify the page contains the expected data or adjust your instructions. {SCRAPE_ATTRIBUTES_HINT}",
             should_retry_later=True,
         )
 
