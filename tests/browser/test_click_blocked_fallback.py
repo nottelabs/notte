@@ -85,6 +85,21 @@ async def test_a_click_on_an_element_kept_out_of_the_viewport_falls_back_at_once
 
 
 @pytest.mark.asyncio
+async def test_a_click_the_page_handles_past_its_slice_is_sent_once(session: NotteSession) -> None:
+    # the button's handler keeps the page busy for longer than the first slice: the deadline falls while the page
+    # handles the click, and Playwright raises its timeout for a click it delivered. The next slice must not click again
+    busy_ms = _CLICK_FIRST_SLICE_MS + 1000
+    html = BUTTON.replace(
+        'event.isTrusted">',
+        f'event.isTrusted; const end = performance.now() + {busy_ms}; while (performance.now() < end) {{}}">',
+    )
+    elapsed, clicks, trusted = await click(session, html)
+
+    assert (clicks, trusted) == (1, True)
+    assert elapsed < FALLBACK_BOUND_S
+
+
+@pytest.mark.asyncio
 async def test_a_click_waits_for_a_cover_of_a_moment(session: NotteSession) -> None:
     # covered past the first slice, uncovered before a cover counts as lasting
     gone_ms = _CLICK_FIRST_SLICE_MS + _CLICK_BLOCKED_MS // 2
