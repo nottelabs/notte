@@ -1241,29 +1241,27 @@ async def test_a_closing_popup_ignores_navigation_during_click_actionability(
     session.window.page = popup
     original_click = Locator.click
 
-    uncovered = False
+    uncovering: asyncio.Task[None] | None = None
+
+    async def uncover() -> None:
+        # the other tab navigates while the click waits for the covered button, then the cover goes
+        await other.goto(f"{site}/second")
+        assert not popup.is_closed(), "The covered button must still be waiting for input"
+        await cover.evaluate("el => el.remove()")
 
     async def covered_click(locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
-        nonlocal uncovered
+        # The pointer click is tried in slices (`_pointer_click`): a slice ending while the button is covered times
+        # out and the next one is tried, so the other tab's navigation runs beside them, started by the first.
+        nonlocal uncovering
+        if uncovering is None:
+            uncovering = asyncio.create_task(uncover())
         if mode == "js":
-            # a pointer click that never lands: it is tried in slices until its budget is out (`_pointer_click`)
-            if not uncovered:
-                uncovered = True
-                await other.goto(f"{site}/second")
-                await cover.evaluate("el => el.remove()")
+            # a pointer click that never lands: it is tried in slices until its budget is out
             await asyncio.sleep(timeout / 1000)
             raise PlaywrightTimeoutError("Use the JS click fallback")
-        pending = asyncio.create_task(original_click(locator, timeout=timeout, no_wait_after=no_wait_after))
-        try:
-            await other.goto(f"{site}/second")
-            assert not pending.done(), "The covered button must still be waiting for input"
-            await cover.evaluate("el => el.remove()")
-            await pending
-        finally:
-            if not pending.done():
-                pending.cancel()
-                with suppress(asyncio.CancelledError):
-                    await pending
+        await original_click(locator, timeout=timeout, no_wait_after=no_wait_after)
+        # the click landed, so the cover went: with the other tab's navigation before it
+        await uncovering
         if not popup.is_closed():
             await popup.wait_for_event("close")
         if mode == "closed":
@@ -1282,6 +1280,8 @@ async def test_a_closing_popup_ignores_navigation_during_click_actionability(
         **({"timeout": 3000} if mode == "js" else {}),
     )
     assert result.success, result.message
+    assert uncovering is not None
+    await uncovering
     assert popup.is_closed()
     assert session.window.page is (results if results is not None else opener)
     if results is not None:

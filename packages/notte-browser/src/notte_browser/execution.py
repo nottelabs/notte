@@ -116,6 +116,9 @@ _CLICK_BLOCKED_MS = 1000
 _CLICK_BLOCKED_IDLE_MS = 500
 # A request in flight for this long (s) no longer counts as something happening: the page keeps it open.
 _CLICK_BLOCKED_REQUEST_S = 5.0
+# Playwright's call log line right before it sends a click's mouse events (one `Input.dispatchMouseEvent` each, all
+# written at once). A click that times out with it in its log was delivered: the page was handling it at the deadline.
+_CLICK_EVENTS_SENT_LOG = "performing click action"
 
 # how long nothing has happened on the page (ms), None while something is in progress (`PageSettle.idle_ms`)
 IdleCheck = Callable[[], Awaitable[float | None]]
@@ -1108,7 +1111,11 @@ async def _pointer_click(
     falls back at once instead of at the end of the budget, with the same result. A cover of a moment (an animation,
     a spinner while a request runs, an element moving into view) is waited out as before. Without `idle`, or in a
     frame whose activity the page does not watch (one of another origin), the whole budget goes into one click as
-    before."""
+    before.
+
+    A click's deadline can fall after its mouse events were sent, while the page handles them (a handler that keeps
+    the page busy): Playwright raises its timeout all the same. Such a click was delivered, so it counts as landed
+    (True): another slice would click a second time, and the fallback would click a second time."""
     keep_ms = action.timeout / 5
     slice_ms = _CLICK_FIRST_SLICE_MS if idle is not None else float("inf")
     probe: JSHandle | None = None
@@ -1119,7 +1126,9 @@ async def _pointer_click(
                 # Navigation belongs to PageSettle, including a response that has not committed before the deadline.
                 await locator.click(timeout=min(left_ms, slice_ms), no_wait_after=True)
                 return True
-            except PlaywrightTimeoutError:
+            except PlaywrightTimeoutError as error:
+                if _CLICK_EVENTS_SENT_LOG in str(error):
+                    return True
                 if left_ms <= slice_ms or idle is None:
                     raise
             slice_ms = _CLICK_SLICE_MS
