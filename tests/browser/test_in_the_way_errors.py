@@ -162,6 +162,23 @@ async def test_a_dialog_that_shows_the_typed_text_is_not_quoted() -> None:
     assert "Results for" not in message
 
 
+# a panel with the role of a dialog that is not modal and covers nothing, beside a part the page made inert
+SIDE_PANEL = """
+<div role="dialog" aria-label="Chat with us" style="position: fixed; right: 0; bottom: 0; width: 200px; height: 100px">
+  <p>How can we help?</p>
+</div>
+"""
+
+
+@pytest.mark.asyncio
+async def test_a_dialog_that_is_not_modal_is_not_named_for_an_inert_field() -> None:
+    async with NotteSession(headless=True) as session:
+        message = await _fill(session, _url(FORM.format(inert="inert"), SIDE_PANEL))
+
+    assert "The field stayed empty after typing: the element is inert" in message
+    assert "Chat with us" not in message
+
+
 @pytest.mark.asyncio
 async def test_a_fill_behind_a_native_modal_dialog_names_it() -> None:
     async with NotteSession(headless=True) as session:
