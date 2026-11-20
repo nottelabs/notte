@@ -627,8 +627,8 @@ KEYWORD_ANNOTATIONS = {
 }
 KEYWORD_DOCSTRINGS = {
     "SessionStartRequestDict": 'Request dictionary for starting a session.\n\nArgs:\n    record_session: Defaults to true. Set to false at session creation to disable saved replay for the entire session. Live View remains available.\n    log_session: Defaults to true. Set to false at session creation to disable saved browser activity and network logs for the entire session. Usage metering remains available.\n    solve_captchas: Whether to try to automatically solve captchas\n    max_duration_minutes: Maximum session lifetime in minutes (absolute maximum).\n    idle_timeout_minutes: Idle timeout in minutes. Session closes after this period of inactivity.\n    proxies: List of custom proxies to use for the session. If True, the default proxies will be used.\n    browser_type: The browser type to use. chrome-nitro starts a managed Chrome Nitro session.\n    user_agent: The user agent to use for the session\n    chrome_args: Overwrite the chrome instance arguments\n    viewport_width: The width of the viewport\n    viewport_height: The height of the viewport\n    aspect_ratio: Viewport shape preset ("5:4" or "16:9"). Cannot be combined with viewport_width/viewport_height.\n    cdp_url: The CDP URL of another remote session provider.\n    profile: Browser profile configuration for state persistence.\n    auth_ids: Up to 10 unique Managed Auth connection IDs. The API verifies them inline and can return an authenticating session while login continues.\n    wait_for_authentication: Defaults to True. The SDK waits for authentication readiness through short API calls before returning from start or entering a context manager. When False, start returns after inline verification; call wait_for_auth() before browser actions if login is pending.\n    auth_retry: Number of additional retries for transient managed-auth login failures, from 0 to 2. Each retry verifies the session again before submitting credentials. A blocked connection permits one explicit login attempt.\n    dialog_policy: Who answers JavaScript dialogs. "auto" (default): Notte dismisses alert, confirm and prompt and accepts beforeunload. "client": your CDP client accepts or dismisses them; Notte dismisses one nobody answers within 10 seconds.\n    os: The operating system the session\'s browser presents: windows or macos. When unset, each session gets one at random among those the environment offers.',
-    "CreateFunctionRequestDict": "Request dictionary for creating a function.\n\nArgs:\n    path: The path to the function to upload.",
-    "UpdateFunctionRequestDict": "Request dictionary for updating a function.\n\nArgs:\n    path: The path to the function to upload.\n    function_id: The ID of the function to update.\n    version: The version of the function to update.",
+    "CreateFunctionRequestDict": "Request dictionary for creating a function.\n\nArgs:\n    path: The path to the function to upload.\n    sdk_generation: The Notte SDK release the code runs with: `v19` (notte 1.9) or `v110` (notte 1.10). Python only. Without it, the uploading client's SDK version decides. `v110` code is checked for APIs notte 1.10 removed.",
+    "UpdateFunctionRequestDict": "Request dictionary for updating a function.\n\nArgs:\n    path: The path to the function to upload.\n    function_id: The ID of the function to update.\n    version: The version of the function to update.\n    sdk_generation: The Notte SDK release the code runs with: `v19` (notte 1.9) or `v110` (notte 1.10). Python only. Without it, the uploading client's SDK version decides. `v110` code is checked for APIs notte 1.10 removed.",
     "GetFunctionRequestDict": "Request dictionary for getting a function.\n\nArgs:\n    function_id: The ID of the function to get.\n    version: The version of the function to get.",
     "ListFunctionsRequestDict": "Request dictionary for listing functions.\n\nArgs:\n    only_active: Whether to only list active functions.\n    page: The page number to list functions for.\n    page_size: The number of functions to list per page.",
     "PersonaCreateRequestDict": "Request dictionary for creating a new persona.",
@@ -646,6 +646,7 @@ HIDDEN_KEYWORDS = {
     "ApiSessionStartRequest": {"screenshot_type", "demonstrate"},
     "ListSessionsParametersQuery": {"only_current_token"},
     "BodyFunctionCreateFunctionsPost": {"response_format"},
+    "BodyFunctionUpdateFunctionsFunctionIdPost": {"file", "response_format"},
     "FunctionUpdateParametersQuery": {"restricted"},
     "ListFunctionsParametersQuery": {"only_current_token", "include_system"},
     "ListFunctionRunsByFunctionIdParametersQuery": {"only_current_token", "include_system", "source"},
@@ -837,6 +838,9 @@ def _keywords(binding: Binding, classes: dict[str, ast.ClassDef]) -> str:
         lines.append(f"    {public_field}: {required}[{ast.unparse(annotation)}]")
     if name == "FunctionUpdateParametersQuery":
         lines.append("    path: Required[str]")
+        # The multipart form fields of the update body are keywords too; its file is `path`.
+        body = cast(type[BaseModel], getattr(_generated_models(), "BodyFunctionUpdateFunctionsFunctionIdPost"))
+        lines.extend(_keywords(Binding("models", body.__name__, body), classes).splitlines()[1:])
     return "\n".join(lines) + "\n"
 
 

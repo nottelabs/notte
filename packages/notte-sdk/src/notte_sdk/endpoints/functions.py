@@ -238,7 +238,8 @@ def _update_request(
     query: dict[str, Any] = {} if restricted else {"restricted": False}
     if (version := data.get("version")) is not None:
         query["version"] = version
-    endpoint = api.function_update(function_id, wire_request(None, {}), params=wire_request(None, query))
+    form = {"sdk_generation": generation} if (generation := data.get("sdk_generation")) is not None else {}
+    endpoint = api.function_update(function_id, wire_request(None, form), params=wire_request(None, query))
     return endpoint, {"file": data["path"]}
 
 

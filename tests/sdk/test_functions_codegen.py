@@ -168,6 +168,17 @@ def test_function_multipart_contract(client: NotteClient, monkeypatch: pytest.Mo
     assert all("Content-Type" not in c.headers for c in api.calls)
 
 
+def test_function_upload_sends_sdk_generation_as_form_field(
+    client: NotteClient, monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+) -> None:
+    path = tmp_path / "function.py"
+    path.write_text("def run(): return 1\n")
+    api = fake(monkeypatch, FUNCTION)
+    _ = client.functions.create(path=str(path), sdk_generation="v110")
+    _ = client.functions.update("fn", path=str(path), sdk_generation="v19")
+    assert [c.data for c in api.calls] == [{"sdk_generation": "v110"}, {"sdk_generation": "v19"}]
+
+
 def test_function_ids_are_encoded_as_one_segment(client: NotteClient, monkeypatch: pytest.MonkeyPatch) -> None:
     api = fake(monkeypatch, {**FUNCTION, "url": "https://storage.example/code"})
     _ = client.functions.download_url("a/b ?#%é")
