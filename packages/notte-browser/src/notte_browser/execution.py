@@ -1054,8 +1054,9 @@ async def _pointer_click(
     another element or out of the viewport the same way for `_CLICK_BLOCKED_MS` (js/click_blocker.js) while nothing
     happened on the page for `_CLICK_BLOCKED_IDLE_MS` (`idle`: no DOM change, no request, none in flight). The caller
     falls back at once instead of at the end of the budget, with the same result. A cover of a moment (an animation,
-    a spinner while a request runs, an element moving into view) is waited out as before. Without `idle`, the whole
-    budget goes into one click as before."""
+    a spinner while a request runs, an element moving into view) is waited out as before. Without `idle`, or in a
+    frame whose activity the page does not watch (one of another origin), the whole budget goes into one click as
+    before."""
     keep_ms = action.timeout / 5
     slice_ms = _CLICK_FIRST_SLICE_MS if idle is not None else float("inf")
     probe: JSHandle | None = None
@@ -1073,6 +1074,11 @@ async def _pointer_click(
             try:
                 if probe is None:
                     probe = await locator.evaluate_handle(_CLICK_BLOCKER, timeout=budget.remaining_ms(keep_ms=keep_ms))
+                    if not await probe.evaluate("probe => probe.watched"):
+                        # a frame of another origin: the page does not see what it does (`idle` would say idle while
+                        # its data loads), so its cover is waited out with the rest of the budget, as before
+                        slice_ms = float("inf")
+                        continue
                 state: _BlockedState = await probe.evaluate("probe => probe.check()")
             except Error:
                 # the element is not on the page for now (a re-render): the next click waits for it as before

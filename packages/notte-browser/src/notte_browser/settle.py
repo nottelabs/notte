@@ -142,6 +142,8 @@ class _PageState(TypedDict):
     last: float | None
     dom: float | None
     urlAt: float | None
+    # the last DOM change of any kind, counted or not (a clock's third tick)
+    activity: float | None
 
 
 @dataclass(frozen=True)
@@ -259,7 +261,8 @@ class PageSettle:
         self._began = time.perf_counter()
 
     async def quiet_ms(self) -> float | None:
-        """For how long nothing the tracker counts has happened on the page (ms): no DOM or URL change, no request
+        """For how long nothing has happened on the page (ms): no DOM change of any kind (the ones the settle leaves
+        out included: a label that keeps changing is the page at work, "please wait 43%"), no URL change, no request
         started or ended. None while a tab is opening, or when the document is not tracked (it is navigating, or the
         tracker could not start). Requests in flight are not counted: `BrowserWindow.requests_in_flight` knows them,
         including the ones started before the action."""
@@ -269,7 +272,8 @@ class PageSettle:
             page: _PageState = await self._tracker.evaluate("t => t.state()")
         except Error:
             return None
-        idle = page["elapsed"] if page["last"] is None else page["elapsed"] - page["last"]
+        last = [t for t in (page["last"], page["activity"]) if t is not None]
+        idle = page["elapsed"] - max(last) if last else page["elapsed"]
         if self._last_request is not None:
             idle = min(idle, (time.perf_counter() - self._last_request) * 1000)
         return idle

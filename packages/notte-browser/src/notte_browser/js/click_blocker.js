@@ -4,6 +4,7 @@
 // link around it (Playwright retargets the hit test the same way). `probe.check()` says why the click cannot land
 // (`hidden`, `outside`, `covered`), or `detached` once the element left the document, and for how long the answer,
 // the covering element and the boxes have stayed the same: a cover that moves or changes is not a lasting one.
+// `probe.watched` says whether the element's frame is one whose activity the page watches.
 (el) => {
     const doc = el.ownerDocument;
     const win = doc.defaultView;
@@ -28,9 +29,33 @@
         for (const rect of el.getClientRects()) {
             const left = Math.max(rect.left, 0), top = Math.max(rect.top, 0);
             const right = Math.min(rect.right, win.innerWidth), bottom = Math.min(rect.bottom, win.innerHeight);
-            if ((right - left) * (bottom - top) > 0.99) return { x: (left + right) / 2, y: (top + bottom) / 2 };
+            // a box past both edges has two negative sides: no part of it is in the viewport either
+            if (right > left && bottom > top && (right - left) * (bottom - top) > 0.99) {
+                return { x: (left + right) / 2, y: (top + bottom) / 2 };
+            }
         }
         return null;
+    };
+    // whether the page watches this frame's DOM and requests (`notte_browser.settle`, `same_origin`: the page and the
+    // frames it reaches through frames of its origin; about:blank and srcdoc frames have the page's origin); the
+    // activity of another frame is not seen, so its cover is not given up on early. Compared by URL: the script may
+    // run in a world that reads across origins
+    const origin = (w) => {
+        const url = new URL(w.location.href);
+        return url.protocol === 'http:' || url.protocol === 'https:' ? url.origin : null;
+    };
+    const watched = () => {
+        try {
+            const top = origin(win.top);
+            for (let w = win; w !== w.top; w = w.parent) {
+                const own = origin(w);
+                if (own !== null && own !== top) return false;
+            }
+            return true;
+        } catch (e) {
+            // a frame of another origin cannot read its ancestors
+            return false;
+        }
     };
     // the topmost element at a point, through open shadow roots
     const hit = (x, y) => {
@@ -64,6 +89,7 @@
     let previous = null;
     let sameSince = 0;
     return {
+        watched: watched(),
         check: () => {
             const seen = look();
             if (
