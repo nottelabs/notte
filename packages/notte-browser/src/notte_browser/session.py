@@ -83,7 +83,7 @@ from notte_core.actions.typedicts import (
     parse_action,
 )
 from notte_core.config import CookieDict, RaiseCondition, config, create_or_append_cookies_to_file
-from notte_core.credentials.base import BaseVault
+from notte_core.credentials.base import BaseVault, fill_values
 from notte_core.credentials.types import ValueWithPlaceholder
 from notte_core.data import DataSpace, StructuredData, TBaseModel
 from notte_core.errors import (
@@ -909,7 +909,7 @@ class NotteSession(AsyncResource, SyncResource):
                         privacy.remember_secrets(
                             {
                                 value.get_secret_value(): value.placeholder_value
-                                for value in BaseVault.fill_values(resolved_action)
+                                for value in fill_values(resolved_action)
                                 if isinstance(value, ValueWithPlaceholder)
                             }
                         )
