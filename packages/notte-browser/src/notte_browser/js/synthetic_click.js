@@ -27,10 +27,11 @@
     const pointerdown = fire("pointerdown", PointerEvent, 1);
     const mousedown = pointerdown && fire("mousedown", MouseEvent, 1);
     if (mousedown) {
-        // the default action of a mousedown: the nearest focusable element takes the focus. A tabindex of any
-        // value, -1 included, makes an element focusable by a click (not by the Tab key)
+        // the default action of a mousedown: the nearest focusable element takes the focus. That is an element in
+        // the Tab order (a `summary`, a control), or one with a tabindex of any value: -1 keeps it out of the Tab
+        // order, not out of a click's reach
         let node = el;
-        while (node && !(node.hasAttribute("tabindex") || node.matches("input, select, textarea, button, a[href], [contenteditable]"))) {
+        while (node && !(node.tabIndex >= 0 || node.hasAttribute("tabindex") || node.matches("input, select, textarea, button, a[href], [contenteditable]"))) {
             node = node.parentElement;
         }
         if (node && node !== document.activeElement) node.focus({ preventScroll: true });

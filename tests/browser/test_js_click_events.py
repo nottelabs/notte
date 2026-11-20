@@ -43,6 +43,8 @@ POINTER_WIDGET = (
     '<div id="widget" tabindex="0" onpointerdown="event.preventDefault(); document.body.dataset.opened = 1"'
     ' onmousedown="document.body.dataset.opened = 0" onmouseup="document.body.dataset.opened = 0">Menu</div>'
 )
+# focusable without a tabindex attribute: the first summary of a details element
+SUMMARY = '<input id="before" autofocus><details><summary id="widget">Options</summary><p>More</p></details>'
 LINK = '<a id="widget" href="javascript:document.body.dataset.went = 1">Go</a>'
 SUBMIT = '<form onsubmit="document.body.dataset.sent = 1; return false"><button id="widget">Send</button></form>'
 
@@ -57,6 +59,19 @@ async def _click(session: NotteSession, controls: str) -> tuple[bool, str, dict[
     data = await session.window.page.evaluate("() => ({...document.body.dataset})")
     active = await session.window.page.evaluate("() => document.activeElement && document.activeElement.id")
     return result.success, result.message, data, active
+
+
+@pytest.mark.asyncio
+async def test_a_click_through_a_cover_focuses_an_element_focusable_without_a_tabindex() -> None:
+    async with NotteSession(headless=True) as session:
+        success, message, data, active = await _click(session, SUMMARY)
+        opened = await session.window.page.evaluate("() => document.querySelector('details').open")
+
+    assert success, message
+    assert data.get("order") == "p m p m p m c "
+    # the focus leaves the field that had it, and the click's activation opens the details
+    assert active == "widget"
+    assert opened is True
 
 
 # a tabindex of any value makes the element focusable by a click; -1 only keeps it out of the Tab order
