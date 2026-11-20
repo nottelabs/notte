@@ -88,8 +88,11 @@
     // A modal dialog escapes the inertness of its ancestors, which then are not looked at.
     for (let current = el; current !== null; current = parent(current)) {
         if (current.inert === true) {
+            // a modal dialog is what makes the rest of a page inert: another dialog that happens to be shown (a chat
+            // panel, a sidebar) is not in the way
+            const modal = (candidate) => candidate.matches(":modal") || candidate.getAttribute("aria-modal") === "true";
             const outside = [...el.ownerDocument.querySelectorAll(DIALOG)].find(
-                (candidate) => shown(candidate) && !within(candidate, current),
+                (candidate) => shown(candidate) && modal(candidate) && !within(candidate, current),
             );
             return outside ? { kind: "dialog", name: name(outside) } : { kind: "inert", name: "" };
         }
