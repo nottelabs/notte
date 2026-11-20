@@ -471,16 +471,14 @@ def _may_quote(action: InteractionAction, page_text: str, secrets: Collection[st
     """Whether the message of a failed `action` may quote the name of what is in the way, given `page_text`: all the
     text of the dialog or element that name is taken from. Never for an
     action that types a credential: a page can write what was typed into its own text, and a credential must not
-    reach a message that is logged and kept. Nor when the text holds what the action typed or an earlier
-    credential retained by the session."""
+    reach a message that is logged and kept. Once the session knows a protected value, later page text
+    is omitted too: a page can echo only a fragment or a transformation of that value."""
     value = getattr(action, "value", None)
-    if isinstance(value, ValueWithPlaceholder):
+    if secrets or isinstance(value, ValueWithPlaceholder):
         return False
     # whitespace as the page's text has it once cleaned: single spaces
     typed = " ".join(value.split()).casefold() if isinstance(value, str) else ""
-    protected = [typed, *(" ".join(secret.split()).casefold() for secret in secrets)]
-    folded = page_text.casefold()
-    return not any(literal and literal in folded for literal in protected)
+    return not typed or typed not in page_text.casefold()
 
 
 async def _in_the_way(located: list[Locator], action: InteractionAction, secrets: Collection[str]) -> str:

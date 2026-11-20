@@ -110,7 +110,7 @@
         const id = cover.id ? `#${cover.id}` : "";
         return {
             kind: "element",
-            name: clean(`<${cover.localName}${id}> ${cut(clean(cover.innerText))}`),
+            name: cut(clean(`<${cover.localName}${id}> ${cover.innerText}`)),
             text: clean(`<${cover.localName}${id}> ${cover.innerText}`),
         };
     }
