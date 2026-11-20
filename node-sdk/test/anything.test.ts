@@ -1,12 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NotteClient } from '@/client';
 
-const mocks = vi.hoisted(() => ({
-  anythingStart: vi.fn(),
-}));
-
-vi.mock('@/lib/client/sdk.gen', () => mocks);
-
 import { NotteAnything } from '@/anything';
 
 /** A `text/event-stream` body, as the `/anything/start` proxy pipes it back. */
@@ -31,34 +25,36 @@ async function collect<T>(chunks: AsyncGenerator<T>): Promise<T[]> {
 }
 
 describe('NotteAnything', () => {
-  const generated = { id: 'test-client' };
-  const client = { getClient: () => generated } as unknown as NotteClient;
+  const post = vi.fn();
+  const client = { getClient: () => ({ post }) } as unknown as NotteClient;
   let anything: NotteAnything;
 
   beforeEach(() => {
-    mocks.anythingStart.mockReset();
+    post.mockReset();
     anything = new NotteAnything(client);
   });
 
   it('posts the task body and requests the raw stream', async () => {
-    mocks.anythingStart.mockResolvedValue({
+    post.mockResolvedValue({
       data: streamOf('data: [DONE]\n\n'),
       response: responseWith({}),
     });
 
     await anything.start({ task: 'fetch the top 3 hacker news posts' });
 
-    expect(mocks.anythingStart).toHaveBeenCalledTimes(1);
-    expect(mocks.anythingStart).toHaveBeenCalledWith({
-      client: generated,
+    expect(post).toHaveBeenCalledTimes(1);
+    expect(post).toHaveBeenCalledWith({
+      security: [{ scheme: 'bearer', type: 'http' }],
+      url: '/anything/start',
       body: { task: 'fetch the top 3 hacker news posts' },
+      headers: { 'Content-Type': 'application/json' },
       parseAs: 'stream',
       throwOnError: true,
     });
   });
 
   it('exposes the thread and stream-format headers', async () => {
-    mocks.anythingStart.mockResolvedValue({
+    post.mockResolvedValue({
       data: streamOf('data: [DONE]\n\n'),
       response: responseWith({
         'x-thread-id': '820a7cff-613b-4529-9ba4-52c7a6777713',
@@ -73,7 +69,7 @@ describe('NotteAnything', () => {
   });
 
   it('reports absent headers as null rather than inventing them', async () => {
-    mocks.anythingStart.mockResolvedValue({
+    post.mockResolvedValue({
       data: streamOf('data: [DONE]\n\n'),
       response: responseWith({}),
     });
@@ -85,7 +81,7 @@ describe('NotteAnything', () => {
   });
 
   it('yields the parsed events of the stream in order', async () => {
-    mocks.anythingStart.mockResolvedValue({
+    post.mockResolvedValue({
       data: streamOf(
         'data: {"type":"start"}\n\n',
         'data: {"type":"text-delta","delta":"hi"}\n\n',
@@ -103,7 +99,7 @@ describe('NotteAnything', () => {
   });
 
   it('parses frames split across chunk boundaries', async () => {
-    mocks.anythingStart.mockResolvedValue({
+    post.mockResolvedValue({
       data: streamOf('data: {"type":"st', 'art"}\n\ndata: [DO', 'NE]\n\n'),
       response: responseWith({}),
     });
@@ -114,7 +110,7 @@ describe('NotteAnything', () => {
   });
 
   it('parses CRLF-terminated frames', async () => {
-    mocks.anythingStart.mockResolvedValue({
+    post.mockResolvedValue({
       data: streamOf('data: {"type":"start"}\r\n\r\ndata: [DONE]\r\n\r\n'),
       response: responseWith({}),
     });
@@ -125,7 +121,7 @@ describe('NotteAnything', () => {
   });
 
   it('stops at [DONE] without yielding it', async () => {
-    mocks.anythingStart.mockResolvedValue({
+    post.mockResolvedValue({
       data: streamOf('data: [DONE]\n\ndata: {"type":"ignored"}\n\n'),
       response: responseWith({}),
     });
@@ -136,7 +132,7 @@ describe('NotteAnything', () => {
   });
 
   it('throws on a malformed event instead of yielding it', async () => {
-    mocks.anythingStart.mockResolvedValue({
+    post.mockResolvedValue({
       data: streamOf('data: {not json}\n\n'),
       response: responseWith({}),
     });
@@ -147,14 +143,14 @@ describe('NotteAnything', () => {
   });
 
   it('throws when the API sends no stream', async () => {
-    mocks.anythingStart.mockResolvedValue({ data: undefined, response: responseWith({}) });
+    post.mockResolvedValue({ data: undefined, response: responseWith({}) });
 
     await expect(anything.start({ task: 'noop' })).rejects.toThrow('no response stream');
   });
 
-  it('propagates rejections from the generated operation', async () => {
+  it('propagates rejections from the request', async () => {
     const failure = new Error('boom');
-    mocks.anythingStart.mockRejectedValue(failure);
+    post.mockRejectedValue(failure);
 
     await expect(anything.start({ task: 'x' })).rejects.toBe(failure);
   });

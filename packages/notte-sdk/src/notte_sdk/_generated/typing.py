@@ -142,6 +142,7 @@ class PaymentRequestDict(TypedDict):
     merchant_name: Required[str]
     description: Required[str]
     mode: NotRequired[Literal["test", "live"]]
+    provider: NotRequired[Literal["link", "agentcard"]]
 
 
 class CreatePaymentParametersQueryDict(TypedDict):
