@@ -116,6 +116,12 @@ def curate_reference(app: Sphinx, exception: Exception | None) -> None:
                 '<ParamField path="usage" type="Dict[str, Any]" required>',
                 '<ParamField path="usage" type="Dict[str, Any]">',
             )
+        # Likewise for `SessionResponse.warnings`, which defaults to an empty list.
+        if page == reference / "misc/sessionresponse.mdx":
+            text = text.replace(
+                '<ParamField path="warnings" type="list[SessionWarning]" required>',
+                '<ParamField path="warnings" type="list[SessionWarning]" default="[]">',
+            )
         # Reached through `RemoteSession.act`, the action's type renders as the expanded discriminated union.
         if page == reference / "misc/actresult.mdx":
             text = re.sub(

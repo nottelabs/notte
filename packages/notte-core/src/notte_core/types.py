@@ -1704,7 +1704,7 @@ class SessionResponse(SdkResponse):
                 "runs without one."
             )
         ),
-    ] = []
+    ] = Field(default_factory=list)
 
     @field_validator("closed_at", mode="before")
     @classmethod
