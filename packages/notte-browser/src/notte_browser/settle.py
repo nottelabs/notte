@@ -258,11 +258,12 @@ class PageSettle:
         """The action has ended: the grace and the caps count from now."""
         self._began = time.perf_counter()
 
-    async def idle_ms(self) -> float | None:
-        """For how long nothing has happened on the page (ms): no DOM or URL change the tracker counts, no request
-        started or ended, none in flight. None while a request is in flight, or when the document is not tracked (it
-        is navigating, or the tracker could not start)."""
-        if self._tracker is None or self._in_flight or self._opening:
+    async def quiet_ms(self) -> float | None:
+        """For how long nothing the tracker counts has happened on the page (ms): no DOM or URL change, no request
+        started or ended. None while a tab is opening, or when the document is not tracked (it is navigating, or the
+        tracker could not start). Requests in flight are not counted: `BrowserWindow.requests_in_flight` knows them,
+        including the ones started before the action."""
+        if self._tracker is None or self._opening:
             return None
         try:
             page: _PageState = await self._tracker.evaluate("t => t.state()")

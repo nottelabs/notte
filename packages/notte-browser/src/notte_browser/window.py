@@ -212,9 +212,9 @@ class BrowserWindow:
         # Context events can report a tab's fetch before its page event installs a tracker.
         self._new_tab_requests: set[Request] = set()
         self._tabs_context: BrowserContext | None = None
-        # the requests of a type the page is waited for (`notte_browser.settle`) that are in flight, whatever started
-        # them: an action's settle only knows the ones started since it began
-        self._requests_in_flight: set[Request] = set()
+        # the requests of a type the page is waited for (`notte_browser.settle`) that are in flight, and when each
+        # started, whatever started them: an action's settle only knows the ones started since it began
+        self._requests_in_flight: dict[Request, float] = {}
         page.set_default_timeout(config.timeout_default_ms)
         # Only final main-document responses establish navigation/raw-file state.
         self.page_callbacks["response"] = self._record_navigation_response  # pyright: ignore[reportArgumentType]
@@ -225,16 +225,24 @@ class BrowserWindow:
 
     def _request_started(self, request: Request) -> None:
         if request.resource_type in TRACKED_REQUESTS:
-            self._requests_in_flight.add(request)
+            self._requests_in_flight[request] = time.perf_counter()
 
     def _request_ended(self, request: Request) -> None:
-        self._requests_in_flight.discard(request)
+        _ = self._requests_in_flight.pop(request, None)
 
-    def requests_in_flight(self) -> int:
+    def requests_in_flight(self, *, younger_than_s: float | None = None) -> int:
         """How many requests the page is waited for are in flight (`notte_browser.settle`: a document, fetch, XHR or
-        script request of the page or a same-origin frame), whatever started them."""
+        script request of the page or a same-origin frame), whatever started them. With `younger_than_s`, only those
+        started less than that long ago: the others are ones the page keeps open (a beacon that never answers, a long
+        poll), as the settle takes requests still open at its cap."""
         page = self._page
-        return sum(tracked(page, request) for request in requests_of(page, self._requests_in_flight))
+        now = time.perf_counter()
+        recent = [
+            request
+            for request, started in self._requests_in_flight.items()
+            if younger_than_s is None or now - started < younger_than_s
+        ]
+        return sum(tracked(page, request) for request in requests_of(page, recent))
 
     async def _close_owned(self) -> None:
         from notte_browser.cleanup import cleanup_resources

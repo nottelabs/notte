@@ -7,7 +7,7 @@ from collections.abc import AsyncIterator
 
 import pytest
 import pytest_asyncio
-from notte_browser.execution import _CLICK_BLOCKED_MS, _CLICK_FIRST_SLICE_MS
+from notte_browser.execution import _CLICK_BLOCKED_MS, _CLICK_BLOCKED_REQUEST_S, _CLICK_FIRST_SLICE_MS
 from notte_browser.session import NotteSession
 from notte_core.actions import ClickAction
 from patchright.async_api import Route
@@ -113,6 +113,26 @@ async def test_a_click_waits_for_a_cover_while_a_request_runs(session: NotteSess
 
     assert (clicks, trusted) == (1, True)
     assert REQUEST_S <= elapsed < FALLBACK_BOUND_S
+
+
+@pytest.mark.asyncio
+async def test_a_request_the_page_keeps_open_does_not_hold_the_fallback(session: NotteSession) -> None:
+    # a beacon that never answers (analytics) is not what the cover waits for: the fallback comes once it is old
+    never = asyncio.Event()
+
+    async def serve(route: Route) -> None:
+        await never.wait()
+        await route.fulfill(body="{}", content_type="application/json", headers={"Access-Control-Allow-Origin": "*"})
+
+    await session.window.page.route("http://data.test/**", serve)
+    html = BUTTON + COVER + "<script>fetch('http://data.test/beacon')</script>"
+    try:
+        elapsed, clicks, trusted = await click(session, html)
+    finally:
+        never.set()
+
+    assert (clicks, trusted) == (1, False)
+    assert _CLICK_BLOCKED_REQUEST_S <= elapsed < FALLBACK_BOUND_S
 
 
 @pytest.mark.asyncio
