@@ -3,7 +3,7 @@ import re
 import time
 from collections.abc import Awaitable, Callable
 from contextlib import suppress
-from typing import Literal
+from typing import Literal, TypedDict
 
 from notte_core.actions import (
     BaseAction,
@@ -97,6 +97,24 @@ _FILE_INPUT_CLICKS = script("file_input_clicks.js")
 _CLICK_INPUT_REPORT_S = 1.0
 # Budget a click keeps for itself after its `before_click` hook (ms), besides the share held for its JS fallback
 _CLICK_AFTER_HOOK_MS = 1000
+# Page-side implementation: js/click_blocker.js
+_CLICK_BLOCKER = script("click_blocker.js")
+# A pointer click is tried in slices: the first one alone covers a click that lands once an animation ends; after each
+# later one the element is looked at (`_pointer_click`).
+_CLICK_FIRST_SLICE_MS = 600
+_CLICK_SLICE_MS = 500
+# A click falls back to a script click once the element has stayed hidden, covered or out of the viewport the same way
+# for this long, while nothing happened on the page for this long: a lasting cover, not a moment's.
+_CLICK_BLOCKED_MS = 1000
+_CLICK_BLOCKED_IDLE_MS = 500
+
+# how long nothing has happened on the page (ms), None while something is in progress (`PageSettle.idle_ms`)
+IdleCheck = Callable[[], Awaitable[float | None]]
+
+
+class _BlockedState(TypedDict):
+    reason: Literal["ok", "hidden", "outside", "covered", "detached"]
+    same_ms: float
 
 
 def text_contains_tabs(text: str) -> bool:
@@ -866,11 +884,13 @@ async def execute_interaction_action(
     verbose: bool = False,
     before_click: Callable[[Locator], Awaitable[Callable[[ElementHandle], Awaitable[None]] | None]] | None = None,
     after_click: Callable[[bool], Awaitable[None]] | None = None,
+    idle: IdleCheck | None = None,
 ) -> bool:
     """Interact with an element within `action.timeout`.
 
     The timeout covers locating the element and the interaction itself, fallbacks included.
     The page's reaction (a navigation it started) is waited for by `execute`, best-effort.
+    With `idle`, a click on an element that stays covered or hidden falls back to a script click at once (`_pointer_click`).
     """
     if action.selectors is None:
         raise ValueError(f"Selector is required for {action.name()}")
@@ -889,6 +909,7 @@ async def execute_interaction_action(
                     storage=storage,
                     verbose=verbose,
                     before_click=before_click,
+                    idle=idle,
                 )
             except Error as error:
                 if (
@@ -1021,6 +1042,60 @@ async def _find_again(window: BrowserWindow, observed: DomNode, snapshot: Browse
     return await resolve_selectors(matches[0])
 
 
+async def _pointer_click(
+    locator: Locator, action: InteractionAction, budget: _ActionBudget, idle: IdleCheck | None
+) -> bool:
+    """Clicks the element with the pointer, within the budget less the fifth kept for the script fallback. Raises
+    Playwright's timeout when the budget runs out, as one click with the whole budget did.
+
+    False, without waiting for that, when the pointer click can never land: the element has stayed hidden, covered by
+    another element or out of the viewport the same way for `_CLICK_BLOCKED_MS` (js/click_blocker.js) while nothing
+    happened on the page for `_CLICK_BLOCKED_IDLE_MS` (`idle`: no DOM change, no request, none in flight). The caller
+    falls back at once instead of at the end of the budget, with the same result. A cover of a moment (an animation,
+    a spinner while a request runs, an element moving into view) is waited out as before. Without `idle`, the whole
+    budget goes into one click as before."""
+    keep_ms = action.timeout / 5
+    slice_ms = _CLICK_FIRST_SLICE_MS if idle is not None else float("inf")
+    probe: JSHandle | None = None
+    try:
+        while True:
+            left_ms = budget.remaining_ms(keep_ms=keep_ms)
+            try:
+                # Navigation belongs to PageSettle, including a response that has not committed before the deadline.
+                await locator.click(timeout=min(left_ms, slice_ms), no_wait_after=True)
+                return True
+            except PlaywrightTimeoutError:
+                if left_ms <= slice_ms or idle is None:
+                    raise
+            slice_ms = _CLICK_SLICE_MS
+            try:
+                if probe is None:
+                    probe = await locator.evaluate_handle(_CLICK_BLOCKER, timeout=budget.remaining_ms(keep_ms=keep_ms))
+                state: _BlockedState = await probe.evaluate("probe => probe.check()")
+            except Error:
+                # the element is not on the page for now (a re-render): the next click waits for it as before
+                continue
+            if state["reason"] == "detached":
+                # the probe's element is gone: the next slice looks at the one the selector finds then
+                await _dispose_handle(probe)
+                probe = None
+                continue
+            if state["reason"] != "ok" and state["same_ms"] >= _CLICK_BLOCKED_MS:
+                idle_ms = await idle()
+                if idle_ms is not None and idle_ms >= _CLICK_BLOCKED_IDLE_MS:
+                    reason = f"{state['reason']} for {state['same_ms']:.0f}ms on an idle page"
+                    logger.warning(f"Failed to click on element: {reason}, fallback to js click")
+                    return False
+    finally:
+        await _dispose_handle(probe)
+
+
+async def _dispose_handle(handle: JSHandle | None) -> None:
+    if handle is not None:
+        with suppress(Error):
+            await handle.dispose()
+
+
 async def _interact(
     window: BrowserWindow,
     action: InteractionAction,
@@ -1030,6 +1105,7 @@ async def _interact(
     storage: BaseStorage | None = None,
     verbose: bool = False,
     before_click: Callable[[Locator], Awaitable[Callable[[ElementHandle], Awaitable[None]] | None]] | None = None,
+    idle: IdleCheck | None = None,
 ) -> None:
     assert action.selectors is not None
     # locate element (possibly in iframe)
@@ -1050,9 +1126,8 @@ async def _interact(
                     time_left_s = budget.remaining_ms(keep_ms=action.timeout / 5 + _CLICK_AFTER_HOOK_MS) / 1000
                     await run_before_click(hooks, locator.page, locator, time_left_s)
                 try:
-                    # Hold back part of the budget for the JS fallback. Navigation belongs to PageSettle,
-                    # including a response that has not committed before the interaction deadline.
-                    await locator.click(timeout=budget.remaining_ms(keep_ms=action.timeout / 5), no_wait_after=True)
+                    # a fifth of the budget is held back for the JS fallback
+                    js_click = not await _pointer_click(locator, action, budget, idle)
                 except PlaywrightTimeoutError as e:
                     logger.warning(f"Failed to click on element: {e}, fallback to js click")
                     js_click = True
@@ -1337,6 +1412,14 @@ async def _execute(
 
         return js_click_with_input
 
+    async def idle_ms() -> float | None:
+        """For how long nothing has happened on the page (`PageSettle.idle_ms`), None while a request is in flight,
+        whether it started since the action began or before it (a page still loading its data)."""
+        assert settle is not None
+        if window.requests_in_flight() > 0:
+            return None
+        return await settle.idle_ms()
+
     retval = True
     closed_during_click: Error | None = None
     try:
@@ -1354,6 +1437,7 @@ async def _execute(
                         verbose=verbose,
                         before_click=track_existing_tabs if isinstance(action, ClickAction) else None,
                         after_click=await_click_input if isinstance(action, ClickAction) else None,
+                        idle=idle_ms if settle is not None and isinstance(action, ClickAction) else None,
                     )
                 except Error as error:
                     # A click handler can close its own tab before the driver acknowledges the click. Continue

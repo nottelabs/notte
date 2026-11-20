@@ -50,7 +50,7 @@ from notte_browser.errors import (
     classify_caller_playwright_error,
 )
 from notte_browser.js import script
-from notte_browser.settle import PageSettle, requests_of
+from notte_browser.settle import TRACKED_REQUESTS, PageSettle, requests_of, tracked
 
 _PAGE_METADATA = script("page_metadata.js")
 
@@ -212,10 +212,29 @@ class BrowserWindow:
         # Context events can report a tab's fetch before its page event installs a tracker.
         self._new_tab_requests: set[Request] = set()
         self._tabs_context: BrowserContext | None = None
+        # the requests of a type the page is waited for (`notte_browser.settle`) that are in flight, whatever started
+        # them: an action's settle only knows the ones started since it began
+        self._requests_in_flight: set[Request] = set()
         page.set_default_timeout(config.timeout_default_ms)
         # Only final main-document responses establish navigation/raw-file state.
         self.page_callbacks["response"] = self._record_navigation_response  # pyright: ignore[reportArgumentType]
+        self.page_callbacks["request"] = self._request_started  # pyright: ignore[reportArgumentType]
+        self.page_callbacks["requestfinished"] = self._request_ended  # pyright: ignore[reportArgumentType]
+        self.page_callbacks["requestfailed"] = self._request_ended  # pyright: ignore[reportArgumentType]
         self.apply_page_callbacks()
+
+    def _request_started(self, request: Request) -> None:
+        if request.resource_type in TRACKED_REQUESTS:
+            self._requests_in_flight.add(request)
+
+    def _request_ended(self, request: Request) -> None:
+        self._requests_in_flight.discard(request)
+
+    def requests_in_flight(self) -> int:
+        """How many requests the page is waited for are in flight (`notte_browser.settle`: a document, fetch, XHR or
+        script request of the page or a same-origin frame), whatever started them."""
+        page = self._page
+        return sum(tracked(page, request) for request in requests_of(page, self._requests_in_flight))
 
     async def _close_owned(self) -> None:
         from notte_browser.cleanup import cleanup_resources
