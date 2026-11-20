@@ -3,7 +3,7 @@
   "info": {
     "title": "Notte API",
     "description": "Notte API is a REST API that allows you to interact with Notte. It is used to create cloud browser sessions, scrape webpages, and run web ai agents to act on your behalf on the internet.",
-    "version": "1.10.14",
+    "version": "1.10.15",
     "x-logo": {
       "url": "https://www.notte.cc/images/logo/logo-white.png"
     }
@@ -27472,7 +27472,7 @@
           "version": {
             "type": "string",
             "title": "Version",
-            "default": "1.10.14"
+            "default": "1.10.15"
           },
           "description": {
             "type": "string",
