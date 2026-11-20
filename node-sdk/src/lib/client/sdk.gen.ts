@@ -553,6 +553,36 @@ export const functionSchedulesUpdate = <ThrowOnError extends boolean = false>(op
 
 /**
  * Function Run Start
+ *
+ * Run a function with a blocking call (without run_id).
+ *
+ * The caller may run a function they own or one that is published; either way
+ * it executes under this key, so the caller's workspace pays and the caller's
+ * tenant scope resolves secrets.
+ *
+ * Pass a `callback_url` to be told when the run is over instead of waiting on
+ * the response: once the run reaches a terminal status, its final metadata
+ * (the same body `GET /functions/{function_id}/runs/{run_id}` returns, plus
+ * `"event": "run.finished"`) is POSTed there.
+ *
+ * Pass a `version` from the function's `versions` to run that saved version
+ * instead of the latest one. Only the function's owner can choose a version
+ * other than the latest; an unknown version is a 404.
+ *
+ * `Authorization: Bearer <NOTTE_API_KEY>` is the only header a run needs, and
+ * the path names the function. Such a run starts here and answers 202 with its
+ * `function_run_id`; poll `GET /functions/{function_id}/runs/{run_id}` for its
+ * result. A request that also repeats the key in `x-notte-api-key` and names
+ * the function in the body is redirected (307) to the runner, which answers
+ * with the result once the run is over.
+ *
+ * Follow that redirect with the same request: a POST with the same JSON body
+ * and the `x-notte-api-key` header, sent to the `Location` URL (a 307 keeps
+ * the method and body). The runner reads the key from `x-notte-api-key`, so a
+ * client may drop `Authorization` on the redirect to the runner's host. A
+ * client that does not follow it, or follows it with a GET, never starts the
+ * run: it is marked failed about 2 minutes after it was created, with
+ * "Run was never started: the function runner was not reached".
  */
 export const functionRunStart = <ThrowOnError extends boolean = false>(options: Options<FunctionRunStartData, ThrowOnError>): RequestResult<FunctionRunStartResponses, FunctionRunStartErrors, ThrowOnError> => (options.client ?? client).post<FunctionRunStartResponses, FunctionRunStartErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
