@@ -1704,7 +1704,7 @@ class SessionResponse(SdkResponse):
                 "runs without one."
             )
         ),
-    ] = []
+    ] = Field(default_factory=list)
 
     @field_validator("closed_at", mode="before")
     @classmethod
@@ -2672,12 +2672,14 @@ class CreateFunctionRequestDict(TypedDict, total=True):
 
     Args:
         path: The path to the function to upload.
+        sdk_generation: The Notte SDK release the code runs with: `v19` (notte 1.9) or `v110` (notte 1.10). Python only. Without it, the uploading client's SDK version decides. `v110` code is checked for APIs notte 1.10 removed.
     """
 
     path: Required[str]
     name: NotRequired[str | None]
     description: NotRequired[str | None]
     shared: NotRequired[bool]
+    sdk_generation: NotRequired[Literal["v19", "v110"] | None]
 
 
 class UpdateFunctionRequestDict(TypedDict):
@@ -2687,10 +2689,12 @@ class UpdateFunctionRequestDict(TypedDict):
         path: The path to the function to upload.
         function_id: The ID of the function to update.
         version: The version of the function to update.
+        sdk_generation: The Notte SDK release the code runs with: `v19` (notte 1.9) or `v110` (notte 1.10). Python only. Without it, the uploading client's SDK version decides. `v110` code is checked for APIs notte 1.10 removed.
     """
 
     path: str
     version: NotRequired[str | None]
+    sdk_generation: NotRequired[Literal["v19", "v110"] | None]
 
 
 class GetFunctionRequestDict(TypedDict, total=False):
@@ -2760,6 +2764,12 @@ class CreateFunctionRequest(SdkRequest):
     name: Annotated[str | None, Field(description="The name of the function")] = None
     description: Annotated[str | None, Field(description="The description of the function")] = None
     shared: Annotated[bool, Field(description="Whether the function is public and shared with other users")] = False
+    sdk_generation: Annotated[
+        Literal["v19", "v110"] | None,
+        Field(
+            description="The Notte SDK release the code runs with: `v19` (notte 1.9) or `v110` (notte 1.10). Python only. Without it, the uploading client's SDK version decides. `v110` code is checked for APIs notte 1.10 removed."
+        ),
+    ] = None
 
 
 class ForkFunctionRequest(SdkRequest):
@@ -2815,6 +2825,12 @@ class UpdateFunctionRequest(SdkRequest):
         Field(description="The path to the function code to upload"),
     ]
     version: Annotated[str | None, Field(description="The version of the function to update")] = None
+    sdk_generation: Annotated[
+        Literal["v19", "v110"] | None,
+        Field(
+            description="The Notte SDK release the code runs with: `v19` (notte 1.9) or `v110` (notte 1.10). Python only. Without it, the uploading client's SDK version decides. `v110` code is checked for APIs notte 1.10 removed."
+        ),
+    ] = None
 
 
 class GetFunctionRequest(SdkRequest):

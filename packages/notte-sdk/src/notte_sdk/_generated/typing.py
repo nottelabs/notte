@@ -59,12 +59,13 @@ class RunPayloadUploadRequestDict(TypedDict):
 
 
 class CreateFunctionRequestDict(TypedDict):
-    "Request dictionary for creating a function.\n\nArgs:\n    path: The path to the function to upload."
+    "Request dictionary for creating a function.\n\nArgs:\n    path: The path to the function to upload.\n    sdk_generation: The Notte SDK release the code runs with: `v19` (notte 1.9) or `v110` (notte 1.10). Python only. Without it, the uploading client's SDK version decides. `v110` code is checked for APIs notte 1.10 removed."
 
     path: Required[str]
     name: NotRequired[str | None]
     description: NotRequired[str | None]
     shared: NotRequired[bool]
+    sdk_generation: NotRequired[Literal["v19", "v110"] | None]
 
 
 class FunctionCreateParametersQueryDict(TypedDict):
@@ -383,10 +384,11 @@ class CreditCardDict(TypedDict):
 
 
 class UpdateFunctionRequestDict(TypedDict):
-    "Request dictionary for updating a function.\n\nArgs:\n    path: The path to the function to upload.\n    function_id: The ID of the function to update.\n    version: The version of the function to update."
+    "Request dictionary for updating a function.\n\nArgs:\n    path: The path to the function to upload.\n    function_id: The ID of the function to update.\n    version: The version of the function to update.\n    sdk_generation: The Notte SDK release the code runs with: `v19` (notte 1.9) or `v110` (notte 1.10). Python only. Without it, the uploading client's SDK version decides. `v110` code is checked for APIs notte 1.10 removed."
 
     version: NotRequired[str | None]
     path: Required[str]
+    sdk_generation: NotRequired[Literal["v19", "v110"] | None]
 
 
 class DeleteVaultRequestDict(TypedDict):

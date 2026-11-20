@@ -27,6 +27,10 @@ See help(type(self)) for accurate signature
 <ParamField path="shared" type="bool">
 </ParamField>
 
+<ParamField path="sdk_generation" type="typing.Literal['v19', 'v110'] | None">
+  The Notte SDK release the code runs with: `v19` (notte 1.9) or `v110` (notte 1.10). Python only. Without it, the uploading client's SDK version decides. `v110` code is checked for APIs notte 1.10 removed.
+</ParamField>
+
 ## Returns
 
 `None`
