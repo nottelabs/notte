@@ -67,6 +67,9 @@ export const DEFAULT_ALLOWED_PATTERNS: RegExp[] = [
   /^functions\/[^\/]+\/schedules\/resume$/, // /functions/{function_id}/schedules/resume
   /^functions\/health$/, // /functions/health
 
+  // Launch-presets endpoints
+  /^launch-presets\/recommend$/, // /launch-presets/recommend
+
   // Mailboxes endpoints
   /^mailboxes$/, // /mailboxes
   /^mailboxes\/[^\/]+$/, // /mailboxes/{mailbox_id}

@@ -22,7 +22,9 @@ from typing_extensions import final
 
 from notte_sdk._flow import Call, Flow, arun, run
 from notte_sdk._generated.resources import (
+    AsyncLaunchPresetsOperations,
     AsyncProfilesOperations,
+    LaunchPresetsOperations,
 )
 from notte_sdk._generated.typing import ProxySettingsDict
 from notte_sdk._retry import DEFAULT_MAX_RETRIES
@@ -140,6 +142,9 @@ class NotteClient:
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
         )
         self.vaults: VaultsClient = VaultsClient(
+            root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
+        )
+        self.launch_presets: LaunchPresetsOperations = LaunchPresetsOperations(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
         )
         self.profiles: ProfilesClient = ProfilesClient(
@@ -386,6 +391,9 @@ class AsyncNotteClient:
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
         )
         self.vaults: AsyncVaultsClient = AsyncVaultsClient(
+            root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
+        )
+        self.launch_presets: AsyncLaunchPresetsOperations = AsyncLaunchPresetsOperations(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
         )
         self.profiles: AsyncProfilesOperations = AsyncProfilesOperations(

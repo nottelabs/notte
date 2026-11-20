@@ -34,6 +34,28 @@ DEFAULT_START = {
 }
 
 
+def test_recommend_then_reuse_launch_preset(client: NotteClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    api = fake(monkeypatch, {"id": "lp_fixture"})
+    preset = client.launch_presets.recommend(domain="app.example.com")
+    api.payload = SESSION
+    assert client.sessions.start(preset_id=preset.id).session_id == "session"
+    _ = client.sessions.start(preset_id=preset.id, viewport_width=None, viewport_height=None)
+    assert [c.url.removeprefix(SERVER) for c in api.calls] == [
+        "/launch-presets/recommend",
+        "/sessions/start",
+        "/sessions/start",
+    ]
+    assert json.loads(api.calls[0].data) == {"domain": "app.example.com"}
+    expected = {k: v for k, v in DEFAULT_START.items() if k not in {"viewport_width", "viewport_height"}}
+    assert json.loads(api.calls[1].data) == {**expected, "preset_id": "lp_fixture"}
+    assert json.loads(api.calls[2].data) == {
+        **expected,
+        "preset_id": "lp_fixture",
+        "viewport_width": None,
+        "viewport_height": None,
+    }
+
+
 def test_session_wire_contract(client: NotteClient, monkeypatch: pytest.MonkeyPatch) -> None:
     api = fake(monkeypatch, SESSION)
     assert client.sessions.start().session_id == "session"

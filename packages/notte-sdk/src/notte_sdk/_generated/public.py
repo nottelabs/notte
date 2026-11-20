@@ -103,6 +103,12 @@ from notte_sdk._generated.models import (
     GetSessionScriptParametersQuery as GetSessionScriptParametersQuery,
 )
 from notte_sdk._generated.models import (
+    LaunchPresetRecommendation as LaunchPresetRecommendation,
+)
+from notte_sdk._generated.models import (
+    LaunchPresetRecommendationRequest as LaunchPresetRecommendationRequest,
+)
+from notte_sdk._generated.models import (
     ListSessionFilesParametersQuery as ListSessionFilesParametersQuery,
 )
 from notte_sdk._generated.models import MouseReplayPage as MouseReplayPage
@@ -253,6 +259,9 @@ from notte_sdk._generated.typing import (
 from notte_sdk._generated.typing import GetFunctionRequestDict as GetFunctionRequestDict
 from notte_sdk._generated.typing import (
     GetSessionScriptParametersQueryDict as GetSessionScriptParametersQueryDict,
+)
+from notte_sdk._generated.typing import (
+    LaunchPresetRecommendationRequestDict as LaunchPresetRecommendationRequestDict,
 )
 from notte_sdk._generated.typing import (
     ListCredentialsRequestDict as ListCredentialsRequestDict,
@@ -415,6 +424,9 @@ __all__ = [
     "GetFunctionWithLinkResponse",
     "GetSessionScriptParametersQuery",
     "GetSessionScriptParametersQueryDict",
+    "LaunchPresetRecommendation",
+    "LaunchPresetRecommendationRequest",
+    "LaunchPresetRecommendationRequestDict",
     "ListCredentialsRequest",
     "ListCredentialsRequestDict",
     "ListCredentialsResponse",

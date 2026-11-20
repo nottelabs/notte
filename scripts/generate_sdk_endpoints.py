@@ -445,7 +445,7 @@ class Resource:
 
 
 def _group(operation: str, resource: str) -> str:
-    return "RunPayloads" if operation == "prepare_run_payload_upload" else resource.title()
+    return "RunPayloads" if operation == "prepare_run_payload_upload" else resource[:1].upper() + resource[1:]
 
 
 def _members(name: str) -> tuple[tuple[str, str], ...]:
@@ -473,6 +473,7 @@ RESOURCES = tuple(
         ("Files", "sessions"),
         ("Personas", "personas"),
         ("Profiles", "profiles"),
+        ("LaunchPresets", "launch-presets"),
         ("Vaults", "vaults"),
     )
 )

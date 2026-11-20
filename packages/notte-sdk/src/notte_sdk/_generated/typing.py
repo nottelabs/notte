@@ -252,6 +252,7 @@ class SessionStartRequestDict(TypedDict):
     dialog_policy: NotRequired[Literal["auto", "client"]]
     advanced_stealth: NotRequired[bool]
     os: NotRequired[Literal["windows", "macos"] | None]
+    preset_id: NotRequired[str | None]
 
 
 class SessionStopRequestDict(TypedDict):
@@ -330,6 +331,10 @@ class ProfileStateImportRequestDict(TypedDict):
     domains: NotRequired[list[str] | None]
     mode: NotRequired[Literal["replace", "append"]]
     storage_scope: NotRequired[Literal["domains", "origins"]]
+
+
+class LaunchPresetRecommendationRequestDict(TypedDict):
+    domain: Required[str]
 
 
 class VaultListRequestDict(TypedDict):

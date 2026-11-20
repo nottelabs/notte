@@ -856,6 +856,7 @@
                       "typescript-sdk-reference/resources/vaults",
                       "typescript-sdk-reference/resources/functions",
                       "typescript-sdk-reference/resources/personas",
+                      "typescript-sdk-reference/resources/launchpresets",
                       "typescript-sdk-reference/resources/profiles"
                     ]
                   }

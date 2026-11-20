@@ -853,6 +853,18 @@ def profile_state_set(
     )
 
 
+def recommend_launch_preset(
+    body: BaseModel,
+) -> NotteEndpoint[models.LaunchPresetRecommendation]:
+    """Recommend Launch Preset (`POST /launch-presets/recommend`)."""
+    return NotteEndpoint(
+        method="POST",
+        path="/launch-presets/recommend",
+        response=models.LaunchPresetRecommendation,
+        request=body,
+    )
+
+
 def list_vaults(
     *,
     params: BaseModel | None = None,

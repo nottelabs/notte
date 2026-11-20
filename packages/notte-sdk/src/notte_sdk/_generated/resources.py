@@ -34,6 +34,7 @@ from notte_sdk._generated.typing import (
     GetCreditCardRequestDict,
     GetFunctionRequestDict,
     GetSessionScriptParametersQueryDict,
+    LaunchPresetRecommendationRequestDict,
     ListCredentialsRequestDict,
     ListFunctionRunsRequestDict,
     ListFunctionsRequestDict,
@@ -1156,6 +1157,54 @@ class AsyncProfilesOperations(AsyncBaseClient):
         "Profile State Set (`POST /profiles/{profile_id}/state`)."
         request = wire_request(models.ProfileStateImportRequest, data)
         return await self.request(api.profile_state_set(profile_id, request))
+
+
+class LaunchPresetsOperations(BaseClient):
+    def __init__(
+        self,
+        root_client: "NotteClient",
+        api_key: str | None = None,
+        server_url: str | None = None,
+        verbose: bool = False,
+    ):
+        super().__init__(
+            root_client=root_client,
+            base_endpoint_path="launch-presets",
+            api_key=api_key,
+            server_url=server_url,
+            verbose=verbose,
+        )
+
+    def recommend(self, **data: Unpack[LaunchPresetRecommendationRequestDict]) -> models.LaunchPresetRecommendation:
+        "Recommend Launch Preset (`POST /launch-presets/recommend`).\n\nRecommend session launch defaults for an exact hostname. Unmapped hosts receive the default preset. Does not contact the site, start a session, navigate, or grant access. During the pilot this returns 403 in production."
+        request = wire_request(models.LaunchPresetRecommendationRequest, data)
+        return self.request(api.recommend_launch_preset(request))
+
+
+class AsyncLaunchPresetsOperations(AsyncBaseClient):
+    "Async twin of `LaunchPresetsOperations`, for `AsyncNotteClient`."
+
+    def __init__(
+        self,
+        root_client: "AsyncNotteClient",
+        api_key: str | None = None,
+        server_url: str | None = None,
+        verbose: bool = False,
+    ):
+        super().__init__(
+            root_client=root_client,
+            base_endpoint_path="launch-presets",
+            api_key=api_key,
+            server_url=server_url,
+            verbose=verbose,
+        )
+
+    async def recommend(
+        self, **data: Unpack[LaunchPresetRecommendationRequestDict]
+    ) -> models.LaunchPresetRecommendation:
+        "Recommend Launch Preset (`POST /launch-presets/recommend`).\n\nRecommend session launch defaults for an exact hostname. Unmapped hosts receive the default preset. Does not contact the site, start a session, navigate, or grant access. During the pilot this returns 403 in production."
+        request = wire_request(models.LaunchPresetRecommendationRequest, data)
+        return await self.request(api.recommend_launch_preset(request))
 
 
 class VaultsOperations(BaseClient):

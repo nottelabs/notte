@@ -684,6 +684,7 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [client.vaults](https://docs.notte.cc/typescript-sdk-reference/resources/vaults.md): Method signatures, arguments, and return types for client.vaults API operations.
 - [client.functions](https://docs.notte.cc/typescript-sdk-reference/resources/functions.md): Method signatures, arguments, and return types for client.functions API operations.
 - [client.personas](https://docs.notte.cc/typescript-sdk-reference/resources/personas.md): Method signatures, arguments, and return types for client.personas API operations.
+- [client.launchPresets](https://docs.notte.cc/typescript-sdk-reference/resources/launchpresets.md)
 - [client.profiles](https://docs.notte.cc/typescript-sdk-reference/resources/profiles.md): Method signatures, arguments, and return types for client.profiles API operations.
 
 ### Debug

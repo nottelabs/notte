@@ -1010,6 +1010,8 @@ class _SessionStartRequestDict(TypedDict, total=False):
 
 
 class SessionStartRequestDict(_SessionStartRequestDict, total=False):
+    preset_id: str | None
+    """Reusable launch defaults from `client.launch_presets.recommend`. Does not navigate. Returns 403 in production during the pilot."""
     browser_type: BrowserType | Literal["chrome-nitro"]
     record_session: bool
     log_session: bool
@@ -1280,6 +1282,7 @@ class _SessionStartRequest(SdkRequest, Generic[_SessionBrowserType]):
 
 
 class SessionStartRequest(_SessionStartRequest[BrowserType | Literal["chrome-nitro"]]):
+    preset_id: str | None = Field(default=None, max_length=64, exclude_if=lambda value: value is None)
     record_session: Annotated[
         StrictBool,
         Field(description="Save session replay. False permanently disables saved replay; Live View remains available."),
@@ -1345,7 +1348,7 @@ class SessionStartRequest(_SessionStartRequest[BrowserType | Literal["chrome-nit
                 if value != ("chromium" if name == "browser_type" else None):
                     if (
                         name.startswith("viewport_")
-                        and (self.cdp_url or self.aspect_ratio)
+                        and (self.cdp_url or self.aspect_ratio or self.preset_id is not None)
                         and name not in self.model_fields_set
                     ):
                         continue
@@ -1360,7 +1363,10 @@ class SessionStartRequest(_SessionStartRequest[BrowserType | Literal["chrome-nit
             data = {
                 key: value
                 for key, value in data.items()
-                if value is not None or key not in fields or type(None) not in get_args(fields[key].annotation)
+                if value is not None
+                or key not in fields
+                or type(None) not in get_args(fields[key].annotation)
+                or (self.preset_id is not None and key in {"viewport_width", "viewport_height", "aspect_ratio"})
             }
         return RootModel[dict[str, Any]](data).model_dump(
             mode=info.mode,

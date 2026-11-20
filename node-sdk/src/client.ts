@@ -583,6 +583,10 @@ export class NotteClient {
     return this.client;
   }
 
+  get launchPresets() {
+    return this.resources.launchPresets;
+  }
+
   /** Client-bound profile API operations, generated from OpenAPI. */
   get profiles() {
     return this.resources.profiles;

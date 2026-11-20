@@ -9,6 +9,13 @@ export interface ResourceRequestOptions { signal?: AbortSignal }
 /** Low-level API resources. Lifecycle helpers remain on Session/Function. */
 export function createResources(client: Client, getApiKey: () => string) {
   return {
+  launchPresets: {
+    /** recommendLaunchPreset: /launch-presets/recommend. Returns the API response body. */
+    recommend: async (body: Types.RecommendLaunchPresetData['body'], requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.RecommendLaunchPresetData['headers']>, 'x-notte-api-key'> } = {}) => {
+      const response = await operations.recommendLaunchPreset({ client, throwOnError: true, signal: requestOptions.signal, headers: { ...requestOptions.headers }, body });
+      return response.data;
+    },
+  },
   sessions: {
     /** pageAct: /sessions/{session_id}/page/act. Returns the API response body. */
     act: async (sessionId: Types.PageActData['path']["session_id"], body: Types.PageActData['body'], query: Types.PageActData['query'] = undefined, requestOptions: ResourceRequestOptions & { headers?: Omit<NonNullable<Types.PageActData['headers']>, 'x-notte-api-key'> } = {}) => {

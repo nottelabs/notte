@@ -1,4 +1,8 @@
 {
+  "recommend_launch_preset": {
+    "method": "recommend",
+    "resource": "launchPresets"
+  },
   "_connect_link_context": {
     "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
   },
