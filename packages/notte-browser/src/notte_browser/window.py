@@ -57,6 +57,23 @@ _PAGE_METADATA = script("page_metadata.js")
 WaitUntil = Literal["commit", "domcontentloaded", "load", "networkidle"]
 
 
+def document_answer(status: int, status_text: str, title: str | None) -> str | None:
+    """What to tell the caller about a main document that answered with an error status: a deny, rate-limit, challenge
+    or error page is served with a 4xx or 5xx and looks like any other page to the actions. None below 400."""
+    if status < HTTPStatus.BAD_REQUEST:
+        return None
+    phrase = status_text.strip()
+    if not phrase:
+        try:
+            phrase = HTTPStatus(status).phrase
+        except ValueError:
+            phrase = ""
+    answer = f"The page answered HTTP {status}{f' {phrase}' if phrase else ''}"
+    if title:
+        answer += f' with title "{title}"'
+    return f"{answer}: it may be an error, deny or challenge page rather than the page's content."
+
+
 class BrowserWindowOptions(BaseModel):
     headless: bool
     solve_captchas: bool
@@ -248,6 +265,21 @@ class BrowserWindow:
     def _record_navigation_response(self, response: Response) -> None:
         if self._is_final_main_document_response(response):
             self.goto_response = response
+
+    async def main_document_answer(self) -> str | None:
+        """How the current main document answered when it was an error status (`document_answer`), with the page's
+        title: a `goto` that lands on an "Access Denied", rate-limit or challenge page succeeds like any other, and
+        this is what tells the two apart. None when the status is below 400 or no main-document response is known."""
+        response = self.goto_response
+        if response is None or response.status < HTTPStatus.BAD_REQUEST:
+            return None
+        title: str | None = None
+        try:
+            title = (await self.page.title()).strip() or None
+        except PlaywrightError:
+            # navigating already, or the page is gone: the status is still worth reporting
+            pass
+        return document_answer(response.status, response.status_text, title)
 
     def apply_page_callbacks(self):
         for key, callback in self.page_callbacks.items():
