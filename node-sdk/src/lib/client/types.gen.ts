@@ -4569,90 +4569,6 @@ export type ManagedAuthCredentials = {
 };
 
 /**
- * ManagedAuthOperation
- */
-export type ManagedAuthOperation = {
-    /**
-     * Id
-     */
-    id: string;
-    /**
-     * Connection Id
-     */
-    connection_id: string;
-    /**
-     * Session Id
-     */
-    session_id?: string | null;
-    /**
-     * Source
-     */
-    source: string;
-    /**
-     * Status
-     */
-    status: 'pending' | 'running' | 'succeeded' | 'failed' | 'cancelled';
-    /**
-     * Phase
-     */
-    phase: string;
-    /**
-     * Attempt
-     */
-    attempt?: number;
-    /**
-     * Auth Retry
-     */
-    auth_retry?: number;
-    /**
-     * Authenticated
-     */
-    authenticated?: boolean | null;
-    /**
-     * Failure Code
-     */
-    failure_code?: string | null;
-    /**
-     * Error
-     */
-    error?: string | null;
-    /**
-     * Deadline
-     */
-    deadline: string;
-    /**
-     * Created At
-     */
-    created_at: string;
-    /**
-     * Updated At
-     */
-    updated_at: string;
-};
-
-/**
- * ManagedAuthReadiness
- */
-export type ManagedAuthReadiness = {
-    /**
-     * Session Id
-     */
-    session_id: string;
-    /**
-     * Status
-     */
-    status: 'authenticating' | 'active' | 'failed' | 'closed';
-    /**
-     * Operations
-     */
-    operations?: Array<ManagedAuthOperation>;
-    /**
-     * Error
-     */
-    error?: string | null;
-};
-
-/**
  * MapsBusiness
  */
 export type MapsBusiness = {
@@ -4863,24 +4779,6 @@ export type MarkdownParams = {
 };
 
 /**
- * MouseReplayPage
- */
-export type MouseReplayPage = {
-    /**
-     * Mouse Manifest Url
-     */
-    mouse_manifest_url?: string | null;
-    /**
-     * Mouse Chunk Urls
-     */
-    mouse_chunk_urls?: Array<string> | null;
-    /**
-     * Mouse Next Offset
-     */
-    mouse_next_offset?: number | null;
-};
-
-/**
  * MultiFactorFillAction
  */
 export type MultiFactorFillActionInput = {
@@ -4997,50 +4895,6 @@ export type NameClue = {
      * Last
      */
     last?: string | null;
-};
-
-/**
- * NetworkBatchFile
- */
-export type NetworkBatchFile = {
-    /**
-     * Key
-     */
-    key: string;
-    /**
-     * Size
-     */
-    size: number;
-    /**
-     * Download Url
-     */
-    download_url?: string | null;
-    /**
-     * Download Url Expires In Seconds
-     */
-    download_url_expires_in_seconds?: number | null;
-};
-
-/**
- * NetworkLogsResponse
- */
-export type NetworkLogsResponse = {
-    /**
-     * Session Id
-     */
-    session_id: string;
-    /**
-     * Format
-     */
-    format?: string;
-    /**
-     * Batches
-     */
-    batches: Array<NetworkBatchFile>;
-    /**
-     * Total Batch Count
-     */
-    total_batch_count: number;
 };
 
 /**
@@ -5643,32 +5497,6 @@ export type PaginatedResponseProfileResponse = {
      * Items
      */
     items: Array<ProfileResponse>;
-    /**
-     * Page
-     */
-    page: number;
-    /**
-     * Page Size
-     */
-    page_size: number;
-    /**
-     * Has Next
-     */
-    has_next: boolean;
-    /**
-     * Has Previous
-     */
-    readonly has_previous: boolean;
-};
-
-/**
- * PaginatedResponse[SessionResponse]
- */
-export type PaginatedResponseSessionResponse = {
-    /**
-     * Items
-     */
-    items: Array<SessionResponse>;
     /**
      * Page
      */
@@ -6704,78 +6532,6 @@ export type ReloadAction = {
      * Description
      */
     description?: string;
-};
-
-/**
- * ReplayMissingResponse
- */
-export type ReplayMissingResponse = {
-    /**
-     * Detail
-     */
-    detail: string;
-    /**
-     * Session Id
-     */
-    session_id: string | null;
-    /**
-     * Status
-     */
-    status: number;
-    /**
-     * Error
-     */
-    error: string;
-    /**
-     * Message
-     */
-    message: string;
-    /**
-     * Replay Status
-     */
-    replay_status: 'waiting_for_session' | 'processing' | 'unavailable' | 'failed' | 'unknown' | 'disabled';
-    /**
-     * Retryable
-     */
-    retryable: boolean;
-};
-
-/**
- * ReplayResponse
- */
-export type ReplayResponse = {
-    /**
-     * Playlist Content
-     */
-    playlist_content?: string | null;
-    /**
-     * Mp4 Url
-     */
-    mp4_url?: string | null;
-    /**
-     * Expires At
-     */
-    expires_at: string;
-    /**
-     * Mouse Manifest Url
-     */
-    mouse_manifest_url?: string | null;
-    /**
-     * Mouse Chunk Urls
-     */
-    mouse_chunk_urls?: Array<string> | null;
-    /**
-     * Mouse Next Offset
-     */
-    mouse_next_offset?: number | null;
-    /**
-     * Video Start Ms
-     */
-    video_start_ms?: number | null;
-    /**
-     * Video Duration Ms
-     */
-    video_duration_ms?: number | null;
 };
 
 /**
@@ -9367,6 +9123,158 @@ export type MailboxUpdateRequest = {
 };
 
 /**
+ * ManagedAuthOperation
+ */
+export type ManagedAuthOperation = {
+    /**
+     * Attempt
+     */
+    attempt?: number;
+    /**
+     * Auth Retry
+     */
+    auth_retry?: number;
+    /**
+     * Authenticated
+     */
+    authenticated?: boolean | null;
+    /**
+     * Connection Id
+     */
+    connection_id: string;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Deadline
+     */
+    deadline: string;
+    /**
+     * Error
+     */
+    error?: string | null;
+    /**
+     * Failure Code
+     */
+    failure_code?: string | null;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Phase
+     */
+    phase: string;
+    /**
+     * Session Id
+     */
+    session_id?: string | null;
+    /**
+     * Source
+     */
+    source: string;
+    /**
+     * Status
+     */
+    status: 'pending' | 'running' | 'succeeded' | 'failed' | 'cancelled';
+    /**
+     * Updated At
+     */
+    updated_at: string;
+};
+
+/**
+ * ManagedAuthReadiness
+ */
+export type ManagedAuthReadiness = {
+    /**
+     * Error
+     */
+    error?: string | null;
+    /**
+     * Operations
+     */
+    operations?: Array<ManagedAuthOperation>;
+    /**
+     * Session Id
+     */
+    session_id: string;
+    /**
+     * Status
+     */
+    status: 'authenticating' | 'active' | 'failed' | 'closed';
+};
+
+/**
+ * MouseReplayPage
+ *
+ * One page of presigned mouse telemetry URLs; every field is null when the manifest cannot be used.
+ */
+export type MouseReplayPage = {
+    /**
+     * Mouse Chunk Urls
+     */
+    mouse_chunk_urls?: Array<string> | null;
+    /**
+     * Mouse Manifest Url
+     */
+    mouse_manifest_url?: string | null;
+    /**
+     * Mouse Next Offset
+     */
+    mouse_next_offset?: number | null;
+};
+
+/**
+ * NetworkBatchFile
+ *
+ * Represents a batched network log file in S3
+ */
+export type NetworkBatchFile = {
+    /**
+     * Download Url
+     */
+    download_url?: string | null;
+    /**
+     * Download Url Expires In Seconds
+     */
+    download_url_expires_in_seconds?: number | null;
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Size
+     */
+    size: number;
+};
+
+/**
+ * NetworkLogsResponse
+ *
+ * Response containing network logs for a session
+ */
+export type NetworkLogsResponse = {
+    /**
+     * Batches
+     */
+    batches: Array<NetworkBatchFile>;
+    /**
+     * Format
+     */
+    format?: string;
+    /**
+     * Session Id
+     */
+    session_id: string;
+    /**
+     * Total Batch Count
+     */
+    total_batch_count: number;
+};
+
+/**
  * PaginatedResponse[PersonaResponse]
  */
 export type PaginatedResponsePersonaResponse = {
@@ -9382,6 +9290,32 @@ export type PaginatedResponsePersonaResponse = {
      * Items
      */
     items: Array<PersonaResponse>;
+    /**
+     * Page
+     */
+    page: number;
+    /**
+     * Page Size
+     */
+    page_size: number;
+};
+
+/**
+ * PaginatedResponse[SessionResponse]
+ */
+export type PaginatedResponseSessionResponse = {
+    /**
+     * Has Next
+     */
+    has_next: boolean;
+    /**
+     * Has Previous
+     */
+    readonly has_previous: boolean;
+    /**
+     * Items
+     */
+    items: Array<SessionResponse>;
     /**
      * Page
      */
@@ -9533,6 +9467,80 @@ export type PersonaUpdateRequest = {
      * Name
      */
     name: string;
+};
+
+/**
+ * ReplayMissingResponse
+ */
+export type ReplayMissingResponse = {
+    /**
+     * Detail
+     */
+    detail: string;
+    /**
+     * Error
+     */
+    error: string;
+    /**
+     * Message
+     */
+    message: string;
+    /**
+     * Replay Status
+     */
+    replay_status: 'waiting_for_session' | 'processing' | 'unavailable' | 'failed' | 'unknown' | 'disabled';
+    /**
+     * Retryable
+     */
+    retryable: boolean;
+    /**
+     * Session Id
+     */
+    session_id: string | null;
+    /**
+     * Status
+     */
+    status: number;
+};
+
+/**
+ * ReplayResponse
+ *
+ * Response containing presigned URLs for session replay.
+ */
+export type ReplayResponse = {
+    /**
+     * Expires At
+     */
+    expires_at: string;
+    /**
+     * Mouse Chunk Urls
+     */
+    mouse_chunk_urls?: Array<string> | null;
+    /**
+     * Mouse Manifest Url
+     */
+    mouse_manifest_url?: string | null;
+    /**
+     * Mouse Next Offset
+     */
+    mouse_next_offset?: number | null;
+    /**
+     * Mp4 Url
+     */
+    mp4_url?: string | null;
+    /**
+     * Playlist Content
+     */
+    playlist_content?: string | null;
+    /**
+     * Video Duration Ms
+     */
+    video_duration_ms?: number | null;
+    /**
+     * Video Start Ms
+     */
+    video_start_ms?: number | null;
 };
 
 /**
@@ -11421,28 +11429,6 @@ export type PaginatedResponseProfileResponseWritable = {
 };
 
 /**
- * PaginatedResponse[SessionResponse]
- */
-export type PaginatedResponseSessionResponseWritable = {
-    /**
-     * Items
-     */
-    items: Array<SessionResponseWritable>;
-    /**
-     * Page
-     */
-    page: number;
-    /**
-     * Page Size
-     */
-    page_size: number;
-    /**
-     * Has Next
-     */
-    has_next: boolean;
-};
-
-/**
  * PaginatedResponse[Vault]
  */
 export type PaginatedResponseVaultWritable = {
@@ -11800,6 +11786,28 @@ export type PaginatedResponsePersonaResponseWritable = {
 };
 
 /**
+ * PaginatedResponse[SessionResponse]
+ */
+export type PaginatedResponseSessionResponseWritable = {
+    /**
+     * Has Next
+     */
+    has_next: boolean;
+    /**
+     * Items
+     */
+    items: Array<SessionResponseWritable>;
+    /**
+     * Page
+     */
+    page: number;
+    /**
+     * Page Size
+     */
+    page_size: number;
+};
+
+/**
  * PaginatedResponse[UsageLog]
  */
 export type PaginatedResponseUsageLogWritable = {
@@ -11843,112 +11851,6 @@ export type PaginatedResponseAgentResponseWritable = {
     has_next: boolean;
 };
 
-export type SessionAuthReadinessData = {
-    body?: never;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path: {
-        /**
-         * Session Id
-         */
-        session_id: string;
-    };
-    query?: never;
-    url: '/sessions/{session_id}/auth';
-};
-
-export type SessionAuthReadinessErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type SessionAuthReadinessError = SessionAuthReadinessErrors[keyof SessionAuthReadinessErrors];
-
-export type SessionAuthReadinessResponses = {
-    /**
-     * Successful Response
-     */
-    200: ManagedAuthReadiness;
-};
-
-export type SessionAuthReadinessResponse = SessionAuthReadinessResponses[keyof SessionAuthReadinessResponses];
-
-export type ListSessionsData = {
-    body?: never;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path?: never;
-    query?: {
-        /**
-         * Page
-         *
-         * Page number
-         */
-        page?: number;
-        /**
-         * Page Size
-         *
-         * Number of items per page
-         */
-        page_size?: number;
-        /**
-         * Only Active
-         *
-         * Whether to only return active sessions
-         */
-        only_active?: boolean;
-        /**
-         * Only Current Token
-         *
-         * Whether to only return sessions for the current token (apikey)
-         */
-        only_current_token?: boolean;
-        /**
-         * Include System
-         *
-         * Whether to include internal system sessions
-         */
-        include_system?: boolean;
-    };
-    url: '/sessions';
-};
-
-export type ListSessionsErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type ListSessionsError = ListSessionsErrors[keyof ListSessionsErrors];
-
-export type ListSessionsResponses = {
-    /**
-     * Successful Response
-     */
-    200: PaginatedResponseSessionResponse;
-};
-
-export type ListSessionsResponse = ListSessionsResponses[keyof ListSessionsResponses];
-
 export type SessionStartData = {
     body: ApiSessionStartRequest;
     headers?: {
@@ -11983,46 +11885,6 @@ export type SessionStartResponses = {
 };
 
 export type SessionStartResponse = SessionStartResponses[keyof SessionStartResponses];
-
-export type SessionStatusData = {
-    body?: never;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path: {
-        /**
-         * Session Id
-         */
-        session_id: string;
-    };
-    query?: never;
-    url: '/sessions/{session_id}';
-};
-
-export type SessionStatusErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type SessionStatusError = SessionStatusErrors[keyof SessionStatusErrors];
-
-export type SessionStatusResponses = {
-    /**
-     * Successful Response
-     */
-    200: SessionResponse;
-};
-
-export type SessionStatusResponse = SessionStatusResponses[keyof SessionStatusResponses];
 
 export type SessionStepsData = {
     body?: never;
@@ -12890,152 +12752,6 @@ export type PageDocumentReadResponses = {
 };
 
 export type PageDocumentReadResponse = PageDocumentReadResponses[keyof PageDocumentReadResponses];
-
-export type SessionNetworkLogsData = {
-    body?: never;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path: {
-        /**
-         * Session Id
-         */
-        session_id: string;
-    };
-    query?: {
-        /**
-         * Limit
-         *
-         * Maximum number of batch files to return
-         */
-        limit?: number;
-        /**
-         * Download
-         *
-         * Whether to include download URLs for the logs
-         */
-        download?: boolean;
-    };
-    url: '/sessions/{session_id}/network/logs';
-};
-
-export type SessionNetworkLogsErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type SessionNetworkLogsError = SessionNetworkLogsErrors[keyof SessionNetworkLogsErrors];
-
-export type SessionNetworkLogsResponses = {
-    /**
-     * Successful Response
-     */
-    200: NetworkLogsResponse;
-};
-
-export type SessionNetworkLogsResponse = SessionNetworkLogsResponses[keyof SessionNetworkLogsResponses];
-
-export type SessionMouseReplayData = {
-    body?: never;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path: {
-        /**
-         * Session Id
-         */
-        session_id: string;
-    };
-    query?: {
-        /**
-         * Offset
-         */
-        offset?: number;
-    };
-    url: '/sessions/{session_id}/replay/mouse';
-};
-
-export type SessionMouseReplayErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type SessionMouseReplayError = SessionMouseReplayErrors[keyof SessionMouseReplayErrors];
-
-export type SessionMouseReplayResponses = {
-    /**
-     * Successful Response
-     */
-    200: MouseReplayPage;
-};
-
-export type SessionMouseReplayResponse = SessionMouseReplayResponses[keyof SessionMouseReplayResponses];
-
-export type SessionReplayData = {
-    body?: never;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path: {
-        /**
-         * Session Id
-         */
-        session_id: string;
-    };
-    query?: never;
-    url: '/sessions/{session_id}/replay';
-};
-
-export type SessionReplayErrors = {
-    /**
-     * Replay missing; see replay_status and retryable.
-     */
-    404: ReplayMissingResponse;
-    /**
-     * Capture completed without any frames.
-     */
-    410: ReplayMissingResponse;
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type SessionReplayError = SessionReplayErrors[keyof SessionReplayErrors];
-
-export type SessionReplayResponses = {
-    /**
-     * Successful Response
-     */
-    200: ReplayResponse;
-};
-
-export type SessionReplayResponse = SessionReplayResponses[keyof SessionReplayResponses];
 
 export type ExecuteSessionFileData = {
     body: FileExecutionRequest;
@@ -18876,6 +18592,298 @@ export type ListSecretProxyHostPresetsResponses = {
 };
 
 export type ListSecretProxyHostPresetsResponse = ListSecretProxyHostPresetsResponses[keyof ListSecretProxyHostPresetsResponses];
+
+export type ListSessionsData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: {
+        /**
+         * Page
+         *
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page Size
+         *
+         * Number of items per page
+         */
+        page_size?: number;
+        /**
+         * Only Active
+         *
+         * Whether to only return active sessions
+         */
+        only_active?: boolean;
+        /**
+         * Only Current Token
+         *
+         * Whether to only return sessions for the current token (apikey)
+         */
+        only_current_token?: boolean;
+        /**
+         * Include System
+         *
+         * Whether to include internal system sessions
+         */
+        include_system?: boolean;
+    };
+    url: '/sessions';
+};
+
+export type ListSessionsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListSessionsError = ListSessionsErrors[keyof ListSessionsErrors];
+
+export type ListSessionsResponses = {
+    /**
+     * Successful Response
+     */
+    200: PaginatedResponseSessionResponse;
+};
+
+export type ListSessionsResponse = ListSessionsResponses[keyof ListSessionsResponses];
+
+export type SessionStatusData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Session Id
+         */
+        session_id: string;
+    };
+    query?: never;
+    url: '/sessions/{session_id}';
+};
+
+export type SessionStatusErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SessionStatusError = SessionStatusErrors[keyof SessionStatusErrors];
+
+export type SessionStatusResponses = {
+    /**
+     * Successful Response
+     */
+    200: SessionResponse;
+};
+
+export type SessionStatusResponse = SessionStatusResponses[keyof SessionStatusResponses];
+
+export type SessionAuthReadinessData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Session Id
+         */
+        session_id: string;
+    };
+    query?: never;
+    url: '/sessions/{session_id}/auth';
+};
+
+export type SessionAuthReadinessErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SessionAuthReadinessError = SessionAuthReadinessErrors[keyof SessionAuthReadinessErrors];
+
+export type SessionAuthReadinessResponses = {
+    /**
+     * Successful Response
+     */
+    200: ManagedAuthReadiness;
+};
+
+export type SessionAuthReadinessResponse = SessionAuthReadinessResponses[keyof SessionAuthReadinessResponses];
+
+export type SessionNetworkLogsData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Session Id
+         */
+        session_id: string;
+    };
+    query?: {
+        /**
+         * Limit
+         *
+         * Maximum number of batch files to return
+         */
+        limit?: number;
+        /**
+         * Download
+         *
+         * Whether to include download URLs for the logs
+         */
+        download?: boolean;
+    };
+    url: '/sessions/{session_id}/network/logs';
+};
+
+export type SessionNetworkLogsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SessionNetworkLogsError = SessionNetworkLogsErrors[keyof SessionNetworkLogsErrors];
+
+export type SessionNetworkLogsResponses = {
+    /**
+     * Successful Response
+     */
+    200: NetworkLogsResponse;
+};
+
+export type SessionNetworkLogsResponse = SessionNetworkLogsResponses[keyof SessionNetworkLogsResponses];
+
+export type SessionReplayData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Session Id
+         */
+        session_id: string;
+    };
+    query?: never;
+    url: '/sessions/{session_id}/replay';
+};
+
+export type SessionReplayErrors = {
+    /**
+     * Replay missing; see replay_status and retryable.
+     */
+    404: ReplayMissingResponse;
+    /**
+     * Capture completed without any frames.
+     */
+    410: ReplayMissingResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SessionReplayError = SessionReplayErrors[keyof SessionReplayErrors];
+
+export type SessionReplayResponses = {
+    /**
+     * Successful Response
+     */
+    200: ReplayResponse;
+};
+
+export type SessionReplayResponse = SessionReplayResponses[keyof SessionReplayResponses];
+
+export type SessionMouseReplayData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Session Id
+         */
+        session_id: string;
+    };
+    query?: {
+        /**
+         * Offset
+         */
+        offset?: number;
+    };
+    url: '/sessions/{session_id}/replay/mouse';
+};
+
+export type SessionMouseReplayErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SessionMouseReplayError = SessionMouseReplayErrors[keyof SessionMouseReplayErrors];
+
+export type SessionMouseReplayResponses = {
+    /**
+     * Successful Response
+     */
+    200: MouseReplayPage;
+};
+
+export type SessionMouseReplayResponse = SessionMouseReplayResponses[keyof SessionMouseReplayResponses];
 
 export type GetUsageData = {
     body?: never;

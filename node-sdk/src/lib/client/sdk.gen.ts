@@ -19,24 +19,6 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 };
 
 /**
- * Session Auth Readiness
- */
-export const sessionAuthReadiness = <ThrowOnError extends boolean = false>(options: Options<SessionAuthReadinessData, ThrowOnError>): RequestResult<SessionAuthReadinessResponses, SessionAuthReadinessErrors, ThrowOnError> => (options.client ?? client).get<SessionAuthReadinessResponses, SessionAuthReadinessErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/sessions/{session_id}/auth',
-    ...options
-});
-
-/**
- * List Sessions
- */
-export const listSessions = <ThrowOnError extends boolean = false>(options?: Options<ListSessionsData, ThrowOnError>): RequestResult<ListSessionsResponses, ListSessionsErrors, ThrowOnError> => (options?.client ?? client).get<ListSessionsResponses, ListSessionsErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/sessions',
-    ...options
-});
-
-/**
  * Session Start
  */
 export const sessionStart = <ThrowOnError extends boolean = false>(options: Options<SessionStartData, ThrowOnError>): RequestResult<SessionStartResponses, SessionStartErrors, ThrowOnError> => (options.client ?? client).post<SessionStartResponses, SessionStartErrors, ThrowOnError>({
@@ -47,15 +29,6 @@ export const sessionStart = <ThrowOnError extends boolean = false>(options: Opti
         'Content-Type': 'application/json',
         ...options.headers
     }
-});
-
-/**
- * Session Status
- */
-export const sessionStatus = <ThrowOnError extends boolean = false>(options: Options<SessionStatusData, ThrowOnError>): RequestResult<SessionStatusResponses, SessionStatusErrors, ThrowOnError> => (options.client ?? client).get<SessionStatusResponses, SessionStatusErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/sessions/{session_id}',
-    ...options
 });
 
 /**
@@ -281,33 +254,6 @@ export const pageDocumentRead = <ThrowOnError extends boolean = false>(options: 
         'Content-Type': 'application/json',
         ...options.headers
     }
-});
-
-/**
- * Session Network Logs
- */
-export const sessionNetworkLogs = <ThrowOnError extends boolean = false>(options: Options<SessionNetworkLogsData, ThrowOnError>): RequestResult<SessionNetworkLogsResponses, SessionNetworkLogsErrors, ThrowOnError> => (options.client ?? client).get<SessionNetworkLogsResponses, SessionNetworkLogsErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/sessions/{session_id}/network/logs',
-    ...options
-});
-
-/**
- * Session Mouse Replay
- */
-export const sessionMouseReplay = <ThrowOnError extends boolean = false>(options: Options<SessionMouseReplayData, ThrowOnError>): RequestResult<SessionMouseReplayResponses, SessionMouseReplayErrors, ThrowOnError> => (options.client ?? client).get<SessionMouseReplayResponses, SessionMouseReplayErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/sessions/{session_id}/replay/mouse',
-    ...options
-});
-
-/**
- * Session Replay
- */
-export const sessionReplay = <ThrowOnError extends boolean = false>(options: Options<SessionReplayData, ThrowOnError>): RequestResult<SessionReplayResponses, SessionReplayErrors, ThrowOnError> => (options.client ?? client).get<SessionReplayResponses, SessionReplayErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/sessions/{session_id}/replay',
-    ...options
 });
 
 /**
@@ -1623,6 +1569,112 @@ export const personaSmsList = <ThrowOnError extends boolean = false>(options: Op
 export const listSecretProxyHostPresets = <ThrowOnError extends boolean = false>(options?: Options<ListSecretProxyHostPresetsData, ThrowOnError>): RequestResult<ListSecretProxyHostPresetsResponses, ListSecretProxyHostPresetsErrors, ThrowOnError> => (options?.client ?? client).get<ListSecretProxyHostPresetsResponses, ListSecretProxyHostPresetsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/secret-proxy/host-presets',
+    ...options
+});
+
+/**
+ * List Sessions
+ *
+ * List all sessions for the authenticated user.
+ *
+ * By default, returns the last 10 active sessions.
+ * Sessions are ordered by creation date (newest first).
+ * No pagination is currently supported.
+ */
+export const listSessions = <ThrowOnError extends boolean = false>(options?: Options<ListSessionsData, ThrowOnError>): RequestResult<ListSessionsResponses, ListSessionsErrors, ThrowOnError> => (options?.client ?? client).get<ListSessionsResponses, ListSessionsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/sessions',
+    ...options
+});
+
+/**
+ * Session Status
+ *
+ * Get the current status of a session, including its metadata and state.
+ *
+ * You can retrieve the status of a session at any time whether it is active or not.
+ *
+ * Session states also contain all steps (i.e actions and observations) performed during the session.
+ * You can use this information to reconstruct the session execution and diagnose potential issues.
+ */
+export const sessionStatus = <ThrowOnError extends boolean = false>(options: Options<SessionStatusData, ThrowOnError>): RequestResult<SessionStatusResponses, SessionStatusErrors, ThrowOnError> => (options.client ?? client).get<SessionStatusResponses, SessionStatusErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/sessions/{session_id}',
+    ...options
+});
+
+/**
+ * Session Auth Readiness
+ */
+export const sessionAuthReadiness = <ThrowOnError extends boolean = false>(options: Options<SessionAuthReadinessData, ThrowOnError>): RequestResult<SessionAuthReadinessResponses, SessionAuthReadinessErrors, ThrowOnError> => (options.client ?? client).get<SessionAuthReadinessResponses, SessionAuthReadinessErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/sessions/{session_id}/auth',
+    ...options
+});
+
+/**
+ * Session Network Logs
+ *
+ * Retrieve network request/response logs for a session.
+ *
+ * Returns a list of batch files containing XHR/Fetch requests and responses
+ * that occurred during the session. Each batch file is a JSON file containing
+ * multiple requests and responses grouped together.
+ *
+ * Viewer links (``interact`` tokens) get download URLs to a redacted copy of
+ * each batch instead, without bodies and with credential headers redacted.
+ * Batches recorded before the copy existed have no download URL.
+ *
+ * Args:
+ * session_id: The ID of the session
+ * auth: User authentication metadata
+ * limit: Maximum number of batch files to return (default: 100, max: 1000)
+ * download: Whether to include presigned download URLs
+ *
+ * Returns:
+ * NetworkLogsResponse containing list of batch files with optional download URLs
+ */
+export const sessionNetworkLogs = <ThrowOnError extends boolean = false>(options: Options<SessionNetworkLogsData, ThrowOnError>): RequestResult<SessionNetworkLogsResponses, SessionNetworkLogsErrors, ThrowOnError> => (options.client ?? client).get<SessionNetworkLogsResponses, SessionNetworkLogsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/sessions/{session_id}/network/logs',
+    ...options
+});
+
+/**
+ * Session Replay
+ *
+ * Get presigned URLs for session replay (HLS playlist with signed segment URLs).
+ *
+ * This endpoint:
+ * 1. Verifies session ownership
+ * 2. Fetches the HLS playlist from S3
+ * 3. Rewrites segment URLs to presigned S3 URLs
+ * 4. Returns the modified playlist and MP4 URL if available
+ *
+ * The returned playlist_content can be used directly with any HLS player.
+ * All segment URLs in the playlist are presigned and valid for 1 hour.
+ *
+ * Returns:
+ * ReplayResponse with playlist content and optional MP4 URL
+ *
+ * Missing replays include `replay_status` and `retryable` in the error body:
+ * `unavailable` (410) confirms capture ended without frames; `failed` (404)
+ * reports a recorded upload/transcoding failure; `processing` (404)
+ * permits bounded polling; `waiting_for_session` (404) requires session close;
+ * `unknown` (404) means processing cannot be confirmed and permits manual retry.
+ */
+export const sessionReplay = <ThrowOnError extends boolean = false>(options: Options<SessionReplayData, ThrowOnError>): RequestResult<SessionReplayResponses, SessionReplayErrors, ThrowOnError> => (options.client ?? client).get<SessionReplayResponses, SessionReplayErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/sessions/{session_id}/replay',
+    ...options
+});
+
+/**
+ * Session Mouse Replay
+ */
+export const sessionMouseReplay = <ThrowOnError extends boolean = false>(options: Options<SessionMouseReplayData, ThrowOnError>): RequestResult<SessionMouseReplayResponses, SessionMouseReplayErrors, ThrowOnError> => (options.client ?? client).get<SessionMouseReplayResponses, SessionMouseReplayErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/sessions/{session_id}/replay/mouse',
     ...options
 });
 

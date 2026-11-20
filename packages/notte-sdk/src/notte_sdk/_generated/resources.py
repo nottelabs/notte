@@ -427,7 +427,7 @@ class SessionsOperations(BaseClient):
 
     @track_usage("cloud.session.list")
     def list(self, **data: Unpack[SessionListRequestDict]) -> Sequence[core.SessionResponse]:
-        "List Sessions (`GET /sessions/`)."
+        "List Sessions (`GET /sessions/`).\n\nList all sessions for the authenticated user.\n\nBy default, returns the last 10 active sessions.\nSessions are ordered by creation date (newest first).\nNo pagination is currently supported."
         request = wire_request(core.SessionListRequest, data)
         return self.request_list(api.list_sessions(params=request))
 
@@ -534,7 +534,7 @@ class SessionsOperations(BaseClient):
     def network_logs(
         self, session_id: str, **data: Unpack[SessionNetworkLogsParametersQueryDict]
     ) -> models.NetworkLogsResponse:
-        "Session Network Logs (`GET /sessions/{session_id}/network/logs`)."
+        "Session Network Logs (`GET /sessions/{session_id}/network/logs`).\n\nRetrieve network request/response logs for a session.\n\nReturns a list of batch files containing XHR/Fetch requests and responses\nthat occurred during the session. Each batch file is a JSON file containing\nmultiple requests and responses grouped together.\n\nViewer links (``interact`` tokens) get download URLs to a redacted copy of\neach batch instead, without bodies and with credential headers redacted.\nBatches recorded before the copy existed have no download URL.\n\nArgs:\n    session_id: The ID of the session\n    auth: User authentication metadata\n    limit: Maximum number of batch files to return (default: 100, max: 1000)\n    download: Whether to include presigned download URLs\n\nReturns:\n    NetworkLogsResponse containing list of batch files with optional download URLs"
         request = wire_request(models.SessionNetworkLogsParametersQuery, data)
         return self.request(api.session_network_logs(session_id, params=request))
 
@@ -560,7 +560,7 @@ class SessionsOperations(BaseClient):
 
     @track_usage("cloud.session.replay")
     def replay(self, session_id: str) -> core.ReplayResponse:
-        "Session Replay (`GET /sessions/{session_id}/replay`)."
+        "Session Replay (`GET /sessions/{session_id}/replay`).\n\nGet presigned URLs for session replay (HLS playlist with signed segment URLs).\n\nThis endpoint:\n1. Verifies session ownership\n2. Fetches the HLS playlist from S3\n3. Rewrites segment URLs to presigned S3 URLs\n4. Returns the modified playlist and MP4 URL if available\n\nThe returned playlist_content can be used directly with any HLS player.\nAll segment URLs in the playlist are presigned and valid for 1 hour.\n\nReturns:\n    ReplayResponse with playlist content and optional MP4 URL\n\nMissing replays include `replay_status` and `retryable` in the error body:\n`unavailable` (410) confirms capture ended without frames; `failed` (404)\nreports a recorded upload/transcoding failure; `processing` (404)\npermits bounded polling; `waiting_for_session` (404) requires session close;\n`unknown` (404) means processing cannot be confirmed and permits manual retry."
         return self.request(api.session_replay(session_id))
 
     @track_usage("cloud.session.start")
@@ -571,7 +571,7 @@ class SessionsOperations(BaseClient):
 
     @track_usage("cloud.session.status")
     def status(self, session_id: str) -> core.SessionResponse:
-        "Session Status (`GET /sessions/{session_id}`)."
+        "Session Status (`GET /sessions/{session_id}`).\n\nGet the current status of a session, including its metadata and state.\n\nYou can retrieve the status of a session at any time whether it is active or not.\n\nSession states also contain all steps (i.e actions and observations) performed during the session.\nYou can use this information to reconstruct the session execution and diagnose potential issues."
         return self.request(api.session_status(session_id))
 
     @track_usage("cloud.session.stop")
@@ -648,7 +648,7 @@ class AsyncSessionsOperations(AsyncBaseClient):
 
     @track_usage("cloud.session.list")
     async def list(self, **data: Unpack[SessionListRequestDict]) -> Sequence[core.SessionResponse]:
-        "List Sessions (`GET /sessions/`)."
+        "List Sessions (`GET /sessions/`).\n\nList all sessions for the authenticated user.\n\nBy default, returns the last 10 active sessions.\nSessions are ordered by creation date (newest first).\nNo pagination is currently supported."
         request = wire_request(core.SessionListRequest, data)
         return await self.request_list(api.list_sessions(params=request))
 
@@ -757,7 +757,7 @@ class AsyncSessionsOperations(AsyncBaseClient):
     async def network_logs(
         self, session_id: str, **data: Unpack[SessionNetworkLogsParametersQueryDict]
     ) -> models.NetworkLogsResponse:
-        "Session Network Logs (`GET /sessions/{session_id}/network/logs`)."
+        "Session Network Logs (`GET /sessions/{session_id}/network/logs`).\n\nRetrieve network request/response logs for a session.\n\nReturns a list of batch files containing XHR/Fetch requests and responses\nthat occurred during the session. Each batch file is a JSON file containing\nmultiple requests and responses grouped together.\n\nViewer links (``interact`` tokens) get download URLs to a redacted copy of\neach batch instead, without bodies and with credential headers redacted.\nBatches recorded before the copy existed have no download URL.\n\nArgs:\n    session_id: The ID of the session\n    auth: User authentication metadata\n    limit: Maximum number of batch files to return (default: 100, max: 1000)\n    download: Whether to include presigned download URLs\n\nReturns:\n    NetworkLogsResponse containing list of batch files with optional download URLs"
         request = wire_request(models.SessionNetworkLogsParametersQuery, data)
         return await self.request(api.session_network_logs(session_id, params=request))
 
@@ -783,7 +783,7 @@ class AsyncSessionsOperations(AsyncBaseClient):
 
     @track_usage("cloud.session.replay")
     async def replay(self, session_id: str) -> core.ReplayResponse:
-        "Session Replay (`GET /sessions/{session_id}/replay`)."
+        "Session Replay (`GET /sessions/{session_id}/replay`).\n\nGet presigned URLs for session replay (HLS playlist with signed segment URLs).\n\nThis endpoint:\n1. Verifies session ownership\n2. Fetches the HLS playlist from S3\n3. Rewrites segment URLs to presigned S3 URLs\n4. Returns the modified playlist and MP4 URL if available\n\nThe returned playlist_content can be used directly with any HLS player.\nAll segment URLs in the playlist are presigned and valid for 1 hour.\n\nReturns:\n    ReplayResponse with playlist content and optional MP4 URL\n\nMissing replays include `replay_status` and `retryable` in the error body:\n`unavailable` (410) confirms capture ended without frames; `failed` (404)\nreports a recorded upload/transcoding failure; `processing` (404)\npermits bounded polling; `waiting_for_session` (404) requires session close;\n`unknown` (404) means processing cannot be confirmed and permits manual retry."
         return await self.request(api.session_replay(session_id))
 
     @track_usage("cloud.session.start")
@@ -794,7 +794,7 @@ class AsyncSessionsOperations(AsyncBaseClient):
 
     @track_usage("cloud.session.status")
     async def status(self, session_id: str) -> core.SessionResponse:
-        "Session Status (`GET /sessions/{session_id}`)."
+        "Session Status (`GET /sessions/{session_id}`).\n\nGet the current status of a session, including its metadata and state.\n\nYou can retrieve the status of a session at any time whether it is active or not.\n\nSession states also contain all steps (i.e actions and observations) performed during the session.\nYou can use this information to reconstruct the session execution and diagnose potential issues."
         return await self.request(api.session_status(session_id))
 
     @track_usage("cloud.session.stop")
