@@ -58,11 +58,11 @@
     const text = (node) => clean(`${name(node)} ${node.innerText}`);
     const dialogOf = (cover) => {
         for (let current = cover; current !== null; current = parent(current)) {
-            if (current.matches(DIALOG) && shown(current)) {
+            if (current.matches(DIALOG) && shown(current) && !within(el, current)) {
                 return current;
             }
         }
-        return [...cover.querySelectorAll(DIALOG)].find(shown) || null;
+        return [...cover.querySelectorAll(DIALOG)].find((candidate) => shown(candidate) && !within(el, candidate)) || null;
     };
 
     // the element the page shows at the center of `el` when that is another element
@@ -95,7 +95,7 @@
             // panel, a sidebar) is not in the way
             const modal = (candidate) => candidate.matches(":modal") || candidate.getAttribute("aria-modal") === "true";
             const outside = [...el.ownerDocument.querySelectorAll(DIALOG)].find(
-                (candidate) => shown(candidate) && modal(candidate) && !within(candidate, current),
+                (candidate) => shown(candidate) && modal(candidate) && !within(candidate, current) && !within(el, candidate),
             );
             return outside
                 ? { kind: "dialog", name: cut(name(outside)), text: text(outside) }
