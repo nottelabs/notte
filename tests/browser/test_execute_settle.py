@@ -1241,10 +1241,17 @@ async def test_a_closing_popup_ignores_navigation_during_click_actionability(
     session.window.page = popup
     original_click = Locator.click
 
+    uncovered = False
+
     async def covered_click(locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
+        nonlocal uncovered
         if mode == "js":
-            await other.goto(f"{site}/second")
-            await cover.evaluate("el => el.remove()")
+            # a pointer click that never lands: it is tried in slices until its budget is out (`_pointer_click`)
+            if not uncovered:
+                uncovered = True
+                await other.goto(f"{site}/second")
+                await cover.evaluate("el => el.remove()")
+            await asyncio.sleep(timeout / 1000)
             raise PlaywrightTimeoutError("Use the JS click fallback")
         pending = asyncio.create_task(original_click(locator, timeout=timeout, no_wait_after=no_wait_after))
         try:
@@ -1271,6 +1278,8 @@ async def test_a_closing_popup_ignores_navigation_during_click_actionability(
             "in_iframe": framed,
             "iframe_parent_css_selectors": ["#click-frame"] if framed else [],
         },
+        # the slices of the pointer click that never lands use four fifths of it before the JS fallback
+        **({"timeout": 3000} if mode == "js" else {}),
     )
     assert result.success, result.message
     assert popup.is_closed()
