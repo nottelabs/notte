@@ -107,6 +107,8 @@ _CLICK_SLICE_MS = 500
 # for this long, while nothing happened on the page for this long: a lasting cover, not a moment's.
 _CLICK_BLOCKED_MS = 1000
 _CLICK_BLOCKED_IDLE_MS = 500
+# A request in flight for this long (s) no longer counts as something happening: the page keeps it open.
+_CLICK_BLOCKED_REQUEST_S = 5.0
 
 # how long nothing has happened on the page (ms), None while something is in progress (`PageSettle.idle_ms`)
 IdleCheck = Callable[[], Awaitable[float | None]]
@@ -1413,12 +1415,13 @@ async def _execute(
         return js_click_with_input
 
     async def idle_ms() -> float | None:
-        """For how long nothing has happened on the page (`PageSettle.idle_ms`), None while a request is in flight,
-        whether it started since the action began or before it (a page still loading its data)."""
+        """For how long nothing has happened on the page (`PageSettle.quiet_ms`), None while a request is in flight,
+        whether it started since the action began or before it (a page still loading its data). A request in flight
+        for `_CLICK_BLOCKED_REQUEST_S` is one the page keeps open (a beacon that never answers, a long poll)."""
         assert settle is not None
-        if window.requests_in_flight() > 0:
+        if window.requests_in_flight(younger_than_s=_CLICK_BLOCKED_REQUEST_S) > 0:
             return None
-        return await settle.idle_ms()
+        return await settle.quiet_ms()
 
     retval = True
     closed_during_click: Error | None = None
