@@ -23,17 +23,19 @@
     const fire = (type, Event, buttons) => el.dispatchEvent(new Event(type, { ...init, buttons }));
     fire("pointerover", PointerEvent, 0);
     fire("mouseover", MouseEvent, 0);
+    // a canceled pointerdown suppresses the compatibility mousedown and mouseup, not the pointerup or the click
     const pointerdown = fire("pointerdown", PointerEvent, 1);
-    const mousedown = fire("mousedown", MouseEvent, 1);
-    if (pointerdown && mousedown) {
-        // the default action of a mousedown: the nearest focusable element takes the focus
+    const mousedown = pointerdown && fire("mousedown", MouseEvent, 1);
+    if (mousedown) {
+        // the default action of a mousedown: the nearest focusable element takes the focus. A tabindex of any
+        // value, -1 included, makes an element focusable by a click (not by the Tab key)
         let node = el;
-        while (node && !(node.tabIndex >= 0 || node.matches("input, select, textarea, button, a[href], [contenteditable]"))) {
+        while (node && !(node.hasAttribute("tabindex") || node.matches("input, select, textarea, button, a[href], [contenteditable]"))) {
             node = node.parentElement;
         }
         if (node && node !== document.activeElement) node.focus({ preventScroll: true });
     }
     fire("pointerup", PointerEvent, 0);
-    fire("mouseup", MouseEvent, 0);
+    if (pointerdown) fire("mouseup", MouseEvent, 0);
     el.click();
 }

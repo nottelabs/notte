@@ -35,7 +35,14 @@ CONTROLS
 </script>
 """
 # a select-like widget: it opens on mousedown (ng-select, react-select) and the option list follows
-WIDGET = '<div id="widget" tabindex="0" onmousedown="document.body.dataset.opened = 1">Choose a payment option</div>'
+WIDGET = (
+    '<div id="widget" tabindex="TABINDEX" onmousedown="document.body.dataset.opened = 1">Choose a payment option</div>'
+)
+# a widget that opens on pointerdown and cancels it, so that its compatibility mouse handler does not open it again
+POINTER_WIDGET = (
+    '<div id="widget" tabindex="0" onpointerdown="event.preventDefault(); document.body.dataset.opened = 1"'
+    ' onmousedown="document.body.dataset.opened = 0" onmouseup="document.body.dataset.opened = 0">Menu</div>'
+)
 LINK = '<a id="widget" href="javascript:document.body.dataset.went = 1">Go</a>'
 SUBMIT = '<form onsubmit="document.body.dataset.sent = 1; return false"><button id="widget">Send</button></form>'
 
@@ -52,10 +59,13 @@ async def _click(session: NotteSession, controls: str) -> tuple[bool, str, dict[
     return result.success, result.message, data, active
 
 
+# a tabindex of any value makes the element focusable by a click; -1 only keeps it out of the Tab order
+@pytest.mark.parametrize("tabindex", ["0", "-1"])
 @pytest.mark.asyncio
-async def test_a_click_through_a_cover_opens_a_widget_that_listens_on_mousedown() -> None:
+async def test_a_click_through_a_cover_opens_a_widget_that_listens_on_mousedown(tabindex: str) -> None:
+    widget = WIDGET.replace("TABINDEX", tabindex)
     async with NotteSession(headless=True) as session:
-        success, message, data, active = await _click(session, WIDGET)
+        success, message, data, active = await _click(session, widget)
 
     assert success, message
     assert data.get("opened") == "1"
@@ -65,8 +75,23 @@ async def test_a_click_through_a_cover_opens_a_widget_that_listens_on_mousedown(
     # a mousedown gives the focus
     assert active == "widget"
     # the events land where the pointer would have: the element's center
-    x = await _center_x(session_html=WIDGET)
+    x = await _center_x(session_html=widget)
     assert abs(int(data["x"]) - x) <= 1
+
+
+@pytest.mark.asyncio
+async def test_a_canceled_pointerdown_suppresses_the_mouse_events() -> None:
+    """As a pointer does: a canceled pointerdown keeps the mousedown and mouseup from firing (so the widget is not
+    toggled twice) and leaves the focus where it was, while the pointerup and the click still fire."""
+    async with NotteSession(headless=True) as session:
+        success, message, data, active = await _click(session, POINTER_WIDGET)
+
+    assert success, message
+    assert data.get("opened") == "1"
+    assert data.get("order") == "p m p p c "
+    assert data.get("mousedown") is None
+    assert data.get("mouseup") is None
+    assert active != "widget"
 
 
 async def _center_x(session_html: str) -> int:
