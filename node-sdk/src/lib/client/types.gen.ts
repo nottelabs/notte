@@ -287,16 +287,6 @@ export type AddCreditCardResponse = {
 };
 
 /**
- * AnythingStartRequest
- */
-export type AnythingStartRequest = {
-    /**
-     * Task
-     */
-    task: string;
-};
-
-/**
  * ApiExecutionResponse
  */
 export type ApiExecutionResponse = {
@@ -4561,130 +4551,6 @@ export type LocationClue = {
 };
 
 /**
- * MailboxConnectRequest
- */
-export type MailboxConnectRequest = {
-    /**
-     * Provider
-     */
-    provider?: 'gmail' | 'microsoft_outlook';
-    /**
-     * Success Redirect Uri
-     */
-    success_redirect_uri: string;
-    /**
-     * Error Redirect Uri
-     */
-    error_redirect_uri: string;
-    /**
-     * Allowed Origin
-     */
-    allowed_origin: string;
-    /**
-     * Mailbox Id
-     */
-    mailbox_id?: string | null;
-};
-
-/**
- * MailboxConnectResponse
- */
-export type MailboxConnectResponse = {
-    /**
-     * Connect Link Url
-     */
-    connect_link_url: string;
-    /**
-     * Expires At
-     */
-    expires_at?: string | null;
-    /**
-     * Mailbox Id
-     */
-    mailbox_id: string;
-};
-
-/**
- * MailboxConnection
- */
-export type MailboxConnection = {
-    /**
-     * Id
-     */
-    id: string;
-    /**
-     * Provider
-     */
-    provider?: 'gmail' | 'microsoft_outlook';
-    /**
-     * Email Address
-     */
-    email_address: string;
-    /**
-     * Healthy
-     */
-    healthy?: boolean;
-    /**
-     * Authorized Scopes
-     */
-    authorized_scopes?: Array<string>;
-    /**
-     * Allow All Senders
-     */
-    allow_all_senders?: boolean;
-    /**
-     * Allowed Sender Domains
-     */
-    allowed_sender_domains?: Array<string>;
-    /**
-     * Created At
-     */
-    created_at?: string | null;
-    /**
-     * Updated At
-     */
-    updated_at?: string | null;
-};
-
-/**
- * MailboxListResponse
- */
-export type MailboxListResponse = {
-    /**
-     * Items
-     */
-    items: Array<MailboxConnection>;
-};
-
-/**
- * MailboxSyncRequest
- */
-export type MailboxSyncRequest = {
-    /**
-     * Mailbox Id
-     */
-    mailbox_id?: string | null;
-    /**
-     * Provider
-     */
-    provider?: 'gmail' | 'microsoft_outlook' | null;
-};
-
-/**
- * MailboxUpdateRequest
- */
-export type MailboxUpdateRequest = {
-    /**
-     * Allow All Senders
-     */
-    allow_all_senders: boolean;
-    /**
-     * Allowed Sender Domains
-     */
-    allowed_sender_domains?: Array<string>;
-};
-
-/**
  * ManagedAuthCredentials
  */
 export type ManagedAuthCredentials = {
@@ -6049,6 +5915,22 @@ export type PaymentListItem = {
      */
     purchase_status?: 'unverified';
     /**
+     * Provider
+     */
+    provider?: 'link' | 'agentcard';
+    /**
+     * Outcome
+     *
+     * What happened to an Agentcard card once the payment ended: `charged`, `declined` (only declined charges) or `unused` (closed without a charge). Null until known, and for Link.
+     */
+    outcome?: 'charged' | 'declined' | 'unused' | null;
+    /**
+     * Outcome Amount
+     *
+     * The amount charged on the card, as an exact decimal string. Null until known.
+     */
+    outcome_amount?: string | null;
+    /**
      * User Id
      *
      * The user who requested the payment.
@@ -6116,6 +5998,12 @@ export type PaymentRequest = {
      * Mode
      */
     mode?: 'test' | 'live';
+    /**
+     * Provider
+     *
+     * `link` (the caller's Link wallet, approved per payment) or `agentcard` (the workspace's Agentcard account, no approval step, USD only).
+     */
+    provider?: 'link' | 'agentcard';
 };
 
 /**
@@ -6185,6 +6073,22 @@ export type PaymentResponse = {
      * Purchase Status
      */
     purchase_status?: 'unverified';
+    /**
+     * Provider
+     */
+    provider?: 'link' | 'agentcard';
+    /**
+     * Outcome
+     *
+     * What happened to an Agentcard card once the payment ended: `charged`, `declined` (only declined charges) or `unused` (closed without a charge). Null until known, and for Link.
+     */
+    outcome?: 'charged' | 'declined' | 'unused' | null;
+    /**
+     * Outcome Amount
+     *
+     * The amount charged on the card, as an exact decimal string. Null until known.
+     */
+    outcome_amount?: string | null;
 };
 
 /**
@@ -9095,6 +8999,16 @@ export type NotteCoreActionsActionsWaitAction = {
 };
 
 /**
+ * AnythingStartRequest
+ */
+export type AnythingStartRequest = {
+    /**
+     * Task
+     */
+    task: string;
+};
+
+/**
  * AuditEvent
  */
 export type AuditEvent = {
@@ -9320,6 +9234,136 @@ export type HostPresetEntry = {
      * Source
      */
     source: string;
+};
+
+/**
+ * MailboxConnectRequest
+ */
+export type MailboxConnectRequest = {
+    /**
+     * Allowed Origin
+     */
+    allowed_origin: string;
+    /**
+     * Error Redirect Uri
+     */
+    error_redirect_uri: string;
+    /**
+     * Mailbox Id
+     */
+    mailbox_id?: string | null;
+    /**
+     * Provider
+     */
+    provider?: 'gmail' | 'microsoft_outlook';
+    /**
+     * Success Redirect Uri
+     */
+    success_redirect_uri: string;
+};
+
+/**
+ * MailboxConnectResponse
+ */
+export type MailboxConnectResponse = {
+    /**
+     * Connect Link Url
+     */
+    connect_link_url: string;
+    /**
+     * Expires At
+     */
+    expires_at?: string | null;
+    /**
+     * Mailbox Id
+     */
+    mailbox_id: string;
+};
+
+/**
+ * MailboxConnection
+ */
+export type MailboxConnection = {
+    /**
+     * Allow All Senders
+     */
+    allow_all_senders?: boolean;
+    /**
+     * Allowed Sender Domains
+     */
+    allowed_sender_domains?: Array<string>;
+    /**
+     * Authorized Scopes
+     */
+    authorized_scopes?: Array<string>;
+    /**
+     * Created At
+     */
+    created_at?: string | null;
+    /**
+     * Email Address
+     */
+    email_address: string;
+    /**
+     * Healthy
+     */
+    healthy?: boolean;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Provider
+     */
+    provider?: 'gmail' | 'microsoft_outlook';
+    /**
+     * Updated At
+     */
+    updated_at?: string | null;
+};
+
+/**
+ * MailboxListResponse
+ */
+export type MailboxListResponse = {
+    /**
+     * Items
+     */
+    items: Array<MailboxConnection>;
+};
+
+/**
+ * MailboxSyncRequest
+ *
+ * Body for post-connect (and refresh) sync.
+ *
+ * Without `mailbox_id`, sync only refreshes rows already in this workspace.
+ * With it (and `provider`), sync imports the Pipedream account minted for that
+ * mailbox identity and inserts/updates the matching row.
+ */
+export type MailboxSyncRequest = {
+    /**
+     * Mailbox Id
+     */
+    mailbox_id?: string | null;
+    /**
+     * Provider
+     */
+    provider?: 'gmail' | 'microsoft_outlook' | null;
+};
+
+/**
+ * MailboxUpdateRequest
+ */
+export type MailboxUpdateRequest = {
+    /**
+     * Allow All Senders
+     */
+    allow_all_senders: boolean;
+    /**
+     * Allowed Sender Domains
+     */
+    allowed_sender_domains?: Array<string>;
 };
 
 /**
@@ -15432,234 +15476,6 @@ export type ProfileListResponses = {
 
 export type ProfileListResponse = ProfileListResponses[keyof ProfileListResponses];
 
-export type MailboxConnectTokenData = {
-    body: MailboxConnectRequest;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path?: never;
-    query?: never;
-    url: '/mailboxes/connect-token';
-};
-
-export type MailboxConnectTokenErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type MailboxConnectTokenError = MailboxConnectTokenErrors[keyof MailboxConnectTokenErrors];
-
-export type MailboxConnectTokenResponses = {
-    /**
-     * Successful Response
-     */
-    200: MailboxConnectResponse;
-};
-
-export type MailboxConnectTokenResponse = MailboxConnectTokenResponses[keyof MailboxConnectTokenResponses];
-
-export type MailboxSyncData = {
-    /**
-     * Body
-     */
-    body?: MailboxSyncRequest | null;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path?: never;
-    query?: never;
-    url: '/mailboxes/sync';
-};
-
-export type MailboxSyncErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type MailboxSyncError = MailboxSyncErrors[keyof MailboxSyncErrors];
-
-export type MailboxSyncResponses = {
-    /**
-     * Successful Response
-     */
-    200: MailboxListResponse;
-};
-
-export type MailboxSyncResponse = MailboxSyncResponses[keyof MailboxSyncResponses];
-
-export type MailboxListData = {
-    body?: never;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path?: never;
-    query?: never;
-    url: '/mailboxes';
-};
-
-export type MailboxListErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type MailboxListError = MailboxListErrors[keyof MailboxListErrors];
-
-export type MailboxListResponses = {
-    /**
-     * Successful Response
-     */
-    200: MailboxListResponse;
-};
-
-export type MailboxListResponse2 = MailboxListResponses[keyof MailboxListResponses];
-
-export type MailboxDeleteData = {
-    body?: never;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path: {
-        /**
-         * Mailbox Id
-         */
-        mailbox_id: string;
-    };
-    query?: never;
-    url: '/mailboxes/{mailbox_id}';
-};
-
-export type MailboxDeleteErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type MailboxDeleteError = MailboxDeleteErrors[keyof MailboxDeleteErrors];
-
-export type MailboxDeleteResponses = {
-    /**
-     * Successful Response
-     */
-    204: void;
-};
-
-export type MailboxDeleteResponse = MailboxDeleteResponses[keyof MailboxDeleteResponses];
-
-export type MailboxGetData = {
-    body?: never;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path: {
-        /**
-         * Mailbox Id
-         */
-        mailbox_id: string;
-    };
-    query?: never;
-    url: '/mailboxes/{mailbox_id}';
-};
-
-export type MailboxGetErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type MailboxGetError = MailboxGetErrors[keyof MailboxGetErrors];
-
-export type MailboxGetResponses = {
-    /**
-     * Successful Response
-     */
-    200: MailboxConnection;
-};
-
-export type MailboxGetResponse = MailboxGetResponses[keyof MailboxGetResponses];
-
-export type MailboxUpdateData = {
-    body: MailboxUpdateRequest;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path: {
-        /**
-         * Mailbox Id
-         */
-        mailbox_id: string;
-    };
-    query?: never;
-    url: '/mailboxes/{mailbox_id}';
-};
-
-export type MailboxUpdateErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type MailboxUpdateError = MailboxUpdateErrors[keyof MailboxUpdateErrors];
-
-export type MailboxUpdateResponses = {
-    /**
-     * Successful Response
-     */
-    200: MailboxConnection;
-};
-
-export type MailboxUpdateResponse = MailboxUpdateResponses[keyof MailboxUpdateResponses];
-
 export type ManagedAuthConnectLinkCreateData = {
     body: ConnectLinkCreateRequest;
     headers?: {
@@ -15896,39 +15712,6 @@ export type ConnectLinkStatusResponses = {
 };
 
 export type ConnectLinkStatusResponse2 = ConnectLinkStatusResponses[keyof ConnectLinkStatusResponses];
-
-export type AnythingStartData = {
-    body: AnythingStartRequest;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path?: never;
-    query?: never;
-    url: '/anything/start';
-};
-
-export type AnythingStartErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type AnythingStartError = AnythingStartErrors[keyof AnythingStartErrors];
-
-export type AnythingStartResponses = {
-    /**
-     * Successful Response
-     */
-    200: unknown;
-};
 
 export type ListSecretsData = {
     body?: never;
@@ -18363,6 +18146,41 @@ export type ScrapeFromHtmlResponses = {
 
 export type ScrapeFromHtmlResponse = ScrapeFromHtmlResponses[keyof ScrapeFromHtmlResponses];
 
+export type AnythingStartData = {
+    body: AnythingStartRequest;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/anything/start';
+};
+
+export type AnythingStartErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AnythingStartError = AnythingStartErrors[keyof AnythingStartErrors];
+
+export type AnythingStartResponses = {
+    /**
+     * anything-api's stream. Content-Type is anything-api's (text/event-stream when it sends none), with "; charset=utf-8" added to a text* type without one.
+     */
+    200: string;
+};
+
+export type AnythingStartResponse = AnythingStartResponses[keyof AnythingStartResponses];
+
 export type ListAuditEventsData = {
     body?: never;
     headers?: {
@@ -18440,6 +18258,234 @@ export type ListAuditEventsResponses = {
 };
 
 export type ListAuditEventsResponse = ListAuditEventsResponses[keyof ListAuditEventsResponses];
+
+export type MailboxListData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/mailboxes';
+};
+
+export type MailboxListErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type MailboxListError = MailboxListErrors[keyof MailboxListErrors];
+
+export type MailboxListResponses = {
+    /**
+     * Successful Response
+     */
+    200: MailboxListResponse;
+};
+
+export type MailboxListResponse2 = MailboxListResponses[keyof MailboxListResponses];
+
+export type MailboxConnectTokenData = {
+    body: MailboxConnectRequest;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/mailboxes/connect-token';
+};
+
+export type MailboxConnectTokenErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type MailboxConnectTokenError = MailboxConnectTokenErrors[keyof MailboxConnectTokenErrors];
+
+export type MailboxConnectTokenResponses = {
+    /**
+     * Successful Response
+     */
+    200: MailboxConnectResponse;
+};
+
+export type MailboxConnectTokenResponse = MailboxConnectTokenResponses[keyof MailboxConnectTokenResponses];
+
+export type MailboxSyncData = {
+    /**
+     * Body
+     */
+    body?: MailboxSyncRequest | null;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/mailboxes/sync';
+};
+
+export type MailboxSyncErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type MailboxSyncError = MailboxSyncErrors[keyof MailboxSyncErrors];
+
+export type MailboxSyncResponses = {
+    /**
+     * Successful Response
+     */
+    200: MailboxListResponse;
+};
+
+export type MailboxSyncResponse = MailboxSyncResponses[keyof MailboxSyncResponses];
+
+export type MailboxDeleteData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Mailbox Id
+         */
+        mailbox_id: string;
+    };
+    query?: never;
+    url: '/mailboxes/{mailbox_id}';
+};
+
+export type MailboxDeleteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type MailboxDeleteError = MailboxDeleteErrors[keyof MailboxDeleteErrors];
+
+export type MailboxDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type MailboxDeleteResponse = MailboxDeleteResponses[keyof MailboxDeleteResponses];
+
+export type MailboxGetData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Mailbox Id
+         */
+        mailbox_id: string;
+    };
+    query?: never;
+    url: '/mailboxes/{mailbox_id}';
+};
+
+export type MailboxGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type MailboxGetError = MailboxGetErrors[keyof MailboxGetErrors];
+
+export type MailboxGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: MailboxConnection;
+};
+
+export type MailboxGetResponse = MailboxGetResponses[keyof MailboxGetResponses];
+
+export type MailboxUpdateData = {
+    body: MailboxUpdateRequest;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Mailbox Id
+         */
+        mailbox_id: string;
+    };
+    query?: never;
+    url: '/mailboxes/{mailbox_id}';
+};
+
+export type MailboxUpdateErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type MailboxUpdateError = MailboxUpdateErrors[keyof MailboxUpdateErrors];
+
+export type MailboxUpdateResponses = {
+    /**
+     * Successful Response
+     */
+    200: MailboxConnection;
+};
+
+export type MailboxUpdateResponse = MailboxUpdateResponses[keyof MailboxUpdateResponses];
 
 export type ListPersonasData = {
     body?: never;

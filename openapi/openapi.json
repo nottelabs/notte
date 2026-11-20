@@ -8141,485 +8141,6 @@
         ]
       }
     },
-    "/mailboxes/connect-token": {
-      "post": {
-        "tags": [
-          "mailboxes"
-        ],
-        "summary": "Mailbox Connect Token",
-        "operationId": "mailbox_connect_token",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "x-notte-request-origin",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Request-Origin"
-            }
-          },
-          {
-            "name": "x-notte-sdk-version",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Sdk-Version"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MailboxConnectRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MailboxConnectResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "x-codeSamples": []
-      }
-    },
-    "/mailboxes/sync": {
-      "post": {
-        "tags": [
-          "mailboxes"
-        ],
-        "summary": "Mailbox Sync",
-        "operationId": "mailbox_sync",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "x-notte-request-origin",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Request-Origin"
-            }
-          },
-          {
-            "name": "x-notte-sdk-version",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Sdk-Version"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "anyOf": [
-                  {
-                    "$ref": "#/components/schemas/MailboxSyncRequest"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "title": "Body"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MailboxListResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "x-codeSamples": []
-      }
-    },
-    "/mailboxes": {
-      "get": {
-        "tags": [
-          "mailboxes"
-        ],
-        "summary": "Mailbox List",
-        "operationId": "mailbox_list",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "x-notte-request-origin",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Request-Origin"
-            }
-          },
-          {
-            "name": "x-notte-sdk-version",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Sdk-Version"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MailboxListResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "x-codeSamples": []
-      }
-    },
-    "/mailboxes/{mailbox_id}": {
-      "get": {
-        "tags": [
-          "mailboxes"
-        ],
-        "summary": "Mailbox Get",
-        "operationId": "mailbox_get",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "mailbox_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Mailbox Id"
-            }
-          },
-          {
-            "name": "x-notte-request-origin",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Request-Origin"
-            }
-          },
-          {
-            "name": "x-notte-sdk-version",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Sdk-Version"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MailboxConnection"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "x-codeSamples": []
-      },
-      "patch": {
-        "tags": [
-          "mailboxes"
-        ],
-        "summary": "Mailbox Update",
-        "operationId": "mailbox_update",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "mailbox_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Mailbox Id"
-            }
-          },
-          {
-            "name": "x-notte-request-origin",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Request-Origin"
-            }
-          },
-          {
-            "name": "x-notte-sdk-version",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Sdk-Version"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MailboxUpdateRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MailboxConnection"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "x-codeSamples": []
-      },
-      "delete": {
-        "tags": [
-          "mailboxes"
-        ],
-        "summary": "Mailbox Delete",
-        "operationId": "mailbox_delete",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "mailbox_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Mailbox Id"
-            }
-          },
-          {
-            "name": "x-notte-request-origin",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Request-Origin"
-            }
-          },
-          {
-            "name": "x-notte-sdk-version",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Sdk-Version"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Successful Response"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "x-codeSamples": []
-      }
-    },
     "/managed-auth/connect-links": {
       "post": {
         "tags": [
@@ -9010,85 +8531,6 @@
                 "schema": {
                   "$ref": "#/components/schemas/ConnectLinkStatusResponse"
                 }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "x-codeSamples": []
-      }
-    },
-    "/anything/start": {
-      "post": {
-        "tags": [
-          "anything"
-        ],
-        "summary": "Anything Start",
-        "operationId": "anything_start",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "x-notte-request-origin",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Request-Origin"
-            }
-          },
-          {
-            "name": "x-notte-sdk-version",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Sdk-Version"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AnythingStartRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
               }
             }
           },
@@ -15486,6 +14928,123 @@
         "x-hidden": true
       }
     },
+    "/anything/start": {
+      "post": {
+        "description": "Anything proxy: starts an Anything turn and streams anything-api's answer (an AI SDK UI message stream over server-sent events) byte for byte, without translation. The stream is not bounded by the 60 s request timeout; it ends when anything-api ends it, and an upstream failure after the headers ends the body where it stopped.",
+        "operationId": "anything_start",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-notte-request-origin",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Request-Origin",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-notte-sdk-version",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Sdk-Version",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnythingStartRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "anything-api's stream. Content-Type is anything-api's (text/event-stream when it sends none), with \"; charset=utf-8\" added to a text/* type without one.",
+            "headers": {
+              "Cache-Control": {
+                "required": true,
+                "schema": {
+                  "enum": [
+                    "no-cache"
+                  ],
+                  "type": "string"
+                }
+              },
+              "Connection": {
+                "required": true,
+                "schema": {
+                  "enum": [
+                    "keep-alive"
+                  ],
+                  "type": "string"
+                }
+              },
+              "X-Accel-Buffering": {
+                "required": true,
+                "schema": {
+                  "enum": [
+                    "no"
+                  ],
+                  "type": "string"
+                }
+              },
+              "x-thread-id": {
+                "description": "anything-api's thread id, when it sends one",
+                "required": false,
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "x-vercel-ai-ui-message-stream": {
+                "description": "The UI message stream version, when anything-api sends one",
+                "required": false,
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Anything Start",
+        "tags": [
+          "anything"
+        ],
+        "x-codeSamples": []
+      }
+    },
     "/audit-events": {
       "get": {
         "description": "List audit events for the caller's workspace, newest first.\n\nWith an organization API key, owners and admins get the whole organization's\naudit trail; members only get events about them or performed by them. A\npersonal API key returns the personal workspace's events. Only approved customer-facing details appear in `metadata`.",
@@ -15646,6 +15205,437 @@
         "summary": "List Audit Events",
         "tags": [
           "audit"
+        ],
+        "x-codeSamples": []
+      }
+    },
+    "/mailboxes": {
+      "get": {
+        "operationId": "mailbox_list",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-notte-request-origin",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Request-Origin",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-notte-sdk-version",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Sdk-Version",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailboxListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Mailbox List",
+        "tags": [
+          "mailboxes"
+        ],
+        "x-codeSamples": []
+      }
+    },
+    "/mailboxes/connect-token": {
+      "post": {
+        "operationId": "mailbox_connect_token",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-notte-request-origin",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Request-Origin",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-notte-sdk-version",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Sdk-Version",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MailboxConnectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailboxConnectResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Mailbox Connect Token",
+        "tags": [
+          "mailboxes"
+        ],
+        "x-codeSamples": []
+      }
+    },
+    "/mailboxes/sync": {
+      "post": {
+        "operationId": "mailbox_sync",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-notte-request-origin",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Request-Origin",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-notte-sdk-version",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Sdk-Version",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/MailboxSyncRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailboxListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Mailbox Sync",
+        "tags": [
+          "mailboxes"
+        ],
+        "x-codeSamples": []
+      }
+    },
+    "/mailboxes/{mailbox_id}": {
+      "delete": {
+        "operationId": "mailbox_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "mailbox_id",
+            "required": true,
+            "schema": {
+              "title": "Mailbox Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-notte-request-origin",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Request-Origin",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-notte-sdk-version",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Sdk-Version",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Mailbox Delete",
+        "tags": [
+          "mailboxes"
+        ],
+        "x-codeSamples": []
+      },
+      "get": {
+        "operationId": "mailbox_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "mailbox_id",
+            "required": true,
+            "schema": {
+              "title": "Mailbox Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-notte-request-origin",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Request-Origin",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-notte-sdk-version",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Sdk-Version",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailboxConnection"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Mailbox Get",
+        "tags": [
+          "mailboxes"
+        ],
+        "x-codeSamples": []
+      },
+      "patch": {
+        "operationId": "mailbox_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "mailbox_id",
+            "required": true,
+            "schema": {
+              "title": "Mailbox Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-notte-request-origin",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Request-Origin",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-notte-sdk-version",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Sdk-Version",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MailboxUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailboxConnection"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Mailbox Update",
+        "tags": [
+          "mailboxes"
         ],
         "x-codeSamples": []
       }
@@ -18160,19 +18150,6 @@
           "status"
         ],
         "title": "AddCreditCardResponse"
-      },
-      "AnythingStartRequest": {
-        "properties": {
-          "task": {
-            "type": "string",
-            "title": "Task"
-          }
-        },
-        "type": "object",
-        "required": [
-          "task"
-        ],
-        "title": "AnythingStartRequest"
       },
       "ApiExecutionResponse": {
         "properties": {
@@ -27655,222 +27632,6 @@
         "type": "object",
         "title": "LocationClue"
       },
-      "MailboxConnectRequest": {
-        "properties": {
-          "provider": {
-            "type": "string",
-            "enum": [
-              "gmail",
-              "microsoft_outlook"
-            ],
-            "title": "Provider",
-            "default": "gmail"
-          },
-          "success_redirect_uri": {
-            "type": "string",
-            "title": "Success Redirect Uri"
-          },
-          "error_redirect_uri": {
-            "type": "string",
-            "title": "Error Redirect Uri"
-          },
-          "allowed_origin": {
-            "type": "string",
-            "title": "Allowed Origin"
-          },
-          "mailbox_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Mailbox Id"
-          }
-        },
-        "type": "object",
-        "required": [
-          "success_redirect_uri",
-          "error_redirect_uri",
-          "allowed_origin"
-        ],
-        "title": "MailboxConnectRequest"
-      },
-      "MailboxConnectResponse": {
-        "properties": {
-          "connect_link_url": {
-            "type": "string",
-            "title": "Connect Link Url"
-          },
-          "expires_at": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Expires At"
-          },
-          "mailbox_id": {
-            "type": "string",
-            "title": "Mailbox Id"
-          }
-        },
-        "type": "object",
-        "required": [
-          "connect_link_url",
-          "mailbox_id"
-        ],
-        "title": "MailboxConnectResponse"
-      },
-      "MailboxConnection": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "provider": {
-            "type": "string",
-            "enum": [
-              "gmail",
-              "microsoft_outlook"
-            ],
-            "title": "Provider",
-            "default": "gmail"
-          },
-          "email_address": {
-            "type": "string",
-            "title": "Email Address"
-          },
-          "healthy": {
-            "type": "boolean",
-            "title": "Healthy",
-            "default": true
-          },
-          "authorized_scopes": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Authorized Scopes"
-          },
-          "allow_all_senders": {
-            "type": "boolean",
-            "title": "Allow All Senders",
-            "default": true
-          },
-          "allowed_sender_domains": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Allowed Sender Domains"
-          },
-          "created_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Created At"
-          },
-          "updated_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Updated At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "email_address"
-        ],
-        "title": "MailboxConnection"
-      },
-      "MailboxListResponse": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/MailboxConnection"
-            },
-            "type": "array",
-            "title": "Items"
-          }
-        },
-        "type": "object",
-        "required": [
-          "items"
-        ],
-        "title": "MailboxListResponse"
-      },
-      "MailboxSyncRequest": {
-        "properties": {
-          "mailbox_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Mailbox Id"
-          },
-          "provider": {
-            "anyOf": [
-              {
-                "type": "string",
-                "enum": [
-                  "gmail",
-                  "microsoft_outlook"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Provider"
-          }
-        },
-        "type": "object",
-        "title": "MailboxSyncRequest"
-      },
-      "MailboxUpdateRequest": {
-        "properties": {
-          "allow_all_senders": {
-            "type": "boolean",
-            "title": "Allow All Senders"
-          },
-          "allowed_sender_domains": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "maxItems": 100,
-            "title": "Allowed Sender Domains"
-          }
-        },
-        "type": "object",
-        "required": [
-          "allow_all_senders"
-        ],
-        "title": "MailboxUpdateRequest"
-      },
       "ManagedAuthCredentials": {
         "properties": {
           "username": {
@@ -30621,6 +30382,44 @@
             "title": "Purchase Status",
             "default": "unverified"
           },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "link",
+              "agentcard"
+            ],
+            "title": "Provider",
+            "default": "link"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "charged",
+                  "declined",
+                  "unused"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome",
+            "description": "What happened to an Agentcard card once the payment ended: `charged`, `declined` (only declined charges) or `unused` (closed without a charge). Null until known, and for Link."
+          },
+          "outcome_amount": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome Amount",
+            "description": "The amount charged on the card, as an exact decimal string. Null until known."
+          },
           "user_id": {
             "type": "string",
             "title": "User Id",
@@ -30756,6 +30555,16 @@
             ],
             "title": "Mode",
             "default": "live"
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "link",
+              "agentcard"
+            ],
+            "title": "Provider",
+            "description": "`link` (the caller's Link wallet, approved per payment) or `agentcard` (the workspace's Agentcard account, no approval step, USD only).",
+            "default": "link"
           }
         },
         "additionalProperties": false,
@@ -30886,6 +30695,44 @@
             "const": "unverified",
             "title": "Purchase Status",
             "default": "unverified"
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "link",
+              "agentcard"
+            ],
+            "title": "Provider",
+            "default": "link"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "charged",
+                  "declined",
+                  "unused"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome",
+            "description": "What happened to an Agentcard card once the payment ended: `charged`, `declined` (only declined charges) or `unused` (closed without a charge). Null until known, and for Link."
+          },
+          "outcome_amount": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome Amount",
+            "description": "The amount charged on the card, as an exact decimal string. Null until known."
           }
         },
         "type": "object",
@@ -36216,6 +36063,19 @@
         ],
         "title": "WaitAction"
       },
+      "AnythingStartRequest": {
+        "properties": {
+          "task": {
+            "title": "Task",
+            "type": "string"
+          }
+        },
+        "required": [
+          "task"
+        ],
+        "title": "AnythingStartRequest",
+        "type": "object"
+      },
       "AuditEvent": {
         "additionalProperties": false,
         "properties": {
@@ -36567,6 +36427,203 @@
           "source"
         ],
         "title": "HostPresetEntry",
+        "type": "object"
+      },
+      "MailboxConnectRequest": {
+        "properties": {
+          "allowed_origin": {
+            "title": "Allowed Origin",
+            "type": "string"
+          },
+          "error_redirect_uri": {
+            "title": "Error Redirect Uri",
+            "type": "string"
+          },
+          "mailbox_id": {
+            "title": "Mailbox Id",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "provider": {
+            "default": "gmail",
+            "enum": [
+              "gmail",
+              "microsoft_outlook"
+            ],
+            "title": "Provider",
+            "type": "string"
+          },
+          "success_redirect_uri": {
+            "title": "Success Redirect Uri",
+            "type": "string"
+          }
+        },
+        "required": [
+          "success_redirect_uri",
+          "error_redirect_uri",
+          "allowed_origin"
+        ],
+        "title": "MailboxConnectRequest",
+        "type": "object"
+      },
+      "MailboxConnectResponse": {
+        "properties": {
+          "connect_link_url": {
+            "title": "Connect Link Url",
+            "type": "string"
+          },
+          "expires_at": {
+            "title": "Expires At",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "mailbox_id": {
+            "title": "Mailbox Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "connect_link_url",
+          "mailbox_id"
+        ],
+        "title": "MailboxConnectResponse",
+        "type": "object"
+      },
+      "MailboxConnection": {
+        "properties": {
+          "allow_all_senders": {
+            "default": true,
+            "title": "Allow All Senders",
+            "type": "boolean"
+          },
+          "allowed_sender_domains": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Allowed Sender Domains",
+            "type": "array"
+          },
+          "authorized_scopes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Authorized Scopes",
+            "type": "array"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email_address": {
+            "title": "Email Address",
+            "type": "string"
+          },
+          "healthy": {
+            "default": true,
+            "title": "Healthy",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "provider": {
+            "default": "gmail",
+            "enum": [
+              "gmail",
+              "microsoft_outlook"
+            ],
+            "title": "Provider",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "email_address"
+        ],
+        "title": "MailboxConnection",
+        "type": "object"
+      },
+      "MailboxListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/MailboxConnection"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "MailboxListResponse",
+        "type": "object"
+      },
+      "MailboxSyncRequest": {
+        "description": "Body for post-connect (and refresh) sync.\n\nWithout `mailbox_id`, sync only refreshes rows already in this workspace.\nWith it (and `provider`), sync imports the Pipedream account minted for that\nmailbox identity and inserts/updates the matching row.",
+        "properties": {
+          "mailbox_id": {
+            "title": "Mailbox Id",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "enum": [
+                  "gmail",
+                  "microsoft_outlook"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          }
+        },
+        "title": "MailboxSyncRequest",
+        "type": "object"
+      },
+      "MailboxUpdateRequest": {
+        "properties": {
+          "allow_all_senders": {
+            "title": "Allow All Senders",
+            "type": "boolean"
+          },
+          "allowed_sender_domains": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "title": "Allowed Sender Domains",
+            "type": "array"
+          }
+        },
+        "required": [
+          "allow_all_senders"
+        ],
+        "title": "MailboxUpdateRequest",
         "type": "object"
       },
       "PaginatedResponse_PersonaResponse_": {
