@@ -425,7 +425,7 @@ class VaultState:
         }
 
     @staticmethod
-    def _fill_values(action: BaseAction) -> list[str | ValueWithPlaceholder]:
+    def fill_values(action: BaseAction) -> list[str | ValueWithPlaceholder]:
         """Values of a fill-type action that may hold credential placeholders (empty for other actions)."""
         if isinstance(action, FormFillAction):
             return list(action.value.values())
@@ -447,7 +447,7 @@ class VaultState:
         """
         return any(
             isinstance(value, ValueWithPlaceholder) or CredentialField.from_placeholder(value) is not None
-            for value in self._fill_values(action)
+            for value in self.fill_values(action)
         )
 
     def has_unresolved_placeholders(self, action: BaseAction) -> bool:
@@ -461,7 +461,7 @@ class VaultState:
         """
         return any(
             isinstance(value, str) and CredentialField.from_placeholder(value) is not None
-            for value in self._fill_values(action)
+            for value in self.fill_values(action)
         )
 
     @staticmethod

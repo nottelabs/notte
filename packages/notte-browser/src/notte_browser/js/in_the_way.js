@@ -6,7 +6,7 @@
 // element, or the one in the wrapper over it (a wrapper that holds a dialog and its backdrop is what the hit test
 // returns), or, for an inert element, the shown dialog outside the inert part. It is named by its aria-label, its
 // labelling elements, its first heading or its first words.
-(el) => {
+(el, point) => {
     const DIALOG = 'dialog, [role="dialog"], [role="alertdialog"], [aria-modal="true"]';
     const MAX_WORDS = 8;
     const MAX_CHARS = 80;
@@ -68,8 +68,9 @@
     // the element the page shows at the center of `el` when that is another element
     let cover = null;
     const rect = el.getBoundingClientRect();
-    const x = rect.left + rect.width / 2;
-    const y = rect.top + rect.height / 2;
+    // In a parent document `el` is the iframe; inspect the target's translated point, not the frame's center.
+    const x = point ? point[0] : rect.left + rect.width / 2;
+    const y = point ? point[1] : rect.top + rect.height / 2;
     if (rect.width > 0 && rect.height > 0 && x >= 0 && y >= 0 && x < innerWidth && y < innerHeight) {
         let hit = el.ownerDocument.elementFromPoint(x, y);
         while (hit !== null && hit.shadowRoot) {
