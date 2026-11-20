@@ -8,9 +8,19 @@ from notte_browser.window import BrowserWindow, BrowserWindowOptions
 from notte_core.types import LocalSessionStartRequest
 
 
+class FakeContext:
+    def on(self, event: str, handler: Any) -> None:
+        pass
+
+    def remove_listener(self, event: str, handler: Any) -> None:
+        pass
+
+
 class FakePage:
     def __init__(self) -> None:
         self.url = "about:blank"
+        # the window records the context's requests in flight
+        self.context = FakeContext()
         self.goto_calls: list[dict[str, Any]] = []
         self.load_states: list[str] = []
 
