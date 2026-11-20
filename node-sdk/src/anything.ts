@@ -1,7 +1,6 @@
 import type { NotteClient } from '@/client';
 import { NotteError } from '@/errors';
-import type { AnythingStartRequest } from '@/lib/client/types.gen';
-import { anythingStart } from '@/lib/client/sdk.gen';
+import type { AnythingStartErrors, AnythingStartRequest } from '@/lib/client/types.gen';
 
 /** Body of `POST /anything/start`: the natural-language description of the task. */
 export type AnythingStartOptions = AnythingStartRequest;
@@ -100,13 +99,20 @@ export class NotteAnything {
    * Rejects with a `NotteAPIError` when the API answers with a non-2xx status.
    */
   async start(body: AnythingStartOptions): Promise<AnythingStartResult> {
-    const { data, response } = await anythingStart({
-      client: this.client.getClient(),
-      body,
-      parseAs: 'stream',
-      throwOnError: true,
-    });
-    const stream = data as ReadableStream<Uint8Array> | null;
+    // Not the generated `anythingStart`: it reads the stream with the SSE client, which hides the
+    // response headers, turns a non-2xx answer into a plain `Error` and retries a failed stream by
+    // sending the POST again, which would start a second run.
+    const { data, response } = await this.client
+      .getClient()
+      .post<{ 200: ReadableStream<Uint8Array> }, AnythingStartErrors, true>({
+        security: [{ scheme: 'bearer', type: 'http' }],
+        url: '/anything/start',
+        body,
+        headers: { 'Content-Type': 'application/json' },
+        parseAs: 'stream',
+        throwOnError: true,
+      });
+    const stream = data as ReadableStream<Uint8Array> | null | undefined;
     if (!stream) {
       throw new NotteError('Anything start returned no response stream');
     }
