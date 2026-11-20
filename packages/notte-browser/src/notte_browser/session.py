@@ -84,6 +84,7 @@ from notte_core.actions.typedicts import (
 )
 from notte_core.config import CookieDict, RaiseCondition, config, create_or_append_cookies_to_file
 from notte_core.credentials.base import BaseVault
+from notte_core.credentials.types import ValueWithPlaceholder
 from notte_core.data import DataSpace, StructuredData, TBaseModel
 from notte_core.errors import (
     ActionExecutionError,
@@ -900,6 +901,18 @@ class NotteSession(AsyncResource, SyncResource):
                         raise InboxActionNotSupportedLocallyError(resolved_action)
                     case _:
                         resolved_action = await self._action_with_vault(resolved_action)
+                        # Remember before typing: even a failed fill may put a credential on the page. Retain it
+                        # after the vault is replaced or detached, using the session's existing privacy state.
+                        privacy = self._act_history.privacy
+                        if self.vault is not None:
+                            privacy.remember_secrets(self.vault.get_replacement_map())
+                        privacy.remember_secrets(
+                            {
+                                value.get_secret_value(): value.placeholder_value
+                                for value in BaseVault.fill_values(resolved_action)
+                                if isinstance(value, ValueWithPlaceholder)
+                            }
+                        )
                         # interactions bound themselves by `action.timeout` (see execution.py)
                         success = await execution.execute(
                             self.window,
@@ -907,6 +920,7 @@ class NotteSession(AsyncResource, SyncResource):
                             storage=self.storage,
                             prev_snapshot=self._snapshot,
                             verbose=self._verbose,
+                            secrets=privacy.replacements,
                         )
                         if not success:
                             # `message` still holds the success-phrased execution_message.

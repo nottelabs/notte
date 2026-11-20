@@ -7,14 +7,19 @@ Which actions succeed does not change: the look only runs once an action has fai
 """
 
 import asyncio
+from html import escape
 from urllib.parse import quote
 
 import notte_browser.execution as execution_module
 import pytest
 from notte_browser.session import NotteSession
 from notte_core.actions import ClickAction, FillAction
+from notte_core.credentials import PASSWORD
 from notte_core.credentials.types import ValueWithPlaceholder
 from notte_core.errors import ActionExecutionError, TextNotKeptError
+
+from tests.mock.mock_vault import MockVault
+from tests.test_vault_credential_redaction import capture_logs, error_texts
 
 # the page: a field and a button, both in a part the dialog made inert, as a page does behind a modal dialog
 FORM = """
@@ -150,6 +155,113 @@ async def test_a_credential_fill_does_not_quote_the_page() -> None:
     assert "The field stayed empty after typing: a dialog covers the element" in result.message
     assert "hunter2" not in result.message
     assert "Results for" not in result.message
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("failed_fill", [False, True])
+async def test_a_later_failure_does_not_quote_an_earlier_credential(failed_fill: bool) -> None:
+    secret = "a b c d e f g h private-value"
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        _ = await page.goto(_url(REFUSING if failed_fill else '<input id="q">'))
+        filled = await session.aexecute(
+            FillAction(selector="#q", value=ValueWithPlaceholder(secret, "<password>"), timeout=3000),
+            raise_on_failure=False,
+        )
+        assert filled.success is not failed_fill
+        # A later document still belongs to the same session. Its label is longer than the displayed hint.
+        await page.set_content(
+            '<button id="go" disabled>Go</button><div role="dialog" '
+            'style="position:fixed;inset:0">Results for ' + secret.upper().replace(" ", " \n ") + "</div>"
+        )
+        result = await session.aexecute(ClickAction(selector="#go", timeout=500), raise_on_failure=False)
+        assert not result.success
+        assert "a dialog covers the element" in result.message
+        assert "Results for" not in result.message
+        assert "A B C" not in result.message
+        assert result.exception is not None
+        assert "Results for" not in str(result.exception)
+
+
+@pytest.mark.asyncio
+async def test_a_replaced_vault_keeps_earlier_credentials_private_in_errors_and_logs() -> None:
+    url = "https://credential-fixture.test/"
+    secret = "old-vault-password"
+    vault = MockVault({url: {"username": "fixture-user", "password": secret}})
+    async with NotteSession(headless=True, vault=vault) as session:
+        page = session.window.page
+        await page.route(url, lambda route: route.fulfill(content_type="text/html", body='<input id="q" type="password">'))
+        _ = await page.goto(url)
+        result = await session.aexecute(FillAction(selector="#q", value=PASSWORD), raise_on_failure=False)
+        assert result.success
+        assert await page.input_value("#q") == secret
+        session.set_vault(MockVault())
+        await page.set_content(
+            '<button id="go" disabled>Go</button><div role="dialog" '
+            'style="position:fixed;inset:0">Results for ' + secret + "</div>"
+        )
+        with capture_logs() as logs:
+            result = await session.aexecute(ClickAction(selector="#go", timeout=500), raise_on_failure=False)
+        assert not result.success
+        assert result.exception is not None
+        assert all(secret not in text for text in [*error_texts(result.exception), *logs, result.model_dump_json()])
+        assert result.message.endswith("a dialog covers the element")
+        session.set_vault(None)
+        detached = await session.aexecute(ClickAction(selector="#go", timeout=500), raise_on_failure=False)
+        assert detached.message.endswith("a dialog covers the element")
+    # Privacy belongs to the session; an unrelated session may quote this ordinary page label.
+    async with NotteSession(headless=True) as fresh:
+        await fresh.window.page.set_content(
+            '<button id="go" disabled>Go</button><div role="dialog" '
+            'style="position:fixed;inset:0">Results for ' + secret + "</div>"
+        )
+        control = await fresh.aexecute(ClickAction(selector="#go", timeout=500), raise_on_failure=False)
+        assert f"Results for {secret}" in control.message
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("nested", [False, True])
+async def test_a_parent_dialog_over_an_iframe_target_is_named(nested: bool) -> None:
+    child = '<button id="go" disabled style="position:absolute;left:30px;top:25px">Go</button>'
+    selector = "iframe >> internal:control=enter-frame >> #go"
+    if nested:
+        child = (
+            '<iframe style="border:7px solid;transform:scale(.8);transform-origin:0 0" srcdoc="'
+            + escape(child, quote=True)
+            + '"></iframe>'
+        )
+        selector = "iframe >> internal:control=enter-frame >> " + selector
+    # Sandbox without allow-same-origin makes the child an opaque origin, including its nested srcdoc.
+    frame = (
+        '<iframe sandbox="allow-scripts" style="width:600px;height:300px;border:9px solid;transform:scale(.9);transform-origin:0 0" srcdoc="'
+        + escape(child, quote=True)
+        + '"></iframe>'
+    )
+    cover = '<div role="dialog" aria-label="Parent sign in" style="position:fixed;left:0;top:0;width:150px;height:140px;background:white">Sign in</div>'
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(_url(frame, cover))
+        result = await session.aexecute(ClickAction(selector=selector, timeout=1000), raise_on_failure=False)
+    assert not result.success
+    assert 'a dialog covers the element: "Parent sign in"' in result.message
+
+
+@pytest.mark.asyncio
+async def test_an_iframe_target_does_not_blame_its_own_parent_dialog() -> None:
+    child = escape('<button id="go" disabled>Go</button>', quote=True)
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(
+            _url(
+                '<div role="dialog" aria-modal="true" aria-label="Edit profile"><iframe srcdoc="',
+                child,
+                '"></iframe></div>',
+            )
+        )
+        result = await session.aexecute(
+            ClickAction(selector="iframe >> internal:control=enter-frame >> #go", timeout=500),
+            raise_on_failure=False,
+        )
+    assert not result.success
+    assert result.message.endswith("Element is disabled")
 
 
 @pytest.mark.asyncio

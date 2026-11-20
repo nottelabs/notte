@@ -1,7 +1,7 @@
 import asyncio
 import re
 import time
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Collection
 from contextlib import suppress
 from typing import Literal, TypedDict
 
@@ -467,20 +467,23 @@ async def _read_back(
         return None, field
 
 
-def _may_quote(action: InteractionAction, page_text: str) -> bool:
+def _may_quote(action: InteractionAction, page_text: str, secrets: Collection[str]) -> bool:
     """Whether the message of a failed `action` may quote the name of what is in the way, given `page_text`: all the
     text of the dialog or element that name is taken from. Never for an
     action that types a credential: a page can write what was typed into its own text, and a credential must not
-    reach a message that is logged and kept. Nor when the text holds what the action typed."""
+    reach a message that is logged and kept. Nor when the text holds what the action typed or an earlier
+    credential retained by the session."""
     value = getattr(action, "value", None)
     if isinstance(value, ValueWithPlaceholder):
         return False
     # whitespace as the page's text has it once cleaned: single spaces
     typed = " ".join(value.split()).casefold() if isinstance(value, str) else ""
-    return typed == "" or typed not in page_text.casefold()
+    protected = [typed, *(" ".join(secret.split()).casefold() for secret in secrets)]
+    folded = page_text.casefold()
+    return not any(literal and literal in folded for literal in protected)
 
 
-async def _in_the_way(located: list[Locator], action: InteractionAction) -> str:
+async def _in_the_way(located: list[Locator], action: InteractionAction, secrets: Collection[str]) -> str:
     """What is in the way of a failed action on the element `located` (`_interact`), for its message
     (`js/in_the_way.js`): `: a dialog covers the element: "Sign in to continue"`, `: an element covers the element:
     <div#banner> We use cookies...` or `: the element is inert`. Empty when nothing is found, or when the page cannot
@@ -497,12 +500,44 @@ async def _in_the_way(located: list[Locator], action: InteractionAction) -> str:
             if await located[0].count() != 1:
                 return ""
             found: dict[str, str] | None = await located[0].evaluate(_IN_THE_WAY)
+            target = await located[0].evaluate_handle("el => el")
+            try:
+                element = target.as_element()
+                if element is not None:
+                    frame = await element.owner_frame()
+                    point: list[float] = await element.evaluate(
+                        "el => { const r = el.getBoundingClientRect(); return [r.left+r.width/2, r.top+r.height/2] }"
+                    )
+                    while frame is not None and frame.parent_frame is not None:
+                        parent = frame.parent_frame
+                        owner = await frame.frame_element()
+                        try:
+                            transform = await owner.evaluate(_FRAME_SCROLL_CLIP)
+                            if transform is None:
+                                break
+                            point = [
+                                transform["originX"] + point[0] * transform["scaleX"],
+                                transform["originY"] + point[1] * transform["scaleY"],
+                            ]
+                            if not (
+                                transform["left"] <= point[0] < transform["right"]
+                                and transform["top"] <= point[1] < transform["bottom"]
+                            ):
+                                break
+                            obstruction: dict[str, str] | None = await owner.evaluate(_IN_THE_WAY, point)
+                            if obstruction is not None:
+                                found = obstruction
+                        finally:
+                            await _dispose_handle(owner)
+                        frame = parent
+            finally:
+                await _dispose_handle(target)
     except (Error, TimeoutError):
         return ""
     if found is None:
         return ""
     # the uncut text the name comes from: a name cut to a few words could show the start of a typed value
-    quoted = _may_quote(action, f"{found.get('name', '')} {found.get('text', '')}")
+    quoted = _may_quote(action, f"{found.get('name', '')} {found.get('text', '')}", secrets)
     match found["kind"]:
         case "dialog":
             return f': a dialog covers the element: "{found["name"]}"' if quoted else ": a dialog covers the element"
@@ -962,6 +997,7 @@ async def execute_interaction_action(
     before_click: Callable[[Locator], Awaitable[Callable[[ElementHandle], Awaitable[None]] | None]] | None = None,
     after_click: Callable[[bool], Awaitable[None]] | None = None,
     idle: IdleCheck | None = None,
+    secrets: Collection[str] = (),
 ) -> bool:
     """Interact with an element within `action.timeout`.
 
@@ -1010,10 +1046,10 @@ async def execute_interaction_action(
         if closed_error is not None:
             raise closed_error from e
         raise NotteTimeoutError(
-            message=f"Action timed out after {action.timeout}ms{await _in_the_way(located, action)}"
+            message=f"Action timed out after {action.timeout}ms{await _in_the_way(located, action, secrets)}"
         ) from e
     except _InTheWay as e:
-        raise e.error(await _in_the_way(located, action)) from None
+        raise e.error(await _in_the_way(located, action, secrets)) from None
     return True
 
 
@@ -1369,9 +1405,12 @@ async def execute(
     prev_snapshot: BrowserSnapshot | None = None,
     storage: BaseStorage | None = None,
     verbose: bool = False,
+    secrets: Collection[str] = (),
 ) -> bool:
     if not isinstance(action, ClickAction):
-        return await _execute(window, action, prev_snapshot=prev_snapshot, storage=storage, verbose=verbose)
+        return await _execute(
+            window, action, prev_snapshot=prev_snapshot, storage=storage, verbose=verbose, secrets=secrets
+        )
     # A click that opens a file chooser chooses no file: it fails. The page records the clicks that reach a file input
     # (Playwright reports the chooser after the click has returned); the chooser is intercepted, so that no native
     # dialog stays open.
@@ -1389,7 +1428,9 @@ async def execute(
         except Error:
             # navigating already: only the chooser is seen
             pass
-        retval = await _execute(window, action, prev_snapshot=prev_snapshot, storage=storage, verbose=verbose)
+        retval = await _execute(
+            window, action, prev_snapshot=prev_snapshot, storage=storage, verbose=verbose, secrets=secrets
+        )
         opened = len(choosers) > 0
         if retval and not opened and clicks is not None:
             with suppress(Error):  # the click navigated away
@@ -1417,6 +1458,7 @@ async def _execute(
     prev_snapshot: BrowserSnapshot | None,
     storage: BaseStorage | None,
     verbose: bool,
+    secrets: Collection[str] = (),
 ) -> bool:
     """Execute `action`, then wait until the page has reacted to it (`notte_browser.settle`): a navigation it started
     has rendered or loaded, a new tab it opened (after a click, a goto or a key press) is switched to and waited for.
@@ -1551,6 +1593,7 @@ async def _execute(
                         before_click=track_existing_tabs if isinstance(action, ClickAction) else None,
                         after_click=await_click_input if isinstance(action, ClickAction) else None,
                         idle=idle_ms if settle is not None and isinstance(action, ClickAction) else None,
+                        secrets=secrets,
                     )
                 except Error as error:
                     # A click handler can close its own tab before the driver acknowledges the click. Continue
