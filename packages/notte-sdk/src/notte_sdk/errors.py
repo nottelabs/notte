@@ -293,8 +293,7 @@ class SessionClosedError(NotteBaseError, RuntimeError):  # pyright: ignore[repor
     example after its idle timeout. Start a new session. It subclasses `RuntimeError`,
     which `session.page` raises for other connection failures, so existing handlers
     still catch it. Like every `NotteBaseError` it is also a `ValueError`: catch
-    `SessionClosedError` before a `ValueError` handler meant for a session that was
-    never started.
+    `SessionClosedError` before any broader `ValueError` handler.
     """
 
     def __init__(
