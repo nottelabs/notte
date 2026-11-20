@@ -115,6 +115,26 @@ def _origin(url: str) -> tuple[str, str] | None:
     return (parts.scheme, parts.netloc) if parts.scheme in ("http", "https") else None
 
 
+def same_origin(page: Page, request: Request) -> bool:
+    """Whether `request` comes from `page` or one of its same-origin frames (whose DOM is watched too). A frame of
+    another origin (an ad, a widget) is not watched, and its requests are not waited for."""
+    try:
+        frame = request.frame
+    except Error:
+        return False
+    if frame is page.main_frame:
+        return True
+    # a frame's navigation is counted by where it goes, its requests by where it is
+    origin = _origin(request.url if request.is_navigation_request() else frame.url)
+    # about:blank and srcdoc frames have the page's origin
+    return origin is None or origin == _origin(page.url)
+
+
+def tracked(page: Page, request: Request) -> bool:
+    """Whether `request` is one the page is waited for: of a tracked type, from the page or a same-origin frame."""
+    return request.resource_type in TRACKED_REQUESTS and same_origin(page, request)
+
+
 class _PageState(TypedDict):
     elapsed: float
     inputAt: float | None
@@ -238,6 +258,21 @@ class PageSettle:
         """The action has ended: the grace and the caps count from now."""
         self._began = time.perf_counter()
 
+    async def idle_ms(self) -> float | None:
+        """For how long nothing has happened on the page (ms): no DOM or URL change the tracker counts, no request
+        started or ended, none in flight. None while a request is in flight, or when the document is not tracked (it
+        is navigating, or the tracker could not start)."""
+        if self._tracker is None or self._in_flight or self._opening:
+            return None
+        try:
+            page: _PageState = await self._tracker.evaluate("t => t.state()")
+        except Error:
+            return None
+        idle = page["elapsed"] if page["last"] is None else page["elapsed"] - page["last"]
+        if self._last_request is not None:
+            idle = min(idle, (time.perf_counter() - self._last_request) * 1000)
+        return idle
+
     def navigation_requested_after(self, input_at: float | None) -> bool:
         """Whether a main-frame navigation was reported after the click's native input notification."""
         return (
@@ -263,7 +298,7 @@ class PageSettle:
         # A context request seeded before the page event can also arrive on the page afterward.
         if request in self._in_flight:
             return
-        if request.resource_type not in TRACKED_REQUESTS or not self._same_origin(request):
+        if not tracked(self.page, request):
             return
         if request.is_navigation_request() and request.frame is self.page.main_frame:
             # Exposed input bindings are queued tasks. Attribute navigation in the same queue so batched protocol
@@ -297,20 +332,6 @@ class PageSettle:
     def _fragment_navigated(self) -> None:
         self._navigation_started_at = time.perf_counter()
         self._navigation_request = None
-
-    def _same_origin(self, request: Request) -> bool:
-        """Whether `request` comes from the page or one of its same-origin frames (whose DOM is watched too). A frame
-        of another origin (an ad, a widget) is not watched, and its requests are not waited for."""
-        try:
-            frame = request.frame
-        except Error:
-            return False
-        if frame is self.page.main_frame:
-            return True
-        # a frame's navigation is counted by where it goes, its requests by where it is
-        origin = _origin(request.url if request.is_navigation_request() else frame.url)
-        # about:blank and srcdoc frames have the page's origin
-        return origin is None or origin == _origin(self.page.url)
 
     def _request_ended(self, request: Request) -> None:
         if self._in_flight.pop(request, False):
