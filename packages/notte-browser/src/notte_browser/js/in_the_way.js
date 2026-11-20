@@ -40,8 +40,10 @@
         }
         const by = dialog.getAttribute("aria-labelledby");
         if (by) {
+            // the ids refer to the dialog's own tree: its shadow root, or the document
+            const root = dialog.getRootNode();
             const ids = by.split(/\s+/).filter(Boolean);
-            const labels = clean(ids.map((id) => dialog.ownerDocument.getElementById(id)?.innerText).join(" "));
+            const labels = clean(ids.map((id) => root.getElementById(id)?.innerText).join(" "));
             if (labels) {
                 return cut(labels);
             }
@@ -59,15 +61,9 @@
         }
         return [...cover.querySelectorAll(DIALOG)].find(shown) || null;
     };
-    const describe = (cover) => {
-        const dialog = dialogOf(cover);
-        if (dialog !== null) {
-            return { kind: "dialog", name: name(dialog) };
-        }
-        const id = cover.id ? `#${cover.id}` : "";
-        return { kind: "element", name: clean(`<${cover.localName}${id}> ${cut(clean(cover.innerText))}`) };
-    };
 
+    // the element the page shows at the center of `el` when that is another element
+    let cover = null;
     const rect = el.getBoundingClientRect();
     const x = rect.left + rect.width / 2;
     const y = rect.top + rect.height / 2;
@@ -81,16 +77,29 @@
             hit = deeper;
         }
         if (hit !== null && !within(hit, el) && !within(el, hit)) {
-            return describe(hit);
+            cover = hit;
         }
     }
+    const dialog = cover === null ? null : dialogOf(cover);
+    if (dialog !== null) {
+        return { kind: "dialog", name: name(dialog) };
+    }
+    // The hit test skips an inert element and returns what is behind it, which is not in its way: the inert part is.
+    // A modal dialog escapes the inertness of its ancestors, which then are not looked at.
     for (let current = el; current !== null; current = parent(current)) {
         if (current.inert === true) {
-            const dialog = [...el.ownerDocument.querySelectorAll(DIALOG)].find(
+            const outside = [...el.ownerDocument.querySelectorAll(DIALOG)].find(
                 (candidate) => shown(candidate) && !within(candidate, current),
             );
-            return dialog ? { kind: "dialog", name: name(dialog) } : { kind: "inert", name: "" };
+            return outside ? { kind: "dialog", name: name(outside) } : { kind: "inert", name: "" };
         }
+        if (current.matches(":modal")) {
+            break;
+        }
+    }
+    if (cover !== null) {
+        const id = cover.id ? `#${cover.id}` : "";
+        return { kind: "element", name: clean(`<${cover.localName}${id}> ${cut(clean(cover.innerText))}`) };
     }
     return null;
 }
