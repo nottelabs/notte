@@ -84,7 +84,7 @@ from notte_sdk._transport import TransportError
 from notte_sdk.endpoints.base import NotteEndpoint
 from notte_sdk.endpoints.files import AsyncRemoteFileStorage, RemoteFileStorage
 from notte_sdk.endpoints.page import AsyncPageClient, PageClient
-from notte_sdk.errors import NotteAPIError
+from notte_sdk.errors import NotteAPIError, SessionClosedError
 from notte_sdk.websockets.base import WebsocketService
 from notte_sdk.websockets.jupyter import display_image_in_notebook
 
@@ -676,6 +676,19 @@ def _forget_stopped_session(session: "RemoteSession | AsyncRemoteSession") -> No
         session._async_playwright_page = None  # pyright: ignore [reportPrivateUsage]
 
 
+def _closed_session_error(response: SessionResponse) -> SessionClosedError | None:
+    """The error for a page connection that failed because the session closed; None otherwise."""
+    if response.status not in ("closed", "error", "timed_out"):
+        return None
+    return SessionClosedError(
+        session_id=response.session_id,
+        status=response.status,
+        close_reason=response.close_reason,
+        idle_timeout_minutes=response.idle_timeout_minutes,
+        max_duration_minutes=response.max_duration_minutes,
+    )
+
+
 def _already_stopped(error: Exception) -> bool:
     return "already stopped" in str(error).lower() or "already closed" in str(error).lower()
 
@@ -772,6 +785,13 @@ async def _async_page(session: "AsyncRemoteSession", cdp_url: Callable[[], Await
         session._async_playwright_page = session._async_playwright_browser.contexts[0].pages[0]  # pyright: ignore [reportPrivateUsage]
         return session._async_playwright_page  # pyright: ignore [reportPrivateUsage]
     except Exception as e:
+        try:
+            closed = _closed_session_error(await session.status())
+        except Exception:
+            # The status is only read to explain the failure.
+            closed = None
+        if closed is not None:
+            raise closed from e
         raise RuntimeError("Failed to access the async playwright page from CDP") from e
 
 
@@ -1443,6 +1463,7 @@ class RemoteSession(SyncResource):
         Raises:
             ImportError: If playwright is not installed. Install with `pip install notte-sdk[playwright]`
             ValueError: If the session hasn't been started yet (no session_id available).
+            SessionClosedError: If the session closed (for example after its idle timeout). Start a new session.
         """
         if not _playwright_available:
             raise ImportError("Playwright not installed. Use `pip install notte-sdk[playwright]` to install it.")
@@ -1470,6 +1491,13 @@ class RemoteSession(SyncResource):
             self._playwright_page = self._playwright_browser.contexts[0].pages[0]
             return self._playwright_page
         except Exception as e:
+            try:
+                closed = _closed_session_error(self.status())
+            except Exception:
+                # The status is only read to explain the failure.
+                closed = None
+            if closed is not None:
+                raise closed from e
             raise RuntimeError("Failed to access the playwright page from CDP") from e
 
     # #######################################################################
@@ -2479,6 +2507,7 @@ class AsyncRemoteSession:
 
         Raises:
             ImportError: If playwright is not installed. Install with `pip install notte-sdk[playwright]`
+            SessionClosedError: If the session closed (for example after its idle timeout). Start a new session.
         """
         return await _async_page(self, self.cdp_url)
 

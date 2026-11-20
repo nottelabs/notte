@@ -109,6 +109,7 @@ export function createReference(root = sdkRoot) {
     WaitAction: "Wait for a specified duration in browser automation.",
     WaitActionOutput: "Browser wait-action fields returned in execution responses.",
     NotteCoreActionsActionsWaitAction: "Browser wait-action fields accepted by the execute endpoint.",
+    SessionClosedError: "Error thrown by session.page() when the session is closed, with its close reason.",
     ...Object.fromEntries(["files", "functions", "sessions", "vaults", "personas", "profiles"].map(name =>
       [`client.${name}`, `Method signatures, arguments, and return types for client.${name} API operations.`])),
   };

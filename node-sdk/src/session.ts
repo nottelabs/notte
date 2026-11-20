@@ -36,7 +36,15 @@ import {
   sessionStatus,
   sessionStop,
 } from '@/lib/client/sdk.gen';
-import { ActionExecutionError, CaptchaRejectedError, EvaluateJsNoDataError, NotteAPIError, NotteTimeoutError, sleep } from '@/errors';
+import {
+  ActionExecutionError,
+  CaptchaRejectedError,
+  EvaluateJsNoDataError,
+  NotteAPIError,
+  NotteTimeoutError,
+  SessionClosedError,
+  sleep,
+} from '@/errors';
 import type { ExecuteAction } from '@/actions';
 import { executeWithCaptcha, type CaptchaExecutionResponse } from '@/captcha';
 import { buildFetchScript, responseFromEvaluated, type PageFetchOptions, type PageFetchResponse } from '@/page-fetch';
@@ -73,6 +81,20 @@ export const CLUSTER_OVERLOAD_RETRY_DELAY_MS = 30_000;
 export const CAPTCHA_SOLVE_TIMEOUT_MS = 100_000;
 
 export type PerceptionType = NonNullable<ObserveRequest['perception_type']>;
+
+/** The error for a page connection that failed because the session closed; null otherwise. */
+function closedSessionError(response: SessionResponse, cause: unknown): SessionClosedError | null {
+  if (response.status !== 'closed' && response.status !== 'error' && response.status !== 'timed_out') {
+    return null;
+  }
+  return new SessionClosedError(
+    response.session_id,
+    response.status,
+    response.close_reason ?? null,
+    { idleTimeoutMinutes: response.idle_timeout_minutes, maxDurationMinutes: response.max_duration_minutes },
+    { cause },
+  );
+}
 
 /** Migration guide for the observe options removed on December 1, 2026. */
 const OBSERVE_MIGRATION_URL = 'https://docs.notte.cc/features/sessions/observe-migration';
@@ -845,6 +867,15 @@ export class Session {
       this.playwrightPage = page;
       return page;
     } catch (error) {
+      let closed: SessionClosedError | null = null;
+      try {
+        closed = closedSessionError(await this.status(), error);
+      } catch {
+        // The status is only read to explain the failure.
+      }
+      if (closed) {
+        throw closed;
+      }
       throw new Error(`Failed to access the playwright page from CDP: ${error instanceof Error ? error.message : String(error)}`, {
         cause: error,
       });
