@@ -153,6 +153,27 @@ async def test_a_credential_fill_does_not_quote_the_page() -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("external_label", [False, True])
+async def test_a_dialog_that_shows_a_long_typed_text_is_not_quoted_in_part(external_label: bool) -> None:
+    """The name of a dialog is cut to a few words: the typed text is looked for in all the dialog's text, so that
+    the cut name does not show the start of it."""
+    typed = "one two three four five six seven eight nine"
+    dialog = ECHOING
+    if external_label:
+        dialog = '<p id="echo">Results for</p>' + ECHOING.replace('<p id="echo">Results for</p>', "").replace(
+            'role="dialog"', 'role="dialog" aria-labelledby="echo"'
+        )
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(_url(STYLE, FORM.format(inert=""), dialog))
+        result = await session.aexecute(FillAction(selector="#q", value=typed, timeout=3000), raise_on_failure=False)
+
+    assert not result.success
+    assert "The field stayed empty after typing: a dialog covers the element" in result.message
+    assert "Results for" not in result.message
+    assert "one two" not in result.message
+
+
+@pytest.mark.asyncio
 async def test_a_dialog_that_shows_the_typed_text_is_not_quoted() -> None:
     async with NotteSession(headless=True) as session:
         message = await _fill(session, _url(STYLE, FORM.format(inert=""), ECHOING))

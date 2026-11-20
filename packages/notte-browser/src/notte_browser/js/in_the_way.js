@@ -36,7 +36,7 @@
     const name = (dialog) => {
         const label = clean(dialog.getAttribute("aria-label"));
         if (label) {
-            return cut(label);
+            return label;
         }
         const by = dialog.getAttribute("aria-labelledby");
         if (by) {
@@ -45,14 +45,17 @@
             const ids = by.split(/\s+/).filter(Boolean);
             const labels = clean(ids.map((id) => root.getElementById(id)?.innerText).join(" "));
             if (labels) {
-                return cut(labels);
+                return labels;
             }
         }
         const heading = [...dialog.querySelectorAll('h1, h2, h3, h4, h5, h6, [role="heading"]')].find(
             (candidate) => clean(candidate.innerText),
         );
-        return cut(clean(heading ? heading.innerText : dialog.innerText));
+        return clean(heading ? heading.innerText : dialog.innerText);
     };
+    // All the text a quoted name is taken from, uncut: the caller looks in it for what the action typed before it
+    // quotes any of it (a name cut to a few words could still show the start of a typed value)
+    const text = (node) => clean(`${name(node)} ${node.innerText}`);
     const dialogOf = (cover) => {
         for (let current = cover; current !== null; current = parent(current)) {
             if (current.matches(DIALOG) && shown(current)) {
@@ -82,7 +85,7 @@
     }
     const dialog = cover === null ? null : dialogOf(cover);
     if (dialog !== null) {
-        return { kind: "dialog", name: name(dialog) };
+        return { kind: "dialog", name: cut(name(dialog)), text: text(dialog) };
     }
     // The hit test skips an inert element and returns what is behind it, which is not in its way: the inert part is.
     // A modal dialog escapes the inertness of its ancestors, which then are not looked at.
@@ -94,7 +97,9 @@
             const outside = [...el.ownerDocument.querySelectorAll(DIALOG)].find(
                 (candidate) => shown(candidate) && modal(candidate) && !within(candidate, current),
             );
-            return outside ? { kind: "dialog", name: name(outside) } : { kind: "inert", name: "" };
+            return outside
+                ? { kind: "dialog", name: cut(name(outside)), text: text(outside) }
+                : { kind: "inert", name: "", text: "" };
         }
         if (current.matches(":modal")) {
             break;
@@ -102,7 +107,11 @@
     }
     if (cover !== null) {
         const id = cover.id ? `#${cover.id}` : "";
-        return { kind: "element", name: clean(`<${cover.localName}${id}> ${cut(clean(cover.innerText))}`) };
+        return {
+            kind: "element",
+            name: clean(`<${cover.localName}${id}> ${cut(clean(cover.innerText))}`),
+            text: clean(`<${cover.localName}${id}> ${cover.innerText}`),
+        };
     }
     return null;
 }
