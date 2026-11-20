@@ -467,17 +467,22 @@ async def _read_back(
         return None, field
 
 
-async def _in_the_way(element: ElementHandle | Locator) -> str:
-    """What is in the way of a failed action on `element`, for its message (`js/in_the_way.js`): `: a dialog covers
-    the element: "Sign in to continue"`, `: an element covers the element: <div#banner> We use cookies...` or
-    `: the element is inert`. Empty when nothing is found, or when the page cannot be asked (it navigated, the
-    element is gone) within `_IN_THE_WAY_S`. A locator that finds no element (an action that timed out waiting for
-    it) is not waited for."""
+async def _in_the_way(located: list[Locator]) -> str:
+    """What is in the way of a failed action on the element `located` (`_interact`), for its message
+    (`js/in_the_way.js`): `: a dialog covers the element: "Sign in to continue"`, `: an element covers the element:
+    <div#banner> We use cookies...` or `: the element is inert`. Empty when nothing is found, or when the page cannot
+    be asked (it navigated, the element is gone) within `_IN_THE_WAY_S`. An element that was never located, or a
+    locator that finds none (an action that timed out waiting for it), is not waited for.
+
+    Only called once the action's timeout no longer applies (`execute_interaction_action`): a look inside it could
+    be cut by the deadline, and the timeout would then replace the failure."""
+    if not located:
+        return ""
     try:
         async with asyncio.timeout(_IN_THE_WAY_S):
-            if isinstance(element, Locator) and await element.count() != 1:
+            if await located[0].count() != 1:
                 return ""
-            found: dict[str, str] | None = await element.evaluate(_IN_THE_WAY)
+            found: dict[str, str] | None = await located[0].evaluate(_IN_THE_WAY)
     except (Error, TimeoutError):
         return ""
     if found is None:
@@ -491,10 +496,21 @@ async def _in_the_way(element: ElementHandle | Locator) -> str:
             return ": the element is inert"
 
 
-async def _not_kept(window: BrowserWindow, field: ElementHandle, value: str) -> TextNotKeptError:
+class _InTheWay(Exception):
+    """A failure of an action on a located element whose message should end with what is in the element's way
+    (`_in_the_way`), raised inside the action's timeout. `error` builds the failure from that suffix, which
+    `execute_interaction_action` looks up once the timeout no longer applies."""
+
+    def __init__(self, error: Callable[[str], ActionExecutionError]) -> None:
+        super().__init__()
+        self.error: Callable[[str], ActionExecutionError] = error
+
+
+def _not_kept(window: BrowserWindow, value: str) -> _InTheWay:
     # the text is not quoted: it can be a secret
     reason = "The field stayed empty after typing" if value == "" else "The field holds other text than the typed text"
-    return TextNotKeptError(window.page.url, reason=reason + await _in_the_way(field))
+    url = window.page.url
+    return _InTheWay(lambda in_the_way: TextNotKeptError(url, reason=reason + in_the_way))
 
 
 async def _retype(
@@ -517,9 +533,9 @@ async def _retype(
     await field.select_text(force=True, timeout=budget.remaining_ms())
     await window.page.keyboard.press("Backspace")
     await field.type(text, delay=_FILL_FALLBACK_KEY_DELAY_MS, timeout=budget.remaining_ms())
-    value, field = await _read_back(field, locator, handles)
+    value, _ = await _read_back(field, locator, handles)
     if value is not None and not _field_keeps(text, value):
-        raise await _not_kept(window, field, value)
+        raise _not_kept(window, value)
 
 
 async def _check_kept(
@@ -536,7 +552,7 @@ async def _check_kept(
     if value is None or _field_keeps(text, value):
         return
     if "\t" in text:
-        raise await _not_kept(window, field, value)
+        raise _not_kept(window, value)
     await _retype(window, locator, field, text, budget, handles)
 
 
@@ -931,7 +947,7 @@ async def execute_interaction_action(
     scope = asyncio.timeout_at(deadline)
     clicked_page = window.page if after_click is not None else None
     closed_error: Error | None = None
-    # the element once located, so that a timeout can say what is in its way
+    # the element once located, so that a failure can say what is in its way
     located: list[Locator] = []
     try:
         async with scope:
@@ -965,8 +981,9 @@ async def execute_interaction_action(
             raise
         if closed_error is not None:
             raise closed_error from e
-        in_the_way = await _in_the_way(located[0]) if located else ""
-        raise NotteTimeoutError(message=f"Action timed out after {action.timeout}ms{in_the_way}") from e
+        raise NotteTimeoutError(message=f"Action timed out after {action.timeout}ms{await _in_the_way(located)}") from e
+    except _InTheWay as e:
+        raise e.error(await _in_the_way(located)) from None
     return True
 
 
@@ -1177,8 +1194,9 @@ async def _interact(
         # Interaction actions
         case ClickAction():
             if await _stays_disabled(locator, action, budget):
-                raise ActionExecutionError(
-                    action.id, window.page.url, reason="Element is disabled" + await _in_the_way(locator)
+                url = window.page.url
+                raise _InTheWay(
+                    lambda in_the_way: ActionExecutionError(action.id, url, reason="Element is disabled" + in_the_way)
                 )
             # the JS click that reports its input, when the click's input is tracked
             js_click_with_input = None if before_click is None else await before_click(locator)

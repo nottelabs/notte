@@ -13,6 +13,7 @@ import notte_browser.execution as execution_module
 import pytest
 from notte_browser.session import NotteSession
 from notte_core.actions import ClickAction, FillAction
+from notte_core.errors import ActionExecutionError, TextNotKeptError
 
 # the page: a field and a button, both in a part the dialog made inert, as a page does behind a modal dialog
 FORM = """
@@ -58,8 +59,35 @@ NATIVE = """
 BANNER = """
 <div id="cookie-banner" class="backdrop">This site uses cookies to improve your experience.</div>
 """
+# a dialog in a shadow root (styled there: the document's styles do not reach it), labelled by an element of that
+# root, while the document has an element with the same id
+SHADOW_LABELLED_BY = (
+    """
+<p id="title">Our latest offers</p>
+<x-modal></x-modal>
+<script>
+  const root = document.querySelector('x-modal').attachShadow({ mode: 'open' });
+  root.innerHTML = `"""
+    + STYLE
+    + """<div class="backdrop"><div class="dialog" role="dialog" aria-modal="true"
+    aria-labelledby="title"><p id="title">Verify your age</p><button>Dismiss</button></div></div>`;
+</script>
+"""
+)
+# a background layer behind the page, as a layout with a full-page backdrop image has; the main part sits over it
+BACKGROUND = """
+<style>#bg { position: fixed; inset: 0; background: #eee } #main { position: relative; z-index: 1 }</style>
+<div id="bg">Background layer</div>
+"""
+# a native modal dialog inside a part the page made inert: the dialog escapes the inertness and takes input
+MODAL_IN_INERT = """
+<div inert><dialog id="d"><input id="q" oninput="this.value = ''"><button>Save</button></dialog></div>
+<script>document.getElementById('d').showModal()</script>
+"""
 # a field that keeps nothing, with nothing in its way
 REFUSING = """<input id="q" oninput="this.value = ''">"""
+# a page that answers the look at what is in the way only after the action's deadline
+SLOW_LOOK = "(el) => new Promise((resolve) => setTimeout(() => resolve(null), 3000))"
 
 
 def _url(*parts: str) -> str:
@@ -98,6 +126,15 @@ async def test_a_fill_behind_a_native_modal_dialog_names_it() -> None:
 
 
 @pytest.mark.asyncio
+async def test_a_dialog_in_a_shadow_root_is_named_by_the_label_of_its_own_root() -> None:
+    """`aria-labelledby` refers to ids of the dialog's own tree: the document's element with the same id is another
+    element."""
+    async with NotteSession(headless=True) as session:
+        message = await _fill(session, _url(FORM.format(inert="inert"), SHADOW_LABELLED_BY))
+    assert 'a dialog covers the element: "Verify your age"' in message
+
+
+@pytest.mark.asyncio
 async def test_a_fill_in_an_inert_part_with_no_dialog_shown_says_so() -> None:
     async with NotteSession(headless=True) as session:
         message = await _fill(session, _url(FORM.format(inert="inert")))
@@ -105,10 +142,62 @@ async def test_a_fill_in_an_inert_part_with_no_dialog_shown_says_so() -> None:
 
 
 @pytest.mark.asyncio
+async def test_a_fill_in_an_inert_part_over_a_background_does_not_name_the_background() -> None:
+    """The hit test skips an inert element and returns what is behind it: that is not in the element's way."""
+    async with NotteSession(headless=True) as session:
+        message = await _fill(session, _url(BACKGROUND, FORM.format(inert="inert")))
+    assert message.endswith("The field stayed empty after typing: the element is inert")
+
+
+@pytest.mark.asyncio
+async def test_a_fill_in_a_modal_dialog_inside_an_inert_part_is_not_called_inert() -> None:
+    """A modal dialog escapes the inertness of its ancestors: a field in it takes input, and a fill it refuses keeps
+    its message."""
+    async with NotteSession(headless=True) as session:
+        message = await _fill(session, _url(MODAL_IN_INERT))
+    assert message.endswith("The field stayed empty after typing")
+
+
+@pytest.mark.asyncio
 async def test_a_fill_that_a_field_refuses_keeps_its_message() -> None:
     async with NotteSession(headless=True) as session:
         message = await _fill(session, _url(REFUSING))
     assert message.endswith("The field stayed empty after typing")
+
+
+@pytest.mark.parametrize(
+    ("page", "action", "error", "reason"),
+    [
+        (
+            REFUSING,
+            FillAction(selector="#q", value="Lisbon", timeout=2000),
+            TextNotKeptError,
+            "The field stayed empty after typing",
+        ),
+        (
+            '<button id="go" disabled>Go</button>',
+            ClickAction(selector="#go", timeout=1000),
+            ActionExecutionError,
+            "Element is disabled",
+        ),
+    ],
+    ids=["fill", "click"],
+)
+@pytest.mark.asyncio
+async def test_a_look_that_outlasts_the_action_deadline_keeps_the_failure(
+    monkeypatch: pytest.MonkeyPatch, page: str, action: FillAction | ClickAction, error: type[Exception], reason: str
+) -> None:
+    """The look at what is in the way runs once the action's timeout no longer applies: a page that answers it
+    slowly cannot turn the failure into a timeout. The look's own bound is widened here so that the page's answer,
+    not the bound, ends it: a fill typed key by key up to the deadline leaves less than the bound."""
+    monkeypatch.setattr(execution_module, "_IN_THE_WAY", SLOW_LOOK)
+    monkeypatch.setattr(execution_module, "_IN_THE_WAY_S", 10.0)
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(_url(page))
+        result = await session.aexecute(action, raise_on_failure=False)
+    assert not result.success
+    assert isinstance(result.exception, error), result.message
+    assert result.message.endswith(reason)
 
 
 @pytest.mark.asyncio
