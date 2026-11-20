@@ -37,7 +37,7 @@ from notte_core.actions import (
     # WriteFileAction,
 )
 from notte_core.config import config
-from notte_core.credentials.types import get_str_value
+from notte_core.credentials.types import ValueWithPlaceholder, get_str_value
 from notte_core.dom_tree import DomNode, NodeSelectors
 from notte_core.errors import (
     ActionExecutionError,
@@ -467,12 +467,24 @@ async def _read_back(
         return None, field
 
 
-async def _in_the_way(located: list[Locator]) -> str:
+def _may_quote(action: InteractionAction, page_text: str) -> bool:
+    """Whether the message of a failed `action` may quote `page_text` (the name of what is in the way). Never for an
+    action that types a credential: a page can write what was typed into its own text, and a credential must not
+    reach a message that is logged and kept. Nor when the text holds what the action typed."""
+    value = getattr(action, "value", None)
+    if isinstance(value, ValueWithPlaceholder):
+        return False
+    typed = value.strip().casefold() if isinstance(value, str) else ""
+    return typed == "" or typed not in page_text.casefold()
+
+
+async def _in_the_way(located: list[Locator], action: InteractionAction) -> str:
     """What is in the way of a failed action on the element `located` (`_interact`), for its message
     (`js/in_the_way.js`): `: a dialog covers the element: "Sign in to continue"`, `: an element covers the element:
     <div#banner> We use cookies...` or `: the element is inert`. Empty when nothing is found, or when the page cannot
     be asked (it navigated, the element is gone) within `_IN_THE_WAY_S`. An element that was never located, or a
-    locator that finds none (an action that timed out waiting for it), is not waited for.
+    locator that finds none (an action that timed out waiting for it), is not waited for. The page's text is left
+    out when the action typed a credential or the text holds what it typed (`_may_quote`).
 
     Only called once the action's timeout no longer applies (`execute_interaction_action`): a look inside it could
     be cut by the deadline, and the timeout would then replace the failure."""
@@ -487,11 +499,12 @@ async def _in_the_way(located: list[Locator]) -> str:
         return ""
     if found is None:
         return ""
+    quoted = _may_quote(action, found.get("name", ""))
     match found["kind"]:
         case "dialog":
-            return f': a dialog covers the element: "{found["name"]}"'
+            return f': a dialog covers the element: "{found["name"]}"' if quoted else ": a dialog covers the element"
         case "element":
-            return f": an element covers the element: {found['name']}"
+            return f": an element covers the element{': ' + found['name'] if quoted else ''}"
         case _:
             return ": the element is inert"
 
@@ -981,9 +994,11 @@ async def execute_interaction_action(
             raise
         if closed_error is not None:
             raise closed_error from e
-        raise NotteTimeoutError(message=f"Action timed out after {action.timeout}ms{await _in_the_way(located)}") from e
+        raise NotteTimeoutError(
+            message=f"Action timed out after {action.timeout}ms{await _in_the_way(located, action)}"
+        ) from e
     except _InTheWay as e:
-        raise e.error(await _in_the_way(located)) from None
+        raise e.error(await _in_the_way(located, action)) from None
     return True
 
 
