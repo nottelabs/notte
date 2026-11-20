@@ -3,12 +3,17 @@
 // started) of the first and last change, of the last DOM change and of the last URL change (`currententrychange`
 // fires within `pushState`, before the mutations of a render in the same task are reported), and of the last user
 // input (a trusted pointerdown or keydown: the action itself), which resets the changes: what the page did while the
-// action waited for its element is not what the action did.
+// action waited for its element is not what the action did. `activity` is the last DOM change of any kind, counted
+// or not (`PageSettle.quiet_ms`).
 () => {
     const roots = NESTED_ROOTS;
     const t0 = performance.now();
     const now = () => performance.now() - t0;
-    const tracker = { first: null, last: null, dom: null, urlAt: null, inputAt: null, url: location.href };
+    // `activity`: the last DOM change of any kind but inline `style` (a clock's ticks included): the page is doing
+    // something, whether or not it counts as the action's effect
+    const tracker = {
+        first: null, last: null, dom: null, urlAt: null, inputAt: null, activity: null, url: location.href,
+    };
     const changed = () => {
         const at = now();
         if (tracker.first === null) tracker.first = at;
@@ -59,13 +64,16 @@
     const counts = (mutations) => {
         const touched = new Set();
         let structural = false;
+        let active = false;
         for (const m of mutations) {
             // inline `style` changes (animations) do not count
             if (m.type === "attributes" && m.attributeName === "style") continue;
+            active = true;
             const nodes = m.type === "childList" ? [...m.addedNodes, ...m.removedNodes] : [];
             if (nodes.some((node) => node.nodeType !== Node.TEXT_NODE)) structural = true;
             else touched.add(m.type === "characterData" ? (m.target.parentNode ?? m.target) : m.target);
         }
+        if (active) tracker.activity = now();
         let fresh = false;
         for (const node of touched) {
             const seen = (repeats.get(node) ?? 0) + 1;
@@ -100,8 +108,8 @@
     const stopUrl = (WATCH_URL)(urlChanged);
     tracker.state = () => {
         urlChanged();
-        const { first, last, dom, urlAt, inputAt } = tracker;
-        return { elapsed: now(), first, last, dom, urlAt, inputAt };
+        const { first, last, dom, urlAt, inputAt, activity } = tracker;
+        return { elapsed: now(), first, last, dom, urlAt, inputAt, activity };
     };
     tracker.dispose = () => {
         observer.disconnect();

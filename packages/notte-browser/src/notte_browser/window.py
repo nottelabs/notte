@@ -212,16 +212,33 @@ class BrowserWindow:
         # Context events can report a tab's fetch before its page event installs a tracker.
         self._new_tab_requests: set[Request] = set()
         self._tabs_context: BrowserContext | None = None
-        # the requests of a type the page is waited for (`notte_browser.settle`) that are in flight, and when each
-        # started, whatever started them: an action's settle only knows the ones started since it began
+        # the requests of a type the page is waited for (`notte_browser.settle`) that are in flight in the context, and
+        # when each started, whatever started them: an action's settle only knows the ones started since it began, and
+        # a tab's run from before it is selected. Recorded on the context: a page's listeners would miss them
         self._requests_in_flight: dict[Request, float] = {}
+        self._requests_context: BrowserContext | None = None
         page.set_default_timeout(config.timeout_default_ms)
         # Only final main-document responses establish navigation/raw-file state.
         self.page_callbacks["response"] = self._record_navigation_response  # pyright: ignore[reportArgumentType]
-        self.page_callbacks["request"] = self._request_started  # pyright: ignore[reportArgumentType]
-        self.page_callbacks["requestfinished"] = self._request_ended  # pyright: ignore[reportArgumentType]
-        self.page_callbacks["requestfailed"] = self._request_ended  # pyright: ignore[reportArgumentType]
         self.apply_page_callbacks()
+        self._record_requests(page.context)
+
+    def _record_requests(self, context: BrowserContext) -> None:
+        if context is self._requests_context:
+            return
+        self._forget_requests()
+        self._requests_context = context
+        context.on("request", self._request_started)
+        context.on("requestfinished", self._request_ended)
+        context.on("requestfailed", self._request_ended)
+
+    def _forget_requests(self) -> None:
+        if self._requests_context is not None:
+            _ = self._requests_context.remove_listener("request", self._request_started)
+            _ = self._requests_context.remove_listener("requestfinished", self._request_ended)
+            _ = self._requests_context.remove_listener("requestfailed", self._request_ended)
+            self._requests_context = None
+        self._requests_in_flight.clear()
 
     def _request_started(self, request: Request) -> None:
         if request.resource_type in TRACKED_REQUESTS:
@@ -293,6 +310,7 @@ class BrowserWindow:
 
     async def close(self) -> None:
         await self._forget_new_tabs()
+        self._forget_requests()
         if self.on_close is not None:
             await self.on_close()
         await self._close_all_cdp_sessions()
@@ -306,6 +324,7 @@ class BrowserWindow:
         _ = self._cdp_sessions.pop(id(self._page), None)
         self._page = page
         self.apply_page_callbacks()
+        self._record_requests(page.context)
 
     async def watch_new_tabs(self, watch: bool) -> None:
         """Called as an action starts: with `watch`, record the tabs opened from now on, until the next action. A page
