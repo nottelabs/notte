@@ -13,6 +13,7 @@ import notte_browser.execution as execution_module
 import pytest
 from notte_browser.session import NotteSession
 from notte_core.actions import ClickAction, FillAction
+from notte_core.credentials.types import ValueWithPlaceholder
 from notte_core.errors import ActionExecutionError, TextNotKeptError
 
 # the page: a field and a button, both in a part the dialog made inert, as a page does behind a modal dialog
@@ -116,6 +117,49 @@ async def test_a_fill_that_stays_empty_names_the_dialog_over_the_field(dialog: s
     async with NotteSession(headless=True) as session:
         message = await _fill(session, _url(STYLE, FORM.format(inert="inert"), dialog))
     assert f'The field stayed empty after typing: a dialog covers the element: "{name}"' in message
+
+
+# a dialog that shows what was typed into the field behind it, as a suggestions panel or a page that logs input does
+ECHOING = """
+<div class="backdrop"><div class="dialog" role="dialog" aria-modal="true"><p id="echo">Results for</p></div></div>
+<script>
+  let longest = "";
+  document.addEventListener("input", (event) => {
+    // the longest text the field held: it is set at once, then typed key by key
+    if (event.target.value.length > longest.length) longest = event.target.value;
+    document.getElementById("echo").textContent = "Results for " + longest;
+    event.target.value = "";
+  }, true);
+</script>
+"""
+
+
+@pytest.mark.asyncio
+async def test_a_credential_fill_does_not_quote_the_page() -> None:
+    """A page can write what was typed into its own text: the message of a fill that typed a credential names no
+    page text at all, whatever the dialog says."""
+    secret = ValueWithPlaceholder("hunter2-s3cret", "<password>")
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(_url(STYLE, FORM.format(inert=""), ECHOING))
+        result = await session.aexecute(FillAction(selector="#q", value=secret, timeout=3000), raise_on_failure=False)
+        shown = await session.window.page.locator("#echo").text_content()
+
+    assert not result.success
+    # the page did show the credential, and the message has none of it
+    assert shown is not None and "hunter2-s3cret" in shown
+    assert "The field stayed empty after typing: a dialog covers the element" in result.message
+    assert "hunter2" not in result.message
+    assert "Results for" not in result.message
+
+
+@pytest.mark.asyncio
+async def test_a_dialog_that_shows_the_typed_text_is_not_quoted() -> None:
+    async with NotteSession(headless=True) as session:
+        message = await _fill(session, _url(STYLE, FORM.format(inert=""), ECHOING))
+
+    assert "The field stayed empty after typing: a dialog covers the element" in message
+    assert "Lisbon" not in message
+    assert "Results for" not in message
 
 
 @pytest.mark.asyncio
