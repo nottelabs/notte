@@ -48,6 +48,8 @@ from notte_core.actions import (
     FallbackFillAction,
     FillAction,
     FormFillAction,
+    GotoAction,
+    GotoNewTabAction,
     InteractionAction,
     MultiFactorFillAction,
     # ReadFileAction,
@@ -909,6 +911,11 @@ class NotteSession(AsyncResource, SyncResource):
                         if not success:
                             # `message` still holds the success-phrased execution_message.
                             message = f"Action '{resolved_action.type}' failed during browser execution"
+                        elif isinstance(resolved_action, (GotoAction, GotoNewTabAction)):
+                            # a deny, rate-limit or challenge page loads like any other: say what it answered
+                            answer = await self.window.main_document_answer()
+                            if answer is not None:
+                                message = f"{message}. {answer}"
 
             except (
                 NoSnapshotObservedError,

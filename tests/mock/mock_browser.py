@@ -237,6 +237,10 @@ class MockBrowserDriver(AsyncResource):
         self._mock_snapshot = snapshot
         return snapshot
 
+    async def main_document_answer(self) -> str | None:
+        # mirrors BrowserWindow.main_document_answer: the mock's pages answer below 400
+        return None
+
     async def short_wait(self) -> None:
         pass
 
