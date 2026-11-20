@@ -37,7 +37,7 @@ from notte_core.actions import (
     # WriteFileAction,
 )
 from notte_core.config import config
-from notte_core.credentials.types import get_str_value
+from notte_core.credentials.types import ValueWithPlaceholder, get_str_value
 from notte_core.dom_tree import DomNode, NodeSelectors
 from notte_core.errors import (
     ActionExecutionError,
@@ -89,6 +89,10 @@ _IS_DISABLED = script("is_disabled.js")
 # Page-side implementation: js/synthetic_click.js. The click sent from a script when the pointer could not click the
 # element (covered, hidden or never still) within its share of the timeout: the events of a click, not `el.click()`
 _SYNTHETIC_CLICK = script("synthetic_click.js")
+# Page-side implementation: js/in_the_way.js
+_IN_THE_WAY = script("in_the_way.js")
+# how long the look at what is in the way of a failed action may take (s): it only adds to a failure's message
+_IN_THE_WAY_S = 1.0
 # how often a disabled control is looked at again
 _ENABLED_POLL_S = 0.1
 _SELECT_HIDDEN_OPTION = script("select_hidden_option.js")
@@ -443,10 +447,66 @@ async def _read_back(
         return None, field
 
 
-def _not_kept(window: BrowserWindow, value: str) -> TextNotKeptError:
+def _may_quote(action: InteractionAction, page_text: str) -> bool:
+    """Whether the message of a failed `action` may quote the name of what is in the way, given `page_text`: all the
+    text of the dialog or element that name is taken from. Never for an
+    action that types a credential: a page can write what was typed into its own text, and a credential must not
+    reach a message that is logged and kept. Nor when the text holds what the action typed."""
+    value = getattr(action, "value", None)
+    if isinstance(value, ValueWithPlaceholder):
+        return False
+    # whitespace as the page's text has it once cleaned: single spaces
+    typed = " ".join(value.split()).casefold() if isinstance(value, str) else ""
+    return typed == "" or typed not in page_text.casefold()
+
+
+async def _in_the_way(located: list[Locator], action: InteractionAction) -> str:
+    """What is in the way of a failed action on the element `located` (`_interact`), for its message
+    (`js/in_the_way.js`): `: a dialog covers the element: "Sign in to continue"`, `: an element covers the element:
+    <div#banner> We use cookies...` or `: the element is inert`. Empty when nothing is found, or when the page cannot
+    be asked (it navigated, the element is gone) within `_IN_THE_WAY_S`. An element that was never located, or a
+    locator that finds none (an action that timed out waiting for it), is not waited for. The page's text is left
+    out when the action typed a credential or the text holds what it typed (`_may_quote`).
+
+    Only called once the action's timeout no longer applies (`execute_interaction_action`): a look inside it could
+    be cut by the deadline, and the timeout would then replace the failure."""
+    if not located:
+        return ""
+    try:
+        async with asyncio.timeout(_IN_THE_WAY_S):
+            if await located[0].count() != 1:
+                return ""
+            found: dict[str, str] | None = await located[0].evaluate(_IN_THE_WAY)
+    except (Error, TimeoutError):
+        return ""
+    if found is None:
+        return ""
+    # the uncut text the name comes from: a name cut to a few words could show the start of a typed value
+    quoted = _may_quote(action, f"{found.get('name', '')} {found.get('text', '')}")
+    match found["kind"]:
+        case "dialog":
+            return f': a dialog covers the element: "{found["name"]}"' if quoted else ": a dialog covers the element"
+        case "element":
+            return f": an element covers the element{': ' + found['name'] if quoted else ''}"
+        case _:
+            return ": the element is inert"
+
+
+class _InTheWay(Exception):
+    """A failure of an action on a located element whose message should end with what is in the element's way
+    (`_in_the_way`), raised inside the action's timeout. `error` builds the failure from that suffix, which
+    `execute_interaction_action` looks up once the timeout no longer applies."""
+
+    def __init__(self, error: Callable[[str], ActionExecutionError]) -> None:
+        super().__init__()
+        self.error: Callable[[str], ActionExecutionError] = error
+
+
+def _not_kept(window: BrowserWindow, value: str) -> _InTheWay:
     # the text is not quoted: it can be a secret
     reason = "The field stayed empty after typing" if value == "" else "The field holds other text than the typed text"
-    return TextNotKeptError(window.page.url, reason=reason)
+    url = window.page.url
+    return _InTheWay(lambda in_the_way: TextNotKeptError(url, reason=reason + in_the_way))
 
 
 async def _retype(
@@ -881,6 +941,8 @@ async def execute_interaction_action(
     scope = asyncio.timeout_at(deadline)
     clicked_page = window.page if after_click is not None else None
     closed_error: Error | None = None
+    # the element once located, so that a failure can say what is in its way
+    located: list[Locator] = []
     try:
         async with scope:
             try:
@@ -892,6 +954,7 @@ async def execute_interaction_action(
                     storage=storage,
                     verbose=verbose,
                     before_click=before_click,
+                    located=located,
                 )
             except Error as error:
                 if (
@@ -911,7 +974,11 @@ async def execute_interaction_action(
             raise
         if closed_error is not None:
             raise closed_error from e
-        raise NotteTimeoutError(message=f"Action timed out after {action.timeout}ms") from e
+        raise NotteTimeoutError(
+            message=f"Action timed out after {action.timeout}ms{await _in_the_way(located, action)}"
+        ) from e
+    except _InTheWay as e:
+        raise e.error(await _in_the_way(located, action)) from None
     return True
 
 
@@ -1033,16 +1100,22 @@ async def _interact(
     storage: BaseStorage | None = None,
     verbose: bool = False,
     before_click: Callable[[Locator], Awaitable[Callable[[ElementHandle], Awaitable[None]] | None]] | None = None,
+    located: list[Locator] | None = None,
 ) -> None:
     assert action.selectors is not None
     # locate element (possibly in iframe)
     locator: Locator = await _locate(window, action, prev_snapshot, budget)
+    if located is not None:
+        located.append(locator)
 
     match action:
         # Interaction actions
         case ClickAction():
             if await _stays_disabled(locator, action, budget):
-                raise ActionExecutionError(action.id, window.page.url, reason="Element is disabled")
+                url = window.page.url
+                raise _InTheWay(
+                    lambda in_the_way: ActionExecutionError(action.id, url, reason="Element is disabled" + in_the_way)
+                )
             # the JS click that reports its input, when the click's input is tracked
             js_click_with_input = None if before_click is None else await before_click(locator)
             # An image-map area has no box: its JS click follows the link without actionability waits.
