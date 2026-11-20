@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased: closed sessions in session.page()
+
+When `session.page()` cannot connect because the session is no longer running
+(it timed out without activity, reached its maximum duration, or was stopped),
+it throws the new `SessionClosedError`, with the session's `status` and
+`closeReason`, instead of a generic connection error. The message says why the
+session closed, for example `Session <id> is closed: it timed out after 6
+minutes without activity. Start a new session.` The original error is its
+`cause`. Other connection failures throw the same error as before. Python's
+`session.page` raises `notte_sdk.errors.SessionClosedError` in the same case, a
+`RuntimeError` like its other connection failures.
+
 ## Unreleased: sessions started without a proxy
 
 `SessionResponse` has two new fields. `started_without_proxy` is `true` when a

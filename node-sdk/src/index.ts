@@ -46,6 +46,7 @@ export {
   CaptchaRejectedError,
   EvaluateJsNoDataError,
   FetchResponseDecodeError,
+  SessionClosedError,
   retry,
 } from '@/errors';
 export type { NotteAPIErrorBody, RetryOptions } from '@/errors';

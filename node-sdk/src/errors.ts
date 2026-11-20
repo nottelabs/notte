@@ -185,6 +185,53 @@ export class CaptchaRejectedError extends ActionExecutionError {
   }
 }
 
+/**
+ * The session is no longer running, so its browser cannot be reached. Thrown by
+ * `session.page()` when connecting fails because the session closed, for example
+ * after its idle timeout. Start a new session. Mirrors `SessionClosedError` in Python.
+ */
+export class SessionClosedError extends NotteError {
+  readonly sessionId: string;
+  readonly status: string;
+  readonly closeReason: string | null;
+
+  constructor(
+    sessionId: string,
+    status: string,
+    closeReason: string | null,
+    timeouts: { idleTimeoutMinutes?: number; maxDurationMinutes?: number } = {},
+    options?: { cause?: unknown },
+  ) {
+    super(`Session ${sessionId} is closed: ${closeDescription(status, closeReason, timeouts)}. Start a new session.`, options);
+    this.sessionId = sessionId;
+    this.status = status;
+    this.closeReason = closeReason;
+  }
+}
+
+function closeDescription(
+  status: string,
+  closeReason: string | null,
+  { idleTimeoutMinutes, maxDurationMinutes }: { idleTimeoutMinutes?: number; maxDurationMinutes?: number },
+): string {
+  switch (closeReason) {
+    case 'idle_timeout':
+      return idleTimeoutMinutes === undefined
+        ? 'it timed out without activity'
+        : `it timed out after ${idleTimeoutMinutes} minutes without activity`;
+    case 'max_duration':
+      return maxDurationMinutes === undefined
+        ? 'it reached its maximum duration'
+        : `it reached its maximum duration of ${maxDurationMinutes} minutes`;
+    case 'manual':
+      return 'it was stopped';
+    case 'error':
+      return 'it ended with an error';
+    default:
+      return `its status is ${status}`;
+  }
+}
+
 /** `evaluate_js` reported success but the API build predates the data payload. */
 export class EvaluateJsNoDataError extends NotteError {
   constructor() {

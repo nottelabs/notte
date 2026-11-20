@@ -286,6 +286,45 @@ class CaptchaRejectedError(NotteBaseError):
         super().__init__(dev_message=message, user_message=message, agent_message=message)
 
 
+class SessionClosedError(NotteBaseError, RuntimeError):  # pyright: ignore[reportUnsafeMultipleInheritance]
+    """The session is no longer running, so its browser cannot be reached.
+
+    Raised by `session.page` when connecting fails because the session closed, for
+    example after its idle timeout. Start a new session. It subclasses `RuntimeError`,
+    which `session.page` raises for other connection failures, so existing handlers
+    still catch it.
+    """
+
+    def __init__(
+        self,
+        session_id: str,
+        status: str,
+        close_reason: str | None,
+        idle_timeout_minutes: int | None = None,
+        max_duration_minutes: int | None = None,
+    ) -> None:
+        self.session_id: str = session_id
+        self.status: str = status
+        self.close_reason: str | None = close_reason
+        match close_reason:
+            case "idle_timeout" if idle_timeout_minutes is not None:
+                why = f"it timed out after {idle_timeout_minutes} minutes without activity"
+            case "idle_timeout":
+                why = "it timed out without activity"
+            case "max_duration" if max_duration_minutes is not None:
+                why = f"it reached its maximum duration of {max_duration_minutes} minutes"
+            case "max_duration":
+                why = "it reached its maximum duration"
+            case "manual":
+                why = "it was stopped"
+            case "error":
+                why = "it ended with an error"
+            case _:
+                why = f"its status is {status}"
+        message = f"Session {session_id} is closed: {why}. Start a new session."
+        super().__init__(dev_message=message, user_message=message, agent_message=message)
+
+
 class AuthenticationError(NotteBaseError):
     def __init__(self, message: str) -> None:
         super().__init__(
