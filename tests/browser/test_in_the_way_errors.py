@@ -153,6 +153,17 @@ async def test_a_click_that_times_out_names_the_element_over_the_control(monkeyp
 
 
 @pytest.mark.asyncio
+async def test_a_timeout_waiting_for_an_element_that_never_shows_keeps_its_message() -> None:
+    """A Playwright selector locates lazily: the fill times out waiting for its element. Nothing is in the way of an
+    element that is not there, and the look does not wait for it either."""
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(_url(STYLE, FORM.format(inert=""), BANNER))
+        result = await session.aexecute(FillAction(selector="#missing", value="x", timeout=500), raise_on_failure=False)
+    assert not result.success
+    assert result.message == "Action timed out after 500ms"
+
+
+@pytest.mark.asyncio
 async def test_a_timeout_before_the_element_is_located_keeps_its_message(monkeypatch: pytest.MonkeyPatch) -> None:
     async def never(*args: object, **kwargs: object) -> None:
         await asyncio.sleep(3600)

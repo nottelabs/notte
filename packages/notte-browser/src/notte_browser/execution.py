@@ -448,9 +448,12 @@ async def _in_the_way(element: ElementHandle | Locator) -> str:
     """What is in the way of a failed action on `element`, for its message (`js/in_the_way.js`): `: a dialog covers
     the element: "Sign in to continue"`, `: an element covers the element: <div#banner> We use cookies...` or
     `: the element is inert`. Empty when nothing is found, or when the page cannot be asked (it navigated, the
-    element is gone) within `_IN_THE_WAY_S`."""
+    element is gone) within `_IN_THE_WAY_S`. A locator that finds no element (an action that timed out waiting for
+    it) is not waited for."""
     try:
         async with asyncio.timeout(_IN_THE_WAY_S):
+            if isinstance(element, Locator) and await element.count() != 1:
+                return ""
             found: dict[str, str] | None = await element.evaluate(_IN_THE_WAY)
     except (Error, TimeoutError):
         return ""
