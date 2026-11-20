@@ -158,6 +158,24 @@ Get session status
 | `--auth` | Show managed authentication readiness and operations |
 | `--session-id <string>` | Session ID (uses current session if not specified) |
 
+## `notte sessions steps`
+
+List the session's steps, oldest first, one page at a time.
+
+When more steps follow, the next page's cursor is printed on stderr; pass it back with `--cursor`.
+
+| Flag | Description |
+| - | - |
+| `--cursor <string>` | Cursor of the page to read, from the previous page's next_cursor |
+| `--limit <int>`, `-n` | Maximum number of steps to return |
+| `--session-id <string>` | Session ID (uses current session if not specified) |
+
+```bash
+notte sessions steps
+notte sessions steps --limit 20
+notte sessions steps --cursor <next-cursor>
+```
+
 ## `notte sessions stop [session-id]`
 
 Stop the session
