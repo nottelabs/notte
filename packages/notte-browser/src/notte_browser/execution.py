@@ -86,6 +86,9 @@ from notte_browser.window import BrowserWindow
 
 _BLUR_ACTIVE_ELEMENT = script("blur_active_element.js")
 _IS_DISABLED = script("is_disabled.js")
+# Page-side implementation: js/synthetic_click.js. The click sent from a script when the pointer could not click the
+# element (covered, hidden or never still) within its share of the timeout: the events of a click, not `el.click()`
+_SYNTHETIC_CLICK = script("synthetic_click.js")
 # how often a disabled control is looked at again
 _ENABLED_POLL_S = 0.1
 _SELECT_HIDDEN_OPTION = script("select_hidden_option.js")
@@ -1058,7 +1061,7 @@ async def _interact(
                     js_click = True
             if js_click:
                 if js_click_with_input is None:
-                    await locator.evaluate("(el) => el.click()", timeout=budget.remaining_ms())
+                    await locator.evaluate(_SYNTHETIC_CLICK, timeout=budget.remaining_ms())
                 else:
                     element = await locator.element_handle(timeout=budget.remaining_ms())
                     assert element is not None
@@ -1333,7 +1336,7 @@ async def _execute(
             # The JS path emits no trusted pointer event: mark its input, and click once the report has arrived.
             await reporter.mark()
             _ = await click_input_received.wait()
-            await element.evaluate("el => el.click()")
+            await element.evaluate(_SYNTHETIC_CLICK)
 
         return js_click_with_input
 
