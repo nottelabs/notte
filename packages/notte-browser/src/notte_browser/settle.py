@@ -212,6 +212,8 @@ class PageSettle:
         # when requests started or ended (ms since `_started`), and the last time one did (`time.perf_counter()`)
         self._changes: list[float] = []
         self._last_request: float | None = None
+        # Click-idle checks include repeated polls, which settlement deliberately suppresses.
+        self._last_request_activity: float | None = None
         self._tabs: bool = tabs
         # when the main document's navigation was requested, and its request: kept after the request ends
         self._navigation_started_at: float | None = None
@@ -274,8 +276,8 @@ class PageSettle:
             return None
         last = [t for t in (page["last"], page["activity"]) if t is not None]
         idle = page["elapsed"] - max(last) if last else page["elapsed"]
-        if self._last_request is not None:
-            idle = min(idle, (time.perf_counter() - self._last_request) * 1000)
+        if self._last_request_activity is not None:
+            idle = min(idle, (time.perf_counter() - self._last_request_activity) * 1000)
         return idle
 
     def navigation_requested_after(self, input_at: float | None) -> bool:
@@ -305,6 +307,7 @@ class PageSettle:
             return
         if not tracked(self.page, request):
             return
+        self._last_request_activity = time.perf_counter()
         if request.is_navigation_request() and request.frame is self.page.main_frame:
             # Exposed input bindings are queued tasks. Attribute navigation in the same queue so batched protocol
             # messages cannot timestamp a request ahead of an earlier input callback that has not run yet.
@@ -339,6 +342,9 @@ class PageSettle:
         self._navigation_request = None
 
     def _request_ended(self, request: Request) -> None:
+        if request not in self._in_flight:
+            return
+        self._last_request_activity = time.perf_counter()
         if self._in_flight.pop(request, False):
             self._changed()
 

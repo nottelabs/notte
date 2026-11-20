@@ -89,6 +89,7 @@
     let previous = null;
     let sameSince = 0;
     return {
+        element: el,
         watched: watched(),
         check: () => {
             const seen = look();

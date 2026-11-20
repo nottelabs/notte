@@ -1055,7 +1055,12 @@ async def test_a_click_reporting_a_closed_target_requires_a_live_replacement(
     session.window.page = original
     original_click = Locator.click
 
-    async def click_then_report_closed(locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
+    async def click_then_report_closed(
+        locator: Locator, *, timeout: float, no_wait_after: bool = False, trial: bool = False
+    ) -> None:
+        if trial:
+            await original_click(locator, trial=True, timeout=timeout, no_wait_after=no_wait_after)
+            return
         await original_click(locator, timeout=timeout, no_wait_after=no_wait_after)
         if not original.is_closed():
             await original.wait_for_event("close")
@@ -1100,7 +1105,12 @@ async def test_a_closing_click_waits_for_a_request_it_started_on_an_existing_tab
     session.window.page = popup
     original_click = Locator.click
 
-    async def closing_click(locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
+    async def closing_click(
+        locator: Locator, *, timeout: float, no_wait_after: bool = False, trial: bool = False
+    ) -> None:
+        if trial:
+            await original_click(locator, trial=True, timeout=timeout, no_wait_after=no_wait_after)
+            return
         await original_click(locator, timeout=timeout, no_wait_after=no_wait_after)
         if other is not None:
             # An unrelated iframe navigation must not be mistaken for a replacement page.
@@ -1141,7 +1151,12 @@ async def test_a_closing_popup_selects_the_existing_named_tab_it_navigated(
     session.window.page = popup
     original_click = Locator.click
 
-    async def closing_click(locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
+    async def closing_click(
+        locator: Locator, *, timeout: float, no_wait_after: bool = False, trial: bool = False
+    ) -> None:
+        if trial:
+            await original_click(locator, trial=True, timeout=timeout, no_wait_after=no_wait_after)
+            return
         await original_click(locator, timeout=timeout, no_wait_after=no_wait_after)
         if not popup.is_closed():
             await popup.wait_for_event("close")
@@ -1186,7 +1201,12 @@ async def test_a_closing_popup_ignores_other_tabs_navigating_during_element_look
         await other.goto(f"{site}/second")
         return locator
 
-    async def closing_click(locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
+    async def closing_click(
+        locator: Locator, *, timeout: float, no_wait_after: bool = False, trial: bool = False
+    ) -> None:
+        if trial:
+            await original_click(locator, trial=True, timeout=timeout, no_wait_after=no_wait_after)
+            return
         await original_click(locator, timeout=timeout, no_wait_after=no_wait_after)
         if not popup.is_closed():
             await popup.wait_for_event("close")
@@ -1249,16 +1269,22 @@ async def test_a_closing_popup_ignores_navigation_during_click_actionability(
         assert not popup.is_closed(), "The covered button must still be waiting for input"
         await cover.evaluate("el => el.remove()")
 
-    async def covered_click(locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
-        # The pointer click is tried in slices (`_pointer_click`): a slice ending while the button is covered times
-        # out and the next one is tried, so the other tab's navigation runs beside them, started by the first.
+    async def covered_click(
+        locator: Locator, *, timeout: float, no_wait_after: bool = False, trial: bool = False
+    ) -> None:
+        # The pointer click's checks are tried in slices of trial clicks (`_pointer_click`): a trial ending while the
+        # button is covered times out and the next one is tried, so the other tab's navigation runs beside them,
+        # started by the first. The real click comes once a trial passed.
         nonlocal uncovering
         if uncovering is None:
             uncovering = asyncio.create_task(uncover())
         if mode == "js":
-            # a pointer click that never lands: it is tried in slices until its budget is out
+            # a pointer click that never lands: its trials are tried until its budget is out
             await asyncio.sleep(timeout / 1000)
             raise PlaywrightTimeoutError("Use the JS click fallback")
+        if trial:
+            await original_click(locator, trial=True, timeout=timeout, no_wait_after=no_wait_after)
+            return
         await original_click(locator, timeout=timeout, no_wait_after=no_wait_after)
         # the click landed, so the cover went: with the other tab's navigation before it
         await uncovering
@@ -1276,7 +1302,7 @@ async def test_a_closing_popup_ignores_navigation_during_click_actionability(
             "in_iframe": framed,
             "iframe_parent_css_selectors": ["#click-frame"] if framed else [],
         },
-        # the slices of the pointer click that never lands use four fifths of it before the JS fallback
+        # the trials of the pointer click that never lands use four fifths of it before the JS fallback
         **({"timeout": 3000} if mode == "js" else {}),
     )
     assert result.success, result.message
@@ -1318,7 +1344,12 @@ async def test_replacement_selection_waits_for_click_input_delivery(
 
         delayed.append(asyncio.create_task(deliver()))
 
-    async def closing_click(locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
+    async def closing_click(
+        locator: Locator, *, timeout: float, no_wait_after: bool = False, trial: bool = False
+    ) -> None:
+        if trial:
+            await original_click(locator, trial=True, timeout=timeout, no_wait_after=no_wait_after)
+            return
         try:
             if mode == "js":
                 raise PlaywrightTimeoutError("Use the JS click fallback")
@@ -1571,7 +1602,12 @@ async def test_a_closed_target_error_is_not_hidden_by_an_unusable_replacement(
     await original.wait_for_load_state("load")
     session.window.page = original
 
-    async def fail_click(locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
+    original_click = Locator.click
+
+    async def fail_click(locator: Locator, *, timeout: float, no_wait_after: bool = False, trial: bool = False) -> None:
+        if trial:
+            await original_click(locator, trial=True, timeout=timeout, no_wait_after=no_wait_after)
+            return
         if failure == "page":
             await opener.close()
             await original.close()
@@ -1627,7 +1663,12 @@ async def test_a_click_whose_document_reloads_before_its_input_still_ends(
         _ = await other.goto(site)
     original_click = Locator.click
 
-    async def click_after_reload(locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
+    async def click_after_reload(
+        locator: Locator, *, timeout: float, no_wait_after: bool = False, trial: bool = False
+    ) -> None:
+        if trial:
+            await original_click(locator, trial=True, timeout=timeout, no_wait_after=no_wait_after)
+            return
         _ = await page.reload(wait_until="load")
         # a busy machine: the input lands well after the new document loaded, its grace counts from the input
         await asyncio.sleep(0.3)
@@ -1744,7 +1785,14 @@ async def test_a_click_whose_popup_reloads_then_closes_before_its_input_fails(
     await popup.wait_for_load_state("load")
     session.window.page = popup
 
-    async def reload_then_close(_locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
+    original_click = Locator.click
+
+    async def reload_then_close(
+        _locator: Locator, *, timeout: float, no_wait_after: bool = False, trial: bool = False
+    ) -> None:
+        if trial:
+            await original_click(_locator, trial=True, timeout=timeout, no_wait_after=no_wait_after)
+            return
         _ = await popup.reload(wait_until="load")
         await popup.close()
         raise Error("Locator.click: Target page, context or browser has been closed")
@@ -1766,7 +1814,14 @@ async def test_a_js_click_that_closes_its_reloaded_popup_selects_the_opener(
     await popup.wait_for_load_state("load")
     session.window.page = popup
 
-    async def reload_then_fall_back(_locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
+    original_click = Locator.click
+
+    async def reload_then_fall_back(
+        _locator: Locator, *, timeout: float, no_wait_after: bool = False, trial: bool = False
+    ) -> None:
+        if trial:
+            await original_click(_locator, trial=True, timeout=timeout, no_wait_after=no_wait_after)
+            return
         _ = await popup.reload(wait_until="load")
         # closes the tab within the JS click, before the driver answers it
         await popup.locator("#close-self").evaluate("el => el.onclick = () => window.close()")
