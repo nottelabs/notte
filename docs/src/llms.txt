@@ -327,13 +327,13 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 
 ## Personas
 
-- [GET List Personas](https://docs.notte.cc/api-reference/personas/list-personas.md)
-- [POST Persona Create](https://docs.notte.cc/api-reference/personas/persona-create.md)
-- [DELETE Persona Delete](https://docs.notte.cc/api-reference/personas/persona-delete.md)
-- [GET Persona Emails List](https://docs.notte.cc/api-reference/personas/persona-emails-list.md)
-- [GET Persona Get](https://docs.notte.cc/api-reference/personas/persona-get.md)
-- [GET Persona Sms List](https://docs.notte.cc/api-reference/personas/persona-sms-list.md)
-- [PATCH Persona Update](https://docs.notte.cc/api-reference/personas/persona-update.md)
+- [GET List Personas](https://docs.notte.cc/api-reference/personas/list-personas.md): Retrieves all active personas associated to the user's account.
+- [POST Persona Create](https://docs.notte.cc/api-reference/personas/persona-create.md): Create a new persona, i.e. a digital identity for your agent.
+- [DELETE Persona Delete](https://docs.notte.cc/api-reference/personas/persona-delete.md): Delete a persona for the authenticated user.
+- [GET Persona Emails List](https://docs.notte.cc/api-reference/personas/persona-emails-list.md): Lists emails in the persona's inbox.
+- [GET Persona Get](https://docs.notte.cc/api-reference/personas/persona-get.md): Retrieve a persona data by its <persona_id>.
+- [GET Persona Sms List](https://docs.notte.cc/api-reference/personas/persona-sms-list.md): Lists SMS Messages in the persona's inbox.
+- [PATCH Persona Update](https://docs.notte.cc/api-reference/personas/persona-update.md): Update persona name.
 
 ## Profiles
 
@@ -357,7 +357,7 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 
 ## Secret-Proxy
 
-- [GET List Secret Proxy Host Presets](https://docs.notte.cc/api-reference/secret-proxy/list-secret-proxy-host-presets.md)
+- [GET List Secret Proxy Host Presets](https://docs.notte.cc/api-reference/secret-proxy/list-secret-proxy-host-presets.md): The host presets with their current hosts, so the secret proxy can decrypt exactly the same hosts.
 
 ## Secrets
 
@@ -396,6 +396,7 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [POST Session Resume](https://docs.notte.cc/api-reference/sessions/session-resume.md)
 - [POST Session Start](https://docs.notte.cc/api-reference/sessions/session-start.md)
 - [GET Session Status](https://docs.notte.cc/api-reference/sessions/session-status.md)
+- [GET Session Steps](https://docs.notte.cc/api-reference/sessions/session-steps.md): List a session's steps (actions and observations), oldest first, one page at a time, in the format of the `steps` of the session status. Pass the response's `next_cursor` as `cursor` to read the next page; it is null when the page ends with the session's latest step. A cursor is opaque and belongs to the session it was returned for. A request whose cursor no longer applies answers 400 `SessionStepsCursorExpiredError`: restart without a cursor.
 - [DELETE Session Stop](https://docs.notte.cc/api-reference/sessions/session-stop.md)
 - [POST Upload Session File](https://docs.notte.cc/api-reference/sessions/upload-session-file.md)
 
