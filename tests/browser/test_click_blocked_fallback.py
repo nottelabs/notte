@@ -8,7 +8,12 @@ from collections.abc import AsyncIterator, Awaitable, Callable
 
 import pytest
 import pytest_asyncio
-from notte_browser.execution import _CLICK_BLOCKED_MS, _CLICK_BLOCKED_REQUEST_S, _CLICK_FIRST_SLICE_MS
+from notte_browser.execution import (
+    _CLICK_BLOCKED_MS,
+    _CLICK_BLOCKED_REQUEST_S,
+    _CLICK_FIRST_SLICE_MS,
+    _click_was_delivered,
+)
 from notte_browser.session import NotteSession
 from notte_core.actions import ClickAction
 from patchright.async_api import Frame, Locator, Route
@@ -90,10 +95,8 @@ async def test_a_click_on_an_element_kept_out_of_the_viewport_falls_back_at_once
 
 @pytest.mark.asyncio
 async def test_a_click_the_page_handles_past_its_slice_is_sent_once(session: NotteSession) -> None:
-    # the button's handler keeps the page busy for longer than the first slice: a real click tried for one slice would
-    # have had its deadline fall while the page handles it (a timeout for a click that was delivered), and the next
-    # slice would have clicked again. The slices are trials, which send no input: the one real click has the whole
-    # budget, so it is acknowledged once the handler returns
+    # The first slice times out while the handler keeps the page busy. Its exact dispatch log entry proves input
+    # was delivered, so neither another slice nor the script fallback may click again.
     busy_ms = _CLICK_FIRST_SLICE_MS + 1000
     html = BUTTON.replace(
         'event.isTrusted">',
@@ -112,25 +115,22 @@ async def test_a_selector_moving_to_a_connected_node_resets_its_cover_history(
     page = session.window.page
     await page.set_content(BUTTON + BUTTON.replace('id="target"', 'id="next"') + COVER)
     original_click = Locator.click
-    trials = 0
+    slices = 0
 
-    async def move_selector(
-        locator: Locator, *, timeout: float, no_wait_after: bool = False, trial: bool = False
-    ) -> None:
-        nonlocal trials
+    async def move_selector(locator: Locator, *, timeout: float, no_wait_after: bool = False) -> None:
+        nonlocal slices
         try:
-            await original_click(locator, timeout=timeout, no_wait_after=no_wait_after, trial=trial)
+            await original_click(locator, timeout=timeout, no_wait_after=no_wait_after)
         except PlaywrightTimeoutError:
-            if trial:
-                trials += 1
-                if trials == 3:
-                    # The old node stays connected beneath its lasting cover. The newly selected node will become
-                    # clickable shortly; only the old probe's history would justify an early script click now.
-                    await page.evaluate("""() => {
-                        document.getElementById('target').id = 'old';
-                        document.getElementById('next').id = 'target';
-                        setTimeout(() => document.getElementById('cover').remove(), 1000);
-                    }""")
+            slices += 1
+            if slices == 3:
+                # The old node stays connected beneath its lasting cover. The newly selected node will become
+                # clickable shortly; only the old probe's history would justify an early script click now.
+                await page.evaluate("""() => {
+                    document.getElementById('target').id = 'old';
+                    document.getElementById('next').id = 'target';
+                    setTimeout(() => document.getElementById('cover').remove(), 1000);
+                }""")
             raise
 
     monkeypatch.setattr(Locator, "click", move_selector)
@@ -141,12 +141,11 @@ async def test_a_selector_moving_to_a_connected_node_resets_its_cover_history(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("driver", ["patchright", "playwright"])
-async def test_a_trial_click_runs_the_checks_and_sends_no_input(driver: str) -> None:
-    # `_pointer_click` tries the click's checks in slices of trial clicks: on both drivers the package runs on, a trial
-    # on a covered element must time out, and a trial on a clickable one pass, without the element or the document
-    # getting a pointer, mouse or click event. The page records them in the DOM, which it shares with the test
+async def test_only_the_exact_driver_dispatch_entry_counts_as_delivered(driver: str) -> None:
+    # Selector text can contain the log entry's words. Both supported drivers must distinguish a blocked click
+    # from input delivered before a slow handler outlasts its slice.
     html = (
-        BUTTON
+        BUTTON.replace('id="target"', 'id="target" aria-label="performing click action"')
         + COVER
         + """<script>
           document.body.dataset.events = '';
@@ -158,34 +157,36 @@ async def test_a_trial_click_runs_the_checks_and_sends_no_input(driver: str) -> 
     )
     api = importlib.import_module(f"{driver}.async_api")
     async with api.async_playwright() as playwright:
-        browser = await playwright.chromium.launch(headless=True)
+        # CI installs the full Chromium binary, without the separate headless shell.
+        browser = await playwright.chromium.launch(headless=True, channel="chromium")
         try:
             page = await browser.new_page()
             await page.set_content(html)
-            target = page.locator("#target")
-
-            start = time.monotonic()
-            with pytest.raises(api.TimeoutError):
-                await target.click(trial=True, timeout=_CLICK_FIRST_SLICE_MS, no_wait_after=True)
-            assert _CLICK_FIRST_SLICE_MS / 1000 <= time.monotonic() - start < 2.0
+            target = page.locator('[aria-label="performing click action"]')
+            with pytest.raises(api.TimeoutError) as blocked:
+                await target.click(timeout=_CLICK_FIRST_SLICE_MS, no_wait_after=True)
+            assert "performing click action" in str(blocked.value)
+            assert not _click_was_delivered(blocked.value)
             assert await page.evaluate("[document.body.dataset.events, document.body.dataset.clicks ?? null]") == [
                 "",
                 None,
             ]
 
-            await page.evaluate("document.getElementById('cover').remove()")
-            await target.click(trial=True, timeout=5000, no_wait_after=True)
-            assert await page.evaluate("[document.body.dataset.events, document.body.dataset.clicks ?? null]") == [
-                "",
-                None,
-            ]
-
-            await target.click(timeout=5000, no_wait_after=True)
+            # Build the slow handler in the page's world. Updating an inline handler from Patchright's isolated
+            # world can retain both worlds' handlers, even though only one click was dispatched.
+            await page.set_content(
+                html.replace(COVER, "").replace(
+                    'event.isTrusted">',
+                    'event.isTrusted; const end = performance.now() + 1600; while (performance.now() < end) {}">',
+                )
+            )
+            with pytest.raises(api.TimeoutError) as delivered:
+                await target.click(timeout=_CLICK_FIRST_SLICE_MS, no_wait_after=True)
+            assert _click_was_delivered(delivered.value)
             events, clicks, trusted = await page.evaluate(
                 "[document.body.dataset.events, document.body.dataset.clicks, document.body.dataset.trusted]"
             )
             assert (clicks, trusted) == ("1", "true")
-            # each event once at the document's capture listener, once at the element's
             assert (
                 events.split()
                 == ["pointerdown"] * 2 + ["mousedown"] * 2 + ["pointerup"] * 2 + ["mouseup"] * 2 + ["click"] * 2

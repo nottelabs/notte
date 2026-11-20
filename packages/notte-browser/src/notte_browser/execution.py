@@ -99,8 +99,8 @@ _CLICK_INPUT_REPORT_S = 1.0
 _CLICK_AFTER_HOOK_MS = 1000
 # Page-side implementation: js/click_blocker.js
 _CLICK_BLOCKER = script("click_blocker.js")
-# A pointer click's checks are tried in slices (trial clicks, which send no input): the first one alone covers a click
-# that lands once an animation ends; after each later one the element is looked at (`_pointer_click`).
+# A pointer click is tried in slices: the first one alone covers a click that lands once an animation ends; after
+# each later one the element is looked at (`_pointer_click`).
 _CLICK_FIRST_SLICE_MS = 600
 _CLICK_SLICE_MS = 500
 # A click falls back to a script click once the element has stayed hidden, covered or out of the viewport the same way
@@ -1044,6 +1044,11 @@ async def _find_again(window: BrowserWindow, observed: DomNode, snapshot: Browse
     return await resolve_selectors(matches[0])
 
 
+def _click_was_delivered(error: Exception) -> bool:
+    # The driver's dispatch entry must be a complete call-log line, not text embedded in the selector.
+    return any(line.strip() == "- performing click action" for line in str(error).splitlines())
+
+
 async def _pointer_click(
     locator: Locator, action: InteractionAction, budget: _ActionBudget, idle: IdleCheck | None
 ) -> bool:
@@ -1058,25 +1063,21 @@ async def _pointer_click(
     frame whose activity the page does not watch (one of another origin), the whole budget goes into one click as
     before.
 
-    The element is looked at between trial clicks (`trial=True`): a trial runs the click's own checks (visible, stable,
-    enabled, scrolled into view, hit at the click point) and sends the page no input, so a trial that times out has
-    clicked nothing and the next one can be tried. The one real click comes once a trial passes, with the remaining
-    pointer budget instead of a short slice: a handler outlasting a slice cannot cause a second click."""
+    A slice can time out after its input was dispatched while the page handles the click. The exact driver
+    call-log entry marks that click as delivered; neither another slice nor the script fallback may repeat it."""
     keep_ms = action.timeout / 5
-    if idle is None:
-        # Navigation belongs to PageSettle, including a response that has not committed before the deadline.
-        await locator.click(timeout=budget.remaining_ms(keep_ms=keep_ms), no_wait_after=True)
-        return True
-    slice_ms = _CLICK_FIRST_SLICE_MS
+    slice_ms = _CLICK_FIRST_SLICE_MS if idle is not None else float("inf")
     probe: JSHandle | None = None
     try:
         while True:
             left_ms = budget.remaining_ms(keep_ms=keep_ms)
             try:
-                await locator.click(trial=True, timeout=min(left_ms, slice_ms), no_wait_after=True)
-                break
-            except PlaywrightTimeoutError:
-                if left_ms <= slice_ms:
+                await locator.click(timeout=min(left_ms, slice_ms), no_wait_after=True)
+                return True
+            except PlaywrightTimeoutError as error:
+                if _click_was_delivered(error):
+                    return True
+                if left_ms <= slice_ms or idle is None:
                     raise
             slice_ms = _CLICK_SLICE_MS
             try:
@@ -1094,12 +1095,12 @@ async def _pointer_click(
                         continue
                 state: _BlockedState = await probe.evaluate("probe => probe.check()")
             except Error:
-                # the element is not on the page for now (a re-render): the next trial waits for it as before
+                # the element is not on the page for now (a re-render): the next slice waits for it as before
                 await _dispose_handle(probe)
                 probe = None
                 continue
             if state["reason"] == "detached":
-                # the probe's element is gone: the next trial looks at the one the selector finds then
+                # the probe's element is gone: the next slice looks at the one the selector finds then
                 await _dispose_handle(probe)
                 probe = None
                 continue
@@ -1111,9 +1112,6 @@ async def _pointer_click(
                     return False
     finally:
         await _dispose_handle(probe)
-    # Navigation belongs to PageSettle, including a response that has not committed before the deadline.
-    await locator.click(timeout=budget.remaining_ms(keep_ms=keep_ms), no_wait_after=True)
-    return True
 
 
 async def _dispose_handle(handle: JSHandle | None) -> None:
