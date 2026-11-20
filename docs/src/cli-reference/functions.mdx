@@ -50,6 +50,7 @@ Create a new function
 | `--file <string>` | Path to function file (required) |
 | `--name <string>` | Function name |
 | `--response-format <string>` | JSON Schema of run()'s return value, computed by the caller from its pydantic model, as inline JSON, @file, or - for stdin |
+| `--sdk-generation <v19>` | The Notte SDK release the code runs with: v19 (notte 1.9) or `v110` (notte 1.10). Python only. Without it, the uploading client's SDK version decides. `v110` code is checked for APIs notte 1.10 removed. |
 | `--shared` | Make function public (API default: false) |
 
 ## `notte functions delete`
@@ -258,3 +259,4 @@ Update function
 | `--file <string>` | Path to updated function file (required) |
 | `--function-id <string>` | Function ID (uses current function if not specified) |
 | `--response-format <string>` | JSON Schema of run()'s return value, computed by the caller from its pydantic model, as inline JSON, @file, or - for stdin |
+| `--sdk-generation <v19>` | The Notte SDK release the code runs with: v19 (notte 1.9) or `v110` (notte 1.10). Python only. Without it, the uploading client's SDK version decides. `v110` code is checked for APIs notte 1.10 removed. |
