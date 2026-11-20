@@ -160,7 +160,7 @@ async def test_a_credential_fill_does_not_quote_the_page() -> None:
 @pytest.mark.asyncio
 @pytest.mark.parametrize("failed_fill", [False, True])
 async def test_a_later_failure_does_not_quote_an_earlier_credential(failed_fill: bool) -> None:
-    secret = "a b c d e f g h private-value"
+    secret = "a b c d e f g h private-value"  # pragma: allowlist secret
     async with NotteSession(headless=True) as session:
         page = session.window.page
         _ = await page.goto(_url(REFUSING if failed_fill else '<input id="q">'))
@@ -186,11 +186,13 @@ async def test_a_later_failure_does_not_quote_an_earlier_credential(failed_fill:
 @pytest.mark.asyncio
 async def test_a_replaced_vault_keeps_earlier_credentials_private_in_errors_and_logs() -> None:
     url = "https://credential-fixture.test/"
-    secret = "old-vault-password"
+    secret = "old-vault-password"  # pragma: allowlist secret
     vault = MockVault({url: {"username": "fixture-user", "password": secret}})
     async with NotteSession(headless=True, vault=vault) as session:
         page = session.window.page
-        await page.route(url, lambda route: route.fulfill(content_type="text/html", body='<input id="q" type="password">'))
+        await page.route(
+            url, lambda route: route.fulfill(content_type="text/html", body='<input id="q" type="password">')
+        )
         _ = await page.goto(url)
         result = await session.aexecute(FillAction(selector="#q", value=PASSWORD), raise_on_failure=False)
         assert result.success
