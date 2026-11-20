@@ -11,9 +11,11 @@ from html import escape
 from urllib.parse import quote
 
 import notte_browser.execution as execution_module
+import notte_browser.session as session_module
 import pytest
 from notte_browser.session import NotteSession
 from notte_core.actions import ClickAction, FillAction
+from notte_core.config import config
 from notte_core.credentials import PASSWORD
 from notte_core.credentials.types import ValueWithPlaceholder
 from notte_core.errors import ActionExecutionError, TextNotKeptError
@@ -219,6 +221,55 @@ async def test_a_replaced_vault_keeps_earlier_credentials_private_in_errors_and_
         )
         control = await fresh.aexecute(ClickAction(selector="#go", timeout=500), raise_on_failure=False)
         assert f"Results for {secret}" in control.message
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("label", ["prefix", "suffix", "unrelated"])
+async def test_known_credentials_prevent_partial_or_transformed_page_quotes(
+    label: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    secret = "private-credential-canary"  # pragma: allowlist secret
+    shown = {"prefix": secret[:-1], "suffix": secret[1:], "unrelated": "Unrelated dialog label"}[label]
+    monkeypatch.setattr(session_module, "config", config.model_copy(update={"verbose": True}))
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        await page.set_content('<input id="q">')
+        result = await session.aexecute(FillAction(selector="#q", value=ValueWithPlaceholder(secret, "<password>")))
+        assert result.success
+        await page.set_content(
+            '<button id="go" disabled>Go</button><div role="dialog" style="position:fixed;inset:0">' + shown + "</div>"
+        )
+        with capture_logs() as logs:
+            result = await session.aexecute(ClickAction(selector="#go", timeout=500), raise_on_failure=False)
+        assert not result.success
+        assert result.exception is not None
+        assert result.message.endswith("a dialog covers the element")
+        assert session.trajectory.elements[-1] is result
+        assert all(
+            shown not in text
+            for text in [
+                *logs,
+                *error_texts(result.exception),
+                result.model_dump_json(),
+                repr(session.trajectory.elements),
+            ]
+        )
+
+
+@pytest.mark.asyncio
+async def test_a_covering_element_id_cannot_expand_the_failure_message() -> None:
+    long_id = "cover-" + "x" * 100_000
+    async with NotteSession(headless=True) as session:
+        await session.window.page.set_content(
+            '<button id="go" disabled>Go</button><div id="'
+            + long_id
+            + '" style="position:fixed;inset:0">A covering banner</div>'
+        )
+        result = await session.aexecute(ClickAction(selector="#go", timeout=500), raise_on_failure=False)
+    assert not result.success
+    assert "an element covers the element" in result.message
+    assert len(result.message) < 300
+    assert long_id not in result.message
 
 
 @pytest.mark.asyncio
@@ -450,7 +501,7 @@ async def test_a_click_that_times_out_names_the_element_over_the_control(monkeyp
     assert not result.success
     assert result.message == (
         "Action timed out after 500ms: an element covers the element: "
-        "<div#cookie-banner> This site uses cookies to improve your experience."
+        "<div#cookie-banner> This site uses cookies to improve your..."
     )
 
 
