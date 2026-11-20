@@ -42,21 +42,24 @@
         }
         return node;
     };
+    // `boxes` is what must stay the same for the answer to count as lasting: the element's own box while it is hidden
+    // or out of the viewport (one that moves may be on its way in), the covering element's box while it is covered
+    // (a cover that moves may be on its way out; the element shifting under a lasting cover, as images load around
+    // it, changes nothing about the cover)
     const look = () => {
         if (!el.isConnected) return { reason: 'detached', blocker: null, boxes: '' };
         const rect = el.getBoundingClientRect();
-        const boxes = box(el);
         if (rect.width <= 0 || rect.height <= 0 || getComputedStyle(el).visibility === 'hidden') {
-            return { reason: 'hidden', blocker: null, boxes };
+            return { reason: 'hidden', blocker: null, boxes: box(el) };
         }
         const p = point();
-        if (p === null) return { reason: 'outside', blocker: null, boxes };
+        if (p === null) return { reason: 'outside', blocker: null, boxes: box(el) };
         const wanted = target();
         const node = hit(p.x, p.y);
         for (let n = node; n; n = parent(n)) {
-            if (n === wanted) return { reason: 'ok', blocker: null, boxes };
+            if (n === wanted) return { reason: 'ok', blocker: null, boxes: '' };
         }
-        return { reason: 'covered', blocker: node, boxes: node ? `${boxes};${box(node)}` : boxes };
+        return { reason: 'covered', blocker: node, boxes: node ? box(node) : '' };
     };
     let previous = null;
     let sameSince = 0;
