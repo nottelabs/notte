@@ -157,7 +157,8 @@ async def test_a_credential_fill_does_not_quote_the_page() -> None:
 async def test_a_dialog_that_shows_a_long_typed_text_is_not_quoted_in_part(external_label: bool) -> None:
     """The name of a dialog is cut to a few words: the typed text is looked for in all the dialog's text, so that
     the cut name does not show the start of it."""
-    typed = "one two three four five six seven eight nine"
+    # Nine short words exceed the label's word limit without spending most of the action budget typing them.
+    typed = "a b c d e f g h i"
     dialog = ECHOING
     if external_label:
         dialog = '<p id="echo">Results for</p>' + ECHOING.replace('<p id="echo">Results for</p>', "").replace(
@@ -166,11 +167,13 @@ async def test_a_dialog_that_shows_a_long_typed_text_is_not_quoted_in_part(exter
     async with NotteSession(headless=True) as session:
         _ = await session.window.page.goto(_url(STYLE, FORM.format(inert=""), dialog))
         result = await session.aexecute(FillAction(selector="#q", value=typed, timeout=3000), raise_on_failure=False)
+        shown = await session.window.page.locator("#echo").inner_text()
 
     assert not result.success
+    assert typed in shown
     assert "The field stayed empty after typing: a dialog covers the element" in result.message
     assert "Results for" not in result.message
-    assert "one two" not in result.message
+    assert "a b" not in result.message
 
 
 @pytest.mark.asyncio
@@ -229,6 +232,20 @@ async def test_a_fill_in_an_inert_part_over_a_background_does_not_name_the_backg
     async with NotteSession(headless=True) as session:
         message = await _fill(session, _url(BACKGROUND, FORM.format(inert="inert")))
     assert message.endswith("The field stayed empty after typing: the element is inert")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("native", [False, True])
+async def test_an_inert_field_does_not_name_its_own_dialog_as_the_obstruction(native: bool) -> None:
+    content = BACKGROUND + FORM.format(inert="inert")
+    if native:
+        page = f'<dialog id="own" aria-label="Edit profile">{content}</dialog><script>own.showModal()</script>'
+    else:
+        page = f'<div role="dialog" aria-modal="true" aria-label="Edit profile">{content}</div>'
+    async with NotteSession(headless=True) as session:
+        message = await _fill(session, _url(page))
+    assert message.endswith("The field stayed empty after typing: the element is inert")
+    assert "Edit profile" not in message
 
 
 @pytest.mark.asyncio
