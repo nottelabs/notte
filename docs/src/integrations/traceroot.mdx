@@ -1,0 +1,147 @@
+---
+title: traceroot
+description: Trace browser agents on Notte, detect failures, and verify fixes with traceroot.
+---
+import AgentMdNotice from '/partials/agent-md-notice.mdx';
+
+<AgentMdNotice />
+
+[traceroot](https://traceroot.ai) is the open-source platform that continuously improves your AI agents using evidence from production. It works in four steps: trace your agent, detect the runs that miss the mark, investigate signals to find the fix, and verify it with evals.
+
+The [runnable examples](https://github.com/nottelabs/notte/tree/main/examples/traceroot) give an agent a Notte browser through [Notte Browser MCP](/mcp-server) and ask it for the top Hacker News stories with their points. This guide walks through each step on them.
+
+## Trace
+
+See each model call, tool call, and response, with inputs, outputs, latency, and cost.
+
+Get keys from [Notte](https://console.notte.cc/apikeys), your model provider, and your project in [traceroot](https://app.traceroot.ai). If you [self-host traceroot](https://traceroot.ai/docs/developer/self-hosting), also set `TRACEROOT_HOST_URL` to your API's origin. Clone the Notte repository and open `examples/traceroot`.
+
+<Tabs>
+  <Tab title="OpenAI Agents SDK">
+    Use Python 3.11 to 3.13 and uv. Set `NOTTE_API_KEY`, `OPENAI_API_KEY`, and `TRACEROOT_API_KEY`, then run `uv sync --locked` and `uv run python hn_openai.py`.
+
+    ```python
+    traceroot.initialize(integrations=[Integration.OPENAI_AGENTS])
+    ```
+
+    Keep the Agents SDK's tracing on: `RunConfig(tracing_disabled=True)` drops the agent's spans. traceroot replaces the SDK's default trace exporter, so the spans go to traceroot instead of OpenAI.
+  </Tab>
+  <Tab title="Claude Agent SDK">
+    Use Python 3.11 to 3.13 and uv. Set `NOTTE_API_KEY`, `ANTHROPIC_API_KEY`, and `TRACEROOT_API_KEY`, then run `uv sync --locked` and `uv run python hn_claude.py`.
+
+    ```python
+    import claude_agent_sdk
+
+    traceroot.initialize(integrations=[Integration.CLAUDE_AGENT_SDK])
+    ...
+    async for message in claude_agent_sdk.query(prompt=prompt, options=OPTIONS):
+        ...
+    ```
+
+    traceroot wraps `claude_agent_sdk.query`. Call it through the module: a `query` imported by name before `initialize()` is not traced.
+  </Tab>
+  <Tab title="Vercel AI SDK">
+    Use Node.js 24+. Set `NOTTE_API_KEY`, `ANTHROPIC_API_KEY`, and `TRACEROOT_API_KEY`, then run `npm ci` and `npm start` in `typescript`.
+
+    ```typescript
+    import { TraceRoot } from '@traceroot-ai/traceroot';
+    import { OpenTelemetry } from '@ai-sdk/otel';
+    import { registerTelemetry } from 'ai';
+
+    TraceRoot.initialize();
+    registerTelemetry(new OpenTelemetry({ usage: true }));
+    ```
+  </Tab>
+</Tabs>
+
+Each example wraps the run in a `hacker_news.top_stories` span, groups it under the Notte session ID, and prints the stories and the trace ID. Under that span, each step shows the model call with its tokens and cost, then the Notte tool the agent called, such as `browser_action`, `browser_observe`, or `browser_scrape`, with what the browser returned. Read the trace from your terminal with the [traceroot CLI](https://traceroot.ai/docs/cli/get-started):
+
+```bash
+npx -y traceroot-cli@latest login --api-key "$TRACEROOT_API_KEY"
+npx -y traceroot-cli@latest traces get <trace_id>
+```
+
+<Frame caption="Trace of a Vercel AI SDK agent: the model call and Notte tool calls in each step">
+  <img src="/images/notte-traceroot.png" alt="traceroot trace of a Claude model reading Hacker News through Notte Browser MCP with the Vercel AI SDK, showing four steps with model calls and browser_action, browser_observe and browser_scrape tool calls" />
+</Frame>
+
+<Note>
+  The Notte key is sent in the MCP connection's header, which the trace doesn't record.
+</Note>
+
+### Other frameworks
+
+The connection to Notte is the same for every framework, so turn on traceroot's integration for the one you use:
+
+| Notte guide | traceroot integration |
+| - | - |
+| [LangChain](/integrations/langchain) | [LangChain](https://traceroot.ai/docs/integrations/langchain) |
+| [Deep Agents](/integrations/deepagents) | [Deep Agents](https://traceroot.ai/docs/integrations/langchain-deepagents) |
+| [crewAI](/integrations/crewai) | [CrewAI](https://traceroot.ai/docs/integrations/crewai) |
+| [Agno](/integrations/agno) | [Agno](https://traceroot.ai/docs/integrations/agno) |
+| [Google ADK](/integrations/google-adk) | [Google ADK](https://traceroot.ai/docs/integrations/google-adk) |
+| [Mastra](/integrations/mastra) | [Mastra](https://traceroot.ai/docs/integrations/mastra) |
+| [Claude Code](/integrations/claude-code-ai-agents) | [Claude Code](https://traceroot.ai/docs/integrations/claude-code) |
+| [OpenAI Computer Use](/integrations/openai-computer-use) | [OpenAI](https://traceroot.ai/docs/integrations/openai) |
+| [Anthropic Computer Use](/integrations/claude-computer-use) | [Anthropic](https://traceroot.ai/docs/integrations/anthropic) |
+| [Gemini Computer Use](/integrations/gemini-computer-use) | [Gemini](https://traceroot.ai/docs/integrations/gemini) |
+
+## Detect
+
+Define what good behavior looks like. [Detectors](https://traceroot.ai/docs/detectors/introduction) use LLM judges to flag runs that miss the mark.
+
+For a browser agent, a useful check is whether the answer is grounded in what the browser returned. Create a detector from the **Hallucination** template, set sampling to 100%, and use this prompt:
+
+```text
+This trace is a browser agent that reads Hacker News through Notte browser tools
+(browser_action, browser_observe, browser_scrape). Its final answer lists stories with a title and points.
+
+A story is backed by the page if its title and points appear in the output of a Notte browser tool span in this trace.
+
+Report identified=true if any story in the final answer is not backed by the page: no browser tool output in the
+trace shows it, or its title or points differ from what the tool returned. Report identified=false if every story
+matches browser tool output.
+```
+
+To see it flag a run, use `uv run python hn_openai.py --broken`. The flag introduces a prompt regression: the instructions tell the agent to skip scraping and answer from memory, so it returns stories that aren't on Hacker News. The detector records a finding on each of those runs and none on the normal runs of the three examples.
+
+## Signals
+
+traceroot groups findings of the same problem into a [signal](https://traceroot.ai/docs/signals/introduction), and the [traceroot Agent](https://traceroot.ai/docs/ai-agent/overview) investigates it.
+
+For the prompt regression, the root cause analysis found the cause from the trace alone: the "don't scrape it: answer from what you know" instruction, browser tools that were listed but never called, and stories taken from the model's training data. It recommended removing the instruction and requiring a `browser_scrape` or `browser_observe` call before the final answer. Connect GitHub in traceroot's settings so the agent can also investigate your code and pinpoint the fix down to the commit, file, and line.
+
+<Frame caption="The signal for the prompt regression: root cause analysis, and how many traces it affects over time">
+  <img src="/images/notte-traceroot-rca.png" alt="traceroot signal 'States facts not established by the available evidence' with a root cause analysis quoting the agent's instruction not to scrape the page, and a count-over-time chart showing 3 of 6 traces affected" />
+</Frame>
+
+## Verify
+
+Run [evals](https://traceroot.ai/docs/evals/introduction) against your datasets and compare versions to measure improvements and catch regressions.
+
+`hn_eval.py` evaluates the OpenAI agent on three Hacker News tasks. Its scorer, `backed_by_front_page`, checks each returned story against the live front page from the Hacker News API and scores the share that matches.
+
+```bash
+uv run python hn_eval.py --broken   # with the prompt regression
+uv run python hn_eval.py            # after the fix
+```
+
+Both runs are recorded against the same dataset, so you can compare them case by case. The version with the regression scores 0 on every case. The fixed version scores 1 on each case where every story is on the front page. If Hacker News rate-limits the browser, the agent can return no stories or placeholder stories instead of an error; that case scores 0, and the eval shows you which run to inspect.
+
+<CardGroup cols={2}>
+  <Card title="Detectors" icon="shield-halved" href="https://traceroot.ai/docs/detectors/introduction">
+    Use LLM judges to flag runs that miss the mark.
+  </Card>
+
+  <Card title="traceroot Agent" icon="brain" href="https://traceroot.ai/docs/ai-agent/overview">
+    Investigate signals with your GitHub code and open a fix pull request.
+  </Card>
+
+  <Card title="Evaluations" icon="flask" href="https://traceroot.ai/docs/evals/introduction">
+    Compare versions on your datasets to measure improvements and catch regressions.
+  </Card>
+
+  <Card title="CLI" icon="terminal" href="https://traceroot.ai/docs/cli/get-started">
+    Give your coding agent traces, signals, and detector findings from the terminal.
+  </Card>
+</CardGroup>
