@@ -11,20 +11,20 @@ description: ""
   SMS message body
 </ParamField>
 
-<ParamField path="created_at" type="datetime" required>
-  Creation date
+<ParamField path="sms_id" type="str" required>
+  SMS UUID
 </ParamField>
 
-<ParamField path="read" type="bool" required>
-  Whether the message was read before this request
+<ParamField path="created_at" type="datetime" required>
+  Creation date
 </ParamField>
 
 <ParamField path="sender" type="str | None" required>
   SMS sender phone number
 </ParamField>
 
-<ParamField path="sms_id" type="str" required>
-  SMS UUID
+<ParamField path="read" type="bool" required>
+  Whether the message was read before this request
 </ParamField>
 
 

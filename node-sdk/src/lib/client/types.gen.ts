@@ -4569,90 +4569,6 @@ export type ManagedAuthCredentials = {
 };
 
 /**
- * ManagedAuthOperation
- */
-export type ManagedAuthOperation = {
-    /**
-     * Id
-     */
-    id: string;
-    /**
-     * Connection Id
-     */
-    connection_id: string;
-    /**
-     * Session Id
-     */
-    session_id?: string | null;
-    /**
-     * Source
-     */
-    source: string;
-    /**
-     * Status
-     */
-    status: 'pending' | 'running' | 'succeeded' | 'failed' | 'cancelled';
-    /**
-     * Phase
-     */
-    phase: string;
-    /**
-     * Attempt
-     */
-    attempt?: number;
-    /**
-     * Auth Retry
-     */
-    auth_retry?: number;
-    /**
-     * Authenticated
-     */
-    authenticated?: boolean | null;
-    /**
-     * Failure Code
-     */
-    failure_code?: string | null;
-    /**
-     * Error
-     */
-    error?: string | null;
-    /**
-     * Deadline
-     */
-    deadline: string;
-    /**
-     * Created At
-     */
-    created_at: string;
-    /**
-     * Updated At
-     */
-    updated_at: string;
-};
-
-/**
- * ManagedAuthReadiness
- */
-export type ManagedAuthReadiness = {
-    /**
-     * Session Id
-     */
-    session_id: string;
-    /**
-     * Status
-     */
-    status: 'authenticating' | 'active' | 'failed' | 'closed';
-    /**
-     * Operations
-     */
-    operations?: Array<ManagedAuthOperation>;
-    /**
-     * Error
-     */
-    error?: string | null;
-};
-
-/**
  * MapsBusiness
  */
 export type MapsBusiness = {
@@ -4863,24 +4779,6 @@ export type MarkdownParams = {
 };
 
 /**
- * MouseReplayPage
- */
-export type MouseReplayPage = {
-    /**
-     * Mouse Manifest Url
-     */
-    mouse_manifest_url?: string | null;
-    /**
-     * Mouse Chunk Urls
-     */
-    mouse_chunk_urls?: Array<string> | null;
-    /**
-     * Mouse Next Offset
-     */
-    mouse_next_offset?: number | null;
-};
-
-/**
  * MultiFactorFillAction
  */
 export type MultiFactorFillActionInput = {
@@ -4997,50 +4895,6 @@ export type NameClue = {
      * Last
      */
     last?: string | null;
-};
-
-/**
- * NetworkBatchFile
- */
-export type NetworkBatchFile = {
-    /**
-     * Key
-     */
-    key: string;
-    /**
-     * Size
-     */
-    size: number;
-    /**
-     * Download Url
-     */
-    download_url?: string | null;
-    /**
-     * Download Url Expires In Seconds
-     */
-    download_url_expires_in_seconds?: number | null;
-};
-
-/**
- * NetworkLogsResponse
- */
-export type NetworkLogsResponse = {
-    /**
-     * Session Id
-     */
-    session_id: string;
-    /**
-     * Format
-     */
-    format?: string;
-    /**
-     * Batches
-     */
-    batches: Array<NetworkBatchFile>;
-    /**
-     * Total Batch Count
-     */
-    total_batch_count: number;
 };
 
 /**
@@ -5643,32 +5497,6 @@ export type PaginatedResponseProfileResponse = {
      * Items
      */
     items: Array<ProfileResponse>;
-    /**
-     * Page
-     */
-    page: number;
-    /**
-     * Page Size
-     */
-    page_size: number;
-    /**
-     * Has Next
-     */
-    has_next: boolean;
-    /**
-     * Has Previous
-     */
-    readonly has_previous: boolean;
-};
-
-/**
- * PaginatedResponse[SessionResponse]
- */
-export type PaginatedResponseSessionResponse = {
-    /**
-     * Items
-     */
-    items: Array<SessionResponse>;
     /**
      * Page
      */
@@ -6704,78 +6532,6 @@ export type ReloadAction = {
      * Description
      */
     description?: string;
-};
-
-/**
- * ReplayMissingResponse
- */
-export type ReplayMissingResponse = {
-    /**
-     * Detail
-     */
-    detail: string;
-    /**
-     * Session Id
-     */
-    session_id: string | null;
-    /**
-     * Status
-     */
-    status: number;
-    /**
-     * Error
-     */
-    error: string;
-    /**
-     * Message
-     */
-    message: string;
-    /**
-     * Replay Status
-     */
-    replay_status: 'waiting_for_session' | 'processing' | 'unavailable' | 'failed' | 'unknown' | 'disabled';
-    /**
-     * Retryable
-     */
-    retryable: boolean;
-};
-
-/**
- * ReplayResponse
- */
-export type ReplayResponse = {
-    /**
-     * Playlist Content
-     */
-    playlist_content?: string | null;
-    /**
-     * Mp4 Url
-     */
-    mp4_url?: string | null;
-    /**
-     * Expires At
-     */
-    expires_at: string;
-    /**
-     * Mouse Manifest Url
-     */
-    mouse_manifest_url?: string | null;
-    /**
-     * Mouse Chunk Urls
-     */
-    mouse_chunk_urls?: Array<string> | null;
-    /**
-     * Mouse Next Offset
-     */
-    mouse_next_offset?: number | null;
-    /**
-     * Video Start Ms
-     */
-    video_start_ms?: number | null;
-    /**
-     * Video Duration Ms
-     */
-    video_duration_ms?: number | null;
 };
 
 /**
@@ -9013,9 +8769,37 @@ export type AnythingStartRequest = {
  */
 export type AuditEvent = {
     /**
+     * Id
+     */
+    id: number;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Entity Type
+     */
+    entity_type: string;
+    /**
+     * Entity Id
+     */
+    entity_id: string;
+    /**
      * Action
      */
     action: string;
+    /**
+     * User Id
+     */
+    user_id: string | null;
+    /**
+     * Actor Id
+     */
+    actor_id: string | null;
+    /**
+     * Actor Type
+     */
+    actor_type: string;
     /**
      * Actor Email
      *
@@ -9023,53 +8807,9 @@ export type AuditEvent = {
      */
     actor_email: string | null;
     /**
-     * Actor Id
-     */
-    actor_id: string | null;
-    /**
      * Actor Name
      */
     actor_name: string | null;
-    /**
-     * Actor Type
-     */
-    actor_type: string;
-    /**
-     * Created At
-     */
-    created_at: string;
-    /**
-     * Entity Id
-     */
-    entity_id: string;
-    /**
-     * Entity Type
-     */
-    entity_type: string;
-    /**
-     * Id
-     */
-    id: number;
-    /**
-     * Metadata
-     */
-    metadata: {
-        changes?: {
-            role: {
-                new: 'owner' | 'admin' | 'member';
-                old: 'owner' | 'admin' | 'member';
-            };
-        };
-        display_name?: string;
-        email?: string;
-        name?: string;
-        role?: 'owner' | 'admin' | 'member';
-        target_email?: string;
-    };
-    /**
-     * Org Id
-     */
-    org_id: string | null;
     /**
      * Resource Name
      *
@@ -9081,19 +8821,31 @@ export type AuditEvent = {
      */
     source: string;
     /**
-     * User Id
+     * Metadata
      */
-    user_id: string | null;
+    metadata: {
+        display_name?: string;
+        name?: string;
+        target_email?: string;
+        email?: string;
+        role?: 'owner' | 'admin' | 'member';
+        changes?: {
+            role: {
+                old: 'owner' | 'admin' | 'member';
+                new: 'owner' | 'admin' | 'member';
+            };
+        };
+    };
+    /**
+     * Org Id
+     */
+    org_id: string | null;
 };
 
 /**
  * AuditEventListResponse
  */
 export type AuditEventListResponse = {
-    /**
-     * Has More
-     */
-    has_more: boolean;
     /**
      * Items
      */
@@ -9104,6 +8856,10 @@ export type AuditEventListResponse = {
      * Opaque cursor for the next (older) page. Null when there are no more events.
      */
     next_cursor: string | null;
+    /**
+     * Has More
+     */
+    has_more: boolean;
 };
 
 /**
@@ -9111,17 +8867,17 @@ export type AuditEventListResponse = {
  */
 export type DeletePersonaResponse = {
     /**
-     * Message
-     *
-     * Message of the deletion
-     */
-    message?: string;
-    /**
      * Status
      *
      * Status of the deletion
      */
     status: 'success' | 'failure';
+    /**
+     * Message
+     *
+     * Message of the deletion
+     */
+    message?: string;
 };
 
 /**
@@ -9129,29 +8885,29 @@ export type DeletePersonaResponse = {
  */
 export type EmailAttachment = {
     /**
-     * Content Type
-     *
-     * MIME type, as the sender declared it
-     */
-    content_type: string;
-    /**
-     * Download Url
-     *
-     * Signed download URL, valid for one hour
-     */
-    download_url: string;
-    /**
      * Filename
      *
      * Filename, as the sender named it
      */
     filename: string;
     /**
+     * Content Type
+     *
+     * MIME type, as the sender declared it
+     */
+    content_type: string;
+    /**
      * Size Bytes
      *
      * Size in bytes
      */
     size_bytes: number;
+    /**
+     * Download Url
+     *
+     * Signed download URL, valid for one hour
+     */
+    download_url: string;
 };
 
 /**
@@ -9159,17 +8915,11 @@ export type EmailAttachment = {
  */
 export type EmailResponse = {
     /**
-     * Attachments
+     * Subject
      *
-     * Files attached to the email, with short-lived download URLs
+     * Subject of the email
      */
-    attachments?: Array<EmailAttachment>;
-    /**
-     * Created At
-     *
-     * Creation date
-     */
-    created_at: string;
+    subject: string;
     /**
      * Email Id
      *
@@ -9177,17 +8927,11 @@ export type EmailResponse = {
      */
     email_id: string;
     /**
-     * Html Content
+     * Created At
      *
-     * HTML body, can be uncorrelated with raw content
+     * Creation date
      */
-    html_content?: string | null;
-    /**
-     * Read
-     *
-     * Whether the email was read before this request
-     */
-    read: boolean;
+    created_at: string;
     /**
      * Sender Email
      *
@@ -9201,27 +8945,35 @@ export type EmailResponse = {
      */
     sender_name: string | null;
     /**
-     * Subject
-     *
-     * Subject of the email
-     */
-    subject: string;
-    /**
      * Text Content
      *
      * Raw textual body, can be uncorrelated with html content
      */
     text_content?: string | null;
+    /**
+     * Html Content
+     *
+     * HTML body, can be uncorrelated with raw content
+     */
+    html_content?: string | null;
+    /**
+     * Attachments
+     *
+     * Files attached to the email, with short-lived download URLs
+     */
+    attachments?: Array<EmailAttachment>;
+    /**
+     * Read
+     *
+     * Whether the email was read before this request
+     */
+    read: boolean;
 };
 
 /**
  * HostPresetEntry
  */
 export type HostPresetEntry = {
-    /**
-     * Evidence
-     */
-    evidence: 'observed' | 'documented';
     /**
      * Host
      */
@@ -9230,6 +8982,10 @@ export type HostPresetEntry = {
      * Provider
      */
     provider: string;
+    /**
+     * Evidence
+     */
+    evidence: 'observed' | 'documented';
     /**
      * Source
      */
@@ -9241,18 +8997,6 @@ export type HostPresetEntry = {
  */
 export type MailboxConnectRequest = {
     /**
-     * Allowed Origin
-     */
-    allowed_origin: string;
-    /**
-     * Error Redirect Uri
-     */
-    error_redirect_uri: string;
-    /**
-     * Mailbox Id
-     */
-    mailbox_id?: string | null;
-    /**
      * Provider
      */
     provider?: 'gmail' | 'microsoft_outlook';
@@ -9260,6 +9004,18 @@ export type MailboxConnectRequest = {
      * Success Redirect Uri
      */
     success_redirect_uri: string;
+    /**
+     * Error Redirect Uri
+     */
+    error_redirect_uri: string;
+    /**
+     * Allowed Origin
+     */
+    allowed_origin: string;
+    /**
+     * Mailbox Id
+     */
+    mailbox_id?: string | null;
 };
 
 /**
@@ -9285,21 +9041,13 @@ export type MailboxConnectResponse = {
  */
 export type MailboxConnection = {
     /**
-     * Allow All Senders
+     * Id
      */
-    allow_all_senders?: boolean;
+    id: string;
     /**
-     * Allowed Sender Domains
+     * Provider
      */
-    allowed_sender_domains?: Array<string>;
-    /**
-     * Authorized Scopes
-     */
-    authorized_scopes?: Array<string>;
-    /**
-     * Created At
-     */
-    created_at?: string | null;
+    provider?: 'gmail' | 'microsoft_outlook';
     /**
      * Email Address
      */
@@ -9309,13 +9057,21 @@ export type MailboxConnection = {
      */
     healthy?: boolean;
     /**
-     * Id
+     * Authorized Scopes
      */
-    id: string;
+    authorized_scopes?: Array<string>;
     /**
-     * Provider
+     * Allow All Senders
      */
-    provider?: 'gmail' | 'microsoft_outlook';
+    allow_all_senders?: boolean;
+    /**
+     * Allowed Sender Domains
+     */
+    allowed_sender_domains?: Array<string>;
+    /**
+     * Created At
+     */
+    created_at?: string | null;
     /**
      * Updated At
      */
@@ -9367,17 +9123,161 @@ export type MailboxUpdateRequest = {
 };
 
 /**
+ * ManagedAuthOperation
+ */
+export type ManagedAuthOperation = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Connection Id
+     */
+    connection_id: string;
+    /**
+     * Session Id
+     */
+    session_id?: string | null;
+    /**
+     * Source
+     */
+    source: string;
+    /**
+     * Status
+     */
+    status: 'pending' | 'running' | 'succeeded' | 'failed' | 'cancelled';
+    /**
+     * Phase
+     */
+    phase: string;
+    /**
+     * Attempt
+     */
+    attempt?: number;
+    /**
+     * Auth Retry
+     */
+    auth_retry?: number;
+    /**
+     * Authenticated
+     */
+    authenticated?: boolean | null;
+    /**
+     * Failure Code
+     */
+    failure_code?: string | null;
+    /**
+     * Error
+     */
+    error?: string | null;
+    /**
+     * Deadline
+     */
+    deadline: string;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+};
+
+/**
+ * ManagedAuthReadiness
+ */
+export type ManagedAuthReadiness = {
+    /**
+     * Session Id
+     */
+    session_id: string;
+    /**
+     * Status
+     */
+    status: 'authenticating' | 'active' | 'failed' | 'closed';
+    /**
+     * Operations
+     */
+    operations?: Array<ManagedAuthOperation>;
+    /**
+     * Error
+     */
+    error?: string | null;
+};
+
+/**
+ * MouseReplayPage
+ *
+ * One page of presigned mouse telemetry URLs; every field is null when the manifest cannot be used.
+ */
+export type MouseReplayPage = {
+    /**
+     * Mouse Manifest Url
+     */
+    mouse_manifest_url?: string | null;
+    /**
+     * Mouse Chunk Urls
+     */
+    mouse_chunk_urls?: Array<string> | null;
+    /**
+     * Mouse Next Offset
+     */
+    mouse_next_offset?: number | null;
+};
+
+/**
+ * NetworkBatchFile
+ *
+ * Represents a batched network log file in S3
+ */
+export type NetworkBatchFile = {
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Size
+     */
+    size: number;
+    /**
+     * Download Url
+     */
+    download_url?: string | null;
+    /**
+     * Download Url Expires In Seconds
+     */
+    download_url_expires_in_seconds?: number | null;
+};
+
+/**
+ * NetworkLogsResponse
+ *
+ * Response containing network logs for a session
+ */
+export type NetworkLogsResponse = {
+    /**
+     * Session Id
+     */
+    session_id: string;
+    /**
+     * Format
+     */
+    format?: string;
+    /**
+     * Batches
+     */
+    batches: Array<NetworkBatchFile>;
+    /**
+     * Total Batch Count
+     */
+    total_batch_count: number;
+};
+
+/**
  * PaginatedResponse[PersonaResponse]
  */
 export type PaginatedResponsePersonaResponse = {
-    /**
-     * Has Next
-     */
-    has_next: boolean;
-    /**
-     * Has Previous
-     */
-    readonly has_previous: boolean;
     /**
      * Items
      */
@@ -9390,12 +9290,6 @@ export type PaginatedResponsePersonaResponse = {
      * Page Size
      */
     page_size: number;
-};
-
-/**
- * PaginatedResponse[UsageLog]
- */
-export type PaginatedResponseUsageLog = {
     /**
      * Has Next
      */
@@ -9404,6 +9298,38 @@ export type PaginatedResponseUsageLog = {
      * Has Previous
      */
     readonly has_previous: boolean;
+};
+
+/**
+ * PaginatedResponse[SessionResponse]
+ */
+export type PaginatedResponseSessionResponse = {
+    /**
+     * Items
+     */
+    items: Array<SessionResponse>;
+    /**
+     * Page
+     */
+    page: number;
+    /**
+     * Page Size
+     */
+    page_size: number;
+    /**
+     * Has Next
+     */
+    has_next: boolean;
+    /**
+     * Has Previous
+     */
+    readonly has_previous: boolean;
+};
+
+/**
+ * PaginatedResponse[UsageLog]
+ */
+export type PaginatedResponseUsageLog = {
     /**
      * Items
      */
@@ -9416,6 +9342,14 @@ export type PaginatedResponseUsageLog = {
      * Page Size
      */
     page_size: number;
+    /**
+     * Has Next
+     */
+    has_next: boolean;
+    /**
+     * Has Previous
+     */
+    readonly has_previous: boolean;
 };
 
 /**
@@ -9423,28 +9357,28 @@ export type PaginatedResponseUsageLog = {
  */
 export type PersonaCreateRequest = {
     /**
-     * Create Phone Number
-     *
-     * Whether to create a phone number for the persona
-     */
-    create_phone_number?: boolean;
-    /**
      * Create Vault
      *
      * Whether to create a vault for the persona
      */
     create_vault?: boolean;
     /**
-     * Email Domain
+     * Create Phone Number
      *
-     * Domain of the persona's email address, for the `notte` provider only. Defaults to the standard domain; other configured domains are listed by GET /personas/create/email-domains.
+     * Whether to create a phone number for the persona
      */
-    email_domain?: string | null;
+    create_phone_number?: boolean;
     email_provider?: PersonaEmailProvider;
     /**
      * Name
      */
     name?: string | null;
+    /**
+     * Email Domain
+     *
+     * Domain of the persona's email address, for the `notte` provider only. Defaults to the standard domain. Any other domain must be one Notte has enabled; other values are refused with the list of allowed domains.
+     */
+    email_domain?: string | null;
 };
 
 export type PersonaEmailProvider = 'notte' | 'agentmail' | 'resend';
@@ -9464,53 +9398,11 @@ export type PersonaEmailProvider = 'notte' | 'agentmail' | 'resend';
  */
 export type PersonaResponse = {
     /**
-     * Created At
-     */
-    created_at: string;
-    /**
-     * Email
-     *
-     * Public, human-readable email address of the persona
-     */
-    email: string;
-    /**
-     * Provider hosting the persona mailbox
-     */
-    email_provider?: PersonaEmailProvider;
-    /**
-     * First Name
-     *
-     * First name of the persona
-     */
-    first_name: string;
-    /**
-     * Internal Email
-     *
-     * Internal UUID-backed mailbox address of the persona
-     */
-    internal_email: string;
-    /**
-     * Last Name
-     *
-     * Last name of the persona
-     */
-    last_name: string;
-    /**
-     * Name
-     */
-    name?: string | null;
-    /**
      * Persona Id
      *
      * ID of the created persona
      */
     persona_id: string;
-    /**
-     * Phone Number
-     *
-     * Phone number of the persona (optional)
-     */
-    phone_number: string | null;
     /**
      * Status
      *
@@ -9518,11 +9410,53 @@ export type PersonaResponse = {
      */
     status: string;
     /**
+     * First Name
+     *
+     * First name of the persona
+     */
+    first_name: string;
+    /**
+     * Last Name
+     *
+     * Last name of the persona
+     */
+    last_name: string;
+    /**
+     * Email
+     *
+     * Public, human-readable email address of the persona
+     */
+    email: string;
+    /**
+     * Internal Email
+     *
+     * Internal UUID-backed mailbox address of the persona
+     */
+    internal_email: string;
+    /**
      * Vault Id
      *
      * ID of the vault
      */
     vault_id: string | null;
+    /**
+     * Phone Number
+     *
+     * Phone number of the persona (optional)
+     */
+    phone_number: string | null;
+    /**
+     * Provider hosting the persona mailbox
+     */
+    email_provider?: PersonaEmailProvider;
+    /**
+     * Name
+     */
+    name?: string | null;
+    /**
+     * Created At
+     */
+    created_at: string;
 };
 
 /**
@@ -9536,6 +9470,80 @@ export type PersonaUpdateRequest = {
 };
 
 /**
+ * ReplayMissingResponse
+ */
+export type ReplayMissingResponse = {
+    /**
+     * Detail
+     */
+    detail: string;
+    /**
+     * Session Id
+     */
+    session_id: string | null;
+    /**
+     * Status
+     */
+    status: number;
+    /**
+     * Error
+     */
+    error: string;
+    /**
+     * Message
+     */
+    message: string;
+    /**
+     * Replay Status
+     */
+    replay_status: 'waiting_for_session' | 'processing' | 'unavailable' | 'failed' | 'unknown' | 'disabled';
+    /**
+     * Retryable
+     */
+    retryable: boolean;
+};
+
+/**
+ * ReplayResponse
+ *
+ * Response containing presigned URLs for session replay.
+ */
+export type ReplayResponse = {
+    /**
+     * Playlist Content
+     */
+    playlist_content?: string | null;
+    /**
+     * Mp4 Url
+     */
+    mp4_url?: string | null;
+    /**
+     * Expires At
+     */
+    expires_at: string;
+    /**
+     * Mouse Manifest Url
+     */
+    mouse_manifest_url?: string | null;
+    /**
+     * Mouse Chunk Urls
+     */
+    mouse_chunk_urls?: Array<string> | null;
+    /**
+     * Mouse Next Offset
+     */
+    mouse_next_offset?: number | null;
+    /**
+     * Video Start Ms
+     */
+    video_start_ms?: number | null;
+    /**
+     * Video Duration Ms
+     */
+    video_duration_ms?: number | null;
+};
+
+/**
  * SMSResponse
  */
 export type SmsResponse = {
@@ -9546,17 +9554,17 @@ export type SmsResponse = {
      */
     body: string;
     /**
+     * Sms Id
+     *
+     * SMS UUID
+     */
+    sms_id: string;
+    /**
      * Created At
      *
      * Creation date
      */
     created_at: string;
-    /**
-     * Read
-     *
-     * Whether the message was read before this request
-     */
-    read: boolean;
     /**
      * Sender
      *
@@ -9564,11 +9572,11 @@ export type SmsResponse = {
      */
     sender: string | null;
     /**
-     * Sms Id
+     * Read
      *
-     * SMS UUID
+     * Whether the message was read before this request
      */
-    sms_id: string;
+    read: boolean;
 };
 
 /**
@@ -9577,18 +9585,6 @@ export type SmsResponse = {
  * A host preset: the token `hosts` can name and the hosts it stands for.
  */
 export type SecretProxyHostPresetResponse = {
-    /**
-     * Description
-     */
-    description: string;
-    /**
-     * Entries
-     */
-    entries: Array<HostPresetEntry>;
-    /**
-     * Hosts
-     */
-    hosts: Array<string>;
     /**
      * Name
      */
@@ -9601,6 +9597,18 @@ export type SecretProxyHostPresetResponse = {
      * Version
      */
     version: string;
+    /**
+     * Description
+     */
+    description: string;
+    /**
+     * Hosts
+     */
+    hosts: Array<string>;
+    /**
+     * Entries
+     */
+    entries: Array<HostPresetEntry>;
 };
 
 /**
@@ -9641,65 +9649,65 @@ export type UsageLog = {
  */
 export type UsageResponse = {
     /**
-     * Balance Amount
+     * Plan Type
      */
-    balance_amount: number;
-    /**
-     * Browser Usage Cost
-     */
-    browser_usage_cost: number;
-    /**
-     * Function Count
-     */
-    function_count: number;
-    /**
-     * Function Usage Cost
-     */
-    function_usage_cost: number;
-    /**
-     * Is Usage Limit Exceeded
-     */
-    is_usage_limit_exceeded: boolean;
-    /**
-     * Llm Usage Cost
-     */
-    llm_usage_cost: number;
+    plan_type: SubscriptionType | string;
     /**
      * Period
      */
     period: string;
     /**
-     * Plan Type
+     * Session Count
      */
-    plan_type: SubscriptionType | string;
+    session_count: number;
+    /**
+     * Function Count
+     */
+    function_count: number;
+    /**
+     * Browser Usage Cost
+     */
+    browser_usage_cost: number;
     /**
      * Proxy Usage Cost
      */
     proxy_usage_cost: number;
     /**
-     * Session Count
+     * Llm Usage Cost
      */
-    session_count: number;
+    llm_usage_cost: number;
     /**
-     * Subscription Balance Amount
+     * Function Usage Cost
      */
-    subscription_balance_amount: number;
+    function_usage_cost: number;
+    /**
+     * Total Cost
+     */
+    total_cost: number;
     /**
      * Subscription Limit Amount
      */
     subscription_limit_amount: number;
     /**
-     * Topup Balance Amount
-     */
-    topup_balance_amount: number;
-    /**
      * Topup Limit Amount
      */
     topup_limit_amount: number;
     /**
-     * Total Cost
+     * Subscription Balance Amount
      */
-    total_cost: number;
+    subscription_balance_amount: number;
+    /**
+     * Topup Balance Amount
+     */
+    topup_balance_amount: number;
+    /**
+     * Balance Amount
+     */
+    balance_amount: number;
+    /**
+     * Is Usage Limit Exceeded
+     */
+    is_usage_limit_exceeded: boolean;
 };
 
 /**
@@ -11421,28 +11429,6 @@ export type PaginatedResponseProfileResponseWritable = {
 };
 
 /**
- * PaginatedResponse[SessionResponse]
- */
-export type PaginatedResponseSessionResponseWritable = {
-    /**
-     * Items
-     */
-    items: Array<SessionResponseWritable>;
-    /**
-     * Page
-     */
-    page: number;
-    /**
-     * Page Size
-     */
-    page_size: number;
-    /**
-     * Has Next
-     */
-    has_next: boolean;
-};
-
-/**
  * PaginatedResponse[Vault]
  */
 export type PaginatedResponseVaultWritable = {
@@ -11782,10 +11768,6 @@ export type UpdateFunctionRunResponseWritable = {
  */
 export type PaginatedResponsePersonaResponseWritable = {
     /**
-     * Has Next
-     */
-    has_next: boolean;
-    /**
      * Items
      */
     items: Array<PersonaResponse>;
@@ -11797,16 +11779,38 @@ export type PaginatedResponsePersonaResponseWritable = {
      * Page Size
      */
     page_size: number;
+    /**
+     * Has Next
+     */
+    has_next: boolean;
+};
+
+/**
+ * PaginatedResponse[SessionResponse]
+ */
+export type PaginatedResponseSessionResponseWritable = {
+    /**
+     * Items
+     */
+    items: Array<SessionResponseWritable>;
+    /**
+     * Page
+     */
+    page: number;
+    /**
+     * Page Size
+     */
+    page_size: number;
+    /**
+     * Has Next
+     */
+    has_next: boolean;
 };
 
 /**
  * PaginatedResponse[UsageLog]
  */
 export type PaginatedResponseUsageLogWritable = {
-    /**
-     * Has Next
-     */
-    has_next: boolean;
     /**
      * Items
      */
@@ -11819,6 +11823,10 @@ export type PaginatedResponseUsageLogWritable = {
      * Page Size
      */
     page_size: number;
+    /**
+     * Has Next
+     */
+    has_next: boolean;
 };
 
 /**
@@ -11842,112 +11850,6 @@ export type PaginatedResponseAgentResponseWritable = {
      */
     has_next: boolean;
 };
-
-export type SessionAuthReadinessData = {
-    body?: never;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path: {
-        /**
-         * Session Id
-         */
-        session_id: string;
-    };
-    query?: never;
-    url: '/sessions/{session_id}/auth';
-};
-
-export type SessionAuthReadinessErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type SessionAuthReadinessError = SessionAuthReadinessErrors[keyof SessionAuthReadinessErrors];
-
-export type SessionAuthReadinessResponses = {
-    /**
-     * Successful Response
-     */
-    200: ManagedAuthReadiness;
-};
-
-export type SessionAuthReadinessResponse = SessionAuthReadinessResponses[keyof SessionAuthReadinessResponses];
-
-export type ListSessionsData = {
-    body?: never;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path?: never;
-    query?: {
-        /**
-         * Page
-         *
-         * Page number
-         */
-        page?: number;
-        /**
-         * Page Size
-         *
-         * Number of items per page
-         */
-        page_size?: number;
-        /**
-         * Only Active
-         *
-         * Whether to only return active sessions
-         */
-        only_active?: boolean;
-        /**
-         * Only Current Token
-         *
-         * Whether to only return sessions for the current token (apikey)
-         */
-        only_current_token?: boolean;
-        /**
-         * Include System
-         *
-         * Whether to include internal system sessions
-         */
-        include_system?: boolean;
-    };
-    url: '/sessions';
-};
-
-export type ListSessionsErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type ListSessionsError = ListSessionsErrors[keyof ListSessionsErrors];
-
-export type ListSessionsResponses = {
-    /**
-     * Successful Response
-     */
-    200: PaginatedResponseSessionResponse;
-};
-
-export type ListSessionsResponse = ListSessionsResponses[keyof ListSessionsResponses];
 
 export type SessionStartData = {
     body: ApiSessionStartRequest;
@@ -11983,46 +11885,6 @@ export type SessionStartResponses = {
 };
 
 export type SessionStartResponse = SessionStartResponses[keyof SessionStartResponses];
-
-export type SessionStatusData = {
-    body?: never;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path: {
-        /**
-         * Session Id
-         */
-        session_id: string;
-    };
-    query?: never;
-    url: '/sessions/{session_id}';
-};
-
-export type SessionStatusErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type SessionStatusError = SessionStatusErrors[keyof SessionStatusErrors];
-
-export type SessionStatusResponses = {
-    /**
-     * Successful Response
-     */
-    200: SessionResponse;
-};
-
-export type SessionStatusResponse = SessionStatusResponses[keyof SessionStatusResponses];
 
 export type SessionStepsData = {
     body?: never;
@@ -12890,152 +12752,6 @@ export type PageDocumentReadResponses = {
 };
 
 export type PageDocumentReadResponse = PageDocumentReadResponses[keyof PageDocumentReadResponses];
-
-export type SessionNetworkLogsData = {
-    body?: never;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path: {
-        /**
-         * Session Id
-         */
-        session_id: string;
-    };
-    query?: {
-        /**
-         * Limit
-         *
-         * Maximum number of batch files to return
-         */
-        limit?: number;
-        /**
-         * Download
-         *
-         * Whether to include download URLs for the logs
-         */
-        download?: boolean;
-    };
-    url: '/sessions/{session_id}/network/logs';
-};
-
-export type SessionNetworkLogsErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type SessionNetworkLogsError = SessionNetworkLogsErrors[keyof SessionNetworkLogsErrors];
-
-export type SessionNetworkLogsResponses = {
-    /**
-     * Successful Response
-     */
-    200: NetworkLogsResponse;
-};
-
-export type SessionNetworkLogsResponse = SessionNetworkLogsResponses[keyof SessionNetworkLogsResponses];
-
-export type SessionMouseReplayData = {
-    body?: never;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path: {
-        /**
-         * Session Id
-         */
-        session_id: string;
-    };
-    query?: {
-        /**
-         * Offset
-         */
-        offset?: number;
-    };
-    url: '/sessions/{session_id}/replay/mouse';
-};
-
-export type SessionMouseReplayErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type SessionMouseReplayError = SessionMouseReplayErrors[keyof SessionMouseReplayErrors];
-
-export type SessionMouseReplayResponses = {
-    /**
-     * Successful Response
-     */
-    200: MouseReplayPage;
-};
-
-export type SessionMouseReplayResponse = SessionMouseReplayResponses[keyof SessionMouseReplayResponses];
-
-export type SessionReplayData = {
-    body?: never;
-    headers?: {
-        /**
-         * X-Notte-Request-Origin
-         */
-        'x-notte-request-origin'?: string | null;
-        /**
-         * X-Notte-Sdk-Version
-         */
-        'x-notte-sdk-version'?: string | null;
-    };
-    path: {
-        /**
-         * Session Id
-         */
-        session_id: string;
-    };
-    query?: never;
-    url: '/sessions/{session_id}/replay';
-};
-
-export type SessionReplayErrors = {
-    /**
-     * Replay missing; see replay_status and retryable.
-     */
-    404: ReplayMissingResponse;
-    /**
-     * Capture completed without any frames.
-     */
-    410: ReplayMissingResponse;
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type SessionReplayError = SessionReplayErrors[keyof SessionReplayErrors];
-
-export type SessionReplayResponses = {
-    /**
-     * Successful Response
-     */
-    200: ReplayResponse;
-};
-
-export type SessionReplayResponse = SessionReplayResponses[keyof SessionReplayResponses];
 
 export type ExecuteSessionFileData = {
     body: FileExecutionRequest;
@@ -18876,6 +18592,298 @@ export type ListSecretProxyHostPresetsResponses = {
 };
 
 export type ListSecretProxyHostPresetsResponse = ListSecretProxyHostPresetsResponses[keyof ListSecretProxyHostPresetsResponses];
+
+export type ListSessionsData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: {
+        /**
+         * Page
+         *
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page Size
+         *
+         * Number of items per page
+         */
+        page_size?: number;
+        /**
+         * Only Active
+         *
+         * Whether to only return active sessions
+         */
+        only_active?: boolean;
+        /**
+         * Only Current Token
+         *
+         * Whether to only return sessions for the current token (apikey)
+         */
+        only_current_token?: boolean;
+        /**
+         * Include System
+         *
+         * Whether to include internal system sessions
+         */
+        include_system?: boolean;
+    };
+    url: '/sessions';
+};
+
+export type ListSessionsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListSessionsError = ListSessionsErrors[keyof ListSessionsErrors];
+
+export type ListSessionsResponses = {
+    /**
+     * Successful Response
+     */
+    200: PaginatedResponseSessionResponse;
+};
+
+export type ListSessionsResponse = ListSessionsResponses[keyof ListSessionsResponses];
+
+export type SessionStatusData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Session Id
+         */
+        session_id: string;
+    };
+    query?: never;
+    url: '/sessions/{session_id}';
+};
+
+export type SessionStatusErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SessionStatusError = SessionStatusErrors[keyof SessionStatusErrors];
+
+export type SessionStatusResponses = {
+    /**
+     * Successful Response
+     */
+    200: SessionResponse;
+};
+
+export type SessionStatusResponse = SessionStatusResponses[keyof SessionStatusResponses];
+
+export type SessionAuthReadinessData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Session Id
+         */
+        session_id: string;
+    };
+    query?: never;
+    url: '/sessions/{session_id}/auth';
+};
+
+export type SessionAuthReadinessErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SessionAuthReadinessError = SessionAuthReadinessErrors[keyof SessionAuthReadinessErrors];
+
+export type SessionAuthReadinessResponses = {
+    /**
+     * Successful Response
+     */
+    200: ManagedAuthReadiness;
+};
+
+export type SessionAuthReadinessResponse = SessionAuthReadinessResponses[keyof SessionAuthReadinessResponses];
+
+export type SessionNetworkLogsData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Session Id
+         */
+        session_id: string;
+    };
+    query?: {
+        /**
+         * Limit
+         *
+         * Maximum number of batch files to return
+         */
+        limit?: number;
+        /**
+         * Download
+         *
+         * Whether to include download URLs for the logs
+         */
+        download?: boolean;
+    };
+    url: '/sessions/{session_id}/network/logs';
+};
+
+export type SessionNetworkLogsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SessionNetworkLogsError = SessionNetworkLogsErrors[keyof SessionNetworkLogsErrors];
+
+export type SessionNetworkLogsResponses = {
+    /**
+     * Successful Response
+     */
+    200: NetworkLogsResponse;
+};
+
+export type SessionNetworkLogsResponse = SessionNetworkLogsResponses[keyof SessionNetworkLogsResponses];
+
+export type SessionReplayData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Session Id
+         */
+        session_id: string;
+    };
+    query?: never;
+    url: '/sessions/{session_id}/replay';
+};
+
+export type SessionReplayErrors = {
+    /**
+     * Replay missing; see replay_status and retryable.
+     */
+    404: ReplayMissingResponse;
+    /**
+     * Capture completed without any frames.
+     */
+    410: ReplayMissingResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SessionReplayError = SessionReplayErrors[keyof SessionReplayErrors];
+
+export type SessionReplayResponses = {
+    /**
+     * Successful Response
+     */
+    200: ReplayResponse;
+};
+
+export type SessionReplayResponse = SessionReplayResponses[keyof SessionReplayResponses];
+
+export type SessionMouseReplayData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path: {
+        /**
+         * Session Id
+         */
+        session_id: string;
+    };
+    query?: {
+        /**
+         * Offset
+         */
+        offset?: number;
+    };
+    url: '/sessions/{session_id}/replay/mouse';
+};
+
+export type SessionMouseReplayErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SessionMouseReplayError = SessionMouseReplayErrors[keyof SessionMouseReplayErrors];
+
+export type SessionMouseReplayResponses = {
+    /**
+     * Successful Response
+     */
+    200: MouseReplayPage;
+};
+
+export type SessionMouseReplayResponse = SessionMouseReplayResponses[keyof SessionMouseReplayResponses];
 
 export type GetUsageData = {
     body?: never;

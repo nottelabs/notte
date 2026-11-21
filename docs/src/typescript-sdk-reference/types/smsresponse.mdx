@@ -18,17 +18,17 @@ export type SmsResponse = {
      */
     body: string;
     /**
+     * Sms Id
+     *
+     * SMS UUID
+     */
+    sms_id: string;
+    /**
      * Created At
      *
      * Creation date
      */
     created_at: string;
-    /**
-     * Read
-     *
-     * Whether the message was read before this request
-     */
-    read: boolean;
     /**
      * Sender
      *
@@ -36,11 +36,11 @@ export type SmsResponse = {
      */
     sender: string | null;
     /**
-     * Sms Id
+     * Read
      *
-     * SMS UUID
+     * Whether the message was read before this request
      */
-    sms_id: string;
+    read: boolean;
 };
 ```
 
@@ -50,18 +50,18 @@ export type SmsResponse = {
 SMS message body
 </ParamField>
 
-<ParamField body="created_at" type={"string"} required>
-Creation date
+<ParamField body="sms_id" type={"string"} required>
+SMS UUID
 </ParamField>
 
-<ParamField body="read" type={"boolean"} required>
-Whether the message was read before this request
+<ParamField body="created_at" type={"string"} required>
+Creation date
 </ParamField>
 
 <ParamField body="sender" type={"string | null"} required>
 SMS sender phone number
 </ParamField>
 
-<ParamField body="sms_id" type={"string"} required>
-SMS UUID
+<ParamField body="read" type={"boolean"} required>
+Whether the message was read before this request
 </ParamField>
