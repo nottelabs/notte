@@ -29,12 +29,21 @@ function run(command, args, options = {}) {
   }
 
   // nosemgrep: javascript.lang.security.detect-child-process.detect-child-process -- command is allowlisted above
-  const result = spawnSync(command, args, {
-    cwd: options.cwd || SDK_DIR,
-    env: process.env,
-    encoding: 'utf8',
-    stdio: options.stdio || 'pipe',
-  });
+  const result =
+    process.platform === 'win32' && command === 'npm'
+      ? spawnSync([command, ...args].join(' '), {
+          cwd: options.cwd || SDK_DIR,
+          env: process.env,
+          encoding: 'utf8',
+          stdio: options.stdio || 'pipe',
+          shell: true,
+        })
+      : spawnSync(command, args, {
+          cwd: options.cwd || SDK_DIR,
+          env: process.env,
+          encoding: 'utf8',
+          stdio: options.stdio || 'pipe',
+        });
 
   if (result.status !== 0) {
     const output = [result.stdout, result.stderr].filter(Boolean).join('\n').trim();
@@ -121,7 +130,7 @@ function collectGeneratedDiffs(expectedSdkDir, actualSdkDir) {
     for (const relativeFile of relativeFiles) {
       const expectedFile = resolveInside(expectedPath, relativeFile);
       const actualFile = resolveInside(actualPath, relativeFile);
-      const displayPath = path.relative(expectedSdkDir, expectedFile);
+      const displayPath = path.relative(expectedSdkDir, expectedFile).split(path.sep).join('/');
 
       if (!fs.existsSync(expectedFile) || !fs.existsSync(actualFile)) {
         changed.add(displayPath);
@@ -145,7 +154,15 @@ function readComparableContent(filePath) {
     return Buffer.from(`symlink:${fs.readlinkSync(filePath)}`);
   }
 
-  return fs.readFileSync(filePath);
+  const raw = fs.readFileSync(filePath);
+  const out = [];
+  for (let i = 0; i < raw.length; i += 1) {
+    if (raw[i] === 0x0d && raw[i + 1] === 0x0a) {
+      continue;
+    }
+    out.push(raw[i]);
+  }
+  return Buffer.from(out);
 }
 
 function main() {

@@ -79,15 +79,13 @@ describe('check-generated-drift', () => {
       fs.symlinkSync('same.ts', path.join(root, 'expected/src/lib/client/link.ts'));
       fs.symlinkSync('other.ts', path.join(root, 'actual/src/lib/client/link.ts'));
 
-      expect(collectGeneratedDiffs(path.join(root, 'expected'), path.join(root, 'actual'))).toEqual(
-        [
-          'src/lib/client/link.ts',
-          'src/lib/client/nested/changed.ts',
-          'src/lib/client/nested/only-actual.ts',
-          'src/lib/client/only-expected.ts',
-          'src/proxy/patterns.ts',
-        ].map((file) => path.join(...file.split('/'))),
-      );
+      expect(collectGeneratedDiffs(path.join(root, 'expected'), path.join(root, 'actual'))).toEqual([
+        'src/lib/client/link.ts',
+        'src/lib/client/nested/changed.ts',
+        'src/lib/client/nested/only-actual.ts',
+        'src/lib/client/only-expected.ts',
+        'src/proxy/patterns.ts',
+      ]);
     });
   });
 });
