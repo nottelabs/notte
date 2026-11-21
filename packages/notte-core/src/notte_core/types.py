@@ -2151,7 +2151,7 @@ class PersonaCreateRequest(SdkRequest):
     email_domain: Annotated[
         str | None,
         Field(
-            description="Domain of the persona's email address, for the `notte` provider only. Defaults to the standard domain; other configured domains are listed by GET /personas/create/email-domains."
+            description="Domain of the persona's email address, for the `notte` provider only. Defaults to the standard domain. Any other domain must be one Notte has enabled; other values are refused with the list of allowed domains."
         ),
     ] = None
 
