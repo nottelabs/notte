@@ -257,6 +257,7 @@ class SessionStartRequestDict(TypedDict):
 
 class SessionStopRequestDict(TypedDict):
     close_reason: NotRequired[Literal["manual", "error"]]
+    wait: NotRequired[bool]
 
 
 class FileExecutionRequestDict(TypedDict):
