@@ -12,25 +12,34 @@ from run_python import capture_example
 class PythonExampleCaptureTest(unittest.TestCase):
     def test_cdp_error_example_handles_failure_and_captures_only_success(self):
         example = Path(__file__).resolve().parent.parent / "testers/sessions/cdp/playwright_cdp_error_handling.py"
-        for connected in (True, False):
-            with self.subTest(connected=connected):
+        hang_up = RuntimeError("BrowserType.connect_over_cdp: WebSocket error: socket hang up")
+        # (connected, first attempt's error, attempts)
+        cases = ((True, None, 1), (True, hang_up, 2), (False, RuntimeError("connection refused"), 1))
+        for connected, first_error, attempts in cases:
+            with self.subTest(connected=connected, first_error=str(first_error)):
                 client = MagicMock()
                 session = client.Session.return_value.__enter__.return_value
                 session.status.return_value = SimpleNamespace(model_dump=lambda mode: {"status": "active"})
                 playwright = MagicMock()
                 connect = playwright.return_value.__enter__.return_value.chromium.connect_over_cdp
-                connect.return_value.is_connected.return_value = True
+                browser = connect.return_value
+                browser.is_connected.return_value = True
                 if not connected:
-                    connect.side_effect = RuntimeError("connection refused")
+                    connect.side_effect = first_error
+                elif first_error is not None:
+                    connect.side_effect = [first_error, browser]
                 sdk_module = ModuleType("notte_sdk")
                 sdk_module.NotteClient = MagicMock(return_value=client)
                 playwright_module = ModuleType("playwright.sync_api")
                 playwright_module.sync_playwright = playwright
+                playwright_module.Browser = object
+                playwright_module.Playwright = object
                 output = StringIO()
                 with patch.dict("sys.modules", {"notte_sdk": sdk_module, "playwright.sync_api": playwright_module}):
                     with redirect_stdout(output):
                         result = capture_example(str(example))
-                connect.assert_called_once_with(session.cdp_url.return_value)
+                self.assertEqual(connect.call_count, attempts)
+                connect.assert_called_with(session.cdp_url.return_value)
                 client.Session.return_value.__exit__.assert_called_once_with(None, None, None)
                 if connected:
                     self.assertEqual(result, {"status": {"status": "active"}})

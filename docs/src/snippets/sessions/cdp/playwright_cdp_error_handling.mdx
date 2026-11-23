@@ -4,8 +4,25 @@
 <CodeGroup>
 
 ```python playwright_cdp_error_handling.py
+import time
+
 from notte_sdk import NotteClient
-from playwright.sync_api import sync_playwright  # type: ignore[import-not-found]
+from playwright.sync_api import Browser, Playwright, sync_playwright  # type: ignore[import-not-found]
+
+# Network failures before the WebSocket upgrade. An HTTP answer (403, 410, 503) is not one of them.
+TRANSPORT_ERRORS = ("socket hang up", "ECONNRESET", "ECONNREFUSED", "ETIMEDOUT")
+
+
+def connect(p: Playwright, cdp_url: str) -> Browser:
+    """Connect over CDP, once more if the connection dropped before the server answered."""
+    try:
+        return p.chromium.connect_over_cdp(cdp_url)
+    except Exception as e:
+        if not any(error in str(e).partition("\n")[0] for error in TRANSPORT_ERRORS):
+            raise
+    time.sleep(0.3)
+    return p.chromium.connect_over_cdp(cdp_url)
+
 
 client = NotteClient()
 
@@ -13,7 +30,7 @@ with client.Session() as session:
     cdp_url = session.cdp_url()
     with sync_playwright() as p:
         try:
-            browser = p.chromium.connect_over_cdp(cdp_url)
+            browser = connect(p, cdp_url)
             # ... operations
         except Exception as e:
             print(f"CDP connection failed: {e}")
@@ -21,7 +38,22 @@ with client.Session() as session:
 
 ```typescript playwright_cdp_error_handling.ts
 import { NotteClient } from 'notte-sdk';
-import { chromium } from 'playwright-core';
+import { chromium, type Browser } from 'playwright-core';
+
+// Network failures before the WebSocket upgrade. An HTTP answer (403, 410, 503) is not one of them.
+const TRANSPORT_ERRORS = ['socket hang up', 'ECONNRESET', 'ECONNREFUSED', 'ETIMEDOUT'];
+
+// Connect over CDP, once more if the connection dropped before the server answered.
+async function connect(cdpUrl: string): Promise<Browser> {
+  try {
+    return await chromium.connectOverCDP(cdpUrl);
+  } catch (error) {
+    const firstLine = String(error).split('\n')[0];
+    if (!TRANSPORT_ERRORS.some(transportError => firstLine.includes(transportError))) throw error;
+  }
+  await new Promise(resolve => setTimeout(resolve, 300));
+  return chromium.connectOverCDP(cdpUrl);
+}
 
 const client = new NotteClient();
 
@@ -29,7 +61,7 @@ const status = await client.Session().use(async session => {
   const status = await session.status();
   const cdpUrl = status.cdp_url!;
   try {
-    const browser = await chromium.connectOverCDP(cdpUrl);
+    const browser = await connect(cdpUrl);
     try {
       // ... operations
       return status;

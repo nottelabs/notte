@@ -89,6 +89,8 @@ npm install puppeteer-core
 
 CDP connections can be interrupted. Catch connection errors around `puppeteer.connect()`. Put browser operations inside `try/finally` so errors still reach your session cleanup.
 
+A connection can also drop before it is established, with `socket hang up` or `ECONNRESET`. Connecting again right away usually works, so retry such a failure once after a short delay, as the `connect()` helper in Approach 1 above does. Don't retry an HTTP answer such as 403, 410 or 503 (`Unexpected server response`): connecting again gets the same answer.
+
 ### 3. Disconnect Properly
 
 Call `browser.disconnect()` in `finally` to disconnect Puppeteer. Also stop the Notte session, or use `session.use()` to manage that lifecycle. Disconnecting the client and stopping the session are separate operations.

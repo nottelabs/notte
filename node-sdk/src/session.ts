@@ -82,6 +82,50 @@ export const CAPTCHA_SOLVE_TIMEOUT_MS = 100_000;
 
 export type PerceptionType = NonNullable<ObserveRequest['perception_type']>;
 
+/** Delay before the one retry of a CDP connection that dropped before the WebSocket upgrade. */
+const CDP_CONNECT_RETRY_DELAY_MS = 300;
+/** Network failures of a CDP connection before the server answered the WebSocket upgrade. */
+const CDP_TRANSPORT_FAILURES = [
+  'socket hang up',
+  'ECONNRESET',
+  'ECONNREFUSED',
+  'ETIMEDOUT',
+  'Client network socket disconnected before secure TLS connection was established',
+];
+
+/**
+ * The reason a CDP connection failed on the network before the WebSocket
+ * upgrade, else undefined. Mirrors `_cdp_transport_failure` in the Python SDK.
+ *
+ * Playwright's first line reads `WebSocket error: socket hang up` for such a
+ * failure, and `WebSocket error: <url> 403 Forbidden` when the server answered
+ * over HTTP (an expired URL, a closed session, a connection limit), which is
+ * never retried. Its later lines are the call log, which shows close code 1006
+ * in both cases, so only the first line is read. Playwright's own timeout is
+ * not retried either: that attempt already used the whole connection timeout.
+ */
+function cdpTransportFailure(error: unknown): string | undefined {
+  const firstLine = (error instanceof Error ? error.message : String(error)).split('\n', 1)[0] ?? '';
+  const marker = 'WebSocket error: ';
+  const at = firstLine.indexOf(marker);
+  if (at < 0) return undefined;
+  const reason = firstLine.slice(at + marker.length);
+  return CDP_TRANSPORT_FAILURES.some(failure => reason.includes(failure)) ? reason : undefined;
+}
+
+/** Run `connect`, once more when the connection dropped before the WebSocket upgrade. */
+async function connectOverCdpWithRetry(connect: () => Promise<Browser>): Promise<Browser> {
+  try {
+    return await connect();
+  } catch (error) {
+    const reason = cdpTransportFailure(error);
+    if (reason === undefined) throw error;
+    console.warn(`[Session] CDP connection failed (${reason}), retrying once in ${CDP_CONNECT_RETRY_DELAY_MS / 1000}s`);
+  }
+  await delay(CDP_CONNECT_RETRY_DELAY_MS);
+  return connect();
+}
+
 /** The error for a page connection that failed because the session closed; null otherwise. */
 function closedSessionError(response: SessionResponse, cause: unknown): SessionClosedError | null {
   if (response.status !== 'closed' && response.status !== 'error' && response.status !== 'timed_out') {
@@ -853,11 +897,13 @@ export class Session {
         const cdpUrl = await this.cdpUrl();
         // Identify the SDK to Notte's CDP endpoint, as every API call does; a caller's
         // own browser (`cdp_url` option) gets nothing extra.
-        this.playwrightBrowser = this.options.cdp_url
-          ? await playwright.chromium.connectOverCDP(cdpUrl)
-          : await playwright.chromium.connectOverCDP(cdpUrl, {
-              headers: { 'x-notte-request-origin': REQUEST_ORIGIN, 'x-notte-sdk-version': SDK_VERSION },
-            });
+        this.playwrightBrowser = await connectOverCdpWithRetry(() =>
+          this.options.cdp_url
+            ? playwright.chromium.connectOverCDP(cdpUrl)
+            : playwright.chromium.connectOverCDP(cdpUrl, {
+                headers: { 'x-notte-request-origin': REQUEST_ORIGIN, 'x-notte-sdk-version': SDK_VERSION },
+              }),
+        );
         installServerOwnedDialogPolicy(this.playwrightBrowser);
       }
       const page = this.playwrightBrowser.contexts()[0]?.pages()[0];

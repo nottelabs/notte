@@ -6,7 +6,7 @@ from collections.abc import AsyncIterator, Awaitable, Callable, Coroutine, Itera
 from enum import StrEnum
 from pathlib import Path
 from types import TracebackType
-from typing import TYPE_CHECKING, Any, Literal, Unpack, overload
+from typing import TYPE_CHECKING, Any, Literal, Unpack, cast, overload
 from urllib.parse import urlsplit
 from webbrowser import open as open_browser
 
@@ -93,6 +93,7 @@ if TYPE_CHECKING:
 
 # Retry configuration constants
 CLUSTER_OVERLOAD_RETRY_DELAY = 30  # seconds to wait before retrying on 529 errors
+CDP_CONNECT_RETRY_DELAY = 0.3  # seconds before the one retry of a CDP connection dropped before the WebSocket upgrade
 CONSOLE_VIEWER_URL = (
     "https://console.notte.cc/static/viewer?ws=wss://api.notte.cc/sessions/{session_id}/debug/recording?token={token}"
 )
@@ -756,6 +757,44 @@ def _cdp_headers(
     return headers
 
 
+# Network failures of a CDP connection before the server answered the WebSocket upgrade.
+_CDP_TRANSPORT_FAILURES = (
+    "socket hang up",
+    "ECONNRESET",
+    "ECONNREFUSED",
+    "ETIMEDOUT",
+    "Client network socket disconnected before secure TLS connection was established",
+)
+
+
+def _cdp_transport_failure(error: Exception) -> str | None:
+    """The reason a CDP connection failed on the network before the WebSocket upgrade, else `None`.
+
+    Playwright's first line reads `WebSocket error: socket hang up` for such a failure, and
+    `WebSocket error: <url> 403 Forbidden` when the server answered over HTTP (an expired URL,
+    a closed session, a connection limit), which is never retried. Its later lines are the call
+    log, which shows close code 1006 in both cases, so only the first line is read. Playwright's
+    own timeout is not retried either: that attempt already used the whole connection timeout.
+    """
+    _, separator, reason = str(error).partition("\n")[0].partition("WebSocket error: ")
+    if separator and any(failure in reason for failure in _CDP_TRANSPORT_FAILURES):
+        return reason
+    return None
+
+
+def _cdp_connect_flow(url: str, headers: dict[str, str] | None) -> "Flow[BrowserSync | BrowserAsync]":
+    """`connect_over_cdp`, tried once more when the connection dropped before the WebSocket upgrade."""
+    try:
+        return (yield Call("connect_over_cdp", (url,), {"headers": headers}))
+    except Exception as e:
+        reason = _cdp_transport_failure(e)
+        if reason is None:
+            raise
+        logger.warning(f"CDP connection failed ({reason}), retrying once in {CDP_CONNECT_RETRY_DELAY}s")
+    yield Sleep(CDP_CONNECT_RETRY_DELAY)
+    return (yield Call("connect_over_cdp", (url,), {"headers": headers}))
+
+
 async def _async_page(session: "AsyncRemoteSession", cdp_url: Callable[[], Awaitable[str]]) -> "PageAsync":
     """The async Playwright page connected to the session over CDP, connecting on first use."""
     if not _async_playwright_available:
@@ -775,9 +814,12 @@ async def _async_page(session: "AsyncRemoteSession", cdp_url: Callable[[], Await
         # Connect to browser via CDP
         if session._async_playwright_browser is None:  # pyright: ignore [reportPrivateUsage]
             url = await cdp_url()
-            session._async_playwright_browser = await session._async_playwright_context.chromium.connect_over_cdp(  # pyright: ignore [reportPrivateUsage]
-                url,
-                headers=session._cdp_headers(url),  # pyright: ignore [reportPrivateUsage]
+            session._async_playwright_browser = cast(  # pyright: ignore [reportPrivateUsage]
+                "BrowserAsync",
+                await arun(
+                    session._async_playwright_context.chromium,  # pyright: ignore [reportPrivateUsage]
+                    _cdp_connect_flow(url, session._cdp_headers(url)),  # pyright: ignore [reportPrivateUsage]
+                ),
             )
             _install_server_owned_dialog_policy(session._async_playwright_browser)  # pyright: ignore [reportPrivateUsage]
 
@@ -1482,8 +1524,9 @@ class RemoteSession(SyncResource):
             # Connect to browser via CDP
             if self._playwright_browser is None:
                 cdp_url = self.cdp_url()
-                self._playwright_browser = self._playwright_context.chromium.connect_over_cdp(
-                    cdp_url, headers=self._cdp_headers(cdp_url)
+                self._playwright_browser = cast(
+                    "BrowserSync",
+                    run(self._playwright_context.chromium, _cdp_connect_flow(cdp_url, self._cdp_headers(cdp_url))),
                 )
                 _install_server_owned_dialog_policy(self._playwright_browser)
 
