@@ -46,6 +46,10 @@ NOT_RETRIED = [
     _http_answer("403 Forbidden", "InvalidRoutingToken"),
     _http_answer("410 Gone", ""),
     _http_answer("503 Service Unavailable", "connection limit reached, ECONNREFUSED"),
+    Exception(
+        "BrowserType.connect_over_cdp: WebSocket error: wss://notte.example/ECONNRESET/s/token 403 Forbidden\n"
+        "Session URL expired"
+    ),
     Exception("BrowserType.connect_over_cdp: Timeout 30000ms exceeded.\nCall log:\n  - <ws connecting> wss://x"),
 ]
 

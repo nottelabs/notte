@@ -775,9 +775,13 @@ def _cdp_transport_failure(error: Exception) -> str | None:
     a closed session, a connection limit), which is never retried. Its later lines are the call
     log, which shows close code 1006 in both cases, so only the first line is read. Playwright's
     own timeout is not retried either: that attempt already used the whole connection timeout.
+    The HTTP answer's reason starts with the URL, which is never matched: a URL may contain any
+    of the failure words.
     """
     _, separator, reason = str(error).partition("\n")[0].partition("WebSocket error: ")
-    if separator and any(failure in reason for failure in _CDP_TRANSPORT_FAILURES):
+    if not separator or reason.startswith(("ws://", "wss://")):
+        return None
+    if any(failure in reason for failure in _CDP_TRANSPORT_FAILURES):
         return reason
     return None
 

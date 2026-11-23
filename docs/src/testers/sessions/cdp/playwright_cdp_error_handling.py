@@ -6,7 +6,13 @@ from notte_sdk import NotteClient
 from playwright.sync_api import Browser, Playwright, sync_playwright  # type: ignore[import-not-found]
 
 # Network failures before the WebSocket upgrade. An HTTP answer (403, 410, 503) is not one of them.
-TRANSPORT_ERRORS = ("socket hang up", "ECONNRESET", "ECONNREFUSED", "ETIMEDOUT")
+TRANSPORT_ERRORS = (
+    "socket hang up",
+    "ECONNRESET",
+    "ECONNREFUSED",
+    "ETIMEDOUT",
+    "Client network socket disconnected before secure TLS connection was established",
+)
 
 
 def connect(p: Playwright, cdp_url: str) -> Browser:

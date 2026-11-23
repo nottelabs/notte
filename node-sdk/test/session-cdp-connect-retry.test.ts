@@ -46,6 +46,9 @@ const NOT_RETRIED = [
   httpAnswer('403 Forbidden', 'InvalidRoutingToken'),
   httpAnswer('410 Gone', ''),
   httpAnswer('503 Service Unavailable', 'connection limit reached, ECONNREFUSED'),
+  new Error(
+    'browserType.connectOverCDP: WebSocket error: wss://notte.example/ECONNRESET/s/token 403 Forbidden\nSession URL expired',
+  ),
   Object.assign(new Error('browserType.connectOverCDP: Timeout 30000ms exceeded.\nCall log:\n  - <ws connecting> wss://x'), {
     name: 'TimeoutError',
   }),

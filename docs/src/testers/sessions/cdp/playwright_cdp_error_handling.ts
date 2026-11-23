@@ -4,7 +4,13 @@ import { NotteClient } from 'notte-sdk';
 import { chromium, type Browser } from 'playwright-core';
 
 // Network failures before the WebSocket upgrade. An HTTP answer (403, 410, 503) is not one of them.
-const TRANSPORT_ERRORS = ['socket hang up', 'ECONNRESET', 'ECONNREFUSED', 'ETIMEDOUT'];
+const TRANSPORT_ERRORS = [
+  'socket hang up',
+  'ECONNRESET',
+  'ECONNREFUSED',
+  'ETIMEDOUT',
+  'Client network socket disconnected before secure TLS connection was established',
+];
 
 // Connect over CDP, once more if the connection dropped before the server answered.
 async function connect(cdpUrl: string): Promise<Browser> {

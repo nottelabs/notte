@@ -103,6 +103,8 @@ const CDP_TRANSPORT_FAILURES = [
  * never retried. Its later lines are the call log, which shows close code 1006
  * in both cases, so only the first line is read. Playwright's own timeout is
  * not retried either: that attempt already used the whole connection timeout.
+ * The HTTP answer's reason starts with the URL, which is never matched: a URL
+ * may contain any of the failure words.
  */
 function cdpTransportFailure(error: unknown): string | undefined {
   const firstLine = (error instanceof Error ? error.message : String(error)).split('\n', 1)[0] ?? '';
@@ -110,6 +112,7 @@ function cdpTransportFailure(error: unknown): string | undefined {
   const at = firstLine.indexOf(marker);
   if (at < 0) return undefined;
   const reason = firstLine.slice(at + marker.length);
+  if (reason.startsWith('ws://') || reason.startsWith('wss://')) return undefined;
   return CDP_TRANSPORT_FAILURES.some(failure => reason.includes(failure)) ? reason : undefined;
 }
 
