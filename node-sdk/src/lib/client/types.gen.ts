@@ -542,6 +542,12 @@ export type ApiSessionStartRequest = {
      */
     screenshot_type?: 'raw' | 'full' | 'last_action';
     /**
+     * Preset Id
+     *
+     * Reusable launch preset revision from POST /launch-presets/recommend. Explicit request and saved profile settings take precedence. Does not navigate or restrict the session. During the pilot, starting with a preset returns 403 in production.
+     */
+    preset_id?: string | null;
+    /**
      * Demonstrate
      *
      * Whether to enable the Notte recorder extension for this session. The extension is installed but remains inactive when this is false.
@@ -4518,6 +4524,30 @@ export type Interval = {
      * Unit
      */
     unit?: 'minutes' | 'hours' | 'days';
+};
+
+/**
+ * LaunchPresetRecommendation
+ */
+export type LaunchPresetRecommendation = {
+    /**
+     * Id
+     *
+     * Opaque, reusable launch preset revision ID.
+     */
+    id: string;
+};
+
+/**
+ * LaunchPresetRecommendationRequest
+ */
+export type LaunchPresetRecommendationRequest = {
+    /**
+     * Domain
+     *
+     * Exact hostname, without a URL scheme, port, or path.
+     */
+    domain: string;
 };
 
 /**
@@ -11850,6 +11880,41 @@ export type PaginatedResponseAgentResponseWritable = {
      */
     has_next: boolean;
 };
+
+export type RecommendLaunchPresetData = {
+    body: LaunchPresetRecommendationRequest;
+    headers?: {
+        /**
+         * X-Notte-Request-Origin
+         */
+        'x-notte-request-origin'?: string | null;
+        /**
+         * X-Notte-Sdk-Version
+         */
+        'x-notte-sdk-version'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/launch-presets/recommend';
+};
+
+export type RecommendLaunchPresetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RecommendLaunchPresetError = RecommendLaunchPresetErrors[keyof RecommendLaunchPresetErrors];
+
+export type RecommendLaunchPresetResponses = {
+    /**
+     * Successful Response
+     */
+    200: LaunchPresetRecommendation;
+};
+
+export type RecommendLaunchPresetResponse = RecommendLaunchPresetResponses[keyof RecommendLaunchPresetResponses];
 
 export type SessionStartData = {
     body: ApiSessionStartRequest;

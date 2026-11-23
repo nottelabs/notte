@@ -9,6 +9,88 @@
     }
   },
   "paths": {
+    "/launch-presets/recommend": {
+      "post": {
+        "tags": [
+          "launch-presets"
+        ],
+        "summary": "Recommend Launch Preset",
+        "description": "Recommend session launch defaults for an exact hostname. Unmapped hosts receive the default preset. Does not contact the site, start a session, navigate, or grant access. During the pilot this returns 403 in production.",
+        "operationId": "recommend_launch_preset",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-notte-request-origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Request-Origin"
+            }
+          },
+          {
+            "name": "x-notte-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Notte-Sdk-Version"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LaunchPresetRecommendationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LaunchPresetRecommendation"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": []
+      }
+    },
     "/sessions/start": {
       "post": {
         "tags": [
@@ -18638,6 +18720,19 @@
             "default": "last_action",
             "deprecated": true
           },
+          "preset_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preset Id",
+            "description": "Reusable launch preset revision from POST /launch-presets/recommend. Explicit request and saved profile settings take precedence. Does not navigate or restrict the session. During the pilot, starting with a preset returns 403 in production."
+          },
           "demonstrate": {
             "type": "boolean",
             "title": "Demonstrate",
@@ -27529,6 +27624,36 @@
         "additionalProperties": false,
         "type": "object",
         "title": "Interval"
+      },
+      "LaunchPresetRecommendation": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Opaque, reusable launch preset revision ID."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "LaunchPresetRecommendation"
+      },
+      "LaunchPresetRecommendationRequest": {
+        "properties": {
+          "domain": {
+            "type": "string",
+            "maxLength": 255,
+            "title": "Domain",
+            "description": "Exact hostname, without a URL scheme, port, or path."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "domain"
+        ],
+        "title": "LaunchPresetRecommendationRequest"
       },
       "ListCredentialsResponse": {
         "properties": {
