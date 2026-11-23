@@ -34,6 +34,12 @@ client = NotteClient()
 
 with client.Session() as session:
     cdp_url = session.cdp_url()
+    with sync_playwright() as p:
+        try:
+            browser = connect(p, cdp_url)
+            # ... operations
+        except Exception as e:
+            print(f"CDP connection failed: {e}")
 ```
 
 ```typescript playwright_cdp_error_handling.ts
@@ -72,6 +78,12 @@ const status = await client.Session().use(async session => {
       // ... operations
       return status;
     } finally {
+      await browser.close();
+    }
+  } catch (error) {
+    console.log(`CDP connection failed: ${error}`);
+  }
+});
 ```
 
 </CodeGroup>

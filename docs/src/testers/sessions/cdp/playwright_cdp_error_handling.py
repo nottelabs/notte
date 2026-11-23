@@ -1,5 +1,5 @@
 # @sniptest filename=playwright_cdp_error_handling.py
-# @sniptest show=1-30
+# @sniptest show=1-36
 import time
 
 from notte_sdk import NotteClient

@@ -1,5 +1,5 @@
 // @sniptest filename=playwright_cdp_error_handling.ts
-// @sniptest show=1-35
+// @sniptest show=1-41
 import { NotteClient } from 'notte-sdk';
 import { chromium, type Browser } from 'playwright-core';
 
