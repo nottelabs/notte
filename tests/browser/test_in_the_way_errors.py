@@ -13,12 +13,13 @@ from urllib.parse import quote
 import notte_browser.execution as execution_module
 import notte_browser.session as session_module
 import pytest
+from notte_browser.driver import Locator
 from notte_browser.session import NotteSession
-from notte_core.actions import ClickAction, FillAction
+from notte_core.actions import CheckAction, ClickAction, FillAction
 from notte_core.config import config
 from notte_core.credentials import PASSWORD
 from notte_core.credentials.types import ValueWithPlaceholder
-from notte_core.errors import ActionExecutionError, TextNotKeptError
+from notte_core.errors import ActionExecutionError, NotteTimeoutError, TextNotKeptError
 
 from tests.mock.mock_vault import MockVault
 from tests.test_vault_credential_redaction import capture_logs, error_texts
@@ -505,15 +506,28 @@ async def test_a_click_that_times_out_names_the_element_over_the_control(monkeyp
     )
 
 
+@pytest.mark.parametrize(
+    "action",
+    [
+        FillAction(selector="#missing", value="x", timeout=500),
+        ClickAction(selector="#missing", timeout=500),
+        CheckAction(selector="#missing", value=True, timeout=500),
+    ],
+    ids=["fill", "click", "check"],
+)
 @pytest.mark.asyncio
-async def test_a_timeout_waiting_for_an_element_that_never_shows_keeps_its_message() -> None:
-    """A Playwright selector locates lazily: the fill times out waiting for its element. Nothing is in the way of an
-    element that is not there, and the look does not wait for it either."""
+async def test_a_timeout_waiting_for_an_element_that_never_shows_says_no_element_matches(
+    action: FillAction | ClickAction | CheckAction,
+) -> None:
+    """A Playwright selector locates lazily: the action times out waiting for its element. Nothing is in the way of
+    an element that is not there: the message says that the selector matches nothing, and the look does not wait
+    for the element either."""
     async with NotteSession(headless=True) as session:
         _ = await session.window.page.goto(_url(STYLE, FORM.format(inert=""), BANNER))
-        result = await session.aexecute(FillAction(selector="#missing", value="x", timeout=500), raise_on_failure=False)
+        result = await session.aexecute(action, raise_on_failure=False)
     assert not result.success
-    assert result.message == "Action timed out after 500ms"
+    assert isinstance(result.exception, NotteTimeoutError), result.message
+    assert result.message == "Action timed out after 500ms: no element matches the selector"
 
 
 @pytest.mark.asyncio
@@ -527,3 +541,141 @@ async def test_a_timeout_before_the_element_is_located_keeps_its_message(monkeyp
         result = await session.aexecute(ClickAction(selector="#go", timeout=500), raise_on_failure=False)
     assert not result.success
     assert result.message == "Action timed out after 500ms"
+
+
+# a button in a frame, for a selector that enters it
+IN_FRAME = f'<iframe id="frame" srcdoc="{escape("<button id=go>Go</button>")}"></iframe>'
+
+
+@pytest.mark.parametrize(
+    ("page", "selector"),
+    [
+        (IN_FRAME, "#frame >> internal:control=enter-frame >> #missing"),
+        ("<p>No frame here</p>", "#frame >> internal:control=enter-frame >> #go"),
+    ],
+    ids=["element missing in its frame", "frame missing"],
+)
+@pytest.mark.asyncio
+async def test_a_timeout_on_a_selector_into_a_frame_says_no_element_matches(page: str, selector: str) -> None:
+    """A selector that goes into a frame is counted in that frame: no element there, or no such frame, is no match."""
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(_url(page))
+        result = await session.aexecute(ClickAction(selector=selector, timeout=500), raise_on_failure=False)
+    assert not result.success
+    assert result.message == "Action timed out after 500ms: no element matches the selector"
+
+
+@pytest.mark.asyncio
+async def test_a_timeout_after_the_page_navigated_away_counts_on_the_current_page() -> None:
+    """The count is taken on the page the action's deadline found: a click that waits for its element while the
+    page navigates to another page without it ends with no element matching the selector there."""
+    pages = {
+        "http://fixture.test/start": "<p>Loading</p><script>setTimeout(() => location.href = '/away', 200)</script>",
+        "http://fixture.test/away": "<p>Another page</p>",
+    }
+    async with NotteSession(headless=True) as session:
+        page = session.window.page
+        await page.route(
+            "http://fixture.test/**",
+            lambda route: route.fulfill(status=200, content_type="text/html", body=pages[route.request.url]),
+        )
+        _ = await page.goto("http://fixture.test/start")
+        result = await session.aexecute(ClickAction(selector="#go", timeout=1500), raise_on_failure=False)
+        assert session.window.page.url == "http://fixture.test/away"
+    assert not result.success
+    assert isinstance(result.exception, NotteTimeoutError), result.message
+    assert result.message == "Action timed out after 1500ms: no element matches the selector"
+
+
+@pytest.mark.asyncio
+async def test_a_timeout_once_the_selector_matches_several_elements_says_how_many(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A selector that matched one element when the click started can match several once the page re-renders: the
+    click held until its timeout (here by a look at its state that never returns) says how many it matches."""
+
+    async def duplicate_then_never(locator: Locator, *args: object, **kwargs: object) -> bool:
+        await locator.page.evaluate("() => document.body.append(document.querySelector('button').cloneNode(true))")
+        await asyncio.sleep(3600)
+        return False
+
+    monkeypatch.setattr(execution_module, "_stays_disabled", duplicate_then_never)
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(_url("<button>Go</button>"))
+        result = await session.aexecute(ClickAction(selector="button", timeout=500), raise_on_failure=False)
+    assert not result.success
+    assert isinstance(result.exception, NotteTimeoutError), result.message
+    assert result.message == "Action timed out after 500ms: the selector matches 2 elements"
+
+
+@pytest.mark.asyncio
+async def test_a_disabled_click_whose_element_is_gone_keeps_its_message(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Only a timeout says how many elements the selector matches: a failure of its own keeps its reason."""
+
+    async def remove_then_disabled(locator: Locator, *args: object, **kwargs: object) -> bool:
+        await locator.page.evaluate("() => document.querySelector('button').remove()")
+        return True
+
+    monkeypatch.setattr(execution_module, "_stays_disabled", remove_then_disabled)
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(_url("<button>Go</button>"))
+        result = await session.aexecute(ClickAction(selector="button", timeout=500), raise_on_failure=False)
+    assert not result.success
+    assert result.message.endswith("Element is disabled"), result.message
+
+
+@pytest.mark.parametrize("look", ["fails", "outlasts its bound"])
+@pytest.mark.asyncio
+async def test_a_count_that_cannot_be_taken_keeps_the_timeout(monkeypatch: pytest.MonkeyPatch, look: str) -> None:
+    """The count is a look like the one at what is in the way: when the page cannot answer it (an error, or no
+    answer within `_IN_THE_WAY_S`), the timeout keeps its message, and the look adds at most its bound."""
+
+    async def count(self: Locator) -> int:
+        if look == "fails":
+            raise execution_module.Error("Target page, context or browser has been closed")
+        await asyncio.sleep(3600)
+        return 0
+
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(_url("<p>Nothing to click</p>"))
+        monkeypatch.setattr(execution_module, "_IN_THE_WAY_S", 0.2)
+        monkeypatch.setattr(type(session.window.page.locator("#go")), "count", count)
+        loop = asyncio.get_running_loop()
+        started = loop.time()
+        result = await session.aexecute(ClickAction(selector="#go", timeout=500), raise_on_failure=False)
+        elapsed = loop.time() - started
+    assert not result.success
+    assert isinstance(result.exception, NotteTimeoutError), result.message
+    assert result.message == "Action timed out after 500ms"
+    # a lower bound only: the deadline was reached (see AGENTS.md on `timing` marks)
+    assert elapsed >= 0.5
+
+
+@pytest.mark.asyncio
+async def test_a_click_that_succeeds_does_not_count_the_matches(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The count only runs once an action timed out: a click that works asks the page nothing more."""
+    looks: list[bool] = []
+    in_the_way = execution_module._in_the_way  # pyright: ignore[reportPrivateUsage]
+
+    async def spy(*args: object, **kwargs: bool) -> str:
+        looks.append(kwargs.get("timed_out", False))
+        return await in_the_way(*args, **kwargs)  # pyright: ignore[reportArgumentType]
+
+    monkeypatch.setattr(execution_module, "_in_the_way", spy)
+    async with NotteSession(headless=True) as session:
+        _ = await session.window.page.goto(_url(FORM.format(inert="")))
+        counted: list[str] = []
+        locator_type = type(session.window.page.locator("#go"))
+        count = locator_type.count
+
+        async def counting(self: Locator) -> int:
+            counted.append(str(self))
+            return await count(self)
+
+        monkeypatch.setattr(locator_type, "count", counting)
+        result = await session.aexecute(ClickAction(selector="#go"), raise_on_failure=False)
+        clicked = await session.window.page.evaluate("() => document.body.dataset.clicked")
+    assert result.success, result.message
+    assert clicked == "1"
+    assert looks == []
+    assert counted == []

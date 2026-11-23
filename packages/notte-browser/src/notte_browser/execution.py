@@ -481,7 +481,9 @@ def _may_quote(action: InteractionAction, page_text: str, secrets: Collection[st
     return not typed or typed not in page_text.casefold()
 
 
-async def _in_the_way(located: list[Locator], action: InteractionAction, secrets: Collection[str]) -> str:
+async def _in_the_way(
+    located: list[Locator], action: InteractionAction, secrets: Collection[str], *, timed_out: bool = False
+) -> str:
     """What is in the way of a failed action on the element `located` (`_interact`), for its message
     (`js/in_the_way.js`): `: a dialog covers the element: "Sign in to continue"`, `: an element covers the element:
     <div#banner> We use cookies...` or `: the element is inert`. Empty when nothing is found, or when the page cannot
@@ -489,14 +491,19 @@ async def _in_the_way(located: list[Locator], action: InteractionAction, secrets
     locator that finds none (an action that timed out waiting for it), is not waited for. The page's text is left
     out when the action typed a credential or the text holds what it typed (`_may_quote`).
 
+    For an action that `timed_out`, a locator that finds no element or several says so instead (`_match_count`):
+    a Playwright selector is located lazily, so the action waited for an element that never came, or that the page
+    turned into several. Only a count is given, never the page's text.
+
     Only called once the action's timeout no longer applies (`execute_interaction_action`): a look inside it could
     be cut by the deadline, and the timeout would then replace the failure."""
     if not located:
         return ""
     try:
         async with asyncio.timeout(_IN_THE_WAY_S):
-            if await located[0].count() != 1:
-                return ""
+            count = await located[0].count()
+            if count != 1:
+                return _match_count(count) if timed_out else ""
             found: dict[str, str] | None = await located[0].evaluate(_IN_THE_WAY)
             target = await located[0].evaluate_handle("el => el")
             try:
@@ -543,6 +550,13 @@ async def _in_the_way(located: list[Locator], action: InteractionAction, secrets
             return f": an element covers the element{': ' + found['name'] if quoted else ''}"
         case _:
             return ": the element is inert"
+
+
+def _match_count(count: int) -> str:
+    """The end of the message of an action that timed out on a selector that does not lead to one element."""
+    if count == 0:
+        return ": no element matches the selector"
+    return f": the selector matches {count} elements"
 
 
 class _InTheWay(Exception):
@@ -1032,7 +1046,8 @@ async def execute_interaction_action(
         if closed_error is not None:
             raise closed_error from e
         raise NotteTimeoutError(
-            message=f"Action timed out after {action.timeout}ms{await _in_the_way(located, action, secrets)}"
+            message=f"Action timed out after {action.timeout}ms"
+            + await _in_the_way(located, action, secrets, timed_out=True)
         ) from e
     except _InTheWay as e:
         raise e.error(await _in_the_way(located, action, secrets)) from None
