@@ -257,6 +257,7 @@ class SessionStartRequestDict(TypedDict):
 
 class SessionStopRequestDict(TypedDict):
     close_reason: NotRequired[Literal["manual", "error"]]
+    wait: NotRequired[bool]
 
 
 class FileExecutionRequestDict(TypedDict):
@@ -284,11 +285,11 @@ class PersonaListRequestDict(TypedDict):
 class PersonaCreateRequestDict(TypedDict):
     "Request dictionary for creating a new persona."
 
-    create_phone_number: NotRequired[bool]
     create_vault: NotRequired[bool]
-    email_domain: NotRequired[str | None]
+    create_phone_number: NotRequired[bool]
     email_provider: NotRequired[Literal["notte", "agentmail", "resend"]]
     name: NotRequired[str | None]
+    email_domain: NotRequired[str | None]
 
 
 class MessageReadRequestDict(TypedDict):

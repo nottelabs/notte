@@ -12,43 +12,39 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ```typescript
 export type PersonaCreateRequest = {
     /**
-     * Create Phone Number
-     *
-     * Whether to create a phone number for the persona
-     */
-    create_phone_number?: boolean;
-    /**
      * Create Vault
      *
      * Whether to create a vault for the persona
      */
     create_vault?: boolean;
     /**
-     * Email Domain
+     * Create Phone Number
      *
-     * Domain of the persona's email address, for the `notte` provider only. Defaults to the standard domain; other configured domains are listed by GET /personas/create/email-domains.
+     * Whether to create a phone number for the persona
      */
-    email_domain?: string | null;
+    create_phone_number?: boolean;
     email_provider?: PersonaEmailProvider;
     /**
      * Name
      */
     name?: string | null;
+    /**
+     * Email Domain
+     *
+     * Domain of the persona's email address, for the `notte` provider only. Defaults to the standard domain. Any other domain must be one Notte has enabled; other values are refused with the list of allowed domains.
+     */
+    email_domain?: string | null;
 };
 ```
 
 ## Fields
 
-<ParamField body="create_phone_number" type={"boolean | undefined"}>
-Whether to create a phone number for the persona
-</ParamField>
-
 <ParamField body="create_vault" type={"boolean | undefined"}>
 Whether to create a vault for the persona
 </ParamField>
 
-<ParamField body="email_domain" type={"string | null | undefined"}>
-Domain of the persona's email address, for the `notte` provider only. Defaults to the standard domain; other configured domains are listed by GET /personas/create/email-domains.
+<ParamField body="create_phone_number" type={"boolean | undefined"}>
+Whether to create a phone number for the persona
 </ParamField>
 
 <ParamField body="email_provider" type={"PersonaEmailProvider | undefined"}>
@@ -57,6 +53,10 @@ Domain of the persona's email address, for the `notte` provider only. Defaults t
 
 <ParamField body="name" type={"string | null | undefined"}>
 
+</ParamField>
+
+<ParamField body="email_domain" type={"string | null | undefined"}>
+Domain of the persona's email address, for the `notte` provider only. Defaults to the standard domain. Any other domain must be one Notte has enabled; other values are refused with the list of allowed domains.
 </ParamField>
 
 ## Related types

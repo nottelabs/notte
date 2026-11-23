@@ -9,221 +9,6 @@
     }
   },
   "paths": {
-    "/sessions/{session_id}/auth": {
-      "get": {
-        "tags": [
-          "sessions"
-        ],
-        "summary": "Session Auth Readiness",
-        "operationId": "session_auth_readiness",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "session_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Session Id"
-            }
-          },
-          {
-            "name": "x-notte-request-origin",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Request-Origin"
-            }
-          },
-          {
-            "name": "x-notte-sdk-version",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Sdk-Version"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ManagedAuthReadiness"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "x-codeSamples": []
-      }
-    },
-    "/sessions": {
-      "get": {
-        "tags": [
-          "sessions"
-        ],
-        "summary": "List Sessions",
-        "operationId": "list_sessions",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "description": "Page number",
-              "default": 1,
-              "title": "Page"
-            },
-            "description": "Page number"
-          },
-          {
-            "name": "page_size",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "description": "Number of items per page",
-              "default": 10,
-              "title": "Page Size"
-            },
-            "description": "Number of items per page"
-          },
-          {
-            "name": "only_active",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "description": "Whether to only return active sessions",
-              "default": true,
-              "title": "Only Active"
-            },
-            "description": "Whether to only return active sessions"
-          },
-          {
-            "name": "only_current_token",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "description": "Whether to only return sessions for the current token (apikey)",
-              "default": false,
-              "title": "Only Current Token"
-            },
-            "description": "Whether to only return sessions for the current token (apikey)"
-          },
-          {
-            "name": "include_system",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "description": "Whether to include internal system sessions",
-              "default": true,
-              "title": "Include System"
-            },
-            "description": "Whether to include internal system sessions"
-          },
-          {
-            "name": "x-notte-request-origin",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Request-Origin"
-            }
-          },
-          {
-            "name": "x-notte-sdk-version",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Sdk-Version"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_SessionResponse_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "x-hidden": true,
-        "x-mcp": true
-      }
-    },
     "/sessions/start": {
       "post": {
         "tags": [
@@ -319,86 +104,6 @@
             "label": "curl"
           }
         ]
-      }
-    },
-    "/sessions/{session_id}": {
-      "get": {
-        "tags": [
-          "sessions"
-        ],
-        "summary": "Session Status",
-        "operationId": "session_status",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "session_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Session Id"
-            }
-          },
-          {
-            "name": "x-notte-request-origin",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Request-Origin"
-            }
-          },
-          {
-            "name": "x-notte-sdk-version",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Sdk-Version"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SessionResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "x-hidden": true
       }
     },
     "/sessions/{session_id}/steps": {
@@ -729,6 +434,18 @@
               "default": "manual",
               "title": "Close Reason"
             }
+          },
+          {
+            "name": "wait",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Answer only once the session's close has finished its background work: its last CDP actions and steps are stored, its replay is finalized, its final network usage is written and its browser is released. The response's `steps` and network usage are then complete. Waits at most 30 seconds from the request, the close included, then answers what is stored. Defaults to false: the stop answers as soon as the session is closed, and that work finishes after the response.",
+              "default": false,
+              "title": "Wait"
+            },
+            "description": "Answer only once the session's close has finished its background work: its last CDP actions and steps are stored, its replay is finalized, its final network usage is written and its browser is released. The response's `steps` and network usage are then complete. Waits at most 30 seconds from the request, the close included, then answers what is stored. Defaults to false: the stop answers as soon as the session is closed, and that work finishes after the response."
           },
           {
             "name": "x-notte-request-origin",
@@ -2369,306 +2086,6 @@
         "x-hidden": true
       }
     },
-    "/sessions/{session_id}/network/logs": {
-      "get": {
-        "tags": [
-          "sessions",
-          "network"
-        ],
-        "summary": "Session Network Logs",
-        "operationId": "session_network_logs",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "session_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Session Id"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 1000,
-              "minimum": 1,
-              "description": "Maximum number of batch files to return",
-              "default": 100,
-              "title": "Limit"
-            },
-            "description": "Maximum number of batch files to return"
-          },
-          {
-            "name": "download",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "description": "Whether to include download URLs for the logs",
-              "default": true,
-              "title": "Download"
-            },
-            "description": "Whether to include download URLs for the logs"
-          },
-          {
-            "name": "x-notte-request-origin",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Request-Origin"
-            }
-          },
-          {
-            "name": "x-notte-sdk-version",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Sdk-Version"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NetworkLogsResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "x-codeSamples": []
-      }
-    },
-    "/sessions/{session_id}/replay/mouse": {
-      "get": {
-        "tags": [
-          "sessions",
-          "replay"
-        ],
-        "summary": "Session Mouse Replay",
-        "operationId": "session_mouse_replay",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "session_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Session Id"
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Offset"
-            }
-          },
-          {
-            "name": "x-notte-request-origin",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Request-Origin"
-            }
-          },
-          {
-            "name": "x-notte-sdk-version",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Sdk-Version"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MouseReplayPage"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "x-codeSamples": []
-      }
-    },
-    "/sessions/{session_id}/replay": {
-      "get": {
-        "tags": [
-          "sessions",
-          "replay"
-        ],
-        "summary": "Session Replay",
-        "operationId": "session_replay",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "session_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Session Id"
-            }
-          },
-          {
-            "name": "x-notte-request-origin",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Request-Origin"
-            }
-          },
-          {
-            "name": "x-notte-sdk-version",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Sdk-Version"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReplayResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Replay missing; see replay_status and retryable.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReplayMissingResponse"
-                }
-              }
-            }
-          },
-          "410": {
-            "description": "Capture completed without any frames.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReplayMissingResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "x-codeSamples": []
-      }
-    },
     "/sessions/{session_id}/page/execute/file": {
       "post": {
         "tags": [
@@ -2981,97 +2398,6 @@
       }
     },
     "/sessions/{session_id}/files/{file_id}": {
-      "get": {
-        "tags": [
-          "sessions",
-          "files"
-        ],
-        "summary": "Download Session File",
-        "operationId": "download_session_file",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "session_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Session Id"
-            }
-          },
-          {
-            "name": "file_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "File Id"
-            }
-          },
-          {
-            "name": "x-notte-request-origin",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Request-Origin"
-            }
-          },
-          {
-            "name": "x-notte-sdk-version",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Notte-Sdk-Version"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              },
-              "application/octet-stream": {}
-            }
-          },
-          "410": {
-            "description": "File expired"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "x-codeSamples": []
-      },
       "delete": {
         "tags": [
           "sessions",
@@ -3152,6 +2478,89 @@
             }
           }
         },
+        "x-codeSamples": []
+      },
+      "get": {
+        "operationId": "download_session_file",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "file_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "File Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-notte-request-origin",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Request-Origin",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-notte-sdk-version",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Sdk-Version",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              },
+              "application/octet-stream": {}
+            },
+            "description": "Successful Response"
+          },
+          "410": {
+            "description": "File expired"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Download Session File",
+        "tags": [
+          "sessions",
+          "files"
+        ],
         "x-codeSamples": []
       }
     },
@@ -16447,6 +15856,557 @@
         ]
       }
     },
+    "/sessions": {
+      "get": {
+        "description": "List all sessions for the authenticated user.\n\nBy default, returns the last 10 active sessions.\nSessions are ordered by creation date (newest first).",
+        "operationId": "list_sessions",
+        "parameters": [
+          {
+            "description": "Page number",
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "description": "Page number",
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Number of items per page",
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "description": "Number of items per page",
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Whether to only return active sessions",
+            "in": "query",
+            "name": "only_active",
+            "required": false,
+            "schema": {
+              "default": true,
+              "description": "Whether to only return active sessions",
+              "title": "Only Active",
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Whether to only return sessions for the current token (apikey)",
+            "in": "query",
+            "name": "only_current_token",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "Whether to only return sessions for the current token (apikey)",
+              "title": "Only Current Token",
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Whether to include internal system sessions",
+            "in": "query",
+            "name": "include_system",
+            "required": false,
+            "schema": {
+              "default": true,
+              "description": "Whether to include internal system sessions",
+              "title": "Include System",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-notte-request-origin",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Request-Origin",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-notte-sdk-version",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Sdk-Version",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponse_SessionResponse_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List Sessions",
+        "tags": [
+          "sessions"
+        ],
+        "x-hidden": true,
+        "x-mcp": true
+      }
+    },
+    "/sessions/{session_id}": {
+      "get": {
+        "description": "Get the current status of a session, including its metadata and state.\n\nYou can retrieve the status of a session at any time whether it is active or not.\n\nSession states also contain all steps (i.e actions and observations) performed during the session.\nYou can use this information to reconstruct the session execution and diagnose potential issues.",
+        "operationId": "session_status",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-notte-request-origin",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Request-Origin",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-notte-sdk-version",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Sdk-Version",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Session Status",
+        "tags": [
+          "sessions"
+        ],
+        "x-hidden": true
+      }
+    },
+    "/sessions/{session_id}/auth": {
+      "get": {
+        "operationId": "session_auth_readiness",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-notte-request-origin",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Request-Origin",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-notte-sdk-version",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Sdk-Version",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagedAuthReadiness"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Session Auth Readiness",
+        "tags": [
+          "sessions"
+        ],
+        "x-codeSamples": []
+      }
+    },
+    "/sessions/{session_id}/network/logs": {
+      "get": {
+        "description": "Retrieve network request/response logs for a session.\n\nReturns a list of batch files containing XHR/Fetch requests and responses\nthat occurred during the session. Each batch file is a JSON file containing\nmultiple requests and responses grouped together.\n\nViewer links (``interact`` tokens) get download URLs to a redacted copy of\neach batch instead, without bodies and with credential headers redacted.\nBatches recorded before the copy existed have no download URL.\n\nArgs:\n    session_id: The ID of the session\n    auth: User authentication metadata\n    limit: Maximum number of batch files to return (default: 100, max: 1000)\n    download: Whether to include presigned download URLs\n\nReturns:\n    NetworkLogsResponse containing list of batch files with optional download URLs",
+        "operationId": "session_network_logs",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Maximum number of batch files to return",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "description": "Maximum number of batch files to return",
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Whether to include download URLs for the logs",
+            "in": "query",
+            "name": "download",
+            "required": false,
+            "schema": {
+              "default": true,
+              "description": "Whether to include download URLs for the logs",
+              "title": "Download",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-notte-request-origin",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Request-Origin",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-notte-sdk-version",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Sdk-Version",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkLogsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Session Network Logs",
+        "tags": [
+          "sessions",
+          "network"
+        ],
+        "x-codeSamples": []
+      }
+    },
+    "/sessions/{session_id}/replay": {
+      "get": {
+        "description": "Get presigned URLs for session replay (HLS playlist with signed segment URLs).\n\nThis endpoint:\n1. Verifies session ownership\n2. Fetches the HLS playlist from S3\n3. Rewrites segment URLs to presigned S3 URLs\n4. Returns the modified playlist and MP4 URL if available\n\nThe returned playlist_content can be used directly with any HLS player.\nAll segment URLs in the playlist are presigned and valid for 1 hour.\n\nReturns:\n    ReplayResponse with playlist content and optional MP4 URL\n\nMissing replays include `replay_status` and `retryable` in the error body:\n`unavailable` (410) confirms capture ended without frames; `failed` (404)\nreports a recorded upload/transcoding failure; `processing` (404)\npermits bounded polling; `waiting_for_session` (404) requires session close;\n`unknown` (404) means processing cannot be confirmed and permits manual retry.",
+        "operationId": "session_replay",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-notte-request-origin",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Request-Origin",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-notte-sdk-version",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Sdk-Version",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplayResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplayMissingResponse"
+                }
+              }
+            },
+            "description": "Replay missing; see replay_status and retryable."
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplayMissingResponse"
+                }
+              }
+            },
+            "description": "Capture completed without any frames."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Session Replay",
+        "tags": [
+          "sessions",
+          "replay"
+        ],
+        "x-codeSamples": []
+      }
+    },
+    "/sessions/{session_id}/replay/mouse": {
+      "get": {
+        "operationId": "session_mouse_replay",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-notte-request-origin",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Request-Origin",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-notte-sdk-version",
+            "required": false,
+            "schema": {
+              "title": "X-Notte-Sdk-Version",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MouseReplayPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Session Mouse Replay",
+        "tags": [
+          "sessions",
+          "replay"
+        ],
+        "x-codeSamples": []
+      }
+    },
     "/usage": {
       "get": {
         "description": "Get the monthly usage information for the user including (current plan, credits consumption, etc.)",
@@ -27683,160 +27643,6 @@
         ],
         "title": "ManagedAuthCredentials"
       },
-      "ManagedAuthOperation": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "connection_id": {
-            "type": "string",
-            "title": "Connection Id"
-          },
-          "session_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Session Id"
-          },
-          "source": {
-            "type": "string",
-            "title": "Source"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "pending",
-              "running",
-              "succeeded",
-              "failed",
-              "cancelled"
-            ],
-            "title": "Status"
-          },
-          "phase": {
-            "type": "string",
-            "title": "Phase"
-          },
-          "attempt": {
-            "type": "integer",
-            "title": "Attempt",
-            "default": 0
-          },
-          "auth_retry": {
-            "type": "integer",
-            "title": "Auth Retry",
-            "default": 0
-          },
-          "authenticated": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Authenticated"
-          },
-          "failure_code": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Failure Code"
-          },
-          "error": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Error"
-          },
-          "deadline": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Deadline"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Updated At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "connection_id",
-          "source",
-          "status",
-          "phase",
-          "deadline",
-          "created_at",
-          "updated_at"
-        ],
-        "title": "ManagedAuthOperation"
-      },
-      "ManagedAuthReadiness": {
-        "properties": {
-          "session_id": {
-            "type": "string",
-            "title": "Session Id"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "authenticating",
-              "active",
-              "failed",
-              "closed"
-            ],
-            "title": "Status"
-          },
-          "operations": {
-            "items": {
-              "$ref": "#/components/schemas/ManagedAuthOperation"
-            },
-            "type": "array",
-            "title": "Operations"
-          },
-          "error": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Error"
-          }
-        },
-        "type": "object",
-        "required": [
-          "session_id",
-          "status"
-        ],
-        "title": "ManagedAuthReadiness"
-      },
       "MapsBusiness": {
         "properties": {
           "place_id": {
@@ -28296,48 +28102,6 @@
         "type": "object",
         "title": "MarkdownParams"
       },
-      "MouseReplayPage": {
-        "properties": {
-          "mouse_manifest_url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Mouse Manifest Url"
-          },
-          "mouse_chunk_urls": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Mouse Chunk Urls"
-          },
-          "mouse_next_offset": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Mouse Next Offset"
-          }
-        },
-        "type": "object",
-        "title": "MouseReplayPage"
-      },
       "MultiFactorFillAction-Input": {
         "properties": {
           "type": {
@@ -28591,77 +28355,6 @@
         "additionalProperties": false,
         "type": "object",
         "title": "NameClue"
-      },
-      "NetworkBatchFile": {
-        "properties": {
-          "key": {
-            "type": "string",
-            "title": "Key"
-          },
-          "size": {
-            "type": "integer",
-            "title": "Size"
-          },
-          "download_url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Download Url"
-          },
-          "download_url_expires_in_seconds": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Download Url Expires In Seconds"
-          }
-        },
-        "type": "object",
-        "required": [
-          "key",
-          "size"
-        ],
-        "title": "NetworkBatchFile"
-      },
-      "NetworkLogsResponse": {
-        "properties": {
-          "session_id": {
-            "type": "string",
-            "title": "Session Id"
-          },
-          "format": {
-            "type": "string",
-            "title": "Format",
-            "default": "batched_v1"
-          },
-          "batches": {
-            "items": {
-              "$ref": "#/components/schemas/NetworkBatchFile"
-            },
-            "type": "array",
-            "title": "Batches"
-          },
-          "total_batch_count": {
-            "type": "integer",
-            "title": "Total Batch Count"
-          }
-        },
-        "type": "object",
-        "required": [
-          "session_id",
-          "batches",
-          "total_batch_count"
-        ],
-        "title": "NetworkLogsResponse"
       },
       "NewsArticle": {
         "properties": {
@@ -29920,43 +29613,6 @@
           "has_previous"
         ],
         "title": "PaginatedResponse[ProfileResponse]"
-      },
-      "PaginatedResponse_SessionResponse_": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/SessionResponse"
-            },
-            "type": "array",
-            "title": "Items"
-          },
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
-          },
-          "has_next": {
-            "type": "boolean",
-            "title": "Has Next"
-          },
-          "has_previous": {
-            "type": "boolean",
-            "title": "Has Previous",
-            "readOnly": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "items",
-          "page",
-          "page_size",
-          "has_next",
-          "has_previous"
-        ],
-        "title": "PaginatedResponse[SessionResponse]"
       },
       "PaginatedResponse_Vault_": {
         "properties": {
@@ -32230,157 +31886,6 @@
         },
         "type": "object",
         "title": "ReloadAction"
-      },
-      "ReplayMissingResponse": {
-        "properties": {
-          "detail": {
-            "type": "string",
-            "title": "Detail"
-          },
-          "session_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Session Id"
-          },
-          "status": {
-            "type": "integer",
-            "title": "Status"
-          },
-          "error": {
-            "type": "string",
-            "title": "Error"
-          },
-          "message": {
-            "type": "string",
-            "title": "Message"
-          },
-          "replay_status": {
-            "type": "string",
-            "enum": [
-              "waiting_for_session",
-              "processing",
-              "unavailable",
-              "failed",
-              "unknown",
-              "disabled"
-            ],
-            "title": "Replay Status"
-          },
-          "retryable": {
-            "type": "boolean",
-            "title": "Retryable"
-          }
-        },
-        "type": "object",
-        "required": [
-          "detail",
-          "session_id",
-          "status",
-          "error",
-          "message",
-          "replay_status",
-          "retryable"
-        ],
-        "title": "ReplayMissingResponse"
-      },
-      "ReplayResponse": {
-        "properties": {
-          "playlist_content": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Playlist Content"
-          },
-          "mp4_url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Mp4 Url"
-          },
-          "expires_at": {
-            "type": "string",
-            "title": "Expires At"
-          },
-          "mouse_manifest_url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Mouse Manifest Url"
-          },
-          "mouse_chunk_urls": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Mouse Chunk Urls"
-          },
-          "mouse_next_offset": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Mouse Next Offset"
-          },
-          "video_start_ms": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Video Start Ms"
-          },
-          "video_duration_ms": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Video Duration Ms"
-          }
-        },
-        "type": "object",
-        "required": [
-          "expires_at"
-        ],
-        "title": "ReplayResponse"
       },
       "Retry": {
         "properties": {
@@ -36080,13 +35585,29 @@
       "AuditEvent": {
         "additionalProperties": false,
         "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "entity_type": {
+            "title": "Entity Type",
+            "type": "string"
+          },
+          "entity_id": {
+            "title": "Entity Id",
+            "type": "string"
+          },
           "action": {
             "title": "Action",
             "type": "string"
           },
-          "actor_email": {
-            "description": "Email of the actor when it is a workspace member the caller may see. Null for system actors.",
-            "title": "Actor Email",
+          "user_id": {
+            "title": "User Id",
             "type": [
               "string",
               "null"
@@ -36099,6 +35620,18 @@
               "null"
             ]
           },
+          "actor_type": {
+            "title": "Actor Type",
+            "type": "string"
+          },
+          "actor_email": {
+            "description": "Email of the actor when it is a workspace member the caller may see. Null for system actors.",
+            "title": "Actor Email",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "actor_name": {
             "title": "Actor Name",
             "type": [
@@ -36106,37 +35639,48 @@
               "null"
             ]
           },
-          "actor_type": {
-            "title": "Actor Type",
-            "type": "string"
+          "resource_name": {
+            "description": "Human-readable name of the resource (an API key's label, a secret's name, a member's email) when one is known. Never a secret value.",
+            "title": "Resource Name",
+            "type": [
+              "string",
+              "null"
+            ]
           },
-          "created_at": {
-            "format": "date-time",
-            "title": "Created At",
+          "source": {
+            "title": "Source",
             "type": "string"
-          },
-          "entity_id": {
-            "title": "Entity Id",
-            "type": "string"
-          },
-          "entity_type": {
-            "title": "Entity Type",
-            "type": "string"
-          },
-          "id": {
-            "title": "Id",
-            "type": "integer"
           },
           "metadata": {
             "additionalProperties": false,
             "properties": {
+              "display_name": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "target_email": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "role": {
+                "enum": [
+                  "owner",
+                  "admin",
+                  "member"
+                ],
+                "type": "string"
+              },
               "changes": {
                 "additionalProperties": false,
                 "properties": {
                   "role": {
                     "additionalProperties": false,
                     "properties": {
-                      "new": {
+                      "old": {
                         "enum": [
                           "owner",
                           "admin",
@@ -36144,7 +35688,7 @@
                         ],
                         "type": "string"
                       },
-                      "old": {
+                      "new": {
                         "enum": [
                           "owner",
                           "admin",
@@ -36164,26 +35708,6 @@
                   "role"
                 ],
                 "type": "object"
-              },
-              "display_name": {
-                "type": "string"
-              },
-              "email": {
-                "type": "string"
-              },
-              "name": {
-                "type": "string"
-              },
-              "role": {
-                "enum": [
-                  "owner",
-                  "admin",
-                  "member"
-                ],
-                "type": "string"
-              },
-              "target_email": {
-                "type": "string"
               }
             },
             "required": [],
@@ -36192,25 +35716,6 @@
           },
           "org_id": {
             "title": "Org Id",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "resource_name": {
-            "description": "Human-readable name of the resource (an API key's label, a secret's name, a member's email) when one is known. Never a secret value.",
-            "title": "Resource Name",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "source": {
-            "title": "Source",
-            "type": "string"
-          },
-          "user_id": {
-            "title": "User Id",
             "type": [
               "string",
               "null"
@@ -36239,10 +35744,6 @@
       "AuditEventListResponse": {
         "additionalProperties": false,
         "properties": {
-          "has_more": {
-            "title": "Has More",
-            "type": "boolean"
-          },
           "items": {
             "items": {
               "$ref": "#/components/schemas/AuditEvent"
@@ -36257,6 +35758,10 @@
               "string",
               "null"
             ]
+          },
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
           }
         },
         "required": [
@@ -36269,12 +35774,6 @@
       },
       "DeletePersonaResponse": {
         "properties": {
-          "message": {
-            "default": "Persona deleted successfully",
-            "description": "Message of the deletion",
-            "title": "Message",
-            "type": "string"
-          },
           "status": {
             "description": "Status of the deletion",
             "enum": [
@@ -36282,6 +35781,12 @@
               "failure"
             ],
             "title": "Status",
+            "type": "string"
+          },
+          "message": {
+            "default": "Persona deleted successfully",
+            "description": "Message of the deletion",
+            "title": "Message",
             "type": "string"
           }
         },
@@ -36293,25 +35798,25 @@
       },
       "EmailAttachment": {
         "properties": {
-          "content_type": {
-            "description": "MIME type, as the sender declared it",
-            "title": "Content Type",
-            "type": "string"
-          },
-          "download_url": {
-            "description": "Signed download URL, valid for one hour",
-            "title": "Download Url",
-            "type": "string"
-          },
           "filename": {
             "description": "Filename, as the sender named it",
             "title": "Filename",
+            "type": "string"
+          },
+          "content_type": {
+            "description": "MIME type, as the sender declared it",
+            "title": "Content Type",
             "type": "string"
           },
           "size_bytes": {
             "description": "Size in bytes",
             "title": "Size Bytes",
             "type": "integer"
+          },
+          "download_url": {
+            "description": "Signed download URL, valid for one hour",
+            "title": "Download Url",
+            "type": "string"
           }
         },
         "required": [
@@ -36325,18 +35830,9 @@
       },
       "EmailResponse": {
         "properties": {
-          "attachments": {
-            "description": "Files attached to the email, with short-lived download URLs",
-            "items": {
-              "$ref": "#/components/schemas/EmailAttachment"
-            },
-            "title": "Attachments",
-            "type": "array"
-          },
-          "created_at": {
-            "description": "Creation date",
-            "format": "date-time",
-            "title": "Created At",
+          "subject": {
+            "description": "Subject of the email",
+            "title": "Subject",
             "type": "string"
           },
           "email_id": {
@@ -36344,18 +35840,11 @@
             "title": "Email Id",
             "type": "string"
           },
-          "html_content": {
-            "description": "HTML body, can be uncorrelated with raw content",
-            "title": "Html Content",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "read": {
-            "description": "Whether the email was read before this request",
-            "title": "Read",
-            "type": "boolean"
+          "created_at": {
+            "description": "Creation date",
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
           },
           "sender_email": {
             "description": "Email address of the sender",
@@ -36373,11 +35862,6 @@
               "null"
             ]
           },
-          "subject": {
-            "description": "Subject of the email",
-            "title": "Subject",
-            "type": "string"
-          },
           "text_content": {
             "description": "Raw textual body, can be uncorrelated with html content",
             "title": "Text Content",
@@ -36385,6 +35869,27 @@
               "string",
               "null"
             ]
+          },
+          "html_content": {
+            "description": "HTML body, can be uncorrelated with raw content",
+            "title": "Html Content",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "attachments": {
+            "description": "Files attached to the email, with short-lived download URLs",
+            "items": {
+              "$ref": "#/components/schemas/EmailAttachment"
+            },
+            "title": "Attachments",
+            "type": "array"
+          },
+          "read": {
+            "description": "Whether the email was read before this request",
+            "title": "Read",
+            "type": "boolean"
           }
         },
         "required": [
@@ -36400,20 +35905,20 @@
       },
       "HostPresetEntry": {
         "properties": {
-          "evidence": {
-            "enum": [
-              "observed",
-              "documented"
-            ],
-            "title": "Evidence",
-            "type": "string"
-          },
           "host": {
             "title": "Host",
             "type": "string"
           },
           "provider": {
             "title": "Provider",
+            "type": "string"
+          },
+          "evidence": {
+            "enum": [
+              "observed",
+              "documented"
+            ],
+            "title": "Evidence",
             "type": "string"
           },
           "source": {
@@ -36432,21 +35937,6 @@
       },
       "MailboxConnectRequest": {
         "properties": {
-          "allowed_origin": {
-            "title": "Allowed Origin",
-            "type": "string"
-          },
-          "error_redirect_uri": {
-            "title": "Error Redirect Uri",
-            "type": "string"
-          },
-          "mailbox_id": {
-            "title": "Mailbox Id",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
           "provider": {
             "default": "gmail",
             "enum": [
@@ -36459,6 +35949,21 @@
           "success_redirect_uri": {
             "title": "Success Redirect Uri",
             "type": "string"
+          },
+          "error_redirect_uri": {
+            "title": "Error Redirect Uri",
+            "type": "string"
+          },
+          "allowed_origin": {
+            "title": "Allowed Origin",
+            "type": "string"
+          },
+          "mailbox_id": {
+            "title": "Mailbox Id",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -36496,42 +36001,6 @@
       },
       "MailboxConnection": {
         "properties": {
-          "allow_all_senders": {
-            "default": true,
-            "title": "Allow All Senders",
-            "type": "boolean"
-          },
-          "allowed_sender_domains": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Allowed Sender Domains",
-            "type": "array"
-          },
-          "authorized_scopes": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Authorized Scopes",
-            "type": "array"
-          },
-          "created_at": {
-            "format": "date-time",
-            "title": "Created At",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "email_address": {
-            "title": "Email Address",
-            "type": "string"
-          },
-          "healthy": {
-            "default": true,
-            "title": "Healthy",
-            "type": "boolean"
-          },
           "id": {
             "title": "Id",
             "type": "string"
@@ -36544,6 +36013,42 @@
             ],
             "title": "Provider",
             "type": "string"
+          },
+          "email_address": {
+            "title": "Email Address",
+            "type": "string"
+          },
+          "healthy": {
+            "default": true,
+            "title": "Healthy",
+            "type": "boolean"
+          },
+          "authorized_scopes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Authorized Scopes",
+            "type": "array"
+          },
+          "allow_all_senders": {
+            "default": true,
+            "title": "Allow All Senders",
+            "type": "boolean"
+          },
+          "allowed_sender_domains": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Allowed Sender Domains",
+            "type": "array"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "updated_at": {
             "format": "date-time",
@@ -36627,17 +36132,238 @@
         "title": "MailboxUpdateRequest",
         "type": "object"
       },
+      "ManagedAuthOperation": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "connection_id": {
+            "title": "Connection Id",
+            "type": "string"
+          },
+          "session_id": {
+            "title": "Session Id",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "running",
+              "succeeded",
+              "failed",
+              "cancelled"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "phase": {
+            "title": "Phase",
+            "type": "string"
+          },
+          "attempt": {
+            "default": 0,
+            "title": "Attempt",
+            "type": "integer"
+          },
+          "auth_retry": {
+            "default": 0,
+            "title": "Auth Retry",
+            "type": "integer"
+          },
+          "authenticated": {
+            "title": "Authenticated",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "failure_code": {
+            "title": "Failure Code",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "error": {
+            "title": "Error",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deadline": {
+            "format": "date-time",
+            "title": "Deadline",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "connection_id",
+          "source",
+          "status",
+          "phase",
+          "deadline",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ManagedAuthOperation",
+        "type": "object"
+      },
+      "ManagedAuthReadiness": {
+        "properties": {
+          "session_id": {
+            "title": "Session Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "authenticating",
+              "active",
+              "failed",
+              "closed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "operations": {
+            "items": {
+              "$ref": "#/components/schemas/ManagedAuthOperation"
+            },
+            "title": "Operations",
+            "type": "array"
+          },
+          "error": {
+            "title": "Error",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "session_id",
+          "status"
+        ],
+        "title": "ManagedAuthReadiness",
+        "type": "object"
+      },
+      "MouseReplayPage": {
+        "description": "One page of presigned mouse telemetry URLs; every field is null when the manifest cannot be used.",
+        "properties": {
+          "mouse_manifest_url": {
+            "title": "Mouse Manifest Url",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "mouse_chunk_urls": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Mouse Chunk Urls",
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "mouse_next_offset": {
+            "title": "Mouse Next Offset",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "title": "MouseReplayPage",
+        "type": "object"
+      },
+      "NetworkBatchFile": {
+        "description": "Represents a batched network log file in S3",
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "size": {
+            "title": "Size",
+            "type": "integer"
+          },
+          "download_url": {
+            "title": "Download Url",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "download_url_expires_in_seconds": {
+            "title": "Download Url Expires In Seconds",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "key",
+          "size"
+        ],
+        "title": "NetworkBatchFile",
+        "type": "object"
+      },
+      "NetworkLogsResponse": {
+        "description": "Response containing network logs for a session",
+        "properties": {
+          "session_id": {
+            "title": "Session Id",
+            "type": "string"
+          },
+          "format": {
+            "default": "batched_v1",
+            "title": "Format",
+            "type": "string"
+          },
+          "batches": {
+            "items": {
+              "$ref": "#/components/schemas/NetworkBatchFile"
+            },
+            "title": "Batches",
+            "type": "array"
+          },
+          "total_batch_count": {
+            "title": "Total Batch Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "session_id",
+          "batches",
+          "total_batch_count"
+        ],
+        "title": "NetworkLogsResponse",
+        "type": "object"
+      },
       "PaginatedResponse_PersonaResponse_": {
         "properties": {
-          "has_next": {
-            "title": "Has Next",
-            "type": "boolean"
-          },
-          "has_previous": {
-            "readOnly": true,
-            "title": "Has Previous",
-            "type": "boolean"
-          },
           "items": {
             "items": {
               "$ref": "#/components/schemas/PersonaResponse"
@@ -36652,6 +36378,15 @@
           "page_size": {
             "title": "Page Size",
             "type": "integer"
+          },
+          "has_next": {
+            "title": "Has Next",
+            "type": "boolean"
+          },
+          "has_previous": {
+            "readOnly": true,
+            "title": "Has Previous",
+            "type": "boolean"
           }
         },
         "required": [
@@ -36664,8 +36399,23 @@
         "title": "PaginatedResponse[PersonaResponse]",
         "type": "object"
       },
-      "PaginatedResponse_UsageLog_": {
+      "PaginatedResponse_SessionResponse_": {
         "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SessionResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "page": {
+            "title": "Page",
+            "type": "integer"
+          },
+          "page_size": {
+            "title": "Page Size",
+            "type": "integer"
+          },
           "has_next": {
             "title": "Has Next",
             "type": "boolean"
@@ -36674,7 +36424,20 @@
             "readOnly": true,
             "title": "Has Previous",
             "type": "boolean"
-          },
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "page_size",
+          "has_next",
+          "has_previous"
+        ],
+        "title": "PaginatedResponse[SessionResponse]",
+        "type": "object"
+      },
+      "PaginatedResponse_UsageLog_": {
+        "properties": {
           "items": {
             "items": {
               "$ref": "#/components/schemas/UsageLog"
@@ -36689,6 +36452,15 @@
           "page_size": {
             "title": "Page Size",
             "type": "integer"
+          },
+          "has_next": {
+            "title": "Has Next",
+            "type": "boolean"
+          },
+          "has_previous": {
+            "readOnly": true,
+            "title": "Has Previous",
+            "type": "boolean"
           }
         },
         "required": [
@@ -36704,25 +36476,17 @@
       "PersonaCreateRequest": {
         "additionalProperties": false,
         "properties": {
-          "create_phone_number": {
-            "default": false,
-            "description": "Whether to create a phone number for the persona",
-            "title": "Create Phone Number",
-            "type": "boolean"
-          },
           "create_vault": {
             "default": false,
             "description": "Whether to create a vault for the persona",
             "title": "Create Vault",
             "type": "boolean"
           },
-          "email_domain": {
-            "description": "Domain of the persona's email address, for the `notte` provider only. Defaults to the standard domain; other configured domains are listed by GET /personas/create/email-domains.",
-            "title": "Email Domain",
-            "type": [
-              "string",
-              "null"
-            ]
+          "create_phone_number": {
+            "default": false,
+            "description": "Whether to create a phone number for the persona",
+            "title": "Create Phone Number",
+            "type": "boolean"
           },
           "email_provider": {
             "$ref": "#/components/schemas/PersonaEmailProvider",
@@ -36730,6 +36494,14 @@
           },
           "name": {
             "title": "Name",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email_domain": {
+            "description": "Domain of the persona's email address, for the `notte` provider only. Defaults to the standard domain. Any other domain must be one Notte has enabled; other values are refused with the list of allowed domains.",
+            "title": "Email Domain",
             "type": [
               "string",
               "null"
@@ -36750,29 +36522,19 @@
       "PersonaResponse": {
         "description": "Local extension of the SDK's `PersonaResponse` for API-only fields.\n\n`email` is the public, human-readable address callers should use, while\n`internal_email` is the stable UUID-backed mailbox address. Kept under the\nsame public name so callers (and generated clients) see one schema.\n\nOnce the external notte-sdk publishes these fields this class can be\ndeleted and the direct SDK import restored. Mirrors the local\n`VaultUpdateRequest` pattern in `notte_api.vault.service`.",
         "properties": {
-          "created_at": {
-            "format": "date-time",
-            "title": "Created At",
+          "persona_id": {
+            "description": "ID of the created persona",
+            "title": "Persona Id",
             "type": "string"
           },
-          "email": {
-            "description": "Public, human-readable email address of the persona",
-            "title": "Email",
+          "status": {
+            "description": "Status of the persona (active, closed)",
+            "title": "Status",
             "type": "string"
-          },
-          "email_provider": {
-            "$ref": "#/components/schemas/PersonaEmailProvider",
-            "default": "notte",
-            "description": "Provider hosting the persona mailbox"
           },
           "first_name": {
             "description": "First name of the persona",
             "title": "First Name",
-            "type": "string"
-          },
-          "internal_email": {
-            "description": "Internal UUID-backed mailbox address of the persona",
-            "title": "Internal Email",
             "type": "string"
           },
           "last_name": {
@@ -36780,29 +36542,14 @@
             "title": "Last Name",
             "type": "string"
           },
-          "name": {
-            "title": "Name",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "persona_id": {
-            "description": "ID of the created persona",
-            "title": "Persona Id",
+          "email": {
+            "description": "Public, human-readable email address of the persona",
+            "title": "Email",
             "type": "string"
           },
-          "phone_number": {
-            "description": "Phone number of the persona (optional)",
-            "title": "Phone Number",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "status": {
-            "description": "Status of the persona (active, closed)",
-            "title": "Status",
+          "internal_email": {
+            "description": "Internal UUID-backed mailbox address of the persona",
+            "title": "Internal Email",
             "type": "string"
           },
           "vault_id": {
@@ -36812,6 +36559,31 @@
               "string",
               "null"
             ]
+          },
+          "phone_number": {
+            "description": "Phone number of the persona (optional)",
+            "title": "Phone Number",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email_provider": {
+            "$ref": "#/components/schemas/PersonaEmailProvider",
+            "default": "notte",
+            "description": "Provider hosting the persona mailbox"
+          },
+          "name": {
+            "title": "Name",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
           }
         },
         "required": [
@@ -36841,6 +36613,126 @@
         "title": "PersonaUpdateRequest",
         "type": "object"
       },
+      "ReplayMissingResponse": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "session_id": {
+            "title": "Session Id",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "title": "Status",
+            "type": "integer"
+          },
+          "error": {
+            "title": "Error",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "replay_status": {
+            "enum": [
+              "waiting_for_session",
+              "processing",
+              "unavailable",
+              "failed",
+              "unknown",
+              "disabled"
+            ],
+            "title": "Replay Status",
+            "type": "string"
+          },
+          "retryable": {
+            "title": "Retryable",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "detail",
+          "session_id",
+          "status",
+          "error",
+          "message",
+          "replay_status",
+          "retryable"
+        ],
+        "title": "ReplayMissingResponse",
+        "type": "object"
+      },
+      "ReplayResponse": {
+        "description": "Response containing presigned URLs for session replay.",
+        "properties": {
+          "playlist_content": {
+            "title": "Playlist Content",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "mp4_url": {
+            "title": "Mp4 Url",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expires_at": {
+            "title": "Expires At",
+            "type": "string"
+          },
+          "mouse_manifest_url": {
+            "title": "Mouse Manifest Url",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "mouse_chunk_urls": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Mouse Chunk Urls",
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "mouse_next_offset": {
+            "title": "Mouse Next Offset",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "video_start_ms": {
+            "title": "Video Start Ms",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "video_duration_ms": {
+            "title": "Video Duration Ms",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "expires_at"
+        ],
+        "title": "ReplayResponse",
+        "type": "object"
+      },
       "SMSResponse": {
         "properties": {
           "body": {
@@ -36848,16 +36740,16 @@
             "title": "Body",
             "type": "string"
           },
+          "sms_id": {
+            "description": "SMS UUID",
+            "title": "Sms Id",
+            "type": "string"
+          },
           "created_at": {
             "description": "Creation date",
             "format": "date-time",
             "title": "Created At",
             "type": "string"
-          },
-          "read": {
-            "description": "Whether the message was read before this request",
-            "title": "Read",
-            "type": "boolean"
           },
           "sender": {
             "description": "SMS sender phone number",
@@ -36867,10 +36759,10 @@
               "null"
             ]
           },
-          "sms_id": {
-            "description": "SMS UUID",
-            "title": "Sms Id",
-            "type": "string"
+          "read": {
+            "description": "Whether the message was read before this request",
+            "title": "Read",
+            "type": "boolean"
           }
         },
         "required": [
@@ -36886,24 +36778,6 @@
       "SecretProxyHostPresetResponse": {
         "description": "A host preset: the token `hosts` can name and the hosts it stands for.",
         "properties": {
-          "description": {
-            "title": "Description",
-            "type": "string"
-          },
-          "entries": {
-            "items": {
-              "$ref": "#/components/schemas/HostPresetEntry"
-            },
-            "title": "Entries",
-            "type": "array"
-          },
-          "hosts": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Hosts",
-            "type": "array"
-          },
           "name": {
             "title": "Name",
             "type": "string"
@@ -36915,6 +36789,24 @@
           "version": {
             "title": "Version",
             "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "hosts": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Hosts",
+            "type": "array"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/HostPresetEntry"
+            },
+            "title": "Entries",
+            "type": "array"
           }
         },
         "required": [
@@ -36984,34 +36876,6 @@
       },
       "UsageResponse": {
         "properties": {
-          "balance_amount": {
-            "title": "Balance Amount",
-            "type": "number"
-          },
-          "browser_usage_cost": {
-            "title": "Browser Usage Cost",
-            "type": "number"
-          },
-          "function_count": {
-            "title": "Function Count",
-            "type": "integer"
-          },
-          "function_usage_cost": {
-            "title": "Function Usage Cost",
-            "type": "number"
-          },
-          "is_usage_limit_exceeded": {
-            "title": "Is Usage Limit Exceeded",
-            "type": "boolean"
-          },
-          "llm_usage_cost": {
-            "title": "Llm Usage Cost",
-            "type": "number"
-          },
-          "period": {
-            "title": "Period",
-            "type": "string"
-          },
           "plan_type": {
             "anyOf": [
               {
@@ -37023,33 +36887,61 @@
             ],
             "title": "Plan Type"
           },
-          "proxy_usage_cost": {
-            "title": "Proxy Usage Cost",
-            "type": "number"
+          "period": {
+            "title": "Period",
+            "type": "string"
           },
           "session_count": {
             "title": "Session Count",
             "type": "integer"
           },
-          "subscription_balance_amount": {
-            "title": "Subscription Balance Amount",
+          "function_count": {
+            "title": "Function Count",
+            "type": "integer"
+          },
+          "browser_usage_cost": {
+            "title": "Browser Usage Cost",
+            "type": "number"
+          },
+          "proxy_usage_cost": {
+            "title": "Proxy Usage Cost",
+            "type": "number"
+          },
+          "llm_usage_cost": {
+            "title": "Llm Usage Cost",
+            "type": "number"
+          },
+          "function_usage_cost": {
+            "title": "Function Usage Cost",
+            "type": "number"
+          },
+          "total_cost": {
+            "title": "Total Cost",
             "type": "number"
           },
           "subscription_limit_amount": {
             "title": "Subscription Limit Amount",
             "type": "number"
           },
-          "topup_balance_amount": {
-            "title": "Topup Balance Amount",
-            "type": "number"
-          },
           "topup_limit_amount": {
             "title": "Topup Limit Amount",
             "type": "number"
           },
-          "total_cost": {
-            "title": "Total Cost",
+          "subscription_balance_amount": {
+            "title": "Subscription Balance Amount",
             "type": "number"
+          },
+          "topup_balance_amount": {
+            "title": "Topup Balance Amount",
+            "type": "number"
+          },
+          "balance_amount": {
+            "title": "Balance Amount",
+            "type": "number"
+          },
+          "is_usage_limit_exceeded": {
+            "title": "Is Usage Limit Exceeded",
+            "type": "boolean"
           }
         },
         "required": [
