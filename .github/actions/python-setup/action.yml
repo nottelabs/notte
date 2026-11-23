@@ -62,7 +62,7 @@ runs:
       run: uv sync --locked --dev --all-extras
 
     - name: Install patchright
-      if: inputs.browsers == 'true' && steps.cache-patchright.outputs.cache-hit != 'true'
+      if: inputs.browsers == 'true'
       shell: bash
       run: uv run patchright install --with-deps chromium --no-shell
 
