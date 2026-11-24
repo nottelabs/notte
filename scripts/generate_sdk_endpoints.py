@@ -643,7 +643,7 @@ KEYWORD_DOCSTRINGS = {
 }
 # Existing public keyword surface; runtime exceptions live in _compat/profiles.py.
 HIDDEN_KEYWORDS = {
-    "ApiSessionStartRequest": {"screenshot_type", "demonstrate"},
+    "ApiSessionStartRequest": {"screenshot_type", "demonstrate", "preset_id"},
     "ListSessionsParametersQuery": {"only_current_token"},
     "BodyFunctionCreateFunctionsPost": {"response_format"},
     "BodyFunctionUpdateFunctionsFunctionIdPost": {"file", "response_format"},
