@@ -147,6 +147,8 @@
   "#/components/schemas/FunctionScheduleListResponse": "FunctionScheduleListResponse",
   "#/components/schemas/FunctionSdkGeneration": "FunctionSdkGeneration",
   "#/components/schemas/FunctionSource": "FunctionSource",
+  "#/components/schemas/FunctionVersionOrigin": "FunctionVersionOrigin",
+  "#/components/schemas/FunctionVersionOriginInfo": "FunctionVersionOriginInfo",
   "#/components/schemas/FunctionWithLinkResponse": "FunctionWithLinkResponse",
   "#/components/schemas/GetCookiesResponse": "GetCookiesResponse",
   "#/components/schemas/GetCredentialsResponse": "GetCredentialsResponse",

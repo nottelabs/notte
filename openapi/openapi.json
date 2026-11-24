@@ -26462,6 +26462,70 @@
         ],
         "title": "FunctionSource"
       },
+      "FunctionVersionOrigin": {
+        "type": "string",
+        "enum": [
+          "self-heal",
+          "anything",
+          "rollback",
+          "fork",
+          "console",
+          "cli",
+          "python-sdk",
+          "node-sdk",
+          "rest-api"
+        ],
+        "title": "FunctionVersionOrigin"
+      },
+      "FunctionVersionOriginInfo": {
+        "properties": {
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "description": "A version from the function's `versions` history"
+          },
+          "origin": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FunctionVersionOrigin"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What created the version: an upload's client (`console`, `cli`, `python-sdk`, `node-sdk`, `rest-api`, `anything`), `self-heal` for an upload from an Anything self-heal turn, `rollback` or `fork`. Null when unknown (versions deployed before origins were recorded)."
+          },
+          "heal_attempt_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Heal Attempt Id",
+            "description": "The Anything self-heal attempt the version was deployed under, when it was one."
+          },
+          "restored_from": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Restored From",
+            "description": "For a rollback, the version whose code it redeployed."
+          }
+        },
+        "type": "object",
+        "required": [
+          "version"
+        ],
+        "title": "FunctionVersionOriginInfo"
+      },
       "FunctionWithLinkResponse": {
         "properties": {
           "url": {
@@ -26712,6 +26776,21 @@
             ],
             "title": "Schedule State",
             "description": "'enabled' while the schedule fires, 'paused' once the backend disabled it after a deterministic failure (exhausted credit, or an inactive function), null when there is no schedule."
+          },
+          "version_origins": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/FunctionVersionOriginInfo"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version Origins",
+            "description": "Where each version in `versions` came from, in the same order. Owner reads only: null for a published function read by someone else and on a run's code fetch (`function_run_id`)."
           },
           "workflow_id": {
             "type": "string",

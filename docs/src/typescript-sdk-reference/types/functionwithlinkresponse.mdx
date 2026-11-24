@@ -168,6 +168,12 @@ export type FunctionWithLinkResponse = {
      */
     schedule_state?: 'enabled' | 'paused' | null;
     /**
+     * Version Origins
+     *
+     * Where each version in `versions` came from, in the same order. Owner reads only: null for a published function read by someone else and on a run's code fetch (`function_run_id`).
+     */
+    version_origins?: Array<FunctionVersionOriginInfo> | null;
+    /**
      * Workflow Id
      */
     readonly workflow_id: string;
@@ -284,10 +290,15 @@ Variables passed to each scheduled run, or null if it is not scheduled.
 'enabled' while the schedule fires, 'paused' once the backend disabled it after a deterministic failure (exhausted credit, or an inactive function), null when there is no schedule.
 </ParamField>
 
+<ParamField body="version_origins" type={"FunctionVersionOriginInfo[] | null | undefined"}>
+Where each version in `versions` came from, in the same order. Owner reads only: null for a published function read by someone else and on a run's code fetch (`function_run_id`).
+</ParamField>
+
 <ParamField body="workflow_id" type={"string"} required>
 
 </ParamField>
 
 ## Related types
 
+- [FunctionVersionOriginInfo](/typescript-sdk-reference/types/functionversionorigininfo)
 - [ParameterInfo](/typescript-sdk-reference/types/parameterinfo)
