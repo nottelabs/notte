@@ -62,9 +62,14 @@ runs:
       run: uv sync --locked --dev --all-extras
 
     - name: Install patchright
-      if: inputs.browsers == 'true' && steps.cache-patchright.outputs.cache-hit != 'true'
+      if: inputs.browsers == 'true'
       shell: bash
       run: uv run patchright install --with-deps chromium --no-shell
+
+    - name: Install Playwright
+      if: inputs.browsers == 'true'
+      shell: bash
+      run: uv run playwright install --with-deps chromium --no-shell
 
     - name: Install pre-commit
       if: inputs.pre-commit == 'true' && steps.cache-pre-commit.outputs.cache-hit != 'true'
