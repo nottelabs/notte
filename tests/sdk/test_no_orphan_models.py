@@ -40,9 +40,12 @@ def _sdk_code() -> str:
     """SDK source with per-line comments stripped, so commented-out code never counts as a reference."""
     lines: list[str] = []
     # The models live in notte_core.types; models embedded in other models count as referenced.
-    # The `__all__` export list names every model, so it is not a reference.
-    for path in [*sorted(SDK_SRC.rglob("*.py")), Path(inspect.getfile(types_module))]:
-        source = re.sub(r"^__all__ = \[.*?^\]", "", path.read_text(), flags=re.M | re.S)
+    types_path = Path(inspect.getfile(types_module))
+    for path in [*sorted(SDK_SRC.rglob("*.py")), types_path]:
+        source = path.read_text()
+        if path == types_path:
+            # Its `__all__` export list names every model, so it is not a reference.
+            source = re.sub(r"^__all__ = \[\n(?:    \"\w+\",\n)*\]\n", "", source, flags=re.M)
         lines.extend(line.split("#", 1)[0] for line in source.splitlines())
     return "\n".join(lines)
 
