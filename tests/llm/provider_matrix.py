@@ -24,7 +24,7 @@ class Route:
 ROUTES = (
     Route("gemini", "google/gemini-3.5-flash-lite", "google-ai-studio"),
     Route("gemini-flash", "google/gemini-3.5-flash", "google-ai-studio"),
-    Route("claude", "anthropic/claude-sonnet-4-5", "anthropic"),
+    Route("claude", "anthropic/claude-sonnet-5.5", "anthropic"),
     Route("openai", "openai/gpt-4o", "openai"),
     Route("groq", "openai/gpt-oss-120b", "groq"),
     Route("cerebras", "openai/gpt-oss-120b", "cerebras"),
