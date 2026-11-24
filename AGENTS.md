@@ -415,6 +415,11 @@ add or remove entries in the same change as the spec. The
 contract check fails. Fix it on `chore/bump-openapi`. Later refreshes leave
 that PR alone once it has manual commits.
 
+The API reports its installed notte version without `.devN` (`info.version`, `HealthResponse`'s
+`version` default). The published schema carries the notte commit the monorepo pins, but the round
+trip installs this workspace, so `openapi_contract.py --fetch` writes the root `pyproject.toml`
+version there. After a release advances the workspace, the next refresh moves the snapshot to it.
+
 OpenAPI refresh compares a temporary order-insensitive representation of JSON objects.
 When the incoming schema is otherwise unchanged, keep the committed snapshot byte for
 byte and still run the generators. Real schema changes retain the API's declared order.
