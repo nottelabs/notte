@@ -129,6 +129,7 @@ Start a new browser session
 | `--max-duration-minutes <int>` | Maximum session lifetime in minutes (absolute maximum, not affected by activity). (API default: 15) |
 | `--no-solve-captchas` | Do not attempt to solve captchas automatically |
 | `--os <string>` | The operating system the session's browser presents: windows or macos. When unset, each session gets one at random among those the environment offers. |
+| `--preset-id <string>` | Reusable launch preset revision from POST /launch-presets/recommend. Explicit request and saved profile settings take precedence. Does not navigate or restrict the session. During the pilot, starting with a preset returns 403 in production. |
 | `--profile-id <string>` | Profile ID to use for this session |
 | `--profile-persist` | Whether to save browser state to profile on session close (API default: false) |
 | `--proxy` | Use default proxies |
