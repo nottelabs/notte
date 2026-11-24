@@ -20,25 +20,14 @@ Get keys from [Notte](https://console.notte.cc/apikeys), your model provider, an
   <Tab title="OpenAI Agents SDK">
     Use Python 3.11 to 3.13 and uv. Set `NOTTE_API_KEY`, `OPENAI_API_KEY`, and `TRACEROOT_API_KEY`, then run `uv sync --locked` and `uv run python hn_openai.py`.
 
-    ```python
-    traceroot.initialize(integrations=[Integration.OPENAI_AGENTS])
-    ```
+    The example turns on tracing with `traceroot.initialize(integrations=[Integration.OPENAI_AGENTS])`.
 
     Keep the Agents SDK's tracing on: `RunConfig(tracing_disabled=True)` drops the agent's spans. traceroot replaces the SDK's default trace exporter, so the spans go to traceroot instead of OpenAI.
   </Tab>
   <Tab title="Claude Agent SDK">
     Use Python 3.11 to 3.13 and uv. Set `NOTTE_API_KEY`, `ANTHROPIC_API_KEY`, and `TRACEROOT_API_KEY`, then run `uv sync --locked` and `uv run python hn_claude.py`.
 
-    ```python
-    import claude_agent_sdk
-
-    traceroot.initialize(integrations=[Integration.CLAUDE_AGENT_SDK])
-    ...
-    async for message in claude_agent_sdk.query(prompt=prompt, options=OPTIONS):
-        ...
-    ```
-
-    traceroot wraps `claude_agent_sdk.query`. Call it through the module: a `query` imported by name before `initialize()` is not traced.
+    The example turns on tracing with `traceroot.initialize(integrations=[Integration.CLAUDE_AGENT_SDK])`, which wraps `claude_agent_sdk.query`. Call it through the module, as in `claude_agent_sdk.query(prompt=prompt, options=OPTIONS)`: a `query` imported by name before `initialize()` is not traced.
   </Tab>
   <Tab title="Vercel AI SDK">
     Use Node.js 24+. Set `NOTTE_API_KEY`, `ANTHROPIC_API_KEY`, and `TRACEROOT_API_KEY`, then run `npm ci` and `npm start` in `typescript`.
