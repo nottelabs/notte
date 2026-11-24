@@ -102,15 +102,12 @@ def api_version() -> str:
 
 
 def stamp_api_version(spec: JsonObject, version: str) -> None:
-    """Write `version` where the API renders its own version: `info.version` and `version` defaults equal to it."""
-    info = cast(JsonObject, spec["info"])
-    served = info["version"]
-    info["version"] = version
-    schemas = cast(JsonObject, spec.get("components", {}).get("schemas", {}))
-    for schema in schemas.values():
-        prop = cast(JsonObject, schema.get("properties", {}).get("version", {}))
-        if "default" in prop and prop["default"] == served:
-            prop["default"] = version
+    """Write `version` where the API renders its own version: `info.version` and `HealthResponse`'s default."""
+    cast(JsonObject, spec["info"])["version"] = version
+    health = cast(JsonObject, spec.get("components", {}).get("schemas", {}).get("HealthResponse", {}))
+    prop = cast(JsonObject, health.get("properties", {}).get("version", {}))
+    if "default" in prop:
+        prop["default"] = version
 
 
 def _schema(schemas: JsonObject, name: str) -> JsonObject | None:

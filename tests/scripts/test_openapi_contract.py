@@ -8,7 +8,7 @@ import threading
 import urllib.error
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, TypeAlias
 
 import pytest
 from pydantic import AliasChoices, BaseModel, Field
@@ -73,7 +73,10 @@ def test_fetch_keeps_real_contract_changes(tmp_path: Path, monkeypatch: pytest.M
     assert snapshot.read_text() != original
 
 
-def _versioned_schema(version: str) -> dict[str, Any]:
+Json: TypeAlias = "str | dict[str, Json]"
+
+
+def _versioned_schema(version: str) -> dict[str, Json]:
     return {
         "openapi": "3.1.0",
         "info": {"title": "Notte API", "version": version},
@@ -82,6 +85,7 @@ def _versioned_schema(version: str) -> dict[str, Any]:
                 "HealthResponse": {"properties": {"version": {"type": "string", "default": version}}},
                 "FunctionVersionOriginInfo": {"properties": {"version": {"type": "string"}}},
                 "RunFunctionRequest": {"properties": {"version": {"type": "string", "default": "latest"}}},
+                "FunctionRollbackRequest": {"properties": {"version": {"type": "string", "default": "1.10.15"}}},
             }
         },
     }
@@ -102,7 +106,13 @@ def test_fetch_writes_the_version_the_api_reports_with_this_workspace(
     monkeypatch.setattr(contract, "download", lambda _: _versioned_schema("1.10.15"))
     assert contract.main() == 0
     # Only the API's own version moves: other `version` properties keep their defaults.
-    assert json.loads(snapshot.read_text()) == _versioned_schema("1.10.16")
+    written = json.loads(snapshot.read_text())
+    schemas = written["components"]["schemas"]
+    assert written["info"]["version"] == "1.10.16"
+    assert schemas["HealthResponse"]["properties"]["version"]["default"] == "1.10.16"
+    assert schemas["FunctionRollbackRequest"]["properties"]["version"]["default"] == "1.10.15"
+    assert schemas["RunFunctionRequest"]["properties"]["version"]["default"] == "latest"
+    assert "default" not in schemas["FunctionVersionOriginInfo"]["properties"]["version"]
     before = snapshot.read_bytes()
     assert contract.main() == 0
     assert snapshot.read_bytes() == before
