@@ -15,6 +15,11 @@ known drift recorded in ``openapi/known_drift.txt``:
     uv run --no-sync python scripts/openapi_contract.py --check --against URL  # live API (release gate)
     uv run --no-sync python scripts/openapi_contract.py --fetch [--url URL]    # refresh the snapshot
     uv run --no-sync python scripts/openapi_contract.py --update-baseline
+
+The API reports the installed ``notte`` package's version, without a ``.devN`` suffix, as
+its schema version (``info.version`` and ``HealthResponse``'s ``version`` default). The
+schema round trip installs this repository's packages into the API, so ``--fetch`` writes
+this workspace's version there instead of the version of the notte commit the API pins.
 """
 
 from __future__ import annotations
@@ -23,7 +28,9 @@ import argparse
 import inspect
 import json
 import os
+import re
 import sys
+import tomllib
 import types
 import typing
 import urllib.request
@@ -42,6 +49,7 @@ sys.path.insert(0, str(REPO_ROOT))
 from scripts.openapi_order import comparison_json  # noqa: E402
 
 SNAPSHOT = REPO_ROOT / "openapi" / "openapi.json"
+PYPROJECT = REPO_ROOT / "pyproject.toml"
 BASELINE = REPO_ROOT / "openapi" / "known_drift.txt"
 DEFAULT_URL = "https://us-staging.notte.cc"
 
@@ -85,6 +93,24 @@ def download(url: str) -> JsonObject:
     opener = urllib.request.build_opener(_NoSchemaRedirect())
     with opener.open(request, timeout=120) as response:
         return cast(JsonObject, json.load(response))
+
+
+def api_version() -> str:
+    """The version the API reports with this workspace's notte installed, as notte-api's `API_VERSION`."""
+    version = cast(str, tomllib.loads(PYPROJECT.read_text())["project"]["version"])
+    return re.sub(r"\.dev\d+$", "", version)
+
+
+def stamp_api_version(spec: JsonObject, version: str) -> None:
+    """Write `version` where the API renders its own version: `info.version` and `version` defaults equal to it."""
+    info = cast(JsonObject, spec["info"])
+    served = info["version"]
+    info["version"] = version
+    schemas = cast(JsonObject, spec.get("components", {}).get("schemas", {}))
+    for schema in schemas.values():
+        prop = cast(JsonObject, schema.get("properties", {}).get("version", {}))
+        if "default" in prop and prop["default"] == served:
+            prop["default"] = version
 
 
 def _schema(schemas: JsonObject, name: str) -> JsonObject | None:
@@ -176,6 +202,7 @@ def main() -> int:
 
     if args.fetch:
         spec = download(args.url)
+        stamp_api_version(spec, api_version())
         SNAPSHOT.parent.mkdir(parents=True, exist_ok=True)
         previous = json.loads(SNAPSHOT.read_text()) if SNAPSHOT.exists() else None
         if comparison_json(previous) == comparison_json(spec):
