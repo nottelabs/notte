@@ -2,7 +2,7 @@
 # @sniptest show=1-42
 from notte_sdk import NotteClient
 from notte_sdk.types import Cookie
-from patchright.sync_api import StorageState
+from playwright.sync_api import StorageState
 
 client = NotteClient()
 

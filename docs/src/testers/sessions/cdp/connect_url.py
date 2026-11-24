@@ -1,21 +1,14 @@
 # @sniptest filename=connect_url.py
-# @sniptest show=9-27
-# ruff: noqa: E402 -- hidden live fixture precedes displayed imports
+# @sniptest show=1-20
 import os
-
-api_key = os.environ["NOTTE_API_KEY"]
-connect_url = (
-    os.environ.get("NOTTE_API_URL", "https://api.notte.cc").replace("https://", "wss://") + "/sessions/connect"
-)
-
 from urllib.parse import urlencode
 
-from patchright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright
 
-# connect_url is "wss://api.notte.cc/sessions/connect"
 # Pass your API key and session options in the query string
-query = urlencode({"token": api_key, "proxies": "false", "max_duration_minutes": 10})
-url = f"{connect_url}?{query}"
+query = urlencode({"token": os.environ["NOTTE_API_KEY"], "proxies": "false", "max_duration_minutes": 10})
+api_url = os.environ.get("NOTTE_API_URL", "https://api.notte.cc")
+url = f"{api_url.replace('https://', 'wss://')}/sessions/connect?{query}"
 
 with sync_playwright() as p:
     # Connecting starts a new Notte session

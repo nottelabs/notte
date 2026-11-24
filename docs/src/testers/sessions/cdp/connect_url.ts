@@ -1,14 +1,15 @@
 // @sniptest filename=connect_url.ts
-// @sniptest show=4-21
-const apiKey = process.env.NOTTE_API_KEY!;
-const connectUrl = `${(process.env.NOTTE_API_URL ?? "https://api.notte.cc").replace("https://", "wss://")}/sessions/connect`;
-
+// @sniptest show=1-22
 import { chromium } from "playwright-core";
 
-// connectUrl is "wss://api.notte.cc/sessions/connect"
 // Pass your API key and session options in the query string
-const query = new URLSearchParams({ token: apiKey, proxies: "false", max_duration_minutes: "10" });
-const url = `${connectUrl}?${query}`;
+const query = new URLSearchParams({
+  token: process.env.NOTTE_API_KEY!,
+  proxies: "false",
+  max_duration_minutes: "10",
+});
+const apiUrl = process.env.NOTTE_API_URL ?? "https://api.notte.cc";
+const url = `${apiUrl.replace("https://", "wss://")}/sessions/connect?${query}`;
 
 // Connecting starts a new Notte session
 const browser = await chromium.connectOverCDP(url);
