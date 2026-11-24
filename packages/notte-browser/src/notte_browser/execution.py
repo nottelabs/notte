@@ -60,7 +60,13 @@ from notte_browser.action_hooks import (
 )
 from notte_browser.captcha import solve_captcha
 from notte_browser.click_input import ClickInputReporter
-from notte_browser.dialogs import Dismissal, dismiss_blocking_dialogs, retries_after_dismissal
+from notte_browser.dialogs import (
+    DIALOG_IN_THE_WAY,
+    DISMISS_S,
+    Dismissal,
+    dismiss_blocking_dialogs,
+    retries_after_dismissal,
+)
 from notte_browser.dom.locate import locate_element, selectors_through_shadow_dom
 from notte_browser.dom.parsing import parse_dom
 from notte_browser.driver import (
@@ -540,7 +546,7 @@ async def _in_the_way(located: list[Locator], action: InteractionAction, secrets
     quoted = _may_quote(action, f"{found.get('name', '')} {found.get('text', '')}", secrets)
     match found["kind"]:
         case "dialog":
-            return f': a dialog covers the element: "{found["name"]}"' if quoted else ": a dialog covers the element"
+            return f'{DIALOG_IN_THE_WAY}: "{found["name"]}"' if quoted else DIALOG_IN_THE_WAY
         case "element":
             return f": an element covers the element{': ' + found['name'] if quoted else ''}"
         case _:
@@ -1406,7 +1412,6 @@ def _with_note(error: NotteBaseError, note: str) -> NotteBaseError:
 
 
 @profiler.profiled("BrowserController.execute", service_name="execution")
-@capture_playwright_errors()
 async def execute(
     window: BrowserWindow,
     action: BaseAction,
@@ -1428,13 +1433,14 @@ async def execute(
         return await _execute_once(
             window, action, prev_snapshot=prev_snapshot, storage=storage, verbose=verbose, secrets=secrets
         )
-    except (NotteTimeoutError, ActionExecutionError) as error:
+    except ActionExecutionError as error:
         if not window.options.dismiss_blocking_dialogs or not retries_after_dismissal(action, error):
             raise
         assert isinstance(action, InteractionAction)
         try:
-            dismissals = await dismiss_blocking_dialogs(window, action)
-        except Exception as e:  # the page went away while it was looked at: the action's own failure stands
+            async with asyncio.timeout(DISMISS_S):
+                dismissals = await dismiss_blocking_dialogs(window, action)
+        except Exception as e:  # the page went away or stopped answering: the action's own failure stands
             logger.debug(f"Could not dismiss a dialog blocking the {action.type}: {type(e).__name__}")
             raise error from None
         if not dismissals:
@@ -1454,6 +1460,7 @@ async def execute(
     return retval
 
 
+@capture_playwright_errors()
 async def _execute_once(
     window: BrowserWindow,
     action: BaseAction,

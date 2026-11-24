@@ -13,7 +13,7 @@ import pytest
 from notte_browser.dialogs import retries_after_dismissal
 from notte_browser.session import NotteSession
 from notte_core.actions import ClickAction, FillAction
-from notte_core.errors import ActionExecutionError
+from notte_core.errors import ActionExecutionError, NotteTimeoutError
 
 # the dialog's controls record themselves and remove the dialog; the page behind it is `inert` while it is shown
 DISMISS = (
@@ -266,8 +266,85 @@ async def test_the_message_does_not_quote_a_dialog_that_shows_the_typed_text() -
     ), result.message
 
 
-def test_actions_on_observed_elements_are_left_as_they_are() -> None:
-    error = ActionExecutionError("I1", "https://example.com", reason="Element is disabled")
-    assert not retries_after_dismissal(ClickAction(id="I1"), error)
-    assert retries_after_dismissal(ClickAction(selector="css=#go"), error)
-    assert not retries_after_dismissal(ClickAction(selector="css=#go"), ValueError("other"))
+@pytest.mark.parametrize(
+    ("controls", "pressed"),
+    [
+        # a link that leads to another page is not a control, whatever its name
+        ('<a href="https://example.com/next">Close</a>', None),
+        # named for signing in: not a close control
+        ("<button onclick=\"document.body.dataset.pressed = 'sign in'\">Sign in to close</button>", None),
+        # accepting comes last, also when its name ends with closing: Escape closes this dialog first
+        ("<button onclick=\"dismiss('accept and close')\">Accept and close</button>", "escape"),
+    ],
+    ids=["a link named Close", "sign in to close", "accept and close"],
+)
+@pytest.mark.asyncio
+async def test_a_control_is_read_by_what_it_does_before_the_word_close(controls: str, pressed: str | None) -> None:
+    async with NotteSession(headless=True, dismiss_blocking_dialogs=True) as session:
+        _ = await session.window.page.goto(_dialog(controls, escape=pressed == "escape", links=""))
+        result = await session.aexecute(
+            FillAction(selector="css=#q", value="hello", timeout=3000), raise_on_failure=False
+        )
+        url = session.window.page.url
+        state = await _state(session)
+
+    assert url.startswith("data:")
+    assert result.success == (pressed is not None), result.message
+    assert state == ({"dismissed": pressed, "value": "hello"} if pressed else {"value": ""})
+
+
+@pytest.mark.asyncio
+async def test_a_banner_over_the_element_and_another_dialog_on_the_page_are_left_alone() -> None:
+    # a sticky banner covers the field (it is no dialog), and a chat panel with a dialog role is shown elsewhere
+    page = _url(
+        '<input id="q" oninput="this.value = \'\'">'
+        '<div style="position:fixed;top:0;left:0;width:100%;height:80px">'
+        "<button onclick=\"document.body.dataset.pressed = 'banner'\">Close</button></div>"
+        '<div role="dialog" aria-label="Chat" style="position:fixed;bottom:0;right:0;width:200px;height:40px">'
+        "<button onclick=\"document.body.dataset.pressed = 'chat'\">Close</button></div>"
+    )
+    async with NotteSession(headless=True, dismiss_blocking_dialogs=True) as session:
+        _ = await session.window.page.goto(page)
+        result = await session.aexecute(
+            FillAction(selector="css=#q", value="hello", timeout=3000), raise_on_failure=False
+        )
+        state = await session.window.page.evaluate("() => ({...document.body.dataset})")
+
+    assert not result.success
+    assert "then retried once" not in result.message
+    assert state == {}
+
+
+@pytest.mark.asyncio
+async def test_a_retry_that_fails_still_says_what_was_dismissed() -> None:
+    # closing the dialog replaces the field with an element that takes no text: the retried fill fails in the driver
+    page = _url(
+        '<main inert><input id="q"></main>'
+        "<script>function swap() { document.querySelector('[role=dialog]').remove();"
+        " document.querySelector('main').outerHTML = '<main><div id=\"q\">closed</div></main>'; }</script>"
+        f'<div role="dialog" aria-modal="true" {BACKDROP}><h2>Welcome</h2>'
+        '<button aria-label="Close welcome modal" onclick="swap()">X</button></div>'
+    )
+    async with NotteSession(headless=True, dismiss_blocking_dialogs=True) as session:
+        _ = await session.window.page.goto(page)
+        result = await session.aexecute(
+            FillAction(selector="css=#q", value="hello", timeout=3000), raise_on_failure=False
+        )
+
+    assert not result.success
+    assert "Dismissed 1 dialog blocking the element, then retried once" in result.message, result.message
+
+
+def test_only_a_failure_that_names_a_dialog_on_a_selector_is_retried() -> None:
+    url = "https://example.com"
+    blocked = ActionExecutionError("I1", url, reason='Element is disabled: a dialog covers the element: "Welcome"')
+    assert retries_after_dismissal(ClickAction(selector="css=#go"), blocked)
+    # an observed element is left as it is
+    assert not retries_after_dismissal(ClickAction(id="I1"), blocked)
+    # nothing, or something that is no dialog, is in the way
+    assert not retries_after_dismissal(
+        ClickAction(selector="css=#go"), ActionExecutionError("I1", url, reason="Element is disabled")
+    )
+    # a timeout: the action may have reached the page before it
+    timed_out = NotteTimeoutError(message='Action timed out after 2000ms: a dialog covers the element: "Welcome"')
+    assert not retries_after_dismissal(ClickAction(selector="css=#go"), timed_out)

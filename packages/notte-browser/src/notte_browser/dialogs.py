@@ -1,9 +1,10 @@
 """Dismiss a dialog a site opened over the page when it blocks an action (`dismiss_blocking_dialogs`).
 
 A cookie or terms dialog, a sign-in prompt, a promo sheet or a welcome modal makes the rest of the page inert or
-covers it: a fill then "stays empty", a click is refused as disabled or times out. With the session option on, such
-a failure of a click or fill on a selector the caller wrote is looked at again: when the target is blocked by such a
-dialog (`js/blocking_dialog.js`), the dialog is dismissed through its own controls and the action is retried once.
+covers it: a fill then "stays empty", a click is refused as disabled. With the session option on, such a failure of
+a click or fill on a selector the caller wrote, when it names a dialog in the way of its element, is looked at
+again (`js/blocking_dialog.js`): the dialog is dismissed through its own controls and the action is retried once.
+A timeout is left as it is: the action may have reached the page before it.
 
 The controls are tried in this order, and the next one only when the dialog is still shown:
 
@@ -25,7 +26,7 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 from notte_core.actions import ClickAction, FillAction, InteractionAction
-from notte_core.errors import ActionExecutionError, NotteTimeoutError
+from notte_core.errors import ActionExecutionError
 from notte_core.logging import logger
 
 from notte_browser.dom.locate import locate_element
@@ -47,6 +48,10 @@ LOCATE_MS = 1_000
 CLICK_MS = 2_000
 # how long a dialog gets to go away (a fade-out transition) after a control was used
 GONE_MS = 1_500
+# how long looking at the page and dismissing its dialogs may take in all, before the action's own failure stands
+DISMISS_S = 30.0
+# how a failure says that a dialog is in the way of its element (`notte_browser.execution._in_the_way`)
+DIALOG_IN_THE_WAY = ": a dialog covers the element"
 _GONE_POLL_S = 0.1
 # the most dialogs dismissed before the action is retried
 MAX_DIALOGS = 3
@@ -68,7 +73,6 @@ class Dismissal:
     """What was done to one dialog."""
 
     reason: str
-    role: str
     label: str
     # the controls used, in order, that did not make the dialog go away: their kind and name (None for Escape)
     tried: list[tuple[How, str | None]] = field(default_factory=list)
@@ -105,12 +109,13 @@ class Dismissal:
 
 
 def retries_after_dismissal(action: object, error: BaseException) -> bool:
-    """Whether a failed action is one a blocking dialog could explain: a click or fill on a selector its caller
-    wrote (an observed element, with an id, is left as it is) that timed out, was refused as disabled or whose
-    field did not keep the text."""
+    """Whether a failed action is one a blocking dialog explains: a click or fill on a selector its caller wrote (an
+    observed element, with an id, is left as it is) that was refused as disabled or whose field did not keep the
+    text, with a dialog found in the way of its element. A timeout is not retried: the click or the Enter key may
+    have reached the page before it, and a dialog shown now can be its result."""
     if not isinstance(action, (ClickAction, FillAction)) or action.id or action.selectors is None:
         return False
-    return isinstance(error, (NotteTimeoutError, ActionExecutionError))
+    return isinstance(error, ActionExecutionError) and DIALOG_IN_THE_WAY in error.dev_message
 
 
 async def _shown(dialog: ElementHandle) -> bool:
@@ -157,7 +162,6 @@ async def _dismiss(window: BrowserWindow, found: dict[str, JSHandle]) -> Dismiss
     assert dialog is not None
     record = Dismissal(
         reason=str(await found["reason"].json_value()),
-        role=str(await found["role"].json_value()),
         label=str(await found["label"].json_value()),
     )
     close = found["close"].as_element()
