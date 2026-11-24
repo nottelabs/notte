@@ -108,7 +108,7 @@ For the prompt regression, the root cause analysis found the cause from the trac
 
 Run [evals](https://traceroot.ai/docs/evals/introduction) against your datasets and compare versions to measure improvements and catch regressions.
 
-`hn_eval.py` evaluates the OpenAI agent on three Hacker News tasks. Its scorer, `backed_by_front_page`, checks each returned story against the live front page from the Hacker News API and scores the share that matches.
+`hn_eval.py` evaluates the OpenAI agent on three Hacker News tasks. Its scorer, `backed_by_front_page`, checks each returned story's title against the live front page from the Hacker News API and scores the share that matches. It doesn't compare points or ranks, which change between the agent's run and the check; the detector compares points with what the browser returned.
 
 ```bash
 uv run python hn_eval.py --broken   # with the prompt regression

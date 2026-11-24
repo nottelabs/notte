@@ -1,5 +1,6 @@
 import asyncio
 import functools
+import html
 import json
 import sys
 import urllib.request
@@ -27,13 +28,16 @@ def front_page_titles() -> frozenset[str]:
     """Titles on the Hacker News front page, fetched once per evaluation run."""
     ids = fetch_json("topstories.json")[:30]
     with ThreadPoolExecutor(max_workers=10) as pool:
-        return frozenset(
-            item["title"].strip().lower() for item in pool.map(lambda i: fetch_json(f"item/{i}.json"), ids)
-        )
+        items = pool.map(lambda i: fetch_json(f"item/{i}.json"), ids)
+        # The API returns titles as HTML, and a story deleted since the ID list was read has no title.
+        return frozenset(html.unescape(item["title"]).strip().lower() for item in items if item and "title" in item)
 
 
 def backed_by_front_page(input, output, expected=None) -> float:
-    """Share of the answer's stories whose title is on the live Hacker News front page."""
+    """Share of the answer's stories whose title is on the live Hacker News front page.
+
+    Points and ranks change between the agent's run and this check, so they are not compared.
+    """
     stories = output["stories"]
     if not stories:
         return 0.0
