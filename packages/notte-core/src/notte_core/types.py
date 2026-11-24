@@ -1033,6 +1033,11 @@ class LocalSessionStartRequestDict(_SessionStartRequestDict, total=False):
 
     browser_type: BrowserType
     headless: bool
+    dismiss_blocking_dialogs: bool
+    """When a click or fill on a selector fails because a dialog the site opened blocks its element (cookie consent,
+    terms, sign-in prompt, promo sheet), dismiss the dialog through its own controls and retry the action once: a
+    close or decline control first, then Escape, and an accept control only when nothing else closes it. The
+    action's result message says what was dismissed. Off by default. Not about JavaScript alert dialogs."""
 
 
 _SessionBrowserType = TypeVar("_SessionBrowserType", bound=str, default=BrowserType)
@@ -1478,6 +1483,17 @@ class LocalSessionStartRequest(_SessionStartRequest[BrowserType]):
     """Request for starting a browser session on the local machine."""
 
     headless: Annotated[bool, Field(description="Whether to run the local browser in headless mode.")] = config.headless
+    dismiss_blocking_dialogs: Annotated[
+        bool,
+        Field(
+            description=(
+                "When a click or fill on a selector fails because a dialog the site opened blocks its element "
+                "(cookie consent, terms, sign-in prompt, promo sheet), dismiss the dialog through its own controls "
+                "and retry the action once: a close or decline control first, then Escape, and an accept control "
+                "only when nothing else closes it. The action's result message says what was dismissed."
+            )
+        ),
+    ] = False
 
     @model_validator(mode="after")
     def validate_local_cdp_headless(self) -> "LocalSessionStartRequest":

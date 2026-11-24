@@ -42,6 +42,7 @@ from notte_core.dom_tree import DomNode, NodeSelectors
 from notte_core.errors import (
     ActionExecutionError,
     FileChooserOpenedError,
+    NotteBaseError,
     NotteTimeoutError,
     SnapshotProcessingError,
     TextNotKeptError,
@@ -59,6 +60,7 @@ from notte_browser.action_hooks import (
 )
 from notte_browser.captcha import solve_captcha
 from notte_browser.click_input import ClickInputReporter
+from notte_browser.dialogs import Dismissal, dismiss_blocking_dialogs, retries_after_dismissal
 from notte_browser.dom.locate import locate_element, selectors_through_shadow_dom
 from notte_browser.dom.parsing import parse_dom
 from notte_browser.driver import (
@@ -1382,8 +1384,28 @@ async def _interact(
         await window.page.keyboard.press("Enter")
 
 
+def _dismissals_note(dismissals: list[Dismissal], action: InteractionAction, secrets: Collection[str]) -> str:
+    """What was done to the dialogs that blocked `action`'s element, for its result message. Page text (the dialogs'
+    labels, their controls' names) is left out when `_may_quote` refuses it."""
+    quote = _may_quote(action, " ".join(text for record in dismissals for text in record.texts()), secrets)
+    described = "; ".join(record.describe(quote=quote) for record in dismissals)
+    if dismissals[-1].how is None:
+        return f"A dialog blocks the element and could not be dismissed: {described}"
+    count = len(dismissals)
+    return f"Dismissed {count} dialog{'s' if count > 1 else ''} blocking the element, then retried once: {described}"
+
+
+def _with_note(error: NotteBaseError, note: str) -> NotteBaseError:
+    """`error` as it was, with `note` added to its developer and agent messages (the user message stays generic)."""
+    old_dev, old_agent = error.dev_message, error.agent_message
+    error.dev_message = f"{old_dev}. {note}"
+    error.agent_message = f"{old_agent} {note}"
+    if error.args and error.args[0] in (old_dev, old_agent):
+        error.args = (error.dev_message if error.args[0] == old_dev else error.agent_message, *error.args[1:])
+    return error
+
+
 @profiler.profiled("BrowserController.execute", service_name="execution")
-@capture_playwright_errors()
 async def execute(
     window: BrowserWindow,
     action: BaseAction,
@@ -1392,6 +1414,60 @@ async def execute(
     storage: BaseStorage | None = None,
     verbose: bool = False,
     secrets: Collection[str] = (),
+    dismissed: list[str] | None = None,
+) -> bool:
+    """Execute `action` (`_execute_once`).
+
+    With the session's `dismiss_blocking_dialogs` on, a click or fill on a selector the caller wrote that failed
+    because a dialog the site opened blocks its element gets the dialog dismissed through its own controls and one
+    more try (`notte_browser.dialogs`). What was dismissed goes into `dismissed` (one sentence for the result
+    message) when the retry succeeds, and into the error's message when it does not. The failure is kept as it was
+    when nothing blocks the element the way a dialog does.
+
+    Only a failure the page refused before it took the input is looked at (`_InTheWay`: a disabled element, a field
+    that did not keep the text). A timeout is not: the click or the Enter key may have reached the page before it,
+    and a dialog shown now can be its result."""
+    try:
+        return await _execute_once(
+            window, action, prev_snapshot=prev_snapshot, storage=storage, verbose=verbose, secrets=secrets
+        )
+    except ActionExecutionError as error:
+        # `raise ... from None` keeps the `_InTheWay` the failure was built from as its context
+        refused = isinstance(error.__context__, _InTheWay)
+        if not window.options.dismiss_blocking_dialogs or not refused or not retries_after_dismissal(action):
+            raise
+        assert isinstance(action, InteractionAction)
+        try:
+            dismissals = await dismiss_blocking_dialogs(window, action)
+        except Exception as e:  # nothing was used on the page (`dismiss_blocking_dialogs`): the failure stands
+            logger.debug(f"Could not dismiss a dialog blocking the {action.type}: {type(e).__name__}")
+            raise error from None
+        if not dismissals:
+            raise
+        note = _dismissals_note(dismissals, action, secrets)
+        logger.info(note)
+        if dismissals[-1].how is None:
+            raise _with_note(error, note) from None
+    try:
+        retval = await _execute_once(
+            window, action, prev_snapshot=prev_snapshot, storage=storage, verbose=verbose, secrets=secrets
+        )
+    except NotteBaseError as error:
+        raise _with_note(error, note) from None
+    if dismissed is not None:
+        dismissed.append(note)
+    return retval
+
+
+@capture_playwright_errors()
+async def _execute_once(
+    window: BrowserWindow,
+    action: BaseAction,
+    *,
+    prev_snapshot: BrowserSnapshot | None,
+    storage: BaseStorage | None,
+    verbose: bool,
+    secrets: Collection[str],
 ) -> bool:
     if not isinstance(action, ClickAction):
         return await _execute(

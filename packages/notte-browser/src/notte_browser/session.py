@@ -913,6 +913,8 @@ class NotteSession(AsyncResource, SyncResource):
                                 if isinstance(value, ValueWithPlaceholder)
                             }
                         )
+                        # dialogs dismissed before a retry (`dismiss_blocking_dialogs`): one sentence
+                        dismissed: list[str] = []
                         # interactions bound themselves by `action.timeout` (see execution.py)
                         success = await execution.execute(
                             self.window,
@@ -921,7 +923,10 @@ class NotteSession(AsyncResource, SyncResource):
                             prev_snapshot=self._snapshot,
                             verbose=self._verbose,
                             secrets=privacy.replacements,
+                            dismissed=dismissed,
                         )
+                        if success and dismissed:
+                            message = f"{message}. {' '.join(dismissed)}"
                         if not success:
                             # `message` still holds the success-phrased execution_message.
                             message = f"Action '{resolved_action.type}' failed during browser execution"
