@@ -1,0 +1,98 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/profiles/import_state.py */}
+
+<CodeGroup>
+
+```python import_state.py
+from notte_sdk import NotteClient
+from notte_sdk.types import Cookie
+from patchright.sync_api import StorageState
+
+client = NotteClient()
+
+# The result of Playwright's context.storage_state() on your previous provider
+state: StorageState = {
+    "cookies": [
+        {
+            "name": "session_id",
+            "value": "abc123",
+            "domain": "example.com",
+            "path": "/",
+            "expires": -1,
+            "httpOnly": True,
+            "secure": True,
+            "sameSite": "Lax",
+        }
+    ],
+    "origins": [
+        {"origin": "https://example.com", "localStorage": [{"name": "theme", "value": "dark"}]},
+    ],
+}
+
+profile = client.profiles.create(name="imported-login")
+
+# Notte takes local storage as {origin: {key: value}}, so convert storage_state()'s lists
+imported = client.profiles.state_set(
+    profile.profile_id,
+    cookies=[Cookie.model_validate(cookie) for cookie in state["cookies"]],
+    local_storage={
+        origin["origin"]: {item["name"]: item["value"] for item in origin["localStorage"]}
+        for origin in state["origins"]
+    },
+)
+print(imported.cookies_count, imported.local_storage_origins)
+
+# Sessions that use the profile start with the imported state
+with client.Session(profile={"id": profile.profile_id}) as session:
+    session.execute(type="goto", url="https://example.com")
+    theme = session.evaluate_js("localStorage.getItem('theme')")
+```
+
+```typescript import_state.ts
+import { NotteClient } from "notte-sdk";
+import type { BrowserContext } from "playwright-core";
+
+type StorageState = Awaited<ReturnType<BrowserContext["storageState"]>>;
+
+const client = new NotteClient();
+
+// The result of Playwright's context.storageState() on your previous provider
+const state: StorageState = {
+  cookies: [
+    {
+      name: "session_id",
+      value: "abc123",
+      domain: "example.com",
+      path: "/",
+      expires: -1,
+      httpOnly: true,
+      secure: true,
+      sameSite: "Lax",
+    },
+  ],
+  origins: [{ origin: "https://example.com", localStorage: [{ name: "theme", value: "dark" }] }],
+};
+
+const profile = await client.profiles.create({ name: "imported-login" });
+
+// Notte takes local storage as {origin: {key: value}}, so convert storageState()'s lists
+const imported = await client.profiles.stateSet(profile.profile_id, {
+  cookies: state.cookies,
+  local_storage: Object.fromEntries(
+    state.origins.map((origin) => [
+      origin.origin,
+      Object.fromEntries(origin.localStorage.map((item) => [item.name, item.value])),
+    ]),
+  ),
+});
+console.log(imported.cookies_count, imported.local_storage_origins);
+
+// Sessions that use the profile start with the imported state
+const session = client.Session({ profile: { id: profile.profile_id } });
+const theme = await session.use(async (session) => {
+  await session.execute({ type: "goto", url: "https://example.com" });
+  return await session.evaluateJs("localStorage.getItem('theme')");
+});
+```
+
+</CodeGroup>

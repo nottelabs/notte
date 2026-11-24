@@ -41,6 +41,10 @@ Start a Notte session in Python and pass its CDP URL to a Node.js Puppeteer scri
 
 <PuppeteerPythonStart />
 
+## Approach 3: Connect with a Single URL
+
+Pass `wss://api.notte.cc/sessions/connect?token=<NOTTE_API_KEY>` as `browserWSEndpoint` to `puppeteer.connect()`. Connecting starts a new session, and `browser.disconnect()` or `browser.close()` stops it within a few seconds. See [Connect with a Single URL](/features/sessions/playwright#connect-with-a-single-url) for the supported query parameters and limits.
+
 ## Network Interception
 
 Use Puppeteer's request interception with Notte sessions:

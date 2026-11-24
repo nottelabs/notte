@@ -32,3 +32,9 @@ Use your own model provider key; a Browserbase account is not required.
   This integration targets Stagehand 4.2.1. Browserbase-managed services and
   experimental callback batches are not supported.
 </Note>
+
+<Warning>
+  Install exactly 4.2.1. Stagehand 4.3.0 and 4.4.0 fail at connect with
+  `StagehandRuntimeIncompatibleError` (`Protocol major mismatch: client 3.x, server 2.1.1`).
+  If your project is on a newer 4.x release, pin it back to 4.2.1 to run on Notte.
+</Warning>

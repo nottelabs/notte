@@ -43,6 +43,22 @@ and keeps progress visible throughout the work. It also compares your current
 provider's cost with an equivalent Notte workload, so you can ask for that
 comparison before starting the migration.
 
+## Defaults that differ from other providers
+
+These session defaults can change how migrated code behaves without raising an error. Set them explicitly when your current provider behaves differently.
+
+| Setting | Notte default | What to check |
+|---|---|---|
+| `proxies` | `true`: residential proxies on | Built-in proxy traffic is billed per GB ([proxy billing](/features/sessions/proxies#billing)). Set `proxies=False` if your current provider used direct egress. |
+| `block_ads` | `true` | Set `block_ads=False` if your workflow needs ads or trackers to load. |
+| `dialog_policy` | `auto`: Notte dismisses alert, confirm and prompt | Set `dialog_policy="client"` if your code accepts or answers dialogs itself. |
+| `max_duration_minutes` | `15` | Plans cap it: 15 minutes on Free, 120 on Developer, 300 on Startup ([plans](https://www.notte.cc/pricing)). |
+| `idle_timeout_minutes` | `3` (max `30`) | An open CDP connection with no traffic does not count as activity. See [session lifecycle](/features/sessions/lifecycle). |
+| `record_session` | `true` | Set `record_session=False` to turn off saved replays. |
+| `profile.persist` | `false` | Set `persist=True` to save state back to the profile when the session ends. |
+
+Notte does not offer region selection, Chrome extensions, or a remote WebDriver URL for Selenium. To bring saved logins from another provider, see [Import State from Another Browser](/features/sessions/browser-profiles#import-state-from-another-browser).
+
 ## Skill source
 
 - [Migration skill](https://github.com/nottelabs/notte-skills/tree/main/plugins/notte-migrate/skills/migrate-to-notte)

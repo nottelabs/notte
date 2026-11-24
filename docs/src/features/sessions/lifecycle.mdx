@@ -134,6 +134,8 @@ Sessions have two limits:
 
 The idle timeout cannot exceed the maximum duration, so raise `max_duration_minutes` first for long workflows. Set the idle timeout to cover the longest pause between operations, for example while an agent thinks or a page loads.
 
+An open CDP connection with no traffic does not count as activity, and neither does polling the session status. A Playwright or Puppeteer client that holds the connection open and sends nothing is closed after the idle timeout. Sending a CDP command, such as `Runtime.evaluate`, resets it.
+
 <TimeoutExample />
 
 ### 3. Monitor Session State
