@@ -48,8 +48,8 @@ LOCATE_MS = 1_000
 CLICK_MS = 2_000
 # how long a dialog gets to go away (a fade-out transition) after a control was used
 GONE_MS = 1_500
-# how long looking at the page and dismissing its dialogs may take in all, before the action's own failure stands
-DISMISS_S = 30.0
+# how long looking at the page for a dialog may take, before the action's own failure stands
+LOOK_S = 5.0
 # how a failure says that a dialog is in the way of its element (`notte_browser.execution._in_the_way`)
 DIALOG_IN_THE_WAY = ": a dialog covers the element"
 _GONE_POLL_S = 0.1
@@ -171,31 +171,37 @@ async def _dismiss(window: BrowserWindow, found: dict[str, JSHandle]) -> Dismiss
     kinds: list[str] = await found["closeKinds"].json_value()
     closes = [found[f"close{index}"].as_element() for index in range(len(names))]
     accept = found["accept"].as_element()
+    accept_name = str(await found["acceptName"].json_value())
     # a target in a popover the caller opened: no Escape, and clicks by script (see `_click`)
     in_popover = bool(await found["targetInPopover"].json_value())
+
+    async def use(kind: How, name: str | None, control: ElementHandle | None) -> bool:
+        """Use one control (Escape without one) and say whether the dialog went away. It is recorded before it is
+        used, and nothing from here on raises: a control that was used is always reported, also when using it failed
+        half-way (the page rebuilt the control, or is navigating)."""
+        record.tried.append((kind, name))
+        try:
+            if control is None:
+                await window.page.keyboard.press("Escape")
+            else:
+                await _click(window, control, pointer=not in_popover)
+        except Error as e:
+            logger.debug(f"Using a dialog's {kind} control failed: {type(e).__name__}")
+        if not await _gone(dialog):
+            return False
+        _ = record.tried.pop()
+        record.how, record.control = kind, name
+        return True
+
     try:
         # every close and decline control before Escape and accepting: the first one can be a dead decoration
-        for close, name, kind_name in zip(closes, names, kinds):
-            assert close is not None
-            kind: How = "decline" if kind_name == "decline" else "close"
-            await _click(window, close, pointer=not in_popover)
-            if await _gone(dialog):
-                record.how, record.control = kind, name
+        for close, name, kind in zip(closes, names, kinds):
+            if await use("decline" if kind == "decline" else "close", name, close):
                 return record
-            record.tried.append((kind, name))
-        if not in_popover:
-            await window.page.keyboard.press("Escape")
-            if await _gone(dialog):
-                record.how = "Escape"
-                return record
-            record.tried.append(("Escape", None))
+        if not in_popover and await use("Escape", None, None):
+            return record
         if accept is not None:
-            name = str(await found["acceptName"].json_value())
-            await _click(window, accept, pointer=not in_popover)
-            if await _gone(dialog):
-                record.how, record.control = "accept", name
-                return record
-            record.tried.append(("accept", name))
+            _ = await use("accept", accept_name, accept)
         return record
     finally:
         for handle in (dialog, *closes, accept):
@@ -204,39 +210,53 @@ async def _dismiss(window: BrowserWindow, found: dict[str, JSHandle]) -> Dismiss
                     await handle.dispose()
 
 
+async def _look(window: BrowserWindow, action: InteractionAction) -> dict[str, JSHandle] | None:
+    """The dialog that blocks `action`'s target and its controls (`js/blocking_dialog.js`), None without one."""
+    assert action.selectors is not None
+    locator = await locate_element(window.page, action.selectors, wait_ms=LOCATE_MS)
+    target = await locator.element_handle(timeout=LOCATE_MS)
+    try:
+        frame = await target.owner_frame()
+        if frame is None or frame != window.page.main_frame:
+            # dialogs that block the page are in the main document
+            return None
+        found = await window.page.evaluate_handle(_BLOCKING_DIALOG, target)
+    finally:
+        with suppress(Error):
+            await target.dispose()
+    try:
+        if await found.evaluate("(found) => found === null"):
+            return None
+        return await found.get_properties()
+    finally:
+        with suppress(Error):
+            await found.dispose()
+
+
 async def dismiss_blocking_dialogs(window: BrowserWindow, action: InteractionAction) -> list[Dismissal]:
     """Dismiss the dialogs that block `action`'s target, up to `MAX_DIALOGS`. Returns what was done to each; an empty
     list when nothing blocks the target the way a dialog does (the failure has another cause), a list whose last
-    dismissal has no `how` when a dialog could not be dismissed."""
-    assert action.selectors is not None
+    dismissal has no `how` when a dialog could not be dismissed.
+
+    Looking at the page is bounded by `LOOK_S` and nothing is used when it fails. Once a control of a dialog is
+    used, that dialog's dismissal runs to its end, so that what was used is always returned."""
     done: list[Dismissal] = []
     for _ in range(MAX_DIALOGS):
         try:
-            locator = await locate_element(window.page, action.selectors, wait_ms=LOCATE_MS)
-            target = await locator.element_handle(timeout=LOCATE_MS)
-        except Exception as e:  # the target is not on the page (any more): nothing to look at
-            logger.debug(f"The target of the failed action was not found again: {type(e).__name__}")
+            async with asyncio.timeout(LOOK_S):
+                found = await _look(window, action)
+        except Exception as e:  # the target is gone, or the page went away or does not answer: nothing to look at
+            logger.debug(f"The target of the failed action could not be looked at again: {type(e).__name__}")
+            return done
+        if found is None:
             return done
         try:
-            frame = await target.owner_frame()
-            if frame is None or frame != window.page.main_frame:
-                # dialogs that block the page are in the main document
-                return done
-            found = await window.page.evaluate_handle(_BLOCKING_DIALOG, target)
+            record = await _dismiss(window, found)
+        except Error as e:  # the dialog could not be read: nothing of it was used
+            logger.debug(f"The dialog blocking the failed action could not be read: {type(e).__name__}")
+            return done
         finally:
-            with suppress(Error):
-                await target.dispose()
-        try:
-            if await found.evaluate("(found) => found === null"):
-                return done
-            properties = await found.get_properties()
-        finally:
-            with suppress(Error):
-                await found.dispose()
-        try:
-            record = await _dismiss(window, properties)
-        finally:
-            for handle in properties.values():
+            for handle in found.values():
                 with suppress(Error):
                     await handle.dispose()
         done.append(record)

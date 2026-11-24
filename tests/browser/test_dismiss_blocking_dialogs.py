@@ -274,6 +274,8 @@ async def test_the_message_does_not_quote_a_dialog_that_shows_the_typed_text() -
         # named for signing in: not a close control
         ("<button onclick=\"document.body.dataset.pressed = 'sign in'\">Sign in to close</button>", None),
         ("<button onclick=\"document.body.dataset.pressed = 'sign in'\">Close and sign in</button>", None),
+        # a close control whose name holds a joining word and a word of the deny list, without going on to it
+        ("<button onclick=\"dismiss('close terms')\">Close Terms and Conditions</button>", "close terms"),
         # a link inside the page is still a link
         ('<a href="#details" onclick="document.body.dataset.pressed = \'link\'">Close</a>', None),
         # accepting comes last, also when its name ends with closing: Escape closes this dialog first
@@ -285,6 +287,7 @@ async def test_the_message_does_not_quote_a_dialog_that_shows_the_typed_text() -
         "a link named Close",
         "sign in to close",
         "close and sign in",
+        "close terms and conditions",
         "a link inside the page",
         "accept and close",
         "agree and close",
@@ -321,6 +324,27 @@ async def test_every_close_and_decline_control_is_tried_before_accepting() -> No
     assert result.success, result.message
     assert state == {"dead": "1", "dismissed": "reject all", "value": "hello"}
     assert "its close control 'Close' had no effect, declined by its decline control 'Reject all'" in result.message
+
+
+@pytest.mark.asyncio
+async def test_a_control_the_page_rebuilt_does_not_end_the_dismissal() -> None:
+    # the first close control does nothing but rebuild the footer: the next control found earlier is gone
+    rebuild = (
+        '<span id="footer"><button aria-label="Close" onclick="footer.innerHTML = footer.innerHTML">X</button>'
+        "<button>Reject all</button></span>"
+    )
+    async with NotteSession(headless=True, dismiss_blocking_dialogs=True) as session:
+        _ = await session.window.page.goto(_dialog(rebuild, escape=True))
+        result = await session.aexecute(
+            FillAction(selector="css=#q", value="hello", timeout=3000), raise_on_failure=False
+        )
+        state = await _state(session)
+
+    assert result.success, result.message
+    assert state == {"dismissed": "escape", "value": "hello"}
+    assert (
+        "its close control 'Close' had no effect, its decline control 'Reject all' had no effect, closed by Escape"
+    ) in result.message, result.message
 
 
 @pytest.mark.asyncio

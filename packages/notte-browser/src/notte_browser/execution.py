@@ -62,7 +62,6 @@ from notte_browser.captcha import solve_captcha
 from notte_browser.click_input import ClickInputReporter
 from notte_browser.dialogs import (
     DIALOG_IN_THE_WAY,
-    DISMISS_S,
     Dismissal,
     dismiss_blocking_dialogs,
     retries_after_dismissal,
@@ -1438,9 +1437,8 @@ async def execute(
             raise
         assert isinstance(action, InteractionAction)
         try:
-            async with asyncio.timeout(DISMISS_S):
-                dismissals = await dismiss_blocking_dialogs(window, action)
-        except Exception as e:  # the page went away or stopped answering: the action's own failure stands
+            dismissals = await dismiss_blocking_dialogs(window, action)
+        except Exception as e:  # nothing was used on the page (`dismiss_blocking_dialogs`): the failure stands
             logger.debug(f"Could not dismiss a dialog blocking the {action.type}: {type(e).__name__}")
             raise error from None
         if not dismissals:

@@ -20,8 +20,9 @@
     const DECLINE_START = /^(skip|no,? thanks|no thanks|not now|maybe later|later|decline|reject|refuse|deny)\b/;
     const CLOSE_GLYPHS = new Set(['×', '✕', '✖', '⨯', 'x', '⤫']);
     const ACCEPT = /^(accept( all)?( cookies)?|i accept|agree|i agree|yes,? i agree|got it|ok|okay|allow( all)?( cookies)?|i understand|understood)( (and|&) (close|continue))?[.!]?$/;
-    // a name that joins two things ("Close and sign in")
-    const JOINS = /\b(and|then)\b|[&+]/;
+    // what a name goes on to after a joining word ("Close and sign in" goes on to sign in; "Close Terms and
+    // Conditions" does not go on to anything that is never pressed)
+    const goesOnTo = (name) => name.split(/\b(?:and|then)\b|[&+]/).slice(1).join(' ');
     // the most close and decline controls tried on one dialog
     const MAX_CLOSES = 3;
     const NEVER = /\b(sign|log ?in|login|register|subscribe|account|settings|preferences|customi[sz]e|manage|policy|terms|learn more|more info)\b/;
@@ -100,7 +101,7 @@
         // a control whose name starts with closing closes ("Dismiss sign-in info." closes, whatever else it names)
         if (CLOSE_GLYPHS.has(name) || CLOSE_START.test(name)) {
             // "Close and sign in" signs in
-            if (!(JOINS.test(name) && NEVER.test(name))) closesExact.push(el);
+            if (!NEVER.test(goesOnTo(name))) closesExact.push(el);
         } else if (ACCEPT.test(name)) {
             // before the looser close match: "Accept and close" accepts
             if (accept === null) accept = el;
