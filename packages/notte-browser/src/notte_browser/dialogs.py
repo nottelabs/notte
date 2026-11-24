@@ -1,22 +1,20 @@
 """Dismiss a dialog a site opened over the page when it blocks an action (`dismiss_blocking_dialogs`).
 
 A cookie or terms dialog, a sign-in prompt, a promo sheet or a welcome modal makes the rest of the page inert or
-covers it: a fill then "stays empty", a click is refused as disabled or times out. With the session option set to
-`close` or `any`, such a failure of a click or fill on a selector the caller wrote is looked at again: when the target
-is blocked by such a dialog (`js/blocking_dialog.js`), the dialog is dismissed through its own controls and the action
-is retried once.
+covers it: a fill then "stays empty", a click is refused as disabled or times out. With the session option on, such
+a failure of a click or fill on a selector the caller wrote is looked at again: when the target is blocked by such a
+dialog (`js/blocking_dialog.js`), the dialog is dismissed through its own controls and the action is retried once.
 
 The controls are tried in this order, and the next one only when the dialog is still shown:
 
 1. a close, dismiss or decline control ("Close", "×", "Dismiss sign-in info.", "No thanks", "Reject all");
 2. the Escape key, unless the target is inside a popover of the page (a picker the caller opened), which Escape
    would close too;
-3. with `any` only, an accept or acknowledge control ("Accept", "Agree", "Got it", "OK").
+3. an accept or acknowledge control ("Accept", "Agree", "Got it", "OK").
 
-Closing and declining come before accepting: accepting cookies or terms on the caller's behalf is a choice some
-callers do not want made for them. With `close` it is never made; with `any` it is made only when the dialog offers no
-other way out. Several dialogs can stack (a promo sheet over a sign-in prompt): up to `MAX_DIALOGS` are dismissed
-before the one retry.
+Closing and declining come before accepting: cookies or terms are accepted on the caller's behalf only when the
+dialog offers no other way out. Several dialogs can stack (a promo sheet over a sign-in prompt): up to `MAX_DIALOGS`
+are dismissed before the one retry.
 
 What was done to each dialog is said in the action's result message (`describe`).
 """
@@ -56,7 +54,6 @@ MAX_DIALOGS = 3
 _LABEL_WORDS = 8
 _LABEL_CHARS = 80
 
-DismissMode = Literal["close", "any"]
 How = Literal["close", "decline", "Escape", "accept"]
 
 
@@ -78,13 +75,11 @@ class Dismissal:
     # how the dialog went away, and by which control (None for Escape)
     how: How | None = None
     control: str | None = None
-    # with `close`, the accept control left unused that the dialog offered
-    accept_left: str | None = None
 
     def texts(self) -> list[str]:
         """The page text this record would quote: its label and control names."""
         names = [name for _, name in self.tried]
-        return [text for text in (self.label, self.control, self.accept_left, *names) if text]
+        return [text for text in (self.label, self.control, *names) if text]
 
     def describe(self, *, quote: bool) -> str:
         """`dialog "Legal Terms" (inert target): Escape had no effect, then accepted by its accept control 'Agree'`.
@@ -99,9 +94,6 @@ class Dismissal:
         done: str
         if self.how is None:
             done = "still shown"
-            if self.accept_left is not None:
-                accept = f" ({self.accept_left!r})" if quote else ""
-                done = f"still shown: its only other way out is an accept control{accept}, which `close` never uses"
         elif self.how == "Escape":
             done = "closed by Escape"
         else:
@@ -160,7 +152,7 @@ async def _click(window: BrowserWindow, control: ElementHandle, *, pointer: bool
         await settle.close()
 
 
-async def _dismiss(window: BrowserWindow, found: dict[str, JSHandle], mode: DismissMode) -> Dismissal:
+async def _dismiss(window: BrowserWindow, found: dict[str, JSHandle]) -> Dismissal:
     dialog = found["dialog"].as_element()
     assert dialog is not None
     record = Dismissal(
@@ -189,9 +181,6 @@ async def _dismiss(window: BrowserWindow, found: dict[str, JSHandle], mode: Dism
             record.tried.append(("Escape", None))
         if accept is not None:
             name = str(await found["acceptName"].json_value())
-            if mode != "any":
-                record.accept_left = name
-                return record
             await _click(window, accept, pointer=not in_popover)
             if await _gone(dialog):
                 record.how, record.control = "accept", name
@@ -205,9 +194,7 @@ async def _dismiss(window: BrowserWindow, found: dict[str, JSHandle], mode: Dism
                     await handle.dispose()
 
 
-async def dismiss_blocking_dialogs(
-    window: BrowserWindow, action: InteractionAction, mode: DismissMode
-) -> list[Dismissal]:
+async def dismiss_blocking_dialogs(window: BrowserWindow, action: InteractionAction) -> list[Dismissal]:
     """Dismiss the dialogs that block `action`'s target, up to `MAX_DIALOGS`. Returns what was done to each; an empty
     list when nothing blocks the target the way a dialog does (the failure has another cause), a list whose last
     dismissal has no `how` when a dialog could not be dismissed."""
@@ -237,7 +224,7 @@ async def dismiss_blocking_dialogs(
             with suppress(Error):
                 await found.dispose()
         try:
-            record = await _dismiss(window, properties, mode)
+            record = await _dismiss(window, properties)
         finally:
             for handle in properties.values():
                 with suppress(Error):

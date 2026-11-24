@@ -1,10 +1,9 @@
 """With `dismiss_blocking_dialogs`, a dialog the site opened over the page that blocks a click or fill on a selector
 is dismissed through its own controls and the action is retried once (`notte_browser.dialogs`).
 
-`off` (the default): the failure is reported as before and nothing on the page is touched. `close`: a close or decline
-control, then Escape, never an accept control. `any`: an accept control when nothing else closes the dialog. The
-action's result message says what was dismissed. Each page here records which control was used in
-`document.body.dataset`.
+Off (the default): the failure is reported as before and nothing on the page is touched. On: a close or decline
+control, then Escape, then an accept control when nothing else closes the dialog. The action's result message says
+what was dismissed. Each page here records which control was used in `document.body.dataset`.
 """
 
 import time
@@ -15,7 +14,6 @@ from notte_browser.dialogs import retries_after_dismissal
 from notte_browser.session import NotteSession
 from notte_core.actions import ClickAction, FillAction
 from notte_core.errors import ActionExecutionError
-from notte_core.types import DismissBlockingDialogs
 
 # the dialog's controls record themselves and remove the dialog; the page behind it is `inert` while it is shown
 DISMISS = (
@@ -33,9 +31,6 @@ SIGN_IN_REGISTER = (
     "<button onclick=\"document.body.dataset.pressed = 'sign in'\">Sign in</button>"
     "<button onclick=\"document.body.dataset.pressed = 'register'\">Register</button>"
 )
-
-ON: list[DismissBlockingDialogs] = ["close", "any"]
-ALL: list[DismissBlockingDialogs] = ["off", "close", "any"]
 
 
 def _url(html: str) -> str:
@@ -63,7 +58,7 @@ async def _state(session: NotteSession) -> dict[str, str]:
 @pytest.mark.asyncio
 async def test_off_by_default_the_fill_fails_as_before_and_the_dialog_stays() -> None:
     async with NotteSession(headless=True) as session:
-        assert session.window.options.dismiss_blocking_dialogs == "off"
+        assert session.window.options.dismiss_blocking_dialogs is False
         _ = await session.window.page.goto(_dialog(CLOSE + AGREE))
         result = await session.aexecute(
             FillAction(selector="css=#q", value="hello", timeout=3000), raise_on_failure=False
@@ -77,10 +72,9 @@ async def test_off_by_default_the_fill_fails_as_before_and_the_dialog_stays() ->
     assert state == {"value": ""}
 
 
-@pytest.mark.parametrize("mode", ON)
 @pytest.mark.asyncio
-async def test_a_blocked_fill_is_retried_after_the_dialog_is_closed(mode: DismissBlockingDialogs) -> None:
-    async with NotteSession(headless=True, dismiss_blocking_dialogs=mode) as session:
+async def test_a_blocked_fill_is_retried_after_the_dialog_is_closed() -> None:
+    async with NotteSession(headless=True, dismiss_blocking_dialogs=True) as session:
         _ = await session.window.page.goto(_dialog(CLOSE + AGREE))
         result = await session.aexecute(
             FillAction(selector="css=#q", value="hello", timeout=3000), raise_on_failure=False
@@ -95,10 +89,9 @@ async def test_a_blocked_fill_is_retried_after_the_dialog_is_closed(mode: Dismis
     ), result.message
 
 
-@pytest.mark.parametrize("mode", ON)
 @pytest.mark.asyncio
-async def test_a_blocked_click_is_retried_after_the_dialog_is_closed(mode: DismissBlockingDialogs) -> None:
-    async with NotteSession(headless=True, dismiss_blocking_dialogs=mode) as session:
+async def test_a_blocked_click_is_retried_after_the_dialog_is_closed() -> None:
+    async with NotteSession(headless=True, dismiss_blocking_dialogs=True) as session:
         _ = await session.window.page.goto(_dialog(CLOSE + AGREE))
         result = await session.aexecute(ClickAction(selector="css=#go", timeout=2000), raise_on_failure=False)
         state = await _state(session)
@@ -109,27 +102,19 @@ async def test_a_blocked_click_is_retried_after_the_dialog_is_closed(mode: Dismi
 
 
 @pytest.mark.parametrize(
-    ("mode", "controls", "escape", "dismissed", "said"),
+    ("controls", "escape", "dismissed", "said"),
     [
-        ("close", AGREE + NO_THANKS, True, "no thanks", "declined by its decline control 'No thanks'"),
-        ("any", AGREE + NO_THANKS, True, "no thanks", "declined by its decline control 'No thanks'"),
-        ("close", AGREE, True, "escape", "closed by Escape"),
-        ("any", AGREE, True, "escape", "closed by Escape"),
-        ("any", AGREE, False, "agree", "Escape had no effect, accepted by its accept control 'Agree'"),
+        (AGREE + NO_THANKS, True, "no thanks", "declined by its decline control 'No thanks'"),
+        (AGREE, True, "escape", "closed by Escape"),
+        (AGREE, False, "agree", "Escape had no effect, accepted by its accept control 'Agree'"),
     ],
-    ids=[
-        "close: decline before accept",
-        "any: decline before accept",
-        "close: Escape",
-        "any: Escape before accept",
-        "any: accept when nothing else closes it",
-    ],
+    ids=["decline before accept", "Escape before accept", "accept when nothing else closes it"],
 )
 @pytest.mark.asyncio
 async def test_closing_and_declining_come_before_accepting(
-    mode: DismissBlockingDialogs, controls: str, escape: bool, dismissed: str, said: str
+    controls: str, escape: bool, dismissed: str, said: str
 ) -> None:
-    async with NotteSession(headless=True, dismiss_blocking_dialogs=mode) as session:
+    async with NotteSession(headless=True, dismiss_blocking_dialogs=True) as session:
         _ = await session.window.page.goto(_dialog(controls, escape=escape))
         result = await session.aexecute(
             FillAction(selector="css=#q", value="hello", timeout=3000), raise_on_failure=False
@@ -141,44 +126,11 @@ async def test_closing_and_declining_come_before_accepting(
     assert f'dialog "Welcome" (inert target): {said}' in result.message, result.message
 
 
+@pytest.mark.parametrize("on", [False, True])
 @pytest.mark.asyncio
-async def test_close_never_accepts_and_says_only_an_accept_control_is_left() -> None:
-    async with NotteSession(headless=True, dismiss_blocking_dialogs="close") as session:
-        _ = await session.window.page.goto(_dialog(AGREE))
-        result = await session.aexecute(
-            FillAction(selector="css=#q", value="hello", timeout=3000), raise_on_failure=False
-        )
-        state = await _state(session)
-
-    assert not result.success
-    # the original failure, then what blocks the element
-    assert isinstance(result.exception, ActionExecutionError)
-    assert 'The field stayed empty after typing: a dialog covers the element: "Welcome"' in result.message
-    assert (
-        'A dialog with only an accept control blocks the element: dialog "Welcome" (inert target): Escape had no '
-        "effect, still shown: its only other way out is an accept control ('Agree'), which `close` never uses"
-    ) in result.message, result.message
-    assert state == {"value": ""}
-
-
-@pytest.mark.asyncio
-async def test_close_keeps_a_blocked_click_failed_when_only_accept_would_close_the_dialog() -> None:
-    async with NotteSession(headless=True, dismiss_blocking_dialogs="close") as session:
-        _ = await session.window.page.goto(_dialog(AGREE))
-        result = await session.aexecute(ClickAction(selector="css=#go", timeout=2000), raise_on_failure=False)
-        state = await _state(session)
-
-    assert not result.success
-    assert "Element is disabled" in result.message
-    assert "A dialog with only an accept control blocks the element" in result.message
-    assert state == {"value": ""}
-
-
-@pytest.mark.parametrize("mode", ALL)
-@pytest.mark.asyncio
-async def test_a_dialog_without_a_known_control_leaves_the_failure_as_it_was(mode: DismissBlockingDialogs) -> None:
+async def test_a_dialog_without_a_known_control_leaves_the_failure_as_it_was(on: bool) -> None:
     page = _dialog("<button onclick=\"dismiss('continue')\">Continue</button>")
-    async with NotteSession(headless=True, dismiss_blocking_dialogs=mode) as session:
+    async with NotteSession(headless=True, dismiss_blocking_dialogs=on) as session:
         _ = await session.window.page.goto(page)
         result = await session.aexecute(
             FillAction(selector="css=#q", value="hello", timeout=3000), raise_on_failure=False
@@ -187,7 +139,7 @@ async def test_a_dialog_without_a_known_control_leaves_the_failure_as_it_was(mod
 
     assert not result.success
     assert "The field stayed empty after typing" in result.message
-    if mode != "off":
+    if on:
         # Escape was pressed (the page ignores it); the links and the unknown control were not clicked
         assert (
             'A dialog blocks the element and could not be dismissed: dialog "Welcome" (inert target): '
@@ -196,17 +148,17 @@ async def test_a_dialog_without_a_known_control_leaves_the_failure_as_it_was(mod
     assert state == {"value": ""}
 
 
-@pytest.mark.parametrize("mode", ALL)
+@pytest.mark.parametrize("on", [False, True])
 @pytest.mark.parametrize("kind", ["fill", "click"])
 @pytest.mark.asyncio
-async def test_sign_in_and_register_are_never_pressed(mode: DismissBlockingDialogs, kind: str) -> None:
+async def test_sign_in_and_register_are_never_pressed(on: bool, kind: str) -> None:
     page = _dialog(SIGN_IN_REGISTER, links="")
     action = (
         FillAction(selector="css=#q", value="hello", timeout=3000)
         if kind == "fill"
         else ClickAction(selector="css=#go", timeout=2000)
     )
-    async with NotteSession(headless=True, dismiss_blocking_dialogs=mode) as session:
+    async with NotteSession(headless=True, dismiss_blocking_dialogs=on) as session:
         _ = await session.window.page.goto(page)
         result = await session.aexecute(action, raise_on_failure=False)
         state = await _state(session)
@@ -224,7 +176,7 @@ async def test_a_failure_with_no_dialog_is_not_retried() -> None:
         '<div role="dialog" style="position:fixed;bottom:0;left:0;width:200px;height:40px">'
         "<button onclick=\"document.body.dataset.dismissed = 'close'\">Close</button></div>"
     )
-    async with NotteSession(headless=True, dismiss_blocking_dialogs="any") as session:
+    async with NotteSession(headless=True, dismiss_blocking_dialogs=True) as session:
         _ = await session.window.page.goto(page)
         started = time.monotonic()
         result = await session.aexecute(
@@ -242,9 +194,8 @@ async def test_a_failure_with_no_dialog_is_not_retried() -> None:
     assert elapsed < 3.0
 
 
-@pytest.mark.parametrize("mode", ON)
 @pytest.mark.asyncio
-async def test_stacked_dialogs_are_dismissed_in_turn(mode: DismissBlockingDialogs) -> None:
+async def test_stacked_dialogs_are_dismissed_in_turn() -> None:
     page = _url(
         '<main inert><input id="q"></main>'
         "<script>function gone(id, how) { document.body.dataset[id] = how; document.getElementById(id).remove();"
@@ -254,7 +205,7 @@ async def test_stacked_dialogs_are_dismissed_in_turn(mode: DismissBlockingDialog
         f'<div id="second" role="dialog" aria-modal="true" aria-label="Deals are live" {BACKDROP}>'
         "<button aria-label=\"Close sheet\" onclick=\"gone('second', 'close')\">X</button></div>"
     )
-    async with NotteSession(headless=True, dismiss_blocking_dialogs=mode) as session:
+    async with NotteSession(headless=True, dismiss_blocking_dialogs=True) as session:
         _ = await session.window.page.goto(page)
         result = await session.aexecute(
             FillAction(selector="css=#q", value="hello", timeout=3000), raise_on_failure=False
@@ -283,7 +234,7 @@ async def test_a_target_in_a_popover_of_the_page_is_dismissed_without_escape_or_
         "Allow optional cookies? <button>Customize</button>"
         "<button onclick=\"document.body.dataset.dismissed = 'accept'; cookies.remove()\">Accept</button></dialog>"
     )
-    async with NotteSession(headless=True, dismiss_blocking_dialogs="any") as session:
+    async with NotteSession(headless=True, dismiss_blocking_dialogs=True) as session:
         _ = await session.window.page.goto(page)
         result = await session.aexecute(
             FillAction(selector="css=#search", value="EUR", timeout=3000), raise_on_failure=False
@@ -301,7 +252,7 @@ async def test_a_target_in_a_popover_of_the_page_is_dismissed_without_escape_or_
 @pytest.mark.asyncio
 async def test_the_message_does_not_quote_a_dialog_that_shows_the_typed_text() -> None:
     # a page can write what was typed into its own text: the dialog and its controls are not named then
-    async with NotteSession(headless=True, dismiss_blocking_dialogs="any") as session:
+    async with NotteSession(headless=True, dismiss_blocking_dialogs=True) as session:
         _ = await session.window.page.goto(_dialog(CLOSE, heading="Results for hello"))
         result = await session.aexecute(
             FillAction(selector="css=#q", value="hello", timeout=3000), raise_on_failure=False

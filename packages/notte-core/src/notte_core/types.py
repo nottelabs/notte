@@ -73,9 +73,6 @@ DEFAULT_VIEWPORT_HEIGHT = config.viewport_height
 AspectRatio = Literal["5:4", "16:9"]
 DialogPolicy = Literal["auto", "client"]
 SessionOs = Literal["windows", "macos"]
-# What a local session does when a dialog the site opened blocks a click or fill on a selector: nothing (`off`), close
-# or decline it, or press Escape (`close`), and accept it when nothing else closes it (`any`)
-DismissBlockingDialogs = Literal["off", "close", "any"]
 
 DEFAULT_BROWSER_TYPE = config.browser_type
 DEFAULT_USER_AGENT = config.user_agent
@@ -1036,12 +1033,11 @@ class LocalSessionStartRequestDict(_SessionStartRequestDict, total=False):
 
     browser_type: BrowserType
     headless: bool
-    dismiss_blocking_dialogs: DismissBlockingDialogs
+    dismiss_blocking_dialogs: bool
     """When a click or fill on a selector fails because a dialog the site opened blocks its element (cookie consent,
-    terms, sign-in prompt, promo sheet), dismiss the dialog through its own controls and retry the action once.
-    `off` (default): nothing is dismissed. `close`: a close or decline control, then Escape; never an accept
-    control. `any`: an accept control as a last resort. The action's result message says what was dismissed. Not
-    about JavaScript alert dialogs."""
+    terms, sign-in prompt, promo sheet), dismiss the dialog through its own controls and retry the action once: a
+    close or decline control first, then Escape, and an accept control only when nothing else closes it. The
+    action's result message says what was dismissed. Off by default. Not about JavaScript alert dialogs."""
 
 
 _SessionBrowserType = TypeVar("_SessionBrowserType", bound=str, default=BrowserType)
@@ -1488,17 +1484,16 @@ class LocalSessionStartRequest(_SessionStartRequest[BrowserType]):
 
     headless: Annotated[bool, Field(description="Whether to run the local browser in headless mode.")] = config.headless
     dismiss_blocking_dialogs: Annotated[
-        DismissBlockingDialogs,
+        bool,
         Field(
             description=(
                 "When a click or fill on a selector fails because a dialog the site opened blocks its element "
                 "(cookie consent, terms, sign-in prompt, promo sheet), dismiss the dialog through its own controls "
-                "and retry the action once. `off` (default): nothing is dismissed. `close`: a close or decline "
-                "control, then Escape; never an accept control. `any`: an accept control as a last resort. The "
-                "action's result message says what was dismissed."
+                "and retry the action once: a close or decline control first, then Escape, and an accept control "
+                "only when nothing else closes it. The action's result message says what was dismissed."
             )
         ),
-    ] = "off"
+    ] = False
 
     @model_validator(mode="after")
     def validate_local_cdp_headless(self) -> "LocalSessionStartRequest":

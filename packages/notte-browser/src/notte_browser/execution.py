@@ -1390,13 +1390,7 @@ def _dismissals_note(dismissals: list[Dismissal], action: InteractionAction, sec
     quote = _may_quote(action, " ".join(text for record in dismissals for text in record.texts()), secrets)
     described = "; ".join(record.describe(quote=quote) for record in dismissals)
     if dismissals[-1].how is None:
-        last = dismissals[-1]
-        what = (
-            "A dialog with only an accept control blocks the element"
-            if last.accept_left is not None
-            else "A dialog blocks the element and could not be dismissed"
-        )
-        return f"{what}: {described}"
+        return f"A dialog blocks the element and could not be dismissed: {described}"
     count = len(dismissals)
     return f"Dismissed {count} dialog{'s' if count > 1 else ''} blocking the element, then retried once: {described}"
 
@@ -1425,22 +1419,21 @@ async def execute(
 ) -> bool:
     """Execute `action` (`_execute_once`).
 
-    With the session's `dismiss_blocking_dialogs` set to `close` or `any`, a click or fill on a selector the caller
-    wrote that failed because a dialog the site opened blocks its element gets the dialog dismissed through its own
-    controls and one more try (`notte_browser.dialogs`). What was dismissed goes into `dismissed` (one sentence for
-    the result message) when the retry succeeds, and into the error's message when it does not. The failure is kept
-    as it was when nothing blocks the element the way a dialog does."""
+    With the session's `dismiss_blocking_dialogs` on, a click or fill on a selector the caller wrote that failed
+    because a dialog the site opened blocks its element gets the dialog dismissed through its own controls and one
+    more try (`notte_browser.dialogs`). What was dismissed goes into `dismissed` (one sentence for the result
+    message) when the retry succeeds, and into the error's message when it does not. The failure is kept as it was
+    when nothing blocks the element the way a dialog does."""
     try:
         return await _execute_once(
             window, action, prev_snapshot=prev_snapshot, storage=storage, verbose=verbose, secrets=secrets
         )
     except (NotteTimeoutError, ActionExecutionError) as error:
-        mode = window.options.dismiss_blocking_dialogs
-        if mode == "off" or not retries_after_dismissal(action, error):
+        if not window.options.dismiss_blocking_dialogs or not retries_after_dismissal(action, error):
             raise
         assert isinstance(action, InteractionAction)
         try:
-            dismissals = await dismiss_blocking_dialogs(window, action, mode)
+            dismissals = await dismiss_blocking_dialogs(window, action)
         except Exception as e:  # the page went away while it was looked at: the action's own failure stands
             logger.debug(f"Could not dismiss a dialog blocking the {action.type}: {type(e).__name__}")
             raise error from None
