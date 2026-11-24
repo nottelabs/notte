@@ -26,6 +26,7 @@ from notte_core.types import (
     DEFAULT_HEADLESS_VIEWPORT_WIDTH,
     AspectRatio,
     Cookie,
+    DismissBlockingDialogs,
     LocalSessionStartRequest,
 )
 from notte_core.url import is_valid_url
@@ -92,6 +93,8 @@ class BrowserWindowOptions(BaseModel):
     custom_devtools_frontend: str | None
 
     extra_http_headers: dict[str, str] | None = None
+    # what a click or fill on a selector that a dialog blocks may dismiss before its one retry (`notte_browser.dialogs`)
+    dismiss_blocking_dialogs: DismissBlockingDialogs = "off"
 
     def set_cdp_url(self, cdp_url: str) -> Self:
         self.cdp_url = cdp_url
@@ -191,6 +194,7 @@ class BrowserWindowOptions(BaseModel):
             debug_port=config.debug_port,
             custom_devtools_frontend=config.custom_devtools_frontend,
             extra_http_headers=request.extra_http_headers,
+            dismiss_blocking_dialogs=request.dismiss_blocking_dialogs,
         )
 
 
