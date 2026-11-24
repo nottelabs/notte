@@ -2,7 +2,7 @@
 # @sniptest typecheck_only=true
 import asyncio
 
-from browser_use import Agent, Browser, BrowserProfile, ChatAnthropic
+from browser_use import Agent, Browser, ChatAnthropic
 from notte_sdk import NotteClient
 
 
@@ -11,10 +11,10 @@ async def main():
 
     with client.Session() as session:
         # Point Browser Use at the Notte cloud browser over CDP
-        browser = Browser(browser_profile=BrowserProfile(cdp_url=session.cdp_url()))
+        browser = Browser(cdp_url=session.cdp_url())
 
         agent = Agent(
-            task="Go to https://example.com and tell me the exact H1 heading text.",
+            task="Go to https://example.com and tell me the page title.",
             llm=ChatAnthropic(model="claude-haiku-5-5"),
             browser=browser,
         )

@@ -10,6 +10,7 @@ import ListProfiles from '/snippets/sessions/profiles/list_profiles.mdx';
 import GetProfile from '/snippets/sessions/profiles/get_profile.mdx';
 import DeleteProfile from '/snippets/sessions/profiles/delete_profile.mdx';
 import SaveProfile from '/snippets/sessions/profiles/save_profile.mdx';
+import ImportState from '/snippets/sessions/profiles/import_state.mdx';
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
@@ -18,7 +19,7 @@ Profiles let you save and reuse browser state (cookies, local storage, and sessi
 
 ## How Profiles Work
 
-A profile is a saved snapshot of a browser's cookies, local storage, and session storage. Other browser data, such as the HTTP cache, history, and extensions, is not saved. By default, each Notte session uses a fresh browser state to ensure isolation.
+A profile is a saved snapshot of a browser's cookies, local storage, and session storage. Other browser data, such as IndexedDB, the HTTP cache, history, and extensions, is not saved. Sites that keep their login in IndexedDB need a fresh login in a Notte session. By default, each Notte session uses a fresh browser state to ensure isolation.
 
 When you create a profile and use it in a session with `persist=True`, Notte saves that session's browser state when the session ends. You can also save any running session into a profile at any time with `save_profile()`. You can then attach the profile to future sessions to restore the saved state.
 
@@ -85,6 +86,18 @@ Use the saved profile in a new session. The browser automatically loads the save
   - Maintaining session state over time
 </Note>
 
+## Import State from Another Browser
+
+To bring logins over from another provider (such as a Browserbase Context or a Kernel profile), export the state with Playwright's `storage_state()` from a session on that provider, then import it into a Notte profile with `profiles.state_set()`:
+
+<ImportState />
+
+- `storage_state()` lists local storage per origin as name/value pairs. Convert it to `{origin: {key: value}}` as shown; posting the raw `storage_state()` output returns a validation error.
+- `storage_state()` does not include session storage. To import it, read `sessionStorage` on each origin before you close the old session and pass it as `session_storage` in the same `{origin: {key: value}}` shape.
+- `mode` defaults to `replace`. Pass `mode="append"` to add to the profile's existing state.
+- To import only cookies, use `profiles.cookies_set()` with `source_format="playwright"` or `"chrome"`. It accepts the cookie list as exported.
+- IndexedDB is not imported.
+
 ## Managing Profiles
 
 ### List Profiles
@@ -139,7 +152,7 @@ Load a profile without saving changes by setting `persist=False`:
 
 | Feature | Profiles | Cookies |
 |---------|----------|---------|
-| **Scope** | Cookies, local storage, and session storage | Cookies only |
+| **Scope** | Cookies, local storage, and session storage (no IndexedDB) | Cookies only |
 | **Storage** | Managed by Notte | JSON file you manage |
 | **Persistence** | Save on session end with `persist=True`, or call `save_profile()` | Manual export/import, or automatic load/save with `cookie_file` |
 | **Use case** | Long-term state preservation | Quick cookie injection |

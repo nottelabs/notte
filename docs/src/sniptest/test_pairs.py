@@ -126,6 +126,10 @@ class RepositoryExamplesTest(unittest.TestCase):
                         # viewer configuration; os is teaching code, not a fixture.
                         self.assertIn('os.getenv("ENV") == "development"', rendered)
                         self.assertIn("open_viewer=is_dev", rendered)
+                    elif name == "sessions/cdp/connect_url.ts" and suffix == ".py":
+                        # Connecting without the SDK means reading the API key and
+                        # endpoint yourself; os is teaching code, not a fixture.
+                        self.assertIn('os.environ["NOTTE_API_KEY"]', rendered)
                     else:
                         self.assertNotIn("import os", rendered)
                     self.assertNotIn("json.dumps", path.read_text())

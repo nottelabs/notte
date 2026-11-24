@@ -12,6 +12,7 @@ import PlaywrightDialogs from '/snippets/sessions/cdp/playwright_dialogs.mdx';
 import PlaywrightContextManagers from '/snippets/sessions/cdp/playwright_context_managers.mdx';
 import PlaywrightTimeout from '/snippets/sessions/cdp/playwright_timeout.mdx';
 import PlaywrightCdpErrorHandling from '/snippets/sessions/cdp/playwright_cdp_error_handling.mdx';
+import ConnectUrl from '/snippets/sessions/cdp/connect_url.mdx';
 import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
@@ -54,6 +55,19 @@ Get the CDP URL from a Notte session and connect Playwright to it:
 <Note>
   Notte sessions automatically create a browser context with one page. Access it via `browser.contexts[0].pages[0]`.
 </Note>
+
+## Connect with a Single URL
+
+If your code or a third-party tool only takes a WebSocket URL, connect to `wss://api.notte.cc/sessions/connect` without calling the SDK. Connecting starts a new session and closing the connection stops it, within a few seconds. The TypeScript example uses `playwright-core` (`npm install playwright-core`):
+
+<ConnectUrl />
+
+- Pass flat session options as query parameters, such as `proxies`, `max_duration_minutes`, `idle_timeout_minutes`, `viewport_width`, `viewport_height`, `solve_captchas`, `block_ads`, `dialog_policy`, and `user_agent`.
+- Options that take objects or lists, such as `profile`, proxy lists, and `extra_http_headers`, are not supported here. `record_session` and `log_session` are also refused. Use the SDK or `POST /sessions/start` for those.
+- The connection returns the session ID in the `X-Session-Id` header of the WebSocket handshake.
+- Unknown parameter names are ignored, so a misspelled option silently falls back to its default. Check the session's settings with the session ID if they matter.
+- A rejected connection, such as a bad API key, an invalid value, or a refused option, returns `403` with an empty body. Start with a minimal URL and add parameters one at a time.
+- The URL contains your API key. Don't log it or share it.
 
 ## Use Both Notte and Playwright APIs
 

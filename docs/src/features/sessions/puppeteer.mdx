@@ -41,6 +41,10 @@ Start a Notte session in Python and pass its CDP URL to a Node.js Puppeteer scri
 
 <PuppeteerPythonStart />
 
+## Approach 3: Connect with a Single URL
+
+Pass `wss://api.notte.cc/sessions/connect?token=<NOTTE_API_KEY>` as `browserWSEndpoint` to `puppeteer.connect()`. Connecting starts a new session, and `browser.disconnect()` or `browser.close()` stops it within a few seconds. See [Connect with a Single URL](/features/sessions/playwright#connect-with-a-single-url) for the supported query parameters and limits.
+
 ## Network Interception
 
 Use Puppeteer's request interception with Notte sessions:
@@ -93,7 +97,7 @@ A connection can also drop before it is established, with `socket hang up` or `E
 
 ### 3. Disconnect Properly
 
-Call `browser.disconnect()` in `finally` to disconnect Puppeteer. Also stop the Notte session, or use `session.use()` to manage that lifecycle. Disconnecting the client and stopping the session are separate operations.
+Call `browser.disconnect()` in `finally` to disconnect Puppeteer. For a session started with the SDK or the REST API, also stop the Notte session, or use `session.use()` to manage that lifecycle: disconnecting the client and stopping the session are separate operations. A session opened with a [single URL](#approach-3-connect-with-a-single-url) stops when you disconnect.
 
 ### 4. Session Timeout
 

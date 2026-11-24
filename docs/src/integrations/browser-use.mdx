@@ -7,7 +7,7 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 <AgentMdNotice />
 
-[Browser Use](https://github.com/browser-use/browser-use) is an open source library that lets an LLM drive a browser. It talks to whatever browser you hand it over the Chrome DevTools Protocol, so pointing it at a Notte session is a one-line change: pass `session.cdp_url()` as the profile's `cdp_url`.
+[Browser Use](https://github.com/browser-use/browser-use) is an open source library that lets an LLM drive a browser. It talks to whatever browser you hand it over the Chrome DevTools Protocol, so pointing it at a Notte session is a one-line change: pass `session.cdp_url()` as the `cdp_url` of `Browser`.
 
 ## Prerequisites
 
@@ -17,8 +17,12 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 ## 1. Install the SDKs
 
 ```bash
-pip install notte-sdk browser-use
+pip install notte-sdk "browser-use>=1.0"
 ```
+
+<Note>
+  This page uses the browser-use 1.0 API. `BrowserProfile` was removed in 1.0; pass `cdp_url` to `Browser` directly.
+</Note>
 
 ## 2. Point Browser Use at a Notte session
 

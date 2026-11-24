@@ -548,5 +548,21 @@
         true
       ]
     }
+  },
+  "sessions/profiles/import_state.ts": {
+    "expected": {
+      "results": [
+        1,
+        1,
+        "dark"
+      ]
+    }
+  },
+  "sessions/cdp/connect_url.ts": {
+    "expected": {
+      "results": [
+        "Example Domain"
+      ]
+    }
   }
 }

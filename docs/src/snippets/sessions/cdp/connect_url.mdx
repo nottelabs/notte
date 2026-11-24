@@ -1,0 +1,54 @@
+{/* Auto-generated mdx file. Do not edit! */}
+{/* @sniptest testers/sessions/cdp/connect_url.py */}
+
+<CodeGroup>
+
+```python connect_url.py
+import os
+from urllib.parse import urlencode
+
+from playwright.sync_api import sync_playwright
+
+# Pass your API key and session options in the query string
+query = urlencode({"token": os.environ["NOTTE_API_KEY"], "proxies": "false", "max_duration_minutes": 10})
+api_url = os.environ.get("NOTTE_API_URL", "https://api.notte.cc").rstrip("/")
+url = f"{api_url.replace('https://', 'wss://')}/sessions/connect?{query}"
+
+with sync_playwright() as p:
+    # Connecting starts a new Notte session
+    browser = p.chromium.connect_over_cdp(url)
+    try:
+        page = browser.contexts[0].pages[0]
+        _ = page.goto("https://example.com")
+        title = page.title()
+    finally:
+        # Closing the connection stops the session
+        browser.close()
+```
+
+```typescript connect_url.ts
+import { chromium } from "playwright-core";
+
+// Pass your API key and session options in the query string
+const query = new URLSearchParams({
+  token: process.env.NOTTE_API_KEY!,
+  proxies: "false",
+  max_duration_minutes: "10",
+});
+const apiUrl = (process.env.NOTTE_API_URL ?? "https://api.notte.cc").replace(/\/+$/, "");
+const url = `${apiUrl.replace("https://", "wss://")}/sessions/connect?${query}`;
+
+// Connecting starts a new Notte session
+const browser = await chromium.connectOverCDP(url);
+let title: string;
+try {
+  const page = browser.contexts()[0].pages()[0];
+  await page.goto("https://example.com");
+  title = await page.title();
+} finally {
+  // Closing the connection stops the session
+  await browser.close();
+}
+```
+
+</CodeGroup>
