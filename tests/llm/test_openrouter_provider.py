@@ -49,7 +49,7 @@ def test_fallback_list_does_not_repeat_requested_model(monkeypatch):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("model", ["openai/gpt-4o", "google/gemini-3.5-flash", "moonshotai/kimi-k2.5", "native-name"])
+@pytest.mark.parametrize("model", ["openai/gpt-4o", "google/gemini-3.5-flash", "moonshotai/kimi-k3", "native-name"])
 async def test_model_and_temperature_are_passed_without_translation(model, monkeypatch):
     monkeypatch.setenv("NOTTE_LLM_API_KEY", "test-key")
 
