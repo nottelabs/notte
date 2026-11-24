@@ -26,6 +26,7 @@ GetFunctionWithLinkResponse: api-only field response_format
 GetFunctionWithLinkResponse: api-only field schedule_cron
 GetFunctionWithLinkResponse: api-only field schedule_variables
 GetFunctionWithLinkResponse: api-only field schedule_state
+GetFunctionWithLinkResponse: api-only field version_origins
 ManagedAuthOperation: api-only field created_at (required)
 ManagedAuthOperation: api-only field updated_at (required)
 ReplayResponse: expires_at required api=True sdk=False

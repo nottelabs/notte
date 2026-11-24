@@ -3831,6 +3831,39 @@ export type FunctionSdkGeneration = 'v19' | 'v110' | 'node110';
 export type FunctionSource = 'console' | 'anything' | 'cli' | 'node-sdk' | 'python-sdk' | 'rest-api';
 
 /**
+ * FunctionVersionOrigin
+ */
+export type FunctionVersionOrigin = 'self-heal' | 'anything' | 'rollback' | 'fork' | 'console' | 'cli' | 'python-sdk' | 'node-sdk' | 'rest-api';
+
+/**
+ * FunctionVersionOriginInfo
+ */
+export type FunctionVersionOriginInfo = {
+    /**
+     * Version
+     *
+     * A version from the function's `versions` history
+     */
+    version: string;
+    /**
+     * What created the version: an upload's client (`console`, `cli`, `python-sdk`, `node-sdk`, `rest-api`, `anything`), `self-heal` for an upload from an Anything self-heal turn, `rollback` or `fork`. Null when unknown (versions deployed before origins were recorded).
+     */
+    origin?: FunctionVersionOrigin | null;
+    /**
+     * Heal Attempt Id
+     *
+     * The Anything self-heal attempt the version was deployed under, when it was one.
+     */
+    heal_attempt_id?: string | null;
+    /**
+     * Restored From
+     *
+     * For a rollback, the version whose code it redeployed.
+     */
+    restored_from?: string | null;
+};
+
+/**
  * FunctionWithLinkResponse
  */
 export type FunctionWithLinkResponse = {
@@ -3990,6 +4023,12 @@ export type FunctionWithLinkResponse = {
      * 'enabled' while the schedule fires, 'paused' once the backend disabled it after a deterministic failure (exhausted credit, or an inactive function), null when there is no schedule.
      */
     schedule_state?: 'enabled' | 'paused' | null;
+    /**
+     * Version Origins
+     *
+     * Where each version in `versions` came from, in the same order. Owner reads only: null for a published function read by someone else and on a run's code fetch (`function_run_id`).
+     */
+    version_origins?: Array<FunctionVersionOriginInfo> | null;
     /**
      * Workflow Id
      */
@@ -11113,6 +11152,12 @@ export type FunctionWithLinkResponseWritable = {
      * 'enabled' while the schedule fires, 'paused' once the backend disabled it after a deterministic failure (exhausted credit, or an inactive function), null when there is no schedule.
      */
     schedule_state?: 'enabled' | 'paused' | null;
+    /**
+     * Version Origins
+     *
+     * Where each version in `versions` came from, in the same order. Owner reads only: null for a published function read by someone else and on a run's code fetch (`function_run_id`).
+     */
+    version_origins?: Array<FunctionVersionOriginInfo> | null;
 };
 
 /**
