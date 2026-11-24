@@ -273,10 +273,23 @@ async def test_the_message_does_not_quote_a_dialog_that_shows_the_typed_text() -
         ('<a href="https://example.com/next">Close</a>', None),
         # named for signing in: not a close control
         ("<button onclick=\"document.body.dataset.pressed = 'sign in'\">Sign in to close</button>", None),
+        ("<button onclick=\"document.body.dataset.pressed = 'sign in'\">Close and sign in</button>", None),
+        # a link inside the page is still a link
+        ('<a href="#details" onclick="document.body.dataset.pressed = \'link\'">Close</a>', None),
         # accepting comes last, also when its name ends with closing: Escape closes this dialog first
         ("<button onclick=\"dismiss('accept and close')\">Accept and close</button>", "escape"),
+        ("<button onclick=\"dismiss('agree and close')\">Agree and close</button>", "escape"),
+        ("<button onclick=\"dismiss('accept all and close')\">Accept all and close</button>", "escape"),
     ],
-    ids=["a link named Close", "sign in to close", "accept and close"],
+    ids=[
+        "a link named Close",
+        "sign in to close",
+        "close and sign in",
+        "a link inside the page",
+        "accept and close",
+        "agree and close",
+        "accept all and close",
+    ],
 )
 @pytest.mark.asyncio
 async def test_a_control_is_read_by_what_it_does_before_the_word_close(controls: str, pressed: str | None) -> None:
@@ -291,6 +304,43 @@ async def test_a_control_is_read_by_what_it_does_before_the_word_close(controls:
     assert url.startswith("data:")
     assert result.success == (pressed is not None), result.message
     assert state == ({"dismissed": pressed, "value": "hello"} if pressed else {"value": ""})
+
+
+@pytest.mark.asyncio
+async def test_every_close_and_decline_control_is_tried_before_accepting() -> None:
+    # the first close control does nothing; the page ignores Escape; "Reject all" works
+    dead = '<button aria-label="Close" onclick="document.body.dataset.dead = 1">X</button>'
+    reject = "<button onclick=\"dismiss('reject all')\">Reject all</button>"
+    async with NotteSession(headless=True, dismiss_blocking_dialogs=True) as session:
+        _ = await session.window.page.goto(_dialog(dead + AGREE + reject))
+        result = await session.aexecute(
+            FillAction(selector="css=#q", value="hello", timeout=3000), raise_on_failure=False
+        )
+        state = await _state(session)
+
+    assert result.success, result.message
+    assert state == {"dead": "1", "dismissed": "reject all", "value": "hello"}
+    assert "its close control 'Close' had no effect, declined by its decline control 'Reject all'" in result.message
+
+
+@pytest.mark.asyncio
+async def test_a_dialog_that_shows_the_typed_text_past_its_first_words_is_not_quoted() -> None:
+    # no heading: the label is the dialog's first words, cut inside the typed text
+    words = "Before you go on, here is what you searched for last time: hello world"
+    page = _url(
+        f'{PAGE}{DISMISS}<div role="dialog" aria-modal="true" {BACKDROP}><p>{words}</p>'
+        '<button aria-label="Close welcome modal" onclick="dismiss(\'close\')">X</button></div>'
+    )
+    async with NotteSession(headless=True, dismiss_blocking_dialogs=True) as session:
+        _ = await session.window.page.goto(page)
+        result = await session.aexecute(
+            FillAction(selector="css=#q", value="hello world", timeout=3000), raise_on_failure=False
+        )
+
+    assert result.success, result.message
+    assert result.message.endswith(
+        "Dismissed 1 dialog blocking the element, then retried once: dialog (inert target): closed by its close control"
+    ), result.message
 
 
 @pytest.mark.asyncio

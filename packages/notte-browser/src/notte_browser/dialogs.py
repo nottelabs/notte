@@ -74,6 +74,8 @@ class Dismissal:
 
     reason: str
     label: str
+    # all the dialog's text, uncut: what a quoted label or control name is checked against (`texts`)
+    text: str
     # the controls used, in order, that did not make the dialog go away: their kind and name (None for Escape)
     tried: list[tuple[How, str | None]] = field(default_factory=list)
     # how the dialog went away, and by which control (None for Escape)
@@ -81,9 +83,9 @@ class Dismissal:
     control: str | None = None
 
     def texts(self) -> list[str]:
-        """The page text this record would quote: its label and control names."""
+        """The page text this record's quotes come from: its label, the dialog's whole text and control names."""
         names = [name for _, name in self.tried]
-        return [text for text in (self.label, self.control, *names) if text]
+        return [text for text in (self.label, self.text, self.control, *names) if text]
 
     def describe(self, *, quote: bool) -> str:
         """`dialog "Legal Terms" (inert target): Escape had no effect, then accepted by its accept control 'Agree'`.
@@ -163,15 +165,19 @@ async def _dismiss(window: BrowserWindow, found: dict[str, JSHandle]) -> Dismiss
     record = Dismissal(
         reason=str(await found["reason"].json_value()),
         label=str(await found["label"].json_value()),
+        text=str(await found["text"].json_value()),
     )
-    close = found["close"].as_element()
+    names: list[str] = await found["closeNames"].json_value()
+    kinds: list[str] = await found["closeKinds"].json_value()
+    closes = [found[f"close{index}"].as_element() for index in range(len(names))]
     accept = found["accept"].as_element()
     # a target in a popover the caller opened: no Escape, and clicks by script (see `_click`)
     in_popover = bool(await found["targetInPopover"].json_value())
     try:
-        if close is not None:
-            name = str(await found["closeName"].json_value())
-            kind: How = "decline" if await found["closeKind"].json_value() == "decline" else "close"
+        # every close and decline control before Escape and accepting: the first one can be a dead decoration
+        for close, name, kind_name in zip(closes, names, kinds):
+            assert close is not None
+            kind: How = "decline" if kind_name == "decline" else "close"
             await _click(window, close, pointer=not in_popover)
             if await _gone(dialog):
                 record.how, record.control = kind, name
@@ -192,7 +198,7 @@ async def _dismiss(window: BrowserWindow, found: dict[str, JSHandle]) -> Dismiss
             record.tried.append(("accept", name))
         return record
     finally:
-        for handle in (dialog, close, accept):
+        for handle in (dialog, *closes, accept):
             if handle is not None:
                 with suppress(Error):
                     await handle.dispose()

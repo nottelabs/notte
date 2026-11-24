@@ -8,9 +8,10 @@
 // another dialog that happens to be shown (a chat panel) are not dialogs that block it.
 //
 // Returns null when the target is not blocked that way. Otherwise an object with the dialog element, why the target
-// is blocked, a label for the dialog, and its dismiss controls by preference: `close` (a close, dismiss or decline
-// control, with `closeKind` saying which of the two) and `accept` (an accept, agree or acknowledge control). Links
-// that lead to another page and controls that sign in, register, subscribe or open settings are never candidates.
+// is blocked, a label for the dialog, all its text (what a quoted name is checked against), and its dismiss controls by
+// preference: `close0`, `close1`... (close, dismiss or decline controls, with `closeKinds` saying which of the two)
+// and `accept` (an accept, agree or acknowledge control). Links that lead somewhere and controls that sign in,
+// register, subscribe or open settings are never candidates.
 (target) => {
     const DIALOGS = 'dialog[open], [role="dialog"], [role="alertdialog"], [aria-modal="true"]';
     const CONTROLS = 'button, [role="button"], a[href], input[type="button"], input[type="submit"], input[type="reset"]';
@@ -18,7 +19,11 @@
     const CLOSE_WORD = /\b(close|dismiss)\b/;
     const DECLINE_START = /^(skip|no,? thanks|no thanks|not now|maybe later|later|decline|reject|refuse|deny)\b/;
     const CLOSE_GLYPHS = new Set(['×', '✕', '✖', '⨯', 'x', '⤫']);
-    const ACCEPT = /^(accept( all)?( cookies)?|i accept|agree|i agree|yes,? i agree|got it|ok|okay|allow( all)?( cookies)?|i understand|understood|accept (and|&) close|accept (and|&) continue)[.!]?$/;
+    const ACCEPT = /^(accept( all)?( cookies)?|i accept|agree|i agree|yes,? i agree|got it|ok|okay|allow( all)?( cookies)?|i understand|understood)( (and|&) (close|continue))?[.!]?$/;
+    // a name that joins two things ("Close and sign in")
+    const JOINS = /\b(and|then)\b|[&+]/;
+    // the most close and decline controls tried on one dialog
+    const MAX_CLOSES = 3;
     const NEVER = /\b(sign|log ?in|login|register|subscribe|account|settings|preferences|customi[sz]e|manage|policy|terms|learn more|more info)\b/;
 
     const visible = (el) =>
@@ -48,8 +53,9 @@
             `${el.id} ${el.getAttribute('class') || ''} ${el.getAttribute('data-dismiss') || ''} ${el.getAttribute('data-bs-dismiss') || ''}`
         );
     const disabled = (el) => el.disabled === true || el.getAttribute('aria-disabled') === 'true';
-    // a link that leads somewhere: only `<a href="#">` and `javascript:` links act as buttons
-    const leads = (el) => el.tagName === 'A' && !/^(#|javascript:|$)/i.test((el.getAttribute('href') || '').trim());
+    // a link that leads somewhere: only an `<a>` with no address (`#`, `javascript:void(0)`) acts as a button
+    const leads = (el) =>
+        el.tagName === 'A' && !/^(#|javascript:(void\(0\))?;?)?$/i.test((el.getAttribute('href') || '').replace(/\s+/g, ''));
 
     // how the target is blocked
     let reason = null;
@@ -85,15 +91,16 @@
     if (dialog === null) return null;
 
     // the dialog's own dismiss controls
-    let close = null;
-    let closeExact = null;
+    const closesExact = [];
+    const closesLoose = [];
     let accept = null;
     for (const el of dialog.querySelectorAll(CONTROLS)) {
         if (!visible(el) || disabled(el) || leads(el)) continue;
         const name = normalized(accessibleName(el));
         // a control whose name starts with closing closes ("Dismiss sign-in info." closes, whatever else it names)
         if (CLOSE_GLYPHS.has(name) || CLOSE_START.test(name)) {
-            if (closeExact === null) closeExact = el;
+            // "Close and sign in" signs in
+            if (!(JOINS.test(name) && NEVER.test(name))) closesExact.push(el);
         } else if (ACCEPT.test(name)) {
             // before the looser close match: "Accept and close" accepts
             if (accept === null) accept = el;
@@ -101,12 +108,12 @@
             // before the looser close match: "Sign in to close" signs in
             continue;
         } else if (CLOSE_WORD.test(name)) {
-            if (close === null) close = el;
+            closesLoose.push(el);
         } else if (name === '' && el.tagName !== 'A' && looksLikeClose(el)) {
-            if (close === null) close = el;
+            closesLoose.push(el);
         }
     }
-    close = closeExact || close;
+    const closes = [...closesExact, ...closesLoose].slice(0, MAX_CLOSES);
     const label =
         text(dialog.getAttribute('aria-label')) ||
         text(dialog.querySelector('h1, h2, h3, h4, [role="heading"]')?.innerText) ||
@@ -116,13 +123,17 @@
         dialog,
         reason,
         label,
+        // all the dialog's text, uncut: a label cut to a few words could still show the start of a typed value
+        text: text(dialog.innerText),
         // A popover the caller opened that holds the target (a currency picker whose search box is the target) closes
         // on Escape and on a pointer press outside it, as the dialog's controls are: the dismissal then avoids both.
         // A combobox is not one: its input sits in the page (a search box wrapped in `role=combobox`).
         targetInPopover: targetDialog !== null || target.closest('[role="menu"], [role="listbox"]') !== null,
-        close,
-        closeName: close ? accessibleName(close) || describe(close) : null,
-        closeKind: close && DECLINE_START.test(normalized(accessibleName(close))) ? 'decline' : 'close',
+        close0: closes[0] || null,
+        close1: closes[1] || null,
+        close2: closes[2] || null,
+        closeNames: closes.map((el) => accessibleName(el) || describe(el)),
+        closeKinds: closes.map((el) => (DECLINE_START.test(normalized(accessibleName(el))) ? 'decline' : 'close')),
         accept,
         acceptName: accept ? accessibleName(accept) : null,
     };
