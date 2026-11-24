@@ -308,6 +308,8 @@ locator read waited until the 15 s action timeout. `tests/browser/test_controlle
   manager, `apage`, or `await_for_auth`.
 - PyOTP 2.10.0 is the minimum for parsing TOTP URIs: 2.9 decodes delimiters
   before splitting the URI and rejects valid encoded issuer/account names.
+  notte-core caps PyOTP below 2.11: 2.11.2 rejects seeds under 80 bits, and 2.12
+  rejects seeds under 112 bits and periods over 120 s. Vaults hold such seeds.
   AAC six- or eight-digit decimal TOTP values are generated codes; numeric seeds
   require an `otpauth` URI. Standard vault MFA values remain seeds.
   AAC presence checks use per-domain requests, since bulk listing is unsupported.
