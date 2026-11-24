@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "@types/node": "24.10.0",
-    "trigger.dev": "4.8.3",
+    "trigger.dev": "4.8.10",
     "typescript": "6.0.3"
   },
   "overrides": {
