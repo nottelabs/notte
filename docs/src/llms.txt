@@ -260,7 +260,7 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 
 ## Anything
 
-- [POST Anything Start](https://docs.notte.cc/api-reference/anything/anything-start.md)
+- [POST Anything Start](https://docs.notte.cc/api-reference/anything/anything-start.md): Anything proxy: starts an Anything turn and streams anything-api's answer (an AI SDK UI message stream over server-sent events) byte for byte, without translation. The stream is not bounded by the 60 s request timeout; it ends when anything-api ends it, and an upstream failure after the headers ends the body where it stopped.
 
 ## Audit
 
@@ -277,7 +277,7 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [PATCH Function Metadata Update](https://docs.notte.cc/api-reference/functions/function-metadata-update.md)
 - [POST Function Rollback](https://docs.notte.cc/api-reference/functions/function-rollback.md)
 - [GET Function Run Get Metadata](https://docs.notte.cc/api-reference/functions/function-run-get-metadata.md)
-- [POST Function Run Start](https://docs.notte.cc/api-reference/functions/function-run-start.md)
+- [POST Function Run Start](https://docs.notte.cc/api-reference/functions/function-run-start.md): Run a function with a blocking call (without run_id).
 - [DELETE Function Run Stop](https://docs.notte.cc/api-reference/functions/function-run-stop.md)
 - [PATCH Function Run Update Metadata](https://docs.notte.cc/api-reference/functions/function-run-update-metadata.md)
 - [GET Function Runtime Health](https://docs.notte.cc/api-reference/functions/function-runtime-health.md)
@@ -374,7 +374,7 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [POST Execute Session File](https://docs.notte.cc/api-reference/sessions/execute-session-file.md)
 - [GET Get Session Script](https://docs.notte.cc/api-reference/sessions/get-session-script.md): Generate a Python script from a session's trajectory.
 - [GET List Session Files](https://docs.notte.cc/api-reference/sessions/list-session-files.md)
-- [GET List Sessions](https://docs.notte.cc/api-reference/sessions/list-sessions.md)
+- [GET List Sessions](https://docs.notte.cc/api-reference/sessions/list-sessions.md): List all sessions for the authenticated user.
 - [POST Page Act](https://docs.notte.cc/api-reference/sessions/page-act.md)
 - [POST Page Check](https://docs.notte.cc/api-reference/sessions/page-check.md)
 - [POST Page Choose](https://docs.notte.cc/api-reference/sessions/page-choose.md)
@@ -388,15 +388,15 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [POST Session Cookies Set](https://docs.notte.cc/api-reference/sessions/session-cookies-set.md)
 - [GET Session Debug Info](https://docs.notte.cc/api-reference/sessions/session-debug-info.md)
 - [GET Session Mouse Replay](https://docs.notte.cc/api-reference/sessions/session-mouse-replay.md)
-- [GET Session Network Logs](https://docs.notte.cc/api-reference/sessions/session-network-logs.md)
+- [GET Session Network Logs](https://docs.notte.cc/api-reference/sessions/session-network-logs.md): Retrieve network request/response logs for a session.
 - [GET Session Offset](https://docs.notte.cc/api-reference/sessions/session-offset.md)
 - [POST Session Pause](https://docs.notte.cc/api-reference/sessions/session-pause.md)
 - [GET Session Profile Preview](https://docs.notte.cc/api-reference/sessions/session-profile-preview.md)
 - [POST Session Profile Save](https://docs.notte.cc/api-reference/sessions/session-profile-save.md)
-- [GET Session Replay](https://docs.notte.cc/api-reference/sessions/session-replay.md)
+- [GET Session Replay](https://docs.notte.cc/api-reference/sessions/session-replay.md): Get presigned URLs for session replay (HLS playlist with signed segment URLs).
 - [POST Session Resume](https://docs.notte.cc/api-reference/sessions/session-resume.md)
 - [POST Session Start](https://docs.notte.cc/api-reference/sessions/session-start.md)
-- [GET Session Status](https://docs.notte.cc/api-reference/sessions/session-status.md)
+- [GET Session Status](https://docs.notte.cc/api-reference/sessions/session-status.md): Get the current status of a session, including its metadata and state.
 - [GET Session Steps](https://docs.notte.cc/api-reference/sessions/session-steps.md): List a session's steps (actions and observations), oldest first, one page at a time, in the format of the `steps` of the session status. Pass the response's `next_cursor` as `cursor` to read the next page; it is null when the page ends with the session's latest step. A cursor is opaque and belongs to the session it was returned for. A request whose cursor no longer applies answers 400 `SessionStepsCursorExpiredError`: restart without a cursor.
 - [DELETE Session Stop](https://docs.notte.cc/api-reference/sessions/session-stop.md)
 - [POST Upload Session File](https://docs.notte.cc/api-reference/sessions/upload-session-file.md)
