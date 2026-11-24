@@ -60,12 +60,7 @@ from notte_browser.action_hooks import (
 )
 from notte_browser.captcha import solve_captcha
 from notte_browser.click_input import ClickInputReporter
-from notte_browser.dialogs import (
-    DIALOG_IN_THE_WAY,
-    Dismissal,
-    dismiss_blocking_dialogs,
-    retries_after_dismissal,
-)
+from notte_browser.dialogs import Dismissal, dismiss_blocking_dialogs, retries_after_dismissal
 from notte_browser.dom.locate import locate_element, selectors_through_shadow_dom
 from notte_browser.dom.parsing import parse_dom
 from notte_browser.driver import (
@@ -545,7 +540,7 @@ async def _in_the_way(located: list[Locator], action: InteractionAction, secrets
     quoted = _may_quote(action, f"{found.get('name', '')} {found.get('text', '')}", secrets)
     match found["kind"]:
         case "dialog":
-            return f'{DIALOG_IN_THE_WAY}: "{found["name"]}"' if quoted else DIALOG_IN_THE_WAY
+            return f': a dialog covers the element: "{found["name"]}"' if quoted else ": a dialog covers the element"
         case "element":
             return f": an element covers the element{': ' + found['name'] if quoted else ''}"
         case _:
@@ -1427,13 +1422,19 @@ async def execute(
     because a dialog the site opened blocks its element gets the dialog dismissed through its own controls and one
     more try (`notte_browser.dialogs`). What was dismissed goes into `dismissed` (one sentence for the result
     message) when the retry succeeds, and into the error's message when it does not. The failure is kept as it was
-    when nothing blocks the element the way a dialog does."""
+    when nothing blocks the element the way a dialog does.
+
+    Only a failure the page refused before it took the input is looked at (`_InTheWay`: a disabled element, a field
+    that did not keep the text). A timeout is not: the click or the Enter key may have reached the page before it,
+    and a dialog shown now can be its result."""
     try:
         return await _execute_once(
             window, action, prev_snapshot=prev_snapshot, storage=storage, verbose=verbose, secrets=secrets
         )
     except ActionExecutionError as error:
-        if not window.options.dismiss_blocking_dialogs or not retries_after_dismissal(action, error):
+        # `raise ... from None` keeps the `_InTheWay` the failure was built from as its context
+        refused = isinstance(error.__context__, _InTheWay)
+        if not window.options.dismiss_blocking_dialogs or not refused or not retries_after_dismissal(action):
             raise
         assert isinstance(action, InteractionAction)
         try:

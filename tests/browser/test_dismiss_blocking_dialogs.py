@@ -10,10 +10,10 @@ import time
 from urllib.parse import quote
 
 import pytest
+from notte_browser import execution
 from notte_browser.dialogs import retries_after_dismissal
 from notte_browser.session import NotteSession
 from notte_core.actions import ClickAction, FillAction
-from notte_core.errors import ActionExecutionError, NotteTimeoutError
 
 # the dialog's controls record themselves and remove the dialog; the page behind it is `inert` while it is shown
 DISMISS = (
@@ -409,16 +409,44 @@ async def test_a_retry_that_fails_still_says_what_was_dismissed() -> None:
     assert "Dismissed 1 dialog blocking the element, then retried once" in result.message, result.message
 
 
-def test_only_a_failure_that_names_a_dialog_on_a_selector_is_retried() -> None:
-    url = "https://example.com"
-    blocked = ActionExecutionError("I1", url, reason='Element is disabled: a dialog covers the element: "Welcome"')
-    assert retries_after_dismissal(ClickAction(selector="css=#go"), blocked)
+@pytest.mark.asyncio
+async def test_the_dialog_is_dismissed_when_the_failure_could_not_name_it(monkeypatch: pytest.MonkeyPatch) -> None:
+    # the look that names what is in the way for the failure's message found nothing in time
+    monkeypatch.setattr(execution, "_IN_THE_WAY_S", 0.0)
+    async with NotteSession(headless=True, dismiss_blocking_dialogs=True) as session:
+        _ = await session.window.page.goto(_dialog(CLOSE))
+        result = await session.aexecute(
+            FillAction(selector="css=#q", value="hello", timeout=3000), raise_on_failure=False
+        )
+        state = await _state(session)
+
+    assert result.success, result.message
+    assert state == {"dismissed": "close", "value": "hello"}
+
+
+@pytest.mark.asyncio
+async def test_only_a_failure_the_page_refused_is_looked_at(monkeypatch: pytest.MonkeyPatch) -> None:
+    # a timeout or a selector that finds nothing is not a refusal: the page is not looked at for a dialog then
+    looked: list[object] = []
+
+    async def look(*args: object) -> list[object]:
+        looked.append(args)
+        return []
+
+    monkeypatch.setattr(execution, "dismiss_blocking_dialogs", look)
+    async with NotteSession(headless=True, dismiss_blocking_dialogs=True) as session:
+        _ = await session.window.page.goto(_dialog(CLOSE))
+        missing = await session.aexecute(ClickAction(selector="css=#missing", timeout=500), raise_on_failure=False)
+        refused = await session.aexecute(ClickAction(selector="css=#go", timeout=2000), raise_on_failure=False)
+
+    assert not missing.success
+    assert not refused.success
+    # only the refused click was looked at
+    assert len(looked) == 1
+
+
+def test_only_actions_on_a_selector_are_looked_at() -> None:
+    assert retries_after_dismissal(ClickAction(selector="css=#go"))
+    assert retries_after_dismissal(FillAction(selector="css=#q", value="hello"))
     # an observed element is left as it is
-    assert not retries_after_dismissal(ClickAction(id="I1"), blocked)
-    # nothing, or something that is no dialog, is in the way
-    assert not retries_after_dismissal(
-        ClickAction(selector="css=#go"), ActionExecutionError("I1", url, reason="Element is disabled")
-    )
-    # a timeout: the action may have reached the page before it
-    timed_out = NotteTimeoutError(message='Action timed out after 2000ms: a dialog covers the element: "Welcome"')
-    assert not retries_after_dismissal(ClickAction(selector="css=#go"), timed_out)
+    assert not retries_after_dismissal(ClickAction(id="I1"))

@@ -2,8 +2,8 @@
 
 A cookie or terms dialog, a sign-in prompt, a promo sheet or a welcome modal makes the rest of the page inert or
 covers it: a fill then "stays empty", a click is refused as disabled. With the session option on, such a failure of
-a click or fill on a selector the caller wrote, when it names a dialog in the way of its element, is looked at
-again (`js/blocking_dialog.js`): the dialog is dismissed through its own controls and the action is retried once.
+a click or fill on a selector the caller wrote is looked at again: when the target is blocked by such a dialog
+(`js/blocking_dialog.js`), the dialog is dismissed through its own controls and the action is retried once.
 A timeout is left as it is: the action may have reached the page before it.
 
 The controls are tried in this order, and the next one only when the dialog is still shown:
@@ -26,7 +26,6 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 from notte_core.actions import ClickAction, FillAction, InteractionAction
-from notte_core.errors import ActionExecutionError
 from notte_core.logging import logger
 
 from notte_browser.dom.locate import locate_element
@@ -50,8 +49,6 @@ CLICK_MS = 2_000
 GONE_MS = 1_500
 # how long looking at the page for a dialog may take, before the action's own failure stands
 LOOK_S = 5.0
-# how a failure says that a dialog is in the way of its element (`notte_browser.execution._in_the_way`)
-DIALOG_IN_THE_WAY = ": a dialog covers the element"
 _GONE_POLL_S = 0.1
 # the most dialogs dismissed before the action is retried
 MAX_DIALOGS = 3
@@ -110,14 +107,10 @@ class Dismissal:
         return f"{label} ({self.reason} target): {steps}"
 
 
-def retries_after_dismissal(action: object, error: BaseException) -> bool:
-    """Whether a failed action is one a blocking dialog explains: a click or fill on a selector its caller wrote (an
-    observed element, with an id, is left as it is) that was refused as disabled or whose field did not keep the
-    text, with a dialog found in the way of its element. A timeout is not retried: the click or the Enter key may
-    have reached the page before it, and a dialog shown now can be its result."""
-    if not isinstance(action, (ClickAction, FillAction)) or action.id or action.selectors is None:
-        return False
-    return isinstance(error, ActionExecutionError) and DIALOG_IN_THE_WAY in error.dev_message
+def retries_after_dismissal(action: object) -> bool:
+    """Whether `action` is one whose failure is looked at for a blocking dialog: a click or fill on a selector its
+    caller wrote. An observed element (an action with an id) is left as it is."""
+    return isinstance(action, (ClickAction, FillAction)) and not action.id and action.selectors is not None
 
 
 async def _shown(dialog: ElementHandle) -> bool:
