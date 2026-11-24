@@ -45,6 +45,11 @@ def exported_names(source: str) -> list[str]:
 
 
 def render(source: str) -> str:
+    # Any other `__all__` assignment or mutation would override the generated list unchecked.
+    outside = BLOCK.sub("", source, count=1)
+    for node in ast.walk(ast.parse(outside)):
+        if isinstance(node, ast.Name) and node.id == "__all__":
+            raise ValueError(f"line {node.lineno}: __all__ is only set by the generated block")
     block = HEADER + "__all__ = [\n" + "".join(f'    "{name}",\n' for name in exported_names(source)) + "]\n"
     if BLOCK.search(source):
         return BLOCK.sub(lambda _: block, source, count=1)

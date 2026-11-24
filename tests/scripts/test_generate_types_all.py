@@ -1,3 +1,5 @@
+import pytest
+
 from scripts import generate_types_all as gen
 
 
@@ -27,3 +29,9 @@ def test_render_appends_then_replaces_the_block() -> None:
     second = gen.render(first.replace("class A: ...", "class A: ...\nclass B: ..."))
     assert second.count("__all__ = [") == 1
     assert '    "B",\n' in second
+
+
+@pytest.mark.parametrize("extra", ['__all__ = ["os"]\n', '__all__.extend(["os"])\n', '__all__ += ["os"]\n'])
+def test_rejects_other_all_assignments(extra: str) -> None:
+    with pytest.raises(ValueError, match="__all__"):
+        _ = gen.render(gen.render("class A: ...\n") + extra)
