@@ -162,6 +162,12 @@ export type ApiSessionStartRequest = {
      */
     screenshot_type?: 'raw' | 'full' | 'last_action';
     /**
+     * Preset Id
+     *
+     * Reusable launch preset revision from POST /launch-presets/recommend. Explicit request and saved profile settings take precedence. Does not navigate or restrict the session. During the pilot, starting with a preset returns 403 in production.
+     */
+    preset_id?: string | null;
+    /**
      * Demonstrate
      *
      * Whether to enable the Notte recorder extension for this session. The extension is installed but remains inactive when this is false.
@@ -274,6 +280,10 @@ Ignored since notte 1.10: screenshots are returned without highlighting.
 **deprecated:**
 
 
+</ParamField>
+
+<ParamField body="preset_id" type={"string | null | undefined"}>
+Reusable launch preset revision from POST /launch-presets/recommend. Explicit request and saved profile settings take precedence. Does not navigate or restrict the session. During the pilot, starting with a preset returns 403 in production.
 </ParamField>
 
 <ParamField body="demonstrate" type={"boolean | undefined"}>

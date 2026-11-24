@@ -461,6 +461,9 @@
   "ready_check": {
     "exclude": "Specialized transport or non-resource API; retained by the existing handwritten client."
   },
+  "recommend_launch_preset": {
+    "exclude": "Pilot API: production does not serve it yet (403 during the pilot); no SDK wrapper until it is generally available."
+  },
   "retrieve": {
     "exclude": "Data API is available through generated low-level operations; no high-level resource wrapper."
   },
