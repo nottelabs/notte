@@ -96,9 +96,12 @@ def download(url: str) -> JsonObject:
 
 
 def api_version() -> str:
-    """The version the API reports with this workspace's notte installed, as notte-api's `API_VERSION`."""
+    """The version the API reports with this workspace's notte installed, as notte-api's `API_VERSION`.
+
+    The installed version is normalized (`1.10.16.dev` installs as `1.10.16.dev0`), so a bare `.dev` goes too.
+    """
     version = cast(str, tomllib.loads(PYPROJECT.read_text())["project"]["version"])
-    return re.sub(r"\.dev\d+$", "", version)
+    return re.sub(r"\.dev\d*$", "", version)
 
 
 def stamp_api_version(spec: JsonObject, version: str) -> None:

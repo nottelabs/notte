@@ -120,7 +120,7 @@ def test_fetch_writes_the_version_the_api_reports_with_this_workspace(
 
 @pytest.mark.parametrize(
     ("workspace", "reported"),
-    [("1.10.16.dev0", "1.10.16"), ("1.9.1.dev12", "1.9.1"), ("1.10.16", "1.10.16")],
+    [("1.10.16.dev0", "1.10.16"), ("1.10.16.dev", "1.10.16"), ("1.9.1.dev12", "1.9.1"), ("1.10.16", "1.10.16")],
 )
 def test_the_api_version_drops_only_the_dev_suffix(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, workspace: str, reported: str
