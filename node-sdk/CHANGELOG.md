@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased: session.page() retries a dropped CDP connection
+
+When `session.page()` connects over CDP and the connection fails on the
+network before the server answers the WebSocket upgrade (`socket hang up`,
+`ECONNRESET`, `ECONNREFUSED` or `ETIMEDOUT`), it waits 300 ms and connects once
+more, with a `console.warn`. An HTTP answer, such as 403 for an expired URL,
+410 for a closed session or 503, is not retried, nor is Playwright's own
+connection timeout. Python's `session.page` does the same, logging a warning.
+
 ## Unreleased: closed sessions in session.page()
 
 When `session.page()` cannot connect because the session is no longer running

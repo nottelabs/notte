@@ -122,7 +122,9 @@ Remember that Notte sessions have a timeout. For long-running Playwright operati
 
 ### 4. Handle CDP Disconnections
 
-CDP connections can be interrupted. Wrap operations in try-except blocks:
+CDP connections can be interrupted. Wrap operations in try-except blocks.
+
+A connection can also drop before it is established, with `socket hang up` or `ECONNRESET`. Connecting again right away usually works, so retry such a failure once after a short delay. Don't retry an HTTP answer such as 403, 410 or 503: connecting again gets the same answer. `session.page` already retries this way; the example below does it for a connection you open yourself:
 
 <PlaywrightCdpErrorHandling />
 
