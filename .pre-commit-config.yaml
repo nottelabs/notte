@@ -115,6 +115,12 @@ repos:
         entry: bash -c "uv run --no-sync python scripts/generate_action_overloads.py --check"
         language: system
         files: ^(packages/notte-core/src/notte_core/actions/.*|packages/notte-browser/src/notte_browser/session\.py|packages/notte-sdk/src/notte_sdk/endpoints/sessions\.py|scripts/generate_action_overloads\.py|\.pre-commit-config\.yaml)$
+      - id: types-all
+        name: Check notte_core.types __all__ matches its definitions
+        entry: bash -c "uv run --no-sync python scripts/generate_types_all.py --check"
+        language: system
+        files: ^(packages/notte-core/src/notte_core/types\.py|scripts/generate_types_all\.py|\.pre-commit-config\.yaml)$
+        pass_filenames: false
       - id: sdk-codegen
         name: Check SDK-owned models match the OpenAPI snapshot
         entry: bash -c "uv run --no-sync python scripts/generate_sdk_models.py --check"
