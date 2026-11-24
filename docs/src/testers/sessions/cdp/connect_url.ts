@@ -8,7 +8,7 @@ const query = new URLSearchParams({
   proxies: "false",
   max_duration_minutes: "10",
 });
-const apiUrl = process.env.NOTTE_API_URL ?? "https://api.notte.cc";
+const apiUrl = (process.env.NOTTE_API_URL ?? "https://api.notte.cc").replace(/\/+$/, "");
 const url = `${apiUrl.replace("https://", "wss://")}/sessions/connect?${query}`;
 
 // Connecting starts a new Notte session

@@ -7,7 +7,7 @@ from playwright.sync_api import sync_playwright
 
 # Pass your API key and session options in the query string
 query = urlencode({"token": os.environ["NOTTE_API_KEY"], "proxies": "false", "max_duration_minutes": 10})
-api_url = os.environ.get("NOTTE_API_URL", "https://api.notte.cc")
+api_url = os.environ.get("NOTTE_API_URL", "https://api.notte.cc").rstrip("/")
 url = f"{api_url.replace('https://', 'wss://')}/sessions/connect?{query}"
 
 with sync_playwright() as p:

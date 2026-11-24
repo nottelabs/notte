@@ -97,7 +97,7 @@ A connection can also drop before it is established, with `socket hang up` or `E
 
 ### 3. Disconnect Properly
 
-Call `browser.disconnect()` in `finally` to disconnect Puppeteer. Also stop the Notte session, or use `session.use()` to manage that lifecycle. Disconnecting the client and stopping the session are separate operations.
+Call `browser.disconnect()` in `finally` to disconnect Puppeteer. For a session started with the SDK or the REST API, also stop the Notte session, or use `session.use()` to manage that lifecycle: disconnecting the client and stopping the session are separate operations. A session opened with a [single URL](#approach-3-connect-with-a-single-url) stops when you disconnect.
 
 ### 4. Session Timeout
 
