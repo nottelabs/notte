@@ -253,6 +253,7 @@ class SessionStartRequestDict(TypedDict):
     dialog_policy: NotRequired[Literal["auto", "client"]]
     advanced_stealth: NotRequired[bool]
     os: NotRequired[Literal["windows", "macos"] | None]
+    preset_id: NotRequired[str | None]
 
 
 class SessionStopRequestDict(TypedDict):

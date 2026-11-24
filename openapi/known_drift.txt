@@ -39,3 +39,5 @@ SessionStepsResponse: next_cursor required api=True sdk=False
 SessionStepsResponse: steps required api=True sdk=False
 SessionStartRequest: api-only field screenshot_type
 SessionStartRequest: api-only field demonstrate
+# Launch preset pilot: production rejects preset_id with 403 and does not serve it yet.
+SessionStartRequest: api-only field preset_id
