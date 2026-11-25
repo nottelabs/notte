@@ -28,8 +28,7 @@ ROUTES = (
     Route("openai", "openai/gpt-4o", "openai"),
     Route("groq", "openai/gpt-oss-120b", "groq"),
     Route("cerebras", "openai/gpt-oss-120b", "cerebras"),
-    # Kimi has no Moonshot-hosted OpenRouter endpoint; pin an advertised upstream.
-    Route("kimi", "moonshotai/kimi-k2.5", "novita"),
+    Route("kimi", "moonshotai/kimi-k3", "moonshotai"),
     Route("xai", "x-ai/grok-4.3", "xai"),
     Route("qwen", "qwen/qwen3.5-397b-a17b", "alibaba"),
     Route("minimax", "minimax/minimax-m2.5", "digitalocean"),
@@ -98,9 +97,9 @@ def routing_options(route: Route) -> tuple[str, dict[str, Any]]:
         "provider": {"order": [route.upstream], "allow_fallbacks": False},
     }
     if route.name == "kimi":
-        # Kimi K2.5 reasons before it answers: with reasoning on, a case took 30 to 190 s
-        # on every upstream and some outlasted the engine's 60 s attempt deadline. The
-        # matrix checks extraction through the pinned upstream, not reasoning latency.
+        # Kimi reasons before it answers by default (K3 at maximum effort): with reasoning on,
+        # K2.5 cases took 30 to 190 s and some outlasted the engine's 60 s attempt deadline.
+        # The matrix checks extraction through the pinned upstream, not reasoning latency.
         options["reasoning"] = {"enabled": False}
     if route.name in {"together", "zai"}:
         candidates = (model, "z-ai/glm-5.3") if route.name == "zai" else (model,)
