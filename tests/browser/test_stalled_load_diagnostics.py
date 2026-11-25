@@ -22,6 +22,8 @@ from notte_core.logging import logger
 BLOCKED_PAGE = """<html><head><link rel="stylesheet" href="/blocking.css?token=secret-value"></head>
 <body><h1>Navigation</h1><script>document.title = "parsed"</script><table id="rows"><tr><td>Row</td></tr></table>
 </body></html>"""
+# Parsed at once, but its image never answers: the load event does not fire.
+IMAGE_PAGE = """<html><body><h1>Parsed</h1><img src="/hang?token=secret-value"></body></html>"""
 # Loads at once, then keeps a fetch open: the goto's settle runs out of time on a page that has loaded.
 POLLING_PAGE = """<html><body><h1>Loaded</h1>
 <script>addEventListener("load", () => fetch("/hang?token=secret-value"))</script></body></html>"""
@@ -36,6 +38,9 @@ async def site() -> AsyncIterator[str]:
     async def blocked(_request: web.Request) -> web.Response:
         return web.Response(text=BLOCKED_PAGE, content_type="text/html")
 
+    async def image_page(_request: web.Request) -> web.Response:
+        return web.Response(text=IMAGE_PAGE, content_type="text/html")
+
     async def polling(_request: web.Request) -> web.Response:
         return web.Response(text=POLLING_PAGE, content_type="text/html")
 
@@ -46,6 +51,7 @@ async def site() -> AsyncIterator[str]:
     app = web.Application()
     app.router.add_get("/blocked", blocked)
     app.router.add_get("/polling", polling)
+    app.router.add_get("/image", image_page)
     app.router.add_get("/blocking.css", hang)
     app.router.add_get("/hang", hang)
     app.router.add_get("/never", hang)
@@ -118,6 +124,24 @@ async def test_a_default_goto_logs_why_its_page_did_not_load(session: NotteSessi
     assert f"did not load within {GOTO_TIMEOUT_MS} ms" in line
     assert "document loading" in line
     assert "stylesheet 127.0.0.1 " in line
+    assert "secret-value" not in line
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("settled", [True, False])
+async def test_a_goto_waiting_for_load_logs_the_image_that_holds_it(
+    session: NotteSession, site: str, settled: bool
+) -> None:
+    with short_goto_timeout(), warnings() as records:
+        if settled:
+            result = await session.aexecute(type="goto", url=f"{site}/image")
+            assert result.success
+        else:
+            await session.window.goto_and_wait(f"{site}/image", wait_until="load")
+    [line] = stalled(records)
+    assert ("did not load within" if settled else "timed out waiting for load") in line
+    assert "document interactive" in line
+    assert "1 request in flight: image 127.0.0.1 " in line
     assert "secret-value" not in line
 
 

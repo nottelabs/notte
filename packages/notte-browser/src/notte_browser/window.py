@@ -57,9 +57,10 @@ _PAGE_METADATA = script("page_metadata.js")
 
 WaitUntil = Literal["commit", "domcontentloaded", "load", "networkidle"]
 
-# The requests `BrowserWindow` keeps in flight: the types the page is waited for (`requests_in_flight`), and stylesheets,
-# which hold back the scripts after them and so the document's DOMContentLoaded (`describe_requests_in_flight`).
-_RECORDED_REQUESTS = TRACKED_REQUESTS | {"stylesheet"}
+# The requests `BrowserWindow` keeps in flight: the types the page is waited for (`requests_in_flight`), and the ones a
+# stalled load can wait for (`describe_requests_in_flight`): stylesheets hold back the scripts after them and so the
+# document's DOMContentLoaded; images and fonts hold back its load event.
+_RECORDED_REQUESTS = TRACKED_REQUESTS | {"stylesheet", "image", "font"}
 # how many requests a stalled load's log line names, oldest first
 _STALLED_REQUESTS_SHOWN = 5
 
@@ -236,8 +237,8 @@ class BrowserWindow:
         # Context events can report a tab's fetch before its page event installs a tracker.
         self._new_tab_requests: set[Request] = set()
         self._tabs_context: BrowserContext | None = None
-        # the requests of a type the page is waited for (`notte_browser.settle`), or a stylesheet, that are in flight in
-        # the context, and when each started, whatever started them: an action's settle only knows the ones started
+        # the requests of a type the page is waited for (`notte_browser.settle`), or that its load waits for
+        # (`_RECORDED_REQUESTS`), that are in flight in the context, and when each started, whatever started them: an action's settle only knows the ones started
         # since it began, and a tab's run from before it is selected. Recorded on the context: a page's listeners would
         # miss them
         self._requests_in_flight: dict[Request, float] = {}
@@ -287,8 +288,8 @@ class BrowserWindow:
         return sum(tracked(page, request) for request in requests_of(page, recent))
 
     def describe_requests_in_flight(self) -> str:
-        """The page's requests in flight that its load can wait for (a document, fetch, XHR, script or stylesheet, of
-        any frame), oldest first, for a log line about a load that stalled: "2 requests in flight: stylesheet
+        """The page's requests in flight that its load can wait for (a document, fetch, XHR, script, stylesheet, image
+        or font, of any frame), oldest first, for a log line about a load that stalled: "2 requests in flight: stylesheet
         fonts.example.com 9.8s, script cdn.example.com 9.5s". Hosts only: a path or a query can carry a token."""
         page = self._page
         now = time.perf_counter()
