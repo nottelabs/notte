@@ -3,7 +3,7 @@
 import os
 from urllib.parse import urlsplit
 
-from notte_sdk import ExpectedFunctionError, NotteClient
+from notte_sdk import NotteClient
 from onepassword import Client
 from playwright.async_api import async_playwright
 
@@ -14,8 +14,13 @@ LOGIN_ORIGIN = "https://portal.example.com"
 client = NotteClient()
 
 
+# The runtime recognizes this class by name: the run ends as rejected and is never self-healed.
+class ExpectedFunctionError(Exception):
+    pass
+
+
 class WrongLoginSite(ExpectedFunctionError):
-    """Ends the run as rejected, so self-healing never rewrites the check."""
+    pass
 
 
 def origin(url: str) -> str:
@@ -40,9 +45,13 @@ async def run(username_ref: str, password_ref: str):
             await page.goto(LOGIN_URL)
             if origin(page.url) != LOGIN_ORIGIN:
                 raise WrongLoginSite(f"Refusing to fill credentials on {origin(page.url)}")
-            await page.get_by_label("Username").fill(username)
-            await page.get_by_label("Password").fill(password)
+            try:
+                await page.get_by_label("Username").fill(username)
+                await page.get_by_label("Password").fill(password)
+            except Exception:
+                # Playwright errors can quote the filled value: raise a fixed message instead.
+                raise RuntimeError("Could not fill the login form") from None
             await page.get_by_role("button", name="Sign in").click()
             # Fails with a timeout if the site rejects the login.
-            await page.get_by_role("button", name="Account").wait_for(timeout=15_000)
+            await page.get_by_role("button", name="Account", exact=True).wait_for(timeout=15_000)
             return {"session_id": session.session_id, "url": page.url}
