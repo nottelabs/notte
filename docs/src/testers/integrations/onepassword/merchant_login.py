@@ -3,7 +3,7 @@
 import os
 from urllib.parse import urlsplit
 
-from notte_sdk import NotteClient
+from notte_sdk import ExpectedFunctionError, NotteClient
 from onepassword import Client
 from playwright.async_api import async_playwright
 
@@ -14,12 +14,8 @@ LOGIN_ORIGIN = "https://portal.example.com"
 client = NotteClient()
 
 
-class ExpectedFunctionError(Exception):
-    """A deliberate refusal: the run ends as "rejected" and is never self-healed."""
-
-
 class WrongLoginSite(ExpectedFunctionError):
-    pass
+    """Ends the run as rejected, so self-healing never rewrites the check."""
 
 
 def origin(url: str) -> str:
