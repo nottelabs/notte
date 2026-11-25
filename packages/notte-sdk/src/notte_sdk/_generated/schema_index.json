@@ -284,6 +284,8 @@
   "#/components/schemas/PersonaEmailProvider": "PersonaEmailProvider",
   "#/components/schemas/PersonaResponse": "PersonaResponse",
   "#/components/schemas/PersonaUpdateRequest": "PersonaUpdateRequest",
+  "#/components/schemas/PlaywrightStorageItem": "PlaywrightStorageItem",
+  "#/components/schemas/PlaywrightStorageOrigin": "PlaywrightStorageOrigin",
   "#/components/schemas/PressKeyAction": "PressKeyAction",
   "#/components/schemas/Product": "Product",
   "#/components/schemas/ProductExtractRequest": "ProductExtractRequest",

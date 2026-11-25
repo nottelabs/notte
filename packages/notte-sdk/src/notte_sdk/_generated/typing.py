@@ -332,6 +332,7 @@ class ProfileStateImportRequestDict(TypedDict):
     domains: NotRequired[list[str] | None]
     mode: NotRequired[Literal["replace", "append"]]
     storage_scope: NotRequired[Literal["domains", "origins"]]
+    origins: NotRequired[list[models.PlaywrightStorageOrigin] | None]
 
 
 class VaultListRequestDict(TypedDict):

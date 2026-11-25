@@ -1181,55 +1181,5 @@
         "title": "cURL"
       }
     ]
-  },
-  "integrations/onepassword/start.mdx": {
-    "group": false,
-    "blocks": [
-      {
-        "source": "integrations/onepassword/start.sh",
-        "language": "bash",
-        "title": ""
-      }
-    ]
-  },
-  "integrations/onepassword/access_request.mdx": {
-    "group": false,
-    "blocks": [
-      {
-        "source": "integrations/onepassword/access_request.sh",
-        "language": "bash",
-        "title": ""
-      }
-    ]
-  },
-  "integrations/onepassword/poll.mdx": {
-    "group": false,
-    "blocks": [
-      {
-        "source": "integrations/onepassword/poll.sh",
-        "language": "bash",
-        "title": ""
-      }
-    ]
-  },
-  "integrations/onepassword/fill.mdx": {
-    "group": false,
-    "blocks": [
-      {
-        "source": "integrations/onepassword/fill.sh",
-        "language": "bash",
-        "title": ""
-      }
-    ]
-  },
-  "integrations/onepassword/release.mdx": {
-    "group": false,
-    "blocks": [
-      {
-        "source": "integrations/onepassword/release.sh",
-        "language": "bash",
-        "title": ""
-      }
-    ]
   }
 }
