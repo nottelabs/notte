@@ -200,7 +200,7 @@ The shared skill covers CLI installation, authentication, live browser explorati
 
 ## Secrets
 
-- [1Password](https://docs.notte.cc/integrations/onepassword.md): Sign Notte browsers in to websites with 1Password, without exposing passwords to your code.
+- [1Password](https://docs.notte.cc/integrations/onepassword.md): Sign Notte browsers in to websites with 1Password. With Agentic Autofill, passwords never reach your code.
 - [Bitwarden](https://docs.notte.cc/integrations/bitwarden.md): Fill local Notte sessions with logins from Bitwarden Password Manager or Bitwarden Secrets Manager.
 
 ## Infrastructure
