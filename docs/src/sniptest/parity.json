@@ -181,6 +181,7 @@
     "client/async_persona_vault.py": "AsyncNotteClient is the Python asyncio client; the TypeScript SDK is already async, so a pair would repeat the existing NotteClient examples.",
     "client/async_scrape.py": "AsyncNotteClient is the Python asyncio client; the TypeScript SDK is already async, so a pair would repeat the existing NotteClient examples.",
     "client/async_session.py": "AsyncNotteClient is the Python asyncio client; the TypeScript SDK is already async, so a pair would repeat the existing NotteClient examples.",
-    "functions/creating/typed_errors.py": "Hosted Notte Function handler raising a typed error; the Function runtime executes Python code, so the error classes exist only in the Python SDK."
+    "functions/creating/typed_errors.py": "Hosted Notte Function handler raising a typed error; the Function runtime executes Python code, so the error classes exist only in the Python SDK.",
+    "integrations/onepassword/merchant_login.py": "Hosted Notte Function handler; the Function runtime executes Python code."
   }
 }
