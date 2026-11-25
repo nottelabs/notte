@@ -226,6 +226,8 @@ class PageSettle:
         self._opened_settles: dict[Page, PageSettle] = {}
         # a tab is opening: its first request was sent
         self._opening: bool = False
+        # `wait` gave up on the new document after `timeout_goto_ms`: it may not have loaded (the caller logs why)
+        self.document_timed_out: bool = False
         page.on("request", self._request_started)
         page.on("requestfinished", self._request_ended)
         page.on("requestfailed", self._request_ended)
@@ -536,6 +538,7 @@ class PageSettle:
                         await self._new_document(GRACE_MS, document)
                 return
             except TimeoutError:
+                self.document_timed_out = True
                 return
             except Error:
                 # navigated again (a redirect by the page), or the page closed

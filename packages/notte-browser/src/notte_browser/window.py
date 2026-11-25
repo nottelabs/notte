@@ -8,6 +8,7 @@ from collections.abc import Awaitable
 from http import HTTPStatus
 from pathlib import Path
 from typing import Any, Callable, ClassVar, Literal, Self
+from urllib.parse import urlsplit
 
 from notte_core.config import BrowserType, CookieDict, PlaywrightProxySettings, config
 from notte_core.dom_tree import DomNode
@@ -55,6 +56,12 @@ from notte_browser.settle import TRACKED_REQUESTS, PageSettle, requests_of, trac
 _PAGE_METADATA = script("page_metadata.js")
 
 WaitUntil = Literal["commit", "domcontentloaded", "load", "networkidle"]
+
+# The requests `BrowserWindow` keeps in flight: the types the page is waited for (`requests_in_flight`), and stylesheets,
+# which hold back the scripts after them and so the document's DOMContentLoaded (`describe_requests_in_flight`).
+_RECORDED_REQUESTS = TRACKED_REQUESTS | {"stylesheet"}
+# how many requests a stalled load's log line names, oldest first
+_STALLED_REQUESTS_SHOWN = 5
 
 
 def document_answer(status: int, status_text: str, title: str | None) -> str | None:
@@ -229,9 +236,10 @@ class BrowserWindow:
         # Context events can report a tab's fetch before its page event installs a tracker.
         self._new_tab_requests: set[Request] = set()
         self._tabs_context: BrowserContext | None = None
-        # the requests of a type the page is waited for (`notte_browser.settle`) that are in flight in the context, and
-        # when each started, whatever started them: an action's settle only knows the ones started since it began, and
-        # a tab's run from before it is selected. Recorded on the context: a page's listeners would miss them
+        # the requests of a type the page is waited for (`notte_browser.settle`), or a stylesheet, that are in flight in
+        # the context, and when each started, whatever started them: an action's settle only knows the ones started
+        # since it began, and a tab's run from before it is selected. Recorded on the context: a page's listeners would
+        # miss them
         self._requests_in_flight: dict[Request, float] = {}
         self._requests_context: BrowserContext | None = None
         page.set_default_timeout(config.timeout_default_ms)
@@ -258,7 +266,7 @@ class BrowserWindow:
         self._requests_in_flight.clear()
 
     def _request_started(self, request: Request) -> None:
-        if request.resource_type in TRACKED_REQUESTS:
+        if request.resource_type in _RECORDED_REQUESTS:
             self._requests_in_flight[request] = time.perf_counter()
 
     def _request_ended(self, request: Request) -> None:
@@ -277,6 +285,45 @@ class BrowserWindow:
             if younger_than_s is None or now - started < younger_than_s
         ]
         return sum(tracked(page, request) for request in requests_of(page, recent))
+
+    def describe_requests_in_flight(self) -> str:
+        """The page's requests in flight that its load can wait for (a document, fetch, XHR, script or stylesheet, of
+        any frame), oldest first, for a log line about a load that stalled: "2 requests in flight: stylesheet
+        fonts.example.com 9.8s, script cdn.example.com 9.5s". Hosts only: a path or a query can carry a token."""
+        page = self._page
+        now = time.perf_counter()
+        mine = set(requests_of(page, self._requests_in_flight))
+        pending = sorted(
+            ((started, request) for request, started in self._requests_in_flight.items() if request in mine),
+            key=lambda item: item[0],
+        )
+        if not pending:
+            return "no request in flight"
+        shown = ", ".join(
+            f"{request.resource_type} {urlsplit(request.url).hostname or '-'} {now - started:.1f}s"
+            for started, request in pending[:_STALLED_REQUESTS_SHOWN]
+        )
+        more = len(pending) - _STALLED_REQUESTS_SHOWN
+        noun = "request" if len(pending) == 1 else "requests"
+        return f"{len(pending)} {noun} in flight: {shown}{f' and {more} more' if more > 0 else ''}"
+
+    async def document_ready_state(self, timeout_ms: float = 500) -> str | None:
+        """The current document's `document.readyState` ("loading", "interactive", "complete"), None when the page
+        does not answer within `timeout_ms` or is between two documents."""
+        try:
+            ready_state = await asyncio.wait_for(self.page.evaluate("document.readyState"), timeout=timeout_ms / 1000)
+        except PlaywrightError:
+            return None
+        except TimeoutError:
+            return None
+        return ready_state if isinstance(ready_state, str) else None
+
+    async def describe_stalled_load(self) -> str:
+        """Why the current document may not have loaded yet, for a log line: its ready state and the requests in flight
+        (`describe_requests_in_flight`). "document loading" means it was not parsed yet (no DOMContentLoaded): a request
+        still in flight, often a stylesheet or a script, holds its parser."""
+        ready_state = await self.document_ready_state()
+        return f"document {ready_state or 'unknown'}, {self.describe_requests_in_flight()}"
 
     async def _close_owned(self) -> None:
         from notte_browser.cleanup import cleanup_resources
@@ -737,13 +784,7 @@ class BrowserWindow:
 
     async def _document_loaded(self, timeout_ms: float) -> bool:
         """Whether the current document has already fired its load event."""
-        try:
-            ready_state = await asyncio.wait_for(self.page.evaluate("document.readyState"), timeout=timeout_ms / 1000)
-        except PlaywrightError:
-            return False
-        except TimeoutError:
-            return False
-        return ready_state == "complete"
+        return await self.document_ready_state(timeout_ms) == "complete"
 
     async def goto_and_wait(
         self,
@@ -794,7 +835,10 @@ class BrowserWindow:
                         raise InvalidProxyError(url=url or self.page.url)
                     logger.info(f"Goto for {url=} committed with HTTP {response.status}: {response.status_text}")
             except PlaywrightTimeoutError as e:
-                logger.warning(f"Goto for {url=} timed out before the main document committed")
+                logger.warning(
+                    f"Goto for {url=} timed out before the main document committed "
+                    + f"({self.describe_requests_in_flight()})"
+                )
                 raise PageLoadingError(url=url or self.page.url) from e
             except InvalidProxyError:
                 raise
@@ -830,8 +874,9 @@ class BrowserWindow:
                         await self.page.wait_for_load_state(wait_until or "load", timeout=remaining_ms())
                     except PlaywrightTimeoutError:
                         logger.warning(
-                            f"Goto for {url=} committed but timed out waiting for {wait_until or 'load'}; "
-                            + "continuing with the loaded document"
+                            f"Goto for {url=} committed but timed out waiting for {wait_until or 'load'} within "
+                            + f"{config.timeout_goto_ms} ms; continuing with the loaded document "
+                            + f"({await self.describe_stalled_load()})"
                         )
 
             # Early load events deliberately skip the animation settle wait.

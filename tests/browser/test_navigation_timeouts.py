@@ -8,6 +8,8 @@ from notte_core.types import LocalSessionStartRequest
 
 
 def make_window(page: MagicMock) -> BrowserWindow:
+    # Page.evaluate is a coroutine: a stalled load's log line reads `document.readyState`
+    page.evaluate = AsyncMock(return_value="interactive")
     return BrowserWindow(page, BrowserWindowOptions.from_request(LocalSessionStartRequest()))
 
 
@@ -141,6 +143,7 @@ async def test_replacement_page_receives_persistent_and_attempt_response_callbac
     response = make_response(replacement_page)
     replacement_page.goto = AsyncMock(return_value=response)
     replacement_page.wait_for_load_state = AsyncMock(side_effect=PlaywrightTimeoutError("load timed out"))
+    replacement_page.evaluate = AsyncMock(return_value="interactive")
 
     with (
         patch.object(BrowserWindow, "long_wait", new_callable=AsyncMock) as long_wait,
