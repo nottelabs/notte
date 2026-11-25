@@ -1,6 +1,6 @@
 """Serialize resource requests without duplicating the server's validation."""
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import Any, cast
 
 from pydantic import BaseModel, RootModel, SecretStr, field_serializer
@@ -13,8 +13,9 @@ def _unmask(value: Any) -> Any:
         return _unmask(value.model_dump())
     if isinstance(value, dict):
         return {key: _unmask(item) for key, item in cast(dict[str, Any], value).items()}
-    if isinstance(value, (list, tuple)):
-        return [_unmask(item) for item in cast(list[Any] | tuple[Any, ...], value)]
+    # Typed request fields accept any sequence (Sequence[...]), not only lists and tuples.
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        return [_unmask(item) for item in cast(Sequence[Any], value)]
     return value
 
 

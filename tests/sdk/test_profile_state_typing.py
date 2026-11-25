@@ -13,7 +13,7 @@ CASE_FILE = CASES_DIR / "profile_state.py"
 
 def test_state_set_accepts_playwright_origins() -> None:
     result = subprocess.run(
-        ["uv", "run", "basedpyright", "--project", str(CASES_DIR), str(CASE_FILE)],
+        ["uv", "run", "--all-extras", "basedpyright", "--project", str(CASES_DIR), str(CASE_FILE)],
         cwd=REPO_ROOT,
         check=False,
         text=True,
