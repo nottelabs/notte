@@ -1,0 +1,30 @@
+# @sniptest filename=merchant_login.py
+# @sniptest typecheck_only=true
+import os
+
+from notte_sdk import NotteClient
+from onepassword import Client
+from playwright.async_api import async_playwright
+
+client = NotteClient()
+
+
+async def run(login_url: str, username_ref: str, password_ref: str):
+    vault = await Client.authenticate(
+        auth=os.environ["OP_SERVICE_ACCOUNT_TOKEN"],
+        integration_name="Notte Function",
+        integration_version="1.0.0",
+    )
+    username = await vault.secrets.resolve(username_ref)
+    password = await vault.secrets.resolve(password_ref)
+
+    with client.Session() as session:
+        async with async_playwright() as p:
+            browser = await p.chromium.connect_over_cdp(session.cdp_url())
+            page = browser.contexts[0].pages[0]
+            await page.goto(login_url)
+            await page.get_by_label("Username").fill(username)
+            await page.get_by_label("Password").fill(password)
+            await page.get_by_role("button", name="Sign in").click()
+            await page.wait_for_load_state()
+            return {"session_id": session.session_id, "url": page.url}
