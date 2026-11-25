@@ -418,6 +418,9 @@ add or remove entries in the same change as the spec. The
 `openapi-schema` branch and three times a day, opens a draft PR and fails when generation or the
 contract check fails. Fix it on `chore/bump-openapi`. Later refreshes leave
 that PR alone once it has manual commits.
+`complete-bot-pr.yml` merges a ready refresh PR, and the version PR a release opens,
+only at the exact head the producing run pushed, after its checks pass and a repository
+writer or Greptile approves that head. A manual commit leaves the PR for a person.
 
 The API reports its installed notte version without `.devN` (`info.version`, `HealthResponse`'s
 `version` default). The published schema carries the notte commit the monorepo pins, but the round

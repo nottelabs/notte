@@ -15,10 +15,15 @@ REPOSITORY = "nottelabs/notte"
 BOT = "andreakiro"
 GREPTILE_APP_ID = 867647
 GREPTILE_BOT_ID = 165735046
+# Fixed branches opened by scheduled or dispatched runs on main.
 PRODUCERS = {
     "chore/bump-submodules": ".github/workflows/bump-submodules.yml",
     "chore/refresh-llms": ".github/workflows/refresh-llms.yml",
+    "chore/bump-openapi": ".github/workflows/openapi-bump.yml",
 }
+# One branch per release, opened by the release run of that tag.
+RELEASE_PRODUCER = ".github/workflows/pypi-release.yml"
+RELEASE_BRANCH = re.compile(r"chore/python-version-after-(v(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*))")
 
 
 class Repository(TypedDict):
@@ -58,6 +63,22 @@ class Review(TypedDict):
     commit_id: str
 
 
+class Producer(TypedDict):
+    path: str
+    events: set[str]
+    ref: str
+
+
+def producer(branch: str) -> Producer | None:
+    """The workflow, events and run ref allowed to produce this branch."""
+    if branch in PRODUCERS:
+        return {"path": PRODUCERS[branch], "events": {"schedule", "workflow_dispatch"}, "ref": "main"}
+    release = RELEASE_BRANCH.fullmatch(branch)
+    if release is not None:
+        return {"path": RELEASE_PRODUCER, "events": {"push"}, "ref": release.group(1)}
+    return None
+
+
 def gh(*args: str) -> bytes:
     return subprocess.check_output(["gh", *args], timeout=45)
 
@@ -95,7 +116,7 @@ def owned(pr: Pull) -> bool:
         and pr["base"]["repo"]["full_name"] == REPOSITORY
         and pr["head"]["repo"] is not None
         and pr["head"]["repo"]["full_name"] == REPOSITORY
-        and pr["head"]["ref"] in PRODUCERS
+        and producer(pr["head"]["ref"]) is not None
         and re.fullmatch(r"[0-9a-f]{40}", pr["head"]["sha"]) is not None
     )
 
@@ -105,18 +126,22 @@ def attested(pr: Pull) -> bool:
     if len(markers) != 1:
         return False
     run_id = markers[0]
+    expected = producer(pr["head"]["ref"])
+    if expected is None:
+        return False
     run = api(f"repos/{REPOSITORY}/actions/runs/{run_id}")
     if not (
         run["repository"]["full_name"] == REPOSITORY
         and run["head_repository"]["full_name"] == REPOSITORY
-        and run["head_branch"] == "main"
-        and run["event"] in {"schedule", "workflow_dispatch"}
-        and run["path"] == PRODUCERS[pr["head"]["ref"]]
+        and run["head_branch"] == expected["ref"]
+        and run["event"] in expected["events"]
+        and run["path"] == expected["path"]
         and run["status"] == "completed"
         and run["conclusion"] == "success"
     ):
         return False
-    # The producer's workflow and code must have come from reviewed main history.
+    # The producer's workflow and code must have come from reviewed main history
+    # (a release tag must point at a main commit).
     comparison = api(f"repos/{REPOSITORY}/compare/{run['head_sha']}...main")
     if comparison["status"] not in {"ahead", "identical"}:
         return False
@@ -213,19 +238,50 @@ def complete(number: int) -> bool:
     return True
 
 
+def release_pulls() -> list[int]:
+    pages = json.loads(
+        gh("api", "--paginate", "--slurp", f"repos/{REPOSITORY}/pulls?state=open&base=main&per_page=100")
+    )
+    return [
+        pull["number"]
+        for page in pages
+        for pull in page
+        if pull["head"]["repo"] is not None
+        and pull["head"]["repo"]["full_name"] == REPOSITORY
+        and RELEASE_BRANCH.fullmatch(pull["head"]["ref"]) is not None
+    ]
+
+
 def main() -> int:
     if os.environ["GITHUB_REPOSITORY"] != REPOSITORY or api("user")["login"] != BOT:
         raise RuntimeError("Unexpected bot repository or authorization")
     failed = False
+
+    def attempt(label: str, number: int) -> None:
+        nonlocal failed
+        try:
+            print(f"PR #{number}: {'merged' if complete(number) else 'left open'}")
+        except Exception as error:
+            failed = True
+            print(f"{label}: {type(error).__name__}: {error}", file=sys.stderr)
+
     for branch in PRODUCERS:
         try:
             pulls = api(f"repos/{REPOSITORY}/pulls?state=open&base=main&head=nottelabs:{branch}&per_page=100")
-            if len(pulls) == 1:
-                number = pulls[0]["number"]
-                print(f"PR #{number}: {'merged' if complete(number) else 'left open'}")
         except Exception as error:
             failed = True
             print(f"{branch}: {type(error).__name__}: {error}", file=sys.stderr)
+            continue
+        if len(pulls) == 1:
+            attempt(branch, pulls[0]["number"])
+    try:
+        numbers = release_pulls()
+    except Exception as error:
+        failed = True
+        print(f"{RELEASE_BRANCH.pattern}: {type(error).__name__}: {error}", file=sys.stderr)
+        numbers = []
+    for number in numbers:
+        attempt(RELEASE_BRANCH.pattern, number)
     return int(failed)
 
 

@@ -45,7 +45,9 @@ Follow the instructions in the [setup docs](../docs/setup.md) file.
 The Python packages and the Node SDK are released together, from one tag and at
 one version. To cut a release:
 
-1. Merge the previous release's automatic development-version PR.
+1. Make sure the previous release's automatic development-version PR merged.
+   It merges itself once it is approved on its current head and its checks pass;
+   if `main` moved first, update the branch and approve it again.
    If the previous Python release published and passed its installation check,
    but the workflow failed before opening that PR, run
    `python3 scripts/release_version.py next vPREVIOUS_VERSION` and `uv lock`,

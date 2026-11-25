@@ -239,6 +239,12 @@ def test_workflows_use_trusted_default_branch_and_no_waiting_runner():
         assert "--body-file" in text
         assert "HEAD_SHA" in text and "bot-pr.json" in text
         assert "github.ref == 'refs/heads/main'" in text
+    text = (ROOT / bot.RELEASE_PRODUCER).read_text()
+    job = yaml.safe_load(text)["jobs"]["next-development-version"]
+    assert job["permissions"] == {"contents": "read"}
+    assert "gh pr merge" not in text
+    assert "<!-- bot-pr-run: %s -->" in text
+    assert "HEAD_SHA" in text and "bot-pr.json" in text
 
 
 @pytest.mark.parametrize(
@@ -376,7 +382,8 @@ def test_unauthorized_change_request_does_not_block_trusted_app_approval(fixture
 def test_first_producer_error_does_not_block_second_and_returns_failure(monkeypatch, capsys, error):
     monkeypatch.setenv("GITHUB_REPOSITORY", bot.REPOSITORY)
     with (
-        patch.object(bot, "api", side_effect=[{"login": bot.BOT}, [{"number": 42}], [{"number": 43}]]),
+        patch.object(bot, "api", side_effect=[{"login": bot.BOT}, [{"number": 42}], [{"number": 43}], []]),
+        patch.object(bot, "release_pulls", return_value=[]),
         patch.object(bot, "complete", side_effect=[error, True]) as complete,
     ):
         assert bot.main() == 1
@@ -392,8 +399,9 @@ def test_branch_lookup_error_is_reported_after_other_branch_processed(monkeypatc
     monkeypatch.setenv("GITHUB_REPOSITORY", bot.REPOSITORY)
     with (
         patch.object(
-            bot, "api", side_effect=[{"login": bot.BOT}, RuntimeError("First lookup failed"), [{"number": 43}]]
+            bot, "api", side_effect=[{"login": bot.BOT}, RuntimeError("First lookup failed"), [{"number": 43}], []]
         ),
+        patch.object(bot, "release_pulls", return_value=[]),
         patch.object(bot, "complete", return_value=False) as complete,
     ):
         assert bot.main() == 1
@@ -407,7 +415,8 @@ def test_pending_results_are_not_errors_and_both_raised_errors_are_reported(monk
     monkeypatch.setenv("GITHUB_REPOSITORY", bot.REPOSITORY)
     for results, expected in (([False, False], 0), ([RuntimeError("First failure"), ValueError("Second failure")], 1)):
         with (
-            patch.object(bot, "api", side_effect=[{"login": bot.BOT}, [{"number": 42}], [{"number": 43}]]),
+            patch.object(bot, "api", side_effect=[{"login": bot.BOT}, [{"number": 42}], [{"number": 43}], []]),
+            patch.object(bot, "release_pulls", return_value=[]),
             patch.object(bot, "complete", side_effect=results) as complete,
         ):
             assert bot.main() == expected
@@ -497,3 +506,101 @@ def test_permission_404_handling_does_not_swallow_other_api_404s_or_missing_stat
             with pytest.raises(subprocess.CalledProcessError) as raised:
                 bot.reviewer_permission("reviewer")
             assert raised.value is error
+
+
+RELEASE = "chore/python-version-after-v1.10.17"
+
+
+def release_fixture(fixture):
+    pr, run, manifest = fixture
+    pr["head"]["ref"] = manifest["BRANCH"] = RELEASE
+    run.update(path=bot.RELEASE_PRODUCER, event="push", head_branch="v1.10.17")
+    return fixture
+
+
+def test_release_tag_run_owns_its_version_branch(fixture):
+    fixture = release_fixture(fixture)
+    assert bot.owned(fixture[0])
+    assert attest(fixture)
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("head_branch", "main"),
+        ("head_branch", "v1.10.16"),
+        ("event", "schedule"),
+        ("event", "workflow_dispatch"),
+        ("path", ".github/workflows/bump-submodules.yml"),
+    ],
+)
+def test_release_branch_needs_the_release_run_of_its_own_tag(fixture, field, value):
+    fixture = release_fixture(fixture)
+    fixture[1][field] = value
+    assert not attest(fixture)
+
+
+def test_fixed_branch_cannot_be_attested_by_a_release_run(fixture):
+    fixture[1].update(path=bot.RELEASE_PRODUCER, event="push", head_branch="v1.10.17")
+    assert not attest(fixture)
+
+
+@pytest.mark.parametrize(
+    "branch",
+    [
+        "chore/python-version-after-v1.10",
+        "chore/python-version-after-v1.10.17-rc1",
+        "chore/python-version-after-v01.10.17",
+        "chore/python-version-after-1.10.17",
+        "chore/python-version-after-v1.10.17/extra",
+    ],
+)
+def test_other_release_like_branches_are_not_owned(fixture, branch):
+    pr = fixture[0]
+    pr["head"]["ref"] = branch
+    assert not bot.owned(pr)
+
+
+def test_release_pulls_lists_only_same_repository_version_branches():
+    def pull(number, ref, repo=bot.REPOSITORY):
+        return {"number": number, "head": {"ref": ref, "repo": None if repo is None else {"full_name": repo}}}
+
+    pages = [
+        [pull(1, RELEASE), pull(2, "chore/bump-submodules"), pull(3, RELEASE, "attacker/notte")],
+        [pull(4, RELEASE, None), pull(5, "chore/python-version-after-v1.10.18"), pull(6, "feature")],
+    ]
+    with patch.object(bot, "gh", return_value=json.dumps(pages).encode()) as gh:
+        assert bot.release_pulls() == [1, 5]
+        args = gh.call_args.args
+        assert "--paginate" in args and "--slurp" in args
+        assert args[-1] == f"repos/{bot.REPOSITORY}/pulls?state=open&base=main&per_page=100"
+
+
+def test_release_prs_are_completed_after_fixed_branches(monkeypatch, capsys):
+    monkeypatch.setenv("GITHUB_REPOSITORY", bot.REPOSITORY)
+    fixed = [[] for _ in bot.PRODUCERS]
+    with (
+        patch.object(bot, "api", side_effect=[{"login": bot.BOT}, *fixed]),
+        patch.object(bot, "release_pulls", return_value=[50, 51]),
+        patch.object(bot, "complete", side_effect=[RuntimeError("Release failure"), True]) as complete,
+    ):
+        assert bot.main() == 1
+        assert [call.args for call in complete.call_args_list] == [(50,), (51,)]
+        output = capsys.readouterr()
+        assert "PR #51: merged" in output.out
+        assert "Release failure" in output.err
+
+
+def test_release_listing_error_is_reported_after_fixed_branches(monkeypatch, capsys):
+    monkeypatch.setenv("GITHUB_REPOSITORY", bot.REPOSITORY)
+    fixed = [[{"number": 42}], [], []]
+    with (
+        patch.object(bot, "api", side_effect=[{"login": bot.BOT}, *fixed]),
+        patch.object(bot, "release_pulls", side_effect=RuntimeError("Listing failed")),
+        patch.object(bot, "complete", return_value=False) as complete,
+    ):
+        assert bot.main() == 1
+        complete.assert_called_once_with(42)
+        output = capsys.readouterr()
+        assert "Listing failed" in output.err
+        assert "PR #42: left open" in output.out
