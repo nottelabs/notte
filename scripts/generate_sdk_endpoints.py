@@ -611,7 +611,11 @@ KEYWORD_ANNOTATIONS = {
         "auth_ids": "list[str]",
     },
     "NotteProxy": {"country": "core.ProxyGeolocationCountry | None"},
-    "ProfileStateImportRequest": {"domains": "list[str] | None"},
+    # Accept the `origins` list of Playwright's storage_state() as it is (see PLAYWRIGHT_STORAGE_DICTS).
+    "ProfileStateImportRequest": {
+        "domains": "list[str] | None",
+        "origins": "Sequence[models.PlaywrightStorageOrigin | PlaywrightStorageOriginDict] | None",
+    },
     "ListSessionsParametersQuery": {"include_system": "bool | None"},
     "SessionStopParametersQuery": {"close_reason": 'Literal["manual", "error"]'},
     "BodySessionCookiesSetSessionsSessionIdCookiesPost": {"cookies": "list[core.Cookie] | list[config.CookieDict]"},
@@ -624,6 +628,17 @@ KEYWORD_ANNOTATIONS = {
         "status": 'Literal["closed", "active", "failed", "rejected"]',
     },
     "ListSessionFilesParametersQuery": {"source": "str | None"},
+}
+# Playwright's storage_state() returns TypedDicts. Read-only fields let a type checker accept them here
+# (mutable TypedDict fields and lists are invariant); IndexedDB, which profiles do not import, is left out
+# so an export without it matches.
+PLAYWRIGHT_STORAGE_DICTS = {
+    "PlaywrightStorageItemDict": "class PlaywrightStorageItemDict(TypedDict):\n    name: ReadOnly[str]\n    value: ReadOnly[str]\n",
+    "PlaywrightStorageOriginDict": (
+        "class PlaywrightStorageOriginDict(TypedDict):\n"
+        "    origin: ReadOnly[str]\n"
+        "    localStorage: ReadOnly[Sequence[models.PlaywrightStorageItem | PlaywrightStorageItemDict]]\n"
+    ),
 }
 KEYWORD_DOCSTRINGS = {
     "SessionStartRequestDict": 'Request dictionary for starting a session.\n\nArgs:\n    record_session: Defaults to true. Set to false at session creation to disable saved replay for the entire session. Live View remains available.\n    log_session: Defaults to true. Set to false at session creation to disable saved browser activity and network logs for the entire session. Usage metering remains available.\n    solve_captchas: Whether to try to automatically solve captchas\n    max_duration_minutes: Maximum session lifetime in minutes (absolute maximum).\n    idle_timeout_minutes: Idle timeout in minutes. Session closes after this period of inactivity.\n    proxies: List of custom proxies to use for the session. If True, the default proxies will be used.\n    browser_type: The browser type to use. chrome-nitro starts a managed Chrome Nitro session.\n    user_agent: The user agent to use for the session\n    chrome_args: Overwrite the chrome instance arguments\n    viewport_width: The width of the viewport\n    viewport_height: The height of the viewport\n    aspect_ratio: Viewport shape preset ("5:4" or "16:9"). Cannot be combined with viewport_width/viewport_height.\n    cdp_url: The CDP URL of another remote session provider.\n    profile: Browser profile configuration for state persistence.\n    auth_ids: Up to 10 unique Managed Auth connection IDs. The API verifies them inline and can return an authenticating session while login continues.\n    wait_for_authentication: Defaults to True. The SDK waits for authentication readiness through short API calls before returning from start or entering a context manager. When False, start returns after inline verification; call wait_for_auth() before browser actions if login is pending.\n    auth_retry: Number of additional retries for transient managed-auth login failures, from 0 to 2. Each retry verifies the session again before submitting credentials. A blocked connection permits one explicit login attempt.\n    dialog_policy: Who answers JavaScript dialogs. "auto" (default): Notte dismisses alert, confirm and prompt and accepts beforeunload. "client": your CDP client accepts or dismisses them; Notte dismisses one nobody answers within 10 seconds.\n    os: The operating system the session\'s browser presents: windows or macos. When unset, each session gets one at random among those the environment offers.',
@@ -823,6 +838,8 @@ def _keywords(binding: Binding, classes: dict[str, ast.ClassDef]) -> str:
                 "models",
                 "ProxySettingsDict",
                 "SessionProfileDict",
+                "PlaywrightStorageOriginDict",
+                "Sequence",
                 "Any",
                 "Literal",
             }
@@ -1079,6 +1096,7 @@ def render_resources(spec: JsonObject) -> dict[str, str]:
     nested_names = ["NotteProxyDict", "ExternalProxyDict", "TailnetProxyDict", "SecretProxyDict", "SessionProfileDict"]
     keywords = {
         **{name: keywords.pop(name) for name in nested_names},
+        **PLAYWRIGHT_STORAGE_DICTS,
         "ProxySettingsDict": 'ProxySettingsDict = Annotated[NotteProxyDict | ExternalProxyDict | TailnetProxyDict | SecretProxyDict, Field(discriminator="type")]\n',
         **keywords,
     }
@@ -1092,7 +1110,7 @@ def render_resources(spec: JsonObject) -> dict[str, str]:
     )
     typing = (
         RESOURCE_HEADER
-        + "from datetime import timedelta as timedelta_aliased\nfrom typing import Annotated, Any, Literal, NotRequired, Required\nfrom pydantic import Field\nfrom notte_core import types as core\nfrom notte_core import config\nfrom notte_sdk._generated import models\nfrom typing_extensions import TypedDict\n\n\n"
+        + "from collections.abc import Sequence\nfrom datetime import timedelta as timedelta_aliased\nfrom typing import Annotated, Any, Literal, NotRequired, Required\nfrom pydantic import Field\nfrom notte_core import types as core\nfrom notte_core import config\nfrom notte_sdk._generated import models\nfrom typing_extensions import ReadOnly, TypedDict\n\n\n"
         + "\n\n".join(keywords.values())
     )
     public.update({name: f"typing.{name}" for name in keyword_names})

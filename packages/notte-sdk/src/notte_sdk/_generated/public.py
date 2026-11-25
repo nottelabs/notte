@@ -298,6 +298,12 @@ from notte_sdk._generated.typing import (
     PersonaUpdateRequestDict as PersonaUpdateRequestDict,
 )
 from notte_sdk._generated.typing import (
+    PlaywrightStorageItemDict as PlaywrightStorageItemDict,
+)
+from notte_sdk._generated.typing import (
+    PlaywrightStorageOriginDict as PlaywrightStorageOriginDict,
+)
+from notte_sdk._generated.typing import (
     ProfileCookiesImportRequestDict as ProfileCookiesImportRequestDict,
 )
 from notte_sdk._generated.typing import (
@@ -457,6 +463,8 @@ __all__ = [
     "PersonaResponse",
     "PersonaUpdateRequest",
     "PersonaUpdateRequestDict",
+    "PlaywrightStorageItemDict",
+    "PlaywrightStorageOriginDict",
     "ProfileCookiesImportRequest",
     "ProfileCookiesImportRequestDict",
     "ProfileCookiesImportResponse",

@@ -1,6 +1,7 @@
 """Profiles compatibility captures, first run against the pre-migration facade."""
 
 import json
+from collections import UserList
 from typing import Any
 
 import pytest
@@ -114,6 +115,20 @@ def test_profile_state_accepts_plain_domain_lists(client: NotteClient, monkeypat
     call = session.calls[0]
     assert (call.method, call.url) == ("POST", SERVER + "/profiles/profile-1/state")
     assert json.loads(call.data) == {"domains": ["example.com"]}
+
+
+def test_profile_state_sends_any_origins_sequence(client: NotteClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    session = fake(
+        monkeypatch,
+        {"success": True, "cookies_count": 0, "local_storage_origins": 1, "session_storage_origins": 0},
+    )
+    items = UserList([{"name": "theme", "value": "dark"}])
+    assert client.profiles.state_set(
+        "profile-1", origins=UserList([{"origin": "https://example.com", "localStorage": items}])
+    ).success
+    assert json.loads(session.calls[0].data) == {
+        "origins": [{"origin": "https://example.com", "localStorage": [{"name": "theme", "value": "dark"}]}]
+    }
 
 
 @pytest.mark.parametrize("payload", [{}, {"success": True}, {"message": "deleted"}])
