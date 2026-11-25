@@ -98,8 +98,9 @@ def test_every_component_has_an_importable_generated_type() -> None:
 
 
 def test_unmigrated_and_page_operation_types_still_reexport_core() -> None:
-    for name, cls in vars(core).items():
-        if not name.startswith("_") and name not in {
+    for name in core.__all__:
+        cls = getattr(core, name)
+        if name not in {
             "SessionStartRequest",
             "SessionStartRequestDict",
             "SessionResponse",
