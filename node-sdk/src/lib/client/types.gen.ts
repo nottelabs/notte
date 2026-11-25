@@ -6272,7 +6272,7 @@ export type PlaywrightStorageOrigin = {
     /**
      * Indexeddb
      *
-     * Accepted but not imported: profiles do not store IndexedDB. Origins that carried any are listed in the response's indexed_db_origins_not_imported.
+     * Accepted but not imported: this endpoint does not import IndexedDB. Origins that carried any are listed in the response's indexed_db_origins_not_imported.
      */
     indexedDB?: Array<unknown> | null;
 };
@@ -6621,7 +6621,7 @@ export type ProfileStateImportResponse = {
     /**
      * Indexed Db Origins Not Imported
      *
-     * Origins whose IndexedDB data in a Playwright export was not imported: profiles store cookies, localStorage and sessionStorage only.
+     * Origins whose IndexedDB data in a Playwright export was not imported: this endpoint imports cookies, localStorage and sessionStorage only.
      */
     indexed_db_origins_not_imported?: Array<string>;
 };
@@ -13266,7 +13266,7 @@ export type FunctionCreateData = {
         /**
          * Restricted
          *
-         * Whether to restrict the function code
+         * Ignored: every upload, update and rollback is checked with the strict code policy. Kept for compatibility.
          */
         restricted?: boolean;
     };
@@ -13454,7 +13454,7 @@ export type FunctionUpdateData = {
         /**
          * Restricted
          *
-         * Whether to restrict the function code
+         * Ignored: every upload, update and rollback is checked with the strict code policy. Kept for compatibility.
          */
         restricted?: boolean;
     };
@@ -13541,7 +13541,7 @@ export type FunctionRollbackData = {
         /**
          * Restricted
          *
-         * Whether to restrict the function code
+         * Ignored: every upload, update and rollback is checked with the strict code policy. Kept for compatibility.
          */
         restricted?: boolean;
     };
@@ -13588,7 +13588,7 @@ export type FunctionConditionalRollbackData = {
         /**
          * Restricted
          *
-         * Whether to restrict the function code
+         * Ignored: every upload, update and rollback is checked with the strict code policy. Kept for compatibility.
          */
         restricted?: boolean;
     };
