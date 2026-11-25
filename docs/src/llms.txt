@@ -298,6 +298,10 @@ For agent-driven browser automation, follow https://notte.cc/skill.md before imp
 - [GET Health Check](https://docs.notte.cc/api-reference/health/health-check.md)
 - [GET Ready Check](https://docs.notte.cc/api-reference/health/ready-check.md)
 
+## Launch-Presets
+
+- [POST Recommend Launch Preset](https://docs.notte.cc/api-reference/launch-presets/recommend-launch-preset.md): Recommend session launch defaults for an exact hostname. Unmapped hosts receive the default preset. Does not contact the site, start a session, navigate, or grant access. During the pilot this returns 403 in production.
+
 ## Mailboxes
 
 - [POST Mailbox Connect Token](https://docs.notte.cc/api-reference/mailboxes/mailbox-connect-token.md)
