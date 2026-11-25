@@ -2751,11 +2751,11 @@
             "required": false,
             "schema": {
               "type": "boolean",
-              "description": "Whether to restrict the function code",
+              "description": "Ignored: every upload, update and rollback is checked with the strict code policy. Kept for compatibility.",
               "default": true,
               "title": "Restricted"
             },
-            "description": "Whether to restrict the function code"
+            "description": "Ignored: every upload, update and rollback is checked with the strict code policy. Kept for compatibility."
           },
           {
             "name": "x-notte-request-origin",
@@ -3004,11 +3004,11 @@
             "required": false,
             "schema": {
               "type": "boolean",
-              "description": "Whether to restrict the function code",
+              "description": "Ignored: every upload, update and rollback is checked with the strict code policy. Kept for compatibility.",
               "default": true,
               "title": "Restricted"
             },
-            "description": "Whether to restrict the function code"
+            "description": "Ignored: every upload, update and rollback is checked with the strict code policy. Kept for compatibility."
           },
           {
             "name": "x-notte-request-origin",
@@ -3496,11 +3496,11 @@
             "required": false,
             "schema": {
               "type": "boolean",
-              "description": "Whether to restrict the function code",
+              "description": "Ignored: every upload, update and rollback is checked with the strict code policy. Kept for compatibility.",
               "default": true,
               "title": "Restricted"
             },
-            "description": "Whether to restrict the function code"
+            "description": "Ignored: every upload, update and rollback is checked with the strict code policy. Kept for compatibility."
           },
           {
             "name": "x-notte-request-origin",
@@ -3598,11 +3598,11 @@
             "required": false,
             "schema": {
               "type": "boolean",
-              "description": "Whether to restrict the function code",
+              "description": "Ignored: every upload, update and rollback is checked with the strict code policy. Kept for compatibility.",
               "default": true,
               "title": "Restricted"
             },
-            "description": "Whether to restrict the function code"
+            "description": "Ignored: every upload, update and rollback is checked with the strict code policy. Kept for compatibility."
           },
           {
             "name": "x-notte-request-origin",
@@ -31321,7 +31321,7 @@
               }
             ],
             "title": "Indexeddb",
-            "description": "Accepted but not imported: profiles do not store IndexedDB. Origins that carried any are listed in the response's indexed_db_origins_not_imported."
+            "description": "Accepted but not imported: this endpoint does not import IndexedDB. Origins that carried any are listed in the response's indexed_db_origins_not_imported."
           }
         },
         "additionalProperties": false,
@@ -31919,7 +31919,7 @@
             },
             "type": "array",
             "title": "Indexed Db Origins Not Imported",
-            "description": "Origins whose IndexedDB data in a Playwright export was not imported: profiles store cookies, localStorage and sessionStorage only."
+            "description": "Origins whose IndexedDB data in a Playwright export was not imported: this endpoint imports cookies, localStorage and sessionStorage only."
           }
         },
         "type": "object",
