@@ -6244,6 +6244,40 @@ export type PersonRole = {
 };
 
 /**
+ * PlaywrightStorageItem
+ */
+export type PlaywrightStorageItem = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Value
+     */
+    value: string;
+};
+
+/**
+ * PlaywrightStorageOrigin
+ */
+export type PlaywrightStorageOrigin = {
+    /**
+     * Origin
+     */
+    origin: string;
+    /**
+     * Localstorage
+     */
+    localStorage: Array<PlaywrightStorageItem>;
+    /**
+     * Indexeddb
+     *
+     * Accepted but not imported: profiles do not store IndexedDB. Origins that carried any are listed in the response's indexed_db_origins_not_imported.
+     */
+    indexedDB?: Array<unknown> | null;
+};
+
+/**
  * PressKeyAction
  */
 export type PressKeyAction = {
@@ -6556,6 +6590,12 @@ export type ProfileStateImportRequest = {
      * Use origins for partial live-tab snapshots: replace only origins present in each storage map.
      */
     storage_scope?: 'domains' | 'origins';
+    /**
+     * Origins
+     *
+     * localStorage in the format of Playwright's context.storage_state(), so its export can be sent as is with its cookies. Imported as local_storage; cannot be combined with local_storage.
+     */
+    origins?: Array<PlaywrightStorageOrigin>;
 };
 
 /**
@@ -6578,6 +6618,12 @@ export type ProfileStateImportResponse = {
      * Session Storage Origins
      */
     session_storage_origins: number;
+    /**
+     * Indexed Db Origins Not Imported
+     *
+     * Origins whose IndexedDB data in a Playwright export was not imported: profiles store cookies, localStorage and sessionStorage only.
+     */
+    indexed_db_origins_not_imported?: Array<string>;
 };
 
 /**
