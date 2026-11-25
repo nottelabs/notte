@@ -1,15 +1,25 @@
 # @sniptest filename=merchant_login.py
 # @sniptest typecheck_only=true
 import os
+from urllib.parse import urlsplit
 
 from notte_sdk import NotteClient
 from onepassword import Client
 from playwright.async_api import async_playwright
 
+# Fixed in code, not passed as a run variable, so a caller cannot send the login elsewhere.
+LOGIN_URL = "https://portal.example.com/login"
+LOGIN_ORIGIN = "https://portal.example.com"
+
 client = NotteClient()
 
 
-async def run(login_url: str, username_ref: str, password_ref: str):
+def origin(url: str) -> str:
+    parts = urlsplit(url)
+    return f"{parts.scheme}://{parts.netloc}"
+
+
+async def run(username_ref: str, password_ref: str):
     vault = await Client.authenticate(
         auth=os.environ["OP_SERVICE_ACCOUNT_TOKEN"],
         integration_name="Notte Function",
@@ -22,9 +32,12 @@ async def run(login_url: str, username_ref: str, password_ref: str):
         async with async_playwright() as p:
             browser = await p.chromium.connect_over_cdp(session.cdp_url())
             page = browser.contexts[0].pages[0]
-            await page.goto(login_url)
+            await page.goto(LOGIN_URL)
+            if origin(page.url) != LOGIN_ORIGIN:
+                raise RuntimeError(f"Refusing to fill credentials on {origin(page.url)}")
             await page.get_by_label("Username").fill(username)
             await page.get_by_label("Password").fill(password)
             await page.get_by_role("button", name="Sign in").click()
-            await page.wait_for_load_state()
+            # Fails with a timeout if the site rejects the login.
+            await page.get_by_role("button", name="Account").wait_for(timeout=15_000)
             return {"session_id": session.session_id, "url": page.url}
