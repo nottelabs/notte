@@ -16,6 +16,14 @@ LOGIN_ORIGIN = "https://portal.example.com"
 client = NotteClient()
 
 
+class ExpectedFunctionError(Exception):
+    """A deliberate refusal: the run ends as "rejected" and is never self-healed."""
+
+
+class WrongLoginSite(ExpectedFunctionError):
+    pass
+
+
 def origin(url: str) -> str:
     parts = urlsplit(url)
     return f"{parts.scheme}://{parts.netloc}"
@@ -30,13 +38,14 @@ async def run(username_ref: str, password_ref: str):
     username = await vault.secrets.resolve(username_ref)
     password = await vault.secrets.resolve(password_ref)
 
-    with client.Session() as session:
+    # No saved browser logs or replay, since the page holds the credentials.
+    with client.Session(log_session=False, record_session=False) as session:
         async with async_playwright() as p:
             browser = await p.chromium.connect_over_cdp(session.cdp_url())
             page = browser.contexts[0].pages[0]
             await page.goto(LOGIN_URL)
             if origin(page.url) != LOGIN_ORIGIN:
-                raise RuntimeError(f"Refusing to fill credentials on {origin(page.url)}")
+                raise WrongLoginSite(f"Refusing to fill credentials on {origin(page.url)}")
             await page.get_by_label("Username").fill(username)
             await page.get_by_label("Password").fill(password)
             await page.get_by_role("button", name="Sign in").click()
