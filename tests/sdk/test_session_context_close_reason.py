@@ -25,7 +25,7 @@ def test_stop_endpoint_sends_error_close_reason() -> None:
     )
 
     assert endpoint.params is not None
-    assert endpoint.params.model_dump() == {"close_reason": "error", "wait": False}
+    assert endpoint.params.model_dump() == {"close_reason": "error", "wait": False, "close_error": None}
 
 
 def test_sync_context_exception_stops_session_as_error() -> None:
