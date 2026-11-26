@@ -735,6 +735,18 @@ def _settles(action: BaseAction) -> bool:
     )
 
 
+async def _log_stalled_goto(window: BrowserWindow, action: GotoAction) -> None:
+    """A goto's page that has not loaded once its `timeout_goto_ms` is spent is used as it is: logs what it still
+    waited for (`BrowserWindow.describe_stalled_load`). A loaded page that keeps a request open is not logged."""
+    ready_state = await window.document_ready_state()
+    if ready_state == "complete":
+        return
+    logger.warning(
+        f"Goto for url={action.url!r} did not load within {config.timeout_goto_ms} ms; continuing with the page as it "
+        + f"is (document {ready_state or 'unknown'}, {window.describe_requests_in_flight()})"
+    )
+
+
 def _settled_goto(action: GotoAction) -> bool:
     """A goto that waits for the load (the default): its page is waited for like a click's new page. With another
     `wait_until`, it waits for that event, then sleeps as before."""
@@ -1505,6 +1517,8 @@ async def _execute(
                 # An exact-URL no-op keeps the previous response, so exclude it before consulting the response.
                 new_document = isinstance(action, GotoAction) and action.url != url and window.goto_response is not None
                 await _settle(settle, action, url, verbose=verbose, new_document=new_document)
+                if isinstance(action, GotoAction) and settle.document_timed_out:
+                    await _log_stalled_goto(window, action)
         if closed_during_click is not None and not any(
             tab is not page and not tab.is_closed() for tab in context.pages
         ):
