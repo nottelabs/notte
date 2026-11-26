@@ -117,9 +117,33 @@ function cdpTransportFailure(error: unknown): string | undefined {
   return CDP_TRANSPORT_FAILURES.some(failure => reason.includes(failure)) ? reason : undefined;
 }
 
-/** Headers for Notte's CDP endpoint: the SDK identity and, under Node, its User-Agent. */
-export function cdpHeaders(): Record<string, string> {
-  const userAgent = clientUserAgent();
+/**
+ * Whether `cdpUrl` is a WebSocket on the API's own origin: same host, the WebSocket scheme of the
+ * API's scheme (wss for https, ws for http) and the same effective port, as Python's `_cdp_headers`.
+ */
+export function onApiOrigin(cdpUrl: string, apiUrl: string | undefined): boolean {
+  if (!apiUrl) return false;
+  let target: URL;
+  let api: URL;
+  try {
+    target = new URL(cdpUrl);
+    api = new URL(apiUrl);
+  } catch {
+    return false;
+  }
+  const secure = target.protocol === 'wss:' && api.protocol === 'https:';
+  const plain = target.protocol === 'ws:' && api.protocol === 'http:';
+  if (!secure && !plain) return false;
+  const defaultPort = secure ? '443' : '80';
+  return target.hostname === api.hostname && (target.port || defaultPort) === (api.port || defaultPort);
+}
+
+/**
+ * Headers for Notte's CDP endpoint: the SDK identity and, under Node, its User-Agent. The User-Agent
+ * names the CI job running the SDK, so it is only sent to the API's own origin (`onApiOrigin`).
+ */
+export function cdpHeaders(cdpUrl: string, apiUrl: string | undefined): Record<string, string> {
+  const userAgent = onApiOrigin(cdpUrl, apiUrl) ? clientUserAgent() : undefined;
   return {
     ...(userAgent ? { 'user-agent': userAgent } : {}),
     'x-notte-request-origin': REQUEST_ORIGIN,
@@ -909,13 +933,15 @@ export class Session {
     try {
       if (!this.playwrightBrowser) {
         const cdpUrl = await this.cdpUrl();
-        // Identify the SDK to Notte's CDP endpoint, as every API call does: its User-Agent
-        // replaces Playwright's own on the WebSocket upgrade. A caller's own browser
-        // (`cdp_url` option) gets nothing extra.
+        // Identify the SDK to Notte's CDP endpoint, as every API call does: on the API's own
+        // origin its User-Agent replaces Playwright's own on the WebSocket upgrade. A caller's
+        // own browser (`cdp_url` option) gets nothing extra.
         this.playwrightBrowser = await connectOverCdpWithRetry(() =>
           this.options.cdp_url
             ? playwright.chromium.connectOverCDP(cdpUrl)
-            : playwright.chromium.connectOverCDP(cdpUrl, { headers: cdpHeaders() }),
+            : playwright.chromium.connectOverCDP(cdpUrl, {
+                headers: cdpHeaders(cdpUrl, this.client.getConfig().baseUrl),
+              }),
         );
         installServerOwnedDialogPolicy(this.playwrightBrowser);
       }
