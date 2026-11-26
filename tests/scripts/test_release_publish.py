@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 import subprocess
@@ -342,6 +343,137 @@ def test_bump_pr_commits_the_stamped_snapshot_and_generated_sdk(tmp_path: Path) 
     pushed = _git(repo, "--git-dir", str(origin), "diff", "--name-only", "main", branch).splitlines()
     assert sorted(pushed) == sorted(files)
     assert _git(repo, "status", "--porcelain") == ""
+
+
+@pytest.mark.parametrize("scenario", ["attested", "moved", "no_changes"])
+def test_regenerated_bump_replaces_only_the_attested_head(tmp_path: Path, scenario: str) -> None:
+    # Real git against a local origin: main moved past the bot's bump; regenerate it on the new main.
+    workflow = _load_workflow("update-bot-pr.yml")
+    step = next(
+        step
+        for step in workflow["jobs"]["release"]["steps"]
+        if step.get("name") == "Replace the version bump PR's head"
+    )
+    branch = "chore/python-version-after-v1.9.1"
+    repo = tmp_path / "repo"
+    (repo / "packages/notte-sdk/src/notte_sdk/_generated").mkdir(parents=True)
+    (repo / "openapi").mkdir()
+    files = {
+        "pyproject.toml": '[project]\nversion = "{v}.dev0"\n',
+        "packages/notte-sdk/pyproject.toml": '[project]\nversion = "{v}.dev0"\n',
+        "uv.lock": "notte {v}.dev0\n",
+        "openapi/openapi.json": '{{"info": {{"version": "{v}"}}}}\n',
+        "packages/notte-sdk/src/notte_sdk/_generated/models.py": 'VERSION = "{v}"\n',
+    }
+
+    def write(version: str) -> None:
+        for path, text in files.items():
+            (repo / path).write_text(text.format(v=version))
+
+    git_env = {
+        **os.environ,
+        "GIT_CONFIG_GLOBAL": os.devnull,
+        "GIT_CONFIG_NOSYSTEM": "1",
+        "GIT_AUTHOR_NAME": "t",
+        "GIT_AUTHOR_EMAIL": "t@t",
+        "GIT_COMMITTER_NAME": "t",
+        "GIT_COMMITTER_EMAIL": "t@t",
+    }
+
+    def git(*args: str) -> str:
+        return subprocess.run(
+            ["git", *args], cwd=repo, env=git_env, check=True, capture_output=True, text=True
+        ).stdout.strip()
+
+    origin = tmp_path / "origin.git"
+    _ = subprocess.run(["git", "init", "--quiet", "--bare", "--initial-branch=main", str(origin)], check=True)
+    _ = git("init", "--quiet", "--initial-branch=main")
+    write("1.9.1")
+    _ = git("add", ".")
+    _ = git("commit", "--quiet", "-m", "base")
+    _ = git("remote", "add", "origin", str(origin))
+    # The release run's bump, attested at this head.
+    _ = git("checkout", "--quiet", "-b", branch)
+    write("1.9.2")
+    _ = git("commit", "--quiet", "-am", "bump")
+    old_head = git("rev-parse", "HEAD")
+    _ = git("push", "--quiet", "origin", branch)
+    # Another PR merges first.
+    _ = git("checkout", "--quiet", "main")
+    (repo / "feature.txt").write_text("feature\n")
+    _ = git("add", "feature.txt")
+    _ = git("commit", "--quiet", "-m", "feature")
+    _ = git("push", "--quiet", "origin", "main")
+    main = git("rev-parse", "HEAD")
+    if scenario == "moved":
+        # A person pushes after the find job checked the head.
+        _ = git("checkout", "--quiet", branch)
+        (repo / "manual.txt").write_text("manual\n")
+        _ = git("add", "manual.txt")
+        _ = git("commit", "--quiet", "-m", "manual")
+        _ = git("push", "--quiet", "origin", branch)
+        _ = git("checkout", "--quiet", "main")
+    # The job checks out main only.
+    _ = git("branch", "--quiet", "-D", branch)
+    remote_before = git("ls-remote", "origin", f"refs/heads/{branch}").split()[0]
+    if scenario != "no_changes":
+        write("1.9.2")  # The advance step's result on the new main.
+
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    edited = tmp_path / "edited.md"
+    gh = fake_bin / "gh"
+    gh.write_text(
+        "#!/bin/sh\n"
+        + "if [ \"$1\" = api ]; then printf 'After publishing v1.9.1.\\n\\n<!-- bot-pr-run: 123 -->\\n'; fi\n"
+        + f'if [ "$1 $2" = "pr edit" ]; then cp "$5" "{edited}"; fi\n'
+        + "exit 0\n"
+    )
+    gh.chmod(0o755)
+    output = tmp_path / "output"
+    result = subprocess.run(
+        ["bash", "-e", "-c", step["run"]],
+        cwd=repo,
+        env={
+            **git_env,
+            "PATH": f"{fake_bin}:{os.environ['PATH']}",
+            "RUNNER_TEMP": str(tmp_path),
+            "GITHUB_OUTPUT": str(output),
+            "GITHUB_REPOSITORY": "nottelabs/notte",
+            "GITHUB_RUN_ID": "777",
+            "RELEASE_TAG": "v1.9.1",
+            "BRANCH": branch,
+            "PR_NUMBER": "51",
+            "OLD_HEAD": old_head,
+        },
+        capture_output=True,
+        text=True,
+    )
+    remote = git("ls-remote", "origin", f"refs/heads/{branch}").split()[0]
+    manifest = tmp_path / "bot-pr.json"
+    if scenario != "attested":
+        assert (result.returncode == 0) is (scenario == "no_changes"), result.stderr
+        if scenario == "moved":
+            assert "stale info" in result.stderr
+        assert remote == remote_before
+        assert not manifest.exists() and not edited.exists()
+        assert not output.exists()
+        return
+    assert result.returncode == 0, result.stderr
+    head = git("rev-parse", "HEAD")
+    assert remote == head != old_head
+    assert git("rev-parse", "HEAD~1") == main
+    assert sorted(git("diff", "--name-only", "main", head).splitlines()) == sorted(files)
+    assert git("status", "--porcelain") == ""
+    assert edited.read_text() == "After publishing v1.9.1.\n\n<!-- bot-pr-run: 777 -->\n"
+    assert json.loads(manifest.read_text()) == {
+        "GITHUB_REPOSITORY": "nottelabs/notte",
+        "GITHUB_RUN_ID": "777",
+        "BRANCH": branch,
+        "PR_NUMBER": "51",
+        "HEAD_SHA": head,
+    }
+    assert output.read_text() == "owned=true\n"
 
 
 def _prepare_step(name: str) -> dict:

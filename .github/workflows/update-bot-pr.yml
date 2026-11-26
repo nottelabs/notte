@@ -1,0 +1,154 @@
+name: update-bot-pr
+
+# Protected main requires an up-to-date branch, and complete-bot-pr merges only the
+# exact head a producing run pushed. When another PR merges first, regenerate the
+# bot's change on the new main instead of merging main into it, so the new head is
+# again bot-produced and attested. Only a PR whose current head is still the attested
+# bot head is regenerated: a person's push, or GitHub's "Update branch", leaves the PR
+# for a person. The new head needs its own approval before complete-bot-pr merges it.
+
+on:
+  push:
+    branches: [main]
+  # Reconcile a run that failed or was replaced in the concurrency queue.
+  schedule:
+    - cron: '23 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: update-bot-pr
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  find:
+    # Default-branch code only; never check out or execute PR code here.
+    if: github.repository == 'nottelabs/notte' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      openapi: ${{ steps.stale.outputs.openapi }}
+      release_number: ${{ steps.stale.outputs.release_number }}
+      release_branch: ${{ steps.stale.outputs.release_branch }}
+      release_tag: ${{ steps.stale.outputs.release_tag }}
+      release_head: ${{ steps.stale.outputs.release_head }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Find owned bot PRs that main has moved past
+        id: stale
+        env:
+          # The same bot authorization complete-bot-pr reads with.
+          GH_TOKEN: ${{ secrets.SUBMODULE_BUMP_PAT }}
+        run: python3 scripts/complete_bot_pr.py --stale
+
+  openapi:
+    # The refresh workflow regenerates from main, keeps manual commits and records its own head.
+    needs: find
+    # A failed lookup of another PR fails find after it records the PRs it did check.
+    if: ${{ !cancelled() && needs.find.outputs.openapi != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    steps:
+      - name: Rerun the OpenAPI refresh on main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ needs.find.outputs.openapi }}
+        run: |
+          set -euo pipefail
+          echo "Refresh PR #$PR_NUMBER is behind main; regenerating it."
+          gh workflow run openapi-bump.yml --repo "$GITHUB_REPOSITORY" --ref main
+
+  release:
+    # complete-bot-pr attests this job's result, not the run's: the openapi job and
+    # find's lookups of other PRs can fail without stranding the head pushed here.
+    needs: find
+    if: ${{ !cancelled() && needs.find.outputs.release_number != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      RELEASE_TAG: ${{ needs.find.outputs.release_tag }}
+      BRANCH: ${{ needs.find.outputs.release_branch }}
+      PR_NUMBER: ${{ needs.find.outputs.release_number }}
+      OLD_HEAD: ${{ needs.find.outputs.release_head }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version-file: .python-version
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+
+      # Identical to the release's step (a test compares them), so the result is what the release produces on this main.
+      - name: Advance workspace version and lockfile
+        run: |
+          python3 scripts/release_version.py next "$RELEASE_TAG"
+          if ! git diff --quiet -- pyproject.toml packages/; then
+            uv lock
+            # The API reports this workspace's version in its schema, so the snapshot and the
+            # SDK generated from it move with the version; otherwise the schema round trip fails.
+            uv sync --locked --dev --all-extras
+            uv run --no-sync python scripts/openapi_contract.py --stamp-version
+            make sdk-codegen
+          fi
+
+      - name: Replace the version bump PR's head
+        id: bump
+        env:
+          GH_TOKEN: ${{ secrets.SUBMODULE_BUMP_PAT }}
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- pyproject.toml packages/ uv.lock openapi/openapi.json; then
+            echo "::notice::Main is already past $RELEASE_TAG; leaving PR #$PR_NUMBER for a person."
+            exit 0
+          fi
+
+          NEXT_VERSION=$(python3 -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')
+          gh auth setup-git
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -b "$BRANCH"
+          git add pyproject.toml packages/*/pyproject.toml uv.lock openapi/openapi.json packages/notte-sdk/src/notte_sdk/_generated
+          git commit -m "chore: advance Python packages to ${NEXT_VERSION}"
+          # Replace only the attested head the find job checked; a push made since is kept.
+          git push --force-with-lease="$BRANCH:$OLD_HEAD" origin "$BRANCH"
+
+          # This run now owns the head: point the PR's single run marker at it.
+          BODY_FILE="$RUNNER_TEMP/python-version-pr.md"
+          gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq .body | BODY_FILE="$BODY_FILE" python3 -c '
+          import os, re, sys
+          body, count = re.subn(r"<!-- bot-pr-run: [0-9]+ -->", "<!-- bot-pr-run: %s -->" % os.environ["GITHUB_RUN_ID"], sys.stdin.read())
+          if count != 1:
+              sys.exit("Expected one bot-pr-run marker in the PR body")
+          open(os.environ["BODY_FILE"], "w").write(body)
+          '
+          gh pr edit "$PR_NUMBER" --body-file "$BODY_FILE"
+          echo "Regenerated PR #$PR_NUMBER on main; it merges once its new head is approved and green."
+
+          # Bind completion to the exact PR and commit produced by this run.
+          HEAD_SHA="$(git rev-parse HEAD)" python3 - <<'PYCODE'
+          import json
+          import os
+          from pathlib import Path
+
+          manifest = {key: os.environ[key] for key in ("GITHUB_REPOSITORY", "GITHUB_RUN_ID", "BRANCH", "PR_NUMBER", "HEAD_SHA")}
+          Path(os.environ["RUNNER_TEMP"], "bot-pr.json").write_text(json.dumps(manifest))
+          PYCODE
+          echo "owned=true" >> "$GITHUB_OUTPUT"
+
+      - name: Record bot PR ownership
+        if: steps.bump.outputs.owned == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: bot-pr
+          path: ${{ runner.temp }}/bot-pr.json
+          if-no-files-found: error

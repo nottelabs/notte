@@ -9,7 +9,13 @@ import re
 import subprocess
 import sys
 import zipfile
+from pathlib import Path
 from typing import NotRequired, TypedDict, cast
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+from scripts import release_version  # noqa: E402
 
 REPOSITORY = "nottelabs/notte"
 BOT = "andreakiro"
@@ -23,6 +29,8 @@ PRODUCERS = {
 }
 # One branch per release, opened by the release run of that tag.
 RELEASE_PRODUCER = ".github/workflows/pypi-release.yml"
+# Regenerates an owned release branch on main once main has moved past it.
+RELEASE_REFRESHER = ".github/workflows/update-bot-pr.yml"
 RELEASE_BRANCH = re.compile(r"chore/python-version-after-(v(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*))")
 
 
@@ -67,16 +75,27 @@ class Producer(TypedDict):
     path: str
     events: set[str]
     ref: str
+    # The job that pushes the head and records it, when the run has other jobs:
+    # only that job's result decides, so an unrelated job's failure keeps the head.
+    job: NotRequired[str]
 
 
-def producer(branch: str) -> Producer | None:
-    """The workflow, events and run ref allowed to produce this branch."""
+def producers(branch: str) -> list[Producer]:
+    """The workflows, events and run refs allowed to produce this branch."""
     if branch in PRODUCERS:
-        return {"path": PRODUCERS[branch], "events": {"schedule", "workflow_dispatch"}, "ref": "main"}
+        return [{"path": PRODUCERS[branch], "events": {"schedule", "workflow_dispatch"}, "ref": "main"}]
     release = RELEASE_BRANCH.fullmatch(branch)
     if release is not None:
-        return {"path": RELEASE_PRODUCER, "events": {"push"}, "ref": release.group(1)}
-    return None
+        return [
+            {"path": RELEASE_PRODUCER, "events": {"push"}, "ref": release.group(1)},
+            {
+                "path": RELEASE_REFRESHER,
+                "events": {"push", "schedule", "workflow_dispatch"},
+                "ref": "main",
+                "job": "release",
+            },
+        ]
+    return []
 
 
 def gh(*args: str) -> bytes:
@@ -116,7 +135,7 @@ def owned(pr: Pull) -> bool:
         and pr["base"]["repo"]["full_name"] == REPOSITORY
         and pr["head"]["repo"] is not None
         and pr["head"]["repo"]["full_name"] == REPOSITORY
-        and producer(pr["head"]["ref"]) is not None
+        and bool(producers(pr["head"]["ref"]))
         and re.fullmatch(r"[0-9a-f]{40}", pr["head"]["sha"]) is not None
     )
 
@@ -126,20 +145,30 @@ def attested(pr: Pull) -> bool:
     if len(markers) != 1:
         return False
     run_id = markers[0]
-    expected = producer(pr["head"]["ref"])
-    if expected is None:
+    expected = producers(pr["head"]["ref"])
+    if not expected:
         return False
     run = api(f"repos/{REPOSITORY}/actions/runs/{run_id}")
+    matched = [
+        item
+        for item in expected
+        if run["head_branch"] == item["ref"] and run["event"] in item["events"] and run["path"] == item["path"]
+    ]
     if not (
         run["repository"]["full_name"] == REPOSITORY
         and run["head_repository"]["full_name"] == REPOSITORY
-        and run["head_branch"] == expected["ref"]
-        and run["event"] in expected["events"]
-        and run["path"] == expected["path"]
+        and len(matched) == 1
         and run["status"] == "completed"
-        and run["conclusion"] == "success"
     ):
         return False
+    job = matched[0].get("job")
+    if job is None:
+        if run["conclusion"] != "success":
+            return False
+    else:
+        jobs = api(f"repos/{REPOSITORY}/actions/runs/{run_id}/jobs?filter=latest&per_page=100")
+        if [item["conclusion"] for item in jobs["jobs"] if item["name"] == job] != ["success"]:
+            return False
     # The producer's workflow and code must have come from reviewed main history
     # (a release tag must point at a main commit).
     comparison = api(f"repos/{REPOSITORY}/compare/{run['head_sha']}...main")
@@ -252,9 +281,85 @@ def release_pulls() -> list[int]:
     ]
 
 
+def advances(tag: str, root: Path = ROOT) -> bool:
+    """Whether the release's advance step changes this checkout of main.
+
+    Main past the release (its version PR is obsolete) or behind it (the step
+    refuses) leaves nothing to regenerate.
+    """
+    version = release_version.release_version(tag)
+    current, _ = release_version.workspace(root)
+    return current in (version, f"{version}.dev", f"{version}.dev0")
+
+
+def stale(number: int) -> Pull | None:
+    """The PR, if its current head is the exact attested bot head and main has moved past it.
+
+    A head with any commit the producing run did not push (a person's push, or
+    GitHub's "Update branch") is not attested, so it stays with a person.
+    """
+    pr = cast(Pull, api(f"repos/{REPOSITORY}/pulls/{number}"))
+    if not owned(pr) or not attested(pr):
+        return None
+    comparison = api(f"repos/{REPOSITORY}/compare/main...{pr['head']['sha']}")
+    return pr if comparison["behind_by"] > 0 else None
+
+
+def find_stale() -> tuple[dict[str, str], list[str]]:
+    """The refresh PR and one release PR (at most) that update-bot-pr regenerates on main.
+
+    A failed lookup is reported for its own PR; the other PRs are still checked.
+    """
+    found = {"openapi": "", "release_number": "", "release_branch": "", "release_tag": "", "release_head": ""}
+    errors: list[str] = []
+    branch = "chore/bump-openapi"
+    try:
+        pulls = api(f"repos/{REPOSITORY}/pulls?state=open&base=main&head=nottelabs:{branch}&per_page=100")
+        if len(pulls) == 1 and stale(pulls[0]["number"]) is not None:
+            found["openapi"] = str(pulls[0]["number"])
+    except Exception as error:
+        errors.append(f"{branch}: {type(error).__name__}: {error}")
+    try:
+        numbers = sorted(release_pulls())
+    except Exception as error:
+        errors.append(f"{RELEASE_BRANCH.pattern}: {type(error).__name__}: {error}")
+        numbers = []
+    # One per run: a run uploads a single bot-pr artifact. Later runs take the next one.
+    for number in numbers:
+        try:
+            pr = stale(number)
+            release = None if pr is None else RELEASE_BRANCH.fullmatch(pr["head"]["ref"])
+            if pr is None or release is None:
+                continue
+            if not advances(release.group(1)):
+                # Otherwise this PR would take every run's single slot without changing.
+                print(f"PR #{number}: main is not at {release.group(1)}; leaving it for a person.")
+                continue
+        except Exception as error:
+            errors.append(f"PR #{number}: {type(error).__name__}: {error}")
+            continue
+        found.update(
+            release_number=str(number),
+            release_branch=pr["head"]["ref"],
+            release_tag=release.group(1),
+            release_head=pr["head"]["sha"],
+        )
+        break
+    return found, errors
+
+
 def main() -> int:
     if os.environ["GITHUB_REPOSITORY"] != REPOSITORY or api("user")["login"] != BOT:
         raise RuntimeError("Unexpected bot repository or authorization")
+    if sys.argv[1:] == ["--stale"]:
+        found, errors = find_stale()
+        with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+            for key, value in found.items():
+                print(f"{key}={value}", file=output)
+        for error in errors:
+            print(error, file=sys.stderr)
+        # The PRs found are still regenerated; the failed lookups fail this run's find job.
+        return int(bool(errors))
     failed = False
 
     def attempt(label: str, number: int) -> None:
