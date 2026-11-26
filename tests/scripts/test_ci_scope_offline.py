@@ -15,6 +15,14 @@ class OfflinePathRoutingTests(unittest.TestCase):
                 self.assertEqual(ci.scopes_for_path(path), {"python_static", "python_unit"})
                 self.assertEqual(ci.integration_examples_for_path(path), set())
 
+    def test_bot_and_types_generator_scripts_select_python_offline_checks(self) -> None:
+        for path in ("scripts/complete_bot_pr.py", "scripts/generate_types_all.py"):
+            with self.subTest(path=path):
+                self.assertEqual(ci.scopes_for_path(path), {"python_static", "python_unit"})
+                self.assertEqual(ci.integration_examples_for_path(path), set())
+        # The generated module is shipped code and keeps its runtime coverage.
+        self.assertTrue(ci.PYTHON_RUNTIME <= ci.scopes_for_path("packages/notte-core/src/notte_core/types.py"))
+
     def test_openapi_tools_and_order_fixtures_keep_generation_checks(self) -> None:
         expected = {"python_static", "python_unit", "node_static", "node_generated"}
         for path in (

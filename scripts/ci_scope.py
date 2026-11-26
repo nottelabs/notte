@@ -54,7 +54,15 @@ WORKSPACE_PACKAGES = {
     "notte-llm": "packages/notte-llm",
     "notte-sdk": "packages/notte-sdk",
 }
-OFFLINE_SCRIPTS = {"scripts/release_version.py", "scripts/build_release.py"}
+# Scripts that never run in CI's runtime suites; their offline tests are in the unit suite.
+# generate_types_all.py only rewrites notte_core/types.py, whose own change selects runtime coverage;
+# pre-commit (python_static) and its unit test fail when the committed file no longer matches.
+OFFLINE_SCRIPTS = {
+    "scripts/release_version.py",
+    "scripts/build_release.py",
+    "scripts/complete_bot_pr.py",
+    "scripts/generate_types_all.py",
+}
 OPENAPI_TOOLS = {
     "scripts/openapi_order.py",
     "scripts/openapi_contract.py",
