@@ -48,7 +48,8 @@ jobs:
   openapi:
     # The refresh workflow regenerates from main, keeps manual commits and records its own head.
     needs: find
-    if: needs.find.outputs.openapi != ''
+    # A failed lookup of another PR fails find after it records the PRs it did check.
+    if: ${{ !cancelled() && needs.find.outputs.openapi != '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -64,8 +65,10 @@ jobs:
           gh workflow run openapi-bump.yml --repo "$GITHUB_REPOSITORY" --ref main
 
   release:
+    # complete-bot-pr attests this job's result, not the run's: the openapi job and
+    # find's lookups of other PRs can fail without stranding the head pushed here.
     needs: find
-    if: needs.find.outputs.release_number != ''
+    if: ${{ !cancelled() && needs.find.outputs.release_number != '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:

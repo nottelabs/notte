@@ -56,12 +56,15 @@ def archive(manifest):
     return data.getvalue()
 
 
-def attest(fixture, *, comparison="ahead", artifacts=None):
+def attest(fixture, *, comparison="ahead", artifacts=None, jobs=None):
     pr, run, manifest = fixture
     if artifacts is None:
         artifacts = [{"id": 1, "name": "bot-pr", "expired": False, "size_in_bytes": 512}]
+    responses = [run, {"status": comparison}, {"artifacts": artifacts}]
+    if jobs is not None:
+        responses.insert(1, {"jobs": jobs})
     with (
-        patch.object(bot, "api", side_effect=[run, {"status": comparison}, {"artifacts": artifacts}]),
+        patch.object(bot, "api", side_effect=responses),
         patch.object(bot, "gh", return_value=archive(manifest)),
     ):
         return bot.attested(pr)
@@ -606,11 +609,58 @@ def test_release_listing_error_is_reported_after_fixed_branches(monkeypatch, cap
         assert "PR #42: left open" in output.out
 
 
+RELEASE_JOB_PASSED = [{"name": "find", "conclusion": "success"}, {"name": "release", "conclusion": "success"}]
+
+
 @pytest.mark.parametrize("event", ["push", "schedule", "workflow_dispatch"])
 def test_refresher_run_on_main_owns_the_regenerated_release_branch(fixture, event):
     fixture = release_fixture(fixture)
     fixture[1].update(path=bot.RELEASE_REFRESHER, event=event, head_branch="main")
-    assert attest(fixture)
+    assert attest(fixture, jobs=RELEASE_JOB_PASSED)
+
+
+@pytest.mark.parametrize("failed", ["openapi", "find"])
+def test_refresher_head_survives_a_failure_in_another_job(fixture, failed):
+    # The OpenAPI dispatch or another PR's lookup failing must not strand the pushed version head.
+    fixture = release_fixture(fixture)
+    fixture[1].update(path=bot.RELEASE_REFRESHER, event="push", head_branch="main", conclusion="failure")
+    jobs = [{"name": failed, "conclusion": "failure"}, {"name": "release", "conclusion": "success"}]
+    assert attest(fixture, jobs=jobs)
+
+
+@pytest.mark.parametrize(
+    "jobs",
+    [
+        [{"name": "release", "conclusion": "failure"}],
+        [{"name": "release", "conclusion": "skipped"}],
+        [{"name": "release", "conclusion": None}],
+        [{"name": "find", "conclusion": "success"}],
+        [{"name": "release", "conclusion": "success"}, {"name": "release", "conclusion": "success"}],
+    ],
+)
+def test_refresher_needs_exactly_one_successful_release_job(fixture, jobs):
+    fixture = release_fixture(fixture)
+    fixture[1].update(path=bot.RELEASE_REFRESHER, event="push", head_branch="main")
+    pr, run, manifest = fixture
+    with (
+        patch.object(bot, "api", side_effect=[run, {"jobs": jobs}]) as api,
+        patch.object(bot, "gh", return_value=archive(manifest)),
+    ):
+        assert not bot.attested(pr)
+        assert api.call_args.args == (f"repos/{bot.REPOSITORY}/actions/runs/123/jobs?filter=latest&per_page=100",)
+
+
+def test_refresher_run_must_be_complete(fixture):
+    fixture = release_fixture(fixture)
+    fixture[1].update(path=bot.RELEASE_REFRESHER, event="push", head_branch="main", status="in_progress")
+    with patch.object(bot, "api", side_effect=[fixture[1]]):
+        assert not bot.attested(fixture[0])
+
+
+def test_release_tag_run_still_needs_the_whole_run_to_succeed(fixture):
+    fixture = release_fixture(fixture)
+    fixture[1]["conclusion"] = "failure"
+    assert not attest(fixture)
 
 
 @pytest.mark.parametrize(
@@ -626,7 +676,7 @@ def test_refresher_attests_only_from_trusted_main_events(fixture, field, value):
     fixture = release_fixture(fixture)
     fixture[1].update(path=bot.RELEASE_REFRESHER, event="push", head_branch="main")
     fixture[1][field] = value
-    assert not attest(fixture)
+    assert not attest(fixture, jobs=RELEASE_JOB_PASSED)
 
 
 @pytest.mark.parametrize("branch", bot.PRODUCERS)
@@ -634,7 +684,7 @@ def test_refresher_cannot_attest_fixed_branches(fixture, branch):
     pr, run, manifest = fixture
     pr["head"]["ref"] = manifest["BRANCH"] = branch
     run.update(path=bot.RELEASE_REFRESHER, event="schedule", head_branch="main")
-    assert not attest(fixture)
+    assert not attest(fixture, jobs=RELEASE_JOB_PASSED)
 
 
 @pytest.mark.parametrize("behind_by,expected", [(0, False), (3, True)])
@@ -671,14 +721,18 @@ def test_find_stale_reports_the_refresh_pr_and_one_release_pr(fixture):
         patch.object(bot, "api", return_value=[{"number": 42}]),
         patch.object(bot, "release_pulls", return_value=[52, 50, 51]),
         patch.object(bot, "stale", side_effect=[fixture[0], None, behind]) as stale,
+        patch.object(bot, "advances", return_value=True),
     ):
-        assert bot.find_stale() == {
-            "openapi": "42",
-            "release_number": "51",
-            "release_branch": RELEASE,
-            "release_tag": "v1.10.17",
-            "release_head": HEAD,
-        }
+        assert bot.find_stale() == (
+            {
+                "openapi": "42",
+                "release_number": "51",
+                "release_branch": RELEASE,
+                "release_tag": "v1.10.17",
+                "release_head": HEAD,
+            },
+            [],
+        )
         # One release PR per run: each run uploads a single bot-pr artifact.
         assert [call.args for call in stale.call_args_list] == [(42,), (50,), (51,)]
 
@@ -689,7 +743,67 @@ def test_find_stale_reports_nothing_for_up_to_date_prs():
         patch.object(bot, "release_pulls", return_value=[50]),
         patch.object(bot, "stale", return_value=None),
     ):
-        assert set(bot.find_stale().values()) == {""}
+        found, errors = bot.find_stale()
+        assert set(found.values()) == {""} and errors == []
+
+
+def release_pr(fixture, number, tag):
+    pr = copy.deepcopy(fixture[0])
+    pr["number"] = number
+    pr["head"]["ref"] = f"chore/python-version-after-{tag}"
+    return pr
+
+
+def test_an_obsolete_release_pr_does_not_take_the_slot_of_a_later_one(fixture, capsys):
+    # Main already past v1.10.16: its PR would never change, and would be chosen on every run.
+    old, current = release_pr(fixture, 50, "v1.10.16"), release_pr(fixture, 51, "v1.10.17")
+    with (
+        patch.object(bot, "api", return_value=[]),
+        patch.object(bot, "release_pulls", return_value=[51, 50]),
+        patch.object(bot, "stale", side_effect=[old, current]),
+        patch.object(bot, "advances", side_effect=lambda tag: tag == "v1.10.17") as advances,
+    ):
+        found, errors = bot.find_stale()
+    assert (found["release_number"], found["release_tag"], errors) == ("51", "v1.10.17", [])
+    assert [call.args for call in advances.call_args_list] == [("v1.10.16",), ("v1.10.17",)]
+    assert "PR #50: main is not at v1.10.16" in capsys.readouterr().out
+
+
+def test_a_failed_lookup_is_reported_and_other_prs_are_still_checked(fixture):
+    current = release_pr(fixture, 51, "v1.10.17")
+    with (
+        patch.object(bot, "api", side_effect=RuntimeError("Listing failed")),
+        patch.object(bot, "release_pulls", return_value=[50, 51]),
+        patch.object(bot, "stale", side_effect=[RuntimeError("Run 9 not found"), current]),
+        patch.object(bot, "advances", return_value=True),
+    ):
+        found, errors = bot.find_stale()
+    assert found["release_number"] == "51"
+    assert errors == [
+        "chore/bump-openapi: RuntimeError: Listing failed",
+        "PR #50: RuntimeError: Run 9 not found",
+    ]
+
+
+def test_a_failed_release_listing_still_reports_the_refresh_pr(fixture):
+    with (
+        patch.object(bot, "api", return_value=[{"number": 42}]),
+        patch.object(bot, "release_pulls", side_effect=RuntimeError("Listing failed")),
+        patch.object(bot, "stale", return_value=fixture[0]),
+    ):
+        found, errors = bot.find_stale()
+    assert found["openapi"] == "42" and found["release_number"] == ""
+    assert errors == [f"{bot.RELEASE_BRANCH.pattern}: RuntimeError: Listing failed"]
+
+
+@pytest.mark.parametrize(
+    "workspace,expected",
+    [("1.10.17.dev0", True), ("1.10.17.dev", True), ("1.10.17", True), ("1.10.18.dev0", False), ("1.10.16", False)],
+)
+def test_advances_only_when_main_is_at_the_release(tmp_path, workspace, expected):
+    _ = (tmp_path / "pyproject.toml").write_text(f'[project]\nname = "notte"\nversion = "{workspace}"\n')
+    (tmp_path / "packages").mkdir()
+    assert bot.advances("v1.10.17", tmp_path) is expected
 
 
 def test_stale_mode_writes_outputs_and_completes_nothing(monkeypatch, tmp_path):
@@ -699,12 +813,26 @@ def test_stale_mode_writes_outputs_and_completes_nothing(monkeypatch, tmp_path):
     monkeypatch.setattr(bot.sys, "argv", ["complete_bot_pr.py", "--stale"])
     with (
         patch.object(bot, "api", return_value={"login": bot.BOT}),
-        patch.object(bot, "find_stale", return_value={"openapi": "42", "release_number": ""}),
+        patch.object(bot, "find_stale", return_value=({"openapi": "42", "release_number": ""}, [])),
         patch.object(bot, "complete") as complete,
     ):
         assert bot.main() == 0
         complete.assert_not_called()
     assert output.read_text() == "openapi=42\nrelease_number=\n"
+
+
+def test_stale_mode_records_found_prs_before_failing_on_lookup_errors(monkeypatch, tmp_path, capsys):
+    output = tmp_path / "output"
+    monkeypatch.setenv("GITHUB_REPOSITORY", bot.REPOSITORY)
+    monkeypatch.setenv("GITHUB_OUTPUT", str(output))
+    monkeypatch.setattr(bot.sys, "argv", ["complete_bot_pr.py", "--stale"])
+    with (
+        patch.object(bot, "api", return_value={"login": bot.BOT}),
+        patch.object(bot, "find_stale", return_value=({"release_number": "51"}, ["PR #50: RuntimeError: gone"])),
+    ):
+        assert bot.main() == 1
+    assert output.read_text() == "release_number=51\n"
+    assert "PR #50: RuntimeError: gone" in capsys.readouterr().err
 
 
 def test_update_workflow_regenerates_from_trusted_main_only():
@@ -716,6 +844,11 @@ def test_update_workflow_regenerates_from_trusted_main_only():
     assert workflow["concurrency"]["cancel-in-progress"] is False
     jobs = workflow["jobs"]
     assert "github.ref == 'refs/heads/main'" in jobs["find"]["if"]
+    # find fails on another PR's lookup error after recording the PRs it found; those still run.
+    assert jobs["openapi"]["if"] == "${{ !cancelled() && needs.find.outputs.openapi != '' }}"
+    assert jobs["release"]["if"] == "${{ !cancelled() && needs.find.outputs.release_number != '' }}"
+    [refresher] = [item for item in bot.producers(RELEASE) if item["path"] == bot.RELEASE_REFRESHER]
+    assert refresher["job"] in jobs and jobs[refresher["job"]] is jobs["release"]
     assert jobs["find"]["steps"][0]["with"] == {"persist-credentials": False}
     assert jobs["find"]["steps"][1]["run"] == "python3 scripts/complete_bot_pr.py --stale"
     # Only the dispatch job may write, and only to start the refresh workflow on main.

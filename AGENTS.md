@@ -432,6 +432,8 @@ writer or Greptile approves that head. A manual commit leaves the PR for a perso
 When main moves past such a PR's attested head, `update-bot-pr.yml` regenerates it on
 main rather than merging main in: it reruns the refresh, or reruns the release's advance
 step and force-pushes with lease as the version branch's producer. The new head needs its own approval.
+Its attestation reads that run's `release` job, not the run's conclusion, so a failed OpenAPI dispatch
+or lookup of another PR keeps the pushed head. A version PR whose tag main's workspace is not at is skipped.
 Don't click "Update branch" on these PRs: its merge commit hands the PR to a person.
 
 The API reports its installed notte version without `.devN` (`info.version`, `HealthResponse`'s

@@ -9,7 +9,13 @@ import re
 import subprocess
 import sys
 import zipfile
+from pathlib import Path
 from typing import NotRequired, TypedDict, cast
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+from scripts import release_version  # noqa: E402
 
 REPOSITORY = "nottelabs/notte"
 BOT = "andreakiro"
@@ -69,6 +75,9 @@ class Producer(TypedDict):
     path: str
     events: set[str]
     ref: str
+    # The job that pushes the head and records it, when the run has other jobs:
+    # only that job's result decides, so an unrelated job's failure keeps the head.
+    job: NotRequired[str]
 
 
 def producers(branch: str) -> list[Producer]:
@@ -79,7 +88,12 @@ def producers(branch: str) -> list[Producer]:
     if release is not None:
         return [
             {"path": RELEASE_PRODUCER, "events": {"push"}, "ref": release.group(1)},
-            {"path": RELEASE_REFRESHER, "events": {"push", "schedule", "workflow_dispatch"}, "ref": "main"},
+            {
+                "path": RELEASE_REFRESHER,
+                "events": {"push", "schedule", "workflow_dispatch"},
+                "ref": "main",
+                "job": "release",
+            },
         ]
     return []
 
@@ -135,17 +149,26 @@ def attested(pr: Pull) -> bool:
     if not expected:
         return False
     run = api(f"repos/{REPOSITORY}/actions/runs/{run_id}")
+    matched = [
+        item
+        for item in expected
+        if run["head_branch"] == item["ref"] and run["event"] in item["events"] and run["path"] == item["path"]
+    ]
     if not (
         run["repository"]["full_name"] == REPOSITORY
         and run["head_repository"]["full_name"] == REPOSITORY
-        and any(
-            run["head_branch"] == item["ref"] and run["event"] in item["events"] and run["path"] == item["path"]
-            for item in expected
-        )
+        and len(matched) == 1
         and run["status"] == "completed"
-        and run["conclusion"] == "success"
     ):
         return False
+    job = matched[0].get("job")
+    if job is None:
+        if run["conclusion"] != "success":
+            return False
+    else:
+        jobs = api(f"repos/{REPOSITORY}/actions/runs/{run_id}/jobs?filter=latest&per_page=100")
+        if [item["conclusion"] for item in jobs["jobs"] if item["name"] == job] != ["success"]:
+            return False
     # The producer's workflow and code must have come from reviewed main history
     # (a release tag must point at a main commit).
     comparison = api(f"repos/{REPOSITORY}/compare/{run['head_sha']}...main")
@@ -258,6 +281,17 @@ def release_pulls() -> list[int]:
     ]
 
 
+def advances(tag: str, root: Path = ROOT) -> bool:
+    """Whether the release's advance step changes this checkout of main.
+
+    Main past the release (its version PR is obsolete) or behind it (the step
+    refuses) leaves nothing to regenerate.
+    """
+    version = release_version.release_version(tag)
+    current, _ = release_version.workspace(root)
+    return current in (version, f"{version}.dev", f"{version}.dev0")
+
+
 def stale(number: int) -> Pull | None:
     """The PR, if its current head is the exact attested bot head and main has moved past it.
 
@@ -271,20 +305,38 @@ def stale(number: int) -> Pull | None:
     return pr if comparison["behind_by"] > 0 else None
 
 
-def find_stale() -> dict[str, str]:
-    """The refresh PR and one release PR (at most) that update-bot-pr regenerates on main."""
+def find_stale() -> tuple[dict[str, str], list[str]]:
+    """The refresh PR and one release PR (at most) that update-bot-pr regenerates on main.
+
+    A failed lookup is reported for its own PR; the other PRs are still checked.
+    """
     found = {"openapi": "", "release_number": "", "release_branch": "", "release_tag": "", "release_head": ""}
+    errors: list[str] = []
     branch = "chore/bump-openapi"
-    pulls = api(f"repos/{REPOSITORY}/pulls?state=open&base=main&head=nottelabs:{branch}&per_page=100")
-    if len(pulls) == 1 and stale(pulls[0]["number"]) is not None:
-        found["openapi"] = str(pulls[0]["number"])
+    try:
+        pulls = api(f"repos/{REPOSITORY}/pulls?state=open&base=main&head=nottelabs:{branch}&per_page=100")
+        if len(pulls) == 1 and stale(pulls[0]["number"]) is not None:
+            found["openapi"] = str(pulls[0]["number"])
+    except Exception as error:
+        errors.append(f"{branch}: {type(error).__name__}: {error}")
+    try:
+        numbers = sorted(release_pulls())
+    except Exception as error:
+        errors.append(f"{RELEASE_BRANCH.pattern}: {type(error).__name__}: {error}")
+        numbers = []
     # One per run: a run uploads a single bot-pr artifact. Later runs take the next one.
-    for number in sorted(release_pulls()):
-        pr = stale(number)
-        if pr is None:
-            continue
-        release = RELEASE_BRANCH.fullmatch(pr["head"]["ref"])
-        if release is None:
+    for number in numbers:
+        try:
+            pr = stale(number)
+            release = None if pr is None else RELEASE_BRANCH.fullmatch(pr["head"]["ref"])
+            if pr is None or release is None:
+                continue
+            if not advances(release.group(1)):
+                # Otherwise this PR would take every run's single slot without changing.
+                print(f"PR #{number}: main is not at {release.group(1)}; leaving it for a person.")
+                continue
+        except Exception as error:
+            errors.append(f"PR #{number}: {type(error).__name__}: {error}")
             continue
         found.update(
             release_number=str(number),
@@ -293,17 +345,21 @@ def find_stale() -> dict[str, str]:
             release_head=pr["head"]["sha"],
         )
         break
-    return found
+    return found, errors
 
 
 def main() -> int:
     if os.environ["GITHUB_REPOSITORY"] != REPOSITORY or api("user")["login"] != BOT:
         raise RuntimeError("Unexpected bot repository or authorization")
     if sys.argv[1:] == ["--stale"]:
+        found, errors = find_stale()
         with open(os.environ["GITHUB_OUTPUT"], "a") as output:
-            for key, value in find_stale().items():
+            for key, value in found.items():
                 print(f"{key}={value}", file=output)
-        return 0
+        for error in errors:
+            print(error, file=sys.stderr)
+        # The PRs found are still regenerated; the failed lookups fail this run's find job.
+        return int(bool(errors))
     failed = False
 
     def attempt(label: str, number: int) -> None:
