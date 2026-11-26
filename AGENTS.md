@@ -425,7 +425,9 @@ writer or Greptile approves that head. A manual commit leaves the PR for a perso
 The API reports its installed notte version without `.devN` (`info.version`, `HealthResponse`'s
 `version` default). The published schema carries the notte commit the monorepo pins, but the round
 trip installs this workspace, so `openapi_contract.py --fetch` writes the root `pyproject.toml`
-version there. After a release advances the workspace, the next refresh moves the snapshot to it.
+version there. The release workflow's development version bump runs `openapi_contract.py --stamp-version`
+and `make sdk-codegen`, and commits the snapshot and generated SDK with the version: a bump without them
+fails the round trip. `test_the_committed_snapshot_reports_this_workspace_version` checks this offline.
 
 OpenAPI refresh compares a temporary order-insensitive representation of JSON objects.
 When the incoming schema is otherwise unchanged, keep the committed snapshot byte for

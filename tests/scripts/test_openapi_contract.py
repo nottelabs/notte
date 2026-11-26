@@ -118,6 +118,34 @@ def test_fetch_writes_the_version_the_api_reports_with_this_workspace(
     assert snapshot.read_bytes() == before
 
 
+def test_stamp_version_moves_only_the_api_version_in_the_snapshot(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # The release workflow's development bump stamps the snapshot without fetching it.
+    snapshot = tmp_path / "openapi.json"
+    snapshot.write_text(json.dumps(_versioned_schema("1.10.18"), indent=2) + "\n")
+    (tmp_path / "pyproject.toml").write_text('[project]\nname = "notte"\nversion = "1.10.19.dev0"\n')
+    monkeypatch.setattr(contract, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(contract, "SNAPSHOT", snapshot)
+    monkeypatch.setattr(contract, "PYPROJECT", tmp_path / "pyproject.toml")
+    monkeypatch.setattr(contract.sys, "argv", ["openapi_contract.py", "--stamp-version"])
+    monkeypatch.setattr(contract, "download", lambda _: pytest.fail("--stamp-version must not fetch"))
+    assert contract.main() == 0
+    expected = _versioned_schema("1.10.18")
+    expected["info"]["version"] = "1.10.19"
+    expected["components"]["schemas"]["HealthResponse"]["properties"]["version"]["default"] = "1.10.19"
+    assert snapshot.read_text() == json.dumps(expected, indent=2) + "\n"
+
+
+def test_the_committed_snapshot_reports_this_workspace_version() -> None:
+    # The schema round trip installs this workspace into the API, which then reports its version.
+    # A version bump that leaves the snapshot behind fails there; run `openapi_contract.py --stamp-version`.
+    snapshot = json.loads((ROOT / "openapi/openapi.json").read_text())
+    version = contract.api_version()
+    assert snapshot["info"]["version"] == version
+    assert snapshot["components"]["schemas"]["HealthResponse"]["properties"]["version"]["default"] == version
+
+
 @pytest.mark.parametrize(
     ("workspace", "reported"),
     [("1.10.16.dev0", "1.10.16"), ("1.10.16.dev", "1.10.16"), ("1.9.1.dev12", "1.9.1"), ("1.10.16", "1.10.16")],

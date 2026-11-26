@@ -203,6 +203,14 @@ def test_development_bump_waits_for_successful_publish_and_opens_reviewable_pr()
     commands = "\n".join(step.get("run", "") for step in job["steps"])
     assert 'release_version.py next "$RELEASE_TAG"' in commands
     assert "uv lock" in commands
+    # The API reports the workspace version in its schema; the snapshot and its generated SDK follow it.
+    advance = next(step for step in job["steps"] if step.get("name") == "Advance workspace version and lockfile")
+    assert (
+        advance["run"].index('release_version.py next "$RELEASE_TAG"')
+        < advance["run"].index("uv lock")
+        < advance["run"].index("openapi_contract.py --stamp-version")
+        < advance["run"].index("make sdk-codegen")
+    )
     assert "gh pr create" in commands
     assert "--state all" in commands
     assert "gh pr merge" not in commands
@@ -259,6 +267,81 @@ fi
     if scenario == "new":
         assert "git push origin chore/python-version-after-v1.9.1" in commands
     assert "gh pr merge" not in commands
+
+
+def test_bump_pr_commits_the_stamped_snapshot_and_generated_sdk(tmp_path: Path) -> None:
+    # Real git against a local origin: the bump commit must carry every file the advance step changes.
+    workflow = _load_workflow("pypi-release.yml")
+    step = next(
+        step
+        for step in workflow["jobs"]["next-development-version"]["steps"]
+        if step.get("name") == "Open version bump pull request"
+    )
+    repo = tmp_path / "repo"
+    generated = repo / "packages/notte-sdk/src/notte_sdk/_generated"
+    generated.mkdir(parents=True)
+    (repo / "openapi").mkdir()
+    files = {
+        "pyproject.toml": '[project]\nversion = "{v}.dev0"\n',
+        "packages/notte-sdk/pyproject.toml": '[project]\nversion = "{v}.dev0"\n',
+        "uv.lock": "notte {v}.dev0\n",
+        "openapi/openapi.json": '{{"info": {{"version": "{v}"}}}}\n',
+        "packages/notte-sdk/src/notte_sdk/_generated/models.py": 'VERSION = "{v}"\n',
+        "packages/notte-sdk/src/notte_sdk/_generated/endpoints.py": "# Notte API {v}\n",
+    }
+    for path, text in files.items():
+        (repo / path).write_text(text.format(v="1.9.1"))
+    git_env = {
+        **os.environ,
+        "GIT_CONFIG_GLOBAL": os.devnull,
+        "GIT_CONFIG_NOSYSTEM": "1",
+        "GIT_AUTHOR_NAME": "t",
+        "GIT_AUTHOR_EMAIL": "t@t",
+        "GIT_COMMITTER_NAME": "t",
+        "GIT_COMMITTER_EMAIL": "t@t",
+    }
+    origin = tmp_path / "origin.git"
+    for command in (
+        ["git", "init", "--quiet", "--bare", "--initial-branch=main", str(origin)],
+        ["git", "init", "--quiet", "--initial-branch=main"],
+        ["git", "add", "."],
+        ["git", "commit", "--quiet", "-m", "base"],
+        ["git", "remote", "add", "origin", str(origin)],
+        ["git", "push", "--quiet", "origin", "main"],
+    ):
+        _ = subprocess.run(command, cwd=repo, env=git_env, check=True, capture_output=True)
+    for path, text in files.items():
+        (repo / path).write_text(text.format(v="1.9.2"))
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    gh = fake_bin / "gh"
+    gh.write_text(
+        "#!/bin/sh\n"
+        + "if [ \"$1 $2\" = 'pr create' ]; then echo 'https://github.com/nottelabs/notte/pull/1234'; fi\n"
+        + "exit 0\n"
+    )
+    gh.chmod(0o755)
+    result = subprocess.run(
+        ["bash", "-e", "-c", step["run"]],
+        cwd=repo,
+        env={
+            **git_env,
+            "PATH": f"{fake_bin}:{os.environ['PATH']}",
+            "RUNNER_TEMP": str(tmp_path),
+            "GITHUB_OUTPUT": str(tmp_path / "output"),
+            "GITHUB_REPOSITORY": "nottelabs/notte",
+            "GITHUB_RUN_ID": "1",
+            "RELEASE_TAG": "v1.9.1",
+            "BASE_BRANCH": "main",
+        },
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    branch = "chore/python-version-after-v1.9.1"
+    pushed = _git(repo, "--git-dir", str(origin), "diff", "--name-only", "main", branch).splitlines()
+    assert sorted(pushed) == sorted(files)
+    assert _git(repo, "status", "--porcelain") == ""
 
 
 def _prepare_step(name: str) -> dict:
