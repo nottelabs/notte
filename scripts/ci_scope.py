@@ -167,6 +167,7 @@ STANDALONE_WORKFLOWS = {
     "publish-release.yml",
     "pypi-release.yml",
     "refresh-llms.yml",
+    "update-bot-pr.yml",
 }
 INTEGRATION_WORKFLOWS = {
     "agent-browser-integration.yml",

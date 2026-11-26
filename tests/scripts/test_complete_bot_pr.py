@@ -604,3 +604,133 @@ def test_release_listing_error_is_reported_after_fixed_branches(monkeypatch, cap
         output = capsys.readouterr()
         assert "Listing failed" in output.err
         assert "PR #42: left open" in output.out
+
+
+@pytest.mark.parametrize("event", ["push", "schedule", "workflow_dispatch"])
+def test_refresher_run_on_main_owns_the_regenerated_release_branch(fixture, event):
+    fixture = release_fixture(fixture)
+    fixture[1].update(path=bot.RELEASE_REFRESHER, event=event, head_branch="main")
+    assert attest(fixture)
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("head_branch", "v1.10.17"),
+        ("head_branch", "feature"),
+        ("event", "pull_request"),
+        ("event", "workflow_run"),
+    ],
+)
+def test_refresher_attests_only_from_trusted_main_events(fixture, field, value):
+    fixture = release_fixture(fixture)
+    fixture[1].update(path=bot.RELEASE_REFRESHER, event="push", head_branch="main")
+    fixture[1][field] = value
+    assert not attest(fixture)
+
+
+@pytest.mark.parametrize("branch", bot.PRODUCERS)
+def test_refresher_cannot_attest_fixed_branches(fixture, branch):
+    pr, run, manifest = fixture
+    pr["head"]["ref"] = manifest["BRANCH"] = branch
+    run.update(path=bot.RELEASE_REFRESHER, event="schedule", head_branch="main")
+    assert not attest(fixture)
+
+
+@pytest.mark.parametrize("behind_by,expected", [(0, False), (3, True)])
+def test_stale_needs_an_attested_head_that_main_moved_past(fixture, behind_by, expected):
+    pr = fixture[0]
+    with (
+        patch.object(bot, "api", side_effect=[pr, {"behind_by": behind_by}]) as api,
+        patch.object(bot, "attested", return_value=True),
+    ):
+        assert (bot.stale(42) is not None) is expected
+        assert api.call_args.args == (f"repos/{bot.REPOSITORY}/compare/main...{HEAD}",)
+
+
+@pytest.mark.parametrize("change", ["manual_head", "draft", "author"])
+def test_unattested_or_unowned_prs_are_never_regenerated(fixture, change):
+    # A person's push or GitHub's "Update branch" moves the head off the attested commit.
+    pr = fixture[0]
+    if change == "draft":
+        pr["draft"] = True
+    elif change == "author":
+        pr["user"] = {"login": "someone"}
+    with (
+        patch.object(bot, "api", return_value=pr) as api,
+        patch.object(bot, "attested", return_value=False),
+    ):
+        assert bot.stale(42) is None
+        api.assert_called_once()
+
+
+def test_find_stale_reports_the_refresh_pr_and_one_release_pr(fixture):
+    behind = copy.deepcopy(release_fixture(copy.deepcopy(fixture))[0])
+    behind["number"] = 51
+    with (
+        patch.object(bot, "api", return_value=[{"number": 42}]),
+        patch.object(bot, "release_pulls", return_value=[52, 50, 51]),
+        patch.object(bot, "stale", side_effect=[fixture[0], None, behind]) as stale,
+    ):
+        assert bot.find_stale() == {
+            "openapi": "42",
+            "release_number": "51",
+            "release_branch": RELEASE,
+            "release_tag": "v1.10.17",
+            "release_head": HEAD,
+        }
+        # One release PR per run: each run uploads a single bot-pr artifact.
+        assert [call.args for call in stale.call_args_list] == [(42,), (50,), (51,)]
+
+
+def test_find_stale_reports_nothing_for_up_to_date_prs():
+    with (
+        patch.object(bot, "api", return_value=[{"number": 42}]),
+        patch.object(bot, "release_pulls", return_value=[50]),
+        patch.object(bot, "stale", return_value=None),
+    ):
+        assert set(bot.find_stale().values()) == {""}
+
+
+def test_stale_mode_writes_outputs_and_completes_nothing(monkeypatch, tmp_path):
+    output = tmp_path / "output"
+    monkeypatch.setenv("GITHUB_REPOSITORY", bot.REPOSITORY)
+    monkeypatch.setenv("GITHUB_OUTPUT", str(output))
+    monkeypatch.setattr(bot.sys, "argv", ["complete_bot_pr.py", "--stale"])
+    with (
+        patch.object(bot, "api", return_value={"login": bot.BOT}),
+        patch.object(bot, "find_stale", return_value={"openapi": "42", "release_number": ""}),
+        patch.object(bot, "complete") as complete,
+    ):
+        assert bot.main() == 0
+        complete.assert_not_called()
+    assert output.read_text() == "openapi=42\nrelease_number=\n"
+
+
+def test_update_workflow_regenerates_from_trusted_main_only():
+    text = (ROOT / bot.RELEASE_REFRESHER).read_text()
+    workflow = yaml.safe_load(text)
+    assert set(workflow[True]) == {"push", "schedule", "workflow_dispatch"}
+    assert workflow[True]["push"] == {"branches": ["main"]}
+    assert workflow["permissions"] == {"contents": "read"}
+    assert workflow["concurrency"]["cancel-in-progress"] is False
+    jobs = workflow["jobs"]
+    assert "github.ref == 'refs/heads/main'" in jobs["find"]["if"]
+    assert jobs["find"]["steps"][0]["with"] == {"persist-credentials": False}
+    assert jobs["find"]["steps"][1]["run"] == "python3 scripts/complete_bot_pr.py --stale"
+    # Only the dispatch job may write, and only to start the refresh workflow on main.
+    assert "permissions" not in jobs["release"] and "permissions" not in jobs["find"]
+    assert jobs["openapi"]["permissions"] == {"actions": "write"}
+    assert "gh workflow run openapi-bump.yml" in jobs["openapi"]["steps"][0]["run"]
+    assert "--ref main" in jobs["openapi"]["steps"][0]["run"]
+    assert "gh pr merge" not in text and "gh pr checks" not in text
+    # The release regeneration is exactly the release's own step, run on main.
+    release = yaml.safe_load((ROOT / bot.RELEASE_PRODUCER).read_text())["jobs"]["next-development-version"]
+    name = "Advance workspace version and lockfile"
+    [ours] = [step for step in jobs["release"]["steps"] if step.get("name") == name]
+    [theirs] = [step for step in release["steps"] if step.get("name") == name]
+    assert ours == theirs
+    assert jobs["release"]["steps"][0] == release["steps"][0]
+    upload = jobs["release"]["steps"][-1]
+    assert upload["with"]["name"] == "bot-pr"
+    assert upload["if"] == "steps.bump.outputs.owned == 'true'"

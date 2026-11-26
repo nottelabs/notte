@@ -23,6 +23,8 @@ PRODUCERS = {
 }
 # One branch per release, opened by the release run of that tag.
 RELEASE_PRODUCER = ".github/workflows/pypi-release.yml"
+# Regenerates an owned release branch on main once main has moved past it.
+RELEASE_REFRESHER = ".github/workflows/update-bot-pr.yml"
 RELEASE_BRANCH = re.compile(r"chore/python-version-after-(v(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*))")
 
 
@@ -69,14 +71,17 @@ class Producer(TypedDict):
     ref: str
 
 
-def producer(branch: str) -> Producer | None:
-    """The workflow, events and run ref allowed to produce this branch."""
+def producers(branch: str) -> list[Producer]:
+    """The workflows, events and run refs allowed to produce this branch."""
     if branch in PRODUCERS:
-        return {"path": PRODUCERS[branch], "events": {"schedule", "workflow_dispatch"}, "ref": "main"}
+        return [{"path": PRODUCERS[branch], "events": {"schedule", "workflow_dispatch"}, "ref": "main"}]
     release = RELEASE_BRANCH.fullmatch(branch)
     if release is not None:
-        return {"path": RELEASE_PRODUCER, "events": {"push"}, "ref": release.group(1)}
-    return None
+        return [
+            {"path": RELEASE_PRODUCER, "events": {"push"}, "ref": release.group(1)},
+            {"path": RELEASE_REFRESHER, "events": {"push", "schedule", "workflow_dispatch"}, "ref": "main"},
+        ]
+    return []
 
 
 def gh(*args: str) -> bytes:
@@ -116,7 +121,7 @@ def owned(pr: Pull) -> bool:
         and pr["base"]["repo"]["full_name"] == REPOSITORY
         and pr["head"]["repo"] is not None
         and pr["head"]["repo"]["full_name"] == REPOSITORY
-        and producer(pr["head"]["ref"]) is not None
+        and bool(producers(pr["head"]["ref"]))
         and re.fullmatch(r"[0-9a-f]{40}", pr["head"]["sha"]) is not None
     )
 
@@ -126,16 +131,17 @@ def attested(pr: Pull) -> bool:
     if len(markers) != 1:
         return False
     run_id = markers[0]
-    expected = producer(pr["head"]["ref"])
-    if expected is None:
+    expected = producers(pr["head"]["ref"])
+    if not expected:
         return False
     run = api(f"repos/{REPOSITORY}/actions/runs/{run_id}")
     if not (
         run["repository"]["full_name"] == REPOSITORY
         and run["head_repository"]["full_name"] == REPOSITORY
-        and run["head_branch"] == expected["ref"]
-        and run["event"] in expected["events"]
-        and run["path"] == expected["path"]
+        and any(
+            run["head_branch"] == item["ref"] and run["event"] in item["events"] and run["path"] == item["path"]
+            for item in expected
+        )
         and run["status"] == "completed"
         and run["conclusion"] == "success"
     ):
@@ -252,9 +258,52 @@ def release_pulls() -> list[int]:
     ]
 
 
+def stale(number: int) -> Pull | None:
+    """The PR, if its current head is the exact attested bot head and main has moved past it.
+
+    A head with any commit the producing run did not push (a person's push, or
+    GitHub's "Update branch") is not attested, so it stays with a person.
+    """
+    pr = cast(Pull, api(f"repos/{REPOSITORY}/pulls/{number}"))
+    if not owned(pr) or not attested(pr):
+        return None
+    comparison = api(f"repos/{REPOSITORY}/compare/main...{pr['head']['sha']}")
+    return pr if comparison["behind_by"] > 0 else None
+
+
+def find_stale() -> dict[str, str]:
+    """The refresh PR and one release PR (at most) that update-bot-pr regenerates on main."""
+    found = {"openapi": "", "release_number": "", "release_branch": "", "release_tag": "", "release_head": ""}
+    branch = "chore/bump-openapi"
+    pulls = api(f"repos/{REPOSITORY}/pulls?state=open&base=main&head=nottelabs:{branch}&per_page=100")
+    if len(pulls) == 1 and stale(pulls[0]["number"]) is not None:
+        found["openapi"] = str(pulls[0]["number"])
+    # One per run: a run uploads a single bot-pr artifact. Later runs take the next one.
+    for number in sorted(release_pulls()):
+        pr = stale(number)
+        if pr is None:
+            continue
+        release = RELEASE_BRANCH.fullmatch(pr["head"]["ref"])
+        if release is None:
+            continue
+        found.update(
+            release_number=str(number),
+            release_branch=pr["head"]["ref"],
+            release_tag=release.group(1),
+            release_head=pr["head"]["sha"],
+        )
+        break
+    return found
+
+
 def main() -> int:
     if os.environ["GITHUB_REPOSITORY"] != REPOSITORY or api("user")["login"] != BOT:
         raise RuntimeError("Unexpected bot repository or authorization")
+    if sys.argv[1:] == ["--stale"]:
+        with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+            for key, value in find_stale().items():
+                print(f"{key}={value}", file=output)
+        return 0
     failed = False
 
     def attempt(label: str, number: int) -> None:
