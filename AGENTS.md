@@ -25,8 +25,9 @@ This is the standalone Python/Node SDK repository. The machine's monorepo
 - `scripts/ci_scope.py` keeps PR live coverage narrow (owner decision, 2026-11-26):
   PRs run native integration examples only for their own inputs (`dependents=False`);
   SDK, lockfile and snapshot dependents run on the `main` push and nightly. The snapshot
-  and generated SDKs select one live suite (`python_live`), and `STANDALONE_WORKFLOWS`
-  select offline checks. A release's version bump, including its version-stamped snapshot
+  (which also selects the schema round trip) and the generated Python SDK select one live
+  suite (`python_live`); the generated Node SDK selects static and generation checks only.
+  `STANDALONE_WORKFLOWS` select offline checks. A release's version bump, including its version-stamped snapshot
   and generated SDK (`VERSION_STAMPED`), stays offline. Unknown paths still select everything.
 - Never add `xfail`, `skip` or an ignore to make a failing test pass. Fix the
   cause, or stop and explain why it fails.

@@ -21,9 +21,10 @@ automatically. No authorization or rerun is needed.
 A PR runs a native integration example (`examples/<name>/`) only when the example's
 own files, its integration workflow or the example registry change. Changes to the
 SDKs, the lockfile or the OpenAPI snapshot run every dependent example after merge
-on `main` and in the nightly examples run. The snapshot and the generated SDK run
-the generator checks, the schema round trip and the Python staging suite; release
-and bot workflows run the offline checks only.
+on `main` and in the nightly examples run. The snapshot runs the generator checks,
+the schema round trip and the Python staging suite. The generated Python SDK runs the
+static checks and the Python staging suite; the generated Node SDK runs the static and
+generation checks only. Release and bot workflows run the offline checks only.
 
 All selected checks must pass on the current head before merging. Queued live
 jobs check the live PR head before dependency installation; obsolete jobs fail
