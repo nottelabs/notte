@@ -19,12 +19,12 @@ async function functionExample() {
 			url: 'https://example.com',
 		});
 
-		console.log('Workflow run result:', result);
-		console.log('Workflow run status:', result.status);
+		console.log('Function run result:', result);
+		console.log('Function run status:', result.status);
 
-		// Get metadata for the workflow run
+		// Get metadata for the function run
 		const metadata = await fn.getRun(result.function_run_id);
-		console.log('Workflow run metadata:', metadata);
+		console.log('Function run metadata:', metadata);
 
 		// Disable live logs. Standard execution still waits for completion.
 		await fn.run({ url: 'https://example.com' }, { stream: false });
@@ -34,7 +34,7 @@ async function functionExample() {
 		await fn.run({ url: 'https://example.com' }, { functionRunId: created.function_run_id });
 
 	} catch (error) {
-		console.error('Error running workflow:', error);
+		console.error('Error running function:', error);
 	}
 }
 
