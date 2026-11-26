@@ -159,6 +159,11 @@ jobs:
           python3 scripts/release_version.py next "$RELEASE_TAG"
           if ! git diff --quiet -- pyproject.toml packages/; then
             uv lock
+            # The API reports this workspace's version in its schema, so the snapshot and the
+            # SDK generated from it move with the version; otherwise the schema round trip fails.
+            uv sync --locked --dev --all-extras
+            uv run --no-sync python scripts/openapi_contract.py --stamp-version
+            make sdk-codegen
           fi
 
       - name: Open version bump pull request
@@ -168,7 +173,7 @@ jobs:
           GH_TOKEN: ${{ secrets.SUBMODULE_BUMP_PAT }}
         run: |
           set -euo pipefail
-          if git diff --quiet -- pyproject.toml packages/ uv.lock; then
+          if git diff --quiet -- pyproject.toml packages/ uv.lock openapi/openapi.json; then
             echo "The development version is already ahead of this release."
             exit 0
           fi
@@ -192,7 +197,7 @@ jobs:
             echo "Reusing the existing branch $BRANCH"
           else
             git checkout -b "$BRANCH"
-            git add pyproject.toml packages/*/pyproject.toml uv.lock
+            git add pyproject.toml packages/*/pyproject.toml uv.lock openapi/openapi.json packages/notte-sdk/src/notte_sdk/_generated
             git commit -m "$TITLE"
             git push origin "$BRANCH"
             OWNED=true

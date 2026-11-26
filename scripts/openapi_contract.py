@@ -14,12 +14,15 @@ known drift recorded in ``openapi/known_drift.txt``:
     uv run --no-sync python scripts/openapi_contract.py --check                # committed snapshot
     uv run --no-sync python scripts/openapi_contract.py --check --against URL  # live API (release gate)
     uv run --no-sync python scripts/openapi_contract.py --fetch [--url URL]    # refresh the snapshot
+    uv run --no-sync python scripts/openapi_contract.py --stamp-version        # after a version bump
     uv run --no-sync python scripts/openapi_contract.py --update-baseline
 
 The API reports the installed ``notte`` package's version, without a ``.devN`` suffix, as
 its schema version (``info.version`` and ``HealthResponse``'s ``version`` default). The
 schema round trip installs this repository's packages into the API, so ``--fetch`` writes
 this workspace's version there instead of the version of the notte commit the API pins.
+``--stamp-version`` writes it into the committed snapshot without fetching, for the release
+workflow's development version bump: the round trip otherwise reports the old version as drift.
 """
 
 from __future__ import annotations
@@ -195,6 +198,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     _ = parser.add_argument("--fetch", action="store_true", help="refresh the committed snapshot from --url")
     _ = parser.add_argument("--url", default=DEFAULT_URL, help=f"API base URL for --fetch (default: {DEFAULT_URL})")
+    _ = parser.add_argument(
+        "--stamp-version", action="store_true", help="write this workspace's API version into the committed snapshot"
+    )
     _ = parser.add_argument("--check", action="store_true", help="fail on drift that is not in the baseline")
     _ = parser.add_argument("--against", metavar="URL", help="check a live API instead of the snapshot")
     _ = parser.add_argument("--update-baseline", action="store_true", help="record the current drift as known")
@@ -211,6 +217,12 @@ def main() -> int:
             # Keep the API's declared order. Sorting is only for the comparison.
             _ = SNAPSHOT.write_text(json.dumps(spec, indent=2, ensure_ascii=False) + "\n")
             print(f"wrote {SNAPSHOT.relative_to(REPO_ROOT)}")
+
+    if args.stamp_version:
+        spec = cast(JsonObject, json.loads(SNAPSHOT.read_text()))
+        stamp_api_version(spec, api_version())
+        _ = SNAPSHOT.write_text(json.dumps(spec, indent=2, ensure_ascii=False) + "\n")
+        print(f"stamped {SNAPSHOT.relative_to(REPO_ROOT)} with version {api_version()}")
 
     if args.update_baseline:
         lines = drift(cast(JsonObject, json.loads(SNAPSHOT.read_text())))
