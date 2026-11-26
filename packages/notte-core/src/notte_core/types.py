@@ -1757,6 +1757,15 @@ class SessionFile(BaseModel):
     created_at: dt.datetime
     expires_at: dt.datetime
     source: FileSource
+    browser_download_id: Annotated[
+        str | None,
+        Field(
+            description=(
+                "The browser's id for the download this file came from: Chrome's download guid, which a CDP client "
+                "reads from `Browser.downloadWillBegin`. Null for files that did not come from a browser download."
+            )
+        ),
+    ] = None
 
 
 class ListFilesResponse(SdkResponse):

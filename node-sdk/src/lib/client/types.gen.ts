@@ -7601,6 +7601,12 @@ export type SessionFile = {
      */
     expires_at: string;
     source: FileSource;
+    /**
+     * Browser Download Id
+     *
+     * The browser's id for the download this file came from: Chrome's download guid, which a CDP client reads from `Browser.downloadWillBegin`. Null for files that did not come from a browser download.
+     */
+    browser_download_id?: string | null;
 };
 
 /**
