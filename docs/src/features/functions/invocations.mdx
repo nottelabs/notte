@@ -64,6 +64,10 @@ Call Functions as HTTP endpoints. Send your API key both as `Authorization: Bear
 
 <HttpResponse />
 
+<Note>
+  Run responses also include `workflow_id` and `workflow_run_id`, legacy copies of `function_id` and `function_run_id`. They are deprecated and will be removed from API responses on December 28, 2026. Use `function_id` and `function_run_id` instead.
+</Note>
+
 ## Via cURL
 
 ### Basic cURL Request

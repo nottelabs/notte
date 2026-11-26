@@ -932,7 +932,7 @@ export class Session {
   }
 
   /**
-   * Get the workflow code generated from the session steps
+   * Get the function code generated from the session steps
    * (`GET /sessions/{id}/workflow/code`).
    *
    * @example
