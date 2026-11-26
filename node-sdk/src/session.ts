@@ -6,6 +6,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import type { Browser, BrowserContext, Dialog, Page } from 'playwright-core';
 import { DEFAULT_REQUEST_TIMEOUT_MS, MAX_RETRIES_HEADER, NotteClient, REQUEST_ORIGIN, TIMEOUT_HEADER } from '@/client';
 import { SDK_VERSION } from '@/version';
+import { clientUserAgent } from '@/client-info';
 import type {
   AgentFunctionCodeResponse,
   ApiExecutionResponse,
@@ -114,6 +115,40 @@ function cdpTransportFailure(error: unknown): string | undefined {
   const reason = firstLine.slice(at + marker.length);
   if (reason.startsWith('ws://') || reason.startsWith('wss://')) return undefined;
   return CDP_TRANSPORT_FAILURES.some(failure => reason.includes(failure)) ? reason : undefined;
+}
+
+/**
+ * Whether `cdpUrl` is a WebSocket on the API's own origin: same host, the WebSocket scheme of the
+ * API's scheme (wss for https, ws for http) and the same effective port, as Python's `_cdp_headers`.
+ */
+export function onApiOrigin(cdpUrl: string, apiUrl: string | undefined): boolean {
+  if (!apiUrl) return false;
+  let target: URL;
+  let api: URL;
+  try {
+    target = new URL(cdpUrl);
+    api = new URL(apiUrl);
+  } catch {
+    return false;
+  }
+  const secure = target.protocol === 'wss:' && api.protocol === 'https:';
+  const plain = target.protocol === 'ws:' && api.protocol === 'http:';
+  if (!secure && !plain) return false;
+  const defaultPort = secure ? '443' : '80';
+  return target.hostname === api.hostname && (target.port || defaultPort) === (api.port || defaultPort);
+}
+
+/**
+ * Headers for Notte's CDP endpoint: the SDK identity and, under Node, its User-Agent. The User-Agent
+ * names the CI job running the SDK, so it is only sent to the API's own origin (`onApiOrigin`).
+ */
+export function cdpHeaders(cdpUrl: string, apiUrl: string | undefined): Record<string, string> {
+  const userAgent = onApiOrigin(cdpUrl, apiUrl) ? clientUserAgent() : undefined;
+  return {
+    ...(userAgent ? { 'user-agent': userAgent } : {}),
+    'x-notte-request-origin': REQUEST_ORIGIN,
+    'x-notte-sdk-version': SDK_VERSION,
+  };
 }
 
 /** Run `connect`, once more when the connection dropped before the WebSocket upgrade. */
@@ -898,13 +933,14 @@ export class Session {
     try {
       if (!this.playwrightBrowser) {
         const cdpUrl = await this.cdpUrl();
-        // Identify the SDK to Notte's CDP endpoint, as every API call does; a caller's
+        // Identify the SDK to Notte's CDP endpoint, as every API call does: on the API's own
+        // origin its User-Agent replaces Playwright's own on the WebSocket upgrade. A caller's
         // own browser (`cdp_url` option) gets nothing extra.
         this.playwrightBrowser = await connectOverCdpWithRetry(() =>
           this.options.cdp_url
             ? playwright.chromium.connectOverCDP(cdpUrl)
             : playwright.chromium.connectOverCDP(cdpUrl, {
-                headers: { 'x-notte-request-origin': REQUEST_ORIGIN, 'x-notte-sdk-version': SDK_VERSION },
+                headers: cdpHeaders(cdpUrl, this.client.getConfig().baseUrl),
               }),
         );
         installServerOwnedDialogPolicy(this.playwrightBrowser);

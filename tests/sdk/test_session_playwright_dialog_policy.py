@@ -3,11 +3,19 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from notte_core import __version__ as notte_core_version
+from notte_sdk.client_info import client_user_agent
 from notte_sdk.endpoints import sessions
 from notte_sdk.endpoints.sessions import AsyncRemoteSession, RemoteSession
 
 CDP_URL = "wss://notte.example/cdp"
-SDK_HEADERS = {"x-notte-request-origin": "sdk-python", "x-notte-sdk-version": notte_core_version}
+
+
+def _sdk_headers() -> dict[str, str]:
+    return {
+        "User-Agent": client_user_agent(),
+        "x-notte-request-origin": "sdk-python",
+        "x-notte-sdk-version": notte_core_version,
+    }
 
 
 def _bare_session() -> RemoteSession:
@@ -46,7 +54,7 @@ def test_sync_page_makes_backend_the_native_dialog_owner(monkeypatch: pytest.Mon
 
     assert session.page is page
 
-    playwright.chromium.connect_over_cdp.assert_called_once_with(CDP_URL, headers=SDK_HEADERS)
+    playwright.chromium.connect_over_cdp.assert_called_once_with(CDP_URL, headers=_sdk_headers())
 
     context.on.assert_called_once_with("dialog", sessions._observe_server_owned_dialog)
     assert sessions._observe_server_owned_dialog(MagicMock()) is None
@@ -72,7 +80,7 @@ async def test_async_page_makes_backend_the_native_dialog_owner(monkeypatch: pyt
 
     assert await session.page is page
 
-    playwright.chromium.connect_over_cdp.assert_awaited_once_with(CDP_URL, headers=SDK_HEADERS)
+    playwright.chromium.connect_over_cdp.assert_awaited_once_with(CDP_URL, headers=_sdk_headers())
 
     context.on.assert_called_once_with("dialog", sessions._observe_server_owned_dialog)
     assert sessions._observe_server_owned_dialog(MagicMock()) is None
