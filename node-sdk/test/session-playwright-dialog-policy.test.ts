@@ -5,6 +5,7 @@ import { Session, installServerOwnedDialogPolicy, observeServerOwnedDialog } fro
 import { sessionStart, sessionStop } from '@/lib/client/sdk.gen';
 import { REQUEST_ORIGIN } from '@/client';
 import { SDK_VERSION } from '@/version';
+import { clientUserAgent } from '@/client-info';
 import { mockNotteClient, sessionResponse } from './helpers/session-mocks';
 
 vi.mock('@/lib/client/sdk.gen', () => ({
@@ -40,7 +41,7 @@ describe('session.page()', () => {
     expect(await session.page()).toBe(page);
 
     expect(chromium.connectOverCDP).toHaveBeenCalledWith('ws://notte.example/cdp', {
-      headers: { 'x-notte-request-origin': REQUEST_ORIGIN, 'x-notte-sdk-version': SDK_VERSION },
+      headers: { 'user-agent': clientUserAgent(), 'x-notte-request-origin': REQUEST_ORIGIN, 'x-notte-sdk-version': SDK_VERSION },
     });
     expect(context.on).toHaveBeenCalledTimes(1);
     expect(context.on).toHaveBeenCalledWith('dialog', observeServerOwnedDialog);

@@ -6,6 +6,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import type { Browser, BrowserContext, Dialog, Page } from 'playwright-core';
 import { DEFAULT_REQUEST_TIMEOUT_MS, MAX_RETRIES_HEADER, NotteClient, REQUEST_ORIGIN, TIMEOUT_HEADER } from '@/client';
 import { SDK_VERSION } from '@/version';
+import { clientUserAgent } from '@/client-info';
 import type {
   AgentFunctionCodeResponse,
   ApiExecutionResponse,
@@ -114,6 +115,16 @@ function cdpTransportFailure(error: unknown): string | undefined {
   const reason = firstLine.slice(at + marker.length);
   if (reason.startsWith('ws://') || reason.startsWith('wss://')) return undefined;
   return CDP_TRANSPORT_FAILURES.some(failure => reason.includes(failure)) ? reason : undefined;
+}
+
+/** Headers for Notte's CDP endpoint: the SDK identity and, under Node, its User-Agent. */
+export function cdpHeaders(): Record<string, string> {
+  const userAgent = clientUserAgent();
+  return {
+    ...(userAgent ? { 'user-agent': userAgent } : {}),
+    'x-notte-request-origin': REQUEST_ORIGIN,
+    'x-notte-sdk-version': SDK_VERSION,
+  };
 }
 
 /** Run `connect`, once more when the connection dropped before the WebSocket upgrade. */
@@ -898,14 +909,13 @@ export class Session {
     try {
       if (!this.playwrightBrowser) {
         const cdpUrl = await this.cdpUrl();
-        // Identify the SDK to Notte's CDP endpoint, as every API call does; a caller's
-        // own browser (`cdp_url` option) gets nothing extra.
+        // Identify the SDK to Notte's CDP endpoint, as every API call does: its User-Agent
+        // replaces Playwright's own on the WebSocket upgrade. A caller's own browser
+        // (`cdp_url` option) gets nothing extra.
         this.playwrightBrowser = await connectOverCdpWithRetry(() =>
           this.options.cdp_url
             ? playwright.chromium.connectOverCDP(cdpUrl)
-            : playwright.chromium.connectOverCDP(cdpUrl, {
-                headers: { 'x-notte-request-origin': REQUEST_ORIGIN, 'x-notte-sdk-version': SDK_VERSION },
-              }),
+            : playwright.chromium.connectOverCDP(cdpUrl, { headers: cdpHeaders() }),
         );
         installServerOwnedDialogPolicy(this.playwrightBrowser);
       }

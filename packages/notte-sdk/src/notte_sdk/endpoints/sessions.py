@@ -81,6 +81,7 @@ from notte_sdk._generated.public import (
 from notte_sdk._generated.resources import AsyncSessionsOperations, SessionsOperations
 from notte_sdk._retry import is_retryable_status
 from notte_sdk._transport import TransportError
+from notte_sdk.client_info import client_user_agent
 from notte_sdk.endpoints.base import NotteEndpoint
 from notte_sdk.endpoints.files import AsyncRemoteFileStorage, RemoteFileStorage
 from notte_sdk.endpoints.page import AsyncPageClient, PageClient
@@ -737,6 +738,7 @@ def _cdp_headers(
 ) -> dict[str, str] | None:
     """Headers for this API's CDP connection: the SDK identity, and the runner capability if set.
 
+    The SDK's User-Agent replaces Playwright's own on the WebSocket upgrade, as on every API call.
     Nothing is sent to a CDP endpoint served by someone else.
     """
     if request.cdp_url is not None:
@@ -750,7 +752,11 @@ def _cdp_headers(
     api_port = api.port if api.port is not None else default_port
     if not ((secure or plain) and target.hostname == api.hostname and target_port == api_port):
         return None
-    headers = {"x-notte-request-origin": client.REQUEST_ORIGIN, "x-notte-sdk-version": notte_core_version}
+    headers = {
+        "User-Agent": client_user_agent(),
+        "x-notte-request-origin": client.REQUEST_ORIGIN,
+        "x-notte-sdk-version": notte_core_version,
+    }
     # The capability is a credential: only ever sent over TLS.
     if secure and (capability := os.getenv("NOTTE_AUTH_CAPABILITY")):
         headers["x-notte-auth-capability"] = capability

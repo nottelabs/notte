@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from notte_core import __version__ as notte_core_version
+from notte_sdk.client_info import client_user_agent
 from notte_sdk.endpoints.sessions import AsyncRemoteSession, RemoteSession
 from notte_sdk.errors import NotteConnectionError
 from notte_sdk.types import SessionStartRequest
@@ -148,13 +149,18 @@ def test_capability_does_not_bypass_failed_readiness(monkeypatch, asynchronous):
     session.client.auth_readiness.assert_called_once_with("session")
 
 
-SDK_HEADERS = {"x-notte-request-origin": "sdk-python", "x-notte-sdk-version": notte_core_version}
+def sdk_headers():
+    return {
+        "User-Agent": client_user_agent(),
+        "x-notte-request-origin": "sdk-python",
+        "x-notte-sdk-version": notte_core_version,
+    }
 
 
 def test_cdp_connection_identifies_the_sdk(monkeypatch):
     monkeypatch.delenv("NOTTE_AUTH_CAPABILITY", raising=False)
     session = bare_session()
-    assert session._cdp_headers("wss://api.notte.cc/sessions/s/cdp") == SDK_HEADERS
+    assert session._cdp_headers("wss://api.notte.cc/sessions/s/cdp") == sdk_headers()
     assert session._cdp_headers("wss://external.invalid/cdp") is None
 
 
@@ -164,7 +170,7 @@ def test_cdp_capability_is_header_only_and_not_sent_to_external_provider(monkeyp
     monkeypatch.setenv("NOTTE_AUTH_CAPABILITY", "runner-capability")
     session = bare_session()
     assert session._cdp_headers("wss://api.notte.cc/sessions/s/cdp") == {
-        **SDK_HEADERS,
+        **sdk_headers(),
         "x-notte-auth-capability": "runner-capability",
     }
     client = SimpleNamespace(db_preview=None)
@@ -196,8 +202,8 @@ def test_cdp_capability_matches_effective_origin(monkeypatch, api_url, cdp_url, 
     session = bare_session()
     session.client.server_url = api_url
     headers = {
-        "capability": {**SDK_HEADERS, "x-notte-auth-capability": "runner-capability"},
-        "identity": SDK_HEADERS,
+        "capability": {**sdk_headers(), "x-notte-auth-capability": "runner-capability"},
+        "identity": sdk_headers(),
         None: None,
     }[expected]
     assert session._cdp_headers(cdp_url) == headers

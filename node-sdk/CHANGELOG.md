@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased: session.page() sends the SDK's User-Agent
+
+`session.page()` now sends the SDK's User-Agent, including the GitHub Actions job
+when there is one, on the CDP WebSocket connection to the Notte API, in place of
+Playwright's default. A browser passed with the `cdp_url` option still gets no
+extra headers. Python's `session.page` does the same.
+
 ## Unreleased: the SDK names itself in its User-Agent
 
 Requests to the Notte API now send `User-Agent: notte-sdk-node/<version> (node
