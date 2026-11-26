@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import TypeAlias, cast
 
 TomlValue: TypeAlias = str | bool | int | float | date | datetime | time | list["TomlValue"] | dict[str, "TomlValue"]
+JsonValue: TypeAlias = str | bool | int | float | None | list["JsonValue"] | dict[str, "JsonValue"]
 
 GROUPS = {
     "python": {"python_static", "python_unit", "python_live", "llm_provider_live", "python_docs", "cli_contract"},
@@ -108,7 +109,6 @@ INTEGRATION_DEPENDENCIES: dict[str, set[str]] = {
     "watsonx": {"python-source", "node-source"},
 }
 RECIPE_INPUTS = {
-    "openapi/openapi.json": {"terraform-profiles"},
     "docs/package.json": {"claude-agents", "openai-agents", "mongodb"},
     "docs/package-lock.json": {"claude-agents", "openai-agents", "mongodb"},
     "docs/src/sniptest/run_python.py": {"agent-browser", "claude-agents", "mongodb", "openai-agents"},
@@ -126,6 +126,13 @@ for _recipe in ("agent-browser", "claude-agents", "mongodb", "openai-agents"):
     RECIPE_INPUTS[f"node-sdk/test/{_recipe}.integration.test.ts"] = {_recipe}
     for _language in ("py", "ts"):
         RECIPE_INPUTS[f"docs/src/testers/integrations/{_recipe.replace('-', '_')}.{_language}"] = {_recipe}
+# The OpenAPI snapshot and the SDK code generated from it. Generator drift checks and the
+# schema round trip validate them, the static example checks type-check the SDK's users, and
+# one staging smoke runs the Python client. Native consumers run after merge and nightly.
+OPENAPI_SNAPSHOT = {"openapi/openapi.json", "openapi/resources.json", "openapi/known_drift.txt"}
+PYTHON_GENERATED = "packages/notte-sdk/src/notte_sdk/_generated/"
+NODE_GENERATED = ("node-sdk/src/lib/client/", "node-sdk/src/resources.gen.ts", "node-sdk/src/proxy/patterns.ts")
+GENERATED_STATIC = {"docs_static", "paired_static", "readme_static"}
 NODE_GENERATION = {
     "node-sdk/openapi-ts.config.ts",
     "node-sdk/src/proxy/patterns.ts",
@@ -141,6 +148,17 @@ WORKFLOWS = {
     "docs-tests-cicd.yml": "docs",
     "paired-sdk-examples.yml": "paired",
     "readme-check.yml": "readme",
+}
+# Release and bot workflows run outside CI. Their offline tests are in the unit suite.
+STANDALONE_WORKFLOWS = {
+    "bump-submodules.yml",
+    "complete-bot-pr.yml",
+    "node-sdk-publish.yml",
+    "openapi-bump.yml",
+    "prepare-release.yml",
+    "publish-release.yml",
+    "pypi-release.yml",
+    "refresh-llms.yml",
 }
 INTEGRATION_WORKFLOWS = {
     "agent-browser-integration.yml",
@@ -190,13 +208,17 @@ def integration_dependencies_for_path(path: str) -> set[str]:
     return set()
 
 
-def integration_examples_for_path(path: str) -> set[str]:
-    """Select actual consumers consistently for PRs and pushes; prose is excluded."""
+def integration_examples_for_path(path: str, *, dependents: bool = True) -> set[str]:
+    """Select the native consumers of a path; prose is excluded.
+
+    ``dependents=False`` (pull requests) keeps only consumers whose own inputs changed. SDK,
+    lockfile and schema changes reach every dependent consumer after merge and nightly.
+    """
     if path.startswith("integrations/terraform-provider-notte/") and "terraform-profiles" in INTEGRATION_EXAMPLES:
         return set() if path.endswith((".md", ".mdx", ".txt")) else {"terraform-profiles"}
     if path in INTEGRATION_INPUTS or path == ".github/workflows/paired-sdk-examples.yml":
         return set(INTEGRATION_EXAMPLES)
-    if dependencies := integration_dependencies_for_path(path):
+    if (dependencies := integration_dependencies_for_path(path)) and dependents:
         return {
             name
             for name in INTEGRATION_EXAMPLES
@@ -238,6 +260,8 @@ def base_scopes_for_path(path: str, *, code_changed: bool = True) -> set[str]:
         return GROUPS["python"] | SDK_EXAMPLES
     if path.startswith(".github/workflows/"):
         name = path.removeprefix(".github/workflows/")
+        if name in STANDALONE_WORKFLOWS:
+            return {"python_static", "python_unit"}
         if name in INTEGRATION_WORKFLOWS:
             # Dedicated integration workflows cover these standalone changes.
             # SDK changes in the same diff still select the SDK's live suites.
@@ -254,6 +278,12 @@ def base_scopes_for_path(path: str, *, code_changed: bool = True) -> set[str]:
         return {"cli_contract"}
     if path == "README.md":
         return {"python_static", "readme_static"} | ({"readme_live"} if code_changed else set())
+    if path in OPENAPI_SNAPSHOT:
+        return {"python_static", "python_unit", "python_live", "node_static", "node_generated"} | GENERATED_STATIC
+    if path.startswith(PYTHON_GENERATED):
+        return {"python_static", "python_unit", "python_live"} | GENERATED_STATIC
+    if path.startswith(NODE_GENERATED):
+        return {"node_static", "node_generated"} | GENERATED_STATIC
     if path in OPENAPI_TOOLS or path.startswith("tests/data/openapi-order/"):
         return {"python_static", "python_unit", "node_static", "node_generated"}
     if path in OFFLINE_SCRIPTS:
@@ -499,10 +529,48 @@ def changed_registry_examples(base: str, head: str) -> set[str]:
         return set(INTEGRATION_EXAMPLES)
 
 
+# The release's version bump also stamps the API version into the snapshot and generated SDK
+# (scripts/openapi_contract.py --stamp-version), so the API version is all they may change.
+VERSION_STAMPED = {
+    "openapi/openapi.json",
+    f"{PYTHON_GENERATED}endpoints.py",
+    f"{PYTHON_GENERATED}models.py",
+}
+
+
+def api_version(version: str) -> str:
+    """The version the API reports for a workspace version, as `openapi_contract.api_version` writes it."""
+    return re.sub(r"\.dev0?$", "", version)
+
+
+def without_api_version(path: str, text: str, version: str) -> str:
+    """Replace the places the version bump stamps; any other difference remains."""
+    if path == "openapi/openapi.json":
+        spec = cast(JsonValue, json.loads(text))
+        info = spec.get("info") if isinstance(spec, dict) else None
+        if not isinstance(info, dict):
+            raise ValueError("unexpected OpenAPI snapshot")
+        if info.get("version") == version:
+            info["version"] = "<api-version>"
+        field: JsonValue = spec
+        for key in ("components", "schemas", "HealthResponse", "properties", "version"):
+            field = field.get(key) if isinstance(field, dict) else None
+        if isinstance(field, dict) and field.get("default") == version:
+            field["default"] = "<api-version>"
+        # Keep the declared order: the snapshot's order is part of its contract.
+        return json.dumps(spec)
+    if path.endswith("/endpoints.py"):
+        return text.replace(f"(Notte API {version}).", "(Notte API <api-version>).", 1)
+    # models.py: the snapshot digest and HealthResponse's version default.
+    text = re.sub(r"(?m)^# openapi/openapi\.json SHA256: [0-9a-f]{64}$", "# <snapshot digest>", text, count=1)
+    default = f'version: Annotated[str, Field(title="Version")] = "{version}"'
+    return text.replace(default, 'version: Annotated[str, Field(title="Version")] = "<api-version>"')
+
+
 def workspace_version_only(base: str, head: str, paths: set[str]) -> bool:
     """Recognize synchronized release bumps without exempting dependency or tooling changes."""
     manifests = {name: str(Path(directory) / "pyproject.toml") for name, directory in WORKSPACE_PACKAGES.items()}
-    if not paths or not paths <= {*manifests.values(), "uv.lock"}:
+    if not paths or not paths <= {*manifests.values(), "uv.lock", *VERSION_STAMPED}:
         return False
 
     def document(sha: str, path: str) -> dict[str, TomlValue]:
@@ -594,10 +662,20 @@ def workspace_version_only(base: str, head: str, paths: set[str]) -> bool:
             return len(before) == len(after) and all(identical(left, right) for left, right in zip(before, after))
         return before == after
 
+    def stamped(sha: str, path: str, version: str) -> str:
+        entry = git("--literal-pathspecs", "ls-tree", "-z", sha, "--", path)
+        if not entry.startswith(b"100644 blob "):
+            raise ValueError("version-stamped file is not a regular non-executable file")
+        return without_api_version(path, git("show", f"{sha}:{path}").decode("utf-8"), api_version(version))
+
     try:
         before, normalized_before = snapshot(base)
         after, normalized_after = snapshot(head)
-        return before != after and identical(normalized_before, normalized_after)
+        return (
+            before != after
+            and identical(normalized_before, normalized_after)
+            and all(stamped(base, path, before) == stamped(head, path, after) for path in paths & VERSION_STAMPED)
+        )
     except (ValueError, subprocess.SubprocessError, UnicodeError):
         return False
 
@@ -651,7 +729,7 @@ def select(event: str, base: str, head: str) -> dict[str, bool | str | list[str]
                     else (
                         changed_registry_examples(base, head)
                         if path == "scripts/integration_examples.json"
-                        else integration_examples_for_path(path)
+                        else integration_examples_for_path(path, dependents=event != "pull_request")
                     )
                 )
                 if path == "scripts/integration_examples.json" and not native_examples:

@@ -78,6 +78,7 @@ class OfflinePathRoutingTests(unittest.TestCase):
                 self.assertTrue(ci.PYTHON_RUNTIME <= ci.scopes_for_path(path))
 
     def test_runtime_schemas_and_generated_outputs_keep_runtime_coverage(self) -> None:
+        # Generated Python keeps the staging smoke; generated Node keeps its drift check.
         for path in (
             "packages/notte-core/src/notte_core/schema.py",
             "packages/notte-sdk/src/notte_sdk/_generated/models.py",
@@ -87,7 +88,8 @@ class OfflinePathRoutingTests(unittest.TestCase):
                 self.assertTrue(ci.PYTHON_RUNTIME <= ci.scopes_for_path(path))
         for path in ("node-sdk/src/resources.gen.ts", "node-sdk/src/lib/client/types.gen.ts"):
             with self.subTest(path=path):
-                self.assertTrue({"node_static", "node_generated", "node_live"} <= ci.scopes_for_path(path))
+                self.assertTrue({"node_static", "node_generated"} <= ci.scopes_for_path(path))
+        self.assertIn("node_live", ci.scopes_for_path("node-sdk/src/session.ts"))
 
 
 class OfflineGitHistoryTests(unittest.TestCase):

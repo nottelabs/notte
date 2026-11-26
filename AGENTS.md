@@ -22,6 +22,12 @@ This is the standalone Python/Node SDK repository. The machine's monorepo
   The owner rejected a per-run maintainer approval (status plus rerun) for live
   coverage; don't reintroduce approval or rerun steps without asking.
   Fork PRs get no secrets; when they select live suites, the `tests` gate stays red.
+- `scripts/ci_scope.py` keeps PR live coverage narrow (owner decision, 2026-11-26):
+  PRs run native integration examples only for their own inputs (`dependents=False`);
+  SDK, lockfile and snapshot dependents run on the `main` push and nightly. The snapshot
+  and generated SDKs select one live suite (`python_live`), and `STANDALONE_WORKFLOWS`
+  select offline checks. A release's version bump, including its version-stamped snapshot
+  and generated SDK (`VERSION_STAMPED`), stays offline. Unknown paths still select everything.
 - Never add `xfail`, `skip` or an ignore to make a failing test pass. Fix the
   cause, or stop and explain why it fails.
 - CI's live LLM calls (`staging-and-live`) go through OpenRouter: the

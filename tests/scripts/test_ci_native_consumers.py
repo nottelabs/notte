@@ -88,16 +88,20 @@ def test_dependency_inventory_covers_registered_projects_and_real_manifests() ->
         ".github/actions/python-setup/action.yml",
     ],
 )
-def test_python_source_inputs_select_python_consumers_on_both_events(
+def test_python_source_inputs_select_python_consumers_after_merge(
     history: history_tests.GitHistoryTests,
     path: str,
 ) -> None:
     head = history.commit({path: "changed input\n"})
-    for event in ("pull_request", "push"):
-        scope = history.scope(event, history.base, head)
-        assert set(scope["integration_examples"]) == PYTHON_ONLY | CROSS_LANGUAGE
-        assert scope["integration_source_only"] == scope["integration_examples"]
-        assert scope["paired_live"] and scope["paired_static"]
+    scope = history.scope("push", history.base, head)
+    assert set(scope["integration_examples"]) == PYTHON_ONLY | CROSS_LANGUAGE
+    assert scope["integration_source_only"] == scope["integration_examples"]
+    assert scope["paired_live"] and scope["paired_static"]
+    # Pull requests run only consumers whose own inputs changed; dependents run after merge and nightly.
+    scope = history.scope("pull_request", history.base, head)
+    assert scope["integration_examples"] == []
+    assert scope["integration_source_only"] == []
+    assert scope["paired_static"]
 
 
 @pytest.mark.parametrize(
@@ -113,15 +117,17 @@ def test_python_source_inputs_select_python_consumers_on_both_events(
         "node-sdk/new-build.config.json",
     ],
 )
-def test_node_inputs_select_node_source_consumers_on_both_events(
+def test_node_inputs_select_node_source_consumers_after_merge(
     history: history_tests.GitHistoryTests,
     path: str,
 ) -> None:
     head = history.commit({path: "changed input\n"})
-    for event in ("pull_request", "push"):
-        scope = history.scope(event, history.base, head)
-        assert set(scope["integration_examples"]) == NODE_ONLY | CROSS_LANGUAGE
-        assert scope["integration_source_only"] == scope["integration_examples"]
+    scope = history.scope("push", history.base, head)
+    assert set(scope["integration_examples"]) == NODE_ONLY | CROSS_LANGUAGE
+    assert scope["integration_source_only"] == scope["integration_examples"]
+    scope = history.scope("pull_request", history.base, head)
+    assert scope["integration_examples"] == []
+    assert scope["integration_source_only"] == []
 
 
 @pytest.mark.parametrize(
@@ -154,18 +160,20 @@ def test_project_and_cross_language_recipe_inputs_keep_full_compatibility(
 
 
 @pytest.mark.parametrize("path", ["openapi/openapi.json", "openapi/resources.json"])
-def test_shared_wire_schema_covers_both_sdks_and_raw_api_consumers(
+def test_shared_wire_schema_covers_both_sdks_and_raw_api_consumers_after_merge(
     history: history_tests.GitHistoryTests,
     path: str,
 ) -> None:
     head = history.commit({path: "{}\n"})
-    for event in ("pull_request", "push"):
-        scope = history.scope(event, history.base, head)
-        assert set(scope["integration_examples"]) == PYTHON_ONLY | NODE_ONLY | CROSS_LANGUAGE | {
-            "terraform-profiles",
-            "valtown",
-        }
-        assert set(scope["integration_source_only"]) == PYTHON_ONLY | NODE_ONLY | CROSS_LANGUAGE
+    scope = history.scope("push", history.base, head)
+    assert set(scope["integration_examples"]) == PYTHON_ONLY | NODE_ONLY | CROSS_LANGUAGE | {
+        "terraform-profiles",
+        "valtown",
+    }
+    assert set(scope["integration_source_only"]) == PYTHON_ONLY | NODE_ONLY | CROSS_LANGUAGE
+    scope = history.scope("pull_request", history.base, head)
+    assert scope["integration_examples"] == []
+    assert not scope["paired_live"]
 
 
 @pytest.mark.parametrize(
@@ -199,19 +207,21 @@ def test_unclassified_future_registration_runs_full_for_either_sdk(
     head = history.commit(
         {"packages/notte-sdk/src/notte_sdk/client.py": "changed\n", "node-sdk/src/session.ts": "changed\n"}
     )
-    for event in ("pull_request", "push"):
-        scope = history.scope(event, history.base, head)
-        assert "future" in scope["integration_examples"]
-        assert "future" not in scope["integration_source_only"]
+    scope = history.scope("push", history.base, head)
+    assert "future" in scope["integration_examples"]
+    assert "future" not in scope["integration_source_only"]
+    assert "future" not in history.scope("pull_request", history.base, head)["integration_examples"]
 
 
 def test_mixed_diff_full_project_mode_dominates_source_mode(history: history_tests.GitHistoryTests) -> None:
     history.commit({"packages/notte-sdk/src/notte_sdk/client.py": "changed\n"})
     head = history.commit({"node-sdk/src/session.ts": "changed\n", "examples/braintrust/python/demo.py": "changed\n"})
-    for event in ("pull_request", "push"):
-        scope = history.scope(event, history.base, head)
-        assert set(scope["integration_examples"]) == PYTHON_ONLY | NODE_ONLY | CROSS_LANGUAGE
-        assert set(scope["integration_source_only"]) == (PYTHON_ONLY | NODE_ONLY | CROSS_LANGUAGE) - {"braintrust"}
+    scope = history.scope("push", history.base, head)
+    assert set(scope["integration_examples"]) == PYTHON_ONLY | NODE_ONLY | CROSS_LANGUAGE
+    assert set(scope["integration_source_only"]) == (PYTHON_ONLY | NODE_ONLY | CROSS_LANGUAGE) - {"braintrust"}
+    scope = history.scope("pull_request", history.base, head)
+    assert scope["integration_examples"] == ["braintrust"]
+    assert scope["integration_source_only"] == []
 
 
 def test_renamed_and_deleted_paths_retain_both_dependencies(history: history_tests.GitHistoryTests) -> None:
@@ -219,13 +229,13 @@ def test_renamed_and_deleted_paths_retain_both_dependencies(history: history_tes
     (history.repo / "node-sdk/src").mkdir(parents=True)
     history.git("mv", "packages/notte-sdk/src/notte_sdk/old.py", "node-sdk/src/new.ts")
     head = history.commit({})
-    for event in ("pull_request", "push"):
-        scope = history.scope(event, before, head)
-        assert set(scope["integration_examples"]) == PYTHON_ONLY | NODE_ONLY | CROSS_LANGUAGE
+    scope = history.scope("push", before, head)
+    assert set(scope["integration_examples"]) == PYTHON_ONLY | NODE_ONLY | CROSS_LANGUAGE
+    assert history.scope("pull_request", before, head)["python_live"]
     (history.repo / "node-sdk/src/new.ts").unlink()
     deleted = history.commit({})
-    for event in ("pull_request", "push"):
-        assert set(history.scope(event, head, deleted)["integration_examples"]) == NODE_ONLY | CROSS_LANGUAGE
+    assert set(history.scope("push", head, deleted)["integration_examples"]) == NODE_ONLY | CROSS_LANGUAGE
+    assert history.scope("pull_request", head, deleted)["node_live"]
 
 
 @pytest.mark.parametrize("event", ["schedule", "workflow_dispatch", "reviewed_push"])
@@ -236,7 +246,8 @@ def test_periodic_and_full_runs_keep_all_published_and_hosted_coverage(event: st
 
 
 @pytest.mark.parametrize("name", ["agentcard", "openai-computer-use", "github-actions", "braintrust", "openagi"])
-@pytest.mark.parametrize("event", ["pull_request", "push"])
+# Pull requests select no dependent consumers, so only the post-merge run installs the SDK source.
+@pytest.mark.parametrize("event", ["push"])
 def test_sdk_diff_drives_source_install_before_native_execution(
     history: history_tests.GitHistoryTests,
     workspace: Path,
