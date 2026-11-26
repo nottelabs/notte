@@ -27,7 +27,8 @@ This is the standalone Python/Node SDK repository. The machine's monorepo
   SDK, lockfile and snapshot dependents run on the `main` push and nightly. The snapshot
   (which also selects the schema round trip) and the generated Python SDK select one live
   suite (`python_live`); the generated Node SDK selects static and generation checks only.
-  `STANDALONE_WORKFLOWS` select offline checks. A release's version bump, including its version-stamped snapshot
+  `STANDALONE_WORKFLOWS` and `OFFLINE_SCRIPTS` (release tools, `complete_bot_pr.py`,
+  `generate_types_all.py`) select offline checks. A release's version bump, including its version-stamped snapshot
   and generated SDK (`VERSION_STAMPED`), stays offline. Unknown paths still select everything.
 - Never add `xfail`, `skip` or an ignore to make a failing test pass. Fix the
   cause, or stop and explain why it fails.
