@@ -45,7 +45,8 @@ def test_list_uses_session_endpoint(files_client: FileStorageClient, monkeypatch
     session = fake(
         monkeypatch,
         {
-            "files": [file_metadata().model_dump(mode="json")],
+            # A server that predates `browser_download_id` leaves it out.
+            "files": [file_metadata().model_dump(mode="json", exclude={"browser_download_id"})],
             "total": 1,
             "limit": 100,
             "offset": 0,
