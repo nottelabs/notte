@@ -33678,6 +33678,18 @@
           },
           "source": {
             "$ref": "#/components/schemas/FileSource"
+          },
+          "browser_download_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Browser Download Id",
+            "description": "The browser's id for the download this file came from: Chrome's download guid, which a CDP client reads from `Browser.downloadWillBegin`. Null for files that did not come from a browser download."
           }
         },
         "type": "object",

@@ -45,7 +45,8 @@ def test_list_uses_session_endpoint(files_client: FileStorageClient, monkeypatch
     session = fake(
         monkeypatch,
         {
-            "files": [file_metadata().model_dump(mode="json")],
+            # A server that predates `browser_download_id` leaves it out.
+            "files": [file_metadata().model_dump(mode="json", exclude={"browser_download_id"})],
             "total": 1,
             "limit": 100,
             "offset": 0,
@@ -56,6 +57,24 @@ def test_list_uses_session_endpoint(files_client: FileStorageClient, monkeypatch
     assert result.files[0].id == "file-id"
     assert session.calls[0].url == "https://api.notte.test/sessions/session-id/files"
     assert session.calls[0].params == {"source": "user_upload"}
+    assert result.files[0].browser_download_id is None
+
+
+def test_listed_downloads_carry_the_browser_download_id(
+    files_client: FileStorageClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    downloads = [
+        {
+            **file_metadata().model_dump(mode="json"),
+            "id": file_id,
+            "source": "session_download",
+            "browser_download_id": guid,
+        }
+        for file_id, guid in (("new", "guid-new"), ("old", "guid-old"))
+    ]
+    _ = fake(monkeypatch, {"files": downloads, "total": 2, "limit": 100, "offset": 0})
+    result = files_client.list("session-id", source=FileSource.SESSION_DOWNLOAD)
+    assert [(file.id, file.browser_download_id) for file in result.files] == [("new", "guid-new"), ("old", "guid-old")]
 
 
 def test_download_is_id_based(files_client: FileStorageClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
