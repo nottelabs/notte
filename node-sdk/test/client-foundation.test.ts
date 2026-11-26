@@ -6,6 +6,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ACCEPT_RUN_STATUSES_HEADER, DEFAULT_NOTTE_API_URL, NotteClient, TIMEOUT_HEADER } from '@/client';
+import { clientUserAgent, githubActionsContext } from '@/client-info';
 import { AuthenticationError, InvalidRequestError, NotteAPIError, NotteAPIExecutionError, NotteTimeoutError } from '@/errors';
 import { SDK_VERSION } from '@/version';
 import { checkForLatestVersion, resetVersionCheckForTests } from '@/version-check';
@@ -100,6 +101,20 @@ describe('NotteClient transport', () => {
       expect(headers.get('x-notte-sdk-version')).toBe(SDK_VERSION);
       expect(headers.get('x-db-preview')).toBeNull();
       expect(headers.get(TIMEOUT_HEADER)).toBeNull();
+      expect(headers.get('user-agent')).toBe(clientUserAgent());
+      expect(headers.get('user-agent')).toMatch(new RegExp(`^notte-sdk-node/${SDK_VERSION} \\(node `));
+    });
+
+    it('names the GitHub Actions job in the user agent', () => {
+      const env = {
+        GITHUB_ACTIONS: 'true',
+        GITHUB_REPOSITORY: 'acme/shop',
+        GITHUB_RUN_ID: '123456',
+        GITHUB_RUN_ATTEMPT: '2',
+        GITHUB_JOB: 'e2e tests\r\nX-Injected: 1',
+      };
+      expect(githubActionsContext(env)).toBe('github-actions (repo=acme/shop; run=123456/2; job=e2e_tests__X-Injected__1)');
+      expect(githubActionsContext({ GITHUB_REPOSITORY: 'acme/shop' })).toBeUndefined();
     });
 
     it('no preview header by default, preview branch sent as a header when configured', async () => {

@@ -34,6 +34,7 @@ import {
   type ZodLikeSchema,
 } from '@/scrape';
 import { SDK_VERSION } from '@/version';
+import { clientUserAgent } from '@/client-info';
 import { RemoteFileStorage, SessionFiles } from '@/files';
 import type { SearchOptions, SearchResponse, SearchResultsResponse, SearchSourcedAnswerResponse, SearchStructuredResponse } from '@/search';
 import { NotteAnything } from '@/anything';
@@ -192,6 +193,8 @@ export class NotteClient {
       if (this.config.apiKey) headers.set('Authorization', `Bearer ${this.config.apiKey}`);
       headers.set('x-notte-request-origin', REQUEST_ORIGIN);
       headers.set('x-notte-sdk-version', SDK_VERSION);
+      const userAgent = clientUserAgent();
+      if (userAgent) headers.set('user-agent', userAgent);
       if (this.config.dbPreview) headers.set(DB_PREVIEW_HEADER, this.config.dbPreview);
       // A caller's own value wins, so a request can still ask for the legacy statuses.
       if (!headers.has(ACCEPT_RUN_STATUSES_HEADER) && isFunctionsRequest(request.url, this.config.baseUrl)) {
