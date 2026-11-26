@@ -12209,6 +12209,12 @@ export type SessionStopData = {
          * Answer only once the session's close has finished its background work: its last CDP actions and steps are stored, its replay is finalized, its final network usage is written and its browser is released. The response's `steps` and network usage are then complete. Waits at most 30 seconds from the request, the close included, then answers what is stored. Defaults to false: the stop answers as soon as the session is closed, and that work finishes after the response. With `wait`, a session already stopped answers what is stored for it instead of 400: if its close is still finishing elsewhere, its last steps may not be stored yet.
          */
         wait?: boolean;
+        /**
+         * Close Error
+         *
+         * What failed on the client when it stops a session with `close_reason=error`, such as the type and message of the exception that ended it. Kept with the stop's usage log for debugging (at most 500 characters, longer is cut); it changes nothing about the close.
+         */
+        close_error?: string | null;
     };
     url: '/sessions/{session_id}/stop';
 };
