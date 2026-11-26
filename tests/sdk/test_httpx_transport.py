@@ -39,6 +39,7 @@ from notte_sdk._transport import (
     translate_error,
     with_query,
 )
+from notte_sdk.client_info import client_user_agent
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.errors import (
     NotteAPIError,
@@ -515,8 +516,8 @@ def test_request_timeouts_and_headers(monkeypatch: pytest.MonkeyPatch) -> None:
     assert headers["accept"] == "*/*"
     assert headers["connection"] == "keep-alive"
     assert "gzip" in headers["accept-encoding"]
-    # The default user agent names the HTTP library, as python-requests/X did.
-    assert headers["user-agent"] == f"python-httpx/{httpx.__version__}"
+    # API calls name the SDK (and the CI job running it); other hosts keep httpx's default.
+    assert headers["user-agent"] == client_user_agent()
 
 
 def test_cookies_are_not_kept_between_calls(monkeypatch: pytest.MonkeyPatch) -> None:

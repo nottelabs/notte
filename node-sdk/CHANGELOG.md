@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased: the SDK names itself in its User-Agent
+
+Requests to the Notte API now send `User-Agent: notte-sdk-node/<version> (node
+<version>; <platform>)` instead of Node's default. Inside a GitHub Actions job it
+also names the job: `github-actions (repo=<owner/name>; run=<id>/<attempt>;
+job=<id>)`, so a failing session can be traced back to the workflow run that
+started it. Python's SDK sends the same, as `notte-sdk-python/<version>`. Browsers
+keep their own User-Agent.
+
 ## Unreleased: session.page() retries a dropped CDP connection
 
 When `session.page()` connects over CDP and the connection fails on the

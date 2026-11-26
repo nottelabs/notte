@@ -41,6 +41,7 @@ from notte_sdk._transport import (
     with_query,
 )
 from notte_sdk.auth import MISSING_API_KEY_MESSAGE, resolve_api_key
+from notte_sdk.client_info import client_user_agent
 from notte_sdk.errors import (
     AuthenticationError,
     NotteAPIError,
@@ -482,6 +483,7 @@ class _ClientCore(ABC, Generic[TRoot]):
         preview = {"x-db-preview": self.db_preview} if self.db_preview else {}
         return {
             "Authorization": f"Bearer {self.token}",
+            "User-Agent": client_user_agent(),
             "x-notte-sdk-version": notte_core_version,
             "x-notte-request-origin": self.REQUEST_ORIGIN,
             **self.RESOURCE_HEADERS,
