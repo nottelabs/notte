@@ -25447,7 +25447,8 @@
               }
             ],
             "title": "Reference Workflow Id",
-            "description": "The ID of the reference function (i.e whether the function was forked from another function or not)"
+            "description": "Deprecated: use reference_function_id. Removed on 2026-12-28.",
+            "deprecated": true
           },
           "deletion_protected": {
             "type": "boolean",
@@ -25508,6 +25509,21 @@
           "workflow_id": {
             "type": "string",
             "title": "Workflow Id",
+            "description": "Deprecated: use function_id. Removed on 2026-12-28.",
+            "deprecated": true,
+            "readOnly": true
+          },
+          "reference_function_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference Function Id",
+            "description": "The ID of the function this one was copied from, such as a fork's source, or null",
             "readOnly": true
           }
         },
@@ -25519,7 +25535,8 @@
           "latest_version",
           "versions",
           "status",
-          "workflow_id"
+          "workflow_id",
+          "reference_function_id"
         ],
         "title": "FunctionListItemResponse"
       },
@@ -25777,7 +25794,8 @@
               }
             ],
             "title": "Reference Workflow Id",
-            "description": "The ID of the reference function (i.e whether the function was forked from another function or not)"
+            "description": "Deprecated: use reference_function_id. Removed on 2026-12-28.",
+            "deprecated": true
           },
           "deletion_protected": {
             "type": "boolean",
@@ -25904,6 +25922,21 @@
           "workflow_id": {
             "type": "string",
             "title": "Workflow Id",
+            "description": "Deprecated: use function_id. Removed on 2026-12-28.",
+            "deprecated": true,
+            "readOnly": true
+          },
+          "reference_function_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference Function Id",
+            "description": "The ID of the function this one was copied from, such as a fork's source, or null",
             "readOnly": true
           }
         },
@@ -25915,7 +25948,8 @@
           "latest_version",
           "versions",
           "status",
-          "workflow_id"
+          "workflow_id",
+          "reference_function_id"
         ],
         "title": "FunctionResponse"
       },
@@ -26070,11 +26104,15 @@
           "workflow_id": {
             "type": "string",
             "title": "Workflow Id",
+            "description": "Deprecated: use function_id. Removed on 2026-12-28.",
+            "deprecated": true,
             "readOnly": true
           },
           "workflow_run_id": {
             "type": "string",
             "title": "Workflow Run Id",
+            "description": "Deprecated: use function_run_id. Removed on 2026-12-28.",
+            "deprecated": true,
             "readOnly": true
           }
         },
@@ -26117,7 +26155,7 @@
               }
             ],
             "title": "Logs",
-            "description": "The logs of the workflow run"
+            "description": "The logs of the function run"
           },
           "variables": {
             "anyOf": [
@@ -26130,7 +26168,7 @@
               }
             ],
             "title": "Variables",
-            "description": "The variables of the workflow run"
+            "description": "The variables of the function run"
           },
           "result": {
             "anyOf": [
@@ -26140,7 +26178,7 @@
               }
             ],
             "title": "Result",
-            "description": "The result of the workflow run"
+            "description": "The result of the function run"
           },
           "status": {
             "type": "string",
@@ -26151,7 +26189,7 @@
               "rejected"
             ],
             "title": "Status",
-            "description": "The status of the workflow run"
+            "description": "The status of the function run"
           },
           "payloads": {
             "additionalProperties": {
@@ -26671,7 +26709,8 @@
               }
             ],
             "title": "Reference Workflow Id",
-            "description": "The ID of the reference function (i.e whether the function was forked from another function or not)"
+            "description": "Deprecated: use reference_function_id. Removed on 2026-12-28.",
+            "deprecated": true
           },
           "deletion_protected": {
             "type": "boolean",
@@ -26813,6 +26852,21 @@
           "workflow_id": {
             "type": "string",
             "title": "Workflow Id",
+            "description": "Deprecated: use function_id. Removed on 2026-12-28.",
+            "deprecated": true,
+            "readOnly": true
+          },
+          "reference_function_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference Function Id",
+            "description": "The ID of the function this one was copied from, such as a fork's source, or null",
             "readOnly": true
           }
         },
@@ -26825,7 +26879,8 @@
           "latest_version",
           "versions",
           "status",
-          "workflow_id"
+          "workflow_id",
+          "reference_function_id"
         ],
         "title": "FunctionWithLinkResponse"
       },
@@ -27027,11 +27082,15 @@
           "workflow_id": {
             "type": "string",
             "title": "Workflow Id",
+            "description": "Deprecated: use function_id. Removed on 2026-12-28.",
+            "deprecated": true,
             "readOnly": true
           },
           "workflow_run_id": {
             "type": "string",
             "title": "Workflow Run Id",
+            "description": "Deprecated: use function_run_id. Removed on 2026-12-28.",
+            "deprecated": true,
             "readOnly": true
           }
         },
@@ -34940,11 +34999,15 @@
           "workflow_id": {
             "type": "string",
             "title": "Workflow Id",
+            "description": "Deprecated: use function_id. Removed on 2026-12-28.",
+            "deprecated": true,
             "readOnly": true
           },
           "workflow_run_id": {
             "type": "string",
             "title": "Workflow Run Id",
+            "description": "Deprecated: use function_run_id. Removed on 2026-12-28.",
+            "deprecated": true,
             "readOnly": true
           }
         },

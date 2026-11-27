@@ -92,7 +92,9 @@ export type FunctionWithLinkResponse = {
     /**
      * Reference Workflow Id
      *
-     * The ID of the reference function (i.e whether the function was forked from another function or not)
+     * Deprecated: use reference_function_id. Removed on 2026-12-28.
+     *
+     * @deprecated
      */
     reference_workflow_id?: string | null;
     /**
@@ -175,8 +177,18 @@ export type FunctionWithLinkResponse = {
     version_origins?: Array<FunctionVersionOriginInfo> | null;
     /**
      * Workflow Id
+     *
+     * Deprecated: use function_id. Removed on 2026-12-28.
+     *
+     * @deprecated
      */
     readonly workflow_id: string;
+    /**
+     * Reference Function Id
+     *
+     * The ID of the function this one was copied from, such as a fork's source, or null
+     */
+    readonly reference_function_id: string | null;
 };
 ```
 
@@ -239,7 +251,11 @@ Whether the function is public and can beshared with other users
 </ParamField>
 
 <ParamField body="reference_workflow_id" type={"string | null | undefined"}>
-The ID of the reference function (i.e whether the function was forked from another function or not)
+Deprecated: use reference_function_id. Removed on 2026-12-28.
+
+**deprecated:**
+
+
 </ParamField>
 
 <ParamField body="deletion_protected" type={"boolean | undefined"}>
@@ -295,7 +311,15 @@ Where each version in `versions` came from, in the same order. Owner reads only:
 </ParamField>
 
 <ParamField body="workflow_id" type={"string"} required>
+Deprecated: use function_id. Removed on 2026-12-28.
 
+**deprecated:**
+
+
+</ParamField>
+
+<ParamField body="reference_function_id" type={"string | null"} required>
+The ID of the function this one was copied from, such as a fork's source, or null
 </ParamField>
 
 ## Related types

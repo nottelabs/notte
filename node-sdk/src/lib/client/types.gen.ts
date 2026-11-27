@@ -3243,7 +3243,9 @@ export type FunctionListItemResponse = {
     /**
      * Reference Workflow Id
      *
-     * The ID of the reference function (i.e whether the function was forked from another function or not)
+     * Deprecated: use reference_function_id. Removed on 2026-12-28.
+     *
+     * @deprecated
      */
     reference_workflow_id?: string | null;
     /**
@@ -3286,8 +3288,18 @@ export type FunctionListItemResponse = {
     domain?: string | null;
     /**
      * Workflow Id
+     *
+     * Deprecated: use function_id. Removed on 2026-12-28.
+     *
+     * @deprecated
      */
     readonly workflow_id: string;
+    /**
+     * Reference Function Id
+     *
+     * The ID of the function this one was copied from, such as a fork's source, or null
+     */
+    readonly reference_function_id: string | null;
 };
 
 /**
@@ -3425,7 +3437,9 @@ export type FunctionResponse = {
     /**
      * Reference Workflow Id
      *
-     * The ID of the reference function (i.e whether the function was forked from another function or not)
+     * Deprecated: use reference_function_id. Removed on 2026-12-28.
+     *
+     * @deprecated
      */
     reference_workflow_id?: string | null;
     /**
@@ -3502,8 +3516,18 @@ export type FunctionResponse = {
     schedule_state?: 'enabled' | 'paused' | null;
     /**
      * Workflow Id
+     *
+     * Deprecated: use function_id. Removed on 2026-12-28.
+     *
+     * @deprecated
      */
     readonly workflow_id: string;
+    /**
+     * Reference Function Id
+     *
+     * The ID of the function this one was copied from, such as a fork's source, or null
+     */
+    readonly reference_function_id: string | null;
 };
 
 /**
@@ -3616,10 +3640,18 @@ export type FunctionRunListItemResponse = {
     local?: boolean;
     /**
      * Workflow Id
+     *
+     * Deprecated: use function_id. Removed on 2026-12-28.
+     *
+     * @deprecated
      */
     readonly workflow_id: string;
     /**
      * Workflow Run Id
+     *
+     * Deprecated: use function_run_id. Removed on 2026-12-28.
+     *
+     * @deprecated
      */
     readonly workflow_run_id: string;
 };
@@ -3637,13 +3669,13 @@ export type FunctionRunUpdateRequest = {
     /**
      * Logs
      *
-     * The logs of the workflow run
+     * The logs of the function run
      */
     logs?: Array<string> | null;
     /**
      * Variables
      *
-     * The variables of the workflow run
+     * The variables of the function run
      */
     variables?: {
         [key: string]: unknown;
@@ -3651,13 +3683,13 @@ export type FunctionRunUpdateRequest = {
     /**
      * Result
      *
-     * The result of the workflow run
+     * The result of the function run
      */
     result?: unknown | null;
     /**
      * Status
      *
-     * The status of the workflow run
+     * The status of the function run
      */
     status: 'closed' | 'active' | 'failed' | 'rejected';
     /**
@@ -3948,7 +3980,9 @@ export type FunctionWithLinkResponse = {
     /**
      * Reference Workflow Id
      *
-     * The ID of the reference function (i.e whether the function was forked from another function or not)
+     * Deprecated: use reference_function_id. Removed on 2026-12-28.
+     *
+     * @deprecated
      */
     reference_workflow_id?: string | null;
     /**
@@ -4031,8 +4065,18 @@ export type FunctionWithLinkResponse = {
     version_origins?: Array<FunctionVersionOriginInfo> | null;
     /**
      * Workflow Id
+     *
+     * Deprecated: use function_id. Removed on 2026-12-28.
+     *
+     * @deprecated
      */
     readonly workflow_id: string;
+    /**
+     * Reference Function Id
+     *
+     * The ID of the function this one was copied from, such as a fork's source, or null
+     */
+    readonly reference_function_id: string | null;
 };
 
 /**
@@ -4153,10 +4197,18 @@ export type GetFunctionRunResponse = {
     };
     /**
      * Workflow Id
+     *
+     * Deprecated: use function_id. Removed on 2026-12-28.
+     *
+     * @deprecated
      */
     readonly workflow_id: string;
     /**
      * Workflow Run Id
+     *
+     * Deprecated: use function_run_id. Removed on 2026-12-28.
+     *
+     * @deprecated
      */
     readonly workflow_run_id: string;
 };
@@ -8378,10 +8430,18 @@ export type UpdateFunctionRunResponse = {
     error?: FunctionRunError | null;
     /**
      * Workflow Id
+     *
+     * Deprecated: use function_id. Removed on 2026-12-28.
+     *
+     * @deprecated
      */
     readonly workflow_id: string;
     /**
      * Workflow Run Id
+     *
+     * Deprecated: use function_run_id. Removed on 2026-12-28.
+     *
+     * @deprecated
      */
     readonly workflow_run_id: string;
 };
@@ -10807,7 +10867,9 @@ export type FunctionListItemResponseWritable = {
     /**
      * Reference Workflow Id
      *
-     * The ID of the reference function (i.e whether the function was forked from another function or not)
+     * Deprecated: use reference_function_id. Removed on 2026-12-28.
+     *
+     * @deprecated
      */
     reference_workflow_id?: string | null;
     /**
@@ -10929,7 +10991,9 @@ export type FunctionResponseWritable = {
     /**
      * Reference Workflow Id
      *
-     * The ID of the reference function (i.e whether the function was forked from another function or not)
+     * Deprecated: use reference_function_id. Removed on 2026-12-28.
+     *
+     * @deprecated
      */
     reference_workflow_id?: string | null;
     /**
@@ -11129,7 +11193,9 @@ export type FunctionWithLinkResponseWritable = {
     /**
      * Reference Workflow Id
      *
-     * The ID of the reference function (i.e whether the function was forked from another function or not)
+     * Deprecated: use reference_function_id. Removed on 2026-12-28.
+     *
+     * @deprecated
      */
     reference_workflow_id?: string | null;
     /**
