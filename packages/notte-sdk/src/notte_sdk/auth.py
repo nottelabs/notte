@@ -52,6 +52,8 @@ _EU_CREDENTIAL_PREFIXES = ("sk-notte-eu-", "sk-notte-org-eu-", "nat_eu_")
 _HOST_TO_ENV_LABEL = {
     "api.notte.cc": "prod",
     "us-prod.notte.cc": "prod",
+    # Same console as api.notte.cc; the region is in the key itself.
+    "eu-api.notte.cc": "prod",
     "us-staging.notte.cc": "staging",
     "us-dev.notte.cc": "dev",
     "us-dev-test.notte.cc": "dev",
