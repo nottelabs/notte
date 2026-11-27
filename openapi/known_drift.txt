@@ -12,6 +12,8 @@ GetFunctionResponse: api-only field response_format
 GetFunctionResponse: api-only field schedule_cron
 GetFunctionResponse: api-only field schedule_variables
 GetFunctionResponse: api-only field schedule_state
+# The API computes reference_function_id from reference_workflow_id (notte_api.wire_models), so the SDK cannot own it as a field yet.
+GetFunctionResponse: api-only field reference_function_id (required)
 GetFunctionRunResponse: api-only field function_version
 GetFunctionRunResponse: api-only field payloads
 GetFunctionRunResponse: api-only field stopped_at
@@ -27,6 +29,7 @@ GetFunctionWithLinkResponse: api-only field schedule_cron
 GetFunctionWithLinkResponse: api-only field schedule_variables
 GetFunctionWithLinkResponse: api-only field schedule_state
 GetFunctionWithLinkResponse: api-only field version_origins
+GetFunctionWithLinkResponse: api-only field reference_function_id (required)
 ManagedAuthOperation: api-only field created_at (required)
 ManagedAuthOperation: api-only field updated_at (required)
 ReplayResponse: expires_at required api=True sdk=False
