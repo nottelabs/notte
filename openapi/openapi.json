@@ -26529,7 +26529,8 @@
           "cli",
           "python-sdk",
           "node-sdk",
-          "rest-api"
+          "rest-api",
+          "github"
         ],
         "title": "FunctionVersionOrigin"
       },
