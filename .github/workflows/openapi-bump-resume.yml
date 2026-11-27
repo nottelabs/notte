@@ -1,0 +1,115 @@
+name: resume-bump-openapi
+
+# bump-openapi leaves a refresh PR with manual commits alone, so a schema
+# published meanwhile starts no refresh of its own. Start one on main once it
+# can run again: when main's snapshot or the refresh changes, when the refresh
+# PR closes, and hourly, since a push to the `openapi-schema` branch runs no
+# workflow here. Only while no refresh PR is open and no refresh run is pending,
+# and only when the published schema differs from main's snapshot the way the
+# refresh compares them (`openapi_contract.py --fetch`, here with `--dry-run`).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - openapi/openapi.json
+      - .github/workflows/openapi-bump.yml
+      - .github/workflows/openapi-bump-resume.yml
+      - scripts/openapi_contract.py
+      - scripts/openapi_order.py
+  # SECURITY: pull_request_target runs this file from main with no secrets and never
+  # checks out or runs the PR's code; the job reads GitHub state and dispatches on main.
+  pull_request_target:
+    types: [closed]
+    branches: [main]
+  schedule:
+    # GitHub cron is UTC.
+    - cron: '41 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: resume-bump-openapi
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  resume:
+    # A closed PR counts only when it is this repository's refresh PR.
+    if: >-
+      github.repository == 'nottelabs/notte' && github.ref == 'refs/heads/main' &&
+      (github.event_name != 'pull_request_target' ||
+      (github.event.pull_request.head.ref == 'chore/bump-openapi' &&
+      github.event.pull_request.head.repo.full_name == github.repository))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      actions: write
+      contents: read
+      pull-requests: read
+    env:
+      BRANCH: chore/bump-openapi
+      SCHEMA_BRANCH: openapi-schema
+    steps:
+      - name: Check for an open refresh PR
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # `--head` also matches forks' branches of the same name.
+          PR_NUMBER=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$BRANCH" --base main --state open \
+            --json number,isCrossRepository --jq '[.[] | select(.isCrossRepository | not)][0].number // empty')
+          if [ -n "$PR_NUMBER" ]; then
+            # bump-openapi updates a bot-only PR on its own and must not overwrite manual commits.
+            echo "Refresh PR #$PR_NUMBER is open; nothing to resume."
+            echo "open=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "open=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout main
+        if: steps.pr.outputs.open == 'false'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Set up uv
+        if: steps.pr.outputs.open == 'false'
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+
+      - name: Compare the published schema with main's snapshot
+        if: steps.pr.outputs.open == 'false'
+        id: compare
+        run: |
+          set -euo pipefail
+          git fetch --quiet --depth=1 origin "refs/heads/$SCHEMA_BRANCH"
+          mkdir -p "$RUNNER_TEMP/schema"
+          git show FETCH_HEAD:openapi.json > "$RUNNER_TEMP/schema/openapi.json"
+          status=0
+          # The contract script needs only notte-core's dependencies.
+          uv run --frozen --no-dev --package notte-core python scripts/openapi_contract.py \
+            --fetch --dry-run --url "file://$RUNNER_TEMP/schema" || status=$?
+          case "$status" in
+            0) echo "outdated=false" >> "$GITHUB_OUTPUT" ;;
+            3) echo "outdated=true" >> "$GITHUB_OUTPUT" ;;
+            *) exit "$status" ;;
+          esac
+
+      - name: Start the refresh on main
+        if: steps.compare.outputs.outdated == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # A queued or running refresh already reads the latest schema and main.
+          pending=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow openapi-bump.yml --limit 20 \
+            --json status --jq '[.[] | select(.status != "completed")] | length')
+          if [ "$pending" -gt 0 ]; then
+            echo "A refresh run is already pending; not starting another."
+            exit 0
+          fi
+          echo "main's snapshot is behind the published schema; starting the refresh."
+          gh workflow run openapi-bump.yml --repo "$GITHUB_REPOSITORY" --ref main

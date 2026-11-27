@@ -73,6 +73,59 @@ def test_fetch_keeps_real_contract_changes(tmp_path: Path, monkeypatch: pytest.M
     assert snapshot.read_text() != original
 
 
+def test_fetch_dry_run_reports_real_changes_without_writing(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    document = json.loads((ROOT / "tests/data/openapi-order/input.json").read_text())
+    snapshot = tmp_path / "openapi.json"
+    original = json.dumps(document, indent=4) + "\n"
+    snapshot.write_text(original)
+    published = copy.deepcopy(document)
+    monkeypatch.setattr(contract, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(contract, "SNAPSHOT", snapshot)
+    monkeypatch.setattr(contract.sys, "argv", ["openapi_contract.py", "--fetch", "--dry-run"])
+    monkeypatch.setattr(contract, "download", lambda _: published)
+    monkeypatch.setattr(contract, "api_version", lambda: document["info"]["version"])
+    assert contract.main() == 0
+    # Key order is not a change, as for the refresh itself.
+    published = json.loads(json.dumps(document), object_pairs_hook=lambda pairs: dict(reversed(pairs)))
+    assert contract.main() == 0
+    published["components"]["schemas"]["Zebra"]["properties"]["a"]["minimum"] = 2
+    assert contract.main() == contract.OUTDATED
+    assert snapshot.read_text() == original
+
+
+def test_fetch_dry_run_ignores_the_version_the_refresh_stamps(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    document = json.loads((ROOT / "tests/data/openapi-order/input.json").read_text())
+    contract.stamp_api_version(document, "1.2.3")
+    snapshot = tmp_path / "openapi.json"
+    snapshot.write_text(json.dumps(document))
+    published = copy.deepcopy(document)
+    contract.stamp_api_version(published, "1.2.2")
+    monkeypatch.setattr(contract, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(contract, "SNAPSHOT", snapshot)
+    monkeypatch.setattr(contract.sys, "argv", ["openapi_contract.py", "--fetch", "--dry-run"])
+    monkeypatch.setattr(contract, "download", lambda _: published)
+    monkeypatch.setattr(contract, "api_version", lambda: "1.2.3")
+    assert contract.main() == 0
+
+
+def test_fetch_dry_run_without_a_snapshot_is_outdated(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    snapshot = tmp_path / "openapi" / "openapi.json"
+    monkeypatch.setattr(contract, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(contract, "SNAPSHOT", snapshot)
+    monkeypatch.setattr(contract.sys, "argv", ["openapi_contract.py", "--fetch", "--dry-run"])
+    monkeypatch.setattr(contract, "download", lambda _: {"info": {"version": "1"}})
+    monkeypatch.setattr(contract, "api_version", lambda: "1")
+    assert contract.main() == contract.OUTDATED
+    assert not snapshot.parent.exists()
+
+
+def test_dry_run_requires_fetch(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(contract.sys, "argv", ["openapi_contract.py", "--dry-run"])
+    with pytest.raises(SystemExit) as error:
+        contract.main()
+    assert error.value.code == 2
+
+
 Json: TypeAlias = "str | dict[str, Json]"
 
 

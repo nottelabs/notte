@@ -425,7 +425,8 @@ add or remove entries in the same change as the spec. The
 `openapi-bump.yml` refresh, started whenever the API's schema changes on the
 `openapi-schema` branch and three times a day, opens a draft PR and fails when generation or the
 contract check fails. Fix it on `chore/bump-openapi`. Later refreshes leave
-that PR alone once it has manual commits.
+that PR alone once it has manual commits; when it merges or closes, `openapi-bump-resume.yml` starts the refresh on main
+if the published schema still differs from main's snapshot (`openapi_contract.py --fetch --dry-run`).
 `complete-bot-pr.yml` merges a ready refresh PR, and the version PR a release opens,
 only at the exact head the producing run pushed, after its checks pass and a repository
 writer or Greptile approves that head. A manual commit leaves the PR for a person.
