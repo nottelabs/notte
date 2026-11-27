@@ -27,7 +27,7 @@ from notte_sdk._generated.resources import (
 from notte_sdk._generated.typing import ProxySettingsDict
 from notte_sdk._retry import DEFAULT_MAX_RETRIES
 from notte_sdk._transport import AsyncSharedHttpClient, SharedHttpClient
-from notte_sdk.auth import MISSING_API_KEY_MESSAGE, resolve_api_key
+from notte_sdk.auth import MISSING_API_KEY_MESSAGE, default_api_url, resolve_api_key
 from notte_sdk.endpoints.base import BaseClient
 from notte_sdk.endpoints.files import (
     AsyncFileStorageClient,
@@ -155,7 +155,7 @@ class NotteClient:
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
         )
 
-        if self.sessions.server_url != self.sessions.DEFAULT_NOTTE_API_URL:
+        if self.sessions.server_url != default_api_url(api_key):
             logger.warning(f"NOTTE_API_URL is set to: {self.sessions.server_url}")
 
     def close(self) -> None:
@@ -401,7 +401,7 @@ class AsyncNotteClient:
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
         )
 
-        if self.sessions.server_url != self.sessions.DEFAULT_NOTTE_API_URL:
+        if self.sessions.server_url != default_api_url(api_key):
             logger.warning(f"NOTTE_API_URL is set to: {self.sessions.server_url}")
 
     @property

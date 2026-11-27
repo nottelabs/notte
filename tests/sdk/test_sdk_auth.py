@@ -75,6 +75,7 @@ def cli_config_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 def test_resolve_env_label_matches_cli() -> None:
     assert resolve_env_label("https://api.notte.cc") == "prod"
     assert resolve_env_label("https://us-prod.notte.cc") == "prod"
+    assert resolve_env_label("https://eu-api.notte.cc") == "prod"
     assert resolve_env_label("https://us-staging.notte.cc") == "staging"
     assert resolve_env_label("https://us-dev-test.notte.cc") == "dev"
     assert resolve_env_label("http://localhost:8000") == "localhost"
@@ -353,6 +354,16 @@ def test_client_uses_cli_keyring_for_api_url(cli_config_dir: Path, monkeypatch: 
 
     assert NotteClient().sessions.token == "cli-local-key"
     assert NotteClient(server_url="https://api.notte.cc").sessions.token == "cli-prod-key"
+
+
+def test_eu_api_url_reads_the_prod_cli_keyring_entry(cli_config_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    _write_cli_store(cli_config_dir, "api_key:prod")
+    monkeypatch.setenv("NOTTE_API_URL", "https://eu-api.notte.cc")
+
+    assert get_keyring_api_key("https://eu-api.notte.cc") == "cli-prod-key"
+    client = NotteClient()
+    assert client.sessions.token == "cli-prod-key"
+    assert client.sessions.server_url == "https://eu-api.notte.cc"
 
 
 def test_client_env_key_overrides_cli_keyring(cli_config_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:

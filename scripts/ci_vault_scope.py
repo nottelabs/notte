@@ -129,7 +129,7 @@ def list_active_vaults(client: Any, *, page_size: int = 100) -> list[Any]:
     return vaults
 
 
-PRODUCTION_HOSTS = frozenset({"api.notte.cc", "www.api.notte.cc"})
+PRODUCTION_HOSTS = frozenset({"api.notte.cc", "www.api.notte.cc", "eu-api.notte.cc"})
 
 
 def resolved_server_url(client: Any) -> str:

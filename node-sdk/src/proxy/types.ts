@@ -33,8 +33,9 @@ export interface NotteProxyConfig {
   apiKey?: string;
 
   /**
-   * Base URL of the Notte API.
-   * @default 'https://api.notte.cc'
+   * Base URL of the Notte API. Defaults to `https://eu-api.notte.cc` when the
+   * forwarded API key is an EU key (`sk-notte-eu-...`, `sk-notte-org-eu-...`,
+   * `nat_eu_...`), else `https://api.notte.cc`.
    */
   apiUrl?: string;
 

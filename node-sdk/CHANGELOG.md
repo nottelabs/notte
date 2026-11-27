@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased: EU API keys use the EU API
+
+When neither `baseUrl` nor `NOTTE_API_URL` is set, an EU API key or access token
+(`sk-notte-eu-...`, `sk-notte-org-eu-...` or `nat_eu_...`) now sends requests to
+`https://eu-api.notte.cc`. Every other key keeps `https://api.notte.cc`. An explicit
+`baseUrl` or `NOTTE_API_URL` still wins, and the `NOTTE_API_URL is set to` warning
+no longer fires for the EU default. The proxy handler and the legacy `createClient`
+pick the host the same way when no API URL is configured. `EU_NOTTE_API_URL` and
+`defaultApiUrl(apiKey)` are exported. Python's `NotteClient` does the same.
+
 ## Unreleased: session.page() sends the SDK's User-Agent
 
 `session.page()` now sends the SDK's User-Agent, including the GitHub Actions job

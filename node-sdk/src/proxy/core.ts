@@ -2,8 +2,8 @@ import { validatePath, DEFAULT_ALLOWED_PATTERNS } from './patterns';
 import type { NotteProxyConfig } from './types';
 import { NotteProxyAuthError } from './types';
 import { ACCEPT_RUN_STATUSES_HEADER } from '../run-statuses';
+import { defaultApiUrl } from '../region';
 
-const DEFAULT_API_URL = 'https://api.notte.cc';
 const DEFAULT_FORWARD_HEADERS = ['content-type', 'accept', ACCEPT_RUN_STATUSES_HEADER];
 const METHODS_WITH_BODY = ['POST', 'PUT', 'PATCH'];
 
@@ -68,7 +68,8 @@ export async function handleProxyRequest(
     }
 
     // Step 3: Build target URL
-    const apiUrl = (config.apiUrl || DEFAULT_API_URL).replace(/\/$/, '');
+    // Without a configured URL, the forwarded key's region picks the API.
+    const apiUrl = (config.apiUrl || defaultApiUrl(apiKey)).replace(/\/$/, '');
     const path = pathSegments.join('/');
     const incomingUrl = new URL(request.url);
     const searchParams = incomingUrl.searchParams.toString();
