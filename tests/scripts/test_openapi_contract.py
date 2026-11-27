@@ -119,6 +119,20 @@ def test_fetch_dry_run_without_a_snapshot_is_outdated(tmp_path: Path, monkeypatc
     assert not snapshot.parent.exists()
 
 
+def test_fetch_dry_run_writes_nothing_with_other_writes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    document = json.loads((ROOT / "tests/data/openapi-order/input.json").read_text())
+    snapshot = tmp_path / "openapi.json"
+    original = json.dumps(document, indent=4) + "\n"
+    snapshot.write_text(original)
+    monkeypatch.setattr(contract, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(contract, "SNAPSHOT", snapshot)
+    monkeypatch.setattr(contract.sys, "argv", ["openapi_contract.py", "--fetch", "--dry-run", "--stamp-version"])
+    monkeypatch.setattr(contract, "download", lambda _: copy.deepcopy(document))
+    monkeypatch.setattr(contract, "api_version", lambda: document["info"]["version"])
+    assert contract.main() == 0
+    assert snapshot.read_text() == original
+
+
 def test_dry_run_requires_fetch(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(contract.sys, "argv", ["openapi_contract.py", "--dry-run"])
     with pytest.raises(SystemExit) as error:

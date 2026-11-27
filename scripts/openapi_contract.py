@@ -220,16 +220,18 @@ def main() -> int:
         spec = download(args.url)
         stamp_api_version(spec, api_version())
         previous = json.loads(SNAPSHOT.read_text()) if SNAPSHOT.exists() else None
-        if comparison_json(previous) == comparison_json(spec):
+        unchanged = comparison_json(previous) == comparison_json(spec)
+        if unchanged:
             print(f"{SNAPSHOT.relative_to(REPO_ROOT)} is unchanged (ignoring object-key order)")
         elif args.dry_run:
             print(f"{SNAPSHOT.relative_to(REPO_ROOT)} is out of date with {args.url}")
-            return OUTDATED
         else:
             # Keep the API's declared order. Sorting is only for the comparison.
             SNAPSHOT.parent.mkdir(parents=True, exist_ok=True)
             _ = SNAPSHOT.write_text(json.dumps(spec, indent=2, ensure_ascii=False) + "\n")
             print(f"wrote {SNAPSHOT.relative_to(REPO_ROOT)}")
+        if args.dry_run:
+            return 0 if unchanged else OUTDATED
 
     if args.stamp_version:
         spec = cast(JsonObject, json.loads(SNAPSHOT.read_text()))

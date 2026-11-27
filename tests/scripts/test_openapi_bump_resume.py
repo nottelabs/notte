@@ -86,7 +86,9 @@ def test_runs_trusted_main_code_only_and_writes_nothing_but_a_dispatch():
     resume = workflow()
     job = resume["jobs"]["resume"]
     assert resume["permissions"] == {"contents": "read"}
-    assert resume["concurrency"]["cancel-in-progress"] is False
+    # Job-level, so a skipped run for an unrelated PR never takes the pending slot.
+    assert "concurrency" not in resume
+    assert job["concurrency"] == {"group": "resume-bump-openapi", "cancel-in-progress": False}
     assert job["permissions"] == {"actions": "write", "contents": "read", "pull-requests": "read"}
     condition = " ".join(job["if"].split())
     assert "github.repository == 'nottelabs/notte' && github.ref == 'refs/heads/main'" in condition
@@ -136,11 +138,13 @@ def test_compares_with_the_refresh_dry_run(tmp_path: Path, status: int, expected
     ) in calls
 
 
-@pytest.mark.parametrize(("pending", "dispatched"), [("0", True), ("1", False)])
-def test_starts_the_refresh_on_main_unless_one_is_pending(tmp_path: Path, pending: str, dispatched: bool):
+@pytest.mark.parametrize(("pending", "pr", "dispatched"), [("0", "", True), ("1", "", False), ("0", "1669", False)])
+def test_starts_the_refresh_on_main_unless_one_is_pending_or_open(
+    tmp_path: Path, pending: str, pr: str, dispatched: bool
+):
     name = "Start the refresh on main"
     assert step(name)["if"] == "steps.compare.outputs.outdated == 'true'"
-    result, _, calls = run_step(name, tmp_path, FAKE_PENDING=pending)
+    result, _, calls = run_step(name, tmp_path, FAKE_PENDING=pending, FAKE_PR=pr)
     assert result.returncode == 0, result.stderr
     assert "gh run list --repo nottelabs/notte --workflow openapi-bump.yml" in calls
     assert ("gh workflow run openapi-bump.yml --repo nottelabs/notte --ref main" in calls) is dispatched

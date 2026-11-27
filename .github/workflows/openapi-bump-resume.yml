@@ -27,10 +27,6 @@ on:
     - cron: '41 * * * *'
   workflow_dispatch:
 
-concurrency:
-  group: resume-bump-openapi
-  cancel-in-progress: false
-
 permissions:
   contents: read
 
@@ -42,6 +38,10 @@ jobs:
       (github.event_name != 'pull_request_target' ||
       (github.event.pull_request.head.ref == 'chore/bump-openapi' &&
       github.event.pull_request.head.repo.full_name == github.repository))
+    # On the job, so an unrelated PR closure, skipped above, never replaces a pending run.
+    concurrency:
+      group: resume-bump-openapi
+      cancel-in-progress: false
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
@@ -109,6 +109,13 @@ jobs:
             --json status --jq '[.[] | select(.status != "completed")] | length')
           if [ "$pending" -gt 0 ]; then
             echo "A refresh run is already pending; not starting another."
+            exit 0
+          fi
+          # A refresh that finished since the first check may have opened its PR.
+          PR_NUMBER=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$BRANCH" --base main --state open \
+            --json number,isCrossRepository --jq '[.[] | select(.isCrossRepository | not)][0].number // empty')
+          if [ -n "$PR_NUMBER" ]; then
+            echo "Refresh PR #$PR_NUMBER is open now; nothing to resume."
             exit 0
           fi
           echo "main's snapshot is behind the published schema; starting the refresh."
