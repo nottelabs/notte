@@ -40,7 +40,7 @@ from notte_sdk._transport import (
     stream,
     with_query,
 )
-from notte_sdk.auth import MISSING_API_KEY_MESSAGE, resolve_api_key
+from notte_sdk.auth import DEFAULT_API_URL, MISSING_API_KEY_MESSAGE, default_api_url, resolve_api_key
 from notte_sdk.client_info import client_user_agent
 from notte_sdk.errors import (
     AuthenticationError,
@@ -255,7 +255,7 @@ class _ClientCore(ABC, Generic[TRoot]):
     # Whether the once-per-process PyPI version check runs on a background thread.
     _check_version_in_background: ClassVar[bool] = False
 
-    DEFAULT_NOTTE_API_URL: ClassVar[str] = "https://api.notte.cc"
+    DEFAULT_NOTTE_API_URL: ClassVar[str] = DEFAULT_API_URL
     DEFAULT_REQUEST_TIMEOUT_SECONDS: ClassVar[int] = 60
     # Headers a resource client adds to every request it sends.
     RESOURCE_HEADERS: ClassVar[dict[str, str]] = {}
@@ -277,11 +277,13 @@ class _ClientCore(ABC, Generic[TRoot]):
         verbose: bool = False,
     ):
         self.root_client: TRoot = root_client
-        self.server_url: str = server_url or os.getenv("NOTTE_API_URL") or self.DEFAULT_NOTTE_API_URL
-        token = resolve_api_key(api_key, self.server_url)
+        configured_url = server_url or os.getenv("NOTTE_API_URL")
+        token = resolve_api_key(api_key, configured_url or self.DEFAULT_NOTTE_API_URL)
         if token is None:
             raise AuthenticationError(MISSING_API_KEY_MESSAGE)
         self.token: str = token
+        # Without a configured URL, the credential's region picks the API.
+        self.server_url: str = configured_url or default_api_url(token)
         self.base_endpoint_path: str | None = base_endpoint_path
         self.verbose: bool = verbose
         self.db_preview = (os.getenv("NOTTE_DB_PREVIEW_BRANCH") or "").strip() or None
@@ -301,7 +303,7 @@ class _ClientCore(ABC, Generic[TRoot]):
         """
         if "localhost" in self.server_url:
             return True
-        return self.server_url != self.DEFAULT_NOTTE_API_URL
+        return self.server_url != default_api_url(self.token)
 
     def _get_latest_pypi_version(self, package_name: str = "notte-sdk") -> str:
         """

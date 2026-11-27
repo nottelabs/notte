@@ -22,6 +22,7 @@ export { client } from '@/lib/client/client.gen';
 
 // Export main SDK classes
 export { NotteClient, DEFAULT_NOTTE_API_URL, DEFAULT_REQUEST_TIMEOUT_MS, TIMEOUT_HEADER } from '@/client';
+export { EU_NOTTE_API_URL, defaultApiUrl } from '@/region';
 export { Session } from '@/session';
 export type { ResourceRequestOptions } from '@/resources.gen';
 export { NotteVault } from '@/vaults';
@@ -144,10 +145,10 @@ export { NotteProxyAuthError } from '@/proxy/types';
 
 // Create a configured client instance (legacy support)
 import { createClient as createGeneratedClient } from '@/lib/client/client';
-import { DEFAULT_NOTTE_API_URL as DEFAULT_API_URL } from '@/client';
+import { defaultApiUrl } from '@/region';
 
 export const createClient = (config?: { baseUrl?: string; token?: string }) => {
-  const client = createGeneratedClient({ baseUrl: config?.baseUrl || DEFAULT_API_URL });
+  const client = createGeneratedClient({ baseUrl: config?.baseUrl || defaultApiUrl(config?.token) });
   if (config?.baseUrl) {
     client.setConfig({ baseUrl: config.baseUrl });
   }

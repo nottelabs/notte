@@ -21,7 +21,7 @@ Set `NOTTE_API_KEY` in your server environment. [NotteClient](/typescript-sdk-re
 
 Pass `apiKey` in the client configuration to override the environment variable. See [NotteClientConfig](/typescript-sdk-reference/types/notteclientconfig) for the generated options.
 
-The API URL defaults to `https://api.notte.cc`. Override it with `NOTTE_API_URL` or the client’s `baseUrl` option. An explicit non-empty option takes precedence over the environment variable.
+The API URL defaults to `https://api.notte.cc`, or `https://eu-api.notte.cc` for an EU API key (`sk-notte-eu-...`, `sk-notte-org-eu-...` or `nat_eu_...`). Override it with `NOTTE_API_URL` or the client’s `baseUrl` option. An explicit non-empty option takes precedence over the environment variable.
 
 ## Authentication errors
 

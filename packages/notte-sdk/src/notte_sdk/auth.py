@@ -43,6 +43,12 @@ _MAX_PBES2_ITERATIONS = 10_000_000
 
 _LOOPBACK_HOSTS = {"localhost", "127.0.0.1", "::1"}
 
+DEFAULT_API_URL = "https://api.notte.cc"
+EU_API_URL = "https://eu-api.notte.cc"
+# API keys and access tokens name their data region in their prefix. The API
+# applies the same rule; any other credential belongs to the default region.
+_EU_CREDENTIAL_PREFIXES = ("sk-notte-eu-", "sk-notte-org-eu-", "nat_eu_")
+
 _HOST_TO_ENV_LABEL = {
     "api.notte.cc": "prod",
     "us-prod.notte.cc": "prod",
@@ -50,6 +56,18 @@ _HOST_TO_ENV_LABEL = {
     "us-dev.notte.cc": "dev",
     "us-dev-test.notte.cc": "dev",
 }
+
+
+def default_api_url(api_key: str | None) -> str:
+    """The API a credential is served by when no URL is configured.
+
+    EU credentials (`sk-notte-eu-...`, `sk-notte-org-eu-...`, `nat_eu_...`) use
+    the EU API; every other credential, or none, uses the default API. An
+    explicit `server_url` or `NOTTE_API_URL` takes precedence over this.
+    """
+    if api_key is not None and api_key.startswith(_EU_CREDENTIAL_PREFIXES):
+        return EU_API_URL
+    return DEFAULT_API_URL
 
 
 def resolve_env_label(api_url: str) -> str:

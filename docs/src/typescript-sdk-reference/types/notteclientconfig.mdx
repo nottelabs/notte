@@ -11,7 +11,10 @@ import AgentMdNotice from '/partials/agent-md-notice.mdx';
 
 ```typescript
 export interface NotteClientConfig {
-  /** API base URL. Defaults to `NOTTE_API_URL` or `https://api.notte.cc`. */
+  /**
+   * API base URL. Defaults to `NOTTE_API_URL`, else `https://eu-api.notte.cc` for an EU API key
+   * (`sk-notte-eu-...`, `sk-notte-org-eu-...`, `nat_eu_...`) and `https://api.notte.cc` for any other.
+   */
   baseUrl?: string;
   /** API key. Defaults to `NOTTE_API_KEY`. Optional only for relative proxy base URLs. */
   apiKey?: string;
@@ -38,7 +41,8 @@ export interface NotteClientConfig {
 ## Fields
 
 <ParamField body="baseUrl" type={"string | undefined"}>
-API base URL. Defaults to `NOTTE_API_URL` or `https://api.notte.cc`.
+API base URL. Defaults to `NOTTE_API_URL`, else `https://eu-api.notte.cc` for an EU API key
+(`sk-notte-eu-...`, `sk-notte-org-eu-...`, `nat_eu_...`) and `https://api.notte.cc` for any other.
 </ParamField>
 
 <ParamField body="apiKey" type={"string | undefined"}>

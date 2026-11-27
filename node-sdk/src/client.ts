@@ -59,7 +59,9 @@ import {
 import { createUpgradeErrorMessage, startVersionCheck, upgradeSuggestion } from '@/version-check';
 import { createRetryingFetch, DEFAULT_MAX_RETRIES } from '@/retry';
 
-export const DEFAULT_NOTTE_API_URL = 'https://api.notte.cc';
+import { DEFAULT_NOTTE_API_URL, defaultApiUrl } from '@/region';
+
+export { DEFAULT_NOTTE_API_URL };
 export const DEFAULT_REQUEST_TIMEOUT_MS = 60_000;
 /** Request origin header, the Node counterpart of `sdk-python`. */
 export const REQUEST_ORIGIN = 'sdk-node';
@@ -80,7 +82,10 @@ export { ACCEPT_RUN_STATUSES_HEADER };
 const EXECUTION_ERROR_CLASS = 'NotteApiExecutionError';
 
 export interface NotteClientConfig {
-  /** API base URL. Defaults to `NOTTE_API_URL` or `https://api.notte.cc`. */
+  /**
+   * API base URL. Defaults to `NOTTE_API_URL`, else `https://eu-api.notte.cc` for an EU API key
+   * (`sk-notte-eu-...`, `sk-notte-org-eu-...`, `nat_eu_...`) and `https://api.notte.cc` for any other.
+   */
   baseUrl?: string;
   /** API key. Defaults to `NOTTE_API_KEY`. Optional only for relative proxy base URLs. */
   apiKey?: string;
@@ -136,7 +141,8 @@ export class NotteClient {
 
   constructor(config: NotteClientConfig = {}) {
     const apiKey = config.apiKey || process.env.NOTTE_API_KEY;
-    const baseUrl = config.baseUrl || process.env.NOTTE_API_URL || DEFAULT_NOTTE_API_URL;
+    // Without a configured URL, the credential's region picks the API.
+    const baseUrl = config.baseUrl || process.env.NOTTE_API_URL || defaultApiUrl(apiKey);
     const dbPreview = config.dbPreview || process.env[DB_PREVIEW_ENV] || undefined;
     const timeoutMs = config.timeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
     const captchaTimeoutSeconds = config.captchaTimeoutSeconds ?? 180;
@@ -173,7 +179,7 @@ export class NotteClient {
       baseUrl, apiKey, timeoutMs, captchaTimeoutSeconds, dbPreview, maxRetries, verbose: config.verbose ?? false,
     };
 
-    if (baseUrl !== DEFAULT_NOTTE_API_URL && !isProxyMode) {
+    if (baseUrl !== defaultApiUrl(apiKey) && !isProxyMode) {
       console.warn(`NOTTE_API_URL is set to: ${baseUrl}`);
     }
 
