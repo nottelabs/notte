@@ -22,13 +22,13 @@ type ApiFunctionRunUpdateRequest = {
     /**
      * Logs
      *
-     * The logs of the workflow run
+     * The logs of the function run
      */
     logs?: Array<string> | null;
     /**
      * Variables
      *
-     * The variables of the workflow run
+     * The variables of the function run
      */
     variables?: {
         [key: string]: unknown;
@@ -36,13 +36,13 @@ type ApiFunctionRunUpdateRequest = {
     /**
      * Result
      *
-     * The result of the workflow run
+     * The result of the function run
      */
     result?: unknown | null;
     /**
      * Status
      *
-     * The status of the workflow run
+     * The status of the function run
      */
     status: 'closed' | 'active' | 'failed' | 'rejected';
     /**
@@ -69,19 +69,19 @@ The ID of the session
 </ParamField>
 
 <ParamField body="logs" type={"string[] | null | undefined"}>
-The logs of the workflow run
+The logs of the function run
 </ParamField>
 
 <ParamField body="variables" type={"{ [key: string]: unknown; } | null | undefined"}>
-The variables of the workflow run
+The variables of the function run
 </ParamField>
 
 <ParamField body="result" type={"unknown"}>
-The result of the workflow run
+The result of the function run
 </ParamField>
 
 <ParamField body="status" type={"\"failed\" | \"rejected\" | \"closed\" | \"active\""} required>
-The status of the workflow run
+The status of the function run
 </ParamField>
 
 <ParamField body="payloads" type={"{ [key: string]: RunPayloadReference; } | undefined"}>

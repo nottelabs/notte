@@ -34,10 +34,18 @@ export type UpdateFunctionRunResponse = {
     error?: FunctionRunError | null;
     /**
      * Workflow Id
+     *
+     * Deprecated: use function_id. Removed on 2026-12-28.
+     *
+     * @deprecated
      */
     readonly workflow_id: string;
     /**
      * Workflow Run Id
+     *
+     * Deprecated: use function_run_id. Removed on 2026-12-28.
+     *
+     * @deprecated
      */
     readonly workflow_run_id: string;
 };
@@ -66,10 +74,18 @@ The ID of the function run
 </ParamField>
 
 <ParamField body="workflow_id" type={"string"} required>
+Deprecated: use function_id. Removed on 2026-12-28.
+
+**deprecated:**
+
 
 </ParamField>
 
 <ParamField body="workflow_run_id" type={"string"} required>
+Deprecated: use function_run_id. Removed on 2026-12-28.
+
+**deprecated:**
+
 
 </ParamField>
 
