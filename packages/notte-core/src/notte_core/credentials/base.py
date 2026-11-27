@@ -288,6 +288,15 @@ def totp_code(secret: str) -> str:
     return TOTP(secret).now()
 
 
+def fill_values(action: BaseAction) -> list[str | ValueWithPlaceholder]:
+    """Values of a fill-type action that may hold credential placeholders (empty for other actions)."""
+    if isinstance(action, FormFillAction):
+        return list(action.value.values())
+    if isinstance(action, (MultiFactorFillAction, FillAction, FallbackFillAction, SelectDropdownOptionAction)):
+        return [action.value]
+    return []
+
+
 class VaultState:
     """Credential tracking and transformations shared by local and remote vaults."""
 
@@ -424,15 +433,6 @@ class VaultState:
             for cred_key, cred_value in creds_dict.items()
         }
 
-    @staticmethod
-    def _fill_values(action: BaseAction) -> list[str | ValueWithPlaceholder]:
-        """Values of a fill-type action that may hold credential placeholders (empty for other actions)."""
-        if isinstance(action, FormFillAction):
-            return list(action.value.values())
-        if isinstance(action, (MultiFactorFillAction, FillAction, FallbackFillAction, SelectDropdownOptionAction)):
-            return [action.value]
-        return []
-
     def contains_credentials(self, action: BaseAction) -> bool:
         """Check if the action contains credentials.
 
@@ -447,7 +447,7 @@ class VaultState:
         """
         return any(
             isinstance(value, ValueWithPlaceholder) or CredentialField.from_placeholder(value) is not None
-            for value in self._fill_values(action)
+            for value in fill_values(action)
         )
 
     def has_unresolved_placeholders(self, action: BaseAction) -> bool:
@@ -461,7 +461,7 @@ class VaultState:
         """
         return any(
             isinstance(value, str) and CredentialField.from_placeholder(value) is not None
-            for value in self._fill_values(action)
+            for value in fill_values(action)
         )
 
     @staticmethod
