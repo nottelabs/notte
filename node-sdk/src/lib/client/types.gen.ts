@@ -3865,7 +3865,7 @@ export type FunctionSource = 'console' | 'anything' | 'cli' | 'node-sdk' | 'pyth
 /**
  * FunctionVersionOrigin
  */
-export type FunctionVersionOrigin = 'self-heal' | 'anything' | 'rollback' | 'fork' | 'console' | 'cli' | 'python-sdk' | 'node-sdk' | 'rest-api';
+export type FunctionVersionOrigin = 'self-heal' | 'anything' | 'rollback' | 'fork' | 'console' | 'cli' | 'python-sdk' | 'node-sdk' | 'rest-api' | 'github';
 
 /**
  * FunctionVersionOriginInfo
