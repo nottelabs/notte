@@ -14,6 +14,7 @@ known drift recorded in ``openapi/known_drift.txt``:
     uv run --no-sync python scripts/openapi_contract.py --check                # committed snapshot
     uv run --no-sync python scripts/openapi_contract.py --check --against URL  # live API (release gate)
     uv run --no-sync python scripts/openapi_contract.py --fetch [--url URL]    # refresh the snapshot
+    uv run --no-sync python scripts/openapi_contract.py --fetch --dry-run [--url URL]  # exit 3 if it would change
     uv run --no-sync python scripts/openapi_contract.py --stamp-version        # after a version bump
     uv run --no-sync python scripts/openapi_contract.py --update-baseline
 
@@ -55,6 +56,8 @@ SNAPSHOT = REPO_ROOT / "openapi" / "openapi.json"
 PYPROJECT = REPO_ROOT / "pyproject.toml"
 BASELINE = REPO_ROOT / "openapi" / "known_drift.txt"
 DEFAULT_URL = "https://us-staging.notte.cc"
+# `--fetch --dry-run` exit status when the snapshot would change (1 stays an error).
+OUTDATED = 3
 
 
 class _NoSchemaRedirect(urllib.request.HTTPRedirectHandler):
@@ -199,24 +202,36 @@ def main() -> int:
     _ = parser.add_argument("--fetch", action="store_true", help="refresh the committed snapshot from --url")
     _ = parser.add_argument("--url", default=DEFAULT_URL, help=f"API base URL for --fetch (default: {DEFAULT_URL})")
     _ = parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help=f"with --fetch, write nothing and exit {OUTDATED} if the snapshot would change",
+    )
+    _ = parser.add_argument(
         "--stamp-version", action="store_true", help="write this workspace's API version into the committed snapshot"
     )
     _ = parser.add_argument("--check", action="store_true", help="fail on drift that is not in the baseline")
     _ = parser.add_argument("--against", metavar="URL", help="check a live API instead of the snapshot")
     _ = parser.add_argument("--update-baseline", action="store_true", help="record the current drift as known")
     args = parser.parse_args()
+    if args.dry_run and not args.fetch:
+        parser.error("--dry-run requires --fetch")
 
     if args.fetch:
         spec = download(args.url)
         stamp_api_version(spec, api_version())
-        SNAPSHOT.parent.mkdir(parents=True, exist_ok=True)
         previous = json.loads(SNAPSHOT.read_text()) if SNAPSHOT.exists() else None
-        if comparison_json(previous) == comparison_json(spec):
+        unchanged = comparison_json(previous) == comparison_json(spec)
+        if unchanged:
             print(f"{SNAPSHOT.relative_to(REPO_ROOT)} is unchanged (ignoring object-key order)")
+        elif args.dry_run:
+            print(f"{SNAPSHOT.relative_to(REPO_ROOT)} is out of date with {args.url}")
         else:
             # Keep the API's declared order. Sorting is only for the comparison.
+            SNAPSHOT.parent.mkdir(parents=True, exist_ok=True)
             _ = SNAPSHOT.write_text(json.dumps(spec, indent=2, ensure_ascii=False) + "\n")
             print(f"wrote {SNAPSHOT.relative_to(REPO_ROOT)}")
+        if args.dry_run:
+            return 0 if unchanged else OUTDATED
 
     if args.stamp_version:
         spec = cast(JsonObject, json.loads(SNAPSHOT.read_text()))

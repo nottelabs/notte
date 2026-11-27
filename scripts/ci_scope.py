@@ -163,6 +163,7 @@ STANDALONE_WORKFLOWS = {
     "complete-bot-pr.yml",
     "node-sdk-publish.yml",
     "openapi-bump.yml",
+    "openapi-bump-resume.yml",
     "prepare-release.yml",
     "publish-release.yml",
     "pypi-release.yml",

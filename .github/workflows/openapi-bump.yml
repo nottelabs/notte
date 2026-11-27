@@ -4,9 +4,10 @@ name: bump-openapi
 # references, from the API schema published on the `openapi-schema` branch (one
 # `openapi.json`, replaced whenever the API's schema changes, which also starts
 # this workflow). Reading that branch instead of a deployed API keeps the
-# snapshot equal to the API's source, never behind or ahead of it. Scheduled
-# runs catch up on a schema that arrived while the refresh PR had manual
-# commits. Drift cannot fail unrelated PRs. If a generator or the contract
+# snapshot equal to the API's source, never behind or ahead of it. A schema
+# that arrived while the refresh PR had manual commits is caught up by
+# openapi-bump-resume.yml once that PR merges or closes, and by scheduled runs.
+# Drift cannot fail unrelated PRs. If a generator or the contract
 # check fails, the refresh PR is opened (or moved back) as a draft with the
 # failure at the top of its body, and the run fails. When main already matches
 # the published schema, an open refresh PR without manual commits is closed.
