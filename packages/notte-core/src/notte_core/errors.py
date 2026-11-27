@@ -101,16 +101,20 @@ class EvaluateJsResultLimitError(ActionError):
 
 
 class ActionExecutionError(ActionError):
+    """An action that failed on the page. With a `reason` (a field that kept no text, a disabled element, an
+    exception the caller's script threw), the user sees it: it names what the page did, so retrying later or
+    waiting for a fix would not help. Without one, the user gets the generic message."""
+
     def __init__(self, action_id: str, url: str, reason: str | None = None) -> None:
+        message = f"Failed to execute action: {action_id} on {url}. Reason: {reason or 'unknown'}"
         super().__init__(
-            dev_message=f"Failed to execute action: {action_id} on {url}. Reason: {reason or 'unknown'}",
-            user_message="Sorry, this action cannot be executed at the moment.",
+            dev_message=message,
+            user_message=message if reason else "Sorry, this action cannot be executed at the moment.",
             agent_message=(
-                f"Failed to execute action: {action_id} on {url}. Reason: {reason or 'unknown'}. "
-                "Hint: check if the action is valid and try again. Otherwise, try another action."
+                f"{message}. Hint: check if the action is valid and try again. Otherwise, try another action."
             ),
-            should_retry_later=True,
-            should_notify_team=True,
+            should_retry_later=reason is None,
+            should_notify_team=reason is None,
         )
 
 

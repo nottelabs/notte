@@ -11,7 +11,7 @@ import json
 
 import pytest
 from notte_core.actions import ClickAction
-from notte_core.errors import ActionExecutionError, NotteBaseError
+from notte_core.errors import ActionExecutionError, ErrorConfig, NotteBaseError, TextNotKeptError
 from notte_core.observation import ExecutionResult, SerializedError, TimedSpan
 
 
@@ -37,8 +37,8 @@ def test_notte_error_round_trips_with_type_messages_and_flags() -> None:
     assert restored.exception.dev_message == original.dev_message
     assert restored.exception.user_message == original.user_message
     assert restored.exception.agent_message == original.agent_message
-    assert restored.exception.should_retry_later is True
-    assert restored.exception.should_notify_team is True
+    assert restored.exception.should_retry_later is False
+    assert restored.exception.should_notify_team is False
     assert "element is disabled" in restored.exception.dev_message
 
 
@@ -170,3 +170,18 @@ def test_success_keeps_exception_invariant() -> None:
             ended_at=span.ended_at,
             exception=ValueError("boom"),
         )
+
+
+def test_user_sees_the_reason_of_a_failed_action() -> None:
+    with ErrorConfig.message_mode("user"):
+        known = TextNotKeptError(url="https://example.com", reason="The field stayed empty after typing")
+        unknown = ActionExecutionError(action_id="click", url="https://example.com")
+
+    # A known reason names what the page did: no "team notified" or "try again later".
+    assert "The field stayed empty after typing" in str(known)
+    assert NotteBaseError.NOTTE_TEAM_NOTIFIED_MESSAGE not in str(known)
+    assert NotteBaseError.TRY_AGAIN_LATER_MESSAGE.strip() not in str(known)
+    assert not known.should_retry_later and not known.should_notify_team
+    # Without one, the generic message stays.
+    assert str(unknown).startswith("Sorry, this action cannot be executed at the moment.")
+    assert unknown.should_retry_later and unknown.should_notify_team
