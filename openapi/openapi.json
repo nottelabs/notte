@@ -25506,6 +25506,18 @@
             "title": "Domain",
             "description": "The site this function drives, used to group endpoints in the console. Null when the function never named a site."
           },
+          "slug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slug",
+            "description": "The function's short name, unique across all functions: it runs at https://functions.notte.cc/<slug>. Assigned at creation and renamable. Null for a function that has none."
+          },
           "workflow_id": {
             "type": "string",
             "title": "Workflow Id",
@@ -25635,6 +25647,19 @@
             ],
             "title": "Deletion Protected",
             "description": "Turn deletion protection on or off. While it is on, the function cannot be deleted. Any workspace member's key can turn it on; turning it off takes the key of a workspace admin or owner. Omit or send null to leave it unchanged."
+          },
+          "slug": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9-]{1,46}[a-z0-9]$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slug",
+            "description": "Rename the function's short name in https://functions.notte.cc/<slug>: 3 to 48 lowercase letters, digits and inner hyphens, unique across all functions (409 when another function has it). Omit or send null to leave it unchanged."
           },
           "response_format": {
             "anyOf": [
@@ -25852,6 +25877,18 @@
             ],
             "title": "Domain",
             "description": "The site this function drives, used to group endpoints in the console. Null when the function never named a site."
+          },
+          "slug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slug",
+            "description": "The function's short name, unique across all functions: it runs at https://functions.notte.cc/<slug>. Assigned at creation and renamable. Null for a function that has none."
           },
           "instructions": {
             "anyOf": [
@@ -26768,6 +26805,18 @@
             ],
             "title": "Domain",
             "description": "The site this function drives, used to group endpoints in the console. Null when the function never named a site."
+          },
+          "slug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slug",
+            "description": "The function's short name, unique across all functions: it runs at https://functions.notte.cc/<slug>. Assigned at creation and renamable. Null for a function that has none."
           },
           "instructions": {
             "anyOf": [

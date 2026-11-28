@@ -3287,6 +3287,12 @@ export type FunctionListItemResponse = {
      */
     domain?: string | null;
     /**
+     * Slug
+     *
+     * The function's short name, unique across all functions: it runs at https://functions.notte.cc/<slug>. Assigned at creation and renamable. Null for a function that has none.
+     */
+    slug?: string | null;
+    /**
      * Workflow Id
      *
      * Deprecated: use function_id. Removed on 2026-12-28.
@@ -3342,6 +3348,12 @@ export type FunctionMetadataUpdateRequest = {
      * Turn deletion protection on or off. While it is on, the function cannot be deleted. Any workspace member's key can turn it on; turning it off takes the key of a workspace admin or owner. Omit or send null to leave it unchanged.
      */
     deletion_protected?: boolean | null;
+    /**
+     * Slug
+     *
+     * Rename the function's short name in https://functions.notte.cc/<slug>: 3 to 48 lowercase letters, digits and inner hyphens, unique across all functions (409 when another function has it). Omit or send null to leave it unchanged.
+     */
+    slug?: string | null;
     /**
      * Response Format
      *
@@ -3480,6 +3492,12 @@ export type FunctionResponse = {
      * The site this function drives, used to group endpoints in the console. Null when the function never named a site.
      */
     domain?: string | null;
+    /**
+     * Slug
+     *
+     * The function's short name, unique across all functions: it runs at https://functions.notte.cc/<slug>. Assigned at creation and renamable. Null for a function that has none.
+     */
+    slug?: string | null;
     /**
      * Instructions
      *
@@ -4023,6 +4041,12 @@ export type FunctionWithLinkResponse = {
      * The site this function drives, used to group endpoints in the console. Null when the function never named a site.
      */
     domain?: string | null;
+    /**
+     * Slug
+     *
+     * The function's short name, unique across all functions: it runs at https://functions.notte.cc/<slug>. Assigned at creation and renamable. Null for a function that has none.
+     */
+    slug?: string | null;
     /**
      * Instructions
      *
@@ -10910,6 +10934,12 @@ export type FunctionListItemResponseWritable = {
      * The site this function drives, used to group endpoints in the console. Null when the function never named a site.
      */
     domain?: string | null;
+    /**
+     * Slug
+     *
+     * The function's short name, unique across all functions: it runs at https://functions.notte.cc/<slug>. Assigned at creation and renamable. Null for a function that has none.
+     */
+    slug?: string | null;
 };
 
 /**
@@ -11034,6 +11064,12 @@ export type FunctionResponseWritable = {
      * The site this function drives, used to group endpoints in the console. Null when the function never named a site.
      */
     domain?: string | null;
+    /**
+     * Slug
+     *
+     * The function's short name, unique across all functions: it runs at https://functions.notte.cc/<slug>. Assigned at creation and renamable. Null for a function that has none.
+     */
+    slug?: string | null;
     /**
      * Instructions
      *
@@ -11236,6 +11272,12 @@ export type FunctionWithLinkResponseWritable = {
      * The site this function drives, used to group endpoints in the console. Null when the function never named a site.
      */
     domain?: string | null;
+    /**
+     * Slug
+     *
+     * The function's short name, unique across all functions: it runs at https://functions.notte.cc/<slug>. Assigned at creation and renamable. Null for a function that has none.
+     */
+    slug?: string | null;
     /**
      * Instructions
      *
