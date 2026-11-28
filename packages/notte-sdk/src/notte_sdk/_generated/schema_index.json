@@ -134,6 +134,7 @@
   "#/components/schemas/FunctionMetadataUpdateRequest": "FunctionMetadataUpdateRequest",
   "#/components/schemas/FunctionMetadataUpdateRequest/expected_errors#-datamodel-code-generator-#-anyOf-#-special-#/0#-datamodel-code-generator-#-array-#-special-#": "ExpectedErrors",
   "#/components/schemas/FunctionMetadataUpdateRequest/expected_errors#-datamodel-code-generator-#-anyOf-#-special-#/0#-datamodel-code-generator-#-array-#-special-##-datamodel-code-generator-#-array-#-special-#/0#-datamodel-code-generator-#-array-#-special-#": "ExpectedError",
+  "#/components/schemas/FunctionMetadataUpdateRequest/slug#-datamodel-code-generator-#-anyOf-#-special-#/0#-datamodel-code-generator-#-array-#-special-#": "Slug",
   "#/components/schemas/FunctionResponse": "FunctionResponse",
   "#/components/schemas/FunctionRollbackRequest": "FunctionRollbackRequest",
   "#/components/schemas/FunctionRunError": "FunctionRunError",

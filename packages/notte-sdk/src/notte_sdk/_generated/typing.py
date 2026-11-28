@@ -99,6 +99,7 @@ class FunctionMetadataUpdateRequestDict(TypedDict):
     self_healing: NotRequired[bool | None]
     shared: NotRequired[bool | None]
     deletion_protected: NotRequired[bool | None]
+    slug: NotRequired[str | None]
     response_format: NotRequired[dict[str, Any] | None]
     expected_errors: NotRequired[list[str] | None]
 

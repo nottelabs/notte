@@ -49,6 +49,10 @@ Enable or disable public code sharing and forking for this function. Source code
 Turn deletion protection on or off. While it is on, the function cannot be deleted. Any workspace member's key can turn it on; turning it off takes the key of a workspace admin or owner. Omit or send null to leave it unchanged.
 </ParamField>
 
+<ParamField body="slug" type={"string | null | undefined"}>
+Rename the function's short name in https://functions.notte.cc/&lt;slug&gt;: 3 to 48 lowercase letters, digits and inner hyphens, unique across all functions (409 when another function has it). Omit or send null to leave it unchanged.
+</ParamField>
+
 <ParamField body="response_format" type={"{ [key: string]: unknown; } | null | undefined"}>
 JSON Schema of run()'s return value, computed by the caller from its pydantic model
 </ParamField>

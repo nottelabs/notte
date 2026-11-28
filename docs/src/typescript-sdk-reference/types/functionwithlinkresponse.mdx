@@ -136,6 +136,12 @@ export type FunctionWithLinkResponse = {
      */
     domain?: string | null;
     /**
+     * Slug
+     *
+     * The function's short name, unique across all functions: it runs at https://functions.notte.cc/<slug>. Assigned at creation and renamable. Null for a function that has none.
+     */
+    slug?: string | null;
+    /**
      * Instructions
      *
      * Builder's operating notes: typical run duration, known failure modes, which parameters matter.
@@ -284,6 +290,10 @@ Whether the build is finished and the function may be healed automatically. Can 
 
 <ParamField body="domain" type={"string | null | undefined"}>
 The site this function drives, used to group endpoints in the console. Null when the function never named a site.
+</ParamField>
+
+<ParamField body="slug" type={"string | null | undefined"}>
+The function's short name, unique across all functions: it runs at https://functions.notte.cc/&lt;slug&gt;. Assigned at creation and renamable. Null for a function that has none.
 </ParamField>
 
 <ParamField body="instructions" type={"string | null | undefined"}>
