@@ -39,6 +39,7 @@ Pass any of `--name`, `--description`, `--domain`, `--run-instructions`, `--defa
 | `--run-instructions <string>` | Notes for whoever calls this function: how long a run takes, what the variables mean, what it trips over |
 | `--self-healing` | Let an agent repair the function when a run fails |
 | `--shared` | Enable or disable public code sharing and forking for this function. Source code, including embedded credentials, becomes public. Runs, results and stored runtime secrets remain private. This does not enable public execution. Omit or send null to leave sharing unchanged. |
+| `--slug <string>` | Rename the function's short name in https://functions.notte.cc/&lt;slug&gt;: 3 to 48 lowercase letters, digits and inner hyphens, unique across all functions (409 when another function has it). Omit or send null to leave it unchanged. |
 
 ## `notte functions create`
 
